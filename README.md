@@ -1,7 +1,7 @@
 # MetaboAnalystR: An R package for comprehensive analysis of metabolomics data
 
 <p align="center">
-  <img src="https://github.com/jsychong/MetaboAnalystR/blob/master/docs/metaboanalyst_logo.png">
+  <img src="https://github.com/jsychong/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
 </p>
 
 ## Description 
@@ -15,11 +15,12 @@
 To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. 
 
 Function to download packages:
+
 ```R
 metanr_packages <- function(){
   
   cran_pkg <- c("Rserve", "RColorBrewer", "xtable", "som", "ROCR", "RJSONIO", "gplots", "e1071", "caTools", "igraph", "randomForest", "Cairo", "pls", "pheatmap", "lattice", "rmarkdown", "knitr", "data.table", "pROC", "Rcpp", "caret", "ellipse", "scatterplot3d")
-  bioconductor_pkg <- c("xcms", "impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva")
+  bioconductor_pkg <- c("impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva")
   
   list_installed <- installed.packages()
   
@@ -38,7 +39,11 @@ metanr_packages <- function(){
     biocLite(new_bio, dependencies = TRUE, ask = FALSE)
     print(c(new_bio, " packages added..."))
   }
-  print("No new packages added...")
+  
+  if((length(new_cran)<1)&(length(new_bio)<1)){
+    print("No new packages added...")
+  }
+    
 }
 ```
 Usage of function:
@@ -48,17 +53,23 @@ metanr_packages()
 
 ### Installing the package
 
-MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file.
+MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package.
 
-To install the package, open R and enter:
+#### To install the package directly from github using the *devtools* package, open R and enter:
 
 ```R
 install.packages("devtools")
 library(devtools)
+
+#Without documentation
+devtools::install_github("xia-lab/MetaboAnalystR")
+
+#With documentation
+devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 ```
 ## Usage
 
-For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes 
+For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
 
 Within R:
 ```R
@@ -79,8 +90,3 @@ If you use the R package, please cite: ###
 ## Bugs or feature requests
 
 To inform us of any bugs or requests, please open a new issue. 
-
-
-
-
-
