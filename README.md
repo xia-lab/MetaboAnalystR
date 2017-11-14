@@ -4,11 +4,11 @@
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
 </p>
 
-## Description 
+## 1. Description 
 
 **MetaboAnalystR** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including 500 functions for data processing, normalization, statistical analysis, metabolite set enrichment analysis, metabolic pathway analysis, and biomarker analysis. The package is synchronized with the web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, to achieve maximum flexibility and reproducibility.
 
-## Getting Started
+## 2. Getting Started
 
 ### Installing package dependencies 
 
@@ -82,7 +82,7 @@ R CMD INSTALL MetaboAnalytR_*.tar.gz
 
 ```
 
-## Usage
+## 3. Usage
 
 For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
 
@@ -96,12 +96,12 @@ Within a web-browser:
 browseVignettes("MetaboAnalystR")
 ```
 
-## Citation
+## 4. Citation
 
 MetaboAnalystR has been developed by the [XiaLab](http://www.xialab.ca/) at McGill University. 
 
 If you use the R package, please cite: ###
 
-## Bugs or feature requests
+## 5. Bugs or feature requests
 
 To inform us of any bugs or requests, please open a new issue. 
