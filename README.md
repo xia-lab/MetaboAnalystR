@@ -4,13 +4,13 @@
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
 </p>
 
-## 1. Description 
+## Description 
 
 **MetaboAnalystR** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including 500 functions for data processing, normalization, statistical analysis, metabolite set enrichment analysis, metabolic pathway analysis, and biomarker analysis. The package is synchronized with the web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, to achieve maximum flexibility and reproducibility.
 
-## 2. Getting Started
+## Getting Started
 
-### Installing package dependencies 
+### Step 1. Install package dependencies 
 
 To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. 
 
@@ -51,28 +51,29 @@ Usage of function:
 metanr_packages()
 ```
 
-### Installing the package
+### Step 2. Install the package
 
 MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package.
 
 ### Quick installation
 
-#### To install the package directly from github using the *devtools* package, open R and enter:
+#### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
 ```R
+# Step 1: Install devtools
 install.packages("devtools")
 library(devtools)
 
-#Without documentation
+# Step 2: Install MetaboAnalystR without documentation
 devtools::install_github("xia-lab/MetaboAnalystR")
 
-#With documentation
+# Step 2: Install MetaboAnalystR with documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 ```
 
-### Clone Github and install locally
+### Option B) Clone Github and install locally
 
-The * must be replaced by what is actually downloaded and built. 
+The * must be replaced by what is actually downloaded and built.  
 
 ```R
 
@@ -82,7 +83,17 @@ R CMD INSTALL MetaboAnalytR_*.tar.gz
 
 ```
 
-## 3. Usage
+### Option C) Manual download of MetaboAnalyst.tar.gz and install locally
+
+Manually download the .tar.gz file from the Github main page. The * must be replaced by what is actually downloaded and built.  
+
+```R
+cd ~/Downloads
+R CMD INSTALL MetaboAnalytR_*.tar.gz
+
+```
+
+## Usage
 
 For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
 
@@ -96,12 +107,12 @@ Within a web-browser:
 browseVignettes("MetaboAnalystR")
 ```
 
-## 4. Citation
+## Citation
 
 MetaboAnalystR has been developed by the [XiaLab](http://www.xialab.ca/) at McGill University. 
 
 If you use the R package, please cite: ###
 
-## 5. Bugs or feature requests
+## Bugs or feature requests
 
 To inform us of any bugs or requests, please open a new issue. 
