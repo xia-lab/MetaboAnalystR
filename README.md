@@ -53,9 +53,7 @@ metanr_packages()
 
 ### Step 2. Install the package
 
-MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package.
-
-### Quick installation
+MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package. There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. 
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
@@ -71,7 +69,7 @@ devtools::install_github("xia-lab/MetaboAnalystR")
 devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 ```
 
-### Option B) Clone Github and install locally
+#### Option B) Clone Github and install locally
 
 The * must be replaced by what is actually downloaded and built.  
 
@@ -83,7 +81,7 @@ R CMD INSTALL MetaboAnalytR_*.tar.gz
 
 ```
 
-### Option C) Manual download of MetaboAnalyst.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalyst.tar.gz and install locally
 
 Manually download the .tar.gz file from the Github main page. The * must be replaced by what is actually downloaded and built.  
 
