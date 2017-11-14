@@ -55,6 +55,8 @@ metanr_packages()
 
 MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package.
 
+### Quick installation
+
 #### To install the package directly from github using the *devtools* package, open R and enter:
 
 ```R
@@ -67,6 +69,19 @@ devtools::install_github("xia-lab/MetaboAnalystR")
 #With documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 ```
+
+### Clone Github and install locally
+
+The * must be replaced by what is actually downloaded and built. 
+
+```R
+
+git clone https://github.com/xia-lab/MetaboAnalystR.git
+R CMD build MetaboAnalystR
+R CMD INSTALL MetaboAnalytR_*.tar.gz
+
+```
+
 ## Usage
 
 For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
