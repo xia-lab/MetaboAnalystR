@@ -1,0 +1,78 @@
+---
+title: "Pathway Analysis"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+The pathway analysis module supports pathway analysis (integrating enrichment analysis and pathway topology analysis) and visualization for 21 model organisms, including Human, Mouse, Rat, Cow, Chicken, Zebrafish, **Arabidopsis thaliana**, Rice, Drosophila, Malaria, **S. cerevisae**, **E.coli**, and others, with a total of ~1600 metabolic pathways.
+
+## 2. Pathway Analysis Example Workflow
+
+
+```{r, eval=FALSE}
+## When input is a list
+
+# Create vector consisting of compounds for enrichment analysis 
+tmp.vec <- c("Acetoacetic acid", "Beta-Alanine", "Creatine", "Dimethylglycine", "Fumaric acid", "Glycine", "Homocysteine", "L-Cysteine", "L-Isolucine", "L-Phenylalanine", "L-Serine", "L-Threonine", "L-Tyrosine", "L-Valine", "Phenylpyruvic acid", "Propionic acid", "Pyruvic acid", "Sarcosine")
+
+# Create mSetObj
+mSet<-MetaboAnalystR:::InitDataObjects("conc", "msetora", FALSE)
+
+#Set up mSetObj with the list of compounds
+mSet<-Setup.MapData(mSet, tmp.vec);
+
+# Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)
+mSet<-CrossReferencing(mSet, "name");
+
+# Perform matching against compound w. out matches
+mSet<-PerformDetailMatch(mSet, "L-Isolucine");
+
+# Get list of candidates for matching
+mSet<-GetCandidateList(mSet);
+
+# Replace selected compound
+mSet<-SetCandidate(mSet, "L-Isolucine", "L-Isoleucine");
+
+# Select the pathway library, ranging from mammals to prokaryotes
+mSet<-SetKEGG.PathLib(mSet, "hsa")
+
+# Set the metabolite filter
+mSet<-SetMetabolomeFilter(mSet, F);
+
+# Calculate the over representation analysis score, here we selected to use the hypergeometric test (alternative is Fisher's exact test)
+# A results table "pathway_results.csv" will be created and found within your working directory
+mSet<-CalculateOraScore(mSet, "rbc", "hyperg")
+
+# Plot the pathway overview
+mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
+
+# Get information for selected node
+mSet<-GetCircleInfo(mSet)
+
+#Plot a specific metabolic pathway
+mSet<-PlotMetPath(mSet, "Glycine, serine and threonine metabolism", 480, 420)
+
+# Rerender the plot
+mSet<-RerenderMetPAGraph(mSet, "zoom1502570616761.png",480.0, 420.0)
+
+```
+
+## 2. Sweave Report 
+
+To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+# Create Biomarker Sweave report 
+CreatePDFReport(mSet, "User Name")
+
+# To save all files created during your session
+SaveTransformedData(mSet)
+
+```

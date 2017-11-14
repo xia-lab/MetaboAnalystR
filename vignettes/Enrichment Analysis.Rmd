@@ -1,0 +1,131 @@
+---
+title: "Enrichment Analysis"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+The enrichment analysis module performs metabolite set enrichment analysis (MSEA) for human and mammalian species based on several libraries containing ~6300 groups of metabolite sets. Users can upload either 1) a list of compounds, 2) a list of compounds with concentrations, or 3) a concentration table.
+
+## 2. Enrichment Analysis Workflow
+
+### 2.1 Over representation analysis
+
+We will go over two analysis workflows, the first is when the input is a list to perform over representation analysis. The first step is to create a vector containing a list of compound names. The list will then be cross-referenced (*CrossReferencing*) against the MetaboAnalyst compound libraries (HMDB, PubChem, KEGG, etc.), and any compounds without a hit will have NA. This step may take long due to downloading of libraries if they do not already exist in your working directory.
+
+```{r, eval=FALSE}
+## When input is a list
+
+# Create vector consisting of compounds for enrichment analysis 
+tmp.vec <- c("Acetoacetic acid", "Beta-Alanine", "Creatine", "Dimethylglycine", "Fumaric acid", "Glycine", "Homocysteine", "L-Cysteine", "L-Isolucine", "L-Phenylalanine", "L-Serine", "L-Threonine", "L-Tyrosine", "L-Valine", "Phenylpyruvic acid", "Propionic acid", "Pyruvic acid", "Sarcosine")
+
+# Create mSetObj
+mSet<-InitDataObjects("conc", "msetora", FALSE)
+
+#Set up mSetObj with the list of compounds
+mSet<-Setup.MapData(mSet, tmp.vec);
+
+# Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)
+mSet<-CrossReferencing(mSet, "name");
+
+# View name map to identify any compounds within the uploaded list that do not have any hits
+mSet$name.map 
+
+$hit.inx
+ [1]   29   86  199  221 6070  236  252 1142   NA 1224 1161 1252 1200 1251  330  349  364  372
+
+$hit.values
+ [1] "Acetoacetic acid"   "Beta-Alanine"       "Creatine"           "Dimethylglycine"    "Fumaric acid"       "Glycine"           
+ [7] "Homocysteine"       "L-Cysteine"         NA                   "L-Phenylalanine"    "L-Serine"           "L-Threonine"       
+[13] "L-Tyrosine"         "L-Valine"           "Phenylpyruvic acid" "Propionic acid"     "Pyruvic acid"       "Sarcosine"         
+
+$match.state
+ [1] 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1
+
+# Input the name of the compound without any matches 
+mSet<-PerformDetailMatch(mSet, "L-Isolucine");
+
+# Create list of candidates to replace the compound
+mSet <- GetCandidateList(mSet);
+
+# Identify the name of the compound to replace
+mSet<-SetCandidate(mSet, "L-Isolucine", "L-Isoleucine");
+
+# Set the metabolite filter
+mSet<-SetMetabolomeFilter(mSet, F);
+
+# Select metabolite set library, refer to 
+mSet<-SetCurrentMsetLib(mSet, "pathway", 0);
+
+# Calculate hypergeometric score, results table generated in your working directory
+mSet<-CalculateHyperScore(mSet)
+
+# Plot the ORA, bar-graph
+mSet<-PlotORA(mSet, "ora_0_", "bar", "png", 72, width=NA)
+```
+
+### 2.2 Quantitative Enrichment Analysis
+
+Below, we will go over a second analysis workflow to perform QEA, where data input is a table.
+
+```{r, eval=FALSE}
+# Create mSetObj
+mSet<-InitDataObjects("conc", "msetora", FALSE)
+
+# Read in data table
+mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
+
+# Perform cross-referencing of compound names
+mSet<-CrossReferencing(mSet, "name");
+
+# Mandatory check of data 
+mSet<-SanityCheckData(mSet);
+
+# Replace missing values with minimum concentration levels
+mSet<-ReplaceMin(mSet);
+
+# Perform no normalization
+mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
+
+# Plot normalization
+mSet<-PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
+
+# Plot sample-wise normalization
+mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
+
+# Set the metabolome filter
+mSet<-SetMetabolomeFilter(mSet, F);
+
+# Set the metabolite set library to pathway
+mSet<-SetCurrentMsetLib(mSet, "pathway", 0);
+
+# Calculate the global test score
+mSet<-CalculateGlobalTestScore(mSet)
+
+# Calculate the hyper score
+mSet<-CalculateHyperScore(mSet)
+
+# Plot the QEA
+mSet<-PlotQEA.Overview(mSet, "qea_0_", "bar", "png", 72, width=NA)
+
+```
+
+## 3. Sweave Report 
+
+To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+# Create Biomarker Sweave report 
+CreatePDFReport(mSet, "User Name")
+
+# To save all files created during your session
+SaveTransformedData(mSet)
+
+```
+

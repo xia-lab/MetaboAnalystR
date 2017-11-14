@@ -1,0 +1,88 @@
+---
+title: "Integrated Pathway Analysis"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+This module performs integrated metabolic pathway analysis on results obtained from combined metabolomics and gene expression studies conducted under the same experimental conditions. This approach exploits KEGG metabolic pathway models to complete the analysis. The underlying assumption behind this module is that by combining evidence from both changes in gene expression and metabolite concentrations, one is more likely to pinpoint the pathways involved in the underlying biological processes. To this end, users need to supply a list of genes and metabolites of interest that have been identified from the same samples or obtained under similar conditions. The metabolite list can be selected from the results of a previous analysis downloaded from MetaboAnalyst. Similarly, the gene list can be easily obtained using many excellent web-based tools such as GEPAS or INVEX. After users have uploaded their data, the genes and metabolites are then mapped to KEGG metabolic pathways for over-representation analysis and pathway topology analysis. Topology analysis uses the structure of a given pathway to evaluate the relative importance of the genes/compounds based on their relative location. Clicking on the name of a specific pathway will generate a graphical representation of that pathway highlighted with the matched genes/metabolites. Users must keep in mind that unlike transcriptomics, where the entire transcriptome is routinely mapped, current metabolomic technologies only capture a small portion of the metabolome. This difference can lead to potentially biased results. To address this issue, the current implementation of this omic integration module allows users to explore the enriched pathways based either on joint evidence or on the evidence obtained from one particular omic platform for comparison.
+
+```{r, eval=FALSE}
+# Initiate MetaboAnalyst
+mSet <- InitDataObjects("conc", "inmex", FALSE)
+
+mSet <- SetOrganism(mSet, "hsa")
+
+genes <- c(1737, 83440, 3939, 10911)
+
+mSet<-PerformIntegGeneMapping(mSet, genes, "hsa", "entrez")
+
+mSet<-PerformIntegGeneMapping("#Entrez  logFC
+                        1737  -1.277784317
+                        83440  -1.034136439
+                        3939  -2.231729728
+                        10911  -1.045657875
+                        10690  -0.968308832
+                        10010  -0.861541301
+                        10053  0.360090661", "hsa", "entrez")
+
+mSet<-PerformIntegCmpdMapping(mSet, cmpds, "hsa", "kegg")
+
+mSet<-PerformIntegCmpdMapping("#KEGG  logFC
+                        C00116  1.010972619
+                        C00565  -0.714283001
+                        C00033  0.822193121
+                        C00583  -1.005192252
+                        C00022  -0.623838569
+                        C00719  -0.406052491
+                        C05984  -0.390152174
+                        C00407  -0.238389886
+                        C00791  0.489764981
+                        C00062  0.291549231
+                        C00300  -0.230475941", "hsa", "kegg")
+
+cmpds <- c(C00116, C00565, C00033, C00583)
+
+mSet<-PrepareIntegData(mSet)
+
+```
+
+## 2. Integrated pathway analysis
+
+Enrichment analysis aims to evaluate whether the observed genes and metabolites in a particular pathway are significantly enriched (appeatr more than expected by random chance) within the dataset. You can choose over-representation analysis (ORA) based on either hypergenometrics analysis or Fisher's exact method.
+
+The topology analysis aims to evaluate whether a given gene or metabolite plays an important role in a biological response based on its position within a pathway. Degree Centrality measures the number of links that connect to a node (representing either a gene or metabolite) within a pathway; Closeness Centrality measures the overall distance from a given node to all other nodes in a pathway; Betweenness Centrality measures the number of shortest paths from all nodes to all the others that pass through a given node within a pathway.
+
+Users can choose one of three different modes of pathways: - the gene-metabolite mode (default) allows joint-analysis and visualization of both significant genes and metabolites; while the gene-centric or metabolite-centric mode allows users to identify enriched pathways driven by significant genes or metabolites, respectively.
+
+
+```{r, eval=FALSE}
+# Perform integrated pathway analysis, using hypergeometric test, degree centrality, and the gene-metabolite pathways
+mSet<-PerformIntegPathwayAnalysis(mSet, "dc", "hyper", "integ")
+
+# Perform integrated pathway analysis, using hypergeometric test, betweenness centrality, and gene-centric pathways 
+mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "hyper", "genetic")
+
+```
+
+**Pathway Analysis Overview**
+
+The stacked bars below show a summary of the joint evidence from enrichment analysis and topology analysis.
+
+```{r, eval=FALSE}
+# Perform pathway analysis
+mSet<-PlotInmexPath(mSet, "hsa00260", 636, 513)
+
+# Create the KEGG graph
+mSet<-RerenderKEGGGraph(mSet, "zoom1502130707551.png",636.0, 513.0, 100.0)
+
+```
+
+
+

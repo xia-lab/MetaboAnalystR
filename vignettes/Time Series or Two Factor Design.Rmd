@@ -1,0 +1,115 @@
+---
+title: "Time Series or Two Factor Design"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+The time-series/two-factor design module supports temporal and two-factor data analysis including data overview, two-way ANOVA, and empirical Bayes time-series analysis for detecting distinctive temporal profiles. It also supports ANOVA-simultaneous component analysis (ASCA) to identify major patterns associated with each experimental factor.
+
+For a comprehensive introductory tutorial and further details concerning time-series analysis, please refer to Xia et al. 2013 (PMID: 23543913). 
+
+
+## 2 Time-Series/Two-Factor Design Example Workflow 
+
+The time-series/two-factor design (TT) module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The pilot data follows the uploading, processing, filtering, and normalization steps as per other modules. Please refer to the "Introduction to MetaboAnalystR" vignette for details. For this example, we will use LC-MS peak list intensity data collected from *Arabidopsis thaliana* during a wounding time course (four time points). WT - wild type; MT - dde2-2 mutant. Please refer to Meinicke P. et al 2008 (PMID: 18582365) for more information.  
+
+```{r, eval=FALSE}
+
+mSet<-InitDataObjects("pktable", "ts", FALSE)
+mSet<-SetDesignType(mSet, "time")
+mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv", "colts", "disc");
+mSet<-SanityCheckData(mSet);
+mSet<-ReplaceMin(mSet);
+mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "S10T0", ratio=FALSE, ratioNum=20)
+mSet<-PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
+mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
+
+```
+
+### 2.1 Time-Series Analysis 
+
+**Data Overview:** The TT module consists of two visualization options for data overview. The first is the Interactive PCA Visualization (iPCA). This approach summarizes data in an interactive 3D graph which supports pointing, clicking, rotating, and zooming in and out to view data details. It is incredibly useful to detect overall patterns within the data. To achieve this, use the *iPCA.Anal* function to create the PCA plot, which will output a .json file of the plot in your working directory. The second option is to create a heatmap of the data. This method displays data in the form of colored cells and provides direct visualization of the relative levels of individual samples or variables. To use this function, use *PlotHeatMap2*, which will create heatmap according to user's specifications in your working directory.
+
+```{r, eval=FALSE}
+# Interactive PCA Plot
+mSet<-iPCA.Anal(mSet, "ipca_3d_0_.json")
+
+# Heatmap
+mSet<-PlotHeatMap2(mSet, "heatmap2_0_", "png", 72, width=NA, "euclidean","ward.D","bwm","overview", F, 1, F, F)
+```
+
+**Univariate Analysis:** The TT module supports two-way ANOVA (ANOVA2), which provides classical univariate two-way ANOVA analysis based on two given factors. For two-factor independent samples, two-way ANOVA between subjects will be performed. 
+For time-series + one experimental factor, two-way repeated measures ANOVA within subjects will be performed. 
+Finally, for time-series data, one-way repeated measures ANOVA within-subjects will be performed. To perform ANOVA2, use the function *ANOVA2.Anal*. and specify the adjusted p-value cutoff (thresh), the multiple testing correction (p.cor), and type of data (type). 
+
+```{r, eval=FALSE}
+# Perform ANOVA2 Analysis
+mSet<-ANOVA2.Anal(mSet, thresh=0.05, p.cor="fdr", type="time")
+
+# Plot ANOVA2
+mSet<-PlotANOVA2(mSet, "aov2_0_", "png", 72, width=NA)
+```
+
+**Multivariate Analysis:** The TT module supports 2 methods for multivariate analysis, 1) ANOVA Simultaneous Component Analysis (ASCA) and Multivariate Empirical Bayes Analysis of Variance (MB-ANOVA) for time-series analysis. We first begin with ASCA, which is designed to identify major patterns with regard to two given factors and their interaction. The implementation of ASCA in MetaboAnalyst was based on the algorithm described by AK Smildle, et al. 2005 (PMID: 15890747) with additional improvements for feature selection and model validation. To begin, use *Perform.ASCA* which requires user input of the number of components for each model (a, b, x) and model residuals (res).   
+
+```{r, eval=FALSE}
+# Perform ASCA, specifying model components
+mSet<-Perform.ASCA(mSet, a=1, b=1, x=2, res=2)
+
+# Create scree plots of each model
+mSet<-PlotModelScree(mSet, "asca_scree_0_", "png", 72, width=NA)
+
+# Plot ASCA model A
+mSet<-PlotASCAModel(mSet, "asca_fa_0_", "png", 72, width=NA, "a",FALSE)
+
+# Plot ASCA model B
+mSet<-PlotASCAModel(mSet, "asca_fb_0_", "png", 72, width=NA, "b",FALSE)
+
+# Plot ASCA Interaction
+mSet<-PlotInteraction(mSet, "asca_fab_0_", "png", 72,FALSE, width=NA)
+
+# Perform model validation, 20 permutations specified
+mSet<-Perform.ASCA.permute(mSet, 20)
+
+# Plot model validation
+mSet<-PlotASCA.Permutation(mSet, "asca_perm_0_", "png", 72, width=NA)
+
+# Calculate significant features, specifying the alpha threshold (spe.thresh) and leverage threshold (lev.thresh) 
+mSet<-CalculateImpVarCutoff(mSet, spe.thresh = 0.05, lev.thresh = 0.9)
+
+# Plots of significant features for each model
+mSet<-PlotAscaImpVar(mSet, "asca_impa_0_", "png", 72, width=NA, "a")
+mSet<-PlotAscaImpVar(mSet, "asca_impb_0_", "png", 72, width=NA, "b")
+mSet<-PlotAscaImpVar(mSet, "asca_impab_0_", "png", 72, width=NA, "ab")
+```
+
+The second method for multivariate analysis is MB-ANOVA, which is designed to compare temporal profiles across different biological conditions. It is based on the time-course method described by YC Tai. et al. 2006 (A multivariate empirical Bayes statistic for replicated microarray time course data). Use *performMB* to begin, specifying the cut-off (topPerc). The generated table shows all the features ranked by the corresponding statistics. Users can select any feature name to view its corresponding time-course profile. For time-course only data, we are interested in fetures which change over time, and for time-course + one experimental factor data, we are interested in features which respond differently in different experimental conditions over time.
+
+```{r, eval=FALSE}
+# Perform MB
+mSet<-performMB(mSet, topPerc = 10)
+
+# Plot time-course profile of selected feature
+mSet<-PlotMBTimeProfile("3.1522/851", "png", 72, width=NA)
+
+```
+
+## 3. Sweave Report 
+
+To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+# Create Biomarker Sweave report 
+CreatePDFReport(mSet, "User Name")
+
+# To save all files created during your session
+SaveTransformedData(mSet)
+
+```
