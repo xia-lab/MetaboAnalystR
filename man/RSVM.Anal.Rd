@@ -6,6 +6,11 @@
 \usage{
 RSVM.Anal(mSetObj = NA, cvType)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{cvType}{Cross-validation type}
+}
 \description{
 recursive SVM for feature selection and classification
 }

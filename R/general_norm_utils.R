@@ -8,7 +8,8 @@
 #'(ex: "Disease B") The name must be identical to a class label. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
-
+#'@export
+#'
 UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -30,19 +31,16 @@ UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
   
   if(!grp.nm.vec %in% cls){
     mSetObj$msgSet$current.msg <- "Cannot find group names!"
-    return ("Cannot find group names!")}
+    return ("Cannot find group names!")
+  }
   
   hit.inx <- cls %in% grp.nm.vec;
   mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
-  cleaned.cls <- factor(cls[!hit.inx])
-  droplevels(cleaned.cls) # in case factor didn't drop level
-  mSetObj$dataSet$prenorm.cls <- cleaned.cls
+  mSetObj$dataSet$prenorm.cls <- droplevels(factor(cls[!hit.inx])); 
   
   if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-    dataSet$prenorm.facA <- droplevels(factor(facA[hit.inx]));
-    dataSet$prenorm.facB <- droplevels(factor(facB[hit.inx]));
-    mSetObj$dataSet$prenorm.facA <- cleaned.facA;
-    mSetObj$dataSet$prenorm.facB <- cleaned.facB;
+    mSetObj$dataSet$prenorm.facA <- droplevels(factor(facA[!hit.inx]));
+    mSetObj$dataSet$prenorm.facB <- droplevels(factor(facB[!hit.inx]));
   }
   
   mSetObj$msgSet$current.msg <- "Successfully updated the group items!";
@@ -54,7 +52,9 @@ UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
   return(.set.mSet(mSetObj));
 }
 
-
+#'Clean the data matrix
+#'@export
+#'
 CleanDataMatrix <- function(ndata){
   # make sure no costant columns crop up
   varCol <- apply(data.frame(ndata), 2, var, na.rm=T); # getting an error of dim(X) must have a positive length, fixed by data.frame 
@@ -71,8 +71,10 @@ CleanDataMatrix <- function(ndata){
 #' sample names found in the data set.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
+#'@export
 #'
 UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
+  
   mSetObj <- .get.mSet(mSetObj);
   if(is.null(mSetObj$dataSet$filt)){
     data <- mSetObj$dataSet$procr;
@@ -89,11 +91,12 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
       facB <- mSetObj$dataSet$filt.facB;
     }
   }
-
+  
   if(!smpl.nm.vec %in% rownames(data)){
     mSetObj$msgSet$current.msg <- "Cannot find the sample names!"
-    return ("Cannot find the sample names!")}
-    
+    return ("Cannot find the sample names!")
+  }
+  
   hit.inx <- rownames(data) %in% smpl.nm.vec;
   mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
   mSetObj$dataSet$prenorm.cls <- as.factor(as.character(cls[!hit.inx]));
@@ -101,9 +104,8 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
     mSetObj$dataSet$prenorm.facA <- as.factor(as.character(facA[!hit.inx]));
     mSetObj$dataSet$prenorm.facB <- as.factor(as.character(facB[!hit.inx]));
   }
-
+  
   mSetObj$msgSet$current.msg <- "Successfully updated the sample items!";
-  print(length(levels(mSetObj$dataSet$prenorm.cls)))
   return(.set.mSet(mSetObj));
 }
 
@@ -117,8 +119,10 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
 #' The name must be identical to the feature names found in the data set.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
+#'@export
 #'
 UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
+  
   mSetObj <- .get.mSet(mSetObj);
   if(is.null(mSetObj$dataSet$filt)){
     data <- mSetObj$dataSet$procr;
@@ -138,7 +142,8 @@ UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
   
   if(!feature.nm.vec %in% colnames(data)){
     mSetObj$msgSet$current.msg <- "Cannot find the feature names!"
-    return ("Cannot find the feature names!")}
+    return ("Cannot find the feature names!")
+  }
   
   hit.inx <- colnames(data) %in% feature.nm.vec;
   mSetObj$dataSet$prenorm <- CleanDataMatrix(data[,!hit.inx,drop=FALSE]);
@@ -170,11 +175,12 @@ UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
 #'@param ratioNum Relevant only for biomarker analysis.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-
+#'@export
+#'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
   
   mSetObj <- .get.mSet(mSetObj);
-   
+  
   if(is.null(mSetObj$dataSet$procr)){
     data<-mSetObj$dataSet$preproc
   }else if(is.null(mSetObj$dataSet$prenorm)){
@@ -182,7 +188,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }else{
     data<-mSetObj$dataSet$prenorm
   }
-    
+  
   if(is.null(mSetObj$dataSet$prenorm.cls)){ # can be so for regression 
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
   }
@@ -301,7 +307,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     
     colNames <- colnames(data);
     rowNames <- rownames(data);
-  
+    
   }
   
   if(!ratio){
@@ -319,7 +325,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       transnm<-"N/A";
     }
   }
-
+  
   # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
   rownorm <- CleanData(data, T, T)
   mSetObj$dataSet$row.norm <- as.data.frame(rownorm); #moved below ratio 
@@ -365,14 +371,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
 }
 
 #'Row-wise Normalization
-#'@description Row-wise norm methods, when x is a row
+#'@description Row-wise norm methods, when x is a row.
+#'Normalize by a sum of each sample, assume constant sum (1000).
+# Return: normalized data.
 #'@usage Options for normalize by sum median, reference sample,
 #'reference reference (compound), or quantile normalization
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-
-# normalize by a sum of each sample, assume constant sum (1000)
-# return: normalized data
+#'@export
+#'
 SumNorm<-function(x){
   1000*x/sum(x, na.rm=T);
 }
@@ -437,7 +444,6 @@ RangeNorm<-function(x){
   }
 }
 
-
 #'Two plot summary plot: Feature View of before and after normalization
 #'@description For each plot, the top is a box plot, bottom is a density plot
 #'@usage PlotNormSummary(mSetObj, imgName, format, dpi, width)
@@ -450,6 +456,7 @@ RangeNorm<-function(x){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
+#'@export
 #'
 PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -528,7 +535,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
-#'
+#'@export
 
 PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
@@ -573,13 +580,13 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   op<-par(mar=c(5.75,8,4,0), xaxt="s");
   boxplot(t(mSetObj$dataSet$procr[pre.inx, ]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
   mtext("Before Normalization", 3,1)
- 
+  
   # fig 2
   op<-par(mar=c(6.5,7,0,0), xaxt="s");
   plot(density(apply(mSetObj$dataSet$procr, 1, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
   mtext(x.label, 1, 4);
   mtext("Density", 2, 5);
- 
+  
   # fig 3
   
   op<-par(mar=c(5.75,8,4,2), xaxt="s");
@@ -600,7 +607,6 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
-
 
 # get the dropdown list for sample normalization view
 GetPrenormSmplNms <-function(mSetObj=NA){

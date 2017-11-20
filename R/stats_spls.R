@@ -6,13 +6,12 @@
 #'
 #' License: GNU GPL (>= 2)
 
-
 #'Perform SPLS-DA
 #'@description Sparse PLS-DA (from mixOmics) 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt){
   mSetObj <- .get.mSet(mSetObj);
@@ -41,13 +40,21 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Plot SPLS-DA
 #'@description Sparse PLS-DA (from mixOmics) pairwise summary plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, indicate the number of principle components
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -77,9 +84,23 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 
 #'Score Plot SPLS-DA
 #'@description Sparse PLS-DA (from mixOmics) score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric, between 1 and 0
+#'@param show Numeric, 1 or 0
+#'@param grey.scale Numeric, use grey-scale, 0 for no, and 1 for yes. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
   mSetObj <- .get.mSet(mSetObj);
   suppressMessages(library('ellipse'));
@@ -180,9 +201,17 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 
 #'3D SPLS-DA score plot
 #'@description Sparse PLS-DA (from mixOmics) 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
   mSetObj <- .get.mSet(mSetObj);
   spls3d <- list();
@@ -223,12 +252,24 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
 
 #'Create SPLS-DA loading plot
 #'@description Sparse PLS-DA (from mixOmics) loading plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param inx Input the model index
+#'@param viewOpt Detailed view "detail" 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx, viewOpt="detail"){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   imp.vec <- abs(mSetObj$analSet$splsr$loadings$X[,inx]);
   imp.vec <- imp.vec[imp.vec > 0];
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -254,10 +295,19 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'Create SPLS-DA classification plot
 #'@description Sparse PLS-DA (from mixOmics) plot of 
 #'classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param validOpt "Mfold"
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-# 
+#'@export
+#'
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, validOpt="Mfold", format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -305,11 +355,10 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, validOpt="Mfold", for
 #'@param tol: Convergence stopping value.
 #'@param max.iter: integer, the maximum number of iterations.
 #'@param near.zero.var: boolean, see the internal \code{\link{nearZeroVar}} function (should be set to TRUE in particular for data with many zero values). Setting this argument to FALSE (when appropriate) will speed up the computations
-
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
 
 splsda <- function(X,
                    Y,

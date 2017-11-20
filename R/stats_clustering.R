@@ -1,9 +1,19 @@
 #'Plot Dendrogram
 #'@description Dendogram
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param smplDist  
+#'@param clstDist 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist, clstDist){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -70,14 +80,14 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'SOM analysis
 #'@description SOM analysis
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
   mSetObj <- .get.mSet(mSetObj);
   library(som);
@@ -88,9 +98,18 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 
 #'SOM Plot
 #'@description Plot SOM map for  less than 20 clusters
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -138,17 +157,33 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
 #'K-means analysis
 #'@description Perform K-means analysis
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 Kmeans.Anal <- function(mSetObj=NA, clust.num){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$analSet$kmeans <- kmeans (mSetObj$dataSet$norm, clust.num, nstart=100);
   return(.set.mSet(mSetObj));
 }
+
+#'Plot K-means analysis
+#'@description Plot K-means analysis
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 
 PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
@@ -183,14 +218,20 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Create Sub Heat Map Plot
 #'@description Plot a sub heatmap based on results from t-tests/ANOVA, VIP or randomforest
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
                            smplDist, clstDist, palette, method.nm, top.num, viewOpt, rowV=T, colV=T, border=T, grp.ave=F){
   mSetObj <- .get.mSet(mSetObj);
@@ -243,9 +284,18 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 
 #'Create Heat Map Plot
 #'@description Plot a heatmap based on results from t-tests/ANOVA, VIP or randomforest
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NA, border=T, grp.ave=F){
   
@@ -258,7 +308,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
   }else{
-    my.data <- mSetObj$dataSet$proc;
+    my.data <- mSetObj$dataSet$procr;
   }
   
   if(is.na(var.inx)){

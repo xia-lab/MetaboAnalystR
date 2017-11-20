@@ -7,7 +7,7 @@
 ClearNegatives(mSetObj = NA, method = "abs")
 }
 \description{
-Operates on dataSet$proc after dealing with missing values
+Operates on dataSet$procr after dealing with missing values
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

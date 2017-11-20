@@ -4,7 +4,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 LoadKEGGLib<-function(mSetObj=NA, libOpt){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -60,11 +61,11 @@ LoadKEGGLib<-function(mSetObj=NA, libOpt){
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param height Input the height
-
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -121,14 +122,14 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
 }
 
-
 #'Plot an igraph object and return the node information (position and labels)
 #'@description Plot an igraph object and return the node information (position and labels)
 #'Used in a higher function
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, line.color=NULL){
   
   # first clean up the graph (only show connected structure, specific compounds, not isolated cmpd)
@@ -173,11 +174,11 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@param height Input the heights
 #'@param zoom.factor Input the zoom factor 
-#'
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 RerenderKEGGGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -203,6 +204,7 @@ RerenderKEGGGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor){
 }
 
 # double check don't need to add mSetObj
+#'@export
 GetKEGGNodeInfo<-function(path.id, g, width, height, usr = par("usr")){
   
   ## transform user to pixel coordinates

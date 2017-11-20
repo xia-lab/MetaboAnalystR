@@ -6,6 +6,11 @@
 \usage{
 SetCurrentGroups(mSetObj = NA, grps)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{grps}{Input the groups}
+}
 \description{
 Choose two groups (when more than two groups uploaded)
 }

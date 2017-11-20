@@ -6,6 +6,9 @@
 \usage{
 RF.Anal(mSetObj = NA, treeNum = 500, tryNum = 7, randomOn = 1)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Perform Random Forest
 }

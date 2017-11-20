@@ -6,6 +6,9 @@
 \usage{
 Kmeans.Anal(mSetObj = NA, clust.num)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Perform K-means analysis
 }

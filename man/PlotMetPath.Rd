@@ -2,15 +2,12 @@
 % Please edit documentation in R/enrich_path_graphics.R
 \name{PlotMetPath}
 \alias{PlotMetPath}
-\title{R script for generating various graphics for pathway analysis}
+\title{Plot metabolome pathway}
 \usage{
 PlotMetPath(mSetObj = NA, pathName, width, height)
 }
 \description{
 Orthogonal PLS-DA (from ropls)
-}
-\details{
-Plot metabolome pathway
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

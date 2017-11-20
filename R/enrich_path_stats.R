@@ -13,7 +13,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj <- .get.mSet(mSetObj);
   # make a clean dataSet$cmpd data based on name mapping
@@ -105,13 +106,14 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 GetORA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   hit.inx <- match(rownames(mSetObj$analSet$ora.mat), metpa$path.ids);
   return(names(metpa$path.ids)[hit.inx]);
 }
 
-
+#'@export
 GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers){
   z <- cbind(numSigMembers, numSigAll-numSigMembers, numMembers-numSigMembers, numAllMembers-numMembers-numSigAll+numSigMembers);
   z <- lapply(split(z, 1:nrow(z)), matrix, ncol=2);
@@ -130,7 +132,8 @@ GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -237,6 +240,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 GetQEA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   hit.inx <- match(rownames(mSetObj$analSet$qea.mat), metpa$path.ids);
@@ -248,7 +252,8 @@ GetQEA.pathNames <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SetupSMPDBLinks <- function(kegg.ids){
   smpdb.vec <- names(metpa$path.smps)[match(kegg.ids,metpa$path.smps)]
   lk.len <- length(smpdb.vec);
@@ -263,20 +268,19 @@ SetupSMPDBLinks <- function(kegg.ids){
   return (all.lks);
 }
 
-
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
 
-
 #'Given a metset inx, return hmtl highlighted pathway cmpds
 #'@description Given a metset inx, return hmtl highlighted pathway cmpds
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   mSetObj <- .get.mSet(mSetObj);
   pathid <- metpa$path.ids[msetNm]; 

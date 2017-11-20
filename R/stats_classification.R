@@ -1,9 +1,11 @@
 #'Perform Random Forest Analysis
 #'@description Perform Random Forest
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -44,11 +46,19 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
 
 #'Plot Random Forest 
 #'@description Random Forest plot 
-#'@usage PlotRF.Classify(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -80,10 +90,19 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 
 #'Plot Random Forest variable importance
 #'@description Random Forest plot of variable importance ranked by MeanDecreaseAccuracy 
-#'@usage PlotRF.VIP(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
@@ -108,10 +127,20 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Plot Random Forest outliers
 #'@description Random Forest plot of outliers
-#'@usage PlotRF.Outlier(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@usage PlotRF.Outlier(mSetObj, imgName, format, dpi, width)
+#'@export
+#'
 PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   cols <- GetColorSchema(mSetObj);
@@ -153,13 +182,15 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Recursive Support Vector Machine (R-SVM)
 #'@description recursive SVM for feature selection and classification
+#'@param mSetObj Input name of the created mSet Object
+#'@param cvType Cross-validation type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 RSVM.Anal <- function(mSetObj=NA, cvType){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -190,10 +221,19 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
 
 #'Recursive Support Vector Machine (R-SVM) plot
 #'@description Plot recursive SVM classification
-#'@usage PlotRSVM.Classification(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@usage PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   res <- mSetObj$analSet$svm$Error;
@@ -227,10 +267,19 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'Recursive Support Vector Machine (R-SVM) plot of important variables
 #'@description Plot recursive SVM variables of importance
 #'if too many, plot top 15
-#'@usage PlotRSVM.Cmpd(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@usage PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   sigs <- mSetObj$analSet$svm$sig.mat;
@@ -253,8 +302,6 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'R-code for R-SVM
 #'@description use leave-one-out / Nfold or bootstrape to permute data for external CV
 #'build SVM model and use mean-balanced weight to sort genes on training set
@@ -262,6 +309,7 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@author Dr. Xin Lu, Research Scientist
 #'Biostatistics Department, Harvard School of Public Health
 #'create a decreasing ladder for recursive feature elimination
+#'
 CreateLadder <- function(Ntotal, Nmin=5){
   x <- vector()
   x[1] <- Ntotal
@@ -295,10 +343,10 @@ CreateLadder <- function(Ntotal, Nmin=5){
 
 #'R-SVM core code
 #'@description Core code to perform R-SVM
-#'@param x: row matrix of data
-#'@param y: class label: 1 / -1 for 2 classes
-#'@param CVtype: integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV
-#'@param CVnum: number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size
+#'@param x Row matrix of data
+#'@param y Class label: 1 / -1 for 2 classes
+#'@param CVtype Integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV
+#'@param CVnum Number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size
 #'outputs a named list
 #'Error: a vector of CV error on each level
 #'SelFreq: a matrix for the frequency of each gene being selected in each level

@@ -11,7 +11,7 @@ PlotAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
 
 \item{imgName}{Input a name for the plot}
 
-\item{format}{elect the image format, "png", of "pdf".}
+\item{format}{Select the image format, "png", of "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}

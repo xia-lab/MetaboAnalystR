@@ -4,7 +4,20 @@
 \alias{PlotRSVM.Cmpd}
 \title{Recursive Support Vector Machine (R-SVM) plot of important variables}
 \usage{
-PlotRSVM.Cmpd(imgName, format, dpi, width)
+PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
+}
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input a name for the plot}
+
+\item{format}{Select the image format, "png", or "pdf".}
+
+\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
+
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 }
 \description{
 Plot recursive SVM variables of importance

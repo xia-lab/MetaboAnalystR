@@ -7,6 +7,9 @@
 PLSDA.CV(mSetObj = NA, methodName = "T", compNum = GetDefaultPLSCVComp(),
   choice = "Q2")
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 PLS-DA classification and feature selection
 }

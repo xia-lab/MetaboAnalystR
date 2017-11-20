@@ -6,6 +6,13 @@
 \usage{
 PLSDA.Permut(mSetObj = NA, num = 100, type = "accu")
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{num}{Numeric, input the number of permutations}
+
+\item{type}{Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance}
+}
 \description{
 Perform PLS-DA permutation using training classification accuracy as
 indicator, for two or multi-groups

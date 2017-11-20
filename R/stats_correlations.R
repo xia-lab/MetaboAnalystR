@@ -3,11 +3,15 @@
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'
 template.match <- function(x, template, dist.name) {
   k<-cor.test(x,template, method=dist.name);
   c(k$estimate, k$stat, k$p.value)
 }
 
+#'Match pattern for correlation analysis
+#'@export
+#'
 Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   mSetObj <- .get.mSet(mSetObj);
   if(is.null(pattern)){
@@ -58,10 +62,18 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
 
 #'Pattern hunter, correlation plot
 #'@description Plot correlation
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -103,9 +115,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   barplot(cor.res[,1], space=c(0.5, rep(0, nrow(cor.res)-1)), xlim=c(-1,1), xaxt="n", col = cols, add=T,horiz=T);
   dev.off();
   return(.set.mSet(mSetObj));
-  
 }
-
 
 #'Pattern hunter, corr heatmap
 #'@description Plot correlation heatmap
@@ -125,7 +135,8 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param no.clst Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
                           colors, viewOpt, fix.col, no.clst, top, topNum){
   
@@ -304,6 +315,7 @@ GenerateTemplates <- function(mSetObj=NA){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   
   mSetObj <- .get.mSet(mSetObj);

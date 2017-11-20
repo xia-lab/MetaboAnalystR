@@ -11,7 +11,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist='pearson', 
                        clstDist='average', colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, 
                        useSigFeature, drawBorder){
@@ -133,7 +134,8 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -204,14 +206,14 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 #'@param spe.thresh alpha threshold, less is better, default less than 5 percentile based chi-square
 #'note: spe and leverage are vectors, not a single value, but a list to store the result
 #'note: the last model is Model.res, no spe
-#'
 #'Calculate leverage cutoff based on permutation
 #'Calculate the reference distribution of leverages
 #'note: leverage.perm is a list with each member in a 3 column matrix
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.95){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -312,8 +314,6 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
   mSetObj$analSet$asca$out.list <- out.list;
   return(.set.mSet(mSetObj));
 }
-
-
 
 #'Function to perform ASCA 
 #'@description Perform ASCA
@@ -490,7 +490,8 @@ ASCAfun.res<-function (X, Fac) {
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   
   # since there are three factors a, b, ab, it is easier
@@ -573,7 +574,8 @@ getFactorSize <- function(fac){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Get.asca.tss <- function(dummy, perm=T){
   
   X <- mSetPerm$analSet$asca$Xoff;
@@ -757,7 +759,8 @@ PCA.GENES<-function(X){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -813,7 +816,8 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE){
   mSetObj <- .get.mSet(mSetObj);
   
@@ -876,11 +880,20 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
 #'Plot ASCA interaction plots 
 #'@description Plot ASCA interaction plots 
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param colorBW Logical, use black and white (TRUE) or colors (FALSE)
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@usage PlotInteraction(imgName, format="png", dpi=72, colowBW, width=NA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotInteraction<-function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -978,11 +991,19 @@ PlotInteraction<-function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FAL
 #'Plot the important variables for each factor
 #'@description Plot the important variables for each factor
 #'@usage PlotASCAImpVar(imgName, format="png", dpi=72, width=NA, type)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param type select model a, b, or ab
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1069,11 +1090,19 @@ PlotSigVar <- function(x, y, xline, yline, title){
 
 #'Plot ASCA permutation
 #'@description Plot plsda classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@usage PlotASCA.Permutation(imgName, format="png", dpi=72, width=NA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1127,7 +1156,8 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
   

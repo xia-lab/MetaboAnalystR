@@ -16,5 +16,5 @@ Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
 
-merge duplicated columns or rows by their mean
+Merge duplicated columns or rows by their mean
 }

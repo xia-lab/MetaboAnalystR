@@ -7,13 +7,13 @@
 RSVM(x, y, ladder, CVtype, CVnum = 0)
 }
 \arguments{
-\item{x:}{row matrix of data}
+\item{x}{Row matrix of data}
 
-\item{y:}{class label: 1 / -1 for 2 classes}
+\item{y}{Class label: 1 / -1 for 2 classes}
 
-\item{CVtype:}{integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV}
+\item{CVtype}{Integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV}
 
-\item{CVnum:}{number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size
+\item{CVnum}{Number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size
 outputs a named list
 Error: a vector of CV error on each level
 SelFreq: a matrix for the frequency of each gene being selected in each level

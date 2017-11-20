@@ -6,6 +6,9 @@
 \usage{
 SetEBAMSigMat(mSetObj = NA, delta)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 return double matrix with 3 columns - z.value, posterior, local.fdr
 }

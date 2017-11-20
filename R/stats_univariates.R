@@ -5,11 +5,11 @@
 #'@param fc.thresh Fold-change threshold, numeric input
 #'@param cmp.type Comparison type, 0 for group 1 minus group 2, and 1 for group 
 #'1 minus group 2
-#'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -57,6 +57,8 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.type=0){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -119,6 +121,8 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -214,6 +218,8 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   mSetObj <- .get.mSet(mSetObj);
   if(paired){
@@ -280,7 +286,8 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -357,8 +364,6 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Plot t-test 
 #'@description Plot t-test
 #'@usage PlotTT(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
@@ -372,7 +377,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -396,7 +402,6 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
 #'Perform Volcano Analysis
 #'@description Perform volcano analysis
 #'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
@@ -409,11 +414,11 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param threshp Numeric, indicate the p-value threshold
 #'@param equal.var Logical, indicates if the group variance is equal (T) or unequal (F)
 #'@param pval.type To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".  
-#'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -512,7 +517,6 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   return(.set.mSet(mSetObj));
 }
 
-
 #'Create volcano plot
 #'@description For labelling interesting points, it is defined by the following rules:
 #'need to be signficant (sig.inx) and or 2. top 5 p, or 2. top 5 left, or 3. top 5 right. 
@@ -527,7 +531,8 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -662,10 +667,11 @@ parseFisher <- function(fisher, cut.off){
 #'@param nonpar Logical, use a non-parametric test (T) or not (F)
 #'@param thresh Numeric, from 0 to 1, indicate the p-value threshold
 #'@param post.hoc Input the name of the post-hoc test, "fisher" or "tukey"
-#'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -801,6 +807,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -828,7 +835,6 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   imgName <- gsub("\\/", "_",  cmpdNm);
@@ -839,7 +845,6 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   title(main=cmpdNm, out=T);
   dev.off();
 }
-
 
 ##############################################
 ##############################################
@@ -1103,9 +1108,9 @@ GetUnivReport <- function(mSetObj=NA){
     } else {
       # t-test
       equal.var <- TRUE;
-      if(var(cbind(x[inx1], x[inx2]), na.rm=TRUE) != 0) {
+      if(var(x, na.rm=TRUE) != 0) {
         anal.var <- var.test(x[inx1], x[inx2]);
-        equal.var <- ifelse(mSetObj$anal.var$p.value <= 0.05, FALSE, TRUE);
+        equal.var <- ifelse(anal.var$p.value <= 0.05, FALSE, TRUE);
       }
       
       tmp <- try(t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var));

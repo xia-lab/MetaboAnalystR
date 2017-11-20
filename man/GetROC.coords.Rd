@@ -4,7 +4,7 @@
 \alias{GetROC.coords}
 \title{Return ROC corodinates with confidence intervals}
 \usage{
-GetROC.coords(mSetObj = NA, fld.nm, val, imgNm)
+GetROC.coords(mSetObj = NA, fld.nm, val, plot = TRUE, imgNm)
 }
 \description{
 Return ROC corodinates with confidence intervals

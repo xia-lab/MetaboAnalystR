@@ -6,6 +6,11 @@
 \usage{
 PrepareROCDetails(mSetObj = NA, feat.nm)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{feat.nm}{Input the feature name}
+}
 \description{
 ROC with CI for AUC
 }

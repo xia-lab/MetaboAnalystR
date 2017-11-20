@@ -8,7 +8,8 @@ Options for normalize by sum median, reference sample,
 reference reference (compound), or quantile normalization
 }
 \description{
-Row-wise norm methods, when x is a row
+Row-wise norm methods, when x is a row.
+Normalize by a sum of each sample, assume constant sum (1000).
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

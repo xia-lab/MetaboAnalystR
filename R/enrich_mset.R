@@ -7,14 +7,18 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 LoadMsetLib <- function(libname="pathway"){
   if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
     read_mSet(libname);
   }
 }
 
-
+#'Set the cachexia set used
+#'@description Set cachexia set used
+#'@export
+#'
 SetCachexiaSetUsed <- function(mSetObj=NA, used){
   mSetObj$dataSet$cachexia.set.used <- used;
   return(.set.mSet(mSetObj));
@@ -31,7 +35,8 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -81,7 +86,8 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -143,11 +149,19 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   
 }
 
+#'Get the library check messages
+#'@description Get the library check messages
+#'@export
+#'
 GetMsetLibCheckMsg<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return (mSetObj$dataSet$user.mset.info);
 }
 
+#'Get the concentration reference
+#'@description Get the concentration reference
+#'@export
+#'
 Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
   mSetObj <- .get.mSet(mSetObj);
   
@@ -170,7 +184,8 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 LoadSmpLib<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   paths <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/smp_path.csv");
@@ -181,6 +196,13 @@ LoadSmpLib<-function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+#'Search metabolite set libraries
+#'@description Search metabolite set libraries
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 SearchMsetLibraries<-function(mSetObj=NA, query, type){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -207,7 +229,8 @@ SearchMsetLibraries<-function(mSetObj=NA, query, type){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SearchByCompound <- function(mSetObj=NA, query){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -299,7 +322,8 @@ SearchByCompound <- function(mSetObj=NA, query){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SearchByName <- function(mSetObj=NA, query){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -345,7 +369,8 @@ SearchByName <- function(mSetObj=NA, query){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -363,7 +388,8 @@ SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -411,7 +437,8 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   
   mSetObj <- .get.mSet(mSetObj);

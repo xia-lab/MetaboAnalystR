@@ -8,7 +8,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 performMB <- function(mSetObj=NA, topPerc = 10){
   mSetObj <- .get.mSet(mSetObj);
   time.fac <- mSetObj$dataSet$time.fac;
@@ -65,14 +66,20 @@ performMB <- function(mSetObj=NA, topPerc = 10){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Plot MB Time Profile
 #'@description Plot MB Time Profile
+#'@param mSetObj Input name of the created mSet Object
+#'@param cmpdNm Input the name of the compound
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm,  format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -279,10 +286,13 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
 
 #'Plot the variable across time points (x)
 #'@description Colored by experimental conditions, used in higher function 
+#'@param mSetObj Input name of the created mSet Object
+#'@param varName Input the name of the variable
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 plotProfile <-function (mSetObj=NA, varName) {
   
   mSetObj <- .get.mSet(mSetObj);

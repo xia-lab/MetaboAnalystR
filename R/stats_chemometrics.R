@@ -4,6 +4,7 @@
 #'@param mSetObj Input name of the created mSet Object
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -25,9 +26,12 @@ PCA.Anal <- function(mSetObj=NA){
 
 #'Rotate PCA analysis
 #'@description Rotate PCA analysis
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+
 PCA.Flip <- function(mSetObj=NA, axisOpt){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -63,6 +67,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param pc.num Numeric, input a number to indicate the number of principal components to display in the pairwise score plot.
 #'@usage PlotPCAPairSummary(mSetOj=NA, imgName, format="png", dpi=72, width=NA, pc.num=X)
+#'@export
 #'
 PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
   mSetObj <- .get.mSet(mSetObj);
@@ -104,6 +109,8 @@ PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param scree.num Numeric, input a number to indicate the number of principal components to display in the scree plot.
 #'@usage PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num)
+#'@export
+#'
 PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -148,9 +155,6 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 
 #'Create 2D PCA score plot
 #'@description Rotate PCA analysis
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -164,7 +168,11 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'@param show Display sample names, 1 = show names, 0 = do not show names.
 #'@param grey.scale Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.
 #'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
-
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
   mSetObj <- .get.mSet(mSetObj);
   xlabel = paste("PC",pcx, "(", round(100*mSetObj$analSet$pca$variance[pcx],1), "%)");
@@ -268,13 +276,20 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   return(.set.mSet(mSetObj));
 }
 
-
 #'Create 3D PCA score plot
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCA3DScore<- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@usage PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
+#'@export
+#'
 PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -316,6 +331,15 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@usage PlotPCA3DScore_orig<- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@usage PlotPCA3DScore<- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
+#'@export
+
 PlotPCA3DScore_orig <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -374,6 +398,7 @@ PlotPCA3DScore_orig <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@param plotType Indicate the plot type, "scatter" for a scatter plot, if blank it will create a barplot.
 #'@param lbl.feat Indicate 1 to show labeled features and 0 to not show labels. 
 #'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
+#'@export
 #'
 PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1){
   
@@ -442,6 +467,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@usage PlotPCABiplot(mSet, imgName, format="png", dpi=72, width=NA, inx1, inx2)
+#'@export
 #'
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   mSetObj <- .get.mSet(mSetObj);
@@ -473,9 +499,13 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
 #'note: the VIP is calculated only after PLSDA-CV is performed
 #'to determine the best # of comp. used for VIP
 #'@description PLS analysis using oscorespls
+#'@param mSetObj Input name of the created mSet Object
+#'@param reg Logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -506,7 +536,18 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, indicate the number of principal components
+#'@export
+
 PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -537,8 +578,25 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg 
+#'@param show Show labels, 1 or 0
+#'@param grey.scale Numeric, use a grey scale (0) or not (1)
+#'@param use.sparse Logical, use a sparse algorithm (T) or not (F)
+#'@export
+#'
 PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, use.sparse=FALSE){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   suppressMessages(library('ellipse'));
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -637,9 +695,17 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 
 #'Plot PLS 3D score plot
 #'@description Plot PLS 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLS3DScore<-function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   pls3d <- list();
@@ -670,6 +736,23 @@ PlotPLS3DScore<-function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   return(.set.mSet(mSetObj));
 }
 
+#'Plot PLS 3D score plot
+#'@description Plot PLS 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLS3DScore_orig<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -708,10 +791,22 @@ PlotPLS3DScore_orig<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 
 #'Plot PLS loading plot, also set the loading matrix for display
 #'@description Plot PLS loading plot, also set the loading matrix for display
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5. The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param plotType Two options, "scatter" or "barplot" 
+#'@param lbl.feat 1 or 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1){
+  
   mSetObj <- .get.mSet(mSetObj);
   # named vector
   load1<-mSetObj$analSet$plsr$loadings[,inx1];
@@ -766,10 +861,14 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 
 #'PLS-DA classification and feature selection
 #'@description PLS-DA classification and feature selection
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(), choice="Q2"){
+  
   mSetObj <- .get.mSet(mSetObj);
   # get classification accuracy using caret
   suppressMessages(library('caret'));
@@ -836,19 +935,24 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(), 
   write.csv(signif(vip.mat,5),file="plsda_vip.csv");
   
   mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, vip.mat=vip.mat, fit.info=all.info);
-  print(1);
   return(.set.mSet(mSetObj));
 }
-
 
 #'Perform PLS-DA permutation
 #'@description Perform PLS-DA permutation using training classification accuracy as
 #'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param num Numeric, input the number of permutations
+#'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   orig.cls <- cls <- as.numeric(mSetObj$dataSet$cls);
   datmat <- as.matrix(mSetObj$dataSet$norm);
   best.num <- mSetObj$analSet$plsda$best.num;
@@ -915,10 +1019,25 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
 
 #'Plot PLS important features
 #'@description Plot PLS important features, BHan: added bgcolor parameter for B/W color
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param type Indicate the type variables of importance to use, "vip" to use VIp scores, or "type"
+#'for coefficients  
+#'@param feat.nm 
+#'@param feat.num 
+#'@param color.BW Logical, true to use black and white, or false to not
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
+  
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -934,6 +1053,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
   mSetObj$imgSet$pls.imp<-imgName;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
   if(type=="vip"){
     mSetObj$analSet$plsda$imp.type<-"vip";
     vips<-mSetObj$analSet$plsda$vip.mat[,feat.nm];
@@ -950,9 +1070,12 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
 #'Plot PLS important variables,
 #'@description Plot PLS important variables, BHan: added bgcolor parameter for B/W color
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1062,9 +1185,18 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
 
 #'Plot PLS-DA classification performance using different components
 #'@description Plot plsda classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   res <- mSetObj$analSet$plsda$fit.info;
@@ -1105,9 +1237,18 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
 
 #'Plot PLS-DA classification performance using different components, permutation
 #'@description Plot plsda classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   bw.vec <- mSetObj$analSet$plsda$permut;
@@ -1141,10 +1282,13 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'Perform OPLS-DA
 #'@description Orthogonal PLS-DA (from ropls)
 #'Add reg (regression i.e. if class order matters)
+#'@param mSetObj Input name of the created mSet Object
+#'@param reg Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1174,9 +1318,23 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 
 #'Create OPLS-DA score plot
 #'@description Orthogonal PLS-DA (from ropls) score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric
+#'@param show Show variable labels, 1 or O
+#'@param grey.scale Numeric, indicate grey-scale, 0 for no, and 1 for yes 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1276,6 +1434,8 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   return(.set.mSet(mSetObj));
 }
 
+#'Reset custom compounds
+#'@export
 ResetCustomCmpds <- function(mSetObj){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$custom.cmpds <- c();
@@ -1285,9 +1445,20 @@ ResetCustomCmpds <- function(mSetObj){
 #'S-plot for OPLS-DA
 #'@description Orthogonal PLS-DA (from ropls) 
 #'S-plot for important features from OPLS-DA
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param plotType To create a plot of all compounds use "all", and to create a plot of custom
+#'compounds, use "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, plotType){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1339,9 +1510,19 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   mSetObj$analSet$oplsda$splot.mat <- splot.mat;
   
   return(.set.mSet(mSetObj));
-  
 }
 
+#'Plot loading compounds
+#'@description Plot loading compounds
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@export
+#'
 PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1352,6 +1533,17 @@ PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   return(PlotCmpdView(cmpdNm, format, dpi, width));
 }
 
+#'Plot OPLS 
+#'@description Plot OPLS 
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@export
+#'
 PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1389,15 +1581,21 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Perform OPLS-DA permutation
 #'@description Orthogonal PLS-DA (from ropls) 
 #'perform permutation, using training classification accuracy as
 #'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=100, width=NA){
   

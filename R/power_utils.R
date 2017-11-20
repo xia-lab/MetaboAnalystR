@@ -7,6 +7,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 InitPowerAnal <- function(mSetObj=NA, clsOpts){
   
@@ -53,6 +54,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
@@ -83,7 +85,8 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetSampleSizeLadder <- function(maxNum){
   Jpred <- c(3, 6, 10, 16, 24, 40, 60, 100, 150, seq(200, 1000, 100));
   inx <- which(Jpred == min(Jpred[Jpred>=maxNum]))
@@ -99,7 +102,8 @@ GetSampleSizeLadder <- function(maxNum){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -122,7 +126,6 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
     .set.mSet(mSetObj);
     return(fdr.lvl);
   }
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -139,6 +142,8 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -178,6 +183,8 @@ PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+
 PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);

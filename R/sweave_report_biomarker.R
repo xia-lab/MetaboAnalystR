@@ -34,14 +34,14 @@ CreateBiomarkerRnwReport<-function(mSetObj, usrName){
 CreateBiomarkerIntr<-function(){
   descr <- c("\\section{Background}\n",
              "The metabolome is well-known to be a sensitive measure of health and disease, reflecting alterations",
-             "to the genome, proteome, and transcriptome, as well as changes in life-style and environment. As such,",
-             "one common goal of metabolomic studies is biomarker discovery, which aims to identify a metabolite or a set",
-             "of metabolites capable of classifying conditions or disease with high sensitivity (true-positive rate) and",
-             "specificity (true negative rate). Biomarker discovery is achieved through building predictive models of one or multiple metabolites",
-             "and evaluating the performance, or robustness of the model, to classify new patients into diseased or healthy categories.",
-             "The Biomarker analysis module supports all common ROC-curve based biomarker analyses. It includes several options for single (classical)",
-             "or multiple biomarker analysis, as well as for predictive biomarker model creation and evaluation.",
-             "For a comprehensive introductory tutorial and further details concerning biomarker analysis, please refer to Xia et al. 2013 (PMID: 23543913).\n"
+             " to the genome, proteome, and transcriptome, as well as changes in life-style and environment. As such,",
+             " one common goal of metabolomic studies is biomarker discovery, which aims to identify a metabolite or a set",
+             " of metabolites capable of classifying conditions or disease with high sensitivity (true-positive rate) and",
+             " specificity (true negative rate). Biomarker discovery is achieved through building predictive models of one or multiple metabolites",
+             " and evaluating the performance, or robustness of the model, to classify new patients into diseased or healthy categories.",
+             " The Biomarker analysis module supports all common ROC-curve based biomarker analyses. It includes several options for single (classical)",
+             " or multiple biomarker analysis, as well as for predictive biomarker model creation and evaluation.",
+             " For a comprehensive introductory tutorial and further details concerning biomarker analysis, please refer to Xia et al. 2013 (PMID: 23543913).\n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -57,8 +57,8 @@ CreateBiomarkerIntr<-function(){
 CreateBiomarkerOverview <- function(){
   descr <- c("\\section{Biomarker Analysis Overview}\n",
              "The Biomarker analysis module consists of five steps - uploading the data, data processing,",
-             "biomarker selection, performance evaluation, and model creation. There are several options within",
-             "MetaboAnalystR to perform each of these steps, supporting all common ROC-curve based biomarker analyses. \n"
+             " biomarker selection, performance evaluation, and model creation. There are several options within",
+             " MetaboAnalystR to perform each of these steps, supporting all common ROC-curve based biomarker analyses. \n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -75,26 +75,26 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
   
   descr <- c("\\section{Data Input}\n",
              "The biomarker analysis module accepts either a compound concentration table, spectral binned data, or a peak intensity",
-             "table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether",
-             "or not the data is paired. The data may either be .csv or .txt files.",
-             "\n\n");
+             " table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether",
+             " or not the data is paired. The data may either be .csv or .txt files.",
+             " \n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
   
   # the data filtering
   descr<-c("\\subsubsection{Data Filtering}\n",
-           "The purpose of data filtering is to identify and remove variables that are unlikely to be of",
-           "use when modeling the data. No phenotype information is used in the filtering process, so the result",
-           "can be used with any downstream analysis. This step can usually improve the results.",
-           "Data filtering is strongly recommended for datasets with a large number of variables (> 250) and",
-           "for datasets which contain a lot of noise (i.e.chemometrics data). Filtering can usually improve your",
-           "results\\footnote{Hackstadt AJ, Hess AM.\\textit{Filtering for increased power for microarray data analysis},",
-           "BMC Bioinformatics. 2009; 10: 11.}.",
-           "\n\n",
-           "\\textit{For data with < 250 of variables, filtering will reduce 5\\% of variables;",
-           "For a total number of variables between 250 and 500, 10\\% of variables will be removed;",
-           "For a total number of variables bewteen 500 and 1000, 25\\% of variables will be removed;",
-           "Finally, 40\\% of variables will be removed for data with over 1000 variables.}");
+           " The purpose of data filtering is to identify and remove variables that are unlikely to be of",
+           " use when modeling the data. No phenotype information is used in the filtering process, so the result",
+           " can be used with any downstream analysis. This step can usually improve the results.",
+           " Data filtering is strongly recommended for datasets with a large number of variables (> 250) and",
+           " for datasets which contain a lot of noise (i.e.chemometrics data). Filtering can usually improve your",
+           " results\\footnote{Hackstadt AJ, Hess AM.\\textit{Filtering for increased power for microarray data analysis},",
+           " BMC Bioinformatics. 2009; 10: 11.}.",
+           " \n\n",
+           " \\textit{For data with < 250 of variables, filtering will reduce 5\\% of variables;",
+           " For a total number of variables between 250 and 500, 10\\% of variables will be removed;",
+           " For a total number of variables bewteen 500 and 1000, 25\\% of variables will be removed;",
+           " Finally, 40\\% of variables will be removed for data with over 1000 variables.}");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -107,28 +107,28 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
   cat("\n\n", file=rnwFile, append=TRUE);
   
   descr<-c("\\subsubsection{Data Integrity Check}\n",
-           "Before data analysis, a data integrity check is performed to make sure that all of the necessary",
-           "information has been collected. The class labels must be present and must contain only two classes.",
-           "If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
-           "(n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
-           "Compound concentration or peak intensity values must all be non-negative numbers.",
-           "By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
-           "found within the data (see next section).");
+           " Before data analysis, a data integrity check is performed to make sure that all of the necessary",
+           " information has been collected. The class labels must be present and must contain only two classes.",
+           " If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
+           " (n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
+           " Compound concentration or peak intensity values must all be non-negative numbers.",
+           " By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
+           " found within the data (see next section).");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
   descr<-c("\\subsubsection{Missing value imputations}\n",
            "Too many zeroes or missing values will cause difficulties in the downstream analysis.",
-           "MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
-           "all the missing and zero values with a small values (the half of the minimum positive",
-           "values in the original data) assuming to be the detection limit. The assumption of this approach",
-           "is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
-           "In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
-           "replaced with this small value. User can also specify other methods, such as replace by mean/median,",
-           "or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
-           "method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
-           "\\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
-           "2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
+           " MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
+           " all the missing and zero values with a small values (the half of the minimum positive",
+           " values in the original data) assuming to be the detection limit. The assumption of this approach",
+           " is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
+           " In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
+           " replaced with this small value. User can also specify other methods, such as replace by mean/median,",
+           " or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
+           " method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
+           " \\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
+           " 2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -156,13 +156,13 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   
   descr <- c("\\subsection{Biomarker Analysis Normalization}\n",
              "The normalization step for the biomarker analysis module includes an additional option for",
-             "calculating ratios between metabolite concentrations. Ratios between two metabolite concentrations",
-             "may provide more information than the two metabolite concentrations seperately. MetaboAnalystR",
-             "will compute ratios between all possible metabolite pairs and then select the top ranked ratios (based on p-values)",
-             "to include with the data for further biomarker analysis. Please note, there is a potential overfitting issue", 
-             "associated with this procedure. The main purpose of computing ratios of metabolite concentrations is to improve the chances of biomarker discovery,", 
-             "therefore users will need to validate their performance in future, independent studies. Log normalization of the data will be performed", 
-             "during the process. \n"
+             " calculating ratios between metabolite concentrations. Ratios between two metabolite concentrations",
+             " may provide more information than the two metabolite concentrations seperately. MetaboAnalystR",
+             " will compute ratios between all possible metabolite pairs and then select the top ranked ratios (based on p-values)",
+             " to include with the data for further biomarker analysis. Please note, there is a potential overfitting issue", 
+             " associated with this procedure. The main purpose of computing ratios of metabolite concentrations is to improve the chances of biomarker discovery,", 
+             " therefore users will need to validate their performance in future, independent studies. Log normalization of the data will be performed", 
+             " during the process. \n"
   );
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -213,30 +213,35 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(is.null(mSetObj$imgSet$roc.univ)){
+  if(is.null(mSetObj$imgSet$roc.univ.plot)){
     return()}
   
   descr <- c("\\section{Classical ROC curve analysis}\n",
              "The aim of classical ROC curve analysis is to evaluate the performance of a single feature, either",
-             "one metabolite or a combined metabolite ratio pair, as a biomarker. The ROC curve summarizes the sensitivity",
-             "and specificity of that single feature to accurately classify data, which can then be used to compare",
-             "the overall accuracy of different biomarkers. \n");
+             " one metabolite or a combined metabolite ratio pair, as a biomarker. The ROC curve summarizes the sensitivity",
+             " and specificity of that single feature to accurately classify data, which can then be used to compare",
+             " the overall accuracy of different biomarkers. \n");
   cat(descr, file=rnwFile, append=TRUE);
   
   descr <- paste("Figure", fig.count<<-fig.count+1, "ROC curve and boxplot for an individual biomarker.")
   
+  cat(descr, file=rnwFile, append=TRUE);
+  
+  ft.name <- paste(mSet$imgSet$roc.univ.name);
+  
   univbio<-c( "\\begin{figure}[htp]",
-                     "\\begin{center}",
-                     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.univ,"}", sep=""),
-                     "\\caption{", paste("The left image is a ROC curve of an individual biomarker.",
-                                         " The sensitivity is on the y-axis, and the specificity is on the", 
-                                         " x-axis. The area-under-the-curve (AUC) is in blue. The right image", 
-                                         " is a box-plot of the two groups within the dataset.", 
-                                         " A horizontal line is in red indicating the optimal cutoff.", sep=""),"}",
-                     "\\end{center}",
-                     paste("\\label{",mSetObj$imgSet$roc.univ,"}", sep=""),
-                     "\\end{figure}",
-                     "\\clearpage"
+              "\\begin{center}",
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.univ.plot,"}", sep=""),
+              "\\caption{The left image is a ROC curve of an individual biomarker.",
+              " The sensitivity is on the y-axis, and the specificity is on the", 
+              " x-axis. The area-under-the-curve (AUC) is in blue. The right image", 
+              " is a box-plot of the two groups within the dataset.", 
+              " A horizontal line is in red indicating the optimal cutoff.",
+              "Selected individual biomarker name :", ft.name, "}",
+              "\\end{center}",
+              paste("\\label{",mSetObj$imgSet$roc.univ.plot,"}", sep=""),
+              "\\end{figure}",
+              "\\clearpage"
   );
   cat(univbio, file=rnwFile, append=TRUE, sep="\n");
   
@@ -286,72 +291,88 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   descr <- c("\\section{Multivariate ROC curve exploration}\n",
              "The aim of the multivariate exploratory ROC curve analysis is to evaluate the performance of biomarker models created",
-             "through automated important feature identification. There are three multivariate algorithms used for ROC curve analysis", 
-             "partial least squares discriminant analysis (PLS-DA), random forest, and support vector machines (SVM). To begin,",  
-             "ROC curves are generated by Monte-Carlo cross validation (MCCV) using balanced subsampling. In each MCCV, 2/3 of the samples", 
-             "are used to evaluate feature importance, and the remaining 1/3 are used to validate the models created with the first step.", 
-             "The top ranking features (max top 100) in terms of importance are used to build the biomarker classification models. This is repeated",
-             "several times to calculate the performance and confidence intervals of each model. Users",
-             "must specify the classification method and the feature ranking method for ROC curve analysis. For large datasets,", 
-             "with more than 1000 features, the univariate feature ranking method is recommended to avoid long computation times. For",
-             "the PLS-DA method, users have the option to specify the number of latent variables (LV) to use. By default it is 2.", 
+             " through automated important feature identification. There are three multivariate algorithms used for ROC curve analysis", 
+             " partial least squares discriminant analysis (PLS-DA), random forest, and support vector machines (SVM). To begin,",  
+             " ROC curves are generated by Monte-Carlo cross validation (MCCV) using balanced subsampling. In each MCCV, 2/3 of the samples", 
+             " are used to evaluate feature importance, and the remaining 1/3 are used to validate the models created with the first step.", 
+             " The top ranking features (max top 100) in terms of importance are used to build the biomarker classification models. This is repeated",
+             " several times to calculate the performance and confidence intervals of each model. Users",
+             " must specify the classification method and the feature ranking method for ROC curve analysis. For large datasets,", 
+             " with more than 1000 features, the univariate feature ranking method is recommended to avoid long computation times. For",
+             " the PLS-DA method, users have the option to specify the number of latent variables (LV) to use. By default it is 2.", 
+             " In the plots below, users have selected to create plots for all biomarker models, or a single biomarker model. The plot description",
+             " will indicate the model selected. If it is 0, it means the plot is for all biomarker models. A -1 means it used the best model, and an",
+             " input 1-6 to plot a ROC curve for one of the top six models.",
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1, " shows the ROC curves of all or a single biomarker model based on the average cross validation performance."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the predicted class probabilities of all samples using a selected biomarker model."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the predictive accuracy of biomarker models with an increasing number of features."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the significant features of single biomarker model ranked by importance."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the ROC curves of all or a single biomarker model based on the average cross validation performance."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the predicted class probabilities of all samples using a selected biomarker model."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the predictive accuracy of biomarker models with an increasing number of features."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the significant features of single biomarker model ranked by importance."),
              "\n");
   
   cat(descr, file=rnwFile, append=TRUE);
   
   # ROC plot
+  
+  modelindex <- paste(mSet$imgSet$roc.multi.model)
+  
   ROCplot <- c( "\\begin{figure}[htp]",
-                     "\\begin{center}",
-                     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.multi,"}", sep=""),
-                     "\\caption{", paste("Plot of ROC curves for all or a single biomarker model based on its average performance",
-                                         " across all MCCV runs. For a single biomarker, the 95% confidence interval",
-                                         " can be computed.", sep=""),"}",
+                "\\begin{center}",
+                paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.multi.plot,"}", sep=""),
+                "\\caption{", paste("Plot of ROC curves for all or a single biomarker model based on its average performance",
+                                    " across all MCCV runs.",
+                                    " For a single biomarker, the 95% confidence interval",
+                                    " can be computed and will appear as a band around the ROC curve.", sep=""),"}",
+                "Selected model :", modelindex, 
                      "\\end{center}",
-                     paste("\\label{",mSetObj$imgSet$roc.multi,"}", sep=""),
+                     paste("\\label{",mSetObj$imgSet$roc.multi.plot,"}", sep=""),
                      "\\end{figure}",
                      "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
   # Prob
+  
+  modelindex2 <- paste(mSet$imgSet$roc.prob.name)
+  
   ROCplot <- c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.prob,"}", sep=""),
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.prob.plot,"}", sep=""),
               "\\caption{", paste("Plot of predicted class probabilities for all samples using a single biomarker model.",
                                   " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line).", sep=""),"}",
+              "Selected model :", modelindex2, 
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.prob,"}", sep=""),
+              paste("\\label{",mSetObj$imgSet$roc.prob.plot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
   # Pred
- 
+  
   ROCplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.pred,"}", sep=""),
-              "\\caption{", paste("Plot of the predictive accuracy of biomarker models with an increasing number of features.", 
-                                  " The most accurate biomarker model will be highlighted with a red dot. ", sep=""),"}",
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.pred,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                "\\begin{center}",
+                paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.pred,"}", sep=""),
+                "\\caption{", paste("Plot of the predictive accuracy of biomarker models with an increasing number of features.", 
+                                    " The most accurate biomarker model will be highlighted with a red dot.", sep=""),"}",
+                "\\end{center}",
+                paste("\\label{",mSetObj$imgSet$roc.pred,"}", sep=""),
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
   # Sig features
+  
+  modelindex3 <- paste(mSet$imgSet$roc.imp.name)
+  
   ROCplot <- c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.imp,"}", sep=""),
-              "\\caption{", paste("Plot of the most important features of a selected model ranked from most to least important.", sep=""),"}",
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.imp.plot,"}", sep=""),
+              "\\caption{", paste("Plot of the most important features of a selected model ranked from most to least important.",
+              " Selected model :", modelindex3, sep=""), "}", 
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.imp,"}", sep=""),
+              paste("\\label{",mSetObj$imgSet$roc.imp.plot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
@@ -376,31 +397,36 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   descr <- c("\\section{ROC Curve Based Model Creation and Evaluation}\n",
              "The aim of ROC curve based model creation and evaluation is to allow users to manually select any combination of features to create biomarker", 
-             "models using any of the three algorithms mentioned previously (PLS-DA, SVM, RF). The user also has the option to withhold a subset of samples", 
-             "for extra validation purposes. Additionally, it allows a user to predict the class labels of new samples (unlabeled samples within the imported dataset).", 
-             "Features should be selected based on the user's own judgement or prior knowledge. Note, selection of features based on overall ranks", 
-             "(AUC, t-statistic, or fold-change) increases the risk of model-overfitting. These features may be the best biomarkers for a user's own data,", 
-             "but not for new samples. Additionally, in order to get a decent ROC curve for validation, it is recommended that the hold-out data contains a balanced number", 
-             "of samples from both groups and that it contain at least 8 hold-out samples (i.e. 4 from each group).", 
+             " models using any of the three algorithms mentioned previously (PLS-DA, SVM, RF). The user also has the option to withhold a subset of samples", 
+             " for extra validation purposes. Additionally, it allows a user to predict the class labels of new samples (unlabeled samples within the imported dataset).", 
+             " Features should be selected based on the user's own judgement or prior knowledge. Note, selection of features based on overall ranks", 
+             " (AUC, t-statistic, or fold-change) increases the risk of model-overfitting. These features may be the best biomarkers for a user's own data,", 
+             " but not for new samples. Additionally, in order to get a decent ROC curve for validation, it is recommended that the hold-out data contains a balanced number", 
+             " of samples from both groups and that it contain at least 8 hold-out samples (i.e. 4 from each group).", 
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1, " shows the ROC curve of the created biomarker model based upon its average cross validation performance."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the predicted class probabilities of all samples using the user-created classifier."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the predictive accuracy of the user-created biomarker model."),
-             paste("Figure", fig.count<<-fig.count+1, " shows the results of the permutation tests for the user-created biomarker model."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the ROC curve of the created biomarker model based upon its average cross validation performance."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the predicted class probabilities of all samples using the user-created classifier."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the predictive accuracy of the user-created biomarker model."),
+             paste("Figure", fig.count<<-fig.count+1, ". shows the results of the permutation tests for the user-created biomarker model."),
              "\n");
   
   cat(descr, file=rnwFile, append=TRUE);
   
   # ROC plot
   
+  modelindex <- paste(mSet$imgSet$roc.testcurve.name)
+  modelmethod <- paste(mSet$imgSet$roc.testcurve.method)
+  
   ROCplot <- c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testcurve,"}", sep=""),
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
               "\\caption{", paste("Plot of the ROC curve for the created biomarker model based upon its average performance",
                                   " across all MCCV runs. The 95% confidence interval",
-                                  " can be computed.", sep=""),"}",
+                                  " can be computed.", sep=""), "}",
+              "Selected model :", modelindex, 
+              "Selected method :", modelmethod, 
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.testcurve,"}", sep=""),
+              paste("\\label{",mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
@@ -408,13 +434,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   # Probability
   
+  modelindex2 <- paste(mSet$imgSet$roc.testprob.name)
+  
   probplot <- c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testprob,"}", sep=""),
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
               "\\caption{", paste("Plot of the predicted class probabilities for all samples using the created biomarker model.",
-                                  " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line).", sep=""),"}",
+                                  " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line)." , sep=""),"}",
+              "Selected model :", modelindex2, 
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.testprob,"}", sep=""),
+              paste("\\label{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
@@ -427,27 +456,31 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
               paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testpred,"}", sep=""),
               "\\caption{", paste("Box plot of the predictive accuracy of the created biomarker model.", sep=""),"}",
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.testpred,"}", sep=""),
+              paste("\\label{", mSetObj$imgSet$roc.testpred,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
   cat(acc.plot, file=rnwFile, append=TRUE, sep="\n");
   
   # Permutation
+  
+  permmethod <- paste(mSet$imgSet$roc.perm.method)
+  
   permplot <- c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm,"}", sep=""),
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm.plot,"}", sep=""),
               "\\caption{", paste("Plot of the permutations tests using the area under the ROC curve or the predictive accuracy",
                                   " of the model as a measure of performance. The plot shows the AUC of all permutations, highlighting", 
                                   " the actual observed AUC in blue, along with showing the empirical p-value.", sep=""),"}",
+              "Selected permutation method :", permmethod, 
               "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.perm,"}", sep=""),
+              paste("\\label{",mSetObj$imgSet$roc.perm.plot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );
   cat(permplot, file=rnwFile, append=TRUE, sep="\n");
   
-  if(is.null(mSetObj$analSet$pred.samples.table)){
+  if(is.null(mSet$analSet$pred.samples.table)){
     return()
   }else{
     ROCLabelstable <- c("<<echo=false, results=tex>>=",

@@ -3,7 +3,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -29,6 +30,10 @@ PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
   return(.set.mSet(mSetObjCR));
 }
 
+#'Perform integrated gene mapping
+#'@description Used for the Inmex module
+#'@export
+#'
 PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -69,6 +74,10 @@ PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   }
 }
 
+#'Remove selected compounds
+#'@description Remove compounds
+#'@export
+#'
 RemoveCmpd <- function(mSetObj=NA, inx){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -86,6 +95,12 @@ RemoveCmpd <- function(mSetObj=NA, inx){
   return(.set.mSet(mSetObj));
 }
 
+#'Remove selected genes
+#'@description Remove selected genes based on an index
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param inx Input compound index
+#'@export
+#'
 RemoveGene <- function(mSetObj=NA, inx){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -104,6 +119,10 @@ RemoveGene <- function(mSetObj=NA, inx){
   return(.set.mSet(mSetObj));
 }
 
+#'Prepare integrated data
+#'@description Used for the inmex module.
+#'@export
+#'
 PrepareIntegData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -157,7 +176,6 @@ PrepareIntegData <- function(mSetObj=NA){
     return(done);
   }
   return(.set.mSet(mSetObj));
-  
 }
 
 #'Perform integrative pathway analysis 
@@ -176,7 +194,8 @@ PrepareIntegData <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libOpt="integ"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -355,7 +374,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SetBarParams <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

@@ -9,7 +9,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SanityCheckData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -232,7 +233,8 @@ SanityCheckData <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 ReplaceMin <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -277,13 +279,21 @@ ReplaceMin <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!.on.public.web){
+  if(!is.null(mSetObj$dataSet$norm)){
     
+    int.mat <- mSetObj$dataSet$norm
+    minConc <- min(int.mat[int.mat>0], na.rm=T)/2;
+    good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
+    mSetObj$dataSet$preproc <- as.data.frame(int.mat[,good.inx]);
+    mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx]);
+
+  if(!.on.public.web){
     if(!is.null(mSetObj$dataSet$norm)){
       
       int.mat <- mSetObj$dataSet$norm
@@ -319,10 +329,9 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     print("removemissing")
     
     return(.set.mSet(mSetObj));
-    
+    }
   }
 }
-
 
 #'Data processing: Replace missing variables
 #'@description Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.
@@ -335,7 +344,8 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 ImputeVar <- function(mSetObj=NA, method="min"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -402,6 +412,12 @@ ImputeVar <- function(mSetObj=NA, method="min"){
       mSetObj$msgSet$replace.msg <- msg;
       return(.set.mSet(mSetObj));
     }
+
+    mSetObj$dataSet$norm <- as.data.frame(new.mat);
+    mSetObj$dataSet$procr <- as.data.frame(new.mat);
+    mSetObj$msgSet$replace.msg <- msg;
+    return(.set.mSet(mSetObj));
+
   }else{
     int.mat <- mSetObj$dataSet$preproc
     new.mat <- NULL;
@@ -464,14 +480,15 @@ ImputeVar <- function(mSetObj=NA, method="min"){
 }
 
 #'Data processing: Dealing with negative values
-#'@description Operates on dataSet$proc after dealing with missing values
+#'@description Operates on dataSet$procr after dealing with missing values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 ClearNegatives <- function(mSetObj=NA, method="abs"){
   mSetObj <- .get.mSet(mSetObj);
-  int.mat <- as.matrix(mSetObj$dataSet$proc)
+  int.mat <- as.matrix(mSetObj$dataSet$procr)
   
   if(mSetObj$dataSet$containsNegative){
     if(method == "min"){
@@ -488,7 +505,7 @@ ClearNegatives <- function(mSetObj=NA, method="abs"){
     
     mSetObj$dataSet$containsNegative <- 0;
     mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, msg);
-    mSetObj$dataSet$proc <- as.data.frame(int.mat);
+    mSetObj$dataSet$procr <- as.data.frame(int.mat);
     return(.set.mSet(mSetObj));
   }
 }
@@ -507,10 +524,10 @@ ClearNegatives <- function(mSetObj=NA, method="abs"){
 #'@param rsd Define the relative standard deviation cut-off. Variables with a RSD greater than this number
 #'will be removed from the dataset. It is only necessary to specify this argument if qcFilter is True (T). 
 #'Otherwise, it will not be used in the function. 
-#'
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   
@@ -635,7 +652,6 @@ CalculatePairwiseDiff <- function(mat){
 #'If the data is 3-column MS, the data can be used directly.
 #'The default mzwid for MS is 0.25 m/z, and for NMR is 0.03 ppm.
 #'The default bw is 30 for LCMS, and 5 for GCMS.
-#'
 #'@usage GroupPeakList(mSetObj=NA, mzwid, bw, minfrac, minsamp, max)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param mzwid, define the width of overlapping m/z slices to use for creating peak density chromatograms
@@ -647,11 +663,11 @@ CalculatePairwiseDiff <- function(mat){
 #'@param minsamp, define the minimum number of samples necessary in at least one of the sample groups for 
 #'it to be a valid group 
 #'@param max, define the maximum number of groups to identify in a single m/z slice
-#'
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
   mSetObj <- .get.mSet(mSetObj);
   peakSet <- mSetObj$dataSet$peakSet;
@@ -736,7 +752,10 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
   return(.set.mSet(mSetObj));
 }
 
-# object is nmr.xcmsSet object
+#'Set peak list group values
+#'@param mSetObj Input name of mSetObj, the data used is the nmr.xcmsSet object
+#'@export
+#'
 SetPeakList.GroupValues <- function(mSetObj=NA) {
   mSetObj <- .get.mSet(mSetObj);
   peakSet <- mSetObj$dataSet$peakSet;
@@ -785,13 +804,13 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 }
 
 #'Retention time correction for LC/GC-MS spectra
-#'
 #'@description Performs retention time correction for LC/GC-MS spectra using the XCMS package. Following
 #'retention time correction, the object dataSet will be regrouped. 
 #'@usage MetaboAnalystR:::MSspec.rtCorrection(mSetObj, bw)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param bw: define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 #'kernel to apply to the peak density chromatogram
+#'@export
 #'
 MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
   mSetObj <- .get.mSet(mSetObj);
@@ -802,7 +821,9 @@ MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
   return(.set.mSet(mSetObj));
 }
 
-# plot rentention time corrected spectra
+#'Plot rentention time corrected spectra
+#'@description Plot the retention time corrected spectra
+#'@export
 PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -832,10 +853,12 @@ PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'integrating signals at those regions to create a new peak. 
 #'@usage MetaboAnalystR:::MSspec.fillPeaks(mSetObj)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-
+#'@export
 
 MSspec.fillPeaks <- function(mSetObj=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   xset3<-fillPeaks(mSetObj$dataSet$xset.rt)
   mSetObj$dataSet$xset.fill<-xset3
   
@@ -861,7 +884,8 @@ MSspec.fillPeaks <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
+
 SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -879,6 +903,9 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   return(.set.mSet(mSetObj));
 }
 
+#'Check if the spectra processing is ok
+#'@export
+#'
 IsSpectraProcessingOK <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   msg <- mSetObj$msgSet$xset.msg;
@@ -916,6 +943,8 @@ GetGroupNumber<-function(mSetObj=NA){
 #' groups in the dataset containing too few samples. It will return a 0 if the data passes the check,
 #' or will return a 1 if the data does not. 
 #' @usage IsSmallSmplSize(mSetObj) 
+#'@export
+#'
 IsSmallSmplSize<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   print(mSetObj$dataSet$small.smpl.size);

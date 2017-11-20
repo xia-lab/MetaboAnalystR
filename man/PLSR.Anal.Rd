@@ -9,6 +9,11 @@ to determine the best # of comp. used for VIP}
 \usage{
 PLSR.Anal(mSetObj = NA, reg = FALSE)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{reg}{Logical}
+}
 \description{
 PLS analysis using oscorespls
 }

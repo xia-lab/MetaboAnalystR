@@ -12,7 +12,6 @@ CalculateImpVarCutoff(mSetObj, spe.thresh, lev.thresh)
 \item{spe.thresh}{alpha threshold, less is better, default less than 5 percentile based chi-square
 note: spe and leverage are vectors, not a single value, but a list to store the result
 note: the last model is Model.res, no spe
-
 Calculate leverage cutoff based on permutation
 Calculate the reference distribution of leverages
 note: leverage.perm is a list with each member in a 3 column matrix}

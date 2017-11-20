@@ -7,15 +7,18 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CreatePDFReport<-function(mSetObj=NA, usrName){
   
   mSetObj <- .get.mSet(mSetObj);
   
   # cannot detect whether PDF generation will fail, so do this all the time
-  # file.copy("../../libs/Sweave.sty", ".")
-  # save.image("SweaveImage.RData");
-  
+  if(.on.public.web){
+    file.copy("../../libs/Sweave.sty", ".")
+    save.image("SweaveImage.RData");
+  }
+
   # create the Rnw file
   file.create("Analysis_Report.Rnw");
   # open for write

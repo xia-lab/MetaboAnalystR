@@ -7,14 +7,14 @@
 Read.TextData(mSetObj=NA, filePath, format, lbl.type)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
 
-\item{filePath}{the path name for the CSV/TXT files to read}
+\item{filePath}{Input the path name for the CSV/TXT files to read.}
 
-\item{format}{specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
-in columns and paired (colp), or in columns and unpaired (colu)}
+\item{format}{Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
+in columns and paired (colp), or in columns and unpaired (colu).}
 
-\item{lbl.type}{specify the data label type, either discrete (disc) or continuous (cont)}
+\item{lbl.type}{Specify the data label type, either discrete (disc) or continuous (cont).}
 }
 \description{
 This function handles reading in CSV or TXT files and filling in the dataSet object created using "InitDataObjects".

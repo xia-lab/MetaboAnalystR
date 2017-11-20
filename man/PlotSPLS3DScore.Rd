@@ -7,6 +7,19 @@
 PlotSPLS3DScore(mSetObj = NA, imgName, format = "json", inx1 = 1,
   inx2 = 2, inx3 = 3)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input a name for the plot}
+
+\item{format}{Select the image format, "png", or "pdf".}
+
+\item{inx1}{Numeric, indicate the number of the principal component for the x-axis of the loading plot.}
+
+\item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
+
+\item{inx3}{Numeric, indicate the number of the principal component for the z-axis of the loading plot.}
+}
 \description{
 Sparse PLS-DA (from mixOmics) 3D score plot
 }

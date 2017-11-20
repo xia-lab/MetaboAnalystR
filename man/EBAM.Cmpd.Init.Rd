@@ -7,6 +7,9 @@
 EBAM.Cmpd.Init(mSetObj = NA, method = "z.ebam", A0 = 0,
   isPaired = FALSE, isVarEq = TRUE)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 note: if method is wilcoxon, the A0 and var equal will be ignored
 }

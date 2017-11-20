@@ -6,6 +6,9 @@
 \usage{
 EBAM.A0.Init(mSetObj = NA, isPaired, isVarEq)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 deteriming a0, only applicable for z.ebam (default)
 }

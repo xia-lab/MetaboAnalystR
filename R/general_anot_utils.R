@@ -4,6 +4,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
   
@@ -56,6 +57,9 @@ doGeneIDMapping <- function(q.vec, org, type){
   }
 }
 
+#'Perform gene annotation
+#'@export
+#'
 PerformGeneAnnotation <- function(){
   if(!exists("entrez.vec")){
     print("Could not find Entrez ID list!");
@@ -85,6 +89,7 @@ doEntrez2SymbolMapping <- function(entrez.vec){
   return(symbols);
 }
 
+#'@export
 doCompoundMapping<-function(cmpd.vec, q.type){
   fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
   destfile <- "compound_db.rds";
@@ -137,6 +142,7 @@ doCompoundMapping<-function(cmpd.vec, q.type){
   return(dat);
 }
 
+#'@export
 doKEGG2NameMapping <- function(kegg.vec){
   fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
   destfile <- "compound_db.rds";

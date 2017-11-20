@@ -6,6 +6,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F){
   
@@ -58,7 +59,8 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -153,6 +155,10 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   return(.set.mSet(mSetObj));
 }
 
+#' Perform detailed name matche
+#'@description Given a query, perform compound matching 
+#'@export
+#'
 PerformDetailMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -164,6 +170,10 @@ PerformDetailMatch <- function(mSetObj=NA, q){
   }
 }
 
+#' Perform multiple name matches
+#'@description Given a query, perform compound matching 
+#'@export
+#'
 PerformMultiMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -190,6 +200,10 @@ PerformMultiMatch <- function(mSetObj=NA, q){
   }
 }
 
+#'Perform approximate compound matches
+#'@description Given a query, perform approximate compound matching 
+#'@export
+#'
 PerformApproxMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -282,7 +296,8 @@ PerformApproxMatch <- function(mSetObj=NA, q){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
+
 SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -341,6 +356,10 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   return(.set.mSet(mSetObj));
 }
 
+#'Perform pathway mapping
+#'@description Perform pathway mapping of compounds
+#'@export
+#'
 PathMapping <- function(mSetObj=NA, qvec){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -493,7 +512,8 @@ GetQuery <- function(mSetObj=NA, inx){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetFinalNameMap <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

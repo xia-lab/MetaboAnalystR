@@ -4,7 +4,7 @@
 \alias{UnzipUploadedFile}
 \title{Unzip .zip files}
 \usage{
-UnzipUploadedFile(mSetObj, inPath, outPath, rmFile = T)
+UnzipUploadedFile(inPath, outPath, rmFile = T)
 }
 \description{
 Unzips uploaded .zip files, removes the uploaded file, checks for success

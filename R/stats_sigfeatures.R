@@ -1,8 +1,10 @@
 #'Perform Signifiance Analysis of Microarrays (SAM) analysis
 #'@description Perform SAM
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
   
@@ -26,6 +28,11 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
   return(.set.mSet(mSetObj));
 }
 
+#'Set Signifiance Analysis of Microarrays (SAM) analysis matrix
+#'@description Create SAM matrix
+#'@param mSetObj Input name of the created mSet Object
+#'@export
+#'
 SetSAMSigMat <- function(mSetObj=NA, delta){
   mSetObj <- .get.mSet(mSetObj);
   sam.sum <- siggenes::summary(mSetObj$analSet$sam, delta);
@@ -38,12 +45,19 @@ SetSAMSigMat <- function(mSetObj=NA, delta){
   return(.set.mSet(mSetObj));
 }
 
-
 #'Plot SAM Delta Plot 
 #'@description Plot SAM Delta Plot (FDR)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 PlotSAM.FDR <- function(mSetObj=NA, delta, imgName, format="png", dpi=72, width=NA){
   
@@ -75,14 +89,21 @@ PlotSAM.FDR <- function(mSetObj=NA, delta, imgName, format="png", dpi=72, width=
   dev.off();
   
   return(.set.mSet(mSetObj));
-  
 }
 
 #'Plot SAM 
 #'@description Plot SAM with positive and negative metabolite sets
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
@@ -112,10 +133,12 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'For EBAM analysis 
 #'@description deteriming a0, only applicable for z.ebam (default)
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-# 
+#'@export
+#'
 EBAM.A0.Init <- function(mSetObj=NA, isPaired, isVarEq){
   mSetObj <- .get.mSet(mSetObj);
   suppressMessages(library(siggenes));
@@ -134,9 +157,18 @@ EBAM.A0.Init <- function(mSetObj=NA, isPaired, isVarEq){
 #'@description plot ebam a0 plot also return the analSet$ebam.a0 object 
 #'so that the suggested a0 can be obtained
 #'@usage PlotEBAM.A0(imgName, format, dpi, width)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotEBAM.A0<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -160,9 +192,11 @@ PlotEBAM.A0<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'For EBAM analysis 
 #'@description note: if method is wilcoxon, the A0 and var equal will be ignored
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 EBAM.Cmpd.Init <- function(mSetObj=NA, method="z.ebam", A0=0, isPaired=FALSE, isVarEq=TRUE){
   
@@ -185,9 +219,11 @@ EBAM.Cmpd.Init <- function(mSetObj=NA, method="z.ebam", A0=0, isPaired=FALSE, is
 
 #'For EBAM analysis 
 #'@description return double matrix with 3 columns - z.value, posterior, local.fdr
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 SetEBAMSigMat <- function(mSetObj=NA, delta){
   mSetObj <- .get.mSet(mSetObj);
@@ -202,11 +238,19 @@ SetEBAMSigMat <- function(mSetObj=NA, delta){
 
 #'Plot EBAM
 #'@description Plot EBAM
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@usage PlotEBAM.Cmpd(mSetObj=NA, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);

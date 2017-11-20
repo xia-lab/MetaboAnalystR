@@ -7,6 +7,9 @@
 SAM.Anal(mSetObj = NA, method = "d.stat", paired = FALSE,
   varequal = TRUE)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Perform SAM
 }

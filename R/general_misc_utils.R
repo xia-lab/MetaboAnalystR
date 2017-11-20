@@ -5,8 +5,10 @@
 #'License: GNU GPL (>= 2)
 #'
 
-#'merge duplicated columns or rows by their mean
+#'Merge duplicated columns or rows by their mean
 #'@description dim 1 => row,  dim 2 => column
+#'@export
+#'
 MergeDuplicates <- function(data, dim=2){
   
   if(is.null(dim(data))){ # a vector
@@ -67,6 +69,7 @@ MergeDuplicates <- function(data, dim=2){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
   
@@ -125,6 +128,8 @@ RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 .readDataTable <- function(fileName){
   dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE));
   if(class(dat) == "try-error"){
@@ -149,6 +154,7 @@ RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 getDataFromTextInput <- function(mSetObj=NA, txtInput, sep.type="space"){
   
@@ -187,7 +193,8 @@ getDataFromTextInput <- function(mSetObj=NA, txtInput, sep.type="space"){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@usage Perform.permutation(perm.num, fun)
-
+#'@export
+#'
 Perform.permutation <- function(perm.num, fun){
   print(paste("performing", perm.num, "permutations ..."));
   #suppressMessages(library('multicore'));
@@ -210,10 +217,9 @@ Perform.permutation <- function(perm.num, fun){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
-UnzipUploadedFile<-function(mSetObj, inPath, outPath, rmFile=T){
-
-  mSetObj <- .get.mSet(mSetObj); 
+#'@export
+#'
+UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   
   a<-try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
   if(class(a) == "try-error" | !length(a)>0){
@@ -226,13 +232,6 @@ UnzipUploadedFile<-function(mSetObj, inPath, outPath, rmFile=T){
   if(rmFile){
     RemoveFile(inPath);
   }
-  
-  if(.on.public.web){
-  return(1);
-  }
-  
-  return(.set.mSet(mSetObj));
-  
 }
 
 
@@ -352,7 +351,6 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'
-#'
 CleanNumber <-function(bdata){
   if(sum(bdata==Inf)>0){
     inx <- bdata == Inf;
@@ -398,6 +396,8 @@ PrepareLatex <- function(stringVec){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 GetValueLabel<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$dataSet$type=="conc"){
@@ -407,13 +407,13 @@ GetValueLabel<-function(mSetObj=NA){
   }
 }
 
-
 #'Determine variable label for plotting
 #'@description Determine data type, binned spectra, nmr peak, or ms peak
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-# 
+#'@export
+#'
 GetVariableLabel<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$dataSet$type=="conc"){
@@ -487,7 +487,7 @@ Get.Accuracy <- function(cm) {
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 
 GetSigTable<-function(mat, method, mSetObj=NA){
   suppressMessages(library(xtable));
@@ -652,6 +652,7 @@ ot.helmert <- function(k){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'
 .ls.objects <- function (pos = 1, pattern, order.by,
                          decreasing=FALSE, head=FALSE, n=5) {
   napply <- function(names, fn) sapply(names, function(x)
@@ -1101,7 +1102,7 @@ ToSemiTransParent <- function (col.nms, alpha=0.5){
 }
 
 # col.vec should already been created
-UpdateGraphSettings <- function(mSetObj=NA){
+UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
   mSetObj <- .get.mSet(mSetObj);
   grpnms <- GetGroupNames(mSetObj);
   names(colVec) <- grpnms;
@@ -1381,16 +1382,35 @@ GetRScriptFullPath<-function(){
   return(path);
 }
 
-#' Matrix creation for MetaboAnalyst
-#' @description Converts processed raw lc/ms data from XCMS 
-#' to a suitable matrix for use in MetaboAnalyst
-#' @param xset The xcmsSet object created 
-
-MetaboAnalystMatrix <- function(xset){
-  library(xcms)
-  data <- groupval(xset, "medret", "into")
-  data2 <- rbind(class= as.character(phenoData(xset)$class), data)
-  rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"))
-  write.csv(data2, file="PeakTable.csv")
-  print("Matrix successfully created...")
+#'Converts xset object from XCMS to mSet object for MetaboAnalyst
+#'@description This function converts processed raw LC/MS data from XCMS 
+#'to a usable data object (mSet) for MetaboAnalyst. The immediate next step following using this 
+#'function is to perform a SanityCheck, and then further data processing and analysis can continue.
+#'@usage mSet <- XSet2MSet(xset, dataType, analType, paired=F, format, lbl.type)
+#'@param xset The name of the xcmsSet object created.
+#'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
+#'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
+#'or msspec (MS spectra data).
+#'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+#'cmpdmap, smpmap, or inmex.
+#'@param paired Logical, is data paired (T) or not (F).
+#'@param format Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
+#'in columns and paired (colp), or in columns and unpaired (colu).
+#'@param lbl.type Specify the data label type, either discrete (disc) or continuous (cont).
+#'@export
+#'
+XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
+  
+  library(xcms);
+  
+  data <- groupval(xset, "medret", "into");
+  data2 <- rbind(class= as.character(phenoData(xset)$class), data);
+  rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"));
+  write.csv(data2, file="PeakTable.csv");
+  mSet <- InitDataObjects("dataType", "analType", paired)
+  mSet <- Read.TextData(mSet, "PeakTable.csv", "format", "lbl.type")
+  print("mSet successfully created...")
+  return(.set.mSet(mSetObj));
 }
+
+

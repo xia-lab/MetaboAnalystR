@@ -9,7 +9,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetFeatureNumbers <- function(feat.len){
   if(feat.len > 100){
     nFeatures <- c(5, 10, 15, 25, 50, 100);
@@ -92,10 +93,13 @@ GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30){
 
 #'To choose from two groups
 #'@description Choose two groups (when more than two groups uploaded)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param grps Input the groups
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SetCurrentGroups <- function(mSetObj=NA, grps){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -159,11 +163,12 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'Calculates feature importance
 #'@description Perform calculation of feature importance (AUC, p value, fold change)
 #'@usage CalculateFeatureRanking(mSet)
-#'@param mSet Object to perform feature ranking upon 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateFeatureRanking <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -213,16 +218,16 @@ CalculateFeatureRanking <- function(mSetObj=NA){
 #'@description ROC utilities
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'@usage SetAnalysisMode(mSetObj, mode)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)s
 #'@param mode Input the selected mode for biomarker analysis, "univ" for univariate ROC curve analysis,
 #'"explore" for multivariate ROC curve analysis, and "test" for ROC curve based model creation and evaluation.
-#'
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
+
 SetAnalysisMode <- function(mSetObj=NA, mode){
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$anal.type <- mode;
+  anal.type <<- mode;
   return(.set.mSet(mSetObj));
 }
 
@@ -242,6 +247,7 @@ SetAnalysisMode <- function(mSetObj=NA, mode){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum=2, propTraining=2/3){
   mSetObj <- .get.mSet(mSetObj);
@@ -359,6 +365,7 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=100){
   
@@ -482,6 +489,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 Predict.class <- function(x.train, y.train, x.test, clsMethod="pls", lvNum, imp.out=F){
   
@@ -710,13 +718,13 @@ genLogisticRegMdl <- function(x.train, y.train, x.test, y.test)
                           html.table.attributes="border=1 width=600");
 }
 
-
 #'Plot ROC for the logistic regression model
 #'@description Plot ROC for the logistic regression model
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf=FALSE, sp.bin=0.01) {
   
   mSetObj <- .get.mSet(mSetObj);
@@ -724,7 +732,7 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
   mSetObj$imgSet$roc.lr <- imgName;
-
+  
   roc.object <- LR.r;
   y.origin <- LR.y.origin;
   y.pred <- LR.y.pred;
@@ -844,6 +852,7 @@ GetCIs <- function(data, param=F){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
   
@@ -866,8 +875,10 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   }
   
   w <- 9; h <- 6;
-  mSetObj$imgSet$roc.univ <- imgName;
-
+  
+  mSetObj$imgSet$roc.univ.plot <- imgName;
+  mSetObj$imgSet$roc.univ.name <- feat.nm
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   lmat<-cbind(1,2);
   layout(lmat, widths = c(2,1));
@@ -920,8 +931,6 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Plot a summary view of the classification result
 #'@description Plot of predicted class probabilities. On the x-axis is the proability, 
 #'and the y-axis is the index of each predicted sample based on the probility. 
@@ -929,7 +938,6 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
 #'This plot can be created for multivariate ROC curve analysis using SVM, PLS, and RandomForest.
 #'Please note that sometimes, not all samples will be tested, instead they will be plotted
 #'at the 0.5 neutral line. 
-#'
 #'@usage PlotProbView(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) 
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
@@ -941,6 +949,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
   
@@ -950,7 +959,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
   prob.vec <- rep(0.5, length(smpl.nms));
   names(prob.vec) <- smpl.nms;
   
-  if(mSetObj$anal.type == "explore"){
+  if(anal.type == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$multiROC$best.model.inx;
     }
@@ -979,7 +988,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
   mSetObj$analSet$conf.table <- xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
   mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )     
   
-  if(mSetObj$anal.type == "test"){
+  if(anal.type == "test"){
     if(!is.null(mSetObj$dataSet$test.data)){
       test.pred <- ifelse(mSetObj$analSet$multiROC$test.res > 0.5, 1, 0);
       test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
@@ -989,15 +998,16 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
       
       test.res <- table(test.pred, test.cls);
       mSetObj$analSet$conf.mat.test <- print(xtable(test.res, 
-                                     caption="Confusion Matrix (Hold-out)"),
-                              type = "html", print.results=F, xtable.width=120, caption.placement="top",
-                              html.table.attributes="border=1 width=150" );
+                                                    caption="Confusion Matrix (Hold-out)"),
+                                             type = "html", print.results=F, xtable.width=120, caption.placement="top",
+                                             html.table.attributes="border=1 width=150" );
     }
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 9; h <- 8;
-  mSetObj$imgSet$roc.prob <- imgName;
+  mSetObj$imgSet$roc.prob.plot <- imgName;
+  mSetObj$imgSet$roc.prob.name <- mdl.inx
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
@@ -1083,7 +1093,6 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'This plot can be created for multivariate ROC curve analysis using SVM, PLS, and RandomForest.
 #'Please note that sometimes, not all samples will be tested, instead they will be plotted
 #'at the 0.5 neutral line. 
-#'
 #'@usage PlotProbViewTest(mSetObj, imgName, format="png", dpi=72, mdl.inx, show, showPred) 
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
@@ -1095,7 +1104,8 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1104,7 +1114,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
   prob.vec <- rep(0.5, length(smpl.nms));
   names(prob.vec) <- smpl.nms;
   
-  if(mSetObj$anal.type == "explore"){
+  if(anal.type == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$ROCtest$best.model.inx;
     }
@@ -1133,7 +1143,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
   mSetObj$analSet$conf.table <- xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
   mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )     
   
-  if(mSetObj$anal.type == "test"){
+  if(anal.type == "test"){
     if(!is.null(mSetObj$dataSet$test.data)){
       test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
       test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
@@ -1143,15 +1153,16 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
       
       test.res <- table(test.pred, test.cls);
       mSetObj$analSet$conf.mat.test <- print(xtable(test.res, 
-                                     caption="Confusion Matrix (Hold-out)"),
-                              type = "html", print.results=F, xtable.width=120, caption.placement="top",
-                              html.table.attributes="border=1 width=150" );
+                                                    caption="Confusion Matrix (Hold-out)"),
+                                             type = "html", print.results=F, xtable.width=120, caption.placement="top",
+                                             html.table.attributes="border=1 width=150" );
     }
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 9; h <- 8;
-  mSetObj$imgSet$roc.testprob <- imgName;
+  mSetObj$imgSet$roc.testprob.plot <- imgName;
+  mSetObj$imgSet$roc.testprob.name <- mdl.inx
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
@@ -1248,20 +1259,22 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
   
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
-  mSetObj$imgSet$roc.multi <- imgName;
-
+  mSetObj$imgSet$roc.multi.plot <- imgName;
+  mSetObj$imgSet$roc.multi.model <- mdl.inx
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   op <- par(mar=c(5,4,3,3));
   
-  if(mSetObj$anal.type=="explore" && mdl.inx == 0){ # compare all models
+  if(anal.type=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$multiROC$pred.list;
     auroc <- mSetObj$analSet$multiROC$auc.vec;
     perf <- performance(preds[[1]], "tpr", "fpr");
@@ -1309,7 +1322,7 @@ PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.m
     
     legend("bottomright", legend = legends, pch=15, col=cols);
     
-  }else if(mdl.inx > 0 && mSetObj$anal.type=="explore"){ 
+  }else if(mdl.inx > 0 && anal.type=="explore"){ 
     
     preds <- prediction(mSetObj$analSet$multiROC$pred.cv[[mdl.inx]], mSetObj$analSet$multiROC$true.cv);
     auroc <- round(mSetObj$analSet$multiROC$auc.vec[mdl.inx],3);
@@ -1416,13 +1429,15 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
-  mSetObj$imgSet$roc.testcurve <- imgName;
-
+  mSetObj$imgSet$roc.testcurve.plot <- imgName;
+  mSetObj$imgSet$roc.testcurve.name <- mdl.inx
+  mSetObj$imgSet$roc.testcurve.method <- avg.method
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   op <- par(mar=c(5,4,3,3));
   
-  if(mSetObj$anal.type=="explore" && mdl.inx == 0){ # compare all models
+  if(anal.type=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$ROCtest$pred.list;
     auroc <- mSetObj$analSet$ROCtest$auc.vec;
     perf <- performance(preds[[1]], "tpr", "fpr");
@@ -1470,7 +1485,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
     
     legend("bottomright", legend = legends, pch=15, col=cols);
     
-  }else if(mdl.inx > 0 && mSetObj$anal.type=="explore"){ 
+  }else if(mdl.inx > 0 && anal.type=="explore"){ 
     
     preds <- prediction(mSetObj$analSet$ROCtest$pred.cv[[mdl.inx]], mSetObj$analSet$ROCtest$true.cv);
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[mdl.inx],3);
@@ -1573,12 +1588,13 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
 #'@usage PlotAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
-#'@param format elect the image format, "png", of "pdf". 
+#'@param format Select the image format, "png", of "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   
@@ -1586,9 +1602,9 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 9; h <- 7;
-
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(mSetObj$anal.type == "explore"){
+  if(anal.type == "explore"){
     accu.mat <- mSetObj$analSet$multiROC$accu.mat;
     mn.accu <- apply (accu.mat, 2, mean);
     ylabl <- 'Predictive Accuracy';
@@ -1634,8 +1650,6 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Plot selected compounds by their % frequency
 #'@description Plot the important variables of single biomarker model ranked by order of importance
 #'@usage PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15)
@@ -1651,6 +1665,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15){
   
@@ -1658,15 +1673,16 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
-  mSetObj$imgSet$roc.imp <- imgName;
-
+  mSetObj$imgSet$roc.imp.plot <- imgName;
+  mSetObj$imgSet$roc.imp.name <- mdl.inx
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   data <- mSetObj$dataSet$norm;
   cls <- mSetObj$dataSet$cls;
   op <- par(mar=c(6,10,3,7));
   
-  if(mSetObj$anal.type == "explore"){
+  if(anal.type == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$multiROC$best.model.inx;
     }
@@ -1796,7 +1812,8 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1882,7 +1899,8 @@ Get.pred <- function(x.train, y.train, x.test, y.test, clsMethod="pls"){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PreparePermResult<-function(perm.vec){
   
   # check for infinite since with group variance could be zero for perfect classification
@@ -1922,13 +1940,20 @@ PreparePermResult<-function(perm.vec){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
-  mSetObj$imgSet$roc.perm <- imgName;
+  mSetObj$imgSet$roc.perm.plot <- imgName;
+  
+  if(mSetObj$analSet$ROCtest$perm.res$perf.measure == "auroc"){
+    mSetObj$imgSet$roc.perm.method <- "auroc"
+  }else{
+    mSetObj$imgSet$roc.perm.method <- "predictive accuracy"
+  }
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
@@ -2119,7 +2144,8 @@ ComputeHighLow <- function(perf){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PrepareROCData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2144,22 +2170,25 @@ PrepareROCData <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
-# the "selected.nms" should be for extraction
-SetCustomData <- function(mSetObj=NA){
+#'Set custom data
+#'@description The "selected.cmpds" should be for extraction
+#'@export
+#'
+SetCustomData <- function(mSetObj=NA, selected.cmpds, selected.smpls){
   
   mSetObj <- .get.mSet(mSetObj);
   
   data.norm <- mSetObj$dataSet$norm;
   cls <- mSetObj$dataSet$cls;
   
-  if(exists("selected.nms") && length(selected.nms) > 0){
-    data.norm <- data.norm[, selected.nms, drop=F];
+  if(length(selected.cmpds) > 0){
+    data.norm <- data.norm[, selected.cmpds, drop=F];
     if(!is.null(mSetObj$dataSet$new.data)){
-      mSetObj$dataSet$new.data <- mSetObj$dataSet$new.data[, selected.nms, drop=F];
+      mSetObj$dataSet$new.data <- mSetObj$dataSet$new.data[, selected.cmpds, drop=F];
     }
   }
   
-  if(exists("selected.smpls") && length(selected.smpls) > 0){
+  if(length(selected.smpls) > 0){
     hit.inx <- rownames(data.norm) %in% selected.smpls;
     mSetObj$dataSet$test.data <- data.norm[hit.inx, ,drop=F];
     mSetObj$dataSet$test.cls <- cls[hit.inx];
@@ -2177,9 +2206,13 @@ SetCustomData <- function(mSetObj=NA){
 
 #'ROC with CI for AUC
 #'@description ROC with CI for AUC
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param feat.nm Input the feature name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PrepareROCDetails <- function(mSetObj=NA, feat.nm){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2205,7 +2238,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
   #analSet$roc.mat <- ClearNumerics(roc.mat);
   mSetObj$analSet$roc.mat <- signif(roc.mat, 6);
   mSetObj$analSet$roc.obj <- roc.res;
-
+  
   current.feat.nm <<- feat.nm;
   
   return(.set.mSet(mSetObj));
@@ -2216,9 +2249,19 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
 
 #'Plot detailed ROC
 #'@description Plot detailed ROC
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Input a name for the plot
+#'@param thresh Input the threshold
+#'@param sp sp
+#'@param se se
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param format Select the image format, "png", or "pdf". 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="png"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2230,7 +2273,7 @@ PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="p
   
   w <- 9; h <- 6;
   mSetObj$imgSet$roc.univ <- imgName;
-
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   lmat<-cbind(1,2);
   layout(lmat, widths = c(2,1));
@@ -2373,6 +2416,8 @@ ContainNewSamples <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 GetNewSampleNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(!is.null(mSetObj$dataSet$new.data)){
@@ -2466,7 +2511,9 @@ Get.Fstat <-  function(x, fac, var.equal=TRUE) {
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-GetROC.coords <- function(mSetObj=NA, fld.nm, val, imgNm){
+#'@export
+#'
+GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   
   mSetObj <- .get.mSet(mSetObj);
   res <- coords(mSetObj$analSet$roc.obj, val, input=fld.nm);
@@ -2533,9 +2580,15 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, imgNm){
       res[1] <- paste(threshs[inx.thresh], collapse="-")
     }
   }
-  PlotDetailROC(mSetObj, imgNm, mythresh, sp, se);
-  res;
-  return(.set.mSet(mSetObj));
+  if(plot){
+    PlotDetailROC(mSetObj, imgNm, mythresh, sp, se);
+  }
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(res);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Compute lasso frequency
@@ -2546,6 +2599,8 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, imgNm){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 GetLassoFreqs <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2564,7 +2619,6 @@ GetLassoFreqs <- function(mSetObj=NA){
   lassoFreq <<- lassoFreq;
   return(lassoFreq);
 }
-
 
 #'Get p-values for ROC
 #'@description ROC p-vaues, used in higher function
@@ -2599,6 +2653,7 @@ GetROCTtestP <- function(data, cls){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'
 createCVset <- function(groupN, kfold, rseed)
 {
   set.seed(rseed)    
@@ -2625,6 +2680,7 @@ createCVset <- function(groupN, kfold, rseed)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'
 GetROCLassoFreq <- function(data, cls){
   suppressMessages(library('lars'));
   
@@ -2717,7 +2773,6 @@ GetROCLassoFreq <- function(data, cls){
   return (as.numeric(compselfreq[,"selfreq"]) );
 }
 
-
 #'Get important feature matrix
 #'@description feat.outp is a list that contains the ranked features in each 
 #'cross validation (CV) and returns a two column matrix, col 1 = median ranking 
@@ -2747,7 +2802,7 @@ GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
   impsMat <- as.data.frame(do.call("cbind", feat.outp));
   impsVec <- apply(impsMat, 1, mean);
   
-  if(mSetObj$anal.type == "explore"){
+  if(anal.type == "explore"){
     # now count the number being selected in the bestFeatNum
     selectedMat <- apply(ordRunRanksMat, 2, function(x) x <= bestFeatNum);
   }else{

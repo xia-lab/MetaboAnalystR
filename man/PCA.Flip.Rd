@@ -6,6 +6,9 @@
 \usage{
 PCA.Flip(mSetObj = NA, axisOpt)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Rotate PCA analysis
 }

@@ -6,6 +6,11 @@
 \usage{
 plotProfile(mSetObj = NA, varName)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{varName}{Input the name of the variable}
+}
 \description{
 Colored by experimental conditions, used in higher function
 }

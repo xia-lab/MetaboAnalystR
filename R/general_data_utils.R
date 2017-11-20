@@ -22,10 +22,11 @@
 #'@description This functions handles the construction of a dataSet object for storing data for further processing and analysis.
 #'It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform. 
 #'@usage InitDataObjects(dataType, analType, paired=F)
-#'@param dataType: the type of data, either list (Compound lists), conc (Compound concentration data), 
+#'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 #'or msspec (MS spectra data)
-#'@param analType: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, cmpdmap, smpmap, inmex
+#'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+#'cmpdmap, smpmap, or inmex
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -64,12 +65,14 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 SetDesignType <-function(mSetObj=NA, design){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$design.type <- tolower(design);
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 RecordRCommand <- function(mSetObj=NA, cmd){
   write(cmd, file = "Rhistory.R", append = TRUE);
   mSetObj <- .get.mSet(mSetObj); 
@@ -77,6 +80,7 @@ RecordRCommand <- function(mSetObj=NA, cmd){
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 GetRCommandHistory <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj); 
   return(mSetObj$cmdSet);
@@ -188,11 +192,11 @@ DeDuplicateRCommandHistory <- function(mSetObj=NA){
 #'Constructor to read uploaded CSV or TXT files into the dataSet object
 #'@description This function handles reading in CSV or TXT files and filling in the dataSet object created using "InitDataObjects". 
 #'@usage Read.TextData(mSetObj=NA, filePath, format, lbl.type)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param filePath the path name for the CSV/TXT files to read
-#'@param format specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
-#'in columns and paired (colp), or in columns and unpaired (colu)
-#'@param lbl.type specify the data label type, either discrete (disc) or continuous (cont)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param filePath Input the path name for the CSV/TXT files to read.
+#'@param format Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
+#'in columns and paired (colp), or in columns and unpaired (colu).
+#'@param lbl.type Specify the data label type, either discrete (disc) or continuous (cont).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -435,6 +439,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 Read.PeakList<-function(mSetObj=NA, foldername){
   mSetObj <- .get.mSet(mSetObj);
@@ -553,7 +558,6 @@ Read.PeakList<-function(mSetObj=NA, foldername){
   );
   mSetObj$dataSet$peakSet <- peakSet;
   mSetObj$msgSet$read.msg <- msg;
-  print(1)
   return(.set.mSet(mSetObj));
 }
 
@@ -571,6 +575,7 @@ Read.PeakList<-function(mSetObj=NA, foldername){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
   mSetObj <- .get.mSet(mSetObj);
@@ -591,10 +596,10 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
   }
   
   # check for min samples in each group
-  if(min(table(cls.all)) < 3){
-    mSetObj$msgSet$read.msg <- "<font color='red'>At least three replicates are required in each group!</font>";
-    return(0);
-  }
+  #if(min(table(cls.all)) < 3){
+  #  mSetObj$msgSet$read.msg <- "<font color='red'>At least three replicates are required in each group!</font>";
+  #  return(0);
+  #}
   
   # check for unique sample names
   if(length(unique(smpl.all))!=length(smpl.all)){
@@ -609,7 +614,6 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
   xset <- group(xset, bw=bw);
   mSetObj$dataSet$xset.orig <- xset;
   mSetObj$msgSet$read.msg <- msg;
-  print(1);
   return(.set.mSet(mSetObj));
 }
 
@@ -619,7 +623,8 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 ReadPairFile <- function(filePath="pairs.txt"){
   all.pairs <- scan(filePath, what='character', strip.white = T);
   labels <- as.vector(rbind(1:length(all.pairs), -(1:length(all.pairs))));
@@ -637,7 +642,8 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 SaveTransformedData<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(!is.null(mSetObj$dataSet$orig)){
@@ -695,6 +701,8 @@ SaveTransformedData<-function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+#'@export
+#'
 AddErrMsg <- function(mSetObj=NA, msg){
   mSetObj <- .get.mSet(mSetObj);
   if(!exists('msg.vec', where = mSetObj$msgSet)){
@@ -710,7 +718,8 @@ AddErrMsg <- function(mSetObj=NA, msg){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -804,7 +813,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 #' @param destfile Name of the downloaded file to current working directory 
 #'
 #' example: cmpd <- read_MetAnal_RDS("http://www.metaboanalyst.ca/resources/libs/syn_nms.rds", destfile="syn_nms.rds")
-#'   
+
 read_MetAnal_RDS <- function(fileURL, destfile){
   
   if(.on.public.web){
@@ -990,7 +999,8 @@ HMDBID2KEGGID<-function(ids){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Setup.MapData<-function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cmpd <- qvec;
@@ -1001,7 +1011,8 @@ Setup.MapData<-function(mSetObj=NA, qvec){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Setup.ConcData<-function(mSetObj=NA, conc){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$norm <- conc;
@@ -1012,6 +1023,7 @@ Setup.ConcData<-function(mSetObj=NA, conc){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 Setup.BiofluidType<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$biofluid <- type;
@@ -1050,7 +1062,6 @@ IsReadyForEditor <- function(mSetObj=NA){
   }
   return(1);
 }
-
 
 SetOrganism <- function(org){
   inmex.org <<- org;

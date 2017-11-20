@@ -6,6 +6,11 @@
 \usage{
 OPLSR.Anal(mSetObj = NA, reg = FALSE)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{reg}{Logical}
+}
 \description{
 Orthogonal PLS-DA (from ropls)
 Add reg (regression i.e. if class order matters)

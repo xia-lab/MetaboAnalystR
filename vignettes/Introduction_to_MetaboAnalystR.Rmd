@@ -77,7 +77,7 @@ Now we will use an example of using a dataset imported from a zipped file. In th
 mSet <- InitDataObjects("msspec", "stat", FALSE)
 
 # Unzip the uploaded zip file/s, remove it and save it as "upload"
-mSet <- UnzipUploadedFile(mSet, "http://www.metaboanalyst.ca/resources/data/lcms_netcdf.zip", "upload", T)
+mSet <- UnzipUploadedFile(mSet, "lcms_netcdf.zip", "upload", T)
 
 # Read the unzipped LC/GC-MS spectra (.netCDF, .mzXML, mzData) 
 # Detect, align, and group peaks
@@ -87,7 +87,7 @@ mSet <- Read.MSspec(mSet, "upload", "bin", 30.0, 30.0)
 
 The function *Read.MSspec* uses the XCMS R package, particularly the *xcmsSet* and the *group* functions. This function creates an object from a set of input LC/MS files for further analysis by storing, aligning, and grouping peaks. It is therefore necessary for you to specify the binning method, the full width at half maximum of the matched filtration gaussian model peak, and the bandwidth (standard deviation of the smoothing kernel) to be used to perform peak detection and alignment. Please refer to the XCMS manual for further details. 
 
-Similarly to binned spectral data, there is a further step to preprocess MS spectra data (2.1.4 Preprocessing example data (LC/GC-MS spectra)). 
+Similarly to binned spectral data, there is a further step to preprocess MS spectra data (2.1.1.1 Preprocessing example data (LC/GC-MS spectra)). 
 
 ## 2.1.1.1 Preprocessing example data (LC/GC-MS spectra)
 

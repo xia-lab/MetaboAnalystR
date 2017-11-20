@@ -7,11 +7,10 @@
 SetAnalysisMode(mSetObj, mode)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)s}
 
 \item{mode}{Input the selected mode for biomarker analysis, "univ" for univariate ROC curve analysis,
 "explore" for multivariate ROC curve analysis, and "test" for ROC curve based model creation and evaluation.
-
 McGill University, Canada
 License: GNU GPL (>= 2)}
 }

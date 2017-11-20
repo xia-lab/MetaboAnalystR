@@ -136,13 +136,13 @@ mSet<-PrepareROCData(mSet)
 mSet<-CalculateFeatureRanking(mSet)
 
 # Manually select a subset of features for ROC analysis to build a classifier 
-selected.nms <- c("Betaine", "N,N-Dimethylglycine", "Quinolinate", "Glucose")
+selected.cmpds <- c("Betaine", "N,N-Dimethylglycine", "Quinolinate", "Glucose")
 
 # Manually select a subset of samples for ROC analysis hold-out data for validation purposes
 selected.smpls <- c("PIF_178", "PIF_087", "PIF_090", "PIF_102", "PIF_111", "PIF_112")
 
 # Prepare the custom data for model creation and sample hold-out 
-mSet<-SetCustomData(mSet)
+mSet<-SetCustomData(mSet, selected.cmpds, selected.smpls)
 
 # Perform ROC curve analysis, using SVM classification 
 mSet<-PerformCV.test(mSet, method = "svm", lvNum = 2)
@@ -157,7 +157,7 @@ mSet<-PlotProbViewTest(mSet, imgName = "cls_prob_0_", format="png",  dpi=300, md
 mSet<-PlotAccuracy(mSet, imgName = "cls_accu_0_", format="png",  dpi=300)
 
 # View the the predictive accuracy results of the model
-mSet<-GetAccuracyInfo(mSet)
+GetAccuracyInfo(mSet)
 
 # Example of the results
 [1] "The average accuracy based on 100 cross validations is 0.692. The accuracy for hold out data prediction is 0.667(4/6)."

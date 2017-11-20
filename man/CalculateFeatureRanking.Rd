@@ -7,7 +7,7 @@
 CalculateFeatureRanking(mSet)
 }
 \arguments{
-\item{mSet}{Object to perform feature ranking upon}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 }
 \description{
 Perform calculation of feature importance (AUC, p value, fold change)

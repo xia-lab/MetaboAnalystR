@@ -6,6 +6,19 @@
 \usage{
 PlotPCA3DScore_orig<- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input a name for the plot}
+
+\item{format}{Select the image format, "png", or "pdf".}
+
+\item{inx1}{Numeric, indicate the number of the principal component for the x-axis of the loading plot.}
+
+\item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
+
+\item{inx3}{Numeric, indicate the number of the principal component for the z-axis of the loading plot.}
+}
 \description{
 Rotate PCA analysis
 }

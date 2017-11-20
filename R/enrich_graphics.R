@@ -12,6 +12,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   
@@ -60,7 +61,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'@description Plot the compound concentration data compared to the reference concentration range
 #'@usage PlotConcRange(mSetObj, nm, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param nm Name of compound 
+#'@param inx Input compound index
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -69,6 +70,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotConcRange<-function(mSetObj=NA, inx, format="png", dpi=72, width=NA){
   
@@ -145,6 +147,7 @@ PlotConcRange<-function(mSetObj=NA, inx, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   
@@ -199,7 +202,8 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -242,7 +246,8 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotMSEA.Overview <- function(folds, pvals){
   
   # due to space limitation, plot top 50 if more than 50 were given
@@ -533,6 +538,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
 # Copyright 2004-2007, Institute for Mathematics Applied Geosciences
 # University Corporation for Atmospheric Research
 # Licensed under the GPL -- www.gpl.org/licenses/gpl.html
+
 image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
                            legend.width = 1, horizontal = FALSE, legend.mar = NULL,
                            bigplot = NULL, smallplot = NULL, ...) {
@@ -594,6 +600,7 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
   

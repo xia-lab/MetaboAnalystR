@@ -13,7 +13,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateHyperScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -103,7 +104,8 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateGlobalTestScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -185,7 +187,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 CalculateSSP<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -358,7 +361,8 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   library(xtable);
@@ -377,7 +381,8 @@ GetSSPTable<-function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetHTMLMetSet<-function(mSetObj=NA, msetNm){
   mSetObj <- .get.mSet(mSetObj);
   
@@ -408,7 +413,8 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 GetMetSetName<-function(mSetObj=NA, msetInx){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$analSet$type=="msetora" || mSetObj$analSet$type=="msetssp"){

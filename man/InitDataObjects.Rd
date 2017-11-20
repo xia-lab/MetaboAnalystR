@@ -7,11 +7,12 @@
 InitDataObjects(dataType, analType, paired=F)
 }
 \arguments{
-\item{dataType:}{the type of data, either list (Compound lists), conc (Compound concentration data), 
+\item{dataType}{The type of data, either list (Compound lists), conc (Compound concentration data), 
 specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 or msspec (MS spectra data)}
 
-\item{analType:}{stat, pathora, pathqea, msetora, msetssp, msetqea, ts, cmpdmap, smpmap, inmex}
+\item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+cmpdmap, smpmap, or inmex}
 }
 \description{
 This functions handles the construction of a dataSet object for storing data for further processing and analysis.

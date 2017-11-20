@@ -1,11 +1,10 @@
-#'R script for generating various graphics for pathway analysis
-#'
 #'Plot metabolome pathway
 #'@description Orthogonal PLS-DA (from ropls)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -97,7 +96,8 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   
   library('KEGGgraph');
@@ -235,7 +235,8 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x, y){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -330,7 +331,8 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height){
   mSetObj <- .get.mSet(mSetObj);
   Cairo(file=imgName, width=width, height=height,type="png", bg="white");

@@ -4,7 +4,8 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   
   dat <- .readDataTable(filePath);
@@ -143,15 +144,14 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   return(.set.mSet(mSetObj));
 }
 
-
-
 #'Set up two matrixes
 #'@description One is a batch containing summed concentrations of each sample
 #'the other contains the features aligned across all samples
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PerformBatchCorrection <- function(mSetObj=NA, imgName){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -197,13 +197,13 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName){
   return(.set.mSet(mSetObj));
 }
 
-
 #'Scatter plot colored by different batches
 #'@description Scatter plot colored by different batches
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotPCA.overview <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -273,7 +273,6 @@ PlotPCA.overview <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
 ##############################################
 ##############################################
 
-
 GetAllBatchNames <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -283,7 +282,6 @@ GetAllBatchNames <- function(mSetObj=NA){
   }
   names(mSetObj$dataSet$batch);
 }
-
 
 ResetBatchData <- function(mSetObj=NA){
   mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;

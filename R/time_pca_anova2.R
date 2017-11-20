@@ -44,7 +44,8 @@ aov.between <- function(x){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -65,8 +66,7 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
     res.mean <- apply(res, 2, mean);
     all.res <- res/res.mean;
     if(sum(all.res != 1) > 0){
-      msg <- "Experiment design is not balanced!";
-      print(msg);
+      AddErrMsg(mSetObj,"Experiment design is not balanced!");
       return(0);
     }
     aov.sbj <<- mSetObj$dataSet$sbj
@@ -94,8 +94,7 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
       res.mean <- apply(res, 2, mean);
       all.res <- res/res.mean;
       if(sum(all.res != 1) > 0){
-        msg <- "Experiment design is not balanced!";
-        print(msg);
+        AddErrMsg(mSetObj,"Experiment design is not balanced!");
         return(0);
       }
       time.fac <- mSetObj$dataSet$time.fac;
@@ -201,7 +200,8 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -250,7 +250,8 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);

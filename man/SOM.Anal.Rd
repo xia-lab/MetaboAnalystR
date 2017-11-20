@@ -6,6 +6,9 @@
 \usage{
 SOM.Anal(mSetObj = NA, x.dim, y.dim, initMethod, neigb = "gaussian")
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 SOM analysis
 }
