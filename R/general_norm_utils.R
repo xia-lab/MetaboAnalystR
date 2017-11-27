@@ -290,6 +290,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     colNames <- colNames[-inx];
   }
   
+  # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
+  mSetObj$dataSet$row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
+  
   # this is for biomarker analysis only (for compound concentration data)
   if(ratio){
     min.val <- min(abs(data[data!=0]))/2;
@@ -325,10 +328,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       transnm<-"N/A";
     }
   }
-  
-  # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
-  rownorm <- CleanData(data, T, T)
-  mSetObj$dataSet$row.norm <- as.data.frame(rownorm); #moved below ratio 
   
   # scaling
   if(scaleNorm=='MeanCenter'){
@@ -366,7 +365,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$combined.method <- FALSE;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
-  print(1);
   return(.set.mSet(mSetObj));
 }
 

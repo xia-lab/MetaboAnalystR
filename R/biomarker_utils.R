@@ -373,7 +373,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
   
   suppressMessages(library(ROCR));
   mSetObj$analMethod <- method;
-  data <- mSetObj$dataSet$norm;
+  data <- mSetObj$dataSet$biomarkernorm;
   cls <- mSetObj$dataSet$cls;    
   
   if( method == "lr" ) {
@@ -1313,7 +1313,7 @@ PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.m
     
     vals <- sprintf("%-8s", vals);
     
-    cis <- mSetObj$analSet$auc.ci;
+    cis <- mSetObj$analSet$multiROC$auc.ci;
     cis <- c("CI", cis);
     legends <- paste(feats, vals, cis, sep="");
     
@@ -1476,7 +1476,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
     
     vals <- sprintf("%-8s", vals);
     
-    cis <- mSetObj$analSet$auc.ci;
+    cis <- mSetObj$analSet$multiROC$auc.ci;
     cis <- c("CI", cis);
     legends <- paste(feats, vals, cis, sep="");
     
@@ -2199,7 +2199,7 @@ SetCustomData <- function(mSetObj=NA, selected.cmpds, selected.smpls){
     mSetObj$dataSet$test.cls <- NULL;
   }
   
-  mSetObj$dataSet$norm <- data.norm;
+  mSetObj$dataSet$biomarkernorm <- data.norm;
   mSetObj$dataSet$cls <- cls;
   return(.set.mSet(mSetObj));
 }
@@ -2919,13 +2919,13 @@ GetImpColNames <- function(mSetObj=NA){
 
 GetModelNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  test.nums <- mSetObj$analSet$test.feats;
+  test.nums <- mSetObj$analSet$multiROC$test.feats;
   paste("Model", 1:length(test.nums), "(", test.nums, "features)");
 }
 
 GetBestModelIndex <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$best.model.inx;
+  mSetObj$analSet$multiROC$best.model.inx;
 }
 
 GetUnivRankedFeatureNames <- function(){

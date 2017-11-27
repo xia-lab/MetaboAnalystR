@@ -187,13 +187,20 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName){
   mSetObj$dataSet$cls.lbls <- cls.lbl;
   mSetObj$dataSet$adjusted.mat <- t(combat_edata);
   
-  PlotPCA.overview(imgName);
+  .set.mSet(mSetObj);
+  
+  PlotPCA.overview(mSetObj, imgName);
   
   # save the meta-dataset
   res <- data.frame(colnames(combat_edata), cls.lbl, batch.lbl, t(combat_edata));
   colnames(res) <- c('NAME', 'CLASS', 'Dataset', rownames(combat_edata));
   write.table(res, sep=",", file="MetaboAnalyst_batch_data.csv", row.names=F, quote=FALSE);
-  print("T");
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return("T");
+  }
+  
   return(.set.mSet(mSetObj));
 }
 

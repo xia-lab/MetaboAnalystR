@@ -113,7 +113,7 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   }
   V(g)$stats <- stats;
   V(g)$topo <- topo;
-
+  
   if(!.on.public.web){
     mSetObjIG <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
     print("Inmex graph has been created, please find it in mSetObj$imgSet$inmex.path")
@@ -161,7 +161,7 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
   }else{
     return(.set.mSet(mSetObj));
   } 
-
+  
   return(nodeInfo);
 }
 
@@ -183,7 +183,7 @@ RerenderKEGGGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  mSetObj$imgSet$kegg.graph <- imgName
+  mSetObj$imgSet$kegg.graph.zoom <- imgName
   
   Cairo(file=imgName, width=width, height=height,type="png", bg="transparent");
   font.cex <- 0.6*zoom.factor/150;

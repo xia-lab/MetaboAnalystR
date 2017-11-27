@@ -58,7 +58,9 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   }else{
     border.col <- NA;
   }
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(viewOpt == "overview"){
     if(is.na(width)){
       w <- 9;
@@ -67,11 +69,9 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
     }else{
       w <- 7.2;
     }
+    mSetObj$imgSet$htmaptwo <- imgName;
     h <- w;
-    mSetObj$imgSet$heatmap <- imgName;
-  }
-  
-  else{
+  }else{
     if(is.na(width)){
       minW <- 650;
       myW <- nrow(hc.dat)*11 + 150;
@@ -91,10 +91,10 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
     }else{
       myH <- ncol(hc.dat)*12 + 20;
     }
+    mSetObj$imgSet$htmaptwo <- imgName;
     h <- round(myH/72,2);
-    
-    mSetObj$imgSet$heatmap <- imgName;
   }
+  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   library(pheatmap);
   

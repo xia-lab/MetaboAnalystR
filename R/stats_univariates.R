@@ -1265,19 +1265,23 @@ GetTopInx <- function(vec, n, dec=T){
 }
 
 GetSigTable.Volcano <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$volcano$sig.mat, "volcano plot", mSetObj);
 }
 
 GetVolcanoSigMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
   return(CleanNumber(mSetObj$analSet$volcano$sig.mat));
 }
 
 GetVolcanoSigRowNames <- function(mSetObj=NA){
-  rownames(mSetObj$analSet$volcano$sig.mat);
+  mSetObj <- .get.mSet(mSetObj);
+  return(rownames(mSetObj$analSet$volcano$sig.mat));
 }
 
 GetVolcanoSigColNames <- function(mSetObj=NA){
-  colnames(mSetObj$analSet$volcano$sig.mat);
+  mSetObj <- .get.mSet(mSetObj);
+  return(colnames(mSetObj$analSet$volcano$sig.mat));
 }
 
 ContainInfiniteVolcano <- function(mSetObj=NA){

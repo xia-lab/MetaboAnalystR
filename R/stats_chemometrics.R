@@ -1013,8 +1013,15 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   mSetObj$analSet$plsda$permut.inf <- F;
   mSetObj$analSet$plsda$permut.type <- perm.type;
   mSetObj$analSet$plsda$permut <- perm.vec;
-  print(p);
-  return(.set.mSet(mSetObj));
+  
+  msg <- paste("Empirical p value:", p);
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(msg)
+  }else{
+    print(msg);
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Plot PLS important features
@@ -1491,7 +1498,7 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,4,7))
   plot(p1, pcorr1, pch=19, xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance", col="magenta");
-  opls.axis.lims <<- par("usr");
+  opls.axis.lims <- par("usr");
   if(plotType=="all"){
     text(p1, pcorr1, labels=colnames(s), cex=0.8, pos=4, xpd=TRUE, col="blue");
   }else if(plotType == "custom"){
@@ -1508,7 +1515,7 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   colnames(splot.mat) <- c("jitter", "p[1]","p(corr)[1]");
   write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv"); 
   mSetObj$analSet$oplsda$splot.mat <- splot.mat;
-  
+  mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;   
   return(.set.mSet(mSetObj));
 }
 
@@ -1559,7 +1566,7 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }
   h <- w*6/9;
   
-  mSetObj$imgSet$pls.class <- imgName;
+  mSetObj$imgSet$opls.class <- imgName;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   # the model R2Y and Q2Y
@@ -1611,9 +1618,25 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   #perm.res<-performOPLS(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
-  perm.res<-perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
-  r.vec<-perm.res$suppLs[["permMN"]][, "R2Y(cum)"];
-  q.vec<-perm.res$suppLs[["permMN"]][, "Q2(cum)"];
+  perm.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
+  r.vec <- perm.res$suppLs[["permMN"]][, "R2Y(cum)"];
+  q.vec <- perm.res$suppLs[["permMN"]][, "Q2(cum)"];
+  
+  better.rhits <- sum(r.vec[-1]>=r.vec[1]);
+  
+  if(better.rhits == 0) {
+    pr <- paste("p < ", 1/num, " (", better.rhits, "/", num, ")", sep="");
+    }else{
+      p <- better.rhits/num;
+      pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", num, ")", sep="");
+    }
+  better.qhits <- sum(q.vec[-1]>=q.vec[1]);
+  if(better.qhits == 0) {
+    pq <- paste("p < ", 1/num, " (", better.qhits, "/", num, ")", sep="");
+    }else{
+      p <- better.qhits/num;
+      pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", num, ")", sep="");
+      }
   
   rng <- range(c(r.vec, q.vec, 1));
   
@@ -1627,8 +1650,6 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   }
   h <- w*6/8;
   
-  mSetObj$imgSet$pls.permut <- imgName;
-  
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,2,7));
   rhst <- hist(r.vec[-1], plot=FALSE);
@@ -1641,36 +1662,29 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
        col=adjustcolor("lightblue", alpha=0.6), main="");
   hist(q.vec[-1], add=TRUE,breaks=qbins, border=F, col=adjustcolor("mistyrose", alpha=0.6));
   
+  #text(bw.vec[1], h/3.5, paste('Observed \n statistic \n', mSetObj$analSet$plsda$permut.p), xpd=T);
+  
   arrows(r.vec[1], h/3, r.vec[1], 0, length=0.1,angle=30,lwd=2);
-  text(r.vec[1], h/2.5, paste('Observed \n R2Y:', r.vec[1]), xpd=TRUE);
+  text(r.vec[1], h/2.5, paste('R2Y:', r.vec[1], "\n", pr), xpd=TRUE);
   
   arrows(q.vec[1], h/2, q.vec[1], 0, length=0.1,angle=30,lwd=2);
-  text(q.vec[1], h/1.8, paste('Observed \n Q2:', q.vec[1]), xpd=TRUE);
+  text(q.vec[1], h/1.8, paste('Q2:', q.vec[1], "\n", pq), xpd=TRUE);
   
   legend(1, h/3, legend = c("Perm R2Y", "Perm Q2"), pch=15, col=c("lightblue", "mistyrose"), xpd=T, bty="n");
   
   dev.off();
   
-  better.rhits <- sum(r.vec[-1]>=r.vec[1]);
-  if(better.rhits == 0) {
-    pr <- paste("p < ", 1/num, " (", better.rhits, "/", num, ")", sep="");
-  }else{
-    p <- better.rhits/num;
-    pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", num, ")", sep="");
-  }
-  better.qhits <- sum(q.vec[-1]>=q.vec[1]);
-  if(better.qhits == 0) {
-    pq <- paste("p < ", 1/num, " (", better.qhits, "/", num, ")", sep="");
-  }else{
-    p <- better.qhits/num;
-    pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", num, ")", sep="");
-  }
+  mSetObj$imgSet$opls.permut <- imgName;
   
-  msg <- paste0("Empirical p-values R2Y: ", pr, " and Q2: ", pq)
-  print(msg);
-  return(.set.mSet(mSetObj));
+  msg <- paste("Empirical p-values Q2: ", pq, " and R2Y: ", pr);
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(msg);
+  }else{
+    print(msg);
+    return(.set.mSet(mSetObj));
+  }
 }
-
 
 #'Perform OPLS
 #'@description Orthogonal PLS functions (adapted from ropls package for web-based usage)
@@ -2224,22 +2238,22 @@ GetPLSLoadMat <- function(mSetObj=NA){
   as.matrix(cbind(mSetObj$analSet$plsr$load.x.uniq, mSetObj$analSet$plsr$imp.loads[,2]));
 }
 
-GetPCALoadAxesSpec <- function(mSetObj=NULL){
+GetPCALoadAxesSpec <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$pca.axis.lims;
 }
 
-GetPCALoadCmpds <- function(mSetObj=NULL){
+GetPCALoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   names(mSetObj$analSet$pca$load.x.uniq);
 }
 
-GetPCALoadCmpdInxs <- function(mSetObj=NULL){
+GetPCALoadCmpdInxs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$analSet$pca$load.x.uniq;
 }
 
-GetPCALoadMat <- function(mSetObj=NULL){
+GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   as.matrix(cbind(mSetObj$analSet$pca$load.x.uniq, mSetObj$analSet$pca$imp.loads[,2]));
 }
@@ -2250,19 +2264,20 @@ GetPCALoadMat <- function(mSetObj=NULL){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'
-GetMaxPCAComp <- function(mSetObj=NULL){
+GetMaxPCAComp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return (min(9, dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
 }
 
 ResetCustomCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
   mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
 }
 
-GetOPLSLoadAxesSpec <- function(){
+GetOPLSLoadAxesSpec <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  opls.axis.lims;
+  return(mSetObj$analSet$oplsda$opls.axis.lims);
 }
 
 GetOPLSLoadCmpds <- function(mSetObj=NA){
@@ -2270,7 +2285,7 @@ GetOPLSLoadCmpds <- function(mSetObj=NA){
   rownames(mSetObj$analSet$oplsda$splot.mat);
 }
 
-GetOPLSLoadColNames <- function(){
+GetOPLSLoadColNames <- function(mSetObj=NA){
   return(c("p[1]","p(corr)[1]"));
 }
 

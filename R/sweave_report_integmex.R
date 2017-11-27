@@ -14,7 +14,7 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   CreateIntegratedPathwayAnalOverview();
   CreateIntegratedPathwayAnalInputDoc(mSetObj);
   CreateStatNORMdoc(mSetObj);
-
+  
   CreateIntegratedPathwayDoc(mSetObj);
   
   CreateRHistAppendix();
@@ -98,7 +98,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
                  "@");
     cat(genetable, file=rnwFile, append=TRUE, sep="\n");
   }
-
+  
   # the data filtering
   descr<-c("\\subsubsection{Data Filtering}\n",
            "The purpose of data filtering is to identify and remove variables that are unlikely to be of",
@@ -125,28 +125,28 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
   cat("\n\n", file=rnwFile, append=TRUE);
   
   descr <- c("\\subsubsection{Data Integrity Check}\n",
-           "Before data analysis, a data integrity check is performed to make sure that all of the necessary",
-           "information has been collected. The class labels must be present and must contain only two classes.",
-           "If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
-           "(n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
-           "Compound concentration or peak intensity values must all be non-negative numbers.",
-           "By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
-           "found within the data (see next section).");
+             "Before data analysis, a data integrity check is performed to make sure that all of the necessary",
+             "information has been collected. The class labels must be present and must contain only two classes.",
+             "If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
+             "(n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
+             "Compound concentration or peak intensity values must all be non-negative numbers.",
+             "By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
+             "found within the data (see next section).");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
   descr <- c("\\subsubsection{Missing value imputations}\n",
-           "Too many zeroes or missing values will cause difficulties in the downstream analysis.",
-           "MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
-           "all the missing and zero values with a small values (the half of the minimum positive",
-           "values in the original data) assuming to be the detection limit. The assumption of this approach",
-           "is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
-           "In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
-           "replaced with this small value. User can also specify other methods, such as replace by mean/median,",
-           "or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
-           "method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
-           "\\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
-           "2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
+             "Too many zeroes or missing values will cause difficulties in the downstream analysis.",
+             "MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
+             "all the missing and zero values with a small values (the half of the minimum positive",
+             "values in the original data) assuming to be the detection limit. The assumption of this approach",
+             "is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
+             "In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
+             "replaced with this small value. User can also specify other methods, such as replace by mean/median,",
+             "or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
+             "method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
+             "\\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
+             "2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -240,30 +240,30 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   # PlotInmexPath
   
   inmexpathplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$inmex.path,"}", sep=""),
-              "\\caption{", paste("Plot of a selected pathway from the integrated methods pathway analysis.",
-                                  " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
-                                  " based on fold change (FC) values. .", sep=""),"}",
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$inmex.path,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                      "\\begin{center}",
+                      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$inmex.path,"}", sep=""),
+                      "\\caption{", paste("Plot of a selected pathway from the integrated methods pathway analysis.",
+                                          " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
+                                          " based on fold change (FC) values.", sep=""),"}",
+                      "\\end{center}",
+                      paste("\\label{",mSetObj$imgSet$inmex.path,"}", sep=""),
+                      "\\end{figure}",
+                      "\\clearpage"
   );
   cat(inmexpathplot, file=rnwFile, append=TRUE, sep="\n");
-
+  
   # PlotReKEGGPath
   
   rekeggplot <- c( "\\begin{figure}[htp]",
-                    "\\begin{center}",
-                    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$kegg.graph,"}", sep=""),
-                    "\\caption{", paste("Zoomed in plot of a selected pathway from the integrated methods pathway analysis.",
-                                        " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
-                                        " based on fold change (FC) values. .", sep=""),"}",
-                    "\\end{center}",
-                    paste("\\label{",mSetObj$imgSet$kegg.graph,"}", sep=""),
-                    "\\end{figure}",
-                    "\\clearpage"
+                   "\\begin{center}",
+                   paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
+                   "\\caption{", paste("Zoomed in plot of a selected pathway from the integrated methods pathway analysis.",
+                                       " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
+                                       " based on fold change (FC) values. .", sep=""),"}",
+                   "\\end{center}",
+                   paste("\\label{",mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
+                   "\\end{figure}",
+                   "\\clearpage"
   );
   cat(rekeggplot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -271,8 +271,8 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
     return()
   }else{
     resultstable<-c("<<echo=false, results=tex>>=",
-                      "CreateIntegratedPathwayResultsTable(mSet)",
-                      "@");
+                    "CreateIntegratedPathwayResultsTable(mSet)",
+                    "@");
     cat(resultstable, file=rnwFile, append=TRUE, sep="\n");
     
   }

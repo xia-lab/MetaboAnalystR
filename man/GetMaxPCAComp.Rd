@@ -4,7 +4,7 @@
 \alias{GetMaxPCAComp}
 \title{For plotting PCA, selects max top 9 components}
 \usage{
-GetMaxPCAComp(mSetObj = NULL)
+GetMaxPCAComp(mSetObj = NA)
 }
 \description{
 Rotate PCA analysis
