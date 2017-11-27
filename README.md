@@ -19,31 +19,23 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
   
-  cran_pkg <- c("Rserve", "RColorBrewer", "xtable", "som", "ROCR", "RJSONIO", "gplots", "e1071", "caTools", "igraph", "randomForest", "Cairo", "pls", "pheatmap", "lattice", "rmarkdown", "knitr", "data.table", "pROC", "Rcpp", "caret", "ellipse", "scatterplot3d")
-  bioconductor_pkg <- c("impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva")
+  metr_pkgs <- c("Rserve", "RColorBrewer", "xtable", "som", "ROCR", "RJSONIO", "gplots", "e1071", "caTools", "igraph", "randomForest", "Cairo", "pls", "pheatmap", "lattice", "rmarkdown", "knitr", "data.table", "pROC", "Rcpp", "caret", "ellipse",
+                 "scatterplot3d", "impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva")
   
   list_installed <- installed.packages()
   
-  new_cran <- subset(cran_pkg, !(cran_pkg %in% list_installed[, "Package"]))
+  new_pkgs <- subset(metr_pkgs, !(metr_pkgs %in% list_installed[, "Package"]))
   
-  if(length(new_cran)!=0){
-    install.packages(new_cran, dependencies = TRUE)
-    print(c(new_cran, " packages added..."))
-  }
-  
-  new_bio <- subset(bioconductor_pkg, !(bioconductor_pkg %in% list_installed[, "Package"]))
-  
-  if(length(new_bio)!=0){
+  if(length(new_pkgs)!=0){
     
     source("https://bioconductor.org/biocLite.R")
-    biocLite(new_bio, dependencies = TRUE, ask = FALSE)
-    print(c(new_bio, " packages added..."))
+    biocLite(new_pkgs, dependencies = TRUE, ask = FALSE)
+    print(c(new_pkgs, " packages added..."))
   }
   
-  if((length(new_cran)<1)&(length(new_bio)<1)){
+  if((length(new_pkgs)<1)){
     print("No new packages added...")
   }
-    
 }
 ```
 Usage of function:
