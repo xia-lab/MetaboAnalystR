@@ -33,13 +33,12 @@ library(MetaboAnalystR)
 
 MetaboAnalystR reads in both comma separated values (CSV) and text (txt) files. The package also accepts zipped files (.zip), including NMR peak, MS peak, and LC/GC-MS spectra (NetCDF, mzDATA, mzXML) data. 
 
-We will first begin with an example dataset included in the package called "cachexia_concentrations.csv". To begin the analysis, we first have to create an object for data processing, using the function *InitDataObjects*, and then we will read in the data file using the function *Read.TextData*. 
-
+We will first begin with an example dataset downloadable from the MetaboAnalyst web-server called "cachexia_concentrations.csv". To begin the analysis, we first have to create an object for data processing, using the function *InitDataObjects*, and then we will read in the data file using the function *Read.TextData*. 
 The *InitDataObjects* is the first function executed when uploading a dataset. It constructs the dataSet object, which is an R list with several variables assigned to it, including the type of data, the data format, and whether or not the data is paired. Is also creates the analSet object, and the imgSet object, which are also lists that will be filled in downstream analysis. Further, the function creates three libraries and databases which will be filled if necessary. Finally, it creates msg.vec, which is a character vector that will contain messages produced from the analysis. It it necessary for users to specify the **dataType**, (list, conc, specbin, pktable, nmrpeak, mspeak, msspec), and the type of analysis to be performed on the uploaded dataset, **analType** (stat, pathora, pathqea, msetora, msetssp, msetqea, ts, cmpdmap, smpmap). In this case, we are uploading a compound concentration dataset ("conc"), and will be performing statistical analysis on the dataset ("stat"). 
 
 *Read.TextData* is the second function to be executed to read in a specific file/s. You must specify the file path, the data format and the label type to provide the right parameters for MetaboAnalystR. In this case, the samples in the cachexia dataset are in rows (versus columns) and are unpaired (hence, "rowu"). Additionally, the data is discrete ("disc") versus continuous. 
 
-Note that *dataSet$read.msg* can be used to view the messages saved from importing the dataset. 
+Note that *mSet$dataSet$read.msg* can be used to view the messages saved from importing the dataset. 
 
 ```{r, eval=FALSE}
 # Create objects for storing processed data
@@ -66,11 +65,11 @@ mSet <- InitDataObjects("pktable", "stat", FALSE)
 mSet <- Read.TextData(mSet, "http://www.metaboanalyst.ca/resources/data/NMRpeaklistskidney.csv", "rowu", "disc")
 ```
 
-To import binned spectral data, users will use the same *Read.TextData* functions in the above two examples. However, binned spectral data is typically of lower quality than compound concentration data and therefore requires a further step of data preprocessing to convert the data into a usable data matrix. For instance, binned spectral data often contains background noise and requires filtering of such unwanted variations. ### check with Jeff if this was disabled? 
+To import binned spectral data, users will use the same *Read.TextData* functions in the above two examples. However, binned spectral data is typically of lower quality than compound concentration data and therefore requires a further step of data preprocessing to convert the data into a usable data matrix. For instance, binned spectral data often contains background noise and requires filtering of such unwanted variations. 
 
 ## 2.1.1.0  Importing example data (Zipped LC/GC-MS spectra) - Example file removed for the time-being
 
-Now we will use an example of using a dataset imported from a zipped file. In this case we will use the "lcms_netcdf.zip" file which you will be able to find included in the package, in the file "data-raw". 
+Now we will use an example of using a dataset imported from a zipped file. In this case we will use the "lcms_netcdf.zip" file which you will be able download from the MetaboAnalyst web-server. 
 
 ```{r, eval=FALSE}
 # Create an object for storing processed data
