@@ -790,8 +790,13 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
     );
   }
   mSetObj$analSet$aov <- aov;
-  .set.mSet(mSetObj);
-  return(res);
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(res);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Plot ANOVA 

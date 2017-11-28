@@ -215,7 +215,13 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     mSetObj$imgSet$corr.heatmap <- imgName;
     
   }
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  if(format=="pdf"){
+    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
+  }else{
+    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  }
+  
   if(no.clst){
     rowv=FALSE;
     colv=FALSE;
