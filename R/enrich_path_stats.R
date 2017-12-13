@@ -89,21 +89,21 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     res.mat <- res.mat[ord.inx,];
   }
   
-  mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx,],5);
+  mSetObj$analSet$ora.mat <- signif(res.mat,5);
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
+  
+  .set.mSet(mSetObj)
   
   save.mat <- mSetObj$analSet$ora.mat;
   rownames(save.mat) <- GetORA.pathNames(mSetObj);
   write.csv(save.mat, file="pathway_results.csv");
   
   if(.on.public.web){
-    .set.mSet(mSetObj);
     return(1);
+  }else{
+    return(.set.mSet(mSetObj));
   }
-  
-  print(1);
-  return(.set.mSet(mSetObj));
 }
 
 #'@export
@@ -222,10 +222,6 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   # now store this new data
   mSetObj$dataSet$norm.path <- path.data;
   
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-  }
-  
   mSetObj$analSet$qea.hits <- hits;
   mSetObj$analSet$qea.univp <- signif(univ.p,7);
   mSetObj$analSet$qea.method <- method;
@@ -233,11 +229,16 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$qea.mat <- res.mat;
   mSetObj$analSet$node.imp <- nodeImp;
   
+  .set.mSet(mSetObj)
+  
   rownames(res.mat) <- GetQEA.pathNames(mSetObj);
   write.csv(res.mat, file="pathway_results.csv");
   
-  print(1);
-  return(.set.mSet(mSetObj));
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'@export

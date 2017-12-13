@@ -510,6 +510,7 @@ GetRefLibCheckMsg<-function(mSetObj=NA){
   return(mSetObj$dataSet$metabo.ref.info);
 }
 
+#'@export
 SetMetabolomeFilter<-function(mSetObj=NA, TorF){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$use.metabo.filter <- TorF;

@@ -94,13 +94,11 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
     mSetObj$imgSet$htmaptwo <- imgName;
     h <- round(myH/72,2);
   }
-  
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
     Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-  
   library(pheatmap);
   
   annotation <- data.frame(new.facB, new.facA);
@@ -526,15 +524,15 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
     facAB.size = facAB.size,
     lvAB.mat = lvAB.mat
   );
-
+  
   mSetPerm <<- mSetObj
   
   perm.orig <- Get.asca.tss(dummy, perm=F);
-
+  
   perm.res <- Perform.permutation(perm.num, Get.asca.tss);
-
+  
   rm(mSetPerm, pos = ".GlobalEnv")
-
+  
   gc(); # garbage collection
   
   # convert to matrix
@@ -776,7 +774,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <- 9;
   }else if(width == 0){
     w <- 7;
-    }else{
+  }else{
     w <- width;
   }
   h <- w;
@@ -804,7 +802,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   title("Scree plots of each model", outer=TRUE)
   dev.off();
   return(.set.mSet(mSetObj));
-  }
+}
 
 #'Plot score plots of each ASCA model for component 1 against time
 #'@description Plot score plots of each ASCA model for component 1 against time
@@ -1149,7 +1147,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
   return(.set.mSet(mSetObj));
   
 }
-  
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -1173,7 +1171,7 @@ GetSigTable.ASCA <- function(mSetObj=NA, nm){
   }else{
     nmLbl <- paste("interaction effect between",  mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
   }
-  GetSigTable( mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj);
+  GetSigTable(mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj);
   return(.set.mSet(mSetObj));
 }
 
@@ -1181,27 +1179,31 @@ GetAscaSigMat <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "sigA"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.a"]])
-  }
-  if(type == "outA"){
+  }else if(type == "outA"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.a"]])
-  }
-  if(type == "sigB"){
+  }else  if(type == "sigB"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.b"]]);
-  }
-  if(type == "outB"){
+  }else if(type == "outB"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.b"]]);
-  }
-  if(type == "sigAB"){
+  }else if(type == "sigAB"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.ab"]]);
-  }
-  if(type == "outAB"){
+  }else if(type == "outAB"){
     sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.ab"]])
+  }else{
+    print(paste("Unknown data type: ", type));
+    return(0);
   }
   
   fileNm <- paste("asca_",type, ".csv", sep="");
   write.csv(signif(sig.mat,5), file=fileNm);
   mSetObj$analSet$asca$sig.nm <- fileNm;
-  return(.set.mSet(mSetObj));
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(sig.mat);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 GetAscaSigRowNames <- function(mSetObj=NA, type){

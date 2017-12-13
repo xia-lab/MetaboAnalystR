@@ -80,7 +80,7 @@ GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30){
     if(big.samples){
       testSampleAllRuns[irun, ] <- sample(which(!indicesTrainingSample), 200);
     }else{
-      testSampleAllRuns[irun, ]   <- which(!indicesTrainingSample);
+      testSampleAllRuns[irun, ] <- which(!indicesTrainingSample);
     }
   }
   
@@ -2403,13 +2403,10 @@ GetMeanROC<-function(perf){
   return (cbind(alpha.values, rowMeans(data.frame(perf.sampled@x.values)), rowMeans(data.frame(perf.sampled@y.values))));
 }
 
-
-
 ContainNewSamples <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   ifelse(mSetObj$dataSet$new.samples, 1, 0);
 }
-
 
 #'Obtain sample names and their class labels
 #'@description Obtain sample names and their class labels
