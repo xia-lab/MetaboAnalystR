@@ -453,6 +453,7 @@ PathMapping <- function(mSetObj=NA, qvec){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 GetCandidateList <- function(mSetObj=NA){
 

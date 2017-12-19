@@ -41,10 +41,12 @@ mSet<-SanityCheckData(mSet)
 mSet<-ReplaceMin(mSet)
 mSet<-IsSmallSmplSize(mSet)
 
+###### *** OPTION 1 FOR NORMALIZATION
 # Perform no normalization, no ratio calculation
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", ref=NULL, ratio=FALSE, ratioNum=20)
 
-# No normalization, and compute metabolite ratios and include the top 20 
+###### *** OPTION 2 FOR NORMALIZATION
+# No normalization, and computeS metabolite ratios and includeS the top 20 
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "C01", ratio=TRUE, ratioNum=20)
 
 # If ratio = TRUE: view the normalized dataset including the top ranked ratios
