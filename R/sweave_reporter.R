@@ -1611,7 +1611,6 @@ CreateFooter <- function(){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
 CreateSummaryTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
