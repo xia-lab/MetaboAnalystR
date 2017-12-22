@@ -1063,6 +1063,7 @@ IsReadyForEditor <- function(mSetObj=NA){
   return(1);
 }
 
+#'@export
 SetOrganism <- function(mSetObj=NA, org){
   mSetObj <- .get.mSet(mSetObj);
   inmex.org <<- org;
