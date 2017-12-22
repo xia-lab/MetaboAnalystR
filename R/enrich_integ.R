@@ -200,8 +200,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   
   mSetObj <- .get.mSet(mSetObj);
   
-  LoadKEGGLib(mSetObj=NA, libOpt);
-  
+  mSetObj <- LoadKEGGLib(mSetObj, libOpt);
+
   if(.on.public.web){
     mSetObj <- .get.mSet(mSetObj);
   }  

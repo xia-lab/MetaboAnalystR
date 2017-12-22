@@ -4,8 +4,7 @@
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
-#' write .Rnw file template
+#'@export
 CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   
   CreateHeader(usrName);
@@ -28,6 +27,7 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateIntegratedPathwayAnalIntr <- function(){
   descr <- c("\\section{Background}\n",
              "This module performs integrated metabolic pathway analysis on results obtained from combined metabolomics ", 
@@ -55,7 +55,7 @@ CreateIntegratedPathwayAnalIntr <- function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateIntegratedPathwayAnalOverview <- function(){
   descr <- c("\\section{Integrated Pathway Analysis Overview}\n",
              "The Biomarker analysis module consists of four steps - uploading the data, data processing,",
@@ -70,6 +70,7 @@ CreateIntegratedPathwayAnalOverview <- function(){
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -168,7 +169,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -190,7 +191,7 @@ CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -211,6 +212,7 @@ CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -287,7 +289,7 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

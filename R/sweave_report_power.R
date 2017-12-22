@@ -4,8 +4,7 @@
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
-#' write .Rnw file template
+#'@export
 CreatePowerRnwReport <- function(mSetObj, usrName){
   
   CreateHeader(usrName);
@@ -28,6 +27,7 @@ CreatePowerRnwReport <- function(mSetObj, usrName){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePowerIntr <- function(){
   descr <- c("\\section{Background}\n",
              "The Power analysis module supports sample size estimation and power analysis for designing", 
@@ -51,7 +51,7 @@ CreatePowerIntr <- function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreatePowerOverview <- function(){
   descr <- c("\\section{Power Analysis Overview}\n",
              "The power analysis module consists of four steps - uploading pilot data, data processing,",
@@ -67,6 +67,7 @@ CreatePowerOverview <- function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePowerInputDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -148,6 +149,7 @@ CreatePowerInputDoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePowerParametersDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -190,6 +192,7 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePowerAnalDoc <- function(mSetObj){
   descr <- c("\\section{Power Analysis}\n",
              "Following parameter selection, power analysis can begin. The ultimate aim of power analysis",

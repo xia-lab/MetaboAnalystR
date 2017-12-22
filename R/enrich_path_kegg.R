@@ -28,24 +28,32 @@ LoadKEGGLib<-function(mSetObj=NA, libOpt){
       kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", inmex.org, ".rda", sep=""); 
     }
   }
-  
+
   print(paste("adding library:", kegg.rda));
+  
+  destfile <- paste(inmex.org, ".rda", sep = "")
   
   if(.on.public.web){
     load(kegg.rda, .GlobalEnv);
   }else if(!file.exists(destfile)){
     download.file(kegg.rda, destfile);
-    load(kegg.rda, .GlobalEnv);
+    load(destfile, .GlobalEnv);
   }else{
-    load(kegg.rda, .GlobalEnv);  
+    load(destfile, .GlobalEnv);  
   }
   
   # now need to set up gene/cmpd universe that covered by the kegg
   mSetObj$dataSet$current.mset <- inmexpa$mset.list;
   mSetObj$dataSet$current.mset.list <- lapply(mSetObj$dataSet$current.mset, function(x){strsplit(x, " ")});
   mSetObj$dataSet$current.universe <- unique(unlist(mSetObj$dataSet$current.mset.list));
+  
   inmexpa <<- inmexpa
-  return(.set.mSet(mSetObj));
+  
+  if(!.on.public.web){
+    return(.set.mSet(mSetObj));
+  }else{
+    .set.mSet(mSetObj)
+  }
 }
 
 

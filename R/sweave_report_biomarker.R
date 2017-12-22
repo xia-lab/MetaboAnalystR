@@ -4,8 +4,7 @@
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
-#' write .Rnw file template
+#'@export
 CreateBiomarkerRnwReport<-function(mSetObj, usrName){
   
   CreateHeader(usrName);
@@ -31,6 +30,7 @@ CreateBiomarkerRnwReport<-function(mSetObj, usrName){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateBiomarkerIntr<-function(){
   descr <- c("\\section{Background}\n",
              "The metabolome is well-known to be a sensitive measure of health and disease, reflecting alterations",
@@ -53,7 +53,7 @@ CreateBiomarkerIntr<-function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateBiomarkerOverview <- function(){
   descr <- c("\\section{Biomarker Analysis Overview}\n",
              "The Biomarker analysis module consists of five steps - uploading the data, data processing,",
@@ -69,6 +69,7 @@ CreateBiomarkerOverview <- function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateBiomarkerInputDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -149,7 +150,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -189,7 +190,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateRatioTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -209,6 +210,7 @@ CreateRatioTable <- function(mSetObj=NA){
 #'@author Jasmine Chong 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -262,7 +264,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateUnivROCTable<-function(){
   
   suppressMessages(library(xtable))
@@ -281,6 +283,7 @@ CreateUnivROCTable<-function(){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -387,6 +390,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -495,6 +499,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
 }
 
 # Function to create the table of newly classified samples
+#'@export
 ROCPredSamplesTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -518,7 +523,7 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateROCLabelsTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

@@ -19,10 +19,6 @@ mSet <- InitDataObjects("conc", "inmex", FALSE)
 
 mSet <- SetOrganism(mSet, "hsa")
 
-genes <- c(1737, 83440, 3939, 10911)
-
-mSet<-PerformIntegGeneMapping(mSet, genes, "hsa", "entrez")
-
 mSet<-PerformIntegGeneMapping("#Entrez  logFC
                         1737  -1.277784317
                         83440  -1.034136439
@@ -31,8 +27,6 @@ mSet<-PerformIntegGeneMapping("#Entrez  logFC
                         10690  -0.968308832
                         10010  -0.861541301
                         10053  0.360090661", "hsa", "entrez")
-
-mSet<-PerformIntegCmpdMapping(mSet, cmpds, "hsa", "kegg")
 
 mSet<-PerformIntegCmpdMapping("#KEGG  logFC
                         C00116  1.010972619
@@ -47,9 +41,9 @@ mSet<-PerformIntegCmpdMapping("#KEGG  logFC
                         C00062  0.291549231
                         C00300  -0.230475941", "hsa", "kegg")
 
-cmpds <- c(C00116, C00565, C00033, C00583)
+mSet<-CreateMappingResultTable(mSet);
 
-mSet<-PrepareIntegData(mSet)
+mSet<-PrepareIntegData(mSet);
 
 ```
 
@@ -63,9 +57,12 @@ Users can choose one of three different modes of pathways: - the gene-metabolite
 
 
 ```{r, eval=FALSE}
+
+#### OPTION 1
 # Perform integrated pathway analysis, using hypergeometric test, degree centrality, and the gene-metabolite pathways
 mSet<-PerformIntegPathwayAnalysis(mSet, "dc", "hyper", "integ")
 
+#### OPTION 2
 # Perform integrated pathway analysis, using hypergeometric test, betweenness centrality, and gene-centric pathways 
 mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "hyper", "genetic")
 

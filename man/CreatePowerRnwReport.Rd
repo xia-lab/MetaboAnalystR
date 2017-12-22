@@ -14,5 +14,4 @@ Put together the analysis report
 Jasmine Chong
 McGill University, Canada
 License: GNU GPL (>= 2)
-write .Rnw file template
 }

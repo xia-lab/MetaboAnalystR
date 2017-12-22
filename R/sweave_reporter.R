@@ -59,6 +59,7 @@ CreatePDFReport<-function(mSetObj=NA, usrName){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 CreateStatRnwReport <- function(mSetObj, usrName){
   
@@ -94,13 +95,13 @@ CreateStatRnwReport <- function(mSetObj, usrName){
   
 }
 
-
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create header
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 CreateHeader <- function(usrName){
   header <- c("\\documentclass[a4paper]{article}",
@@ -130,6 +131,8 @@ CreateStatIntr <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateStatIOdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -329,6 +332,8 @@ CreateStatIOdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateStatNORMdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -414,6 +419,7 @@ CreateStatNORMdoc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
+#'@export
 InitStatAnalMode <- function(){
   descr <- c("\\section{Statistical and Machine Learning Data Analysis}",
              "MetaboAnalyst offers a variety of methods commonly used in metabolomic data analyses.",
@@ -465,6 +471,7 @@ InitStatAnalMode <- function(){
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
 }
 
+#'@export
 CreateAnalNullMsg <- function(){
   descr <- c("No analysis was performed on your data.\n");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
@@ -476,6 +483,7 @@ CreateAnalNullMsg <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateUNIVdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -606,6 +614,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateANOVAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -667,6 +676,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateCorrDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -757,6 +767,7 @@ CreateCorrDoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePCAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -839,6 +850,7 @@ CreatePCAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreatePLSdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -972,6 +984,7 @@ CreatePLSdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateSPLSDAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1046,6 +1059,8 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateOPLSDAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1112,6 +1127,8 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateSAMdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1174,6 +1191,7 @@ CreateSAMdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 CreateEBAMdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1232,6 +1250,8 @@ CreateEBAMdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateHCdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1293,6 +1313,7 @@ CreateHCdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateSOMdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1342,6 +1363,7 @@ CreateSOMdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 
 CreateKMdoc <- function(mSetObj=NA){
   
@@ -1393,6 +1415,8 @@ CreateKMdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateRFdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1475,6 +1499,7 @@ CreateRFdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateSVMdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1528,6 +1553,7 @@ CreateSVMdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateStatFooter <- function(){
   cat("\\vspace{5 mm}\n", file=rnwFile, append=TRUE);
   cat("--------------------------------", file=rnwFile, append=TRUE);
@@ -1544,6 +1570,7 @@ CreateStatFooter <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateRHistAppendix <- function(){
   
   descr <- c("\\section{Appendix: R Command History}\n");
@@ -1565,6 +1592,8 @@ CreateRHistAppendix <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
+#'
 CreateFooter <- function(){
   
   end <- c("\\vspace{5 mm}\n--------------------------------\n\n",
@@ -1581,6 +1610,7 @@ CreateFooter <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 #'
 CreateSummaryTable <- function(mSetObj=NA){
   

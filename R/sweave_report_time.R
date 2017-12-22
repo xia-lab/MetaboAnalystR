@@ -5,6 +5,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
   CreateHeader(usrName);
@@ -33,6 +34,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   descr <- c("\\section{Data Upload and Integrity Checking}\n");
@@ -92,6 +94,7 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 InitTimeSeriesAnal <- function(){
   descr <- c("\\section{Statistical and Machine Learning Data Analysis}",
              "For two-factor and time-series data, MetaboAnalyst offers several carefully selected methods for general two-factor and time-series",
@@ -126,6 +129,7 @@ InitTimeSeriesAnal <- function(){
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
 }
 
+#'@export
 CreateTimeSeriesAnalNullMsg<-function(){
   descr <- c("No analysis was performed on your data.\n");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
@@ -137,6 +141,7 @@ CreateTimeSeriesAnalNullMsg<-function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateiPCAdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
@@ -167,6 +172,7 @@ CreateiPCAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateHeatmap2doc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   # need to check if this process is executed
@@ -207,6 +213,7 @@ CreateHeatmap2doc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateAOV2doc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -256,13 +263,13 @@ CreateAOV2doc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
-
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'Random Forest ASCA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateASCAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -454,6 +461,7 @@ CreateASCAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateMBdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

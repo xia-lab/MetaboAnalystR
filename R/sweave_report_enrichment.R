@@ -4,8 +4,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
-#' write .Rnw file template
+#'@export
 CreateEnrichRnwReport<-function(mSetObj, usrName){
   
   CreateHeader(usrName);
@@ -35,6 +34,7 @@ CreateEnrichRnwReport<-function(mSetObj, usrName){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichIntr <- function(){
   descr <- c("\\section{Background}\n",
              "MSEA or Metabolite Set Enrichment Analysis is a way to identify biologically meaningful",
@@ -65,7 +65,7 @@ CreateEnrichIntr <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'
+#'@export
 CreateEnrichOverview <- function(){
   descr <- c("\\section{MSEA Overview}\n",
              "Metabolite set enrichment analysis consists of four steps - data input, data processing,",
@@ -84,6 +84,7 @@ CreateEnrichOverview <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichInputDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -136,6 +137,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichProcessDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -175,6 +177,7 @@ CreateEnrichProcessDoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichAnalDoc <- function(){
   
   descr <- c("\\section{Selection of Metabolite Set Library}\n",
@@ -223,6 +226,7 @@ CreateEnrichAnalDoc <- function(){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichORAdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -266,6 +270,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichSSPdoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -307,6 +312,7 @@ CreateEnrichSSPdoc <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@export
 CreateEnrichQEAdoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

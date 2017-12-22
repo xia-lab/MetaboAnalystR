@@ -48,6 +48,9 @@ $hit.values
 $match.state
  [1] 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1
 
+# Create the mapping results table
+mSet<-CreateMappingResultTable(mSet)
+
 # Input the name of the compound without any matches 
 mSet<-PerformDetailMatch(mSet, "L-Isolucine");
 

@@ -553,7 +553,8 @@ GetMapTable <- function(mSetObj=NA){
         tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
 }
 
-GetMappingResultTable <- function(mSetObj=NA){
+#'@export
+CreateMappingResultTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   qvec <- mSetObj$dataSet$cmpd;
@@ -625,9 +626,12 @@ GetMappingResultTable <- function(mSetObj=NA){
   mSetObj$dataSet$map.table <- csv.res;
   write.csv(csv.res, file="name_map.csv", row.names=F);
   
-  .set.mSet(mSetObj);
-  return(as.vector(html.res));
-  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(as.vector(html.res));
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 GetHitsRowNumber<-function(mSetObj=NA){
