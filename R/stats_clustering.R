@@ -118,7 +118,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   total<-xdim*ydim;
   if(total>20) { return();}
   
-  ylabel<-GetValueLabel(mSetObj);
+  ylabel<-GetAbundanceLabel(mSetObj$dataSet$type);
   clust<-mSetObj$analSet$som$visual;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -192,7 +192,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   if(clust.num>20) return();
   # calculate arrangement of panel
-  ylabel<-GetValueLabel(mSetObj);
+  ylabel<-GetAbundanceLabel(mSetObj$dataSet$type);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -241,17 +241,20 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       if(GetGroupNumber() == 2){
         if(is.null(mSetObj$analSet$tt)){
           Ttests.Anal(mSetObj);
+          mSetObj <- .get.mSet(mSetObj);
         }
         var.nms <- names(sort(mSetObj$analSet$tt$p.value))[1:top.num];
       }else{
         if(is.null(mSetObj$analSet$aov)){
           ANOVA.Anal(mSetObj);
+          mSetObj <- .get.mSet(mSetObj);
         }
         var.nms <- names(sort(mSetObj$analSet$aov$p.value))[1:top.num];
       }
     }else if(method.nm == 'cor'){
       if(is.null(mSetObj$analSet$cor.res)){
         Match.Pattern(mSetObj);
+        mSetObj <- .get.mSet(mSetObj);
       }
       
       # re-order for pretty view
@@ -268,12 +271,14 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       if(is.null(mSetObj$analSet$plsda)){
         PLSR.Anal(mSetObj);
         PLSDA.CV(mSetObj);
+        mSetObj <- .get.mSet(mSetObj);
       }
       vip.vars <- mSetObj$analSet$plsda$vip.mat[,1];# use the first component
       var.nms <- names(rev(sort(vip.vars)))[1:top.num];
     }else if(method.nm == 'rf'){
       if(is.null(analSet$rf)){
         RF.Anal(mSetObj);
+        mSetObj <- .get.mSet(mSetObj);
       }
       var.nms <- GetRFSigRowNames()[1:top.num];
     }
@@ -400,15 +405,13 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }else{
     border.col <- NA;
   }
-  
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
     Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-  
   if(mSetObj$dataSet$cls.type == "disc"){
-    require(pheatmap);
+    library(pheatmap);
     annotation <- data.frame(class= hc.cls);
     rownames(annotation) <-rownames(hc.dat); 
     

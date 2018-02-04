@@ -10,7 +10,7 @@ SetCurrentMsetLib(mSetObj=NA, lib.type, excludeNum)
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{lib.type}{Input user selected name of library, "self", "pathway", "blood", "urine", "csf", "snp", "predicted",
-"location"}
+"location", "drug"}
 
 \item{excludeNum}{Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)}
 }

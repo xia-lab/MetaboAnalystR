@@ -4,7 +4,7 @@
 \alias{RemoveDuplicates}
 \title{Given a data with duplicates, remove duplicates}
 \usage{
-RemoveDuplicates(mSetObj = NA, data, lvlOpt = "mean", quiet = T)
+RemoveDuplicates(data, lvlOpt = "mean", quiet = T)
 }
 \description{
 Dups is the one with duplicates

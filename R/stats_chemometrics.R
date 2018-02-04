@@ -321,7 +321,7 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink();
   
   if(!.on.public.web){
-  return(.set.mSet(mSetObj));
+    return(.set.mSet(mSetObj));
   }
 }
 
@@ -1305,7 +1305,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   }else{
     cls<-model.matrix(~mSetObj$dataSet$cls-1);
   }
-
+  
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
@@ -1613,7 +1613,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   }else{
     cls<-model.matrix(~mSetObj$dataSet$cls-1);
   }
-
+  
   datmat<-as.matrix(mSetObj$dataSet$norm);
   
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
@@ -1626,17 +1626,17 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   
   if(better.rhits == 0) {
     pr <- paste("p < ", 1/num, " (", better.rhits, "/", num, ")", sep="");
-    }else{
-      p <- better.rhits/num;
-      pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", num, ")", sep="");
-    }
+  }else{
+    p <- better.rhits/num;
+    pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", num, ")", sep="");
+  }
   better.qhits <- sum(q.vec[-1]>=q.vec[1]);
   if(better.qhits == 0) {
     pq <- paste("p < ", 1/num, " (", better.qhits, "/", num, ")", sep="");
-    }else{
-      p <- better.qhits/num;
-      pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", num, ")", sep="");
-      }
+  }else{
+    p <- better.qhits/num;
+    pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", num, ")", sep="");
+  }
   
   rng <- range(c(r.vec, q.vec, 1));
   

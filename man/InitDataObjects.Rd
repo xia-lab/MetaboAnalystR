@@ -12,10 +12,10 @@ specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak
 or msspec (MS spectra data)}
 
 \item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
-cmpdmap, smpmap, or inmex}
+cmpdmap, smpmap, or pathinteg}
 }
 \description{
-This functions handles the construction of a dataSet object for storing data for further processing and analysis.
+This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
 It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform.
 }
 \author{

@@ -76,7 +76,6 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   library(lattice);
   plot(mSetObj$analSet$power$pdD);
   dev.off();
-  print("Power stats plot created")
   return(.set.mSet(mSetObj));
 }
 
@@ -121,7 +120,7 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
   mSetObj$analSet$power$ssD <- ssD;
   mSetObj$analSet$power$Jpred <- Jpred;
   mSetObj$analSet$power$pwrD <- pwrD;
-
+  
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(fdr.lvl);
@@ -151,10 +150,10 @@ PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
-
+    
   }else if(width == 0){
     w <- 8;
-
+    
   }else{
     w <- width;
   }

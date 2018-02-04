@@ -6,32 +6,29 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-LoadKEGGLib<-function(mSetObj=NA, libOpt){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  library('igraph');
+LoadKEGGLib<-function(libOpt){
   
   if(.on.public.web){
     if(libOpt == "integ"){
-      kegg.rda <- paste("../../libs/kegg/integrative/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("../../libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
     }else if(libOpt == "genetic"){
-      kegg.rda <- paste("../../libs/kegg/genetic/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("../../libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
     }else{
-      kegg.rda <- paste("../../libs/kegg/metabolic/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("../../libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
     }
   }else{
     if(libOpt == "integ"){
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/integrative/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
     }else if(libOpt == "genetic"){
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/genetic/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
     }else{
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", inmex.org, ".rda", sep=""); 
+      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
     }
   }
-
+  
   print(paste("adding library:", kegg.rda));
   
-  destfile <- paste(inmex.org, ".rda", sep = "")
+  destfile <- paste(pathinteg.org, ".rda", sep = "")
   
   if(.on.public.web){
     load(kegg.rda, .GlobalEnv);
@@ -43,19 +40,17 @@ LoadKEGGLib<-function(mSetObj=NA, libOpt){
   }
   
   # now need to set up gene/cmpd universe that covered by the kegg
-  mSetObj$dataSet$current.mset <- inmexpa$mset.list;
-  mSetObj$dataSet$current.mset.list <- lapply(mSetObj$dataSet$current.mset, function(x){strsplit(x, " ")});
-  mSetObj$dataSet$current.universe <- unique(unlist(mSetObj$dataSet$current.mset.list));
+  # mSetObj$dataSet$current.mset <- inmexpa$mset.list;
+  # mSetObj$dataSet$current.mset.list <- lapply(mSetObj$dataSet$current.mset, function(x){strsplit(x, " ")});
+  # mSetObj$dataSet$current.universe <- unique(unlist(mSetObj$dataSet$current.mset.list));
+  # inmexpa <<- inmexpa
   
-  inmexpa <<- inmexpa
-  
-  if(!.on.public.web){
-    return(.set.mSet(mSetObj));
-  }else{
-    .set.mSet(mSetObj)
-  }
+  #if(!.on.public.web){
+  #  return(.set.mSet(mSetObj));
+  #}else{
+  #  .set.mSet(mSetObj)
+  #}
 }
-
 
 #'Plot integrated methods pathway analysis
 #'@description Only update the background info for matched node
@@ -75,16 +70,15 @@ LoadKEGGLib<-function(mSetObj=NA, libOpt){
 #'@export
 #'
 PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
-  
+  library(igraph);
   mSetObj <- .get.mSet(mSetObj);
-  
   g <- inmexpa$graph.list[[path.id]]
   g <- upgrade_graph(g); # to fix warning
   phits <- mSetObj$dataSet$path.hits[[path.id]];
-  topo <- mSetObj$dataSet$inmex.impTopo[[path.id]];
+  topo <- mSetObj$dataSet$pathinteg.impTopo[[path.id]];
   
   # obtain up/down/stat information
-  res <- mSetObj$dataSet$inmex.impMat;
+  res <- mSetObj$dataSet$pathinteg.impMat;
   
   bg.cols <- rep("#E3E4FA", length(V(g)));
   line.cols <- rep("dimgrey", length(V(g)));
@@ -124,7 +118,7 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   
   if(!.on.public.web){
     mSetObjIG <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
-    print("Inmex graph has been created, please find it in mSetObj$imgSet$inmex.path")
+    print("pathinteg graph has been created, please find it in mSetObj$imgSet$pathinteg.path")
     return(.set.mSet(mSetObjIG));
   } 
   PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
@@ -152,7 +146,7 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
   }
   
   imgName <- paste(path.id, ".png", sep="");
-  mSetObj$imgSet$inmex.path <- imgName
+  mSetObj$imgSet$pathinteg.path <- imgName
   
   ## Open plot device
   Cairo(file=imgName, width=width, height=height, type="png", bg="transparent");

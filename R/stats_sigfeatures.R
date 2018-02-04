@@ -275,6 +275,14 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 ##############################################
 ##############################################
 
+GetSAMDeltaRange <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mat.fdr<-mSetObj$analSet$sam@mat.fdr;
+  rng <- range(mat.fdr[,"Delta"]);
+  step <- (rng[2]-rng[1])/12
+  return(signif(c(rng, step), 3));
+}
+
 #'For SAM analysis 
 #'@description obtain a default delta with reasonable number
 #'of sig features and decent FDR
@@ -288,6 +296,7 @@ GetSuggestedSAMDelta <- function(mSetObj=NA){
   
   mat.fdr<-mSetObj$analSet$sam@mat.fdr
   deltaVec <- mat.fdr[,"Delta"];
+  
   fdrVec <- mat.fdr[,"FDR"];
   signumVec <- mat.fdr[,"Called"];
   for(i in 1:length(deltaVec)){
@@ -330,7 +339,7 @@ GetSAMSigColNames <- function(mSetObj=NA){
 
 GetSigTable.SAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$sam.cmpds, "SAM");
+  GetSigTable(mSetObj$analSet$sam.cmpds, "SAM", mSetObj$dataSet$type);
 }
 
 GetEBAMSigMat <- function(mSetObj=NA){
@@ -350,6 +359,6 @@ GetEBAMSigColNames <- function(mSetObj=NA){
 
 GetSigTable.EBAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$ebam.cmpds, "EBAM");
+  GetSigTable(mSetObj$analSet$ebam.cmpds, "EBAM", mSetObj$dataSet$type);
 }
 

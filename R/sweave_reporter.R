@@ -12,13 +12,15 @@
 CreatePDFReport<-function(mSetObj=NA, usrName){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  print(mSetObj$analSet$type);
+
   # cannot detect whether PDF generation will fail, so do this all the time
   if(.on.public.web){
     file.copy("../../libs/Sweave.sty", ".")
     save.image("SweaveImage.RData");
   }
-
+  
   # create the Rnw file
   file.create("Analysis_Report.Rnw");
   # open for write
@@ -28,29 +30,40 @@ CreatePDFReport<-function(mSetObj=NA, usrName){
   fig.count <<- 0;
   table.count <<- 0;
   
-  if(mSetObj$analSet$type == "stat" ){
+  anal.type <- mSetObj$analSet$type;
+    
+  if(anal.type == "stat" ){
     CreateStatRnwReport(mSetObj, usrName);
-  }else if(mSetObj$analSet$type == "ts"){
+  }else if(anal.type == "ts"){
     CreateTimeSeriesRnwReport(mSetObj, usrName);
-  }else if(substr(mSetObj$analSet$type, 0, 4) == "mset"){
+  }else if(substr(anal.type, 0, 4) == "mset"){
     CreateEnrichRnwReport(mSetObj, usrName);
-  }else if(mSetObj$analSet$type == "power"){
+  }else if(anal.type == "power"){
     CreatePowerRnwReport(mSetObj, usrName)
-  }else if(mSetObj$analSet$type == "roc"){
+  }else if(anal.type == "roc"){
     CreateBiomarkerRnwReport(mSetObj, usrName)
-  }else if(mSetObj$analSet$type == "inmex"){
-    CreateIntegPathwayAnalysisRnwReport(mSetObj, usrName)
-  }else{
+  }else if(anal.type == "pathinteg"){
+    CreateIntegPathwayAnalysisRnwReport(mSetObj, usrName);
+  }else if(substr(anal.type, 0, 4) == "path"){ # must be after pathiteg
     CreatePathRnwReport(mSetObj, usrName);
+  }else if(anal.type == "network"){
+    CreateNetworkExplorerRnwReport(mSetObj, usrName);
+  }else if(anal.type == "mummichog"){
+     CreateMummichogRnwReport(mSetObj, usrName);
+  }else if(anal.type == "metadata"){
+    CreateMetaAnalysisRnwReport(mSetObj, usrName);
+  }else{
+    AddErrMsg(paste("No template found for this module:", anal.type));
+    return(0);
   }
   
   # close opened files
   close(rnwFile);
   
-  Sweave("Analysis_Report.Rnw");
-  
+  Sweave("Analysis_Report.Rnw", encoding="utf8");
   res <- try(tools::texi2dvi("Analysis_Report.tex", pdf = TRUE, quiet=TRUE));
-  
+
+  return(1);
 }
 
 #'Create report of analyses
@@ -1611,6 +1624,7 @@ CreateFooter <- function(){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'
 CreateSummaryTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

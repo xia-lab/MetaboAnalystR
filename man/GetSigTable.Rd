@@ -4,7 +4,7 @@
 \alias{GetSigTable}
 \title{Create Latex table}
 \usage{
-GetSigTable(mat, method, mSetObj = NA)
+GetSigTable(mat, method, data.type)
 }
 \description{
 generate Latex table

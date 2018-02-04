@@ -61,7 +61,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'@description Plot the compound concentration data compared to the reference concentration range
 #'@usage PlotConcRange(mSetObj, nm, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param inx Input compound index
+#'@param nm of the input compound
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -72,7 +72,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotConcRange<-function(mSetObj=NA, inx, format="png", dpi=72, width=NA){
+PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -183,6 +183,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   
   PlotMSEA.Overview(folds, pvals);
   dev.off();
+  
   PlotEnrichNet.Overview(folds, pvals);
   
   return(.set.mSet(mSetObj));

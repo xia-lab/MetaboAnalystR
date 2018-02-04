@@ -20,7 +20,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   templ <- as.numeric(ClearStrings(strsplit(pattern, "-")[[1]]));
   
   if(all(templ==templ[1])){
-    AddErrMsg(mSetObj, "Cannot calculate correlation on constant values!");
+    AddErrMsg("Cannot calculate correlation on constant values!");
     return(0);
   }
   
@@ -29,7 +29,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   all.lvls <- levels(mSetObj$dataSet$cls);
   
   if(length(templ)!=length(all.lvls)){
-    AddErrMsg(mSetObj, "Wrong template - must the same length as the group number!");
+    AddErrMsg("Wrong template - must the same length as the group number!");
     return(0);
   }
   
@@ -79,7 +79,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   cor.res <- mSetObj$analSet$corr$cor.mat;
   pattern <- mSetObj$analSet$corr$pattern;
-  title <- paste(GetVariableLabel(mSetObj), "correlated with the", pattern);
+  title <- paste(GetVariableLabel(mSetObj$dataSet$type), "correlated with the", pattern);
   if(nrow(cor.res) > 25){
     
     # first get most signficant ones (p value)
@@ -93,7 +93,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
       ord.inx <- rev(ord.inx);
     }
     cor.res <- cor.res[ord.inx, ];
-    title <- paste("Top 25", tolower(GetVariableLabel(mSetObj)), "correlated with the", pattern);
+    title <- paste("Top 25", tolower(GetVariableLabel(mSetObj$dataSet$type)), "correlated with the", pattern);
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -221,7 +221,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }else{
     Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-  
   if(no.clst){
     rowv=FALSE;
     colv=FALSE;
@@ -285,7 +284,7 @@ GetCorSigColNames <- function(mSetObj=NA){
 
 GetSigTable.Corr <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$corr$cor.mat, "Pattern search using correlation analysis", mSetObj);
+  GetSigTable(mSetObj$analSet$corr$cor.mat, "Pattern search using correlation analysis", mSetObj$dataSet$type);
 }
 
 

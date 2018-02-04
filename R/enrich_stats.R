@@ -28,14 +28,14 @@ CalculateHyperScore <- function(mSetObj=NA){
   q.size<-length(ora.vec);
   
   if(is.na(ora.vec) || q.size==0) {
-    AddErrMsg(mSetObj, "No valid HMDB compound names found!");
+    AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }
   
   current.mset <- current.msetlib$member
   
   # make a clean metabilite set based on reference metabolome filtering
-  if(mSetObj$dataSet$use.metabo.filter && exists('mSetObj$dataSet$metabo.filter.hmdb')){
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
@@ -46,7 +46,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   set.size<-length(current.mset);
   
   if(set.size ==1){
-    AddErrMsg(mSetObj, "Cannot perform enrichment analysis on a single metabolite set!");
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
     return(0);
   }
   
@@ -57,7 +57,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   hit.num<-unlist(lapply(hits, function(x) length(x)), use.names = FALSE);
   
   if(sum(hit.num>0)==0){
-    AddErrMsg(mSetObj, "No match was found to the selected metabolite set library!");
+    AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
   }
   
@@ -113,7 +113,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   library('globaltest');
   set.size <- length(current.msetlib);
   if(set.size == 1){
-    AddErrMsg(mSetObj, "Cannot perform enrichment analysis on a single metabolite sets!");
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
     return(0);
   }
   
@@ -131,8 +131,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   current.mset <- current.msetlib$member; 
   
   # make a clean metabilite set based on reference metabolome filtering
-  if(mSetObj$dataSet$use.metabo.filter && exists('mSetObj$dataSet$metabo.filter.hmdb')){
-    current.mset <- lapply(mSetObj$dataSet$current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
+  if(mSetObj$dataSet$use.metabo.filter && !is.null('mSetObj$dataSet$metabo.filter.hmdb')){
+    current.mset <- lapply(inmexpa$mset.list, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
   
@@ -146,10 +146,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   gt.res<-result(gt.obj);
   set.num<-unlist(lapply(current.mset, length), use.names = FALSE);
   
-  
   match.num <- gt.res[,5];
   if(sum(match.num>0)==0){
-    AddErrMsg(mSetObj, "No match was found to the selected metabolite set library!");
+    AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
   }
   
@@ -208,10 +207,7 @@ CalculateSSP<-function(mSetObj=NA){
   ssp.nm <- as.character(nm.map$hmdb[hmdb.inx[match.inx]]);
   ssp.vec <- mSetObj$dataSet$norm[match.inx];
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   hit.inx <- match(tolower(ssp.nm), tolower(cmpd.db$name));
   
@@ -328,17 +324,12 @@ GetSSP.Details<-function(mSetObj=NA){
   return(mSetObj$analSet$ssp.mat[,6]);
 }
 
-GetSSP.NameLink<-function(mSetObj=NA, inx){
-  mSetObj <- .get.mSet(mSetObj);
-  return(paste("<a href=\"http://www.hmdb.ca/metabolites/", mSetObj$analSet$ssp.mat[inx,3], "\">", mSetObj$analSet$ssp.mat[inx,1], "</a>", sep=""));
-}
-
 GetSSP.RefConc<-function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
   if(is.na(mSetObj$analSet$ssp.means[[nm]])){
     return ("NA");
   }
-  return(paste(mSetObj$analSet$ssp.means[[inx]], " (", mSetObj$analSet$ssp.lows[[inx]], " - ", mSetObj$analSet$ssp.highs[[inx]], ")", sep=""));
+  return(paste(mSetObj$analSet$ssp.means[[nm]], " (", mSetObj$analSet$ssp.lows[[nm]], " - ", mSetObj$analSet$ssp.highs[[nm]], ")", sep=""));
 }
 
 GetSSP.Refs<-function(mSetObj=NA, nm){
@@ -459,7 +450,7 @@ GetORATable<-function(mSetObj=NA){
     print(xtable(mSetObj$analSet$ora.mat,align="p{5cm}|l|l|l|l|l|l", display=c("s","d","f","d","E","E","E"), caption="Result from Over Representation Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }else{
-    rownames(res)<-GetORA.pathNames();
+    rownames(res)<-GetORA.pathNames(mSetObj);
     print(xtable(res,align="p{5cm}|l|l|l|l||ll|l|l", display=c("s","d","f","d","E","E", "E","E", "f"),
                  caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");

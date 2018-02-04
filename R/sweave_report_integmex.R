@@ -243,12 +243,12 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   
   inmexpathplot <- c( "\\begin{figure}[htp]",
                       "\\begin{center}",
-                      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$inmex.path,"}", sep=""),
+                      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pathinteg.path,"}", sep=""),
                       "\\caption{", paste("Plot of a selected pathway from the integrated methods pathway analysis.",
                                           " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
                                           " based on fold change (FC) values.", sep=""),"}",
                       "\\end{center}",
-                      paste("\\label{",mSetObj$imgSet$inmex.path,"}", sep=""),
+                      paste("\\label{",mSetObj$imgSet$pathinteg.path,"}", sep=""),
                       "\\end{figure}",
                       "\\clearpage"
   );

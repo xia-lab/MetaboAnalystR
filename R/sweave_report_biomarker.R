@@ -170,11 +170,11 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   if(exists('ratio', where=mSetObj$analSet)){
     
     ratiotable<-c("<<echo=false, results=tex>>=",
-              "CreateRatioTable(mSet)",
-              "@");
+                  "CreateRatioTable(mSet)",
+                  "@");
     cat(ratiotable, file=rnwFile, append=TRUE, sep="\n");
     cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-    }
+  }
   
   else{
     rationo <- "No ratios between metabolite concentration pairs were computed.";
@@ -199,9 +199,9 @@ CreateRatioTable <- function(mSetObj=NA){
   ldf <- lapply(ratiodf, mean)
   mdf <- do.call(rbind.data.frame, mdf)
   colnames(mdf)[1] <- "Mean concentration ratios across all samples"
-    
+  
   print(xtable(mdf, caption="Top ranked included ratios for biomarker analysis"), caption.placement="top", size="\\scriptsize");
-
+  
 }
 
 #'Create power analysis report: Biomarker Univariate Analysis
@@ -327,10 +327,10 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                                     " For a single biomarker, the 95% confidence interval",
                                     " can be computed and will appear as a band around the ROC curve.", sep=""),"}",
                 "Selected model :", modelindex, 
-                     "\\end{center}",
-                     paste("\\label{",mSetObj$imgSet$roc.multi.plot,"}", sep=""),
-                     "\\end{figure}",
-                     "\\clearpage"
+                "\\end{center}",
+                paste("\\label{",mSetObj$imgSet$roc.multi.plot,"}", sep=""),
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -339,15 +339,15 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   modelindex2 <- paste(mSet$imgSet$roc.prob.name)
   
   ROCplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.prob.plot,"}", sep=""),
-              "\\caption{", paste("Plot of predicted class probabilities for all samples using a single biomarker model.",
-                                  " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line).", sep=""),"}",
-              "Selected model :", modelindex2, 
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.prob.plot,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                "\\begin{center}",
+                paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.prob.plot,"}", sep=""),
+                "\\caption{", paste("Plot of predicted class probabilities for all samples using a single biomarker model.",
+                                    " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line).", sep=""),"}",
+                "Selected model :", modelindex2, 
+                "\\end{center}",
+                paste("\\label{",mSetObj$imgSet$roc.prob.plot,"}", sep=""),
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -370,14 +370,14 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   modelindex3 <- paste(mSet$imgSet$roc.imp.name)
   
   ROCplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.imp.plot,"}", sep=""),
-              "\\caption{", paste("Plot of the most important features of a selected model ranked from most to least important.",
-              " Selected model :", modelindex3, sep=""), "}", 
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.imp.plot,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                "\\begin{center}",
+                paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.imp.plot,"}", sep=""),
+                "\\caption{", paste("Plot of the most important features of a selected model ranked from most to least important.",
+                                    " Selected model :", modelindex3, sep=""), "}", 
+                "\\end{center}",
+                paste("\\label{",mSetObj$imgSet$roc.imp.plot,"}", sep=""),
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
@@ -422,17 +422,17 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   modelmethod <- paste(mSet$imgSet$roc.testcurve.method)
   
   ROCplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
-              "\\caption{", paste("Plot of the ROC curve for the created biomarker model based upon its average performance",
-                                  " across all MCCV runs. The 95% confidence interval",
-                                  " can be computed.", sep=""), "}",
-              "Selected model :", modelindex, 
-              "Selected method :", modelmethod, 
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                "\\begin{center}",
+                paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
+                "\\caption{", paste("Plot of the ROC curve for the created biomarker model based upon its average performance",
+                                    " across all MCCV runs. The 95% confidence interval",
+                                    " can be computed.", sep=""), "}",
+                "Selected model :", modelindex, 
+                "Selected method :", modelmethod, 
+                "\\end{center}",
+                paste("\\label{",mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(ROCplot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -441,28 +441,28 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   modelindex2 <- paste(mSet$imgSet$roc.testprob.name)
   
   probplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
-              "\\caption{", paste("Plot of the predicted class probabilities for all samples using the created biomarker model.",
-                                  " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line)." , sep=""),"}",
-              "Selected model :", modelindex2, 
-              "\\end{center}",
-              paste("\\label{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
+                 "\\caption{", paste("Plot of the predicted class probabilities for all samples using the created biomarker model.",
+                                     " Due to balanced subsampling, the classification boundary is at the center (x=0.5, dotted line)." , sep=""),"}",
+                 "Selected model :", modelindex2, 
+                 "\\end{center}",
+                 paste("\\label{", mSetObj$imgSet$roc.testprob.plot,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage"
   );
   cat(probplot, file=rnwFile, append=TRUE, sep="\n");
   
   # Accuracy
   
   acc.plot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testpred,"}", sep=""),
-              "\\caption{", paste("Box plot of the predictive accuracy of the created biomarker model.", sep=""),"}",
-              "\\end{center}",
-              paste("\\label{", mSetObj$imgSet$roc.testpred,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testpred,"}", sep=""),
+                 "\\caption{", paste("Box plot of the predictive accuracy of the created biomarker model.", sep=""),"}",
+                 "\\end{center}",
+                 paste("\\label{", mSetObj$imgSet$roc.testpred,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage"
   );
   cat(acc.plot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -471,16 +471,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   permmethod <- paste(mSet$imgSet$roc.perm.method)
   
   permplot <- c( "\\begin{figure}[htp]",
-              "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm.plot,"}", sep=""),
-              "\\caption{", paste("Plot of the permutations tests using the area under the ROC curve or the predictive accuracy",
-                                  " of the model as a measure of performance. The plot shows the AUC of all permutations, highlighting", 
-                                  " the actual observed AUC in blue, along with showing the empirical p-value.", sep=""),"}",
-              "Selected permutation method :", permmethod, 
-              "\\end{center}",
-              paste("\\label{",mSetObj$imgSet$roc.perm.plot,"}", sep=""),
-              "\\end{figure}",
-              "\\clearpage"
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm.plot,"}", sep=""),
+                 "\\caption{", paste("Plot of the permutations tests using the area under the ROC curve or the predictive accuracy",
+                                     " of the model as a measure of performance. The plot shows the AUC of all permutations, highlighting", 
+                                     " the actual observed AUC in blue, along with showing the empirical p-value.", sep=""),"}",
+                 "Selected permutation method :", permmethod, 
+                 "\\end{center}",
+                 paste("\\label{",mSetObj$imgSet$roc.perm.plot,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage"
   );
   cat(permplot, file=rnwFile, append=TRUE, sep="\n");
   
@@ -488,8 +488,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
     return()
   }else{
     ROCLabelstable <- c("<<echo=false, results=tex>>=",
-                      "CreateROCLabelsTable(mSet)",
-                      "@");
+                        "CreateROCLabelsTable(mSet)",
+                        "@");
     cat(ROCLabelstable, file=rnwFile, append=TRUE, sep="\n");
     
   }

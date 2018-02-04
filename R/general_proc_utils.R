@@ -40,14 +40,14 @@ SanityCheckData <- function(mSetObj=NA){
           pairs <- ReadPairFile();
           # check if they are of the right length
           if(length(pairs)!=nrow(mSetObj$dataSet$orig)){
-            AddErrMsg(mSetObj, "Error: the total paired names are not equal to sample names.");
+            AddErrMsg("Error: the total paired names are not equal to sample names.");
             return(0);
           }else{
             # matching the names of the files
             inx<-match(rownames(mSetObj$dataSet$orig), names(pairs));
             #check if all matched exactly
             if(sum(is.na(inx))>0){
-              AddErrMsg(mSetObj, "Error: some paired names not match the sample names.");
+              AddErrMsg("Error: some paired names not match the sample names.");
               return(0);
             }else{
               mSetObj$dataSet$pairs <- pairs[inx];
@@ -61,9 +61,9 @@ SanityCheckData <- function(mSetObj=NA){
         qc.hits <- tolower(as.character(cls)) %in% "qc";
         mSetObj$dataSet$orig <- mSetObj$dataSet$orig;
         if(sum(qc.hits) > 0){
-          AddErrMsg(mSetObj, "<font color='red'>Error: QC samples not supported in paired analysis mode.</font>");
-          AddErrMsg(mSetObj, "You can perform QC filtering using regular two-group labels.");
-          AddErrMsg(mSetObj, "Then re-upload your data (without QC samples) for paired analysis.");
+          AddErrMsg("<font color='red'>Error: QC samples not supported in paired analysis mode.</font>");
+          AddErrMsg("You can perform QC filtering using regular two-group labels.");
+          AddErrMsg("Then re-upload your data (without QC samples) for paired analysis.");
           return(0);
         }else{
           pairs <- as.numeric(pairs);
@@ -79,12 +79,12 @@ SanityCheckData <- function(mSetObj=NA){
         sorted.pairs <- sort(pairs,index=TRUE);
         
         if(!all(sorted.pairs$x==c(-uni.cl.abs:-1,1:uni.cl.abs))){
-          AddErrMsg(mSetObj, "There are some problems in paired sample labels! ");
+          AddErrMsg("There are some problems in paired sample labels! ");
           if(uni.cl.abs != round(uni.cl.abs)){
-            AddErrMsg(mSetObj, "The total samples must be of even number!");
+            AddErrMsg("The total samples must be of even number!");
           }else{
-            AddErrMsg(mSetObj, paste("And class labels between ",-uni.cl.abs,
-                                     " and 1, and between 1 and ",uni.cl.abs,".",sep=""));
+            AddErrMsg(paste("And class labels between ",-uni.cl.abs,
+                            " and 1, and between 1 and ",uni.cl.abs,".",sep=""));
           }
           return(0);
         }else{  
@@ -320,7 +320,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     print("removemissing")
     
     return(.set.mSet(mSetObj));
-    }
+  }
 }
 
 #'Data processing: Replace missing variables
@@ -491,10 +491,10 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       int.mat <- int.mat[,gd.inx];
       msg <- paste("Removed ", sum(!gd.inx), " features based on QC RSD values. QC samples are still kept. You can remove them later.");
     }else if(sum(qc.hits) > 0){
-      msg <- "RSD requires at least 3 QC samples, and only non-QC based filtering can be applied.";
+      AddErrMsg("RSD requires at least 3 QC samples, and only non-QC based filtering can be applied.");
       return(0);
     }else{
-      mSetObj$msgSet$current.msg <- "No QC Samples (with class label: QC) found.  Please use non-QC based filtering.";
+      AddErrMsg("No QC Samples (with class label: QC) found.  Please use non-QC based filtering.");
       return(0);
     }
   }
@@ -557,25 +557,11 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   }
   
   mSetObj$dataSet$filt <- int.mat[, remain];
-  mSetObj$msgSet$filter.msg <- mSetObj$msgSet$current.msg<- msg;
+  mSetObj$msgSet$filter.msg <- msg;
+  AddMsg(msg);
   return(.set.mSet(mSetObj));
 }
 
-#'Calculate Pairwise Differences
-#'@description mat are log normalized, diff will be ratio
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
-CalculatePairwiseDiff <- function(mat){
-  f <- function(i, mat) {
-    z <- mat[, i-1] - mat[, i:ncol(mat), drop = FALSE]
-    colnames(z) <- paste(colnames(mat)[i-1], colnames(z), sep = "/")
-    z
-  }
-  res <- do.call("cbind", sapply(2:ncol(mat), f, mat));
-  round(res,5);
-}
 
 #'Group peak list
 #'@description Group peaks from the peak list based on position
@@ -828,8 +814,8 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   # transpose to make row for samples
   orig <- as.data.frame(t(values));
   
-  msg=c(msg, paste("These peaks were aligned to", dim(orig)[2], "groups according to their mass and retention time."));
-  msg=c(msg, paste("Please note that some peaks were excluded if they appear in only a few samples."));
+  msg <- c(msg, paste("These peaks were aligned to", dim(orig)[2], "groups according to their mass and retention time."));
+  msg <-c(msg, paste("Please note that some peaks were excluded if they appear in only a few samples."));
   mSetObj$msgSet$xset.msg <- msg;
   mSetObj$dataSet$orig <- orig;
   mSetObj$dataSet$orig.cls <- as.factor(sampclass(mSetObj$dataSet$xset.fill));

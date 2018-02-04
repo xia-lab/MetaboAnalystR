@@ -2,26 +2,16 @@
 % Please edit documentation in R/general_misc_utils.R
 \name{Get.bwss}
 \alias{Get.bwss}
-\alias{Get.bwss}
 \title{Compute within group and between group sum of squares
 (BSS/WSS) for each row of a matrix which may have NA}
 \usage{
-Get.bwss(x, cl)
-
 Get.bwss(x, cl)
 }
 \description{
 Columns have labels, x is a numeric vector,
 cl is consecutive integers
-
-Columns have labels, x is a numeric vector,
-cl is consecutive integers
 }
 \author{
-Jeff Xia\email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
-
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)

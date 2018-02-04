@@ -9,7 +9,7 @@ PlotConcRange(mSetObj, nm, format="png", dpi=72, width=NA)
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{inx}{Input compound index}
+\item{nm}{of the input compound}
 
 \item{format}{Select the image format, "png", or "pdf".}
 

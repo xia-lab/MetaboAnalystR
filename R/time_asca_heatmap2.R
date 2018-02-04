@@ -1171,7 +1171,7 @@ GetSigTable.ASCA <- function(mSetObj=NA, nm){
   }else{
     nmLbl <- paste("interaction effect between",  mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
   }
-  GetSigTable(mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj);
+  GetSigTable(mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj$dataSet$type);
   return(.set.mSet(mSetObj));
 }
 

@@ -6,8 +6,11 @@
 #'License: GNU GPL (>= 2)
 
 aov.within <- function(x, time.fac){
-  
   unlist(summary(aov(x ~ (aov.facA*aov.facB) + Error(aov.sbj/time.fac))), use.names=F)[c(9,23,24)];
+}
+
+aov.within.wo <- function(x, time.fac){
+  unlist(summary(aov(x ~ (aov.facA+aov.facB))), use.names=F)[c(13,14)];
 }
 
 #'Perform Two-way ANOVA 
@@ -30,8 +33,11 @@ aov.repeated <- function(x, time.fac){
 #'License: GNU GPL (>= 2)
 
 aov.between <- function(x){
-  
   unlist(summary(aov(x ~ aov.facA*aov.facB)), use.names=F)[c(17,18,19)];
+}
+
+aov.between.type3 <- function(x){
+  unlist(Anova(lm(x ~ aov.facA*aov.facB), type="3"))[c(17,18,19)];
 }
 
 #'Perform Two-way ANOVA 
@@ -41,12 +47,13 @@ aov.between <- function(x){
 #'@param thresh Input the p-value threshold 
 #'@param p.cor select method for p-value correction, bonferroni, holm or fdr
 #'@param type select b to perform between-subjects ANOVA, and w for within-subjects ANOVA 
+#'@param use.interact is whether to consider interaction in two-way repeated ANOVA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
+ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -66,7 +73,7 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
     res.mean <- apply(res, 2, mean);
     all.res <- res/res.mean;
     if(sum(all.res != 1) > 0){
-      AddErrMsg(mSetObj,"Experiment design is not balanced!");
+      AddErrMsg("Experiment design is not balanced!");
       return(0);
     }
     aov.sbj <<- mSetObj$dataSet$sbj
@@ -94,7 +101,7 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
       res.mean <- apply(res, 2, mean);
       all.res <- res/res.mean;
       if(sum(all.res != 1) > 0){
-        AddErrMsg(mSetObj,"Experiment design is not balanced!");
+        AddErrMsg("Experiment design is not balanced!");
         return(0);
       }
       time.fac <- mSetObj$dataSet$time.fac;
@@ -127,9 +134,11 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
       aov.facA <<- mSetObj$dataSet$facA
       aov.facB <<- mSetObj$dataSet$facB
       aov.sbj <<- mSetObj$dataSet$sbj
-      
-      aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.within, time.fac));
-      
+      if(use.interact){
+        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.within, time.fac));
+      }else{
+        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.within.wo, time.fac));
+      }
       rm(aov.facA, pos=".GlobalEnv")
       rm(aov.facB, pos=".GlobalEnv")
       rm(aov.sbj, pos=".GlobalEnv")
@@ -138,8 +147,13 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
     }else{
       aov.facA <<- mSetObj$dataSet$facA
       aov.facB <<- mSetObj$dataSet$facB
-      aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between));
       
+      if(aov.type == 1){
+        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between));
+      }else{
+        library(car);
+        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between.type3));
+      }
       rm(aov.facA, pos=".GlobalEnv")
       rm(aov.facB, pos=".GlobalEnv")
       
@@ -147,26 +161,42 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0"){
     }
     rownames(aov.mat)<-colnames(mSetObj$dataSet$norm);
     
-    if(p.cor != "none"){
-      aov.mat <- cbind (p.adjust(aov.mat[,1], p.cor),
-                        p.adjust(aov.mat[,2], p.cor),
-                        p.adjust(aov.mat[,3], p.cor));
+    if(use.interact){
+      if(p.cor != "none"){
+        aov.mat <- cbind (p.adjust(aov.mat[,1], p.cor),
+                          p.adjust(aov.mat[,2], p.cor),
+                          p.adjust(aov.mat[,3], p.cor));
+      }
+      
+      sig.facA <-(aov.mat[,1] <= thresh);
+      sig.facB <-(aov.mat[,2] <= thresh);
+      sig.intr <-(aov.mat[,3] <= thresh);
+      
+      all.match <- cbind(sig.facA, sig.facB, sig.intr);
+      colnames(all.match) <- colnames(aov.mat) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
+      
+      vennC <- getVennCounts(all.match);
+      p.value <- aov.mat[,1]; # not used
+      inx.imp <- sig.facA | sig.facB | sig.intr;
+    }else{
+      if(p.cor != "none"){
+        aov.mat <- cbind(p.adjust(aov.mat[,1], p.cor), p.adjust(aov.mat[,2], p.cor));
+      }
+      
+      sig.facA <-(aov.mat[,1] <= thresh);
+      sig.facB <-(aov.mat[,2] <= thresh);
+      
+      all.match <- cbind(sig.facA, sig.facB);
+      colnames(all.match) <- colnames(aov.mat) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+      
+      vennC <- getVennCounts(all.match);
+      p.value <- aov.mat[,1]; # not used
+      inx.imp <- sig.facA | sig.facB;
     }
-    
-    sig.facA <-(aov.mat[,1] <= thresh);
-    sig.facB <-(aov.mat[,2] <= thresh);
-    sig.intr <-(aov.mat[,3] <= thresh);
-    
-    all.match <- cbind(sig.facA, sig.facB, sig.intr);
-    colnames(all.match) <- colnames(aov.mat) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
-    
-    vennC <- getVennCounts(all.match);
-    p.value <- aov.mat[,1]; # not used
-    inx.imp <- sig.facA | sig.facB | sig.intr;
     aov.mat <- aov.mat[inx.imp, ,drop=F];
     
     # default sort first by main effect: treatment, then by ...
-    ord.inx <- order(aov.mat[,1], aov.mat[,2], aov.mat[,3], decreasing = FALSE);
+    ord.inx <- order(aov.mat[,1], aov.mat[,2], decreasing = FALSE);
   }
   
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
@@ -408,8 +438,7 @@ GetAov2SigColNames<-function(mSetObj=NA){
 
 GetSigTable.Aov2<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$aov2$sig.mat,
-              "Significant features identified by advanced ANOVA", mSetObj);
+  GetSigTable(mSetObj$analSet$aov2$sig.mat, "Significant features identified by advanced ANOVA", mSetObj$dataSet$type);
 }
 
 GetAnova2UpMat<-function(mSetObj=NA){

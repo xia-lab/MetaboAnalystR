@@ -39,7 +39,8 @@ Imports: Rserve,
     sva,
     Rcpp,
     pROC,
-    data.table
+    data.table,
+    limma
 Suggests: knitr,
     rmarkdown,
     xcms,

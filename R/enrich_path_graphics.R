@@ -40,7 +40,7 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
         # remember to change jscode for image size when the change the size above
         par(mar=c(4,4,1,1));
         
-        y.label<-GetValueLabel(mSetObj);
+        y.label<-GetAbundanceLabel(mSetObj$dataSet$type);
         if(is.factor(mSetObj$dataSet$cls)){
           cls.lbls <- mSetObj$dataSet$cls;
           if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){

@@ -4,10 +4,12 @@
 \alias{CalculateFeatureRanking}
 \title{Calculates feature importance}
 \usage{
-CalculateFeatureRanking(mSet)
+CalculateFeatureRanking(mSet, clust.num)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{clust.num}{Numeric, input the number of clusters for cluster-analysis}
 }
 \description{
 Perform calculation of feature importance (AUC, p value, fold change)

@@ -29,9 +29,9 @@ UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
     }
   }
   
-  if(!grp.nm.vec %in% cls){
-    mSetObj$msgSet$current.msg <- "Cannot find group names!"
-    return ("Cannot find group names!")
+  if(!all(grp.nm.vec %in% cls)){
+    AddErrMsg("Cannot find group names!");
+    return(0);
   }
   
   hit.inx <- cls %in% grp.nm.vec;
@@ -43,13 +43,13 @@ UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
     mSetObj$dataSet$prenorm.facB <- droplevels(factor(facB[!hit.inx]));
   }
   
-  mSetObj$msgSet$current.msg <- "Successfully updated the group items!";
-  
+  AddMsg("Successfully updated the group items!");
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(length(levels(mSetObj$dataSet$prenorm.cls)));
+  }else{
+    return(.set.mSet(mSetObj));
   }
-  return(.set.mSet(mSetObj));
 }
 
 #'Clean the data matrix
@@ -93,8 +93,8 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
   }
   
   if(!smpl.nm.vec %in% rownames(data)){
-    mSetObj$msgSet$current.msg <- "Cannot find the sample names!"
-    return ("Cannot find the sample names!")
+    AddErrMsg("Cannot find the sample names!");
+    return(0)
   }
   
   hit.inx <- rownames(data) %in% smpl.nm.vec;
@@ -105,8 +105,14 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
     mSetObj$dataSet$prenorm.facB <- as.factor(as.character(facB[!hit.inx]));
   }
   
-  mSetObj$msgSet$current.msg <- "Successfully updated the sample items!";
-  return(.set.mSet(mSetObj));
+  AddMsg("Successfully updated the sample items!");
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(length(levels(mSetObj$dataSet$prenorm.cls)));
+  }else{
+    return(.set.mSet(mSetObj)); 
+  }
 }
 
 #' Remove feature items
@@ -141,16 +147,15 @@ UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
   }
   
   if(!feature.nm.vec %in% colnames(data)){
-    mSetObj$msgSet$current.msg <- "Cannot find the feature names!"
-    return ("Cannot find the feature names!")
+    AddErrMsg("Cannot find the feature names!");
+    return(0);
   }
   
   hit.inx <- colnames(data) %in% feature.nm.vec;
   mSetObj$dataSet$prenorm <- CleanDataMatrix(data[,!hit.inx,drop=FALSE]);
   mSetObj$dataSet$prenorm.cls <- cls; # this is the same
   
-  mSetObj$msgSet$current.msg <- "Successfully updated the feature items!";
-  print("Successfully updated the feature items!");
+  AddMsg("Successfully updated the feature items!");
   return(.set.mSet(mSetObj));
 }
 
@@ -492,8 +497,8 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   rangex.pre <- range(mSetObj$dataSet$procr[, pre.inx], na.rm=T);
   rangex.norm <- range(mSetObj$dataSet$norm[, norm.inx], na.rm=T);
   
-  x.label<-GetValueLabel(mSetObj);
-  y.label<-GetVariableLabel(mSetObj);
+  x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
+  y.label<-GetVariableLabel(mSetObj$dataSet$type);
   
   # fig 1
   op<-par(mar=c(4,7,4,0), xaxt="s");
@@ -571,7 +576,7 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   rangex.pre <- range(mSetObj$dataSet$procr[pre.inx,], na.rm=T);
   rangex.norm <- range(mSetObj$dataSet$norm[norm.inx,], na.rm=T);
   
-  x.label<-GetValueLabel(mSetObj);
+  x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-"Samples";
   
   # fig 1

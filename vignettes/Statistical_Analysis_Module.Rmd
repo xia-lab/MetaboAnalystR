@@ -29,7 +29,7 @@ mSet<-InitDataObjects("conc", "stat", FALSE)
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
-mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "S10T0", ratio=FALSE, ratioNum=20)
+mSet<-Normalization(mSet, "NULL", "LogNorm", "MeanCenter", "S10T0", ratio=FALSE, ratioNum=20)
 mSet<-PlotNormSummary(mSet, "norm_0_", format ="png", dpi=72, width=NA)
 mSet<-PlotSampleNormSummary(mSet, "snorm_0_", format = "png", dpi=72, width=NA)
 

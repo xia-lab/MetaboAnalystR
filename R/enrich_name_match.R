@@ -25,20 +25,14 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
   
   if(.on.public.web){
     .set.mSet(mSetObj);
-  }
-  
-  if(!.on.public.web){
-    mSetObj <- MetaboliteMappingExact(mSetObj, q.type);
-  }else{
     MetaboliteMappingExact(mSetObj, q.type);
+    mSetObj <- .get.mSet(mSetObj);
+  }else{
+    mSetObj <- MetaboliteMappingExact(mSetObj, q.type);
   }
   
-  if(.on.public.web){
-    mSetObj <- .get.mSet(mSetObj);
-  }
   
   # do some sanity check
-
   todo.inx <- which(is.na(mSetObj$name.map$hit.inx));
   
   if(length(todo.inx)/length(mSetObj$name.map$hit.inx) > 0.5){
@@ -72,13 +66,15 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   match.values <- vector(mode='character', length=length(qvec)); # the best matched values (hit names), initial ""
   match.state <- vector(mode='numeric', length=length(qvec));  # match status - 0, no match; 1, exact match; initial 0 
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   if(q.type == "hmdb"){
+    n <- 5 # Number of digits for V3 of HMDB
+    hmdb.digits <- as.vector(sapply(cmpd.db$hmdb, function(x) strsplit(x, "HMDB")[[1]][2]))
+    hmdb.v3.ids <- paste0("HMDB", substr(hmdb.digits, nchar(hmdb.digits)-n+1, nchar(hmdb.digits)))
+    hit.inx.v3 <- match(tolower(qvec), tolower(hmdb.v3.ids));
     hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
+    hit.inx[is.na(hit.inx)] <- hit.inx.v3[is.na(hit.inx)]
     match.values <- cmpd.db$name[hit.inx];
     match.state[!is.na(hit.inx)] <- 1;
   }else if(q.type == "pubchem"){
@@ -110,7 +106,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
     match.state[!is.na(hit.inx)] <- 1;
     
     # then try to find exact match to synanyms for the remaining unmatched query names one by one
-    syn.db <- read_synnames_RDS("syn_nms.rds")
+    syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
     syns.list <-  syn.db$syns.list;
     todo.inx <-which(is.na(hit.inx));
     if(length(todo.inx) > 0){
@@ -149,9 +145,6 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   mSetObj$name.map$hit.values <- match.values;
   mSetObj$name.map$match.state <- match.state;
   
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -177,27 +170,16 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 PerformMultiMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
-  
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   matched.inx <- which(cmpd.db$kegg %in% q);
-  
   if(length(matched.inx) > 0) {
     # record all the candidates,
     candidates <- cbind(matched.inx, cmpd.db$name[matched.inx]);
     mSetObj$dataSet$candidates <- candidates;
-    .set.mSet(mSetObj);
-  }
-  mSetObj$dataSet$candidates <- NULL
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
   }else{
-    return(.set.mSet(mSetObj));
+    mSetObj$dataSet$candidates <- NULL;
   }
+  return(.set.mSet(mSetObj));
 }
 
 #'Perform approximate compound matches
@@ -208,15 +190,12 @@ PerformApproxMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   # only for none lipids
   nonLipidInx <- cmpd.db$lipid == 0;
   com.nms <- cmpd.db$name[nonLipidInx];
   
-  syn.db <- read_synnames_RDS("syn_nms.rds")
+  syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
   syns.vec <- syn.db$syns.vec[nonLipidInx];
   syns.list <- syn.db$syns.list[nonLipidInx];
   
@@ -303,11 +282,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   mSetObj <- .get.mSet(mSetObj);
   
   can_mat <- mSetObj$dataSet$candidates;
-  
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   query_inx <- which(mSetObj$name.map$query.vec == query_nm);
   can_inx <- which(can_mat[,2] == can_nm);
@@ -351,9 +326,9 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(query_inx);
+  }else{
+    return(.set.mSet(mSetObj));
   }
-  print(query_inx)
-  return(.set.mSet(mSetObj));
 }
 
 #'Perform pathway mapping
@@ -365,12 +340,8 @@ PathMapping <- function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
   qvec <- strsplit(qvec, "; *")[[1]];
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
-  # load to local environment to save memory
-  syn.db <- readRDS("http://www.metaboanalyst.ca/resources/libs/syn_nms.rds");
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  syn.db <-  .read.metaboanalyst.lib("syn_nms.rds");
   
   if(!exists('path.list', where = mSetObj$dataSet)){
     LoadSmpLib(mSetObj);
@@ -456,17 +427,15 @@ PathMapping <- function(mSetObj=NA, qvec){
 #'@export
 
 GetCandidateList <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   # contruct the result table with cells wrapped in html tags
   # the unmatched will be highlighted in different background
   
   can.mat <- matrix("", nrow=nrow(mSetObj$dataSet$candidates)+1, ncol= 6);
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
   
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   # need to exclude lipids, to be consistent with approx matching part so that same index can be used to fetch db entries
   nonLipidInx <- cmpd.db$lipid == 0;
@@ -490,7 +459,7 @@ GetCandidateList <- function(mSetObj=NA){
   return.cols <- c(TRUE, mSetObj$return.cols);
   
   if(.on.public.web){
-  return(as.vector(can.mat[,return.cols, drop=F]));
+    return(as.vector(can.mat[,return.cols, drop=F]));
   }
   
   mSetObj$name.map$hits.candidate.list <- can.mat[,mSetObj$return.cols, drop=F]
@@ -525,10 +494,8 @@ GetFinalNameMap <- function(mSetObj=NA){
   qvec <- mSetObj$dataSet$cmpd;
   nm.mat <- matrix(nrow=length(qvec), ncol=3);
   colnames(nm.mat) <- c("query", "hmdb", "kegg");
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
   
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   for (i in 1:length(qvec)){
     hit <-cmpd.db[hit.inx[i], ,drop=F];
@@ -544,7 +511,6 @@ GetFinalNameMap <- function(mSetObj=NA){
   return(as.data.frame(nm.mat));
 }
 
-#'@export
 GetMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -585,10 +551,8 @@ CreateMappingResultTable <- function(mSetObj=NA){
   html.res <- matrix("", nrow=length(qvec), ncol=8);
   csv.res <- matrix("", nrow=length(qvec), ncol=8);
   colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "Comment");
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
   
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   for (i in 1:length(qvec)){
     if(match.state[i]==1){
@@ -633,6 +597,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
   }else{
     return(.set.mSet(mSetObj));
   }
+  
 }
 
 GetHitsRowNumber<-function(mSetObj=NA){

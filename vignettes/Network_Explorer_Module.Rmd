@@ -1,0 +1,96 @@
+---
+title: "Network Explorer Module"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Network Explorer Module}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction 
+
+Biological processes are driven by a complex web of interactions amongst numerous molecular entities of a biological system. The classical method of pathway analysis is unable to identify important associations or interactions between molecules belonging to different pathways. Network analysis is therefore commonly used to address this limitation. Here, the aim of the Network Explorer module is to provide an easy-to-use tool to that allows users to map their metabolites and/or genes onto different networks for novel insights or development of new hypotheses.
+
+Mapping of both  metabolites and genes are supported in this module (including KOs), whereby either entity can be projected onto five existing biological networks including the KEGG global metabolic network, the gene-metabolite interaction network, the metabolite-disease interaction network, the metabolite-metabolite interaction network, and the metabolite-gene-disease interaction network. The last four networks are created based on information gathered from HMDB and STITCH and are applicable to human studies only. 
+
+Users can upload either a list of metabolites, a list of genes, or a list of both metabolites and genes. MetaboAnalystR currently accepts compound names, HMDB IDs, KEGG compound IDs as metabolite identifiers. As well, we only accept Entrez IDs, ENSEMBL IDs, Official Gene Symbols, or KEGG Orthologs (KO) as gene identifiers. The uploaded list of metabolites and/or genes is then mapped using our internal databases of metabolites and gene annotations. Following this step, users can select which of the five networks to begin visually exploring their data.
+
+## 2. Network Explorer
+
+As the main goal of the network explorer module is to allow for user's to visually explore their data, the ideal setting is to use the MetaboAnalyst web-server, which permits interactive exploration such as drag-and-drop of nodes, highlighting specific nodes, deleting specific nodes, and overlapping pathway-analysis onto the network. Further, a user's edited network image can be downloaded as a SVG or PNG images for publication purposes. The use of the Network Explorer module in R will result in a JSON file of your network that can be viewed in other network-visuzalization applications. Further, this module will create a snapshot of a network in your working directory, though this image may be hard to interpret if user's data is too large. 
+
+# 2.1 Uploading User Data
+
+This module require's user's to upload a list of metabolites, a list of genes, or both. For users to prepare these lists, they can copy and paste a list of metabolites and/or genes into a plain text file, which can then be uploaded to R. The steps include:
+
+1) Set working directory to location of your files for analysis
+2) Set your list of features as "geneListFile"  &/or "cmpdListFile" in R
+3) Read in the text file for analysis using *readChar*, saving it as "geneList" and/or "cmpdList" respectively.
+
+# 2.1 Detailed steps surrounding a typical workflow are below:
+
+```{r, eval=FALSE}
+
+# Create objects for storing processed data from the network explorer module
+mSet <- InitDataObjects("conc", "network", FALSE)
+
+# Set organism to human, at the moment only human data can be accomodated
+mSet<-SetOrganism(mSet, "hsa")
+
+# Set geneListFile as a file containing your gene list
+geneListFile<-"replace_with_your_file_name"
+
+# Read in the geneListFile
+# This will import a plain text file as single character string
+geneList<-readChar(geneListFile, file.info(geneListFile)$size)
+
+# Perform gene ID mapping
+mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "entrez");
+
+# Set cmpdListFile as a file containing your metablolite list
+cmpdListFile <- "replace_with_your_file_name"
+
+# Read in the cmpdListFile
+# This will import a plain text file as single character string
+cmpdList<-readChar(cmpdListFile, file.info(cmpdListFile)$size)
+
+# Perform compound ID mapping
+mSet<-PerformIntegCmpdMapping(mSet, cmpdList, "hsa", "kegg");
+
+# Create the mapping results table
+mSet<-CreateMappingResultTable(mSet)
+
+# Prepare the data for network analysis, saves a .json file that can be uploaded
+# to external sites/packages to view the network
+mSet<-PrepareNetworkData(mSet);
+ 
+# After selecting KEGG global metabolic network
+mSet<-PrepareQueryJson(mSet)
+ 
+# Perform enrichment analysis based on uploaded KOs (KEGG Global Metabolic Network) 
+PerformKOEnrichAnalysis_KO01100("pathway", "network_enrichment_pathway_0");
+
+# Perform mapping for interaction network
+SearchNetDB("pheno", "gene_metabolites", FALSE, 0.5)
+
+```
+
+## 3. Sweave Report 
+
+To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+# Create Biomarker Sweave report 
+CreatePDFReport(mSet, "User Name")
+
+# To save all files created during your session
+SaveTransformedData(mSet)
+
+```
+
+
+
+
+

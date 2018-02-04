@@ -147,7 +147,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   if(fc$paired){
     ylim <- c(-nrow(mSetObj$dataSet$norm)/2, nrow(mSetObj$dataSet$norm)/2);
     xlim <- c(0, ncol(mSetObj$dataSet$norm));
-    plot(NULL, xlim=xlim, ylim=ylim, xlab = GetVariableLabel(mSetObj),
+    plot(NULL, xlim=xlim, ylim=ylim, xlab = GetVariableLabel(mSetObj$dataSet$type),
          ylab=paste("Count with FC >=", fc$max.thresh, "or <=", fc$min.thresh));
     for(i in 1:ncol(fc$fc.all)){
       segments(i,0, i, fc$fc.all[1,i], col= ifelse(fc$inx.up[i],"magenta", "darkgrey"),
@@ -163,7 +163,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
       # be symmetrical
       topVal <- max(abs(fc$fc.log));
       ylim <- c(-topVal, topVal);
-      plot(fc$fc.log,  ylab="Log2 (FC)", ylim = ylim, xlab = GetVariableLabel(mSetObj), pch=19, axes=F,
+      plot(fc$fc.log,  ylab="Log2 (FC)", ylim = ylim, xlab = GetVariableLabel(mSetObj$dataSet$type), pch=19, axes=F,
            col= ifelse(fc$inx.imp, "magenta", "darkgrey"));
       axis(2);
       axis(4); # added by Beomsoo
@@ -302,9 +302,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   
   inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
-  msg <- NULL;
   
-  mSetObj$msgSet$current.msg <- paste(c(msg, "A total of", sum(inx.imp), "significant features were found."), collapse=" ");
+  AddMsg(paste("A total of", sum(inx.imp), "significant features were found."));
   sig.num <- sum(inx.imp);
   
   if(sig.num > 0){
@@ -360,7 +359,6 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
     .set.mSet(mSetObj);
     return(sig.num);
   }
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -394,7 +392,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$tt <- imgName;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(mSetObj$analSet$tt$p.log, ylab="-log10(p)", xlab=GetVariableLabel(mSetObj), main=mSetObj$analSet$tt$tt.nm, pch=19,
+  plot(mSetObj$analSet$tt$p.log, ylab="-log10(p)", xlab=GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$tt$tt.nm, pch=19,
        col= ifelse(mSetObj$analSet$tt$inx.imp, "magenta", "darkgrey"));
   abline (h=mSetObj$analSet$tt$thresh, lty=3);
   axis(4); 
@@ -761,7 +759,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
     }
   }
   
-  mSetObj$msgSet$current.msg <- paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" ");
+  AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
   if(sig.num> 0){
     res <- 1;
     write.csv(sig.mat,file=fileName);
@@ -830,7 +828,7 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$anova <- imgName;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(lod, ylab="-log10(p)", xlab = GetVariableLabel(mSetObj), main=mSetObj$analSet$aov$aov.nm, type="n");
+  plot(lod, ylab="-log10(p)", xlab = GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$aov$aov.nm, type="n");
   red.inx <- which(mSetObj$analSet$aov$inx.imp);
   blue.inx <- which(!mSetObj$analSet$aov$inx.imp);
   points(red.inx, lod[red.inx], bg="red", cex=1.2, pch=21);
@@ -859,7 +857,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 
 GetSigTable.FC <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$fc$sig.mat, "fold change analysis", mSetObj);
+  GetSigTable(mSetObj$analSet$fc$sig.mat, "fold change analysis", mSetObj$dataSet$type);
 }
 
 GetFCSigMat <- function(mSetObj=NA){
@@ -900,7 +898,7 @@ GetAovPostHocSig <- function(mSetObj=NA){
 
 GetSigTable.Anova <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$aov$sig.mat, "One-way ANOVA and post-hoc analysis", mSetObj);
+  GetSigTable(mSetObj$analSet$aov$sig.mat, "One-way ANOVA and post-hoc analysis", mSetObj$dataSet$type);
 }
 
 GetAnovaUpMat <- function(mSetObj=NA){
@@ -958,7 +956,7 @@ GetTTSigNum <- function(mSetObj=NA){
 
 GetSigTable.TT <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$tt$sig.mat, "t-tests", mSetObj);
+  GetSigTable(mSetObj$analSet$tt$sig.mat, "t-tests", mSetObj$dataSet$type);
 }
 
 #'T-test matrix
@@ -1271,7 +1269,7 @@ GetTopInx <- function(vec, n, dec=T){
 
 GetSigTable.Volcano <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$volcano$sig.mat, "volcano plot", mSetObj);
+  GetSigTable(mSetObj$analSet$volcano$sig.mat, "volcano plot", mSetObj$dataSet$type);
 }
 
 GetVolcanoSigMat <- function(mSetObj=NA){

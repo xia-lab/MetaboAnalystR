@@ -28,6 +28,17 @@ doGeneIDMapping <- function(q.vec, org, type){
     entrezs <- db.map[hit.inx, "gene_id"];
     rm(db.map, q.vec);
     return(entrezs);
+  }else if(type == "kos"){
+    db.path <- paste(url.pre, "network/ko_dic_new.csv", sep="");
+    db.map <-  .readDataTable(db.path);
+    #db.map <- db.map[as.integer(db.map[,"Entrez_hsa"]) != -1,]
+    hit.inx <- match(q.vec, db.map[, "KO"]);
+    entrezs <- as.integer(db.map[hit.inx, "Entrez_hsa"]);
+    entrezs[entrezs==-1] <- NA
+    kos <- db.map[hit.inx, "KO"];
+    result <- list(entrezs = entrezs, kos = kos)
+    rm(db.map, q.vec);
+    return(result);
   }else{ 
     if(type == "genbank"){
       db.path <- paste(url.pre, org, "/entrez_gb.rda", sep="");
@@ -66,7 +77,13 @@ PerformGeneAnnotation <- function(){
     return(0);
   }
   
-  db.path <- paste("http://www.metaboanalyst.ca/resources/libs/", inmex.org, "/entrez.csv", sep="");
+  if(.on.public.web){
+    url.pre <- "../../libs/";
+  }else{
+    url.pre <- "http://www.metaboanalyst.ca/resources/libs/";
+  }
+  
+  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
   gene.map <-  .readDataTable(db.path);
   
   hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
@@ -78,7 +95,14 @@ PerformGeneAnnotation <- function(){
 }
 
 doEntrez2SymbolMapping <- function(entrez.vec){
-  db.path <- paste("http://www.metaboanalyst.ca/resources/libs/", inmex.org, "/entrez.csv", sep="");
+  
+  if(.on.public.web){
+    url.pre <- "../../libs/";
+  }else{
+    url.pre <- "http://www.metaboanalyst.ca/resources/libs/";
+  }
+  
+  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
   gene.map <- .readDataTable(db.path);
   
   hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
@@ -91,10 +115,8 @@ doEntrez2SymbolMapping <- function(entrez.vec){
 
 #'@export
 doCompoundMapping<-function(cmpd.vec, q.type){
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
   
-  cmpd.map <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.map <- .read.metaboanalyst.lib("compound_db.rds");
   
   if(q.type == "name"){
     
@@ -105,7 +127,7 @@ doCompoundMapping<-function(cmpd.vec, q.type){
     todo.inx <-which(is.na(hit.inx));
     if(length(todo.inx) > 0){
       # then try to find exact match to synanyms for the remaining unmatched query names one by one
-      syn.db <- read_synnames_RDS("syn_nms.rds")
+      syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
       syns.list <-  syn.db$syns.list;
       for(i in 1:length(syns.list)){
         syns <-  syns.list[[i]];
@@ -144,10 +166,7 @@ doCompoundMapping<-function(cmpd.vec, q.type){
 
 #'@export
 doKEGG2NameMapping <- function(kegg.vec){
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.map <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.map <- .read.metaboanalyst.lib("compound_db.rds");
   hit.inx <- match(tolower(kegg.vec), tolower(cmpd.map$kegg));
   nms <- cmpd.map[hit.inx, "name"];
   return(nms);

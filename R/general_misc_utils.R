@@ -71,9 +71,7 @@ MergeDuplicates <- function(data, dim=2){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
-  
-  mSetObj <- .get.mSet(mSetObj);
+RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   
   all.nms <- rownames(data);
   colnms <- colnames(data);
@@ -107,16 +105,10 @@ RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
         uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, sum, na.rm=T);
       }
     }
-    if(!quiet){
-      mSetObj$msgSet$current.msg <- paste(current.msg, paste("A total of ", sum(dup.inx), " of duplicates were replaced by their ", lvlOpt, ".", sep=""), collapse="\n");
-      print(mSetObj$msgSet$current.msg)
-    }
+    AddMsg(paste("A total of ", sum(dup.inx), " of duplicates were replaced by their ", lvlOpt, ".", sep=""));
     return(uniq.data);
   }else{
-    if(!quiet){
-      mSetObj$msgSet$current.msg <- paste(current.msg, "All IDs are unique.", collapse="\n");
-      print(mSetObj$msgSet$current.msg)
-    }
+    AddMsg("All IDs are unique.");
     return(data);
   }
 } 
@@ -136,7 +128,7 @@ RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
     # try to use "tr" to remove double return characters
     trFileName <- paste("tr -d \'\\r\' <", fileName);
     dat <- try(data.table::fread(trFileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-    if(class(dat) == "try-error"){
+    if(any(dim(dat) == 0) | class(dat) == "try-error"){
       print("Using slower file reader ...");
       formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
       if(formatStr == "txt"){
@@ -156,9 +148,7 @@ RemoveDuplicates <- function(mSetObj=NA, data, lvlOpt="mean", quiet=T){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-getDataFromTextInput <- function(mSetObj=NA, txtInput, sep.type="space"){
-  
-  mSetObj <- .get.mSet(mSetObj);
+getDataFromTextArea <- function(txtInput, sep.type="space"){
   
   lines <- unlist(strsplit(txtInput, "\r|\n|\r\n")[1]);
   if(substring(lines[1],1,1)=="#"){
@@ -177,11 +167,11 @@ getDataFromTextInput <- function(mSetObj=NA, txtInput, sep.type="space"){
     my.mat <- cbind(my.mat, rep(0, nrow(my.mat)));
   }else if(dim(my.mat)[2] > 2){
     my.mat <- my.mat[,1:2];
-    mSetObj$msgSet$current.msg <- "More than two columns found in the list. Only first two columns will be used. ";
+    msg <- "More than two columns found in the list. Only first two columns will be used."
+    AddErrMsg(msg);
   }
   rownames(my.mat) <- data.matrix(my.mat[,1]);
   my.mat <- my.mat[,-1, drop=F];
-  .set.mSet(mSetObj);
   return(my.mat);
 }
 
@@ -197,14 +187,7 @@ getDataFromTextInput <- function(mSetObj=NA, txtInput, sep.type="space"){
 #'
 Perform.permutation <- function(perm.num, fun){
   print(paste("performing", perm.num, "permutations ..."));
-  #suppressMessages(library('multicore'));
-  #core.num <- multicore:::detectCores();
-  
-  #if(core.num > 1){ # use two CPUs only, otherwise, the server will be unresponsive for other users
-  #    perm.res <- mclapply(2:perm.num, fun, mc.cores =core.num-1);
-  #}else{ # just regular
   perm.res <- lapply(2:perm.num, fun);
-  #}
   perm.res;
 }
 
@@ -223,15 +206,16 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   
   a<-try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
   if(class(a) == "try-error" | !length(a)>0){
-    AddErrMsg(mSetObj, "Failed to unzip the uploaded files!");
-    AddErrMsg(mSetObj, "Possible reason: file name contains space or special characters.");
-    AddErrMsg(mSetObj, "Use only alphabets and numbers, make sure there is no space in your file name.");
-    AddErrMsg(mSetObj, "For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
+    AddErrMsg("Failed to unzip the uploaded files!");
+    AddErrMsg("Possible reason: file name contains space or special characters.");
+    AddErrMsg("Use only alphabets and numbers, make sure there is no space in your file name.");
+    AddErrMsg("For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
     return (0);
   }
   if(rmFile){
     RemoveFile(inPath);
   }
+  return (1);
 }
 
 
@@ -398,9 +382,8 @@ PrepareLatex <- function(stringVec){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-GetValueLabel<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  if(mSetObj$dataSet$type=="conc"){
+GetAbundanceLabel<-function(data.type){
+  if(data.type=="conc"){
     return("Concentration");
   }else {
     return("Intensity");
@@ -414,20 +397,15 @@ GetValueLabel<-function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-GetVariableLabel<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  if(mSetObj$dataSet$type=="conc"){
+GetVariableLabel<-function(data.type){
+  if(data.type=="conc"){
     return("Compounds");
-  }else if(mSetObj$dataSet$type=="specbin"){
+  }else if(data.type=="specbin"){
     return("Spectra Bins");
-  }else if(mSetObj$dataSet$type=="nmrpeak"){
+  }else if(data.type=="nmrpeak"){
     return("Peaks (ppm)");
-  }else if(mSetObj$dataSet$type=="mspeak"){
-    if(mSetObj$dataSet$peakSet$ncol==2){
-      return("Peaks (mass)");
-    }else{
-      return("Peaks (mz/rt)");
-    }
+  }else if(data.type=="mspeak"){
+    return("Peaks (mass)");
   }else{
     return("Peaks(mz/rt)");
   }
@@ -489,7 +467,7 @@ Get.Accuracy <- function(cm) {
 #'License: GNU GPL (>= 2)
 #'@export
 
-GetSigTable<-function(mat, method, mSetObj=NA){
+GetSigTable<-function(mat, method, data.type){
   suppressMessages(library(xtable));
   if(!isEmptyMatrix(mat)){ # test if empty
     cap<-"Important features identified by";
@@ -502,7 +480,7 @@ GetSigTable<-function(mat, method, mSetObj=NA){
     # change the rowname to first column
     col1<-rownames(mat);
     cname<-colnames(mat);
-    cname<-c(GetVariableLabel(mSetObj), cname);
+    cname<-c(GetVariableLabel(data.type), cname);
     mat<-cbind(col1, mat);
     rownames(mat)<-NULL;
     colnames(mat)<-cname;
@@ -851,46 +829,6 @@ GetShortNames<-function(nm.vec, max.len= 45){
 
 
 #'Perform utilities for MetPa
-#'@description Get all the KEGG compounds from the pathway databases
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-getCmpdID<-function(dirName){
-  library(KEGGgraph);
-  folds<-dir(dirName);
-  all.nms <- "";
-  
-  for(m in 1:length(folds)){
-    files <- dir(paste(dirName, "/", folds[m], sep=""));
-    cmpd.nms <- "";
-    for(i in 1:length(files)){
-      f <- paste(dirName, "/", folds[m],"/",files[i], sep="");
-      print(f);
-      g <- KEGGpathway2reactionGraph(parseKGML(f));
-      nms <- nodes(g);
-      start.pos <- unlist(gregexpr(":", nms))+1;
-      nms <- substr(nms, start.pos, nchar(nms));
-      cmpd.nms <- c(cmpd.nms, nms);
-    }
-    all.nms <- c(all.nms, unique(cmpd.nms));
-  }
-  write.csv(unique(all.nms), file="kegg_uniq.csv", row.names=F)
-}
-
-getPathName<-function(dirName, saveName){
-  library(KEGGgraph);
-  files<-dir(dirName);
-  nm.mat<-matrix("NA", nrow=length(files), ncol=2);
-  for(i in 1:length(files)){
-    f <- files[i];
-    print(f);
-    path <- parseKGML(paste(dirName,"/",f, sep=""));
-    nm.mat[i,]<-c(f, path@pathwayInfo@title);
-  }
-  write.csv(nm.mat, file=saveName);
-}
-
-#'Perform utilities for MetPa
 #'@description Extends the axis range to both ends
 #'vec is the values for that axis
 #'unit is the width to extend, 10 will increase by 1/10 of the range
@@ -1065,6 +1003,22 @@ ClearNumerics <-function(dat.mat){
   dat.mat;
 }
 
+#'Calculate Pairwise Differences
+#'@description mat are log normalized, diff will be ratio
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+CalculatePairwiseDiff <- function(mat){
+  f <- function(i, mat) {
+    z <- mat[, i-1] - mat[, i:ncol(mat), drop = FALSE]
+    colnames(z) <- paste(colnames(mat)[i-1], colnames(z), sep = "/")
+    z
+  }
+  res <- do.call("cbind", sapply(2:ncol(mat), f, mat));
+  round(res,5);
+}
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -1177,44 +1131,12 @@ GetColorSchema <- function(mSetObj=NA, grayscale=F){
 #'License: GNU GPL (>= 2)
 #'
 RemoveFolder<-function(folderName){
-  # a<-unzip(inPath, exdir=outPath);
   a<-system(paste("rm",  "-r", folderName), intern=T);
   if(!length(a)>0){
-    AddErrMsg(mSetObj, paste("Could not remove file -", folderName));
+    AddErrMsg(paste("Could not remove file -", folderName));
     return (0);
   }
   return(1);
-}
-
-#'Compute within group and between group sum of squares
-#'(BSS/WSS) for each row of a matrix which may have NA
-#'@description Columns have labels, x is a numeric vector,
-#'cl is consecutive integers
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-Get.bwss<-function(x, cl){
-  K <- max(cl) - min(cl) + 1
-  tvar <- var.na(x);
-  tn <- sum(!is.na(x));
-  wvar <- wn <- numeric(K);
-  
-  for(i in (1:K)) {
-    if(sum(cl == (i + min(cl) - 1)) == 1){
-      wvar[i] <- 0;
-      wn[i] <- 1;
-    }
-    
-    if(sum(cl == (i + min(cl) - 1)) > 1) {
-      wvar[i] <- var.na(x[cl == (i + min(cl) - 1)]);
-      wn[i] <- sum(!is.na(x[cl == (i + min(cl) - 1)]));
-    }
-  }
-  
-  WSS <- sum.na(wvar * (wn - 1));
-  TSS <- tvar * (tn - 1)
-  (TSS - WSS)/WSS;
 }
 
 #'Remove file
@@ -1260,31 +1182,6 @@ GetCMD<-function(regexp){
   }
 }
 
-#'Subset data by p value (t-test)
-#'@description Get a subsets of data ranked by their p values from t tests
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
-
-GetTTSubsetIndex<-function(mSetObj=NA, sub.num=50){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  data <- mSetObj$dataSet$norm
-  
-  if(ncol(data) < sub.num){
-    1:ncol(data);
-  }else{
-    if(is.null(mSetObj$analSet$tt)){
-      Ttests.Anal(0.75);
-    }
-    all.lod <- -log10(mSetObj$analSet$tt$p.value);
-    
-    sub.inx <-order(all.lod, decreasing = T)[1:sub.num];
-    sel.inx <- 1:ncol(data) %in% sub.inx;
-    sel.inx;
-  }
-}
 
 #'Compute sum of squares (SSQ) for each row of a matrix which may have NA
 #'@description Columns have labels cl=consecutive integers
@@ -1392,13 +1289,13 @@ GetRScriptFullPath<-function(){
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 #'or msspec (MS spectra data).
 #'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
-#'cmpdmap, smpmap, or inmex.
+#'cmpdmap, smpmap, or pathinteg.
 #'@param paired Logical, is data paired (T) or not (F).
 #'@param format Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
 #'in columns and paired (colp), or in columns and unpaired (colu).
 #'@param lbl.type Specify the data label type, either discrete (disc) or continuous (cont).
 #'@export
-#'
+
 XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
   
   library(xcms);
@@ -1414,3 +1311,305 @@ XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
 }
 
 
+# input: a two-col (id, val) data with potential duplicates (same id may be associated with 1 or more values
+# output: a list named by unique id, with multiple values will be merged to vector
+Covert2Dictionary <- function(data, quiet=T){
+  
+  all.ids <- data[,1];
+  dup.inx <- duplicated(all.ids);
+  if(sum(dup.inx) > 0){
+    uniq.ids <- all.ids[!dup.inx];
+    uniq.vals <- data[!dup.inx,2];
+    
+    # convert two-col data it to list (vals as list values, ids as list names)
+    uniq.list <- split(uniq.vals, uniq.ids)
+    
+    # the list element orde will be sorted by the names alphabetically, need to get updated ones
+    uniq.id.list <- names(uniq.list)
+    
+    dup.ids <- all.ids[dup.inx];
+    uniq.dupids <- unique(dup.ids);
+    uniq.duplen <- length(uniq.dupids);
+    
+    for(id in uniq.dupids){ # only update those with more than one hits
+      hit.inx.all <- which(all.ids == id);
+      hit.inx.uniq <- which(uniq.id.list == id);
+      uniq.list[[hit.inx.uniq]]<- data[hit.inx.all,2];
+    }
+    
+    AddMsg(paste("A total of ", sum(dup.inx), " of duplicates were merged.", sep=""));
+    return(uniq.list);
+  }else{
+    AddMsg("All IDs are unique.");
+    uniq.list <- split(data[,2], data[,1]);
+    return(uniq.list);
+  }
+}
+
+# utility function for fast list expanding (dynamic length)
+# We need to repeatedly add an element to a list. With normal list concatenation
+# or element setting this would lead to a large number of memory copies and a
+# quadratic runtime. To prevent that, this function implements a bare bones
+# expanding array, in which list appends are (amortized) constant time.
+# https://stackoverflow.com/questions/2436688/append-an-object-to-a-list-in-r-in-amortized-constant-time-o1
+
+myFastList <- function(capacity = 100) {
+  buffer <- vector('list', capacity)
+  names <- character(capacity)
+  length <- 0
+  methods <- list()
+  
+  methods$double.size <- function() {
+    buffer <<- c(buffer, vector('list', capacity))
+    names <<- c(names, character(capacity))
+    capacity <<- capacity * 2
+  }
+  
+  methods$add <- function(name, val) {
+    if(length == capacity) {
+      methods$double.size()
+    }
+    
+    length <<- length + 1
+    buffer[[length]] <<- val
+    names[length] <<- name
+  }
+  
+  methods$as.list <- function() {
+    b <- buffer[0:length]
+    names(b) <- names[0:length]
+    return(b)
+  }
+  
+  methods
+}
+
+# create adducts based on ms_mode
+# input: a vector of mw
+# output: a matrix of possible adducts (one mw per row)
+# note, this is only for creating the mass search library
+# not on user input
+ComputeAdductsFromMass <- function(ms_mode, mw){
+  
+  PROTON <- 1.00727646677;
+  mw_modified <- NULL;
+  
+  if (ms_mode == "dpj_positive"){
+    mw_modified <- cbind(mw, mw + PROTON, mw/2 + PROTON, mw +1.0034 + PROTON, mw/2 + 0.5017 + PROTON, mw +1.9958 + PROTON, mw +1.9972 + PROTON, mw + 21.9820 + PROTON, mw/2 + 10.991 + PROTON, mw + 37.9555 + PROTON, mw + 67.9874 + PROTON, mw + 83.9613 + PROTON);
+    colnames(mw_modified) <- c('M[1+]', 'M+H[1+]', 'M(C13)+H[1+]', 'M(C13)+H[1+]', 'M(C13)+2H[2+]', 'M(S34)+H[1+]', 'M(Cl37)+H[1+]', 'M+Na[1+]', 'M+H+Na[2+]', 'M+K[1+]', 'M+HCOONa[1+]', 'M+HCOOK[1+]');
+    
+  }else if (ms_mode == "generic_positive"){
+    mw_modified <- cbind(mw, mw + PROTON, mw/2 + PROTON, mw/3 + PROTON, mw +1.0034 + PROTON, mw/2 + 0.5017 + PROTON, mw/3 + 0.3344 + PROTON, mw +1.9958 + PROTON, mw +1.9972 + PROTON, mw + 21.9820 + PROTON, mw/2 + 10.991 + PROTON, mw + 37.9555 + PROTON, mw + 18.0106 + PROTON, mw - 18.0106 + PROTON, mw - 36.0212 + PROTON, mw - 17.0265 + PROTON, mw - 27.9950 + PROTON, mw - 43.9898 + PROTON, mw - 46.0054 + PROTON, mw + 67.9874 + PROTON, mw - 67.9874 + PROTON, mw + 57.9586 + PROTON, mw - 72.0211 + PROTON, mw + 83.9613 + PROTON, mw - 83.9613 + PROTON);
+    colnames(mw_modified) <- c('M[1+]', 'M+H[1+]', 'M+2H[2+]', 'M+3H[3+]', 'M(C13)+H[1+]', 'M(C13)+2H[2+]', 'M(C13)+3H[3+]', 'M(S34)+H[1+]', 'M(Cl37)+H[1+]', 'M+Na[1+]', 'M+H+Na[2+]', 'M+K[1+]', 'M+H2O+H[1+]', 'M-H2O+H[1+]', 'M-H4O2+H[1+]', 'M-NH3+H[1+]', 'M-CO+H[1+]', 'M-CO2+H[1+]', 'M-HCOOH+H[1+]', 'M+HCOONa[1+]', 'M-HCOONa+H[1+]', 'M+NaCl[1+]', 'M-C3H4O2+H[1+]', 'M+HCOOK[1+]', 'M-HCOOK+H[1+]');
+    
+  }else if (ms_mode == "negative"){
+    mw_modified <- cbind(mw - PROTON, mw/2 - PROTON, mw + 1.0034 - PROTON, mw + 1.9958 - PROTON, mw + 1.9972 - PROTON, mw + 21.9820 - 2*PROTON, mw + 37.9555 - 2*PROTON, mw - 18.0106 - PROTON, mw + 34.9689, mw + 36.9659, mw + 78.9183, mw + 80.9163, mw + 2*12 + 3*1.007825 + 14.00307 - PROTON, mw + 1.007825 + 12 + 2*15.99491, mw + 3*1.007825 + 2*12 + 2*15.99491, mw - PROTON + 15.99491);
+    colnames(mw_modified) <- c('M-H[-]', 'M-2H[2-]', 'M(C13)-H[-]', 'M(S34)-H[-]', 'M(Cl37)-H[-]', 'M+Na-2H[-]', 'M+K-2H[-]', 'M-H2O-H[-]', 'M+Cl[-]', 'M+Cl37[-]', 'M+Br[-]', 'M+Br81[-]', 'M+ACN-H[-]', 'M+HCOO[-]', 'M+CH3COO[-]', 'M-H+O[-]');
+    
+  }else{
+    print("Unrecognized mode of instrumentation.")
+  }
+  return(mw_modified);
+}
+
+
+# read tab delimited file
+# can have many classes, stored in meta.info (starts with #) 
+# return a list (data.name, data.frame, meta.data)
+.readTabData <- function(dataName) {
+  if(length(grep('\\.zip$',dataName,perl=TRUE))>0){
+    dataName <- unzip(dataName);
+    if(length(dataName) > 1){
+      # test if "__MACOSX" or ".DS_Store"
+      osInx <- grep('MACOSX',dataName,perl=TRUE);
+      if(length(osInx) > 0){
+        dataName <- dataName[-osInx];
+      }
+      dsInx <- grep('DS_Store',dataName,perl=TRUE);
+      if(length(dsInx) > 0){
+        dataName <- dataName[-dsInx];
+      }
+      dat.inx <- grep(".[Tt][Xx][Tt]$", dataName);
+      if(length(dat.inx) != 1){
+        AddErrMsg("More than one text files (.txt) found in the zip file.");
+        return(0);
+      }
+    }
+  }
+  
+  msg <- NULL;
+  # using the powerful fread function, 10 times faster, note: default return data.table, turn off
+  dat1 <- .readDataTable(dataName);
+  
+  # look for #CLASS, could have more than 1 class labels, store in a list
+  meta.info <- list();
+  cls.inx <- grep("^#CLASS", dat1[,1]);
+  if(length(cls.inx) > 0){ 
+    for(i in 1:length(cls.inx)){
+      inx <- cls.inx[i];
+      cls.nm <- substring(dat1[inx, 1],2); # discard the first char #
+      if(nchar(cls.nm) > 6){
+        cls.nm <- substring(cls.nm, 7); # remove class
+      }
+      cls.lbls <- dat1[inx, -1];
+      # test NA
+      na.inx <- is.na(cls.lbls);
+      cls.lbls[na.inx] <- "NA";
+      cls.lbls <- ClearFactorStrings(cls.nm, cls.lbls);
+      
+      meta.info[[cls.nm]] <- cls.lbls;
+    }
+  }else{
+    AddErrMsg("No metadata labels #CLASS found in your data!");
+    return("F");
+  }
+  
+  meta.info <- data.frame(meta.info);
+  
+  # now remove all comments in dat1
+  # assign rownames after covert to matrix as data.frame does not allow duplicate names
+  comments.inx <- grep("^#", dat1[,1]);
+  dat1.nms <- dat1[-comments.inx,1];
+  dat1<-dat1[-comments.inx,-1];
+  dat1 <- data.matrix(dat1);
+  rownames(dat1) <- dat1.nms;
+  
+  list(
+    name= basename(dataName),
+    data=dat1,
+    meta.info=meta.info
+  );
+}
+
+# utils to remove from
+# within, leading and trailing spaces
+# remove /
+ClearFactorStrings<-function(cls.nm, query){
+  # remove leading and trailing space
+  query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
+  
+  # kill multiple white space
+  query <- gsub(" +","_",query);
+  # remove non alphabets and non numbers 
+  query <- gsub("[^[:alnum:] ]", "_", query);
+  
+  # test all numbers (i.e. Time points)
+  chars <- substr(query, 0, 1);
+  num.inx<- chars >= '0' & chars <= '9';
+  if(all(num.inx)){
+    query = as.numeric(query);
+    nquery <- paste(cls.nm, query, sep="_");
+    query <- factor(nquery, levels=paste(cls.nm, sort(unique(query)), sep="_"));
+  }else{
+    query[num.inx] <- paste(cls.nm, query[num.inx], sep="_");
+    query <- factor(query);
+  }
+  return (query);
+}
+
+arrayQualityMetricsGlobalParameters = list(
+  dpi = 72,
+  maxNumberOfArraysForShowingArrayMetadataByDefault = 20,
+  maxNumberOfArraysForDrawingDendrogram = 20
+)
+
+# overwrite ave, => na.rm=T
+myave <- function (x, ...) {
+  n <- length(list(...))
+  if (n) {
+    g <- interaction(...)
+    split(x, g) <- lapply(split(x, g), mean, na.rm=T)
+  }
+  else x[] <- FUN(x, na.rm=T)
+  x
+}
+
+#'@export
+GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers){
+  z <- cbind(numSigMembers, numSigAll-numSigMembers, numMembers-numSigMembers, numAllMembers-numMembers-numSigAll+numSigMembers);
+  z <- lapply(split(z, 1:nrow(z)), matrix, ncol=2);
+  z <- lapply(z, fisher.test, alternative = 'greater');
+  p.values <- as.numeric(unlist(lapply(z, "[[", "p.value"), use.names=FALSE));
+  return(p.values);
+}
+
+# convert single element vector in list to matrix
+# b/c single element vector will convert to scalar in javascript, force to matrix
+
+convert2JsonList <- function(my.list){
+  lapply(my.list, function(x){
+    if(length(x) == 1){
+      matrix(x);
+    }else{
+      x;
+    }
+  });
+}
+
+# perform limma on given two groups selected 
+# used by integarative analysis
+PerformTtestDE<-function(dataName, p.lvl, fc.lvl=NULL){
+  
+  if(dataSet$name != dataName){
+    dataSet <- readRDS(dataName);
+  }
+  res.all <- ComputeTtests(dataSet$cls, dataSet$data);
+  hit.inx <- res.all$adj.p <= p.lvl;
+  res<-res.all[hit.inx,];
+  sig.count <- nrow(res);
+  non.sig.count <- nrow(res.all)-sig.count;
+  
+  # save the result, rm .txt suffix for new names
+  shortNm <- substring(dataName, 0, nchar(dataName)-4);
+  write.csv(signif(res[,-1],5), file=paste("SigFeatures_", shortNm, ".csv",sep=""));
+  
+  return (c(1, sig.count, non.sig.count));
+}
+
+# utility function to perform ttests from a given
+# Input: class labels and data matrix (features in columns)
+# Output: a two column data.frame with statistics and p value
+ComputeTtests<-function(cls, data){
+  inx1 <- which(cls==levels(cls)[1]);
+  inx2 <- which(cls==levels(cls)[2]);
+  res.all <- apply(data, 2, function(x) {
+    tmp <- try(t.test(x[inx1], x[inx2], paired = FALSE, var.equal = TRUE));
+    if(class(tmp) == "try-error") {
+      return(c(0, 1)); # assume not signifcant
+    }else{
+      return(c(tmp$statistic, tmp$p.value));
+    }
+  })
+  res.all <- data.frame(t(res.all));
+  fdr <- p.adjust(res.all[,2], "fdr");
+  res.all <- cbind(res.all, fdr=fdr);
+  colnames(res.all) <- c("t.stat", "raw.p", "adj.p");
+  rownames(res.all) <- colnames(data);
+  return(res.all);
+}
+
+effectsize <- function(tstat,ntilde,m){
+  cm=gamma(m/2)/(sqrt(m/2)*gamma((m-1)/2))
+  d=tstat/sqrt(ntilde)
+  dprime=cm*d
+  terme1=m/((m-2)*ntilde)
+  vard=terme1+d^2*(terme1*ntilde-1/cm^2)
+  vardprime=cm^2*(terme1+dprime^2*(terme1*ntilde-1/cm^2))
+  result=cbind(d,vard,dprime,vardprime)
+  colnames(result)=c("d","vard","dprime","vardprime")
+  result
+}
+
+f.Q.NA = function(dadj, varadj) {
+  w <- 1/varadj
+  tmp1 <- w * dadj
+  mu <- rowSums(tmp1, na.rm = TRUE)/rowSums(w, na.rm = TRUE)
+  Q <- rowSums(w * (dadj - mu)^2, na.rm = TRUE)
+}
+
+tau2.NA <- function(Q, num.studies, my.weights) {
+  vwts <- rowSums(my.weights, na.rm = TRUE)
+  tmp2 <- rowSums(my.weights^2, na.rm = TRUE)
+  tau2 <- pmax(0, (Q - (num.studies - 1))/(vwts - tmp2/vwts))
+  return(tau2)
+}

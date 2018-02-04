@@ -55,14 +55,12 @@ performMB <- function(mSetObj=NA, topPerc = 10){
     MB.stats <- suppressWarnings(mb.2D(t(mSetObj$dataSet$norm), time.len, size, exp.grp, mn.grp=rep.grp));
   }
   if(is.null(MB.stats)) {
-    mSetObj$msgSet$current.msg <- "Please make sure the data are formatted properly for time-series analysis. In particular, for each time 
-    point, all experiments must exist and cannot be missing!"; 
+    AddErrMsg("Please make sure the data are formatted properly for time-series analysis. In particular, for each time point, all experiments must exist and cannot be missing!"); 
     mSetObj$analSet$MB <- NULL;
     return(0);
   }
   write.csv(signif(MB.stats, 5), file="meba_sig_features.csv");
   mSetObj$analSet$MB <-list(stats=MB.stats);
-  print(1);
   return(.set.mSet(mSetObj));
 }
 
@@ -102,7 +100,7 @@ PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm,  format="png", dpi=72, width=N
     .set.mSet(mSetObj);
     return(imgName);  
   }
-
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -966,5 +964,5 @@ GetMBSigColNames <- function(mSetObj=NA){
 
 GetSigTable.MB<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$MB$stats, "MEBA", mSetObj);
+  GetSigTable(mSetObj$analSet$MB$stats, "MEBA", mSetObj$dataSet$type);
 }

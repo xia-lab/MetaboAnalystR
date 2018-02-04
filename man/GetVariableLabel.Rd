@@ -4,7 +4,7 @@
 \alias{GetVariableLabel}
 \title{Determine variable label for plotting}
 \usage{
-GetVariableLabel(mSetObj = NA)
+GetVariableLabel(data.type)
 }
 \description{
 Determine data type, binned spectra, nmr peak, or ms peak

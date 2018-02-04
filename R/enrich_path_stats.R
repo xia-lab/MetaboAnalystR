@@ -26,7 +26,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   q.size<-length(ora.vec);
   
   if(is.na(ora.vec) || q.size==0) {
-    AddErrMsg(mSetObj, "No valid KEGG compounds found!");
+    AddErrMsg("No valid KEGG compounds found!");
     return(0);
   }
   
@@ -36,8 +36,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   
   # check if need to be filtered against reference metabolome
-  if(mSetObj$dataSet$use.metabo.filter && exists('metabo.filter.kegg')){
-    current.mset <- lapply(current.mset, function(x){x[x %in% metabo.filter.kegg]});
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.kegg)){
+    current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
     mSetObj$analSet$ora.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset, use.names=FALSE)));
   }
@@ -113,14 +113,6 @@ GetORA.pathNames <- function(mSetObj=NA){
   return(names(metpa$path.ids)[hit.inx]);
 }
 
-#'@export
-GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers){
-  z <- cbind(numSigMembers, numSigAll-numSigMembers, numMembers-numSigMembers, numAllMembers-numMembers-numSigAll+numSigMembers);
-  z <- lapply(split(z, 1:nrow(z)), matrix, ncol=2);
-  z <- lapply(z, fisher.test, alternative = 'greater');
-  p.values <- as.numeric(unlist(lapply(z, "[[", "p.value"), use.names=FALSE));
-  return(p.values);
-}
 
 #'Calculate quantitative enrichment score
 #'@description Calculate quantitative enrichment score
@@ -156,8 +148,8 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   uniq.count <- metpa$uniq.count;
   
   # check if a reference metabolome is applied
-  if(mSetObj$dataSet$use.metabo.filter && exists('metabo.filter.kegg')){
-    current.mset<-lapply(current.mset, function(x) {x[x %in% metabo.filter.kegg]});
+  if(mSetObj$dataSet$use.metabo.filter && exists(mSetObj$dataSet$metabo.filter.kegg)){
+    current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
     mSetObj$analSet$qea.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
   }

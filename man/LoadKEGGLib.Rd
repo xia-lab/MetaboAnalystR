@@ -4,7 +4,7 @@
 \alias{LoadKEGGLib}
 \title{Load KEGG library}
 \usage{
-LoadKEGGLib(mSetObj = NA, libOpt)
+LoadKEGGLib(libOpt)
 }
 \arguments{
 \item{libOpt}{KEGG library option, "integ" for integrative, "genetic" for genetic, and "met" for metabolic}

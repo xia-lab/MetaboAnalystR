@@ -9,13 +9,12 @@ PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  mSetObj$msgSet$current.msg <- NULL;
   mSetObj$dataSet$cmpd.orig <- cmpdIDs;
   mSetObj$dataSet$cmpd.org <- org;
   if(idType == "name"){
-    cmpd.mat <- getDataFromTextInput(mSetObj, cmpdIDs, "tab");
+    cmpd.mat <- getDataFromTextArea(cmpdIDs, "tab");
   }else{ # all other id should not contains space
-    cmpd.mat <- getDataFromTextInput(mSetObj, cmpdIDs, "space");
+    cmpd.mat <- getDataFromTextArea(cmpdIDs, "space");
   }
   mSetObj$dataSet$cmpd <- rownames(cmpd.mat); # this is for compatibility with name_match function
   mSetObj$dataSet$cmpd.mat <- cmpd.mat;
@@ -31,43 +30,47 @@ PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
 }
 
 #'Perform integrated gene mapping
-#'@description Used for the Inmex module
+#'@description Used for the pathinteg module
 #'@export
 #'
 PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   
   mSetObj <- .get.mSet(mSetObj);
+  gene.mat <- getDataFromTextArea(geneIDs);
+  gene.vec <- rownames(gene.mat);
   
-  mSetObj$msgSet$current.msg <- NULL;
-  
+  #record the info
   mSetObj$dataSet$q.type.gene <- idType;
   mSetObj$dataSet$gene.orig <- geneIDs;
   mSetObj$dataSet$gene.org <- org;
-  gene.mat <- getDataFromTextInput(mSetObj, geneIDs);
-  gene.vec <- rownames(gene.mat);
   mSetObj$dataSet$gene.mat <- gene.mat;
   mSetObj$dataSet$gene <- gene.vec;
   
   enIDs <- doGeneIDMapping(gene.vec, org, idType);
-  mSetObj$dataSet$gene.name.map <- list();
-  mSetObj$dataSet$gene.name.map$hit.values <- enIDs;
-  mSetObj$dataSet$gene.name.map$match.state <- ifelse(is.na(enIDs), 0, 1);
   
-  mSetObj$msgSet$current.msg <- c(paste("A total of ", length(unique(enIDs)), "unique genes were uploaded."));
+  if(idType == "kos"){
+    kos <- enIDs$kos;
+    enIDs <- enIDs$entrezs;
+    mSetObj$dataSet$kos.name.map <- kos
+  }
+  
+  # Handle case when only KOs are mapped with no corresponding entrez id
   na.inx <- is.na(enIDs);
+  if(sum(!na.inx) == 0 && idType == "kos"){
+    na.inx <- is.na(kos);
+  }
+  
+  mSetObj$dataSet$gene.name.map <- list(
+    hit.values=enIDs,
+    match.state = ifelse(is.na(enIDs), 0, 1)
+  );
+  
+  AddMsg(paste("A total of ", length(unique(enIDs)), "unique genes were uploaded."));
   if(sum(!na.inx) > 0){
-    
-    print("All genes were successfully mapped...")
-    if(.on.public.web){
-      .set.mSet(mSetObj)  
-      return(1);
-    }
     return(.set.mSet(mSetObj));
   }else{
-    
-    print("1 or more genes were unsuccessfully mapped...")
-    if(.on.public.web){
-      .set.mSet(mSetObj)  
+    AddErrMsg("Error: no hits found!");
+    if(.on.public.web){ 
       return(0);
     }
     return(.set.mSet(mSetObj));
@@ -120,7 +123,7 @@ RemoveGene <- function(mSetObj=NA, inx){
 }
 
 #'Prepare integrated data
-#'@description Used for the inmex module.
+#'@description Used for the pathinteg module.
 #'@export
 #'
 PrepareIntegData <- function(mSetObj=NA){
@@ -136,21 +139,15 @@ PrepareIntegData <- function(mSetObj=NA){
     
     na.inx <- is.na(enIDs);
     gene.mat <- gene.mat[!na.inx, ,drop=F];
-    gene.mat <- RemoveDuplicates(mSetObj, gene.mat);
-    mSetObj$msgSet$current.msg <- c(paste("A total of ", nrow(gene.mat), "unique genes were uploaded."));
+    gene.mat <- RemoveDuplicates(gene.mat);
+    AddMsg(paste("A total of ", nrow(gene.mat), "unique genes were uploaded."));
     
-    if(!exists("inmex.imps", where = mSetObj$dataSet)){
-      mSetObj$dataSet$inmex.imps <- list();
+    if(!exists("pathinteg.imps", where = mSetObj$dataSet)){
+      mSetObj$dataSet$pathinteg.imps <- list();
     }
-    mSetObj$dataSet$inmex.imps$gene.mat <- gene.mat;
-    .set.mSet(mSetObj);  
+    mSetObj$dataSet$pathinteg.imps$gene.mat <- gene.mat;
     done <- 1;
-    
   }
-  
-  if(.on.public.web){
-    .get.mSet(mSetObj);
-  }  
   
   # prepare compound list
   if(!is.null(mSetObj$dataSet$cmpd.mat)){
@@ -164,15 +161,14 @@ PrepareIntegData <- function(mSetObj=NA){
     
     cmpd.mat <- cmpd.mat[hit.inx, ,drop=F];
     rownames(cmpd.mat) <- kegg.id;
-    cmpd.mat <- RemoveDuplicates(mSetObj, cmpd.mat);
-    mSetObj$msgSet$current.msg <- c(mSetObj$msgSet$current.msg, paste("A total of ", nrow(cmpd.mat), "unique compounds were found."));
-    mSetObj$dataSet$inmex.imps$cmpd.mat <- cmpd.mat;
+    cmpd.mat <- RemoveDuplicates(cmpd.mat);
+    AddMsg(paste("A total of ", nrow(cmpd.mat), "unique compounds were found."));
+    mSetObj$dataSet$pathinteg.imps$cmpd.mat <- cmpd.mat;
     done <- 1;
   }
   
   if(.on.public.web){
     .set.mSet(mSetObj);  
-    print("prep integ data")
     return(done);
   }
   return(.set.mSet(mSetObj));
@@ -197,83 +193,90 @@ PrepareIntegData <- function(mSetObj=NA){
 #'@export
 #'
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libOpt="integ"){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  mSetObj <- LoadKEGGLib(mSetObj, libOpt);
 
-  if(.on.public.web){
-    mSetObj <- .get.mSet(mSetObj);
-  }  
+  mSetObj <- .get.mSet(mSetObj);  
+  
+  LoadKEGGLib(libOpt);
   
   set.size <- length(inmexpa$mset.list);
-  ms.list <- mSetObj$dataSet$current.mset.list;
-  
+  ms.list <- lapply(inmexpa$mset.list, function(x){strsplit(x, " ")});
+  current.universe <- unique(unlist(ms.list));
+
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=7);
   rownames(res.mat)<-names(inmexpa$path.ids);
   colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "Topology", "PVal.Z",  "Topo.Z");
   
-  mSetObj$dataSet$inmex.method <- libOpt;
+  mSetObj$dataSet$pathinteg.method <- libOpt;
   mSetObj$dataSet$path.mat <- NULL;
   
-  if(libOpt == "genetic" && !is.null(mSetObj$dataSet$inmex.imps$gene.mat)){
-    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$inmex.imps$gene.mat));
-    mSetObj$dataSet$inmex.imps$gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$inmex.imps$gene.mat);
-    gene.vec <- paste(inmex.org, ":", rownames(mSetObj$dataSet$inmex.imps$gene.mat), sep="");
-    rownames(mSetObj$dataSet$inmex.imps$gene.mat) <- gene.vec;
-    write.csv(mSetObj$dataSet$inmex.imps$gene.mat, file="MetaboAnalyst_result_genes.csv");
-    
-    impMat <- mSetObj$dataSet$inmex.imps$gene.mat;
+  if(libOpt == "genetic" && !is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
+    gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+    gene.vec <- paste(pathinteg.org, ":", rownames(gene.mat), sep="");
+    rownames(gene.mat) <- gene.vec;
+    impMat <- gene.mat;
     uniq.count <- inmexpa$uniq.gene.count;
     uniq.len <- inmexpa$gene.counts;
+
+    # saving only
+    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat));
+    gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
+    write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     
-  }else if(libOpt == "metab" && !is.null(mSetObj$dataSet$inmex.imps$cmpd.mat)){
-    cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$inmex.imps$cmpd.mat));
-    mSetObj$dataSet$inmex.imps$cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$inmex.imps$cmpd.mat);
-    cmpd.vec <- paste("cpd:", rownames(mSetObj$dataSet$inmex.imps$cmpd.mat), sep="");
-    rownames(mSetObj$dataSet$inmex.imps$cmpd.mat) <- cmpd.vec;
-    write.csv(mSetObj$dataSet$inmex.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
-    
-    impMat <- mSetObj$dataSet$inmex.imps$cmpd.mat;
+  }else if(libOpt == "metab" && !is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
+
+    cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
+    cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep="");
+    rownames(cmpd.mat) <- cmpd.vec;
+    impMat <- cmpd.mat;
     uniq.count <- inmexpa$uniq.cmpd.count
     uniq.len <- inmexpa$cmpd.counts;
+
+    # saving only
+    cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
+    cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat);
+    write.csv(mSetObj$dataSet$pathinteg.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
+    
   }else{ # integ
     impMat <- NULL;
     uniq.count <- uniq.len <- 0;
-    if(!is.null(mSetObj$dataSet$inmex.imps$cmpd.mat)){
-      cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$inmex.imps$cmpd.mat));
-      mSetObj$dataSet$inmex.imps$cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$inmex.imps$cmpd.mat);
-      cmpd.vec <- paste("cpd:", rownames(mSetObj$dataSet$inmex.imps$cmpd.mat), sep="");
-      rownames(mSetObj$dataSet$inmex.imps$cmpd.mat) <- cmpd.vec;
-      write.csv(mSetObj$dataSet$inmex.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
-      impMat <- mSetObj$dataSet$inmex.imps$cmpd.mat;
-      uniq.count <- inmexpa$uniq.cmpd.count
-      uniq.len <- inmexpa$cmpd.counts;
-      
+    if(!is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
+        cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
+        cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep="");
+        rownames(cmpd.mat) <- cmpd.vec;
+        impMat <- cmpd.mat;
+        uniq.count <- inmexpa$uniq.cmpd.count
+        uniq.len <- inmexpa$cmpd.counts;
+
+        # saving only
+        cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
+        cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat);
+        write.csv(mSetObj$dataSet$pathinteg.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
     }
-    if(!is.null(mSetObj$dataSet$inmex.imps$gene.mat)){
-      gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$inmex.imps$gene.mat));
-      mSetObj$dataSet$inmex.imps$gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$inmex.imps$gene.mat);
-      gene.vec <- paste(inmex.org, ":", rownames(mSetObj$dataSet$inmex.imps$gene.mat), sep="");
-      rownames(mSetObj$dataSet$inmex.imps$gene.mat) <- gene.vec;
-      write.csv(mSetObj$dataSet$inmex.imps$gene.mat, file="MetaboAnalyst_result_genes.csv");
-      impMat <- rbind(impMat, mSetObj$dataSet$inmex.imps$gene.mat);
-      uniq.count <- uniq.count + inmexpa$uniq.gene.count;
-      uniq.len <- uniq.len + inmexpa$gene.counts;
-      
+
+    if(!is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
+        gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+        gene.vec <- paste(pathinteg.org, ":", rownames(gene.mat), sep="");
+        rownames(gene.mat) <- gene.vec;
+        impMat <- gene.mat;
+        uniq.count <- inmexpa$uniq.gene.count;
+        uniq.len <- inmexpa$gene.counts;
+
+        # saving only
+        gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat));
+        gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
+        write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     }
   }
   
   # now project to pathways
   # combine results for genes and cmpds
   ora.vec <- rownames(impMat);
-  colnames(impMat) <- c("Name", "logFC");
-  impMat <- data.frame(Name=impMat[,1], logFC=as.numeric(impMat[,2]));
+  impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
   rownames(impMat) <- ora.vec;
   
   # need to cut to the universe covered by the pathways, not all genes 
-  ora.vec <- ora.vec[ora.vec %in% mSetObj$dataSet$current.universe]
+  ora.vec <- ora.vec[ora.vec %in% current.universe]
   q.size <- length(ora.vec);
   
   # note, we need to do twice one for nodes (for plotting)
@@ -288,7 +291,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   hit.num <- unlist(lapply(hits.query, function(x){sum(x)}), use.names=FALSE);
   
   if(sum(hit.num) == 0){
-    AddErrMsg(mSetObj, "No hits found for your input!");
+    AddErrMsg("No hits found for your input!");
     return(0);
   }
   
@@ -300,9 +303,9 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   # use lower.tail = F for P(X>x)
   if(enrich=="hyper"){
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
-    
   }else if(enrich == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
+    print(enrich)
   }else{
     print("Not defined enrichment method!");
     print(enrich);
@@ -347,8 +350,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   mSetObj$dataSet$path.hits <- hits.path;
   
   # store results from individual analysis
-  mSetObj$dataSet$inmex.impMat <- impMat; 
-  mSetObj$dataSet$inmex.impTopo <- imp.list;
+  mSetObj$dataSet$pathinteg.impMat <- impMat; 
+  mSetObj$dataSet$pathinteg.impTopo <- imp.list;
   mSetObj$dataSet$path.mat <- resTable;
   
   if(.on.public.web){
@@ -358,7 +361,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   SetBarParams(mSetObj);
   
   mSetObj <- .get.mSet(mSetObj);
-  
   
   if(.on.public.web){
     .set.mSet(mSetObj)  
@@ -480,7 +482,7 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   csv.res<-matrix("", nrow=length(qvec), ncol=5);
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
-  db.path <- paste("../../libs/", inmex.org, "/entrez.csv", sep="");
+  db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
   gene.db <- .readDataTable(db.path);
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;

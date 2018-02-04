@@ -7,5 +7,5 @@
 PerformIntegGeneMapping(mSetObj = NA, geneIDs, org, idType)
 }
 \description{
-Used for the Inmex module
+Used for the pathinteg module
 }

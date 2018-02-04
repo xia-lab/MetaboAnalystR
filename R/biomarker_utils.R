@@ -162,14 +162,15 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 
 #'Calculates feature importance
 #'@description Perform calculation of feature importance (AUC, p value, fold change)
-#'@usage CalculateFeatureRanking(mSet)
+#'@usage CalculateFeatureRanking(mSet, clust.num)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param clust.num Numeric, input the number of clusters for cluster-analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-CalculateFeatureRanking <- function(mSetObj=NA){
+CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   mSetObj <- .get.mSet(mSetObj);
   LRConverged <<- "FALSE"; 
@@ -197,21 +198,37 @@ CalculateFeatureRanking <- function(mSetObj=NA){
   m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
   m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
   fc <- m1-m2;
-  
-  rank.mat <- cbind(auc, ttp, fc);
-  
-  rownames(rank.mat) <- colnames(x);
-  ord.inx <- order(auc, decreasing=T);
-  rank.mat <- rank.mat[ord.inx,];
-  
-  write.csv(rank.mat[,1:3], file="metaboanalyst_roc_univ.csv");
+
+  # now do k-means to measure their expression similarities
+  kms <- ComputeKmeanClusters(t(x), clust.num);
+  feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
+  rownames(feat.rank.mat) <- colnames(x);
+
+  ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
+  feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx,]);
   # how to format pretty, and still keep numeric
-  my.mat <- format(rank.mat, scientific = TRUE, digits = 5);
-  class(my.mat) <- "numeric";
-  feat.rank.mat <- my.mat;
-  feat.rank.mat <<- feat.rank.mat 
-  return(.set.mSet(mSetObj));
+  feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
   
+  if(mSetObj$analSet$mode == "univ"){
+     write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+  }
+
+  return(.set.mSet(mSetObj));  
+ }
+
+
+# return a vector contain the cluster index 
+ComputeKmeanClusters <- function(data, clust.num){
+  kmeans.res <- kmeans (data, clust.num, nstart=100);
+  return(kmeans.res$cluster);
+}
+
+# recomputing based on new cluster number
+UpdateKmeans <- function(mSetObj=NA, clust.num=5){
+  mSetObj <- .get.mSet(mSetObj);
+  x  <- mSetObj$dataSet$norm;
+  feat.rank.mat$clusters <- ComputeKmeanClusters(t(x), clust.num);
+  feat.rank.mat <<- feat.rank.mat;
 }
 
 #'Set biomarker analysis mode
@@ -227,7 +244,7 @@ CalculateFeatureRanking <- function(mSetObj=NA){
 
 SetAnalysisMode <- function(mSetObj=NA, mode){
   mSetObj <- .get.mSet(mSetObj);
-  anal.type <<- mode;
+  mSetObj$analSet$mode <- mode;
   return(.set.mSet(mSetObj));
 }
 
@@ -376,7 +393,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
   data <- mSetObj$dataSet$biomarkernorm;
   cls <- mSetObj$dataSet$cls;    
   
-  if( method == "lr" ) {
+  if( method == "lr") {
     # check cls (response variable) whether it is number 0/1 or not
     if( length(levels(mSetObj$dataSet$cls)) == 2 ) {
       mSetObj$dataSet$cls.lbl <- levels(mSetObj$dataSet$cls);  # already sorted
@@ -569,8 +586,7 @@ genLREquation <- function(coef.mdl){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-CVTest.LRmodel <- function(data.in, fmla.in, kfold=10, run.stepwise=FALSE)
-{
+CVTest.LRmodel <- function(data.in, fmla.in, kfold=10, run.stepwise=FALSE){
   
   dw.case <- data.in[which(data.in$y == 1), ]; nrow(dw.case)
   dw.ctrl <- data.in[which(data.in$y == 0), ]; nrow(dw.ctrl)
@@ -730,7 +746,7 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 8; h <- 8;
+  w <- h <- 8;
   mSetObj$imgSet$roc.lr <- imgName;
   
   roc.object <- LR.r;
@@ -954,12 +970,13 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
 PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
   
   smpl.nms <- rownames(mSetObj$dataSet$norm);
   prob.vec <- rep(0.5, length(smpl.nms));
   names(prob.vec) <- smpl.nms;
   
-  if(anal.type == "explore"){
+  if(anal.mode == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$multiROC$best.model.inx;
     }
@@ -988,7 +1005,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
   mSetObj$analSet$conf.table <- xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
   mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )     
   
-  if(anal.type == "test"){
+  if(anal.mode == "test"){
     if(!is.null(mSetObj$dataSet$test.data)){
       test.pred <- ifelse(mSetObj$analSet$multiROC$test.res > 0.5, 1, 0);
       test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
@@ -1109,12 +1126,13 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
   
   smpl.nms <- rownames(mSetObj$dataSet$norm);
   prob.vec <- rep(0.5, length(smpl.nms));
   names(prob.vec) <- smpl.nms;
   
-  if(anal.type == "explore"){
+  if(anal.mode == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$ROCtest$best.model.inx;
     }
@@ -1143,7 +1161,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
   mSetObj$analSet$conf.table <- xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
   mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )     
   
-  if(anal.type == "test"){
+  if(anal.mode == "test"){
     if(!is.null(mSetObj$dataSet$test.data)){
       test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
       test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
@@ -1264,6 +1282,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
 PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
@@ -1274,7 +1293,7 @@ PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.m
   
   op <- par(mar=c(5,4,3,3));
   
-  if(anal.type=="explore" && mdl.inx == 0){ # compare all models
+  if(anal.mode=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$multiROC$pred.list;
     auroc <- mSetObj$analSet$multiROC$auc.vec;
     perf <- performance(preds[[1]], "tpr", "fpr");
@@ -1322,7 +1341,7 @@ PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.m
     
     legend("bottomright", legend = legends, pch=15, col=cols);
     
-  }else if(mdl.inx > 0 && anal.type=="explore"){ 
+  }else if(mdl.inx > 0 && anal.mode=="explore"){ 
     
     preds <- prediction(mSetObj$analSet$multiROC$pred.cv[[mdl.inx]], mSetObj$analSet$multiROC$true.cv);
     auroc <- round(mSetObj$analSet$multiROC$auc.vec[mdl.inx],3);
@@ -1426,6 +1445,7 @@ PlotROCMulti<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.m
 PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
@@ -1437,7 +1457,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
   
   op <- par(mar=c(5,4,3,3));
   
-  if(anal.type=="explore" && mdl.inx == 0){ # compare all models
+  if(anal.mode=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$ROCtest$pred.list;
     auroc <- mSetObj$analSet$ROCtest$auc.vec;
     perf <- performance(preds[[1]], "tpr", "fpr");
@@ -1485,7 +1505,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
     
     legend("bottomright", legend = legends, pch=15, col=cols);
     
-  }else if(mdl.inx > 0 && anal.type=="explore"){ 
+  }else if(mdl.inx > 0 && anal.mode=="explore"){ 
     
     preds <- prediction(mSetObj$analSet$ROCtest$pred.cv[[mdl.inx]], mSetObj$analSet$ROCtest$true.cv);
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[mdl.inx],3);
@@ -1599,12 +1619,13 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
 PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 9; h <- 7;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(anal.type == "explore"){
+  if(anal.mode == "explore"){
     accu.mat <- mSetObj$analSet$multiROC$accu.mat;
     mn.accu <- apply (accu.mat, 2, mean);
     ylabl <- 'Predictive Accuracy';
@@ -1670,7 +1691,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  anal.mode <- mSetObj$analSet$mode;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
   mSetObj$imgSet$roc.imp.plot <- imgName;
@@ -1682,7 +1703,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   cls <- mSetObj$dataSet$cls;
   op <- par(mar=c(6,10,3,7));
   
-  if(anal.type == "explore"){
+  if(anal.mode == "explore"){
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$multiROC$best.model.inx;
     }
@@ -1967,6 +1988,15 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72){
     preds <- prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv);
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[1],3)
     perf <- performance(preds, "tpr", "fpr");
+    # need to replace Inf with 1
+    alpha.vals <- perf@alpha.values;
+    perf@alpha.values <- lapply(alpha.vals, function(x){
+               x[x==Inf] <- 1;
+               x[x==-Inf] <- 0;
+               x
+            });
+            
+    
     plot(perf,lwd=2,avg="threshold", col="blue", add=T);
     
     # calculate p value
@@ -2019,8 +2049,6 @@ Get.pAUC <- function(x, y, focus, cutoff) {
     cutoff <- 1-cutoff;
   }
   if (length(x) < 2) {
-    # stop(paste("Not enough distinct predictions to compute area",
-    #          "under the ROC curve."))
     return (NA);
   }
   
@@ -2781,6 +2809,7 @@ GetROCLassoFreq <- function(data, cls){
 GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
   
   mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode; 
   
   # first order each run by cmpd names so that can be combined to a data frame
   feat.outp <- lapply(feat.outp, function(x) x[order(names(x))]);
@@ -2799,7 +2828,7 @@ GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
   impsMat <- as.data.frame(do.call("cbind", feat.outp));
   impsVec <- apply(impsMat, 1, mean);
   
-  if(anal.type == "explore"){
+  if(anal.mode == "explore"){
     # now count the number being selected in the bestFeatNum
     selectedMat <- apply(ordRunRanksMat, 2, function(x) x <= bestFeatNum);
   }else{
@@ -2929,6 +2958,7 @@ GetUnivRankedFeatureNames <- function(){
   rownames(feat.rank.mat);
 }
 
+# do the ordering before return
 GetFeatureRankingMat <- function(){
   feat.rank.mat;
 }

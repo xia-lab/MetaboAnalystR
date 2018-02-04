@@ -13,22 +13,22 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   mSetObj <- .get.mSet(mSetObj);
   
   if(class(dat) == "try-error") {
-    AddErrMsg(mSetObj, "Data format error. Failed to read in the data!");
-    AddErrMsg(mSetObj, "Please check the followings: ");
-    AddErrMsg(mSetObj, "Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-    AddErrMsg(mSetObj, "We recommend to use a combination of English letters, underscore, and numbers for naming purpose");
-    AddErrMsg(mSetObj, "Make sure sample names and feature (peak, compound) names are unique;");
-    AddErrMsg(mSetObj, "Missing values should be blank or NA without quote.");
+    AddErrMsg("Data format error. Failed to read in the data!");
+    AddErrMsg("Please check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique;");
+    AddErrMsg("Missing values should be blank or NA without quote.");
     return("F");
   }
   
   if(ncol(dat) == 1){
-    AddErrMsg(mSetObj, "Error: Make sure the data table is saved as comma separated values (.csv) format!");
-    AddErrMsg(mSetObj, "Please also check the followings: ");
-    AddErrMsg(mSetObj, "Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-    AddErrMsg(mSetObj, "We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
-    AddErrMsg(mSetObj, "Make sure sample names and feature (peak, compound) names are unique.");
-    AddErrMsg(mSetObj, "Missing values should be blank or NA without quote.");
+    AddErrMsg("Error: Make sure the data table is saved as comma separated values (.csv) format!");
+    AddErrMsg("Please also check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+    AddErrMsg("Missing values should be blank or NA without quote.");
     return("F");
   }
   
@@ -57,36 +57,33 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   # check the class labels
   if(!is.null(mSetObj$dataSet$batch.cls)){
     if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]]))){
-      AddErrMsg(mSetObj, "The class labels in current data is different from the previous!");
-      AddErrMsg(mSetObj, dup.nm);
-      print(GetErrMsg(mSetObj));
+      AddErrMsg("The class labels in current data is different from the previous!");
+      AddErrMsg(dup.nm);
       return("F");
     }
   }
   
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
-    AddErrMsg(mSetObj, "Duplicate sample names (except QC) are not allowed!");
-    AddErrMsg(mSetObj, dup.nm);
-    print(GetErrMsg(mSetObj));
+    AddErrMsg("Duplicate sample names (except QC) are not allowed!");
+    AddErrMsg(dup.nm);
     return("F");
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
     dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg(mSetObj, "Duplicate feature names are not allowed!");
-    AddErrMsg(mSetObj, dup.nm);
-    print(GetErrMsg(mSetObj));
+    AddErrMsg("Duplicate feature names are not allowed!");
+    AddErrMsg(dup.nm);
     return("F");
   }
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
-    AddErrMsg(mSetObj, "No special letters (i.e. Latin, Greek) are allowed in sample names!");
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in sample names!");
     return("F");
   }
   
   if(sum(is.na(iconv(var.nms)))>0){
-    AddErrMsg(mSetObj, "No special letters (i.e. Latin, Greek) are allowed in feature names!");
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in feature names!");
     return("F");
   }
   
@@ -140,8 +137,13 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   
   # free memory
   gc();
-  print(label);
-  return(.set.mSet(mSetObj));
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(label);
+  }else{
+    print(label);
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Set up two matrixes
@@ -291,6 +293,7 @@ GetAllBatchNames <- function(mSetObj=NA){
 }
 
 ResetBatchData <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;
   return(.set.mSet(mSetObj));
 }

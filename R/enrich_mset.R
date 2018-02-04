@@ -11,7 +11,7 @@
 #'
 LoadMsetLib <- function(libname="pathway"){
   if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
-    read_mSet(libname);
+    .load.metaboanalyst.lib("msets", libname);
   }
 }
 
@@ -30,7 +30,7 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@usage SetCurrentMsetLib(mSetObj=NA, lib.type, excludeNum)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param lib.type Input user selected name of library, "self", "pathway", "blood", "urine", "csf", "snp", "predicted",
-#'"location"
+#'"location", "drug"
 #'@param excludeNum Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -96,13 +96,13 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   libCheck.msg <- NULL;
   if(class(dat) == "try-error") {
     libCheck.msg <-c(libCheck.msg, "Data format error - fail to read in the data!");
-    AddErrMsg(mSetObj, libCheck.msg);
+    AddErrMsg(libCheck.msg);
     return(0);
   }
   
   if(is.null(dim(dat)) || dim(dat)[2]!=2){
     libCheck.msg <-c(libCheck.msg, "Data format error - must have two columns!");
-    AddErrMsg(mSetObj, libCheck.msg);
+    AddErrMsg(libCheck.msg);
     return(0);
   }
   
@@ -112,10 +112,7 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   names(mset.list)<-dat[,1];
   names(mset.ids)<-dat[,1];
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   # now need to check all metabolites match HMDB names
   # and get the statistics
@@ -375,7 +372,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", kegg.rda, "}(KEGG organisms abbreviation).");
-  kegglib <- read_KEGG(kegg.rda)
+  kegglib <- .load.metaboanalyst.lib("kegg", kegg.rda)
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(1);
@@ -402,14 +399,11 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   if(class(ref.vec) == "try-error") {
     libCheck.msg <-c(libCheck.msg, "Data format error - fail to read in the data!");
     print(libCheck.msg);
-    AddErrMsg(mSetObj, libCheck.msg);
+    AddErrMsg(libCheck.msg);
     return(0);
   }
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   # now need to check all metabolites match HMDB names
   # and get the statistics
@@ -419,7 +413,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   
   if(unmatched.num > 0) {
     unmatched.nms <- ref.vec[!hits];
-    mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were no matched to KEGG compound IDs.",
+    mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were not matched to KEGG compound IDs.",
                                              "They are:", paste(unmatched.nms, collapse="; "), ". Please correct these names. Otherwise,",
                                              "they will be ignored during the enrichment analysis.");
   }else{
@@ -449,14 +443,11 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   libCheck.msg <- NULL;
   if(class(ref.vec) == "try-error") {
     libCheck.msg <-c(libCheck.msg, "Data format error - fail to read in the data!");
-    AddErrMsg(mSetObj, libCheck.msg);
+    AddErrMsg(libCheck.msg);
     return(0);
   }
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   # now need to check all metabolites match HMDB names
   # and get the statistics
@@ -466,11 +457,11 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   
   if(unmatched.num > 0) {
     unmatched.nms <- ref.vec[!hits];
-    mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were no matched to HMDB compound names.",
+    mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were not matched to HMDB compound names.",
                                              "They are:", paste(unmatched.nms, collapse="; "), ". Please correct these names. Otherwise,",
                                              "they will be ignored during the enrichment analysis.");
   }else{
-    mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were sucessfully added to the library.");
+    mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were successfully added to the library.");
   }
   if(.on.public.web){
     .set.mSet(mSetObj);

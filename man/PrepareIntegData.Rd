@@ -7,5 +7,5 @@
 PrepareIntegData(mSetObj = NA)
 }
 \description{
-Used for the inmex module.
+Used for the pathinteg module.
 }

@@ -1,13 +1,15 @@
 # internal variables and functions not to be modified by users
+# This is only for web version 
 .on.public.web <- FALSE; # only TRUE when on metaboanalyst web server
 
+# note, this is usually used at the end of a function
+# for local, return itself; for web, push to global environment
 .set.mSet <- function(mSetObj=NA){
   if(.on.public.web){
     mSet <<- mSetObj;
     return (1);
-  }else{
-    mSetObj;
   }
+  return(mSetObj);
 }
 
 .get.mSet <- function(mSetObj=NA){
@@ -19,14 +21,14 @@
 }
 
 #'Constructs a dataSet object for storing data 
-#'@description This functions handles the construction of a dataSet object for storing data for further processing and analysis.
+#'@description This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
 #'It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform. 
 #'@usage InitDataObjects(dataType, analType, paired=F)
 #'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 #'or msspec (MS spectra data)
 #'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
-#'cmpdmap, smpmap, or inmex
+#'cmpdmap, smpmap, or pathinteg
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -34,29 +36,40 @@
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
-  mSetObj <- list();
   dataSet <- list();
   dataSet$type <- data.type;
   dataSet$design.type <- "regular"; # one factor to two factor
   dataSet$cls.type <- "disc"; # default until specified otherwise
   dataSet$format <- "rowu";
   dataSet$paired <- paired;
-  
   analSet <- list();
   analSet$type <- anal.type;
   
+  mSetObj <- list();
   mSetObj$dataSet <- dataSet;
   mSetObj$analSet <- analSet;
   mSetObj$imgSet <- list();
-  mSetObj$msgSet <- list();
-  mSetObj$cmdSet <- vector(mode="character");
+  mSetObj$msgSet <- list(); # store various message during data processing
+  mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
+  mSetObj$cmdSet <- vector(mode="character"); # store R command
+  
+  # other global variables
+  msg.vec <<- "";
+  module.count <<- 0; 
+  data.org <<- NULL; 
+  lib.path <<- "../../data/";
+  
+  # for meta-analysis
+  mdata.all <<- list(); 
+  mdata.siggenes <<- vector("list");
+  meta.selected <<- TRUE;
+  anal.type <<- anal.type;
   
   # plotting required by all
   library(Cairo)  
   CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
   
   print("R objects intialized ...");
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -86,109 +99,6 @@ GetRCommandHistory <- function(mSetObj=NA){
   return(mSetObj$cmdSet);
 }
 
-GetRCMD<-function(mSetObj=NA, pattern){
-  mSetObj <- .get.mSet(mSetObj); 
-  
-  rhist <- mSetObj$cmdSet
-  
-  all.matches<-grep(regexp, rhist, value=T);
-  if(length(all.matches)==0){
-    return(NULL);
-  }else{
-    # only return the last command
-    return(all.matches[length(all.matches)]);
-  }
-}
-
-DeDuplicateRCommandHistory <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj); 
-  
-  #data processing
-  
-  init <- GetRCMD("mSet<-InitDataObjects")
-  readdata <- GetRCMD("mSet<-Read.TextData")
-  unzipmsdata <- GetRCMD("mSet<-UnzipUploadedFile")
-  readmsdata <- GetRCMD("mSet<-Read.MSspec")
-  mscorr <- GetRCMD("mSet<-MSspec.rtCorrection")
-  mspeaks <- GetRCMD("mSet<-MSspec.fillPeaks")
-  msmatrix <- GetRCMD("mSet<-SetupMSdataMatrix")
-  specproc <- GetRCMD("mSet<-IsSpectraProcessingOK")
-  readpeak <- GetRCMD("mSet<-Read.PeakList")
-  grouppeak <- GetRCMD("mSet<-GroupPeakList")
-  setpeak <- GetRCMD("mSet<-SetPeakList.GroupValues")
-  sanity <- GetRCMD("mSet<-SanityCheckData")
-  replace <- GetRCMD("mSet<-ReplaceMin")
-  norm <- GetRCMD("mSet<-Normalization")
-  plotnorm <- GetRCMD("mSet<-PlotNormSummary")
-  plotsnorm <- GetRCMD("mSet<-PlotSampleNormSummary")
-
-  #stat analysis
-  
-  fcanal <- GetRCMD("mSet<-FC.Anal.unpaired")
-  fcplt <- GetRCMD("mSet<-PlotFC")
-  ttanal <- GetRCMD("mSet<-Ttests.Anal")
-  ttplt <- GetRCMD("mSet<-PlotTT")
-  volcano <- GetRCMD("mSet<-Volcano.Anal")
-  plotvolcano <- GetRCMD("mSet<-PlotVolcano")
-  anova <- GetRCMD("mSet <- ANOVA.Anal")
-  anovaplot <- GetRCMD("mSet <- PlotANOVA")
-  corr <- GetRCMD("mSet<-PlotCorrHeatMap")
-  pattern <- GetRCMD("mSet<-FeatureCorrelation")
-  plotpattern <- GetRCMD("mSet<-PlotCorr(mSet")
-  pcaanal <- GetRCMD("mSet<-PCA.Anal")
-  pcaplot <- GetRCMD("mSet<-PlotPCAPairSummary")
-  pcascree <- GetRCMD("mSet<-PlotPCAScree")
-  pca2D <- GetRCMD("mSet<-PlotPCA2DScore")
-  pca3d <- GetRCMD("mSet<-PlotPCA3DScore")
-  pcaload <- GetRCMD("mSet<-PlotPCALoading")
-  pcabiplot <- GetRCMD("mSet<-PlotPCABiplot")
-  plsranal <- GetRCMD("mSet<-PLSR.Anal")
-  plsrsum <- GetRCMD("mSet<-PlotPLSPairSummary")
-  pls2d <- GetRCMD("mSet<-PlotPLS2DScore")
-  plsload <- GetRCMD("mSet<-PlotPLSLoading")
-  plscv <- GetRCMD("mSet<-PLSDA.CV")
-  plsimp <- GetRCMD("mSet<-PlotPLS.Imp")
-  plsperm <- GetRCMD("mSet<-PLSDA.Permut")
-  plotplsperm <- GetRCMD("mSet<-PlotPLS.Permutation")
-  splsanal <- GetRCMD("mSet<-SPLSR.Anal")
-  splspair <- GetRCMD("mSet<-PlotSPLSPairSummary")
-  spls2d <- GetRCMD("mSet<-PlotSPLS2DScore")
-  spls3d <- GetRCMD("mSet<-PlotSPLS3DScore")
-  splsload <- GetRCMD("mSet<-PlotSPLSLoading")
-  splsclass <- GetRCMD("mSet<-PlotSPLSDA.Classification")
-  oplsanal <- GetRCMD("mSet<-OPLSR.Anal")
-  opls2d <- GetRCMD("mSet<-PlotOPLS2DScore")
-  oplssplot <- GetRCMD("mSet<-PlotOPLS.Splot")
-  oplsmodel <- GetRCMD("mSet<-PlotOPLS.MDL")
-  oplsperm <- GetRCMD("mSet<-PlotOPLS.Permutation")
-  samanal <- GetRCMD("mSet<-SAM.Anal")
-  sammat <- GetRCMD("mSet<-SetSAMSigMat")
-  samfdr <- GetRCMD("mSet<-PlotSAM.FDR")
-  samcmpd <- GetRCMD("mSet<-PlotSAM.Cmpd")
-  ebamanal <- GetRCMD("mSet<-EBAM.A0.Init")
-  ebamplot <- GetRCMD("mSet<-PlotEBAM.A0")
-  ebamcmpd <- GetRCMD("mSet<-EBAM.Cmpd.Init")
-  ebammat <- GetRCMD("mSet<-SetEBAMSigMat")
-  ebamplotcmpd <- GetRCMD("mSet<-PlotEBAM.Cmpd")
-  hicl <- GetRCMD("mSet<-PlotHCTree")
-  heatmap <- GetRCMD("mSet<-PlotHeatMap")
-  kmeans <- GetRCMD("mSet<-Kmeans.Anal")
-  kmeansplot <- GetRCMD("mSet<-PlotKmeans")
-  som <- GetRCMD("mSet<-SOM.Anal")
-  plotsom <- GetRCMD("mSet<-PlotSOM")
-  rfanal <- GetRCMD("mSet<-RF.Anal")
-  rfplot <- GetRCMD("mSet<-PlotRF.Classify")
-  rfvip <- GetRCMD("mSet<-PlotRF.VIP")
-  rfout <- GetRCMD("mSet<-PlotRF.Outlier")
-  rsvm <- GetRCMD("mSet<-RSVM.Anal")
-  rsvmplot <- GetRCMD("mSet<-PlotRSVM.Classification")
-  rsvmcmptplot <- GetRCMD("mSet<-PlotRSVM.Cmpd")
-
-  # continue...
-  
-}
-
 #'Constructor to read uploaded CSV or TXT files into the dataSet object
 #'@description This function handles reading in CSV or TXT files and filling in the dataSet object created using "InitDataObjects". 
 #'@usage Read.TextData(mSetObj=NA, filePath, format, lbl.type)
@@ -210,29 +120,18 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   dat <- .readDataTable(filePath);
   
-  # try to guess column numers and class labels (starts with #) from the top 20 rows
-  if(class(dat) == "try-error") {
-    AddErrMsg(mSetObj, "Data format error. Failed to read in the data!");
-    AddErrMsg(mSetObj, "Please check the followings: ");
-    AddErrMsg(mSetObj, "Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-    AddErrMsg(mSetObj, "We recommend using a combination of English letters, underscore, and numbers for naming purpose");
-    AddErrMsg(mSetObj, "Make sure sample names and feature (peak, compound) names are unique;");
-    AddErrMsg(mSetObj, "Missing values should be blank or NA without quote.");
-    return(0);
-  }
-  
-  if(ncol(dat) == 1){
-    AddErrMsg(mSetObj, "Error: Make sure the data table is saved as comma separated values (.csv) format!");
-    AddErrMsg(mSetObj, "Please also check the followings: ");
-    AddErrMsg(mSetObj, "Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-    AddErrMsg(mSetObj, "We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
-    AddErrMsg(mSetObj, "Make sure sample names and feature (peak, compound) names are unique.");
-    AddErrMsg(mSetObj, "Missing values should be blank or NA without quote.");
+  if(class(dat) == "try-error" || ncol(dat) == 1){
+    AddErrMsg("Data format error. Failed to read in the data!");
+    AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
+    AddErrMsg("Please also check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+    AddErrMsg("Missing values should be blank or NA without quote.");
     return(0);
   }
   
   msg <- NULL;
-  
   if(substring(format,4,5)=="ts"){
     # two factor time series data
     if(substring(format,1,3)=="row"){ # sample in row
@@ -262,8 +161,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
       # determine time factor
       if(!(tolower(facA.lbl) == "time" | tolower(facB.lbl) == "time")){
-        AddErrMsg(mSetObj, "No time points found in your data");
-        AddErrMsg(mSetObj, "The time points group must be labeled as <b>Time</b>");
+        AddErrMsg("No time points found in your data");
+        AddErrMsg("The time points group must be labeled as <b>Time</b>");
         return(0);
       }
     }
@@ -326,25 +225,16 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   if(mSetObj$analSet$type == "roc"){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
-      AddErrMsg(mSetObj, "ROC analysis is only defined for two-group comparisions!");
+      AddErrMsg("ROC analysis is only defined for two-group comparisions!");
       return(0);
     }
-  }
-  
-  # try to remove check & remove empty line if sample name is empty
-  empty.inx <- is.na(smpl.nms) | smpl.nms == "";
-  if(sum(empty.inx) > 0){
-    msg <- c(msg,paste("<font color=\"red\">", sum(empty.inx), "empty samples</font> were detected and excluded from your data."));
-    smpl.nms <- smpl.nms[!empty.inx];
-    cls.lbl <-  cls.lbl[!empty.inx];
-    conc <- conc[!empty.inx, ];
   }
   
   # check for uniqueness of dimension name
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
-    AddErrMsg(mSetObj, "Duplicate sample names are not allowed!");
-    AddErrMsg(mSetObj, dup.nm);
+    AddErrMsg("Duplicate sample names are not allowed!");
+    AddErrMsg(dup.nm);
     return(0);
   }
   
@@ -358,8 +248,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   if(length(unique(var.nms))!=length(var.nms)){
     dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg(mSetObj, "Duplicate feature names are not allowed!");
-    AddErrMsg(mSetObj, dup.nm);
+    AddErrMsg("Duplicate feature names are not allowed!");
+    AddErrMsg(dup.nm);
     return(0);
   }
   
@@ -367,14 +257,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   if(sum(is.na(iconv(smpl.nms)))>0){
     na.inx <- is.na(iconv(smpl.nms));
     nms <- paste(smpl.nms[na.inx], collapse="; ");
-    AddErrMsg(mSetObj, paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
+    AddErrMsg(paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
     return(0);
   }
   
   if(sum(is.na(iconv(var.nms)))>0){
     na.inx <- is.na(iconv(var.nms));
     nms <- paste(var.nms[na.inx], collapse="; ");
-    AddErrMsg(mSetObj, paste("No special letters (i.e. Latin, Greek) are allowed in feature names!", nms, collapse=" "));
+    AddErrMsg(paste("No special letters (i.e. Latin, Greek) are allowed in feature names!", nms, collapse=" "));
     return(0);
   }
   
@@ -395,9 +285,9 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     if(lbl.type == "disc"){
       # check for class labels at least two replicates per class
       if(min(table(cls.lbl)) < 3){
-        AddErrMsg(mSetObj, paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
-        AddErrMsg(mSetObj, "At least three replicates are required in each group!");
-        AddErrMsg(mSetObj, "Or maybe you forgot to specify the data format?");
+        AddErrMsg(paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
+        AddErrMsg("At least three replicates are required in each group!");
+        AddErrMsg("Or maybe you forgot to specify the data format?");
         return(0);
       }
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
@@ -421,8 +311,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
-                                          " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj)), ") data matrix.", sep=""));
-  print(mSetObj$msgSet$read.msg);
+                                          " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   
   return(.set.mSet(mSetObj));
 }
@@ -450,7 +339,7 @@ Read.PeakList<-function(mSetObj=NA, foldername){
   # each of the subfolder contains samples (.csv files)
   files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.name=TRUE)
   if (length(files) == 0) {
-    AddErrMsg(mSetObj, "No peak list files (.csv) were found.");
+    AddErrMsg("No peak list files (.csv) were found.");
     return(0);
   }
   
@@ -473,22 +362,22 @@ Read.PeakList<-function(mSetObj=NA, foldername){
   # some sanity check before proceeds
   sclass <- as.factor(sclass);
   if(length(levels(sclass))<2){
-    AddErrMsg(mSetObj, "You must provide classes labels (at least two classes)!");
+    AddErrMsg("You must provide classes labels (at least two classes)!");
     return(0);
   }
   
   # check for class labels at least three replicates per class
   if(min(table(sclass)) < 3){
-    AddErrMsg(mSetObj, "At least three replicates are required in each group!");
+    AddErrMsg("At least three replicates are required in each group!");
     return(0);
   }
   
   # check for unique sample names
   if(length(unique(snames))!=length(snames)){
-    AddErrMsg(mSetObj, "Duplcate sample names are not allowed!");
+    AddErrMsg("Duplcate sample names are not allowed!");
     dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
-    AddErrMsg(mSetObj, "Duplicate sample names are not allowed!");
-    AddErrMsg(mSetObj, dup.nm);
+    AddErrMsg("Duplicate sample names are not allowed!");
+    AddErrMsg(dup.nm);
     return(0);
   }
   
@@ -503,7 +392,7 @@ Read.PeakList<-function(mSetObj=NA, foldername){
   ############## use try block to catch any error ##############
   pks<- .readDataTable(files[1]);
   if(class(pks) == "try-error") {
-    AddErrMsg(mSetObj, "The CSV file is not formatted correctly!");
+    AddErrMsg("The CSV file is not formatted correctly!");
     return(0);
   };
   pks <- as.matrix(pks);
@@ -515,7 +404,7 @@ Read.PeakList<-function(mSetObj=NA, foldername){
   }else if(n.col==3){
     add=FALSE;
   }else{
-    AddErrMsg(mSetObj, "The peak list file can only contain 2 or 3 columns.");
+    AddErrMsg("The peak list file can only contain 2 or 3 columns.");
     return(0);
   }
   
@@ -525,7 +414,7 @@ Read.PeakList<-function(mSetObj=NA, foldername){
     print(files[i]);
     pks<- as.matrix(.readDataTable(files[i]));
     if(ncol(pks)!=n.col){
-      AddErrMsg(mSetObj, "The number of columns in each file are not the same!");
+      AddErrMsg("The number of columns in each file are not the same!");
       return(0);
     }
     
@@ -595,12 +484,6 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
     return(0);
   }
   
-  # check for min samples in each group
-  #if(min(table(cls.all)) < 3){
-  #  mSetObj$msgSet$read.msg <- "<font color='red'>At least three replicates are required in each group!</font>";
-  #  return(0);
-  #}
-  
   # check for unique sample names
   if(length(unique(smpl.all))!=length(smpl.all)){
     mSetObj$msgSet$read.msg <- "<font color='red'>Duplcate sample names are not allowed!</font>";
@@ -633,7 +516,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
     all.names=c(all.names, unlist(strsplit(all.pairs[i],":"), use.names=FALSE));
   }
   names(labels) <- all.names;
-  labels;
+  return(labels);
 }
 
 #'Save the processed data with class names
@@ -702,14 +585,28 @@ SaveTransformedData<-function(mSetObj=NA){
 }
 
 #'@export
+# error message will print in all cases
 #'
-AddErrMsg <- function(mSetObj=NA, msg){
-  mSetObj <- .get.mSet(mSetObj);
-  if(!exists('msg.vec', where = mSetObj$msgSet)){
-    mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
+AddErrMsg <- function(msg){
+  msg.vec <<- c(msg.vec, msg);
+  print(msg);
+}
+
+# general message only print when running local
+AddMsg <- function(msg){
+  msg.vec <<- c(msg.vec, msg);
+  if(!.on.public.web){
+    print(msg);
   }
-  mSetObj$msgSet$msg.vec <- c(mSetObj$msgSet$msg.vec, msg);
-  return(.set.mSet(mSetObj));
+}
+
+# return the latest message
+GetCurrentMsg <- function(){
+  return(msg.vec[length(msg.vec)]);
+}
+
+GetCurrentCheckMsg <- function(){
+  return(check.msg);
 }
 
 #'Plot compound summary
@@ -738,8 +635,11 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
     par(mar=c(4,4,2,2), mfrow = c(1,2), oma=c(0,0,2,0));
     
-    mns <- by(as.numeric(mSetObj$dataSet$procr[, cmpdNm]), mSetObj$dataSet$proc.cls, mean, na.rm=T);
-    sds <- by(as.numeric(mSetObj$dataSet$procr[, cmpdNm]), mSetObj$dataSet$proc.cls, sd, na.rm=T);
+    # need to consider norm data were edited, different from proc
+    smpl.nms <- rownames(mSetObj$dataSet$norm);
+    
+    mns <- by(as.numeric(mSetObj$dataSet$procr[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, mean, na.rm=T);
+    sds <- by(as.numeric(mSetObj$dataSet$procr[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, sd, na.rm=T);
     
     ups <- mns + sds;
     dns <- mns - sds;
@@ -811,97 +711,58 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 #' @usage read_compound(fileURL, destfile)
 #' @param fileURL Name of the file path
 #' @param destfile Name of the downloaded file to current working directory 
-#'
-#' example: cmpd <- read_MetAnal_RDS("http://www.metaboanalyst.ca/resources/libs/syn_nms.rds", destfile="syn_nms.rds")
 
-read_MetAnal_RDS <- function(fileURL, destfile){
-  
+# read binary RDS files
+.read.metaboanalyst.lib <- function(filenm){
   if(.on.public.web){
-    metanal <- readRDS("../../libs/compound_db.rds");
-  }else if(!file.exists(destfile)) {
-    res <- download.file(fileURL, destfile, method="libcurl");
-    metanal <- readRDS(destfile);
+    lib.path <- paste("../../libs/", filenm, sep="");
   }else{
-    time <- file.info(destfile)
-    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-    
-    if(diff_time>30){
-      res <- download.file(fileURL, destfile, method="libcurl");
+    lib.download <- FALSE;
+    if(!file.exists(filenm)){
+      lib.download <- TRUE;
+    }else{
+      time <- file.info(filenm)
+      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+      if(diff_time>30){
+        lib.download <- TRUE;
+      }
     }
-    metanal <- readRDS(destfile);
+    if(lib.download){
+      lib.url <- paste("http://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
+      download.file(lib.url, destfile=filenm, method="libcurl")
+    }
+    lib.path <- filenm;
   }
-  
-  return(metanal);
+  my.lib <- readRDS(lib.path);
+  return(my.lib)
 }
 
-#' Synonym Names Database
-read_synnames_RDS <- function(destfile){
-  
-  if(.on.public.web){
-    syn.db <- readRDS("../../libs/syn_nms.rds")
-  }else if(!file.exists(destfile)){
-    res <- download.file("http://www.metaboanalyst.ca/resources/libs/syn_nms.rds", destfile="syn_nms.rds", method="libcurl")
-    syn.db <- readRDS("syn_nms.rds")
-  }else{
-    time <- file.info(destfile)
-    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-    
-    if(diff_time>30){
-      res <- download.file("http://www.metaboanalyst.ca/resources/libs/syn_nms.rds", destfile="syn_nms.rds", method="libcurl")
-    }
-    syn.db <- readRDS("syn_nms.rds")
-  }
-  return(syn.db)
-}
-
-#' Read metabolite sets from library 
-read_mSet <- function(libname){
+# read binary RDA files (old style should be all RDS)
+# type should mset or kegg
+.load.metaboanalyst.lib <- function(libtype, libname){
   
   destfile <- paste(libname, ".rda", sep="");
-  
   if(.on.public.web){
-    libPath <- paste("../../libs/msets/", libname, ".rda", sep="");
-    load(libPath, .GlobalEnv);
-  }else if(!file.exists(destfile)){
-    libPath <- paste("http://www.metaboanalyst.ca/resources/libs/msets/", libname, ".rda", sep="");
-    download.file(libPath, destfile);
-    load(destfile, .GlobalEnv);
+    destfile <- paste("../../libs/", libtype, "/", libname, ".rda", sep="");
   }else{
-    time <- file.info(destfile)
-    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-    
-    if(diff_time>30){
-      libPath <- paste("http://www.metaboanalyst.ca/resources/libs/msets/", libname, ".rda", sep="");
+    lib.download <- FALSE;
+    if(!file.exists(destfile)){
+      lib.download <- TRUE;
+    }else{
+      time <- file.info(destfile)
+      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+      if(diff_time>30){
+        lib.download <- TRUE;
+      }
+    }
+    if(lib.download){
+      libPath <- paste("http://www.metaboanalyst.ca/resources/libs/", libtype, "/", libname, ".rda", sep="");
       download.file(libPath, destfile);
     }
-    load(destfile, .GlobalEnv);  
   }
+  load(destfile, .GlobalEnv);  
 }
 
-#' Read KEGG files from library
-
-read_KEGG <- function(kegg.rda){
-  
-  destfile <- paste(kegg.rda, ".rda", sep="");
-  
-  if(.on.public.web){
-    libPath <- paste("../../libs/kegg/", kegg.rda, ".rda", sep="");
-    load(libPath, .GlobalEnv);
-  }else if(!file.exists(destfile)){
-    libPath <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/", kegg.rda, ".rda", sep="");
-    download.file(libPath, destfile);
-    load(destfile, .GlobalEnv);
-  }else{
-    time <- file.info(destfile)
-    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-    
-    if(diff_time>30){
-      libPath <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/", kegg.rda, ".rda", sep="");
-      download.file(libPath, destfile);
-    }
-    load(destfile, .GlobalEnv);  
-  }
-}
 
 ##############################################
 ##############################################
@@ -909,12 +770,9 @@ read_KEGG <- function(kegg.rda){
 ##############################################
 ##############################################
 
-
-GetErrMsg<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$msgSet$msg.vec);
+GetErrMsg<-function(){
+  return(msg.vec);
 }
-
 
 GetKEGG.PathNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -929,9 +787,7 @@ GetKEGG.PathNames<-function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 
 KEGGID2Name<-function(ids){
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   hit.inx<- match(ids, cmpd.db$kegg);
   return(cmpd.db[hit.inx, 3]);
 }
@@ -956,9 +812,7 @@ KEGGPATHID2SMPDBIDs<-function(ids){
 #'License: GNU GPL (>= 2)
 
 HMDBID2Name<-function(ids){
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   hit.inx<- match(ids, cmpd.db$hmdb);
   return(cmpd.db[hit.inx, "name"]);
 }
@@ -972,9 +826,7 @@ HMDBID2Name<-function(ids){
 
 KEGGID2HMDBID<-function(ids){
   
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
   hit.inx<- match(ids, cmpd.db$kegg);
   return(cmpd.db[hit.inx, "hmdb_id"]);
@@ -988,9 +840,7 @@ KEGGID2HMDBID<-function(ids){
 #'License: GNU GPL (>= 2)
 
 HMDBID2KEGGID<-function(ids){
-  fileURL <- "http://www.metaboanalyst.ca/resources/libs/compound_db.rds";
-  destfile <- "compound_db.rds";
-  cmpd.db <- read_MetAnal_RDS(fileURL, destfile);
+  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   hit.inx<- match(ids, cmpd.db$hmdb);
   return(cmpd.db[hit.inx, "kegg_id"]);
 }
@@ -1066,6 +916,6 @@ IsReadyForEditor <- function(mSetObj=NA){
 #'@export
 SetOrganism <- function(mSetObj=NA, org){
   mSetObj <- .get.mSet(mSetObj);
-  inmex.org <<- org;
+  pathinteg.org <<- data.org <<- org;
   return(.set.mSet(mSetObj))
 }

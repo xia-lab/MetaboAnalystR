@@ -9,7 +9,7 @@
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(require(randomForest));
+  suppressMessages(library(randomForest));
   # set up random numbers
   if(is.null(mSetObj$dataSet$random.seeds)){
     mSetObj$dataSet$random.seeds <- GetRandomNumbers();
@@ -121,7 +121,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotImpVar(mSetObj, vip.score, "MeanDecreaseAccuracy");
   dev.off();
- 
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -520,7 +520,7 @@ GetRFOOB <- function(mSetObj=NA){
 
 GetSigTable.RF <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$rf.sigmat, "Random Forest", mSetObj);
+  GetSigTable(mSetObj$analSet$rf.sigmat, "Random Forest", mSetObj$dataSet$type);
 }
 
 #'Random Forest Significance matrix
@@ -593,5 +593,5 @@ GetSVMSigColNames <- function(mSetObj=NA){
 
 GetSigTable.SVM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  GetSigTable(mSetObj$analSet$svm$sig.mat, "Recursive SVM", mSetObj);
+  GetSigTable(mSetObj$analSet$svm$sig.mat, "Recursive SVM", mSetObj$dataSet$type);
 }

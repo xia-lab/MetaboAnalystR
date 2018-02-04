@@ -14,6 +14,8 @@ ANOVA2.Anal(mSetObj, thresh, p.cor, type)
 \item{p.cor}{select method for p-value correction, bonferroni, holm or fdr}
 
 \item{type}{select b to perform between-subjects ANOVA, and w for within-subjects ANOVA}
+
+\item{use.interact}{is whether to consider interaction in two-way repeated ANOVA}
 }
 \description{
 Perform Two-way ANOVA

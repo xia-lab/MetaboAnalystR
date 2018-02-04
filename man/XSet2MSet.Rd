@@ -14,7 +14,7 @@ specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak
 or msspec (MS spectra data).}
 
 \item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
-cmpdmap, smpmap, or inmex.}
+cmpdmap, smpmap, or pathinteg.}
 
 \item{paired}{Logical, is data paired (T) or not (F).}
 
