@@ -8,7 +8,7 @@
 
 **MetaboAnalystR** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility.
 
-## Updates
+## Updates - 05/02/2018
 
 We present a new update to MetaboAnalystR (In conjuction with the release of MetaboAnalyst Version 4.0) to enable comprehensive metabolomic data analysis, interpretation, and integration with other omics data. Over the years, MetaboAnalyst has continued to evolve based on user feedback and technological advancements in the field. For this year’s update, three new modules have been added to MetaboAnalyst 4.0/R, including: 1) the addition of a new module for pathway prediction from high-resolution mass spectral data using the mummichog algorithm; 2) the addition of a Biomarker Meta-Analysis module for robust biomarker identification through the combination of multiple metabolomic datasets; and 3) the addition of a Network Explorer module for integrative analysis of metabolomics, metagenomics, and/or transcriptomics data. The underlying knowledgebases (compound libraries, metabolite sets, metabolite-SNP associations and metabolic pathways) have also been updated using the latest data from the Human Metabolome Database (HMDB) and the Small Molecule Pathway Database (SMPDB).
 

@@ -167,6 +167,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
     }
   }else{
+    
     if(substring(format,1,3)=="row"){ # sample in row
       msg <- c(msg, "Samples are in rows and features in columns");
       smpl.nms <-dat[,1];
@@ -223,7 +224,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     }
   }
   
-  if(mSetObj$analSet$type == "roc"){
+  if(anal.type == "roc"){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
       AddErrMsg("ROC analysis is only defined for two-group comparisions!");
       return(0);

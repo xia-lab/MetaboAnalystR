@@ -20,6 +20,7 @@ LoadMsetLib <- function(libname="pathway"){
 #'@export
 #'
 SetCachexiaSetUsed <- function(mSetObj=NA, used){
+  mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cachexia.set.used <- used;
   return(.set.mSet(mSetObj));
 }
