@@ -1707,9 +1707,9 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
     if(mdl.inx == -1){
       mdl.inx <- mSetObj$analSet$multiROC$best.model.inx;
     }
-    imp.mat <- GetImpFeatureMat(mSetObj=NA, mSetObj$analSet$multiROC$imp.cv, mSetObj$analSet$multiROC$test.feats[mdl.inx]);
+    imp.mat <- GetImpFeatureMat(mSetObj, mSetObj$analSet$multiROC$imp.cv, mSetObj$analSet$multiROC$test.feats[mdl.inx]);
   }else{
-    imp.mat <- GetImpFeatureMat(mSetObj=NA, mSetObj$analSet$multiROC$imp.cv, null);
+    imp.mat <- GetImpFeatureMat(mSetObj, mSetObj$analSet$multiROC$imp.cv, null);
   }
   
   if(measure=="freq"){

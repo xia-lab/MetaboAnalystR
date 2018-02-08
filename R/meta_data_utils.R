@@ -465,6 +465,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   # record the sig gene vec
   if(.on.public.web==TRUE){
     .set.mSet(mSetObj)
+
     return(c(1, sig.count, non.sig.count));
   }else{
     return(.set.mSet(mSetObj));
@@ -685,7 +686,4 @@ SetupMetaStats <- function(BHth){
     
     write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
 }
-
-
-
 

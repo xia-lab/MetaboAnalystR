@@ -40,10 +40,10 @@ CreateEnrichIntr <- function(){
              "MSEA or Metabolite Set Enrichment Analysis is a way to identify biologically meaningful",
              "patterns that are significantly enriched in quantitative metabolomic data. In conventional",
              "approaches, metabolites are evaluated individually for their significance under conditions",
-             "of study. Those compounds that have passed certain sigificance level are then combined to",
+             "of study. Those compounds that have passed certain significance level are then combined to",
              "see if any meaningful patterns can be discerned. In contrast, MSEA directly investigates if",
              "a set of functionally related metabolites without the need to preselect compounds based on",
-             "some arbituary cut-off threshold. It has the potentail to identify subtle but consistent changes",
+             "some arbitrary cut-off threshold. It has the potential to identify subtle but consistent changes",
              "among a group of related compounds, which may go undetected with the conventional approaches.",
              "\n\n",
              "Essentially, MSEA is a metabolomic version of the popular GSEA (Gene Set Enrichment Analysis)",
@@ -123,7 +123,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
     );
   }else{
     descr <- c("You selected Quantitative Enrichment Analysis (QEA) which requires a concentration table.",
-               "This is the most common data format generated from quantitative metabolomcs studies.",
+               "This is the most common data format generated from quantitative metabolomics studies.",
                "The phenotype label can be can be discrete (binary or multi-class) or continuous. \n\n"
     );
   }
@@ -189,19 +189,21 @@ CreateEnrichAnalDoc <- function(){
   descr <- c(
     "\\begin{itemize}",
     "\\item{Metabolic pathway associated metabolite sets",
-    "(\\textit{currently contains 88 entries});}",
+    "(\\textit{currently contains 99 entries});}",
     "\\item{Disease associated metabolite sets (reported in blood)",
-    "(\\textit{currently contains 416 entries});}",
+    "(\\textit{currently contains 344 entries});}",
     "\\item{Disease associated metabolite sets (reported in urine)",
-    "(\\textit{currently contains 346 entries})}",
+    "(\\textit{currently contains 384 entries})}",
     "\\item{Disease associated metabolite sets (reported in CSF)",
-    "(\\textit{currently contains 124 entries})}",
+    "(\\textit{currently contains 166 entries})}",
     "\\item{Metabolite sets associated with SNPs",
-    "(\\textit{currently contains 4500 entries})}",
+    "(\\textit{currently contains 4598 entries})}",
     "\\item{Predicted metabolite sets based on computational enzyme knockout model",
     "(\\textit{currently contains 912 entries})}",
     "\\item{Metabolite sets based on locations",
-    "(\\textit{currently contains 57 entries})}",
+    "(\\textit{currently contains 73 entries})}",
+    "\\item{Drug pathway associated metabolite sets",
+    "(\\textit{currently contains 461 entries})}",
     "\\end{itemize}",
     "\n\n");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
@@ -209,7 +211,7 @@ CreateEnrichAnalDoc <- function(){
   descr <- c("In addition, MSEA also allows user-defined metabolite sets to be uploaded to perform",
              "enrichment analysis on arbitrary groups of compounds which researchers want to test.",
              "The metabolite set library is simply a two-column comma separated text file with the",
-             "first column for metabolite set names and the second column for its comound names (\\textbf{must use HMDB compound name})",
+             "first column for metabolite set names and the second column for its compound names (\\textbf{must use HMDB compound name})",
              "separated by \"; \". Please note, the",
              "built-in libraries are mainly from human studies. The functional grouping of metabolites",
              "may not be valid. Therefore, for data from subjects other than human being, users are",

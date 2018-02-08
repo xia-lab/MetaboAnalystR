@@ -109,6 +109,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 CalculateGlobalTestScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+
   # now, perform the enrichment analysis
   library('globaltest');
   set.size <- length(current.msetlib);
@@ -116,7 +117,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
     return(0);
   }
-  
+
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
   nm.map <- GetFinalNameMap(mSetObj);
@@ -130,12 +131,12 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
   current.mset <- current.msetlib$member; 
   
-  # make a clean metabilite set based on reference metabolome filtering
+  # make a clean metabolite set based on reference metabolome filtering
   if(mSetObj$dataSet$use.metabo.filter && !is.null('mSetObj$dataSet$metabo.filter.hmdb')){
     current.mset <- lapply(inmexpa$mset.list, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
-  
+
   # first, get the matched entries from current.mset
   hits<-lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   

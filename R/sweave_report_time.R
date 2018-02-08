@@ -158,7 +158,7 @@ CreateiPCAdoc <- function(mSetObj=NA){
              "visualization system. The system supports pointing-and-clicking, rotating",
              "zooming(hold down SHIFT key and drag vertically). Clicking any of the displayed",
              "data points will show the corresponding sample summarized by the top 20 most",
-             "different variables that devidate from the data center.",
+             "different variables that deviate from the data center.",
              "\n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
@@ -234,7 +234,7 @@ CreateAOV2doc <- function(mSetObj=NA){
              "Univariate analysis methods are the most common methods used for exploratory data analysis. ",
              "For two-factor data, the basic approach is two-way ANOVA",
              "There are two options - between-subjects ANOVA and within-subjects ANOVA. When samples are all from",
-             "indepent subjects (i.e. general two-way ANOVA), the between-subjects option should be selected.",
+             "independent subjects (i.e. general two-way ANOVA), the between-subjects option should be selected.",
              "The time series data contains samples measured from the same subjects from different time points.",
              "The within-subjects ANOVA should be used.",
              "\n\n",
@@ -314,8 +314,8 @@ CreateASCAdoc <- function(mSetObj=NA){
              "then calculate the permuted variation associated with each factor",
              "Finally, the permuted values are compared with the original variations",
              "The significant variables are identified based on the leverage and the",
-             "Squared Prediction Errors (SPE) assciated with each variables",
-             "Variables with low SPE and higher leverage are modelled well after the major patterns.",
+             "Squared Prediction Errors (SPE) associated with each variables",
+             "Variables with low SPE and higher leverage are modeled well after the major patterns.",
              "\n\n",
              paste("Figure", fig.count<<-fig.count+1,"shows the scree plots for each effect model.\n"),
              paste("Figure", fig.count<<-fig.count+1,"shows the major patterns associated with factor A.\n"),

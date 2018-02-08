@@ -39,7 +39,7 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@export
 #'
 SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(lib.type!="self"){
@@ -53,28 +53,21 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
     ms.list <- strsplit(current.msetlib[,3],"; ");
     names(ms.list) <- current.msetlib[,2];
   }
-  
+
   if(excludeNum > 0){
     cmpd.count <- lapply(ms.list, length);
     sel.inx <- cmpd.count >= excludeNum;
     ms.list <- ms.list[sel.inx];
     current.msetlib <- current.msetlib[sel.inx,];
   }
-  
-  # note exclude the cachaxia signature if test data used
-  if(exists('cachexia.set.used', where = mSetObj$dataSet)){
-    sel.inx <- which(names(ms.list) == "CANCER CACHEXIA PATIENTS");
-    ms.list[sel.inx] <- NULL;
-    current.msetlib <- current.msetlib[-sel.inx,];
-  }
-  
+
   # total uniq cmpds in the mset lib
   mSetObj$dataSet$uniq.count <- length(unique(unlist(ms.list, use.names = FALSE)));
-  
+
   # update current.mset and push to global env
   current.msetlib$member <- ms.list;
   current.msetlib <<- current.msetlib;
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
   }
@@ -506,7 +499,7 @@ GetRefLibCheckMsg<-function(mSetObj=NA){
 SetMetabolomeFilter<-function(mSetObj=NA, TorF){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$use.metabo.filter <- TorF;
-  .set.mSet(mSetObj)
+  return(.set.mSet(mSetObj));
 }
 
 getBestHit<-function(mSetObj=NA){
@@ -524,7 +517,7 @@ getBestHit<-function(mSetObj=NA){
 
 GetMsetLibSearchResult<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return (as.vector(mSetObj$dataSet$lib.search$matched.table));
+  return(as.vector(mSetObj$dataSet$lib.search$matched.table));
 }
 
 GetSMPDBimg<-function(mSetObj=NA, msetInx){

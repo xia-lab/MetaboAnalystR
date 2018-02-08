@@ -321,7 +321,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
              "\\textit{For data with number of variables  < 250, this step will reduce 5\\% of variables;",
              "For variable number between 250 and 500, 10\\% of variables will be removed;",
              "For variable number bwteen 500 and 1000, 25\\% of variables will be removed;",
-             "And 40\\% of variabled will be removed for data with over 1000 varaibles.}");
+             "And 40\\% of variabled will be removed for data with over 1000 variables.}");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -544,8 +544,8 @@ CreateUNIVdoc <- function(mSetObj=NA){
              volcano.tab,
              "\n\n",
              "Please note, the purpose of fold change is to compare absolute value changes between two group means.",
-             "Therefore, the data before column normlaization will be used instead. Also note, the result is plotted",
-             "in log2 scale, so that same fold change (up/down-regulated) will have the same distance to the zero baseline.",
+             "Therefore, the data before column normalization will be used instead. Also note, the result is plotted",
+             "in log2 scale, so that same fold change (up/down regulated) will have the same distance to the zero baseline.",
              "\n");
   
   cat(descr, file=rnwFile, append=TRUE);
@@ -557,7 +557,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$fc,"}", sep=""),
     "\\caption{", paste("Important features selected by fold-change analysis with threshold ", mSetObj$analSet$fc$raw.thresh, ". ",
                         "The red circles represent features above the threshold. Note the values are on log scale, so that both up-regulated ",
-                        "and downregulated features can be plotted in a symmetrical way", sep=""), "}",
+                        "and down-regulated features can be plotted in a symmetrical way", sep=""), "}",
     "\\end{center}",
     paste("\\label{",mSetObj$imgSet$fc,"}", sep=""),
     "\\end{figure}"
@@ -897,7 +897,7 @@ CreatePLSdoc <- function(mSetObj=NA){
              "\n\n",
              "There are two variable importance measures in PLS-DA. The first, Variable Importance in Projection (VIP) is",
              "a weighted sum of squares of the PLS loadings taking into account the amount of explained Y-variation",
-             "in each dimension. Please note, VIP scores are calculated for each components. When more than componetnts are used to calculate", 
+             "in each dimension. Please note, VIP scores are calculated for each components. When more than components are used to calculate", 
              "the feature importance, the average of the VIP scores are used. The other importance measure is based",
              "on the weighted sum of PLS-regression. The weights are a function of the reduction of the sums of squares across the number",
              "of PLS components. Please note, for multiple-group (more than two) analysis, the same number of predictors will be built for each",
@@ -1010,14 +1010,14 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
   descr <- c("\\subsection{Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)}\n",
              "The sparse PLS-DA (sPLS-DA) algorithm can be used to effectively reduce the number of variables (metabolites)", 
              "in high-dimensional metabolomics data to produce robust and easy-to-interpret models.", 
-             "Users can control the sparseness of the model by controling the number of components in the model and the number ",
+             "Users can control the sparseness of the model by controlling the number of components in the model and the number ",
              "of variables in each component. For more information, please refer to Cao et al. 2011 (PMC3133555). ",
              "\n\n",
              paste("Figure", fig.count<<-fig.count+1,"shows the overview of scores plots;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the loading plot of the top ranked features;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluted using cross-validations;"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluated using cross-validations;"));
   cat(descr, file=rnwFile, append=TRUE);
   
   

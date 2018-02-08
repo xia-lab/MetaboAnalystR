@@ -169,14 +169,12 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
   if(exists('network.type')){
 
     if(network.type=="gene_metabolites"){
-      net.type <- paste("The selected interaction network is: ", network.type);
-      image <- paste("Figure 1 shows the plot of the created interaction network.");
       network = "Gene-Metabolite Interaction Network."
       
-      }else if(network.type=="gene_metabolites"){
+      }else if(network.type=="metabo_phenotypes"){
         network = "Metabolite-Disease Interaction Network."
         
-        }else if(network.type=="gene_metabolites"){
+        }else if(network.type=="metabo_metabolites"){
           network = "Metabolite-Metabolite Interaction Network."
           
           }else{

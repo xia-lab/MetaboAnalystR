@@ -262,7 +262,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                    "\\caption{", paste("Venn diagram of the top differentially expressed features from the meta-analysis. ", 
                                        "On the left side are features that are DE only from the meta-analysis,",
                                        " in the center are DE features that were identified in both the meta-analysis and the individual studies, ",
-                                       "and on the right side are features that are were DE in the individual analysis, but did not show up as DE during meta-analysis.", sep=""),"}",
+                                       "and on the right side are features that were DE in the individual analysis, but did not show up as DE during meta-analysis.", sep=""),"}",
                    "\\end{center}",
                    paste("\\label{",mSetObj$imgSet$venn,"}", sep=""),
                    "\\end{figure}",

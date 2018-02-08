@@ -11,7 +11,7 @@
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # record the filter for 8 major databases
   mSetObj$return.cols <- c(hmdb, pubchem, chebi, kegg, metlin);
   
@@ -19,7 +19,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
   if(!exists("name.map", where = mSetObj)){
     mSetObj$name.map <- list();
   }
-  
+
   # distribute job
   mSetObj$dataSet$q.type <- q.type;
   

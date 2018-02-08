@@ -158,7 +158,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   descr <- c("\\subsection{Biomarker Analysis Normalization}\n",
              "The normalization step for the biomarker analysis module includes an additional option for",
              " calculating ratios between metabolite concentrations. Ratios between two metabolite concentrations",
-             " may provide more information than the two metabolite concentrations seperately. MetaboAnalystR",
+             " may provide more information than the two metabolite concentrations separately. MetaboAnalystR",
              " will compute ratios between all possible metabolite pairs and then select the top ranked ratios (based on p-values)",
              " to include with the data for further biomarker analysis. Please note, there is a potential overfitting issue", 
              " associated with this procedure. The main purpose of computing ratios of metabolite concentrations is to improve the chances of biomarker discovery,", 
@@ -229,7 +229,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
   cat(descr, file=rnwFile, append=TRUE);
   
-  ft.name <- paste(mSet$imgSet$roc.univ.name);
+  ft.name <- paste(mSetObj$imgSet$roc.univ.name);
   
   univbio<-c( "\\begin{figure}[htp]",
               "\\begin{center}",
@@ -271,9 +271,9 @@ CreateUnivROCTable<-function(){
   
   univROCtable <- feat.rank.mat
   
-  colnames(univROCtable) <- c("Area-under-the-curve", "T-test", "Log 2 Fold-Change")
+  colnames(univROCtable) <- c("Area-under-the-curve", "T-test", "Log 2 Fold-Change", "Cluster")
   
-  print(xtable(univROCtable, caption="AUC, Log2FC, and T-test for univariate biomarker analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable(univROCtable, caption="AUC, Log2FC, T-test and K-Means Cluster for univariate biomarker analysis"), caption.placement="top", size="\\scriptsize");
   
 }
 
@@ -317,7 +317,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   # ROC plot
   
-  modelindex <- paste(mSet$imgSet$roc.multi.model)
+  modelindex <- paste(mSetObj$imgSet$roc.multi.model)
   
   ROCplot <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
@@ -336,7 +336,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   # Prob
   
-  modelindex2 <- paste(mSet$imgSet$roc.prob.name)
+  modelindex2 <- paste(mSetObj$imgSet$roc.prob.name)
   
   ROCplot <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
@@ -367,7 +367,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   # Sig features
   
-  modelindex3 <- paste(mSet$imgSet$roc.imp.name)
+  modelindex3 <- paste(mSetObj$imgSet$roc.imp.name)
   
   ROCplot <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
@@ -418,8 +418,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   # ROC plot
   
-  modelindex <- paste(mSet$imgSet$roc.testcurve.name)
-  modelmethod <- paste(mSet$imgSet$roc.testcurve.method)
+  modelindex <- paste(mSetObj$imgSet$roc.testcurve.name)
+  modelmethod <- paste(mSetObj$imgSet$roc.testcurve.method)
   
   ROCplot <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
@@ -438,7 +438,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   # Probability
   
-  modelindex2 <- paste(mSet$imgSet$roc.testprob.name)
+  modelindex2 <- paste(mSetObj$imgSet$roc.testprob.name)
   
   probplot <- c( "\\begin{figure}[htp]",
                  "\\begin{center}",
@@ -468,7 +468,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   # Permutation
   
-  permmethod <- paste(mSet$imgSet$roc.perm.method)
+  permmethod <- paste(mSetObj$imgSet$roc.perm.method)
   
   permplot <- c( "\\begin{figure}[htp]",
                  "\\begin{center}",
@@ -484,7 +484,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   );
   cat(permplot, file=rnwFile, append=TRUE, sep="\n");
   
-  if(is.null(mSet$analSet$pred.samples.table)){
+  if(is.null(mSetObj$analSet$pred.samples.table)){
     return()
   }else{
     ROCLabelstable <- c("<<echo=false, results=tex>>=",

@@ -205,7 +205,9 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$dataSet$minConc <- minConc;
   mSetObj$dataSet$preproc <- as.data.frame(int.mat);
+
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+  
   if(substring(mSetObj$dataSet$format,4,5)=="ts"){
     mSetObj$dataSet$proc.facA <- mSetObj$dataSet$orig.facA;
     mSetObj$dataSet$proc.facB <- mSetObj$dataSet$orig.facB;
@@ -214,7 +216,7 @@ SanityCheckData <- function(mSetObj=NA){
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
   #print(mSetObj$dataSet$min.grp.size);
   
-  if(.on.public.web){
+  if(.on.public.web==TRUE){
     .set.mSet(mSetObj);
     return(1)
   }
@@ -267,6 +269,7 @@ ReplaceMin <- function(mSetObj=NA){
     mSetObj$msgSet$replace.msg <- paste("Zero or missing variables were replaced with a small value:", minConc);
     rm(int.mat);
     invisible(gc()); # suppress gc output
+
     return(.set.mSet(mSetObj));
   }
 }
@@ -317,7 +320,6 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     
     # need to update cls labels
     mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
-    print("removemissing")
     
     return(.set.mSet(mSetObj));
   }
@@ -842,6 +844,10 @@ IsSpectraProcessingOK <- function(mSetObj=NA){
     res <- 0;
   }
   
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(res);
+  }
   print(res);
   return(.set.mSet(mSetObj));
 }
