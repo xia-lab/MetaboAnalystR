@@ -1160,7 +1160,6 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
 GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
   

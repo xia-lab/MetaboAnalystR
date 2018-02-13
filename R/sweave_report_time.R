@@ -151,9 +151,9 @@ CreateiPCAdoc <- function(mSetObj=NA){
   }
   
   descr <- c("\\subsection{Interactive Principal Component Analysis (iPCA)}\n",
-             "PCA is an unsupervised method aiming to find the directions that best",
+             "PCA is an unsupervised method that aims to find the directions that best",
              "explain the variance in a data set (X) without referring to class labels (Y).",
-             "The data are summarized into top three components or PCs that explain most of the",
+             "The data are summarized into the top three components or PCs that explain most of the",
              "variations in the data. The result is displayed in an interactive 3D",
              "visualization system. The system supports pointing-and-clicking, rotating",
              "zooming(hold down SHIFT key and drag vertically). Clicking any of the displayed",
@@ -181,8 +181,8 @@ CreateHeatmap2doc <- function(mSetObj=NA){
   }
   
   descr <- c("\\subsection{Two-way Heatmap Visualization}\n",
-             "The heatmap provides direct visualization of all the data points in the forms",
-             "of colors squares. The color spectrum intuitively indicates the higher or lower values",
+             "The heatmap provides direct visualization of all data points in the form",
+             "of colors squares. The color spectrum intuitively indicates the higher or lower values.",
              "Users can choose different clustering algorithms or distance measures to cluster the",
              "variables. The samples are ordered by the two factors with default the first factor",
              "used for primary ordering. Users can choose to switch the order.",
@@ -232,11 +232,11 @@ CreateAOV2doc <- function(mSetObj=NA){
   
   descr <- c("\\subsection{Univariate Analysis}\n",
              "Univariate analysis methods are the most common methods used for exploratory data analysis. ",
-             "For two-factor data, the basic approach is two-way ANOVA",
+             "For two-factor data, the basic approach is two-way ANOVA. ",
              "There are two options - between-subjects ANOVA and within-subjects ANOVA. When samples are all from",
              "independent subjects (i.e. general two-way ANOVA), the between-subjects option should be selected.",
-             "The time series data contains samples measured from the same subjects from different time points.",
-             "The within-subjects ANOVA should be used.",
+             "However, time series data contains samples measured from the same subjects from different time points.",
+             "Therefore within-subjects ANOVA should be used.",
              "\n\n",
              paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by ANOVA analysis."),
              aov2.tab,

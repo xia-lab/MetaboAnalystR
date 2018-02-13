@@ -358,7 +358,7 @@ mSet<-PlotRSVM.Cmpd(mSet, "svm_imp_0_", format = "png", dpi=72, width=NA)
 
 ## 3. Sweave Report
 
-Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To create the report, use the *CreatePDFReport*, and specify the user's name in quotation marks as the second argument. 
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To create the report, use the *CreatePDFReport*, and specify the user's name in quotation marks as the second argument. Note to create the report, the mSetObj must be named mSet.
 
 ```{r, eval=FALSE}
 

@@ -282,6 +282,8 @@ GetCorSigColNames <- function(mSetObj=NA){
   colnames(mSetObj$analSet$corr$cor.mat);
 }
 
+#'Sig table for Correlation Analysis
+#'@export
 GetSigTable.Corr <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$corr$cor.mat, "Pattern search using correlation analysis", mSetObj$dataSet$type);

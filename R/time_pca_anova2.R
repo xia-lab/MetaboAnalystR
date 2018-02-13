@@ -436,6 +436,8 @@ GetAov2SigColNames<-function(mSetObj=NA){
   colnames(mSetObj$analSet$aov2$sig.mat);
 }
 
+#'Sig table for AOV2
+#'@export
 GetSigTable.Aov2<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$aov2$sig.mat, "Significant features identified by advanced ANOVA", mSetObj$dataSet$type);

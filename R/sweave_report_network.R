@@ -191,7 +191,7 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
     cat(note, file=rnwFile, append=TRUE);
 
     }else{
-      net.type <- paste("The selected network is the KEGG Global Metabolic Network.");
+      net.type <- paste("The selected network is the KEGG Global Metabolic Network. Please use the web-server to visualize your data as a network and save the file as a PNG/SVG file.");
       cat(net.type, file=rnwFile, append=TRUE);
   }
 

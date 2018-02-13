@@ -233,7 +233,8 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
   }else{
     MetaAnalysisTable <- c("<<echo=false, results=tex>>=",
                            "CreateMetaTable(mSet)",
-                           "@");
+                           "@",
+                           "\\clearpage\n\n");
     cat(MetaAnalysisTable, file=rnwFile, append=TRUE, sep="\n");
   }
   
@@ -275,7 +276,8 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
   if(!is.null(mSetObj$analSet$sigfeat.matrix)){
     MetaAnalysisVennTable <- c("<<echo=false, results=tex>>=",
                            "CreateVennMetaTable(mSet)",
-                           "@");
+                           "@",
+                           "\\clearpage\n\n");
     cat(MetaAnalysisVennTable, file=rnwFile, append=TRUE, sep="\n");
   }
 

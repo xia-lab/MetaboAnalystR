@@ -337,6 +337,8 @@ GetSAMSigColNames <- function(mSetObj=NA){
   colnames(mSetObj$analSet$sam.cmpds);
 }
 
+#'Sig table for SAM
+#'@export
 GetSigTable.SAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$sam.cmpds, "SAM", mSetObj$dataSet$type);
@@ -357,6 +359,8 @@ GetEBAMSigColNames <- function(mSetObj=NA){
   colnames(mSetObj$analSet$ebam.cmpds);
 }
 
+#'Sig table for EBAM
+#'@export
 GetSigTable.EBAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$ebam.cmpds, "EBAM", mSetObj$dataSet$type);

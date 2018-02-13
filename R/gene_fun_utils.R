@@ -5,7 +5,7 @@
 ###################################################
 
 LoadKEGGLib.gene<-function(){
-    kegg.path <- paste(lib.path, data.org, "/kegg.rds", sep="");
+    kegg.path <- paste(libs.path, data.org, "/kegg.rds", sep="");
 
     kegg.anot <- readRDS(kegg.path)
     current.setlink <- kegg.anot$link;
@@ -21,7 +21,7 @@ LoadKEGGLib.gene<-function(){
 
 LoadREACTOMELib.gene<-function(){
 
-    reactome.path <- paste(lib.path, data.org, "/reactome.rds", sep="");
+    reactome.path <- paste(libs.path, data.org, "/reactome.rds", sep="");
     reactome.anot <- readRDS(reactome.path)
     current.mset <- reactome.anot$sets;
     set.ids<- names(current.mset); 
@@ -33,7 +33,7 @@ LoadREACTOMELib.gene<-function(){
 }
 
 LoadGOLib<-function(onto){
-    go.path <- paste(lib.path, data.org, "/go_", tolower(onto), ".rds", sep="");
+    go.path <- paste(libs.path, data.org, "/go_", tolower(onto), ".rds", sep="");
     if(tolower(onto) == "bp"){
         go_bp <- readRDS(go.path);
         if(is.null(names(go_bp))){ # new go lib does not give names

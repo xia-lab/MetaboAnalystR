@@ -518,6 +518,8 @@ GetRFOOB <- function(mSetObj=NA){
   signif(errors[nrow, 1],3);
 }
 
+#'Sig table for random forest analysis
+#'@export
 GetSigTable.RF <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$rf.sigmat, "Random Forest", mSetObj$dataSet$type);
@@ -590,7 +592,8 @@ GetSVMSigColNames <- function(mSetObj=NA){
   colnames(mSetObj$analSet$svm$sig.mat);
 }
 
-
+#'Sig table for SVM
+#'@export
 GetSigTable.SVM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$svm$sig.mat, "Recursive SVM", mSetObj$dataSet$type);

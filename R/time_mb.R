@@ -962,6 +962,8 @@ GetMBSigColNames <- function(mSetObj=NA){
   return(colnames(mSetObj$analSet$MB$stats));
 }
 
+#'Sig table for MB analysis
+#'@export
 GetSigTable.MB<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$MB$stats, "MEBA", mSetObj$dataSet$type);

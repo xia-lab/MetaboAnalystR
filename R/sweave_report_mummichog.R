@@ -170,17 +170,23 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
   
   univROCtable<-c("<<echo=false, results=tex>>=",
                   "CreateMummichogAnalTable(mSet)",
-                  "@");
+                  "@",
+                  "\\clearpage\n\n");
   cat(univROCtable, file=rnwFile, append=TRUE, sep="\n");
 
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
-  descr <- c("\\section{MS Peaks to Pathway Output: Compound Matching Table}\n",
+  descr <- c("\\section{Compound Matching Table}\n",
              "The output of the MS Peaks to Pathways module also consists of a comprehensive table containing the compound matching", 
              " information for all user-uploaded m/z features. The table has four columns, containing the Query.Mass of each feature, the predicted Matched.Compound for each feature,",
              "the Matched.Form, and the Mass.Diff. As the file can be very long (>40 pages), please download it separately on the Downloads page of MetaboAnalyst. \n");
   cat(descr, file=rnwFile, append=TRUE);
   
+  descr <- c("\\section{Network Visualization}\n",
+             "The MS Peaks to Pathways module also allows users to interactively view their data in a global KEGG metabolic network.",
+             "Users will be able to their network as a SVG or PNG file on the network viewer page of MetaboAnalyst. \n");
+  cat(descr, file=rnwFile, append=TRUE);
+
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
 }

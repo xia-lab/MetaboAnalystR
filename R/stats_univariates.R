@@ -855,6 +855,8 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 ##############################################
 ##############################################
 
+#'Sig Table for Fold-Change Analysis
+#'@export
 GetSigTable.FC <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$fc$sig.mat, "fold change analysis", mSetObj$dataSet$type);
@@ -874,7 +876,6 @@ GetFCSigColNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   colnames(mSetObj$analSet$fc$sig.mat);
 }
-
 
 GetAovSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -896,6 +897,8 @@ GetAovPostHocSig <- function(mSetObj=NA){
   mSetObj$analSet$aov$sig.mat[,5];
 }
 
+#'Sig Table for Anova
+#'@export
 GetSigTable.Anova <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$aov$sig.mat, "One-way ANOVA and post-hoc analysis", mSetObj$dataSet$type);
@@ -954,6 +957,8 @@ GetTTSigNum <- function(mSetObj=NA){
   return(mSetObj$analSet$tt$sig.num);
 }
 
+#'Sig Table for T-test Analysis
+#'@export
 GetSigTable.TT <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$tt$sig.mat, "t-tests", mSetObj$dataSet$type);
@@ -1267,6 +1272,8 @@ GetTopInx <- function(vec, n, dec=T){
   return (vec);
 }
 
+#'Sig table for Volcano Analysis
+#'@export
 GetSigTable.Volcano <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$volcano$sig.mat, "volcano plot", mSetObj$dataSet$type);

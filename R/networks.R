@@ -840,22 +840,10 @@ doProteinIDMappingNetwork <- function(q.vec, type){
       db.path <- paste(libs.path, data.org, "/entrez_refseq.rds", sep="");
     }else if(type == "emblgene"){
       db.path <- paste(libs.path, data.org, "/entrez_embl_gene.rds", sep="");
-    }else if(type == "tair"){
-      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-      q.vec <- q.mat[,1];
-      db.path <- paste(libs.path, data.org, "/entrez_embl_transcript.rds", sep="");
     }else if(type == "embltranscript"){
       db.path <- paste(libs.path, data.org, "/entrez_embl_transcript.rds", sep="");
     }else if(type == "emblprotein"){
       db.path <- paste(libs.path, data.org, "/entrez_embl_protein.rds", sep="");
-    }else if(type == "orfid"){ # only for yeast
-      db.path <- paste(libs.path, data.org, "/entrez_orf.rds", sep="");
-    }else if(type == "flybase"){
-      db.path <- paste(libs.path, data.org, "/entrez_flybase.rds", sep="");
-    }else if(type == "string"){ 
-      db.path <- paste(libs.path, data.org, "/entrez_string.rds", sep="")
-    }else if(type == "ecogene"){ # only for ecoli
-      db.path <- paste(libs.path, data.org, "/entrez_ecogene.rds", sep="")
     }else if(type == "uniprot"){
       db.path <- paste(libs.path, data.org, "/entrez_uniprot.rds", sep="")
     }else{
@@ -884,7 +872,6 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
 
 #' Utility function for SearchNetDB
 .preparePhenoListSeeds <- function(table.nm){
-  lib.path <<- "../../data/";
   libs.path <<- "../../libs/";
   
   table.nm <<- table.nm;
@@ -971,9 +958,6 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     dbDisconnect(pheno.db);
     
     # Combine all
-    print(ncol(genemetab.res))
-    print(ncol(metabpheno.res))
-    print(ncol(genespheno.res))
     pheno.dic <- rbind(genemetab.res, metabpheno.res, genespheno.res)
     
   } else{
@@ -1242,16 +1226,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   }
 }
 
-PrepareNetwork <- function(net.nm, json.nm){
-  
-  #my.ppi <- ppi.comps[[net.nm]];
-  #nd.nms <- V(my.ppi)$name;
-  #GeneAnotDB <- doProteinIDMappingNetwork(nd.nms, "entrez");
-  
-  #entrezIDs <- GeneAnotDB[,1];
-  #names(entrezIDs) <- nd.nms;
-  #current.anot <<- entrezIDs;
-  
+PrepareNetwork <- function(net.nm, json.nm){  
   convertIgraph2JSON(net.nm, json.nm);
   current.net.nm <<- net.nm;
   return(1);
@@ -1327,14 +1302,6 @@ DecomposeGraph <- function(gObj, minNodeNum = 3){
   # now record
   ppi.comps <<- comps;
   net.stats <<- net.stats;
-  
-  # set up the cache for layout reuse
-  #if(!exists("PerformLayOut_mem")){
-  #    require("memoise");
-  #    PerformLayOut_mem<<- memoise(PerformLayOut, ~timeout(300)); # the cache will be empty after 5 min
-  #}else{
-  #    forget(PerformLayOut_mem); # clear cache
-  #}
   
   return(sub.stats);
 }

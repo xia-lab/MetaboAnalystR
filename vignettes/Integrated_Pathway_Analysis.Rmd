@@ -39,8 +39,9 @@ mSet<-PrepareIntegData(mSet);
 
 ```
 
+Option with list of Genes/Compounds:
+
 ```{r, eval=FALSE}
-#V3
 mSet<-InitDataObjects("conc", "inmex", FALSE)
 mSet<-SetOrganism(mSet, "hsa")
 mSet<-PerformIntegGeneMapping(mSet, "#Entrez  logFC
@@ -246,7 +247,6 @@ The topology analysis aims to evaluate whether a given gene or metabolite plays 
 
 Users can choose one of three different modes of pathways: - the gene-metabolite mode (default) allows joint-analysis and visualization of both significant genes and metabolites; while the gene-centric or metabolite-centric mode allows users to identify enriched pathways driven by significant genes or metabolites, respectively.
 
-
 ```{r, eval=FALSE}
 
 #### OPTION 1
@@ -277,5 +277,14 @@ mSet<-RerenderKEGGGraph(mSet, "zoom1502130707551.png",636.0, 513.0, 100.0)
 
 ```
 
+## 3. Sweave Report
+
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To create the report, use the *CreatePDFReport*, and specify the user's name in quotation marks as the second argument. Note to create the report, the mSetObj must be named mSet.
+
+```{r, eval=FALSE}
+
+CreatePDFReport(mSet, "User Name")
+
+```
 
 
