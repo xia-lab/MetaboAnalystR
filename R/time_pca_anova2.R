@@ -54,7 +54,7 @@ aov.between.type3 <- function(x){
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(type == "time0"){
@@ -159,41 +159,49 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0", aov.type
       
       fileName <- "anova_between_sbj.csv";
     }
+    
     rownames(aov.mat)<-colnames(mSetObj$dataSet$norm);
     
     if(use.interact){
       if(p.cor != "none"){
-        aov.mat <- cbind (p.adjust(aov.mat[,1], p.cor),
+        aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,1], p.cor),
                           p.adjust(aov.mat[,2], p.cor),
                           p.adjust(aov.mat[,3], p.cor));
       }
       
-      sig.facA <-(aov.mat[,1] <= thresh);
-      sig.facB <-(aov.mat[,2] <= thresh);
-      sig.intr <-(aov.mat[,3] <= thresh);
+      sig.facA <-(aov.mat2[,4] <= thresh);
+      sig.facB <-(aov.mat2[,5] <= thresh);
+      sig.intr <-(aov.mat2[,6] <= thresh);
       
       all.match <- cbind(sig.facA, sig.facB, sig.intr);
-      colnames(all.match) <- colnames(aov.mat) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
+      colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
+      colnames(aov.mat2) <- c(paste("RawP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("RawP", mSetObj$dataSet$facB.lbl, sep = "_"),
+                             paste("RawP_Interaction"), paste("AdjP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("AdjP", mSetObj$dataSet$facB.lbl, sep = "_"),
+                             paste("AdjP_Interaction"))
       
       vennC <- getVennCounts(all.match);
-      p.value <- aov.mat[,1]; # not used
+      p.value <- aov.mat2[,4]; # not used
       inx.imp <- sig.facA | sig.facB | sig.intr;
+      
     }else{
       if(p.cor != "none"){
-        aov.mat <- cbind(p.adjust(aov.mat[,1], p.cor), p.adjust(aov.mat[,2], p.cor));
+        aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,1], p.cor), p.adjust(aov.mat[,2], p.cor));
       }
       
-      sig.facA <-(aov.mat[,1] <= thresh);
-      sig.facB <-(aov.mat[,2] <= thresh);
+      sig.facA <-(aov.mat2[,3] <= thresh);
+      sig.facB <-(aov.mat2[,4] <= thresh);
       
       all.match <- cbind(sig.facA, sig.facB);
-      colnames(all.match) <- colnames(aov.mat) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+      colnames(all.match) <- colnames(aov.mat2) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+      colnames(aov.mat2) <- c(paste("RawP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("RawP", mSetObj$dataSet$facB.lbl, sep = "_"),
+                              paste("AdjP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("AdjP", mSetObj$dataSet$facB.lbl, sep = "_"))
       
       vennC <- getVennCounts(all.match);
-      p.value <- aov.mat[,1]; # not used
+      p.value <- aov.mat2[,3]; # not used
       inx.imp <- sig.facA | sig.facB;
+      
     }
-    aov.mat <- aov.mat[inx.imp, ,drop=F];
+    aov.mat <- aov.mat2[inx.imp, ,drop=F];
     
     # default sort first by main effect: treatment, then by ...
     ord.inx <- order(aov.mat[,1], aov.mat[,2], decreasing = FALSE);

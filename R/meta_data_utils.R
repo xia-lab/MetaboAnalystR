@@ -129,7 +129,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     current.msg <<- msg;
     return(0);
   }else{
-    lvls <- unique(cls.lbl)
+    lvls <- as.character(unique(unlist(cls.lbl)))
     msg <- c(msg, paste("Two groups found:", lvls[1], "and", lvls[2], collapse=" "));
   }
   

@@ -308,14 +308,13 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     fstats <- Get.Fstat(ratio.mat, cls);
     hit.inx <- rank(-fstats) < ratioNum;  # get top n
     
-    
     ratio.mat <- ratio.mat[, hit.inx];
     
     data <- cbind(norm.data, ratio.mat);
     
     colNames <- colnames(data);
     rowNames <- rownames(data);
-    
+    mSetObj$dataSet$procr <- data
   }
   
   if(!ratio){

@@ -156,6 +156,11 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
     de.sig <- paste(mSetObj$dataSet$desig);
     cat(de.sig, file=rnwFile, append=TRUE, sep="\n");
   }
+
+  descr<-c("\\subsection{Data Integrity Check}\n",
+           " Before meta-analysis, one final data integrity check is performed to ensure meta-data are consistent between datasets and",
+           " that there are at least more than 25 percent common features between the collective datasets.");
+  cat(descr, file=rnwFile, append=TRUE);
 }
 
 #'Create MetaAnalysis analysis report: Data Normalization
@@ -168,20 +173,10 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
 CreateMetaAnalysisOutput <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  descr<-c("\\subsubsection{Data Integrity Check}\n",
-           " Before meta-analysis, one final data integrity check is performed to ensure meta-data are consistent between datasets and",
-           " that there are at least more than 25 percent common features between the collective datasets.");
-  cat(descr, file=rnwFile, append=TRUE);
-  
-  if(!is.null(mSetObj$dataSet$studyinfo)){
-    studyinfo <- paste("The following is information about your uploaded dataset for meta-analysis:" ,mSetObj$dataSet$studyinfo);
-    cat(studyinfo, file=rnwFile, append=TRUE);
-  }
-  
-  descr<-c("\\subsection{Meta-Analysis Output}\n",
+    
+  descr<-c("\\section{Meta-Analysis Output}\n",
            "After the data has passed the final integrity check, users have the option to select one of three methods to perform meta-analysis: ",
-           "1) Combining p-values, 2) vote counting, or 3) directly mering the datasets into a mega-dataset.");
+           "1) Combining p-values, 2) vote counting, or 3) directly merging the datasets into a mega-dataset.");
   cat(descr, file=rnwFile, append=TRUE);
   
   descr<-c("\\subsection{Combining P-Values}\n",
@@ -214,16 +209,16 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 
   if(metastat.method=="metap"){
-    method <- paste(" P-value combination was the selected method to perform meta-analysis.", 
+    method <- paste("P-value combination was the selected method to perform meta-analysis.", 
                     "The method of p-value combination used is: ", mSetObj$dataSet$pvalmethod,
-                    "The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
+                    " The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
   }else if(metastat.method=="votecount"){
-    method <- paste(" Vote counting was the selected method to perform meta-analysis.",
+    method <- paste("Vote counting was the selected method to perform meta-analysis.",
                     "The minimum vote count used is: ", mSetObj$dataSet$vote,
-                    "The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
+                    " The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
   }else{
-    method <- paste(" Direct merging of individual data was the selected method to perform meta-analysis.", 
-                    "The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
+    method <- paste("Direct merging of individual data was the selected method to perform meta-analysis.", 
+                    " The p-value significance threshold is: ", mSetObj$dataSet$pvalcutoff);
     
   }
   cat(method, file=rnwFile, append=TRUE, sep="\n");

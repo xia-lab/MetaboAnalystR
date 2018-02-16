@@ -354,7 +354,6 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   library(xtable);
@@ -443,6 +442,8 @@ GetORA.mat<-function(mSetObj=NA){
   return(mSetObj$analSet$ora.mat);
 }
 
+#'Get ORA table
+#'@export
 GetORATable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   library(xtable);
@@ -485,6 +486,8 @@ GetQEA.mat<-function(mSetObj=NA){
   return(mSetObj$analSet$qea.mat);
 }
 
+#'QEA table
+#'@export
 GetQEATable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   library(xtable);

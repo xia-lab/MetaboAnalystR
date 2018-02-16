@@ -511,6 +511,8 @@ GetFinalNameMap <- function(mSetObj=NA){
   return(as.data.frame(nm.mat));
 }
 
+#'Get mapping table
+#'@export
 GetMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);

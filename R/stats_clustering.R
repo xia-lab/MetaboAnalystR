@@ -468,6 +468,12 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   paste("<font color=\"", all.cols[hit.inx], "\">", rownames(mSetObj$dataSet$norm)[hit.inx], "</font>",collapse =", ");
 }
 
+#'SOM analysis
+#'@description Get members for given cluster index, return a character string
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 GetAllSOMClusterMembers <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -522,6 +528,8 @@ GetKMClusterMembers <- function(mSetObj=NA, i){
   # paste(all.cols[hit.inx], rownames(dataSet$norm)[hit.inx], collapse =", ");
 }
 
+#'K-means analysis - cluster
+#'@export
 GetAllKMClusterMembers <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   clust.df = data.frame();

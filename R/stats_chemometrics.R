@@ -1343,7 +1343,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   suppressMessages(library('ellipse'));
@@ -1387,7 +1387,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
   
   ## cols = as.numeric(dataSet$cls)+1;
-  cols <- GetColorSchema(grey.scale==1);
+  cols <- GetColorSchema(mSetObj, grey.scale==1);
   uniq.cols <- unique(cols);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");

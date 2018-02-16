@@ -545,6 +545,8 @@ GetRFSigColNames <- function(mSetObj=NA){
   colnames(mSetObj$analSet$rf.sigmat);
 }
 
+#'Classification performance table for random forest analysis
+#'@export
 GetRFConf.Table <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   print(xtable(mSetObj$analSet$rf$confusion, 
