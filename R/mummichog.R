@@ -86,10 +86,18 @@ SetMass.PathLib <- function(mSetObj=NA, lib){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  filenm <- paste(lib, ".rds", sep="")
+  
   if(.on.public.web==TRUE){
-    mummichog.lib <- readRDS(paste("../../libs/mummichog/", lib, ".rds", sep=""));
+    mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
   }else{
-    mummichog.lib <- readRDS(paste("~/Desktop/mummichog_libraries/kegg_pathways/", lib, ".rds", sep=""));
+    if(!file.exists(filenm)){
+      mum.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      download.file(mum.url, destfile = filenm, method="libcurl")
+      mummichog.lib <- readRDS(filenm);
+    }else{
+      mummichog.lib <- readRDS(filenm);
+    }
   }
   
   mSetObj$cpd.lib <- list(
