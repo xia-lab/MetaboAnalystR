@@ -93,7 +93,7 @@ SetMass.PathLib <- function(mSetObj=NA, lib){
   }else{
     if(!file.exists(filenm)){
       mum.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
-      download.file(mum.url, destfile = filenm, method="libcurl")
+      download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
       mummichog.lib <- readRDS(filenm);
     }else{
       mummichog.lib <- readRDS(filenm);
@@ -195,8 +195,14 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
 }
 
-
-# the main method to perform mummichog
+#'Main function to perform mummichog
+#'@description This is the main function that performs the mummichog analysis. 
+#'@usage mSet <- PerformMummichog(mummichog = NA, enrichOpt, pvalOpt, permNum = 100)
+#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 PerformMummichog <- function(mummichog = NA, enrichOpt, pvalOpt, permNum = 100){
   mummichog <- SearchCompoundLib(mummichog);
   mummichog <- PerformMummichogPermutations(mummichog, permNum);
