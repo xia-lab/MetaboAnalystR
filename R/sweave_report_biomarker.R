@@ -323,8 +323,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                 "\\begin{center}",
                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.multi.plot,"}", sep=""),
                 "\\caption{", paste("Plot of ROC curves for all or a single biomarker model based on its average performance",
-                                    " across all MCCV runs.",
-                                    " For a single biomarker, the 95% confidence interval",
+                                    " across all MCCV runs. For a single biomarker, the 95 percent confidence interval",
                                     " can be computed and will appear as a band around the ROC curve.", sep=""),"}",
                 "Selected model :", modelindex, 
                 "\\end{center}",
@@ -425,8 +424,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                 "\\begin{center}",
                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.testcurve.plot,"}", sep=""),
                 "\\caption{", paste("Plot of the ROC curve for the created biomarker model based upon its average performance",
-                                    " across all MCCV runs. The 95% confidence interval",
-                                    " can be computed.", sep=""), "}",
+                                    " across all MCCV runs. The 95 percent confidence interval can be computed.", sep=""), "}",
                 "Selected model :", modelindex, 
                 "Selected method :", modelmethod, 
                 "\\end{center}",
@@ -468,21 +466,25 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   # Permutation
   
-  permmethod <- paste(mSetObj$imgSet$roc.perm.method)
-  
-  permplot <- c( "\\begin{figure}[htp]",
-                 "\\begin{center}",
-                 paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm.plot,"}", sep=""),
-                 "\\caption{", paste("Plot of the permutations tests using the area under the ROC curve or the predictive accuracy",
-                                     " of the model as a measure of performance. The plot shows the AUC of all permutations, highlighting", 
-                                     " the actual observed AUC in blue, along with showing the empirical p-value.", sep=""),"}",
-                 "Selected permutation method :", permmethod, 
-                 "\\end{center}",
-                 paste("\\label{",mSetObj$imgSet$roc.perm.plot,"}", sep=""),
-                 "\\end{figure}",
-                 "\\clearpage"
-  );
-  cat(permplot, file=rnwFile, append=TRUE, sep="\n");
+  if(is.null(mSetObj$imgSet$roc.perm.method)){
+    return()
+  }else{
+    permmethod <- paste(mSetObj$imgSet$roc.perm.method)
+    
+    permplot <- c( "\\begin{figure}[htp]",
+                   "\\begin{center}",
+                   paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.perm.plot,"}", sep=""),
+                   "\\caption{", paste("Plot of the permutations tests using the area under the ROC curve or the predictive accuracy",
+                                       " of the model as a measure of performance. The plot shows the AUC of all permutations, highlighting", 
+                                       " the actual observed AUC in blue, along with showing the empirical p-value.", sep=""),"}",
+                   "Selected permutation method :", permmethod, 
+                   "\\end{center}",
+                   paste("\\label{",mSetObj$imgSet$roc.perm.plot,"}", sep=""),
+                   "\\end{figure}",
+                   "\\clearpage"
+    );
+    cat(permplot, file=rnwFile, append=TRUE, sep="\n");
+  }
   
   if(is.null(mSetObj$analSet$pred.samples.table)){
     return()

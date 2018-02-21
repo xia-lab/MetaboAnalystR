@@ -1603,7 +1603,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
   return(.set.mSet(mSetObj));
 }
 
-#'Plot classification performance using different features
+#'Plot classification performance using different features for Multi-Biomarker
 #'@description Plot of the accuracy of classification with an increasing number of features.
 #'@usage PlotAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
@@ -1625,48 +1625,75 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   w <- 9; h <- 7;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(anal.mode == "explore"){
-    accu.mat <- mSetObj$analSet$multiROC$accu.mat;
-    mn.accu <- apply (accu.mat, 2, mean);
-    ylabl <- 'Predictive Accuracy';
-    ylim <- c(0,1);
-    title <- 'Predictive accuracies with different features';
-    txt.lbls <- paste(100*round(mn.accu,3),'%');
+
+  accu.mat <- mSetObj$analSet$multiROC$accu.mat;
+  mn.accu <- apply (accu.mat, 2, mean);
+  ylabl <- 'Predictive Accuracy';
+  ylim <- c(0,1);
+  title <- 'Predictive accuracies with different features';
+  txt.lbls <- paste(100*round(mn.accu,3),'%');
     
-    matplot(t(accu.mat),type='l', lty=2, col="grey", xlab='Number of features',ylab=ylabl, ylim=ylim,
-            axes=F,main=title);
+  matplot(t(accu.mat),type='l', lty=2, col="grey", xlab='Number of features',ylab=ylabl, ylim=ylim,
+          axes=F,main=title);
     
-    lines(1:ncol(accu.mat), mn.accu, lwd=2);
-    points(mn.accu, pch=19, col=ifelse(1:length(mn.accu)==which.max(mn.accu),"red","blue"));
-    text(mn.accu,labels=txt.lbls, adj=c(-0.3, -0.5), srt=45, xpd=T)
-    axis(2);
+  lines(1:ncol(accu.mat), mn.accu, lwd=2);
+  points(mn.accu, pch=19, col=ifelse(1:length(mn.accu)==which.max(mn.accu),"red","blue"));
+  text(mn.accu,labels=txt.lbls, adj=c(-0.3, -0.5), srt=45, xpd=T)
+  axis(2);
     
-    lbls <- colnames(accu.mat);
-    axis(1, 1:length(mn.accu), labels=lbls);
+  lbls <- colnames(accu.mat);
+  axis(1, 1:length(mn.accu), labels=lbls);
     
-    mSetObj$imgSet$roc.pred <- imgName;
+  mSetObj$imgSet$roc.pred <- imgName;
     
-  }else{
-    y.vec <- mSetObj$analSet$ROCtest$accu.mat[1,];
-    ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
-    boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
-    stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot classification performance using different features for Biomarker Tester
+#'@description Plot of the accuracy of classification with an increasing number of features.
+#'@usage PlotTestAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", of "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  anal.mode <- mSetObj$analSet$mode;
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- 9; h <- 7;
+  
+  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+  y.vec <- mSetObj$analSet$ROCtest$accu.mat[1,];
+  ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
+  boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
+  stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
     
-    accu.info <- paste ("The average accuracy based on 100 cross validations is", round(mean(y.vec), 3));
+  accu.info <- paste ("The average accuracy based on 100 cross validations is", round(mean(y.vec), 3));
     
-    mSetObj$imgSet$roc.testpred <- imgName;
+  mSetObj$imgSet$roc.testpred <- imgName;
     
-    if(!is.null(mSetObj$dataSet$test.cls)){
-      test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
-      test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
+  if(!is.null(mSetObj$dataSet$test.cls)){
+    test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
+    test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
       
-      hit <- sum(test.pred == test.cls);
-      percent <- round(hit/length(test.cls), 3);
-      accu.info <- paste(accu.info, ". The accuracy for hold out data prediction is ",  percent,
+    hit <- sum(test.pred == test.cls);
+    percent <- round(hit/length(test.cls), 3);
+    accu.info <- paste(accu.info, ". The accuracy for hold out data prediction is ",  percent,
                          "(", hit, "/",  length(test.cls), ").", sep="");
-    }
-    mSetObj$analSet$ROCtest$accu.info <- accu.info;
   }
+  
+  mSetObj$analSet$ROCtest$accu.info <- accu.info;
+  
   dev.off();
   return(.set.mSet(mSetObj));
 }

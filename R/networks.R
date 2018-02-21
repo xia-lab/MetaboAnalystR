@@ -209,11 +209,11 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@export
 SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){ 
 
-  mSetObj <- .get.mSet(mSetObj);
+    mSetObj <- .get.mSet(mSetObj);
   
     result.list <- .preparePhenoListSeeds(table.nm);
     genes <- result.list$genes;
-    protein.vec <- seed.genes;
+    protein.vec <- seed.graph;
     cmpds <- result.list$cmpds;
 
     network.type <<- table.nm 
@@ -260,7 +260,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
     nodeListu <<- node.res
     write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
 
-    ppi.net <<- list(
+    pheno.net <<- list(
                     db.type=db.type,
                     order=1, 
                     seeds=protein.vec, 
@@ -466,15 +466,15 @@ CreateGraph <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   require('igraph');
-  node.list <- ppi.net$node.data;
-  edge.list <- ppi.net$edge.data;
+  node.list <- pheno.net$node.data;
+  edge.list <- pheno.net$edge.data;
   
-  seed.proteins <- ppi.net$seeds;
+  seed.proteins <- pheno.net$seeds;
   overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list));
   
   # add node expression value
   #newIDs <- names(seed.expr);
-  newIDs <- seed.genes;
+  newIDs <- seed.graph;
   
   match.index <- match(V(overall.graph)$name, newIDs);
   expr.vals <- seed.expr[match.index];
@@ -492,7 +492,7 @@ CreateGraph <- function(mSetObj=NA){
   
   if(.on.public.web){
     if(!is.null(substats)){
-      return(c(length(seed.genes), length(seed.proteins), nrow(node.list), nrow(edge.list), length(ppi.comps), substats));        
+      return(c(length(seed.graph), length(seed.proteins), nrow(node.list), nrow(edge.list), length(pheno.comps), substats));        
     }else{
       return(0);
     }
@@ -536,8 +536,8 @@ PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   # annotation
   nms <- V(overall.graph)$name;
-  hit.inx <- match(nms, ppi.net$node.data[,1]);
-  lbls <- ppi.net$node.data[hit.inx,2];
+  hit.inx <- match(nms, pheno.net$node.data[,1]);
+  lbls <- pheno.net$node.data[hit.inx,2];
   V(overall.graph)$name <- as.vector(lbls);
   
   
@@ -781,7 +781,7 @@ LoadKEGGKO_lib<-function(category){
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$"Pathway module";
   }else{
-    kegg.rda <- "../../libs/network/ko_pathways_v2.rda";
+    kegg.rda <- "../../libs/network/ko_pathways.rda";
     load(kegg.rda);
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$Metabolism;
@@ -879,32 +879,27 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
   mSetObj <- .get.mSet(mSetObj);
   # Retreive compounds information
   cmpds <- rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat);
-  seed.compounds <<- cmpds;
-  seed.expr.compounds <<- as.vector(mSetObj$dataSet$pathinteg.imps$cmpd.mat[,1]);
+  seed.compounds <- cmpds;
+  seed.expr.compounds <- as.vector(mSetObj$dataSet$pathinteg.imps$cmpd.mat[,1]);
+  
   # Retreive genes information
   genes <- rownames(mSetObj$dataSet$pathinteg.imps$gene.mat);
-  seed.genes <<- genes;
-  
   # Prepare gene seeds for the graph when user upload no genes
   if(length(genes) == 0){
-    db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
-    db.map <-  .readDataTable(db.path);
-    genes <- db.map[, "gene_id"];
-    rm(db.map);
-    seed.genes <<- genes;
-    seed.expr <<- numeric(length(genes));
-  } else{
-    seed.expr <<- as.vector(mSetObj$dataSet$pathinteg.imps$gene.mat[,1]);
+    seed.genes <- c();
+    seed.expr.genes <- c();
+  } else {
+    seed.genes <- genes;
+    seed.expr.genes <- as.vector(mSetObj$dataSet$pathinteg.imps$gene.mat[,1]);
   }
   
   # Change default seeds information (i.e. genes) to chemicals if needed
-  #   TO-DO: rename seed.genes to seed.nodes for example (more general)
   if((table.nm == "metabo_phenotypes") || (table.nm == "metabo_metabolites")){
-    seed.genes <<- seed.compounds;
+    seed.graph <<- seed.compounds;
     seed.expr <<- seed.expr.compounds;
-  } else if(table.nm == "gene_metabolites"){
-    seed.genes <<- c(seed.compounds, seed.genes);
-    seed.expr <<- c(seed.expr.compounds, seed.expr);
+  } else {
+    seed.graph <<- c(seed.compounds, seed.genes);
+    seed.expr <<- c(seed.expr.compounds, seed.expr.genes);
   }
   
   list(
@@ -1300,7 +1295,7 @@ DecomposeGraph <- function(gObj, minNodeNum = 3){
   }
   
   # now record
-  ppi.comps <<- comps;
+  pheno.comps <<- comps;
   net.stats <<- net.stats;
   
   return(sub.stats);
@@ -1317,8 +1312,8 @@ ComputeSubnetStats <- function(comps){
 }
 
 UpdateSubnetStats <- function(){
-  old.nms <- names(ppi.comps);
-  net.stats <- ComputeSubnetStats(ppi.comps);
+  old.nms <- names(pheno.comps);
+  net.stats <- ComputeSubnetStats(pheno.comps);
   ord.inx <- order(net.stats[,1], decreasing=TRUE);
   net.stats <- net.stats[ord.inx,];
   rownames(net.stats) <- old.nms[ord.inx];
@@ -1347,7 +1342,7 @@ GetNetsQueryNum <- function(){
 
 # from to should be valid nodeIDs
 GetShortestPaths <- function(from, to){
-  current.net <- ppi.comps[[current.net.nm]];
+  current.net <- pheno.comps[[current.net.nm]];
   paths <- get.all.shortest.paths(current.net, from, to)$res;
   if(length(paths) == 0){
     return (paste("No connection between the two nodes!"));
@@ -1374,7 +1369,7 @@ GetShortestPaths <- function(from, to){
 # exclude nodes in current.net (networkview)
 ExcludeNodes <- function(nodeids, filenm){
   nodes2rm <- strsplit(nodeids, ";")[[1]];
-  current.net <- ppi.comps[[current.net.nm]];
+  current.net <- pheno.comps[[current.net.nm]];
   current.net <- delete.vertices(current.net, nodes2rm);
   
   # need to remove all orphan nodes
@@ -1389,8 +1384,8 @@ ExcludeNodes <- function(nodeids, filenm){
   node.dgr <- as.numeric(degree(current.net));
   node.exp <- as.numeric(get.vertex.attribute(current.net, name="abundance", index = V(current.net)));
   nms <- V(current.net)$name;
-  hit.inx <- match(nms, ppi.net$node.data[,1]);
-  lbls <- ppi.net$node.data[hit.inx,2];
+  hit.inx <- match(nms, pheno.net$node.data[,1]);
+  lbls <- pheno.net$node.data[hit.inx,2];
   
   nodes <- vector(mode="list");
   for(i in 1:length(nms)){
@@ -1409,7 +1404,7 @@ ExcludeNodes <- function(nodeids, filenm){
   cat(toJSON(netData));
   sink();
   
-  ppi.comps[[current.net.nm]] <<- current.net;
+  pheno.comps[[current.net.nm]] <<- current.net;
   UpdateSubnetStats();
   
   # remember to forget the cached layout, and restart caching, as this is now different object (with the same name)
@@ -1421,7 +1416,7 @@ ExcludeNodes <- function(nodeids, filenm){
 FindCommunities <- function(method="walktrap", use.weight=FALSE){
   
   # make sure this is the connected
-  current.net <- ppi.comps[[current.net.nm]];
+  current.net <- pheno.comps[[current.net.nm]];
   g <- current.net;
   if(!is.connected(g)){
     g <- decompose.graph(current.net, min.vertices=2)[[1]];
@@ -1477,8 +1472,8 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   pval.vec <- NULL;
   rowcount <- 0;
   nms <- V(g)$name;
-  hit.inx <- match(nms, ppi.net$node.data[,1]);
-  sybls <- ppi.net$node.data[hit.inx,2];
+  hit.inx <- match(nms, pheno.net$node.data[,1]);
+  sybls <- pheno.net$node.data[hit.inx,2];
   names(sybls) <- V(g)$name;
   for(i in 1:length(communities)){
     # update for igraph 1.0.1 
@@ -1540,12 +1535,12 @@ community.significance.test <- function(graph, vs, ...) {
 
 convertIgraph2JSON <- function(net.nm, filenm){
   
-  g <- ppi.comps[[net.nm]];
+  g <- pheno.comps[[net.nm]];
   # annotation
   nms <- V(g)$name;
-  hit.inx <- match(nms, ppi.net$node.data[,1]);
-  lbls <- ppi.net$node.data[hit.inx,2];
-  gene.names <- ppi.net$node.data[hit.inx,3];
+  hit.inx <- match(nms, pheno.net$node.data[,1]);
+  lbls <- pheno.net$node.data[hit.inx,2];
+  gene.names <- pheno.net$node.data[hit.inx,3];
   
   # get edge data
   edge.mat <- get.edgelist(g);
@@ -1610,7 +1605,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
     # now update for bipartite network
     # setup shape (gene circle, other squares)
     shapes <- rep("circle", length(nms));
-    if(ppi.net$db.type != 'ppi' && table.nm != "metabo_metabolites"){ # the other part miRNA or TF will be in square
+    if(pheno.net$db.type != 'ppi' && table.nm != "metabo_metabolites"){ # the other part miRNA or TF will be in square
       mir.inx <- nms %in% edge.mat[,"target"];
       shapes[mir.inx] <- "square";
       node.sizes[mir.inx] <- node.sizes[mir.inx] + 0.5;
@@ -1661,7 +1656,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
 
 # also save to GraphML
 ExportNetwork <- function(fileName){
-  current.net <- ppi.comps[[current.net.nm]];
+  current.net <- pheno.comps[[current.net.nm]];
   write.graph(current.net, file=fileName, format="graphml");
 }
 
@@ -1669,7 +1664,7 @@ ExtractModule<- function(nodeids){
   set.seed(8574);
   nodes <- strsplit(nodeids, ";")[[1]];
   
-  g <- ppi.comps[[current.net.nm]];
+  g <- pheno.comps[[current.net.nm]];
   # try to see if the nodes themselves are already connected
   hit.inx <- V(g)$name %in% nodes; 
   gObj <- induced.subgraph(g, V(g)$name[hit.inx]);
@@ -1710,7 +1705,7 @@ ExtractModule<- function(nodeids){
   filenm <- paste(module.nm, ".json", sep="");
   
   # record the module 
-  ppi.comps[[module.nm]] <<- g;
+  pheno.comps[[module.nm]] <<- g;
   UpdateSubnetStats();
   
   module.count <<- module.count
@@ -1720,7 +1715,7 @@ ExtractModule<- function(nodeids){
 }
 
 PerformLayOut <- function(net.nm, algo){
-  g <- ppi.comps[[net.nm]];
+  g <- pheno.comps[[net.nm]];
   vc <- vcount(g);
   if(algo == "Default"){
     if(vc > 3000) {
@@ -1763,7 +1758,7 @@ PerformLayOut <- function(net.nm, algo){
 }
 
 UpdateNetworkLayout <- function(algo, filenm){
-  current.net <- ppi.comps[[current.net.nm]];
+  current.net <- pheno.comps[[current.net.nm]];
   #pos.xy <- PerformLayOut_mem(current.net.nm, algo);
   pos.xy <- PerformLayOut(current.net.nm, algo);
   nms <- V(current.net)$name;

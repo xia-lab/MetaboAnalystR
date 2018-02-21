@@ -175,14 +175,17 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0", aov.type
       
       all.match <- cbind(sig.facA, sig.facB, sig.intr);
       colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
-      colnames(aov.mat2) <- c(paste("RawP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("RawP", mSetObj$dataSet$facB.lbl, sep = "_"),
-                             paste("RawP_Interaction"), paste("AdjP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("AdjP", mSetObj$dataSet$facB.lbl, sep = "_"),
-                             paste("AdjP_Interaction"))
+      colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(raw.p)", sep = ""), 
+                             paste(mSetObj$dataSet$facB.lbl, "(raw.p)", sep = ""),
+                             paste("Interaction", "(raw.p)", sep = ""), 
+                             paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), 
+                             paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""), 
+                             paste("Interaction", "(adj.p)", sep = ""))
       
       vennC <- getVennCounts(all.match);
       p.value <- aov.mat2[,4]; # not used
       inx.imp <- sig.facA | sig.facB | sig.intr;
-      
+      aov.mat2 <- aov.mat2[, c(1,4,2,5,3,6),drop=F] 
     }else{
       if(p.cor != "none"){
         aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,1], p.cor), p.adjust(aov.mat[,2], p.cor));
@@ -193,13 +196,13 @@ ANOVA2.Anal <-function(mSetObj, thresh=0.05, p.cor="fdr", type="time0", aov.type
       
       all.match <- cbind(sig.facA, sig.facB);
       colnames(all.match) <- colnames(aov.mat2) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-      colnames(aov.mat2) <- c(paste("RawP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("RawP", mSetObj$dataSet$facB.lbl, sep = "_"),
-                              paste("AdjP", mSetObj$dataSet$facA.lbl, sep = "_"), paste("AdjP", mSetObj$dataSet$facB.lbl, sep = "_"))
+      colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(raw.p)", sep = ""), paste(mSetObj$dataSet$facB.lbl, "(raw.p)", sep = ""),
+                              paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""))
       
       vennC <- getVennCounts(all.match);
       p.value <- aov.mat2[,3]; # not used
       inx.imp <- sig.facA | sig.facB;
-      
+      aov.mat2 <- aov.mat2[, c(1,3,2,4),drop=F];
     }
     aov.mat <- aov.mat2[inx.imp, ,drop=F];
     
