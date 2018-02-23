@@ -163,5 +163,5 @@ loaded via a namespace (and not attached):
 
 ## MetaboAnalystR History & Updates
 
-23-02-2018 - Minor bug fixes based on user feedback 
+23-02-2018 - Minor bug fixes based on user feedback (MetaboAnalystR_1.0.0.6.tar.gz)
 05-02-2018 - Update MetaboAnalystR with 3 new modules in conjunction with the release of MetaboAnalyst Version 4
