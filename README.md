@@ -160,3 +160,8 @@ loaded via a namespace (and not attached):
 [121] sva_3.24.4            blob_1.1.0            Rgraphviz_2.20.0      ModelMetrics_1.1.0    digest_0.6.15         xtable_1.8-2         
 [127] tidyr_0.8.0           stats4_3.4.1          munsell_0.4.3 
 ```
+
+## MetaboAnalystR History & Updates
+
+23-02-2018 - Minor bug fixes based on user feedback 
+05-02-2018 - Update MetaboAnalystR with 3 new modules in conjunction with the release of MetaboAnalyst Version 4
