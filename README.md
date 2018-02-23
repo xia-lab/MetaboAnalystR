@@ -74,7 +74,7 @@ The * must be replaced by what is actually downloaded and built.
 
 git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build metaboanalystr
-R CMD INSTALL MetaboAnalytR_*.tar.gz
+R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
@@ -84,7 +84,7 @@ Manually download the .tar.gz file from [here](https://github.com/jsychong/Metab
 
 ```R
 cd ~/Downloads
-R CMD INSTALL MetaboAnalytR_*.tar.gz
+R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
