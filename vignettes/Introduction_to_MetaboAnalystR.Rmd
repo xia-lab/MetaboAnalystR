@@ -29,9 +29,11 @@ library(MetaboAnalystR)
 
 ## 1.2 Tips for using the R package
 
-The first function that you use in every analysis module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is mSet. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
+1) The first function that you use in every analysis module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is mSet. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
 
-The MetaboAnalystR package directly creates plots/tables/analysis outputs in your current working directory. It is not necessary to call any plotting functions onto the created mSetObj.
+2) The MetaboAnalystR package directly creates plots/tables/analysis outputs in your current working directory. It is not necessary to call any plotting functions onto the created mSetObj.
+
+3) Every command must be run in sequence, please do not skip any commands as this will result in errors downstream. 
 
 ## 2.0 Example Data
 

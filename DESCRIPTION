@@ -41,7 +41,8 @@ Imports: Rserve,
     pROC,
     data.table,
     limma,
-    car
+    car,
+    fitdistrplus
 Suggests: knitr,
     rmarkdown,
     xcms,

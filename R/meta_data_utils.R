@@ -13,7 +13,7 @@
 ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   dat <- .readDataTable(dataName);
   if(class(dat) == "try-error" || ncol(dat) == 1){
     AddErrMsg("Data format error. Failed to read in the data!");
@@ -25,7 +25,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
     AddErrMsg("Missing values should be blank or NA without quote.");
     return(0);
   }
-
+  
   #mSetObj$dataSet <- list();
   mSetObj$dataSet$data.orig <- dat;
   mSetObj$dataSet$format <- format;
@@ -73,6 +73,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
 #'@export
 # 
 SanityCheckIndData<-function(mSetObj=NA, dataName){
+  
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -125,7 +126,8 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   }
   
   if(length(unique(cls.lbl[!empty.inx])) > 2){
-    msg <- c(msg, "Meta-analysis is only defined for two-group comparisions!");
+    msg <- c(msg, paste(c("Groups found:", unique(cls.lbl[!empty.inx])), collapse=" "));
+    msg <- c(msg, "<font color=\"red\">Meta-analysis is only defined for two-group comparisions!</font>");
     current.msg <<- msg;
     return(0);
   }else{
@@ -202,12 +204,13 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   gene.num <- ncol(data);
   
   # remove smpls/exp with over half missing value
-  good.inx<-apply(is.na(data), 1, sum)/nrow(data)<0.6;
+  good.inx<-apply(is.na(data), 1, sum)/ncol(data)<0.6;
   smpl.msg <- "";
   if(sum(!good.inx)>0){
+    
     msg <- c(msg, paste(sum(!good.inx), "low quality samples(>60% missing) removed."));
     
-    data <- data[,good.inx];
+    data <- data[good.inx,];
     if(nrow(data)/smpl.num < 0.5){
       msg <- c(msg, paste(msg, "Low quality data rejected!"));
       current.msg <<- msg;
@@ -215,7 +218,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     }
     
     # update meta information
-    proc.cls <- proc.cls[good.inx, , drop=F];
+    proc.cls <- proc.cls[good.inx];
   }
   
   if(ncol(data) < 4){
@@ -287,9 +290,9 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
 #'Remove data object, the current dataSet will be the last one by default 
 #'@export
 RemoveData <- function(dataName){
-    if(!is.null(mdata.all[[dataName]])){
-        mdata.all[[dataName]] <<- NULL;
-    }
+  if(!is.null(mdata.all[[dataName]])){
+    mdata.all[[dataName]] <<- NULL;
+  }
 }
 
 #'Select one or more datasets for meta-analysis
@@ -305,38 +308,38 @@ SelectMultiData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-    if(!exists('nm.vec')){
-        AddErrMsg("No dataset is selected for analysis!");
-        return(0);
-    }
-
-    all.nms <- names(mdata.all);
-    for(nm in all.nms){
-        if(nm %in% nm.vec){
-            mdata.all[[nm]] <<- 1;
-        }else{
-            mdata.all[[nm]] <<- 0;
-        }
-    }
-
-    if("meta_dat" %in% nm.vec){
-        meta.selected <<- TRUE;
+  if(!exists('nm.vec')){
+    AddErrMsg("No dataset is selected for analysis!");
+    return(0);
+  }
+  
+  all.nms <- names(mdata.all);
+  for(nm in all.nms){
+    if(nm %in% nm.vec){
+      mdata.all[[nm]] <<- 1;
     }else{
-        meta.selected <<- FALSE;
+      mdata.all[[nm]] <<- 0;
     }
-   
-    rm('nm.vec', envir = .GlobalEnv);
-    
-    if(.on.public.web==TRUE){
-      return(1);
-    }else{
-      return(.set.mSet(mSetObj));
-    }
+  }
+  
+  if("meta_dat" %in% nm.vec){
+    meta.selected <<- TRUE;
+  }else{
+    meta.selected <<- FALSE;
+  }
+  
+  rm('nm.vec', envir = .GlobalEnv);
+  
+  if(.on.public.web==TRUE){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'@export
 GetAllDataNames <- function(){
-    names(mdata.all);
+  names(mdata.all);
 }
 
 #'Perform normalization for individually-uploaded datasets for meta-analysis
@@ -459,13 +462,13 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   non.sig.count <- nrow(res.all)-sig.count;
   
   gc();
-
+  
   mSetObj$dataSet$deparam <- paste(c("P value cutoff:", p.lvl, "Fold-Change cutoff:", fc.lvl))
   mSetObj$dataSet$desig <- paste(c("Number of significant features:", sig.count, "Number of non-significant features:", non.sig.count))
   # record the sig gene vec
   if(.on.public.web==TRUE){
     .set.mSet(mSetObj)
-
+    
     return(c(1, sig.count, non.sig.count));
   }else{
     return(.set.mSet(mSetObj));
@@ -519,57 +522,57 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
   
-    imgName <- paste(gene.id, ".png", sep="");
+  imgName <- paste(gene.id, ".png", sep="");
+  
+  mSetObj$imgSet$meta.anal$plot <- imgName
+  
+  library(lattice);
+  
+  num <- sum(mdata.all == 1);
+  # calculate width based on the dataset number
+  if(num == 1){
+    Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
+                     xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
+  }else{
+    # calculate layout
+    if(num < 6){
+      layout <- c(num, 1);
+      height=320;
+      width=160*num;
+    }else{
+      rn <- round(num/2);
+      layout <- c(rn, 2);
+      height=500;
+      width=160*rn;
+    }
     
-    mSetObj$imgSet$meta.anal$plot <- imgName
+    Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+    data.lbl <- as.character(metastat.meta$data.lbl);
+    data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
     
-    library(lattice);
-
-        num <- sum(mdata.all == 1);
-        # calculate width based on the dataset number
-        if(num == 1){
-            Cairo(file = imgName, width=280, height=320, type="png", bg="white");
-            myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
-                xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
-        }else{
-            # calculate layout
-            if(num < 6){
-                layout <- c(num, 1);
-                height=320;
-                width=160*num;
-            }else{
-                rn <- round(num/2);
-                layout <- c(rn, 2);
-                height=500;
-                width=160*rn;
-            }
-        
-            Cairo(file = imgName, width=width, height=height, type="png", bg="white");
-            data.lbl <- as.character(metastat.meta$data.lbl);
-            data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
-
-            # get counts in each data, same order as a levels
-            counts <- table(data.lbl);
-            # back to factor 
-            data.lbl <- factor(data.lbl);
-
-            # get new lbls to cut potential long names, and add sample numbers
-            nlbls <- data.lbl;
-            levels(nlbls) <- abbreviate(levels(nlbls),9);
-            nlbls <- paste(levels(nlbls), "( n=", as.vector(counts), ")");
-            # update labels
-            data.lbl <- factor(data.lbl, labels=nlbls);
-            # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-            myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
-                xlab="Datasets", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)),
-                fill="#0000ff22", layout=layout);
-        }
+    # get counts in each data, same order as a levels
+    counts <- table(data.lbl);
+    # back to factor 
+    data.lbl <- factor(data.lbl);
     
-    print(myplot); 
-
-    dev.off();
-    
-    return(.set.mSet(mSetObj));
+    # get new lbls to cut potential long names, and add sample numbers
+    nlbls <- data.lbl;
+    levels(nlbls) <- abbreviate(levels(nlbls),9);
+    nlbls <- paste(levels(nlbls), "( n=", as.vector(counts), ")");
+    # update labels
+    data.lbl <- factor(data.lbl, labels=nlbls);
+    # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
+    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
+                     xlab="Datasets", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)),
+                     fill="#0000ff22", layout=layout);
+  }
+  
+  print(myplot); 
+  
+  dev.off();
+  
+  return(.set.mSet(mSetObj));
 }
 
 ##############################################
@@ -582,35 +585,35 @@ GetMetaSanityCheckMsg <- function(mSetObj=NA, dataName){
   
   mSetObj <- .get.mSet(mSetObj);
   
-    if(mSetObj$dataSet$name != dataName){
-        dataSet <- readRDS(dataName);
-    }
+  if(mSetObj$dataSet$name != dataName){
+    dataSet <- readRDS(dataName);
+  }
   
-    return(dataSet$check.msg);
+  return(dataSet$check.msg);
 } 
 
 GetDataDims <- function(mSetObj=NA, dataName){
   
   mSetObj <- .get.mSet(mSetObj);
   
-    if(mSetObj$dataSet$name != dataName){
-        dataSet <- readRDS(dataName);
-    }
-    data <- dataSet$data;
-    dm <- dim(data);
-    naNum <- sum(is.na(data));
-    zoNum <- sum(data == 0);
-    return(c(dm, naNum, zoNum));
+  if(mSetObj$dataSet$name != dataName){
+    dataSet <- readRDS(dataName);
+  }
+  data <- dataSet$data;
+  dm <- dim(data);
+  naNum <- sum(is.na(data));
+  zoNum <- sum(data == 0);
+  return(c(dm, naNum, zoNum));
 } 
 
 GetMetaGroupNames <-function(mSetObj=NA, dataName){
   
   mSetObj <- .get.mSet(mSetObj);
   
-    if(mSetObj$dataSet$name != dataName){
-        dataSet <- readRDS(dataName);
-    }
-    return(levels(dataSet$cls));
+  if(mSetObj$dataSet$name != dataName){
+    dataSet <- readRDS(dataName);
+  }
+  return(levels(dataSet$cls));
 }
 
 
@@ -619,8 +622,8 @@ GetMetaGroupNames <-function(mSetObj=NA, dataName){
 #######################################
 
 GlobalCutOff = list(
-    logFC = 0,
-    BHth = 0.05
+  logFC = 0,
+  BHth = 0.05
 )
 
 # function to set up results combining individual data analysis
@@ -628,62 +631,62 @@ GlobalCutOff = list(
 # no return, as set global 
 
 SetupMetaStats <- function(BHth){
-
-    GlobalCutOff$BHth <<- BHth;
-    #all common genes
-    gene.ids <- rownames(metastat.meta$data);
-    # meta.sig genes
-    metade.genes <- rownames(meta.mat);
-
-    # setup individual sig genes & stats
-    # that overlap with meta.sig
-    metastat.de <- list();
-
-    pval.mat <- fc.mat <- matrix(nrow=nrow(meta.mat), ncol=sum(mdata.all==1));
-    for(i in 1:length(metastat.ind)){
-        de.res <- metastat.ind[[i]];
-
-        hit.inx <- de.res[,2] <= BHth;
-        hit.inx <- which(hit.inx); # need to get around NA
-        metastat.de[[i]] <- rownames(de.res)[hit.inx];
-
-        # only choose the genes that are also meta sig genes from in
-        # individual analysis for display
-        de.res <- de.res[metade.genes,];
-
-        fc.mat[,i] <- de.res[,1];
-        pval.mat[,i] <- de.res[,2];
-    }
-    names(metastat.de) <- names(metastat.ind);
-
-    # calculate gain/loss
-    deindst <- unique(unlist(metastat.de));
-    gains=metade.genes[which(!(metade.genes %in% deindst))];
-    losses=deindst[which(!(deindst %in% metade.genes))];
-    all.de <- cbind(gene.ids %in% metade.genes, gene.ids %in% deindst);
-    colnames(all.de) <- c("Meta-DE", "Individual-DE");
-    vennC <- getVennCounts(all.de);
-
-    # significant features from individual 
-    de.len <- sapply(metastat.de, length);
-    stat <- c(length(metade.genes), de.len);
-    names(stat) <- c("Meta", substr(names(metastat.de), 0, nchar(names(metastat.de))-4));
-    meta.stat <- list(
-            stat = stat,
-            de = metade.genes,
-            idd = gains,
-            loss = losses,
-            venn = vennC
-        );
-
-    fc.mat <<- fc.mat;
-    pval.mat <<- pval.mat;
-    metastat.de <<- metastat.de;
-    meta.stat <<- meta.stat;
-
-    # save the result
-    res <- cbind(ID=metade.genes, meta.mat);
+  
+  GlobalCutOff$BHth <<- BHth;
+  #all common genes
+  gene.ids <- rownames(metastat.meta$data);
+  # meta.sig genes
+  metade.genes <- rownames(meta.mat);
+  
+  # setup individual sig genes & stats
+  # that overlap with meta.sig
+  metastat.de <- list();
+  
+  pval.mat <- fc.mat <- matrix(nrow=nrow(meta.mat), ncol=sum(mdata.all==1));
+  for(i in 1:length(metastat.ind)){
+    de.res <- metastat.ind[[i]];
     
-    write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
+    hit.inx <- de.res[,2] <= BHth;
+    hit.inx <- which(hit.inx); # need to get around NA
+    metastat.de[[i]] <- rownames(de.res)[hit.inx];
+    
+    # only choose the genes that are also meta sig genes from in
+    # individual analysis for display
+    de.res <- de.res[metade.genes,];
+    
+    fc.mat[,i] <- de.res[,1];
+    pval.mat[,i] <- de.res[,2];
+  }
+  names(metastat.de) <- names(metastat.ind);
+  
+  # calculate gain/loss
+  deindst <- unique(unlist(metastat.de));
+  gains=metade.genes[which(!(metade.genes %in% deindst))];
+  losses=deindst[which(!(deindst %in% metade.genes))];
+  all.de <- cbind(gene.ids %in% metade.genes, gene.ids %in% deindst);
+  colnames(all.de) <- c("Meta-DE", "Individual-DE");
+  vennC <- getVennCounts(all.de);
+  
+  # significant features from individual 
+  de.len <- sapply(metastat.de, length);
+  stat <- c(length(metade.genes), de.len);
+  names(stat) <- c("Meta", substr(names(metastat.de), 0, nchar(names(metastat.de))-4));
+  meta.stat <- list(
+    stat = stat,
+    de = metade.genes,
+    idd = gains,
+    loss = losses,
+    venn = vennC
+  );
+  
+  fc.mat <<- fc.mat;
+  pval.mat <<- pval.mat;
+  metastat.de <<- metastat.de;
+  meta.stat <<- meta.stat;
+  
+  # save the result
+  res <- cbind(ID=metade.genes, meta.mat);
+  
+  write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
 }
 

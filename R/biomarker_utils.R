@@ -198,23 +198,23 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
   m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
   fc <- m1-m2;
-
+  
   # now do k-means to measure their expression similarities
   kms <- ComputeKmeanClusters(t(x), clust.num);
   feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
   rownames(feat.rank.mat) <- colnames(x);
-
+  
   ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
   feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx,]);
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
   
   if(mSetObj$analSet$mode == "univ"){
-     write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+    write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
   }
-
+  
   return(.set.mSet(mSetObj));  
- }
+}
 
 
 # return a vector contain the cluster index 
@@ -227,7 +227,7 @@ ComputeKmeanClusters <- function(data, clust.num){
 UpdateKmeans <- function(mSetObj=NA, clust.num=5){
   mSetObj <- .get.mSet(mSetObj);
   x  <- mSetObj$dataSet$norm;
-  feat.rank.mat$clusters <- ComputeKmeanClusters(t(x), clust.num);
+  feat.rank.mat[,"clusters"] <- ComputeKmeanClusters(t(x), clust.num);
   feat.rank.mat <<- feat.rank.mat;
 }
 
@@ -1625,27 +1625,27 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   w <- 9; h <- 7;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-
+  
   accu.mat <- mSetObj$analSet$multiROC$accu.mat;
   mn.accu <- apply (accu.mat, 2, mean);
   ylabl <- 'Predictive Accuracy';
   ylim <- c(0,1);
   title <- 'Predictive accuracies with different features';
   txt.lbls <- paste(100*round(mn.accu,3),'%');
-    
+  
   matplot(t(accu.mat),type='l', lty=2, col="grey", xlab='Number of features',ylab=ylabl, ylim=ylim,
           axes=F,main=title);
-    
+  
   lines(1:ncol(accu.mat), mn.accu, lwd=2);
   points(mn.accu, pch=19, col=ifelse(1:length(mn.accu)==which.max(mn.accu),"red","blue"));
   text(mn.accu,labels=txt.lbls, adj=c(-0.3, -0.5), srt=45, xpd=T)
   axis(2);
-    
+  
   lbls <- colnames(accu.mat);
   axis(1, 1:length(mn.accu), labels=lbls);
-    
+  
   mSetObj$imgSet$roc.pred <- imgName;
-    
+  
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -1672,24 +1672,24 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   w <- 9; h <- 7;
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-
+  
   y.vec <- mSetObj$analSet$ROCtest$accu.mat[1,];
   ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
   boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
   stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
-    
+  
   accu.info <- paste ("The average accuracy based on 100 cross validations is", round(mean(y.vec), 3));
-    
+  
   mSetObj$imgSet$roc.testpred <- imgName;
-    
+  
   if(!is.null(mSetObj$dataSet$test.cls)){
     test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
     test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
-      
+    
     hit <- sum(test.pred == test.cls);
     percent <- round(hit/length(test.cls), 3);
     accu.info <- paste(accu.info, ". The accuracy for hold out data prediction is ",  percent,
-                         "(", hit, "/",  length(test.cls), ").", sep="");
+                       "(", hit, "/",  length(test.cls), ").", sep="");
   }
   
   mSetObj$analSet$ROCtest$accu.info <- accu.info;
@@ -2018,11 +2018,11 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72){
     # need to replace Inf with 1
     alpha.vals <- perf@alpha.values;
     perf@alpha.values <- lapply(alpha.vals, function(x){
-               x[x==Inf] <- 1;
-               x[x==-Inf] <- 0;
-               x
-            });
-            
+      x[x==Inf] <- 1;
+      x[x==-Inf] <- 0;
+      x
+    });
+    
     
     plot(perf,lwd=2,avg="threshold", col="blue", add=T);
     

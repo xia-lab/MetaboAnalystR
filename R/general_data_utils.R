@@ -113,13 +113,13 @@ GetRCommandHistory <- function(mSetObj=NA){
 #'@export
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
   
   dat <- .readDataTable(filePath);
-
+  
   if(class(dat) == "try-error" || ncol(dat) == 1){
     AddErrMsg("Data format error. Failed to read in the data!");
     AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
@@ -167,7 +167,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
     }
   }else{
-
+    
     if(substring(format,1,3)=="row"){ # sample in row
       msg <- c(msg, "Samples are in rows and features in columns");
       smpl.nms <-dat[,1];
@@ -230,7 +230,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       return(0);
     }
   }
-
+  
   # check for uniqueness of dimension name
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
@@ -277,7 +277,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   # now assgin the dimension names
   rownames(conc) <- smpl.nms;
   colnames(conc) <- var.nms;
-
+  
   # check if paired or not
   if(mSetObj$dataSet$paired){
     # save as it is and process in sanity check step
@@ -304,7 +304,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.numeric(cls.lbl);
     }
   }
-
+  
   # for the current being to support MSEA and MetPA
   if(mSetObj$dataSet$type == "conc"){
     mSetObj$dataSet$cmpd <- var.nms;
@@ -606,9 +606,8 @@ GetCurrentMsg <- function(){
   return(msg.vec[length(msg.vec)]);
 }
 
-GetCurrentCheckMsg <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$msgSet$check.msg);
+GetMetaCheckMsg <- function(mSetObj=NA){
+  return(current.msg);
 }
 
 #'Plot compound summary
