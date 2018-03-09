@@ -74,7 +74,6 @@ RegisterData <- function(mSetObj=NA, dataSet){
 # 
 SanityCheckIndData<-function(mSetObj=NA, dataName){
   
-  
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
@@ -202,7 +201,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   data <- conc;
   smpl.num <- nrow(data);
   gene.num <- ncol(data);
-  
+
   # remove smpls/exp with over half missing value
   good.inx<-apply(is.na(data), 1, sum)/ncol(data)<0.6;
   smpl.msg <- "";
