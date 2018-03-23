@@ -110,7 +110,7 @@ If you use the R package, please cite: ###
 
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue or send an email to jasmine.chong@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## Session Info
 
