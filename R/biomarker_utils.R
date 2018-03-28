@@ -2994,3 +2994,7 @@ GetUnivRankedFeatureNames <- function(){
 GetFeatureRankingMat <- function(){
   feat.rank.mat;
 }
+
+Get.Accuracy <- function(cm) {
+  sum(diag(cm)) / sum(cm);
+}

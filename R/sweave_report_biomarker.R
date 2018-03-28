@@ -486,7 +486,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
     cat(permplot, file=rnwFile, append=TRUE, sep="\n");
   }
   
-  if(is.null(mSetObj$analSet$pred.samples.table)){
+  if(is.null(mSetObj$analSet$ROCtest$pred.samples.table)){
     return()
   }else{
     ROCLabelstable <- c("<<echo=false, results=tex>>=",
