@@ -508,8 +508,8 @@ ROCPredSamplesTable <- function(mSetObj=NA){
   
   suppressMessages(library(tidyverse));
   suppressMessages(library(dplyr));
-  groups <- as.data.frame(GetNewSampleGrps());
-  prob <- as.data.frame(GetNewSampleProbs());
+  groups <- as.data.frame(GetNewSampleGrps(mSetObj));
+  prob <- as.data.frame(GetNewSampleProbs(mSetObj));
   predtable <- merge(prob, groups, by="row.names");
   pred.samples.table <- predtable %>% remove_rownames %>% column_to_rownames(var="Row.names");
   colnames(pred.samples.table) <- c("Probability", "Class Label");

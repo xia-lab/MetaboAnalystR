@@ -42,7 +42,9 @@ Imports: Rserve,
     data.table,
     limma,
     car,
-    fitdistrplus
+    fitdistrplus,
+    lars,
+    tidyverse
 Suggests: knitr,
     rmarkdown,
     xcms,

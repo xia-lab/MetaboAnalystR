@@ -1626,7 +1626,12 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   
   Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
-  accu.mat <- mSetObj$analSet$multiROC$accu.mat;
+  if(is.null(mSetObj$analSet$multiROC$accu.mat)){
+    accu.mat <- mSet$analSet$ROCtest$accu.mat;
+  }else{
+    accu.mat <- mSetObj$analSet$multiROC$accu.mat;
+  }
+  
   mn.accu <- apply (accu.mat, 2, mean);
   ylabl <- 'Predictive Accuracy';
   ylim <- c(0,1);
@@ -2363,7 +2368,7 @@ PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="p
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
-
+#'@export
 GetAccuracyInfo<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$analSet$ROCtest$accu.info);

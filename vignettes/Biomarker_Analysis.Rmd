@@ -156,7 +156,7 @@ mSet<-PlotROCTest(mSet, imgName = "cls_roc_0_", format="png",  dpi=300, mdl.inx 
 mSet<-PlotProbViewTest(mSet, imgName = "cls_prob_0_", format="png",  dpi=300, mdl.inx =-1, show=0, showPred= 0)
 
 # Plot the predictive accuracy of the model with increasing number of features
-mSet<-PlotAccuracy(mSet, imgName = "cls_accu_0_", format="png",  dpi=300)
+mSet<-PlotTestAccuracy(mSet, imgName = "cls_accu_0_", format="png",  dpi=300)
 
 # View the the predictive accuracy results of the model
 GetAccuracyInfo(mSet)
@@ -172,7 +172,8 @@ mSet<-Plot.Permutation(mSet, imgName = "roc_perm_1_", format="png",  dpi=300)
 
 # View predicted classes of new samples (only applicable if samples with empty class labels were in the uploaded dataset)
 
-newclasslabels <- ROCPredSamplesTable(mSet)
+mSet <- ROCPredSamplesTable(mSet) # Create table
+mSet$analSet$ROCtest$pred.samples.table # View table of new predictions
 
 ```
 
