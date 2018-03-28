@@ -23,7 +23,11 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
   
+<<<<<<< HEAD
   metr_pkgs <- c("Rserve", "RColorBrewer", "xtable", "som", "ROCR", "RJSONIO", "gplots", "e1071", "caTools", "igraph", "randomForest", "Cairo", "pls", "pheatmap", "lattice", "rmarkdown", "knitr", "data.table", "pROC", "Rcpp", "caret", "ellipse", "scatterplot3d", "impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "car", "fitdistrplus", "lars", "tidyverse")
+=======
+  metr_pkgs <- c("Rserve", "RColorBrewer", "xtable", "som", "ROCR", "RJSONIO", "gplots", "e1071", "caTools", "igraph", "randomForest", "Cairo", "pls", "pheatmap", "lattice", "rmarkdown", "knitr", "data.table", "pROC", "Rcpp", "caret", "ellipse", "scatterplot3d", "impute", "pcaMethods", "siggenes", "globaltest", "GlobalAncova", "Rgraphviz", "KEGGgraph", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "car", "fitdistrplus", "xcms", "lars", "tidyverse")
+>>>>>>> ce2e0f7f7428ee944054f17319da65e97daa343d
   
   list_installed <- installed.packages()
   
@@ -110,7 +114,7 @@ If you use the R package, please cite: ###
 
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue or send an email to jasmine.chong@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## Session Info
 
@@ -163,5 +167,8 @@ loaded via a namespace (and not attached):
 
 ## MetaboAnalystR History & Updates
 
+03-23-2018 - Added 3 more package dependencies 
+
 02-23-2018 - Minor bug fixes based on user feedback (MetaboAnalystR_1.0.0.6.tar.gz)
+
 02-05-2018 - Update MetaboAnalystR with 3 new modules in conjunction with the release of MetaboAnalyst Version 4
