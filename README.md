@@ -116,8 +116,7 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ```R
 > sessionInfo()
-
-R version 3.4.1 (2017-06-30)
+R version 3.4.4 (2018-03-15)
 Platform: x86_64-pc-linux-gnu (64-bit)
 Running under: Ubuntu 14.04.5 LTS
 
@@ -134,34 +133,44 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] MetaboAnalystR_0.0.0.9000 devtools_1.13.4          
+[1] MetaboAnalystR_1.0.0 Cairo_1.5-9         
 
 loaded via a namespace (and not attached):
-  [1] colorspace_1.3-2      class_7.3-14          siggenes_1.50.0       rprojroot_1.3-2       qvalue_2.8.0          som_0.3-5.1          
-  [7] pls_2.6-0             rstudioapi_0.7        roxygen2_6.0.1        DRR_0.0.3             bit64_0.9-7           AnnotationDbi_1.38.2 
- [13] prodlim_1.6.1         lubridate_1.7.1       xml2_1.2.0            codetools_0.2-15      splines_3.4.1         mnormt_1.5-5         
- [19] impute_1.50.1         robustbase_0.92-8     RcppRoll_0.2.2        pROC_1.10.0           Cairo_1.5-9           caret_6.0-78         
- [25] broom_0.4.3           annotate_1.54.0       ddalpha_1.3.1         kernlab_0.9-25        sfsmisc_1.1-1         pheatmap_1.0.8       
- [31] globaltest_5.30.0     graph_1.54.0          compiler_3.4.1        backports_1.1.2       assertthat_0.2.0      Matrix_1.2-12        
- [37] lazyeval_0.2.1        limma_3.32.10         tools_3.4.1           bindrcpp_0.2          igraph_1.1.2          gtable_0.2.0         
- [43] glue_1.2.0            reshape2_1.4.3        dplyr_0.7.4           Rcpp_0.12.15          Biobase_2.36.2        RJSONIO_1.3-0        
- [49] multtest_2.32.0       gdata_2.18.0          preprocessCore_1.38.1 nlme_3.1-131          iterators_1.0.9       psych_1.7.8          
- [55] timeDate_3042.101     GlobalAncova_3.44.0   gower_0.1.2           stringr_1.2.0         gtools_3.5.0          XML_3.98-1.9         
- [61] DEoptimR_1.0-8        MASS_7.3-47           scales_0.5.0          ipred_0.9-6           SSPA_2.16.0           pcaMethods_1.68.0    
- [67] parallel_3.4.1        KEGGgraph_1.38.1      RColorBrewer_1.1-2    yaml_2.1.16           memoise_1.1.0         ggplot2_2.2.1        
- [73] rpart_4.1-11          stringi_1.1.6         RSQLite_2.0           genefilter_1.58.1     desc_1.1.1            S4Vectors_0.14.7     
- [79] foreach_1.4.4         randomForest_4.6-12   e1071_1.6-8           caTools_1.17.1        BiocGenerics_0.22.1   BiocParallel_1.10.1  
- [85] lava_1.6              matrixStats_0.52.2    rlang_0.1.6           pkgconfig_2.0.1       commonmark_1.4        bitops_1.0-6         
- [91] lattice_0.20-35       ROCR_1.0-7            purrr_0.2.4           bindr_0.1             recipes_0.1.2         CVST_0.2-1           
- [97] bit_1.1-12            tidyselect_0.2.3      plyr_1.8.4            magrittr_1.5          R6_2.2.2              IRanges_2.10.5       
-[103] gplots_3.0.1          dimRed_0.1.0          DBI_0.7               mgcv_1.8-22           pillar_1.1.0          foreign_0.8-69       
-[109] withr_2.1.1           survival_2.41-3       scatterplot3d_0.3-40  RCurl_1.95-4.8        nnet_7.3-12           tibble_1.4.2         
-[115] crayon_1.3.4          KernSmooth_2.23-15    ellipse_0.4.1         Rserve_1.7-3          grid_3.4.1            data.table_1.10.4-3  
-[121] sva_3.24.4            blob_1.1.0            Rgraphviz_2.20.0      ModelMetrics_1.1.0    digest_0.6.15         xtable_1.8-2         
-[127] tidyr_0.8.0           stats4_3.4.1          munsell_0.4.3 
+  [1] backports_1.1.2       readxl_1.0.0          plyr_1.8.4            igraph_1.2.1          lazyeval_0.2.1       
+  [6] splines_3.4.4         BiocParallel_1.10.1   ggplot2_2.2.1         sva_3.24.4            digest_0.6.15        
+ [11] foreach_1.4.4         lars_1.2              gdata_2.18.0          magrittr_1.5          memoise_1.1.0        
+ [16] ROCR_1.0-7            sfsmisc_1.1-2         openxlsx_4.0.17       limma_3.32.10         readr_1.1.1          
+ [21] recipes_0.1.2         annotate_1.54.0       modelr_0.1.1          gower_0.1.2           dimRed_0.1.0         
+ [26] matrixStats_0.52.2    siggenes_1.50.0       colorspace_1.3-2      rvest_0.3.2           blob_1.1.0           
+ [31] haven_1.1.1           dplyr_0.7.4           crayon_1.3.4          jsonlite_1.5          RCurl_1.95-4.8       
+ [36] graph_1.54.0          roxygen2_6.0.1        genefilter_1.58.1     bindr_0.1             impute_1.50.1        
+ [41] survival_2.41-3       iterators_1.0.9       glue_1.2.0            DRR_0.0.3             gtable_0.2.0         
+ [46] ipred_0.9-6           car_3.0-0             kernlab_0.9-25        ddalpha_1.3.1.1       Rgraphviz_2.20.0     
+ [51] Rserve_1.7-3          BiocGenerics_0.22.1   DEoptimR_1.0-8        abind_1.4-5           scales_0.5.0         
+ [56] SSPA_2.16.0           pheatmap_1.0.8        DBI_0.7               som_0.3-5.1           Rcpp_0.12.16         
+ [61] xtable_1.8-2          foreign_0.8-69        bit_1.1-12            GlobalAncova_3.44.0   preprocessCore_1.38.1
+ [66] stats4_3.4.4          lava_1.6              prodlim_1.6.1         httr_1.3.1            gplots_3.0.1         
+ [71] RColorBrewer_1.1-2    pkgconfig_2.0.1       XML_3.98-1.10         nnet_7.3-12           RJSONIO_1.3-0        
+ [76] caret_6.0-79          tidyselect_0.2.4      rlang_0.2.0           reshape2_1.4.3        AnnotationDbi_1.38.2 
+ [81] munsell_0.4.3         cellranger_1.1.0      tools_3.4.4           RSQLite_2.0           globaltest_5.30.0    
+ [86] pls_2.6-0             devtools_1.13.5       broom_0.4.3           stringr_1.3.0         yaml_2.1.18          
+ [91] ModelMetrics_1.1.0    knitr_1.20            bit64_0.9-7           fitdistrplus_1.0-9    robustbase_0.92-8    
+ [96] caTools_1.17.1        purrr_0.2.4           randomForest_4.6-14   bindrcpp_0.2          nlme_3.1-131         
+[101] RcppRoll_0.2.2        KEGGgraph_1.38.1      xml2_1.2.0            rstudioapi_0.7        compiler_3.4.4       
+[106] curl_3.2              e1071_1.6-8           tibble_1.4.2          stringi_1.1.6         desc_1.1.1           
+[111] forcats_0.3.0         lattice_0.20-35       Matrix_1.2-12         commonmark_1.4        psych_1.7.8          
+[116] multtest_2.32.0       pillar_1.2.1          data.table_1.10.4-3   bitops_1.0-6          qvalue_2.8.0         
+[121] R6_2.2.2              pcaMethods_1.68.0     KernSmooth_2.23-15    rio_0.5.10            IRanges_2.10.5       
+[126] codetools_0.2-15      MASS_7.3-47           gtools_3.5.0          assertthat_0.2.0      CVST_0.2-1           
+[131] rprojroot_1.3-2       withr_2.1.2           mnormt_1.5-5          S4Vectors_0.14.7      hms_0.4.1            
+[136] mgcv_1.8-22           parallel_3.4.4        tidyverse_1.2.1       grid_3.4.4            rpart_4.1-11         
+[141] timeDate_3043.102     tidyr_0.8.0           class_7.3-14          carData_3.0-1         git2r_0.21.0         
+[146] pROC_1.11.0           scatterplot3d_0.3-41  Biobase_2.36.2        lubridate_1.7.3       ellipse_0.4.1  
 ```
 
 ## MetaboAnalystR History & Updates
+
+04-10-2018 - Updated underlying R code w. changes to MetaboAnalyst 4.0 
 
 03-23-2018 - Added 2 more package dependencies 
 
