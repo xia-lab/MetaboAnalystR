@@ -2996,5 +2996,5 @@ GetFeatureRankingMat <- function(){
 }
 
 Get.Accuracy <- function(cm) {
-  sum(diag(cm)) / sum(cm);
+    sum(diag(cm)) / sum(cm);
 }

@@ -158,6 +158,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   colnames(data)<-substr(colnames(data), 1, 18);
   corr.mat<-cor(data, method=cor.method);
   
+  library(Hmisc)
+  pval.mat <- rcorr(as.matrix(data), type=cor.method)
+  
   # use total abs(correlation) to select
   if(top){
     cor.sum <- apply(abs(corr.mat), 1, sum);
@@ -252,7 +255,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   dev.off();
   new.ord <- res$tree_row$order;
   corr.mat <- corr.mat[new.ord, new.ord];
-  write.csv(signif(corr.mat,5), file="correlation_table.csv")
+  write.csv(signif(corr.mat,5), file="correlation_table.csv");
+  pvals.mat <- pval.mat$P[new.ord, new.ord];
+  write.csv(signif(pvals.mat,5), file="pval_corr_table.csv");
   return(.set.mSet(mSetObj));
 }
 

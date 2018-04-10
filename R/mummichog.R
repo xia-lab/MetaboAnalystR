@@ -5,7 +5,7 @@
 # 1) to make this available to the R user community
 # 2) high-performance (similar or faster compared to python)
 # 3) broader pathways support - by adding support for 21 common organisms based on KEGG pathways
-# 4) companion web interface on MetaboAnalyst - the "Untargeted Pathway Analysis" module
+# 4) companion web interface on MetaboAnalyst - the "MS Peaks to Pathways" module
 # @authors J. Chong \email{jasmine.chong@mail.mcgill.ca}, J. Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -190,7 +190,6 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$dataSet$N <- sig.size;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
   
-    print(mSetObj$msgSet$check.msg)
     return(.set.mSet(mSetObj));
   
 }
@@ -636,4 +635,91 @@ count_cpd2mz <- function(cpd2mz_dict, cpd.ids,  inputmzlist){ # inputmz is eithe
     result <- intersect(mzs, inputmzlist); #intersect to only mzs from the input mz list
     return(length(result));
   }
+}
+
+########### Utility Functions #########
+
+# convert single element vector in list to matrix
+# b/c single element vector will convert to scalar in javascript, force to matrix
+convert2JsonList <- function(my.list){
+  lapply(my.list, function(x){
+    if(length(x) == 1){
+      matrix(x);
+    }else{
+      x;
+    }
+  });
+}
+
+# input: a two-col (id, val) data with potential duplicates (same id may be associated with 1 or more values
+# output: a list named by unique id, with multiple values will be merged to vector
+Covert2Dictionary <- function(data, quiet=T){
+  
+  all.ids <- data[,1];
+  dup.inx <- duplicated(all.ids);
+  if(sum(dup.inx) > 0){
+    uniq.ids <- all.ids[!dup.inx];
+    uniq.vals <- data[!dup.inx,2];
+    
+    # convert two-col data it to list (vals as list values, ids as list names)
+    uniq.list <- split(uniq.vals, uniq.ids)
+    
+    # the list element orde will be sorted by the names alphabetically, need to get updated ones
+    uniq.id.list <- names(uniq.list)
+    
+    dup.ids <- all.ids[dup.inx];
+    uniq.dupids <- unique(dup.ids);
+    uniq.duplen <- length(uniq.dupids);
+    
+    for(id in uniq.dupids){ # only update those with more than one hits
+      hit.inx.all <- which(all.ids == id);
+      hit.inx.uniq <- which(uniq.id.list == id);
+      uniq.list[[hit.inx.uniq]]<- data[hit.inx.all,2];
+    }
+    
+    AddMsg(paste("A total of ", sum(dup.inx), " of duplicates were merged.", sep=""));
+    return(uniq.list);
+  }else{
+    AddMsg("All IDs are unique.");
+    uniq.list <- split(data[,2], data[,1]);
+    return(uniq.list);
+  }
+}
+
+# utility function for fast list expanding (dynamic length)
+# We need to repeatedly add an element to a list. With normal list concatenation
+# or element setting this would lead to a large number of memory copies and a
+# quadratic runtime. To prevent that, this function implements a bare bones
+# expanding array, in which list appends are (amortized) constant time.
+# https://stackoverflow.com/questions/2436688/append-an-object-to-a-list-in-r-in-amortized-constant-time-o1
+
+myFastList <- function(capacity = 100) {
+  buffer <- vector('list', capacity)
+  names <- character(capacity)
+  length <- 0
+  methods <- list()
+  
+  methods$double.size <- function() {
+    buffer <<- c(buffer, vector('list', capacity))
+    names <<- c(names, character(capacity))
+    capacity <<- capacity * 2
+  }
+  
+  methods$add <- function(name, val) {
+    if(length == capacity) {
+      methods$double.size()
+    }
+    
+    length <<- length + 1
+    buffer[[length]] <<- val
+    names[length] <<- name
+  }
+  
+  methods$as.list <- function() {
+    b <- buffer[0:length]
+    names(b) <- names[0:length]
+    return(b)
+  }
+  
+  methods
 }

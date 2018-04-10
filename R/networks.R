@@ -228,34 +228,56 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 
         if(table.nm == "gene_metabolites"){
             src <- "entrez"; src.nm <- "symbol";
+            src.evidence <- "protein"
             target <- "ctdid"; target.nm <- "name";
+            target.evidence <- "stitch"
         } else if(table.nm == "metabo_phenotypes"){
             src <- "ctdid"; src.nm <- "name";
             target <- "omimid"; target.nm <- "phenoname";
+            evidence <- "pmid"
         } else if(table.nm == "metabo_metabolites"){
             src <- "ctdid1"; src.nm <- "name1";
+            src.evidence <- "stitch1"
             target <- "ctdid2"; target.nm <- "name2";
+            target.evidence <- "stitch2"
         } else if(table.nm == "gene_phenotypes"){
             src <- "entrez"; src.nm <- "symbol";
             target <- "omimid"; target.nm <- "phenoname";
         } else if(table.nm == "global"){
           src <- "id1"; src.nm <- "name1";
+          src.evidence <- "evidsrc"
           target <- "id2"; target.nm <- "name2";
+          target.evidence <- "evidtar"
         }
 
-        edge.res <- data.frame(Source=res[,src],Target=res[,target]);
+        if(table.nm == "metabo_phenotypes"){
+          edge.res <- data.frame(Source=res[,src],Target=res[,target], Evidence=res[,evidence]);
+        } else {
+          edge.res <- data.frame(Source=res[,src],Target=res[,target]);
+        }
         row.names(edge.res) <- 1:nrow(res);
         write.csv(edge.res, file="orig_edge_list.csv",row.names=FALSE);
     
         node.ids <- c(res[,src], res[,target])
         node.nms <- c(res[,src.nm], res[,target.nm]);
+        
+        if(table.nm == "metabo_metabolites" || table.nm == "gene_metabolites" || table.nm == "global"){
+          node.evidence <- c(res[,src.evidence], res[,target.evidence]);
+        } else{
+          node.evidence <- ""
+        }
     }
     
     # Retrieve gene full names
     genes.names.idx <- match(node.ids, mSetObj$dataSet$gene.map.table[,"Entrez"])
     genes.names <- mSetObj$dataSet$gene.map.table[genes.names.idx,"Name"]
 
-    node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names);
+    if(node.evidence != ""){
+      # Evidence is related to the STITCH database accessions for chemicals/proteins
+      node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names, Evidence=node.evidence);
+    } else{
+      node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names);
+    }
     node.res <- node.res[!duplicated(node.res$Id),];
     nodeListu <<- node.res
     write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
@@ -429,7 +451,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
     }
   }
   
-  hits.names <- lapply(hits.query, function(x) ora.vec.ids[x]);
+  hits.names <- lapply(hits.query, function(x) ora.vec.ids[which(x == TRUE)]);
   #res.mat <- data.frame(res.mat);
   
   #get gene symbols
@@ -456,6 +478,13 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   cat(json.mat);
   sink();
 
+  # write csv
+  fun.hits <<- hits.query;
+  fun.pval <<- resTable[,5];
+  hit.num <<- resTable[,4];
+  csv.nm <- paste(file.nm, ".csv", sep="");
+  write.csv(resTable, file=csv.nm, row.names=F);
+
 }
 
 #'Create igraph from the edgelist saved from graph DB and decompose into subnets
@@ -470,7 +499,7 @@ CreateGraph <- function(mSetObj=NA){
   edge.list <- pheno.net$edge.data;
   
   seed.proteins <- pheno.net$seeds;
-  overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list));
+  overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
   
   # add node expression value
   #newIDs <- names(seed.expr);
@@ -930,8 +959,8 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     }
     phenotable <- dbSendQuery(pheno.db, statement);
     genemetab.res <- fetch(phenotable, n=-1); # get all records
-    genemetab.res <- genemetab.res[,1:4]
-    names(genemetab.res) <- c("id1", "id2", "name1", "name2")
+    genemetab.res <- genemetab.res[,1:6]
+    names(genemetab.res) <- c("id1", "id2", "name1", "name2", "evidsrc", "evidtar")
     
     # Handle metab_phenotypes
     table.nm <- "metabo_phenotypes";
@@ -939,8 +968,9 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");      
     phenotable <- dbSendQuery(pheno.db, statement);
     metabpheno.res <- fetch(phenotable, n=-1); # get all records
-    metabpheno.res <- metabpheno.res[,1:4]
-    names(metabpheno.res) <- c("id1", "id2", "name1", "name2")
+    evidsrc <- genemetab.res[match(metabpheno.res[,1], genemetab.res[,2]), 6]
+    metabpheno.res <- cbind(metabpheno.res[,1:4], evidsrc, metabpheno.res[,7])
+    names(metabpheno.res) <- c("id1", "id2", "name1", "name2", "evidsrc", "evidtar")
     
     # Handle genes_phenotypes
     table.nm <- "gene_phenotypes";
@@ -948,8 +978,8 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND score >= ",min.score, sep="");      
     phenotable <- dbSendQuery(pheno.db, statement);
     genespheno.res <- fetch(phenotable, n=-1); # get all records
-    genespheno.res <- genespheno.res[,1:4]
-    names(genespheno.res) <- c("id1", "id2", "name1", "name2")
+    genespheno.res <- cbind(genespheno.res[,1:4], rep(NA, nrow(genespheno.res)), rep(NA, nrow(genespheno.res)))
+    names(genespheno.res) <- c("id1", "id2", "name1", "name2", "evidsrc", "evidtar")
     dbDisconnect(pheno.db);
     
     # Combine all
@@ -1542,9 +1572,21 @@ convertIgraph2JSON <- function(net.nm, filenm){
   lbls <- pheno.net$node.data[hit.inx,2];
   gene.names <- pheno.net$node.data[hit.inx,3];
   
+  if("Evidence" %in% colnames(pheno.net$node.data)){
+    evidence.ids <- pheno.net$node.data[hit.inx,4];
+  } else {
+    evidence.ids <- rep("", length(gene.names));
+  }
+  
+  
   # get edge data
   edge.mat <- get.edgelist(g);
-  edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
+  edge.evidence <- edge_attr(g, "Evidence")
+  if(!is.null(edge.evidence)){
+    edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2], evidence=edge.evidence);
+  } else{
+    edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
+  }
   
   # now get coords
   #pos.xy <- PerformLayOut_mem(net.nm, "Default");
@@ -1623,6 +1665,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
       id=nms[i],
       idnb = i, 
       label=lbls[i],
+      evidence=evidence.ids[i],
       genename=gene.names[i],
       x = pos.xy[i,1],
       y = pos.xy[i,2],

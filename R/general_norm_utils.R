@@ -657,3 +657,12 @@ GetPrenormClsNms <- function(mSetObj=NA){
   }
   return(levels(mSetObj$dataSet$prenorm.cls));
 }
+
+########## Utility Functions ###############
+GetRandomSubsetIndex<-function(total, sub.num = 50){
+  if(total < sub.num){
+    1:total;
+  }else{
+    sample(1:total, sub.num);
+  }
+}

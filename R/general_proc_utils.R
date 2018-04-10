@@ -885,3 +885,62 @@ IsDataContainsNegative<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$dataSet$containsNegative);
 }
+
+########## Utility Functions ##############
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+descendMin <- function(y, istart = which.max(y)) {
+  
+  if (!is.double(y)) y <- as.double(y)
+  unlist(.C("DescendMin",
+            y,
+            length(y),
+            as.integer(istart-1),
+            ilower = integer(1),
+            iupper = integer(1),
+            DUP = FALSE, PACKAGE = "xcms")[4:5]) + 1
+}
+
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+findEqualGreaterM <- function(x, values) {
+  
+  if (!is.double(x)) x <- as.double(x)
+  if (!is.double(values)) values <- as.double(values)
+  .C("FindEqualGreaterM",
+     x,
+     length(x),
+     values,
+     length(values),
+     index = integer(length(values)),
+     DUP = FALSE, PACKAGE = "xcms")$index + 1
+}
+
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
+  
+  nr <- nrow(m)
+  nc <- ncol(m)
+  if (!is.double(m))
+    m <- as.double(m)
+  .C("RectUnique",
+     m,
+     as.integer(order-1),
+     nr,
+     nc,
+     as.double(xdiff),
+     as.double(ydiff),
+     logical(nrow(m)),
+     DUP = FALSE, PACKAGE = "xcms")[[7]]
+}

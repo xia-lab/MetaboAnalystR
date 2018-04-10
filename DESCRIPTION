@@ -1,8 +1,13 @@
 Package: MetaboAnalystR
 Title: An R package for comprehensive analysis of metabolomics data
-Version: 0.0.0.9000
-Authors@R: c(person("Jianguo (Jeff)", "Xia", email = "jeff.xia@mcgill.ca", role = c("aut", "cre")), person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut")))
-Description: This package contains the R functions and libraries underlying the popular MetaboAnalyst web server, including 500 functions for data processing, normalization, statistical analysis, metabolite set enrichment analysis, metabolic pathway analysis, and biomarker analysis. The package is synchronized with the web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, to achieve maximum flexibility and reproducibility.   
+Version: 1.0.0
+Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut", "cre")))
+BugReports: https://github.com/xia-lab/MetaboAnalystR/issues
+Description: This package contains the R functions and libraries underlying the popular MetaboAnalyst web server, 
+    including 500 functions for data processing, normalization, statistical analysis, metabolite set enrichment analysis, 
+    metabolic pathway analysis, and biomarker analysis. The package is synchronized with the web server. After installing and 
+    loading the package, users will be able to reproduce the same results from their local computers using the corresponding R 
+    command history downloaded from MetaboAnalyst, to achieve maximum flexibility and reproducibility.   
 Depends: R (>= 3.3.2)
 License: GPL-3
 Encoding: UTF-8

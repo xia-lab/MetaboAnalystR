@@ -130,7 +130,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     AddErrMsg("Missing values should be blank or NA without quote.");
     return(0);
   }
-  
+
   msg <- NULL;
   if(substring(format,4,5)=="ts"){
     # two factor time series data
@@ -139,7 +139,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       smpl.nms <-dat[,1];
       all.nms <- colnames(dat);
       facA.lbl <- all.nms[2];
-      cls.lbl <-facA <- dat[,2]; # default assign facA to cls.lbl in order for one-factor analysis
+      cls.lbl <- facA <- dat[,2]; # default assign facA to cls.lbl in order for one-factor analysis
       facB.lbl <- all.nms[3];
       facB <- dat[,3];
       conc <- dat[,-c(1:3)];
@@ -156,8 +156,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       smpl.nms <- rownames(conc);
     }
     
-    facA <- as.factor(as.character(facA));
-    facB <- as.factor(as.character(facB));
     if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
       # determine time factor
       if(!(tolower(facA.lbl) == "time" | tolower(facB.lbl) == "time")){
@@ -191,6 +189,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       conc <- t(dat[-1,]);
     }
   }
+  
+  type.cls.lbl <- class(cls.lbl)
   
   # free memory
   dat <- NULL;
@@ -272,7 +272,11 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
   smpl.nms <- gsub("[^[:alnum:]./_-]", "", smpl.nms);
   var.nms <- gsub("[^[:alnum:][:space:],'./_-]", "", var.nms); # allow space, comma and period
-  cls.lbl <- ClearStrings(as.vector(cls.lbl));
+  if(type.cls.lbl=="character"){
+    cls.lbl <- ClearStrings(as.vector(cls.lbl));
+  }else{
+    cls.lbl <- as.numeric(ClearStrings(as.vector(cls.lbl)));
+  }
   
   # now assgin the dimension names
   rownames(conc) <- smpl.nms;
@@ -291,13 +295,28 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
         AddErrMsg("Or maybe you forgot to specify the data format?");
         return(0);
       }
-      mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
+      
+      if(is.numeric(cls.lbl)){
+        mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+      }else{
+        mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
+      }
+      
       if(substring(format,4,5)=="ts"){
-        mSetObj$dataSet$facA <- as.factor(as.character(facA));
-        mSetObj$dataSet$orig.facA <- as.factor(as.character(facA))
+        
+        if(is.numeric(facA)){
+          mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(facA);
+        }else{
+          mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
+        }
+        
         mSetObj$dataSet$facA.lbl <- facA.lbl;
-        mSetObj$dataSet$facB <- as.factor(as.character(facB));
-        mSetObj$dataSet$orig.facB <- as.factor(as.character(facB));
+        
+        if(is.numeric(facB)){
+          mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(facB);
+        }else{
+          mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
+        }
         mSetObj$dataSet$facB.lbl <- facB.lbl;
       }
     }else{ # continuous

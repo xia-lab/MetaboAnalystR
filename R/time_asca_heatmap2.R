@@ -1237,3 +1237,40 @@ GetAscaSigFileName <- function(mSetObj=NA){
   mSetObj$analSet$asca$sig.nm
 }
 
+#'Heckbert algorithm
+#'@description function to calculate tick mark based on Heckbert algorithm
+#'available in the "labeling" package implemented by Justin Talbot
+#'adapted from the imagemap package
+#'Heckbert's labeling algorithm
+#'Heckbert, P. S. (1990) Nice numbers for graph labels, Graphics Gems I, Academic Press Professional, Inc.
+#'@author Justin Talbot \email{jtalbot@@stanford.edu}
+
+heckbert <- function(dmin, dmax, m)
+{
+  range <- .heckbert.nicenum((dmax-dmin), FALSE)
+  lstep <- .heckbert.nicenum(range/(m-1), TRUE)
+  lmin <- floor(dmin/lstep)*lstep
+  lmax <- ceiling(dmax/lstep)*lstep
+  seq(lmin, lmax, by=lstep)
+}
+
+.heckbert.nicenum <- function(x, round)
+{
+  e <- floor(log10(x))
+  f <- x / (10^e)
+  if(round)
+  {
+    if(f < 1.5) nf <- 1
+    else if(f < 3) nf <- 2
+    else if(f < 7) nf <- 5
+    else nf <- 10
+  }
+  else
+  {
+    if(f <= 1) nf <- 1
+    else if(f <= 2) nf <- 2
+    else if(f <= 5) nf <- 5
+    else nf <- 10
+  }
+  nf * (10^e)
+}

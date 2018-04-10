@@ -44,6 +44,12 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   return(.set.mSet(mSetObj));
 }
 
+GetRandomNumbers <- function(){
+  rm(.Random.seed);
+  runif(1);
+  return(.Random.seed[3:626]);
+}
+
 #'Plot Random Forest 
 #'@description Random Forest plot 
 #'@param mSetObj Input name of the created mSet Object

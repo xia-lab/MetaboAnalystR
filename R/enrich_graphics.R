@@ -789,3 +789,31 @@ getIdx <- function(v, MIN, MAX) {
   intervals <- seq(MIN, MAX, length.out=100)
   max(which(intervals <= v))
 }
+
+######### Utility Functions #############
+GetShortNames<-function(nm.vec, max.len= 45){
+  new.nms <- vector(mode="character", length=length(nm.vec));
+  for(i in 1:length(nm.vec)){
+    nm <- nm.vec[i];
+    if(nchar(nm) <= max.len){
+      new.nms[i] <- nm;
+    }else{
+      wrds <- strsplit(nm, "[[:space:]]+")[[1]];
+      new.nm <- "";
+      if(length(wrds)>1){
+        for(m in 1:length(wrds)){
+          wrd <- wrds[m];
+          if(nchar(new.nm)+4+nchar(wrd) <= max.len){
+            new.nm <- paste(new.nm, wrd);
+          }else{
+            new.nms[i] <- paste (new.nm, "...", sep="");
+            break;
+          }
+        }
+      }else{
+        new.nms[i] <- paste (substr(nm, 0, 21), "...", sep="");
+      }
+    }
+  }
+  return(new.nms);
+}

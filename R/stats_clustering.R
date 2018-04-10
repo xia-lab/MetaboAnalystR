@@ -549,3 +549,34 @@ GetAllKMClusterMembers <- function(mSetObj=NA){
   colnames(clust.df)<-"Samples in each cluster";
   print(xtable(clust.df, align="l|p{8cm}", caption="Clustering result using K-means"), caption.placement="top", size="\\scriptsize");
 }
+
+########## Utility Functions ##############
+#'Determine row/column number for plotting
+#'@description Determine the number of rows and columns for a given total
+#'number of plots (used by Kmeans and SOM plots)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+GetXYCluster<-function(total){
+  if(total>16){
+    ncol<-4;
+    nrow<-5;
+  }else if(total>12){
+    ncol<-4;
+    nrow<-4;
+  }else if(total>9){
+    ncol<-3;
+    nrow<-4;
+  }else if(total>6){
+    ncol<-3;
+    nrow<-3;
+  }else if(total>4){
+    ncol<-2;
+    nrow<-3;
+  }else{
+    ncol<-1;
+    nrow<-total;
+  }
+  c(nrow, ncol);
+}

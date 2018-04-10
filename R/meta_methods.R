@@ -589,35 +589,6 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
     listres
 }
 
-#combine effect size
-combineES <- function (ES, varES, BHth = 0.05, method){
-    if(method == "rem"){
-        useREM = TRUE;
-    }else{
-        useREM = FALSE;
-    }
-
-    num.studies <- dim(ES)[2];
-
-    Qvals <- f.Q.NA(ES, varES)
-    if (useREM) {
-        varES <- varES + tau2.NA(Qvals, num.studies, my.weights = 1/varES)
-    }
-    wt <- 1/varES
-    MUvals <- rowSums(ES * wt, na.rm = TRUE)/rowSums(wt, na.rm = TRUE)
-    MUsES <- sqrt(1/rowSums(wt, na.rm = TRUE))
-    zSco <- MUvals/MUsES
-    rpvalESc = 2 * (1 - pnorm(abs(zSco)))
-    res = which(p.adjust(rpvalESc, method = "BH") <= BHth);
-    listres <- list();
-    listres[[1]] = res
-    listres[[2]] = zSco
-    listres[[3]] = MUvals; # pool effect size
-    listres[[4]] = wt; # wt for each studies, it is matrix with one column for each studies
-    names(listres) = c("DEindices", "TestStatistic", "PooledEffectSize", "Weights")
-    listres
-}
-
 PlotDataProfile<-function(dataName, boxplotName, pcaName){
     dataSet <- readRDS(dataName);
     qc.boxplot(dataSet$data, boxplotName);

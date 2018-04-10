@@ -346,3 +346,65 @@ GetCircleInfo<-function(mSetObj=NA){
   return(mSetObj$imgSet$circleInfo);
 }
 
+##########Utility Functions########
+
+#'Perform utilities for MetPa
+#'@description Convert user coords (as used in current plot) to pixels in a png
+#'adapted from the imagemap package
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+usr2png <- function(xy, im){
+  xy <- usr2dev(xy,dev.cur())
+  cbind(
+    ceiling(xy[,1]*im$Width),
+    ceiling((1-xy[,2])*im$Height)
+  )
+}
+
+usr2plt <- function(xy, dev=dev.cur()){
+  olddev <- dev.cur()
+  dev.set(dev)
+  usr <- par("usr")
+  dev.set(olddev)
+  xytrans(xy,usr)
+}
+
+plt2fig <- function(xy, dev=dev.cur()){
+  olddev <- dev.cur()
+  dev.set(dev)
+  plt <- par("plt")
+  dev.set(olddev)
+  xytrans2(xy,plt)
+}
+
+fig2dev <- function(xy, dev=dev.cur()){
+  olddev <- dev.cur()
+  dev.set(dev)
+  fig <- par("fig")
+  dev.set(olddev)
+  xytrans2(xy,fig)
+}
+
+usr2dev <- function(xy, dev=dev.cur()){
+  fig2dev(plt2fig(usr2plt(xy,dev),dev),dev)
+}
+
+xytrans2 <- function(xy, par){
+  cbind(par[1]+((par[2]-par[1])*xy[,1]),
+        par[3]+((par[4]-par[3])*xy[,2]))
+}
+
+xytrans <- function(xy, par){
+  cbind((xy[,1]-par[1])/(par[2]-par[1]),
+        (xy[,2]-par[3])/(par[4]-par[3]))
+}
+
+getndp <- function(x, tol=2*.Machine$double.eps){
+  ndp <- 0
+  while(!isTRUE(all.equal(x, round(x, ndp), tol=tol))) ndp <- ndp+1
+  if(ndp > -log10(tol)) {
+    warning("Tolerance reached, ndp possibly underestimated.")
+  }
+  ndp
+}
