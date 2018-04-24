@@ -6,7 +6,7 @@
 
 ## Updates 24-04-2018 
 
-We introduce MetaboAnalystR Version 1.0.0, which has been submitted to CRAN. A user manual is now available (MetaboAnalystR-manual.pdf). 
+We introduce MetaboAnalystR Version 1.0.0, which has been submitted to CRAN. A user manual is now available [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/MetaboAnalystR-manual.pdf). 
 
 ## Getting Started
 
@@ -86,7 +86,7 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ## Usage
 
-For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
+A user manual is now available [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/MetaboAnalystR-manual.pdf). For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
 
 Within R:
 ```R
