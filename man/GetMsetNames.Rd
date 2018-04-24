@@ -6,6 +6,9 @@
 \usage{
 GetMsetNames(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Return the selected metset library to java for display
 }

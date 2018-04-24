@@ -6,6 +6,9 @@
 \usage{
 GetSSPTable(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Replace the last column of the ssp.mat with the final selection from users
 }

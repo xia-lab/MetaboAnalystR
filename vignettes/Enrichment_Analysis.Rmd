@@ -79,13 +79,16 @@ Below, we will go over a second analysis workflow to perform QEA, where data inp
 
 ```{r, eval=FALSE}
 # Create mSetObj
-mSet<-InitDataObjects("conc", "msetora", FALSE)
+mSet<-InitDataObjects("conc", "msetqea", FALSE)
 
 # Read in data table
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 
 # Perform cross-referencing of compound names
 mSet<-CrossReferencing(mSet, "name");
+
+# Create mapping results table
+mSet<-CreateMappingResultTable(mSet)
 
 # Mandatory check of data 
 mSet<-SanityCheckData(mSet);
@@ -111,9 +114,6 @@ mSet<-SetCurrentMsetLib(mSet, "pathway", 0);
 # Calculate the global test score
 mSet<-CalculateGlobalTestScore(mSet)
 
-# Calculate the hyper score
-mSet<-CalculateHyperScore(mSet)
-
 # Plot the QEA
 mSet<-PlotQEA.Overview(mSet, "qea_0_", "bar", "png", 72, width=NA)
 
@@ -121,14 +121,4 @@ mSet<-PlotQEA.Overview(mSet, "qea_0_", "bar", "png", 72, width=NA)
 
 ## 3. Sweave Report 
 
-To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
-
-```{r, eval=FALSE}
-# Create Biomarker Sweave report 
-CreatePDFReport(mSet, "User Name")
-
-# To save all files created during your session
-SaveTransformedData(mSet)
-
-```
-
+To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 

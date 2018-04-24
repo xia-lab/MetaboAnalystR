@@ -6,6 +6,9 @@
 \usage{
 GetTTSigMat(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Return a double matrix with 2 columns - p values and lod
 }

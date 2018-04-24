@@ -7,6 +7,11 @@
 \usage{
 Get.bwss(x, cl)
 }
+\arguments{
+\item{x}{Numeric vector}
+
+\item{cl}{Columns}
+}
 \description{
 Columns have labels, x is a numeric vector,
 cl is consecutive integers

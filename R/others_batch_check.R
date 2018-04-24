@@ -1,6 +1,10 @@
 #'Data I/O for batch effect checking
 #'@description Read multiple user uploaded CSV data one by one
 #'format: row, col
+#'@param mSetObj Input name of the created mSet Object
+#'@param filePath Input the path to the batch files
+#'@param format Input the format of the batch files
+#'@param label Input the label-type of the files
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -149,6 +153,8 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
 #'Set up two matrixes
 #'@description One is a batch containing summed concentrations of each sample
 #'the other contains the features aligned across all samples
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input the name of the plot to create
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -178,11 +184,10 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName){
   batch.lbl <- factor(batch.lbls,levels=names(mSetObj$dataSet$batch), ordered=T);
   cls.lbl <- factor(cls.lbls);
   
-  library('sva');
   pheno <- data.frame(cbind(cls.lbl, batch.lbl));
   modcombat <- model.matrix(~1, data=pheno);
   # note, transpose to fit the gene expression format
-  combat_edata <- ComBat(dat=t(commonMat), batch=batch.lbl, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
+  combat_edata <- sva::ComBat(dat=t(commonMat), batch=batch.lbl, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
   
   mSetObj$dataSet$commonMat <- commonMat;
   mSetObj$dataSet$batch.lbls <- batch.lbl;
@@ -208,6 +213,13 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName){
 
 #'Scatter plot colored by different batches
 #'@description Scatter plot colored by different batches
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -227,7 +239,7 @@ PlotPCA.overview <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   
   mSetObj$imgSet$pca.batch.overview <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow=c(1,2));
   
   nlbls <-  mSetObj$dataSet$batch.lbls;
@@ -275,7 +287,6 @@ PlotPCA.overview <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   return(.set.mSet(mSetObj));
 }
 
-
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -300,6 +311,7 @@ ResetBatchData <- function(mSetObj=NA){
 
 #'Create semitransparant colors
 #'@description Create semitransparant colors for a given class label
+#'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

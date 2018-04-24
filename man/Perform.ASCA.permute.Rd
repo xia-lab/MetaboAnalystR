@@ -4,10 +4,12 @@
 \alias{Perform.ASCA.permute}
 \title{Perform ASCA model validation by permutation}
 \usage{
-Perform.ASCA.permute(mSetObj, perm.num)
+Perform.ASCA.permute(mSetObj=NA, perm.num)
 }
 \arguments{
-\item{perm.num}{select the number of permutations, default is 20}
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{perm.num}{Select the number of permutations, default is 20}
 }
 \description{
 Perform ASCA model validation by permutation

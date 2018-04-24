@@ -4,7 +4,7 @@
 \alias{CalculateFeatureRanking}
 \title{Calculates feature importance}
 \usage{
-CalculateFeatureRanking(mSet, clust.num)
+CalculateFeatureRanking(mSetObj=NA, clust.num=5)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

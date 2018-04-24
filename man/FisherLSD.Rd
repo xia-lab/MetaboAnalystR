@@ -6,6 +6,11 @@
 \usage{
 FisherLSD(aov.obj, thresh)
 }
+\arguments{
+\item{aov.obj}{Input the anova object}
+
+\item{thresh}{Numeric, input the alpha threshold}
+}
 \description{
 Perform  Fisher LSD for ANOVA, used in higher function
 }

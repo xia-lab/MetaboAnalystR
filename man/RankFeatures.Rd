@@ -6,6 +6,15 @@
 \usage{
 RankFeatures(x.in, y.in, method, lvNum)
 }
+\arguments{
+\item{x.in}{Input the X features}
+
+\item{y.in}{Input the Y features}
+
+\item{method}{Input the method}
+
+\item{lvNum}{Input the number of levels}
+}
 \description{
 Ranks features based on various importance measures,
 return imp.vec which contains the importance measures

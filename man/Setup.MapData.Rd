@@ -6,6 +6,11 @@
 \usage{
 Setup.MapData(mSetObj = NA, qvec)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{qvec}{Input the vector to query}
+}
 \description{
 Save compound name for mapping
 }

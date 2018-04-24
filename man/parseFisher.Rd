@@ -6,6 +6,11 @@
 \usage{
 parseFisher(fisher, cut.off)
 }
+\arguments{
+\item{fisher}{Input fisher object}
+
+\item{cut.off}{Numeric, set cut-off}
+}
 \description{
 Return only the signicant comparison names, used in higher function
 }

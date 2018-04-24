@@ -6,6 +6,11 @@
 \usage{
 PerformMultiMatch(mSetObj = NA, q)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{q}{Input the query}
+}
 \description{
 Given a query, perform compound matching
 }

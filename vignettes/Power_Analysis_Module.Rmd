@@ -57,19 +57,9 @@ mSet<-PlotPowerEffectSize(mSet, "powereffect", format="png", dpi=300, width=NA)
 mSet<-PlotPowerProfile(mSet, 0.1, 200, "powerprofile", format="png", dpi=300, width=NA)
 ```
 
-## 3. Sweave Report 
+## 3. Sweave Report
 
-To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
-
-```{r, eval=FALSE}
-# Create Biomarker Sweave report 
-CreatePDFReport(mSet, "User Name")
-
-# To save all files created during your session
-SaveTransformedData(mSet)
-
-```
-
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
 
 
 

@@ -6,6 +6,11 @@
 \usage{
 GetCIs(data, param = F)
 }
+\arguments{
+\item{data}{Input data matrix}
+
+\item{param}{Logical, False by default}
+}
 \description{
 For non-parametric tests, use quantiles,
 use normal (1.96*std.err) if parametric

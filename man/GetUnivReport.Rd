@@ -6,6 +6,9 @@
 \usage{
 GetUnivReport(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 The approach is computationally expensive,and fails more often 
 get around: make it lazy unless users request, otherwise the default t-test will also be affected

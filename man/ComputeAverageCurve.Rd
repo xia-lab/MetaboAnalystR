@@ -6,6 +6,11 @@
 \usage{
 ComputeAverageCurve(perf, avg.method)
 }
+\arguments{
+\item{perf}{Input the average}
+
+\item{avg.method}{Input the name of the method to compute the average curve}
+}
 \description{
 Compute the average ROC curve
 }

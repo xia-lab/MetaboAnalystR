@@ -11,6 +11,8 @@ RSVM(x, y, ladder, CVtype, CVnum = 0)
 
 \item{y}{Class label: 1 / -1 for 2 classes}
 
+\item{ladder}{Input the ladder}
+
 \item{CVtype}{Integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV}
 
 \item{CVnum}{Number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size

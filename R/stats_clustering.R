@@ -7,8 +7,8 @@
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@param smplDist  
-#'@param clstDist 
+#'@param smplDist Method to calculate sample distance
+#'@param clstDist Method to calculate clustering distance 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -50,10 +50,10 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   
   mSetObj$imgSet$tree <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(cex=0.8, mar=c(4,2,2,8));
   if(mSetObj$dataSet$cls.type == "disc"){
-    clusDendro<-as.dendrogram(hc_tree);
+    clusDendro <- as.dendrogram(hc_tree);
     cols <- GetColorSchema(mSetObj);
     names(cols) <- rownames(hc.dat);
     labelColors <- cols[hc_tree$order];
@@ -67,11 +67,18 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
       }
       n
     }
-    clusDendro<-dendrapply(clusDendro, colLab)
+    clusDendro <- dendrapply(clusDendro, colLab)
     plot(clusDendro,horiz=T,axes=T);
     par(cex=1);
-    legend.nm <- as.character(mSetObj$dataSet$cls);
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      legend.nm <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+    }else{
+      legend.nm <- as.character(mSetObj$dataSet$cls);
+    }
+    
     legend("topleft", legend = unique(legend.nm), pch=15, col=unique(cols), bty = "n");
+    
   }else{
     plot(as.dendrogram(hc_tree), hang=-1, main=paste("Cluster with", clstDist, "method"), xlab=NULL, sub=NULL, horiz=TRUE);
   }
@@ -83,6 +90,10 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'SOM analysis
 #'@description SOM analysis
 #'@param mSetObj Input name of the created mSet Object
+#'@param x.dim Input X dimension for SOM analysis
+#'@param y.dim Input Y dimension for SOM analysis
+#'@param initMethod Input the method 
+#'@param neigb Default is set to 'gaussian'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -90,8 +101,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'
 SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
   mSetObj <- .get.mSet(mSetObj);
-  library(som);
-  mSetObj$analSet$som <- som(as.matrix(mSetObj$dataSet$norm), xdim=x.dim, ydim=y.dim, init=initMethod, neigh=neigb);
+  mSetObj$analSet$som <- som::som(as.matrix(mSetObj$dataSet$norm), xdim=x.dim, ydim=y.dim, init=initMethod, neigh=neigb);
   return(.set.mSet(mSetObj));
 }
 
@@ -133,7 +143,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$som <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow = GetXYCluster(total), mar=c(5,4,2,2));
   for (i in 0:(xdim-1)) {
     xTrue<-clust$x == i;
@@ -160,6 +170,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'K-means analysis
 #'@description Perform K-means analysis
 #'@param mSetObj Input name of the created mSet Object
+#'@param clust.num Numeric, input the number of clusters for K-means analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -167,7 +178,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'
 Kmeans.Anal <- function(mSetObj=NA, clust.num){
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$kmeans <- kmeans (mSetObj$dataSet$norm, clust.num, nstart=100);
+  mSetObj$analSet$kmeans <- kmeans(mSetObj$dataSet$norm, clust.num, nstart=100);
   return(.set.mSet(mSetObj));
 }
 
@@ -192,7 +203,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   if(clust.num>20) return();
   # calculate arrangement of panel
-  ylabel<-GetAbundanceLabel(mSetObj$dataSet$type);
+  ylabel<- GetAbundanceLabel(mSetObj$dataSet$type);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -205,7 +216,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$kmeans <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow = GetXYCluster(clust.num), mar=c(5,4,2,2));
   for (loop in 1:clust.num) {
     matplot(t(mSetObj$dataSet$norm[mSetObj$analSet$kmeans$cluster==loop,]), type="l", col='grey', ylab=ylabel, axes=F,
@@ -227,6 +238,18 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param dataOpt Set data options
+#'@param scaleOpt Set the image scale
+#'@param smplDist Input the sample distance method
+#'@param clstDist Input the clustering distance method
+#'@param palette Input color palette choice
+#'@param method.nm Input the method for sub-heat map
+#'@param top.num Input the top number
+#'@param viewOpt Set heatmap options, default is set to "detail"
+#'@param rowV Default is set to T
+#'@param colV Default is set to T
+#'@param border Indicate whether or not to show cell-borders, default is set to T
+#'@param grp.ave Logical, default is set to F
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -234,6 +257,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
                            smplDist, clstDist, palette, method.nm, top.num, viewOpt, rowV=T, colV=T, border=T, grp.ave=F){
+  
   mSetObj <- .get.mSet(mSetObj);
   var.nms = colnames(mSetObj$dataSet$norm);
   if(top.num < length(var.nms)){
@@ -296,6 +320,17 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param dataOpt Set data options
+#'@param scaleOpt Set the image scale
+#'@param smplDist Input the sample distance method
+#'@param clstDist Input the clustering distance method
+#'@param palette Input color palette choice
+#'@param viewOpt Set heatmap options, default is set to "detail"
+#'@param rowV Default is set to T
+#'@param colV Default is set to T
+#'@param var.inx Default is set to NA
+#'@param border Indicate whether or not to show cell-borders, default is set to T
+#'@param grp.ave Logical, default is set to F
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -323,7 +358,13 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }
   
   colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
-  hc.cls <- mSetObj$dataSet$cls;
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    hc.cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    hc.cls <- mSetObj$dataSet$cls;
+  }
+  
   if(grp.ave){ # only use group average
     lvs <- levels(hc.cls);
     my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
@@ -347,8 +388,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }else if(palette == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
   }else{
-    suppressMessages(library(RColorBrewer));
-    colors <- rev(colorRampPalette(brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -356,16 +396,15 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   if(is.na(width)){
     minW <- 630;
     myW <- nrow(hc.dat)*18 + 150;
+    
     if(myW < minW){
       myW <- minW;
     }   
     w <- round(myW/72,2);
   }else if(width == 0){
     w <- 7.2;
-    
   }else{
     w <- 7.2;
-    
   }
   
   mSetObj$imgSet$heatmap <- imgName;
@@ -391,7 +430,6 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
     }
     
     mSetObj$imgSet$heatmap <- imgName;
-    
   }
   
   # make the width smaller fro group average
@@ -408,25 +446,31 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
-    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
   if(mSetObj$dataSet$cls.type == "disc"){
-    library(pheatmap);
-    annotation <- data.frame(class= hc.cls);
-    rownames(annotation) <-rownames(hc.dat); 
+    annotation <- data.frame(class = hc.cls);
+    rownames(annotation) <- rownames(hc.dat); 
     
     # set up color schema for samples
-    if(palette== "gray"){
+    if(palette == "gray"){
       cols <- GetColorSchema(mSetObj, T);
       uniq.cols <- unique(cols);
     }else{
       cols <- GetColorSchema(mSetObj);
       uniq.cols <- unique(cols);
     }
-    names(uniq.cols) <- unique(as.character(mSetObj$dataSet$cls));
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+    }else{
+      cls <- mSetObj$dataSet$cls;
+    }
+    
+    names(uniq.cols) <- unique(as.character(sort(cls)));
     ann_colors <- list(class= uniq.cols);
     
-    pheatmap(t(hc.dat), 
+    pheatmap::pheatmap(t(hc.dat), 
              annotation=annotation, 
              fontsize=8, fontsize_row=8, 
              clustering_distance_rows = smplDist,
@@ -437,8 +481,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
              cluster_cols = rowV,
              scale = scaleOpt, 
              color = colors,
-             annotation_colors = ann_colors
-    );
+             annotation_colors = ann_colors);
   }else{
     heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
   }
@@ -454,14 +497,17 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
 
 #'SOM analysis
 #'@description Get members for given cluster index, return a character string
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param i Index of X
+#'@param j Index of Y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   mSetObj <- .get.mSet(mSetObj);
-  clust<-mSetObj$analSet$som$visual;
-  xTrue<-clust$x == i;
-  yTrue<-clust$y == j;
+  clust <- mSetObj$analSet$som$visual;
+  xTrue <- clust$x == i;
+  yTrue <- clust$y == j;
   hit.inx <- xTrue & yTrue;
   
   all.cols <- GetColorSchema(mSetObj);
@@ -470,6 +516,7 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
 
 #'SOM analysis
 #'@description Get members for given cluster index, return a character string
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -500,9 +547,9 @@ GetAllSOMClusterMembers <- function(mSetObj=NA){
     }
     i = i+1;
   }
-  row.names(clust.df)<- rowNameVec;
-  colnames(clust.df)<-"Samples in each cluster";
-  print(xtable(clust.df, align="l|p{8cm}", caption="Clustering result using SOM"),caption.placement="top", size="\\scriptsize");
+  row.names(clust.df) <- rowNameVec;
+  colnames(clust.df) <- "Samples in each cluster";
+  print(xtable::xtable(clust.df, align="l|p{8cm}", caption="Clustering result using SOM"),caption.placement="top", size="\\scriptsize");
 }
 
 
@@ -516,6 +563,8 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'K-means analysis - cluster
 #'@description Get the cluster members for given index
 #'add HTML color to the names based on its group membership
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param i Input the cluster index
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -529,6 +578,7 @@ GetKMClusterMembers <- function(mSetObj=NA, i){
 }
 
 #'K-means analysis - cluster
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetAllKMClusterMembers <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -545,15 +595,16 @@ GetAllKMClusterMembers <- function(mSetObj=NA){
     rowNameVec <- c(rowNameVec, paste("Cluster(", i, ")"));
     i = i+1;
   }
-  row.names(clust.df)<- rowNameVec;
-  colnames(clust.df)<-"Samples in each cluster";
-  print(xtable(clust.df, align="l|p{8cm}", caption="Clustering result using K-means"), caption.placement="top", size="\\scriptsize");
+  row.names(clust.df) <- rowNameVec;
+  colnames(clust.df) <-"Samples in each cluster";
+  print(xtable::xtable(clust.df, align="l|p{8cm}", caption="Clustering result using K-means"), caption.placement="top", size="\\scriptsize");
 }
 
 ########## Utility Functions ##############
 #'Determine row/column number for plotting
 #'@description Determine the number of rows and columns for a given total
 #'number of plots (used by Kmeans and SOM plots)
+#'@param total Input the total
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

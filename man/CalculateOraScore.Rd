@@ -2,10 +2,7 @@
 % Please edit documentation in R/enrich_path_stats.R
 \name{CalculateOraScore}
 \alias{CalculateOraScore}
-\title{Over-representation analysis using hypergeometric tests
-The probability is calculated from obtaining the equal or higher number
-of hits using 1-phyper. Since phyper is a cumulative probability,
-to get P(X>=hit.num) => P(X>(hit.num-1))}
+\title{Calculate ORA score}
 \usage{
 CalculateOraScore(mSetObj=NA, nodeImp, method)
 }
@@ -19,9 +16,6 @@ and "dgr" for out-degree centrality.}
 }
 \description{
 Calculate the over representation analysis score
-}
-\details{
-Calculate ORA score
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

@@ -2,11 +2,14 @@
 % Please edit documentation in R/general_misc_utils.R
 \name{Perform.permutation}
 \alias{Perform.permutation}
-\title{need to check if necessary to include this code
-use single core on the public server
-Permutation}
+\title{Permutation}
 \usage{
 Perform.permutation(perm.num, fun)
+}
+\arguments{
+\item{perm.num}{Numeric, input the number of permutations to perform}
+
+\item{fun}{Dummy function}
 }
 \description{
 Perform permutation, options to change number of cores used

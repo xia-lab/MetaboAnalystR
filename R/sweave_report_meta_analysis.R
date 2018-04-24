@@ -1,6 +1,8 @@
 #'Create report of analyses (Meta-Analysis)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -31,7 +33,7 @@ CreateMetaAnalysisRnwReport<-function(mSetObj, usrName){
 CreateMetaAnalysisIntr<-function(){
   descr <- c("\\section{Background}\n",
              "The combination of multiple independent metabolomics studies investigating the same condition in similar populations, ",
-             "which is often termed “horizontal integration”, or “metabolomic meta-analysis”. The aim of metabolomic ",
+             "which is often termed horizontal integration, or metabolomic meta-analysis. The aim of metabolomic ",
              "meta-analysis is to leverage the collective power of multiple studies to overcome potential noise, bias, and small ",
              "effect sizes to improve the precision in identifying true patterns within data. Specifically, biomarker ",
              "identification remains a large area of research in metabolomics, and their validation is challenging due to ",
@@ -64,6 +66,7 @@ CreateMetaAnalysisOverview <- function(){
 #'Create MetaAnalysis analysis report: Data Input
 #'@description Report generation using Sweave
 #'Power analysis report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -99,6 +102,7 @@ CreateMetaAnalysisInputDoc <- function(mSetObj=NA){
 #'Create MetaAnalysis analysis report: Data Normalization
 #'@description Report generation using Sweave
 #'Meta-Analysis, data normalization documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -131,6 +135,7 @@ CreateMetaAnalysisNORMdoc <- function(mSetObj=NA){
 #'Create MetaAnalysis analysis report: Data Normalization
 #'@description Report generation using Sweave
 #'Meta-Analysis, data normalization documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -166,6 +171,7 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
 #'Create MetaAnalysis analysis report: Data Normalization
 #'@description Report generation using Sweave
 #'MetaAnalysis analysis, data normalization documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -283,6 +289,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
 #'Create MetaAnalysis table of results
 #'@description Report generation using Sweave
 #'Function to create a table containing meta-analysis results.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -291,17 +298,16 @@ CreateMetaTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(xtable));
-  
   metatable <- mSetObj$analSet$meta.mat;
   
-  print(xtable(metatable, caption="Predicted top-ranking features from meta-analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(metatable, caption="Predicted top-ranking features from meta-analysis"), caption.placement="top", size="\\scriptsize");
   
 }
 
 #'Create MetaAnalysis table of results for Venn Diagram
 #'@description Report generation using Sweave
 #'Function to create a table containing meta-analysis results.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -310,33 +316,9 @@ CreateVennMetaTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
 
-  suppressMessages(library(xtable));
-
   metatable <- mSetObj$analSet$sigfeat.matrix;
   
-  print(xtable(metatable, caption="Differentially expressed features by individual study and from meta-analysis"), caption.placement="top", size="\\scriptsize", scalebox = "0.6");
+  print(xtable::xtable(metatable, caption="Differentially expressed features by individual study and from meta-analysis"), caption.placement="top", size="\\scriptsize", scalebox = "0.6");
   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -6,6 +6,11 @@
 \usage{
 PlotMSEA.Overview(folds, pvals)
 }
+\arguments{
+\item{folds}{Input the fold-change values}
+
+\item{pvals}{Input the p-values}
+}
 \description{
 Barplot height is enrichment fold change
 color is based on p values, used in higher functions

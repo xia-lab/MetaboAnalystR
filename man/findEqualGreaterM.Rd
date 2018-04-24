@@ -6,6 +6,11 @@
 \usage{
 findEqualGreaterM(x, values)
 }
+\arguments{
+\item{x}{Input the data}
+
+\item{values}{Input the values}
+}
 \description{
 Perform various utilities for peak grouping
 }

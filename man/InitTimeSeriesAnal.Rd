@@ -8,8 +8,7 @@ InitTimeSeriesAnal()
 }
 \description{
 Report generation using Sweave
-Metabolomic pathway analysis, time-series
-Analysis
+Metabolomic pathway analysis, time-series analysis
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

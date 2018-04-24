@@ -6,6 +6,9 @@
 \usage{
 GetMapTable(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
-Get mapping table
+Return results from compound name mapping in a table
 }

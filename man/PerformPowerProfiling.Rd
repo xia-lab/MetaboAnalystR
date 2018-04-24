@@ -4,14 +4,14 @@
 \alias{PerformPowerProfiling}
 \title{Perform power profiling}
 \usage{
-PerformPowerProfiling(mSetObj, fdr.lvl, smplSize)
+PerformPowerProfiling(mSetObj=NA, fdr.lvl, smplSize)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{fdr.lvl}{Specify the false-discovery rate level.}
 
-\item{smpSize}{Specify the maximum sample size, the number must be between 60-1000.}
+\item{smplSize}{Specify the maximum sample size, the number must be between 60-1000.}
 }
 \description{
 Perform power profiling of data

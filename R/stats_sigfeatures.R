@@ -1,15 +1,18 @@
 #'Perform Signifiance Analysis of Microarrays (SAM) analysis
 #'@description Perform SAM
 #'@param mSetObj Input name of the created mSet Object
+#'@param method Method for SAM analysis, default is set to "d.stat", alternative is "wilc.stat"
+#'@param paired Logical, indicates if samples are paired or not. Default is set to FALSE
+#'@param varequal Logical, indicates if variance is equal. Default is set to TRUE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+#'@import siggenes
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(siggenes));
+
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
   cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
   if(mSetObj$dataSet$cls.num==2){
@@ -17,12 +20,12 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
       cl<-as.numeric(mSetObj$dataSet$pairs);
     }
     if(method == "d.stat"){
-      sam_out <- sam(mat, cl, method=d.stat, var.equal=varequal, R.fold=0, rand=123);
+      sam_out <- siggenes::sam(mat, cl, method=d.stat, var.equal=varequal, R.fold=0, rand=123);
     }else{
-      sam_out <- sam(mat, cl, method=wilc.stat, R.fold=0,rand=123);
+      sam_out <- siggenes::sam(mat, cl, method=wilc.stat, R.fold=0,rand=123);
     }
   }else{
-    sam_out <- sam(mat, cl, rand=123);
+    sam_out <- siggenes::sam(mat, cl, rand=123);
   }
   mSetObj$analSet$sam <- sam_out;
   return(.set.mSet(mSetObj));
@@ -31,6 +34,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
 #'Set Signifiance Analysis of Microarrays (SAM) analysis matrix
 #'@description Create SAM matrix
 #'@param mSetObj Input name of the created mSet Object
+#'@param delta Input the delta for SAM analysis
 #'@export
 #'
 SetSAMSigMat <- function(mSetObj=NA, delta){
@@ -48,6 +52,7 @@ SetSAMSigMat <- function(mSetObj=NA, delta){
 #'Plot SAM Delta Plot 
 #'@description Plot SAM Delta Plot (FDR)
 #'@param mSetObj Input name of the created mSet Object
+#'@param delta Input the delta
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
@@ -72,9 +77,9 @@ PlotSAM.FDR <- function(mSetObj=NA, delta, imgName, format="png", dpi=72, width=
   
   mSetObj$imgSet$sam.fdr <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow=c(1,2), mar=c(5,6,4,1));
-  mat.fdr<-mSetObj$analSet$sam@mat.fdr;
+  mat.fdr <- mSetObj$analSet$sam@mat.fdr;
   plot(mat.fdr[,"Delta"],mat.fdr[,"FDR"],xlab='Delta',ylab=NA,type="b", col='blue', las=2);
   abline(v = delta, lty=3, col="magenta");
   mtext("FDR", side=2, line=5);
@@ -109,7 +114,6 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   sam.out <- mSetObj$analSet$sam
-  suppressMessages(library(siggenes));
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -122,10 +126,8 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$sam.cmpd <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   siggenes::plot(mSetObj$analSet$sam, mSetObj$analSet$sam.delta);
-  
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -134,6 +136,8 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'For EBAM analysis 
 #'@description deteriming a0, only applicable for z.ebam (default)
 #'@param mSetObj Input name of the created mSet Object
+#'@param isPaired Logical
+#'@param isVarEq Logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -141,22 +145,22 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'
 EBAM.A0.Init <- function(mSetObj=NA, isPaired, isVarEq){
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(siggenes));
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
   }else{
     cl.ebam <- as.numeric(mSetObj$dataSet$cls)-1; # change to 0 and 1 for class label
   }
   conc.ebam <- t(mSetObj$dataSet$norm); # in sam column is sample, row is gene
-  ebam_a0 <- find.a0(conc.ebam, cl.ebam, var.equal=isVarEq, gene.names = names(mSetObj$dataSet$norm), rand=123);
+  ebam_a0 <- siggenes::find.a0(conc.ebam, cl.ebam, var.equal=isVarEq, gene.names = names(mSetObj$dataSet$norm), rand=123);
   mSetObj$analSet$ebam.a0 <- ebam_a0;
+  
   return(.set.mSet(mSetObj));
 }
 
 #'For EBAM analysis 
 #'@description plot ebam a0 plot also return the analSet$ebam.a0 object 
 #'so that the suggested a0 can be obtained
-#'@usage PlotEBAM.A0(imgName, format, dpi, width)
+#'@usage PlotEBAM.A0(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -183,7 +187,7 @@ PlotEBAM.A0<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$ebam.a0 <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(mSetObj$analSet$ebam.a0);
   dev.off();
   
@@ -193,6 +197,10 @@ PlotEBAM.A0<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'For EBAM analysis 
 #'@description note: if method is wilcoxon, the A0 and var equal will be ignored
 #'@param mSetObj Input name of the created mSet Object
+#'@param method Input the method for EBAM analysis
+#'@param A0 Numeric
+#'@param isPaired Logical, FALSE by default
+#'@param isVarEq Logical, TRUE by default
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -220,6 +228,7 @@ EBAM.Cmpd.Init <- function(mSetObj=NA, method="z.ebam", A0=0, isPaired=FALSE, is
 #'For EBAM analysis 
 #'@description return double matrix with 3 columns - z.value, posterior, local.fdr
 #'@param mSetObj Input name of the created mSet Object
+#'@param delta Input the delta for EBAM analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -263,7 +272,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <- h <- width;
   }
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(mSetObj$analSet$ebam, mSetObj$analSet$ebam.delta);
   dev.off();
   return(.set.mSet(mSetObj));
@@ -277,7 +286,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 GetSAMDeltaRange <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  mat.fdr<-mSetObj$analSet$sam@mat.fdr;
+  mat.fdr <- mSetObj$analSet$sam@mat.fdr;
   rng <- range(mat.fdr[,"Delta"]);
   step <- (rng[2]-rng[1])/12
   return(signif(c(rng, step), 3));
@@ -286,6 +295,7 @@ GetSAMDeltaRange <- function(mSetObj=NA){
 #'For SAM analysis 
 #'@description obtain a default delta with reasonable number
 #'of sig features and decent FDR
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -294,7 +304,7 @@ GetSuggestedSAMDelta <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  mat.fdr<-mSetObj$analSet$sam@mat.fdr
+  mat.fdr <- mSetObj$analSet$sam@mat.fdr
   deltaVec <- mat.fdr[,"Delta"];
   
   fdrVec <- mat.fdr[,"FDR"];
@@ -338,6 +348,7 @@ GetSAMSigColNames <- function(mSetObj=NA){
 }
 
 #'Sig table for SAM
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.SAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -360,6 +371,7 @@ GetEBAMSigColNames <- function(mSetObj=NA){
 }
 
 #'Sig table for EBAM
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.EBAM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

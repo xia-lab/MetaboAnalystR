@@ -6,6 +6,11 @@
 \usage{
 Get.Leverage(XKw, Fac)
 }
+\arguments{
+\item{XKw}{Features}
+
+\item{Fac}{Factor}
+}
 \description{
 note, the leverage combines all components
 the importance feature is for the factor not per components

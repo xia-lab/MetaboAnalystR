@@ -6,9 +6,12 @@
 \usage{
 CreateiPCAdoc(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
-Interactive PCA
+For Interactive PCA
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

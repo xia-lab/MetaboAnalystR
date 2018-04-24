@@ -91,11 +91,10 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
     common.matrix <- t(common.matrix);
 
     if(combat){
-        library('sva');
         pheno <- data.frame(cbind(cls.lbl, data.lbl));
         modcombat = model.matrix(~1, data=pheno)
         batch <- data.lbl;
-        combat_edata = ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
+        combat_edata = sva::ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
         common.matrix <- combat_edata;
     }
 
@@ -391,7 +390,7 @@ PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
 #'Meta-Analysis: Plot Venn Diagram
 #'@description This function plots a venn diagram of the individual studies.
 #'@param mSetObj Input name of the created mSet Object.
-#'@param imgName 
+#'@param imgNM Input the name of the created Venn Diagram
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -403,7 +402,7 @@ PlotMetaVenn<-function(mSetObj=NA, imgNM=NA){
   imgName <- paste(imgNM, ".png", sep="");
   mSetObj$imgSet$venn <- imgName;
 
-  Cairo(file = imgName, width=420, height=300,  type="png", bg="transparent");
+  Cairo::Cairo(file = imgName, width=420, height=300,  type="png", bg="transparent");
   plotVennDiagram(meta.stat$venn, circle.col=c("blue", "forestgreen"), mar=c(0,0,2,0));
   dev.off();
 
@@ -421,10 +420,10 @@ PlotMetaVenn<-function(mSetObj=NA, imgNM=NA){
   return(.set.mSet(mSetObj));
 }
 
-#' Utility function: Plot Venn diagram
-#'Gordon Smyth, James Wettenhall.
-#'Capabilities for multiple counts and colors by Francois Pepin.
-#'4 July 2003.  Last modified 12 March 2010.
+# Utility function: Plot Venn diagram
+# Gordon Smyth, James Wettenhall.
+# Capabilities for multiple counts and colors by Francois Pepin.
+# 4 July 2003.  Last modified 12 March 2010.
 plotVennDiagram <- function(object,include="both",names,mar=rep(0,4),cex=1.2,lwd=1,circle.col,counts.col,show.include,...){
 
   nsets <- ncol(object)-1
@@ -503,7 +502,9 @@ GetMetaResultColNames <- function(){
     c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(meta.mat));
 }
 
-# single.type return logFC or p value for individual data analysis
+#'Single.type return logFC or p value for individual data analysis
+#'@param mSetObj Input name of the created mSet Object
+#'@param single.type Default is "fc"
 #'@export
 GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   
@@ -598,8 +599,6 @@ PlotDataProfile<-function(dataName, boxplotName, pcaName){
 qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
     imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
 
-    library('lattice');
-
     subgene=10000;
     if (nrow(dat)>subgene) {
         set.seed(28051968);
@@ -622,7 +621,7 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
     values  = as.numeric(Mss)
     formula = sample_id ~ values
 
-    box = bwplot(formula, groups = sample_id, layout = c(1,1), as.table = TRUE,
+    box = lattice::bwplot(formula, groups = sample_id, layout = c(1,1), as.table = TRUE,
         strip = function(..., bg) strip.default(..., bg ="#cce6ff"),
         horizontal = TRUE,
         pch = "|",  col = "black", do.out = FALSE, box.ratio = 2,
@@ -638,31 +637,32 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
           panel.bwplot(x, y, ...)
         })
 
-    Cairo(file=imgNm, width=460, height=420, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, width=460, height=420, type="png", bg="white");
     print(box);
     dev.off();
 }
 
 qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
     imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-    library('lattice');
     pca <- prcomp(t(na.omit(x)));
     names <- colnames(x);
     pca.res <- as.data.frame(pca$x);
     # increase xlim ylim for text label
     xlim <- GetExtendRange(pca.res$PC1);
     ylim <- GetExtendRange(pca.res$PC2);
-    pcafig = xyplot(PC2~PC1, data=pca.res, pch=19, cex=1, xlim = xlim, ylim=ylim,
+    pcafig = lattice::xyplot(PC2~PC1, data=pca.res, pch=19, cex=1, xlim = xlim, ylim=ylim,
         panel=function(x, y, ...) {
                panel.xyplot(x, y, ...);
                ltext(x=x, y=y, labels=names, pos=1, offset=1, cex=0.8, col="magenta")
             })
 
-    Cairo(file=imgNm, width=480, height=480, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, width=480, height=480, type="png", bg="white");
     print(pcafig);
     dev.off();
 }
 
+#'Prepare data for Venn diagram
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 PrepareVennData <- function(mSetObj=NA){
 
@@ -800,6 +800,8 @@ Prepare4Venn <- function(dat){
     vennData <<- vennData;
 }
 
+#'Retrieve selected data numbers
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 GetSelectedDataNumber <- function(mSetObj=NA){
   
@@ -812,6 +814,8 @@ GetSelectedDataNumber <- function(mSetObj=NA){
   }
 }
 
+#'Retrieve data names
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 GetSelectedDataNames <- function(mSetObj=NA){
   
@@ -824,8 +828,11 @@ GetSelectedDataNames <- function(mSetObj=NA){
   }
 }
 
+# Areas is allname concated
+#'Get Venn names
+#'@param mSetObj Input name of the created mSet Object
+#'@param areas Input areas to retrieve names
 #'@export
-#areas is allname concated
 GetVennGeneNames <- function(mSetObj=NA, areas){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -837,15 +844,18 @@ GetVennGeneNames <- function(mSetObj=NA, areas){
     }
     gene.vec <- unique(gene.vec);
     names(gene.vec) <- gene.vec;
-    venn.genes <<- gene.vec;
     
     if(.on.public.web==TRUE){
+      venn.genes <<- gene.vec;
       return(paste(unique(gene.vec), collapse="||"));
     }else{
+      mSetObj$dataSet$venn_overlap <- gene.vec
       return(.set.mSet(mSetObj));
     }
 }
 
+#'Export the significant hits from meta-analysis
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 #areas is allname concated
 GetMetaSigHitsTable <- function(mSetObj=NA){

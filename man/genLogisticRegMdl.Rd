@@ -6,6 +6,15 @@
 \usage{
 genLogisticRegMdl(x.train, y.train, x.test, y.test)
 }
+\arguments{
+\item{x.train}{Input the X training set}
+
+\item{y.train}{Input the Y training set}
+
+\item{x.test}{Input the X test set}
+
+\item{y.test}{Input the Y test set}
+}
 \description{
 Develop a Logistic Regression Model with all of the combined k-fold CV subsets
 }

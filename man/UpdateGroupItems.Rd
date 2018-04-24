@@ -4,7 +4,7 @@
 \alias{UpdateGroupItems}
 \title{Remove a group from the data}
 \usage{
-UpdateGroupItems(mSetObj, grp.nm.vec)
+UpdateGroupItems(mSetObj=NA, grp.nm.vec)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

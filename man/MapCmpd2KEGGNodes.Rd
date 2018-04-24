@@ -6,6 +6,11 @@
 \usage{
 MapCmpd2KEGGNodes(cmpds, net = "ko01100")
 }
+\arguments{
+\item{cmpds}{Input the compounds}
+
+\item{net}{Input the network name}
+}
 \description{
 Utility function for PrepareQueryJson
 }

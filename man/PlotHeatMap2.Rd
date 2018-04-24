@@ -4,22 +4,36 @@
 \alias{PlotHeatMap2}
 \title{Plot heatmap visualization for time-series data}
 \usage{
-PlotHeatMap2(mSetObj, imgName, format, dpi, width, smplDist, clstDist, colors, viewOpt, hiRes, sortInx, useSigFeature, drawBorder, var.inx)
+PlotHeatMap2(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, useSigFeature, drawBorder)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{smplDist}{select distance measure: euclidean, pearson, or minkowski}
+\item{imgName}{Input a name for the plot}
 
-\item{clstDist}{select clustering algorithm: ward, average, complete, single}
+\item{format}{Select the image format, "png", or "pdf".}
 
-\item{colors}{select heatmap colors: bwm, gray}
+\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
 
-\item{viewOpt}{select overview or detailed view: overview or detail}
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
-\item{useSigFeature}{use significant features only: F or T (default false)}
+\item{smplDist}{Select distance measure: euclidean, pearson, or minkowski}
 
-\item{drawborder}{show cell borders: F or T (default F)}
+\item{clstDist}{Select clustering algorithm: ward, average, complete, single}
+
+\item{colors}{Select heatmap colors: bwm, gray}
+
+\item{viewOpt}{Select overview or detailed view: overview or detail}
+
+\item{hiRes}{Select high-resolution or not: logical, default set to F}
+
+\item{sortInx}{Sort by index}
+
+\item{useSigFeature}{Use significant features only: F or T (default false)}
+
+\item{drawBorder}{Show cell borders: F or T (default F)}
 }
 \description{
 Plot heatmap visualization for time-series data

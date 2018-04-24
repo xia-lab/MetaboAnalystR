@@ -1,9 +1,9 @@
 #'View individual compounds related to a given metabolite set
 #'@description View individual compounds related to a given metabolite set
 #'Functions for varous plots for enrichment analysis
-#'@usage PlotQEA.MetSet(mSetObj, msetInx, format="png", dpi=72, width=NA)
+#'@usage PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param msetInx Input the name of the individual compound 
+#'@param setNM Input the name of the metabolite set 
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -37,14 +37,14 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$qea.mset<-imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   gt.obj<-mSetObj$analSet$qea.msea;
-  inx <- which (names(gt.obj) == setNM);
+  inx <- which(names(gt.obj) == setNM);
   if(is.factor(mSetObj$dataSet$cls)){
     colors = unique(as.numeric(mSetObj$dataSet$cls))+1;
-    features(gt.obj[inx], cex=0.8, colors=colors, cluster=F);
+    globaltest::features(gt.obj[inx], cex=0.8, colors=colors, cluster=F);
   }else{
-    features(gt.obj[inx], cex=0.8, cluster=F);
+    globaltest::features(gt.obj[inx], cex=0.8, cluster=F);
   }
   dev.off();
   mSetObj$imgSet$current.img <- imgName;
@@ -53,7 +53,6 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
     .set.mSet(mSetObj);
     return(imgName);
   }
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -77,20 +76,21 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   inx <- which(names(mSetObj$analSet$ssp.lows)==nm);
-  lows<-mSetObj$analSet$ssp.lows[[inx]];
+  lows <- mSetObj$analSet$ssp.lows[[inx]];
   
   if(length(lows)==1 && is.na(lows)){
     return();
   }
   
   #conc<-dataSet$norm[inx];
-  means<-mSetObj$analSet$ssp.means[[inx]];
-  highs<-mSetObj$analSet$ssp.highs[[inx]];
+  means <- mSetObj$analSet$ssp.means[[inx]];
+  highs <- mSetObj$analSet$ssp.highs[[inx]];
   
   cmpdNm <- mSetObj$analSet$ssp.mat[inx,1];
   conc <- as.numeric(mSetObj$analSet$ssp.mat[inx,2]);
   hmdbID <- mSetObj$analSet$ssp.mat[inx,3];
   imgName <<- paste(hmdbID, "dpi", dpi, ".png", sep="");
+  
   if(is.na(width)){
     w <- h <- 7;
   }else if(width == 0){
@@ -99,10 +99,10 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
     w <- h <- width;
   }
   
-  mSetObj$imgSet$conc.range<-imgName;
+  mSetObj$imgSet$conc.range <- imgName;
   mSetObj$imgSet$current.img <- imgName;
   
-  rng<-range(lows, highs, conc);
+  rng <- range(lows, highs, conc);
   ext <- (rng[2]-rng[1])/8;
   max.rg <- rng[2]+ext;
   min.rg <- ifelse(rng[1]-ext>=0, rng[1]-ext, 0);
@@ -111,7 +111,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
     unit <- "(umol/mmol_creatine)"
   }
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   concplot(means, lows, highs, xlim=c(min.rg, max.rg), labels = paste("Study ", 1:length(lows)),
            main=cmpdNm, xlab=paste("Concentration Range", unit), ylab="Study Reference")
   abline(v=c(range(lows, highs), conc), col=c("lightgrey", "lightgrey", "orange"), lty=c(5, 5, 5), lwd=c(1,1,2));
@@ -135,7 +135,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
 
 #'Plot over-representation analysis (ORA)
 #'@description Plot over-representation analysis (ORA)
-#'@usage PlotORA(mSetObj, imgName, imgOpt, format="png", dpi=72, width=NA)
+#'@usage PlotORA(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param imgOpt "net" 
@@ -155,7 +155,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   
   #calculate the enrichment fold change
   folds <- mSetObj$analSet$ora.mat[,3]/mSetObj$analSet$ora.mat[,2];
-  names(folds)<-GetShortNames(rownames(mSetObj$analSet$ora.mat));
+  names(folds) <- GetShortNames(rownames(mSetObj$analSet$ora.mat));
   pvals <- mSetObj$analSet$ora.mat[,4];
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -179,19 +179,21 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   mSetObj$imgSet$ora <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   
   PlotMSEA.Overview(folds, pvals);
   dev.off();
   
-  PlotEnrichNet.Overview(folds, pvals);
+  if(.on.public.web){
+    PlotEnrichNet.Overview(folds, pvals);
+  }
   
   return(.set.mSet(mSetObj));
 }
 
 #'Plot QEA overview
 #'@description Plot QEA overview
-#'@usage PlotQEA.Overview(mSetObj, imgName, imgOpt, format="png", dpi=72, width=NA)
+#'@usage PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param imgOpt "net" 
@@ -211,7 +213,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   
   #calculate the enrichment fold change
   folds <- mSetObj$analSet$qea.mat[,3]/mSetObj$analSet$qea.mat[,4];
-  names(folds)<-GetShortNames(rownames(mSetObj$analSet$qea.mat));
+  names(folds) <- GetShortNames(rownames(mSetObj$analSet$qea.mat));
   pvals <- mSetObj$analSet$qea.mat[,6];
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -230,10 +232,13 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
     bg="white";
   }
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   PlotMSEA.Overview(folds, pvals);
   dev.off();
-  PlotEnrichNet.Overview(folds, pvals);
+  
+  if(.on.public.web){
+    PlotEnrichNet.Overview(folds, pvals);
+  }
   
   mSetObj$imgSet$qea <-imgName;
   mSetObj$imgSet$current.img <- imgName;
@@ -244,6 +249,8 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'@description Barplot height is enrichment fold change
 #'color is based on p values, used in higher functions
 #'@usage PlotMSEA.Overview(folds, pvals)
+#'@param folds Input the fold-change values
+#'@param pvals Input the p-values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -274,11 +281,9 @@ PlotMSEA.Overview <- function(folds, pvals){
   image.plot(legend.only=TRUE, zlim=c(minP, maxP), col=ht.col,
              axis.args=axs.args, legend.shrink = 0.4, legend.lab="P value");
   par(op);
-  
 }
 
-#' Utility function
-
+# Utility function
 concplot <- function(mn, lower, upper, labels=NULL,
                      xlab = "Odds ratio", ylab = "Study Reference",
                      xlim = NULL, line.col = "blue", text.col="forestgreen",
@@ -305,12 +310,12 @@ concplot <- function(mn, lower, upper, labels=NULL,
   }
 }
 
-#'Plot a strip of color key beside a figure
-#'@description Adapted from the image.plot in fields package to correct label
-#'so that the small p value is bigger, located on top of the color key
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
+# Plot a strip of color key beside a figure
+# Adapted from the image.plot in fields package to correct label
+# so that the small p value is bigger, located on top of the color key
+# Jeff Xia, jeff.xia@mcgill.ca
+# McGill University, Canada
+# License: GNU GPL (>= 2)
 
 image.plot <- function(..., add = FALSE, nlevel = 64,
                        horizontal = FALSE, legend.shrink = 0.9, legend.width = 1.2,
@@ -598,10 +603,15 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 
 #'Barplot height is enrichment fold change
 #'@description Used in higher functions, the color is based on p values
+#'@param folds Input fold-change for bar plot
+#'@param pvals Input p-values for bar plot
+#'@param layoutOpt Input the layout option, default is set to layout.fruchterman.reingold
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import igraph
+#'@import reshape
 
 PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
   
@@ -613,8 +623,6 @@ PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.rein
     title <- "Enrichment Overview (top 50)";
   }
   
-  library(igraph);
-  library(reshape);
   pvalue <- pvals;
   id <- names(pvalue);
   geneSets <- current.msetlib$member;
@@ -666,12 +674,10 @@ PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.rein
   edge.mat <- get.edgelist(g);
   edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
   # covert to json
-  library(RJSONIO);
   netData <- list(nodes=nodes, edges=edge.mat);
   sink("msea_network.json");
-  cat(toJSON(netData));
+  cat(RJSONIO::toJSON(netData));
   sink();
-  
 }
 
 overlap_ratio <- function(x, y) {
@@ -688,7 +694,9 @@ color_scale <- function(c1="grey", c2="red") {
 }
 
 #'Network functions
-#'@description adapted from BioNet
+#'@description Adapted from BioNet
+#'@param network Input network
+#'@param name Input file name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

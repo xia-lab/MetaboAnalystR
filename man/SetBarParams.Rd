@@ -6,6 +6,9 @@
 \usage{
 SetBarParams(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 x axis is the pathway impact factor
 y axis is the p value (from ORA) 

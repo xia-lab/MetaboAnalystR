@@ -6,6 +6,9 @@
 \usage{
 LoadKEGGKO_lib(category)
 }
+\arguments{
+\item{category}{Module or pathway}
+}
 \description{
 Utility function for PerformKOEnrichAnalysis_KO01100
 }

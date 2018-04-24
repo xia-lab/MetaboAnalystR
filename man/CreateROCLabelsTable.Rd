@@ -6,6 +6,9 @@
 \usage{
 CreateROCLabelsTable(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
 Function to create a table for newly classified samples

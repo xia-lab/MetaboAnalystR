@@ -2,9 +2,9 @@
 % Please edit documentation in R/general_proc_utils.R
 \name{MSspec.fillPeaks}
 \alias{MSspec.fillPeaks}
-\title{Fill in missing peaks}
+\title{Function to fill in missing peaks}
 \usage{
-MetaboAnalystR:::MSspec.fillPeaks(mSetObj)
+MSspec.fillPeaks(mSetObj=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

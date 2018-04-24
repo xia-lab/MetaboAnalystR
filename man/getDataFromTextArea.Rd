@@ -6,6 +6,11 @@
 \usage{
 getDataFromTextArea(txtInput, sep.type = "space")
 }
+\arguments{
+\item{txtInput}{Input text}
+
+\item{sep.type}{Indicate the seperator type for input text. Default set to "space"}
+}
 \description{
 Transform two column input text to data matrix (single column data frame)
 }

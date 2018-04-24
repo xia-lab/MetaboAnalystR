@@ -1,21 +1,20 @@
-# An R package for pathway enrichment analysis for untargeted metabolomics
-# based on high-resolution LC-MS platform
-# This is based on the mummichog algorithm implemented in python (http://mummichog.org/)
-# The goals of developing MummichogR are
-# 1) to make this available to the R user community
-# 2) high-performance (similar or faster compared to python)
-# 3) broader pathways support - by adding support for 21 common organisms based on KEGG pathways
-# 4) companion web interface on MetaboAnalyst - the "MS Peaks to Pathways" module
-# @authors J. Chong \email{jasmine.chong@mail.mcgill.ca}, J. Xia \email{jeff.xia@mcgill.ca}
-# McGill University, Canada
-#'License: GNU GPL (>= 2)
-
+### An R package for pathway enrichment analysis for untargeted metabolomics
+### based on high-resolution LC-MS platform
+### This is based on the mummichog algorithm implemented in python (http://mummichog.org/)
+### The goals of developing MummichogR are
+### 1) to make this available to the R user community
+### 2) high-performance (similar or faster compared to python)
+### 3) broader pathways support - by adding support for 21 common organisms based on KEGG pathways
+### 4) companion web interface on MetaboAnalyst - the "MS Peaks to Pathways" module
+### @authors J. Chong \email{jasmine.chong@mail.mcgill.ca}, J. Xia \email{jeff.xia@mcgill.ca}
+### McGill University, Canada
+### License: GNU GPL (>= 2)
 
 #'Constructor to read uploaded user files into the mummichog object
 #'@description This function handles reading in CSV or TXT files and filling in the mSet object
 #' for mummichog analysis. It makes sure that all necessary columns are present.
-#'@usage Read.PeakListData(mSetObj=NA, filename, sigmzs, anal.type, cutoff = 0)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@usage Read.PeakListData(mSetObj=NA, filename = NA)
+#'@param mSetObj Input the name of the created mSetObj.
 #'@param filename Input the path name for the CSV/TXT files to read.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -45,15 +44,11 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
 #'@description This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function
 #'to specify to the organism's pathways to use (libOpt), the mass-spec mode (msModeOpt), mass-spec instrument (instrumentOpt), 
 #'the p-value cutoff (pvalCutoff), and the number of permutations (permNum).
-#'@usage UpdateMummichogParameters(mSetObj=NA, libOpt, instrumentOpt, msModeOpt, pvalCutoff, permNum)
+#'@usage UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@param data.type Input the type of data uploaded, 1) a list of significant m/z features ("siglist"), 2) a full list of all
-#'m/z features, p-values, and their t-scores ("peaklist"), or 3) a peak intensity table ("peaktable").
-#'@param libOpt Define the selected network for mummichog analysis: "human_mfn" etc.
 #'@param instrumentOpt Define the mass-spec instrument used to perform untargeted metabolomics.
 #'@param msModeOpt Define the mass-spec mode of the instrument used to perform untargeted metabolomics.
 #'@param pvalCutoff Numeric, specify the p-value cutoff to define significant m/z features from reference m/z features.
-#'@param permNum Numerical, input the number of permutations to be performed. By default it is 100.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -72,11 +67,12 @@ UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pval
 }
 
 #'Load the selected metabolic pathway database
-#'@description LoadMummichogLib is used to load in the user selected metabolic pathway database. If the user's input
+#'@description SetMass.PathLib is used to load in the user selected metabolic pathway database. If the user's input
 #'is just a list of significant features (anal.type = "siglist"), this function will also provide a list of
 #'reference features.
-#'@usage LoadMummichogLib(mSetObj=NA)
+#'@usage SetMass.PathLib(mSetObj=NA, lib)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param lib Input the name of organism library
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -190,29 +186,34 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$dataSet$N <- sig.size;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
   
-    return(.set.mSet(mSetObj));
+  return(.set.mSet(mSetObj));
   
 }
 
 #'Main function to perform mummichog
 #'@description This is the main function that performs the mummichog analysis. 
-#'@usage mSet <- PerformMummichog(mummichog = NA, enrichOpt, pvalOpt, permNum = 100)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@usage PerformMummichog(mSetObj=NA, enrichOpt, pvalOpt, permNum = 100)
+#'@param mSetObj Input the name of the created mSetObj object 
+#'@param enrichOpt Input the method to perform enrichment analysis
+#'@param pvalOpt Input the method to calculate p-values
+#'@param permNum Numeric, the number of permutations to perform
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PerformMummichog <- function(mummichog = NA, enrichOpt, pvalOpt, permNum = 100){
-  mummichog <- SearchCompoundLib(mummichog);
-  mummichog <- PerformMummichogPermutations(mummichog, permNum);
-  mummichog <- ComputeMummichogSigPvals(mummichog, enrichOpt, pvalOpt);
+PerformMummichog <- function(mSetObj=NA, enrichOpt, pvalOpt, permNum = 100){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- SearchCompoundLib(mSetObj);
+  mSetObj <- PerformMummichogPermutations(mSetObj, permNum);
+  mSetObj <- ComputeMummichogSigPvals(mSetObj, enrichOpt, pvalOpt);
+  return(.set.mSet(mSetObj));
 }
 
 #'Merges user-input files with library files
 #'@description This function matches user-uploaded files to library files specific to the selected organism. It
 #'also creates a list of compounds IDs from the user-uploaded list of significant m/z features.
 #'@usage SearchCompoundLib(mSetObj=NA)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@param mSetObj Input the name of the created mSetObj object 
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -324,8 +325,8 @@ GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
 #'Perform permutations and calculates p-values
 #'@description This function performs permutations to create a background distribution of p-values for pathway
 #'enrichment analysis.
-#'@usage MummichogPermutations(mSetObj=NA, permNum)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@usage PerformMummichogPermutations(mSetObj=NA, permNum)
+#'@param mSetObj Input the name of the created mSetObj.
 #'@param permNum Numeric, the number of permutations to perform
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -354,7 +355,8 @@ PerformMummichogPermutations <- function(mSetObj=NA, permNum){
   
 }
 
-#'Calculate p-values for each Lperm
+# Calculate p-values for each Lperm
+# Used in higher mummichogR functions
 ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathways, matches.res, input_mzlist, cpd2mz_dict){
 
   ora.vec <- input_cpdlist; #Lperm
@@ -395,8 +397,10 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
 #'Calculate p-values for the list of significant compounds
 #'@description This function performs pathway enrichment by calculate p-values for each pathway in the reference
 #'organism from the list of significant compounds.
-#'@usage MummichogSigPvals(mSetObj=NA)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
+#'@usage ComputeMummichogSigPvals(mSetObj=NA, enrichOpt, pvalOpt)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param enrichOpt Input method for enrichment analysis
+#'@param pvalOpt Calculate fisher or hypergeometric p-values
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -452,10 +456,9 @@ ComputeMummichogSigPvals <- function(mSetObj=NA, enrichOpt, pvalOpt){
   sig_hits <- res.mat[,3]; # sighits
   sigpvalue <- res.mat[,4]; # EASE scores
   
-  library(fitdistrplus);
   perm_record <- unlist(mSetObj$perm_record);
   perm_minus <- abs(0.9999999999 - perm_record);
-  fit.gamma <- fitdist(perm_minus, distr = "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1));
+  fit.gamma <- fitdistrplus::fitdist(perm_minus, distr = "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1));
   rawpval <- as.numeric(sigpvalue);
   adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
 
@@ -484,8 +487,7 @@ ComputeMummichogSigPvals <- function(mSetObj=NA, enrichOpt, pvalOpt){
     );
 
   write.csv(res.mat, file="mummichog_pathway_enrichment.csv", row.names=TRUE);
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
+  json.mat <- RJSONIO::toJSON(json.res, .na='null');
   sink("mummichog_query.json");
   cat(json.mat);
   sink();
@@ -527,7 +529,7 @@ PrepareMummiQueryJson <- function(){
     hits.sig <- mSetObj$input_cpdlist;
 
     lapply(path.all, hits.all, overlap)
-mset <- mSetObj$pathways$cpds[[inx]];
+    mset <- mSetObj$pathways$cpds[[inx]];
     # need to filter with global map
     map.all <- 
 
@@ -539,12 +541,10 @@ mset <- mSetObj$pathways$cpds[[inx]];
     query.res <- edge.mat[,3];# abundance
     names(query.res) <- eids; # named by edge
 
-    require(RJSONIO);
-    json.mat <- toJSON(query.res, .na='null');
+    json.mat <- RJSONIO::toJSON(query.res, .na='null');
     sink("network_query.json");
     cat(json.mat);
     sink();
-
     return(1);
 }
 
@@ -572,7 +572,7 @@ GetMummiResultPathIDs <- function(mSetObj=NA){
 }
 
 ################## Utility Functions #########
-#' Global variables define currency compounds
+# Global variables define currency compounds
 currency <- c('C00001', 'C00080', 'C00007', 'C00006', 'C00005', 'C00003',
               'C00004', 'C00002', 'C00013', 'C00008', 'C00009', 'C00011',
               'G11113', '', 'H2O', 'H+', 'Oxygen', 'NADP+', 'NADPH', 'NAD+', 'NADH', 'ATP',
@@ -600,9 +600,9 @@ mz_tolerance <- function(mz, ms.type){
 
 #'Utility function to create compound lists for permutation analysis
 #'@description From a vector of m/z features, this function outputs a vector of compounds.
-#'@usage make_cpdlist_function(mSetObj=NA, match_dict, refmzlist, input_mzlist)
-#'@param mummichog Input the name of the created mummichog object (see mummichog_init).
-#'@param input_mzlist The vector of randomly drawn m/z features.
+#'@usage make_cpdlist(mSetObj=NA, input_mzs)
+#'@param mSetObj Input the name of the created mSetObj
+#'@param input_mzs The vector of randomly drawn m/z features.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -619,9 +619,9 @@ make_cpdlist <- function(mSetObj=NA, input_mzs){
   return(cpd);
 }
 
-#'Utility function to adjust for the fact that a single m/z feature can match to several compound identifiers
-#'input: a vector of compound ids
-#'output: a length of unique mzs corresponding to those compounds
+# Utility function to adjust for the fact that a single m/z feature can match to several compound identifiers
+# input: a vector of compound ids
+# output: a length of unique mzs corresponding to those compounds
 
 count_cpd2mz <- function(cpd2mz_dict, cpd.ids,  inputmzlist){ # inputmz is either t or input cpd_list and cpd.ids are overlap features
   

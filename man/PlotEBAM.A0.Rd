@@ -4,7 +4,7 @@
 \alias{PlotEBAM.A0}
 \title{For EBAM analysis}
 \usage{
-PlotEBAM.A0(imgName, format, dpi, width)
+PlotEBAM.A0(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

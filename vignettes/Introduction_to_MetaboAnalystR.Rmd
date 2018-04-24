@@ -29,7 +29,7 @@ library(MetaboAnalystR)
 
 ## 1.2 Tips for using the R package
 
-1) The first function that you use in every analysis module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is mSet. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
+1) The first function that you use in every analysis module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is *mSet*. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
 
 2) The MetaboAnalystR package directly creates plots/tables/analysis outputs in your current working directory. It is not necessary to call any plotting functions onto the created mSetObj.
 
@@ -77,14 +77,14 @@ To import binned spectral data, users will use the same *Read.TextData* function
 
 ## 2.1.1.0  Importing example data (Zipped LC/GC-MS spectra) - Example file removed for the time-being
 
-Now we will use an example of using a dataset imported from a zipped file. In this case we will use the "lcms_netcdf.zip" file which you will be able download from the MetaboAnalyst web-server. 
+Now we will use an example of using a dataset imported from a zipped file. In this case we will use the "lcms_netcdf.zip" file which you will be able download from the "data" folder of the MetaboAnalyst GitHub. 
 
 ```{r, eval=FALSE}
 # Create an object for storing processed data
 mSet <- InitDataObjects("msspec", "stat", FALSE)
 
 # Unzip the uploaded zip file/s, remove it and save it as "upload"
-mSet <- UnzipUploadedFile(mSet, "lcms_netcdf.zip", "upload", T)
+UnzipUploadedFile("lcms_netcdf.zip", "upload", T)
 
 # Read the unzipped LC/GC-MS spectra (.netCDF, .mzXML, mzData) 
 # Detect, align, and group peaks
@@ -100,9 +100,13 @@ Similarly to binned spectral data, there is a further step to preprocess MS spec
 
 Following peak detection and alignment (grouping), MetaboAnalystR will perform retention time correction (RTC), fill in missing peaks, and create a usable data matrix using the XCMS R package. First, the function *MSspec.rtCorrection* uses *retcor* from XCMS to correct for differences in retention times between different samples. This function will also re-group the peaks as the inital grouping is no longer appropriate. Following RTC, *MSspec.fillPeaks* will identify among the peak groups any groups that contain missing peaks from some samples, and will then fill in those peaks by rereading the raw data and integrating signals at those regions to create a new peak. Finally, *SetupMSdataMatrix* uses *groupval* from XCMS to create a MS spectra data matrix, where the samples are in rows and peak groups are in columns. You must specify the name of the peak column (intvalue) you wish to enter into the returned matrix. 
 
-There are also two options available to view messages from preprocessing the spectral data. *dataSet&xset.msg* which when entered in the R console will print the various messages saved throughout the preprocessing. An example of the messages can be seen below. Further, *IsSpectraProcessingOK()* will evaluate if the spectra data processing went smoothly, printing [1] if the processing went well, and if not, it will print various error messages indicating problematic areas.  
+There are also two options available to view messages from preprocessing the spectral data. *mSet$dataSet$xset.msg* which when entered in the R console will print the various messages saved throughout the preprocessing. An example of the messages can be seen below. Further, *IsSpectraProcessingOK()* will evaluate if the spectra data processing went smoothly, printing [1] if the processing went well, and if not, it will print various error messages indicating problematic areas.  
 
 ```{r, eval=FALSE}
+
+# As this uses the XCMS R package, load XCMS
+library(xcms)
+
 # Perform retention time correction and re-group peaks
 mSet <- MSspec.rtCorrection(mSet, 30.0)
 
@@ -128,14 +132,14 @@ mSet <- IsSpectraProcessingOK(mSet)
 
 ## 2.1.2.0 Importing example data (Zipped Peak Lists)
 
-In this example, we will import a zipped file of peak lists ("lcms_3col_peaks.zip"), which you will find in the "data-raw"" folder of this R package. As above, we will first create a dataSet object, this time specifying "mspeak" as the dataType for LC-MS peak lists, and "stat" as the analysis type. 
+In this example, we will import a zipped file of peak lists ("lcms_3col_peaks.zip"), which you will find in the "data" folder of the MetaboAnalystR GitHub. As above, we will first create a dataSet object, this time specifying "mspeak" as the dataType for LC-MS peak lists, and "stat" as the analysis type. 
 
 ```{r, eval=FALSE}
 # Create an object for storing processed data
 mSet <- InitDataObjects("mspeak", "stat", FALSE)
 
 # Unzips the uploaded zip file/s, removes it and saves it as "upload"
-mSet <- UnzipUploadedFile(mSet, "lcms_3col_peaks.zip", "upload", F)
+UnzipUploadedFile("lcms_3col_peaks.zip", "upload", F)
 
 # Read peak lists/intensity files
 mSet <- Read.PeakList(mSet, "upload")
@@ -145,7 +149,7 @@ Following unzipping the files, we will use *Read.PeakList* to read in the peak l
 
 ## 2.1.2.1 Preprocessing example data (NMR and MS Peak Lists)
 
-Following import of NMR or MS peak lists, peaks that represent the same metabolite should be grouped together. The function *GroupPeakList* utilizes the XCMS grouping algorithm to combine peaks across samples with similar massess and retention times into groups. Further, *SetPeakList.GroupValues* cleans the peak groups, summing multiple identical peaks within groups if they originate from the same sample. Both functions work directly upon the dataSet object. 
+Following import of NMR or MS peak lists, peaks that represent the same metabolite should be grouped together. The function *GroupPeakList* utilizes the XCMS grouping algorithm to combine peaks across samples with similar massess and retention times into groups. Further, *SetPeakList.GroupValues* cleans the peak groups, summing multiple identical peaks within groups if they originate from the same sample. Both functions work directly upon the mSet object. 
 
 ```{r, eval=FALSE}
 # Perform grouping of peaks
@@ -203,13 +207,13 @@ Other options are available to deal with missing values, consisting of 2 steps. 
 The second step is to remove or replace the remaining missing values, using *ImputeVar*. There are several options to decide what to replace missing values with, such as replacement based on the minimum/mean/median value of each feature column, or several options to impute the missing values, using k-nearest neighbour (KNN), probabilistic PCA (PPCA), Bayesian PCA (BPCA), or Singular Value Decomposition (SVD). In the example below, we will exclude variables with missing values ("exclude"). An example of replacing missing values with KNN imputed values is also included (method = "knn"). 
 
 ```{r, eval=FALSE}
-# Step 1: Remove features containing a user-defined % cut-off of missing values
+# STEP 1: Remove features containing a user-defined % cut-off of missing values
 mSet <- RemoveMissingPercent(mSet, percent=0.5)
 
-# Step 2: Remove variables with missing values
+# STEP 2: Remove variables with missing values
 mSet <- ImputeVar(mSet, method="exclude")
 
-# Alternative Step 2: Replace missing values with KNN imputed values   
+######### Alternative Step 2: Replace missing values with KNN imputed values   
 mSet <- ImputeVar(mSet, method="knn")
 ```
 
@@ -244,13 +248,13 @@ For this tutorial we will go through 3 examples of data normalization:
 3) Perform quantile normalization ("QuantileNorm"), log transformation ("LogNorm"), and mean-center scaling ("MeanCenter"). 
 
 ```{r, eval=FALSE}
-# 1) Perform Probabilistic Quotient Normalization based upon a reference sample
+### OPTION 1) Perform Probabilistic Quotient Normalization based upon a reference sample
 mSet<-Normalization(mSet, "ProbNormF", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
 
-# 2) Normalize by reference feature 
+### OPTION 2) Normalize by reference feature 
 mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "1,6-Anhydro-beta-D-glucose", ratio=FALSE, ratioNum=20)
 
-# 3) Perform quantile normalization, log transformation, and mean-center scaling  
+### OPTION 3) Perform quantile normalization, log transformation, and mean-center scaling  
 mSet<-Normalization(mSet, "QuantileNorm", "LogNorm", "MeanCenter", ref=NULL, ratio=FALSE, ratioNum=20)  
 ```
 
@@ -264,6 +268,7 @@ mSet<-PlotNormSummary(mSet, "feature_norm", format="png", dpi=300, width=0)
 mSet<-PlotSampleNormSummary(mSet, "sample_norm", format="pdf", width=NA)
 
 ```
+
 For futher understanding, an excellent resource to understanding normalization of metabolomics data: van den Berg et al. 2006 (PMID:16762068). 
 
 ## 2.4 Filtering an example dataset (Compound concentration data)
@@ -317,9 +322,17 @@ mSet <- UpdateGroupItems(mSet, "control")
 ```
 
 
+## 3. Sweave Report Generation
 
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary LaTeX libraries to generate the report (i.e. texlive and texlive-fonts-extra). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
 
+```{r, eval=FALSE}
+# Create Biomarker Sweave report 
+CreatePDFReport(mSet, "User Name")
 
+# To save all files created during your session
+SaveTransformedData(mSet)
 
+```
 
 

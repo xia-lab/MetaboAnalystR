@@ -2,10 +2,17 @@
 % Please edit documentation in R/networks.R
 \name{PerformMapping}
 \alias{PerformMapping}
-\title{Utility function for PrepareQueryJson}
+\title{Utility function for PrepareQueryJson
+geneIDs is text one string, need to make to vector}
 \usage{
 PerformMapping(inputIDs, type)
 }
+\arguments{
+\item{inputIDs}{Input list of IDs}
+
+\item{type}{Input the type of IDs}
+}
 \description{
 Utility function for PrepareQueryJson
+geneIDs is text one string, need to make to vector
 }

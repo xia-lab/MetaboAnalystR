@@ -6,6 +6,15 @@
 \usage{
 rectUnique(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0)
 }
+\arguments{
+\item{m}{Peaks}
+
+\item{order}{Performs seq(length = nrow(m))}
+
+\item{xdiff}{Default set to 0}
+
+\item{ydiff}{Default set to 0}
+}
 \description{
 Perform various utilities for peak grouping
 }

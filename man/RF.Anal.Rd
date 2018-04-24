@@ -8,6 +8,12 @@ RF.Anal(mSetObj = NA, treeNum = 500, tryNum = 7, randomOn = 1)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{treeNum}{Input the number of trees to create, default is set to 500}
+
+\item{tryNum}{Set number of tries, default is 7}
+
+\item{randomOn}{Set random, default is 1}
 }
 \description{
 Perform Random Forest

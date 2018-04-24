@@ -2,6 +2,8 @@
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
 #'Create timeseries .Rnw file template
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -31,6 +33,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis, time-series
 #'Read and process the raw data
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -89,8 +92,7 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
 
 #'Create report of analyses (Met Pathway)
 #'@description Report generation using Sweave
-#'Metabolomic pathway analysis, time-series
-#'Analysis
+#'Metabolomic pathway analysis, time-series analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -129,6 +131,8 @@ InitTimeSeriesAnal <- function(){
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
 }
 
+#'Create null analysis message for time-series sweave report
+#'@description Creates empty time-series analysis message
 #'@export
 CreateTimeSeriesAnalNullMsg<-function(){
   descr <- c("No analysis was performed on your data.\n");
@@ -137,7 +141,8 @@ CreateTimeSeriesAnalNullMsg<-function(){
 
 #'Create report of analyses 
 #'@description Report generation using Sweave
-#'Interactive PCA
+#'For Interactive PCA
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -165,10 +170,10 @@ CreateiPCAdoc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
-
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'2-way heatmap
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -210,6 +215,7 @@ CreateHeatmap2doc <- function(mSetObj=NA){
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'ANOVA 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -229,7 +235,6 @@ CreateAOV2doc <- function(mSetObj=NA){
     aov2.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
   }
   
-  
   descr <- c("\\subsection{Univariate Analysis}\n",
              "Univariate analysis methods are the most common methods used for exploratory data analysis. ",
              "For two-factor data, the basic approach is two-way ANOVA. ",
@@ -248,7 +253,7 @@ CreateAOV2doc <- function(mSetObj=NA){
     "\\begin{figure}[htp]",
     "\\begin{center}",
     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$anova2,"}", sep=""),
-    "\\caption{Important features selected by two-way ANOVA}",
+    "\\caption{Plot of important features selected by two-way ANOVA.}",
     "\\end{center}",
     paste("\\label{",mSetObj$imgSet$anova2,"}", sep=""),
     "\\end{figure}"
@@ -266,6 +271,7 @@ CreateAOV2doc <- function(mSetObj=NA){
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'Random Forest ASCA
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -338,7 +344,7 @@ CreateASCAdoc <- function(mSetObj=NA){
     "\\begin{figure}[htp]",
     "\\begin{center}",
     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$asca.scree,"}", sep=""),
-    "\\caption{Scree plots for each sub model}",
+    "\\caption{Scree plots for each sub model.}",
     "\\end{center}",
     paste("\\label{",mSetObj$imgSet$asca.scree,"}", sep=""),
     "\\end{figure}"
@@ -374,7 +380,7 @@ CreateASCAdoc <- function(mSetObj=NA){
     "\\begin{figure}[htp]",
     "\\begin{center}",
     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$asca.modelAB,"}", sep=""),
-    "\\caption{Major patterns associated with the Interaction between the two factors}",
+    "\\caption{Major patterns associated with the Interaction between the two factors.}",
     "\\end{center}",
     paste("\\label{",mSetObj$imgSet$asca.modelAB,"}", sep=""),
     "\\end{figure}"
@@ -458,6 +464,7 @@ CreateASCAdoc <- function(mSetObj=NA){
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'Multivariate Bayes
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

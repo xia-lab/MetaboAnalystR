@@ -1,6 +1,9 @@
 #'Perform Random Forest Analysis
 #'@description Perform Random Forest
 #'@param mSetObj Input name of the created mSet Object
+#'@param treeNum Input the number of trees to create, default is set to 500
+#'@param tryNum Set number of tries, default is 7
+#'@param randomOn Set random, default is 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -9,7 +12,7 @@
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(randomForest));
+  
   # set up random numbers
   if(is.null(mSetObj$dataSet$random.seeds)){
     mSetObj$dataSet$random.seeds <- GetRandomNumbers();
@@ -30,7 +33,7 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   # save the 
   mSetObj$dataSet$rn.seed <- rn.sd;
   
-  rf_out <- randomForest(mSetObj$dataSet$norm, mSetObj$dataSet$cls, ntree = treeNum, mtry = tryNum, importance = TRUE, proximity = TRUE);
+  rf_out <- randomForest::randomForest(mSetObj$dataSet$norm, mSetObj$dataSet$cls, ntree = treeNum, mtry = tryNum, importance = TRUE, proximity = TRUE);
   
   # set up named sig table for display
   impmat <- rf_out$importance;
@@ -52,6 +55,7 @@ GetRandomNumbers <- function(){
 
 #'Plot Random Forest 
 #'@description Random Forest plot 
+#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -59,13 +63,13 @@ GetRandomNumbers <- function(){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -80,12 +84,19 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   
   mSetObj$imgSet$rf.cls <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   #par(mfrow=c(2,1));
   par(mar=c(4,4,3,2));
   cols <- rainbow(length(levels(mSetObj$dataSet$cls))+1);
   plot(mSetObj$analSet$rf, main="Random Forest classification", col=cols);
-  legend("topright", legend = c("Overall", levels(mSetObj$dataSet$cls)), lty=2, lwd=1, col=cols);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  legend("topright", legend = c("Overall", levels(cls)), lty=2, lwd=1, col=cols);
   
   #PlotConfusion(analSet$rf$confusion);
   
@@ -96,6 +107,7 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 
 #'Plot Random Forest variable importance
 #'@description Random Forest plot of variable importance ranked by MeanDecreaseAccuracy 
+#'@usage PlotRF.VIP(mSetObj=NA, imgName, format, dpi, width)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -103,14 +115,15 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -124,7 +137,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   h <- w*7/8;
   mSetObj$imgSet$rf.imp <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotImpVar(mSetObj, vip.score, "MeanDecreaseAccuracy");
   dev.off();
   
@@ -133,6 +146,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Plot Random Forest outliers
 #'@description Random Forest plot of outliers
+#'@usage PlotRF.Outlier(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -140,19 +154,25 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotRF.Classify(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotRF.Outlier(mSetObj, imgName, format, dpi, width)
 #'@export
 #'
 PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
   cols <- GetColorSchema(mSetObj);
   uniq.cols <- unique(cols);
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-  dist.res <- outlier(mSetObj$analSet$rf);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  legend.nm <- unique(as.character(sort(cls)));
+  dist.res <- randomForest::outlier(mSetObj$analSet$rf);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -163,12 +183,13 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <- width;
   }
   h <- w*7/9;
+  
   mSetObj$imgSet$rf.outlier <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   layout(matrix(c(1,2), 1, 2, byrow = TRUE), width=c(4,1));
   
-  op<-par(mar=c(5,5,4,0));
+  op <- par(mar=c(5,5,4,0));
   plot(dist.res, type="h", col=cols, xlab="Samples", xaxt="n", ylab="Outlying Measures", bty="n");
   
   # add sample names to top 5
@@ -178,7 +199,7 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   inx.y <- dist.res[inx.x];
   nms <- names(dist.res)[inx.x];
   text(inx.x, inx.y, nms, pos=ifelse(inx.y >= 0, 3, 1), xpd=T)
-  op<-par(mar=c(5,0,4,1));
+  op <- par(mar=c(5,0,4,1));
   plot.new();
   plot.window(c(0,1), c(0,1));
   
@@ -205,7 +226,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
   svm.out <- RSVM(mSetObj$dataSet$norm, mSetObj$dataSet$cls, ladder, CVtype=cvType);
   
   # calculate important features
-  ERInd <- max( which(svm.out$Error == min(svm.out$Error)) )
+  ERInd <- max(which(svm.out$Error == min(svm.out$Error)))
   MinLevel <- svm.out$ladder[ERInd]
   FreqVec <- svm.out$SelFreq[, ERInd]
   SelInd <- which(rank(FreqVec) >= (svm.out$ladder[1]-MinLevel));
@@ -241,7 +262,9 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
 #'@export
 #'
 PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   res <- mSetObj$analSet$svm$Error;
   edge <- (max(res)-min(res))/100; # expand y uplimit for text
   
@@ -257,7 +280,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
   
   mSetObj$imgSet$svm.class <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(res,type='l',xlab='Number of variables (levels)',ylab='Error Rate',
        ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
        main="Recursive SVM classification")
@@ -273,6 +296,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'Recursive Support Vector Machine (R-SVM) plot of important variables
 #'@description Plot recursive SVM variables of importance
 #'if too many, plot top 15
+#'@usage PlotRSVM.Cmpd(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -280,14 +304,15 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   sigs <- mSetObj$analSet$svm$sig.mat;
   data <- sigs[,1];
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -302,7 +327,7 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$svm <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotImpVar(mSetObj, data, "Frequency");
   dev.off();
   return(.set.mSet(mSetObj));
@@ -312,6 +337,8 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@description use leave-one-out / Nfold or bootstrape to permute data for external CV
 #'build SVM model and use mean-balanced weight to sort genes on training set
 #'and recursive elimination of least important genes
+#'@param Ntotal Total number
+#'@param Nmin Minimum number, default set to 5
 #'@author Dr. Xin Lu, Research Scientist
 #'Biostatistics Department, Harvard School of Public Health
 #'create a decreasing ladder for recursive feature elimination
@@ -351,6 +378,7 @@ CreateLadder <- function(Ntotal, Nmin=5){
 #'@description Core code to perform R-SVM
 #'@param x Row matrix of data
 #'@param y Class label: 1 / -1 for 2 classes
+#'@param ladder Input the ladder
 #'@param CVtype Integer (N fold CV), "LOO" leave-one-out CV, "bootstrape" bootstrape CV
 #'@param CVnum Number of CVs, LOO: defined as sample size, Nfold and bootstrape:  user defined, default as sample size
 #'outputs a named list
@@ -364,11 +392,9 @@ CreateLadder <- function(Ntotal, Nmin=5){
 #'License: GNU GPL (>= 2)
 
 RSVM <- function(x, y, ladder, CVtype, CVnum=0){
-  suppressMessages(library(e1071));
   ## check if y is binary response
   Ytype <- names(table(y))
-  if( length(Ytype) != 2)
-  {
+  if(length(Ytype) != 2){
     print("ERROR!! RSVM can only deal with 2-class problem")
     return(0)
   }
@@ -378,20 +404,18 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
   m2 <- apply(x[ which(y==Ytype[2]), ], 2, mean)
   md <- m1-m2
   
-  yy <- vector( length=length(y))
+  yy <- vector(length=length(y))
   yy[which(y==Ytype[1])] <- 1
   yy[which(y==Ytype[2])] <- -1
   y <- yy
   
   ## check ladder
-  if( min(diff(ladder)) >= 0 )
-  {
+  if(min(diff(ladder)) >= 0){
     print("ERROR!! ladder must be monotonously decreasing")
     return(0);
   }
   
-  if( ladder[1] != ncol(x) )
-  {
+  if(ladder[1] != ncol(x) ){
     ladder <- c(ncol(x), ladder)
   }
   
@@ -399,38 +423,33 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
   nGene   <- ncol(x)
   SampInd <- seq(1, nSample)
   
-  if( CVtype == "LOO" )
-  {
+  if(CVtype == "LOO"){
     CVnum <- nSample
-  } else
-  {
-    if( CVnum == 0 )
-    {
+  }else{
+    if(CVnum == 0 ){
       CVnum <- nSample
     }
   }
   
   ## vector for test error and number of tests
-  ErrVec <- vector( length=length(ladder))
+  ErrVec <- vector(length=length(ladder))
   names(ErrVec) <- as.character(ladder);
   nTests <- 0
   
-  SelFreq <- matrix( 0, nrow=nGene, ncol=length(ladder))
+  SelFreq <- matrix(0, nrow=nGene, ncol=length(ladder))
   colnames(SelFreq) <- paste("Level", ladder);
   
   ## for each CV
-  for( i in 1:CVnum )
-  {
+  for(i in 1:CVnum){
     ## split data
-    if( CVtype == "LOO" )
-    {
+    if(CVtype == "LOO"){
       TestInd <- i
       TrainInd <- SampInd[ -TestInd]
-    } else {
-      if( CVtype == "bootstrape" ) {
+    }else{
+      if(CVtype == "bootstrape"){
         TrainInd <- sample(SampInd, nSample, replace=T);
         TestInd <- SampInd[ which(!(SampInd %in% TrainInd ))];
-      } else {
+      }else{
         ## Nfold
         TrainInd <- sample(SampInd, nSample*(CVtype-1)/CVtype);
         TestInd <- SampInd[ which(!(SampInd %in% TrainInd ))];
@@ -448,7 +467,7 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
     
     ## index of the genes used in the
     SelInd <- seq(1, nGene)
-    for( gLevel in 1:length(ladder) )
+    for(gLevel in 1:length(ladder))
     {
       ## record the genes selected in this ladder
       SelFreq[SelInd, gLevel] <- SelFreq[SelInd, gLevel] +1
@@ -459,7 +478,7 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
       ## note: the classification performance is idenpendent of about scale is T/F  #####
       ## for "LOO", the test data should be as.data.frame, matrxi will trigger error #####
       ###################################################################################
-      svmres <- svm(xTrain[, SelInd], yTrain, scale=T, type="C-classification", kernel="linear" )
+      svmres <- e1071::svm(xTrain[, SelInd], yTrain, scale=T, type="C-classification", kernel="linear" )
       if( CVtype == "LOO" ){
         svmpred <- predict(svmres, as.data.frame(xTest[SelInd], nrow=1) )
       }else{
@@ -505,7 +524,6 @@ PlotConfusion <- function(clsConf){
   par(opar) # reset par
 }
 
-
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -514,6 +532,7 @@ PlotConfusion <- function(clsConf){
 
 #'Random Forest OOB
 #'@description Get the OOB error for the last signif
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -525,6 +544,7 @@ GetRFOOB <- function(mSetObj=NA){
 }
 
 #'Sig table for random forest analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.RF <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -532,7 +552,8 @@ GetSigTable.RF <- function(mSetObj=NA){
 }
 
 #'Random Forest Significance matrix
-#'@description Significance measure, double[][]
+#'@description Significance measure, double brackets
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -552,15 +573,17 @@ GetRFSigColNames <- function(mSetObj=NA){
 }
 
 #'Classification performance table for random forest analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetRFConf.Table <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(xtable(mSetObj$analSet$rf$confusion, 
+  print(xtable::xtable(mSetObj$analSet$rf$confusion, 
                caption="Random Forest Classification Performance"), size="\\scriptsize");
 }
 
 #'Random Forest Confusion Matrix
-#'@description Return double[][] confusion matrix
+#'@description Return double confusion matrix
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -581,6 +604,7 @@ GetRFConfColNames <- function(mSetObj=NA){
 
 #'Recursive Support Vector Machine (R-SVM) Significance Measure
 #'@description Return significance measure, double[][]
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -601,6 +625,7 @@ GetSVMSigColNames <- function(mSetObj=NA){
 }
 
 #'Sig table for SVM
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.SVM <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

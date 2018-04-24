@@ -19,13 +19,13 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   max.thresh = fc.thresh;
   min.thresh = 1/fc.thresh;
   
-  res <-GetFC(mSetObj, F, cmp.type);
+  res <- GetFC(mSetObj, F, cmp.type);
   fc.all <- res$fc.all;
   fc.log <- res$fc.log;
   
   imp.inx <- fc.all > max.thresh | fc.all < min.thresh;
   sig.mat <- cbind(fc.all[imp.inx, drop=F], fc.log[imp.inx, drop=F]);
-  colnames(sig.mat)<-c("Fold Change", "log2(FC)");
+  colnames(sig.mat) <- c("Fold Change", "log2(FC)");
   
   # order by absolute log value (since symmetrical in pos and neg)
   inx.ord <- order(abs(sig.mat[,2]), decreasing=T);
@@ -68,27 +68,27 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
   max.thresh = fc.thresh;
   min.thresh = 1/fc.thresh;
   
-  fc.mat <-GetFC(mSetObj, T, cmp.type);
+  fc.mat <- GetFC(mSetObj, T, cmp.type);
   
-  count.thresh<-round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
+  count.thresh <- round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
   mat.up <- fc.mat >= log(max.thresh,2);
   mat.down <- fc.mat <= log(min.thresh,2);
   
-  count.up<-apply(mat.up, 2, sum);
-  count.down<-apply(mat.down, 2, sum);
-  fc.all<-rbind(count.up, count.down);
+  count.up <- apply(mat.up, 2, sum);
+  count.down <- apply(mat.down, 2, sum);
+  fc.all <- rbind(count.up, count.down);
   
   inx.up <- count.up>=count.thresh;
   inx.down <- count.down>=count.thresh;
   
-  colnames(fc.all)<-colnames(mSetObj$dataSet$norm);
-  rownames(fc.all)<-c("Count (up)", "Count (down)");
+  colnames(fc.all) <- colnames(mSetObj$dataSet$norm);
+  rownames(fc.all) <- c("Count (up)", "Count (down)");
   sig.var <- t(fc.all[,(inx.up|inx.down), drop=F]);
   
   # sort sig.var using absolute difference between count(up)-count(down)
-  sig.dff<-abs(sig.var[,1]-sig.var[,2])
-  inx<-order(sig.dff, decreasing=T);
-  sig.var<-sig.var[inx,,drop=F];
+  sig.dff <- abs(sig.var[,1]-sig.var[,2])
+  inx <- order(sig.dff, decreasing=T);
+  sig.var <- sig.var[inx,,drop=F];
   
   fileName <- "fold_change.csv";
   write.csv(signif(sig.var,5),file=fileName);
@@ -110,7 +110,7 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
 
 #'Plot fold change 
 #'@description Plot fold change analysis
-#'@usage PlotFC(imgName, format, dpi, width)
+#'@usage PlotFC(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -139,7 +139,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$fc <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   par(mar=c(5,5,2,3));
   
@@ -209,7 +209,6 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
-
 #'Used by higher functions to calculate fold change 
 #'@description Utility method to calculate FC, used in higher function
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
@@ -221,7 +220,9 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'
 GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   if(paired){
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
@@ -271,7 +272,6 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     }else{
       names(fc.all) <- names(fc.log) <- colnames(mSetObj$dataSet$row.norm) # make even vectors
     }
-    
     return(list(fc.all = fc.all, fc.log = fc.log));
   }
 }
@@ -291,6 +291,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
+  
   res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
   t.stat <- res[,1];
   p.value <- res[,2];
@@ -378,7 +379,9 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -391,10 +394,10 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$tt <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(mSetObj$analSet$tt$p.log, ylab="-log10(p)", xlab=GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$tt$tt.nm, pch=19,
        col= ifelse(mSetObj$analSet$tt$inx.imp, "magenta", "darkgrey"));
-  abline (h=mSetObj$analSet$tt$thresh, lty=3);
+  abline(h=mSetObj$analSet$tt$thresh, lty=3);
   axis(4); 
   dev.off();
   return(.set.mSet(mSetObj));
@@ -532,7 +535,9 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 #'@export
 #'
 PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 10;
@@ -542,13 +547,15 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <- width;
   }
   h <- w*6/10;
+  
   mSetObj$imgSet$volcano <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,4));
-  vcn<-mSetObj$analSet$volcano;
+  vcn <- mSetObj$analSet$volcano;
   MyGray <- rgb(t(col2rgb("black")), alpha=40, maxColorValue=255);
   MyHighlight <- rgb(t(col2rgb("magenta")), alpha=80, maxColorValue=255);
+  
   if(vcn$paired){
     xlim<-c(-nrow(mSetObj$dataSet$norm)/2, nrow(mSetObj$dataSet$norm)/2)*1.2;
     
@@ -612,6 +619,8 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'ANOVA
 #'@description Perform anova and only return p values and MSres (for Fisher's LSD)
+#'@param x Input the data to perform ANOVA
+#'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -621,7 +630,9 @@ aof <- function(x, cls) {
 
 
 #'Kruskal-Wallis
-#'@description Perform  Kruskal Wallis Test
+#'@description Perform  Kruskal-Wallis Test
+#'@param x Input data to perform Kruskal-Wallis
+#'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -631,15 +642,19 @@ kwtest <- function(x, cls) {
 
 #'Fisher for ANOVA
 #'@description Perform  Fisher LSD for ANOVA, used in higher function 
+#'@param aov.obj Input the anova object
+#'@param thresh Numeric, input the alpha threshold 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-FisherLSD<-function(aov.obj, thresh){
+FisherLSD <- function(aov.obj, thresh){
   LSD.test(aov.obj,"cls", alpha=thresh)
 }
 
 #'Return only the signicant comparison names
 #'@description Return only the signicant comparison names, used in higher function 
+#'@param tukey Input tukey output
+#'@param cut.off Input numeric cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -650,6 +665,8 @@ parseTukey <- function(tukey, cut.off){
 
 #'Return only the signicant comparison names
 #'@description Return only the signicant comparison names, used in higher function 
+#'@param fisher Input fisher object 
+#'@param cut.off Numeric, set cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -677,7 +694,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
   sig.num <- 0;
   if(nonpar){
     aov.nm <- "Kruskal Wallis Test";
-    anova.res<-apply(as.matrix(mSetObj$dataSet$norm), 2, kwtest, cls=mSetObj$dataSet$cls);
+    anova.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, kwtest, cls=mSetObj$dataSet$cls);
     
     #extract all p values
     res <- unlist(lapply(anova.res, function(x) {c(x$statistic, x$p.value)}));
@@ -799,7 +816,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
 
 #'Plot ANOVA 
 #'@description Plot ANOVA 
-#'@usage PlotANOVA(mSetObj=NA, imgName, dpi, format, width)
+#'@usage PlotANOVA(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -813,9 +830,12 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
 #'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   lod <- mSetObj$analSet$aov$p.log;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
@@ -827,7 +847,7 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$anova <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(lod, ylab="-log10(p)", xlab = GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$aov$aov.nm, type="n");
   red.inx <- which(mSetObj$analSet$aov$inx.imp);
   blue.inx <- which(!mSetObj$analSet$aov$inx.imp);
@@ -838,13 +858,37 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   return(.set.mSet(mSetObj));
 }
 
+#'Plot Compound View 
+#'@description Plots a bar-graph of selected compound over groups 
+#'@usage PlotCmpdView(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cmpdNm Input a name for the compound 
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
-  Cairo(file = imgName, dpi=dpi, width=240, height=240, type=format, bg="transparent");
+  Cairo::Cairo(file = imgName, dpi=dpi, width=240, height=240, type=format, bg="transparent");
   par(mar=c(4,3,1,2), oma=c(0,0,1,0));
-  boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= unique(GetColorSchema(mSetObj)));
+  boxplot(mSetObj$dataSet$norm[, cmpdNm]~cls,las=2, col= unique(GetColorSchema(mSetObj)));
   title(main=cmpdNm, out=T);
   dev.off();
 }
@@ -856,6 +900,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 ##############################################
 
 #'Sig Table for Fold-Change Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.FC <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -898,6 +943,7 @@ GetAovPostHocSig <- function(mSetObj=NA){
 }
 
 #'Sig Table for Anova
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.Anova <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -958,6 +1004,7 @@ GetTTSigNum <- function(mSetObj=NA){
 }
 
 #'Sig Table for T-test Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.TT <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -966,6 +1013,7 @@ GetSigTable.TT <- function(mSetObj=NA){
 
 #'T-test matrix
 #'@description Return a double matrix with 2 columns - p values and lod
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1036,6 +1084,10 @@ GetTtestSigFileName <- function(mSetObj=NA){
 
 #'Retrieve T-test p-values
 #'@description Utility method to get p values
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param paired Default set to FALSE
+#'@param equal.var Default set to TRUE
+#'@param nonpar Use non-parametric tests, default is set to FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1069,8 +1121,7 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
         }
       })
     }else{ # use fast version
-      library(genefilter);
-      res <- try(rowttests(t(as.matrix(mSetObj$dataSet$norm)), mSetObj$dataSet$cls));
+      res <- try(genefilter::rowttests(t(as.matrix(mSetObj$dataSet$norm)), mSetObj$dataSet$cls));
       if(class(res) == "try-error") {
         res <- c(NA, NA);
       }else{
@@ -1084,6 +1135,7 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
 #'Utility method to perform the univariate analysis automatically
 #'@description The approach is computationally expensive,and fails more often 
 #'get around: make it lazy unless users request, otherwise the default t-test will also be affected
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1185,7 +1237,6 @@ GetUnivReport <- function(mSetObj=NA){
   write.table(sigDataSet.norm, file=paste("data_subset_norm_p", threshp, ".csv", sep=''), append=FALSE, sep=",", row.names=FALSE);
 }
 
-
 ContainInfiniteTT<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(sum(!is.finite(mSetObj$analSet$tt$sig.mat))>0){
@@ -1261,6 +1312,9 @@ GetVolcanoCmpdInxs <-function(mSetObj=NA){
 
 #'Volcano indices
 #'@description Get indices of top n largest/smallest number
+#'@param vec Vector containing volcano indices
+#'@param n Numeric
+#'@param dec Logical, default set to TRUE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1273,6 +1327,7 @@ GetTopInx <- function(vec, n, dec=T){
 }
 
 #'Sig table for Volcano Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.Volcano <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1301,7 +1356,6 @@ ContainInfiniteVolcano <- function(mSetObj=NA){
   }
   return("false");
 }
-
 
 GetAovSigNum <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

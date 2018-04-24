@@ -6,6 +6,13 @@
 \usage{
 ASCAfun1(X, Design, Fac)
 }
+\arguments{
+\item{X}{Numeric, number of compounds}
+
+\item{Design}{Number of levels in the factor}
+
+\item{Fac}{Numeric, the factor}
+}
 \description{
 Perform ASCA
 }

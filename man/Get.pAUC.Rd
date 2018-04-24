@@ -6,6 +6,15 @@
 \usage{
 Get.pAUC(x, y, focus, cutoff)
 }
+\arguments{
+\item{x}{Input X}
+
+\item{y}{Input Y}
+
+\item{focus}{Method}
+
+\item{cutoff}{Numeric}
+}
 \description{
 Calculate partial area under ROC curve
 }

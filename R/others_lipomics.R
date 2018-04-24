@@ -1,5 +1,7 @@
 #'Lipid analysis pipeliner
 #'@description Lipid analysis pipeliner
+#'@param inFile Input the file to read in
+#'@param iso Default is set to "y"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -14,6 +16,8 @@ analyze.lipids <- function(inFile, iso='y'){
 #'the minimal of the fatty acid concentration (nmol fatty acid/gram of sample)
 #'X is the lopomics data obtained above
 #'the result is the saved as separate files for each lipid class
+#'@param X Input the data
+#'@param iso Default is set to "y"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -60,6 +64,11 @@ computeConc<-function(X, iso="y"){
 #'we need to get frequncies - percentage w.r.t the total nmol.
 #'the result is the saved as separate files for each lipid class
 #'data for each FA class, first col is sample name
+#'@param dat Input the data
+#'@param cls.name Input the class names
+#'@param cls.num Input the number of classes
+#'@param min.file Input the min file
+#'@param prob.file Input the prob file
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

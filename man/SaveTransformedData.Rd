@@ -6,6 +6,9 @@
 \usage{
 SaveTransformedData(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 This function saves the processed data with class names as CSV files. 
 Several files may be generated, the original data, processed data, peak normalized, and/or normalized data.

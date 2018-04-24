@@ -15,21 +15,22 @@ The pathway analysis module supports pathway analysis (integrating enrichment an
 
 ## 2. Pathway Analysis Example Workflow
 
-
 ```{r, eval=FALSE}
 ## When input is a list
 
 # Create vector consisting of compounds for enrichment analysis 
 tmp.vec <- c("Acetoacetic acid", "Beta-Alanine", "Creatine", "Dimethylglycine", "Fumaric acid", "Glycine", "Homocysteine", "L-Cysteine", "L-Isolucine", "L-Phenylalanine", "L-Serine", "L-Threonine", "L-Tyrosine", "L-Valine", "Phenylpyruvic acid", "Propionic acid", "Pyruvic acid", "Sarcosine")
 
-# Create mSetObj
-mSet<-MetaboAnalystR:::InitDataObjects("conc", "msetora", FALSE)
+# Create mSetObj for storing objects created during your analysis
+mSet<-InitDataObjects("conc", "pathora", FALSE)
 
-#Set up mSetObj with the list of compounds
+# Set up mSetObj with the list of compounds
 mSet<-Setup.MapData(mSet, tmp.vec);
 
 # Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)
 mSet<-CrossReferencing(mSet, "name");
+
+mSet<-CreateMappingResultTable(mSet);
 
 # Perform matching against compound w. out matches
 mSet<-PerformDetailMatch(mSet, "L-Isolucine");
@@ -50,29 +51,14 @@ mSet<-SetMetabolomeFilter(mSet, F);
 # A results table "pathway_results.csv" will be created and found within your working directory
 mSet<-CalculateOraScore(mSet, "rbc", "hyperg")
 
-# Plot the pathway overview
+# Plot of the Pathway Analysis Overview 
 mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 
-# Get information for selected node
-mSet<-GetCircleInfo(mSet)
-
-#Plot a specific metabolic pathway
+# Plot a specific metabolic pathway, in this case "Glycine, serine and threonine metabolism"
 mSet<-PlotMetPath(mSet, "Glycine, serine and threonine metabolism", 480, 420)
 
-# Rerender the plot
-mSet<-RerenderMetPAGraph(mSet, "zoom1502570616761.png",480.0, 420.0)
-
 ```
 
-## 2. Sweave Report 
+## 3. Sweave Report
 
-To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
-
-```{r, eval=FALSE}
-# Create Biomarker Sweave report 
-CreatePDFReport(mSet, "User Name")
-
-# To save all files created during your session
-SaveTransformedData(mSet)
-
-```
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 

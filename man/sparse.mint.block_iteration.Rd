@@ -4,14 +4,35 @@
 \alias{sparse.mint.block_iteration}
 \title{Perform Sparse Generalized Canonical Correlation (sgccak)}
 \usage{
-sparse.mint.block_iteration(A, design, ncomp)
+sparse.mint.block_iteration(A, design, study = NULL,
+  keepA.constraint = NULL, keepA = NULL, scheme = "horst", init = "svd",
+  max.iter = 100, tol = 1e-06, verbose = TRUE, bias = FALSE,
+  penalty = NULL)
 }
 \arguments{
-\item{A}{list of datasets each with the same number of rows (samples)}
+\item{A}{Data}
 
-\item{Design}{design matrix}
+\item{design}{Set design}
 
-\item{ncomp}{vector specifying number of components to keep per datasets}
+\item{study}{Default set to NULL}
+
+\item{keepA.constraint}{Default set to NULL}
+
+\item{keepA}{Default set to NULL}
+
+\item{scheme}{Scheme, default set to "horst"}
+
+\item{init}{Init mode, default set to "svd"}
+
+\item{max.iter}{Max number of iterations, numeric, default set to 100}
+
+\item{tol}{Tolerance, numeric, default set to 1e-06}
+
+\item{verbose}{Default set to TRUE}
+
+\item{bias}{Default set to FALSE}
+
+\item{penalty}{Default set to NULL}
 }
 \description{
 Runs sgccak() modified from RGCCA

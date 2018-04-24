@@ -6,6 +6,9 @@
 \usage{
 RemoveFolder(folderName)
 }
+\arguments{
+\item{folderName}{Input name of folder to remove}
+}
 \description{
 Remove folder
 }

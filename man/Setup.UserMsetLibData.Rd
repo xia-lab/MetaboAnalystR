@@ -6,6 +6,11 @@
 \usage{
 Setup.UserMsetLibData(mSetObj = NA, filePath)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{filePath}{Input the path to the user's uploaded metabolite set library}
+}
 \description{
 Return two col csv file, first name, second cmpd list
 }

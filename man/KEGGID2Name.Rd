@@ -6,6 +6,9 @@
 \usage{
 KEGGID2Name(ids)
 }
+\arguments{
+\item{ids}{Vector of KEGG ids}
+}
 \description{
 This function, given a vector containing KEGGIDs, returns a vector of KEGG compound names.
 }

@@ -6,6 +6,9 @@
 \usage{
 GetFinalNameMap(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Returns three columns: original name, HMDB name and KEGG ID,
 for enrichment and pathway analysis, respectively

@@ -6,6 +6,11 @@
 \usage{
 parseTukey(tukey, cut.off)
 }
+\arguments{
+\item{tukey}{Input tukey output}
+
+\item{cut.off}{Input numeric cut-off}
+}
 \description{
 Return only the signicant comparison names, used in higher function
 }

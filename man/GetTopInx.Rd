@@ -6,6 +6,13 @@
 \usage{
 GetTopInx(vec, n, dec = T)
 }
+\arguments{
+\item{vec}{Vector containing volcano indices}
+
+\item{n}{Numeric}
+
+\item{dec}{Logical, default set to TRUE}
+}
 \description{
 Get indices of top n largest/smallest number
 }

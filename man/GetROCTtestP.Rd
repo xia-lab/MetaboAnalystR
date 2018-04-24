@@ -6,6 +6,11 @@
 \usage{
 GetROCTtestP(data, cls)
 }
+\arguments{
+\item{data}{Input data}
+
+\item{cls}{Input class labels}
+}
 \description{
 ROC p-vaues, used in higher function
 }

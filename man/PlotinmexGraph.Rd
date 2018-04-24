@@ -7,6 +7,22 @@
 PlotinmexGraph(mSetObj, path.id, g, width, height, bg.color = NULL,
   line.color = NULL)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{path.id}{Input the pathway id}
+
+\item{g}{Input the graph}
+
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{height}{Input the height of the graph to create}
+
+\item{bg.color}{Set the background color, default is set to NULL}
+
+\item{line.color}{Set the line color, default is set to NULL}
+}
 \description{
 Plot an igraph object and return the node information (position and labels)
 Used in a higher function

@@ -6,6 +6,13 @@
 \usage{
 RemoveDuplicates(data, lvlOpt = "mean", quiet = T)
 }
+\arguments{
+\item{data}{Input data to remove duplicates}
+
+\item{lvlOpt}{Set options, default is mean}
+
+\item{quiet}{Set to quiet, logical, default is T}
+}
 \description{
 Dups is the one with duplicates
 }

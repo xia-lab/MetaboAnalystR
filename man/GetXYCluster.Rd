@@ -6,6 +6,9 @@
 \usage{
 GetXYCluster(total)
 }
+\arguments{
+\item{total}{Input the total}
+}
 \description{
 Determine the number of rows and columns for a given total
 number of plots (used by Kmeans and SOM plots)

@@ -4,7 +4,7 @@
 \alias{PlotRF.VIP}
 \title{Plot Random Forest variable importance}
 \usage{
-PlotRF.Classify(mSetObj, imgName, format, dpi, width)
+PlotRF.VIP(mSetObj=NA, imgName, format, dpi, width)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

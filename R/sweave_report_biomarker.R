@@ -1,6 +1,8 @@
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -66,6 +68,7 @@ CreateBiomarkerOverview <- function(){
 #'Create biomarker analysis report: Data Input
 #'@description Report generation using Sweave
 #'Power analysis report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -147,6 +150,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
 #'Create biomarker analysis report: Normalization, ratio
 #'@description Report generation using Sweave
 #'Biomarker analysis, ratio option
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -187,6 +191,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'Function to create a summary table for biomarker analysis: included metabolite ratios
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -194,19 +199,19 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
 CreateRatioTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable))
   ratiodf <- mSetObj$dataSet$ratio
   ldf <- lapply(ratiodf, mean)
   mdf <- do.call(rbind.data.frame, mdf)
   colnames(mdf)[1] <- "Mean concentration ratios across all samples"
   
-  print(xtable(mdf, caption="Top ranked included ratios for biomarker analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(mdf, caption="Top ranked included ratios for biomarker analysis"), caption.placement="top", size="\\scriptsize");
   
 }
 
 #'Create power analysis report: Biomarker Univariate Analysis
 #'@description Report generation using Sweave
 #'Biomarker analysis report, Univariate Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -267,19 +272,18 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
 #'@export
 CreateUnivROCTable<-function(){
   
-  suppressMessages(library(xtable))
-  
   univROCtable <- feat.rank.mat
   
   colnames(univROCtable) <- c("Area-under-the-curve", "T-test", "Log 2 Fold-Change", "Cluster")
   
-  print(xtable(univROCtable, caption="AUC, Log2FC, T-test and K-Means Cluster for univariate biomarker analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(univROCtable, caption="AUC, Log2FC, T-test and K-Means Cluster for univariate biomarker analysis"), caption.placement="top", size="\\scriptsize");
   
 }
 
 #'Create biomarker analysis report: Multivariate Biomarker Analysis
 #'@description Report generation using Sweave
 #'Biomarker analysis report, Multivariate Biomarker Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -386,6 +390,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
 #'Create biomarker analysis report: ROC Curve Based Model Creation and Evaluation
 #'@description Report generation using Sweave
 #'Biomarker analysis report, ROC Curve Based Model Creation and Evaluation
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -500,14 +505,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
 }
 
-# Function to create the table of newly classified samples
+#'Create a table of newly classified samples
+#'@description Function to create the table of newly classified samples
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'Function to create the table of newly classified samples
 #'@export
+#'@importFrom tibble remove_rownames column_to_rownames
 ROCPredSamplesTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(tidyverse));
-  suppressMessages(library(dplyr));
   groups <- as.data.frame(GetNewSampleGrps(mSetObj));
   prob <- as.data.frame(GetNewSampleProbs(mSetObj));
   predtable <- merge(prob, groups, by="row.names");
@@ -522,6 +529,7 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 #'Create a x-table for newly classified samples
 #'@description Report generation using Sweave
 #'Function to create a table for newly classified samples
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -529,22 +537,9 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 CreateROCLabelsTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable));
-  
+
   predlabeltable <- mSetObj$analSet$ROCtest$pred.samples.table;
   
-  print(xtable(predlabeltable, caption="Predicted class labels with probability for new samples"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(predlabeltable, caption="Predicted class labels with probability for new samples"), caption.placement="top", size="\\scriptsize");
   
 }
-
-
-
-
-
-
-
-
-
-
-
-

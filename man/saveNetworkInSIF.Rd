@@ -6,8 +6,13 @@
 \usage{
 saveNetworkInSIF(network, name)
 }
+\arguments{
+\item{network}{Input network}
+
+\item{name}{Input file name}
+}
 \description{
-adapted from BioNet
+Adapted from BioNet
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

@@ -6,6 +6,17 @@
 \usage{
 calculateConcISO(dat, cls.name, cls.num, min.file, prob.file)
 }
+\arguments{
+\item{dat}{Input the data}
+
+\item{cls.name}{Input the class names}
+
+\item{cls.num}{Input the number of classes}
+
+\item{min.file}{Input the min file}
+
+\item{prob.file}{Input the prob file}
+}
 \description{
 Assuming independent random distribution of FA, the most probable frequency
 will be the product of the each component. Note: the data is concentration,

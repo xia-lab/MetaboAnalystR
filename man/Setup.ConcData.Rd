@@ -6,6 +6,11 @@
 \usage{
 Setup.ConcData(mSetObj = NA, conc)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{conc}{Input the concentration data}
+}
 \description{
 Save concentration data
 }

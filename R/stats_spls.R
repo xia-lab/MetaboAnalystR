@@ -1,22 +1,24 @@
-#' R script for MetaboAnalyst
-#' Description: perform PCA/PLS-DA/Orthogonal PLS-DA/sparse PLS-DA
-#'
-#' Author: Jeff Xia, jeff.xia@mcgill.ca
-#' McGill University, Canada
-#'
-#' License: GNU GPL (>= 2)
+### R script for MetaboAnalyst
+### Description: perform PCA/PLS-DA/Orthogonal PLS-DA/sparse PLS-DA
+### Author: Jeff Xia, jeff.xia@mcgill.ca
+### McGill University, Canada
+### License: GNU GPL (>= 2)
 
 #'Perform SPLS-DA
 #'@description Sparse PLS-DA (from mixOmics) 
+#'@param mSetObj Input name of the created mSet Object
+#'@param comp.num Input the number of computations to run 
+#'@param var.num Input the number of variables
+#'@param compVarOpt Input the option to perform SPLS-DA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt){
+  
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(caret))
   if(compVarOpt == "same"){
     comp.var.nums <- rep(var.num, comp.num);
   }else{
@@ -35,7 +37,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt){
   mSetObj$analSet$splsr <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
   score.mat <- mSetObj$analSet$splsr$variates$X;
   write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
-  load.mat <- score.mat <-mSetObj$analSet$splsr$loadings$X;
+  load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;
   write.csv(signif(load.mat,5), file="splsda_loadings.csv");
   return(.set.mSet(mSetObj));
 }
@@ -56,7 +58,9 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt){
 #'@export
 #'
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -75,9 +79,9 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
   vars <- round(100*mSetObj$analSet$splsr$explained_variance$X,1);
   my.data <- mSetObj$analSet$splsr$variates$X[,1:pc.num];
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
-  pairs(my.data, col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
+  ellipse::pairs(my.data, col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -102,8 +106,9 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'@export
 #'
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+  
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library('ellipse'));
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -121,26 +126,33 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx1],1), "%)");
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,3));
-  text.lbls<-substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
-  lvs <- levels(mSetObj$dataSet$cls);
-  pts.array <- array(0, dim=c(100,2,length(lvs)));
-  for(i in 1:length(lvs)){
-    inx <-mSetObj$dataSet$cls == lvs[i];
-    groupVar<-var(cbind(lv1[inx],lv2[inx]), na.rm=T);
-    groupMean<-cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
-    pts.array[,,i] <- ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
   }
   
-  xrg <- range (lv1, pts.array[,1,]);
-  yrg <- range (lv2, pts.array[,2,]);
-  x.ext<-(xrg[2]-xrg[1])/12;
-  y.ext<-(yrg[2]-yrg[1])/12;
-  xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
-  ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
+  lvs <- levels(cls);
+  pts.array <- array(0, dim=c(100,2,length(lvs)));
+  for(i in 1:length(lvs)){
+    inx <- mSetObj$dataSet$cls == lvs[i];
+    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
+    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
+    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  }
+  
+  xrg <- range(lv1, pts.array[,1,]);
+  yrg <- range(lv2, pts.array[,2,]);
+  x.ext <- (xrg[2]-xrg[1])/12;
+  y.ext <- (yrg[2]-yrg[1])/12;
+  xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);
+  ylims <- c(yrg[1]-y.ext, yrg[2]+y.ext);
   
   ## cols = as.numeric(dataSet$cls)+1;
   cols <- GetColorSchema(mSetObj, grey.scale==1);
@@ -150,17 +162,17 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   
   # make sure name and number of the same order DO NOT USE levels, which may be different
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
+  legend.nm <- unique(as.character(sort(cls)));
   ## uniq.cols <- unique(cols);
   
   ## BHAN: when same color is choosen for black/white; it makes an error
   # names(uniq.cols) <- legend.nm;
-  if ( length(uniq.cols) > 1 ) {
+  if (length(uniq.cols) > 1) {
     names(uniq.cols) <- legend.nm;
   }
   # draw ellipse
   for(i in 1:length(lvs)){
-    if ( length(uniq.cols) > 1) {
+    if (length(uniq.cols) > 1) {
       polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
     } else {
       polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
@@ -213,7 +225,9 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'@export
 #'
 PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   spls3d <- list();
   # need to check if only two components are generated
   if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
@@ -228,7 +242,13 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   colnames(coords) <- NULL; 
   spls3d$score$xyz <- coords;
   spls3d$score$name <- rownames(mSetObj$dataSet$norm);
-  cls <- as.character(mSetObj$dataSet$cls);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
   if(all.numeric(cls)){
     cls <- paste("Group", cls);
   }
@@ -241,8 +261,7 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   spls3d$score$colors <- cols;
   
   imgName = paste(imgName, ".", format, sep="");
-  library(RJSONIO);
-  json.obj <- toJSON(spls3d, .na='null');
+  json.obj <- RJSONIO::toJSON(spls3d, .na='null');
   sink(imgName);
   cat(json.obj);
   sink();
@@ -285,7 +304,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   
   mSetObj$imgSet$spls.imp <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
   dev.off();
   
@@ -307,11 +326,10 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+#'@import caret
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, validOpt="Mfold", format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(caret))
   
   res <- perf.splsda(mSetObj$analSet$splsr, dist= "centroids.dist", validation=validOpt, folds = 5);
   res <- res$error.rate$overall;
@@ -331,7 +349,7 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, validOpt="Mfold", for
   
   mSetObj$imgSet$splsda.class <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(res, type='l', xlab='Number of Components', ylab='Error Rate',
        ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
        main="Sparse PLS-DA Classification Error Rates")
@@ -346,15 +364,19 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, validOpt="Mfold", for
 #'@description Sparse PLS functions (adapted from mixOmics package for web-based usage)
 #'this function is a particular setting of internal_mint.block
 #'the formatting of the input is checked in internal_wrapper.mint
-#'@param X: numeric matrix of predictors
-#'@param Y: a factor or a class vector for the discrete outcome
-#'@param ncomp: the number of components to include in the model. Default to 2.
-#'@param keepX.constraint: A list containing which variables of X are to be kept on each of the first PLS-components.
-#'@param keepX: number of \eqn{X} variables kept in the model on the last components (once all keepX.constraint[[i]] are used).
-#'@param scale: boleean. If scale = TRUE, each block is standardized to zero means and unit variances (default: TRUE).
-#'@param tol: Convergence stopping value.
-#'@param max.iter: integer, the maximum number of iterations.
-#'@param near.zero.var: boolean, see the internal \code{\link{nearZeroVar}} function (should be set to TRUE in particular for data with many zero values). Setting this argument to FALSE (when appropriate) will speed up the computations
+#'@param X numeric matrix of predictors
+#'@param Y a factor or a class vector for the discrete outcome
+#'@param ncomp the number of components to include in the model. Default to 2.
+#'@param mode Default set to c("regression", "canonical", "invariant", "classic")
+#'@param keepX Number of \eqn{X} variables kept in the model on the last components (once all keepX.constraint[[i]] are used).
+#'@param keepX.constraint A list containing which variables of X are to be kept on each of the first PLS-components.
+#'@param scale Boleean. If scale = TRUE, each block is standardized to zero means and unit variances (default: TRUE).
+#'@param tol Convergence stopping value.
+#'@param max.iter integer, the maximum number of iterations.
+#'@param near.zero.var boolean, see the internal \code{\link{nearZeroVar}} function (should be set to TRUE in particular for data with many zero values). 
+#'Setting this argument to FALSE (when appropriate) will speed up the computations
+#'@param logratio "None" by default, or "CLR"
+#'@param multilevel Designate multilevel design, "NULL" by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -794,11 +816,11 @@ internal_mint.block = function (A, indY = NULL,  design = 1 - diag(length(A)), t
   return(out)
 }
 
-#'Performance for PLS-DA and sPLS-DA
-#'@description Performance prediction for PLS-DA and sPLS-DA
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
+# Performance for PLS-DA and sPLS-DA
+# Performance prediction for PLS-DA and sPLS-DA
+# Jeff Xia \email{jeff.xia@mcgill.ca}
+# McGill University, Canada
+# License: GNU GPL (>= 2)
 perf.splsda <- function(object,
                         dist = c("all", "max.dist", "centroids.dist", "mahalanobis.dist"),
                         constraint = FALSE,
@@ -1532,18 +1554,25 @@ MCVfold.splsda = function(
 
 #'Perform Sparse Generalized Canonical Correlation (sgccak)
 #'@description Runs sgccak() modified from RGCCA
-#'@usage sparse.mint.block_iteration(A, design, ncomp)
-#'@param A list of datasets each with the same number of rows (samples)
-#'@param Design design matrix
-#'@param ncomp vector specifying number of components to keep per datasets
+#'@param A Data
+#'@param design Set design
+#'@param study Default set to NULL
+#'@param keepA.constraint Default set to NULL
+#'@param keepA Default set to NULL
+#'@param scheme Scheme, default set to "horst"
+#'@param init Init mode, default set to "svd"
+#'@param max.iter Max number of iterations, numeric, default set to 100
+#'@param tol Tolerance, numeric, default set to 1e-06
+#'@param verbose Default set to TRUE
+#'@param bias Default set to FALSE
+#'@param penalty Default set to NULL
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-sparse.mint.block_iteration = function (A, design, study = NULL, keepA.constraint = NULL, keepA = NULL,
-                                        scheme = "horst", init = "svd", max.iter = 100, tol = 1e-06, verbose = TRUE, bias = FALSE,
-                                        penalty=NULL)
-{
+sparse.mint.block_iteration = function(A, design, study = NULL, keepA.constraint = NULL, keepA = NULL,
+                                      scheme = "horst", init = "svd", max.iter = 100, tol = 1e-06, verbose = TRUE, bias = FALSE,
+                                      penalty=NULL){
   
   # keepA.constraint is a list of positions in A of the variables to keep on the component
   # keepA is a vector of numbers
@@ -2924,6 +2953,7 @@ Check.entry.pls = function(X, Y, ncomp, keepX, keepY, keepX.constraint, keepY.co
 
 #'sPLS-DA Map
 #'@description map variable for (s)plsda
+#'@param Y Input data
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

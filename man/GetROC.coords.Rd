@@ -6,6 +6,17 @@
 \usage{
 GetROC.coords(mSetObj = NA, fld.nm, val, plot = TRUE, imgNm)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{fld.nm}{The kind of input coordinate}
+
+\item{val}{The coordinates to look for}
+
+\item{plot}{Logical, by default set to TRUE}
+
+\item{imgNm}{Input the image name}
+}
 \description{
 Return ROC corodinates with confidence intervals
 }

@@ -6,6 +6,9 @@
 \usage{
 GetSigTable.SVM(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Sig table for SVM
 }

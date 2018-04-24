@@ -4,24 +4,17 @@
 \alias{PlotInmexPath}
 \title{Plot integrated methods pathway analysis}
 \usage{
-PlotInmexPath(mSetObj, imgName, format="png", dpi=72, path.id, width, height)
+PlotInmexPath(mSetObj=NA, path.id, width, height)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{path.id}{Input the path ID}
+\item{path.id}{Input the ID of the pathway to plot.}
 
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
-\item{height}{Input the height}
-
-\item{imgName}{Input a name for the plot}
-
-\item{format}{Select the image format, "png", or "pdf".}
-
-\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
+\item{height}{Input the height of the image to create.}
 }
 \description{
 Only update the background info for matched node

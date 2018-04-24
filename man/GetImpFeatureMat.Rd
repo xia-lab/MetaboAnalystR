@@ -6,6 +6,15 @@
 \usage{
 GetImpFeatureMat(mSetObj = NA, feat.outp, bestFeatNum)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{feat.outp}{Input the list that contains the ranked features in each 
+cross validation (CV) and returns a two column matrix, col 1 = median ranking 
+and col 2 =  mean importance measure}
+
+\item{bestFeatNum}{Numeric}
+}
 \description{
 feat.outp is a list that contains the ranked features in each 
 cross validation (CV) and returns a two column matrix, col 1 = median ranking 

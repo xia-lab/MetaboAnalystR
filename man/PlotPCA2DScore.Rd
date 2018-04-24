@@ -23,7 +23,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{pcy}{Specify the principal component on the y-axis}
 
-\item{reg}{Numeric, input a number between 0 and 1, 0.95 will display the 95% confidence regions, and 0 will not.}
+\item{reg}{Numeric, input a number between 0 and 1, 0.95 will display the 95 percent confidence regions, and 0 will not.}
 
 \item{show}{Display sample names, 1 = show names, 0 = do not show names.}
 

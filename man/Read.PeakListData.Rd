@@ -2,15 +2,14 @@
 % Please edit documentation in R/mummichog.R
 \name{Read.PeakListData}
 \alias{Read.PeakListData}
-\title{License: GNU GPL (>= 2)
-Constructor to read uploaded user files into the mummichog object}
+\title{Constructor to read uploaded user files into the mummichog object}
 \usage{
-Read.PeakListData(mSetObj=NA, filename, sigmzs, anal.type, cutoff = 0)
+Read.PeakListData(mSetObj=NA, filename = NA)
 }
 \arguments{
-\item{filename}{Input the path name for the CSV/TXT files to read.}
+\item{mSetObj}{Input the name of the created mSetObj.}
 
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{filename}{Input the path name for the CSV/TXT files to read.}
 }
 \description{
 This function handles reading in CSV or TXT files and filling in the mSet object

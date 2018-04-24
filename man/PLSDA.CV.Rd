@@ -9,6 +9,12 @@ PLSDA.CV(mSetObj = NA, methodName = "T", compNum = GetDefaultPLSCVComp(),
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{methodName}{Logical, by default set to TRUE}
+
+\item{compNum}{GetDefaultPLSCVComp()}
+
+\item{choice}{Input the choice, by default it is Q2}
 }
 \description{
 PLS-DA classification and feature selection

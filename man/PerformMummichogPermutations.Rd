@@ -4,12 +4,12 @@
 \alias{PerformMummichogPermutations}
 \title{Perform permutations and calculates p-values}
 \usage{
-MummichogPermutations(mSetObj=NA, permNum)
+PerformMummichogPermutations(mSetObj=NA, permNum)
 }
 \arguments{
-\item{permNum}{Numeric, the number of permutations to perform}
+\item{mSetObj}{Input the name of the created mSetObj.}
 
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{permNum}{Numeric, the number of permutations to perform}
 }
 \description{
 This function performs permutations to create a background distribution of p-values for pathway

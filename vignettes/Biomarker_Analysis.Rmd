@@ -71,13 +71,13 @@ mSet<-SetAnalysisMode(mSet, "univ")
 # Prepare data for biomarker analysis
 mSet<-PrepareROCData(mSet)
 
-# Perform univariate ROC curve analysis, 
+### OPTION 1 Perform univariate ROC curve analysis ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", imgName = "Isoleucine", "png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
 
-# Perform univariate ROC curve analysis, resulting in a partial AUC with a 95% CI band 
+### OPTION 2 Perform univariate ROC curve analysis, resulting in a partial AUC with a 95% CI band ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Valine", imgName = "Valine", "png", dpi=300, isAUC=T, isOpt=T, optMethod="closest.topleft", isPartial=T, measure="se", cutoff=0.2)
 
-# Perform univariate ROC curve analysis on a metabolite ratio pair, note that you cannot save an image with a "\" in the name
+### OPTION 3 Perform univariate ROC curve analysis on a metabolite ratio pair, note that you cannot save an image with a "\" in the name ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine/Valine", imgName = "IsoleucineValine", "png", dpi=300, isAUC=T, isOpt=T, optMethod="closest.topleft", isPartial=T, measure="se", cutoff=0.2)
 
 # Perform calculation of feature importance (AUC, p value, fold change)
@@ -101,10 +101,10 @@ mSet<-PrepareROCData(mSet)
 # Perform multivariate ROC curve analysis, using SVM classification and ranking
 mSet<-PerformCV.explore(mSet, cls.method = "svm", rank.method = "svm", lvNum = 2)
 
-# Comparison plot of ROC curves of all models
+### OPTION 1 Comparison plot of ROC curves of all models ###
 mSet<-PlotROCMulti(mSet, imgName = "ROC_all_models", format = "png", dpi = 300, mdl.inx= 0, avg.method = "threshold", show.conf = 0, show.holdout = 0, focus="fpr", cutoff=0.5)
 
-# Plot the ROC curve of a single selected model, in this case model 1 and display the confidence interval
+### OPTION 2 Plot the ROC curve of a single selected model, in this case model 1 and display the confidence interval ###
 mSet<-PlotROCMulti(mSet, imgName = "ROC_model1", format = "png", dpi = 300, mdl.inx = 1, avg.method = "threshold", show.conf = 1, 0, "fpr", 0.2)
 
 # Plot predicted class probabilities for each sample for a selected model, not showing labels of wrongly classified samples
@@ -177,20 +177,9 @@ mSet$analSet$ROCtest$pred.samples.table # View table of new predictions
 
 ```
 
-## 6. Sweave Report 
+## 3. Sweave Report 
 
-To prepare the sweave report, please use the *CreatePDFReport* function. The object created must be named mSet, and specify the user name in quotation marks. 
-
-```{r, eval=FALSE}
-# Create Biomarker Sweave report 
-CreatePDFReport(mSet, "User Name")
-
-# To save all files created during your session
-SaveTransformedData(mSet)
-
-```
-
-
+To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
 
 
 

@@ -6,6 +6,9 @@
 \usage{
 map(Y)
 }
+\arguments{
+\item{Y}{Input data}
+}
 \description{
 map variable for (s)plsda
 }

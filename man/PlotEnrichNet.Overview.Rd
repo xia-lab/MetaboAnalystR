@@ -6,6 +6,13 @@
 \usage{
 PlotEnrichNet.Overview(folds, pvals, layoutOpt = layout.fruchterman.reingold)
 }
+\arguments{
+\item{folds}{Input fold-change for bar plot}
+
+\item{pvals}{Input p-values for bar plot}
+
+\item{layoutOpt}{Input the layout option, default is set to layout.fruchterman.reingold}
+}
 \description{
 Used in higher functions, the color is based on p values
 }

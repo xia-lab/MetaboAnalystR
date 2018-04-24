@@ -4,7 +4,7 @@
 \alias{PlotANOVA}
 \title{Plot ANOVA}
 \usage{
-PlotANOVA(mSetObj=NA, imgName, dpi, format, width)
+PlotANOVA(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

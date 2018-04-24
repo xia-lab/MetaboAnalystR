@@ -6,6 +6,11 @@
 \usage{
 CreateLadder(Ntotal, Nmin = 5)
 }
+\arguments{
+\item{Ntotal}{Total number}
+
+\item{Nmin}{Minimum number, default set to 5}
+}
 \description{
 use leave-one-out / Nfold or bootstrape to permute data for external CV
 build SVM model and use mean-balanced weight to sort genes on training set

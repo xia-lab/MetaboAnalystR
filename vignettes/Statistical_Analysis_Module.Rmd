@@ -23,7 +23,6 @@ Univariate tests differ from multivariate tests in that they assess the importan
 
 To begin the SA module, we will start with identifying important features from the data set using various univariate tests, including classical methods such as the Student’s t-test and ANOVA, as well as other methods such as the volcano plot and correlation analysis. 
 
-
 ```{r, eval=FALSE}
 mSet<-InitDataObjects("conc", "stat", FALSE)
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
@@ -81,9 +80,9 @@ mSet<-PlotVolcano(mSet, "volcano_0_", format ="png", dpi=72, width=NA)
 
 ```
 
-## 2.4 One-way Analysis of Variance (ANOVA)
+## 2.4 One-way Analysis of Variance (ANOVA) - ONLY FOR MULTI-GROUP ANALYSIS
 
-ANOVA can only be computed on data with more than one group. Please note that the below example uses data from a different example dataset. 
+ANOVA can only be computed on data with more than one group. **Please note that the below example uses data from a different example dataset.**
 
 ```{r, eval=FALSE}
 # Perform ANOVA
@@ -101,12 +100,11 @@ To perform correlation analysis to evaluate the correlation between all features
 Note, the heatmap will only show correlations for a maximum of 1000 features. For larger datasets, only top 1000 features will be selected based on their interquantile range (IQR). When color distribution is fixed, you can potentially compare the correlation patterns among different data sets. In this case, you can choose "do not perform clustering" for all data set, or only to perform clustering on a single reference data set, then manually re-arranged other data sets according to the clustering pattern of the reference data set.
 
 ```{r, eval=FALSE}
-# Heatmap specifying pearson distance and an overview
+### OPTION 1 - Heatmap specifying pearson distance and an overview
 mSet<-PlotCorrHeatMap(mSet, "corr_0_", format = "png", dpi=72, width=NA, "col", "pearson", "bwm", "overview", F, F, F, 100)
 
-# Heatmap specifying pearson correlation and a detailed view
+### OPTION 2 - Heatmap specifying pearson correlation and a detailed view
 mSet<-PlotCorrHeatMap(mSet, "corr_1_", format = "png", dpi=72, width=NA, "col", "spearman", "bwm", "detail", F, F, F, 999)
-
 
 ```
 
@@ -153,6 +151,8 @@ mSet<-PlotPCABiplot(mSet, "pca_biplot_0_", format = "png", dpi = 72, width=NA, 1
 
 ## 2.8 Partial Least Squares - Discriminant Analysis (PLS-DA)
 
+To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). Please refer to the user manual for details about each function.   
+
 
 ```{r, eval=FALSE}
 
@@ -171,10 +171,6 @@ mSet<-PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 15,
 mSet<-PLSDA.Permut(mSet, 100, "accu")
 
 mSet<-PlotPLS.Permutation(mSet, "pls_perm_1_", "png", 72, width=NA)
-
-mSet<-PLSDA.Permut(mSet, 100, "bw")
-
-mSet<-PlotPLS.Permutation(mSet, "pls_perm_2_", "png", 72, width=NA)
 
 ```
 
@@ -358,13 +354,6 @@ mSet<-PlotRSVM.Cmpd(mSet, "svm_imp_0_", format = "png", dpi=72, width=NA)
 
 ## 3. Sweave Report
 
-Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To create the report, use the *CreatePDFReport*, and specify the user's name in quotation marks as the second argument. Note to create the report, the mSetObj must be named mSet.
-
-```{r, eval=FALSE}
-
-CreatePDFReport(mSet, "User Name")
-
-```
-
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
 
 

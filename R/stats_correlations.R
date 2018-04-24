@@ -1,15 +1,21 @@
 #'Pattern hunter
 #'@description Run template on all the high region effect genes
+#'@param x Input data
+#'@param template Input template
+#'@param dist.name Input distance method 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'
 template.match <- function(x, template, dist.name) {
-  k<-cor.test(x,template, method=dist.name);
+  k <- cor.test(x,template, method=dist.name);
   c(k$estimate, k$stat, k$p.value)
 }
 
 #'Match pattern for correlation analysis
+#'@param mSetObj Input the name of the created mSetObj
+#'@param dist.name Input the distance method, default is set to pearson
+#'@param pattern Set the pattern, default is set to NULL
 #'@export
 #'
 Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
@@ -59,7 +65,6 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   return(.set.mSet(mSetObj));
 }
 
-
 #'Pattern hunter, correlation plot
 #'@description Plot correlation
 #'@param mSetObj Input name of the created mSet Object
@@ -105,7 +110,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <- h <- width;
   }
   mSetObj$imgSet$corr <- imgName;
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,6,4,3))
   rownames(cor.res)<-substr(rownames(cor.res), 1, 18);
   cols <- ifelse(cor.res[,1] >0, "mistyrose","lightblue");
@@ -121,6 +126,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@description Plot correlation heatmap
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'@param mSetObj Input name of the created mSet Object.
+#'@param imgName Input the name of the image to create
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
@@ -133,9 +139,12 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param viewOpt Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.
 #'@param fix.col Logical, fix colors (TRUE) or not (FALSE).
 #'@param no.clst Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
+#'@param top View top
+#'@param topNum Numeric, view top 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
                           colors, viewOpt, fix.col, no.clst, top, topNum){
@@ -155,11 +164,10 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     print("Data is reduced to 1000 vars ..");
   }
   
-  colnames(data)<-substr(colnames(data), 1, 18);
-  corr.mat<-cor(data, method=cor.method);
+  colnames(data) <- substr(colnames(data), 1, 18);
+  corr.mat <- cor(data, method=cor.method);
   
-  library(Hmisc)
-  pval.mat <- rcorr(as.matrix(data), type=cor.method)
+  pval.mat <- Hmisc::rcorr(as.matrix(data), type=cor.method)
   
   # use total abs(correlation) to select
   if(top){
@@ -170,8 +178,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }
   
   # set up parameter for heatmap
-  suppressMessages(library(RColorBrewer));
-  suppressMessages(library(gplots));
   if(colors=="gbr"){
     colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
   }else if(colors == "heat"){
@@ -181,7 +187,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }else if(colors == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"))(256);
   }else{
-    colors <- rev(colorRampPalette(brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -216,13 +222,12 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
       w <- h <- 7.2;
     }
     mSetObj$imgSet$corr.heatmap <- imgName;
-    
   }
   
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
-    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
   if(no.clst){
     rowv=FALSE;
@@ -234,10 +239,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     dendro= "both";
   }
   
-  library(pheatmap);
   if(fix.col){
     breaks <- seq(from = -1, to = 1, length = 257);
-    res <- pheatmap(corr.mat, 
+    res <- pheatmap::pheatmap(corr.mat, 
                     fontsize=8, fontsize_row=8, 
                     cluster_rows = colv, 
                     cluster_cols = rowv,
@@ -245,7 +249,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
                     breaks = breaks
     );
   }else{
-    res <- pheatmap(corr.mat, 
+    res <- pheatmap::pheatmap(corr.mat, 
                     fontsize=8, fontsize_row=8, 
                     cluster_rows = colv, 
                     cluster_cols = rowv,
@@ -288,12 +292,12 @@ GetCorSigColNames <- function(mSetObj=NA){
 }
 
 #'Sig table for Correlation Analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.Corr <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   GetSigTable(mSetObj$analSet$corr$cor.mat, "Pattern search using correlation analysis", mSetObj$dataSet$type);
 }
-
 
 GenerateTemplates <- function(mSetObj=NA){
   
@@ -319,11 +323,14 @@ GenerateTemplates <- function(mSetObj=NA){
   
   # add the ledgends
   res <- c(paste(levels(mSetObj$dataSet$cls), collapse="-"), res);
-  return (res);
+  return(res);
 }
 
 #'Pattern hunter
-#'@description calculate correlation of all other feature to a given feature name
+#'@description Calculate correlation of all other feature to a given feature name
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param dist.name Input the name of the distance measure
+#'@param varName Input the variable name
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

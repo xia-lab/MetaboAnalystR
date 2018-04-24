@@ -6,6 +6,9 @@
 \usage{
 GetSVMSigMat(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Return significance measure, double[][]
 }

@@ -6,8 +6,11 @@
 \usage{
 GetRFSigMat(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
-Significance measure, double[][]
+Significance measure, double brackets
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

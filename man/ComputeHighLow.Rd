@@ -2,12 +2,16 @@
 % Please edit documentation in R/biomarker_utils.R
 \name{ComputeHighLow}
 \alias{ComputeHighLow}
-\title{Compute the 95% interval for threshold ROC}
+\title{Compute the 95 percent interval for threshold ROC}
 \usage{
-Utility function, called upon by higher functions
+ComputeHighLow(perf)
+}
+\arguments{
+\item{perf}{Input the performance}
 }
 \description{
-Only for y-axis
+Computes the 95 percent interval only for the y-axis.
+Utility function, called upon by higher functions
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

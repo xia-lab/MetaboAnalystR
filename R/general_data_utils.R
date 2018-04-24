@@ -23,16 +23,18 @@
 #'Constructs a dataSet object for storing data 
 #'@description This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
 #'It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform. 
-#'@usage InitDataObjects(dataType, analType, paired=F)
-#'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
+#'@usage InitDataObjects(data.type, anal.type, paired=FALSE)
+#'@param data.type The type of data, either list (Compound lists), conc (Compound concentration data), 
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 #'or msspec (MS spectra data)
-#'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+#'@param anal.type Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
 #'cmpdmap, smpmap, or pathinteg
+#'@param paired Indicate if the data is paired or not. Logical, default set to FALSE
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import methods
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
@@ -57,7 +59,12 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   msg.vec <<- "";
   module.count <<- 0; 
   data.org <<- NULL; 
-  lib.path <<- "../../data/";
+  
+  if(.on.public.web){
+    lib.path <<- "../../data/";
+  }else{
+    lib.path <<- "http://www.metaboanalyst.ca/resources/data/";
+  }
   
   # for meta-analysis
   mdata.all <<- list(); 
@@ -66,8 +73,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   anal.type <<- anal.type;
   
   # plotting required by all
-  library(Cairo)  
-  CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
+  Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
   
   print("R objects intialized ...");
   return(.set.mSet(mSetObj));
@@ -75,6 +81,8 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
 
 #'For two factor time series only
 #'@description For two factor time series only
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param design Input the design type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -85,6 +93,9 @@ SetDesignType <-function(mSetObj=NA, design){
   return(.set.mSet(mSetObj));
 }
 
+#'Record R Commands
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cmd Commands 
 #'@export
 RecordRCommand <- function(mSetObj=NA, cmd){
   write(cmd, file = "Rhistory.R", append = TRUE);
@@ -93,6 +104,8 @@ RecordRCommand <- function(mSetObj=NA, cmd){
   return(.set.mSet(mSetObj));
 }
 
+#'Export R Command History
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetRCommandHistory <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj); 
@@ -190,7 +203,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     }
   }
   
-  type.cls.lbl <- class(cls.lbl)
+  mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
   
   # free memory
   dat <- NULL;
@@ -272,12 +285,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
   smpl.nms <- gsub("[^[:alnum:]./_-]", "", smpl.nms);
   var.nms <- gsub("[^[:alnum:][:space:],'./_-]", "", var.nms); # allow space, comma and period
-  if(type.cls.lbl=="character"){
-    cls.lbl <- ClearStrings(as.vector(cls.lbl));
-  }else{
-    cls.lbl <- as.numeric(ClearStrings(as.vector(cls.lbl)));
-  }
-  
+  cls.lbl <- ClearStrings(as.vector(cls.lbl));
+
   # now assgin the dimension names
   rownames(conc) <- smpl.nms;
   colnames(conc) <- var.nms;
@@ -285,7 +294,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   # check if paired or not
   if(mSetObj$dataSet$paired){
     # save as it is and process in sanity check step
-    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$pairs <- cls.lbl
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$pairs <- cls.lbl;
   }else{
     if(lbl.type == "disc"){
       # check for class labels at least two replicates per class
@@ -295,30 +304,20 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
         AddErrMsg("Or maybe you forgot to specify the data format?");
         return(0);
       }
-      
-      if(is.numeric(cls.lbl)){
-        mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
-      }else{
-        mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
-      }
+     
+      mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
       
       if(substring(format,4,5)=="ts"){
         
-        if(is.numeric(facA)){
-          mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(facA);
-        }else{
-          mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
-        }
-        
+        mSetObj$dataSet$facA.type <- is.numeric(facA);
+        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
         mSetObj$dataSet$facA.lbl <- facA.lbl;
         
-        if(is.numeric(facB)){
-          mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(facB);
-        }else{
-          mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
-        }
+        mSetObj$dataSet$facB.type <- is.numeric(facB);
+        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
         mSetObj$dataSet$facB.lbl <- facB.lbl;
       }
+      
     }else{ # continuous
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.numeric(cls.lbl);
     }
@@ -349,10 +348,9 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+
 Read.PeakList<-function(mSetObj=NA, foldername){
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xcms));
   msg <- c("The uploaded files are peak lists and intensities data.");
   
   # the "upload" folder should contain several subfolders (groups)
@@ -487,15 +485,15 @@ Read.PeakList<-function(mSetObj=NA, foldername){
 #'@export
 #'
 Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
+  
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xcms));
   msfiles <- list.files(folderName, recursive=T, full.names=TRUE);
   
   # first do some sanity check b4 spending more time on that
   # note the last level is the file names, previous one should be the class label
   
   dir.table <- t(data.frame(strsplit(msfiles, "/")));
-  cls.all<-dir.table[,ncol(dir.table)-1];
+  cls.all <- dir.table[,ncol(dir.table)-1];
   smpl.all <- dir.table[,ncol(dir.table)];
   
   # check for groups
@@ -510,11 +508,11 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
     return(0);
   }
   
-  xset <- xcmsSet(msfiles, profmethod = profmethod, fwhm=fwhm);
+  xset <- xcms::xcmsSet(msfiles, profmethod = profmethod, fwhm=fwhm);
   msg<-c(paste("In total,", length(xset@filepaths), "sample files were detected. "),
          paste("They are divided into ", length(levels(xset@phenoData[,1]))," classes: ", paste(levels(xset@phenoData[,1]), collapse=', '), ".", sep=""));
   
-  xset <- group(xset, bw=bw);
+  xset <- xcms::group(xset, bw=bw);
   mSetObj$dataSet$xset.orig <- xset;
   mSetObj$msgSet$read.msg <- msg;
   return(.set.mSet(mSetObj));
@@ -523,6 +521,7 @@ Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
 #'Read paired peak or spectra files
 #'@description This function reads paired peak lists or spectra files. The pair information
 #'is stored in a file where each line is a pair and names are separated by ":".
+#'@param filePath Set file path
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -542,12 +541,13 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'Save the processed data with class names
 #'@description This function saves the processed data with class names as CSV files. 
 #'Several files may be generated, the original data, processed data, peak normalized, and/or normalized data. 
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-SaveTransformedData<-function(mSetObj=NA){
+SaveTransformedData <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(!is.null(mSetObj$dataSet$orig)){
     lbls <- NULL;
@@ -604,9 +604,11 @@ SaveTransformedData<-function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+#' Adds an error message
+#'@description The error message will be printed in all cases.
+#'Used in higher functions. 
+#'@param msg Error message to print 
 #'@export
-# error message will print in all cases
-#'
 AddErrMsg <- function(msg){
   msg.vec <<- c(msg.vec, msg);
   print(msg);
@@ -632,6 +634,11 @@ GetMetaCheckMsg <- function(mSetObj=NA){
 #'Plot compound summary
 #'change to use dataSet$procr instead of dataSet$orig in
 #'case of too many NAs
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cmpdNm Input the name of the compound to plot
+#'@param format Input the format of the image to create
+#'@param dpi Input the dpi of the image to create
+#'@param width Input the width of the image to create
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -652,7 +659,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   if(substring(mSetObj$dataSet$format,4,5)!="ts"){
     
-    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
     par(mar=c(4,4,2,2), mfrow = c(1,2), oma=c(0,0,2,0));
     
     # need to consider norm data were edited, different from proc
@@ -685,7 +692,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     dev.off();
     
   }else if(mSetObj$dataSet$design.type =="time0"){
-    Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
     plotProfile(mSetObj, cmpdNm);
     dev.off();
     
@@ -709,10 +716,10 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     }else{
       h <- w*0.5*row.num;
     }
-    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     par(mar=c(3,4,4,2), mfrow=c(row.num, 2));
     # make sure all at the same range
-    ylim.ext <-  GetExtendRange (mSetObj$dataSet$norm[, cmpdNm], 12);
+    ylim.ext <- GetExtendRange(mSetObj$dataSet$norm[, cmpdNm], 12);
     for(lv in levels(out.fac)){
       inx <- out.fac == lv;
       dat <- mSetObj$dataSet$norm[inx, cmpdNm];
@@ -799,9 +806,9 @@ GetKEGG.PathNames<-function(mSetObj=NA){
   return(names(metpa$path.ids));
 }
 
-
 #'Given a vector containing KEGGIDs, returns a vector of KEGG compound names
 #'@description This function, given a vector containing KEGGIDs, returns a vector of KEGG compound names.
+#'@param ids Vector of KEGG ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -815,6 +822,7 @@ KEGGID2Name<-function(ids){
 #'Given a vector containing KEGG pathway IDs, return a vector containing SMPDB IDs (only for hsa)
 #'@description This function, when given a vector of KEGG pathway IDs, return a vector of SMPDB IDs (only for hsa).
 #'SMPDB standing for the Small Molecule Pathway Database, and hsa standing for human serum albumin. 
+#'@param ids Vector of KEGG pathway IDs
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -827,6 +835,7 @@ KEGGPATHID2SMPDBIDs<-function(ids){
 #'Given a vector of HMDBIDs, return a vector of HMDB compound names
 #'@description This function, when given a vector of HMDBIDs, return a vector of HMDB compound names. HMDB standing
 #'for the Human Metabolome Database. 
+#'@param ids Input the vector of HMDB Ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -840,6 +849,7 @@ HMDBID2Name<-function(ids){
 #'Given a vector of KEGGIDs, return a vector of HMDB ID
 #'@description This functionn, when given a vector of KEGGIDs, returns a vector of HMDB IDs. HMDB standing
 #'for the Human Metabolome Database. 
+#'@param ids Vector of KEGG ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -855,6 +865,7 @@ KEGGID2HMDBID<-function(ids){
 #'Given a vector of HMDBIDs, return a vector of KEGG IDs
 #'@description This function, when given a vector of HMDBIDs, returns a vector of KEGG ID. HMDB standing
 #'for the Human Metabolome Database. 
+#'@param ids Input the vector of HMDB Ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -866,6 +877,8 @@ HMDBID2KEGGID<-function(ids){
 }
 
 #'Save compound name for mapping
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param qvec Input the vector to query
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -878,6 +891,8 @@ Setup.MapData<-function(mSetObj=NA, qvec){
 }
 
 #'Save concentration data
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param conc Input the concentration data
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -890,6 +905,8 @@ Setup.ConcData<-function(mSetObj=NA, conc){
 }
 
 #'Save biofluid type for SSP
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param type Input the biofluid type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -933,9 +950,37 @@ IsReadyForEditor <- function(mSetObj=NA){
   return(1);
 }
 
+#'Set organism for further analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param org Set organism ID
 #'@export
 SetOrganism <- function(mSetObj=NA, org){
   mSetObj <- .get.mSet(mSetObj);
   pathinteg.org <<- data.org <<- org;
   return(.set.mSet(mSetObj))
 }
+
+##' @importFrom tibble remove_rownames column_to_rownames 
+
+##' @importFrom RSQLite dbConnect SQLite dbSendQuery fetch dbDisconnect 
+
+##' @importFrom grDevices adjustcolor as.graphicsAnnot col2rgb dev.cur dev.off dev.set heat.colors hsv 
+##'pdf rainbow rgb topo.colors 
+
+##' @importFrom graphics abline arrows axis barplot box boxplot dotchart grid hist image layout 
+##'legend lines matplot mtext pairs par plot plot.new plot.window points polygon 
+##'rect segments stripchart symbols text title 
+
+##' @importFrom methods hasArg is slot 
+
+##' @importFrom stats IQR TukeyHSD aggregate anova aov approxfun as.dendrogram as.formula binomial 
+##'biplot coef complete.cases confint cor cor.test cov dendrapply density deviance 
+##'df.residual dist fisher.test glm hclust heatmap is.leaf kmeans kruskal.test lm mad 
+##'median model.matrix na.omit p.adjust pchisq pgamma phyper pnorm prcomp predict pt 
+##'qchisq qnorm qt quantile rnorm runif sd shapiro.test smooth step t.test var var.test wilcox.test 
+
+##' @importFrom utils Sweave capture.output combn download.file object.size read.csv read.table relist  
+##'setTxtProgressBar tail write.csv write.table zip 
+
+
+

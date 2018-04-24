@@ -6,6 +6,15 @@
 \usage{
 ASCAfun2(X, Desa, Desb, Fac)
 }
+\arguments{
+\item{X}{Numeric, number of compounds}
+
+\item{Desa}{Number of levels in the factor TIME}
+
+\item{Desb}{Number of levels in the other factor}
+
+\item{Fac}{Numeric, the factor}
+}
 \description{
 Perform ASCA
 }

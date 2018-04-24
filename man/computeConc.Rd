@@ -6,6 +6,11 @@
 \usage{
 computeConc(X, iso = "y")
 }
+\arguments{
+\item{X}{Input the data}
+
+\item{iso}{Default is set to "y"}
+}
 \description{
 The upper limit for each combination is considered to be
 the minimal of the fatty acid concentration (nmol fatty acid/gram of sample)

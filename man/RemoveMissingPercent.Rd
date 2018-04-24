@@ -9,7 +9,7 @@ RemoveMissingPercent(mSetObj, percent)
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{percent}{Input the percentage cut-off you wish to use. For instance, 50% is represented by percent=0.5.}
+\item{percent}{Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5.}
 }
 \description{
 Remove variables containing a user-defined percentage cut-off of missing values.

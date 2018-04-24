@@ -6,6 +6,9 @@
 \usage{
 GetSuggestedSAMDelta(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 obtain a default delta with reasonable number
 of sig features and decent FDR

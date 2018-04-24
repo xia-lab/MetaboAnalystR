@@ -6,6 +6,13 @@
 \usage{
 createCVset(groupN, kfold, rseed)
 }
+\arguments{
+\item{groupN}{Input the size of the group}
+
+\item{kfold}{Input the number of cross-validations}
+
+\item{rseed}{Input the random seed}
+}
 \description{
 Separate data set with k-fold CV, used in higher function
 }

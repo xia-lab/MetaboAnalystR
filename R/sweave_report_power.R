@@ -1,6 +1,8 @@
 #'Create report of analyses (Power)
 #'@description Report generation using Sweave
 #'Put together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -64,6 +66,7 @@ CreatePowerOverview <- function(){
 #'Create power analysis report: Data Input
 #'@description Report generation using Sweave
 #'Power analysis report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -146,6 +149,7 @@ CreatePowerInputDoc <- function(mSetObj=NA){
 #'Create power analysis report: Power Parameter Selection
 #'@description Report generation using Sweave
 #'Power analysis report, parameter selection
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -185,10 +189,10 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
   
 }
 
-
 #'Create power analysis report: Power Analysis
 #'@description Report generation using Sweave
 #'Power analysis report, analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -232,15 +236,4 @@ CreatePowerAnalDoc <- function(mSetObj){
   )
   cat(powerprofile, file=rnwFile, append=TRUE, sep="\n")
 }
-
-
-
-
-
-
-
-
-
-
-
 

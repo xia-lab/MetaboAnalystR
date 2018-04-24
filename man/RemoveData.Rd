@@ -6,6 +6,9 @@
 \usage{
 RemoveData(dataName)
 }
+\arguments{
+\item{dataName}{Input name of data to remove}
+}
 \description{
 Remove data object, the current dataSet will be the last one by default
 }

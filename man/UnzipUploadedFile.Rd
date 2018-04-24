@@ -6,6 +6,13 @@
 \usage{
 UnzipUploadedFile(inPath, outPath, rmFile = T)
 }
+\arguments{
+\item{inPath}{Input the path of the zipped files}
+
+\item{outPath}{Input the path to directory where the unzipped files will be deposited}
+
+\item{rmFile}{Logical, input whether or not to remove files. Default set to T}
+}
 \description{
 Unzips uploaded .zip files, removes the uploaded file, checks for success
 }

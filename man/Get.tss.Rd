@@ -6,6 +6,11 @@
 \usage{
 Get.tss(x, cl)
 }
+\arguments{
+\item{x}{Input X}
+
+\item{cl}{Input the columns}
+}
 \description{
 Columns have labels cl=consecutive integers
 note: this is desgined for ASCA parition data

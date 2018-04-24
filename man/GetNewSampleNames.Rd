@@ -6,6 +6,9 @@
 \usage{
 GetNewSampleNames(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Obtain sample names and their class labels
 }

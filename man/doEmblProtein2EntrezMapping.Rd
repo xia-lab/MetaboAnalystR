@@ -6,6 +6,9 @@
 \usage{
 doEmblProtein2EntrezMapping(emblprotein.vec)
 }
+\arguments{
+\item{emblprotein.vec}{Input the vector containing protein embl ids}
+}
 \description{
 Utility function for PerformNetEnrichment
 }

@@ -10,6 +10,8 @@ PlotSAM.FDR(mSetObj = NA, delta, imgName, format = "png", dpi = 72,
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
+\item{delta}{Input the delta}
+
 \item{imgName}{Input a name for the plot}
 
 \item{format}{Select the image format, "png", or "pdf".}

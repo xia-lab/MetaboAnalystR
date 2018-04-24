@@ -4,11 +4,17 @@
 \alias{LogNorm}
 \title{Column-wise Normalization}
 \usage{
-Options for log, zero mean and unit variance, and
-several zero mean and variance/SE
+LogNorm(x, min.val)
+}
+\arguments{
+\item{x}{Input data}
+
+\item{min.val}{Input minimum value}
 }
 \description{
 Column-wise norm methods, when x is a column
+Options for log, zero mean and unit variance, and
+several zero mean and variance/SE
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

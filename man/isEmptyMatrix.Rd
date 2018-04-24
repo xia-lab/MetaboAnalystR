@@ -6,8 +6,11 @@
 \usage{
 isEmptyMatrix(mat)
 }
+\arguments{
+\item{mat}{Matrix to test if empty}
+}
 \description{
-test if a sig table matrix is empty
+Test if a sig table matrix is empty
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

@@ -6,6 +6,9 @@
 \usage{
 HMDBID2Name(ids)
 }
+\arguments{
+\item{ids}{Input the vector of HMDB Ids}
+}
 \description{
 This function, when given a vector of HMDBIDs, return a vector of HMDB compound names. HMDB standing
 for the Human Metabolome Database.

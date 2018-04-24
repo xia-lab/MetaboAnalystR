@@ -6,6 +6,11 @@
 \usage{
 PerformApproxMatch(mSetObj = NA, q)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj}
+
+\item{q}{Input the q vector}
+}
 \description{
 Given a query, perform approximate compound matching
 }

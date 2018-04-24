@@ -6,6 +6,11 @@
 \usage{
 MapKO2KEGGEdges(kos, net = "ko01100")
 }
+\arguments{
+\item{kos}{Input the KOs}
+
+\item{net}{Input the name of the network}
+}
 \description{
 Utility function for PrepareQueryJson
 }

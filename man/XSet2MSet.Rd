@@ -4,7 +4,7 @@
 \alias{XSet2MSet}
 \title{Converts xset object from XCMS to mSet object for MetaboAnalyst}
 \usage{
-mSet <- XSet2MSet(xset, dataType, analType, paired=F, format, lbl.type)
+XSet2MSet(xset, dataType, analType, paired = F, format, lbl.type)
 }
 \arguments{
 \item{xset}{The name of the xcmsSet object created.}

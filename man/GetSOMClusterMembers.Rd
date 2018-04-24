@@ -6,6 +6,13 @@
 \usage{
 GetSOMClusterMembers(mSetObj = NA, i, j)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{i}{Index of X}
+
+\item{j}{Index of Y}
+}
 \description{
 Get members for given cluster index, return a character string
 }

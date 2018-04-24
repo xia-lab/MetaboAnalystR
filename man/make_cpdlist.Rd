@@ -4,12 +4,12 @@
 \alias{make_cpdlist}
 \title{Utility function to create compound lists for permutation analysis}
 \usage{
-make_cpdlist_function(mSetObj=NA, match_dict, refmzlist, input_mzlist)
+make_cpdlist(mSetObj=NA, input_mzs)
 }
 \arguments{
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{mSetObj}{Input the name of the created mSetObj}
 
-\item{input_mzlist}{The vector of randomly drawn m/z features.}
+\item{input_mzs}{The vector of randomly drawn m/z features.}
 }
 \description{
 From a vector of m/z features, this function outputs a vector of compounds.

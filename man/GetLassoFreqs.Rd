@@ -6,6 +6,9 @@
 \usage{
 GetLassoFreqs(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Not part of default, need to perform function 
 to compute lasso frequency

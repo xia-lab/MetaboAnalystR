@@ -6,6 +6,9 @@
 \usage{
 KEGGPATHID2SMPDBIDs(ids)
 }
+\arguments{
+\item{ids}{Vector of KEGG pathway IDs}
+}
 \description{
 This function, when given a vector of KEGG pathway IDs, return a vector of SMPDB IDs (only for hsa).
 SMPDB standing for the Small Molecule Pathway Database, and hsa standing for human serum albumin.

@@ -4,7 +4,7 @@
 \alias{PlotPCA3DScore}
 \title{Create 3D PCA score plot}
 \usage{
-PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
+PlotPCA3DScore(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

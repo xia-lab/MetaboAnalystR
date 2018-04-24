@@ -6,6 +6,11 @@
 \usage{
 SetCachexiaSetUsed(mSetObj = NA, used)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{used}{Set data to be used}
+}
 \description{
 Set cachexia set used
 }

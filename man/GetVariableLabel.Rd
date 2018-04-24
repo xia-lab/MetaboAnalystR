@@ -6,6 +6,9 @@
 \usage{
 GetVariableLabel(data.type)
 }
+\arguments{
+\item{data.type}{Input the data type}
+}
 \description{
 Determine data type, binned spectra, nmr peak, or ms peak
 }

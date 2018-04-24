@@ -8,6 +8,21 @@ Given a list of compound names or ids, find matched name or ids from selected da
 CrossReferencing(mSetObj = NA, q.type, hmdb = T, pubchem = T, chebi = F,
   kegg = T, metlin = F)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{q.type}{Input the query type}
+
+\item{hmdb}{Logical, T to cross reference to HMDB, F to not}
+
+\item{pubchem}{Logical, T to cross reference to PubChem, F to not}
+
+\item{chebi}{Logical, T to cross reference to CheBI, F to not}
+
+\item{kegg}{Logical, T to cross reference to KEGG, F to not}
+
+\item{metlin}{Logical, T to cross reference to MetLin, F to not}
+}
 \description{
 Given a list of compound names or ids
 find matched name or ids from selected databases

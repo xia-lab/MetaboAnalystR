@@ -6,6 +6,13 @@
 \usage{
 doGeneIDMapping(q.vec, org, type)
 }
+\arguments{
+\item{q.vec}{Input the query}
+
+\item{org}{Input the organism type}
+
+\item{type}{Input the type of data to annotate}
+}
 \description{
 Gene ID mapping, gene annotation, compound
 mapping, KEGG mapping

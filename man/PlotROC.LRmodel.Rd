@@ -7,6 +7,20 @@
 PlotROC.LRmodel(mSetObj = NA, imgName, format = "png", dpi = 72,
   show.conf = FALSE, sp.bin = 0.01)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input a name for the plot}
+
+\item{format}{Select the image format, "png", or "pdf".}
+
+\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
+
+\item{show.conf}{Logical, show confidence intervals}
+
+\item{sp.bin}{Numeric, default is set to 0.01.}
+}
 \description{
 Plot ROC for the logistic regression model
 }

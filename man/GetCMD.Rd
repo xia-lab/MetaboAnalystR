@@ -6,6 +6,9 @@
 \usage{
 GetCMD(regexp)
 }
+\arguments{
+\item{regexp}{Retrieve last command from Rhistory file}
+}
 \description{
 Fetches the last command from the Rhistory.R file
 }

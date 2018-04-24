@@ -6,6 +6,9 @@
 \usage{
 ClearStrings(query)
 }
+\arguments{
+\item{query}{Input the query to clear}
+}
 \description{
 Remove from, within, leading and trailing spaces
 }

@@ -2,9 +2,9 @@
 % Please edit documentation in R/general_norm_utils.R
 \name{UpdateSampleItems}
 \alias{UpdateSampleItems}
-\title{Remove samples}
+\title{Remove samples from user's data}
 \usage{
-MetaboAnalystR:::UpdateSampleItems(mSetObj, smpl.nm.vec)
+UpdateSampleItems(mSetObj=NA, smpl.nm.vec)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

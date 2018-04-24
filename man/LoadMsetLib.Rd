@@ -6,6 +6,9 @@
 \usage{
 LoadMsetLib(libname = "pathway")
 }
+\arguments{
+\item{libname}{Input the name of the metabolite set library to load. Default set to "pathway" library.}
+}
 \description{
 Metabolite set library
 }

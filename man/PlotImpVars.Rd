@@ -2,7 +2,7 @@
 % Please edit documentation in R/biomarker_utils.R
 \name{PlotImpVars}
 \alias{PlotImpVars}
-\title{Plot selected compounds by their % frequency}
+\title{Plot selected compounds by their percentage frequency}
 \usage{
 PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15)
 }

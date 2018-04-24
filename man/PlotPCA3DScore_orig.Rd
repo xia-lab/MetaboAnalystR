@@ -4,7 +4,7 @@
 \alias{PlotPCA3DScore_orig}
 \title{Create 3D PCA score plot}
 \usage{
-PlotPCA3DScore_orig<- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
+PlotPCA3DScore_orig(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
@@ -13,11 +13,19 @@ PlotPCA3DScore_orig<- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 
 \item{format}{Select the image format, "png", or "pdf".}
 
+\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
+
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
 \item{inx1}{Numeric, indicate the number of the principal component for the x-axis of the loading plot.}
 
 \item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
 
 \item{inx3}{Numeric, indicate the number of the principal component for the z-axis of the loading plot.}
+
+\item{angl}{Input the angle}
 }
 \description{
 Rotate PCA analysis

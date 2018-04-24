@@ -6,6 +6,9 @@
 \usage{
 aov.between(x)
 }
+\arguments{
+\item{x}{Input data to perform 2-way ANOVA}
+}
 \description{
 Perform Two-way ANOVA 
 Perform between-subjects anova

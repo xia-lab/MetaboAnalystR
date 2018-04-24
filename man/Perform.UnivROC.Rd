@@ -13,22 +13,22 @@ Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt
 
 \item{imgName}{Input a name for the plot}
 
-\item{format}{Select the image format, "png", of "pdf".}
+\item{format}{Select the image format, png, of pdf.}
 
-\item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+\item{dpi}{Input the dpi. If the image format is pdf, users need not define the dpi. For png images, 
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
 
-\item{isAUC}{Logical, select "T" to compute the 95% confidence interval band and "F" to not}
+\item{isAUC}{Logical, select T to compute the 95 percent confidence interval band and "F" to not}
 
-\item{isOpt}{Logical, show the optimal cutoff, "T" to show it and "F" to not}
+\item{isOpt}{Logical, show the optimal cutoff, T to show it and F to not}
 
-\item{optMethod}{Select the optimal cutoff by using either "closest.topleft" for closest to top-left corner or 
-"youden" for farthest to the diagonal line (Youden)}
+\item{optMethod}{Select the optimal cutoff by using either closest.topleft for closest to top-left corner or 
+youden for farthest to the diagonal line (Youden)}
 
-\item{isPartial}{Logical, input "T" to calculate a partial ROC curve, and "F" to not}
+\item{isPartial}{Logical, input T to calculate a partial ROC curve, and F to not}
 
-\item{measure}{Select the parameter to limit the calculation of the partial ROC curve, "se" for the X-axis (maximum false-positive rate)
-and "sp" for the Y-axis, representing the minimum true positive-rate}
+\item{measure}{Select the parameter to limit the calculation of the partial ROC curve, se for the X-axis (maximum false-positive rate)
+and sp for the Y-axis, representing the minimum true positive-rate}
 
 \item{cutoff}{Input the threshold to limit the calculation of the partial ROC curve, the number must be between 0 and 1.}
 }

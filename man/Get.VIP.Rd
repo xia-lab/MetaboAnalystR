@@ -6,6 +6,11 @@
 \usage{
 Get.VIP(pls.obj, comp = 2)
 }
+\arguments{
+\item{pls.obj}{Input the PLS object}
+
+\item{comp}{Numeric, input the number of components, by default it is 2}
+}
 \description{
 Users give a pls object ('oscorespls'=T), function calculates VIP score
 usually one VIP for each component, return is the average of all VIP

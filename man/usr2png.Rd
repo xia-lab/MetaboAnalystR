@@ -6,6 +6,11 @@
 \usage{
 usr2png(xy, im)
 }
+\arguments{
+\item{xy}{Input coordinates}
+
+\item{im}{Input coordinates}
+}
 \description{
 Convert user coords (as used in current plot) to pixels in a png
 adapted from the imagemap package

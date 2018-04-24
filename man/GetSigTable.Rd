@@ -6,6 +6,13 @@
 \usage{
 GetSigTable(mat, method, data.type)
 }
+\arguments{
+\item{mat}{Input matrix}
+
+\item{method}{Input method to create table}
+
+\item{data.type}{Input the data type}
+}
 \description{
 generate Latex table
 }

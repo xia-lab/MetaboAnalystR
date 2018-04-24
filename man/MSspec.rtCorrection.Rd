@@ -4,12 +4,12 @@
 \alias{MSspec.rtCorrection}
 \title{Retention time correction for LC/GC-MS spectra}
 \usage{
-MetaboAnalystR:::MSspec.rtCorrection(mSetObj, bw)
+MSspec.rtCorrection(mSetObj=NA, bw=30)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{bw:}{define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
+\item{bw}{Numeric, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 kernel to apply to the peak density chromatogram}
 }
 \description{

@@ -6,6 +6,11 @@
 \usage{
 Setup.HMDBReferenceMetabolome(mSetObj = NA, filePath)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{filePath}{Input the path to the user's list of HMDB compound names}
+}
 \description{
 Read user uploaded metabolome as a list of HMDB compound names
 }

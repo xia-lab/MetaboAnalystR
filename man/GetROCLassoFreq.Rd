@@ -6,6 +6,11 @@
 \usage{
 GetROCLassoFreq(data, cls)
 }
+\arguments{
+\item{data}{Input data}
+
+\item{cls}{Input class labels}
+}
 \description{
 Get p-values from lasso
 }

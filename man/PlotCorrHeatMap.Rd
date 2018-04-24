@@ -11,6 +11,8 @@ PlotCorrHeatMap(mSetObj = NA, imgName, format = "png", dpi = 72,
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}
 
+\item{imgName}{Input the name of the image to create}
+
 \item{format}{Select the image format, "png", or "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
@@ -30,7 +32,11 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{fix.col}{Logical, fix colors (TRUE) or not (FALSE).}
 
-\item{no.clst}{Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
+\item{no.clst}{Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).}
+
+\item{top}{View top}
+
+\item{topNum}{Numeric, view top 
 McGill University, Canada
 License: GNU GPL (>= 2)}
 }

@@ -6,6 +6,9 @@
 \usage{
 SetupSMPDBLinks(kegg.ids)
 }
+\arguments{
+\item{kegg.ids}{Input the list of KEGG ids to add SMPDB links}
+}
 \description{
 Only works for human (hsa.rda) data
 }

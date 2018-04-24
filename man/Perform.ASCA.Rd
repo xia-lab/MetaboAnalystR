@@ -13,13 +13,13 @@ Perform.ASCA(mSetObj = NA, a = 1, b = 2, x = 2, res = 2)
 
 \item{b}{specify the number of components for facB}
 
+\item{x}{specify the number of components for interaction AB}
+
 \item{res}{specify the number of model residuals
 type is string, indicating the type of analysis
 "abc" separately
 "aab" facA joins with AB
 "bab" facB joins with AB}
-
-\item{c}{specify the number of components for interaction AB}
 }
 \description{
 The ASCA algorithm was adapted from the ASCA-genes method

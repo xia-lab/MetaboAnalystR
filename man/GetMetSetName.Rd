@@ -6,6 +6,11 @@
 \usage{
 GetMetSetName(mSetObj = NA, msetInx)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{msetInx}{Input the index of the metabolite set}
+}
 \description{
 Given a metset inx, give its name
 }

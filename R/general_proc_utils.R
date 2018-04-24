@@ -278,7 +278,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@description Remove variables containing a user-defined percentage cut-off of missing values.
 #'@usage RemoveMissingPercent(mSetObj, percent)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param percent Input the percentage cut-off you wish to use. For instance, 50% is represented by percent=0.5. 
+#'@param percent Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -386,17 +386,15 @@ ImputeVar <- function(mSetObj=NA, method="min"){
     msg <- c(msg,"Missing variables were replaced with the median for each feature column.");
   }else{
     if(method == "knn"){
-      suppressMessages(library(impute));
       #print("loading for KNN...");
-      new.mat<-t(impute.knn(t(int.mat))$data);
+      new.mat<-t(impute::impute.knn(t(int.mat))$data);
     }else{
-      suppressMessages(library(pcaMethods));
       if(method == "bpca"){
-        new.mat<-pca(int.mat, nPcs =5, method="bpca", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="bpca", center=T)@completeObs;
       }else if(method == "ppca"){
-        new.mat<-pca(int.mat, nPcs =5, method="ppca", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="ppca", center=T)@completeObs;
       }else if(method == "svdImpute"){
-        new.mat<-pca(int.mat, nPcs =5, method="svdImpute", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="svdImpute", center=T)@completeObs;
       }
     }
     msg <- c(msg, paste("Missing variables were imputated using", toupper(method)));
@@ -416,6 +414,8 @@ ImputeVar <- function(mSetObj=NA, method="min"){
 
 #'Data processing: Dealing with negative values
 #'@description Operates on dataSet$procr after dealing with missing values
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param method Input the method to clear negatives
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -727,23 +727,30 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 #'Retention time correction for LC/GC-MS spectra
 #'@description Performs retention time correction for LC/GC-MS spectra using the XCMS package. Following
 #'retention time correction, the object dataSet will be regrouped. 
-#'@usage MetaboAnalystR:::MSspec.rtCorrection(mSetObj, bw)
+#'@usage MSspec.rtCorrection(mSetObj=NA, bw=30)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param bw: define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
+#'@param bw Numeric, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 #'kernel to apply to the peak density chromatogram
 #'@export
 #'
 MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
   mSetObj <- .get.mSet(mSetObj);
-  xset2<-retcor(mSetObj$dataSet$xset.orig)
+  xset2 <- xcms::retcor(mSetObj$dataSet$xset.orig)
   # re-group peaks after retention time correction
-  xset2<-group(xset2, bw=bw)
-  mSetObj$dataSet$xset.rt<-xset2;
+  xset2 <- xcms::group(xset2, bw=bw)
+  mSetObj$dataSet$xset.rt <- xset2;
   return(.set.mSet(mSetObj));
 }
 
 #'Plot rentention time corrected spectra
 #'@description Plot the retention time corrected spectra
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input the name for the created plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@export
 PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
@@ -760,28 +767,27 @@ PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$msrt <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plotrt(mSetObj$dataSet$xset.rt);
   dev.off();
   
   return(.set.mSet(mSetObj));
 }
 
-#'Fill in missing peaks
+#'Function to fill in missing peaks
 #'@description For each sample in the processed MS spectra data, this function will fill in missing peaks 
 #'using the fillPeaks function from the XCMS package. First, the function will identify any peak groups that are missing 
 #'any peaks from the samples and will then fill in those peaks by rereading the raw data and 
 #'integrating signals at those regions to create a new peak. 
-#'@usage MetaboAnalystR:::MSspec.fillPeaks(mSetObj)
+#'@usage MSspec.fillPeaks(mSetObj=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
-
 MSspec.fillPeaks <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  xset3<-fillPeaks(mSetObj$dataSet$xset.rt)
-  mSetObj$dataSet$xset.fill<-xset3
+  xset3 <- xcms::fillPeaks(mSetObj$dataSet$xset.rt)
+  mSetObj$dataSet$xset.fill <- xset3
   
   msg <- paste("A total of", dim(xset3@peaks)[1],"peaks were detected from these samples")
   msg <- c(msg, paste("with an average of", round(dim(xset3@peaks)[1]/dim(xset3@phenoData)[1], 2), "peaks per spectrum."))
@@ -796,6 +802,7 @@ MSspec.fillPeaks <- function(mSetObj=NA){
 #'Collisions where more than one peak from a single sample are in the same group get resolved
 #'utilizing "medret", which uses the peak closest to the median retention time.
 #'@usage SetupMSdataMatrix(mSetObj, intvalue) 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param intvalue name of peak column to enter into the returned matrix, if intvalue = 'into', 
 #'use integrated area of original (raw) peak intensities, 
 #'if intvalue = 'intf', use integrated area of filtered peak intensities, 
@@ -811,7 +818,7 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  values <- groupval(mSetObj$dataSet$xset.fill, "medret", value = intvalue);
+  values <- xcms::groupval(mSetObj$dataSet$xset.fill, "medret", value = intvalue);
   msg <- mSetObj$msgSet$xset.msg;
   # transpose to make row for samples
   orig <- as.data.frame(t(values));
@@ -825,6 +832,7 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
 }
 
 #'Check if the spectra processing is ok
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@export
 #'
 IsSpectraProcessingOK <- function(mSetObj=NA){
@@ -863,11 +871,12 @@ GetGroupNumber<-function(mSetObj=NA){
   return(length(levels(mSetObj$dataSet$cls)));
 }
 
-#' Check if the sample size is small
-#' @description Returns whether or not the sanity check found that there were too many
-#' groups in the dataset containing too few samples. It will return a 0 if the data passes the check,
-#' or will return a 1 if the data does not. 
-#' @usage IsSmallSmplSize(mSetObj) 
+#'Check if the sample size is small
+#'@description Returns whether or not the sanity check found that there were too many
+#'groups in the dataset containing too few samples. It will return a 0 if the data passes the check,
+#'or will return a 1 if the data does not. 
+#'@usage IsSmallSmplSize(mSetObj=NA) 
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 #'
 IsSmallSmplSize<-function(mSetObj=NA){
@@ -889,6 +898,8 @@ IsDataContainsNegative<-function(mSetObj=NA){
 ########## Utility Functions ##############
 #'Perform utilities for peak grouping
 #'@description Perform various utilities for peak grouping
+#'@param y Input peaks
+#'@param istart Performs which.max on y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -906,6 +917,8 @@ descendMin <- function(y, istart = which.max(y)) {
 
 #'Perform utilities for peak grouping
 #'@description Perform various utilities for peak grouping
+#'@param x Input the data
+#'@param values Input the values 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -924,6 +937,10 @@ findEqualGreaterM <- function(x, values) {
 
 #'Perform utilities for peak grouping
 #'@description Perform various utilities for peak grouping
+#'@param m Peaks
+#'@param order Performs seq(length = nrow(m))
+#'@param xdiff Default set to 0
+#'@param ydiff Default set to 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

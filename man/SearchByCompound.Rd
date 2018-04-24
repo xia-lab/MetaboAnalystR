@@ -6,6 +6,11 @@
 \usage{
 SearchByCompound(mSetObj = NA, query)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{query}{Input the query to search}
+}
 \description{
 Search for compound from all member compounds of metabolite set
 }

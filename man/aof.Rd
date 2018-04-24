@@ -6,6 +6,11 @@
 \usage{
 aof(x, cls)
 }
+\arguments{
+\item{x}{Input the data to perform ANOVA}
+
+\item{cls}{Input class labels}
+}
 \description{
 Perform anova and only return p values and MSres (for Fisher's LSD)
 }

@@ -6,6 +6,11 @@
 \usage{
 CreateEnrichRnwReport(mSetObj, usrName)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{usrName}{Input the name of the user}
+}
 \description{
 Report generation using Sweave
 Metabolite enrichment analysis report

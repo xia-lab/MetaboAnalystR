@@ -6,6 +6,11 @@
 \usage{
 analyze.lipids(inFile, iso = "y")
 }
+\arguments{
+\item{inFile}{Input the file to read in}
+
+\item{iso}{Default is set to "y"}
+}
 \description{
 Lipid analysis pipeliner
 }

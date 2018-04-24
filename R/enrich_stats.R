@@ -1,15 +1,14 @@
-#'Various enrichment analysis algorithms
-#'@description Various enrichment analysis algorithms
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
-#'
+### Various enrichment analysis algorithms
+### Jeff Xia \email{jeff.xia@mcgill.ca}
+### McGill University, Canada
+### License: GNU GPL (>= 2)
+
 #'Over-representation analysis using hypergeometric tests
 #'@description Over-representation analysis using hypergeometric tests
 #'The probability is calculated from obtaining equal or higher number
 #'of hits using 1-phyper. Since phyper is a cumulative probability,
 #'to get P(X>=hit.num) => P(X>(hit.num-1))
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -97,10 +96,9 @@ CalculateHyperScore <- function(mSetObj=NA){
   
 }
 
-
-
 #'Quantitative enrichment analysis with globaltest
 #'@description Various enrichment analysis algorithms
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -111,7 +109,6 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   # now, perform the enrichment analysis
-  library('globaltest');
   set.size <- length(current.msetlib);
   if(set.size == 1){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
@@ -127,7 +124,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   
   hmdb.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(hmdb.inx);
-  msea.data<-mSetObj$dataSet$norm[,hit.inx];
+  msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
   current.mset <- current.msetlib$member; 
   
@@ -138,14 +135,14 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   }
 
   # first, get the matched entries from current.mset
-  hits<-lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
+  hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   
   phenotype <- mSetObj$dataSet$cls;
   
   # this step is very slow
-  gt.obj <- gt(phenotype, msea.data, subsets=hits);
-  gt.res<-result(gt.obj);
-  set.num<-unlist(lapply(current.mset, length), use.names = FALSE);
+  gt.obj <- globaltest::gt(phenotype, msea.data, subsets=hits);
+  gt.res <- globaltest::result(gt.obj);
+  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
   
   match.num <- gt.res[,5];
   if(sum(match.num>0)==0){
@@ -160,8 +157,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   fdr.p <- p.adjust(raw.p, "fdr");
   
   res.mat <- cbind(set.num, match.num, gt.res[,2], gt.res[,3], raw.p, bonf.p, fdr.p);
-  rownames(res.mat)<-rownames(gt.res);
-  colnames(res.mat)<-c("Total Cmpd", "Hits", "Statistic Q", "Expected Q", "Raw p", "Holm p", "FDR");
+  rownames(res.mat) <- rownames(gt.res);
+  colnames(res.mat) <- c("Total Cmpd", "Hits", "Statistic Q", "Expected Q", "Raw p", "Holm p", "FDR");
   
   hit.inx<-res.mat[,2]>0;
   res.mat<-res.mat[hit.inx, ];
@@ -184,6 +181,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 
 #'Single sample profiling to compare with
 #'@description reference concentrations stored in the library
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -350,25 +348,27 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 
 #'Replace the last column of the ssp.mat with the final selection from users
 #'@description Replace the last column of the ssp.mat with the final selection from users
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  library(xtable);
   ssp.res<-mSetObj$analSet$ssp.mat[,-c(1,3,6)];
   rownames(ssp.res)<-mSetObj$analSet$ssp.mat[,1]
   selected.col<-rep(0, nrow(ssp.res));
   inx<-match(mSetObj$dataSet$cmpd, mSetObj$analSet$ssp.mat[,1]);
   selected.col[inx]<-1;
   
-  print(xtable(cbind(ssp.res, selected = selected.col),align="l|l|p{8cm}|c|c", caption="Comparison with Reference Concentrations"),
+  print(xtable::xtable(cbind(ssp.res, selected = selected.col),align="l|l|p{8cm}|c|c", caption="Comparison with Reference Concentrations"),
         tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
 }
 
 #'Given a metset inx, return hmtl highlighted metset cmpds and references
 #'@description Given a metset inx, return hmtl highlighted metset cmpds and references
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -401,6 +401,8 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
 
 #'Given a metset inx, give its name
 #'@description Given a metset inx, give its name
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param msetInx Input the index of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -443,22 +445,21 @@ GetORA.mat<-function(mSetObj=NA){
 }
 
 #'Get ORA table
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetORATable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  library(xtable);
   res <- mSetObj$analSet$ora.mat;
   if(substr(mSetObj$analSet$type, 0, 4) == 'mset'){
-    print(xtable(mSetObj$analSet$ora.mat,align="p{5cm}|l|l|l|l|l|l", display=c("s","d","f","d","E","E","E"), caption="Result from Over Representation Analysis"),
+    print(xtable::xtable(mSetObj$analSet$ora.mat,align="p{5cm}|l|l|l|l|l|l", display=c("s","d","f","d","E","E","E"), caption="Result from Over Representation Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }else{
     rownames(res)<-GetORA.pathNames(mSetObj);
-    print(xtable(res,align="p{5cm}|l|l|l|l||ll|l|l", display=c("s","d","f","d","E","E", "E","E", "f"),
+    print(xtable::xtable(res,align="p{5cm}|l|l|l|l||ll|l|l", display=c("s","d","f","d","E","E", "E","E", "f"),
                  caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }      
 }
-
 
 GetQEA.colorBar<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -487,18 +488,18 @@ GetQEA.mat<-function(mSetObj=NA){
 }
 
 #'QEA table
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetQEATable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  library(xtable);
   res <- mSetObj$analSet$qea.mat;
   if(substr(mSetObj$analSet$type, 0, 4) == 'mset'){
-    print(xtable(res,align="p{4cm}|l|l|l|l|l|l|l", display=c("s","d","d","f","f","E","E","E"),
+    print(xtable::xtable(res,align="p{4cm}|l|l|l|l|l|l|l", display=c("s","d","d","f","f","E","E","E"),
                  caption="Result from Quantitative Enrichment Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }else{
     rownames(res)<- GetQEA.pathNames();
-    print(xtable(res,align="p{5cm}|l|l|l|l|l|l|l", display=c("s","d","d","E","E", "E","E","f"),
+    print(xtable::xtable(res,align="p{5cm}|l|l|l|l|l|l|l", display=c("s","d","d","E","E", "E","E","f"),
                  caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }

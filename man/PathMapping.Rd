@@ -6,6 +6,11 @@
 \usage{
 PathMapping(mSetObj = NA, qvec)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{qvec}{Input the query vector}
+}
 \description{
 Perform pathway mapping of compounds
 }

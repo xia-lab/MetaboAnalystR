@@ -7,6 +7,8 @@
 PlotModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
 }
 \arguments{
+\item{mSetObj}{Input name of the created mSet Object.}
+
 \item{imgName}{Input a name for the plot}
 
 \item{format}{Select the image format, "png", or "pdf".}

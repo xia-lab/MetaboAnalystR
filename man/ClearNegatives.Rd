@@ -6,6 +6,11 @@
 \usage{
 ClearNegatives(mSetObj = NA, method = "abs")
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{method}{Input the method to clear negatives}
+}
 \description{
 Operates on dataSet$procr after dealing with missing values
 }

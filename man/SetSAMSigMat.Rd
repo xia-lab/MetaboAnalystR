@@ -8,6 +8,8 @@ SetSAMSigMat(mSetObj = NA, delta)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{delta}{Input the delta for SAM analysis}
 }
 \description{
 Create SAM matrix

@@ -6,8 +6,11 @@
 \usage{
 GetRFConfMat(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
-Return double[][] confusion matrix
+Return double confusion matrix
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

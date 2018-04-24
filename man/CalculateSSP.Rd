@@ -6,6 +6,9 @@
 \usage{
 CalculateSSP(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 reference concentrations stored in the library
 }

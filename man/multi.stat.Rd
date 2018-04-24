@@ -6,6 +6,11 @@
 \usage{
 multi.stat(pred, resp)
 }
+\arguments{
+\item{pred}{Input predictions}
+
+\item{resp}{Input responses}
+}
 \description{
 Get multiple category statistics
 }

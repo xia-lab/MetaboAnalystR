@@ -13,7 +13,6 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  library(SSPA);
   if(clsOpts == "NA"){
     grp.nms <- levels(mSetObj$dataSet$cls)[1:2];
   }else{
@@ -34,7 +33,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
   n1 <- length(inx1);
   n2 <- length(inx2);
   
-  pdD <- pilotData(statistics = stats, 
+  pdD <- SSPA::pilotData(statistics = stats, 
                    samplesize = sqrt(n1+n2), 
                    distribution="t",
                    df=n1+n2-2);
@@ -55,7 +54,8 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+#'@import lattice
+
 PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -72,15 +72,15 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$powerstat<-imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  library(lattice);
-  plot(mSetObj$analSet$power$pdD);
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  SSPA::plot(mSetObj$analSet$power$pdD);
   dev.off();
   return(.set.mSet(mSetObj));
 }
 
 #'Retrieve sample size ladder
 #'@description Return sample size ladder, used in higher functions
+#'@param maxNum Numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -94,10 +94,10 @@ GetSampleSizeLadder <- function(maxNum){
 
 #'Perform power profiling
 #'@description Perform power profiling of data
-#'@usage PerformPowerProfiling(mSetObj, fdr.lvl, smplSize)
+#'@usage PerformPowerProfiling(mSetObj=NA, fdr.lvl, smplSize)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fdr.lvl Specify the false-discovery rate level.
-#'@param smpSize Specify the maximum sample size, the number must be between 60-1000. 
+#'@param smplSize Specify the maximum sample size, the number must be between 60-1000. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -108,7 +108,7 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
   mSetObj <- .get.mSet(mSetObj);
   
   res <- round(length(mSetObj$analSet$power$pdD@statistics)/2);
-  ssD <- sampleSize(mSetObj$analSet$power$pdD, method="congrad", control=list(from=-6, to=6, resolution=res));
+  ssD <- SSPA::sampleSize(mSetObj$analSet$power$pdD, method="congrad", control=list(from=-6, to=6, resolution=res));
   Jpred <- GetSampleSizeLadder(smplSize);
   N <- sqrt(Jpred/2);
   
@@ -116,7 +116,7 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
   if(fdr.lvl >= pi0){
     fdr.lvl <- signif(pi0-pi0/10, 3);
   }
-  pwrD <- predictpower(ssD, samplesizes=N, alpha=fdr.lvl)
+  pwrD <- SSPA::predictpower(ssD, samplesizes=N, alpha=fdr.lvl)
   mSetObj$analSet$power$ssD <- ssD;
   mSetObj$analSet$power$Jpred <- Jpred;
   mSetObj$analSet$power$pwrD <- pwrD;
@@ -160,8 +160,8 @@ PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width
   h <- w*7/9;
   
   mSetObj$imgSet$powereffect<-imgName;
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(plot(mSetObj$analSet$power$ssD));
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(SSPA::plot(mSetObj$analSet$power$ssD));
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -169,10 +169,10 @@ PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'Plot power profile
 #'@description Plot power profile, specifying FDR level and sample size. It will 
 #'return the image as well as the predicted power at various sample sizes. 
-#'@usage PlotPowerProfile(mSetObj, fdr.lvl, smplSize, imgName, format, dpi, width)
+#'@usage PlotPowerProfile(mSetObj=NA, fdr.lvl, smplSize, imgName, format, dpi, width)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fdr.lvl Specify the false-discovery rate level.
-#'@param smpSize Specify the maximum sample size, the number must be between 60-1000. 
+#'@param smplSize Specify the maximum sample size, the number must be between 60-1000. 
 #'@param imgName Specify the name to save the image as.
 #'@param format Specify the format of the image to save it as, either "png" or "pdf".
 #'@param dpi Specify the dots-per-inch (dpi). By default it is 72, for publications
@@ -190,7 +190,7 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
   
   Jpred <- GetSampleSizeLadder(smplSize);
   N <- sqrt(Jpred/2);
-  pwrD <- predictpower(mSetObj$analSet$power$ssD, samplesizes=N, alpha=fdr.lvl)
+  pwrD <- SSPA::predictpower(mSetObj$analSet$power$ssD, samplesizes=N, alpha=fdr.lvl)
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -205,7 +205,7 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
   
   mSetObj$imgSet$powerprofile<-imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(Jpred, pwrD, type="n", ylim=c(0,1), ylab="Predicted power", xlab="Sample Size (per group)");
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   lines(Jpred, pwrD, lwd=4, col="orange");
@@ -219,7 +219,6 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
     .set.mSet(mSetObj);
     return(pwrD);
   }
-  
   return(.set.mSet(mSetObj));
 }
 

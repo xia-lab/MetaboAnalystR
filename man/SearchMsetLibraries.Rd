@@ -6,6 +6,13 @@
 \usage{
 SearchMsetLibraries(mSetObj = NA, query, type)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{query}{Input the query to search}
+
+\item{type}{Input the data type (name or compound)}
+}
 \description{
 Search metabolite set libraries
 }

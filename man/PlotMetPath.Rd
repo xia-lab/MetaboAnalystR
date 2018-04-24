@@ -6,6 +6,16 @@
 \usage{
 PlotMetPath(mSetObj = NA, pathName, width, height)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{pathName}{Input the name of the selected pathway}
+
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{height}{Input the height of the created plot.}
+}
 \description{
 Orthogonal PLS-DA (from ropls)
 }

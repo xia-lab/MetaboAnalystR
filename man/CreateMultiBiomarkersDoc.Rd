@@ -6,6 +6,9 @@
 \usage{
 CreateMultiBiomarkersDoc(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
 Biomarker analysis report, Multivariate Biomarker Analysis

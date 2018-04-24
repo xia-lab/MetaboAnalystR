@@ -6,6 +6,9 @@
 \usage{
 RemoveFile(fileName)
 }
+\arguments{
+\item{fileName}{Input name of file to remove}
+}
 \description{
 Remove file
 }

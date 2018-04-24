@@ -9,6 +9,17 @@ case of too many NAs}
 PlotCmpdSummary(mSetObj = NA, cmpdNm, format = "png", dpi = 72,
   width = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{cmpdNm}{Input the name of the compound to plot}
+
+\item{format}{Input the format of the image to create}
+
+\item{dpi}{Input the dpi of the image to create}
+
+\item{width}{Input the width of the image to create}
+}
 \description{
 Plot compound summary
 change to use dataSet$procr instead of dataSet$orig in

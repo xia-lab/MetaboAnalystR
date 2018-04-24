@@ -6,6 +6,17 @@
 \usage{
 Get.pred(x.train, y.train, x.test, y.test, clsMethod = "pls")
 }
+\arguments{
+\item{x.train}{Training X}
+
+\item{y.train}{Training Y}
+
+\item{x.test}{Test X}
+
+\item{y.test}{Test Y}
+
+\item{clsMethod}{Method to predict class, by default it is PLS}
+}
 \description{
 Get predicted class probability, used in higher function
 }

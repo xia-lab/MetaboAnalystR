@@ -4,7 +4,7 @@
 \alias{UpdateFeatureItems}
 \title{Remove feature items}
 \usage{
-MetaboAnalystR:::UpdateFeatureItems(mSetObj, feature.nm.vec)
+UpdateFeatureItems(mSetObj=NA, feature.nm.vec)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

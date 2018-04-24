@@ -6,6 +6,9 @@
 \usage{
 GetSigTable.FC(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Sig Table for Fold-Change Analysis
 }

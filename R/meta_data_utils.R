@@ -1,4 +1,3 @@
-
 #'Read in individual data 
 #'@description This function determines reads in user's individual data for meta-analysis.
 #'@param mSetObj Input name of the created mSet Object
@@ -287,6 +286,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
 #removed setcurrentdata, never used?
 
 #'Remove data object, the current dataSet will be the last one by default 
+#'@param dataName Input name of data to remove
 #'@export
 RemoveData <- function(dataName){
   if(!is.null(mdata.all[[dataName]])){
@@ -336,6 +336,7 @@ SelectMultiData <- function(mSetObj=NA){
   }
 }
 
+#' Get all meta-analysis name data
 #'@export
 GetAllDataNames <- function(){
   names(mdata.all);
@@ -405,12 +406,10 @@ PerformDataNormalization <- function(data, norm.opt){
     data <- log2(data);
     msg <- paste(msg, "Log2 transformation.", collapse=" ");
   }else if(norm.opt=="vsn"){
-    library(limma);
-    data <- normalizeVSN(data);
+    data <- limma::normalizeVSN(data);
     msg <- paste(msg, "VSN normalization.", collapse=" ");
   }else if(norm.opt=="quantile"){
-    library('preprocessCore');
-    data <- normalize.quantiles(data, copy=TRUE);
+    data <- preprocessCore::normalize.quantiles(data, copy=TRUE);
     msg <- paste(msg, "Quantile normalization.", collapse=" ");
   }else{
     msg <- paste("Unknown normalization: ", norm.opt, collapse=" ");
@@ -478,25 +477,25 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
 # for two groups only (used for meta-analysis)
 PerformLimma<-function(data, group){
   
-  library(limma);
   data <- data;
   design <- model.matrix(~-1 + group);
-  fit = lmFit(data, design)
+  fit = limma::lmFit(data, design)
   
   grps.cmp <- paste("group", levels(group)[2], " - ", "group", levels(group)[1], sep="");
   myargs <- list(grps.cmp, levels = design);
-  contrast.matrix <- do.call(makeContrasts, myargs);
-  fit <- contrasts.fit(fit, contrast.matrix)
-  fit <- eBayes(fit);
+  contrast.matrix <- do.call(limma::makeContrasts, myargs);
+  fit <- limma::contrasts.fit(fit, contrast.matrix)
+  fit <- limma::eBayes(fit);
   gc();
   return(list(fit.obj=fit));
 }
 
-# get result table from eBayes fit object
+#'Get result table from eBayes fit object
+#'@param fit.obj eBayes fit object to parse to a table
 #'@export
 GetLimmaResTable<-function(fit.obj){
   
-  resTable <- topTable(fit.obj, number=Inf, adjust.method="BH");
+  resTable <- limma::topTable(fit.obj, number=Inf, adjust.method="BH");
   if(!is.null(resTable$ID)){ # for older version
     rownames(resTable) <- resTable$ID;
     resTable$ID <- NULL;
@@ -518,20 +517,15 @@ GetLimmaResTable<-function(fit.obj){
 PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   
   mSetObj <- .get.mSet(mSetObj);
-  
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
-  
   imgName <- paste(gene.id, ".png", sep="");
-  
   mSetObj$imgSet$meta.anal$plot <- imgName
-  
-  library(lattice);
-  
+
   num <- sum(mdata.all == 1);
   # calculate width based on the dataset number
   if(num == 1){
-    Cairo(file = imgName, width=280, height=320, type="png", bg="white");
-    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
+    Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+    myplot <- lattice::bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
                      xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
   }else{
     # calculate layout
@@ -546,7 +540,7 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
       width=160*rn;
     }
     
-    Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+    Cairo::Cairo(file = imgName, width=width, height=height, type="png", bg="white");
     data.lbl <- as.character(metastat.meta$data.lbl);
     data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
     
@@ -562,15 +556,13 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
     # update labels
     data.lbl <- factor(data.lbl, labels=nlbls);
     # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
+    myplot <- lattice::bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
                      xlab="Datasets", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)),
                      fill="#0000ff22", layout=layout);
   }
   
   print(myplot); 
-  
   dev.off();
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -587,7 +579,6 @@ GetMetaSanityCheckMsg <- function(mSetObj=NA, dataName){
   if(mSetObj$dataSet$name != dataName){
     dataSet <- readRDS(dataName);
   }
-  
   return(dataSet$check.msg);
 } 
 
@@ -614,7 +605,6 @@ GetMetaGroupNames <-function(mSetObj=NA, dataName){
   }
   return(levels(dataSet$cls));
 }
-
 
 ######################################
 ## methods for merged expression data

@@ -6,6 +6,9 @@
 \usage{
 PerformKOEnrichAnalysis_List(file.nm)
 }
+\arguments{
+\item{file.nm}{Input the file name}
+}
 \description{
-Utility function for PerformKOEnrichAnalysis_KO01100
+Please note: only return hits in map KO01100
 }

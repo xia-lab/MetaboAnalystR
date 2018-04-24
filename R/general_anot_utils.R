@@ -1,6 +1,9 @@
 #'Perform various annotation
 #'@description Gene ID mapping, gene annotation, compound
 #'mapping, KEGG mapping
+#'@param q.vec Input the query
+#'@param org Input the organism type
+#'@param type Input the type of data to annotate 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -113,6 +116,9 @@ doEntrez2SymbolMapping <- function(entrez.vec){
   return(symbols);
 }
 
+#'Perform compound mapping
+#'@param cmpd.vec Input compound vector
+#'@param q.type Query type
 #'@export
 doCompoundMapping<-function(cmpd.vec, q.type){
   
@@ -164,6 +170,8 @@ doCompoundMapping<-function(cmpd.vec, q.type){
   return(dat);
 }
 
+#'Perform KEGG to compound name mapping
+#'@param kegg.vec Input vector of KEGG compounds
 #'@export
 doKEGG2NameMapping <- function(kegg.vec){
   cmpd.map <- .read.metaboanalyst.lib("compound_db.rds");

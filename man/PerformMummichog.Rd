@@ -4,10 +4,16 @@
 \alias{PerformMummichog}
 \title{Main function to perform mummichog}
 \usage{
-mSet <- PerformMummichog(mummichog = NA, enrichOpt, pvalOpt, permNum = 100)
+PerformMummichog(mSetObj=NA, enrichOpt, pvalOpt, permNum = 100)
 }
 \arguments{
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{mSetObj}{Input the name of the created mSetObj object}
+
+\item{enrichOpt}{Input the method to perform enrichment analysis}
+
+\item{pvalOpt}{Input the method to calculate p-values}
+
+\item{permNum}{Numeric, the number of permutations to perform}
 }
 \description{
 This is the main function that performs the mummichog analysis.

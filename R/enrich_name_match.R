@@ -3,6 +3,13 @@
 #'Given a list of compound names or ids, find matched name or ids from selected databases
 #'@description Given a list of compound names or ids
 #'find matched name or ids from selected databases
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param q.type Input the query type
+#'@param hmdb Logical, T to cross reference to HMDB, F to not
+#'@param pubchem Logical, T to cross reference to PubChem, F to not
+#'@param chebi Logical, T to cross reference to CheBI, F to not
+#'@param kegg Logical, T to cross reference to KEGG, F to not
+#'@param metlin Logical, T to cross reference to MetLin, F to not
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -50,6 +57,8 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
 #'@description For compound names to other ids, can do exact or approximate matches
 #'For other IDs, except HMDB ID, all others may return multiple/non-unique hits
 #'Multiple hits or non-unique hits will allow users to manually select
+#'@param mSetObj Input the name of the created mSetObj
+#'@param q.type Inpute the query-type
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -150,6 +159,8 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
 
 #' Perform detailed name matche
 #'@description Given a query, perform compound matching 
+#'@param mSetObj Input name of the created mSet Object
+#'@param q Input the query
 #'@export
 #'
 PerformDetailMatch <- function(mSetObj=NA, q){
@@ -165,6 +176,8 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 
 #' Perform multiple name matches
 #'@description Given a query, perform compound matching 
+#'@param mSetObj Input name of the created mSet Object
+#'@param q Input the query
 #'@export
 #'
 PerformMultiMatch <- function(mSetObj=NA, q){
@@ -184,6 +197,8 @@ PerformMultiMatch <- function(mSetObj=NA, q){
 
 #'Perform approximate compound matches
 #'@description Given a query, perform approximate compound matching 
+#'@param mSetObj Input the name of the created mSetObj
+#'@param q Input the q vector
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q){
@@ -272,6 +287,9 @@ PerformApproxMatch <- function(mSetObj=NA, q){
 
 #'Set matched name based on user selection from all potential hits
 #'@description Note: to change object in the enclosing enviroment, use "<<-"
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param query_nm Input the query name
+#'@param can_nm Input the candidate name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -333,6 +351,8 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 
 #'Perform pathway mapping
 #'@description Perform pathway mapping of compounds
+#'@param mSetObj Input name of the created mSet Object
+#'@param qvec Input the query vector
 #'@export
 #'
 PathMapping <- function(mSetObj=NA, qvec){
@@ -421,6 +441,7 @@ PathMapping <- function(mSetObj=NA, qvec){
 
 #'Get all candidate compound names for a given index 
 #'@description Returns 3 coloumns - inx, name, score
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -479,6 +500,7 @@ GetQuery <- function(mSetObj=NA, inx){
 #'Return the final (after user selection) map as dataframe
 #'@description Returns three columns: original name, HMDB name and KEGG ID,
 #'for enrichment and pathway analysis, respectively
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -512,16 +534,20 @@ GetFinalNameMap <- function(mSetObj=NA){
 }
 
 #'Get mapping table
+#'@description Return results from compound name mapping in a table
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
+
 GetMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  library(xtable);
-  print(xtable(mSetObj$dataSet$map.table, caption="Result from Compound Name Mapping"),
+  print(xtable::xtable(mSetObj$dataSet$map.table, caption="Result from Compound Name Mapping"),
         tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
 }
 
+#'Creates the mapping result table
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 CreateMappingResultTable <- function(mSetObj=NA){
   
@@ -599,7 +625,6 @@ CreateMappingResultTable <- function(mSetObj=NA){
   }else{
     return(.set.mSet(mSetObj));
   }
-  
 }
 
 GetHitsRowNumber<-function(mSetObj=NA){

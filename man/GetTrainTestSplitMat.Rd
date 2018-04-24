@@ -6,6 +6,13 @@
 \usage{
 GetTrainTestSplitMat(y, propTraining = 2/3, nRuns = 30)
 }
+\arguments{
+\item{y}{Input the data}
+
+\item{propTraining}{By default set to 2/3}
+
+\item{nRuns}{By default set to 30}
+}
 \description{
 Make random partitions, returns matrices indicating
 whether the observation is in train/test for each run

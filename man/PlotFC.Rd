@@ -4,7 +4,7 @@
 \alias{PlotFC}
 \title{Plot fold change}
 \usage{
-PlotFC(imgName, format, dpi, width)
+PlotFC(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

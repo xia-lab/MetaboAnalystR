@@ -1,8 +1,8 @@
-#'Over-representation analysis using hypergeometric tests
-#'The probability is calculated from obtaining the equal or higher number
-#'of hits using 1-phyper. Since phyper is a cumulative probability,
-#'to get P(X>=hit.num) => P(X>(hit.num-1))
-#'
+### Over-representation analysis using hypergeometric tests
+### The probability is calculated from obtaining the equal or higher number
+### of hits using 1-phyper. Since phyper is a cumulative probability,
+### to get P(X>=hit.num) => P(X>(hit.num-1))
+
 #'Calculate ORA score
 #'@description Calculate the over representation analysis score
 #'@usage CalculateOraScore(mSetObj=NA, nodeImp, method)
@@ -14,8 +14,9 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
+  
   mSetObj <- .get.mSet(mSetObj);
   # make a clean dataSet$cmpd data based on name mapping
   # only valid kegg id will be used
@@ -30,7 +31,6 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     return(0);
   }
   
-  library(KEGGgraph);
   current.mset <- metpa$mset.list;
   uniq.count <- metpa$uniq.count;
   
@@ -43,9 +43,9 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   }
   
   hits <- lapply(current.mset, function(x){x[x %in% ora.vec]});
-  hit.num<-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
-  set.size<-length(current.mset);
-  set.num<-unlist(lapply(current.mset, length), use.names=FALSE);
+  hit.num <-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
+  set.size <-length(current.mset);
+  set.num <- unlist(lapply(current.mset, length), use.names=FALSE);
   
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=8);
@@ -65,11 +65,11 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   res.mat[,3]<-hit.num;
   
   if(method == "fisher"){
-    res.mat[,4]<-GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
+    res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is \\textbf{Fishers' exact test}.";
   }else{
     # use lower.tail = F for P(X>x)
-    res.mat[,4]<-phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
+    res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is \\textbf{Hypergeometric test}.";
   }
   
@@ -82,7 +82,6 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   res.mat[,8] <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   
   res.mat <- res.mat[hit.num>0, , drop=FALSE];
-  
   
   if(nrow(res.mat) > 1){
     ord.inx <- order(res.mat[,4], res.mat[,8]);
@@ -106,13 +105,14 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   }
 }
 
+#'Export pathway names from ORA analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetORA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   hit.inx <- match(rownames(mSetObj$analSet$ora.mat), metpa$path.ids);
   return(names(metpa$path.ids)[hit.inx]);
 }
-
 
 #'Calculate quantitative enrichment score
 #'@description Calculate quantitative enrichment score
@@ -125,7 +125,7 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+
 CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -143,7 +143,6 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
   
   # now, perform the enrichment analysis
-  library(KEGGgraph);
   current.mset <- metpa$mset.list;
   uniq.count <- metpa$uniq.count;
   
@@ -155,20 +154,18 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   
   hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
-  hit.inx<-unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
+  hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
   hits <- hits[hit.inx]; # remove no hits
   
   if(method == "gt"){
-    library('globaltest');
-    qea.obj <- gt(mSetObj$dataSet$cls, path.data, subsets=hits);
-    qea.res <- result(qea.obj);
+    qea.obj <- globaltest::gt(mSetObj$dataSet$cls, path.data, subsets=hits);
+    qea.res <- globaltest::result(qea.obj);
     match.num <- qea.res[,5];
     raw.p <- qea.res[,1];
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
   }else{
-    library('GlobalAncova');
     qea.obj <- NULL;
-    qea.res <- GlobalAncova(xx=t(path.data), group=mSetObj$dataSet$cls, test.genes=hits, method="approx");
+    qea.res <- GlobalAncova::GlobalAncova(xx=t(path.data), group=mSetObj$dataSet$cls, test.genes=hits, method="approx");
     match.num <- qea.res[,1];
     raw.p <- qea.res[,3];
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
@@ -233,6 +230,8 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
 }
 
+#'Export pathway names from QEA analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetQEA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -242,6 +241,7 @@ GetQEA.pathNames <- function(mSetObj=NA){
 
 #'Only works for human (hsa.rda) data
 #'@description Only works for human (hsa.rda) data
+#'@param kegg.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -258,7 +258,7 @@ SetupSMPDBLinks <- function(kegg.ids){
       all.lks[i]<-paste("<a href=http://www.smpdb.ca/view/",lks," target=_new>SMP</a>", sep="", collapse="\n");
     }
   }
-  return (all.lks);
+  return(all.lks);
 }
 
 ##############################################
@@ -269,6 +269,8 @@ SetupSMPDBLinks <- function(kegg.ids){
 
 #'Given a metset inx, return hmtl highlighted pathway cmpds
 #'@description Given a metset inx, return hmtl highlighted pathway cmpds
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -297,30 +299,31 @@ GetHTMLPathSet <- function(mSetObj=NA, msetNm){
 
 GetORA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  kegg.vec<-rownames(mSetObj$analSet$ora.mat);
+  kegg.vec <- rownames(mSetObj$analSet$ora.mat);
   kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
-  return (kegg.vec);
+  return(kegg.vec);
 }
 
 #'Only for human pathways
 #'@description Only for human pathways
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
 GetORA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return (SetupSMPDBLinks(rownames(mSetObj$analSet$ora.mat)));
+  return(SetupSMPDBLinks(rownames(mSetObj$analSet$ora.mat)));
 }
 
 GetQEA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  kegg.vec<-rownames(mSetObj$analSet$qea.mat);
+  kegg.vec <- rownames(mSetObj$analSet$qea.mat);
   kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
-  return (kegg.vec);
+  return(kegg.vec);
 }
 
 GetQEA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return (SetupSMPDBLinks(rownames(mSetObj$analSet$qea.mat)));
+  return(SetupSMPDBLinks(rownames(mSetObj$analSet$qea.mat)));
 }

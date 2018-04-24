@@ -6,6 +6,9 @@
 \usage{
 ReadPairFile(filePath = "pairs.txt")
 }
+\arguments{
+\item{filePath}{Set file path}
+}
 \description{
 This function reads paired peak lists or spectra files. The pair information
 is stored in a file where each line is a pair and names are separated by ":".

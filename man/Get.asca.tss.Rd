@@ -6,6 +6,11 @@
 \usage{
 Get.asca.tss(dummy, perm = T)
 }
+\arguments{
+\item{dummy}{Dummy variable}
+
+\item{perm}{Logical, TRUE by default}
+}
 \description{
 Dummy is used only for the purpose to maintain lapply API
 this is used for permutation on ANOVA paritions,

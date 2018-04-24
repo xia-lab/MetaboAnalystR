@@ -6,6 +6,15 @@
 \usage{
 PerformIntegGeneMapping(mSetObj = NA, geneIDs, org, idType)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{geneIDs}{Input the list of gene IDs}
+
+\item{org}{Input the organism code}
+
+\item{idType}{Input the ID type}
+}
 \description{
 Used for the pathinteg module
 }

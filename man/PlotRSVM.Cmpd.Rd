@@ -4,7 +4,7 @@
 \alias{PlotRSVM.Cmpd}
 \title{Recursive Support Vector Machine (R-SVM) plot of important variables}
 \usage{
-PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
+PlotRSVM.Cmpd(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

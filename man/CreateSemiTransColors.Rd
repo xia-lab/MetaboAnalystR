@@ -6,6 +6,9 @@
 \usage{
 CreateSemiTransColors(cls)
 }
+\arguments{
+\item{cls}{Input class labels}
+}
 \description{
 Create semitransparant colors for a given class label
 }

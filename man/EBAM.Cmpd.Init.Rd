@@ -9,6 +9,14 @@ EBAM.Cmpd.Init(mSetObj = NA, method = "z.ebam", A0 = 0,
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{method}{Input the method for EBAM analysis}
+
+\item{A0}{Numeric}
+
+\item{isPaired}{Logical, FALSE by default}
+
+\item{isVarEq}{Logical, TRUE by default}
 }
 \description{
 note: if method is wilcoxon, the A0 and var equal will be ignored

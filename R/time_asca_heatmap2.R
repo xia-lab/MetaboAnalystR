@@ -1,32 +1,52 @@
 #'Plot heatmap visualization for time-series data
 #'@description Plot heatmap visualization for time-series data
-#'@usage PlotHeatMap2(mSetObj, imgName, format, dpi, width, smplDist, clstDist, colors, viewOpt, hiRes, sortInx, useSigFeature, drawBorder, var.inx)
+#'@usage PlotHeatMap2(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, useSigFeature, drawBorder)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param smplDist select distance measure: euclidean, pearson, or minkowski
-#'@param clstDist select clustering algorithm: ward, average, complete, single 
-#'@param colors select heatmap colors: bwm, gray
-#'@param viewOpt select overview or detailed view: overview or detail
-#'@param useSigFeature use significant features only: F or T (default false)
-#'@param drawborder show cell borders: F or T (default F)
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param smplDist Select distance measure: euclidean, pearson, or minkowski
+#'@param clstDist Select clustering algorithm: ward, average, complete, single 
+#'@param colors Select heatmap colors: bwm, gray
+#'@param viewOpt Select overview or detailed view: overview or detail
+#'@param hiRes Select high-resolution or not: logical, default set to F
+#'@param sortInx Sort by index
+#'@param useSigFeature Use significant features only: F or T (default false)
+#'@param drawBorder Show cell borders: F or T (default F)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist='pearson', 
-                       clstDist='average', colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, 
+PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", 
+                       clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, 
                        useSigFeature, drawBorder){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(sortInx == 1){
-    ordInx <- order(mSetObj$dataSet$facA, mSetObj$dataSet$facB);
+  if(mSet$dataSet$facA.type==TRUE){
+    facA <- as.factor(as.numeric(levels(mSet$dataSet$facA))[mSet$dataSet$facA]);
   }else{
-    ordInx <- order(mSetObj$dataSet$facB, mSetObj$dataSet$facA);
+    facA <- mSetObj$dataSet$facA;
   }
   
-  new.facA <- mSetObj$dataSet$facA[ordInx];
-  new.facB <- mSetObj$dataSet$facB[ordInx];
+  if(mSet$dataSet$facB.type==TRUE){
+    facB <- as.factor(as.numeric(levels(mSet$dataSet$facB))[mSet$dataSet$facB]);
+  }else{
+    facB <- mSetObj$dataSet$facB;
+  }
+  
+  if(sortInx == 1){
+    ordInx <- order(facA, facB);
+  }else{
+    ordInx <- order(facB, facA);
+  }
+  
+  new.facA <- facA[ordInx];
+  new.facB <- facB[ordInx];
   
   # set up data set. note, need to transpose the data for two way plotting
   data <- mSetObj$dataSet$norm[ordInx, ];
@@ -41,7 +61,6 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   colnames(hc.dat) <- substr(colnames(data), 1, 18) # some names are too long
   
   # set up parameter for heatmap
-  suppressMessages(library(RColorBrewer));
   if(colors=="gbr"){
     colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
   }else if(colors == "heat"){
@@ -51,7 +70,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   }else if(colors == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
   }else{
-    colors <- rev(colorRampPalette(brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   if(drawBorder){
     border.col<-"grey60";
@@ -97,15 +116,14 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
-    Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-  library(pheatmap);
-  
+
   annotation <- data.frame(new.facB, new.facA);
   colnames(annotation) <- c(mSetObj$dataSet$facB.lbl, mSetObj$dataSet$facA.lbl);
   rownames(annotation) <-rownames(hc.dat); 
   
-  pheatmap(t(hc.dat), 
+  pheatmap::pheatmap(t(hc.dat), 
            annotation=annotation, 
            fontsize=8, fontsize_row=8, 
            clustering_distance_rows = smplDist,
@@ -128,7 +146,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param a specify the number of components for facA
 #'@param b specify the number of components for facB
-#'@param c specify the number of components for interaction AB
+#'@param x specify the number of components for interaction AB
 #'@param res specify the number of model residuals
 #' type is string, indicating the type of analysis
 #' "abc" separately
@@ -203,15 +221,15 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 
 #'Perform OPLS-DA
 #'@description Orthogonal PLS-DA (from ropls)
-#'@usage CalculateImpVarCutoff(mSetObj, spe.thresh, lev.thresh)
+#'@usage  CalculateImpVarCutoff(mSetObj, spe.thresh, lev.thresh)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param lev.thresh leverage threshold, the higher better, default more than 95 percentile of permuted leverage
 #'@param spe.thresh alpha threshold, less is better, default less than 5 percentile based chi-square
 #'note: spe and leverage are vectors, not a single value, but a list to store the result
 #'note: the last model is Model.res, no spe
 #'Calculate leverage cutoff based on permutation
 #'Calculate the reference distribution of leverages
 #'note: leverage.perm is a list with each member in a 3 column matrix
+#'@param lev.thresh leverage threshold, the higher better, default more than 95 percentile of permuted leverage
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -320,6 +338,9 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
 
 #'Function to perform ASCA 
 #'@description Perform ASCA
+#'@param X Numeric, number of compounds
+#'@param Design Number of levels in the factor
+#'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -375,6 +396,10 @@ ASCAfun1<-function (X, Design, Fac) {
 
 #'Function to perform ASCA 
 #'@description Perform ASCA
+#'@param X Numeric, number of compounds
+#'@param Desa Number of levels in the factor TIME
+#'@param Desb Number of levels in the other factor 
+#'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -453,10 +478,12 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
 #'Function to perform ASCA 
 #'@description Perform ASCA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'@param X Input list of compounds
+#'@param Fac Numeric 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-ASCAfun.res<-function (X, Fac) {
+ASCAfun.res <- function(X, Fac){
   PCA<-PCA.GENES(X);
   sc<-PCA$scores[,1:Fac];
   ld<-PCA$loadings[,1:Fac];
@@ -480,7 +507,6 @@ ASCAfun.res<-function (X, Fac) {
   output
 }
 
-
 #'Perform ASCA model validation by permutation
 #'@description Perform ASCA model validation by permutation
 #'we use Manly's unrestricted permutation of observations
@@ -488,8 +514,9 @@ ASCAfun.res<-function (X, Fac) {
 #'designed experiment, then calculates the score for
 #'each main factor or interaction components.
 #'This will get the null distribution for all effects in one go
-#'@usage Perform.ASCA.permute(mSetObj, perm.num)
-#'@param perm.num select the number of permutations, default is 20
+#'@usage Perform.ASCA.permute(mSetObj=NA, perm.num)
+#'@param mSetObj Input name of the created mSet Object
+#'@param perm.num Select the number of permutations, default is 20
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -574,6 +601,8 @@ getFactorSize <- function(fac){
 #'this is used for permutation on ANOVA paritions,
 #'not on the SCA/PCA part, so the number of selected components is
 #'not applicable in this step
+#'@param dummy Dummy variable
+#'@param perm Logical, TRUE by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -702,6 +731,8 @@ Get.asca.leverage <- function(dummy){
 #'Fast leverage calculation for permutation purpose
 #'@description note, the leverage combines all components
 #'the importance feature is for the factor not per components
+#'@param XKw Features
+#'@param Fac Factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -718,10 +749,11 @@ Get.Leverage <- function(XKw, Fac){
 
 
 #'Obtain principal components into a matrix that has more variables than individuals
-#'@description X is a matrix that has as columns the genes that were considered as variables in the PCA analysis.
+#'@description X is a matrix that has as columns the compounds that were considered as variables in the PCA analysis.
 #'First we center the matrix by columns (Xoff) and then we obtain the eigenvalues and the 
 #'eigenvectors of the matrix Xoff%*%t(Xoff) and we
 #'use the equivalences between the loadings and scores to obtain the solution
+#'@param X Input matrix that has as columns the compounds that were considered as variables in the PCA analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -753,6 +785,7 @@ PCA.GENES<-function(X){
 #'Plot scree plots for each model in ASCA
 #'@description Plot scree plots for each model in ASCA
 #'@usage PlotModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@param mSetObj Input name of the created mSet Object.
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
@@ -781,7 +814,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$asca.scree <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, type=format, width=w, height=h,  bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, type=format, width=w, height=h,  bg="white");
   
   models <- mSetObj$analSet$asca$models;
   # note four plots, model a, b, ab and res
@@ -806,16 +839,16 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Plot score plots of each ASCA model for component 1 against time
 #'@description Plot score plots of each ASCA model for component 1 against time
-#'@usage PlotASCAModel(mSetObj, imgName, format="png", dpi=72, width=NA, type, colowBW)
+#'@usage PlotASCAModel(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param imgName Input a name for the plot
+#'@param imgName Input a name for the ASCA score plot
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param type select model a or b
-#'@param colowBW Logical
+#'@param colorBW Logical, use black/white coloring (T) or not (F)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -856,7 +889,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
     mSetObj$imgSet$asca.modelB <- imgName;
   }
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow = c(1, pcNum), cex=1.0);
   for(j in 1:pcNum){
     ## add 'xlab=fac.lbl' & replace ylab as "Scores Component #1 (XX% of variation explained)"
@@ -883,6 +916,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
 #'Plot ASCA interaction plots 
 #'@description Plot ASCA interaction plots 
+#'@usage PlotInteraction(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -891,13 +925,12 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'@param colorBW Logical, use black and white (TRUE) or colors (FALSE)
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotInteraction(imgName, format="png", dpi=72, colowBW, width=NA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotInteraction<-function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
+PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -921,7 +954,7 @@ PlotInteraction<-function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FAL
   
   mSetObj$imgSet$asca.modelAB <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=9, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=9, type=format, bg="white");
   lmat<-matrix(1:(4*pcNum), nrow=4, byrow=F);
   lwid<-rep(4.0, pcNum);
   lhei<-rep(c(4.0, 0.4), 2);
@@ -993,7 +1026,7 @@ PlotInteraction<-function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FAL
 
 #'Plot the important variables for each factor
 #'@description Plot the important variables for each factor
-#'@usage PlotASCAImpVar(imgName, format="png", dpi=72, width=NA, type)
+#'@usage PlotAscaImpVar(mSetObj=NA, imgName, format, dpi, width=NA, type)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1049,7 +1082,7 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
     mSetObj$imgSet$asca.impAB<-imgName;
   }
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotSigVar(lvg, spe, lv.cutoff, spe.cutoff,lbl);
   dev.off();
   return(.set.mSet(mSetObj));
@@ -1059,10 +1092,14 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
 #'@description Supporting function for plotting important variables for each factor
 #'note, by control xpd to plot legend outside the plotting area
 #'without using layout
+#'@param x Input the X variable
+#'@param y Input the Y variable
+#'@param xline Input the xline
+#'@param yline Input the yline
+#'@param title Input the title
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
 PlotSigVar <- function(x, y, xline, yline, title){
   
   par(mar=c(5,4,3,8), xpd=F);
@@ -1093,6 +1130,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 
 #'Plot ASCA permutation
 #'@description Plot plsda classification performance using different components
+#'@usage PlotASCA.Permutation(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1100,7 +1138,6 @@ PlotSigVar <- function(x, y, xline, yline, title){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@usage PlotASCA.Permutation(imgName, format="png", dpi=72, width=NA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1127,7 +1164,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
   
   mSetObj$imgSet$asca.perm <- imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow=c(3,1), cex=1.0);
   nms <- colnames(perm.mat);
   for(i in 1:3){
@@ -1156,6 +1193,8 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 
 #'Table of features well modelled by ASCA
 #'@description Table of features well modelled by ASCA
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param nm Input the name of the well modelled features
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1164,14 +1203,14 @@ GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
   
   if(nm == "Model.a"){
-    nmLbl <- paste("main effect",  mSetObj$dataSet$facA.lbl);
+    nmLbl <- paste("main effect", mSetObj$dataSet$facA.lbl);
   }else if(nm == "Model.b"){
-    nmLbl <- paste("main effect",  mSetObj$dataSet$facB.lbl);
+    nmLbl <- paste("main effect", mSetObj$dataSet$facB.lbl);
   }else{
-    nmLbl <- paste("interaction effect between",  mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
+    nmLbl <- paste("interaction effect between", mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
   }
   GetSigTable(mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj$dataSet$type);
-  return(.set.mSet(mSetObj));
+  #return(.set.mSet(mSetObj));
 }
 
 GetAscaSigMat <- function(mSetObj=NA, type){
@@ -1243,10 +1282,12 @@ GetAscaSigFileName <- function(mSetObj=NA){
 #'adapted from the imagemap package
 #'Heckbert's labeling algorithm
 #'Heckbert, P. S. (1990) Nice numbers for graph labels, Graphics Gems I, Academic Press Professional, Inc.
+#'@param dmin Heckbert
+#'@param dmax Heckbert
+#'@param m Heckbert 
 #'@author Justin Talbot \email{jtalbot@@stanford.edu}
 
-heckbert <- function(dmin, dmax, m)
-{
+heckbert <- function(dmin, dmax, m){
   range <- .heckbert.nicenum((dmax-dmin), FALSE)
   lstep <- .heckbert.nicenum(range/(m-1), TRUE)
   lmin <- floor(dmin/lstep)*lstep
@@ -1254,8 +1295,7 @@ heckbert <- function(dmin, dmax, m)
   seq(lmin, lmax, by=lstep)
 }
 
-.heckbert.nicenum <- function(x, round)
-{
+.heckbert.nicenum <- function(x, round){
   e <- floor(log10(x))
   f <- x / (10^e)
   if(round)

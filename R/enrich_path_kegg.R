@@ -54,24 +54,22 @@ LoadKEGGLib<-function(libOpt){
 
 #'Plot integrated methods pathway analysis
 #'@description Only update the background info for matched node
-#'@usage PlotInmexPath(mSetObj, imgName, format="png", dpi=72, path.id, width, height)
+#'@usage PlotInmexPath(mSetObj=NA, path.id, width, height)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param imgName Input a name for the plot
-#'@param format Select the image format, "png", or "pdf". 
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param path.id Input the path ID
+#'@param path.id Input the ID of the pathway to plot. 
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@param height Input the height
+#'@param height Input the height of the image to create.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import igraph  
 #'
 PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
-  library(igraph);
+
   mSetObj <- .get.mSet(mSetObj);
+  
   g <- inmexpa$graph.list[[path.id]]
   g <- upgrade_graph(g); # to fix warning
   phits <- mSetObj$dataSet$path.hits[[path.id]];
@@ -81,7 +79,7 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   res <- mSetObj$dataSet$pathinteg.impMat;
   
   bg.cols <- rep("#E3E4FA", length(V(g)));
-  line.cols <- rep("dimgrey", length(V(g)));
+  line.cols <- rep("dimgray", length(V(g)));
   
   # now, do color schema - up red, down green
   nd.inx <- which(phits);
@@ -107,7 +105,7 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
       }
       
       # 1) update the node info (tooltip/popup) 
-      V(g)$db.lnks[inx] <-  paste("<a href='http://www.genome.jp/dbget-bin/www_bget?", rownames(res)[hit.inx],
+      V(g)$db.lnks[inx] <- paste("<a href='http://www.genome.jp/dbget-bin/www_bget?", rownames(res)[hit.inx],
                                   "' target='_blank'>", res$Name[hit.inx], "</a>", sep="", collapse=" ");
       # 2) save the stats for each node 
       stats[[inx]] <- signif(res[hit.inx, "logFC", drop=F],5);
@@ -117,9 +115,9 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   V(g)$topo <- topo;
   
   if(!.on.public.web){
-    mSetObjIG <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
-    print("pathinteg graph has been created, please find it in mSetObj$imgSet$pathinteg.path")
-    return(.set.mSet(mSetObjIG));
+    mSetObj <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
+    print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
+    return(.set.mSet(mSetObj));
   } 
   PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
 }
@@ -127,6 +125,14 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
 #'Plot an igraph object and return the node information (position and labels)
 #'@description Plot an igraph object and return the node information (position and labels)
 #'Used in a higher function
+#'@param mSetObj Input name of the created mSet Object
+#'@param path.id Input the pathway id
+#'@param g Input the graph
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param height Input the height of the graph to create
+#'@param bg.color Set the background color, default is set to NULL
+#'@param line.color Set the line color, default is set to NULL
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -149,7 +155,7 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
   mSetObj$imgSet$pathinteg.path <- imgName
   
   ## Open plot device
-  Cairo(file=imgName, width=width, height=height, type="png", bg="transparent");
+  Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="transparent");
   par(mai=rep(0,4));
   plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
   nodeInfo <- GetKEGGNodeInfo(path.id, g, width, height);
@@ -160,11 +166,10 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
   # remember the current graph
   if(.on.public.web){
     .set.mSet(mSetObj);
+    return(nodeInfo);
   }else{
     return(.set.mSet(mSetObj));
   } 
-  
-  return(nodeInfo);
 }
 
 #'Redraw current graph for zooming or clipping then return a value
@@ -180,14 +185,14 @@ PlotinmexGraph <- function(mSetObj, path.id, g, width, height, bg.color=NULL, li
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+#'@import igraph
 RerenderKEGGGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor){
   
   mSetObj <- .get.mSet(mSetObj);
   
   mSetObj$imgSet$kegg.graph.zoom <- imgName
   
-  Cairo(file=imgName, width=width, height=height,type="png", bg="transparent");
+  Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="transparent");
   font.cex <- 0.6*zoom.factor/150;
   if(font.cex < 0.6){
     font.cex=0.6;
@@ -205,9 +210,14 @@ RerenderKEGGGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor){
   return(.set.mSet(mSetObj));
 }
 
-# double check don't need to add mSetObj
+#'Retrieves KEGG node information
+#'@param path.id Input the path ID
+#'@param g Input data
+#'@param width Input the width
+#'@param height Input the height 
+#'@param usr Input the user
 #'@export
-GetKEGGNodeInfo<-function(path.id, g, width, height, usr = par("usr")){
+GetKEGGNodeInfo <- function(path.id, g, width, height, usr = par("usr")){
   
   ## transform user to pixel coordinates
   #x.u2p = function(x) { rx=(x-usr[1])/diff(usr[1:2]); stopifnot(all(rx>=0&rx<=1)); return(rx*width)  }
@@ -223,7 +233,7 @@ GetKEGGNodeInfo<-function(path.id, g, width, height, usr = par("usr")){
   
   nw <- 1/200*as.numeric(wds);
   nh <-  1/200*as.numeric(hts);
-  nxy <- layout.norm(getLayout(g), -1, 1, -1, 1);
+  nxy <- igraph::layout.norm(getLayout(g), -1, 1, -1, 1);
   
   # note: nxy is the center of the node, need to deal differently for cirlce or rectangle
   # for circle the width/height are radius, stay the same, only adjust the rectangle
@@ -243,8 +253,8 @@ GetKEGGNodeInfo<-function(path.id, g, width, height, usr = par("usr")){
   # create the javascript code
   pathName <- names(inmexpa$path.ids)[which(inmexpa$path.ids == path.id)];
   
-  jscode <-paste("keggPathLnk=\'(<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", path.id, "\\',\\'KEGG\\');\">KEGG</a>)\'", sep="");
-  jscode <-paste(jscode, paste("keggPathName=\"", pathName,"\"", sep=""), sep="\n");
+  jscode <- paste("keggPathLnk=\'(<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", path.id, "\\',\\'KEGG\\');\">KEGG</a>)\'", sep="");
+  jscode <- paste(jscode, paste("keggPathName=\"", pathName,"\"", sep=""), sep="\n");
   
   #add code for mouseover locations, basically the annotation info. In this case, the name of the node
   if(is.null(V(g)$stats)){
@@ -274,7 +284,7 @@ GetKEGGNodeInfo<-function(path.id, g, width, height, usr = par("usr")){
 }
 
 # Used in higher function
-plotGraph<-function(graph,margin=0,vertex.label.cex=0.6,vertex.label.font=1,vertex.size=8,
+plotGraph <- function(graph,margin=0,vertex.label.cex=0.6,vertex.label.font=1,vertex.size=8,
                     vertex.size2=6,edge.arrow.size=0.2,edge.arrow.width=3,vertex.label=V(graph)$graphics_name,
                     vertex.shape=V(graph)$graphics_type,layout=getLayout(graph),vertex.label.color="black",
                     vertex.color=V(graph)$graphics_bgcolor,vertex.frame.color="dimgray",edge.color="dimgray",
@@ -284,15 +294,15 @@ plotGraph<-function(graph,margin=0,vertex.label.cex=0.6,vertex.label.font=1,vert
   if(vcount(graph)==0){
     print("the graph is an empty graph.")
   }else{	 
-    vertex.shape<-replace(vertex.shape,which(vertex.shape %in% c("roundrectangle","line")),"crectangle")
-    vertex.color<-replace(vertex.color,which(vertex.color %in% c("unknow","none")),"white")
+    vertex.shape <- replace(vertex.shape,which(vertex.shape %in% c("roundrectangle","line")),"crectangle")
+    vertex.color <- replace(vertex.color,which(vertex.color %in% c("unknow","none")),"white")
     if(length(vertex.shape)==0) vertex.shape<-NULL
     if(length(vertex.color)==0) vertex.color<-NULL  
     if(length(vertex.label)==0) vertex.label<-NULL 
     if(length(layout)==0) layout<-NULL 
     if(length(edge.label)==0) edge.label<-NULL
     if((axes==FALSE)&&xlab==""&&ylab==""&&is.null(sub)&&is.null(main)){
-      old.mai<-par(mai=c(0.01,0.25,0.01,0.3))
+      old.mai <- par(mai=c(0.01,0.25,0.01,0.3))
       #old.mai<-par(mai=0.01+c(0,0,0,0))
       on.exit(par(mai=old.mai), add=TRUE)
     }
@@ -304,14 +314,13 @@ plotGraph<-function(graph,margin=0,vertex.label.cex=0.6,vertex.label.font=1,vert
          edge.label=edge.label,edge.label.cex=edge.label.cex,edge.label.color=edge.label.color,
          edge.lty=edge.lty,axes=axes,xlab=xlab,ylab=ylab,sub=sub,main=main,...)
   }
-  
 }
 
 getLayout<-function(graph){
   if(length(V(graph)$graphics_x)==0||length(V(graph)$graphics_y)==0) return (NULL)
   x_y<-c()
-  graphics_x<-get.vertex.attribute(graph,"graphics_x")
-  index<-which(graphics_x=="unknow")
+  graphics_x <- igraph::get.vertex.attribute(graph,"graphics_x")
+  index <- which(graphics_x=="unknow")
   
   if(length(index)>1){
     temp<-as.numeric(graphics_x[which(graphics_x!="unknow")])
@@ -322,27 +331,27 @@ getLayout<-function(graph){
     temp<-as.numeric(graphics_x[which(graphics_x!="unknow")])
     graphics_x<-replace(graphics_x,which(graphics_x=="unknow"),min(temp))
   } 
-  graphics_x <-as.numeric(graphics_x)	
-  graphics_y<-get.vertex.attribute(graph,"graphics_y")
-  index<-which(graphics_y=="unknow")
+  graphics_x <- as.numeric(graphics_x)	
+  graphics_y <- igraph::get.vertex.attribute(graph,"graphics_y")
+  index <- which(graphics_y=="unknow")
   if(length(index)>0){
-    temp<-as.numeric(graphics_y[which(graphics_y!="unknow")])
+    temp <- as.numeric(graphics_y[which(graphics_y!="unknow")])
     if(length(temp)<2){temp<-as.numeric(c(100,600))}
-    graphics_y<-replace(graphics_y,which(graphics_y=="unknow"),max(temp)+100)
+    graphics_y <- replace(graphics_y,which(graphics_y=="unknow"),max(temp)+100)
   } 
-  graphics_y <-as.numeric(graphics_y)
+  graphics_y <- as.numeric(graphics_y)
   
-  x_y<-as.matrix(data.frame(graphics_x=graphics_x, graphics_y=graphics_y))
-  x_y[,2]<--x_y[,2]
-  dimnames(x_y)<-NULL
-  return (x_y)
+  x_y <- as.matrix(data.frame(graphics_x=graphics_x, graphics_y=graphics_y))
+  x_y[,2] <- -x_y[,2]
+  dimnames(x_y) <- NULL
+  return(x_y)
 }
 
 getEdgeLabel<-function(graph){
-  edge.name<-E(graph)$subtype_name
-  edge.value<-E(graph)$subtype_value
+  edge.name <- igraph::E(graph)$subtype_name
+  edge.value <- igraph::E(graph)$subtype_value
   #edge.label<-E(graph)$subtype_value
-  edge.label<-rep("",len=length(edge.name))
+  edge.label <- rep("",len=length(edge.name))
   for(i in seq(edge.name)){
     edge_i<-unlist(strsplit(edge.name[i],";"))
     if("phosphorylation" %in% edge_i){
@@ -394,12 +403,12 @@ getEdgeLabel<-function(graph){
       }    
     }           
   }
-  return (edge.label)
+  return(edge.label)
 }
 
 #04350 indirect effect,04620
 getEdgeLty<-function(graph){
-  edge.name<-E(graph)$subtype_name
+  edge.name <- igraph::E(graph)$subtype_name
   edge.lty=rep("solid",len=length(edge.name))
   for(i in seq(edge.name)){
     if(edge.name[i]=="indirect effect"){

@@ -6,11 +6,16 @@
 \usage{
 ASCAfun.res(X, Fac)
 }
+\arguments{
+\item{X}{Input list of compounds}
+
+\item{Fac}{Numeric 
+McGill University, Canada
+License: GNU GPL (>= 2)}
+}
 \description{
 Perform ASCA
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
 }

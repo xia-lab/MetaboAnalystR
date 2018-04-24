@@ -6,6 +6,9 @@
 \usage{
 PreparePermResult(perm.vec)
 }
+\arguments{
+\item{perm.vec}{Input permutation vector}
+}
 \description{
 Function to prepare a report for permutation tests, used in higher functions
 }

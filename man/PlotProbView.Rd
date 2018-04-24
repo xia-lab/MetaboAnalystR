@@ -19,6 +19,8 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 \item{mdl.inx}{Model index, 0 means to compare all models, -1 means to use the best model, input 1-6 to plot a ROC curve for one of the top six models}
 
 \item{show}{1 or 0, if 1, label samples classified to the wrong groups}
+
+\item{showPred}{Show predicted samples}
 }
 \description{
 Plot of predicted class probabilities. On the x-axis is the proability, 

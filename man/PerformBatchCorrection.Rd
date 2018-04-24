@@ -6,6 +6,11 @@
 \usage{
 PerformBatchCorrection(mSetObj = NA, imgName)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input the name of the plot to create}
+}
 \description{
 One is a batch containing summed concentrations of each sample
 the other contains the features aligned across all samples

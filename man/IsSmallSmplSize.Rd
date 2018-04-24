@@ -4,7 +4,10 @@
 \alias{IsSmallSmplSize}
 \title{Check if the sample size is small}
 \usage{
-IsSmallSmplSize(mSetObj)
+IsSmallSmplSize(mSetObj=NA)
+}
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
 }
 \description{
 Returns whether or not the sanity check found that there were too many

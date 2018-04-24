@@ -6,6 +6,9 @@
 \usage{
 GetSampleSizeLadder(maxNum)
 }
+\arguments{
+\item{maxNum}{Numeric}
+}
 \description{
 Return sample size ladder, used in higher functions
 }

@@ -7,7 +7,7 @@
 doAnnotation <- function(id.vec, idType){
   feature.vec <- id.vec;
   if(idType %in% c("entrez", "symbol", "refseq", "genbank", "emblgene","emblprotein", "embltranscript", "orfid")){
-    anot.id <- doGeneIDMapping(feature.vec, idType);
+    anot.id <- doGeneIDMapping2(feature.vec, idType);
   }else{
     anot.id <- doProbeMapping(feature.vec, idType);
   }   
@@ -45,7 +45,7 @@ doProbeMapping <- function(probe.vec, platform){
 }
 
 # mapping between genebank, refseq and entrez
-doGeneIDMapping <- function(q.vec, type){
+doGeneIDMapping2 <- function(q.vec, type){
   if(is.null(q.vec)){
     db.path <- paste(lib.path, data.org, "/entrez.rds", sep="");
     db.map <-  readRDS(db.path);

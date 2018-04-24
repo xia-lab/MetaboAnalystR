@@ -6,6 +6,9 @@
 \usage{
 ResetCustomCmpds(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Reset custom compounds
 }

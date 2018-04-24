@@ -6,6 +6,9 @@
 \usage{
 GetMsetLibCheckMsg(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Get the library check messages
 }

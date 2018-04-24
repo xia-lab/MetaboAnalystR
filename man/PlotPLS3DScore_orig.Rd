@@ -25,6 +25,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
 
 \item{inx3}{Numeric, indicate the number of the principal component for the z-axis of the loading plot.}
+
+\item{angl}{Input the angle}
 }
 \description{
 Plot PLS 3D score plot

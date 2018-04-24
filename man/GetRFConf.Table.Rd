@@ -6,6 +6,9 @@
 \usage{
 GetRFConf.Table(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Classification performance table for random forest analysis
 }

@@ -6,8 +6,13 @@
 \usage{
 kwtest(x, cls)
 }
+\arguments{
+\item{x}{Input data to perform Kruskal-Wallis}
+
+\item{cls}{Input class labels}
+}
 \description{
-Perform  Kruskal Wallis Test
+Perform  Kruskal-Wallis Test
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

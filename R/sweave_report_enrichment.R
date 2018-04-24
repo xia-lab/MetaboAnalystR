@@ -1,6 +1,8 @@
 #'Create report of analyses (Met Enrichment)
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -81,6 +83,7 @@ CreateEnrichOverview <- function(){
 #'Create report of analyses (Met Enrichment)
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report data input
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -134,6 +137,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
 #'Create report of analyses (Met Enrichment)
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report enrichment process
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -225,6 +229,7 @@ CreateEnrichAnalDoc <- function(){
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report, over
 #'representation analysis (ORA)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -269,6 +274,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report
 #'Single sampling profiling
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -311,6 +317,7 @@ CreateEnrichSSPdoc <- function(mSetObj=NA){
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report
 #'Quantitative enrichment analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

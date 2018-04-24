@@ -4,12 +4,14 @@
 \alias{PlotPowerProfile}
 \title{Plot power profile}
 \usage{
-PlotPowerProfile(mSetObj, fdr.lvl, smplSize, imgName, format, dpi, width)
+PlotPowerProfile(mSetObj=NA, fdr.lvl, smplSize, imgName, format, dpi, width)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{fdr.lvl}{Specify the false-discovery rate level.}
+
+\item{smplSize}{Specify the maximum sample size, the number must be between 60-1000.}
 
 \item{imgName}{Specify the name to save the image as.}
 
@@ -20,8 +22,6 @@ the recommended dpi is 300.}
 
 \item{width}{Specify the width of the image. NA specifies a width of 9, 0 specifies a width
 of 7, otherwise input a chosen width.}
-
-\item{smpSize}{Specify the maximum sample size, the number must be between 60-1000.}
 }
 \description{
 Plot power profile, specifying FDR level and sample size. It will 

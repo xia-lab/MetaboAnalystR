@@ -7,6 +7,8 @@
 SetupMSdataMatrix(mSetObj, intvalue)
 }
 \arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
 \item{intvalue}{name of peak column to enter into the returned matrix, if intvalue = 'into', 
 use integrated area of original (raw) peak intensities, 
 if intvalue = 'intf', use integrated area of filtered peak intensities, 

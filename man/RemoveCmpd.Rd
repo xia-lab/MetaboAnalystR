@@ -6,6 +6,11 @@
 \usage{
 RemoveCmpd(mSetObj = NA, inx)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{inx}{Input the index of compound to remove}
+}
 \description{
 Remove compounds
 }

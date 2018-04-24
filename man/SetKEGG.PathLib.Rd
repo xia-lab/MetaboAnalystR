@@ -6,6 +6,11 @@
 \usage{
 SetKEGG.PathLib(mSetObj = NA, kegg.rda)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{kegg.rda}{Input the name of the KEGG library}
+}
 \description{
 note, this process can be long, need to return a value
 to force Java to wait

@@ -89,8 +89,9 @@ PrepareNetworkData <- function(mSetObj=NA){
 #'@export
 PrepareQueryJson <- function(mSetObj=NA){
 
-    # Map query matched KOs with the KO database
     mSetObj <- .get.mSet(mSetObj);
+  
+    # Map query matched KOs with the KO database
     kos <- mSetObj$dataSet$gene.name.map$hit.kos
     expr.mat <- mSetObj$dataSet$pathinteg.imps$kos.mat
     kos <- cbind(kos, expr.mat)
@@ -112,7 +113,7 @@ PrepareQueryJson <- function(mSetObj=NA){
             exp.vec <- dataSet.gene$data[,1]; # drop dim for json
         }else{
             # for global test, all KO measured should be highlighted
-            genemat<-as.data.frame(t(otu_table(dataSet.gene$norm.phyobj)));
+            genemat <- as.data.frame(t(otu_table(dataSet.gene$norm.phyobj)));
             exp.vec <- rep(2, ncol(genemat));
             names(exp.vec) <- colnames(genemat);
         }
@@ -131,7 +132,7 @@ PrepareQueryJson <- function(mSetObj=NA){
             exp.vec <- dataSet.cmpd$data[,1]; # drop dim for json
         }else{
             # for global test, all KO measured should be highlighted
-            genemat<-as.data.frame(t(otu_table(dataSet.cmpd$norm.phyobj)));
+            genemat <- as.data.frame(t(otu_table(dataSet.cmpd$norm.phyobj)));
             exp.vec <- rep(2, ncol(genemat));
             names(exp.vec) <- colnames(genemat);
         }
@@ -159,8 +160,7 @@ PrepareQueryJson <- function(mSetObj=NA){
     query.res <- edge.mat[,3];# abundance
     names(query.res) <- eids; # named by edge
 
-    library(RJSONIO);
-    json.mat <- toJSON(query.res, .na='null');
+    json.mat <- RJSONIO::toJSON(query.res, .na='null');
     sink("network_query.json");
     cat(json.mat);
     sink();
@@ -185,10 +185,9 @@ PrepareQueryJson <- function(mSetObj=NA){
 PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-    LoadKEGGKO_lib(category);
-    #if(enrich.type == "hyper"){ else PerformKOEnrichAnalysis_Table
-    PerformKOEnrichAnalysis_List(file.nm);
+  LoadKEGGKO_lib(category);
+  #if(enrich.type == "hyper"){ else PerformKOEnrichAnalysis_Table
+  PerformKOEnrichAnalysis_List(file.nm);
   
   if(.on.public.web == FALSE){
     return(.set.mSet(mSetObj)); 
@@ -199,6 +198,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@description This function performs mapping of user's data to the internal network
 #' to create a network from the seed nodes
 #'@param mSetObj Input name of the created mSet Object
+#'@param db.type Input the database type
 #'@param table.nm Input the organism code for the sqlite table (ppi). For chemical type, the 
 #'table.nm is drugbank of ctd
 #'@param require.exp Logical, only used for the STRING database
@@ -207,18 +207,17 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import RSQLite
 SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){ 
 
     mSetObj <- .get.mSet(mSetObj);
   
-    result.list <- .preparePhenoListSeeds(table.nm);
+    result.list <- .preparePhenoListSeeds(mSetObj, table.nm);
     genes <- result.list$genes;
     protein.vec <- seed.graph;
     cmpds <- result.list$cmpds;
 
     network.type <<- table.nm 
-
-    library(RJSONIO);
 
     # now do the database search
     
@@ -303,8 +302,10 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 #'Update integrative pathway analysis for new input list
 #'@description used for integrative analysis 
 #'as well as general pathways analysis for meta-analysis results
-#'@usage PerformIntegPathwayAnalysis(mSetObj, topo="dc", enrich="hyper", libOpt="integ")
+#'@usage UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ")
 #'@param mSetObj Input name of the created mSet Object
+#'@param qids Input the query IDs
+#'@param file.nm Input the name of the file
 #'@param topo Select the mode for topology analysis: Degree Centrality ("dc") measures the number of links that connect to a node 
 #'(representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures the overall distance from a given node 
 #'to all other nodes in a pathway; Betweenness Centrality ("bc")measures the number of shortest paths from all nodes to all the others that pass through a given node within a pathway.
@@ -387,9 +388,9 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   }
   
   set.num <- uniq.len;
-  res.mat[,1]<-set.num;
-  res.mat[,2]<-q.size*(set.num/uniq.count);
-  res.mat[,3]<-hit.num;
+  res.mat[,1] <- set.num;
+  res.mat[,2] <- q.size*(set.num/uniq.count);
+  res.mat[,3] <- hit.num;
   
   # use lower.tail = F for P(X>x)
   if(enrich=="hyper"){
@@ -431,7 +432,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   
   if(nrow(res.mat)> 1){
     # order by p value
-    ord.inx<-order(res.mat[,4]);
+    ord.inx <- order(res.mat[,4]);
     res.mat <- signif(res.mat[ord.inx,],3);
     hits.query <- hits.query[ord.inx];
     
@@ -456,8 +457,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   
   #get gene symbols
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
-  
-  library(RJSONIO);
+
   fun.anot = hits.names; names(fun.anot) <- resTable[,1];
   fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
   hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
@@ -471,7 +471,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
               fun.pval = fun.pval,
               hit.num = hit.num
   );
-  json.mat <- toJSON(json.res, .na='null');
+  json.mat <- RJSONIO::toJSON(json.res, .na='null');
   json.nm <- paste(file.nm, ".json", sep="");
   
   sink(json.nm)
@@ -491,10 +491,10 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 #'@description Function for the network explorer module, prepares user's data for network exploration.
 #'@param mSetObj Input name of the created mSet Object
 #'@export
+#'@import igraph
 CreateGraph <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  require('igraph');
   node.list <- pheno.net$node.data;
   edge.list <- pheno.net$edge.data;
   
@@ -515,11 +515,10 @@ CreateGraph <- function(mSetObj=NA){
   substats <- DecomposeGraph(overall.graph);
   overall.graph <<- overall.graph;
   
-  PlotNetwork(mSetObj, network.type);
-  
-  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- PlotNetwork(mSetObj, network.type);
   
   if(.on.public.web){
+    mSetObj <- .get.mSet(mSetObj);
     if(!is.null(substats)){
       return(c(length(seed.graph), length(seed.proteins), nrow(node.list), nrow(edge.list), length(pheno.comps), substats));        
     }else{
@@ -534,12 +533,10 @@ CreateGraph <- function(mSetObj=NA){
 ### Utility functions
 ###
 
-#'Utility function to plot network for analysis report (CreateGraph)
+# Utility function to plot network for analysis report (CreateGraph)
 PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  library(Cairo)
   
   img.Name = paste(imgName, "_dpi", dpi, ".", format, sep="");
   
@@ -569,8 +566,7 @@ PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   lbls <- pheno.net$node.data[hit.inx,2];
   V(overall.graph)$name <- as.vector(lbls);
   
-  
-  Cairo(file = img.Name, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = img.Name, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(overall.graph)
   text(1,1, "Entrez gene ", col="#306EFF")
   text(1,0.9, "KEGG compound ", col="orange")
@@ -586,10 +582,14 @@ PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }
 }
 
-#' Utility function for PrepareNetworkData
+# Utility function for PrepareNetworkData
 doGene2KONameMapping <- function(enIDs){
 
-  ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
+  if(.on.public.web){
+    ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
+  }else{
+    ko.dic <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
+  }
 
   #TO-DO: map based on specific selection of a species
   ko.dic.enIDs <- as.integer(ko.dic[, "Entrez_hsa"])
@@ -604,8 +604,9 @@ doGene2KONameMapping <- function(enIDs){
   return(kos);
 }
 
-#' Utility function for PerformKOEnrichAnalysis_KO01100
-# note: only return hits in this map KO01100
+#'Utility function for PerformKOEnrichAnalysis_KO01100
+#'@description Please note: only return hits in map KO01100
+#'@param file.nm Input the file name 
 PerformKOEnrichAnalysis_List <- function(file.nm){
   
   if(idtype == "cmpd"){
@@ -708,14 +709,23 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
   return(1);
 }
 
-#' Utility function for PerformKOEnrichAnalysis_List
+# Utility function for PerformKOEnrichAnalysis_List
 # for KO01100
 Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
+  
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   AddMsg("Functional enrichment analysis was completed");
+  
   if(!exists("ko.edge.map")){
-    ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
-    ko.edge.map <- .readDataTable(ko.edge.path);
+    
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.map <- .readDataTable(ko.edge.path);
+    }else{
+      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
+      ko.edge.map <- .readDataTable("ko_edge.csv"); 
+    }
     ko.edge.map <- ko.edge.map[ko.edge.map$net=="ko01100",];  #only one map
     ko.edge.map <<- ko.edge.map;
   }
@@ -732,7 +742,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
                         }
     );
     hits.inx <- unlist(lapply(hits.edge, length))>0;
-  } else if(idtype == "cmpd"){
+  }else if(idtype == "cmpd"){
     ko.map <- ko.node.map.global;
     colnames(ko.map) <- c("queryid", "edge", "net")
     hits.node <- lapply(hits.query,
@@ -741,7 +751,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
                         }
     );
     hits.inx <- unlist(lapply(hits.node, length))>0;
-  } else{
+  }else{
     # gene&cmpd
     ko.map1 <- ko.edge.map;
     colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
@@ -787,8 +797,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
     fun.pval = fun.pval,
     hit.num = hit.num
   );
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
+  json.mat <- RJSONIO::toJSON(json.res, .na='null');
   json.nm <- paste(file.nm, ".json", sep="");
   sink(json.nm)
   cat(json.mat);
@@ -802,23 +811,42 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
   write.csv(resTable, file=csv.nm, row.names=F);
 }
 
-#' Utility function for PerformKOEnrichAnalysis_KO01100
+#'Utility function for PerformKOEnrichAnalysis_KO01100
+#'@param category Module or pathway
 LoadKEGGKO_lib<-function(category){
   if(category == "module"){
-    kegg.rda <- "../../libs/network/ko_modules.rda";
-    load(kegg.rda);
+    if(.on.public.web){
+      kegg.rda <- "../../libs/network/ko_modules.rda";
+      load(kegg.rda);
+    }else{
+      kegg.rda <- "http://www.metaboanalyst.ca/resources/libs/network/ko_modules.rda";
+      download.file(kegg.rda, destfile = "ko_modules.rda", method="libcurl", mode = "wb");
+      load("ko_modules.rda", .GlobalEnv);
+    }
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$"Pathway module";
   }else{
-    kegg.rda <- "../../libs/network/ko_pathways.rda";
-    load(kegg.rda);
+    if(.on.public.web){
+      kegg.rda <- "../../libs/network/ko_pathways.rda";
+      load(kegg.rda);
+    }else{
+      kegg.rda <- "http://www.metaboanalyst.ca/resources/libs/network/ko_pathways.rda";
+      download.file(kegg.rda, destfile = "ko_pathways.rda", method="libcurl", mode = "wb")
+      load("ko_pathways.rda", .GlobalEnv);
+    }
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$Metabolism;
   }
   # now need to update the msets to contain only those in ko01100 map
   if(!exists("ko.edge.map")){
-    ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
-    ko.edge.map <<- .readDataTable(ko.edge.path);     
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path); 
+    }else{
+      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
+      ko.edge.map <<- .readDataTable("ko_edge.csv"); 
+    }
   } 
   
   kos.01100 <- ko.edge.map$gene[ko.edge.map$net == "ko01100"];
@@ -889,6 +917,7 @@ doProteinIDMappingNetwork <- function(q.vec, type){
 }
 
 #'Utility function for PerformNetEnrichment
+#'@param emblprotein.vec Input the vector containing protein embl ids
 #'@export
 doEmblProtein2EntrezMapping <- function(emblprotein.vec){
   db.path <- paste(libs.path, data.org, "/entrez_embl_protein.rds", sep="");
@@ -899,9 +928,14 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
   return(entrezs);
 }
 
-#' Utility function for SearchNetDB
-.preparePhenoListSeeds <- function(table.nm){
-  libs.path <<- "../../libs/";
+# Utility function for SearchNetDB
+.preparePhenoListSeeds <- function(mSetObj, table.nm){
+  
+  if(.on.public.web){
+    libs.path <<- "../../libs/";
+  }else{
+    libs.path <<- "http://www.metaboanalyst.ca/resources/libs/";
+  }
   
   table.nm <<- table.nm;
   # Preparing dataset variables
@@ -937,24 +971,30 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
   );
 }
 
-#' Utility function for SearchNetDB
+# Utility function for SearchNetDB
 # table name is org code, id.type is column name
-QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
-  require('RSQLite');
-  pheno.db <- dbConnect(SQLite(), "../../libs/network/MetPriCNet.sqlite");
+#'@import RSQLite
+QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
+  
+  if(.on.public.web){
+    pheno.db <- dbConnect(SQLite(), "../../libs/network/MetPriCNet.sqlite");
+  }else{
+    download.file("http://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
+    pheno.db <- dbConnect(SQLite(), "MetPriCNet.sqlite");
+  }
   
   if(table.nm == "global"){
     # Handle gene_metabolites
     table.nm <- "gene_metabolites";
     if((length(genes) > 0) && (length(cmpds) > 0)){
-      genes.query <- paste (shQuote(genes),collapse=",");
-      cmpds.query <- paste (shQuote(cmpds),collapse=",");
+      genes.query <- paste(shQuote(genes),collapse=",");
+      cmpds.query <- paste(shQuote(cmpds),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");
     } else if(length(genes) > 0){
-      genes.query <- paste (shQuote(genes),collapse=",");
+      genes.query <- paste(shQuote(genes),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND score >= ",min.score, sep="");
     } else{
-      cmpds.query <- paste (shQuote(cmpds),collapse=",");
+      cmpds.query <- paste(shQuote(cmpds),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");
     }
     phenotable <- dbSendQuery(pheno.db, statement);
@@ -964,7 +1004,7 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     
     # Handle metab_phenotypes
     table.nm <- "metabo_phenotypes";
-    cmpds.query <- paste (shQuote(cmpds),collapse=",");
+    cmpds.query <- paste(shQuote(cmpds),collapse=",");
     statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");      
     phenotable <- dbSendQuery(pheno.db, statement);
     metabpheno.res <- fetch(phenotable, n=-1); # get all records
@@ -974,7 +1014,7 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     
     # Handle genes_phenotypes
     table.nm <- "gene_phenotypes";
-    genes.query <- paste (shQuote(genes),collapse=",");
+    genes.query <- paste(shQuote(genes),collapse=",");
     statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND score >= ",min.score, sep="");      
     phenotable <- dbSendQuery(pheno.db, statement);
     genespheno.res <- fetch(phenotable, n=-1); # get all records
@@ -988,24 +1028,24 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
   } else{
     if(table.nm == "gene_metabolites"){
       if((length(genes) > 0) && (length(cmpds) > 0)){
-        genes.query <- paste (shQuote(genes),collapse=",");
-        cmpds.query <- paste (shQuote(cmpds),collapse=",");
+        genes.query <- paste(shQuote(genes),collapse=",");
+        cmpds.query <- paste(shQuote(cmpds),collapse=",");
         statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");
       } else if(length(genes) > 0){
-        genes.query <- paste (shQuote(genes),collapse=",");
+        genes.query <- paste(shQuote(genes),collapse=",");
         statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND score >= ",min.score, sep="");
       } else{
-        cmpds.query <- paste (shQuote(cmpds),collapse=",");
+        cmpds.query <- paste(shQuote(cmpds),collapse=",");
         statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");
       }
     } else if(table.nm == "metabo_phenotypes"){
-      cmpds.query <- paste (shQuote(cmpds),collapse=",");
+      cmpds.query <- paste(shQuote(cmpds),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid IN (",cmpds.query,") AND score >= ",min.score, sep="");
     } else if(table.nm == "metabo_metabolites"){
-      cmpds.query <- paste (shQuote(cmpds),collapse=",");
+      cmpds.query <- paste(shQuote(cmpds),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE ctdid1 IN (",cmpds.query,") AND score >= ",min.score, sep="");
     } else if(table.nm == "gene_phenotypes"){
-      genes.query <- paste (shQuote(genes),collapse=",");
+      genes.query <- paste(shQuote(genes),collapse=",");
       statement <- paste("SELECT * FROM ", table.nm, " WHERE entrez IN (",genes.query,") AND score >= ",min.score, sep="");
     }
     
@@ -1013,23 +1053,35 @@ QueryPhenoSQLite<- function(table.nm, genes, cmpds, min.score){
     pheno.dic <- fetch(phenotable, n=-1); # get all records
     dbDisconnect(pheno.db);
   }
-  
   return(pheno.dic);
 }
 
 #'Utility function
-# return matched KO in the same order (NA if no match)
+#'@description Returns matched KO in the same order (NA if no match)
+#'@param ko.vec Input the vector containing KOs
+#'@param type Input the type 
 doKOFiltering <- function(ko.vec, type){
-  ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
+  if(.on.public.web){
+    ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
+  }else{
+    ko.dic <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
+  }
   hit.inx <- match(ko.vec, ko.dic$KO);
   return(ko.dic$KO[hit.inx]);
 }
 
-#' Utility function for PrepareQueryJson
+#'Utility function for PrepareQueryJson
+#'@param kos Input the KOs
+#'@param net Input the name of the network 
 MapKO2KEGGEdges<- function(kos, net="ko01100"){
   if(!exists("ko.edge.map")){
-    ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
-    ko.edge.map <<- .readDataTable(ko.edge.path);     
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path);     
+    }else{
+      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path);     
+    }
   } 
   all.hits <- ko.edge.map$gene %in% names(kos) & ko.edge.map$net == net;
   my.map <- ko.edge.map[all.hits, ];
@@ -1046,13 +1098,27 @@ MapKO2KEGGEdges<- function(kos, net="ko01100"){
   return(dat[,-2]);
 }
 
-#' Utility function for PrepareQueryJson
-MapCmpd2KEGGNodes<- function(cmpds, net="ko01100"){
+#'Utility function for PrepareQueryJson
+#'@param cmpds Input the compounds
+#'@param net Input the network name
+MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
   
-  lib <- "hsa_kegg" # TO-DO: change for other species
+  lib <- "hsa_kegg.rds" # TO-DO: change for other species
   if(!exists("ko.node.map.global")){
     # Read original library files for a list of pathways with assigned compounds to each
-    pathway.lib <- readRDS(paste("../../libs/mummichog/", lib, ".rds", sep=""));
+    
+    if(.on.public.web==TRUE){
+      pathway.lib <- readRDS(paste("../../libs/mummichog/", lib, sep=""));
+    }else{
+      if(!file.exists(lib)){
+        path.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
+        download.file(path.url, destfile = lib, method="libcurl", mode = "wb")
+        pathway.lib <- readRDS(lib);
+      }else{
+        pathway.lib <- readRDS(lib);
+      }
+    }
+
     pathways <- pathway.lib$pathways;
     
     # Store universe for enrichment analysis
@@ -1060,7 +1126,13 @@ MapCmpd2KEGGNodes<- function(cmpds, net="ko01100"){
     current.cmpd.set <<- pathways$cpds;
     
     # Read pathway names and ids in the target pathway map (e.g. ko01100)
-    ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));
+    
+    if(.on.public.web==TRUE){
+      ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));    
+    }else{
+      ko.pathway.names <- .readDataTable(paste("http://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    
+    }
+    
     #ko.node.map <- do.call(rbind, lapply(1:length(pathways$name), function(i) cbind(unlist(pathways$cpds[i]), pathways$name[i])));
     #ko.node.matches <- ko.pathway.names[match(ko.node.map[,2], ko.pathway.names$name),2]
     # Replace pathway names with ids
@@ -1086,8 +1158,10 @@ MapCmpd2KEGGNodes<- function(cmpds, net="ko01100"){
   return(dat[,-2]);
 }
 
-#' Utility function for PrepareQueryJson
-# geneIDs is text one string, need to make to vector
+#'Utility function for PrepareQueryJson
+#'geneIDs is text one string, need to make to vector
+#'@param inputIDs Input list of IDs
+#'@param type Input the type of IDs
 PerformMapping <- function(inputIDs, type){
   
   dataSet <- list();
@@ -1136,7 +1210,9 @@ PerformMapping <- function(inputIDs, type){
   return(dataSet);
 }
 
-#' Utility function for PrepareQueryJson
+#'Utility function for PrepareQueryJson
+#'@param dataSet1 Input the first dataset
+#'@param dataSet2 Input the second dataset
 MergeDatasets <- function(dataSet1, dataSet2){
   
   dataSet <- list();
@@ -1155,6 +1231,9 @@ MergeDatasets <- function(dataSet1, dataSet2){
 ##############################################
 ##############################################
 
+
+#'Exports Gene-Mapping result into a table
+#'@param mSetObj Input name of the created mSet Object
 #'@export
 GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   
@@ -1201,7 +1280,12 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   csv.res<-matrix("", nrow=length(qvec), ncol=6);
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
-  db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
+  if(.on.public.web){
+    db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
+  }else{
+    db.path <- paste("http://www.metaboanalyst.ca/resources/libs/", pathinteg.org, "/entrez.csv", sep="");
+  }
+  
   gene.db <- .readDataTable(db.path);
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
@@ -1288,7 +1372,7 @@ GetNodeBetweenness <- function(){
 
 DecomposeGraph <- function(gObj, minNodeNum = 3){
   # now decompose to individual connected subnetworks
-  comps <-decompose.graph(gObj, min.vertices=minNodeNum);
+  comps <- igraph::decompose.graph(gObj, min.vertices=minNodeNum);
   if(length(comps) == 0){
     current.msg <<- paste("No subnetwork was identified with at least", minNodeNum, "nodes!");
     return(NULL);
@@ -1310,12 +1394,12 @@ DecomposeGraph <- function(gObj, minNodeNum = 3){
     i <- i + 1;
     g <- comps[[nm]];
     saveNetworkInSIF(g, nm)
-    nodeList <- get.data.frame(g, "vertices");
+    nodeList <- igraph::get.data.frame(g, "vertices");
     colnames(nodeList) <- c("Id", "Label");
     ndFileNm = paste(nm, "_node_list.csv", sep="");
     write.csv(nodeList, file=ndFileNm, row.names=F, quote=F);
     
-    edgeList <- get.data.frame(g, "edges");
+    edgeList <- igraph::get.data.frame(g, "edges");
     edgeList <- cbind(rownames(edgeList), edgeList);
     colnames(edgeList) <- c("Id", "Source", "Target");
     edgFileNm = paste(nm, "_edge_list.csv", sep="");
@@ -1373,7 +1457,7 @@ GetNetsQueryNum <- function(){
 # from to should be valid nodeIDs
 GetShortestPaths <- function(from, to){
   current.net <- pheno.comps[[current.net.nm]];
-  paths <- get.all.shortest.paths(current.net, from, to)$res;
+  paths <- igraph::get.all.shortest.paths(current.net, from, to)$res;
   if(length(paths) == 0){
     return (paste("No connection between the two nodes!"));
   }
@@ -1400,19 +1484,19 @@ GetShortestPaths <- function(from, to){
 ExcludeNodes <- function(nodeids, filenm){
   nodes2rm <- strsplit(nodeids, ";")[[1]];
   current.net <- pheno.comps[[current.net.nm]];
-  current.net <- delete.vertices(current.net, nodes2rm);
+  current.net <- igraph::delete.vertices(current.net, nodes2rm);
   
   # need to remove all orphan nodes
   bad.vs<-V(current.net)$name[degree(current.net) == 0];
-  current.net <- delete.vertices(current.net, bad.vs);
+  current.net <- igraph::delete.vertices(current.net, bad.vs);
   
   # return all those nodes that are removed 
   nds2rm <- paste(c(bad.vs, nodes2rm), collapse="||");
   
   # update topo measures
-  node.btw <- as.numeric(betweenness(current.net));
-  node.dgr <- as.numeric(degree(current.net));
-  node.exp <- as.numeric(get.vertex.attribute(current.net, name="abundance", index = V(current.net)));
+  node.btw <- as.numeric(igraph::betweenness(current.net));
+  node.dgr <- as.numeric(igraph::degree(current.net));
+  node.exp <- as.numeric(igraph::get.vertex.attribute(current.net, name="abundance", index = V(current.net)));
   nms <- V(current.net)$name;
   hit.inx <- match(nms, pheno.net$node.data[,1]);
   lbls <- pheno.net$node.data[hit.inx,2];
@@ -1428,10 +1512,9 @@ ExcludeNodes <- function(nodeids, filenm){
     );
   }
   # now only save the node pos to json
-  require(RJSONIO);
-  netData <- list(deletes=nds2rm,nodes=nodes);
+  netData <- list(deletes=nds2rm, nodes=nodes);
   sink(filenm);
-  cat(toJSON(netData));
+  cat(RJSONIO::toJSON(netData));
   sink();
   
   pheno.comps[[current.net.nm]] <<- current.net;
@@ -1449,13 +1532,13 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   current.net <- pheno.comps[[current.net.nm]];
   g <- current.net;
   if(!is.connected(g)){
-    g <- decompose.graph(current.net, min.vertices=2)[[1]];
+    g <- igraph::decompose.graph(current.net, min.vertices=2)[[1]];
   }
   total.size <- length(V(g));
   
   if(use.weight){ # this is only tested for walktrap, should work for other method
     # now need to compute weights for edges
-    egs <- get.edges(g, E(g)); #node inx
+    egs <- igraph::get.edges(g, E(g)); #node inx
     nodes <- V(g)$name;
     # conver to node id
     negs <- cbind(nodes[egs[,1]],nodes[egs[,2]]);
@@ -1480,11 +1563,11 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   }
   
   if(method == "walktrap"){
-    fc <- walktrap.community(g);
+    fc <- igraph::walktrap.community(g);
   }else if(method == "infomap"){
-    fc <- infomap.community(g);
+    fc <- igraph::infomap.community(g);
   }else if(method == "labelprop"){
-    fc <- label.propagation.community(g);
+    fc <- igraph::label.propagation.community(g);
   }else{
     print(paste("Unknown method:", method));
     return ("NA||Unknown method!");
@@ -1495,7 +1578,7 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   }
   
   # only get communities
-  communities <- communities(fc);
+  communities <- igraph::communities(fc);
   community.vec <- vector(mode="character", length=length(communities));
   gene.community <- NULL;
   qnum.vec <- NULL;
@@ -1528,10 +1611,10 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
     
     # calculate p values (comparing in- out- degrees)
     #subgraph <- induced.subgraph(g, path.inx);
-    subgraph <- induced.subgraph(g, path.ids);
-    in.degrees <- degree(subgraph);
+    subgraph <- igraph::induced.subgraph(g, path.ids);
+    in.degrees <- igraph::degree(subgraph);
     #out.degrees <- degree(g, path.inx) - in.degrees;
-    out.degrees <- degree(g, path.ids) - in.degrees;
+    out.degrees <- igraph::degree(g, path.ids) - in.degrees;
     ppval <- wilcox.test(in.degrees, out.degrees)$p.value;
     ppval <- signif(ppval, 3);
     pval.vec <- c(pval.vec, ppval);
@@ -1553,16 +1636,16 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
 }
 
 community.significance.test <- function(graph, vs, ...) {
-  subgraph <- induced.subgraph(graph, vs)
-  in.degrees <- degree(subgraph)
-  out.degrees <- degree(graph, vs) - in.degrees
+  subgraph <- igraph::induced.subgraph(graph, vs)
+  in.degrees <- igraph::degree(subgraph)
+  out.degrees <- igraph::degree(graph, vs) - in.degrees
   wilcox.test(in.degrees, out.degrees, ...)
 }
 
 ###################################
 # Adapted from netweavers package
 ###################
-
+#'@import RColorBrewer
 convertIgraph2JSON <- function(net.nm, filenm){
   
   g <- pheno.comps[[net.nm]];
@@ -1578,10 +1661,9 @@ convertIgraph2JSON <- function(net.nm, filenm){
     evidence.ids <- rep("", length(gene.names));
   }
   
-  
   # get edge data
-  edge.mat <- get.edgelist(g);
-  edge.evidence <- edge_attr(g, "Evidence")
+  edge.mat <- igraph::get.edgelist(g);
+  edge.evidence <- igraph::edge_attr(g, "Evidence")
   if(!is.null(edge.evidence)){
     edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2], evidence=edge.evidence);
   } else{
@@ -1592,9 +1674,9 @@ convertIgraph2JSON <- function(net.nm, filenm){
   #pos.xy <- PerformLayOut_mem(net.nm, "Default");
   pos.xy <- PerformLayOut(net.nm, "Default");
   # get the note data
-  node.btw <- as.numeric(betweenness(g));
-  node.dgr <- as.numeric(degree(g));
-  node.exp <- as.numeric(get.vertex.attribute(g, name="abundance", index = V(g)));
+  node.btw <- as.numeric(igraph::betweenness(g));
+  node.dgr <- as.numeric(igraph::degree(g));
+  node.exp <- as.numeric(igraph::get.vertex.attribute(g, name="abundance", index = V(g)));
   
   # node size to degree values
   if(vcount(g)>500){
@@ -1608,7 +1690,6 @@ convertIgraph2JSON <- function(net.nm, filenm){
   centered = T;
   notcentered = F;
   # update node color based on betweenness
-  require("RColorBrewer");
   topo.val <- log(node.btw+1);
   topo.colsb <- ComputeColorGradient(topo.val, "black", notcentered);
   topo.colsw <-  ComputeColorGradient(topo.val, "white", notcentered);
@@ -1690,17 +1771,16 @@ convertIgraph2JSON <- function(net.nm, filenm){
   write.csv(nd.tbl, file="node_table.csv", row.names=FALSE);
   
   # covert to json
-  require(RJSONIO);
   netData <- list(nodes=nodes, edges=edge.mat);
   sink(filenm);
-  cat(toJSON(netData));
+  cat(RJSONIO::toJSON(netData));
   sink();
 }
 
 # also save to GraphML
 ExportNetwork <- function(fileName){
   current.net <- pheno.comps[[current.net.nm]];
-  write.graph(current.net, file=fileName, format="graphml");
+  igraph::write.graph(current.net, file=fileName, format="graphml");
 }
 
 ExtractModule<- function(nodeids){
@@ -1710,10 +1790,10 @@ ExtractModule<- function(nodeids){
   g <- pheno.comps[[current.net.nm]];
   # try to see if the nodes themselves are already connected
   hit.inx <- V(g)$name %in% nodes; 
-  gObj <- induced.subgraph(g, V(g)$name[hit.inx]);
+  gObj <- igraph::induced.subgraph(g, V(g)$name[hit.inx]);
   
   # now find connected components
-  comps <-decompose.graph(gObj, min.vertices=1);
+  comps <- igraph::decompose.graph(gObj, min.vertices=1);
   
   if(length(comps) == 1){ # nodes are all connected
     g <- comps[[1]];
@@ -1722,13 +1802,13 @@ ExtractModule<- function(nodeids){
     paths.list <-list();
     sd.len <- length(nodes);
     for(pos in 1:sd.len){
-      paths.list[[pos]] <- get.shortest.paths(g, nodes[pos], nodes[-(1:pos)])$vpath;
+      paths.list[[pos]] <- igraph::get.shortest.paths(g, nodes[pos], nodes[-(1:pos)])$vpath;
     }
     nds.inxs <- unique(unlist(paths.list));
     nodes2rm <- V(g)$name[-nds.inxs];
-    g <- simplify(delete.vertices(g, nodes2rm));
+    g <- simplify(igraph::delete.vertices(g, nodes2rm));
   }
-  nodeList <- get.data.frame(g, "vertices");
+  nodeList <- igraph::get.data.frame(g, "vertices");
   if(nrow(nodeList) < 3){
     return ("NA");
   }
@@ -1739,7 +1819,7 @@ ExtractModule<- function(nodeids){
   ndFileNm = paste(module.nm, "_node_list.csv", sep="");
   write.csv(nodeList, file=ndFileNm, row.names=F, quote=F);
   
-  edgeList <- get.data.frame(g, "edges");
+  edgeList <- igraph::get.data.frame(g, "edges");
   edgeList <- cbind(rownames(edgeList), edgeList);
   colnames(edgeList) <- c("Id", "Source", "Target");
   edgFileNm = paste(module.nm, "_edge_list.csv", sep="");
@@ -1762,27 +1842,27 @@ PerformLayOut <- function(net.nm, algo){
   vc <- vcount(g);
   if(algo == "Default"){
     if(vc > 3000) {
-      pos.xy <- layout.lgl(g, maxiter = 100);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 100);
     }else if(vc > 2000) {
-      pos.xy <- layout.lgl(g, maxiter = 150);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 150);
     }else if(vc > 1000) {
-      pos.xy <- layout.lgl(g, maxiter = 200);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 200);
     }else if(vc < 150){
-      pos.xy <- layout.kamada.kawai(g);
+      pos.xy <- igraph::layout.kamada.kawai(g);
     }else{
-      pos.xy <- layout.fruchterman.reingold(g);
+      pos.xy <- igraph::layout.fruchterman.reingold(g);
     }
   }else if(algo == "FrR"){
-    pos.xy <- layout.fruchterman.reingold(g);
+    pos.xy <- igraph::layout.fruchterman.reingold(g);
   }else if(algo == "random"){
-    pos.xy <- layout.random(g);
+    pos.xy <- igraph::layout.random(g);
   }else if(algo == "lgl"){
     if(vc > 3000) {
-      pos.xy <- layout.lgl(g, maxiter = 100);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 100);
     }else if(vc > 2000) {
-      pos.xy <- layout.lgl(g, maxiter = 150);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 150);
     }else {
-      pos.xy <- layout.lgl(g, maxiter = 200);
+      pos.xy <- igraph::layout.lgl(g, maxiter = 200);
     }
   }else if(algo == "gopt"){
     # this is a slow one
@@ -1795,7 +1875,7 @@ PerformLayOut <- function(net.nm, algo){
     }else{
       maxiter = 500;
     }
-    pos.xy <- layout.graphopt(g, niter=maxiter);
+    pos.xy <- igraph::layout.graphopt(g, niter=maxiter);
   }
   pos.xy;
 }
@@ -1814,10 +1894,9 @@ UpdateNetworkLayout <- function(algo, filenm){
     );
   }
   # now only save the node pos to json
-  require(RJSONIO);
   netData <- list(nodes=nodes);
   sink(filenm);
-  cat(toJSON(netData));
+  cat(RJSONIO::toJSON(netData));
   sink();
   return(filenm);
 }
@@ -1826,12 +1905,12 @@ UpdateNetworkLayout <- function(algo, filenm){
 saveNetworkInSIF <- function(network, name){
   edges <- .graph.sif(network=network, file=name);
   sif.nm <- paste(name, ".sif", sep="");
-  if(length(list.edge.attributes(network))!=0){
+  if(length(igraph::list.edge.attributes(network))!=0){
     edge.nms <- .graph.eda(network=network, file=name, edgelist.names=edges);
     sif.nm <- c(sif.nm, edge.nms);
     
   }
-  if(length(list.vertex.attributes(network))!=0){
+  if(length(igraph::list.vertex.attributes(network))!=0){
     node.nms <- .graph.noa(network=network, file=name);
     sif.nm <- c(sif.nm, node.nms);
   }
@@ -1841,11 +1920,11 @@ saveNetworkInSIF <- function(network, name){
 
 # internal function to write cytoscape .sif file
 .graph.sif <- function(network, file){
-  edgelist.names1 <<- get.edgelist(network, names=TRUE)
-  edgelist.names <- get.edgelist(network, names=TRUE)
+  edgelist.names1 <<- igraph::get.edgelist(network, names=TRUE)
+  edgelist.names <- igraph::get.edgelist(network, names=TRUE)
   a <- matrix(doID2LabelMapping(as.vector(edgelist.names[,1])))
   b <- matrix(doID2LabelMapping(as.vector(edgelist.names[,2])))
-  edgelist.names <- cbind(a, rep("pp", length(E(network))), b);    
+  edgelist.names <- cbind(a, rep("pp", length(igraph::E(network))), b);    
   write.table(edgelist.names, row.names=FALSE, col.names=FALSE, file=paste(file, ".sif", sep=""), sep="\t", quote=FALSE)
   return(edgelist.names) 
 }
@@ -1864,21 +1943,21 @@ doID2LabelMapping <- function(entrez.vec){
 # internal method to write cytoscape node attribute files
 .graph.noa <- function(network, file){
   all.nms <- c();
-  attrib <- list.vertex.attributes(network)
+  attrib <- igraph::list.vertex.attributes(network)
   for(i in 1:length(attrib)){
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "character")
+    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "character")
     {
       type <- "String"
     }
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "integer")
+    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "integer")
     {
       type <- "Integer"
     }
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "numeric")
+    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "numeric")
     {
       type <- "Double"
     }
-    noa <- cbind(V(network)$name, rep("=", length(V(network))), get.vertex.attribute(network, attrib[i]))
+    noa <- cbind(V(network)$name, rep("=", length(V(network))), igraph::get.vertex.attribute(network, attrib[i]))
     first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="")
     file.nm <- paste(file, "_", attrib[i], ".NA", sep="");
     write(first.line, file=file.nm, ncolumns = 1, append=FALSE, sep=" ")
@@ -1891,21 +1970,21 @@ doID2LabelMapping <- function(entrez.vec){
 # internal method to write cytoscape edge attribute files
 .graph.eda <- function(network, file, edgelist.names){
   all.nms <- c();
-  attrib <- list.edge.attributes(network)
+  attrib <- igraph::list.edge.attributes(network)
   for(i in 1:length(attrib)){
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "character")
+    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "character")
     {
       type <- "String"
     }
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "integer")
+    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "integer")
     {
       type <- "Integer"
     }
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "numeric")
+    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "numeric")
     {
       type <- "Double"
     }
-    eda <- cbind(cbind(edgelist.names[,1], rep("(pp)", length(E(network))), edgelist.names[,3]), rep("=", length(E(network))), get.edge.attribute(network, attrib[i]))
+    eda <- cbind(cbind(edgelist.names[,1], rep("(pp)", length(igraph::E(network))), edgelist.names[,3]), rep("=", length(igraph::E(network))), igraph::get.edge.attribute(network, attrib[i]))
     first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="");
     file.nm <- paste(file, "_", attrib[i], ".EA", sep="");
     write(first.line, file=file.nm, ncolumns=1, append=FALSE, sep =" ")
@@ -2009,7 +2088,6 @@ generate_breaks = function(x, n, center = F){
 }
 
 ComputeColorGradient <- function(nd.vec, background="black", centered){
-  require("RColorBrewer");
   #if(sum(nd.vec<0, na.rm=TRUE) > 0){ 
   #centered <- T;
   #}else{

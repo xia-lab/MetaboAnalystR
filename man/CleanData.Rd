@@ -6,8 +6,17 @@
 \usage{
 CleanData(bdata, removeNA = T, removeNeg = T, removeConst = T)
 }
+\arguments{
+\item{bdata}{Input data to clean}
+
+\item{removeNA}{Logical, T to remove NAs, F to not.}
+
+\item{removeNeg}{Logical, T to remove negative numbers, F to not.}
+
+\item{removeConst}{Logical, T to remove samples/features with 0s, F to not.}
+}
 \description{
-Cleans data and removes -Inf, Inf, NA, negative and 0
+Cleans data and removes -Inf, Inf, NA, negative and 0s.
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

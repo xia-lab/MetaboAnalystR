@@ -1,5 +1,9 @@
 #'Perform compound mapping for integrative analysis methods
 #'@description Perform compound mapping
+#'@param mSetObj Input name of the created mSet Object
+#'@param cmpdIDs Input the list of compound IDs 
+#'@param org Input the organism code
+#'@param idType Input the ID type
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -31,6 +35,10 @@ PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
 
 #'Perform integrated gene mapping
 #'@description Used for the pathinteg module
+#'@param mSetObj Input name of the created mSet Object
+#'@param geneIDs Input the list of gene IDs 
+#'@param org Input the organism code
+#'@param idType Input the ID type
 #'@export
 #'
 PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
@@ -79,6 +87,8 @@ PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
 
 #'Remove selected compounds
 #'@description Remove compounds
+#'@param mSetObj Input name of the created mSet Object
+#'@param inx Input the index of compound to remove 
 #'@export
 #'
 RemoveCmpd <- function(mSetObj=NA, inx){
@@ -124,6 +134,7 @@ RemoveGene <- function(mSetObj=NA, inx){
 
 #'Prepare integrated data
 #'@description Used for the pathinteg module.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 #'
 PrepareIntegData <- function(mSetObj=NA){
@@ -373,6 +384,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
 #'@description x axis is the pathway impact factor
 #'y axis is the p value (from ORA) 
 #'return the circle information
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

@@ -6,8 +6,11 @@
 \usage{
 CalculatePairwiseDiff(mat)
 }
+\arguments{
+\item{mat}{Input matrix of data to calculate pair-wise differences.}
+}
 \description{
-mat are log normalized, diff will be ratio
+Mat are log normalized, diff will be ratio. Used in higher functions.
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

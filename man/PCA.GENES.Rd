@@ -6,8 +6,11 @@
 \usage{
 PCA.GENES(X)
 }
+\arguments{
+\item{X}{Input matrix that has as columns the compounds that were considered as variables in the PCA analysis}
+}
 \description{
-X is a matrix that has as columns the genes that were considered as variables in the PCA analysis.
+X is a matrix that has as columns the compounds that were considered as variables in the PCA analysis.
 First we center the matrix by columns (Xoff) and then we obtain the eigenvalues and the 
 eigenvectors of the matrix Xoff%*%t(Xoff) and we
 use the equivalences between the loadings and scores to obtain the solution

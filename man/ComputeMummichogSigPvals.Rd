@@ -4,10 +4,14 @@
 \alias{ComputeMummichogSigPvals}
 \title{Calculate p-values for the list of significant compounds}
 \usage{
-MummichogSigPvals(mSetObj=NA)
+ComputeMummichogSigPvals(mSetObj=NA, enrichOpt, pvalOpt)
 }
 \arguments{
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{enrichOpt}{Input method for enrichment analysis}
+
+\item{pvalOpt}{Calculate fisher or hypergeometric p-values}
 }
 \description{
 This function performs pathway enrichment by calculate p-values for each pathway in the reference

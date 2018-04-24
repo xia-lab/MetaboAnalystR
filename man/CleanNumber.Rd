@@ -6,6 +6,9 @@
 \usage{
 CleanNumber(bdata)
 }
+\arguments{
+\item{bdata}{Input matrix to clean numbers}
+}
 \description{
 Replace -Inf, Inf to 99999 and -99999
 }

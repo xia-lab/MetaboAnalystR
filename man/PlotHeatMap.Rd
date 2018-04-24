@@ -20,6 +20,28 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{dataOpt}{Set data options}
+
+\item{scaleOpt}{Set the image scale}
+
+\item{smplDist}{Input the sample distance method}
+
+\item{clstDist}{Input the clustering distance method}
+
+\item{palette}{Input color palette choice}
+
+\item{viewOpt}{Set heatmap options, default is set to "detail"}
+
+\item{rowV}{Default is set to T}
+
+\item{colV}{Default is set to T}
+
+\item{var.inx}{Default is set to NA}
+
+\item{border}{Indicate whether or not to show cell-borders, default is set to T}
+
+\item{grp.ave}{Logical, default is set to F}
 }
 \description{
 Plot a heatmap based on results from t-tests/ANOVA, VIP or randomforest

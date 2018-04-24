@@ -4,15 +4,17 @@
 \alias{InitDataObjects}
 \title{Constructs a dataSet object for storing data}
 \usage{
-InitDataObjects(dataType, analType, paired=F)
+InitDataObjects(data.type, anal.type, paired=FALSE)
 }
 \arguments{
-\item{dataType}{The type of data, either list (Compound lists), conc (Compound concentration data), 
+\item{data.type}{The type of data, either list (Compound lists), conc (Compound concentration data), 
 specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 or msspec (MS spectra data)}
 
-\item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+\item{anal.type}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
 cmpdmap, smpmap, or pathinteg}
+
+\item{paired}{Indicate if the data is paired or not. Logical, default set to FALSE}
 }
 \description{
 This functions handles the construction of a mSetObj object for storing data for further processing and analysis.

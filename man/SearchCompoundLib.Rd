@@ -7,7 +7,7 @@
 SearchCompoundLib(mSetObj=NA)
 }
 \arguments{
-\item{mummichog}{Input the name of the created mummichog object (see mummichog_init).}
+\item{mSetObj}{Input the name of the created mSetObj object}
 }
 \description{
 This function matches user-uploaded files to library files specific to the selected organism. It

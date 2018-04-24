@@ -4,12 +4,16 @@
 \alias{SumNorm}
 \title{Row-wise Normalization}
 \usage{
-Options for normalize by sum median, reference sample,
-reference reference (compound), or quantile normalization
+SumNorm(x)
+}
+\arguments{
+\item{x}{Input data to normalize}
 }
 \description{
 Row-wise norm methods, when x is a row.
 Normalize by a sum of each sample, assume constant sum (1000).
+Options for normalize by sum median, reference sample,
+reference reference (compound), or quantile normalization
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

@@ -2,26 +2,20 @@
 % Please edit documentation in R/enrich_stats.R
 \name{CalculateHyperScore}
 \alias{CalculateHyperScore}
-\title{Various enrichment analysis algorithms}
+\title{Over-representation analysis using hypergeometric tests}
 \usage{
 CalculateHyperScore(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
-Various enrichment analysis algorithms
-
 Over-representation analysis using hypergeometric tests
 The probability is calculated from obtaining equal or higher number
 of hits using 1-phyper. Since phyper is a cumulative probability,
 to get P(X>=hit.num) => P(X>(hit.num-1))
 }
 \author{
-Jeff Xia \email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
-
-
-Over-representation analysis using hypergeometric tests
-
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)

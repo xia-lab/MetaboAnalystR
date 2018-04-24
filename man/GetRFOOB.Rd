@@ -6,6 +6,9 @@
 \usage{
 GetRFOOB(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Get the OOB error for the last signif
 }

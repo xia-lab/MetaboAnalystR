@@ -6,6 +6,17 @@
 \usage{
 PlotSigVar(x, y, xline, yline, title)
 }
+\arguments{
+\item{x}{Input the X variable}
+
+\item{y}{Input the Y variable}
+
+\item{xline}{Input the xline}
+
+\item{yline}{Input the yline}
+
+\item{title}{Input the title}
+}
 \description{
 Supporting function for plotting important variables for each factor
 note, by control xpd to plot legend outside the plotting area

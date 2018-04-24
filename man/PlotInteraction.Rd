@@ -4,7 +4,7 @@
 \alias{PlotInteraction}
 \title{Plot ASCA interaction plots}
 \usage{
-PlotInteraction(imgName, format="png", dpi=72, colowBW, width=NA)
+PlotInteraction(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

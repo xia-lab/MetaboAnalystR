@@ -6,6 +6,11 @@
 \usage{
 descendMin(y, istart = which.max(y))
 }
+\arguments{
+\item{y}{Input peaks}
+
+\item{istart}{Performs which.max on y}
+}
 \description{
 Perform various utilities for peak grouping
 }

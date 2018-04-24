@@ -1,6 +1,8 @@
 #'Create report of analyses (Network Explorer)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -27,11 +29,11 @@ CreateNetworkExplorerRnwReport<-function(mSetObj, usrName){
 #'@export
 CreateNetworkExplorerIntr <- function(){
   descr <- c("\\section{Background}\n",
-             "The aim of the Network Explorer module is to provide a comprehensive tool to describe user’s biological data as a network,", 
+             "The aim of the Network Explorer module is to provide a comprehensive tool to describe user's biological data as a network,", 
              " as well as to explore interactions between biological entities and their potential impacts to help inform hypothesis generation.", 
              " This module supports network visualization of both metabolomic and gene list data. Here, we aim to provide support for the", 
              " integration of transcriptomics and metabolomics data, as well as metagenomics and metabolomics data. MetaboAnalyst 4.0 implements ", 
-             "a knowledge-based network approach, whereby user’s data (metabolites and genes) can be projected onto five existing biological", 
+             "a knowledge-based network approach, whereby user's data (metabolites and genes) can be projected onto five existing biological", 
              " networks: 1) Pathway-based network discovery, 2) Gene-metabolite interaction network, 3) Metabolite-phenotype interaction network, ", 
              "4) Metabolite-metabolite interaction network, and 5) Metabolite-gene-phenotype interaction network.\n"
   );
@@ -56,6 +58,7 @@ CreateNetworkExplorerOverview <- function(){
 #'Create network explorer: Data Input
 #'@description Report generation using Sweave
 #'network explorer report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
 #'License: GNU GPL (>= 2)
@@ -99,6 +102,7 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
 #'Create a x-table for compound name mapping
 #'@description Report generation using Sweave
 #'Function to create a table for compound name mapping 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -107,19 +111,18 @@ CreateNetworkNameMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(xtable));
-  
   namemapped <- mSetObj$dataSet$map.table;
   
   colnames(namemapped) <- c("Query", "Match", "HMDB", "PubChem", "KEGG", "Comment");
   
-  print(xtable(namemapped, caption="Compound Name Mapping"), table.placement="!h", caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(namemapped, caption="Compound Name Mapping"), table.placement="!h", caption.placement="top", size="\\scriptsize");
   
 }
 
 #'Create a x-table for gene name mapping
 #'@description Report generation using Sweave
 #'Function to create a table for gene name mapping
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -127,19 +130,19 @@ CreateNetworkNameMapTable <- function(mSetObj=NA){
 CreateNetworkGeneMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable));
-  
+
   genemapped <- mSetObj$dataSet$gene.map.table;
   
   colnames(genemapped) <- c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
-  print(xtable(genemapped, caption="Gene Name Mapping"), table.placement="!h", tabular.environment = "longtable", caption.placement="top", size="\\tiny");
+  print(xtable::xtable(genemapped, caption="Gene Name Mapping"), table.placement="!h", tabular.environment = "longtable", caption.placement="top", size="\\tiny");
   
 }
 
 #'Create integrated pathway analysis report
 #'@description Report generation using Sweave
 #'Biomarker analysis report, ROC Curve Based Model Creation and Evaluation
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

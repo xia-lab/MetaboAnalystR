@@ -4,10 +4,14 @@
 \alias{UpdateIntegPathwayAnalysis}
 \title{Update integrative pathway analysis for new input list}
 \usage{
-PerformIntegPathwayAnalysis(mSetObj, topo="dc", enrich="hyper", libOpt="integ")
+UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ")
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{qids}{Input the query IDs}
+
+\item{file.nm}{Input the name of the file}
 
 \item{topo}{Select the mode for topology analysis: Degree Centrality ("dc") measures the number of links that connect to a node 
 (representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures the overall distance from a given node 

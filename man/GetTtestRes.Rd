@@ -6,6 +6,15 @@
 \usage{
 GetTtestRes(mSetObj = NA, paired = FALSE, equal.var = TRUE, nonpar = F)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{paired}{Default set to FALSE}
+
+\item{equal.var}{Default set to TRUE}
+
+\item{nonpar}{Use non-parametric tests, default is set to FALSE}
+}
 \description{
 Utility method to get p values
 }

@@ -6,6 +6,11 @@
 \usage{
 GetSigTable.ASCA(mSetObj = NA, nm)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{nm}{Input the name of the well modelled features}
+}
 \description{
 Table of features well modelled by ASCA
 }

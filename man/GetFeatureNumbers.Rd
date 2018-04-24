@@ -2,21 +2,17 @@
 % Please edit documentation in R/biomarker_utils.R
 \name{GetFeatureNumbers}
 \alias{GetFeatureNumbers}
-\title{Miscellaneous tasks for subsetting and training}
+\title{Numbers for subset selection}
 \usage{
 GetFeatureNumbers(feat.len)
 }
+\arguments{
+\item{feat.len}{Input the feature length}
+}
 \description{
-Subset data, train, rank
-
 Return a series of number for subsets selection
 }
 \author{
-Jeff Xia \email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
-Numbers for subset selection
-
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)

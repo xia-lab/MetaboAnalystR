@@ -6,6 +6,11 @@
 \usage{
 MergeDatasets(dataSet1, dataSet2)
 }
+\arguments{
+\item{dataSet1}{Input the first dataset}
+
+\item{dataSet2}{Input the second dataset}
+}
 \description{
 Utility function for PrepareQueryJson
 }

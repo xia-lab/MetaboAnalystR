@@ -6,6 +6,11 @@
 \usage{
 SearchByName(mSetObj = NA, query)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{query}{Input the query to search}
+}
 \description{
 Given a metabolite set name, search its index
 }

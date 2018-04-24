@@ -9,7 +9,7 @@ PlotMetaVenn(mSetObj = NA, imgNM = NA)
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}
 
-\item{imgName}{}
+\item{imgNM}{Input the name of the created Venn Diagram}
 }
 \description{
 This function plots a venn diagram of the individual studies.

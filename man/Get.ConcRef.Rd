@@ -6,6 +6,11 @@
 \usage{
 Get.ConcRef(mSetObj = NA, cmpd.nm)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{cmpd.nm}{Input the compound name}
+}
 \description{
 Get the concentration reference
 }

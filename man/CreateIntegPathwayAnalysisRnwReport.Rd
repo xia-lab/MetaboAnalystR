@@ -6,6 +6,11 @@
 \usage{
 CreateIntegPathwayAnalysisRnwReport(mSetObj, usrName)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{usrName}{Input the name of the user}
+}
 \description{
 Report generation using Sweave
 Puts together the analysis report

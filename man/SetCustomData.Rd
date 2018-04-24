@@ -6,6 +6,13 @@
 \usage{
 SetCustomData(mSetObj = NA, selected.cmpds, selected.smpls)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{selected.cmpds}{Input the vector containing the compounds}
+
+\item{selected.smpls}{Input the vector containing the samples}
+}
 \description{
 The "selected.cmpds" should be for extraction
 }

@@ -6,6 +6,11 @@
 \usage{
 doKOFiltering(ko.vec, type)
 }
+\arguments{
+\item{ko.vec}{Input the vector containing KOs}
+
+\item{type}{Input the type}
+}
 \description{
-Utility function
+Returns matched KO in the same order (NA if no match)
 }

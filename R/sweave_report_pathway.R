@@ -2,6 +2,8 @@
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
 #'write .Rnw file template
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -70,6 +72,7 @@ CreatePathInputDoc<-function(){
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
 #'Create MetPA process
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -103,6 +106,7 @@ CreatePathProcessDoc <- function(mSetObj=NA){
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
 #'Create pathway analysis doc
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -219,6 +223,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
 #'Create MetPA results doc
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

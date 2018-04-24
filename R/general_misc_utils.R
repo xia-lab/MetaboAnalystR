@@ -1,12 +1,14 @@
-#'Perform miscellaneous tasks
-#'@description Perform misc tasks
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
+### Perform miscellaneous tasks
+### Perform misc tasks
+### Jeff Xia\email{jeff.xia@mcgill.ca}
+### McGill University, Canada
+###License: GNU GPL (>= 2)
+
 
 #'Merge duplicated columns or rows by their mean
 #'@description dim 1 => row,  dim 2 => column
+#'@param data Input the data
+#'@param dim Numeric, input the dimensions, default is set to 2
 #'@export
 #'
 MergeDuplicates <- function(data, dim=2){
@@ -66,6 +68,9 @@ MergeDuplicates <- function(data, dim=2){
 
 #'Given a data with duplicates, remove duplicates
 #'@description Dups is the one with duplicates
+#'@param data Input data to remove duplicates
+#'@param lvlOpt Set options, default is mean
+#'@param quiet Set to quiet, logical, default is T
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -117,6 +122,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@description note, try to use the fread, however, it has issues with 
 #'some windows 10 files "Line ending is \r\r\n. .... appears to add the extra \r in text mode on Windows"
 #'in such as, use the slower read.table method
+#'@param fileName Input filename
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -143,6 +149,8 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 
 #'Transform 2 column text to data matrix
 #'@description Transform two column input text to data matrix (single column data frame)
+#'@param txtInput Input text
+#'@param sep.type Indicate the seperator type for input text. Default set to "space"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -175,10 +183,10 @@ getDataFromTextArea <- function(txtInput, sep.type="space"){
   return(my.mat);
 }
 
-#' need to check if necessary to include this code
-#' use single core on the public server
 #'Permutation
 #'@description Perform permutation, options to change number of cores used
+#'@param perm.num Numeric, input the number of permutations to perform
+#'@param fun Dummy function
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -191,12 +199,11 @@ Perform.permutation <- function(perm.num, fun){
   perm.res;
 }
 
-`%fin%` <- function(x, table) {
-  fmatch(x, table, nomatch = 0L) > 0L
-}
-
 #'Unzip .zip files
 #'@description Unzips uploaded .zip files, removes the uploaded file, checks for success
+#'@param inPath Input the path of the zipped files
+#'@param outPath Input the path to directory where the unzipped files will be deposited
+#'@param rmFile Logical, input whether or not to remove files. Default set to T
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -218,14 +225,16 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   return (1);
 }
 
-
 #'Calculate Fisher's Least Significant Difference (LSD)
 #'@description Adapted from the 'agricolae' package
+#'@param y Input Y
+#'@param trt Input trt
+#'@param alpha Numeric, default is 0.05
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-LSD.test <- function (y, trt, alpha = 0.05){
+LSD.test <- function(y, trt, alpha = 0.05){
   clase<-c("aov","lm")
   name.y <- paste(deparse(substitute(y)))
   name.t <- paste(deparse(substitute(trt)))
@@ -288,7 +297,11 @@ LSD.test <- function (y, trt, alpha = 0.05){
 }
 
 #'Perform data cleaning
-#'@description Cleans data and removes -Inf, Inf, NA, negative and 0
+#'@description Cleans data and removes -Inf, Inf, NA, negative and 0s.
+#'@param bdata Input data to clean
+#'@param removeNA Logical, T to remove NAs, F to not. 
+#'@param removeNeg Logical, T to remove negative numbers, F to not. 
+#'@param removeConst Logical, T to remove samples/features with 0s, F to not. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -331,6 +344,7 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
 
 #'Replace infinite numbers
 #'@description Replace -Inf, Inf to 99999 and -99999
+#'@param bdata Input matrix to clean numbers
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -351,6 +365,7 @@ CleanNumber <-function(bdata){
 
 #'Remove spaces
 #'@description Remove from, within, leading and trailing spaces
+#'@param query Input the query to clear
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -363,12 +378,7 @@ ClearStrings<-function(query){
   return(query);
 }
 
-#'Remove HTML tag
-#'@description Removes html tag
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
+# Remove HTML tag
 PrepareLatex <- function(stringVec){
   stringVec <- gsub("<(.|\n)*?>","",stringVec);
   stringVec <- gsub("%", "\\\\%", stringVec);
@@ -377,6 +387,7 @@ PrepareLatex <- function(stringVec){
 
 #'Determine value label for plotting
 #'@description Concentration or intensity data type
+#'@param data.type Input concentration or intensity data
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -392,6 +403,7 @@ GetAbundanceLabel<-function(data.type){
 
 #'Determine variable label for plotting
 #'@description Determine data type, binned spectra, nmr peak, or ms peak
+#'@param data.type Input the data type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -413,13 +425,15 @@ GetVariableLabel<-function(data.type){
 
 #'Create Latex table
 #'@description generate Latex table
+#'@param mat Input matrix
+#'@param method Input method to create table
+#'@param data.type Input the data type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
 GetSigTable<-function(mat, method, data.type){
-  suppressMessages(library(xtable));
   if(!isEmptyMatrix(mat)){ # test if empty
     cap<-"Important features identified by";
     if(nrow(mat)>50){
@@ -435,19 +449,20 @@ GetSigTable<-function(mat, method, data.type){
     mat<-cbind(col1, mat);
     rownames(mat)<-NULL;
     colnames(mat)<-cname;
-    print(xtable(mat, caption=paste(cap, method)), caption.placement="top", size="\\scriptsize");
+    print(xtable::xtable(mat, caption=paste(cap, method)), caption.placement="top", size="\\scriptsize");
   }else{
     print(paste("No significant features were found using the given threshold for", method));
   }
 }
 
 #'Sig table matrix is empty
-#'@description test if a sig table matrix is empty
+#'@description Test if a sig table matrix is empty
+#'@param mat Matrix to test if empty
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-isEmptyMatrix<-function(mat){
+isEmptyMatrix <- function(mat){
   if(is.null(mat) | length(mat)==0){
     return(TRUE);
   }
@@ -460,11 +475,12 @@ isEmptyMatrix<-function(mat){
   return(FALSE);
 }
 
-
 #'Compute within group and between group sum of squares
 #'(BSS/WSS) for each row of a matrix which may have NA
 #'@description Columns have labels, x is a numeric vector,
 #'cl is consecutive integers
+#'@param x Numeric vector
+#'@param cl Columns
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -510,7 +526,6 @@ var.na <- function(x){
   res
 }
 
-
 tapply.stat <-function (y, x, stat = "mean"){
   cx<-deparse(substitute(x))
   cy<-deparse(substitute(y))
@@ -552,12 +567,12 @@ tapply.stat <-function (y, x, stat = "mean"){
   return(junto)
 }
 
-#'List of objects
-#'@description Improved list of objects
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
+# List of objects
+# Improved list of objects
+# Jeff Xia\email{jeff.xia@mcgill.ca}
+# McGill University, Canada
+# License: GNU GPL (>= 2)
+
 .ls.objects <- function (pos = 1, pattern, order.by,
                          decreasing=FALSE, head=FALSE, n=5) {
   napply <- function(names, fn) sapply(names, function(x)
@@ -586,6 +601,8 @@ tapply.stat <-function (y, x, stat = "mean"){
 #'@description Extends the axis range to both ends
 #'vec is the values for that axis
 #'unit is the width to extend, 10 will increase by 1/10 of the range
+#'@param vec Input the vector
+#'@param unit Numeric
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -619,11 +636,11 @@ getVennCounts <- function(x, include="both") {
   structure(cbind(outcomes,Counts=counts),class="VennCounts")
 }
 
-#'Perform utilities for MetPa
-#'@description borrowed from Hmisc
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
+# Perform utilities for MetPa
+# borrowed from Hmisc
+# Jeff Xia\email{jeff.xia@mcgill.ca}
+# McGill University, Canada
+# License: GNU GPL (>= 2)
 all.numeric <- function (x, what = c("test", "vector"), extras = c(".", "NA")){
   what <- match.arg(what)
   old <- options(warn = -1)
@@ -648,7 +665,8 @@ ClearNumerics <-function(dat.mat){
 }
 
 #'Calculate Pairwise Differences
-#'@description mat are log normalized, diff will be ratio
+#'@description Mat are log normalized, diff will be ratio. Used in higher functions. 
+#'@param mat Input matrix of data to calculate pair-wise differences.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -740,6 +758,7 @@ GetColorSchema <- function(mSetObj=NA, grayscale=F){
 
 #'Remove folder
 #'@description Remove folder
+#'@param folderName Input name of folder to remove
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -755,6 +774,7 @@ RemoveFolder<-function(folderName){
 
 #'Remove file
 #'@description Remove file
+#'@param fileName Input name of file to remove
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -766,6 +786,7 @@ RemoveFile<-function(fileName){
 
 #'Clear folder and memory
 #'@description Clear the current folder and objects in memory
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -780,6 +801,7 @@ ClearUserDir<-function(mSetObj=NA){
 
 #'Retrieve last command from the Rhistory.R file
 #'@description Fetches the last command from the Rhistory.R file
+#'@param regexp Retrieve last command from Rhistory file
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -800,6 +822,8 @@ GetCMD<-function(regexp){
 #'@description Columns have labels cl=consecutive integers
 #'note: this is desgined for ASCA parition data
 #'in which Within group (WSS) is zero, so, we only need TSS
+#'@param x Input X
+#'@param cl Input the columns
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -830,7 +854,7 @@ Get.tss<-function(x, cl){
   return(TSS);
 }
 
-#'Memory functions
+# Memory functions
 ShowMemoryUse <- function(..., n=20) {
   save.image("TestMem.RData");
   print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
@@ -866,7 +890,6 @@ GetBashFullPath<-function(){
 #'@description This function converts processed raw LC/MS data from XCMS 
 #'to a usable data object (mSet) for MetaboAnalyst. The immediate next step following using this 
 #'function is to perform a SanityCheck, and then further data processing and analysis can continue.
-#'@usage mSet <- XSet2MSet(xset, dataType, analType, paired=F, format, lbl.type)
 #'@param xset The name of the xcmsSet object created.
 #'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
@@ -881,8 +904,7 @@ GetBashFullPath<-function(){
 
 XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
   
-  require(xcms);
-  data <- groupval(xset, "medret", "into");
+  data <- xcms::groupval(xset, "medret", "into");
   data2 <- rbind(class= as.character(phenoData(xset)$class), data);
   rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"));
   write.csv(data2, file="PeakTable.csv");
@@ -892,6 +914,11 @@ XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
   return(.set.mSet(mSetObj));
 }
 
+#'Get fisher p-values
+#'@param numSigMembers Number of significant members
+#'@param numSigAll Number of all significant features
+#'@param numMembers Number of members
+#'@param numAllMembers Number of all members
 #'@export
 GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers){
   z <- cbind(numSigMembers, numSigAll-numSigMembers, numMembers-numSigMembers, numAllMembers-numMembers-numSigAll+numSigMembers);
@@ -900,4 +927,5 @@ GetFisherPvalue <- function(numSigMembers, numSigAll, numMembers, numAllMembers)
   p.values <- as.numeric(unlist(lapply(z, "[[", "p.value"), use.names=FALSE));
   return(p.values);
 }
+
 

@@ -6,6 +6,16 @@
 \usage{
 RerenderMetPAGraph(mSetObj = NA, imgName, width, height)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{imgName}{Input the name of the plot}
+
+\item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{height}{Input the height of the created plot.}
+}
 \description{
 Redraw current graph for zooming or clipping then return a value
 }

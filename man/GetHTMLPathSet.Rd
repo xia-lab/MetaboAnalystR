@@ -6,6 +6,11 @@
 \usage{
 GetHTMLPathSet(mSetObj = NA, msetNm)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{msetNm}{Input the name of the metabolite set}
+}
 \description{
 Given a metset inx, return hmtl highlighted pathway cmpds
 }

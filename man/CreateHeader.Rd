@@ -6,6 +6,9 @@
 \usage{
 CreateHeader(usrName)
 }
+\arguments{
+\item{usrName}{Input the name of the user}
+}
 \description{
 Report generation using Sweave
 Create header

@@ -14,9 +14,9 @@ PlotDetailROC(mSetObj = NA, imgName, thresh, sp, se, dpi = 72,
 
 \item{thresh}{Input the threshold}
 
-\item{sp}{sp}
+\item{sp}{Specificity}
 
-\item{se}{se}
+\item{se}{Sensitivity}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}

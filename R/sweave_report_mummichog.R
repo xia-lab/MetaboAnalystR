@@ -1,6 +1,8 @@
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -30,10 +32,10 @@ CreateMummichogIntro <- function(){
   descr <- c("\\section{Background}\n",
              "Understanding the functional importance of metabolites in untargeted metabolomics is limited due to challenges with metabolite ",
              "identication. to reduce problems associated with compound misidentification and thereby pathway misinterpretation is to shift the unit of analysis from individual", 
-             " compounds to individual pathways. In particular, the mummichog algorithm (5) offers an elegant and efficient implementation of this concept.",
+             " compounds to individual pathways. In particular, the mummichog algorithm offers an elegant and efficient implementation of this concept.",
              " Mummichog bypasses the bottleneck of metabolite identification prior to pathway analysis by leveraging a priori pathway and network knowledge",
              " to directly infer biological activity based on MS peaks. Due of its popularity and repeated user requests, we have implemented",
-             " the mummichog algorithm (version 1.0.10) from Li et al. 2013, which has been carefully translated from the Python programming ",
+             " the mummichog algorithm (Version 1.0.10) from Li et al. 2013, which has been carefully translated from the Python programming ",
              "language to R, and includes a expanded knowledgebase of 21 organisms for pathway analysis. In particular, this module ",
              "by-passes the bottle-neck of metabolite identification prior to pathway analysis, leveraging a priori knowledge from",
              " genome-scale metabolic models and KEGG metabolic pathways. For instance, conventional approaches require statistically significant metabolites to be identified ",
@@ -61,6 +63,7 @@ CreateMummichogOverview <- function(){
 #'Create Mummichog analysis report: Data Input
 #'@description Report generation using Sweave
 #'Mummichog analysis report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -127,6 +130,7 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
 #'Create Mummichog report of analyses 
 #'@description Report generation using Sweave
 #'Function to create a summary table of mummichog analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -134,15 +138,15 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
 CreateMummichogAnalTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable))
   mummitable <- mSetObj$mummi.resmat
-  print(xtable(mummitable, caption="Results of the mummichog pathway analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(mummitable, caption="Results of the mummichog pathway analysis"), caption.placement="top", size="\\scriptsize");
   
 }
 
 #'Create mummichog analysis report
 #'@description Report generation using Sweave
 #'Mummichog analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

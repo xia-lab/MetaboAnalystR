@@ -6,6 +6,9 @@
 \usage{
 GetAbundanceLabel(data.type)
 }
+\arguments{
+\item{data.type}{Input concentration or intensity data}
+}
 \description{
 Concentration or intensity data type
 }

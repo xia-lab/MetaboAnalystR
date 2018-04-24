@@ -6,6 +6,13 @@
 \usage{
 LSD.test(y, trt, alpha = 0.05)
 }
+\arguments{
+\item{y}{Input Y}
+
+\item{trt}{Input trt}
+
+\item{alpha}{Numeric, default is 0.05}
+}
 \description{
 Adapted from the 'agricolae' package
 }

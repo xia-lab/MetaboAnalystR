@@ -6,6 +6,9 @@
 \usage{
 Get.rpart.summary(x)
 }
+\arguments{
+\item{x}{An Rpart object}
+}
 \description{
 x must be an rpart object
 }

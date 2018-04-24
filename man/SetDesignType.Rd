@@ -6,6 +6,11 @@
 \usage{
 SetDesignType(mSetObj = NA, design)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{design}{Input the design type}
+}
 \description{
 For two factor time series only
 }

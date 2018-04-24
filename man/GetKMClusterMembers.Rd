@@ -6,6 +6,11 @@
 \usage{
 GetKMClusterMembers(mSetObj = NA, i)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{i}{Input the cluster index}
+}
 \description{
 Get the cluster members for given index
 add HTML color to the names based on its group membership

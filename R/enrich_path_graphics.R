@@ -1,5 +1,10 @@
 #'Plot metabolome pathway
 #'@description Orthogonal PLS-DA (from ropls)
+#'@param mSetObj Input name of the created mSet Object
+#'@param pathName Input the name of the selected pathway
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param height Input the height of the created plot.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -8,18 +13,15 @@
 PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  library('KEGGgraph');
-  library('Rgraphviz');
-  path.id<-metpa$path.ids[pathName];
+  path.id <- metpa$path.ids[pathName];
   g <- metpa$graph.list[[path.id]];
-  tooltip <- names(nodes(g));
+  tooltip <- names(KEGGgraph::nodes(g));
   
   nm.vec <- NULL;
   
-  fillcolvec <- rep("lightblue", length(nodes(g)));
-  pvec <- histvec <- rep("NA", length(nodes(g)));
-  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- nodes(g);
+  fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
+  pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
+  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
   
   if(mSetObj$analSet$type == "pathora"){
     if(!is.null(mSetObj$analSet$ora.hits)){
@@ -30,17 +32,17 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
     }
   }else{
     if(!is.null(mSetObj$analSet$qea.hits)){
-      hit.cmpds<-mSetObj$analSet$qea.hits[[path.id]];
+      hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
       # now plotting summary graphs for each compounds
       for(i in 1:length(hit.cmpds)){
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;
         cmpd.name <- paste(cmpd, ".png", sep="");
-        Cairo(file=cmpd.name, width=180, height=180, bg = "transparent", type="png");
+        Cairo::Cairo(file=cmpd.name, width=180, height=180, bg = "transparent", type="png");
         # remember to change jscode for image size when the change the size above
         par(mar=c(4,4,1,1));
         
-        y.label<-GetAbundanceLabel(mSetObj$dataSet$type);
+        y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
         if(is.factor(mSetObj$dataSet$cls)){
           cls.lbls <- mSetObj$dataSet$cls;
           if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
@@ -48,7 +50,7 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
           }
           boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), ylab=y.label, las=2);
         }else{
-          plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
+          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
           abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
         }
         dev.off();
@@ -56,12 +58,12 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
       }
       
       pvals <- mSetObj$analSet$qea.univp[hit.cmpds];
-      pvec[hit.cmpds]<-pvals;
+      pvec[hit.cmpds] <- pvals;
       
       bg.vec <- heat.colors(length(pvals));
       
       # reorder the colors according to the ordered p values
-      ord.inx<-match(pvals, sort(pvals));
+      ord.inx <- match(pvals, sort(pvals));
       fillcolvec[hit.cmpds] <- bg.vec[ord.inx];
       
       if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$qea.filtered.mset)){
@@ -79,9 +81,9 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   imgName <- paste(pathName, ".png", sep="");
   
   ## Open plot device
-  Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+  Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
   par(mai=rep(0,4));
-  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+  g.obj <- Rgraphviz::plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
   nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
   dev.off();
   mSetObj$imgSet$current.metpa.graph <- g.obj;
@@ -93,6 +95,13 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 
 #'Plot KEGG pathway
 #'@description Orthogonal PLS-DA (from ropls)
+#'@param mSetObj Input name of the created mSet Object
+#'@param pathName Input the name of the selected KEGG pathway
+#'@param format Select the image format, "png", or "pdf". 
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -100,18 +109,15 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 #'
 PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   
-  library('KEGGgraph');
-  library('Rgraphviz');
-  
-  path.id<-metpa$path.ids[pathName];
+  path.id <- metpa$path.ids[pathName];
   g <- metpa$graph.list[[path.id]];
-  tooltip <- names(nodes(g));
+  tooltip <- names(KEGGgraph::nodes(g));
   
   nm.vec <- NULL;
   
-  fillcolvec <- rep("lightblue", length(nodes(g)));
-  pvec <- histvec <- rep("NA", length(nodes(g)));
-  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- nodes(g);
+  fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
+  pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
+  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
   
   if(mSetObj$analSet$type == "pathora"){
     if(!is.null(mSetObj$analSet$ora.hits)){
@@ -122,15 +128,15 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
     }
   }else{
     if(!is.null(mSetObj$analSet$qea.hits)){
-      hit.cmpds<-mSetObj$analSet$qea.hits[[path.id]];
+      hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
       
       pvals <- mSetObj$analSet$qea.univp[hit.cmpds];
-      pvec[hit.cmpds]<-pvals;
+      pvec[hit.cmpds] <- pvals;
       
       bg.vec <- heat.colors(length(pvals));
       
       # reorder the colors according to the ordered p values
-      ord.inx<-match(pvals, sort(pvals));
+      ord.inx <- match(pvals, sort(pvals));
       fillcolvec[hit.cmpds] <- bg.vec[ord.inx];
       
       if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$qea.filtered.mset)){
@@ -149,9 +155,9 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   }
   w <- h <- width;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mai=rep(0,4));
-  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+  g.obj <- Rgraphviz::plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
   dev.off();
   mSetObj$imgSet$kegg.graph.opls <- g.obj
   print(imgName);
@@ -162,22 +168,22 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
 
 GetMetPANodeInfo<-function(pathName, object, tags, histvec, pvec, impvec, width, height, usr = par("usr")){
   
-  nn = sapply(AgNode(object), function(x) x@name);
+  nn = sapply(Rgraphviz::AgNode(object), function(x) x@name);
   
   ## transform user to pixel coordinates
   x.u2p = function(x) { rx=(x-usr[1])/diff(usr[1:2]); stopifnot(all(rx>=0&rx<=1)); return(rx*width)  }
   y.u2p = function(y) { ry=(usr[4]-y)/diff(usr[3:4]); stopifnot(all(ry>=0&ry<=1)); return(ry*height) }
   
-  nxy = getNodeXY(object);
-  nh  = getNodeHeight(object)/2;
-  xl  = floor(x.u2p( nxy$x - getNodeLW(object) ));
-  xr  = ceiling(x.u2p( nxy$x + getNodeRW(object)));
+  nxy = Rgraphviz::getNodeXY(object);
+  nh  = Rgraphviz::getNodeHeight(object)/2;
+  xl  = floor(x.u2p( nxy$x - Rgraphviz::getNodeLW(object) ));
+  xr  = ceiling(x.u2p( nxy$x + Rgraphviz::getNodeRW(object)));
   yu  = floor(y.u2p( nxy$y - nh ));
   yl  = ceiling(y.u2p( nxy$y + nh ));
   names(xl) = names(xr) = names(yu) = names(yl) = nn;
   
   # create the javascript code
-  jscode <-paste("keggPathLnk=\'<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", metpa$path.ids[pathName], "\\',\\'KEGG\\');\">", pathName,"</a>\'", sep="");
+  jscode <- paste("keggPathLnk=\'<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", metpa$path.ids[pathName], "\\',\\'KEGG\\');\">", pathName,"</a>\'", sep="");
   tag.ids <- names(tags);
   kegg.ids <- names(tags);
   hmdb.ids <- KEGGID2HMDBID(kegg.ids);
@@ -197,16 +203,16 @@ GetMetPANodeInfo<-function(pathName, object, tags, histvec, pvec, impvec, width,
   return(jscode);
 }
 
-#'Generate suitable features for nodes and edges
-#'@description adapted from PathRender, used in higher functions. 
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
+# Generate suitable features for nodes and edges
+# adapted from PathRender, used in higher functions. 
+# Jeff Xia \email{jeff.xia@mcgill.ca}
+# McGill University, Canada
+# License: GNU GPL (>= 2)
 
 setRendAttrs = function(g, AllBorder="transparent",
                         AllFixedsize=FALSE, AllFontsize=16, AllShape="rectangle",
                         fillcolor="lightgreen", ...) {
-  nn = nodes(g)
+  nn = KEGGgraph::nodes(g)
   numn = length(nn)
   color = rep(AllBorder, numn)
   names(color)=nn
@@ -215,7 +221,7 @@ setRendAttrs = function(g, AllBorder="transparent",
   if (length(fillcolor)==1) {
     fillcolvec = rep(fillcolor, numn)
     names(fillcolvec) = nn
-  } else if (!identical(names(fillcolor), as.vector(nodes(g)))){
+  } else if (!identical(names(fillcolor), as.vector(KEGGgraph::nodes(g)))){
     stop("names on vector fillcolor must match nodes(g) exactly")
   } else {
     fillcolvec = fillcolor
@@ -232,6 +238,14 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@description x axis is the pathway impact factor
 #'y axis is the p value (from ORA or globaltest) 
 #'return the circle information
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'@param x Input the X
+#'@param y Input the Y
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -285,8 +299,8 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   
   mSetObj$imgSet$path.overview<-imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
-  op<-par(mar=c(6,5,2,3));
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  op <- par(mar=c(6,5,2,3));
   plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log(p)");
   axis(1);
   axis(2);
@@ -319,7 +333,6 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
   return(jscode);
 }
 
-
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -328,6 +341,11 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 
 #'Redraw current graph for zooming or clipping then return a value
 #'@description Redraw current graph for zooming or clipping then return a value
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input the name of the plot
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param height Input the height of the created plot.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -335,12 +353,15 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 #'
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height){
   mSetObj <- .get.mSet(mSetObj);
-  Cairo(file=imgName, width=width, height=height,type="png", bg="white");
+  Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="white");
   plot(mSetObj$imgSet$current.metpa.graph);
   dev.off();
   return(1);
 }
 
+#' Export information about selected circle
+#'@param mSetObj Input name of the created mSet Object
+#'@export
 GetCircleInfo<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$imgSet$circleInfo);
@@ -351,6 +372,8 @@ GetCircleInfo<-function(mSetObj=NA){
 #'Perform utilities for MetPa
 #'@description Convert user coords (as used in current plot) to pixels in a png
 #'adapted from the imagemap package
+#'@param xy Input coordinates
+#'@param im Input coordinates
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

@@ -6,6 +6,9 @@
 \usage{
 GetMsetLibSearchResult(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 since String[][] is not supported, have to return as 1D vector, 
 matrix can be directly convert to vector, note default will be column first

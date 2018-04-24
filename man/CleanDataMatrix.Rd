@@ -6,6 +6,9 @@
 \usage{
 CleanDataMatrix(ndata)
 }
+\arguments{
+\item{ndata}{Input the data to be cleaned}
+}
 \description{
-Clean the data matrix
+Function used in higher functinos to clean data matrix
 }

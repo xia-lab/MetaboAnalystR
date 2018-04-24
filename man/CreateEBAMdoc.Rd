@@ -6,6 +6,9 @@
 \usage{
 CreateEBAMdoc(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
 Create EBAM document

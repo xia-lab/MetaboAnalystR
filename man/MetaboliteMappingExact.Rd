@@ -6,6 +6,11 @@
 \usage{
 MetaboliteMappingExact(mSetObj = NA, q.type)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj}
+
+\item{q.type}{Inpute the query-type}
+}
 \description{
 For compound names to other ids, can do exact or approximate matches
 For other IDs, except HMDB ID, all others may return multiple/non-unique hits

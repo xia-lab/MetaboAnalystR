@@ -6,8 +6,15 @@
 \usage{
 FeatureCorrelation(mSetObj = NA, dist.name, varName)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{dist.name}{Input the name of the distance measure}
+
+\item{varName}{Input the variable name}
+}
 \description{
-calculate correlation of all other feature to a given feature name
+Calculate correlation of all other feature to a given feature name
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

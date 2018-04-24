@@ -8,6 +8,8 @@ SetEBAMSigMat(mSetObj = NA, delta)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{delta}{Input the delta for EBAM analysis}
 }
 \description{
 return double matrix with 3 columns - z.value, posterior, local.fdr

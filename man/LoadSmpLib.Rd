@@ -6,6 +6,9 @@
 \usage{
 LoadSmpLib(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+}
 \description{
 Load pathway library
 }

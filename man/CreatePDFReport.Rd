@@ -6,6 +6,11 @@
 \usage{
 CreatePDFReport(mSetObj = NA, usrName)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{usrName}{Input the name of the user}
+}
 \description{
 Report generation using Sweave
 Note: most analyses were already performed, only need to embed

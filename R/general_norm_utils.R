@@ -2,7 +2,7 @@
 #'@description This function removes a user-specified group from the data set.
 #'This must be performed following data processing and filtering. If the data was normalized prior to removal,
 #'you must re-normalize the data. 
-#'@usage UpdateGroupItems(mSetObj, grp.nm.vec)  
+#'@usage UpdateGroupItems(mSetObj=NA, grp.nm.vec)  
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param grp.nm.vec Input the name of the group you would like to remove from the data set in quotation marks 
 #'(ex: "Disease B") The name must be identical to a class label. 
@@ -53,6 +53,8 @@ UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
 }
 
 #'Clean the data matrix
+#'@description Function used in higher functinos to clean data matrix
+#'@param ndata Input the data to be cleaned
 #'@export
 #'
 CleanDataMatrix <- function(ndata){
@@ -62,13 +64,13 @@ CleanDataMatrix <- function(ndata){
   return(ndata[,!constCol, drop=FALSE]); # got an error of incorrect number of dimensions, added drop=FALSE to avoid vector conversion
 }
 
-#' Remove samples
-#' @description This function removes samples from the data set. This must be performed following data processing and filtering.
-#' If the data was normalized prior to removal, you must re-normalize the data.  
-#' @usage MetaboAnalystR:::UpdateSampleItems(mSetObj, smpl.nm.vec)
+#'Remove samples from user's data
+#'@description This function removes samples from the data set. This must be performed following data processing and filtering.
+#'If the data was normalized prior to removal, you must re-normalize the data.  
+#'@usage UpdateSampleItems(mSetObj=NA, smpl.nm.vec)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#' @param smpl.nm.vec Input the name of the sample to remove from the data in quotation marks. The name must be identical to the 
-#' sample names found in the data set.  
+#'@param smpl.nm.vec Input the name of the sample to remove from the data in quotation marks. The name must be identical to the 
+#'sample names found in the data set.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
 #'McGill University, Canada
 #'@export
@@ -119,7 +121,7 @@ UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
 #' @description This function removes user-selected features from the data set. 
 #' This must be performed following data processing and filtering.
 #' If the data was normalized prior to removal, you must re-normalize the data.  
-#' @usage MetaboAnalystR:::UpdateFeatureItems(mSetObj, feature.nm.vec)
+#' @usage UpdateFeatureItems(mSetObj=NA, feature.nm.vec)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #' @param feature.nm.vec Input the name of the feature to remove from the data in quotation marks. 
 #' The name must be identical to the feature names found in the data set.  
@@ -376,8 +378,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
 #'@description Row-wise norm methods, when x is a row.
 #'Normalize by a sum of each sample, assume constant sum (1000).
 # Return: normalized data.
-#'@usage Options for normalize by sum median, reference sample,
+#'Options for normalize by sum median, reference sample,
 #'reference reference (compound), or quantile normalization
+#'@param x Input data to normalize
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'@export
@@ -406,14 +409,15 @@ CompNorm<-function(x, ref){
 # perform quantile normalization on the raw data (can be log transformed later by user)
 # https://stat.ethz.ch/pipermail/bioconductor/2005-April/008348.html
 QuantileNormalize <- function(data){
-  library('preprocessCore');
-  return(t(normalize.quantiles(t(data), copy=FALSE)));
+  return(t(preprocessCore::normalize.quantiles(t(data), copy=FALSE)));
 }
 
 #'Column-wise Normalization
 #'@description Column-wise norm methods, when x is a column
-#'@usage Options for log, zero mean and unit variance, and
+#'Options for log, zero mean and unit variance, and
 #'several zero mean and variance/SE 
+#'@param x Input data
+#'@param min.val Input minimum value
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 
@@ -476,7 +480,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   
   mSetObj$imgSet$norm <- imgName
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE))
   
   # since there may be too many compounds, only plot a subsets (50) in box plot
@@ -527,7 +531,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 
 #'Two plot summary plot: Sample View of before and after normalization
 #'@description For each plot, the top is a density plot and the bottom is a box plot.
-#'@usage PlotNormSummary(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotSampleNormSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -555,7 +559,7 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   
   mSetObj$imgSet$summary_norm <-imgName;
   
-  Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   layout(matrix(c(1,1,1,2,3,3,3,4), 4, 2, byrow = FALSE))
   
   # since there may be too many samples, only plot a subsets (50) in box plot

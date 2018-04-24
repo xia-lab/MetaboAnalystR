@@ -8,6 +8,14 @@ SOM.Anal(mSetObj = NA, x.dim, y.dim, initMethod, neigb = "gaussian")
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{x.dim}{Input X dimension for SOM analysis}
+
+\item{y.dim}{Input Y dimension for SOM analysis}
+
+\item{initMethod}{Input the method}
+
+\item{neigb}{Default is set to 'gaussian'}
 }
 \description{
 SOM analysis

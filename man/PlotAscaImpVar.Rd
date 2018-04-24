@@ -4,7 +4,7 @@
 \alias{PlotAscaImpVar}
 \title{Plot the important variables for each factor}
 \usage{
-PlotASCAImpVar(imgName, format="png", dpi=72, width=NA, type)
+PlotAscaImpVar(mSetObj=NA, imgName, format, dpi, width=NA, type)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

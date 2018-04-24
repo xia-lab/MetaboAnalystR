@@ -4,13 +4,15 @@
 \alias{SetMass.PathLib}
 \title{Load the selected metabolic pathway database}
 \usage{
-LoadMummichogLib(mSetObj=NA)
+SetMass.PathLib(mSetObj=NA, lib)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{lib}{Input the name of organism library}
 }
 \description{
-LoadMummichogLib is used to load in the user selected metabolic pathway database. If the user's input
+SetMass.PathLib is used to load in the user selected metabolic pathway database. If the user's input
 is just a list of significant features (anal.type = "siglist"), this function will also provide a list of
 reference features.
 }

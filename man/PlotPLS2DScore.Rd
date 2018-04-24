@@ -25,7 +25,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
 
-\item{reg}{}
+\item{reg}{Numeric, default is 0.95}
 
 \item{show}{Show labels, 1 or 0}
 

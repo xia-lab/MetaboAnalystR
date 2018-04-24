@@ -6,6 +6,15 @@
 \usage{
 Read.BatchCSVdata(mSetObj = NA, filePath, format, label)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{filePath}{Input the path to the batch files}
+
+\item{format}{Input the format of the batch files}
+
+\item{label}{Input the label-type of the files}
+}
 \description{
 Read multiple user uploaded CSV data one by one
 format: row, col

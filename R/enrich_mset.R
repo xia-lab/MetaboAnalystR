@@ -4,6 +4,7 @@
 
 #'Load metabolite set library
 #'@description Metabolite set library
+#'@param libname Input the name of the metabolite set library to load. Default set to "pathway" library.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -17,6 +18,8 @@ LoadMsetLib <- function(libname="pathway"){
 
 #'Set the cachexia set used
 #'@description Set cachexia set used
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param used Set data to be used
 #'@export
 #'
 SetCachexiaSetUsed <- function(mSetObj=NA, used){
@@ -77,6 +80,8 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
 
 #'Read user upload metabolite set library file
 #'@description Return two col csv file, first name, second cmpd list
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param filePath Input the path to the user's uploaded metabolite set library
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -142,6 +147,7 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
 
 #'Get the library check messages
 #'@description Get the library check messages
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 #'
 GetMsetLibCheckMsg<-function(mSetObj=NA){
@@ -151,6 +157,8 @@ GetMsetLibCheckMsg<-function(mSetObj=NA){
 
 #'Get the concentration reference
 #'@description Get the concentration reference
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cmpd.nm Input the compound name
 #'@export
 #'
 Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
@@ -172,6 +180,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
 
 #'Load pathway library
 #'@description Load pathway library
+#'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -189,6 +198,9 @@ LoadSmpLib<-function(mSetObj=NA){
 
 #'Search metabolite set libraries
 #'@description Search metabolite set libraries
+#'@param mSetObj Input name of the created mSet Object
+#'@param query Input the query to search
+#'@param type Input the data type (name or compound)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -217,6 +229,8 @@ SearchMsetLibraries<-function(mSetObj=NA, query, type){
 
 #'Search for compound from all member compounds of metabolite set
 #'@description Search for compound from all member compounds of metabolite set
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param query Input the query to search
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -310,6 +324,8 @@ SearchByCompound <- function(mSetObj=NA, query){
 
 #'Given a metabolite set name, search its index
 #'@description Given a metabolite set name, search its index
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param query Input the query to search 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -357,6 +373,8 @@ SearchByName <- function(mSetObj=NA, query){
 #'Set KEGG pathway library
 #'@description note, this process can be long, need to return a value
 #'to force Java to wait
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param kegg.rda Input the name of the KEGG library
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -376,6 +394,8 @@ SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
 
 #'Read user uploaded metabolome as a list of KEGG pathway ids
 #'@description Read user uploaded metabolome as a list of KEGG pathway ids
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param filePath Input the path to the user's list of KEGG pathway ids
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -422,6 +442,8 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
 
 #'Read user uploaded metabolome as a list of HMDB compound names
 #'@description Read user uploaded metabolome as a list of HMDB compound names
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param filePath Input the path to the user's list of HMDB compound names 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -472,6 +494,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
 
 #'Return the selected metset library to java for display
 #'@description Return the selected metset library to java for display
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -495,6 +518,9 @@ GetRefLibCheckMsg<-function(mSetObj=NA){
   return(mSetObj$dataSet$metabo.ref.info);
 }
 
+#'Set metabolome filter
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param TorF Input metabolome filter
 #'@export
 SetMetabolomeFilter<-function(mSetObj=NA, TorF){
   mSetObj <- .get.mSet(mSetObj);
@@ -511,6 +537,7 @@ getBestHit<-function(mSetObj=NA){
 #'Return metset search results
 #'@description since String[][] is not supported, have to return as 1D vector, 
 #'matrix can be directly convert to vector, note default will be column first
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

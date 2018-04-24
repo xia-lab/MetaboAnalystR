@@ -6,6 +6,11 @@
 \usage{
 Setup.BiofluidType(mSetObj = NA, type)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{type}{Input the biofluid type}
+}
 \description{
 Save biofluid type for SSP
 }

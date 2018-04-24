@@ -6,6 +6,9 @@
 \usage{
 ClearUserDir(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Clear the current folder and objects in memory
 }

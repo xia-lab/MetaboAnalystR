@@ -6,7 +6,6 @@
 
 LoadKEGGLib.gene<-function(){
     kegg.path <- paste(libs.path, data.org, "/kegg.rds", sep="");
-
     kegg.anot <- readRDS(kegg.path)
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets;
@@ -178,7 +177,6 @@ PerformEnrichAnalysis <- function(file.nm, fun.type, ora.vec){
     AddMsg("Functional enrichment analysis was completed");
 
     # write json
-    library(RJSONIO);
     fun.anot = hits.query; 
     fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
     hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
@@ -191,7 +189,7 @@ PerformEnrichAnalysis <- function(file.nm, fun.type, ora.vec){
                     fun.pval = fun.pval,
                     hit.num = hit.num
         );
-     json.mat <- toJSON(json.res, .na='null');
+     json.mat <- RJSONIO::toJSON(json.res, .na='null');
      json.nm <- paste(file.nm, ".json", sep="");
      
      sink(json.nm)
@@ -204,6 +202,5 @@ PerformEnrichAnalysis <- function(file.nm, fun.type, ora.vec){
     hit.num <<- resTable[,4];
     csv.nm <- paste(file.nm, ".csv", sep="");
     write.csv(resTable, file=csv.nm, row.names=F);
-
     return(1);
 }

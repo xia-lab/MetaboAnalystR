@@ -7,6 +7,19 @@
 Predict.class(x.train, y.train, x.test, clsMethod = "pls", lvNum,
   imp.out = F)
 }
+\arguments{
+\item{x.train}{Input the x training samples}
+
+\item{y.train}{Input the y training samples}
+
+\item{x.test}{Input the x testing samples}
+
+\item{clsMethod}{Se the classification method, default is set to pls}
+
+\item{lvNum}{Input the number of levels}
+
+\item{imp.out}{Logical, set to F by default}
+}
 \description{
 Get predicted class probability
 }

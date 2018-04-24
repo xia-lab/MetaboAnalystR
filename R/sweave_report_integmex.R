@@ -1,6 +1,8 @@
 #'Create report of analyses (IntegPathwayAnalysis)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -12,14 +14,12 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   
   CreateIntegratedPathwayAnalOverview();
   CreateIntegratedPathwayAnalInputDoc(mSetObj);
-  CreateStatNORMdoc(mSetObj);
   
   CreateIntegratedPathwayDoc(mSetObj);
   
   CreateRHistAppendix();
   CreateFooter();
 }
-
 
 #'Create integrated pathway analysis report: Introduction  
 #'@description Report generation using Sweave
@@ -67,6 +67,7 @@ CreateIntegratedPathwayAnalOverview <- function(){
 #'Create integrated pathway  report: Data Input
 #'@description Report generation using Sweave
 #'integrated pathway report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
 #'License: GNU GPL (>= 2)
@@ -162,10 +163,10 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
-
 #'Create a x-table for compound name mapping
 #'@description Report generation using Sweave
 #'Function to create a table for compound name mapping 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -174,20 +175,18 @@ CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(xtable));
-  
   namemapped <- mSetObj$dataSet$map.table;
   
   colnames(namemapped) <- c("Query", "Match", "HMDB", "PubChem", "KEGG", "Comment");
   
-  print(xtable(namemapped, caption="Compound Name Mapping"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(namemapped, caption="Compound Name Mapping"), caption.placement="top", size="\\scriptsize");
   
 }
-
 
 #'Create a x-table for gene name mapping
 #'@description Report generation using Sweave
 #'Function to create a table for gene name mapping
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -195,20 +194,19 @@ CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
 CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable));
-  
+
   genemapped <- mSetObj$dataSet$gene.map.table;
   
   colnames(genemapped) <- c("Query", "Entrez", "Symbol", "Name", "Comment");
   
-  print(xtable(genemapped, caption="Gene Name Mapping"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(genemapped, caption="Gene Name Mapping"), caption.placement="top", size="\\scriptsize");
   
 }
-
 
 #'Create integrated pathway analysis report
 #'@description Report generation using Sweave
 #'Biomarker analysis report, ROC Curve Based Model Creation and Evaluation
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -256,18 +254,20 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   
   # PlotReKEGGPath
   
-  rekeggplot <- c( "\\begin{figure}[htp]",
-                   "\\begin{center}",
-                   paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
-                   "\\caption{", paste("Zoomed in plot of a selected pathway from the integrated methods pathway analysis.",
-                                       " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
-                                       " based on fold change (FC) values. .", sep=""),"}",
-                   "\\end{center}",
-                   paste("\\label{",mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
-                   "\\end{figure}",
-                   "\\clearpage"
-  );
-  cat(rekeggplot, file=rnwFile, append=TRUE, sep="\n");
+  if(!is.null(mSetObj$imgSet$kegg.graph.zoom)){
+    rekeggplot <- c( "\\begin{figure}[htp]",
+                     "\\begin{center}",
+                     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
+                     "\\caption{", paste("Zoomed in plot of a selected pathway from the integrated methods pathway analysis.",
+                                         " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
+                                         " based on fold change (FC) values. .", sep=""),"}",
+                     "\\end{center}",
+                     paste("\\label{",mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
+                     "\\end{figure}",
+                     "\\clearpage"
+    );
+    cat(rekeggplot, file=rnwFile, append=TRUE, sep="\n");
+  }
   
   if(is.null(mSetObj$dataSet$path.mat)){
     return()
@@ -286,6 +286,7 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
 #'Create a x-table for pathway results
 #'@description Report generation using Sweave
 #'Function to create a table for pathway results
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -293,13 +294,12 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
 CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  suppressMessages(library(xtable));
-  
+
   results <- mSetObj$dataSet$path.mat;
   
   colnames(results) <- c("Pathway", "Total", "Expected", "Hits", "P-Value", "Topology", "P-Value Z-Score", "Topology-Z Score");
   
-  print(xtable(results, caption="Enriched pathways based on the integrated methods pathway analysis."), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(results, caption="Enriched pathways based on the integrated methods pathway analysis."), caption.placement="top", size="\\scriptsize");
   
 }
 

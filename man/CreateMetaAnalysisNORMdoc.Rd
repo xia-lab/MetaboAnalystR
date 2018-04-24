@@ -6,6 +6,9 @@
 \usage{
 CreateMetaAnalysisNORMdoc(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
 Meta-Analysis, data normalization documentation.

@@ -11,7 +11,9 @@
 #'@export
 #'
 performMB <- function(mSetObj=NA, topPerc = 10){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   time.fac <- mSetObj$dataSet$time.fac;
   exp.fac <- mSetObj$dataSet$exp.fac;
   sbj <- vector(mode="character", length=nrow(mSetObj$dataSet$norm));
@@ -92,7 +94,7 @@ PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm,  format="png", dpi=72, width=N
   }
   h <- w;
   mSetObj$imgSet$mb <- imgName;
-  Cairo(file = imgName,  unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName,  unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plotProfile(mSetObj, cmpdNm);
   dev.off();
   
@@ -963,6 +965,7 @@ GetMBSigColNames <- function(mSetObj=NA){
 }
 
 #'Sig table for MB analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 GetSigTable.MB<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

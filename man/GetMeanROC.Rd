@@ -6,6 +6,9 @@
 \usage{
 GetMeanROC(perf)
 }
+\arguments{
+\item{perf}{Performance object from ROCR}
+}
 \description{
 perf is the performance object from ROCR
 }

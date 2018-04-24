@@ -10,6 +10,8 @@ SearchNetDB(mSetObj = NA, db.type, table.nm, require.exp = TRUE,
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
+\item{db.type}{Input the database type}
+
 \item{table.nm}{Input the organism code for the sqlite table (ppi). For chemical type, the 
 table.nm is drugbank of ctd}
 

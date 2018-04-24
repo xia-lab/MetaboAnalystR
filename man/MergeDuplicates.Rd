@@ -2,19 +2,15 @@
 % Please edit documentation in R/general_misc_utils.R
 \name{MergeDuplicates}
 \alias{MergeDuplicates}
-\title{Perform miscellaneous tasks}
+\title{Merge duplicated columns or rows by their mean}
 \usage{
 MergeDuplicates(data, dim = 2)
 }
-\description{
-Perform misc tasks
+\arguments{
+\item{data}{Input the data}
 
-dim 1 => row,  dim 2 => column
+\item{dim}{Numeric, input the dimensions, default is set to 2}
 }
-\author{
-Jeff Xia\email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
-
-Merge duplicated columns or rows by their mean
+\description{
+dim 1 => row,  dim 2 => column
 }

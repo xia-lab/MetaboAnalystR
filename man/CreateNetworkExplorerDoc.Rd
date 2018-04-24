@@ -6,6 +6,9 @@
 \usage{
 CreateNetworkExplorerDoc(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+}
 \description{
 Report generation using Sweave
 Biomarker analysis report, ROC Curve Based Model Creation and Evaluation

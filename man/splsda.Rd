@@ -10,23 +10,30 @@ splsda(X, Y, ncomp = 2, mode = c("regression", "canonical", "invariant",
   multilevel = NULL)
 }
 \arguments{
-\item{X:}{numeric matrix of predictors}
+\item{X}{numeric matrix of predictors}
 
-\item{Y:}{a factor or a class vector for the discrete outcome}
+\item{Y}{a factor or a class vector for the discrete outcome}
 
-\item{ncomp:}{the number of components to include in the model. Default to 2.}
+\item{ncomp}{the number of components to include in the model. Default to 2.}
 
-\item{keepX.constraint:}{A list containing which variables of X are to be kept on each of the first PLS-components.}
+\item{mode}{Default set to c("regression", "canonical", "invariant", "classic")}
 
-\item{keepX:}{number of \eqn{X} variables kept in the model on the last components (once all keepX.constraint[[i]] are used).}
+\item{keepX}{Number of \eqn{X} variables kept in the model on the last components (once all keepX.constraint[[i]] are used).}
 
-\item{scale:}{boleean. If scale = TRUE, each block is standardized to zero means and unit variances (default: TRUE).}
+\item{keepX.constraint}{A list containing which variables of X are to be kept on each of the first PLS-components.}
 
-\item{tol:}{Convergence stopping value.}
+\item{scale}{Boleean. If scale = TRUE, each block is standardized to zero means and unit variances (default: TRUE).}
 
-\item{max.iter:}{integer, the maximum number of iterations.}
+\item{tol}{Convergence stopping value.}
 
-\item{near.zero.var:}{boolean, see the internal \code{\link{nearZeroVar}} function (should be set to TRUE in particular for data with many zero values). Setting this argument to FALSE (when appropriate) will speed up the computations}
+\item{max.iter}{integer, the maximum number of iterations.}
+
+\item{near.zero.var}{boolean, see the internal \code{\link{nearZeroVar}} function (should be set to TRUE in particular for data with many zero values). 
+Setting this argument to FALSE (when appropriate) will speed up the computations}
+
+\item{logratio}{"None" by default, or "CLR"}
+
+\item{multilevel}{Designate multilevel design, "NULL" by default}
 }
 \description{
 Sparse PLS functions (adapted from mixOmics package for web-based usage)

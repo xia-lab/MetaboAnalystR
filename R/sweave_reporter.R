@@ -4,6 +4,8 @@
 #'the results to the right place without rerunning the whole analysis
 #'through Sweave. Only some auxilliary info (i.e. time, version etc need to
 #'run in R through Sweave
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -69,6 +71,8 @@ CreatePDFReport<-function(mSetObj=NA, usrName){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Write .Rnw file template
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -111,6 +115,7 @@ CreateStatRnwReport <- function(mSetObj, usrName){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create header
+#'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -141,6 +146,7 @@ CreateStatIntr <- function(){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Read and process raw data
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -342,6 +348,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create normalization document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -432,6 +439,9 @@ CreateStatNORMdoc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
+
+#'Introduction for statistical analysis module report
+#'Initialize Statistical Analysis Report
 #'@export
 InitStatAnalMode <- function(){
   descr <- c("\\section{Statistical and Machine Learning Data Analysis}",
@@ -484,6 +494,10 @@ InitStatAnalMode <- function(){
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
 }
 
+
+#'Create null message for analysis
+#'Creates a message for the Sweave report
+#'@description Creates a message stating that no analyses were performed on your data.
 #'@export
 CreateAnalNullMsg <- function(){
   descr <- c("No analysis was performed on your data.\n");
@@ -493,6 +507,7 @@ CreateAnalNullMsg <- function(){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create univariate analyses document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -624,6 +639,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create ANOVA document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -686,6 +702,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create correlation document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -777,6 +794,7 @@ CreateCorrDoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create PCA document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -860,6 +878,7 @@ CreatePCAdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create PLS document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -994,6 +1013,7 @@ CreatePLSdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create sPLS-DA document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1069,6 +1089,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create OPLSDA document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1137,6 +1158,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create SAM document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1201,6 +1223,7 @@ CreateSAMdoc <- function(mSetObj=NA){
 #'Create EBAM document
 #'Note: the search for delta (SAM) and a0 (EBAM) will not be plotted
 #'it is only exploration, and may cause potential inconsistentcies. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1260,6 +1283,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create hierarchical clustering document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1323,6 +1347,7 @@ CreateHCdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create SOM partitional clustering document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1373,6 +1398,7 @@ CreateSOMdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create Kmeans partitional clustering document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1425,6 +1451,7 @@ CreateKMdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create Random Forest document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1509,6 +1536,7 @@ CreateRFdoc <- function(mSetObj=NA){
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Create R-SVM document
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1620,6 +1648,7 @@ CreateFooter <- function(){
 #'@description Report generation using Sweave
 #'Create a summary table for each type of uploaded data
 #'csv table has 5 col: sampleID, feature #, zero,  missing #
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1629,7 +1658,6 @@ CreateSummaryTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  suppressMessages(library(xtable));
   sum.dat<-NULL;
   plenth<-dim(mSetObj$dataSet$procr)[2];
   if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin'){
@@ -1665,6 +1693,6 @@ CreateSummaryTable <- function(mSetObj=NA){
     colnames(sum.dat)<-c("Peaks (raw)","Peaks (fill)", "Peaks(processed)");
     rownames(sum.dat)<-row.names(mSetObj$dataSet$orig);
   }
-  print(xtable(sum.dat, caption="Summary of data processing results"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(sum.dat, caption="Summary of data processing results"), caption.placement="top", size="\\scriptsize");
 }
 

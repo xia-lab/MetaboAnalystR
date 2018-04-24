@@ -6,6 +6,9 @@
 \usage{
 KEGGID2HMDBID(ids)
 }
+\arguments{
+\item{ids}{Vector of KEGG ids}
+}
 \description{
 This functionn, when given a vector of KEGGIDs, returns a vector of HMDB IDs. HMDB standing
 for the Human Metabolome Database.

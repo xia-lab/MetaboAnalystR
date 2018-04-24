@@ -6,6 +6,15 @@
 \usage{
 CVTest.LRmodel(data.in, fmla.in, kfold = 10, run.stepwise = FALSE)
 }
+\arguments{
+\item{data.in}{Input matrix of data}
+
+\item{fmla.in}{Input for generalized linear model}
+
+\item{kfold}{Numeric}
+
+\item{run.stepwise}{Logical}
+}
 \description{
 Calculate ROC performance with CV
 }

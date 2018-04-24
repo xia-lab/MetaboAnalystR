@@ -6,6 +6,13 @@
 \usage{
 template.match(x, template, dist.name)
 }
+\arguments{
+\item{x}{Input data}
+
+\item{template}{Input template}
+
+\item{dist.name}{Input distance method}
+}
 \description{
 Run template on all the high region effect genes
 }

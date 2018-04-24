@@ -6,6 +6,15 @@
 \usage{
 PerformIntegCmpdMapping(mSetObj = NA, cmpdIDs, org, idType)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{cmpdIDs}{Input the list of compound IDs}
+
+\item{org}{Input the organism code}
+
+\item{idType}{Input the ID type}
+}
 \description{
 Perform compound mapping
 }

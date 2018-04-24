@@ -23,9 +23,9 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{type}{Indicate the type variables of importance to use, "vip" to use VIp scores, or "type"
 for coefficients}
 
-\item{feat.nm}{}
+\item{feat.nm}{Feature name}
 
-\item{feat.num}{}
+\item{feat.num}{Feature numbers}
 
 \item{color.BW}{Logical, true to use black and white, or false to not}
 }

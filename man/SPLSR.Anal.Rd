@@ -2,20 +2,21 @@
 % Please edit documentation in R/stats_spls.R
 \name{SPLSR.Anal}
 \alias{SPLSR.Anal}
-\title{R script for MetaboAnalyst
-Description: perform PCA/PLS-DA/Orthogonal PLS-DA/sparse PLS-DA}
+\title{Perform SPLS-DA}
 \usage{
 SPLSR.Anal(mSetObj = NA, comp.num, var.num, compVarOpt)
 }
+\arguments{
+\item{mSetObj}{Input name of the created mSet Object}
+
+\item{comp.num}{Input the number of computations to run}
+
+\item{var.num}{Input the number of variables}
+
+\item{compVarOpt}{Input the option to perform SPLS-DA}
+}
 \description{
 Sparse PLS-DA (from mixOmics)
-}
-\details{
-Author: Jeff Xia, jeff.xia@mcgill.ca
-McGill University, Canada
-
-License: GNU GPL (>= 2)
-Perform SPLS-DA
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
