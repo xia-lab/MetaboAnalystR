@@ -12,6 +12,10 @@
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_siggenes()
+  }
 
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
   cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
@@ -145,6 +149,11 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'
 EBAM.A0.Init <- function(mSetObj=NA, isPaired, isVarEq){
   mSetObj <- .get.mSet(mSetObj);
+
+  if(.on.public.web){
+    load_siggenes();
+  }
+
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
   }else{

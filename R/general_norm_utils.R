@@ -1,57 +1,3 @@
-#'Remove a group from the data 
-#'@description This function removes a user-specified group from the data set.
-#'This must be performed following data processing and filtering. If the data was normalized prior to removal,
-#'you must re-normalize the data. 
-#'@usage UpdateGroupItems(mSetObj=NA, grp.nm.vec)  
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param grp.nm.vec Input the name of the group you would like to remove from the data set in quotation marks 
-#'(ex: "Disease B") The name must be identical to a class label. 
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
-#'McGill University, Canada
-#'@export
-#'
-UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$filt)){
-    data <- mSetObj$dataSet$procr;
-    cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$proc.facA;
-      facB <- mSetObj$dataSet$proc.facB;
-    }
-  }else{
-    data <- mSetObj$dataSet$filt;
-    cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$filt.facA;
-      facB <- mSetObj$dataSet$filt.facB;
-    }
-  }
-  
-  if(!all(grp.nm.vec %in% cls)){
-    AddErrMsg("Cannot find group names!");
-    return(0);
-  }
-  
-  hit.inx <- cls %in% grp.nm.vec;
-  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
-  mSetObj$dataSet$prenorm.cls <- droplevels(factor(cls[!hit.inx])); 
-  
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-    mSetObj$dataSet$prenorm.facA <- droplevels(factor(facA[!hit.inx]));
-    mSetObj$dataSet$prenorm.facB <- droplevels(factor(facB[!hit.inx]));
-  }
-  
-  AddMsg("Successfully updated the group items!");
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(length(levels(mSetObj$dataSet$prenorm.cls)));
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-}
-
 #'Clean the data matrix
 #'@description Function used in higher functinos to clean data matrix
 #'@param ndata Input the data to be cleaned
@@ -62,103 +8,6 @@ CleanDataMatrix <- function(ndata){
   varCol <- apply(data.frame(ndata), 2, var, na.rm=T); # getting an error of dim(X) must have a positive length, fixed by data.frame 
   constCol <- (varCol == 0 | is.na(varCol));
   return(ndata[,!constCol, drop=FALSE]); # got an error of incorrect number of dimensions, added drop=FALSE to avoid vector conversion
-}
-
-#'Remove samples from user's data
-#'@description This function removes samples from the data set. This must be performed following data processing and filtering.
-#'If the data was normalized prior to removal, you must re-normalize the data.  
-#'@usage UpdateSampleItems(mSetObj=NA, smpl.nm.vec)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param smpl.nm.vec Input the name of the sample to remove from the data in quotation marks. The name must be identical to the 
-#'sample names found in the data set.  
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
-#'McGill University, Canada
-#'@export
-#'
-UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$filt)){
-    data <- mSetObj$dataSet$procr;
-    cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$proc.facA;
-      facB <- mSetObj$dataSet$proc.facB;
-    }
-  }else{
-    data <- mSetObj$dataSet$filt;
-    cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$filt.facA;
-      facB <- mSetObj$dataSet$filt.facB;
-    }
-  }
-  
-  if(!smpl.nm.vec %in% rownames(data)){
-    AddErrMsg("Cannot find the sample names!");
-    return(0)
-  }
-  
-  hit.inx <- rownames(data) %in% smpl.nm.vec;
-  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
-  mSetObj$dataSet$prenorm.cls <- as.factor(as.character(cls[!hit.inx]));
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-    mSetObj$dataSet$prenorm.facA <- as.factor(as.character(facA[!hit.inx]));
-    mSetObj$dataSet$prenorm.facB <- as.factor(as.character(facB[!hit.inx]));
-  }
-  
-  AddMsg("Successfully updated the sample items!");
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(length(levels(mSetObj$dataSet$prenorm.cls)));
-  }else{
-    return(.set.mSet(mSetObj)); 
-  }
-}
-
-#' Remove feature items
-#' @description This function removes user-selected features from the data set. 
-#' This must be performed following data processing and filtering.
-#' If the data was normalized prior to removal, you must re-normalize the data.  
-#' @usage UpdateFeatureItems(mSetObj=NA, feature.nm.vec)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#' @param feature.nm.vec Input the name of the feature to remove from the data in quotation marks. 
-#' The name must be identical to the feature names found in the data set.  
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
-#'McGill University, Canada
-#'@export
-#'
-UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$filt)){
-    data <- mSetObj$dataSet$procr;
-    cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$proc.facA;
-      facB <- mSetObj$dataSet$proc.facB;
-    }
-  }else{
-    data <- mSetObj$dataSet$filt;
-    cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      facA <- mSetObj$dataSet$filt.facA;
-      facB <- mSetObj$dataSet$filt.facB;
-    }
-  }
-  
-  if(!feature.nm.vec %in% colnames(data)){
-    AddErrMsg("Cannot find the feature names!");
-    return(0);
-  }
-  
-  hit.inx <- colnames(data) %in% feature.nm.vec;
-  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[,!hit.inx,drop=FALSE]);
-  mSetObj$dataSet$prenorm.cls <- cls; # this is the same
-  
-  AddMsg("Successfully updated the feature items!");
-  return(.set.mSet(mSetObj));
 }
 
 #'Normalization
@@ -188,15 +37,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(is.null(mSetObj$dataSet$procr)){
+  if(is.null(mSetObj$dataSet[["procr"]])){
     data<-mSetObj$dataSet$preproc
-  }else if(is.null(mSetObj$dataSet$prenorm)){
+  }else if(is.null(mSetObj$dataSet[["prenorm"]])){
     data<- mSetObj$dataSet$procr;
   }else{
     data<-mSetObj$dataSet$prenorm
   }
   
-  if(is.null(mSetObj$dataSet$prenorm.cls)){ # can be so for regression 
+  if(is.null(mSetObj$dataSet[["prenorm.cls"]])){ # can be so for regression 
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
   }
   
@@ -241,21 +90,21 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     constCol <- (varCol == 0 | is.na(varCol));
     constNum <- sum(constCol, na.rm=T);
     if(constNum > 0){
-      print(paste("After quantile normalization", constNum, "columns with constant value were found and deleted."));
+      print(paste("After quantile normalization", constNum, "features with a constant value were found and deleted."));
       data <- data[,!constCol];
       colNames <- colnames(data);
       rowNames <- rownames(data);
     }
     rownm<-"Quantile Normalization";
-  }else if(rowNorm=="ProbNormT"){
+  }else if(rowNorm=="GroupPQN"){
     grp.inx <- cls == ref;
     ref.smpl <- apply(data[grp.inx, ], 2, mean);
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
-    rownm<-"Probabilistic Quotient Normalization";
-  }else if(rowNorm=="ProbNormF"){
+    rownm<-"Probabilistic Quotient Normalization by a reference group";
+  }else if(rowNorm=="SamplePQN"){
     ref.smpl <- data[ref,];
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
-    rownm<-"Probabilistic Quotient Normalization";
+    rownm<-"Probabilistic Quotient Normalization by a reference sample";
   }else if(rowNorm=="CompNorm"){
     data<-t(apply(data, 1, CompNorm, ref));
     rownm<-"Normalization by a reference feature";
@@ -316,10 +165,12 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     
     colNames <- colnames(data);
     rowNames <- rownames(data);
-    mSetObj$dataSet$procr <- data
-  }
-  
-  if(!ratio){
+    #mSetObj$dataSet$procr <- data;
+    mSetObj$dataSet$use.ratio <- TRUE;
+    mSetObj$dataSet$proc.ratio <- data;
+
+  }else{
+    mSetObj$dataSet$use.ratio <- FALSE;
     # transformation
     if(transNorm=='LogNorm'){
       min.val <- min(abs(data[data!=0]))/10;
@@ -614,51 +465,178 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 ##############################################
 ##############################################
 
+
+#'Remove a group from the data 
+#'@description This function removes a user-specified group from the data set.
+#'This must be performed following data processing and filtering. If the data was normalized prior to removal,
+#'you must re-normalize the data. 
+#'@usage UpdateGroupItems(mSetObj=NA, grp.nm.vec)  
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param grp.nm.vec Input the name of the group you would like to remove from the data set in quotation marks 
+#'(ex: "Disease B") The name must be identical to a class label. 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
+#'McGill University, Canada
+#'@export
+#'
+UpdateGroupItems <- function(mSetObj=NA, grp.nm.vec){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$filt)){
+    data <- mSetObj$dataSet$procr;
+    cls <- mSetObj$dataSet$proc.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$proc.facA;
+      facB <- mSetObj$dataSet$proc.facB;
+    }
+  }else{
+    data <- mSetObj$dataSet$filt;
+    cls <- mSetObj$dataSet$filt.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$filt.facA;
+      facB <- mSetObj$dataSet$filt.facB;
+    }
+  }
+  
+  hit.inx <- cls %in% grp.nm.vec;
+  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
+  mSetObj$dataSet$prenorm.cls <- droplevels(factor(cls[!hit.inx])); 
+  
+  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    mSetObj$dataSet$prenorm.facA <- droplevels(factor(facA[!hit.inx]));
+    mSetObj$dataSet$prenorm.facB <- droplevels(factor(facB[!hit.inx]));
+  }
+  
+  AddMsg("Successfully updated the group items!");
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(length(levels(mSetObj$dataSet$prenorm.cls)));
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+}
+
+#'Remove samples from user's data
+#'@description This function removes samples from the data set. This must be performed following data processing and filtering.
+#'If the data was normalized prior to removal, you must re-normalize the data.  
+#'@usage UpdateSampleItems(mSetObj=NA, smpl.nm.vec)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param smpl.nm.vec Input the name of the sample to remove from the data in quotation marks. The name must be identical to the 
+#'sample names found in the data set.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
+#'McGill University, Canada
+#'@export
+#'
+UpdateSampleItems <- function(mSetObj=NA, smpl.nm.vec){
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$filt)){
+    data <- mSetObj$dataSet$procr;
+    cls <- mSetObj$dataSet$proc.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$proc.facA;
+      facB <- mSetObj$dataSet$proc.facB;
+    }
+  }else{
+    data <- mSetObj$dataSet$filt;
+    cls <- mSetObj$dataSet$filt.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$filt.facA;
+      facB <- mSetObj$dataSet$filt.facB;
+    }
+  }
+  
+  hit.inx <- rownames(data) %in% smpl.nm.vec;
+  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[!hit.inx,,drop=FALSE]);
+  mSetObj$dataSet$prenorm.cls <- as.factor(as.character(cls[!hit.inx]));
+  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    mSetObj$dataSet$prenorm.facA <- as.factor(as.character(facA[!hit.inx]));
+    mSetObj$dataSet$prenorm.facB <- as.factor(as.character(facB[!hit.inx]));
+  }
+  
+  AddMsg("Successfully updated the sample items!");
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(length(levels(mSetObj$dataSet$prenorm.cls)));
+  }else{
+    return(.set.mSet(mSetObj)); 
+  }
+}
+
+#' Remove feature items
+#' @description This function removes user-selected features from the data set. 
+#' This must be performed following data processing and filtering.
+#' If the data was normalized prior to removal, you must re-normalize the data.  
+#' @usage UpdateFeatureItems(mSetObj=NA, feature.nm.vec)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#' @param feature.nm.vec Input the name of the feature to remove from the data in quotation marks. 
+#' The name must be identical to the feature names found in the data set.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong 
+#'McGill University, Canada
+#'@export
+#'
+UpdateFeatureItems <- function(mSetObj=NA, feature.nm.vec){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$filt)){
+    data <- mSetObj$dataSet$procr;
+    cls <- mSetObj$dataSet$proc.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$proc.facA;
+      facB <- mSetObj$dataSet$proc.facB;
+    }
+  }else{
+    data <- mSetObj$dataSet$filt;
+    cls <- mSetObj$dataSet$filt.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      facA <- mSetObj$dataSet$filt.facA;
+      facB <- mSetObj$dataSet$filt.facB;
+    }
+  }
+  
+  hit.inx <- colnames(data) %in% feature.nm.vec;
+  mSetObj$dataSet$prenorm <- CleanDataMatrix(data[,!hit.inx,drop=FALSE]);
+  mSetObj$dataSet$prenorm.cls <- cls; # this is the same
+  
+  AddMsg("Successfully updated the feature items!");
+  return(.set.mSet(mSetObj));
+}
+
+
+InitPrenormData <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    if(is.null(mSetObj$dataSet[["prenorm"]])){
+        if(is.null(mSetObj$dataSet[["filt"]])){
+            mSetObj$dataSet$prenorm <- mSetObj$dataSet$procr;
+            mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
+            if(substring(mSetObj$dataSet$format,4,5) == "ts"){
+                mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
+                mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
+            }
+        }else{
+            mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
+            mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
+            if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+                mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
+                mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
+            }
+        }
+        .set.mSet(mSetObj)
+    }
+}
+
 # get the dropdown list for sample normalization view
 GetPrenormSmplNms <-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$prenorm)){
-    if(is.null(mSetObj$dataSet$filt)){
-      mSetObj$dataSet$prenorm <- mSetObj$dataSet$procr;
-    }else{
-      mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
-    }
-    .set.mSet(mSetObj)
-  }
   return(rownames(mSetObj$dataSet$prenorm));
 }
 
 GetPrenormFeatureNms <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$prenorm)){
-    if(is.null(mSetObj$dataSet$filt)){
-      mSetObj$dataSet$prenorm <- mSetObj$dataSet$procr;
-    }else{
-      mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
-    }
-    .set.mSet(mSetObj)
-  }
   return(colnames(mSetObj$dataSet$prenorm));
 }
 
 GetPrenormClsNms <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$prenorm.cls)){
-    if(is.null(mSetObj$dataSet$filt)){
-      mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
-      if(substring(mSetObj$dataSet$format,4,5) == "ts"){
-        mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
-        mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
-      }
-    }else{
-      mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-      if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-        mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
-        mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
-      }
-    }
-    .set.mSet(mSetObj)
-  }
   return(levels(mSetObj$dataSet$prenorm.cls));
 }
 

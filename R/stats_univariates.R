@@ -521,9 +521,10 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 #'Create volcano plot
 #'@description For labelling interesting points, it is defined by the following rules:
 #'need to be signficant (sig.inx) and or 2. top 5 p, or 2. top 5 left, or 3. top 5 right. 
-#'@usage PlotVolcano(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotVolcano(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
+#'@param plotLbl Logical, plot labels, 1 for yes and 0 for no. 
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -534,7 +535,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -571,7 +572,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     p.topInx <- GetTopInx(vcn$p.log, 5, T) & vcn$inx.up;
     fc.rtInx <- GetTopInx(vcn$fc.all[1,], 5, T);
     lblInx <- p.topInx & sig.upInx & fc.rtInx;
-    if(sum(lblInx, na.rm=T) > 0){
+    if(plotLbl & sum(lblInx, na.rm=T) > 0){
       text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
       text(vcn$fc.all[1,lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
     }
@@ -580,7 +581,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     p.topInx <- GetTopInx(vcn$p.log, 5, T) & vcn$inx.down;
     fc.leftInx <- GetTopInx(vcn$fc.all[2,], 5, T) & vcn$inx.down;
     lblInx <-p.topInx & sig.dnInx & fc.leftInx;
-    if(sum(lblInx, na.rm=T) > 0){
+    if(plotLbl & sum(lblInx, na.rm=T) > 0){
       text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
       text(-vcn$fc.all[2,lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
     }
@@ -595,7 +596,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.down);
     fc.leftInx <- GetTopInx(vcn$fc.log, 5, F);
     lblInx <-  sig.inx & (p.topInx | fc.leftInx);
-    if(sum(lblInx, na.rm=T) > 0){
+    if(plotLbl &  sum(lblInx, na.rm=T) > 0){
       text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
       text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
     }
@@ -603,7 +604,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.up);
     fc.rtInx <- GetTopInx(vcn$fc.log, 5, T);
     lblInx <- sig.inx & (p.topInx | fc.rtInx);
-    if(sum(lblInx, na.rm=T) > 0){
+    if(plotLbl & sum(lblInx, na.rm=T) > 0){
       text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
       text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
     }
@@ -886,9 +887,17 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
-  Cairo::Cairo(file = imgName, dpi=dpi, width=240, height=240, type=format, bg="transparent");
+  
+  my.width <- 240;
+  adj.width <- 60*length(levels(cls))+20;
+  if(adj.width > my.width){
+     my.width <- adj.width;
+  }
+
+  Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=300, type=format, bg="transparent");
   par(mar=c(4,3,1,2), oma=c(0,0,1,0));
-  boxplot(mSetObj$dataSet$norm[, cmpdNm]~cls,las=2, col= unique(GetColorSchema(mSetObj)));
+  boxplot(mSetObj$dataSet$norm[, cmpdNm]~cls,las=2, col= unique(GetColorSchema(mSetObj)), xaxt="n");
+  text(1:length(levels(cls)), par("usr")[3] - 0.25, srt = 45, adj = 1, labels = levels(cls), xpd = TRUE)
   title(main=cmpdNm, out=T);
   dev.off();
 }
@@ -1360,4 +1369,118 @@ ContainInfiniteVolcano <- function(mSetObj=NA){
 GetAovSigNum <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$analSet$aov$sig.num);
+}
+
+
+#'Calculate Fisher's Least Significant Difference (LSD)
+#'@description Adapted from the 'agricolae' package
+#'@param y Input Y
+#'@param trt Input trt
+#'@param alpha Numeric, default is 0.05
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+LSD.test <- function(y, trt, alpha = 0.05){
+  clase<-c("aov","lm")
+  name.y <- paste(deparse(substitute(y)))
+  name.t <- paste(deparse(substitute(trt)))
+  if("aov"%in%class(y) | "lm"%in%class(y)){
+    A<-y$model
+    DFerror<-df.residual(y)
+    MSerror<-deviance(y)/DFerror
+    y<-A[,1]
+    ipch<-pmatch(trt,names(A))
+    name.t <-names(A)[ipch]
+    trt<-A[,ipch]
+    name.y <- names(A)[1]
+  }
+  junto <- subset(data.frame(y, trt), is.na(y) == FALSE)
+  means <- tapply.stat(junto[, 1], junto[, 2], stat="mean") #change
+  sds <- tapply.stat(junto[, 1], junto[, 2], stat="sd")     #change
+  nn <- tapply.stat(junto[, 1], junto[, 2], stat="length")  #change
+  std.err <- sds[, 2]/sqrt(nn[, 2])
+  Tprob <- qt(1 - alpha/2, DFerror)
+  LCL <- means[,2]-Tprob*std.err
+  UCL <- means[,2]+Tprob*std.err
+  means <- data.frame(means, std.err, replication = nn[, 2], LCL, UCL)
+  names(means)[1:2] <- c(name.t, name.y)
+  #row.names(means) <- means[, 1]
+  ntr <- nrow(means)
+  nk <- choose(ntr, 2)
+  nr <- unique(nn[, 2])
+  
+  comb <- combn(ntr, 2)
+  nn <- ncol(comb)
+  dif <- rep(0, nn)
+  LCL1<-dif
+  UCL1<-dif
+  sig<-NULL
+  pvalue <- rep(0, nn)
+  for (k in 1:nn) {
+    i <- comb[1, k]
+    j <- comb[2, k]
+    if (means[i, 2] < means[j, 2]){
+      comb[1, k]<-j
+      comb[2, k]<-i
+    }
+    dif[k] <- abs(means[i, 2] - means[j, 2])
+    sdtdif <- sqrt(MSerror * (1/means[i, 4] + 1/means[j,4]))
+    pvalue[k] <- 2 * (1 - pt(dif[k]/sdtdif, DFerror));
+    pvalue[k] <- round(pvalue[k],6);
+    LCL1[k] <- dif[k] - Tprob*sdtdif
+    UCL1[k] <- dif[k] + Tprob*sdtdif
+    sig[k]<-" "
+    if (pvalue[k] <= 0.001) sig[k]<-"***"
+    else  if (pvalue[k] <= 0.01) sig[k]<-"**"
+    else  if (pvalue[k] <= 0.05) sig[k]<-"*"
+    else  if (pvalue[k] <= 0.1) sig[k]<-"."
+  }
+  tr.i <- means[comb[1, ],1]
+  tr.j <- means[comb[2, ],1]
+  output<-data.frame("Difference" = dif, pvalue = pvalue,sig,LCL=LCL1,UCL=UCL1)
+  rownames(output)<-paste(tr.i,tr.j,sep=" - ");
+  output;
+}
+
+
+tapply.stat <-function (y, x, stat = "mean"){
+  cx<-deparse(substitute(x))
+  cy<-deparse(substitute(y))
+  x<-data.frame(c1=1,x)
+  y<-data.frame(v1=1,y)
+  nx<-ncol(x)
+  ny<-ncol(y)
+  namex <- names(x)
+  namey <- names(y)
+  if (nx==2) namex <- c("c1",cx)
+  if (ny==2) namey <- c("v1",cy)
+  namexy <- c(namex,namey)
+  for(i in 1:nx) {
+    x[,i]<-as.character(x[,i])
+  }
+  z<-NULL
+  for(i in 1:nx) {
+    z<-paste(z,x[,i],sep="&")
+  }
+  w<-NULL
+  for(i in 1:ny) {
+    m <-tapply(y[,i],z,stat)
+    m<-as.matrix(m)
+    w<-cbind(w,m)
+  }
+  nw<-nrow(w)
+  c<-rownames(w)
+  v<-rep("",nw*nx)
+  dim(v)<-c(nw,nx)
+  for(i in 1:nw) {
+    for(j in 1:nx) {
+      v[i,j]<-strsplit(c[i],"&")[[1]][j+1]
+    }
+  }
+  rownames(w)<-NULL
+  junto<-data.frame(v[,-1],w)
+  junto<-junto[,-nx]
+  names(junto)<-namexy[c(-1,-(nx+1))]
+  return(junto)
 }

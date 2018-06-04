@@ -521,11 +521,14 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   imgName <- paste(gene.id, ".png", sep="");
   mSetObj$imgSet$meta.anal$plot <- imgName
 
+  if(.on.public.web){
+    load_lattice()
+  }
   num <- sum(mdata.all == 1);
   # calculate width based on the dataset number
   if(num == 1){
     Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
-    myplot <- lattice::bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
+    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
                      xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
   }else{
     # calculate layout
@@ -556,7 +559,7 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
     # update labels
     data.lbl <- factor(data.lbl, labels=nlbls);
     # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-    myplot <- lattice::bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
+    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
                      xlab="Datasets", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)),
                      fill="#0000ff22", layout=layout);
   }

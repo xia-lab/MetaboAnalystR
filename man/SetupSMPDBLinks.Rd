@@ -11,6 +11,7 @@ SetupSMPDBLinks(kegg.ids)
 }
 \description{
 Only works for human (hsa.rda) data
+2018 - works for ath, eco, mmu, sce
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

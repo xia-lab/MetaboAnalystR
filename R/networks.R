@@ -212,6 +212,10 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 
     mSetObj <- .get.mSet(mSetObj);
   
+    if(.on.public.web){
+       load_rsqlite()
+    }    
+
     result.list <- .preparePhenoListSeeds(mSetObj, table.nm);
     genes <- result.list$genes;
     protein.vec <- seed.graph;
@@ -495,6 +499,11 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 CreateGraph <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_igraph()
+  }
+  
   node.list <- pheno.net$node.data;
   edge.list <- pheno.net$edge.data;
   
@@ -977,6 +986,7 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
 QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
   
   if(.on.public.web){
+    load_rsqlite()
     pheno.db <- dbConnect(SQLite(), "../../libs/network/MetPriCNet.sqlite");
   }else{
     download.file("http://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
@@ -1370,7 +1380,8 @@ GetNodeBetweenness <- function(){
   round(betweenness(overall.graph, directed=F, normalized=F), 2);
 }
 
-DecomposeGraph <- function(gObj, minNodeNum = 3){
+DecomposeGraph <- function(gObj, minNodeNum=3, maxNetNum=10){
+
   # now decompose to individual connected subnetworks
   comps <- igraph::decompose.graph(gObj, min.vertices=minNodeNum);
   if(length(comps) == 0){
@@ -1388,31 +1399,24 @@ DecomposeGraph <- function(gObj, minNodeNum = 3){
   # note, we report stats for all nets (at least 3 nodes);
   hit.inx <- net.stats$Node >= minNodeNum;
   comps <- comps[hit.inx];
-  sub.stats <- NULL;
-  i <- 0;
-  for(nm in names(comps)){
-    i <- i + 1;
-    g <- comps[[nm]];
-    saveNetworkInSIF(g, nm)
-    nodeList <- igraph::get.data.frame(g, "vertices");
-    colnames(nodeList) <- c("Id", "Label");
-    ndFileNm = paste(nm, "_node_list.csv", sep="");
-    write.csv(nodeList, file=ndFileNm, row.names=F, quote=F);
-    
-    edgeList <- igraph::get.data.frame(g, "edges");
-    edgeList <- cbind(rownames(edgeList), edgeList);
-    colnames(edgeList) <- c("Id", "Source", "Target");
-    edgFileNm = paste(nm, "_edge_list.csv", sep="");
-    write.csv(edgeList, file=edgFileNm, row.names=F, quote=F);
-    
-    sub.stats <- c(sub.stats, nrow(nodeList));   
+
+  # in case too many
+  if(length(comps) > maxNetNum){
+     comps <- comps[1:maxNetNum];
   }
-  
+
   # now record
   pheno.comps <<- comps;
   net.stats <<- net.stats;
-  
+  sub.stats <- unlist(lapply(comps, vcount));  
   return(sub.stats);
+}
+
+PrepareSubnetDownloads <- function(nm){
+  g <- pheno.comps[[nm]];
+  # need to update graph so that id is compound names rather than ID
+  V(g)$name <- as.character(doID2LabelMapping(V(g)$name));
+  saveNetworkInSIF(g, nm);
 }
 
 ComputeSubnetStats <- function(comps){
@@ -1742,9 +1746,13 @@ convertIgraph2JSON <- function(net.nm, filenm){
   # now create the json object
   nodes <- vector(mode="list");
   for(i in 1:length(node.sizes)){
+    # TODO: avoid which here and just attach HMDB matched IDs to the list of Compound nodes
+    hmdb.id <- mSet$dataSet$map.table[which(mSet$dataSet$map.table[,1] == nms[i]), 3]
+
     nodes[[i]] <- list(
       id=nms[i],
       idnb = i, 
+      hmdb=hmdb.id,
       label=lbls[i],
       evidence=evidence.ids[i],
       genename=gene.names[i],
@@ -1901,33 +1909,6 @@ UpdateNetworkLayout <- function(algo, filenm){
   return(filenm);
 }
 
-# adapted from BioNet
-saveNetworkInSIF <- function(network, name){
-  edges <- .graph.sif(network=network, file=name);
-  sif.nm <- paste(name, ".sif", sep="");
-  if(length(igraph::list.edge.attributes(network))!=0){
-    edge.nms <- .graph.eda(network=network, file=name, edgelist.names=edges);
-    sif.nm <- c(sif.nm, edge.nms);
-    
-  }
-  if(length(igraph::list.vertex.attributes(network))!=0){
-    node.nms <- .graph.noa(network=network, file=name);
-    sif.nm <- c(sif.nm, node.nms);
-  }
-  # need to save all sif and associated attribute files into a zip file for download
-  zip(paste(name,"_sif",".zip", sep=""), sif.nm);
-}
-
-# internal function to write cytoscape .sif file
-.graph.sif <- function(network, file){
-  edgelist.names1 <<- igraph::get.edgelist(network, names=TRUE)
-  edgelist.names <- igraph::get.edgelist(network, names=TRUE)
-  a <- matrix(doID2LabelMapping(as.vector(edgelist.names[,1])))
-  b <- matrix(doID2LabelMapping(as.vector(edgelist.names[,2])))
-  edgelist.names <- cbind(a, rep("pp", length(igraph::E(network))), b);    
-  write.table(edgelist.names, row.names=FALSE, col.names=FALSE, file=paste(file, ".sif", sep=""), sep="\t", quote=FALSE)
-  return(edgelist.names) 
-}
 
 doID2LabelMapping <- function(entrez.vec){
   
@@ -1939,60 +1920,6 @@ doID2LabelMapping <- function(entrez.vec){
   symbols[na.inx] <- entrez.vec[na.inx];
   return(symbols);
 } 
-
-# internal method to write cytoscape node attribute files
-.graph.noa <- function(network, file){
-  all.nms <- c();
-  attrib <- igraph::list.vertex.attributes(network)
-  for(i in 1:length(attrib)){
-    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "character")
-    {
-      type <- "String"
-    }
-    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "integer")
-    {
-      type <- "Integer"
-    }
-    if(is(igraph::get.vertex.attribute(network, attrib[i]))[1] == "numeric")
-    {
-      type <- "Double"
-    }
-    noa <- cbind(V(network)$name, rep("=", length(V(network))), igraph::get.vertex.attribute(network, attrib[i]))
-    first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="")
-    file.nm <- paste(file, "_", attrib[i], ".NA", sep="");
-    write(first.line, file=file.nm, ncolumns = 1, append=FALSE, sep=" ")
-    write.table(noa, row.names = FALSE, col.names = FALSE, file=file.nm, sep=" ", append=TRUE, quote=FALSE);
-    all.nms <- c(all.nms, file.nm);
-  }
-  return(all.nms);
-}
-
-# internal method to write cytoscape edge attribute files
-.graph.eda <- function(network, file, edgelist.names){
-  all.nms <- c();
-  attrib <- igraph::list.edge.attributes(network)
-  for(i in 1:length(attrib)){
-    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "character")
-    {
-      type <- "String"
-    }
-    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "integer")
-    {
-      type <- "Integer"
-    }
-    if(is(igraph::get.edge.attribute(network, attrib[i]))[1] == "numeric")
-    {
-      type <- "Double"
-    }
-    eda <- cbind(cbind(edgelist.names[,1], rep("(pp)", length(igraph::E(network))), edgelist.names[,3]), rep("=", length(igraph::E(network))), igraph::get.edge.attribute(network, attrib[i]))
-    first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="");
-    file.nm <- paste(file, "_", attrib[i], ".EA", sep="");
-    write(first.line, file=file.nm, ncolumns=1, append=FALSE, sep =" ")
-    write.table(eda, row.names = FALSE, col.names = FALSE, file=file.nm, sep=" ", append=TRUE, quote=FALSE);
-    all.nms <- c(all.nms, file.nm);
-  }
-  return(all.nms);
-}
 
 # new range [a, b]
 rescale2NewRange <- function(qvec, a, b){

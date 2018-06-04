@@ -4,12 +4,14 @@
 \alias{PlotVolcano}
 \title{Create volcano plot}
 \usage{
-PlotVolcano(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+PlotVolcano(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{imgName}{Input a name for the plot}
+
+\item{plotLbl}{Logical, plot labels, 1 for yes and 0 for no.}
 
 \item{format}{Select the image format, "png", or "pdf".}
 

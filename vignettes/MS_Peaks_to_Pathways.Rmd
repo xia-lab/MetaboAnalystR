@@ -34,12 +34,9 @@ mSet <- UpdateMummichogParameters(mSet, "three", "positive", 1.0E-4);
 # Sanity check of the uploaded data
 mSet <- SanityCheckMummichogData(mSet)
 
-# Set the library, in this case the model is the human MFN model
-mSet <- SetMass.PathLib(mSet, "hsa_mfn")
-
-# Perform the mummichog algorith, using Fisher's p-value and gamma-adjustment of p-
+# Perform the mummichog algorith, in this case the model is the human MFN model, using Fisher's p-value and gamma-adjustment of p-
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
-mSet <- PerformMummichog(mSet, "fisher", "gamma")
+mSet<-PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
 
 ```
 

@@ -1,7 +1,6 @@
 ## Test environments
 
 * Ubuntu 14.04, R 3.4.4
-* Mac OS High Sierra 10.13.4 R 3.4.4
 
 ## R CMD check results
 

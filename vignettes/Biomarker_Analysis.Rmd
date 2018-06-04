@@ -29,7 +29,9 @@ The biomarker analysis module accepts either a compound concentration table, spe
 
 The normalization step for biomarker analysis, however, includes an additional option for calculating ratios between metabolite concentrations. Ratios between two metabolite concentrations may provide more information than the two individual metabolite concentrations seperately. MetaboAnalystR will compute ratios between all possible metabolite pairs and then choose the top ranked ratios (based on p-values) to be included with the data for further biomarker analysis. Please note, there is a potential overfitting issue associated with this procedure. The main purpose of computing ratios of metabolite concentrations is to improve the chances of biomarker discovery, therefore users will need to validate their performance in future, independent studies. Log normalization of the data will be performed during the process. If you would like to perform data scaling, perform it separately in a second step. 
 
-```{r, eval=FALSE}
+```{r}
+library(MetaboAnalystR)
+
 # Create objects for storing processed data from biomarker analysis 
 mSet<-InitDataObjects("conc", "roc", FALSE)
 
@@ -45,6 +47,11 @@ mSet<-IsSmallSmplSize(mSet)
 # Perform no normalization, no ratio calculation
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", ref=NULL, ratio=FALSE, ratioNum=20)
 
+```
+
+To perform normalization with ratio calculation use Option 2...
+
+```{r, eval=FALSE}
 ###### *** OPTION 2 FOR NORMALIZATION
 # No normalization, and computeS metabolite ratios and includeS the top 20 
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "C01", ratio=TRUE, ratioNum=20)
@@ -64,7 +71,7 @@ To perform classical ROC curve analysis, you must first set the analysis mode to
 
 Use the *CalculateFeatureRanking* function to calculate the feature importance, ranked by order of most to least important, based on AUC. This creates a CSV file titled "metaboanalyst_roc_univ.csv" including the AUC, p-value, and log-2-fold-change for each metabolite feature. Keep the name "feat.rank.mat" to ensure that the sweave report will work.  
 
-```{r, eval=FALSE}
+```{r}
 # Set the biomarker analysis mode to perform Classical ROC curve analysis ("univ")
 mSet<-SetAnalysisMode(mSet, "univ")
 
@@ -74,14 +81,19 @@ mSet<-PrepareROCData(mSet)
 ### OPTION 1 Perform univariate ROC curve analysis ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", imgName = "Isoleucine", "png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
 
+# Perform calculation of feature importance (AUC, p value, fold change)
+mSet<-CalculateFeatureRanking(mSet)
+
+```
+
+Other options are also available to perform univariate ROC curve analysis, as exemplified below:
+
+```{r, eval=FALSE}
 ### OPTION 2 Perform univariate ROC curve analysis, resulting in a partial AUC with a 95% CI band ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Valine", imgName = "Valine", "png", dpi=300, isAUC=T, isOpt=T, optMethod="closest.topleft", isPartial=T, measure="se", cutoff=0.2)
 
 ### OPTION 3 Perform univariate ROC curve analysis on a metabolite ratio pair, note that you cannot save an image with a "\" in the name ###
 mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine/Valine", imgName = "IsoleucineValine", "png", dpi=300, isAUC=T, isOpt=T, optMethod="closest.topleft", isPartial=T, measure="se", cutoff=0.2)
-
-# Perform calculation of feature importance (AUC, p value, fold change)
-mSet<-CalculateFeatureRanking(mSet)
 
 ```
 
@@ -91,7 +103,7 @@ The aim of the multivariate exploratory ROC curve analysis is to evaluate the pe
 
 There are several options to visualize the multivariate ROC curve exploration. The *PlotROC* function creates a plot of ROC curves for all of the top biomarker models or a single biomarker model based on its average performance across all Monte-Carlo cross validation runs. For a single biomarker, the 95% confidence interval can be computed (show.conf = 1). Meanwhile, the *PlotProbView* function creates a plot of the predicted class probabilities of all samples using a single biomarker model. Users have the option to label wrongly classified samples. The *PlotAccuracy* function creates a plot of the predictive accuracy of the top biomarker models with an increasing number of features on the x-axis. Finally, the *PlotImpVars* function creates a plot of the top ranked important variables of a selected model. Users have the option to change the number of important features to include in the plot (feat.num) as well as the method to rank the features by (measure). 
 
-```{r, eval=FALSE}
+```{r}
 # Set the biomarker analysis mode to perform Multivariate exploratory ROC curve analysis ("explore")
 mSet<-SetAnalysisMode(mSet, "explore")
 
@@ -102,10 +114,7 @@ mSet<-PrepareROCData(mSet)
 mSet<-PerformCV.explore(mSet, cls.method = "svm", rank.method = "svm", lvNum = 2)
 
 ### OPTION 1 Comparison plot of ROC curves of all models ###
-mSet<-PlotROCMulti(mSet, imgName = "ROC_all_models", format = "png", dpi = 300, mdl.inx= 0, avg.method = "threshold", show.conf = 0, show.holdout = 0, focus="fpr", cutoff=0.5)
-
-### OPTION 2 Plot the ROC curve of a single selected model, in this case model 1 and display the confidence interval ###
-mSet<-PlotROCMulti(mSet, imgName = "ROC_model1", format = "png", dpi = 300, mdl.inx = 1, avg.method = "threshold", show.conf = 1, 0, "fpr", 0.2)
+mSet<-PlotROC(mSet, imgName = "ROC_all_models", format = "png", dpi = 300, mdl.inx= 0, avg.method = "threshold", show.conf = 0, show.holdout = 0, focus="fpr", cutoff=0.5)
 
 # Plot predicted class probabilities for each sample for a selected model, not showing labels of wrongly classified samples
 mSet<-PlotProbView(mSet, imgName = "multi_roc_prob", format = "png", dpi = 300, mdl.inx = -1, show = 0, showPred = 0)
@@ -115,6 +124,14 @@ mSet<-PlotAccuracy(mSet, imgName = "multi_roc_accuracy", format = "png", dpi = 3
 
 # Plot the most important features of a selected model ranked from most to least important
 mSet<-PlotImpVars(mSet, imgName = "multi_roc_impvar", format="png", dpi=300, mdl.inx = -1, measure="freq", feat.num=15)
+
+```
+
+The above workflow plotted ROC curves for all models, to plot the ROC curve for a single model instead use:
+
+```{r, eval=FALSE}
+### OPTION 2 Plot the ROC curve of a single selected model, in this case model 1 and display the confidence interval ###
+mSet<-PlotROC(mSet, imgName = "ROC_model1", format = "png", dpi = 300, mdl.inx = 1, avg.method = "threshold", show.conf = 1, 0, "fpr", 0.2)
 
 ```
 
@@ -150,19 +167,13 @@ mSet<-SetCustomData(mSet, selected.cmpds, selected.smpls)
 mSet<-PerformCV.test(mSet, method = "svm", lvNum = 2)
 
 # Plot the ROC curve for the created model
-mSet<-PlotROCTest(mSet, imgName = "cls_roc_0_", format="png",  dpi=300, mdl.inx = 0, avg.method = "threshold", 0, 0, "fpr", 0.5)
+mSet<-PlotROC(mSet, imgName = "cls_roc_0_", format="png",  dpi=300, mdl.inx = 0, avg.method = "threshold", 0, 0, "fpr", 0.5)
 
 # Plot the predicted class probabilities for each sample using the user-created classifier, not showing labels of wrongly classified samples
-mSet<-PlotProbViewTest(mSet, imgName = "cls_prob_0_", format="png",  dpi=300, mdl.inx =-1, show=0, showPred= 0)
+mSet<-PlotProbView(mSet, imgName = "cls_prob_0_", format="png",  dpi=300, mdl.inx =-1, show=0, showPred= 0)
 
 # Plot the predictive accuracy of the model with increasing number of features
 mSet<-PlotTestAccuracy(mSet, imgName = "cls_accu_0_", format="png",  dpi=300)
-
-# View the the predictive accuracy results of the model
-GetAccuracyInfo(mSet)
-
-# Example of the results
-[1] "The average accuracy based on 100 cross validations is 0.692. The accuracy for hold out data prediction is 0.667(4/6)."
 
 # Perform permutations tests using the area under the ROC curve as a measure of performance
 mSet<-Perform.Permut(mSet, perf.measure = "auroc", perm.num = 500, propTraining = 2/3)
@@ -171,25 +182,20 @@ mSet<-Perform.Permut(mSet, perf.measure = "auroc", perm.num = 500, propTraining 
 mSet<-Plot.Permutation(mSet, imgName = "roc_perm_1_", format="png",  dpi=300)
 
 # View predicted classes of new samples (only applicable if samples with empty class labels were in the uploaded dataset)
-
 mSet <- ROCPredSamplesTable(mSet) # Create table
-mSet$analSet$ROCtest$pred.samples.table # View table of new predictions
+```
 
+```{r, eval=FALSE}
+To view the example of the results:
+# View the the predictive accuracy results of the model
+# >R GetAccuracyInfo(mSet)
+[1] "The average accuracy based on 100 cross validations is 0.692. The accuracy for hold out data prediction is 0.667(4/6)."
+
+# View table of new predictions
+# >R mSet$analSet$ROCtest$pred.samples.table 
 ```
 
 ## 3. Sweave Report 
 
 To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -9,6 +9,7 @@
 LoadKEGGLib<-function(libOpt){
   
   if(.on.public.web){
+    load_igraph()
     if(libOpt == "integ"){
       kegg.rda <- paste("../../libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
     }else if(libOpt == "genetic"){

@@ -15,9 +15,9 @@ The pathway analysis module supports pathway analysis (integrating enrichment an
 
 ## 2. Pathway Analysis Example Workflow
 
-```{r, eval=FALSE}
-## When input is a list
+In this workflow, we will perform pathway analysis where the input is a list of compound names.
 
+```{r}
 # Create vector consisting of compounds for enrichment analysis 
 tmp.vec <- c("Acetoacetic acid", "Beta-Alanine", "Creatine", "Dimethylglycine", "Fumaric acid", "Glycine", "Homocysteine", "L-Cysteine", "L-Isolucine", "L-Phenylalanine", "L-Serine", "L-Threonine", "L-Tyrosine", "L-Valine", "Phenylpyruvic acid", "Propionic acid", "Pyruvic acid", "Sarcosine")
 

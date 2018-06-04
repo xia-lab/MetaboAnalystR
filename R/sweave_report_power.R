@@ -14,7 +14,7 @@ CreatePowerRnwReport <- function(mSetObj, usrName){
   
   CreatePowerOverview();
   CreatePowerInputDoc(mSetObj);
-  CreateStatNORMdoc(mSetObj)
+  CreateNORMdoc(mSetObj)
   
   CreatePowerParametersDoc(mSetObj);
   CreatePowerAnalDoc(mSetObj);
@@ -163,10 +163,9 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
              " must be selected. Further, there will be four diagnostic plots which display a visual overview",
              " of the test-statistics and p-values, providing context for whether or not the normalization was sufficient.",
              " The shape of the test-statistic should follow a near-normal distribution, and the majority of p-values",
-             " should be close to zero.\n");
+             " should be close to zero. \n", 
+             paste("Figure", fig.count<<-fig.count+1, "shows various diagnostic plots of the pilot data for power analysis."));
   cat(descr, file=rnwFile, append=TRUE);
-  
-  descr <- paste("Figure", fig.count<<-fig.count+1, "Exploratory plot overview of pilot-data for power analysis.")
   
   powerparamhist <- c( "\\begin{figure}[htp]",
                        "\\begin{center}",
@@ -186,7 +185,6 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
                        "\\clearpage"
   );
   cat(powerparamhist, file=rnwFile, append=TRUE, sep="\n");
-  
 }
 
 #'Create power analysis report: Power Analysis
@@ -213,17 +211,6 @@ CreatePowerAnalDoc <- function(mSetObj){
              paste("Figure", fig.count<<-fig.count+1," shows the density of estimated effect sizes, and "),
              paste("Figure", fig.count<<-fig.count+1," shows the predicted power curve."))
   cat(descr, file=rnwFile, append=TRUE)
-  
-  powereffect <- c( "\\begin{figure}[htp]",
-                    "\\begin{center}",
-                    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$powereffect,"}", sep=""),
-                    "\\caption{Plot of the density of effect sizes, the blue line represents the estimated density of effect sizes.","}",
-                    "\\end{center}",
-                    paste("\\label{",mSetObj$imgSet$powerstat,"}", sep=""),
-                    "\\end{figure}",
-                    "\\clearpage"
-  );
-  cat(powereffect, file=rnwFile, append=TRUE, sep="\n")
   
   powerprofile <- c( "\\begin{figure}[htp]",
                      "\\begin{center}",

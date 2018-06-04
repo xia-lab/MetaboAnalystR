@@ -73,6 +73,9 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$powerstat<-imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  if(.on.public.web){
+    load_lattice()
+  }
   SSPA::plot(mSetObj$analSet$power$pdD);
   dev.off();
   return(.set.mSet(mSetObj));
@@ -125,44 +128,6 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
     .set.mSet(mSetObj);
     return(fdr.lvl);
   }
-  return(.set.mSet(mSetObj));
-}
-
-#'Plot power effect size
-#'@description Create power effect size plot
-#'@usage PlotPowerEffectSize(mSetObj, imgName, format, dpi, width)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param imgName Specify the name to save the image as.
-#'@param format Specify the format of the image to save it as, either "png" or "pdf"
-#'@param dpi Specify the dots-per-inch (dpi). By default it is 72, for publications
-#'the recommended dpi is 300.
-#'@param width Specify the width of the image. NA specifies a width of 9, 0 specifies a width
-#'of 8, otherwise input a chosen width. 
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-PlotPowerEffectSize <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-    
-  }else if(width == 0){
-    w <- 8;
-    
-  }else{
-    w <- width;
-  }
-  h <- w*7/9;
-  
-  mSetObj$imgSet$powereffect<-imgName;
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(SSPA::plot(mSetObj$analSet$power$ssD));
-  dev.off();
   return(.set.mSet(mSetObj));
 }
 

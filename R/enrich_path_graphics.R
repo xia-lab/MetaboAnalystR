@@ -13,6 +13,12 @@
 PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_kegggraph()
+    load_rgraphwiz()
+  }
+  
   path.id <- metpa$path.ids[pathName];
   g <- metpa$graph.list[[path.id]];
   tooltip <- names(KEGGgraph::nodes(g));
@@ -83,7 +89,7 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   ## Open plot device
   Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
   par(mai=rep(0,4));
-  g.obj <- Rgraphviz::plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
   nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
   dev.off();
   mSetObj$imgSet$current.metpa.graph <- g.obj;
@@ -108,6 +114,11 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 #'@export
 #'
 PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
+  
+  if(.on.public.web){
+    load_kegggraph()
+    load_rgraphwiz()
+  }
   
   path.id <- metpa$path.ids[pathName];
   g <- metpa$graph.list[[path.id]];
@@ -157,7 +168,7 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mai=rep(0,4));
-  g.obj <- Rgraphviz::plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
   dev.off();
   mSetObj$imgSet$kegg.graph.opls <- g.obj
   print(imgName);
@@ -354,7 +365,7 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height){
   mSetObj <- .get.mSet(mSetObj);
   Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="white");
-  plot(mSetObj$imgSet$current.metpa.graph);
+  KEGGgraph::plot(mSetObj$imgSet$current.metpa.graph);
   dev.off();
   return(1);
 }

@@ -21,7 +21,7 @@ Users can upload either a list of metabolites, a list of genes, or a list of bot
 
 As the main goal of the network explorer module is to allow for user's to visually explore their data, the ideal setting is to use the *MetaboAnalyst web-server*, which permits interactive exploration such as drag-and-drop of nodes, highlighting specific nodes, deleting specific nodes, and overlapping pathway-analysis onto the network. Further, a user's edited network image can be downloaded as a SVG or PNG images for publication purposes. The use of the Network Explorer module in R will result in a JSON file of your network that can be viewed in other network-visuzalization applications. This module will also create a snapshot of a network in your working directory, though this image may be hard to interpret if user's data is too large. 
 
-# 2.1 Uploading User Data
+### 2.1 Uploading User Data
 
 This module require's user's to upload a list of metabolites, a list of genes, or both. For users to prepare these lists, they can copy and paste a list of metabolites and/or genes into a plain text file, which can then be uploaded to R. The steps include:
 
@@ -29,11 +29,17 @@ This module require's user's to upload a list of metabolites, a list of genes, o
 2) Set your list of features as "geneListFile"  &/or "cmpdListFile" in R
 3) Read in the text file for analysis using *readChar*, saving it as "geneList" and/or "cmpdList" respectively.
 
-An example set of gene and compounds lists can be found in the "data" folder of the MetaboAnalyst GitHub. 
+To use the tutorial, please **download the example data** below and place it in your current working directory. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. 
 
-# 2.1 Detailed steps surrounding a typical workflow are below:
+**Download the gene list** [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/data/integ_genes.txt), consisting of a list of Official Gene Symbols.
 
-In the examples below, we will first explore the gene/metabolite data in a KEGGG global metabolic network (ko01100), and then in a metabolite-disease interaction network.
+**Download the metabolite list** [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/data/integ_cmpds.txt), consisting of a list of KEGG compound IDS. 
+
+### 2.2 Perform Network Exploration
+
+In the examples below, we will first explore the gene/metabolite data in a KEGGG global metabolic network (ko01100), and then in a metabolite-disease interaction network. To view the created 3D JSON files, there exists a few software such as E-charts (online web-tool), CanvasXpress (R package), and plotly.
+
+**Example 1**
 
 ```{r, eval=FALSE}
 
@@ -55,7 +61,7 @@ geneListFile<-"integ_genes.txt"
 geneList<-readChar(geneListFile, file.info(geneListFile)$size)
 
 # Perform gene ID mapping
-mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "entrez");
+mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "symbol");
 
 # Set cmpdListFile as a file containing your metablolite list
 cmpdListFile <- "integ_cmpds.txt"
@@ -79,9 +85,11 @@ mSet<-PrepareQueryJson(mSet)
  
 # Perform enrichment analysis based on uploaded KOs (KEGG Global Metabolic Network) 
 mSet<-PerformKOEnrichAnalysis_KO01100(mSet, "pathway", "network_enrichment_pathway_0");
+```
 
-################################################################################################
+**Example 2**
 
+```{r, eval=FALSE}
 ##
 ## EXAMPLE TWO: METABOLITE-DISEASE INTERACTION NETWORK
 ##
@@ -100,7 +108,7 @@ geneListFile<-"integ_genes.txt"
 geneList<-readChar(geneListFile, file.info(geneListFile)$size)
 
 # Perform gene ID mapping
-mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "entrez");
+mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "symbol");
 
 # Set cmpdListFile as a file containing your metablolite list
 cmpdListFile<-"integ_cmpds.txt"

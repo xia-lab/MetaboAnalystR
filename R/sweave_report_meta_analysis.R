@@ -117,7 +117,7 @@ CreateMetaAnalysisNORMdoc <- function(mSetObj=NA){
            );
   cat(descr, file=rnwFile, append=TRUE);
   
-  if(exists(norm.msg)){
+  if(exists("norm.msg")){
     norm.desc <- paste(norm.msg);
   }else{
     norm.desc <- " No normalization methods were applied.";
@@ -150,14 +150,14 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
   );
   cat(descr, file=rnwFile, append=TRUE);
   
-  if(exists(mSetObj$dataSet$deparam)){
+  if(!is.null(mSetObj$dataSet[["deparam"]])){
     de.desc <- paste(mSetObj$dataSet$deparam);
   }else{
     de.desc <- " No differential-expression analysis was performed."
   } 
   cat(de.desc, file=rnwFile, append=TRUE, sep="\n");
   
-  if(exists(mSetObj$dataSet$desig)){
+  if(!is.null(mSetObj$dataSet[["desig"]])){
     de.sig <- paste(mSetObj$dataSet$desig);
     cat(de.sig, file=rnwFile, append=TRUE, sep="\n");
   }

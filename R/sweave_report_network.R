@@ -190,7 +190,7 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
     cat(image, file=rnwFile, append=TRUE);
     note <- paste (" The plot (Figure 1) shows feature names, which may be hard for users to decipher in the generated plot within
                      this report. It is therefore recommended that users with large datasets to use the Network Explorer to visually explore their data 
-                     online, where high-quality SVG/PNG images can be saved. As well, users will be able to directly edit their created network online.")
+                     online, where high-quality SVG/PNG images can be saved.")
     cat(note, file=rnwFile, append=TRUE);
 
     }else{

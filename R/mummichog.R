@@ -20,7 +20,6 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-
 Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   
     mSetObj <- .get.mSet(mSetObj);
@@ -35,7 +34,6 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
 
     mSetObj$dataSet$orig <- cbind(input$p.value, input$m.z, input$t.score);
     mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), "m/z features were found in your uploaded data.");
-    print(mSetObj$msgSet$read.msg);
     return(.set.mSet(mSetObj));
 
 }
@@ -53,8 +51,6 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
-
 UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -62,49 +58,6 @@ UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pval
   mSetObj$dataSet$instrument <- instrumentOpt;
   mSetObj$dataSet$mode <- msModeOpt;
   mSetObj$dataSet$cutoff <- pvalCutoff;
-  
-  return(.set.mSet(mSetObj));
-}
-
-#'Load the selected metabolic pathway database
-#'@description SetMass.PathLib is used to load in the user selected metabolic pathway database. If the user's input
-#'is just a list of significant features (anal.type = "siglist"), this function will also provide a list of
-#'reference features.
-#'@usage SetMass.PathLib(mSetObj=NA, lib)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param lib Input the name of organism library
-#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-SetMass.PathLib <- function(mSetObj=NA, lib){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  filenm <- paste(lib, ".rds", sep="")
-  
-  if(.on.public.web==TRUE){
-    mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
-  }else{
-    if(!file.exists(filenm)){
-      mum.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
-      download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
-      mummichog.lib <- readRDS(filenm);
-    }else{
-      mummichog.lib <- readRDS(filenm);
-    }
-  }
-  
-  mSetObj$cpd.lib <- list(
-    mz.mat = mummichog.lib$cpd.lib$adducts[[mSetObj$dataSet$mode]],
-    mw = mummichog.lib$cpd.lib$mw,
-    id = mummichog.lib$cpd.lib$id,
-    name = mummichog.lib$cpd.lib$name
-  );
-  mSetObj$pathways <- mummichog.lib$pathways;
-  mSetObj$cpd.tree <- mummichog.lib$cpd.tree[[mSetObj$dataSet$mode]];
-  mSetObj$lib.organism <- lib; #keep track of lib organism for sweave report
   
   return(.set.mSet(mSetObj));
 }
@@ -119,8 +72,6 @@ SetMass.PathLib <- function(mSetObj=NA, lib){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
-
 SanityCheckMummichogData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -192,8 +143,9 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 
 #'Main function to perform mummichog
 #'@description This is the main function that performs the mummichog analysis. 
-#'@usage PerformMummichog(mSetObj=NA, enrichOpt, pvalOpt, permNum = 100)
+#'@usage PerformMummichog(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
 #'@param mSetObj Input the name of the created mSetObj object 
+#'@param lib Input the name of the organism library, default is hsa 
 #'@param enrichOpt Input the method to perform enrichment analysis
 #'@param pvalOpt Input the method to calculate p-values
 #'@param permNum Numeric, the number of permutations to perform
@@ -201,36 +153,49 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PerformMummichog <- function(mSetObj=NA, enrichOpt, pvalOpt, permNum = 100){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj <- SearchCompoundLib(mSetObj);
-  mSetObj <- PerformMummichogPermutations(mSetObj, permNum);
-  mSetObj <- ComputeMummichogSigPvals(mSetObj, enrichOpt, pvalOpt);
-  return(.set.mSet(mSetObj));
+PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
+    mSetObj <- .get.mSet(mSetObj);
+  
+    filenm <- paste(lib, ".rds", sep="")
+  
+    if(.on.public.web==TRUE){
+        mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
+    }else{
+        if(!file.exists(filenm)){
+            mum.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+            download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
+            mummichog.lib <- readRDS(filenm);
+        }else{
+            mummichog.lib <- readRDS(filenm);
+        }
+    }
+  
+    cpd.lib <- list(
+        mz.mat = mummichog.lib$cpd.lib$adducts[[mSetObj$dataSet$mode]],
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name
+    );
+    cpd.tree <- mummichog.lib$cpd.tree[[mSetObj$dataSet$mode]];
+
+    mSetObj$pathways <- mummichog.lib$pathways;
+    mSetObj$lib.organism <- lib; #keep track of lib organism for sweave report
+  
+    mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
+    mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
+    mSetObj <- .compute.mummichogSigPvals(mSetObj, enrichOpt, pvalOpt);
+    mummichog.lib <- NULL;
+    return(.set.mSet(mSetObj));
 }
 
-#'Merges user-input files with library files
-#'@description This function matches user-uploaded files to library files specific to the selected organism. It
-#'also creates a list of compounds IDs from the user-uploaded list of significant m/z features.
-#'@usage SearchCompoundLib(mSetObj=NA)
-#'@param mSetObj Input the name of the created mSetObj object 
-#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
+# internal function for searching compound library
 
-SearchCompoundLib <- function(mSetObj=NA){
+.search.compoundLib <- function(mSetObj, cpd.lib, cpd.tree){
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(is.null(mSetObj$cpd.lib)){
-    LoadMummichogLib(mSetObj);
-  }
-
   ref_mzlist <- mSetObj$data$ref_mzlist;
   t.scores <- mSetObj$data$ref_mzlist;
 
-  modified.states <- colnames(mSetObj$cpd.lib$mz.mat);
+  modified.states <- colnames(cpd.lib$mz.mat);
   my.tols <- mz_tolerance(ref_mzlist, mSetObj$dataSet$instrument);
   
   # get mz ladder (pos index)
@@ -240,9 +205,6 @@ SearchCompoundLib <- function(mSetObj=NA){
   # matched_res will contain detailed result (cmpd.id. query.mass, mass.diff) for all mz;
   # use a high-performance variant of list
   matched_res <- myFastList();
-  
-  cpd.tree <- mSetObj$cpd.tree;
-  cpd.lib <- mSetObj$cpd.lib;
   
   for(i in 1:length(ref_mzlist)){
     mz <- ref_mzlist[i];
@@ -307,41 +269,16 @@ SearchCompoundLib <- function(mSetObj=NA){
   mSetObj$total_matched_cpds <- unique(as.vector(mSetObj$matches.res$Matched.Compound));
   mSetObj$input_cpdlist <- cpd1;
   
-  return(.set.mSet(mSetObj));
+  return(mSetObj);
 }
 
-GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
+# Internal function for permutation
+.perform.mummichogPermutations <- function(mSetObj, permNum){
   
-   mSetObj <- .get.mSet(mSetObj);
-   forms <- mSetObj$cpd_form_dict[[cmpd.id]];
-   tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
-   # create html table
-   res <- paste("<li>", "<b>", forms, "</b>: ", tscores, "</li>",sep="", collapse="");
-   return(res);
-}
-
-#### Permutations
-
-#'Perform permutations and calculates p-values
-#'@description This function performs permutations to create a background distribution of p-values for pathway
-#'enrichment analysis.
-#'@usage PerformMummichogPermutations(mSetObj=NA, permNum)
-#'@param mSetObj Input the name of the created mSetObj.
-#'@param permNum Numeric, the number of permutations to perform
-#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-
-PerformMummichogPermutations <- function(mSetObj=NA, permNum){
-  
-  mSetObj <- .get.mSet(mSetObj);
   num_perm <- permNum;
-  
   print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
   permutation_hits <- permutation_record <- vector("list", num_perm);
   for(i in 1:num_perm){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
-
     input_mzlist <- sample(mSetObj$data$ref_mzlist, mSetObj$data$N)
     t <- make_cpdlist(mSetObj, input_mzlist);
     perm <- ComputeMummichogPermPvals(t, mSetObj$total_matched_cpds, mSetObj$pathways, mSetObj$matches.res, input_mzlist, mSetObj$cpd2mz_dict);
@@ -351,64 +288,11 @@ PerformMummichogPermutations <- function(mSetObj=NA, permNum){
 
   mSetObj$perm_record <- permutation_record;
   mSetObj$perm_hits <- permutation_hits
-  return(.set.mSet(mSetObj));
-  
+  return(mSetObj);
 }
 
-# Calculate p-values for each Lperm
-# Used in higher mummichogR functions
-ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathways, matches.res, input_mzlist, cpd2mz_dict){
-
-  ora.vec <- input_cpdlist; #Lperm
-  query_set_size <- length(ora.vec)
-  current.mset <- pathways$cpds; #all
-  total_cpds <- unique(total_matched_cpds) #matched compounds
-  total_feature_num <- length(total_cpds)
-  
-  size <- negneg <- vector(mode="list", length=length(current.mset));
-  
-  cpds <- lapply(current.mset, function(x) intersect(x, total_cpds)); # pathways & all ref cpds
-  feats <- lapply(current.mset, function(x) intersect(x, ora.vec)); #pathways & lsig
-  feat_len <- unlist(lapply(feats, length)); # length of overlap features
-  set.num <- unlist(lapply(cpds, length)); #cpdnum
-  
-  negneg <- sizes <- vector(mode="list", length=length(current.mset));
-  
-  for(i in 1:length(current.mset)){ # for each pathway
-    sizes[[i]] <- min(feat_len[i], count_cpd2mz(cpd2mz_dict, unlist(feats[i]), input_mzlist))
-    negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
-  }
-  
-  unsize <- as.integer(unlist(sizes))
-  
-  res.mat <- matrix(0, nrow=length(current.mset), ncol=1)
-  
-  fishermatrix <- cbind(unsize, (set.num - unsize), (query_set_size - unsize), unlist(negneg))
-  
-  res.mat[,1] <- apply(fishermatrix, 1, function(x) fisher.test(matrix(x, nrow = 2))$p.value);
-  
-  perm_records <- list(res.mat, as.matrix(unsize));
-  
-  return(perm_records);
-}
-
-###
-
-#'Calculate p-values for the list of significant compounds
-#'@description This function performs pathway enrichment by calculate p-values for each pathway in the reference
-#'organism from the list of significant compounds.
-#'@usage ComputeMummichogSigPvals(mSetObj=NA, enrichOpt, pvalOpt)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param enrichOpt Input method for enrichment analysis
-#'@param pvalOpt Calculate fisher or hypergeometric p-values
-#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-ComputeMummichogSigPvals <- function(mSetObj=NA, enrichOpt, pvalOpt){
-  
-  mSetObj <- .get.mSet(mSetObj);
+# Internal function for significant p value 
+.compute.mummichogSigPvals <- function(mSetObj, enrichOpt, pvalOpt){
   
   qset <- unique(unlist(mSetObj$input_cpdlist)); #Lsig ora.vec
   query_set_size <- length(qset); #q.size
@@ -429,8 +313,8 @@ ComputeMummichogSigPvals <- function(mSetObj=NA, enrichOpt, pvalOpt){
   negneg <- sizes <- vector(mode="list", length=length(current.mset));
   
   for(i in 1:length(current.mset)){ # for each pathway
-    sizes[[i]] <- min(feat_len[i], count_cpd2mz(mSetObj$cpd2mz_dict, unlist(feats[i]), mSetObj$data$input_mzlist))
-    negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
+        sizes[[i]] <- min(feat_len[i], count_cpd2mz(mSetObj$cpd2mz_dict, unlist(feats[i]), mSetObj$data$input_mzlist))
+        negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
   }
   
   unsize <- as.integer(unlist(sizes))
@@ -491,11 +375,20 @@ ComputeMummichogSigPvals <- function(mSetObj=NA, enrichOpt, pvalOpt){
   sink("mummichog_query.json");
   cat(json.mat);
   sink();
-
-  return(.set.mSet(mSetObj));
+  return(mSetObj);
 }
 
 ##### For Web ################
+
+GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
+  
+   mSetObj <- .get.mSet(mSetObj);
+   forms <- mSetObj$cpd_form_dict[[cmpd.id]];
+   tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
+   # create html table
+   res <- paste("<li>", "<b>", forms, "</b>: ", tscores, "</li>",sep="", collapse="");
+   return(res);
+}
 
 GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
   
@@ -520,34 +413,6 @@ GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
     return(cbind(msetNm, paste(nms, collapse="; ")));
 }
 
-PrepareMummiQueryJson <- function(){
-
-    # need to show hit.all and hits.sig
-
-    path.all <- mSetObj$pathways$cpds;
-    hits.all <- unique(mSetObj$total_matched_cpds) #matched compounds
-    hits.sig <- mSetObj$input_cpdlist;
-
-    lapply(path.all, hits.all, overlap)
-    mset <- mSetObj$pathways$cpds[[inx]];
-    # need to filter with global map
-    map.all <- 
-
-
-    edge.mat <- MapKO2KEGGEdges(exp.vec);
-    row.names(edge.mat) <- eids <- rownames(edge.mat);
-    query.ko <- edge.mat[,1];
-    net.orig <- edge.mat[,2];
-    query.res <- edge.mat[,3];# abundance
-    names(query.res) <- eids; # named by edge
-
-    json.mat <- RJSONIO::toJSON(query.res, .na='null');
-    sink("network_query.json");
-    cat(json.mat);
-    sink();
-    return(1);
-}
-
 GetMummiResMatrix <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$mummi.resmat);
@@ -561,14 +426,6 @@ GetMummiResRowNames <- function(mSetObj=NA){
 GetMummiResColNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(colnames(mSetObj$mummi.resmat));
-}
-
-GetMummiResultPathNames <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-}
-
-GetMummiResultPathIDs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
 }
 
 ################## Utility Functions #########
@@ -607,11 +464,7 @@ mz_tolerance <- function(mz, ms.type){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
-
 make_cpdlist <- function(mSetObj=NA, input_mzs){
-  
-  mSetObj <- .get.mSet(mSetObj);
   cpd <- unique(unlist(mSetObj$mz2cpd_dict[input_mzs]));
   cpd <- cpd[!is.null(cpd)];
   cpd <- cpd[!(cpd %in% currency)];
@@ -684,6 +537,37 @@ Covert2Dictionary <- function(data, quiet=T){
     uniq.list <- split(data[,2], data[,1]);
     return(uniq.list);
   }
+}
+
+# Calculate p-values for each Lperm
+# Used in higher mummichogR functions
+ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathways, matches.res, input_mzlist, cpd2mz_dict){
+
+  ora.vec <- input_cpdlist; #Lperm
+  query_set_size <- length(ora.vec)
+  current.mset <- pathways$cpds; #all
+  total_cpds <- unique(total_matched_cpds) #matched compounds
+  total_feature_num <- length(total_cpds)
+  
+  size <- negneg <- vector(mode="list", length=length(current.mset));
+  
+  cpds <- lapply(current.mset, function(x) intersect(x, total_cpds)); # pathways & all ref cpds
+  feats <- lapply(current.mset, function(x) intersect(x, ora.vec)); #pathways & lsig
+  feat_len <- unlist(lapply(feats, length)); # length of overlap features
+  set.num <- unlist(lapply(cpds, length)); #cpdnum
+  
+  negneg <- sizes <- vector(mode="list", length=length(current.mset));
+  
+  for(i in 1:length(current.mset)){ # for each pathway
+    sizes[[i]] <- min(feat_len[i], count_cpd2mz(cpd2mz_dict, unlist(feats[i]), input_mzlist))
+    negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
+  }
+  unsize <- as.integer(unlist(sizes))
+  res.mat <- matrix(0, nrow=length(current.mset), ncol=1)
+  fishermatrix <- cbind(unsize, (set.num - unsize), (query_set_size - unsize), unlist(negneg))
+  res.mat[,1] <- apply(fishermatrix, 1, function(x) fisher.test(matrix(x, nrow = 2))$p.value);
+  perm_records <- list(res.mat, as.matrix(unsize));
+  return(perm_records);
 }
 
 # utility function for fast list expanding (dynamic length)

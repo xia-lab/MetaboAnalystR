@@ -147,7 +147,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   uniq.count <- metpa$uniq.count;
   
   # check if a reference metabolome is applied
-  if(mSetObj$dataSet$use.metabo.filter && exists(mSetObj$dataSet$metabo.filter.kegg)){
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
     current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
     mSetObj$analSet$qea.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
@@ -241,6 +241,7 @@ GetQEA.pathNames <- function(mSetObj=NA){
 
 #'Only works for human (hsa.rda) data
 #'@description Only works for human (hsa.rda) data
+#'2018 - works for ath, eco, mmu, sce
 #'@param kegg.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -305,7 +306,7 @@ GetORA.keggIDs <- function(mSetObj=NA){
 }
 
 #'Only for human pathways
-#'@description Only for human pathways
+#'@description Only for human pathways + ath, eco, mmu & sce
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada

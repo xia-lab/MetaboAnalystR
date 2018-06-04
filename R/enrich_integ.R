@@ -269,9 +269,9 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
         gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
         gene.vec <- paste(pathinteg.org, ":", rownames(gene.mat), sep="");
         rownames(gene.mat) <- gene.vec;
-        impMat <- gene.mat;
+        impMat <- rbind(impMat, gene.mat);
         uniq.count <- inmexpa$uniq.gene.count;
-        uniq.len <- inmexpa$gene.counts;
+        uniq.len <- uniq.len + inmexpa$gene.counts;
 
         # saving only
         gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat));
@@ -534,4 +534,40 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   }else{
     return(.set.mSet(mSetObj));
   }
+}
+
+#'Transform two column text to data matrix
+#'@description Transform two column input text to data matrix (single column data frame)
+#'@param txtInput Input text
+#'@param sep.type Indicate the seperator type for input text. Default set to "space"
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+getDataFromTextArea <- function(txtInput, sep.type="space"){
+  
+  lines <- unlist(strsplit(txtInput, "\r|\n|\r\n")[1]);
+  if(substring(lines[1],1,1)=="#"){
+    lines <- lines[-1];
+  }
+  
+  # separated by tab 
+  if(sep.type=="tab"){
+    my.lists <- strsplit(lines, "\\t");
+  }else{ # from any space
+    my.lists <- strsplit(lines, "\\s+");
+  }
+  my.mat <- do.call(rbind, my.lists);
+  
+  if(dim(my.mat)[2] == 1){ # add 0
+    my.mat <- cbind(my.mat, rep(0, nrow(my.mat)));
+  }else if(dim(my.mat)[2] > 2){
+    my.mat <- my.mat[,1:2];
+    msg <- "More than two columns found in the list. Only first two columns will be used."
+    AddErrMsg(msg);
+  }
+  rownames(my.mat) <- data.matrix(my.mat[,1]);
+  my.mat <- my.mat[,-1, drop=F];
+  return(my.mat);
 }

@@ -14,7 +14,7 @@ CreateBiomarkerRnwReport<-function(mSetObj, usrName){
   
   CreateBiomarkerOverview();
   CreateBiomarkerInputDoc(mSetObj);
-  CreateStatNORMdoc(mSetObj);
+  CreateNORMdoc(mSetObj);
   CreateBiomarkerRatioOverview(mSetObj);
   
   CreateUnivarBiomarkersDoc(mSetObj);

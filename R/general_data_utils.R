@@ -351,6 +351,11 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 
 Read.PeakList<-function(mSetObj=NA, foldername){
   mSetObj <- .get.mSet(mSetObj);
+
+  if(.on.public.web){
+    load_xcms()
+  }
+
   msg <- c("The uploaded files are peak lists and intensities data.");
   
   # the "upload" folder should contain several subfolders (groups)
@@ -487,6 +492,11 @@ Read.PeakList<-function(mSetObj=NA, foldername){
 Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
   
   mSetObj <- .get.mSet(mSetObj);
+
+  if(.on.public.web){
+    load_xcms()
+  }
+
   msfiles <- list.files(folderName, recursive=T, full.names=TRUE);
   
   # first do some sanity check b4 spending more time on that
@@ -549,7 +559,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'
 SaveTransformedData <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(!is.null(mSetObj$dataSet$orig)){
+  if(!is.null(mSetObj$dataSet[["orig"]])){
     lbls <- NULL;
     tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
     if(tsFormat){
@@ -563,7 +573,7 @@ SaveTransformedData <- function(mSetObj=NA){
       orig.data<-t(orig.data);
     }
     write.csv(orig.data, file="data_original.csv");
-    if(!is.null(mSetObj$dataSet$procr)){
+    if(!is.null(mSetObj$dataSet[["procr"]])){
       if(tsFormat){
         lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
         colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
@@ -575,7 +585,7 @@ SaveTransformedData <- function(mSetObj=NA){
         proc.data<-t(proc.data);
       }
       write.csv(proc.data, file="data_processed.csv");
-      if(!is.null(mSetObj$dataSet$norm)){
+      if(!is.null(mSetObj$dataSet[["norm"]])){
         if(tsFormat){
           lbls <- cbind(as.character(mSetObj$dataSet$facA),as.character(mSetObj$dataSet$facB));
           colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
@@ -944,7 +954,7 @@ GetLiteralGroupNames <- function(mSetObj=NA){
 
 IsReadyForEditor <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet$prenorm)){
+  if(is.null(mSetObj$dataSet[["prenorm"]])){
     return(0);
   }
   return(1);
@@ -959,28 +969,6 @@ SetOrganism <- function(mSetObj=NA, org){
   pathinteg.org <<- data.org <<- org;
   return(.set.mSet(mSetObj))
 }
-
-##' @importFrom tibble remove_rownames column_to_rownames 
-
-##' @importFrom RSQLite dbConnect SQLite dbSendQuery fetch dbDisconnect 
-
-##' @importFrom grDevices adjustcolor as.graphicsAnnot col2rgb dev.cur dev.off dev.set heat.colors hsv 
-##'pdf rainbow rgb topo.colors 
-
-##' @importFrom graphics abline arrows axis barplot box boxplot dotchart grid hist image layout 
-##'legend lines matplot mtext pairs par plot plot.new plot.window points polygon 
-##'rect segments stripchart symbols text title 
-
-##' @importFrom methods hasArg is slot 
-
-##' @importFrom stats IQR TukeyHSD aggregate anova aov approxfun as.dendrogram as.formula binomial 
-##'biplot coef complete.cases confint cor cor.test cov dendrapply density deviance 
-##'df.residual dist fisher.test glm hclust heatmap is.leaf kmeans kruskal.test lm mad 
-##'median model.matrix na.omit p.adjust pchisq pgamma phyper pnorm prcomp predict pt 
-##'qchisq qnorm qt quantile rnorm runif sd shapiro.test smooth step t.test var var.test wilcox.test 
-
-##' @importFrom utils Sweave capture.output combn download.file object.size read.csv read.table relist  
-##'setTxtProgressBar tail write.csv write.table zip 
 
 
 

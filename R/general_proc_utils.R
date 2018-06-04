@@ -186,7 +186,7 @@ SanityCheckData <- function(mSetObj=NA){
   constCol <- (varCol == 0 | is.na(varCol));
   constNum <- sum(constCol, na.rm=T);
   if(constNum > 0){
-    msg<-c(msg, paste("<font color=\"red\">", constNum, "columns with constant or a single value were found and deleted.</font>"));
+    msg<-c(msg, paste("<font color=\"red\">", constNum, "features with a constant or single value across samples were found and deleted.</font>"));
     int.mat <- int.mat[,!constCol];
   }
   
@@ -721,6 +721,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   mSetObj$dataSet$orig <- t(values);
   mSetObj$msgSet$proc.msg <- msg
   mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
+  mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);
   return(.set.mSet(mSetObj));
 }
 
@@ -827,7 +828,9 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   msg <-c(msg, paste("Please note that some peaks were excluded if they appear in only a few samples."));
   mSetObj$msgSet$xset.msg <- msg;
   mSetObj$dataSet$orig <- orig;
-  mSetObj$dataSet$orig.cls <- as.factor(sampclass(mSetObj$dataSet$xset.fill));
+  cls.info <- sampclass(mSetObj$dataSet$xset.fill);
+  mSetObj$dataSet$orig.cls <- as.factor(cls.info);
+  mSetObj$dataSet$type.cls.lbl <- class(cls.info);
   return(.set.mSet(mSetObj));
 }
 

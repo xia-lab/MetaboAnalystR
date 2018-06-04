@@ -12,6 +12,7 @@
 CreatePathRnwReport <- function(mSetObj, usrName){
   
   CreateHeader(usrName);
+
   CreatePathIntr();
   CreatePathInputDoc();
   CreatePathProcessDoc(mSetObj);

@@ -10,7 +10,7 @@ GetORA.smpdbIDs(mSetObj = NA)
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 }
 \description{
-Only for human pathways
+Only for human pathways + ath, eco, mmu & sce
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

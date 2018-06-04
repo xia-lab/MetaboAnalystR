@@ -1,6 +1,6 @@
 Package: MetaboAnalystR
 Title: An R Package for Comprehensive Analysis of Metabolomics Data
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut", "cre")))
 BugReports: https://github.com/xia-lab/MetaboAnalystR/issues
 Description: This package contains the R functions and libraries underlying the popular MetaboAnalyst web server, 

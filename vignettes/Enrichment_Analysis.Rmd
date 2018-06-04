@@ -15,11 +15,15 @@ The enrichment analysis module performs metabolite set enrichment analysis (MSEA
 
 ## 2. Enrichment Analysis Workflow
 
+Below we will go over 2 use-cases to perform Enrichment Analysis, the first using as input a list of compounds, and the second as input a concentration table. 
+
 ### 2.1 Over representation analysis
 
 We will go over two analysis workflows, the first is when the input is a list to perform over representation analysis. The first step is to create a vector containing a list of compound names. The list will then be cross-referenced (*CrossReferencing*) against the MetaboAnalyst compound libraries (HMDB, PubChem, KEGG, etc.), and any compounds without a hit will have NA. This step may take long due to downloading of libraries if they do not already exist in your working directory.
 
-```{r, eval=FALSE}
+```{r}
+library(MetaboAnalystR)
+
 ## When input is a list
 
 # Create vector consisting of compounds for enrichment analysis 
@@ -33,21 +37,34 @@ mSet<-Setup.MapData(mSet, tmp.vec);
 
 # Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)
 mSet<-CrossReferencing(mSet, "name");
+```
 
-# View name map to identify any compounds within the uploaded list that do not have any hits
+To view the compound name map to identify any compounds within the uploaded list without hits...
+```{r, eval=FALSE}
+# Example compound name map
 mSet$name.map 
 
+$query.vec
+ [1] "Acetoacetic acid"   "Beta-Alanine"       "Creatine"           "Dimethylglycine"    "Fumaric acid"      
+ [6] "Glycine"            "Homocysteine"       "L-Cysteine"         "L-Isolucine"        "L-Phenylalanine"   
+[11] "L-Serine"           "L-Threonine"        "L-Tyrosine"         "L-Valine"           "Phenylpyruvic acid"
+[16] "Propionic acid"     "Pyruvic acid"       "Sarcosine"         
+
 $hit.inx
- [1]   29   86  199  221 6070  236  252 1142   NA 1224 1161 1252 1200 1251  330  349  364  372
+ [1]  42  40  46  62  88  78 588 446  NA 104 120 109 103 702 131 159 164 185
 
 $hit.values
- [1] "Acetoacetic acid"   "Beta-Alanine"       "Creatine"           "Dimethylglycine"    "Fumaric acid"       "Glycine"           
- [7] "Homocysteine"       "L-Cysteine"         NA                   "L-Phenylalanine"    "L-Serine"           "L-Threonine"       
-[13] "L-Tyrosine"         "L-Valine"           "Phenylpyruvic acid" "Propionic acid"     "Pyruvic acid"       "Sarcosine"         
+ [1] "Acetoacetic acid"   "Beta-Alanine"       "Creatine"           "Dimethylglycine"    "Fumaric acid"      
+ [6] "Glycine"            "Homocysteine"       "L-Cysteine"         NA                   "L-Phenylalanine"   
+[11] "L-Serine"           "L-Threonine"        "L-Tyrosine"         "L-Valine"           "Phenylpyruvic acid"
+[16] "Propionic acid"     "Pyruvic acid"       "Sarcosine"         
 
 $match.state
  [1] 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1
+```
 
+Continute with the enrichment analysis...
+```{r}
 # Create the mapping results table
 mSet<-CreateMappingResultTable(mSet)
 
@@ -77,7 +94,7 @@ mSet<-PlotORA(mSet, "ora_0_", "bar", "png", 72, width=NA)
 
 Below, we will go over a second analysis workflow to perform QEA, where data input is a table.
 
-```{r, eval=FALSE}
+```{r}
 # Create mSetObj
 mSet<-InitDataObjects("conc", "msetqea", FALSE)
 

@@ -185,7 +185,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   dev.off();
   
   if(.on.public.web){
-    PlotEnrichNet.Overview(folds, pvals);
+    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds, pvals);
   }
   
   return(.set.mSet(mSetObj));
@@ -237,7 +237,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   dev.off();
   
   if(.on.public.web){
-    PlotEnrichNet.Overview(folds, pvals);
+    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds, pvals);
   }
   
   mSetObj$imgSet$qea <-imgName;
@@ -613,7 +613,7 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 #'@import igraph
 #'@import reshape
 
-PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
+PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
   
   # due to space limitation, plot top 50 if more than 50 were given
   title <- "Enrichment Network Overview";
@@ -623,6 +623,11 @@ PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.rein
     title <- "Enrichment Overview (top 50)";
   }
   
+  if(.on.public.web){
+    load_igraph()
+    load_reshape()
+  }
+
   pvalue <- pvals;
   id <- names(pvalue);
   geneSets <- current.msetlib$member;
@@ -651,7 +656,6 @@ PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.rein
   cnt2 <- cnt[V(g)$name] + 1; #make sure this is positve 
   V(g)$size <- cnt2/sum(cnt2) * 100 #log(cnt2, base=10) * 10;
   
-  saveNetworkInSIF(g, "metaboanalyst_enrich");
   
   pos.xy <- layout.fruchterman.reingold(g,niter=500);
   
@@ -678,6 +682,13 @@ PlotEnrichNet.Overview<-function(folds, pvals, layoutOpt=layout.fruchterman.rein
   sink("msea_network.json");
   cat(RJSONIO::toJSON(netData));
   sink();
+  
+  return(g);  
+}
+
+PrepareSifDownloads <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  saveNetworkInSIF(mSetObj$analSet$enrich.net, "metaboanalyst_enrich");
 }
 
 overlap_ratio <- function(x, y) {
@@ -691,91 +702,6 @@ color_scale <- function(c1="grey", c2="red") {
   pal <- colorRampPalette(c(c1, c2))
   colors <- pal(100)
   return(colors)
-}
-
-#'Network functions
-#'@description Adapted from BioNet
-#'@param network Input network
-#'@param name Input file name
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-saveNetworkInSIF <- function(network, name){
-  edges <- .graph.sif(network=network, file=name);
-  sif.nm <- paste(name, ".sif", sep="");
-  if(length(list.edge.attributes(network))!=0){
-    edge.nms <- .graph.eda(network=network, file=name, edgelist.names=edges);
-    sif.nm <- c(sif.nm, edge.nms);
-  }
-  if(length(list.vertex.attributes(network))!=0){
-    node.nms <- .graph.noa(network=network, file=name);
-    sif.nm <- c(sif.nm, node.nms);
-  }
-  # need to save all sif and associated attribute files into a zip file for download
-  zip(paste(name,"_sif",".zip", sep=""), sif.nm);
-}
-
-# internal function to write cytoscape .sif file
-.graph.sif <- function(network, file){
-  edgelist.names <- get.edgelist(network, names=TRUE)
-  edgelist.names <- cbind(edgelist.names[,1], rep("pp", length(E(network))), edgelist.names[,2]);
-  write.table(edgelist.names, row.names=FALSE, col.names=FALSE, file=paste(file, ".sif", sep=""), sep="\t", quote=FALSE)
-  return(edgelist.names) 
-} 
-
-# internal method to write cytoscape node attribute files
-.graph.noa <- function(network, file){
-  all.nms <- c();
-  attrib <- list.vertex.attributes(network)
-  for(i in 1:length(attrib)){
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "character")
-    {
-      type <- "String"
-    }
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "integer")
-    {
-      type <- "Integer"
-    }
-    if(is(get.vertex.attribute(network, attrib[i]))[1] == "numeric")
-    {
-      type <- "Double"
-    }
-    noa <- cbind(V(network)$name, rep("=", length(V(network))), get.vertex.attribute(network, attrib[i]))
-    first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="")
-    file.nm <- paste(file, "_", attrib[i], ".NA", sep="");
-    write(first.line, file=file.nm, ncolumns = 1, append=FALSE, sep=" ")
-    write.table(noa, row.names = FALSE, col.names = FALSE, file=file.nm, sep=" ", append=TRUE, quote=FALSE);
-    all.nms <- c(all.nms, file.nm);
-  }
-  return(all.nms);
-}
-
-# internal method to write cytoscape edge attribute files
-.graph.eda <- function(network, file, edgelist.names){
-  all.nms <- c();
-  attrib <- list.edge.attributes(network)
-  for(i in 1:length(attrib)){
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "character")
-    {
-      type <- "String"
-    }
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "integer")
-    {
-      type <- "Integer"
-    }
-    if(is(get.edge.attribute(network, attrib[i]))[1] == "numeric")
-    {
-      type <- "Double"
-    }
-    eda <- cbind(cbind(edgelist.names[,1], rep("(pp)", length(E(network))), edgelist.names[,3]), rep("=", length(E(network))), get.edge.attribute(network, attrib[i]))
-    first.line <- paste(attrib[i], " (class=java.lang.", type, ")", sep="");
-    file.nm <- paste(file, "_", attrib[i], ".EA", sep="");
-    write(first.line, file=file.nm, ncolumns=1, append=FALSE, sep =" ")
-    write.table(eda, row.names = FALSE, col.names = FALSE, file=file.nm, sep=" ", append=TRUE, quote=FALSE);
-    all.nms <- c(all.nms, file.nm);
-  }
-  return(all.nms);
 }
 
 ##############################################

@@ -12,7 +12,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
   CreateHeader(usrName);
   CreateTimeSeriesIOdoc(mSetObj);
-  CreateStatNORMdoc(mSetObj);
+  CreateNORMdoc(mSetObj);
   
   InitTimeSeriesAnal();
   if(exists("analSet", where=mSetObj)){

@@ -592,6 +592,9 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
 
 PlotDataProfile<-function(dataName, boxplotName, pcaName){
     dataSet <- readRDS(dataName);
+    if(.on.public.web){
+        load_lattice()
+    }
     qc.boxplot(dataSet$data, boxplotName);
     qc.pcaplot(dataSet$data, pcaName);
 }
@@ -621,7 +624,7 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
     values  = as.numeric(Mss)
     formula = sample_id ~ values
 
-    box = lattice::bwplot(formula, groups = sample_id, layout = c(1,1), as.table = TRUE,
+    box = bwplot(formula, groups = sample_id, layout = c(1,1), as.table = TRUE,
         strip = function(..., bg) strip.default(..., bg ="#cce6ff"),
         horizontal = TRUE,
         pch = "|",  col = "black", do.out = FALSE, box.ratio = 2,

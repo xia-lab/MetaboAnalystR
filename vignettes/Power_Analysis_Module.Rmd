@@ -17,8 +17,7 @@ The Power analysis module supports sample size estimation and power analysis for
 
 The power analysis uses the entire set of pilot data to estimate effect size distribution, average power, and sample size. The power analysis module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The pilot data follows the uploading, processing, filtering, and normalization steps as per other modules. Please refer to the "Introduction to MetaboAnalystR" vignette for details.  
 
-```{r, eval=FALSE}
-
+```{r}
 mSet<-InitDataObjects("conc", "power", FALSE)
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
@@ -32,7 +31,7 @@ To begin power analysis, you will use the *InitPowerAnal* function, which uses t
 
 The *PlotPowerStat* will create an image containing four exploratory plots of the pilot-data, the top two will be bar charts, and the bottom two will be quantile-quantile (QQ) plots of the test-statistics and the p-values, respectively. This image is created to allow users to visually inspect that their data follows a standard normal distribution. For the test-statistic bar chart (top right), you should expect to see a bell-curve. For the p-value bar chart, you should expect that the two groups to perform the power analysis upon are different from eachother, resulting in the majority of the p-values hovering around 0. As for the qq-plots, if the test-statistics and the p-values follow a normal distribution, the data points will follow the straight line.      
 
-```{r, eval=FALSE}
+```{r}
 # Initiate the power analysis 
 mSet<-InitPowerAnal(mSet, "NA")
 
@@ -41,17 +40,15 @@ mSet<-PlotPowerStat(mSet, "powerstat", format="png", dpi=300, width=NA)
 
 ```
 
-Following the above steps, you will use *PerformPowerProfiling* to perform the power analysis. The ultimate aim of power analysis is to determine the minimum sample size used to detect an effect size of interest. The sample size x statistical power relationship will be used to guide future study design based upon the pilot data. The function requires that you specify the false-discovery rate (FDR), and the maximum sample size (between 60-1000). The false-discovery rate will represent the significance criterion or the alpha level. 
+Following the above steps, you will once again use the *InitPowerAnal* function, specifying the two groups for power analysis. After, you will use *PerformPowerProfiling* to perform the power analysis. The ultimate aim of power analysis is to determine the minimum sample size used to detect an effect size of interest. The sample size x statistical power relationship will be used to guide future study design based upon the pilot data. The function requires that you specify the false-discovery rate (FDR), and the maximum sample size (between 60-1000). The false-discovery rate will represent the significance criterion or the alpha level. 
 
-The magnitude of the effect of interest in the population (effect size) will be calculated from the pilot data. The *PlotPowerEffectSize* will create a plot of the density of the effect sizes, which will display a blue line that represents the estimated density of effect sizes. 
 The *PlotPowerProfile* will create a plot of the predicted power curve. From these plots, you will be able to determine the best minimal sample size and its associated predicted power for future studies. This provides invaluable insight for proper experimental design, as well as strengthen the ability to detect true differences within a metabolomic data set.
 
-```{r, eval=FALSE}
+```{r}
+mSet<-InitPowerAnal(mSet, "cachexic vs. control")
+
 # Perform power analysis, specifying the FDR and the max sample size
 mSet<-PerformPowerProfiling(mSet, 0.1, 200)
-
-# Plot the power effect size
-mSet<-PlotPowerEffectSize(mSet, "powereffect", format="png", dpi=300, width=NA)
 
 # Plot the power profile
 mSet<-PlotPowerProfile(mSet, 0.1, 200, "powerprofile", format="png", dpi=300, width=NA)
