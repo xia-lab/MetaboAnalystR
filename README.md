@@ -196,8 +196,10 @@ While running MetaboAnalystR, you may come across the error "1. Error: package o
 
 ON MAC OS/LINUX - You will need to edit the ".Renviron" file which will be found in your home directory. If it does not exist, you will need to create one. Add the line R_MAX_NUM_DLLS=200, which will increase the max DLLs to 200. Restart your terminal/RStudio and continue using MetaboAnalystR.  
 
-## Error: 
+## Error: Downloading compound_db.rds
 
-For users who run MetaboAnalystR on a windows, you may come across the error "". To address this, please download the necessary file  [here](https://github.com/jsychong/MetaboAnalystR/blob/master/compound_db.rds) and put it in your working directory. Retry the function and continue using MetaboAnalystR. 
+For users who run MetaboAnalystR on a windows, you may come across the error "Error in readRDS(lib.path) : 
+  ReadItem: unknown type 77, perhaps written by later version of R
+" when the package is trying to download the compound_db.rds file for compound name matching. To address this, please download the necessary file  [here](https://github.com/jsychong/MetaboAnalystR/blob/master/compound_db.rds) and put it in your working directory. Retry the function and continue using MetaboAnalystR. 
 
 
