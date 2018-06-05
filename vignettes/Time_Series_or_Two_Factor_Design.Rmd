@@ -36,7 +36,7 @@ mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
 
 **Data Overview:** The TT module consists of two visualization options for data overview. The first is the Interactive PCA Visualization (iPCA). This approach summarizes data in an interactive 3D graph which supports pointing, clicking, rotating, and zooming in and out to view data details. It is incredibly useful to detect overall patterns within the data. To achieve this, use the *iPCA.Anal* function to create the PCA plot, which will output a .json file of the plot in your working directory. The second option is to create a heatmap of the data. This method displays data in the form of colored cells and provides direct visualization of the relative levels of individual samples or variables. To use this function, use *PlotHeatMap2*, which will create heatmap according to user's specifications in your working directory.
 
-To view the 3D JSON files, there exists a few software such as E-charts (online web-tool), CanvasXpress (R package), and plotly.
+We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
 
 ```{r}
 # Create an Interactive PCA Plot

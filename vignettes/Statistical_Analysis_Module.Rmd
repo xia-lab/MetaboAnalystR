@@ -129,7 +129,7 @@ mSet<-PlotCorr(mSet, "ptn_3_", format="png", dpi=72, width=NA)
 
 ## 2.7 Principal Component Analysis (PCA)
 
-To perform PCA, first use *PCA.Anal*. MetaboAnalystR has the options to create a scree plot (*PlotPCAScree*), score plot (*PlotPCA2DScore* or *PlotPCA3DScore*), loadings plot (*PlotPCALoading*), and biplot (*PlotPCABiplot*). Please refer to the user manual for details about each function. To view the created 3D JSON files, there exists a few software such as E-charts (online web-tool), CanvasXpress (R package), and plotly.  
+To perform PCA, first use *PCA.Anal*. MetaboAnalystR has the options to create a scree plot (*PlotPCAScree*), score plot (*PlotPCA2DScore* or *PlotPCA3DScore*), loadings plot (*PlotPCALoading*), and biplot (*PlotPCABiplot*). Please refer to the user manual for details about each function. We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
 
 ```{r}
 # Perform PCA analysis

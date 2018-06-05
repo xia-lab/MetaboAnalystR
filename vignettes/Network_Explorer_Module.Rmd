@@ -37,7 +37,7 @@ To use the tutorial, please **download the example data** below and place it in 
 
 ### 2.2 Perform Network Exploration
 
-In the examples below, we will first explore the gene/metabolite data in a KEGGG global metabolic network (ko01100), and then in a metabolite-disease interaction network. To view the created 3D JSON files, there exists a few software such as E-charts (online web-tool), CanvasXpress (R package), and plotly.
+In the examples below, we will first explore the gene/metabolite data in a KEGGG global metabolic network (ko01100), and then in a metabolite-disease interaction network. We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
 
 **Example 1**
 

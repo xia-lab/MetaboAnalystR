@@ -745,9 +745,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 #' Read RDS files from the internet
 #' @description Function downloads the required file and reads it only if not already in working directory.
 #' Need to specify the file URL and the destfile. 
-#' @usage read_compound(fileURL, destfile)
-#' @param fileURL Name of the file path
-#' @param destfile Name of the downloaded file to current working directory 
+#' @param filenm Input the name of the file to download
 
 # read binary RDS files
 .read.metaboanalyst.lib <- function(filenm){
@@ -766,7 +764,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     }
     if(lib.download){
       lib.url <- paste("http://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
-      download.file(lib.url, destfile=filenm, method="libcurl")
+      download.file(lib.url, destfile=filenm, method="curl")
     }
     lib.path <- filenm;
   }
@@ -969,6 +967,3 @@ SetOrganism <- function(mSetObj=NA, org){
   pathinteg.org <<- data.org <<- org;
   return(.set.mSet(mSetObj))
 }
-
-
-

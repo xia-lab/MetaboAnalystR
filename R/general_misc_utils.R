@@ -174,14 +174,18 @@ Perform.permutation <- function(perm.num, fun){
 #'@export
 #'
 UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
+
+  a <- try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
   
-  a<-try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
   if(class(a) == "try-error" | !length(a)>0){
-    AddErrMsg("Failed to unzip the uploaded files!");
-    AddErrMsg("Possible reason: file name contains space or special characters.");
-    AddErrMsg("Use only alphabets and numbers, make sure there is no space in your file name.");
-    AddErrMsg("For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
-    return (0);
+    b <- try(unzip(inPath, outPath))
+    if(length(b)==0){
+      AddErrMsg("Failed to unzip the uploaded files!");
+      AddErrMsg("Possible reason: file name contains space or special characters.");
+      AddErrMsg("Use only alphabets and numbers, make sure there is no space in your file name.");
+      AddErrMsg("For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
+      return (0);
+    }
   }
   if(rmFile){
     RemoveFile(inPath);
