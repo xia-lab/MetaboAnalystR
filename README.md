@@ -1,7 +1,7 @@
 # MetaboAnalystR: An R package for comprehensive analysis of metabolomics data
 
 <p align="center">
-  <img src="https://github.com/jsychong/MetaboAnalystR/blob/master/docs/metaboanalyst_logo.png">
+  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
 </p>
 
 ## Description 
