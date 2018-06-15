@@ -5,3 +5,4 @@
 # MetaboAnalyst 1.0.1
 
 - Updated underlying R code with updates to MetaboAnalyst 4.0.9
+- Added unit-testing 

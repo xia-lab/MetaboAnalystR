@@ -12,7 +12,10 @@ iPCA.Anal(mSetObj, fileNm)
 \item{fileNm}{select a file name}
 }
 \description{
-Perform PCA analysis, prepare file for interactive liveGraphics3D
+Perform PCA analysis, prepares a JSON file for interactive liveGraphics3D, as well as interactive 3D
+PCA score and loading plots using the plotly R package. These plots are saved in the created mSetObj; to view these, 
+type "mSetObj$imgSet$time$score3d" to view the interactive score plot, and "mSetObj$imgSet$time$load3d" to view
+the interactive loading plot.
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

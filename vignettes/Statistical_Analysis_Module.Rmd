@@ -17,7 +17,7 @@ The standard workflow for statistical analysis is as follows:
 
 **Processed metabolomic data -> Univariate analysis -> Multivariate analysis -> Biological interpretation**
 
-Univariate tests differ from multivariate tests in that they assess the importance of each variable seperately. Meanwhile, multivariate tests assess two or more variables at once, while also taking into consideration the relationship between the variables. Finally, biological interpretation provides a biological context for the significant metabolites identified using univariate/multivariate methods. Below, we will discuss the various statistical methods in greater detail. 
+Univariate tests differ from multivariate tests in that they assess the importance of each variable seperately. Meanwhile, multivariate tests assess two or more variables at once, while also taking into consideration the relationship between the variables. Finally, biological interpretation provides a biological context for the significant metabolites identified using univariate/multivariate methods. Below, we will discuss the various statistical methods in greater detail. For the tutorial, we will be using a dataset consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
 
 ## 2. Univariate Methods
 
@@ -129,7 +129,7 @@ mSet<-PlotCorr(mSet, "ptn_3_", format="png", dpi=72, width=NA)
 
 ## 2.7 Principal Component Analysis (PCA)
 
-To perform PCA, first use *PCA.Anal*. MetaboAnalystR has the options to create a scree plot (*PlotPCAScree*), score plot (*PlotPCA2DScore* or *PlotPCA3DScore*), loadings plot (*PlotPCALoading*), and biplot (*PlotPCABiplot*). Please refer to the user manual for details about each function. We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
+To perform PCA, first use *PCA.Anal*. MetaboAnalystR has the options to create a scree plot (*PlotPCAScree*), score plot (*PlotPCA2DScore* or *PlotPCA3DScore*), loadings plot (*PlotPCALoading*), and biplot (*PlotPCABiplot*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$pca.3d" into your R console. Please refer to the user manual for details about each function. 
 
 ```{r}
 # Perform PCA analysis
@@ -145,7 +145,7 @@ mSet<-PlotPCAScree(mSet, "pca_scree_0_", "png", dpi = 72, width=NA, 5)
 mSet<-PlotPCA2DScore(mSet, "pca_score2d_0_", format = "png", dpi=300, width=NA, 1, 2, 0.95, 1, 0)
 
 # Create a 3D PCA score plot
-mSet<-PlotPCA3DScore(mSet, "pca_score3d_0_", format = "json", 1, 2 ,3)
+mSet<-PlotPCA3DScoreImg(mSet, "pca_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
 
 # Create a PCA loadings Plots
 mSet<-PlotPCALoading(mSet, "pca_loading_0_", format = "png", dpi = 72, width=NA, 1, 2, "scatter", 1);
@@ -155,9 +155,15 @@ mSet<-PlotPCABiplot(mSet, "pca_biplot_0_", format = "png", dpi = 72, width=NA, 1
 
 ```
 
+```{r, eval=FALSE}
+# View the 3D interactive PLS-DA score plot
+mSet$imgSet$pca.3d
+
+```
+
 ## 2.8 Partial Least Squares - Discriminant Analysis (PLS-DA)
 
-To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). Please refer to the user manual for details about each function.   
+To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$plsda.3d" into your R console. Please refer to the user manual for details about each function.   
 
 
 ```{r}
@@ -167,9 +173,13 @@ mSet<-PlotPLSPairSummary(mSet, "pls_pair_0_", "png", 72, width=NA, 5)
 
 mSet<-PlotPLS2DScore(mSet, "pls_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
 
+mSet<-PlotPLS3DScoreImg(mSet, "pls_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
+
 mSet<-PlotPLSLoading(mSet, "pls_loading_0_", "png", 72, width=NA, 1, 2,"scatter", 1);
 
 mSet<-PLSDA.CV(mSet, "T",5, "Q2")
+
+mSet<-PlotPLS.Classification(mSet, "pls_cv_0_", "png", 72, width=NA)
 
 mSet<-PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 15,FALSE)
 
@@ -179,11 +189,17 @@ mSet<-PlotPLS.Permutation(mSet, "pls_perm_1_", "png", 72, width=NA)
 
 ```
 
+```{r, eval=FALSE}
+# View the 3D interactive PLS-DA score plot
+mSet$imgSet$plsda.3d
+
+```
+
 ## 2.9 Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)
 
 The sparse PLS-DA (sPLS-DA) algorithm can effectively reduce the number of variables (metabolites) in high-dimensional metabolomics data to produce robust and easy-to-interpret models. Users can control the "sparseness" of the model by controlling the number of components included in the model and the number of variables within each component. More details can be found from Le Cao et. al 2011 (PMC3133555). 
 
-To begin, use *SPLSR.Anal*. MetaboAnalystR has the options to create an overview of the sPLS-DA analysis (*PlotSPLSPairSummary*), a score plot (*PlotSPLS2DScore* or *PlotSPLS3DScore*), loadings plot (*PlotSPLSLoading*), and classification plot (*PlotSPLSDA.Classification*). Please refer to the user manual for details about each function. Note that the loadings plot shows the variables selected by the sPLS-DA model for a given component. The variables are ranked by the absolute values of their loadings.
+To begin, use *SPLSR.Anal*. MetaboAnalystR has the options to create an overview of the sPLS-DA analysis (*PlotSPLSPairSummary*), a score plot (*PlotSPLS2DScore* or *PlotSPLS3DScore*), loadings plot (*PlotSPLSLoading*), and classification plot (*PlotSPLSDA.Classification*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$splsda.3d" into your R console. Please refer to the user manual for details about each function. Note that the loadings plot shows the variables selected by the sPLS-DA model for a given component. The variables are ranked by the absolute values of their loadings.
 
 To evaluate the performance of the created sPLS-DA models for classification, use *PlotSPLSDA.Classification*. The performance of the sPLS-DA models are evaluated using cross validations (CV) with increasing numbers of components created using the specified number of the variables. Users can choose to use either 5-fold CVs or leave one out cross-validation (LOOCV). Please note that the results from 5-fold CV may change slightly due to random subsampling procedures. 
 
@@ -195,16 +211,22 @@ mSet<-SPLSR.Anal(mSet, 5, 10, "same")
 mSet<-PlotSPLSPairSummary(mSet, "spls_pair_0_", format = "png", dpi=72, width=NA, 5)
 
 # Create 2D sPLS-DA Score Plot
-mSet<-PlotSPLS2DScore(mSet, "spls_score2d_0_", format = "png", dpi=72, width=NA, 1,2,0.95,1,0)
+mSet<-PlotSPLS2DScore(mSet, "spls_score2d_0_", format = "png", dpi=72, width=NA, 1, 2, 0.95, 1, 0)
 
 # Create 3D sPLS-DA Score Plot
-mSet<-PlotSPLS3DScore(mSet, "spls_score3d_0_", format = "json")
+mSet<-PlotSPLS3DScoreImg(mSet, "spls_score3d_0_", format = "png", 72, width=NA, 1, 2, 3, 40)
 
 # Create sPLS-DA loadings plot
 mSet<-PlotSPLSLoading(mSet, "spls_loading_0_", format = "png", dpi=72, width=NA, 1,"overview")
 
 # Perform cross-validation and plot sPLS-DA classification
 mSet<-PlotSPLSDA.Classification(mSet, "spls_cv_0_", "Mfold", format = "png", dpi=72, width=NA)
+
+```
+
+```{r, eval=FALSE}
+# View the 3D interactive PLS-DA score plot
+mSet$imgSet$splsda.3d
 
 ```
 
@@ -348,7 +370,7 @@ mSet<-PlotRF.Outlier(mSet, "rf_outlier_0_", format = "png", dpi=72, width=NA)
 SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. The SVM- based recursive feature selection and classification is performed using the R-SVM script11. The process is performed recursively using decreasing series of feature subsets (ladder) so that different classification models can be calculated. Feature importance is evaluated based on its frequencies being selected in the best classifier identified by recursive classification and cross-validation. Please note, R-SVM is very computationally intensive. Only the top 50 features (ranked by their p values from t-tests) will be evaluated.
 
 ```{r}
-
+# Perform SVM 
 mSet<-RSVM.Anal(mSet, 10)
 
 mSet<-PlotRSVM.Classification(mSet, "svm_cls_0_", format = "png", dpi=72, width=NA)

@@ -115,12 +115,15 @@ PlotInmexPath <- function(mSetObj=NA, path.id, width, height){
   V(g)$stats <- stats;
   V(g)$topo <- topo;
   
-  if(!.on.public.web){
+  if(.on.public.web){
+    .set.mSet(mSetObj); 
+    res <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);  
+    return(res);
+  }else{ 
     mSetObj <- PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
     print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
     return(.set.mSet(mSetObj));
-  } 
-  PlotinmexGraph(mSetObj, path.id, g, width, height, bg.cols, line.cols);   
+  }
 }
 
 #'Plot an igraph object and return the node information (position and labels)

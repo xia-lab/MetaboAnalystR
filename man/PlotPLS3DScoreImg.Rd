@@ -29,7 +29,9 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{angl}{Input the angle}
 }
 \description{
-Plot PLS 3D score plot
+This function creates two 3D PLS-DA score plots, the first is static for Analysis Report purposes, as well as 
+an interactive 3D plot using the plotly R package. The 3D score plot is saved in the created mSetObj (mSetObj$imgSet$plsda.3d).
+To view the score plot, if the name of your mSetObj is mSet, enter "mSet$imgSet$plsda.3d" to view the interactive score plot.
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

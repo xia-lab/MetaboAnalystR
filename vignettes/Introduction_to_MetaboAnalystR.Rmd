@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## 1.0 Overview
+## 1.0 Overview of MetaboAnalystR
 
 MetaboAnalystR is a R package, synchronized with the popular MetaboAnalyst web server, designed for comprehensive metabolomic data analysis, visualization, and interpretation. This R package contains the numerous R functions and libraries underlying the web server necessary to perform data processing, normalization, statistical analysis, metabolite set enrichment analysis, metabolic pathway analysis, and biomarker analysis. This package provides support for several data types, including nuclear magnetic resonance (NMR) spectroscopy, gas chromatography mass spectrometry (GC-MS), and liquid chromatography-MS (LC-MS) data. Further, it is mainly designed to support quantitative metabolomics.
 
@@ -19,7 +19,9 @@ MetaboAnalystR serves as a platform to enable users to perform high-quality, com
 
 The aim of this vignette is to provide an overview of how to use MetaboAnalystR to perform comprehensive metabolomic data analysis and visualization. In detail, this vignette will go through the steps of data import, processing, normalization, and filtering.
 
-## 1.1 Load package
+## 1.1 Loading the package
+
+After following the installation instructions on the MetaboAnalystR Github, you will be ready to use the package. Use the library() function to load the package into R. 
 
 ```{r, eval=FALSE}
 # Load MetaboAnalystR
@@ -27,13 +29,37 @@ library(MetaboAnalystR)
 
 ```
 
-## 1.2 Tips for using the R package
+## 1.2 Tips for using the MetaboAnalystR package
 
-1) The first function that you use in every analysis module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is *mSet*. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
+1) The first function that you will use in every module is the *InitDataObjects* function, which constructs the mSetObj object that stores user's data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is *mSet*. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step. 
 
 2) The MetaboAnalystR package directly creates plots/tables/analysis outputs in your current working directory. It is not necessary to call any plotting functions onto the created mSetObj.
 
 3) Every command must be run in sequence, please do not skip any commands as this will result in errors downstream. 
+
+## 1.3 Data Format
+
+### Comma Separated Values (.csv) or Tab Delimited Text (.txt)
+
+These two formats are used for concentration data, peak intensity tables, and MS/NMR spectral bins. Samples can be in either rows or columns. Please note:
+
+1. Both sample and feature names must be unique and consist of a combination of common English letters, underscores and numbers for naming purpose. Latin/Greek letters are not supported.
+
+2. Class labels must immediately follow sample names; for two-factor and time series data, there must be two class labels corresponding to the two factors.
+
+3. For time-series data, the time-point group must be named as Time. In addition, the samples collected from the same subjects at different time points should be consecutive (See the screenshots demo for "Two-factor / Time series")
+
+4. Data values (concentrations, bins, peak intensities) should contain only numeric and positive values (using empty or NA for missing values).
+
+### Zipped files (.zip)
+
+For NMR/MS peak list files and GC/LC-MS spectra data, users must upload a zipped folder containing data files from different groups under study (one file per spectrum and one sub-folder for each group). For paired comparison, users must upload a separate text file specifying the paired information.
+
+GC/LC-MS spectra must be in either NetCDF, mzXML, or mzDATA format. The spectra should be stored in two separate folders according to their class labels, and then compressed into .zip files. Please note, the program is not compatible with the most recent WinZip (v12.0) with default option. Make sure to select the Legacy compression (Zip 2.0 compatible) for compressing files. **No spaces** are allowed in either the folder names or the spectra names. The size limit for each uploaded zip file is 50M. 
+
+The peak list data is composed of peak list files organized into separate folders named by their class labels. For example, if your data contains three groups, the peak list files should be organized into three folders accordingly. Compress these folders into a single zip file then upload them to MetaboAnalyst.
+
+NMR peak list files should contain two comma separated columns with the 1st column for peak positions (ppm) and the 2nd column for peak intensities; MS peak list files can be in either two-column (mass and intensities) or three-column format (mass, retention time and intensities), but not a mixture of both. The first line of each peak list file is reserved for column labels. The file must be saved in comma separated values (.csv) format.
 
 ## 2.0 Example Data
 
@@ -304,7 +330,7 @@ mSet <- FilterVariable(mSet, "none", "T", 25)
 
 ## 2.5 Removing sample variables
 
-Throughout the analysis of your metabolomic data, you may need to remove samples, variables, or even groups from your dataset. One reason to remove data could be that they are outliers, meaning that the value/s of that data is far from the majority of the other data, or a second reason could be that the data are accidental duplicates of other samples and their removal is necessary to have a usable data set.  
+Throughout the analysis of your metabolomic data, you may need to remove samples, variables, or even groups from your dataset. One reason to remove data could be that they are outliers, meaning that the value/s of that data is far from the majority of the other data, or a second reason could be that the data are accidental duplicates of other samples and their removal is necessary to have a usable data set.
 
 Several options are available to visually identify potential outliers in your data. For instance, *PlotNormSummary* or *PlotSampleNormSummary* will give a box plot summary of samples and features, or *PlotPCA2DScore* will give you a 2D PCA score plot. In the case of a PCA score plot, outliers will be far away from the main cluster. Finally, *PlotHCTree* and *PlotHeatMap* are two functions that perform hierarchical clustering, providing you with a dendogram and a heatmap of the data, respectively. More details of these functions can be found in the **Statistical Analysis Module** vignette.
 
@@ -321,7 +347,6 @@ mSet <- UpdateFeatureItems(mSet, "2-Aminobutyrate")
 mSet <- UpdateGroupItems(mSet, "control") 
 ```
 
-
 ## 3. Sweave Report Generation
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *CreatePDFReport* function. You must ensure that you have the nexessary LaTeX libraries to generate the report (i.e. texlive and texlive-fonts-extra). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
@@ -334,5 +359,3 @@ CreatePDFReport(mSet, "User Name")
 SaveTransformedData(mSet)
 
 ```
-
-

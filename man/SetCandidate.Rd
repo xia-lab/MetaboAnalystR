@@ -7,11 +7,11 @@
 SetCandidate(mSetObj = NA, query_nm, can_nm)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
 
-\item{query_nm}{Input the query name}
+\item{query_nm}{Input the query name.}
 
-\item{can_nm}{Input the candidate name}
+\item{can_nm}{Input the candidate name.}
 }
 \description{
 Note: to change object in the enclosing enviroment, use "<<-"

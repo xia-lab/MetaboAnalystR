@@ -2,8 +2,8 @@
 #'Check if data are ready for meta-analysis
 #'@description This function determines if all annotated data are ready for meta-analysis
 #'@param mSetObj Input name of the created mSet Object
-#'@param combat Adjust for batch effects, logical variable: TRUE = adjust for batch effects using an empirical Bayes framework (R package sva), FALSE = 
-#'no batch effect adjustment.
+#'@param combat Adjust for batch effects, logical variable: TRUE = adjust for batch effects using an empirical Bayes framework (R package sva),
+#'FALSE = no batch effect adjustment.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

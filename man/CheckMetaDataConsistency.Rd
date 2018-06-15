@@ -9,8 +9,8 @@ CheckMetaDataConsistency(mSetObj = NA, combat = TRUE)
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
-\item{combat}{Adjust for batch effects, logical variable: TRUE = adjust for batch effects using an empirical Bayes framework (R package sva), FALSE = 
-no batch effect adjustment.}
+\item{combat}{Adjust for batch effects, logical variable: TRUE = adjust for batch effects using an empirical Bayes framework (R package sva),
+FALSE = no batch effect adjustment.}
 }
 \description{
 This function determines if all annotated data are ready for meta-analysis

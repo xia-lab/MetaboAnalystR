@@ -19,7 +19,7 @@ Users can upload either a list of metabolites, a list of genes, or a list of bot
 
 ## 2. Network Explorer
 
-As the main goal of the network explorer module is to allow for user's to visually explore their data, the ideal setting is to use the *MetaboAnalyst web-server*, which permits interactive exploration such as drag-and-drop of nodes, highlighting specific nodes, deleting specific nodes, and overlapping pathway-analysis onto the network. Further, a user's edited network image can be downloaded as a SVG or PNG images for publication purposes. The use of the Network Explorer module in R will result in a JSON file of your network that can be viewed in other network-visuzalization applications. This module will also create a snapshot of a network in your working directory, though this image may be hard to interpret if user's data is too large. 
+As the main goal of the network explorer module is to allow for user's to visually explore their data, the ideal setting is to use the *MetaboAnalyst web-server*, which permits interactive exploration such as drag-and-drop of nodes, highlighting specific nodes, deleting specific nodes, and overlapping pathway-analysis onto the network. Further, a user's edited network image can be downloaded as a SVG or PNG images for publication purposes. This module will also create a snapshot of a network in your working directory, though this image may be hard to interpret if user's data is too large. 
 
 ### 2.1 Uploading User Data
 
@@ -29,69 +29,26 @@ This module require's user's to upload a list of metabolites, a list of genes, o
 2) Set your list of features as "geneListFile"  &/or "cmpdListFile" in R
 3) Read in the text file for analysis using *readChar*, saving it as "geneList" and/or "cmpdList" respectively.
 
-To use the tutorial, please **download the example data** below and place it in your current working directory. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. 
+To use the tutorial, please **download the example data** below (directly by using the links, or with the provided R commands) and place it in your current working directory. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. 
 
-**Download the gene list** [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/data/integ_genes.txt), consisting of a list of Official Gene Symbols.
+**Download the gene list** [here](http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt), consisting of a list of Official Gene Symbols.
+**Download the metabolite list** [here](http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt), consisting of a list of KEGG compound IDS. 
 
-**Download the metabolite list** [here](https://github.com/xia-lab/MetaboAnalystR/blob/master/data/integ_cmpds.txt), consisting of a list of KEGG compound IDS. 
+```{r, eval=FALSE}
+
+download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt", "integ_genes.txt", "curl")
+
+download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt", "integ_cmpds.txt", "curl")
+
+```
 
 ### 2.2 Perform Network Exploration
 
-In the examples below, we will first explore the gene/metabolite data in a KEGGG global metabolic network (ko01100), and then in a metabolite-disease interaction network. We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
-
-**Example 1**
-
-```{r, eval=FALSE}
-
-##
-## EXAMPLE ONE: KEGG GLOBAL METABOLIC NETWORK
-##
-
-# Create objects for storing processed data from the network explorer module
-mSet <- InitDataObjects("conc", "network", FALSE)
-
-# Set organism to human, at the moment only human data can be accomodated
-mSet<-SetOrganism(mSet, "hsa")
-
-# Set geneListFile as a file containing your gene list
-geneListFile<-"integ_genes.txt"
-
-# Read in the geneListFile
-# This will import a plain text file as single character string
-geneList<-readChar(geneListFile, file.info(geneListFile)$size)
-
-# Perform gene ID mapping
-mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "symbol");
-
-# Set cmpdListFile as a file containing your metablolite list
-cmpdListFile <- "integ_cmpds.txt"
-
-# Read in the cmpdListFile
-# This will import a plain text file as single character string
-cmpdList<-readChar(cmpdListFile, file.info(cmpdListFile)$size)
-
-# Perform compound ID mapping
-mSet<-PerformIntegCmpdMapping(mSet, cmpdList, "hsa", "kegg");
-
-# Create the mapping results table
-mSet<-CreateMappingResultTable(mSet)
-
-# Prepare the data for network analysis, saves a .json file that can be uploaded
-# to external sites/packages to view the network
-mSet<-PrepareNetworkData(mSet);
- 
-# After selecting KEGG global metabolic network
-mSet<-PrepareQueryJson(mSet)
- 
-# Perform enrichment analysis based on uploaded KOs (KEGG Global Metabolic Network) 
-mSet<-PerformKOEnrichAnalysis_KO01100(mSet, "pathway", "network_enrichment_pathway_0");
-```
-
-**Example 2**
+In the example below, we will explore the gene/metabolite data in a metabolite-disease interaction network. 
 
 ```{r, eval=FALSE}
 ##
-## EXAMPLE TWO: METABOLITE-DISEASE INTERACTION NETWORK
+## METABOLITE-DISEASE INTERACTION NETWORK
 ##
 
 # Create objects for storing processed data from the network explorer module

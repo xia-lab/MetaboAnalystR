@@ -17,6 +17,8 @@ The Power analysis module supports sample size estimation and power analysis for
 
 The power analysis uses the entire set of pilot data to estimate effect size distribution, average power, and sample size. The power analysis module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The pilot data follows the uploading, processing, filtering, and normalization steps as per other modules. Please refer to the "Introduction to MetaboAnalystR" vignette for details.  
 
+For the tutorial, we will be using a dataset consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
+
 ```{r}
 mSet<-InitDataObjects("conc", "power", FALSE)
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");

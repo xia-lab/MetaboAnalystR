@@ -2,14 +2,15 @@
 
 #'Given a list of compound names or ids, find matched name or ids from selected databases
 #'@description Given a list of compound names or ids
-#'find matched name or ids from selected databases
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param q.type Input the query type
-#'@param hmdb Logical, T to cross reference to HMDB, F to not
-#'@param pubchem Logical, T to cross reference to PubChem, F to not
-#'@param chebi Logical, T to cross reference to CheBI, F to not
-#'@param kegg Logical, T to cross reference to KEGG, F to not
-#'@param metlin Logical, T to cross reference to MetLin, F to not
+#'find matched name or IDs from selected databases
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param q.type Input the query type, "name" for compound names, "hmdb" for HMDB IDs, "kegg" for KEGG IDs, "pubchem"
+#'for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.
+#'@param hmdb Logical, T to cross reference to HMDB, F to not.
+#'@param pubchem Logical, T to cross reference to PubChem, F to not.
+#'@param chebi Logical, T to cross reference to CheBI, F to not.
+#'@param kegg Logical, T to cross reference to KEGG, F to not.
+#'@param metlin Logical, T to cross reference to MetLin, F to not.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -56,8 +57,9 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
 #'@description For compound names to other ids, can do exact or approximate matches
 #'For other IDs, except HMDB ID, all others may return multiple/non-unique hits
 #'Multiple hits or non-unique hits will allow users to manually select
-#'@param mSetObj Input the name of the created mSetObj
-#'@param q.type Inpute the query-type
+#'@param mSetObj Input the name of the created mSetObj.
+#'@param q.type Inpute the query-type, "name" for compound names, "hmdb" for HMDB IDs, "kegg" for KEGG IDs, "pubchem"
+#'for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -156,10 +158,10 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   return(.set.mSet(mSetObj));
 }
 
-#' Perform detailed name matche
-#'@description Given a query, perform compound matching 
-#'@param mSetObj Input name of the created mSet Object
-#'@param q Input the query
+#' Perform detailed name match
+#'@description Given a query, perform compound matching. 
+#'@param mSetObj Input name of the created mSet Object.
+#'@param q Input the query.
 #'@export
 #'
 PerformDetailMatch <- function(mSetObj=NA, q){
@@ -174,9 +176,9 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 }
 
 #' Perform multiple name matches
-#'@description Given a query, perform compound matching 
-#'@param mSetObj Input name of the created mSet Object
-#'@param q Input the query
+#'@description Given a query, performs compound name matching. 
+#'@param mSetObj Input name of the created mSet Object.
+#'@param q Input the query.
 #'@export
 #'
 PerformMultiMatch <- function(mSetObj=NA, q){
@@ -196,8 +198,8 @@ PerformMultiMatch <- function(mSetObj=NA, q){
 
 #'Perform approximate compound matches
 #'@description Given a query, perform approximate compound matching 
-#'@param mSetObj Input the name of the created mSetObj
-#'@param q Input the q vector
+#'@param mSetObj Input the name of the created mSetObj.
+#'@param q Input the q vector.
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q){
@@ -285,9 +287,9 @@ PerformApproxMatch <- function(mSetObj=NA, q){
 
 #'Set matched name based on user selection from all potential hits
 #'@description Note: to change object in the enclosing enviroment, use "<<-"
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param query_nm Input the query name
-#'@param can_nm Input the candidate name
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param query_nm Input the query name.
+#'@param can_nm Input the candidate name.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -303,14 +305,16 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   if(!is.null(can_mat)){
     cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
     can_inx <- which(can_mat[,2] == can_nm);
-    if(can_inx <= nrow(can_mat)){
-        mSetObj$name.map$hit.inx[query_inx] <- can_mat[can_inx,1];
-        mSetObj$name.map$hit.values[query_inx] <- can_mat[can_inx,2];
-        mSetObj$name.map$match.state[query_inx] <- 1;
     
-        # re-generate the CSV file
-        hit <-cmpd.db[mSetObj$name.map$hit.inx[query_inx], ,drop=F];
-        csv.res <- mSetObj$dataSet$map.table;
+    if(can_inx <= nrow(can_mat)){
+      can_inx <- which(cmpd.db$name == can_nm);
+      hit <- cmpd.db[can_inx, ,drop=F];
+      mSetObj$name.map$hit.inx[query_inx] <- can_inx;
+      mSetObj$name.map$hit.values[query_inx] <- hit[,2];
+      mSetObj$name.map$match.state[query_inx] <- 1;
+      
+      # re-generate the CSV file
+      csv.res <- mSetObj$dataSet$map.table;
         if(ncol(csv.res) > 6){ # general utilities
             csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
                               mSetObj$name.map$hit.values[query_inx],
@@ -330,7 +334,6 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
         }
         write.csv(csv.res, file="name_map.csv", row.names=F);
         mSetObj$dataSet$map.table <- csv.res;
-    
     }else{ #no match
         mSetObj$name.map$hit.inx[query_inx] <- 0;
         mSetObj$name.map$hit.values[query_inx] <- "";
@@ -345,90 +348,6 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   }else{
     return(.set.mSet(mSetObj));
   }
-}
-
-#'Perform pathway mapping
-#'@description Perform pathway mapping of compounds
-#'@param mSetObj Input name of the created mSet Object
-#'@param qvec Input the query vector
-#'@export
-#'
-PathMapping <- function(mSetObj=NA, qvec){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  qvec <- strsplit(qvec, "; *")[[1]];
-  
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  syn.db <-  .read.metaboanalyst.lib("syn_nms.rds");
-  
-  if(!exists('path.list', where = mSetObj$dataSet)){
-    LoadSmpLib(mSetObj);
-  }
-  
-  # first find exact match to the common compound names
-  hit.inx <- match(tolower(qvec), tolower(cmpd.db$name));
-  
-  match.values <- cmpd.db$name[hit.inx];
-  match.ids <- cmpd.db$hmdb[hit.inx];
-  
-  # then try to find exact match to synanyms for the remaining unmatched query names one by one
-  todo.inx <-which(is.na(hit.inx));
-  if(length(todo.inx) > 0){
-    syns.list <-  syn.db$syns.list;
-    for(i in 1:length(syns.list)){
-      syns <-  syns.list[[i]];
-      hitInx <- match(tolower(qvec[todo.inx]), tolower(syns));
-      
-      hitPos <- which(!is.na(hitInx));
-      if(length(hitPos)>0){
-        # record matched ones
-        orig.inx<-todo.inx[hitPos];
-        match.values[orig.inx] <- cmpd.db$name[i];    # show common name
-        match.ids[orig.inx] <- cmpd.db$hmdb[i];
-        
-        # update unmatched list
-        todo.inx<-todo.inx[is.na(hitInx)];
-      }
-    }
-  }
-  
-  na.inx <- is.na(match.values);
-  qvec.nm <- match.values[!na.inx];
-  qvec.id <- match.ids[!na.inx];
-  
-  # then used the matched.values to search the pathway database
-  hits <- lapply(path.list, match, qvec.nm);
-  
-  set.size <- length(path.list);
-  res.mat <- matrix(NA, nrow=set.size, ncol=4);
-  
-  path.nms <- names(path.list);
-  
-  for(i in 1:set.size){
-    path <- path.list[[i]];
-    m.inx <- hits[[i]];
-    m.inx <- m.inx[!is.na(m.inx)];
-    if(length(m.inx)>0){
-      
-      # note: need to set cmpd highlights in SMPDB using the hmdbid
-      # syntax: http://pathman.smpdb.ca/pathways/SMP00055/pathway?reset=true&highlight[HMDB00243]=true
-      # changed URL--> http://www.smpdb.ca/view/SMP00055  
-      pathUrl <- paste(path.link[i], "?reset=true", sep="");
-      highLights <- paste("highlight[", qvec.id[m.inx], "]=true", sep="", collapse="&");
-      
-      res.mat[i, 1] <- paste("<a href=", paste(pathUrl, "&", highLights, sep=""), ">",path.nms[i],"</a>", sep="");
-      res.mat[i, 2] <- paste("<a href=http://www.hmdb.ca/metabolites/", qvec.id[m.inx], ">",qvec.nm[m.inx],"</a>", sep="", collapse="; ");
-      res.mat[i, 3] <- length(m.inx);
-      res.mat[i, 4] <- 1/length(path);
-    }
-  }
-  
-  res.mat<-res.mat[!is.na(res.mat[,1]),];
-  ord.inx <- order(res.mat[,3], res.mat[,4], decreasing = T);
-  res.mat <- res.mat[ord.inx, -c(3,4)];
-  mSetObj$dataSet$path.res <- res.mat;
-  return(.set.mSet(mSetObj));
-  
 }
 
 ##############################################

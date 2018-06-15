@@ -19,7 +19,15 @@ After users have uploaded their data, the genes and metabolites are then mapped 
 
 ## 1.1 Download Necessary Files
 
-Before beginning, **two files must be downloaded** and placed in your working directory, the [gene list]() and the [metabolite list](https://github.com/xia-lab/MetaboAnalystR/blob/master/data/integ_cmpds.txt). The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. Please download these files prior to using the tutorial below.  
+Before beginning, **two files must be downloaded** and placed in your working directory, the gene list and the metabolite list. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. Please download these files prior to using the tutorial below as per the R code below.  
+
+```{r, eval=FALSE}
+
+download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt", "integ_genes.txt", "curl")
+
+download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt", "integ_cmpds.txt", "curl")
+
+```
 
 ## 2. Joint (Integrated) Pathway Analysis
 

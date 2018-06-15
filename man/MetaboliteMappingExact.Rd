@@ -7,9 +7,10 @@
 MetaboliteMappingExact(mSetObj = NA, q.type)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj}
+\item{mSetObj}{Input the name of the created mSetObj.}
 
-\item{q.type}{Inpute the query-type}
+\item{q.type}{Inpute the query-type, "name" for compound names, "hmdb" for HMDB IDs, "kegg" for KEGG IDs, "pubchem"
+for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.}
 }
 \description{
 For compound names to other ids, can do exact or approximate matches

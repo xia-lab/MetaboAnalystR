@@ -269,6 +269,95 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   return(.set.mSet(mSetObj));
 }
 
+#'Plot sPLS-DA 3D score plot
+#'@description This function creates two 3D sPLS-DA score plots, the first is static for Analysis Report purposes, as well as 
+#'an interactive 3D plot using the plotly R package. The 3D score plot is saved in the created mSetObj (mSetObj$imgSet$splsda.3d).
+#'To view the score plot, if the name of your mSetObj is mSet, enter "mSet$imgSet$splsda.3d" to view the interactive score plot.
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@param angl Input the angle
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@importFrom plotly plot_ly add_markers layout
+PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_plotly()
+  }
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.score3d <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,3,3));
+  
+  spls3d <- list();
+  
+  ## need to check if only 2 or 3 components generated
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");    
+    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2)], 5));
+    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");    
+    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2, inx3)], 5));
+  }
+  
+  xlabel <- spls3d$score$axis[1]
+  ylabel <- spls3d$score$axis[2]
+  zlabel <- spls3d$score$axis[3]
+  
+  # static
+  cols <- GetColorSchema(mSetObj);
+  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
+  uniq.cols <- unique(cols);
+  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
+  uniq.pchs <- unique(pchs);
+  Plot3D(coords[,inx1], coords[,inx2], coords[,inx3], xlab= xlabel, ylab=ylabel,
+         zlab=zlabel, angle = angl, color=cols, pch=pchs, box=F);
+  legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  dev.off();
+  
+  # 3D View using plotly
+  if(length(uniq.pchs) > 3){
+    col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
+  }else{
+    col <- c("#1972A4", "#FF7070")
+  }
+  p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
+               color = mSetObj$dataSet$cls, colors = col)
+  p <- plotly::add_markers(p, sizes = 5)
+  p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+                           yaxis = list(title = ylabel),
+                           zaxis = list(title = zlabel)))
+  
+  mSetObj$imgSet$splsda.3d <- p;
+  print("The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.")
+  return(.set.mSet(mSetObj));
+}
+
 #'Create SPLS-DA loading plot
 #'@description Sparse PLS-DA (from mixOmics) loading plot
 #'@param mSetObj Input name of the created mSet Object

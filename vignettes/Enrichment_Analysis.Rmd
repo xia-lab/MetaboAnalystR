@@ -92,7 +92,7 @@ mSet<-PlotORA(mSet, "ora_0_", "bar", "png", 72, width=NA)
 
 ### 2.2 Quantitative Enrichment Analysis
 
-Below, we will go over a second analysis workflow to perform QEA, where data input is a table.
+Below, we will go over a second analysis workflow to perform QEA, where the data input is a concentration table consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
 
 ```{r}
 # Create mSetObj

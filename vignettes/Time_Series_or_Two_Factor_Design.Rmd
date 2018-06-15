@@ -21,6 +21,7 @@ For a comprehensive introductory tutorial and further details concerning time-se
 The time-series/two-factor design (TT) module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The pilot data follows the uploading, processing, filtering, and normalization steps as per other modules. Please refer to the "Introduction to MetaboAnalystR" vignette for details. For this example, we will use LC-MS peak list intensity data collected from *Arabidopsis thaliana* during a wounding time course (four time points). WT - wild type; MT - dde2-2 mutant. Please refer to Meinicke P. et al 2008 (PMID: 18582365) for more information.  
 
 ```{r}
+library(MetaboAnalystR)
 mSet<-InitDataObjects("pktable", "ts", FALSE)
 mSet<-SetDesignType(mSet, "time")
 mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv", "colts", "disc");
@@ -34,9 +35,7 @@ mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
 
 ### 2.1 Time-Series Analysis 
 
-**Data Overview:** The TT module consists of two visualization options for data overview. The first is the Interactive PCA Visualization (iPCA). This approach summarizes data in an interactive 3D graph which supports pointing, clicking, rotating, and zooming in and out to view data details. It is incredibly useful to detect overall patterns within the data. To achieve this, use the *iPCA.Anal* function to create the PCA plot, which will output a .json file of the plot in your working directory. The second option is to create a heatmap of the data. This method displays data in the form of colored cells and provides direct visualization of the relative levels of individual samples or variables. To use this function, use *PlotHeatMap2*, which will create heatmap according to user's specifications in your working directory.
-
-We suggest that users use the Plotly R package to view the created 3D JSON files, see: https://plot.ly/r/3d-scatter-plots/.
+**Data Overview:** The TT module consists of two visualization options for data overview. The first is the Interactive PCA Visualization (iPCA). This approach summarizes data in an interactive 3D graph which supports pointing, clicking, rotating, and zooming in and out to view data details. It is incredibly useful to detect overall patterns within the data. To achieve this, use the *iPCA.Anal* function to create the PCA plot, which will output a .json file of the plot in your working directory. In addition to the JSON file, interactive 3D score and loading plots made with the plotly R package are also available. To view these plots, type "mSetObj\$imgSet\$time\$score3d" to view the interactive scores plot, and "mSetObj\$imgSet\$time\$load3d" to view the interactive loadings plot. The second option is to create a heatmap of the data. This method displays data in the form of colored cells and provides direct visualization of the relative levels of individual samples or variables. To use this function, use *PlotHeatMap2*, which will create heatmap according to user's specifications in your working directory.
 
 ```{r}
 # Create an Interactive PCA Plot
@@ -44,6 +43,14 @@ mSet<-iPCA.Anal(mSet, "ipca_3d_0_.json")
 
 # Create a Heatmap
 mSet<-PlotHeatMap2(mSet, "heatmap2_0_", "png", 72, width=NA, "euclidean","ward.D","bwm","overview", F, 1, F, F)
+```
+
+```{r, eval=FALSE}
+# View the interactive scores plot
+mSet$imgSet$time$score3d 
+
+# View the interactive loadings plot
+mSet$imgSet$time$load3d
 ```
 
 **Univariate Analysis:** The TT module supports two-way ANOVA (ANOVA2), which provides classical univariate two-way ANOVA analysis based on two given factors. For two-factor independent samples, two-way ANOVA between subjects will be performed. 

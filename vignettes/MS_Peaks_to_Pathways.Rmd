@@ -19,24 +19,24 @@ To use this module, users must upload a table containing three columns - m/z fea
 
 The output of this module first consists of a table of results identifying the top-pathways that are enriched in the user-uploaded data, which can be found in your working directory named "mummichog_pathway_enrichment.csv". The table consists of the total number of hits, the raw p-value (Fisher’s or Hypergeometric), the EASE score, and the adjusted p-value (for permutations) per pathway. A second table can also be found in your working directory named "mummichog_matched_compound_all.csv", that contains all matched metabolites from the user’s uploaded list of m/z features. 
 
-For this tutorial we will use the "mummichog_mzs.txt" data, which you will be able to find in the "data" folder of the MetaboAnalyst Github. 
+For this tutorial we will directly use the an example peak list data obtained from untargeted metabolomics of human monocyte-derived dendritic cells (moDC) under stimulation by a strain of yellow fever virus (YF17D, vaccine strain) collected using Orbitrap LC-MS (positive mode, human samples, p.value cutoff: 0.0001).
 
 ```{r, eval=FALSE}
 # Create objects for storing processed data from the MS peaks to pathways module
 mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
 
 # Read in peak-list data
-mSet <- Read.PeakListData(mSet, "mummichog_mzs.txt");
+mSet <- Read.PeakListData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_mzs.txt");
 
 # Set parameters for analysis, in this case the mass accuracy is set to 3 ppm, the mode of the MS instrument is positive, and the p-value cut-off is 0.0001
-mSet <- UpdateMummichogParameters(mSet, "three", "positive", 1.0E-4);
+mSet <- UpdateMummichogParameters(mSet, "0.1", "positive", 1.0E-4);
 
 # Sanity check of the uploaded data
 mSet <- SanityCheckMummichogData(mSet)
 
 # Perform the mummichog algorith, in this case the model is the human MFN model, using Fisher's p-value and gamma-adjustment of p-
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
-mSet<-PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
+mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
 
 ```
 

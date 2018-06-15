@@ -23,7 +23,7 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
 
-  metr_pkgs <- c("Rserve", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes")
+  metr_pkgs <- c("Rserve", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes", "plotly")
   
   list_installed <- installed.packages()
   
@@ -88,13 +88,11 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
-## Usage
-
-### Use-Cases
+## Case Studies
 
 To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
 
-### Tutorials
+## Tutorials
 
 For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
 
@@ -120,7 +118,7 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
-06-13-2018 - Addition of Supplementary Material for use-cases
+06-13-2018 - Addition of case studies + unit-testing + 3D visualization with plotly
 
 05-25-2018 - Version Update: 1.0.1 - update underlying R code w. changes to MetaboAnalyst 4.09
 

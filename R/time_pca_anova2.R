@@ -295,7 +295,10 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 }
 
 #'Perform PCA analysis, prepare file for interactive liveGraphics3D
-#'@description Perform PCA analysis, prepare file for interactive liveGraphics3D
+#'@description Perform PCA analysis, prepares a JSON file for interactive liveGraphics3D, as well as interactive 3D
+#'PCA score and loading plots using the plotly R package. These plots are saved in the created mSetObj; to view these, 
+#'type "mSetObj$imgSet$time$score3d" to view the interactive score plot, and "mSetObj$imgSet$time$load3d" to view
+#'the interactive loading plot.  
 #'@usage iPCA.Anal(mSetObj, fileNm)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fileNm select a file name
@@ -303,13 +306,14 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom plotly plot_ly add_markers layout
 #'
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  pca<-prcomp(mSetObj$dataSet$norm, center=T, scale=F);
-  imp.pca<-summary(pca)$importance;
+  pca <- prcomp(mSetObj$dataSet$norm, center=T, scale=F);
+  imp.pca <- summary(pca)$importance;
   
   pca3d <- list();
   pca3d$score$axis <- paste("PC", 1:3, " (", 100*round(imp.pca[2,][1:3], 3), "%)", sep="");
@@ -318,14 +322,18 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   pca3d$score$xyz <- coords;
   pca3d$score$name <- rownames(mSetObj$dataSet$norm);
   facA <- as.character(mSetObj$dataSet$facA);
+  
   if(all.numeric(facA)){
     facA <- paste("Group", facA);
   }
+  
   pca3d$score$facA <- facA;
   facB <- as.character(mSetObj$dataSet$facB);
+  
   if(all.numeric(facB)){
     facB <- paste("Group", facB);
   }
+  
   pca3d$score$facB <- facB;
   
   pca3d$loadings$axis <- paste("Loadings", 1:3);
@@ -346,9 +354,57 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   sink();
   
   if(!.on.public.web){
-    return(.set.mSet(mSetObj));
+    
+    uniq.facA <- unique(facA)
+    uniq.facB <- unique(facB)
+    
+    if(length(uniq.facA) > 3){
+      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
+    }else{
+      col <- c("#1972A4", "#FF7070")
+    }
+    
+    s.xlabel <- pca3d$score$axis[1]
+    s.ylabel <- pca3d$score$axis[2]
+    s.zlabel <- pca3d$score$axis[3]
+    
+    all.symbols <- c("circle", "cross", "diamond", "x", "square", "circle-open",
+                     "square-open", "diamond-open")
+    
+    b.symbol <- all.symbols[1:length(uniq.facB)]
+    
+    # first, scores plot
+    data.s <- data.frame(cbind(t(pca3d$score$xyz), as.numeric(mSetObj$dataSet$facB)))
+    
+    p.s <- plotly::plot_ly(x = data.s[, 1], y = data.s[, 2], z = data.s[, 3],
+                         color = mSetObj$dataSet$facA, colors = col) 
+    p.s <- plotly::add_markers(p.s, sizes = 5, symbol = data.s[,4], symbols = b.symbol)
+    p.s <- plotly::layout(p.s, scene = list(xaxis = list(title = s.xlabel),
+                                        yaxis = list(title = s.ylabel),
+                                        zaxis = list(title = s.zlabel)))
+    
+    # second, loadings plot
+    l.xlabel <- pca3d$loadings$axis[1]
+    l.ylabel <- pca3d$loadings$axis[2]
+    l.zlabel <- pca3d$loadings$axis[3]
+    
+    data.l <- data.frame(cbind(t(pca3d$loadings$xyz)))
+    
+    p.l <- plotly::plot_ly(x = data.l[, 1], y = data.l[, 2], z = data.l[, 3], colors = col[1]) 
+    p.l <- plotly::add_markers(p.l, sizes = 5)
+    p.l <- plotly::layout(p.l, scene = list(xaxis = list(title = l.xlabel),
+                                        yaxis = list(title = l.ylabel),
+                                        zaxis = list(title = l.zlabel)))
+    
+    mSetObj$imgSet$time$score3d <- p.s
+    mSetObj$imgSet$time$load3d <- p.l
   }
   
+  if(!.on.public.web){
+    print("Interactive scores and loading plots have been created, please find
+          them in mSet$imgSet$time$score3d and mSet$imgSet$time$load3d.")
+    return(.set.mSet(mSetObj));
+  }
 }
 
 # Plot Venn diagram

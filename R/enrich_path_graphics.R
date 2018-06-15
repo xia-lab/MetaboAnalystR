@@ -95,8 +95,12 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
   mSetObj$imgSet$current.metpa.graph <- g.obj;
   mSetObj$analSet$nodeInfo <- nodeInfo;
   
-  return(.set.mSet(mSetObj));
-  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(nodeInfo);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Plot KEGG pathway
@@ -171,7 +175,6 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
   dev.off();
   mSetObj$imgSet$kegg.graph.opls <- g.obj
-  print(imgName);
   return(.set.mSet(mSetObj));
 }
 
