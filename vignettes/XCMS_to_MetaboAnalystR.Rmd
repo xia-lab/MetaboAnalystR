@@ -1,0 +1,88 @@
+---
+title: "XCMS to MetaboAnalystR"
+author: "Jasmine Chong and Jianguo Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{XCMS to MetaboAnalystR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+
+MetaboAnalystR is designed for comprehensive metabolomic data analysis, visualization, and interpretation. While it does support raw data preprocessing, we recommend that users use the XCMS R package directly to process their raw LC-MS/GC-MS data, and then use MetaboAnalystR to perform a wide-range of metabolomic data analyses (statistical analysis, functional analysis, omics data integration). This tutorial will guide users through using the XCMS R package to perform peak identification, retention time correction, and peak alignment of an example dataset to create a peak table in a usable form for MetaboAnalystR. Then with the MetaboAnalystR package, users will perform various statistical analyses including fold-change analysis, PCA, and PLS-DA. The goal of this tutorial is to demonstrate the ease of using the two R packages for a holsitic metabolomic data analysis workflow. For users who wish to perform other types of analyses with their created peak table, please refer to the other vignettes.      
+
+## XCMS to MetaboAnalystR Workflow
+
+In the example workflow below, users must have both the XCMS and the MetaboAnalystR packages installed. Further, the tutorial utilizes **example data provided from the "faahKO" package** (usually installed with XCMS). Please verify first that these packages are installed using *installed.packages()*.  
+
+```{r, eval = FALSE}
+# Load necessary libraries
+library(xcms)
+library(MetaboAnalystR)
+
+# Create path to files
+cdfpath <- system.file("cdf", package = "faahKO")
+cdffiles <- list.files(cdfpath, recursive = TRUE, full.names = TRUE)
+
+# Perform data pre-processing (peak identification, RT correction, peak alignment),
+# using the XCMS R package
+xset <- xcmsSet(cdffiles)
+xset <- group(xset)
+xset2 <- retcor(xset, family = "symmetric", plottype = "mdevden")
+xset2 <- group(xset2, bw = 10)
+xset3 <- fillPeaks(xset2)
+
+# This step is the most important for the workflow between XCMS and MetaboAnalystR
+# .write.metaboanalyst creates a peak table of the processed data in the right format
+# to use with MetaboAnalystR, using the xset object
+xcms:::.write.metaboanalyst(xset3, "met_test1.csv")
+
+# Perform data analysis using the MetaboAnalystR package
+# First step is to create the mSet Object, specifying that the data to be uploaded
+# is a peak table ("pktable") and that statistical analysis will be performed ("stat").
+mSet <- InitDataObjects("pktable", "stat", FALSE)
+
+# The second step is to read in the processed data (created above)
+mSet <- Read.TextData(mSet, "met_test1.csv", "colu", "disc");
+
+# The third step is to perform data processing using MetaboAnalystR (filtering/normalization)
+mSet <- SanityCheckData(mSet)
+mSet <- ReplaceMin(mSet);
+mSet <- FilterVariable(mSet, "iqr", "F", 25)
+mSet <- Normalization(mSet, "NULL", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
+mSet <- PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
+mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
+
+# The fourth step is to perform fold-change analysis
+mSet <- FC.Anal.unpaired(mSet, 2.0, 0)
+mSet <- PlotFC(mSet, "fc_0_", "png", 72, width=NA)
+
+# The fifth step is to perform t-test analysis
+mSet <- Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
+mSet <- PlotTT(mSet, "tt_0_", "png", 72, width=NA)
+
+# The sixth step is to perform PCA
+mSet <- PCA.Anal(mSet)
+mSet <- PlotPCAPairSummary(mSet, "pca_pair_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCAScree(mSet, "pca_scree_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCA2DScore(mSet, "pca_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
+mSet <- PlotPCALoading(mSet, "pca_loading_0_", "png", 72, width=NA, 1,2,"scatter", 1);
+mSet <- PlotPCABiplot(mSet, "pca_biplot_0_", "png", 72, width=NA, 1,2)
+mSet <- PlotPCA3DScoreImg(mSet, "pca_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
+
+# The seventh step is to perform PLS-DA
+mSet <- PLSR.Anal(mSet, reg=TRUE)
+mSet <- PlotPLSPairSummary(mSet, "pls_pair_0_", "png", 72, width=NA, 5)
+mSet <- PlotPLS2DScore(mSet, "pls_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
+mSet <- PlotPLS3DScoreImg(mSet, "pls_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
+mSet <- PlotPLSLoading(mSet, "pls_loading_0_", "png", 72, width=NA, 1, 2,"scatter", 1);
+mSet <- PLSDA.CV(mSet, "L",5, "Q2")
+mSet <- PlotPLS.Classification(mSet, "pls_cv_0_", "png", 72, width=NA)
+mSet <- PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 15,FALSE)
+
+# The last step is to create a summary report of the statistical analysis 
+PreparePDFReport(mSet, "User Name")
+```
+

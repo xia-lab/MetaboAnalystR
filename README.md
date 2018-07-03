@@ -94,7 +94,7 @@ To demonstrate the functionality, flexibility, and scalability of the MetaboAnal
 
 ## Tutorials
 
-For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. 
+For detailed tutorials on how to use MetaboAnalystR, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalyt modules (11), as well as an example that demonstrates the ease of using XCMS and MetaboAnalystR for a holisitic metabolomic data analysis. 
 
 Within R:
 ```R
@@ -126,7 +126,9 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
-06-25-2018 - Publication of MetaboAnalystR in Bioinformatics
+07-03-2018 - Addition of XCMS to MetaboAnalystR tutorial  
+
+06-25-2018 - Publication of MetaboAnalystR in Bioinformatics 
 
 06-13-2018 - Addition of case studies + unit-testing + 3D visualization with plotly
 
