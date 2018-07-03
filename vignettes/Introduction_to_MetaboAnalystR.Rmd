@@ -353,7 +353,7 @@ Following analysis, a comprehensive report can be generated which contains a det
 
 ```{r, eval=FALSE}
 # Create Biomarker Sweave report 
-CreatePDFReport(mSet, "User Name")
+PreparePDFReport(mSet, "User Name")
 
 # To save all files created during your session
 SaveTransformedData(mSet)
