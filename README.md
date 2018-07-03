@@ -110,13 +110,23 @@ browseVignettes("MetaboAnalystR")
 
 MetaboAnalystR has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University. 
 
-If you use the R package, please cite: ###
+The R package has been [published](https://doi.org/10.1093/bioinformatics/bty528)!
+
+If you use the R package, please cite us: 
+
+Within R:
+
+```R
+citation("MetaboAnalystR")
+```
 
 ## Bugs or feature requests
 
 To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+06-25-2018 - Publication of MetaboAnalystR in Bioinformatics
 
 06-13-2018 - Addition of case studies + unit-testing + 3D visualization with plotly
 
