@@ -11,18 +11,18 @@ vignette: >
 
 ## Introduction
 
-MetaboAnalystR is designed for comprehensive metabolomic data analysis, visualization, and interpretation. While it does support raw data preprocessing, we recommend that users use the XCMS R package directly to process their raw LC-MS/GC-MS data, and then use MetaboAnalystR to perform a wide-range of metabolomic data analyses (statistical analysis, functional analysis, omics data integration). This tutorial will guide users through using the XCMS R package to perform peak identification, retention time correction, and peak alignment of an example dataset to create a peak table in a usable form for MetaboAnalystR. Then with the MetaboAnalystR package, users will perform various statistical analyses including fold-change analysis, PCA, and PLS-DA. The goal of this tutorial is to demonstrate the ease of using the two R packages for a holsitic metabolomic data analysis workflow. For users who wish to perform other types of analyses with their created peak table, please refer to the other vignettes.      
+MetaboAnalystR is designed for comprehensive metabolomic data analysis, visualization, and interpretation. While it does support raw data preprocessing, we encourage users to use the XCMS R package (Smith et al. 2006) directly to process their raw LC-MS/GC-MS data, and then use MetaboAnalystR to perform a wide-range of metabolomic data analyses (statistical analysis, functional analysis, and multiple omics data integration). This tutorial will guide users through using the XCMS R package to perform peak identification, retention time correction, and peak alignment of an example dataset to create a peak table in a usable form for MetaboAnalystR. Then with the MetaboAnalystR package, users will perform various statistical analyses including fold-change analysis, PCA, and PLS-DA. The goal of this tutorial is to demonstrate the ease of using the two R packages for a holsitic metabolomic data analysis workflow. For users who wish to perform other types of analyses with their created peak table, please refer to the other MetaboAnalystR vignettes.      
 
 ## XCMS to MetaboAnalystR Workflow
 
-In the example workflow below, users must have both the XCMS and the MetaboAnalystR packages installed. Further, the tutorial utilizes **example data provided from the "faahKO" package** (usually installed with XCMS). Please verify first that these packages are installed using *installed.packages()*.  
+In the example workflow below, users must have both the XCMS and the MetaboAnalystR packages installed. Further, the tutorial utilizes **example data provided from the "faahKO" package** (usually installed with XCMS). Please verify first that both of these packages are installed on your computer using *installed.packages()*.  
 
 ```{r, eval = FALSE}
 # Load necessary libraries
 library(xcms)
 library(MetaboAnalystR)
 
-# Create path to files
+# Create file path to example data 
 cdfpath <- system.file("cdf", package = "faahKO")
 cdffiles <- list.files(cdfpath, recursive = TRUE, full.names = TRUE)
 
@@ -86,3 +86,6 @@ mSet <- PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 1
 PreparePDFReport(mSet, "User Name")
 ```
 
+### References
+
+Smith, C.A., Want, E.J., O'Maille, G., Abagyan,R., Siuzdak, G. (2006). “XCMS: Processing mass spectrometry data for metabolite profiling using nonlinear peak alignment, matching and identification.” Analytical Chemistry, 78, 779–787.
