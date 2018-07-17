@@ -51,6 +51,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
   
   if(lib.type=="self"){
     ms.list <- user.mset;
+    current.msetlib <- data.frame(member=character(), stringsAsFactors = FALSE)
   }else{
     # create a named list, use the ids for list names
     ms.list <- strsplit(current.msetlib[,3],"; ");

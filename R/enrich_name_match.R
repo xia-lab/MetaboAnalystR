@@ -146,6 +146,9 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
     hit.inx2 <- match(tolower(qvec), tolower(cmpd.db$kegg));
     nohmdbInx <- is.na(hit.inx);
     hit.inx[nohmdbInx]<-hit.inx2[nohmdbInx]
+    match.values <- cmpd.db$name[hit.inx];
+    match.state[!is.na(hit.inx)] <- 1;
+    
   }
   # empty memory
   gc();
