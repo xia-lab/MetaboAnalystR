@@ -342,9 +342,16 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
   
   perm_record <- unlist(mSetObj$perm_record);
   perm_minus <- abs(0.9999999999 - perm_record);
-  fit.gamma <- fitdistrplus::fitdist(perm_minus, distr = "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1));
-  rawpval <- as.numeric(sigpvalue);
-  adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
+  
+  tryCatch({
+    fit.gamma <- fitdistrplus::fitdist(perm_minus, distr = "gamma", method = "mle", lower = c(0, 0), start = list(scale = 1, shape = 1));
+    rawpval <- as.numeric(sigpvalue);
+    adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
+  }, error = function(e){
+      print(e)
+  }, finally = {
+      adjustedp <- rep(NA, length = length(res.mat[,1]))
+  })
 
   res.mat <- cbind(res.mat, Gamma=adjustedp);
 
