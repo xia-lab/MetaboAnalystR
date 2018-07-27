@@ -262,7 +262,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   var.nms = colnames(mSetObj$dataSet$norm);
   if(top.num < length(var.nms)){
     if(method.nm == 'tanova'){
-      if(GetGroupNumber() == 2){
+      if(GetGroupNumber(mSetObj) == 2){
         if(is.null(mSetObj$analSet$tt)){
           Ttests.Anal(mSetObj);
           mSetObj <- .get.mSet(mSetObj);
