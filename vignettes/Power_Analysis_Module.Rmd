@@ -21,7 +21,7 @@ For the tutorial, we will be using a dataset consisting of concentrations of 77 
 
 ```{r}
 mSet<-InitDataObjects("conc", "power", FALSE)
-mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
+mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)

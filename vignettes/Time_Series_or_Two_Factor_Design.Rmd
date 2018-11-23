@@ -24,7 +24,7 @@ The time-series/two-factor design (TT) module accepts either a compound concentr
 library(MetaboAnalystR)
 mSet<-InitDataObjects("pktable", "ts", FALSE)
 mSet<-SetDesignType(mSet, "time")
-mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv", "colts", "disc");
+mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv", "colts", "disc");
 mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "S10T0", ratio=FALSE, ratioNum=20)

@@ -119,15 +119,16 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 } 
 
 #'Read data table
-#'@description note, try to use the fread, however, it has issues with 
-#'some windows 10 files "Line ending is \r\r\n. .... appears to add the extra \r in text mode on Windows"
-#'in such as, use the slower read.table method
+#'@description Read in data table
 #'@param fileName Input filename
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+### note, try to use the fread, however, it has issues with 
+###some windows 10 files "Line ending is \r\r\n. .... appears to add the extra \r in text mode on Windows"
+###in such as, use the slower read.table method
+
 .readDataTable <- function(fileName){
   dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE));
   if(class(dat) == "try-error"){

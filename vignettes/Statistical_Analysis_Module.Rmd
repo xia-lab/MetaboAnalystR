@@ -26,7 +26,7 @@ To begin the SA module, we will start with identifying important features from t
 ```{r}
 library(MetaboAnalystR)
 mSet<-InitDataObjects("conc", "stat", FALSE)
-mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
+mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
 mSet<-Normalization(mSet, "NULL", "LogNorm", "MeanCenter", "S10T0", ratio=FALSE, ratioNum=20)

@@ -31,14 +31,14 @@ This module require's user's to upload a list of metabolites, a list of genes, o
 
 To use the tutorial, please **download the example data** below (directly by using the links, or with the provided R commands) and place it in your current working directory. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. 
 
-**Download the gene list** [here](http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt), consisting of a list of Official Gene Symbols.
-**Download the metabolite list** [here](http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt), consisting of a list of KEGG compound IDS. 
+**Download the gene list** [here](https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt), consisting of a list of Official Gene Symbols.
+**Download the metabolite list** [here](https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt), consisting of a list of KEGG compound IDS. 
 
 ```{r, eval=FALSE}
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt", "integ_genes.txt", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt", "integ_genes.txt", "curl")
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt", "integ_cmpds.txt", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt", "integ_cmpds.txt", "curl")
 
 ```
 
