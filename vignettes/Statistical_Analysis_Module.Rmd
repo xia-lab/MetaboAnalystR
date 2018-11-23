@@ -242,7 +242,7 @@ mSet<-OPLSR.Anal(mSet, reg=TRUE)
 mSet<-PlotOPLS2DScore(mSet, "opls_score2d_0_", format = "png", dpi=72, width=NA, 1,2,0.95,1,0)
 
 # Create a significant features plot
-mSet<-PlotOPLS.Splot(mSet, "opls_splot_0_", format = "png", dpi=72, width=NA, "all")
+mSet<-PlotOPLS.Splot(mSet, "opls_splot_0_", "png", 72, width=NA);
 
 # Create a plot of the model overview
 mSet<-PlotOPLS.MDL(mSet, "opls_mdl_0_", format = "png", dpi=72, width=NA)
