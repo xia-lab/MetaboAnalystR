@@ -148,7 +148,7 @@ mSet<-PlotPCA2DScore(mSet, "pca_score2d_0_", format = "png", dpi=300, width=NA, 
 mSet<-PlotPCA3DScoreImg(mSet, "pca_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
 
 # Create a PCA loadings Plots
-mSet<-PlotPCALoading(mSet, "pca_loading_0_", format = "png", dpi = 72, width=NA, 1, 2, "scatter", 1);
+mSet<-PlotPCALoading(mSet, "pca_loading_0_", "png", 72, width=NA, 1,2);
 
 # Create a PCA Biplot
 mSet<-PlotPCABiplot(mSet, "pca_biplot_0_", format = "png", dpi = 72, width=NA, 1, 2)
@@ -175,7 +175,7 @@ mSet<-PlotPLS2DScore(mSet, "pls_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
 
 mSet<-PlotPLS3DScoreImg(mSet, "pls_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
 
-mSet<-PlotPLSLoading(mSet, "pls_loading_0_", "png", 72, width=NA, 1, 2,"scatter", 1);
+mSet<-PlotPLSLoading(mSet, "pls_loading_0_", "png", 72, width=NA, 1, 2);
 
 mSet<-PLSDA.CV(mSet, "T",5, "Q2")
 
