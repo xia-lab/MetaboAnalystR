@@ -57,13 +57,14 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   # other global variables
   msg.vec <<- "";
-  module.count <<- 0; 
+  module.count <<- 0;
+  smpdbpw.count <<- 0; # counter for naming different json file (pathway viewer)
   data.org <<- NULL; 
   
   if(.on.public.web){
     lib.path <<- "../../data/";
   }else{
-    lib.path <<- "http://www.metaboanalyst.ca/resources/data/";
+    lib.path <<- "https://www.metaboanalyst.ca/resources/data/";
   }
   
   # for meta-analysis
@@ -568,7 +569,11 @@ SaveTransformedData <- function(mSetObj=NA){
     }else{
       lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));
     }
-    orig.data<-cbind(lbls, mSetObj$dataSet$orig);
+    if(anal.type == "mummichog"){
+        orig.data<- mSetObj$dataSet$orig;
+    }else{
+        orig.data<-cbind(lbls, mSetObj$dataSet$orig);
+    }
     if(dim(orig.data)[2]>200){
       orig.data<-t(orig.data);
     }
@@ -763,7 +768,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
       }
     }
     if(lib.download){
-      lib.url <- paste("http://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
+      lib.url <- paste("https://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
       download.file(lib.url, destfile=filenm, method="curl")
     }
     lib.path <- filenm;
@@ -791,7 +796,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
       }
     }
     if(lib.download){
-      libPath <- paste("http://www.metaboanalyst.ca/resources/libs/", libtype, "/", libname, ".rda", sep="");
+      libPath <- paste("https://www.metaboanalyst.ca/resources/libs/", libtype, "/", libname, ".rda", sep="");
       download.file(libPath, destfile);
     }
   }
@@ -892,9 +897,24 @@ HMDBID2KEGGID<-function(ids){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Setup.MapData<-function(mSetObj=NA, qvec){
+Setup.MapData <- function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cmpd <- qvec;
+  return(.set.mSet(mSetObj));
+}
+
+#'Save adduct names for mapping
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param qvec Input the vector to query
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Setup.AdductData <- function(mSetObj=NA, qvec){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$adduct.list <- qvec;
+  mSetObj$adduct.custom <- TRUE
   return(.set.mSet(mSetObj));
 }
 
@@ -967,3 +987,6 @@ SetOrganism <- function(mSetObj=NA, org){
   pathinteg.org <<- data.org <<- org;
   return(.set.mSet(mSetObj))
 }
+
+
+

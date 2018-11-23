@@ -358,6 +358,16 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   # csv
   write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=F);
   
+  mSetObj <- .get.mSet(mSetObj);
+resTable2 = resTable
+resTable2$id = inmexpa$path.ids[rownames(resTable)];
+     json.mat <- RJSONIO::toJSON(resTable2);
+     json.nm <- "integ_pathway.json"
+     sink(json.nm)
+     cat(json.mat);
+     sink();
+
+
   mSetObj$dataSet$path.hits <- hits.path;
   
   # store results from individual analysis

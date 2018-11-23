@@ -597,7 +597,7 @@ doGene2KONameMapping <- function(enIDs){
   if(.on.public.web){
     ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
   }else{
-    ko.dic <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
+    ko.dic <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
   }
 
   #TO-DO: map based on specific selection of a species
@@ -731,7 +731,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
       ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
       ko.edge.map <- .readDataTable(ko.edge.path);
     }else{
-      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
       download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
       ko.edge.map <- .readDataTable("ko_edge.csv"); 
     }
@@ -828,7 +828,7 @@ LoadKEGGKO_lib<-function(category){
       kegg.rda <- "../../libs/network/ko_modules.rda";
       load(kegg.rda);
     }else{
-      kegg.rda <- "http://www.metaboanalyst.ca/resources/libs/network/ko_modules.rda";
+      kegg.rda <- "https://www.metaboanalyst.ca/resources/libs/network/ko_modules.rda";
       download.file(kegg.rda, destfile = "ko_modules.rda", method="libcurl", mode = "wb");
       load("ko_modules.rda", .GlobalEnv);
     }
@@ -839,7 +839,7 @@ LoadKEGGKO_lib<-function(category){
       kegg.rda <- "../../libs/network/ko_pathways.rda";
       load(kegg.rda);
     }else{
-      kegg.rda <- "http://www.metaboanalyst.ca/resources/libs/network/ko_pathways.rda";
+      kegg.rda <- "https://www.metaboanalyst.ca/resources/libs/network/ko_pathways.rda";
       download.file(kegg.rda, destfile = "ko_pathways.rda", method="libcurl", mode = "wb")
       load("ko_pathways.rda", .GlobalEnv);
     }
@@ -852,7 +852,7 @@ LoadKEGGKO_lib<-function(category){
       ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
       ko.edge.map <<- .readDataTable(ko.edge.path); 
     }else{
-      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
       download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
       ko.edge.map <<- .readDataTable("ko_edge.csv"); 
     }
@@ -943,7 +943,7 @@ doEmblProtein2EntrezMapping <- function(emblprotein.vec){
   if(.on.public.web){
     libs.path <<- "../../libs/";
   }else{
-    libs.path <<- "http://www.metaboanalyst.ca/resources/libs/";
+    libs.path <<- "https://www.metaboanalyst.ca/resources/libs/";
   }
   
   table.nm <<- table.nm;
@@ -989,7 +989,7 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     load_rsqlite()
     pheno.db <- dbConnect(SQLite(), "../../libs/network/MetPriCNet.sqlite");
   }else{
-    download.file("http://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
+    download.file("https://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
     pheno.db <- dbConnect(SQLite(), "MetPriCNet.sqlite");
   }
   
@@ -1074,7 +1074,7 @@ doKOFiltering <- function(ko.vec, type){
   if(.on.public.web){
     ko.dic <- .readDataTable("../../libs/network/ko_dic_new.csv");
   }else{
-    ko.dic <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
+    ko.dic <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/network/ko_dic_new.csv");
   }
   hit.inx <- match(ko.vec, ko.dic$KO);
   return(ko.dic$KO[hit.inx]);
@@ -1089,7 +1089,7 @@ MapKO2KEGGEdges<- function(kos, net="ko01100"){
       ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
       ko.edge.map <<- .readDataTable(ko.edge.path);     
     }else{
-      ko.edge.path <- paste("http://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
       ko.edge.map <<- .readDataTable(ko.edge.path);     
     }
   } 
@@ -1121,7 +1121,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
       pathway.lib <- readRDS(paste("../../libs/mummichog/", lib, sep=""));
     }else{
       if(!file.exists(lib)){
-        path.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
+        path.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
         download.file(path.url, destfile = lib, method="libcurl", mode = "wb")
         pathway.lib <- readRDS(lib);
       }else{
@@ -1140,7 +1140,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     if(.on.public.web==TRUE){
       ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));    
     }else{
-      ko.pathway.names <- .readDataTable(paste("http://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    
+      ko.pathway.names <- .readDataTable(paste("https://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    
     }
     
     #ko.node.map <- do.call(rbind, lapply(1:length(pathways$name), function(i) cbind(unlist(pathways$cpds[i]), pathways$name[i])));
@@ -1293,7 +1293,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   if(.on.public.web){
     db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
   }else{
-    db.path <- paste("http://www.metaboanalyst.ca/resources/libs/", pathinteg.org, "/entrez.csv", sep="");
+    db.path <- paste("https://www.metaboanalyst.ca/resources/libs/", pathinteg.org, "/entrez.csv", sep="");
   }
   
   gene.db <- .readDataTable(db.path);
@@ -1429,7 +1429,7 @@ ComputeSubnetStats <- function(comps){
   return(net.stats);
 }
 
-UpdateSubnetStats <- function(){
+    UpdateSubnetStats <- function(){
   old.nms <- names(pheno.comps);
   net.stats <- ComputeSubnetStats(pheno.comps);
   ord.inx <- order(net.stats[,1], decreasing=TRUE);

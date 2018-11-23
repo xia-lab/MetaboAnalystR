@@ -4,7 +4,8 @@
 \alias{PlotPLS3DScore}
 \title{Plot PLS 3D score plot}
 \usage{
-PlotPLS3DScore(mSetObj = NA, imgName, format = "json", inx1, inx2, inx3)
+PlotPLS3DScore(mSetObj = NA, imgName, format = "json", inx1, inx2,
+  inx3)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

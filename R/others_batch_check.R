@@ -62,7 +62,6 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format, label){
   if(!is.null(mSetObj$dataSet$batch.cls)){
     if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]]))){
       AddErrMsg("The class labels in current data is different from the previous!");
-      AddErrMsg(dup.nm);
       return("F");
     }
   }

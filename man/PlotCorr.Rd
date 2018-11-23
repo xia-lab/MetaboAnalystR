@@ -4,7 +4,8 @@
 \alias{PlotCorr}
 \title{Pattern hunter, correlation plot}
 \usage{
-PlotCorr(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotCorr(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

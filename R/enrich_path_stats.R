@@ -18,16 +18,27 @@
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   mSetObj <- .get.mSet(mSetObj);
+
   # make a clean dataSet$cmpd data based on name mapping
   # only valid kegg id will be used
   
   nm.map <- GetFinalNameMap(mSetObj);
-  valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
-  ora.vec <- nm.map$kegg[valid.inx];
+  
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
+    ora.vec <- nm.map$kegg[valid.inx];
+  } else if(mSetObj$pathwaylibtype == "SMPDB"){
+    valid.inx <- !(is.na(nm.map$hmdbid)| duplicated(nm.map$hmdbid));
+    ora.vec <- nm.map$hmdbid[valid.inx];
+  }
   q.size<-length(ora.vec);
   
   if(is.na(ora.vec) || q.size==0) {
-    AddErrMsg("No valid KEGG compounds found!");
+    if(mSetObj$pathwaylibtype == "KEGG"){
+      AddErrMsg("No valid KEGG compounds found!");
+    } else if(mSetObj$pathwaylibtype == "SMPDB"){
+      AddErrMsg("No valid SMPDB compounds found!");
+    }
     return(0);
   }
   
@@ -36,6 +47,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   
   # check if need to be filtered against reference metabolome
+  # TODO: address the following filtering for SMPDB if needed
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.kegg)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
     mSetObj$analSet$ora.filtered.mset <- current.mset;
@@ -82,6 +94,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   res.mat[,8] <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   
   res.mat <- res.mat[hit.num>0, , drop=FALSE];
+  res.mat <- res.mat[!is.na(res.mat[,8]), , drop=FALSE];
   
   if(nrow(res.mat) > 1){
     ord.inx <- order(res.mat[,4], res.mat[,8]);
@@ -133,14 +146,24 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   # first, need to make a clean dataSet$norm data based on name mapping
   # only contain valid kegg id will be used
   nm.map <- GetFinalNameMap(mSetObj);
-  valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
+  
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
+  } else if(mSetObj$pathwaylibtype == "SMPDB"){
+    valid.inx <- !(is.na(nm.map$hmdbid)| duplicated(nm.map$hmdbid));
+  }
   nm.map <- nm.map[valid.inx,];
   orig.nms <- nm.map$query;
   
   kegg.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(kegg.inx);
   path.data<-mSetObj$dataSet$norm[,hit.inx];
-  colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
+  
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
+  } else if(mSetObj$pathwaylibtype == "SMPDB"){
+    colnames(path.data) <- nm.map$hmdbid[kegg.inx[hit.inx]];
+  }
   
   # now, perform the enrichment analysis
   current.mset <- metpa$mset.list;
@@ -190,6 +213,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   res.mat <- cbind(set.num, match.num, raw.p, log.p, holm.p, fdr.p, imp.vec);
   rownames(res.mat)<-rownames(qea.res);
   colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  res.mat <- res.mat[!is.na(res.mat[,7]), , drop=FALSE];
   
   ord.inx<-order(res.mat[,3], -res.mat[,7]);
   res.mat<-signif(res.mat[ord.inx,],5);
@@ -262,6 +286,29 @@ SetupSMPDBLinks <- function(kegg.ids){
   return(all.lks);
 }
 
+#'Only works for human (hsa.rda) data
+#'@description Only works for human (hsa.rda) data
+#'2018 - works for ath, eco, mmu, sce
+#'@param kegg.ids Input the list of KEGG ids to add SMPDB links
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+SetupKEGGLinks <- function(smpdb.ids){
+  kegg.vec <- metpa$path.keggs[match(smpdb.ids,names(metpa$mset.list))]
+  lk.len <- length(kegg.vec);
+  all.lks <- vector(mode="character", length=lk.len);
+  for(i in 1:lk.len){
+    lks <- strsplit(kegg.vec[i], "; ")[[1]];
+    if(!is.na(lks[1])){
+      all.lks[i] <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",lks," target=_new>KEGG</a>", sep="");
+      # all.lks[i]<-paste("<a href=http://pathman.smpdb.ca/pathways/",lks,"/pathway target=_new>SMP</a>", sep="", collapse="\n");
+    }
+  }
+  return(all.lks);
+}
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -300,31 +347,56 @@ GetHTMLPathSet <- function(mSetObj=NA, msetNm){
 
 GetORA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  kegg.vec <- rownames(mSetObj$analSet$ora.mat);
-  kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    kegg.vec <- rownames(mSetObj$analSet$ora.mat);
+    kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
+  } else{ # pathwaylibtype == "HMDB"
+    return(SetupKEGGLinks(rownames(mSetObj$analSet$ora.mat)));
+  }
   return(kegg.vec);
 }
 
-#'Only for human pathways
+#'Only for human pathways (SMPDB)
 #'@description Only for human pathways + ath, eco, mmu & sce
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
 GetORA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(SetupSMPDBLinks(rownames(mSetObj$analSet$ora.mat)));
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    return(SetupSMPDBLinks(rownames(mSetObj$analSet$ora.mat)));
+  } else{
+    hmdb.vec <- rownames(mSetObj$analSet$ora.mat);
+    all.lks <-paste("<a href=http://www.smpdb.ca/view/",hmdb.vec," target=_new>SMP</a>", sep="");
+    return(all.lks)
+  }
 }
 
+#'Only for human pathways (KEGG)
+#'@description Only for human pathways + ath, eco, mmu & sce
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
 GetQEA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  kegg.vec <- rownames(mSetObj$analSet$qea.mat);
-  kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    kegg.vec <- rownames(mSetObj$analSet$qea.mat);
+    kegg.vec <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",kegg.vec," target=_new>KEGG</a>", sep="");
+  } else{ # pathwaylibtype == "HMDB"
+    return(SetupKEGGLinks(rownames(mSetObj$analSet$qea.mat)));
+  }
   return(kegg.vec);
 }
 
 GetQEA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(SetupSMPDBLinks(rownames(mSetObj$analSet$qea.mat)));
+  if(mSetObj$pathwaylibtype == "KEGG"){
+    return(SetupSMPDBLinks(rownames(mSetObj$analSet$qea.mat)));
+  } else{
+    hmdb.vec <- rownames(mSetObj$analSet$qea.mat);
+    all.lks <-paste("<a href=http://www.smpdb.ca/view/",hmdb.vec," target=_new>SMP</a>", sep="");
+    return(all.lks)
+  }
 }

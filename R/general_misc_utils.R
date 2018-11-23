@@ -174,7 +174,7 @@ Perform.permutation <- function(perm.num, fun){
 #'@export
 #'
 UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
-
+  
   a <- try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
   
   if(class(a) == "try-error" | !length(a)>0){

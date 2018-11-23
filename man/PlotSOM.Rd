@@ -4,7 +4,8 @@
 \alias{PlotSOM}
 \title{SOM Plot}
 \usage{
-PlotSOM(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotSOM(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

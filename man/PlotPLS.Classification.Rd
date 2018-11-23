@@ -4,8 +4,8 @@
 \alias{PlotPLS.Classification}
 \title{Plot PLS-DA classification performance using different components}
 \usage{
-PlotPLS.Classification(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotPLS.Classification(mSetObj = NA, imgName, format = "png",
+  dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

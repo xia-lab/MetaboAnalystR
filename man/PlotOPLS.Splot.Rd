@@ -5,7 +5,7 @@
 \title{S-plot for OPLS-DA}
 \usage{
 PlotOPLS.Splot(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, plotType)
+  width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

@@ -15,7 +15,6 @@
 #'@export
 #'
 CalculateHyperScore <- function(mSetObj=NA){
-  
   mSetObj <- .get.mSet(mSetObj);
   
   # make a clean dataSet$cmpd data based on name mapping
@@ -48,7 +47,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
     return(0);
   }
-  
+
   hits<-lapply(current.mset, function(x){x[x %in% ora.vec]});
   # lapply(current.mset, function(x) grepl("Ammonia", x))
   #hits<-lapply(current.mset, function(x) grepl(paste(ora.vec, collapse = "|"), x))
@@ -130,7 +129,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   
   # make a clean metabolite set based on reference metabolome filtering
   if(mSetObj$dataSet$use.metabo.filter && !is.null('mSetObj$dataSet$metabo.filter.hmdb')){
-    current.mset <- lapply(inmexpa$mset.list, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
+    current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
 

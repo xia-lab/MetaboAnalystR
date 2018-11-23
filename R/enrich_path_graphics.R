@@ -104,7 +104,6 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 }
 
 #'Plot KEGG pathway
-#'@description Orthogonal PLS-DA (from ropls)
 #'@param mSetObj Input name of the created mSet Object
 #'@param pathName Input the name of the selected KEGG pathway
 #'@param format Select the image format, "png", or "pdf". 
@@ -119,6 +118,7 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 #'
 PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   
+   mSetObj <- .get.mSet(mSetObj);
   if(.on.public.web){
     load_kegggraph()
     load_rgraphwiz()
@@ -144,6 +144,29 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
   }else{
     if(!is.null(mSetObj$analSet$qea.hits)){
       hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
+      # now plotting summary graphs for each compounds
+      for(i in 1:length(hit.cmpds)){
+        cmpd <- hit.cmpds[i];
+        histvec[cmpd] <- cmpd;
+        cmpd.name <- paste(cmpd, ".png", sep="");
+        Cairo::Cairo(file=cmpd.name, width=180, height=180, bg = "transparent", type="png");
+        # remember to change jscode for image size when the change the size above
+        par(mar=c(4,4,1,1));
+        
+        y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
+        if(is.factor(mSetObj$dataSet$cls)){
+          cls.lbls <- mSetObj$dataSet$cls;
+          if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
+            cls.lbls <- as.factor(abbreviate(as.character(cls.lbls), 6));
+          }
+          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), ylab=y.label, las=2);
+        }else{
+          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
+          abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
+        }
+        dev.off();
+        nm.vec <- c(nm.vec, cmpd.name);
+      }
       
       pvals <- mSetObj$analSet$qea.univp[hit.cmpds];
       pvec[hit.cmpds] <- pvals;
@@ -160,22 +183,21 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
     }
   }
   
-  pathName <- gsub("\\s","_", pathName);
-  pathName <- gsub(",","", pathName);
-  
-  imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    width <- 8;
-  }
-  w <- h <- width;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mai=rep(0,4));
-  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
-  dev.off();
-  mSetObj$imgSet$kegg.graph.opls <- g.obj
-  return(.set.mSet(mSetObj));
+    pathName <- gsub("\\s","_", pathName);
+    pathName <- gsub(",","", pathName);
+
+    imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+
+    if(is.na(width)){
+        width <- 8;
+    }
+    w <- h <- width;
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    par(mai=rep(0,4));
+    g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+    dev.off();
+
+    return(imgName);
 }
 
 # Used in higher function
@@ -286,8 +308,8 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   # set circle size according to impact
   # take sqrt to increase spread out
   sqx <- sqrt(x);
-  min.x<- min(sqx);
-  max.x <- max(sqx);
+  min.x<- min(sqx, na.rm = TRUE);
+  max.x <- max(sqx, na.rm = TRUE);
   maxR <- (max.x - min.x)/40;
   minR <- (max.x - min.x)/160;
   radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
@@ -321,9 +343,11 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   grid(col="blue");
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
-  # convert to pixel positions
-  width.px <- height.px <- w*dpi;
-  mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, names(metpa$path.ids)[match(names(x),metpa$path.ids)]);
+  # convert to pixel positions, only for web interaction dpi=72
+  if(dpi == 72){
+    width.px <- height.px <- w*dpi;
+    mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, names(metpa$path.ids)[match(names(x),metpa$path.ids)]);
+  }
   par(op);
   dev.off();
   return(.set.mSet(mSetObj));
@@ -344,8 +368,54 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
     jscode <- paste(jscode, paste("circleArray.push({xc:", xyrc[1,1], ", yc:", xyrc[1,2], 
                                   ", r:", radius, ", lb: \"", lbls[i], "\"})", sep=""), sep="\n");
   }
+
   return(jscode);
 }
+
+# Generate json file of selected pathway to visualize using sigma.js
+# Jeff Xia \email{jeff.xia@mcgill.ca}
+# McGill University, Canada
+# License: GNU GPL (>= 2)
+GeneratePathwayJSON<-function(pathway.nm){
+  mSetObj <- .get.mSet(mSetObj);
+
+  smpdb.path <- paste("../../libs/smpdb/", data.org, ".rda", sep="");
+  load(smpdb.path)
+  
+  jsons.path <- paste("../../libs/smpdb/jsons/", data.org, ".rds", sep="");
+  smpdb.jsons <<- readRDS(jsons.path)
+
+  if(pathway.nm == "top"){
+    if(mSetObj$analSet$type == "pathora"){
+        pathway.id <- rownames(mSetObj$analSet$ora.mat)[1]
+    } else{
+        pathway.id <- rownames(mSetObj$analSet$qea.mat)[1]
+    }
+    pathway.nm <- names(metpa$path.ids)[which(metpa$path.ids == pathway.id)]
+  } else {
+    pathway.id <- metpa$path.ids[which(names(metpa$path.ids) == pathway.nm)]
+  }
+
+  # Get matched metabolites
+  if(mSetObj$analSet$type == "pathora"){
+    metab.matches <- paste(mSetObj$analSet$ora.hits[[pathway.id]], collapse=",");
+  } else{
+    metab.matches <- paste(mSetObj$analSet$qea.hits[[pathway.id]], collapse=",");
+  }
+
+  title <- paste(pathway.id, ";", pathway.nm, sep="");
+   
+  # store json file  
+  smpdbpw.nm <- paste("smpdb_pathway_netview", smpdbpw.count, ".json", sep="");
+  smpdbpw.count <<- smpdbpw.count + 1;
+  sink(smpdbpw.nm);
+  cat(jsonlite::toJSON(smpdb.jsons[[pathway.id]], pretty = TRUE));
+  sink();
+  
+  smpdbpw.nm <- paste0(smpdbpw.nm, ";", metab.matches, ";", title)
+  return(smpdbpw.nm)
+}
+
 
 ##############################################
 ##############################################

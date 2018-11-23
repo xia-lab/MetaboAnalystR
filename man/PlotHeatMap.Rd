@@ -4,9 +4,10 @@
 \alias{PlotHeatMap}
 \title{Create Heat Map Plot}
 \usage{
-PlotHeatMap(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA,
-  dataOpt, scaleOpt, smplDist, clstDist, palette, viewOpt = "detail",
-  rowV = T, colV = T, var.inx = NA, border = T, grp.ave = F)
+PlotHeatMap(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA, dataOpt, scaleOpt, smplDist, clstDist, palette,
+  viewOpt = "detail", rowV = T, colV = T, var.inx = NA,
+  border = T, grp.ave = F)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

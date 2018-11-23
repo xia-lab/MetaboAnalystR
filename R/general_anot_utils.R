@@ -14,7 +14,7 @@ doGeneIDMapping <- function(q.vec, org, type){
   if(.on.public.web){
     url.pre <- "../../libs/";
   }else{
-    url.pre <- "http://www.metaboanalyst.ca/resources/libs/";
+    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
   }
   if(type == "symbol"){
     db.path <- paste(url.pre, org, "/entrez.csv", sep="");
@@ -83,7 +83,7 @@ PerformGeneAnnotation <- function(){
   if(.on.public.web){
     url.pre <- "../../libs/";
   }else{
-    url.pre <- "http://www.metaboanalyst.ca/resources/libs/";
+    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
   }
   
   db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
@@ -102,7 +102,7 @@ doEntrez2SymbolMapping <- function(entrez.vec){
   if(.on.public.web){
     url.pre <- "../../libs/";
   }else{
-    url.pre <- "http://www.metaboanalyst.ca/resources/libs/";
+    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
   }
   
   db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");

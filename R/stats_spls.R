@@ -194,9 +194,9 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
-        points(lv1, lv2, pch=pchs, col=cols, cex=1.8);
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
-        points(lv1, lv2, pch=21, bg=cols, cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
     }
   }
@@ -293,10 +293,6 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web){
-    load_plotly()
-  }
-  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -340,21 +336,23 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   dev.off();
   
-  # 3D View using plotly
-  if(length(uniq.pchs) > 3){
-    col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-  }else{
-    col <- c("#1972A4", "#FF7070")
+  if(!.on.public.web){
+    # 3D View using plotly
+    if(length(uniq.pchs) > 3){
+      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
+    }else{
+      col <- c("#1972A4", "#FF7070")
+    }
+    p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
+                         color = mSetObj$dataSet$cls, colors = col)
+    p <- plotly::add_markers(p, sizes = 5)
+    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+                                        yaxis = list(title = ylabel),
+                                        zaxis = list(title = zlabel)))
+    
+    mSetObj$imgSet$splsda.3d <- p;
+    print("The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.")
   }
-  p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
-               color = mSetObj$dataSet$cls, colors = col)
-  p <- plotly::add_markers(p, sizes = 5)
-  p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                           yaxis = list(title = ylabel),
-                           zaxis = list(title = zlabel)))
-  
-  mSetObj$imgSet$splsda.3d <- p;
-  print("The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.")
   return(.set.mSet(mSetObj));
 }
 

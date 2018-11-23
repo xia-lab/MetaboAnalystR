@@ -122,6 +122,40 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     
   }
   
+  if(!is.null(mSetObj$curr.cust) && mSetObj$curr.cust){
+
+    descr.cust <- c("\\subsubsection{Analysis Customization}\n",
+                    "The aim of this module is to use the mummichog algorithm (Li et al. 2013) to predict pathway-level activity from untargeted", 
+                    "metabolomics, bypassing the need for conventional metabolite identification prior",
+                    "to functional enrichment analysis. In brief, the algorithm uses the collective power of the organizational",
+                    "structure of metabolic pathways/networks and maps m/z features, including all of its adducts and forms, onto",
+                    "these structures to infer activity. Here, the assumption is that if a list of significant m/z features truly reflects",
+                    "biological activity, then the true metabolites will show enrichment on the pathways/networks, while falsely matched",
+                    "metabolites will be more randomly distributed.\n");
+    cat(descr.cust, file=rnwFile, append=TRUE);
+    cat("\n\n", file=rnwFile, append=TRUE);
+    
+    descr.curr <- c("\\subsubsection{Analysis Customization: Currency Metabolites}\n",
+                    "Currency metabolites are abundant substances such as water and carbon dioxide known to occur in normal",
+                    " functioning cells and participate in a large number of metabolic reactions (Huss and Holme 2007, PMID 17907676). ", 
+                    "Because of their ubiquitous nature, they will be removed from further analysis. There is no formal consensus of a set of currency ", 
+                    "metabolites, therefore users who are unsatisfied with the default list of currency metabolites", 
+                    " are provided an option to select the metabolites to use as currency.\n");
+    cat(descr.curr, file=rnwFile, append=TRUE);
+    cat("\n\n", file=rnwFile, append=TRUE);
+    
+    curr.desc <- paste("The user's selected list of currency metabolites is: ", currency, ".");
+    cat(curr.desc, file=rnwFile, append=TRUE, sep="\n");
+    
+    descr.add <- c("\\subsubsection{Analysis Customization: Adducts}\n",
+                   "In addition to pathway information, the mummichog libraries contain a set of adducts tailored to the analytical mode of the MS instrument.",
+                   "These options however, may not be optimal for users data, therefore users are provided the option", 
+                   "to customize the adduct list used in the mummichog analysis.\n");
+    cat(descr.add, file=rnwFile, append=TRUE);
+    cat("\n\n", file=rnwFile, append=TRUE);
+    
+  }
+  
   cat("\n\n", file=rnwFile, append=TRUE);
   
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");

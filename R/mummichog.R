@@ -58,6 +58,7 @@ UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pval
   mSetObj$dataSet$instrument <- instrumentOpt;
   mSetObj$dataSet$mode <- msModeOpt;
   mSetObj$dataSet$cutoff <- pvalCutoff;
+  mSetObj$custom <- FALSE
   
   return(.set.mSet(mSetObj));
 }
@@ -90,6 +91,9 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   my.inx <- mznew > 50 & mznew < 2001;
   trim.num <- sum(!my.inx);
   
+  msg.vec <- c(msg.vec, "Only a small percentage (below 10%) peaks in your input peaks should be significant.");
+  msg.vec <- c(msg.vec, "The algorithm works best for <u>200~500 significant peaks in 3000~7000 total peaks</u>.");
+
   if(trim.num > 0){
     ndat <- ndat[my.inx,]
     msg.vec <- c(msg.vec, paste("A total of", trim.num, "were excluded to fit within mz range of 50-2000"));
@@ -113,17 +117,27 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   ref.size <- length(ref_mzlist);
   
   msg.vec <- c(msg.vec, paste("A total of ", ref.size, "input mz features were retained for further analysis"));
-  
+
   if(ref.size > 20000){
     msg.vec <- c(msg.vec, "There are too many input features, the performance may be too slow");
   }
-  
+
   my.inx <- ndat[,1] < cutoff;
   input_mzlist <- ref_mzlist[my.inx];
-  msg.vec <- c(msg.vec, "The optimal number of significant features ~300.");
+
+  # note, most of peaks are assumed to be not changed significantly, more than 25% should be warned
   sig.size <- length(input_mzlist);
-  msg.vec <- c(msg.vec, paste("A total of", sig.size, "signficant mz features were found based on the selected p-value cutoff:", cutoff));
-  
+  sig.part <- round(100*sig.size/length(ref_mzlist),2);
+  if(sig.part > 75){
+     msg.vec <- c(msg.vec, paste("<font color=\"red\">Warning: over", sig.part, "percent were significant based on your cutoff </font>."));
+     msg.vec <- c(msg.vec, "You need to adjust p-value cutoff to control the percentage");
+  }else if(sig.part > 25){
+     msg.vec <- c(msg.vec, paste("<font color=\"orange\">Warning: over", sig.part, "percent were significant based on your cutoff</font>."));
+     msg.vec <- c(msg.vec, "You should adjust p-value cutoff to control the percentage");
+  }else{
+     msg.vec <- c(msg.vec, paste("A total of", sig.size, "or", sig.part, "percent signficant mz features were found based on the selected p-value cutoff:", cutoff));
+  }
+
   if(sig.size > 2000){
     msg.vec <- c(msg.vec, "There are too many significant features based on the current cutoff, possibly too slow.");
   }else if(sig.size < 30){
@@ -153,16 +167,36 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+
 PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
+  
     mSetObj <- .get.mSet(mSetObj);
   
     filenm <- paste(lib, ".rds", sep="")
+    biocyc <- grepl("biocyc", lib)
+    
+    if(!is.null(mSetObj$curr.cust)){
+      
+      if(biocyc){
+        user.curr <- mSetObj$curr.map$BioCyc
+      }else{
+        user.curr <- mSetObj$curr.map$KEGG
+      }
+      
+      currency <<- user.curr
+      
+      if(length(currency)>0){
+        mSetObj$mummi$anal.msg <- c("Currency metabolites were successfully uploaded!")
+      }else{
+        mSetObj$mummi$anal.msg <- c("Errors in currency metabolites uploading!")
+      }
+    }
   
     if(.on.public.web==TRUE){
         mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
     }else{
         if(!file.exists(filenm)){
-            mum.url <- paste("http://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+            mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
             download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
             mummichog.lib <- readRDS(filenm);
         }else{
@@ -170,12 +204,26 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
         }
     }
   
-    cpd.lib <- list(
+    if(!is.null(mSetObj$adduct.custom)){
+      mw <- mummichog.lib$cpd.lib$mw
+      new_adducts <- new_adduct_mzlist(mSetObj, mw)
+      
+      cpd.lib <- list(
+        mz.mat = new_adducts,
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name
+      );
+      
+    }else{
+      cpd.lib <- list(
         mz.mat = mummichog.lib$cpd.lib$adducts[[mSetObj$dataSet$mode]],
         mw = mummichog.lib$cpd.lib$mw,
         id = mummichog.lib$cpd.lib$id,
         name = mummichog.lib$cpd.lib$name
-    );
+      );
+    }
+
     cpd.tree <- mummichog.lib$cpd.tree[[mSetObj$dataSet$mode]];
 
     mSetObj$pathways <- mummichog.lib$pathways;
@@ -188,8 +236,97 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
     return(.set.mSet(mSetObj));
 }
 
-# internal function for searching compound library
+#'Map currency metabolites to KEGG & BioCyc
+#'@description This function maps the user selected list
+#'of compounds to its corresponding KEGG IDs and BioCyc IDs
+#'@param mSetObj Input the name of the created mSetObj object 
+#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 
+PerformCurrencyMapping <- function(mSetObj = NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  qvec <- mSetObj$dataSet$cmpd;
+  curr_db <- .read.metaboanalyst.lib("curr_db.rds");
+  hit.inx <- match(tolower(qvec), tolower(curr_db$Common.Name));
+  match.values <- curr_db[hit.inx,];
+  curr.met <- nrow(match.values)
+
+  mSetObj$curr.map <- match.values
+  
+  if(curr.met > 0){
+    mSetObj$mummi$curr.msg <- paste("A total of ", curr.met ," currency metabolites were successfully uploaded!", sep = "")
+  }else{
+    mSetObj$mummi$curr.msg <- c("No currency metabolites were selected!")
+  }
+  
+  mSetObj$curr.cust <- TRUE;
+  return(.set.mSet(mSetObj));
+}
+
+#'Read Adduct List
+#'@description This function reads in the user's adduct list and 
+#'saves it as a matrix. 
+#'@usage Read.AdductData(mSetObj=NA, adductList)
+#'@param mSetObj Input the name of the created mSetObj object 
+#'@param adductList Input the name of the adduct list
+#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+PerformAdductMapping <- function(mSetObj=NA, add.mode){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  adducts <- mSetObj$dataSet$adduct.list
+  
+  if(add.mode == "positive"){
+    add_db <- .read.metaboanalyst.lib("pos_adduct.rds");
+  }else if(add.mode == "negative"){
+    add_db <- .read.metaboanalyst.lib("neg_adduct.rds");
+  }else{
+    msg <- c("Adduct mode is not valid")
+  }
+
+  hit.inx <- match(tolower(adducts), tolower(add_db$Ion_Name));
+  match.values <- add_db[hit.inx,];
+  sel.add <- nrow(match.values)
+  
+  if(sel.add > 0){
+    mSetObj$mummi$add.msg <- paste("A total of ", sel.add ," adducts were successfully selected!", sep = "")
+  }else{
+    mSetObj$mummi$add.msg <- c("No adducts were selected!")
+  }
+  
+  mSetObj$add.map <- match.values
+  
+  return(.set.mSet(mSetObj));
+}
+
+# internal function to create new mz matrix from user-curated list of adducts
+new_adduct_mzlist <- function(mSetObj=NA, mw){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  ion.name <- mSetObj$add.map$Ion_Name
+  ion.mass <- mSetObj$add.map$Ion_Mass
+  
+  mw_modified <- NULL;
+  
+  mass.list <- as.list(ion.mass)
+  mass.user <- lapply(mass.list, function(x) eval(parse(text = paste(x)))) 
+  
+  mw_modified <- cbind(mw, do.call(cbind, mass.user));
+  colnames(mw_modified) <- c('M[1+]', ion.name);
+
+  return(mw_modified);
+}
+
+# internal function for searching compound library
 .search.compoundLib <- function(mSetObj, cpd.lib, cpd.tree){
   
   ref_mzlist <- mSetObj$data$ref_mzlist;
@@ -288,6 +425,7 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
 
   mSetObj$perm_record <- permutation_record;
   mSetObj$perm_hits <- permutation_hits
+
   return(mSetObj);
 }
 
@@ -297,35 +435,36 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
   qset <- unique(unlist(mSetObj$input_cpdlist)); #Lsig ora.vec
   query_set_size <- length(qset); #q.size
   
-  total_cpds <- unique(mSetObj$total_matched_cpds) #matched compounds
+  total_cpds <- unique(mSetObj$total_matched_cpds) #all matched compounds
   total_feature_num <- length(total_cpds)
   
-  current.mset <- mSetObj$pathways$cpds; #all
+  current.mset <- mSetObj$pathways$cpds; #all compounds per pathway
   path.num <- unlist(lapply(current.mset, length));
 
-  cpds <- lapply(current.mset, function(x) intersect(x, total_cpds)); # pathways & all ref cpds
-  feats <- lapply(current.mset, function(x) intersect(x, qset)); #pathways & lsig
-  feat_len <- unlist(lapply(feats, length)); # length of overlap features
-
-  uniq.count <- length(unique(unlist(cpds)));
+  cpds <- lapply(current.mset, function(x) intersect(x, total_cpds)); #pathways & all ref cpds
   set.num <- unlist(lapply(cpds, length)); #cpdnum
   
-  negneg <- sizes <- vector(mode="list", length=length(current.mset));
+  feats <- lapply(current.mset, function(x) intersect(x, qset)); #pathways & lsig
+  feat_len <- unlist(lapply(feats, length)); # length of overlap features
+  
+  negneg <- sizes <- vector(mode="list", length=length(current.mset)); #empty lists
   
   for(i in 1:length(current.mset)){ # for each pathway
-        sizes[[i]] <- min(feat_len[i], count_cpd2mz(mSetObj$cpd2mz_dict, unlist(feats[i]), mSetObj$data$input_mzlist))
-        negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
+        sizes[[i]] <- min(feat_len[i], count_cpd2mz(mSetObj$cpd2mz_dict, unlist(feats[i]), mSetObj$data$input_mzlist)) #min overlap or mz hits
+        negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size; # 
   }
-  
-  unsize <- as.integer(unlist(sizes))
+
+  #error fixing for negatives, problem occurs when total_feat_num and query_set_size too close (lsig too close to lall)
+  negneg <- rapply(negneg, function(x) ifelse(x<0,0,x), how = "replace") 
+
+  unsize <- as.integer(unlist(sizes));
   
   # prepare for the result table
-  res.mat <- matrix(0, nrow=length(current.mset), ncol=5)
+  res.mat <- matrix(0, nrow=length(current.mset), ncol=5);
   
-  fishermatrix <- cbind(unsize, (set.num - unsize), (query_set_size - unsize), unlist(negneg))
-  
+  fishermatrix <- cbind(unsize, (set.num - unsize), (query_set_size - unsize), unlist(negneg)); 
   first <- unlist(lapply(sizes, function(x) max(0, x-1)));
-  easematrix <- cbind(first, (set.num - unsize + 1), (query_set_size - unsize), unlist(negneg));
+  easematrix <- cbind(first, (set.num - unsize + 1), (query_set_size - unsize), unlist(negneg)); 
 
   res.mat[,1] <- path.num;  
   res.mat[,2] <- set.num;
@@ -348,12 +487,13 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
     rawpval <- as.numeric(sigpvalue);
     adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
   }, error = function(e){
-      print(e)
+      print(e)   
   }, finally = {
-      adjustedp <- rep(NA, length = length(res.mat[,1]))
+       if(!exists("adjustedp")){
+         adjustedp <- rep(NA, length = length(res.mat[,1]))
+       }
+       res.mat <- cbind(res.mat, Gamma=adjustedp);
   })
-
-  res.mat <- cbind(res.mat, Gamma=adjustedp);
 
   # remove those no hits
   hit.inx <- as.numeric(as.character(res.mat[,3])) > 0;
@@ -435,13 +575,22 @@ GetMummiResColNames <- function(mSetObj=NA){
   return(colnames(mSetObj$mummi.resmat));
 }
 
+GetCurrencyMsg <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$mummi$curr.msg)
+}
+
+GetAdductMsg <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$mummi$add.msg)
+}
+
 ################## Utility Functions #########
 # Global variables define currency compounds
 currency <- c('C00001', 'C00080', 'C00007', 'C00006', 'C00005', 'C00003',
               'C00004', 'C00002', 'C00013', 'C00008', 'C00009', 'C00011',
               'G11113', '', 'H2O', 'H+', 'Oxygen', 'NADP+', 'NADPH', 'NAD+', 'NADH', 'ATP',
               'Pyrophosphate', 'ADP', 'Orthophosphate', 'CO2');
-
 
 # mz tolerance based on instrument type
 # input: a vector of mz,
@@ -569,6 +718,7 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
     sizes[[i]] <- min(feat_len[i], count_cpd2mz(cpd2mz_dict, unlist(feats[i]), input_mzlist))
     negneg[[i]] <- total_feature_num + sizes[[i]] - set.num[i] - query_set_size;
   }
+
   unsize <- as.integer(unlist(sizes))
   res.mat <- matrix(0, nrow=length(current.mset), ncol=1)
   fishermatrix <- cbind(unsize, (set.num - unsize), (query_set_size - unsize), unlist(negneg))

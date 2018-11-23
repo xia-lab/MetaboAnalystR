@@ -4,8 +4,8 @@
 \alias{PLSDA.CV}
 \title{PLS-DA classification and feature selection}
 \usage{
-PLSDA.CV(mSetObj = NA, methodName = "T", compNum = GetDefaultPLSCVComp(),
-  choice = "Q2")
+PLSDA.CV(mSetObj = NA, methodName = "T",
+  compNum = GetDefaultPLSCVComp(), choice = "Q2")
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

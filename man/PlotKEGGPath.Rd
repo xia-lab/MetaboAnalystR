@@ -21,7 +21,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
 }
 \description{
-Orthogonal PLS-DA (from ropls)
+Plot KEGG pathway
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

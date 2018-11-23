@@ -4,7 +4,8 @@
 \alias{PlotMS.RT}
 \title{Plot rentention time corrected spectra}
 \usage{
-PlotMS.RT(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotMS.RT(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

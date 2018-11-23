@@ -23,7 +23,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
   # create a global counter to label figures
   fig.count <<- 0;
   table.count <<- 0;
-  
+
   anal.type <- mSetObj$analSet$type;
     
   if(anal.type == "stat" ){

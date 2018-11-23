@@ -4,8 +4,8 @@
 \alias{PlotHCTree}
 \title{Plot Dendrogram}
 \usage{
-PlotHCTree(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA,
-  smplDist, clstDist)
+PlotHCTree(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA, smplDist, clstDist)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

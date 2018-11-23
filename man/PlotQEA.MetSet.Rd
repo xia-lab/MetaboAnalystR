@@ -21,7 +21,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 }
 \description{
 View individual compounds related to a given metabolite set
-Functions for varous plots for enrichment analysis
+Functions for various plots for enrichment analysis
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

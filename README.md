@@ -16,7 +16,9 @@ We present a new update to MetaboAnalystR (In conjuction with the release of Met
 
 ### Step 1. Install package dependencies 
 
-To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. Note that we suggest you install the XCMS R package if you will be processing raw data, but is not necessary for the majority of MetaboAnalystR utilities. 
+To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options. 
+
+Option 1. Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. Note that we suggest you install the XCMS R package if you will be processing raw data, but is not necessary for the majority of MetaboAnalystR utilities. 
 
 Function to download packages:
 
@@ -46,6 +48,13 @@ Usage of function:
 metanr_packages()
 ```
 
+Option 2. Use the pacman R package. 
+
+```R
+library(pacman)
+
+pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly)
+```
 ### Step 2. Install the package
 
 MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package. There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file.
@@ -126,13 +135,15 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
+11-20-2018 - Version Update: 1.0.2 - updated links in R code (https) + underlying code w. changes to MetaboAnalyst 4.09 
+
 07-03-2018 - Addition of XCMS to MetaboAnalystR tutorial  
 
 06-25-2018 - Publication of MetaboAnalystR in Bioinformatics 
 
 06-13-2018 - Addition of case studies + unit-testing + 3D visualization with plotly
 
-05-25-2018 - Version Update: 1.0.1 - update underlying R code w. changes to MetaboAnalyst 4.09
+05-25-2018 - Version Update: 1.0.1 - updated underlying R code w. changes to MetaboAnalyst 4.09
 
 04-20-2018 - Submission to CRAN
 

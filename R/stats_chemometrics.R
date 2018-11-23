@@ -23,6 +23,8 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj$analSet$pca<-append(pca, list(std=std.pca, variance=var.pca, cum.var=cum.pca));
   write.csv(signif(mSetObj$analSet$pca$x,5), file="pca_score.csv");
   write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
+  mSetObj$analSet$pca$loading.type <- "all";
+  mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
 }
 
@@ -53,6 +55,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
   }
   write.csv(signif(pca$x,5), file="pca_score.csv");
   write.csv(signif(pca$rotation,5), file="pca_loadings.csv");
+
   mSetObj$analSet$pca <- pca;
   return(.set.mSet(mSetObj));
 }
@@ -246,9 +249,9 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     # draw ellipse
     for(i in 1:length(lvs)){
       if (length(uniq.cols) > 1) {
-        polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+        polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
       } else {
-        polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+        polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
       }
       if(grey.scale) {
         lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
@@ -267,9 +270,9 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
       }else{
         if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
-          points(pc1, pc2, pch=pchs, col=cols, cex=1.8);
+          points(pc1, pc2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
         }else{
-          points(pc1, pc2, pch=21, bg=cols, cex=2);
+          points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
         }
       }
     }
@@ -369,10 +372,6 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web){
-    load_plotly()
-  }
-  
   xlabel = paste("PC",inx1, "(", round(100*mSetObj$analSet$pca$variance[inx1],1), "%)");
   ylabel = paste("PC",inx2, "(", round(100*mSetObj$analSet$pca$variance[inx2],1), "%)");
   zlabel = paste("PC",inx3, "(", round(100*mSetObj$analSet$pca$variance[inx3],1), "%)");
@@ -405,18 +404,23 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
     legend("topleft", legend =legend.nm, pch=uniq.pchs, col=uniq.cols);
     dev.off();
     
-    # 3D View using plotly
-    if(length(uniq.pchs) > 3){
-      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-    }else{
-      col <- c("#1972A4", "#FF7070")
-    }
-    p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
+    if(!.on.public.web){
+      # 3D View using plotly
+      if(length(uniq.pchs) > 3){
+        col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
+      }else{
+        col <- c("#1972A4", "#FF7070")
+      }
+      
+      p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
                  color = mSetObj$dataSet$cls, colors = col) 
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+      p <- plotly::add_markers(p, sizes = 5)
+      p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
                           yaxis = list(title = ylabel),
                           zaxis = list(title = zlabel)))
+      mSetObj$imgSet$pca.3d <- p;
+      print("The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d.")
+    }
     
   }else{
     
@@ -424,19 +428,27 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
            zlab=zlabel, angle =angl, pch=pchs, box=F);
     dev.off();
     
-    # 3D View using plotly
-    col <- c("#C61951", "#1972A4")
-    p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
-                 color = pchs, colors = col, marker = list(colorbar = list(len = 1, tickmode = array, tickvals = range(unique(pchs)),
-                                                                           ticktext = levels(mSetObj$dataSet$cls)))); 
-    p <- plotly::add_markers(p, sizes = 1000);
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                          yaxis = list(title = ylabel),
-                          zaxis = list(title = zlabel)));
+    if(!.on.public.web){
+      # 3D View using plotly
+      col <- c("#C61951", "#1972A4")
+      p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
+                           color = pchs, colors = col, marker = list(colorbar = list(len = 1, tickmode = array, tickvals = range(unique(pchs)),
+                                                                                     ticktext = levels(mSetObj$dataSet$cls)))); 
+      p <- plotly::add_markers(p, sizes = 1000);
+      p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+                                          yaxis = list(title = ylabel),
+                                          zaxis = list(title = zlabel)));
+      mSetObj$imgSet$pca.3d <- p;
+      print("The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d.")
+    }
   }
-  
-  mSetObj$imgSet$pca.3d <- p;
-  print("The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d.")
+  return(.set.mSet(mSetObj));
+}
+
+UpdatePCA.Loading<- function(mSetObj=NA, plotType){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$pca$loading.type <- plotType;
+  mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
 }
 
@@ -459,7 +471,7 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'@param lbl.feat Indicate 1 to show labeled features and 0 to not show labels. 
 #'@export
 #'
-PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1){
+PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -482,30 +494,28 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   h <- w;
   
   mSetObj$imgSet$pca.loading <- imgName;
-  
+  plotType <- mSetObj$analSet$pca$loading.type;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(plotType=="scatter"){
+
     par(mar=c(6,5,2,6));
     plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
     
     mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-    
     grid(col = "lightgray", lty = "dotted", lwd = 1);
-    points(loadings[,1],loadings[,2], pch=19, col="magenta");
-    if(lbl.feat > 0){
-      text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 12), pos=4, col="blue", xpd=T);
+    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+
+    if(plotType=="all"){
+        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    }else if(plotType == "custom"){
+        if(length(mSetObj$custom.cmpds) > 0){
+            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+        }
+    }else{
+        # do nothing
     }
-  }else{ # barplot
-    layout(matrix(c(1,1,2,2,2), nrow=5, byrow=T), respect = FALSE)
-    cmpd.nms <- substr(rownames(loadings), 1, 14);
-    hlims <- c(min(loadings[,1], loadings[,2]), max(loadings[,1], loadings[,2]));
-    
-    par(mar=c(1,4,4,1));
-    barplot(loadings[,1], names.arg=NA, las=2, ylim=hlims, main =ldName1);
-    
-    par(mar=c(10,4,3,1));
-    barplot(loadings[,2], names.arg=cmpd.nms, las=2, cex.names=1.0, ylim=hlims, main =ldName2);
-  }
+
   dev.off();
   return(.set.mSet(mSetObj));
   
@@ -589,6 +599,9 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   mSetObj$analSet$plsr <- pls::plsr(cls~datmat,method='oscorespls', ncomp=comp.num);
   mSetObj$analSet$plsr$reg <- reg;
+  mSetObj$analSet$plsr$loading.type <- "all";
+  mSetObj$custom.cmpds <- c();
+
   write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
   write.csv(signif(mSetObj$analSet$plsr$loadings,5), file="plsda_loadings.csv");
   return(.set.mSet(mSetObj));
@@ -724,9 +737,9 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   # draw ellipse
   for(i in 1:length(lvs)){
     if ( length(uniq.cols) > 1) {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
     } else {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
     }
     if(grey.scale) {
       lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
@@ -745,9 +758,9 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
-        points(lv1, lv2, pch=pchs, col=cols, cex=1.8);
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
-        points(lv1, lv2, pch=21, bg=cols, cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
     }
   }
@@ -838,10 +851,6 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web){
-    load_plotly()
-  }
-  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -871,23 +880,34 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   dev.off();
   
-  # 3D View using plotly
-  if(length(uniq.pchs) > 3){
-    col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-  }else{
-    col <- c("#1972A4", "#FF7070")
+  if(!.on.public.web){
+    # 3D View using plotly
+    if(length(uniq.pchs) > 3){
+      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
+    }else{
+      col <- c("#1972A4", "#FF7070")
+    }
+    p <- plotly::plot_ly(x = mSetObj$analSet$plsr$score[, inx1], y = mSetObj$analSet$plsr$score[, inx2], z = mSetObj$analSet$plsr$score[, inx3],
+                         color = mSetObj$dataSet$cls, colors = col) 
+    p <- plotly::add_markers(p, sizes = 5)
+    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+                                        yaxis = list(title = ylabel),
+                                        zaxis = list(title = zlabel)))
+    
+    mSetObj$imgSet$plsda.3d <- p;
+    print("The Interactive 3D PLS-DA plot has been created, please find it in mSet$imgSet$plsda.3d.")
   }
-  p <- plotly::plot_ly(x = mSetObj$analSet$plsr$score[, inx1], y = mSetObj$analSet$plsr$score[, inx2], z = mSetObj$analSet$plsr$score[, inx3],
-               color = mSetObj$dataSet$cls, colors = col) 
-  p <- plotly::add_markers(p, sizes = 5)
-  p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                           yaxis = list(title = ylabel),
-                           zaxis = list(title = zlabel)))
-  
-  mSetObj$imgSet$plsda.3d <- p;
-  print("The Interactive 3D PLS-DA plot has been created, please find it in mSet$imgSet$plsda.3d.")
+
   return(.set.mSet(mSetObj));
 }
+
+UpdatePLS.Loading<- function(mSetObj=NA, plotType){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$plsr$loading.type <- plotType;
+  mSetObj$custom.cmpds <- c();
+  return(.set.mSet(mSetObj));
+}
+
 
 #'Plot PLS loading plot, also set the loading matrix for display
 #'@description Plot PLS loading plot, also set the loading matrix for display
@@ -905,7 +925,7 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1){
+PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
   # named vector
@@ -932,31 +952,30 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   h <- w;
   
   mSetObj$imgSet$pls.loading <- imgName;
-  
+  plotType <- mSetObj$analSet$plsr$loading.type;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(plotType == "scatter"){
+
     par(mar=c(6,4,4,5));
     plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
     
     mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-    
     grid(col = "lightgray", lty = "dotted", lwd = 1);
-    points(loadings[,1],loadings[,2], pch=19, col="magenta");
-    if(lbl.feat > 0){
-      text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 12), pos=4, col="blue", xpd=T);
+    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+
+    if(plotType=="all"){
+        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    }else if(plotType == "custom"){
+        if(length(mSetObj$custom.cmpds) > 0){
+            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+        }
+    }else{
+        # do nothing
     }
-  }else{ # barplot
-    cmpd.nms <- substr(rownames(loadings), 1, 14);
-    hlims <- c(min(loadings[,1], loadings[,2]), max(loadings[,1], loadings[,2]));
-    layout(matrix(c(1,1,2,2,2), nrow=5, byrow=T))
-    par(mar=c(1,4,4,1));
-    barplot(loadings[,1], names.arg=NA, las=2, ylim=hlims, main = ldName1);
-    
-    par(mar=c(10,4,3,1));
-    barplot(loadings[,2], names.arg=cmpd.nms, cex.names=1.0, las=2, ylim=hlims, main = ldName2);
-  }
-  dev.off();
-  return(.set.mSet(mSetObj));
+
+    dev.off();
+    return(.set.mSet(mSetObj));
 }
 
 #'PLS-DA classification and feature selection
@@ -1437,8 +1456,10 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
   write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
   
+  # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
-  
+  mSetObj$analSet$oplsda$splot.type <- "all";
+
   return(.set.mSet(mSetObj));
 }
 
@@ -1521,9 +1542,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   # draw ellipse
   for(i in 1:length(lvs)){
     if ( length(uniq.cols) > 1) {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
     } else {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
     }
     if(grey.scale) {
       lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
@@ -1542,9 +1563,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
-        points(lv1, lv2, pch=pchs, col=cols, cex=1.8);
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
-        points(lv1, lv2, pch=21, bg=cols, cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
     }
   }
@@ -1559,11 +1580,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   return(.set.mSet(mSetObj));
 }
 
-#'Reset custom compounds
-#'@param mSetObj Input name of the created mSet Object
-#'@export
-ResetCustomCmpds <- function(mSetObj){
+UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$oplsda$splot.type <- plotType;
   mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
 }
@@ -1585,7 +1604,7 @@ ResetCustomCmpds <- function(mSetObj){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, plotType){
+PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1613,10 +1632,12 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }
   
   mSetObj$imgSet$opls.loading<-imgName;
-  
+  plotType <- mSetObj$analSet$oplsda$splot.type;
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,4,7))
-  plot(p1, pcorr1, pch=19, xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance", col="magenta");
+  plot(p1, pcorr1, type="n", xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance");
+  grid(col="lightgrey", lty=3, lwd = 1);
+  points(p1, pcorr1, pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
   opls.axis.lims <- par("usr");
   if(plotType=="all"){
     text(p1, pcorr1, labels=colnames(s), cex=0.8, pos=4, xpd=TRUE, col="blue");
@@ -1655,7 +1676,8 @@ PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   # need to record the clicked compounds
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
-  
+  .set.mSet(mSetObj);
+
   return(PlotCmpdView(mSetObj, cmpdNm, format, dpi, width));
 }
 
@@ -2387,12 +2409,6 @@ GetPCALoadMat <- function(mSetObj=NA){
 GetMaxPCAComp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(min(9, dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
-}
-
-ResetCustomCmpds <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$custom.cmpds <- c();
-  return(.set.mSet(mSetObj));
 }
 
 GetOPLSLoadAxesSpec <- function(mSetObj=NA){

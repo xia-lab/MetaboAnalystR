@@ -50,8 +50,8 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
   }
   
   if(lib.type=="self"){
-    ms.list <- user.mset;
-    current.msetlib <- data.frame(member=character(), stringsAsFactors = FALSE)
+    ms.list <- mSetObj$dataSet$user.mset;
+    current.msetlib <- data.frame(name=character(), member=character(), reference=character(), stringsAsFactors = FALSE)
   }else{
     # create a named list, use the ids for list names
     ms.list <- strsplit(current.msetlib[,3],"; ");
@@ -131,7 +131,7 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   mSetObj$dataSet$user.mset.ids <- mset.ids;
   
   if(unmatched.num > 0) {
-    mSetObj$dataSet$user.mset.info <- paste("A total of", unmatched.num, "compounds were no matched to HMDB common names.",
+    mSetObj$dataSet$user.mset.info <- paste("A total of", unmatched.num, "compounds were not matched to HMDB common names.",
                                             "They are:", paste(unmatched.nms, collapse="; "), ". Please correct these names. Otherwise,",
                                             "they will be ignored during the enrichment analysis.");
   }else{
@@ -169,7 +169,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
     if(.on.public.web){
       conc.db <<-  .readDataTable("../../libs/cmpd_conc.csv");
     }else{
-      conc.db <<-  .readDataTable("http://www.metaboanalyst.ca/resources/libs/cmpd_conc.csv");
+      conc.db <<-  .readDataTable("https://www.metaboanalyst.ca/resources/libs/cmpd_conc.csv");
     }
   }
   matches <- subset(conc.db, name == cmpd.nm & biotype==mSetObj$dataSet$biofluid, select=c(conc, pubmed, references, notes));
@@ -189,7 +189,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
 #'
 LoadSmpLib<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  paths <- .readDataTable("http://www.metaboanalyst.ca/resources/libs/smp_path.csv");
+  paths <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/smp_path.csv");
   path.list<-strsplit(paths[,2],"; ");
   names(path.list)<-paths[,1];
   mSetObj$dataSet$path.list <- path.list;
@@ -386,6 +386,30 @@ SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", kegg.rda, "}(KEGG organisms abbreviation).");
   kegglib <- .load.metaboanalyst.lib("kegg", kegg.rda)
+  mSetObj$pathwaylibtype <- "KEGG"
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(1);
+  }
+  return(.set.mSet(mSetObj));
+}
+
+#'Set SMPDB pathway library
+#'@description note, this process can be long, need to return a value
+#'to force Java to wait
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param smpdb.rda Input the name of the SMPDB library (e.g. hsa or mmu)
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+SetSMPDB.PathLib<-function(mSetObj=NA, smpdb.rda){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", smpdb.rda, "}(KEGG organisms abbreviation).");
+  smpdblib <- .load.metaboanalyst.lib("smpdb", smpdb.rda)
+  mSetObj$pathwaylibtype <- "SMPDB"
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(1);

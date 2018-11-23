@@ -1,6 +1,6 @@
 Package: MetaboAnalystR
 Title: An R Package for Comprehensive Analysis of Metabolomics Data
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut", "cre")))
 BugReports: https://github.com/xia-lab/MetaboAnalystR/issues
 Description: This package contains the R functions and libraries underlying the popular MetaboAnalyst web server, 
@@ -12,7 +12,7 @@ Depends: R (>= 3.4.4), lattice, methods, pls
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Imports: Rserve,
     ellipse,
     scatterplot3d,

@@ -441,8 +441,8 @@ GetFinalNameMap <- function(mSetObj=NA){
   match.state <- mSetObj$name.map$match.state;
   
   qvec <- mSetObj$dataSet$cmpd;
-  nm.mat <- matrix(nrow=length(qvec), ncol=3);
-  colnames(nm.mat) <- c("query", "hmdb", "kegg");
+  nm.mat <- matrix(nrow=length(qvec), ncol=4);
+  colnames(nm.mat) <- c("query", "hmdb",  "kegg", "hmdbid");
   
   cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
@@ -450,12 +450,14 @@ GetFinalNameMap <- function(mSetObj=NA){
     hit <-cmpd.db[hit.inx[i], ,drop=F];
     if(match.state[i]==0){
       hmdb.hit <- NA;
+      hmdb.hit.id <- NA;
       kegg.hit <- NA;
     }else{
       hmdb.hit <- ifelse(nchar(hit.values[i])==0, NA, hit.values[i]);
+      hmdb.hit.id <- ifelse(nchar(hit$hmdb_id)==0, NA, hit$hmdb_id);
       kegg.hit <- ifelse(nchar(hit$kegg_id)==0, NA, hit$kegg_id);
     }
-    nm.mat[i, ]<-c(qvec[i],hmdb.hit, kegg.hit);
+    nm.mat[i, ]<-c(qvec[i], hmdb.hit, kegg.hit, hmdb.hit.id);
   }
   return(as.data.frame(nm.mat));
 }

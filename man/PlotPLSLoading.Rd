@@ -5,7 +5,7 @@
 \title{Plot PLS loading plot, also set the loading matrix for display}
 \usage{
 PlotPLSLoading(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx1, inx2, plotType, lbl.feat = 1)
+  width = NA, inx1, inx2)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

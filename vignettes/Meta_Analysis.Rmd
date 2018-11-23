@@ -27,18 +27,19 @@ To perform this tutorial, please download the necessary files into your current 
 
 ```{r, eval=FALSE}
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data1.csv", "data1.csv", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data1.csv", "data1.csv", "curl")
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data2.csv", "data2.csv", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data2.csv", "data2.csv", "curl")
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data3.csv", "data3.csv", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data3.csv", "data3.csv", "curl")
 
-download.file("http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data4.csv", "data4.csv", "curl")
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data4.csv", "data4.csv", "curl")
 
 ```
 
 **Note One**
-The MetaboAnalystR package will create all necessary results/plots in your current working directory. In particular, this module will save user-uploaded files as RDS files, using the exact same names as the uploaded file. For instance, in the analysis workflow below, we upload a file named "data2.csv", which following the ReadIndData function, a RDS file also named "data2.csv" will be created, thereby over-writing the initial .csv file with a RDS file with the exact same name. Please make copies of your uploaded data and perform meta-analysis in a folder with copies of the data you wish to upload. 
+
+The MetaboAnalystR package will create all necessary results/plots in your current working directory. In particular, this module will save user-uploaded files as RDS files, using the exact same names as the uploaded file. For instance, in the analysis workflow below, we upload a file named "data2.csv", which following the ReadIndData function, a RDS file also named "data2.csv" will be created, thereby over-writing the initial .csv file with a RDS file -- with the exact same name. Please make copies of your uploaded data and perform meta-analysis in a folder with copies of the data you wish to upload. 
 
 ## 3. Biomarker Meta-Analysis
 
@@ -136,7 +137,7 @@ mSet <- PrepareVennData(mSet);
 # Get names of features overlapping between selected datasets from "vennData"
 mSet <- GetVennGeneNames(mSet, "data1.csvdata3.csvmeta_dat");
 
-# Enter the object below to obtain the names
+# Enter the object below to obtain the names of the features that overlap between the studies
 mSet$dataSet$venn_overlap
 
 ```

@@ -19,11 +19,11 @@ LoadKEGGLib<-function(libOpt){
     }
   }else{
     if(libOpt == "integ"){
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
     }else if(libOpt == "genetic"){
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
     }else{
-      kegg.rda <- paste("http://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
     }
   }
   

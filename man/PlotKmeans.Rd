@@ -4,7 +4,8 @@
 \alias{PlotKmeans}
 \title{Plot K-means analysis}
 \usage{
-PlotKmeans(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotKmeans(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

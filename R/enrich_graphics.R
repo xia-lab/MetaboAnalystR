@@ -1,6 +1,6 @@
 #'View individual compounds related to a given metabolite set
 #'@description View individual compounds related to a given metabolite set
-#'Functions for varous plots for enrichment analysis
+#'Functions for various plots for enrichment analysis
 #'@usage PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param setNM Input the name of the metabolite set 
@@ -169,17 +169,11 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   }
   h <- w;
   
-  if(format == "png"){
-    bg = "transparent";
-  }else{
-    bg="white";
-  }
-  
   #record img
   mSetObj$imgSet$ora <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   PlotMSEA.Overview(folds, pvals);
   dev.off();
@@ -226,13 +220,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   }
   h <- w;
   
-  if(format == "png"){
-    bg = "transparent";
-  }else{
-    bg="white";
-  }
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   PlotMSEA.Overview(folds, pvals);
   dev.off();
   
