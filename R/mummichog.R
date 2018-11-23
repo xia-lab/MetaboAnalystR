@@ -270,7 +270,7 @@ PerformCurrencyMapping <- function(mSetObj = NA){
 #'Read Adduct List
 #'@description This function reads in the user's adduct list and 
 #'saves it as a matrix. 
-#'@usage Read.AdductData(mSetObj=NA, adductList)
+#'@usage PerformAdductMapping(mSetObj=NA, add.mode)
 #'@param mSetObj Input the name of the created mSetObj object 
 #'@param adductList Input the name of the adduct list
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}

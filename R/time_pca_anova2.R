@@ -46,7 +46,8 @@ aov.between.type3 <- function(x){
 
 #'Perform Two-way ANOVA 
 #'@description Perform Two-way ANOVA 
-#'@usage ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1)
+#'@usage ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", 
+#'       aov.type=1, use.interact=1)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param thresh Input the p-value threshold 
 #'@param p.cor Select method for p-value correction, bonferroni, holm or fdr

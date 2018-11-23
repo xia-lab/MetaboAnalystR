@@ -514,6 +514,8 @@ GetLimmaResTable<-function(fit.obj){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@import lattice
+
 PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   
   mSetObj <- .get.mSet(mSetObj);

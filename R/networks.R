@@ -306,7 +306,8 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 #'Update integrative pathway analysis for new input list
 #'@description used for integrative analysis 
 #'as well as general pathways analysis for meta-analysis results
-#'@usage UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ")
+#'@usage UpdateIntegPathwayAnalysis(mSetObj=NA, qids, 
+#'       file.nm, topo="dc", enrich="hyper", libOpt="integ")
 #'@param mSetObj Input name of the created mSet Object
 #'@param qids Input the query IDs
 #'@param file.nm Input the name of the file

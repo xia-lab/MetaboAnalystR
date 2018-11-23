@@ -372,10 +372,13 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
   return(jscode);
 }
 
-# Generate json file of selected pathway to visualize using sigma.js
-# Jeff Xia \email{jeff.xia@mcgill.ca}
-# McGill University, Canada
-# License: GNU GPL (>= 2)
+#'Generate JSON for pathway
+#'@description Generate a json file of selected pathway to visualize using sigma.js
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@importFrom jsonlite toJSON
 GeneratePathwayJSON<-function(pathway.nm){
   mSetObj <- .get.mSet(mSetObj);
 

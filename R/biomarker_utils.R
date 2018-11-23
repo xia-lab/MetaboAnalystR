@@ -876,7 +876,8 @@ GetCIs <- function(data, param=F){
 
 #'Perform Classical Univariate ROC
 #'@description Perform Classical Univariate ROC
-#'@usage Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
+#'@usage Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
+#'       isAUC, isOpt, optMethod, isPartial, measure, cutoff)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param feat.nm Input the name of the feature to perform univariate ROC analysis
 #'@param imgName Input a name for the plot
@@ -1149,7 +1150,9 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'Plot ROC
 #'@description Pred and auroc are lists containing predictions
 #'and labels from different cross-validations 
-#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=72, 
+#'       mdl.inx, avg.method, show.conf, show.holdout, 
+#'       focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1335,7 +1338,9 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.meth
 #'Plot ROC for the ROC Curve Based Model Creation and Evaluation module
 #'@description Plot the ROC curve of the biomarker model created using a user-selected subset of features.
 #'Pred and auroc are lists containing predictions and labels from different cross-validations. 
-#'@usage PlotROCTest(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+#'@usage PlotROCTest(mSetObj=NA, imgName, format="png", 
+#'       dpi=72, mdl.inx, avg.method, show.conf, 
+#'       show.holdout, focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1614,7 +1619,8 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 
 #'Plot selected compounds by their percentage frequency
 #'@description Plot the important variables of single biomarker model ranked by order of importance
-#'@usage PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15)
+#'@usage PlotImpVars(mSetObj=NA, imgName, format="png", 
+#'       dpi=72, mdl.inx, measure = "freq", feat.num = 15)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format elect the image format, "png", of "pdf". 

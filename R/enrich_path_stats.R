@@ -289,7 +289,7 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'Only works for human (hsa.rda) data
 #'@description Only works for human (hsa.rda) data
 #'2018 - works for ath, eco, mmu, sce
-#'@param kegg.ids Input the list of KEGG ids to add SMPDB links
+#'@param smpdb.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
