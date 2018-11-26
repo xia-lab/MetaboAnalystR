@@ -22,15 +22,18 @@ might not be suited for other data sets. For more information on the different
 algorithms and their settings are provided in the vignettes from the `xcms`
 package.
 
-Also, the export functionality from `xcms` below has been introduced in `xcms`
-version 3.3.3. The code block evaluates whether the minimal required version of
-`xcms` is installed and installs the most recent from github otherwise.
+## Note for using the exportMetaboAnalyst function
+
+The export functionality from `xcms` below has been introduced in `xcms`
+**version 3.3.3**. The code block below evaluates whether the minimal required version of
+`xcms` is installed and installs the most recent from GitHub otherwise.
 
 ```{r, eval = FALSE}
 if (packageVersion("xcms") < "3.3.3")
     devtools::install_github("sneumann/xcms")
 ```
 
+## Tutorial
 
 ```{r, eval = FALSE}
 # Load necessary libraries
