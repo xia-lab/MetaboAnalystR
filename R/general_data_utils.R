@@ -559,8 +559,10 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'@export
 #'
 SaveTransformedData <- function(mSetObj=NA){
+
   mSetObj <- .get.mSet(mSetObj);
-  if(!is.null(mSetObj$dataSet[["orig"]])){
+  
+if(!is.null(mSetObj$dataSet[["orig"]])){
     lbls <- NULL;
     tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
     if(tsFormat){
@@ -578,18 +580,33 @@ SaveTransformedData <- function(mSetObj=NA){
       orig.data<-t(orig.data);
     }
     write.csv(orig.data, file="data_original.csv");
+
     if(!is.null(mSetObj$dataSet[["procr"]])){
-      if(tsFormat){
-        lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
-        colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+
+      if(!is.null(mSetObj$dataSet[["filt"]])){
+        if(tsFormat){
+          lbls <- cbind(as.character(mSetObj$dataSet$filt.facA),as.character(mSetObj$dataSet$filt.facB));
+          colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+        }else{
+          lbls <- cbind("Label"= as.character(mSetObj$dataSet$filt.cls));
+        }
+        proc.data<-cbind(lbls, mSetObj$dataSet$filt);  
+      
       }else{
-        lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
+        if(tsFormat){
+          lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
+          colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+        }else{
+          lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
+        }
+        proc.data<-cbind(lbls, mSetObj$dataSet$procr);
       }
-      proc.data<-cbind(lbls, mSetObj$dataSet$procr);
+      
       if(dim(proc.data)[2]>200){
         proc.data<-t(proc.data);
       }
       write.csv(proc.data, file="data_processed.csv");
+
       if(!is.null(mSetObj$dataSet[["norm"]])){
         if(tsFormat){
           lbls <- cbind(as.character(mSetObj$dataSet$facA),as.character(mSetObj$dataSet$facB));
@@ -767,13 +784,44 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
         lib.download <- TRUE;
       }
     }
+    # Deal with curl issues
     if(lib.download){
       lib.url <- paste("https://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
-      download.file(lib.url, destfile=filenm, method="curl")
+      tryCatch(
+        {
+          download.file(lib.url, destfile=filenm, method="curl")
+        }, warning = function(w){ print() },
+        error = function(e) {
+          print("Download unsucceful. Ensure that curl is downloaded on your computer.")
+          print("Attempting to re-try download using libcurl...")
+          download.file(lib.url, destfile=filenm, method="libcurl")
+        }
+      )
     }
     lib.path <- filenm;
   }
-  my.lib <- readRDS(lib.path);
+  
+  # Deal w. corrupt downloaded files
+  tryCatch({
+    assign("my.lib", readRDS(lib.path), envir = .GlobalEnv)
+    print("Loaded files from MetaboAnalyst web-server.")
+  },
+  warning = function(w) { print() },
+  error = function(err) {
+    print("Reading data unsuccessful, attempting to re-download file...")
+    tryCatch(
+      {
+        lib.url <- paste("https://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
+        download.file(lib.url, destfile=filenm, method="curl")
+        assign("my.lib", readRDS(lib.path), envir = .GlobalEnv)
+        print("Loaded necessary files.")
+      },
+      warning = function(w) { print() },
+      error = function(err) {
+        print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
+      }
+    )
+  })
   return(my.lib)
 }
 

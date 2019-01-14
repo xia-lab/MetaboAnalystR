@@ -405,9 +405,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Perform Volcano Analysis
 #'@description Perform volcano analysis
-#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, 
-#'       cmpType, percent.thresh, nonpar=F, threshp, 
-#'       equal.var=TRUE, pval.type="raw")
+#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param paired Logical, T if data is paired, F if data is not.
 #'@param fcthresh Numeric, input the fold change threshold

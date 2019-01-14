@@ -162,8 +162,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 
 #'Create 2D PCA score plot
 #'@description Rotate PCA analysis
-#'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", 
-#'       dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
+#'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -297,8 +296,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCA3DScore(mSetObj=NA, imgName, format="json", 
-#'       inx1, inx2, inx3)
+#'@usage PlotPCA3DScore(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -459,8 +457,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", 
-#'       dpi=72, width=NA, inx1, inx2)
+#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -578,7 +575,6 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import pls
 
 PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   
@@ -601,7 +597,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   }
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  mSetObj$analSet$plsr <- plsr(cls~datmat,method='oscorespls', ncomp=comp.num);
+  mSetObj$analSet$plsr <- pls::plsr(cls~datmat,method='oscorespls', ncomp=comp.num);
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
@@ -922,6 +918,8 @@ UpdatePLS.Loading<- function(mSetObj=NA, plotType){
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5. The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param plotType Two options, "scatter" or "barplot" 
+#'@param lbl.feat 1 or 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1599,6 +1597,8 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param plotType To create a plot of all compounds use "all", and to create a plot of custom
+#'compounds, use "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

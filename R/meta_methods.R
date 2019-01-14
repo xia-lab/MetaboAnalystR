@@ -590,14 +590,6 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
     listres
 }
 
-#'Plot Data Profile
-#'@description This function plots a box-plot and PCA plot.
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'@import lattice
-
 PlotDataProfile<-function(dataName, boxplotName, pcaName){
     dataSet <- readRDS(dataName);
     if(.on.public.web){
@@ -661,7 +653,7 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
     # increase xlim ylim for text label
     xlim <- GetExtendRange(pca.res$PC1);
     ylim <- GetExtendRange(pca.res$PC2);
-    pcafig = xyplot(PC2~PC1, data=pca.res, pch=19, cex=1, xlim = xlim, ylim=ylim,
+    pcafig = lattice::xyplot(PC2~PC1, data=pca.res, pch=19, cex=1, xlim = xlim, ylim=ylim,
         panel=function(x, y, ...) {
                panel.xyplot(x, y, ...);
                ltext(x=x, y=y, labels=names, pos=1, offset=1, cex=0.8, col="magenta")

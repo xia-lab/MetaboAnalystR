@@ -240,6 +240,7 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
 #'@description This function maps the user selected list
 #'of compounds to its corresponding KEGG IDs and BioCyc IDs
 #'@param mSetObj Input the name of the created mSetObj object 
+#'@param 
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -270,7 +271,7 @@ PerformCurrencyMapping <- function(mSetObj = NA){
 #'Read Adduct List
 #'@description This function reads in the user's adduct list and 
 #'saves it as a matrix. 
-#'@usage PerformAdductMapping(mSetObj=NA, add.mode)
+#'@usage Read.AdductData(mSetObj=NA, adductList)
 #'@param mSetObj Input the name of the created mSetObj object 
 #'@param adductList Input the name of the adduct list
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}

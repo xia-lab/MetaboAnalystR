@@ -39,10 +39,10 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   
   if(is.null(mSetObj$dataSet[["procr"]])){
     data<-mSetObj$dataSet$preproc
-  }else if(is.null(mSetObj$dataSet[["prenorm"]])){
+  }else if(is.null(mSetObj$dataSet[["filt"]])){
     data<- mSetObj$dataSet$procr;
   }else{
-    data<-mSetObj$dataSet$prenorm
+    data<-mSetObj$dataSet$filt
   }
   
   if(is.null(mSetObj$dataSet[["prenorm.cls"]])){ # can be so for regression 

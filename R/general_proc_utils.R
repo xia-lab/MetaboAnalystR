@@ -289,8 +289,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
   mSetObj <- .get.mSet(mSetObj);
   
   if(!.on.public.web){
-    if(!is.null(mSetObj$dataSet$norm)){
-      
+    if(!is.null(mSetObj$dataSet$norm)){    
       int.mat <- mSetObj$dataSet$norm
       minConc <- min(int.mat[int.mat>0], na.rm=T)/2;
       good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
@@ -300,8 +299,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
       mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
       return(.set.mSet(mSetObj));
       
-    }else{
-      
+    }else{  
       int.mat <- mSetObj$dataSet$preproc
       minConc <- mSetObj$dataSet$minConc;
       good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
@@ -312,7 +310,6 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
       return(.set.mSet(mSetObj));
     }
   }else{
-    
     int.mat <- mSetObj$dataSet$preproc
     minConc <- mSetObj$dataSet$minConc;
     good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
@@ -537,7 +534,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
     
     # get the rank of the filtered variables
     rk <- rank(-filter.val, ties.method='random');
-    
+
     var.num <- ncol(int.mat);
     if(var.num < 250){ # reduce 5%
       remain <- rk < var.num*0.95;
@@ -557,13 +554,12 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       }
     }
   }
-  
+
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);
   return(.set.mSet(mSetObj));
 }
-
 
 #'Group peak list
 #'@description Group peaks from the peak list based on position
