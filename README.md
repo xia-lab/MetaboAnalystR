@@ -123,10 +123,11 @@ browseVignettes("MetaboAnalystR")
 
 ## Citation
 
-MetaboAnalystR has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University. 
+MetaboAnalystR has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University.
+
 The R package has been [published](https://doi.org/10.1093/bioinformatics/bty528)!
 
-If you use the R package, please cite us: 
+We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
 Within R:
 
