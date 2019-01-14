@@ -20,11 +20,12 @@ The power analysis uses the entire set of pilot data to estimate effect size dis
 For the tutorial, we will be using a dataset consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
 
 ```{r}
-mSet<-InitDataObjects("conc", "power", FALSE)
+mSet<-InitDataObjects("conc", "power", FALSE);
 mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
-mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
+mSet<-PreparePrenormData(mSet);
+mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20);
 ```
 
 ### 2.1 Power Analysis  

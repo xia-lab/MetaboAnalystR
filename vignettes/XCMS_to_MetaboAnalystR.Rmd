@@ -86,6 +86,7 @@ mSet <- Read.TextData(mSet, "met_test1.csv", "colu", "disc");
 mSet <- SanityCheckData(mSet)
 mSet <- ReplaceMin(mSet);
 mSet <- FilterVariable(mSet, "iqr", "F", 25)
+mSet<-PreparePrenormData(mSet)
 mSet <- Normalization(mSet, "NULL", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
 mSet <- PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
 mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)

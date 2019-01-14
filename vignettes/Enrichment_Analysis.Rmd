@@ -114,6 +114,7 @@ mSet<-SanityCheckData(mSet);
 mSet<-ReplaceMin(mSet);
 
 # Perform no normalization
+mSet<-PreparePrenormData(mSet)
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
 
 # Plot normalization

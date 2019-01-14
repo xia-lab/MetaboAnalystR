@@ -275,12 +275,15 @@ For this tutorial we will go through 3 examples of data normalization:
 
 ```{r, eval=FALSE}
 ### OPTION 1) Perform Probabilistic Quotient Normalization based upon a reference sample
+mSet<-PreparePrenormData(mSet)
 mSet<-Normalization(mSet, "ProbNormF", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
 
 ### OPTION 2) Normalize by reference feature 
+mSet<-PreparePrenormData(mSet)
 mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "1,6-Anhydro-beta-D-glucose", ratio=FALSE, ratioNum=20)
 
 ### OPTION 3) Perform quantile normalization, log transformation, and mean-center scaling  
+mSet<-PreparePrenormData(mSet)
 mSet<-Normalization(mSet, "QuantileNorm", "LogNorm", "MeanCenter", ref=NULL, ratio=FALSE, ratioNum=20)  
 ```
 
