@@ -4,7 +4,6 @@
 ### McGill University, Canada
 ###License: GNU GPL (>= 2)
 
-
 #'Merge duplicated columns or rows by their mean
 #'@description dim 1 => row,  dim 2 => column
 #'@param data Input the data
@@ -129,12 +128,8 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 #'
 .readDataTable <- function(fileName){
-  dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-  if(class(dat) == "try-error"){
-    # try to use "tr" to remove double return characters
-    trFileName <- paste("tr -d \'\\r\' <", fileName);
-    dat <- try(data.table::fread(trFileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-    if(any(dim(dat) == 0) | class(dat) == "try-error"){
+  dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE));
+  if(class(dat) == "try-error" || any(dim(dat) == 0)){
       print("Using slower file reader ...");
       formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
       if(formatStr == "txt"){
@@ -142,7 +137,6 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
       }else{ # note, read.csv is more than read.table with sep=","
         dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
       }  
-    }
   }
   return(dat);
 }
@@ -387,12 +381,14 @@ isEmptyMatrix <- function(mat){
   obj.mode <- napply(names, mode)
   obj.type <- ifelse(is.na(obj.class), obj.mode, obj.class)
   obj.prettysize <- napply(names, function(x) {
-    capture.output(format(utils::object.size(x), units = "auto")) })
+  capture.output(format(utils::object.size(x), units = "auto")) })
   obj.size <- napply(names, object.size)
   obj.dim <- t(napply(names, function(x)
     as.numeric(dim(x))[1:2]))
   vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
   obj.dim[vec, 1] <- napply(names, length)[vec]
+  mSetObj <- .get.mSet(mSetObj);
+  print(lapply(mSetObj$dataSet, object.size));
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))

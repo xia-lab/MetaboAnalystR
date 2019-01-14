@@ -43,7 +43,8 @@ CreateBiomarkerIntr<-function(){
              " and evaluating the performance, or robustness of the model, to classify new patients into diseased or healthy categories.",
              " The Biomarker analysis module supports all common ROC-curve based biomarker analyses. It includes several options for single (classical)",
              " or multiple biomarker analysis, as well as for predictive biomarker model creation and evaluation.",
-             " For a comprehensive introductory tutorial and further details concerning biomarker analysis, please refer to Xia et al. 2013 (PMID: 23543913).\n"
+             " For a comprehensive introductory tutorial and further details concerning biomarker analysis, please refer to",
+             " \\textbf{Translational biomarker discovery in clinical metabolomics: an introductory tutorial} by Xia et al. 2013 (PMID: 23543913).\n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -58,7 +59,7 @@ CreateBiomarkerIntr<-function(){
 #'@export
 CreateBiomarkerOverview <- function(){
   descr <- c("\\section{Biomarker Analysis Overview}\n",
-             "The Biomarker analysis module consists of five steps - uploading the data, data processing,",
+             "The module consists of five steps - uploading the data, data processing,",
              " biomarker selection, performance evaluation, and model creation. There are several options within",
              " MetaboAnalystR to perform each of these steps, supporting all common ROC-curve based biomarker analyses. \n"
   );
@@ -129,7 +130,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
            " is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
            " In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
            " replaced with this small value. User can also specify other methods, such as replace by mean/median,",
-           " or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
+           " or use K-Nearest Neighbours (KNN), Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
            " method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
            " \\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
            " 2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
@@ -537,9 +538,7 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 CreateROCLabelsTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
   predlabeltable <- mSetObj$analSet$ROCtest$pred.samples.table;
-  
   print(xtable::xtable(predlabeltable, caption="Predicted class labels with probability for new samples"), caption.placement="top", size="\\scriptsize");
   
 }

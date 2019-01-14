@@ -399,16 +399,12 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   # use lower.tail = F for P(X>x)
   if(enrich=="hyper"){
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
-    
   }else if(enrich == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
   }else{
-    print("Not defined enrichment method!");
-    print(enrich);
+    AddErrMsg(paste("Not defined enrichment method:", enrich));
+    return(0);
   }
-  
-  # adjust for multiple testing problems
-  # res.mat[,5] <- p.adjust(res.mat[,4], "fdr");
   
   # toplogy test
   if(topo == "bc"){
@@ -418,8 +414,8 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   }else if(topo == "cc"){
     imp.list <- inmexpa$cc;       
   }else{
-    print("Not a defined topological measure!");
-    print(topo);
+    AddErrMsg(paste("Not defined topology method:", topo));
+    return(0);
   }
   
   # now, perform topological analysis		
@@ -457,7 +453,6 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   }
   
   hits.names <- lapply(hits.query, function(x) ora.vec.ids[which(x == TRUE)]);
-  #res.mat <- data.frame(res.mat);
   
   #get gene symbols
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
@@ -466,8 +461,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
   hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   current.setlink <- "http://www.genome.jp/kegg-bin/show_pathway?";
-  #fun.ids <- as.vector(current.setids[names(fun.anot)]); 
-  #if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
+
   json.res <- list(
               fun.link = current.setlink[1],
               fun.anot = fun.anot,
@@ -488,7 +482,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   hit.num <<- resTable[,4];
   csv.nm <- paste(file.nm, ".csv", sep="");
   write.csv(resTable, file=csv.nm, row.names=F);
-
+  return(1);
 }
 
 #'Create igraph from the edgelist saved from graph DB and decompose into subnets

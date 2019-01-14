@@ -348,7 +348,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
   }else{
-    my.data <- mSetObj$dataSet$procr;
+    my.data <- mSetObj$dataSet$prenorm;
   }
   
   if(is.na(var.inx)){

@@ -12,7 +12,6 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   CreateHeader(usrName);
   CreateIntegratedPathwayAnalIntr();
   
-  CreateIntegratedPathwayAnalOverview();
   CreateIntegratedPathwayAnalInputDoc(mSetObj);
   
   CreateIntegratedPathwayDoc(mSetObj);
@@ -44,22 +43,6 @@ CreateIntegratedPathwayAnalIntr <- function(){
              " is routinely mapped, current metabolomic technologies only capture a small portion of the metabolome. This difference can lead to potentially biased", 
              " results. To address this issue, the current implementation of this omic integration module allows users to explore the enriched pathways based either", 
              " on joint evidence or on the evidence obtained from one particular omic platform for comparison.\n"
-  );
-  cat(descr, file=rnwFile, append=TRUE);
-}
-
-
-#'Create integrated pathway  report: Overview
-#'@description Report generation using Sweave
-#'integrated pathway analysis report overview
-#'@author Jasmine Chong
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreateIntegratedPathwayAnalOverview <- function(){
-  descr <- c("\\section{Integrated Pathway Analysis Overview}\n",
-             "The Biomarker analysis module consists of four steps - uploading the data, data processing,",
-             " overviewing the entire pathway analysis, and then viewing user-specified pathway/s in greater detail. \n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -99,64 +82,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
                  "CreateIntegratedPathwayGeneMapTable(mSet)",
                  "@");
     cat(genetable, file=rnwFile, append=TRUE, sep="\n");
-  }
-  
-  # the data filtering
-  descr<-c("\\subsubsection{Data Filtering}\n",
-           "The purpose of data filtering is to identify and remove variables that are unlikely to be of",
-           "use when modeling the data. No phenotype information is used in the filtering process, so the result",
-           "can be used with any downstream analysis. This step can usually improve the results.",
-           "Data filtering is strongly recommended for datasets with a large number of variables (> 250) and",
-           "for datasets which contain a lot of noise (i.e.chemometrics data). Filtering can usually improve your",
-           "results\\footnote{Hackstadt AJ, Hess AM.\\textit{Filtering for increased power for microarray data analysis},",
-           "BMC Bioinformatics. 2009; 10: 11.}.",
-           "\n\n",
-           "\\textit{For data with < 250 of variables, filtering will reduce 5\\% of variables;",
-           "For a total number of variables between 250 and 500, 10\\% of variables will be removed;",
-           "For a total number of variables bewteen 500 and 1000, 25\\% of variables will be removed;",
-           "Finally, 40\\% of variables will be removed for data with over 1000 variables.}");
-  cat(descr, file=rnwFile, append=TRUE);
-  cat("\n\n", file=rnwFile, append=TRUE);
-  
-  filt.msg <- mSetObj$msgSet$filter.msg;
-  if(is.null(filt.msg)){
-    filt.msg <- "No data filtering was performed.";
-  }
-  
-  cat(filt.msg, file=rnwFile, append=TRUE);
-  cat("\n\n", file=rnwFile, append=TRUE);
-  
-  descr <- c("\\subsubsection{Data Integrity Check}\n",
-             "Before data analysis, a data integrity check is performed to make sure that all of the necessary",
-             "information has been collected. The class labels must be present and must contain only two classes.",
-             "If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
-             "(n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
-             "Compound concentration or peak intensity values must all be non-negative numbers.",
-             "By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
-             "found within the data (see next section).");
-  cat(descr, file=rnwFile, append=TRUE);
-  cat("\n\n", file=rnwFile, append=TRUE);
-  
-  descr <- c("\\subsubsection{Missing value imputations}\n",
-             "Too many zeroes or missing values will cause difficulties in the downstream analysis.",
-             "MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
-             "all the missing and zero values with a small values (the half of the minimum positive",
-             "values in the original data) assuming to be the detection limit. The assumption of this approach",
-             "is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
-             "In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
-             "replaced with this small value. User can also specify other methods, such as replace by mean/median,",
-             "or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
-             "method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
-             "\\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
-             "2007 23(9):1164-1167}. Please select the one that is the most appropriate for your data.");
-  cat(descr, file=rnwFile, append=TRUE);
-  cat("\n\n", file=rnwFile, append=TRUE);
-  
-  if(is.null(mSetObj$msgSet$replace.msg)){
-    mSetObj$msgSet$replace.msg <- "No data filtering was performed.";
-  }
-  
-  cat(mSetObj$msgSet$replace.msg, file=rnwFile, append=TRUE);
+  }  
   
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -230,39 +156,44 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
              " Users must finally choose one of three different kinds of pathways for analysis: the gene-metabolite mode (default) which allows for joint-analysis and visualization", 
              " of both significant genes and metabolites. There are also gene-centric or metabolite-centric pathways which allows users to identify enriched pathways", 
              " driven by significant genes or metabolites, respectively.",
-             "\n\n",
-             paste("Figure", fig.count<<-fig.count+1, " shows the plot of a selected pathway for the integrated methods pathway analysis."),
-             paste("Figure", fig.count<<-fig.count+1, " shows a zoomed-in version of the plot of a selected pathway for the integrated methods pathway analysis."),
-             "\n");
+             "\n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
   
   # PlotInmexPath
-  
-  inmexpathplot <- c( "\\begin{figure}[htp]",
-                      "\\begin{center}",
-                      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pathinteg.path,"}", sep=""),
-                      "\\caption{", paste("Plot of a selected pathway from the integrated methods pathway analysis.",
-                                          " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
-                                          " based on fold change (FC) values.", sep=""),"}",
-                      "\\end{center}",
-                      paste("\\label{",mSetObj$imgSet$pathinteg.path,"}", sep=""),
-                      "\\end{figure}",
-                      "\\clearpage"
+  descr <- c("\\section{Pathway Analysis Result}\n",
+             "The results from pathway analysis are presented graphically as well as in a detailed table.",
+             "The graphical output contains three levels of view: \\textbf{overview}, \\textbf{pathway view},",
+             "and \\textbf{molecule view}. Only the overview is shown below.",
+             "Pathway views and molecule views are generated dynamically based on your interactions with the",
+             "visualization system. They are available in your downloaded files. \n",
+             paste("Figure", fig.count<<-fig.count+1, " shows the overview of all pathways with hits to your queries."),
+             paste("Figure", fig.count<<-fig.count+1, " shows the last pathway you inspected."),
+             "\n"
+            );
+  cat(descr, file=rnwFile, append=TRUE, sep="\n");
+  fig <- c(  "\\begin{figure}[htp]",
+             "\\begin{center}",
+             paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$path.overview,"}",sep=""),
+             "\\caption{Summary of Joint Pathway Analysis}",
+             "\\end{center}",
+             paste("\\label{",mSetObj$imgSet$path.overview,"}", sep=""),
+             "\\end{figure}",
+             "\\clearpage\n\n"
   );
-  cat(inmexpathplot, file=rnwFile, append=TRUE, sep="\n");
-  
+  cat(fig, file=rnwFile, append=TRUE, sep="\n");
+
   # PlotReKEGGPath
   
-  if(!is.null(mSetObj$imgSet$kegg.graph.zoom)){
+  if(!is.null(mSetObj$imgSet$pathinteg.path)){
     rekeggplot <- c( "\\begin{figure}[htp]",
                      "\\begin{center}",
-                     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
-                     "\\caption{", paste("Zoomed in plot of a selected pathway from the integrated methods pathway analysis.",
+                     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pathinteg.path,"}", sep=""),
+                     "\\caption{", paste("A selected pathway from the joint pathway analysis.",
                                          " The matched nodes are highlighted in different colors - red (upregulated), yellow (unknown), green (downregulated)", 
-                                         " based on fold change (FC) values. .", sep=""),"}",
+                                         " based on fold change (FC) values.", sep=""),"}",
                      "\\end{center}",
-                     paste("\\label{",mSetObj$imgSet$kegg.graph.zoom,"}", sep=""),
+                     paste("\\label{",mSetObj$imgSet$pathinteg.path,"}", sep=""),
                      "\\end{figure}",
                      "\\clearpage"
     );
@@ -295,11 +226,12 @@ CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
 
-  results <- mSetObj$dataSet$path.mat;
-  
-  colnames(results) <- c("Pathway", "Total", "Expected", "Hits", "P-Value", "Topology", "P-Value Z-Score", "Topology-Z Score");
-  
-  print(xtable::xtable(results, caption="Enriched pathways based on the integrated methods pathway analysis."), caption.placement="top", size="\\scriptsize");
+  results <- mSetObj$dataSet$path.mat;  
+  colnames(results) <- c("Total", "Expected", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  path.nms <- names(rownames(results));  
+  rownames(results) <- path.nms;
+
+  print(xtable::xtable(results, caption="Enriched pathways based on the integrated pathway analysis."), caption.placement="top", size="\\scriptsize");
   
 }
 

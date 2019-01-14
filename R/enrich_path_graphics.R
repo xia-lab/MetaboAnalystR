@@ -10,96 +10,17 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotMetPath <- function(mSetObj=NA, pathName, width, height){
-  
-  mSetObj <- .get.mSet(mSetObj);
+PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
   
   if(.on.public.web){
     load_kegggraph()
     load_rgraphwiz()
   }
-  
-  path.id <- metpa$path.ids[pathName];
-  g <- metpa$graph.list[[path.id]];
-  tooltip <- names(KEGGgraph::nodes(g));
-  
-  nm.vec <- NULL;
-  
-  fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
-  pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
-  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
-  
-  if(mSetObj$analSet$type == "pathora"){
-    if(!is.null(mSetObj$analSet$ora.hits)){
-      fillcolvec[mSetObj$analSet$ora.hits[[path.id]]] <- "red";
-      if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$ora.filtered.mset)){
-        fillcolvec[!(names(fillcolvec) %in% mSetObj$analSet$ora.filtered.mset[[path.id]])]<- "lightgrey";
-      }
-    }
+  mSetObj <- .get.mSet(mSetObj);
+  if(mSetObj$analSet$type == "pathinteg"){
+    return(PlotInmexPath(mSetObj, pathName, width, height, format, dpi));
   }else{
-    if(!is.null(mSetObj$analSet$qea.hits)){
-      hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
-      # now plotting summary graphs for each compounds
-      for(i in 1:length(hit.cmpds)){
-        cmpd <- hit.cmpds[i];
-        histvec[cmpd] <- cmpd;
-        cmpd.name <- paste(cmpd, ".png", sep="");
-        Cairo::Cairo(file=cmpd.name, width=180, height=180, bg = "transparent", type="png");
-        # remember to change jscode for image size when the change the size above
-        par(mar=c(4,4,1,1));
-        
-        y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
-        if(is.factor(mSetObj$dataSet$cls)){
-          cls.lbls <- mSetObj$dataSet$cls;
-          if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
-            cls.lbls <- as.factor(abbreviate(as.character(cls.lbls), 6));
-          }
-          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), ylab=y.label, las=2);
-        }else{
-          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
-          abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
-        }
-        dev.off();
-        nm.vec <- c(nm.vec, cmpd.name);
-      }
-      
-      pvals <- mSetObj$analSet$qea.univp[hit.cmpds];
-      pvec[hit.cmpds] <- pvals;
-      
-      bg.vec <- heat.colors(length(pvals));
-      
-      # reorder the colors according to the ordered p values
-      ord.inx <- match(pvals, sort(pvals));
-      fillcolvec[hit.cmpds] <- bg.vec[ord.inx];
-      
-      if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$qea.filtered.mset)){
-        fillcolvec[!(names(fillcolvec) %in% mSetObj$analSet$qea.filtered.mset[[path.id]])]<- "lightgrey";
-      }
-    }
-  }
-  
-  if(is.null(mSetObj$analSet$node.imp) || mSetObj$analSet$node.imp == "rbc"){
-    impvec <- metpa$rbc[[path.id]];
-  }else{
-    impvec <- metpa$dgr[[path.id]];
-  }
-  
-  imgName <- paste(pathName, ".png", sep="");
-  
-  ## Open plot device
-  Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
-  par(mai=rep(0,4));
-  g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
-  nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
-  dev.off();
-  mSetObj$imgSet$current.metpa.graph <- g.obj;
-  mSetObj$analSet$nodeInfo <- nodeInfo;
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(nodeInfo);
-  }else{
-    return(.set.mSet(mSetObj));
+    return(PlotMetpaPath(mSetObj, pathName, width, height, format, dpi));
   }
 }
 
@@ -116,23 +37,17 @@ PlotMetPath <- function(mSetObj=NA, pathName, width, height){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
+PlotMetpaPath<-function(mSetObj=NA, pathName,width=NA, height=NA, format="png", dpi=NULL){
+
+    path.id <- metpa$path.ids[pathName];
+    g <- metpa$graph.list[[path.id]];
+    tooltip <- names(KEGGgraph::nodes(g));
   
-   mSetObj <- .get.mSet(mSetObj);
-  if(.on.public.web){
-    load_kegggraph()
-    load_rgraphwiz()
-  }
+    nm.vec <- NULL;
   
-  path.id <- metpa$path.ids[pathName];
-  g <- metpa$graph.list[[path.id]];
-  tooltip <- names(KEGGgraph::nodes(g));
-  
-  nm.vec <- NULL;
-  
-  fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
-  pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
-  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
+    fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
+    pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
+    names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
   
   if(mSetObj$analSet$type == "pathora"){
     if(!is.null(mSetObj$analSet$ora.hits)){
@@ -183,21 +98,47 @@ PlotKEGGPath<-function(mSetObj=NA, pathName, format="png", width=NA, dpi=72){
     }
   }
   
-    pathName <- gsub("\\s","_", pathName);
-    pathName <- gsub(",","", pathName);
+    if(is.null(dpi)){
+        if(is.null(mSetObj$analSet$node.imp) || mSetObj$analSet$node.imp == "rbc"){
+            impvec <- metpa$rbc[[path.id]];
+        }else{
+            impvec <- metpa$dgr[[path.id]];
+        }
+  
+        imgName <- paste(pathName, ".png", sep="");
+  
+        ## Open plot device
+        Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+        par(mai=rep(0,4));
+        g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+        nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
+        dev.off();
+        mSetObj$imgSet$current.metpa.graph <- g.obj;
+        mSetObj$analSet$nodeInfo <- nodeInfo;
+  
+        if(.on.public.web){
+            .set.mSet(mSetObj);
+            return(nodeInfo);
+        }else{
+            return(.set.mSet(mSetObj));
+        }
+    }else{
+        pathName <- gsub("\\s","_", pathName);
+        pathName <- gsub(",","", pathName);
 
-    imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
 
-    if(is.na(width)){
-        width <- 8;
+        if(is.na(width)){
+            width <- 8;
+        }
+        w <- h <- width;
+        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+        par(mai=rep(0,4));
+        g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+        dev.off();
+
+        return(imgName);
     }
-    w <- h <- width;
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    par(mai=rep(0,4));
-    g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
-    dev.off();
-
-    return(imgName);
 }
 
 # Used in higher function
@@ -288,15 +229,21 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@export
 #'
 PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x, y){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
-  }else{
+  }else if(mSetObj$analSet$type == "pathqea"){
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
+  }else if (mSetObj$analSet$type == "pathinteg"){ # this is integrative analysis
+    x <-  mSetObj$dataSet$path.mat[,8];
+    y <-  mSetObj$dataSet$path.mat[,4];
+  }else{
+    print(paste("Unknown analysis type: ", mSetObj$analSet$type));
+    return(0);
   }
   
   # first sort values based on p
@@ -316,7 +263,13 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   
   # set background color according to y
   bg.vec <- heat.colors(length(y));
-  
+
+  if(mSetObj$analSet$type == "pathinteg"){
+     path.nms <- names(inmexpa$path.ids)[match(names(x),inmexpa$path.ids)];
+  }else{
+     path.nms <- names(metpa$path.ids)[match(names(x),metpa$path.ids)];
+  }
+
   ## Open plot device
   if(format == "png"){
     bg = "transparent";
@@ -342,11 +295,11 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   axis(2);
   grid(col="blue");
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
-  
+
   # convert to pixel positions, only for web interaction dpi=72
   if(dpi == 72){
     width.px <- height.px <- w*dpi;
-    mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, names(metpa$path.ids)[match(names(x),metpa$path.ids)]);
+    mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, path.nms);
   }
   par(op);
   dev.off();
@@ -435,10 +388,23 @@ GeneratePathwayJSON<-function(pathway.nm){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height){
+RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=NA){
   mSetObj <- .get.mSet(mSetObj);
   Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="white");
-  KEGGgraph::plot(mSetObj$imgSet$current.metpa.graph);
+  if(mSetObj$analSet$type == "pathinteg"){
+    font.cex <- 0.7*zoom.factor/100;
+    if(font.cex < 0.6){
+        font.cex=0.6;
+    }
+    plotGraph(mSetObj$dataSet$current.kegg$graph, 
+            vertex.color=mSetObj$dataSet$current.kegg$bg.color, 
+            vertex.frame.color=mSetObj$dataSet$current.kegg$line.color,
+            vertex.label=V(mSetObj$dataSet$current.kegg$graph)$plot_name,
+            vertex.label.cex=font.cex
+        );
+  }else{
+    KEGGgraph::plot(mSetObj$imgSet$current.metpa.graph);
+  }
   dev.off();
   return(1);
 }

@@ -14,7 +14,7 @@
 SanityCheckData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
@@ -214,7 +214,6 @@ SanityCheckData <- function(mSetObj=NA){
   }
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
-  #print(mSetObj$dataSet$min.grp.size);
   
   if(.on.public.web==TRUE){
     .set.mSet(mSetObj);
@@ -228,7 +227,7 @@ SanityCheckData <- function(mSetObj=NA){
 #'@description This function will replace zero/missing values by half of the smallest
 #'positive value in the original dataset.  
 #'This method will be called after all missing value imputations are conducted.
-#'Also, it directly modifies the mSet$dataSet$procr if executed after normalization,
+#'Also, it directly modifies the mSet$dataSet$proc if executed after normalization,
 #'or the mSet$dataSet$norm if before normalization.
 #'@usage ReplaceMin(mSetObj=NA) 
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
@@ -240,38 +239,24 @@ SanityCheckData <- function(mSetObj=NA){
 ReplaceMin <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(!is.null(mSetObj$dataSet$norm)){
-    int.mat <- mSetObj$dataSet$norm
-    minConc <- min(int.mat[int.mat>0], na.rm=T)/2;
-    
-    # replace zero and missing values
-    # we leave nagative values unchanged! ? not sure if this is the best way
-    int.mat[int.mat==0 | is.na(int.mat)] <- minConc;
-    
-    # note, this is last step of processing, replace norm and save to procr
-    mSetObj$dataSet$procr <- as.data.frame(int.mat);
-    mSetObj$dataSet$norm <- as.data.frame(int.mat);
-    mSetObj$msgSet$replace.msg <- paste("Zero or missing variables were replaced with a small value:", minConc);
-    rm(int.mat);
-    invisible(gc()); # suppress gc output
-    return(.set.mSet(mSetObj));
-  }else{
-    int.mat <- as.matrix(mSetObj$dataSet$preproc)
-    minConc <- mSetObj$dataSet$minConc;
-    
-    # replace zero and missing values
-    # we leave nagative values unchanged! ? not sure if this is the best way
-    int.mat[int.mat==0 | is.na(int.mat)] <- minConc;
-    
-    # note, this is last step of processing, also save to proc
-    mSetObj$dataSet$procr <- as.data.frame(int.mat);
-    mSetObj$msgSet$replace.msg <- paste("Zero or missing variables were replaced with a small value:", minConc);
-    rm(int.mat);
-    invisible(gc()); # suppress gc output
 
-    return(.set.mSet(mSetObj));
-  }
+  #Reset to default
+  mSetObj$dataSet$proc <- mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- mSetObj$dataSet$prenorm <- NULL;
+  
+  int.mat <- as.matrix(mSetObj$dataSet$preproc)
+  minConc <- mSetObj$dataSet$minConc;
+    
+  # replace zero and missing values
+  # we leave nagative values unchanged! ? not sure if this is the best way
+  int.mat[int.mat==0 | is.na(int.mat)] <- minConc;
+    
+  # note, this is last step of processing, also save to proc
+  mSetObj$dataSet$proc <- as.data.frame(int.mat);
+  mSetObj$msgSet$replace.msg <- paste("Zero or missing variables were replaced with a small value:", minConc);
+  rm(int.mat);
+  invisible(gc()); # suppress gc output
+
+  return(.set.mSet(mSetObj));
 }
 
 #'Data processing: remove variables with missing values
@@ -339,12 +324,7 @@ ImputeVar <- function(mSetObj=NA, method="min"){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!is.null(mSetObj$dataSet$norm)){ # if normalization performed first
-    int.mat <- mSetObj$dataSet$norm
-  }else{
-    int.mat <- mSetObj$dataSet$preproc
-  }
-  
+  int.mat <- mSetObj$dataSet$preproc;
   new.mat <- NULL;
   msg <- mSetObj$msgSet$replace.msg;
   
@@ -396,21 +376,14 @@ ImputeVar <- function(mSetObj=NA, method="min"){
     }
     msg <- c(msg, paste("Missing variables were imputated using", toupper(method)));
   }
-  
-  if(!is.null(mSetObj$dataSet$norm)){
-    mSetObj$dataSet$procr <- as.data.frame(new.mat);
-    mSetObj$dataSet$norm <- as.data.frame(new.mat);
-    mSetObj$msgSet$replace.msg <- msg;
-    return(.set.mSet(mSetObj));
-  }else{
-    mSetObj$dataSet$procr <- as.data.frame(new.mat);
-    mSetObj$msgSet$replace.msg <- msg;
-    return(.set.mSet(mSetObj))
-  }
+
+  mSetObj$dataSet$proc <- as.data.frame(new.mat);
+  mSetObj$msgSet$replace.msg <- msg;
+  return(.set.mSet(mSetObj))
 }
 
 #'Data processing: Dealing with negative values
-#'@description Operates on dataSet$procr after dealing with missing values
+#'@description Operates on dataSet$proc after dealing with missing values
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param method Input the method to clear negatives
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -420,7 +393,7 @@ ImputeVar <- function(mSetObj=NA, method="min"){
 #'
 ClearNegatives <- function(mSetObj=NA, method="abs"){
   mSetObj <- .get.mSet(mSetObj);
-  int.mat <- as.matrix(mSetObj$dataSet$procr)
+  int.mat <- as.matrix(mSetObj$dataSet$proc)
   
   if(mSetObj$dataSet$containsNegative){
     if(method == "min"){
@@ -437,7 +410,7 @@ ClearNegatives <- function(mSetObj=NA, method="abs"){
     
     mSetObj$dataSet$containsNegative <- 0;
     mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, msg);
-    mSetObj$dataSet$procr <- as.data.frame(int.mat);
+    mSetObj$dataSet$proc <- as.data.frame(int.mat);
     return(.set.mSet(mSetObj));
   }
 }
@@ -464,9 +437,11 @@ ClearNegatives <- function(mSetObj=NA, method="abs"){
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   
   mSetObj <- .get.mSet(mSetObj);
+
+  #Reset to default
+  mSetObj$dataSet$filt <- mSetObj$dataSet$prenorm <- NULL; 
   
-  int.mat <- as.matrix(mSetObj$dataSet$procr);
-  
+  int.mat <- as.matrix(mSetObj$dataSet$proc);
   cls <- mSetObj$dataSet$proc.cls;
   
   # save a copy
@@ -501,7 +476,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   feat.num <- ncol(int.mat);
   feat.nms <- colnames(int.mat);
   nm <- NULL;
-  if(filter == "none" && feat.num <= 4000){ # only allow for less than 4000
+  if(filter == "none" && feat.num < 5000){ # only allow for less than 4000
     remain <- rep(TRUE, feat.num);
     msg <- paste(msg, "No non-QC based data filtering was applied");
   }else{
@@ -558,8 +533,10 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);
+
   return(.set.mSet(mSetObj));
 }
+
 
 #'Group peak list
 #'@description Group peaks from the peak list based on position
@@ -711,7 +688,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
     rownames(values) <- paste(round(groupmat[,paste("mz", "med", sep="")],5));
   }else{
     rownames(values) <- paste(round(groupmat[,paste("mz", "med", sep="")],5), "/", round(groupmat[,paste("rt", "med", sep="")],2), sep="");
-    mSetObj$dataSet$three.col <- T;
+    mSetObj$dataSet$three.col <- TRUE;
   }
   
   mSetObj$dataSet$orig <- t(values);

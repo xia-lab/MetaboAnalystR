@@ -285,7 +285,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
   smpl.nms <- gsub("[^[:alnum:]./_-]", "", smpl.nms);
+
+  # keep a copy of original names for saving tables 
+  orig.var.nms <- var.nms;
   var.nms <- gsub("[^[:alnum:][:space:],'./_-]", "", var.nms); # allow space, comma and period
+  names(orig.var.nms) <- var.nms;
+
   cls.lbl <- ClearStrings(as.vector(cls.lbl));
 
   # now assgin the dimension names
@@ -328,7 +333,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   if(mSetObj$dataSet$type == "conc"){
     mSetObj$dataSet$cmpd <- var.nms;
   }
-  
+  mSetObj$dataSet$orig.var.nms <- orig.var.nms;
   mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
@@ -561,7 +566,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 SaveTransformedData <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+  data.type <- mSetObj$dataSet$type
 if(!is.null(mSetObj$dataSet[["orig"]])){
     lbls <- NULL;
     tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
@@ -571,17 +576,24 @@ if(!is.null(mSetObj$dataSet[["orig"]])){
     }else{
       lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));
     }
-    if(anal.type == "mummichog"){
-        orig.data<- mSetObj$dataSet$orig;
-    }else{
-        orig.data<-cbind(lbls, mSetObj$dataSet$orig);
+
+    orig.var.nms <- mSetObj$dataSet$orig.var.nms;
+    orig.data<- mSetObj$dataSet$orig;
+
+    if(anal.type != "mummichog"){
+        # convert back to original names
+        if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
+            colnames(orig.data) <- orig.var.nms[colnames(orig.data)];
+        }
+        orig.data<-cbind(lbls, orig.data);
     }
+
     if(dim(orig.data)[2]>200){
       orig.data<-t(orig.data);
     }
     write.csv(orig.data, file="data_original.csv");
 
-    if(!is.null(mSetObj$dataSet[["procr"]])){
+    if(!is.null(mSetObj$dataSet[["proc"]])){
 
       if(!is.null(mSetObj$dataSet[["filt"]])){
         if(tsFormat){
@@ -590,8 +602,7 @@ if(!is.null(mSetObj$dataSet[["orig"]])){
         }else{
           lbls <- cbind("Label"= as.character(mSetObj$dataSet$filt.cls));
         }
-        proc.data<-cbind(lbls, mSetObj$dataSet$filt);  
-      
+        proc.data<-mSetObj$dataSet$filt;  
       }else{
         if(tsFormat){
           lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
@@ -599,9 +610,15 @@ if(!is.null(mSetObj$dataSet[["orig"]])){
         }else{
           lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
         }
-        proc.data<-cbind(lbls, mSetObj$dataSet$procr);
+        proc.data<-mSetObj$dataSet$proc;
       }
       
+      # convert back to original names
+      if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
+           colnames(proc.data) <- orig.var.nms[colnames(proc.data)];
+      }
+      proc.data<-cbind(lbls, proc.data);
+  
       if(dim(proc.data)[2]>200){
         proc.data<-t(proc.data);
       }
@@ -615,21 +632,26 @@ if(!is.null(mSetObj$dataSet[["orig"]])){
           lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
         }
         
+        norm.data <- mSetObj$dataSet$norm;
+
         # for ms peaks with rt and ms, insert two columns, without labels
         # note in memory, features in columns
-        
         if(!is.null(mSetObj$dataSet$three.col)){ 
-          ids <- matrix(unlist(strsplit(colnames(mSetObj$dataSet$norm), "/")),ncol=2, byrow=T);
-          colnames(ids) <- c("mz", "rt");
-          new.data <- data.frame(ids, t(mSetObj$dataSet$norm));
-          write.csv(new.data, file="peak_normalized_rt_mz.csv");
+            ids <- matrix(unlist(strsplit(colnames(norm.data), "/")),ncol=2, byrow=T);
+            colnames(ids) <- c("mz", "rt");
+            new.data <- data.frame(ids, t(norm.data));
+            write.csv(new.data, file="peak_normalized_rt_mz.csv");
+        }else{
+            # convert back to original names
+            if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
+                colnames(norm.data) <- orig.var.nms[colnames(norm.data)];   
+            }
+            norm.data<-cbind(lbls, norm.data);
+            if(dim(norm.data)[2]>200){
+                norm.data<-t(norm.data);
+            }
+            write.csv(norm.data, file="data_normalized.csv");
         }
-        
-        norm.data<-cbind(lbls, mSetObj$dataSet$norm);
-        if(dim(norm.data)[2]>200){
-          norm.data<-t(norm.data);
-        }
-        write.csv(norm.data, file="data_normalized.csv");
       }
     }
   }
@@ -664,7 +686,7 @@ GetMetaCheckMsg <- function(mSetObj=NA){
 }
 
 #'Plot compound summary
-#'change to use dataSet$procr instead of dataSet$orig in
+#'change to use dataSet$proc instead of dataSet$orig in
 #'case of too many NAs
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param cmpdNm Input the name of the compound to plot
@@ -697,8 +719,8 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     # need to consider norm data were edited, different from proc
     smpl.nms <- rownames(mSetObj$dataSet$norm);
     
-    mns <- by(as.numeric(mSetObj$dataSet$procr[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, mean, na.rm=T);
-    sds <- by(as.numeric(mSetObj$dataSet$procr[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, sd, na.rm=T);
+    mns <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, mean, na.rm=T);
+    sds <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, sd, na.rm=T);
     
     ups <- mns + sds;
     dns <- mns - sds;
@@ -1016,14 +1038,6 @@ GetNormGroupNames <- function(mSetObj=NA){
 GetLiteralGroupNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   as.character(mSetObj$dataSet$prenorm.cls);
-}
-
-IsReadyForEditor <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSetObj$dataSet[["prenorm"]])){
-    return(0);
-  }
-  return(1);
 }
 
 #'Set organism for further analysis

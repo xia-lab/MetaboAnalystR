@@ -84,7 +84,7 @@ PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm,  format="png", dpi=72, width=N
   
   mSetObj <- .get.mSet(mSetObj);
   imgName <- gsub("\\/", "_",  cmpdNm);
-  imgName <- paste(imgName, "_dpi", dpi, ".png", sep="");
+  imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 5.6;
   }else if(width == 0){

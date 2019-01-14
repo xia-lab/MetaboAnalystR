@@ -193,7 +193,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   if(mSetObj$dataSet$use.ratio){
     data <- mSetObj$dataSet$proc.ratio;
   }else{
-    data <- mSetObj$dataSet$procr;
+    data <- mSetObj$dataSet$proc;
   }
   # update in case norm filtered?
   hit.inxX <- rownames(data) %in% rownames(x);
@@ -1660,7 +1660,8 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
     imp.vec <- sort(imp.mat[,2], decreasing=T);
     xlbl <- "Average Importance";
   }
-  data <- data[, names(imp.vec)];
+  hit.nms <- rev(names(imp.vec)[names(imp.vec) %in% colnames(data)]);
+  data <- data[, hit.nms];
   
   # note, tapply can only be applied to a vector, we need
   # to combine with apply in order to used on a data frame

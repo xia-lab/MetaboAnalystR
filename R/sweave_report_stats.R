@@ -79,7 +79,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$orig) | is.null(mSetObj$dataSet$procr) | is.null(mSetObj$dataSet$cls)){
+  if(is.null(mSetObj$dataSet$orig) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$cls)){
     errorMsg <- c(descr, "Error occured during reading the raw data ....",
                   "Failed to proceed. Please check if the data format you uploaded is correct.",
                   "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");
@@ -215,7 +215,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
              "is that most missing values are caused by low abundance metabolites (i.e.below the detection limit).",
              "In addition, since zero values may cause problem for data normalization (i.e. log), they are also ",
              "replaced with this small value. User can also specify other methods, such as replace by mean/median,",
-             "or use K-Nearest Neighbours, Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
+             "or use K-Nearest Neighbours (KNN), Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)",
              "method to impute the missing values \\footnote{Stacklies W, Redestig H, Scholz M, Walther D, Selbig J.",
              "\\textit{pcaMethods: a bioconductor package, providing PCA methods for incomplete data.}, Bioinformatics",
              "2007 23(9):1164-1167}. Please choose the one that is the most appropriate for your data.");
@@ -239,7 +239,9 @@ CreateStatIOdoc <- function(mSetObj=NA){
              "\\textit{For data with number of variables  < 250, this step will reduce 5\\% of variables;",
              "For variable number between 250 and 500, 10\\% of variables will be removed;",
              "For variable number bwteen 500 and 1000, 25\\% of variables will be removed;",
-             "And 40\\% of variabled will be removed for data with over 1000 variables.}");
+             "And 40\\% of variabled will be removed for data with over 1000 variables.",
+             "The None option is only for less than 5000 features. Over that, if you choose None,",
+             "the IQR filter will still be applied. In addition, the maximum allowed number of variables is \\textbf{10000}}");
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
@@ -339,18 +341,21 @@ CreateUNIVdoc <- function(mSetObj=NA){
   }
   
   if(isEmptyMatrix(mSetObj$analSet$fc$sig.mat)){
-    fc.tab<-NULL;
+    fc.img <- fc.tab<-NULL;
   }else{
+    fc.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by fold change analysis.");
     fc.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
   }
   if(isEmptyMatrix(mSetObj$analSet$tt$sig.mat)){
-    tt.tab<-NULL;
+    tt.img <- tt.tab<-NULL;
   }else{
+    tt.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by t-tests.");
     tt.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
   }
   if(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat)){
-    volcano.tab<-NULL;
+    volcano.img <- volcano.tab<-NULL;
   }else{
+    volcano.img <-paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by volcano plot.");
     volcano.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features.");
   }
   
@@ -368,11 +373,11 @@ CreateUNIVdoc <- function(mSetObj=NA){
              "that are consistently above/below the specified FC threshold for each variable. A variable will be",
              "reported as significant if this number is above a given count threshold (default > 75\\% of pairs/variable)",
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by fold change analysis."),
+             fc.img,
              fc.tab,
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by t-tests."),
+             tt.img,
              tt.tab,
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by volcano plot."),
+             volcano.img,
              volcano.tab,
              "\n\n",
              "Please note, the purpose of fold change is to compare absolute value changes between two group means.",
@@ -383,21 +388,21 @@ CreateUNIVdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # Fold change
-  cmdhist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$fc,"}", sep=""),
-    "\\caption{", paste("Important features selected by fold-change analysis with threshold ", mSetObj$analSet$fc$raw.thresh, ". ",
+  if(!(isEmptyMatrix(mSetObj$analSet$fc$sig.mat))){
+    cmdhist <- c(
+        "\\begin{figure}[htp]",
+        "\\begin{center}",
+        paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$fc,"}", sep=""),
+        "\\caption{", paste("Important features selected by fold-change analysis with threshold ", mSetObj$analSet$fc$raw.thresh, ". ",
                         "The red circles represent features above the threshold. Note the values are on log scale, so that both up-regulated ",
                         "and down-regulated features can be plotted in a symmetrical way", sep=""), "}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$fc,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
+        "\\end{center}",
+        paste("\\label{",mSetObj$imgSet$fc,"}", sep=""),
+        "\\end{figure}"
+    );
+    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
   
-  if(!(isEmptyMatrix(mSetObj$analSet$fc$sig.mat))){
     cmdhist2 <- c("<<echo=false, results=tex>>=",
                   "GetSigTable.FC(mSet)",
                   "@");
@@ -406,21 +411,21 @@ CreateUNIVdoc <- function(mSetObj=NA){
   }
   
   # T-tests
-  cmdhist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$tt,"}", sep=""),
-    "\\caption{", paste("Important features selected by t-tests with threshold ", mSetObj$analSet$tt$raw.thresh, ". ",
+  if(!(isEmptyMatrix(mSetObj$analSet$tt$sig.mat))){
+    cmdhist <- c(
+        "\\begin{figure}[htp]",
+        "\\begin{center}",
+        paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$tt,"}", sep=""),
+        "\\caption{", paste("Important features selected by t-tests with threshold ", mSetObj$analSet$tt$raw.thresh, ". ",
                         "The red circles represent features above the threshold. Note the p values are transformed by -log10 so that the more significant ",
                         "features (with smaller p values) will be plotted higher on the graph. ", sep=""),"}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$tt,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
+        "\\end{center}",
+        paste("\\label{",mSetObj$imgSet$tt,"}", sep=""),
+        "\\end{figure}"
+    );
+    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
   
-  if(!(isEmptyMatrix(mSetObj$analSet$tt$sig.mat))){
     cmdhist2<-c("<<echo=false, results=tex>>=",
                 "GetSigTable.TT(mSet)",
                 "@");
@@ -429,22 +434,23 @@ CreateUNIVdoc <- function(mSetObj=NA){
   }
   
   # Volcano plot
-  cmdhist <- c( 
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$volcano,"}", sep=""),
-    "\\caption{", paste("Important features selected by volcano plot with fold change threshold (x) ",
+  if(!(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat))){
+    cmdhist <- c( 
+        "\\begin{figure}[htp]",
+        "\\begin{center}",
+        paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$volcano,"}", sep=""),
+        "\\caption{", paste("Important features selected by volcano plot with fold change threshold (x) ",
                         mSetObj$analSet$volcano$raw.threshx, " and t-tests threshold (y) ", mSetObj$analSet$volcano$raw.threshy, ". ",
                         "The red circles represent features above the threshold. Note both fold changes and p values are log ",
                         "transformed. The further its position away from the (0,0), the more significant the feature is. ", sep=""),"}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$volcano,"}", sep=""),
-    "\\end{figure}"
-  );
+        "\\end{center}",
+        paste("\\label{",mSetObj$imgSet$volcano,"}", sep=""),
+        "\\end{figure}"
+    );
   
-  if(!(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat))){
     cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
     cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
+
     cmdhist2 <- c("<<echo=false, results=tex>>=",
                   "GetSigTable.Volcano(mSet)",
                   "@");

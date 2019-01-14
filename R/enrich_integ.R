@@ -213,11 +213,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   ms.list <- lapply(inmexpa$mset.list, function(x){strsplit(x, " ")});
   current.universe <- unique(unlist(ms.list));
 
-  # prepare for the result table
-  res.mat<-matrix(0, nrow=set.size, ncol=7);
-  rownames(res.mat)<-names(inmexpa$path.ids);
-  colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "Topology", "PVal.Z",  "Topo.Z");
-  
   mSetObj$dataSet$pathinteg.method <- libOpt;
   mSetObj$dataSet$path.mat <- NULL;
   
@@ -305,7 +300,12 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     AddErrMsg("No hits found for your input!");
     return(0);
   }
-  
+
+  # prepare for the result table
+  res.mat<-matrix(0, nrow=set.size, ncol=8);
+  rownames(res.mat)<-names(inmexpa$path.ids);
+  colnames(res.mat)<-c("Total", "Expected", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+
   set.num <- uniq.len;
   res.mat[,1]<-set.num;
   res.mat[,2]<-q.size*(set.num/uniq.count);
@@ -316,14 +316,14 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
   }else if(enrich == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
-    print(enrich)
   }else{
     print("Not defined enrichment method!");
     print(enrich);
   }
-  
-  # adjust for multiple testing problems
-  # res.mat[,5] <- p.adjust(res.mat[,4], "fdr");
+
+  res.mat[,5] <- -log(res.mat[,4]);
+  res.mat[,6] <- p.adjust(res.mat[,4], "holm");
+  res.mat[,7] <- p.adjust(res.mat[,4], "fdr");
   
   # toplogy test
   if(topo == "bc"){
@@ -339,102 +339,28 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   
   # now, perform topological analysis		
   # calculate the sum of importance
-  res.mat[,5] <- mapply(function(x, y){sum(x[y])}, imp.list, hits.path);
-  
-  # now add two more columns for the scaled values
-  res.mat[,6] <- scale(-log(res.mat[,4]));
-  res.mat[,7] <- scale(res.mat[,5]);
-  
-  res.mat <- res.mat[hit.num>0,];
-  ord.inx<-order(res.mat[,4], res.mat[,5]);
-  
-  res.mat <- signif(res.mat[ord.inx,,drop=FALSE],5);
-  #res.mat <- data.frame(res.mat);
-  
-  #get gene symbols
-  resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
-  
-  # now save to different formats
-  # csv
-  write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=F);
-  
-  mSetObj <- .get.mSet(mSetObj);
-resTable2 = resTable
-resTable2$id = inmexpa$path.ids[rownames(resTable)];
-     json.mat <- RJSONIO::toJSON(resTable2);
-     json.nm <- "integ_pathway.json"
-     sink(json.nm)
-     cat(json.mat);
-     sink();
+  res.mat[,8] <- mapply(function(x, y){sum(x[y])}, imp.list, hits.path);
+  res.mat <- res.mat[hit.num>0, , drop=FALSE];
+  res.mat <- res.mat[!is.na(res.mat[,8]), , drop=FALSE];
+  ord.inx<-order(res.mat[,4], res.mat[,8]);
+  resTable <- signif(res.mat[ord.inx,,drop=FALSE],5);
 
-
-  mSetObj$dataSet$path.hits <- hits.path;
+  # now save to csv
+  write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
+  
+  # for internal use, switch to pathway IDs (name containing special characters)
+  rownames(resTable) <- inmexpa$path.ids[rownames(resTable)];
   
   # store results from individual analysis
-  mSetObj$dataSet$pathinteg.impMat <- impMat; 
-  mSetObj$dataSet$pathinteg.impTopo <- imp.list;
   mSetObj$dataSet$path.mat <- resTable;
-  
-  if(.on.public.web){
-    mSetObj <- .set.mSet(mSetObj);
-  } 
-  
-  SetBarParams(mSetObj);
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
-    return(1);
-  }
+  mSetObj$dataSet$path.hits <- hits.path;
+  mSetObj$dataSet$pathinteg.impMat <- impMat; 
+
+  saveRDS(imp.list, file="pathinteg.impTopo");
+
   return(.set.mSet(mSetObj));
 }
 
-#'Plot a scatterplot bubble chart overview of the matched pathways
-#'@description x axis is the pathway impact factor
-#'y axis is the p value (from ORA) 
-#'return the circle information
-#'@param mSetObj Input name of the created mSet Object
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-SetBarParams <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  y <-  mSetObj$dataSet$path.mat$Topology;
-  x <-  mSetObj$dataSet$path.mat$P.Value;
-  x = -log(x);
-  
-  x <- scale(x);
-  y <- scale(y);
-  base <- abs(min(c(x,y)));
-  
-  x <- x + base;
-  y <- y + base;
-  # names(y) <-  rownames(path.mat);
-  
-  # set circle size according to
-  # sum of p and topo (since they
-  # alrealy bring to same range
-  
-  # we do twice to reduce difference for plotting
-  radi.vec <- sqrt(x+y);
-  
-  resTable <- data.frame(x=x, y=y); 
-  rownames(resTable) <- rownames(mSetObj$dataSet$path.mat);
-  
-  # display only top 100 sorted by p
-  if(nrow(resTable) > 20){
-    resTable <- resTable[1:20,];
-  }
-  
-  resTable <- resTable[nrow(resTable):1,];
-  mSetObj$dataSet$bar.data <- resTable;
-  return(.set.mSet(mSetObj));
-}
 
 ##############################################
 ##############################################
@@ -442,35 +368,24 @@ SetBarParams <- function(mSetObj=NA){
 ##############################################
 ##############################################
 
-GetBarParams<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(as.matrix(mSetObj$dataSet$bar.data));
-}
-
-GetBarNames<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  # single quote apostrophe caused trouble 
-  return(rownames(mSetObj$dataSet$bar.data));
-}
-
 GetIntegResultPathIDs<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  inmexpa$path.ids[rownames(mSetObj$dataSet$path.mat)];
-}
-
-GetIntegResultPathNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(rownames(mSetObj$dataSet$path.mat));
 }
 
+GetIntegResultPathNames<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(names(inmexpa$path.ids)[match(rownames(mSetObj$dataSet$path.mat),inmexpa$path.ids)]);
+}
+
 GetIntegResultColNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(colnames(mSetObj$dataSet$path.mat)[-1]);
+  return(colnames(mSetObj$dataSet$path.mat));
 }
 
 GetIntegResultMatrix<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(as.matrix(mSetObj$dataSet$path.mat[,-1]));
+  return(as.matrix(mSetObj$dataSet$path.mat));
 }
 
 GetGeneHitsRowNumber<-function(mSetObj=NA){
@@ -580,4 +495,412 @@ getDataFromTextArea <- function(txtInput, sep.type="space"){
   rownames(my.mat) <- data.matrix(my.mat[,1]);
   my.mat <- my.mat[,-1, drop=F];
   return(my.mat);
+}
+
+#'Load KEGG library
+#'@description Load KEGG library
+#'@param libOpt KEGG library option, "integ" for integrative, "genetic" for genetic, and "met" for metabolic
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+LoadKEGGLib<-function(libOpt){
+  
+  if(.on.public.web){
+    load_igraph()
+    if(libOpt == "integ"){
+      kegg.rda <- paste("../../libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
+    }else if(libOpt == "genetic"){
+      kegg.rda <- paste("../../libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
+    }else{
+      kegg.rda <- paste("../../libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
+    }
+  }else{
+    if(libOpt == "integ"){
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/integrative/", pathinteg.org, ".rda", sep=""); 
+    }else if(libOpt == "genetic"){
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/genetic/", pathinteg.org, ".rda", sep=""); 
+    }else{
+      kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/metabolic/", pathinteg.org, ".rda", sep=""); 
+    }
+  }
+  
+  print(paste("adding library:", kegg.rda));
+  
+  destfile <- paste(pathinteg.org, ".rda", sep = "")
+  
+  if(.on.public.web){
+    load(kegg.rda, .GlobalEnv);
+  }else if(!file.exists(destfile)){
+    download.file(kegg.rda, destfile);
+    load(destfile, .GlobalEnv);
+  }else{
+    load(destfile, .GlobalEnv);  
+  }
+  
+}
+
+#'Plot integrated methods pathway analysis
+#'@description Only update the background info for matched node
+#'@usage PlotInmexPath(mSetObj=NA, path.id, width, height)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param path.id Input the ID of the pathway to plot. 
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param height Input the height of the image to create.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@import igraph  
+#'
+PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
+
+  mSetObj <- .get.mSet(mSetObj);
+  path.id <- inmexpa$path.ids[pathName];
+  g <- inmexpa$graph.list[[path.id]]
+  g <- upgrade_graph(g); # to fix warning
+  phits <- mSetObj$dataSet$path.hits[[path.id]];
+  pathinteg.impTopo <- readRDS("pathinteg.impTopo");
+  topo <- pathinteg.impTopo[[path.id]];
+  
+  # obtain up/down/stat information
+  res <- mSetObj$dataSet$pathinteg.impMat;
+  
+  bg.cols <- rep("#E3E4FA", length(V(g)));
+  line.cols <- rep("dimgray", length(V(g)));
+  
+  # now, do color schema - up red, down green
+  nd.inx <- which(phits);
+  
+  # fill with 'NA'
+  stats <- vector(mode='list', length=length(V(g)));
+  
+  rnms <- rownames(res);
+  for(inx in nd.inx){
+    nm <- unlist(strsplit(V(g)$names[inx], " "));
+    hit.inx <- which(rnms %in% nm)[1];
+    if(length(hit.inx) > 0){
+      # use logFCs to decide up/down regulated
+      if(res$logFC[hit.inx] > 0){
+        bg.cols[inx]<- "#F75D59";
+        line.cols[inx] <- "#C11B17";
+      }else if(res$logFC[hit.inx] == 0){
+        bg.cols[inx]<- "#FFFF77";
+        line.cols[inx] <- "#F7E259";
+      }else{
+        bg.cols[inx]<- "#6AFB92";
+        line.cols[inx] <- "#347235";
+      }
+      
+      # 1) update the node info (tooltip/popup) 
+      V(g)$db.lnks[inx] <- paste("<a href='http://www.genome.jp/dbget-bin/www_bget?", rownames(res)[hit.inx],
+                                  "' target='_blank'>", res$Name[hit.inx], "</a>", sep="", collapse=" ");
+      # 2) save the stats for each node 
+      stats[[inx]] <- signif(res[hit.inx, "logFC", drop=F],5);
+    }
+  }
+  V(g)$stats <- stats;
+  V(g)$topo <- topo;
+  
+  if(.on.public.web){ 
+    return(PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi));  
+  }else{ 
+    mSetObj <- PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi);   
+    print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
+    return(.set.mSet(mSetObj));
+  }
+}
+
+#'Plot an igraph object and return the node information (position and labels)
+#'@description Plot an igraph object and return the node information (position and labels)
+#'Used in a higher function
+#'@param mSetObj Input name of the created mSet Object
+#'@param path.id Input the pathway id
+#'@param g Input the graph
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param height Input the height of the graph to create
+#'@param bg.color Set the background color, default is set to NULL
+#'@param line.color Set the line color, default is set to NULL
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotInmexGraph <- function(mSetObj, pathName, g, width=NA, height=NA, bg.color=NULL, line.color=NULL, format="png", dpi=NULL){
+ 
+  if(is.null(bg.color)){
+    bg.color <- V(g)$graphics_bgcolor
+  }
+  if(is.null(line.color)){
+    line.color <- "dimgray";
+  }
+
+  if(!is.null(dpi)){
+    pathName <- gsub("\\s","_", pathName);
+    pathName <- gsub(",","", pathName);
+
+    imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+    if(is.na(width)){
+        width <- 8;
+    }
+    w <- h <- width;
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    par(mai=rep(0,4));
+    plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
+    dev.off();
+    return(imgName);
+  }else{
+    imgName <- paste(pathName, ".png", sep="");
+    mSetObj$imgSet$pathinteg.path <- imgName
+    Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+    par(mai=rep(0,4));
+    plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
+    nodeInfo <- GetKEGGNodeInfo(pathName, g, width, height);
+    dev.off();
+
+    mSetObj$dataSet$current.kegg <- list(graph=g, bg.color=bg.color, line.color=line.color);
+  
+    # remember the current graph
+    if(.on.public.web){
+        .set.mSet(mSetObj);
+        return(nodeInfo);
+    }else{
+        return(.set.mSet(mSetObj));
+    } 
+   }
+}
+
+#'Retrieves KEGG node information
+#'@param path.id Input the path ID
+#'@param g Input data
+#'@param width Input the width
+#'@param height Input the height 
+#'@param usr Input the user
+#'@export
+GetKEGGNodeInfo <- function(pathName, g, width, height, usr = par("usr")){
+  
+  x.u2p = function(x) { rx=(x-usr[1])/diff(usr[1:2]);  return(rx*width)  }
+  y.u2p = function(y) { ry=(usr[4]-y)/diff(usr[3:4]);  return(ry*height) }
+  
+  wds <- V(g)$graphics_width;
+  wds[wds == 'unknow']<- 46;
+  hts <- V(g)$graphics_height;
+  hts[hts == 'unknow']<- 17;     
+  
+  nw <- 1/200*as.numeric(wds);
+  nh <-  1/200*as.numeric(hts);
+  nxy <- igraph::layout.norm(getLayout(g), -1, 1, -1, 1);
+  
+  # note: nxy is the center of the node, need to deal differently for cirlce or rectangle
+  # for circle the width/height are radius, stay the same, only adjust the rectangle
+  rec.inx <- V(g)$graphics_type == "rectangle";
+  
+  nw[rec.inx] <- nw[rec.inx]/4;
+  nh[rec.inx] <- nh[rec.inx]/2;
+  
+  xl  = floor(100*x.u2p(nxy[,1] - nw)/width);
+  xr  = ceiling(100*x.u2p(nxy[,1] + nw)/width);
+  yu  = floor(100*y.u2p(nxy[,2] - nh)/height);
+  yl  = ceiling(100*y.u2p(nxy[,2] + nh)/height);
+  
+  tags <- V(g)$graphics_name;
+  nm.lnks <- V(g)$db.lnks;
+  
+  # create the javascript code
+  path.id <- inmexpa$path.ids[pathName];
+  jscode <- paste("keggPathLnk=\'<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", path.id, "\\',\\'KEGG\\');\">", pathName, "</a>\'", sep="");
+  jscode <- paste(jscode, paste("keggPathName=\"", pathName,"\"", sep=""), sep="\n");
+  
+  #add code for mouseover locations, basically the annotation info. In this case, the name of the node
+  if(is.null(V(g)$stats)){
+    for(i in 1:length(tags)) {
+      jscode <- paste(jscode, paste("rectArray.push({x1:", xl[i], ", y1:", yl[i], ", x2:", 
+                                    xr[i], ", y2:", yu[i],
+                                    ", lb: \"", tags[i], 
+                                    "\", lnk: \"", nm.lnks[i], 
+                                    "\"})", sep=""), sep="\n");
+    }
+  }else{
+    stats <- V(g)$stats;
+    topos <- signif(V(g)$topo,5);
+    for(i in 1:length(tags)) {
+      jscode <- paste(jscode, paste("rectArray.push({x1:", xl[i], ", y1:", yl[i], ", x2:", 
+                                    xr[i], ", y2:", yu[i],
+                                    ", lb: \"", tags[i], 
+                                    "\", lnk: \"", nm.lnks[i], 
+                                    "\", topo: ", topos[i], 
+                                    ifelse(is.null(stats[[i]]), 
+                                           "", 
+                                           paste(", logFC:", stats[[i]][1], sep="")),
+                                    "})", sep=""), sep="\n");
+    }
+  }
+  return(jscode);
+}
+
+# Used in higher function
+plotGraph <- function(graph,margin=0,vertex.label.cex=0.6,vertex.label.font=1,vertex.size=8,
+                    vertex.size2=6,edge.arrow.size=0.2,edge.arrow.width=3,vertex.label=V(graph)$graphics_name,
+                    vertex.shape=V(graph)$graphics_type,layout=getLayout(graph),vertex.label.color="black",
+                    vertex.color=V(graph)$graphics_bgcolor,vertex.frame.color="dimgray",edge.color="dimgray",
+                    edge.label=getEdgeLabel(graph),edge.label.cex=0.6,edge.label.color="dimgray",edge.lty=getEdgeLty(graph),
+                    axes=FALSE,xlab="",ylab="",sub=NULL,main=NULL,...){
+  if(class(graph)!="igraph") stop("the graph should be a igraph graph.")
+  if(vcount(graph)==0){
+    print("the graph is an empty graph.")
+  }else{	 
+    vertex.shape <- replace(vertex.shape,which(vertex.shape %in% c("roundrectangle","line")),"crectangle")
+    vertex.color <- replace(vertex.color,which(vertex.color %in% c("unknow","none")),"white")
+    if(length(vertex.shape)==0) vertex.shape<-NULL
+    if(length(vertex.color)==0) vertex.color<-NULL  
+    if(length(vertex.label)==0) vertex.label<-NULL 
+    if(length(layout)==0) layout<-NULL 
+    if(length(edge.label)==0) edge.label<-NULL
+    if((axes==FALSE)&&xlab==""&&ylab==""&&is.null(sub)&&is.null(main)){
+      old.mai <- par(mai=c(0.01,0.25,0.01,0.3))
+      #old.mai<-par(mai=0.01+c(0,0,0,0))
+      on.exit(par(mai=old.mai), add=TRUE)
+    }
+    plot(graph,margin=margin,vertex.label.cex=vertex.label.cex,vertex.label.font=vertex.label.font,
+         vertex.size=vertex.size,vertex.size2=vertex.size2,
+         edge.arrow.size=edge.arrow.size,edge.arrow.width=edge.arrow.width,vertex.label=vertex.label,
+         vertex.shape=vertex.shape,layout=layout,vertex.label.color=vertex.label.color,
+         vertex.color=vertex.color,vertex.frame.color=vertex.frame.color,edge.color=edge.color,
+         edge.label=edge.label,edge.label.cex=edge.label.cex,edge.label.color=edge.label.color,
+         edge.lty=edge.lty,axes=axes,xlab=xlab,ylab=ylab,sub=sub,main=main,...)
+  }
+}
+
+getLayout<-function(graph){
+  if(length(V(graph)$graphics_x)==0||length(V(graph)$graphics_y)==0) return (NULL)
+  x_y<-c()
+  graphics_x <- igraph::get.vertex.attribute(graph,"graphics_x")
+  index <- which(graphics_x=="unknow")
+  
+  if(length(index)>1){
+    temp<-as.numeric(graphics_x[which(graphics_x!="unknow")])
+    if(length(temp)<2){temp<-as.numeric(c(100,600))}
+    replace_value<-seq(min(temp),max(temp),by = (max(temp)-min(temp))/(length(index)-1))
+    graphics_x<-replace(graphics_x,which(graphics_x=="unknow"),replace_value)
+  }else if(length(index)==1){
+    temp<-as.numeric(graphics_x[which(graphics_x!="unknow")])
+    graphics_x<-replace(graphics_x,which(graphics_x=="unknow"),min(temp))
+  } 
+  graphics_x <- as.numeric(graphics_x)	
+  graphics_y <- igraph::get.vertex.attribute(graph,"graphics_y")
+  index <- which(graphics_y=="unknow")
+  if(length(index)>0){
+    temp <- as.numeric(graphics_y[which(graphics_y!="unknow")])
+    if(length(temp)<2){temp<-as.numeric(c(100,600))}
+    graphics_y <- replace(graphics_y,which(graphics_y=="unknow"),max(temp)+100)
+  } 
+  graphics_y <- as.numeric(graphics_y)
+  
+  x_y <- as.matrix(data.frame(graphics_x=graphics_x, graphics_y=graphics_y))
+  x_y[,2] <- -x_y[,2]
+  dimnames(x_y) <- NULL
+  return(x_y)
+}
+
+getEdgeLabel<-function(graph){
+  edge.name <- igraph::E(graph)$subtype_name
+  edge.value <- igraph::E(graph)$subtype_value
+  #edge.label<-E(graph)$subtype_value
+  edge.label <- rep("",len=length(edge.name))
+  for(i in seq(edge.name)){
+    edge_i<-unlist(strsplit(edge.name[i],";"))
+    if("phosphorylation" %in% edge_i){
+      edge.label[i]<-paste("+p",edge.label[i],sep=" ")
+    }
+    if("dephosphorylation" %in% edge_i){
+      edge.label[i]<-paste("-p",edge.label[i],sep=" ")
+    }
+    if("glycosylation"  %in% edge_i){
+      edge.label[i]<-paste("+g",edge.label[i],sep=" ")
+    }
+    if("ubiquitination"  %in% edge_i){
+      edge.label[i]<-paste("+u",edge.label[i],sep=" ")
+    }
+    if("methylation"  %in% edge_i){
+      edge.label[i]<-paste("+m",edge.label[i],sep=" ")
+    }
+    if("missing interaction"  %in% edge_i){
+      edge.label[i]<-paste("/",edge.label[i],sep=" ")
+    }
+    if("dissociation"  %in% edge_i){
+      edge.label[i]<-paste("|",edge.label[i],sep=" ")
+    }
+    if("binding/association"  %in% edge_i){
+      edge.label[i]<-paste("---",edge.label[i],sep=" ")
+    }
+    if("repression"  %in% edge_i){
+      edge.label[i]<-paste("-e-|",edge.label[i],sep=" ")
+    }
+    if("expression"  %in% edge_i){
+      edge.label[i]<-paste("-e->",edge.label[i],sep=" ")
+    }
+    if("inhibition"  %in% edge_i){
+      edge.label[i]<-paste("--|",edge.label[i],sep=" ")
+    }
+    if("activation"  %in% edge_i){
+      edge.label[i]<-paste("-->",edge.label[i],sep=" ")
+    }
+    if("indirect effect"  %in% edge_i){
+      edge.label[i]<-paste("..>",edge.label[i],sep=" ")
+    }
+    if("state change"  %in% edge_i){
+      edge.label[i]<-paste("...",edge.label[i],sep=" ")
+    }
+    if("compound" %in% edge_i){
+      compound<-V(graph)[V(graph)$id==edge.value[i]]$graphics_name
+      if(length(compound)==1){
+        edge.label[i]<-paste(compound,edge.label[i],sep=" ")
+      }    
+    }           
+  }
+  return(edge.label)
+}
+
+#04350 indirect effect,04620
+getEdgeLty<-function(graph){
+  edge.name <- igraph::E(graph)$subtype_name
+  edge.lty=rep("solid",len=length(edge.name))
+  for(i in seq(edge.name)){
+    if(edge.name[i]=="indirect effect"){
+      edge.lty[i]<-"longdash"
+    }else if(edge.name[i]=="state change"){
+      edge.lty[i]<-"longdash"
+    }
+  }
+  #new!
+  if(length(edge.lty)==0){
+    edge.lty="solid"
+  }
+  return(edge.lty)
+}
+
+##############################################
+##############################################
+########## Utilities for web-server ##########
+##############################################
+##############################################
+
+# return gene and compounds highlighted in the pathway
+GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
+    mSetObj <- .get.mSet(mSetObj);
+    path.id <- inmexpa$path.ids[[pathName]];
+
+    # pathway nodes
+    all.ids <- inmexpa$mset.list[[path.id]];
+    g <- upgrade_graph(inmexpa$graph.list[[path.id]]);
+    all.nms <- V(g)$graphics_name;
+
+    phits <- mSetObj$dataSet$path.hits[[path.id]];
+    nd.inx <- which(phits);
+    all.nms[nd.inx] <- paste("<font color=\"red\">", "<b>", all.nms[nd.inx], "</b>", "</font>",sep="");
+
+    return(cbind(pathName, paste(all.nms, collapse="; ")));
 }

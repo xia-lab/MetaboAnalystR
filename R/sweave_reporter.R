@@ -76,7 +76,7 @@ CreateHeader <- function(usrName){
               "options(width=60);",
               "@",
               "\\SweaveOpts{eps=FALSE,pdf=TRUE}",
-              "\\title{Metabolomic Data Analysis with MetaboAnalystR}",
+              "\\title{Metabolomic Data Analysis with MetaboAnalyst 4.0}",
               paste("\\author{ Name: ", usrName, " }", sep=""),
               "\\begin{document}",
               "\\parskip=.3cm",
@@ -100,7 +100,7 @@ CreateSummaryTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   sum.dat<-NULL;
-  plenth<-dim(mSetObj$dataSet$procr)[2];
+  plenth<-dim(mSetObj$dataSet$proc)[2];
   if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin'){
     for(i in 1:nrow(mSetObj$dataSet$orig)){
       srow<-mSetObj$dataSet$orig[i,];
@@ -172,16 +172,18 @@ CreateNORMdoc <- function(mSetObj=NA){
   cat(descr1, file=rnwFile, append=TRUE);
   
   descr2 <- c("\\begin{enumerate}",
-              "\\item{Sample specific normalization (i.e. normalize by dry weight, volume) }",
               "\\item{Row-wise procedures: }",
               "\\begin{itemize}",
+              "\\item{Sample specific normalization (i.e. normalize by dry weight, volume) }",
               "\\item{Normalization by the sum }",
               "\\item{Normalization by the sample median }",
               "\\item{Normalization by a reference sample (probabilistic quotient",
               "normalization)\\footnote{Dieterle F, Ross A, Schlotterbeck G, Senn H. \\textit{Probabilistic quotient normalization as robust",
               "method to account for dilution of complex biological mixtures. Application in 1H NMR metabonomics}, 2006,",
               "Anal Chem 78 (13);4281 - 4290}}",
+              "\\item{Normalization by a pooled or average sample from a particular group }",
               "\\item{Normalization by a reference feature (i.e. creatinine, internal control) }",
+              "\\item{Quantile normalization }",
               "\\end{itemize}",
               "\\item{Data transformation : }",
               "\\begin{itemize}",
@@ -190,7 +192,8 @@ CreateNORMdoc <- function(mSetObj=NA){
               "\\end{itemize}",
               "\\item{Data scaling: }",
               "\\begin{itemize}",
-              "\\item{Unit scaling (mean-centered and divided by standard deviation of each variable)}",
+              "\\item{Mean centering (mean-centered only)}",
+              "\\item{Auto scaling (mean-centered and divided by standard deviation of each variable)}",
               "\\item{Pareto scaling (mean-centered and divided by the square root of standard deviation of each variable)}",
               "\\item{Range scaling (mean-centered and divided by the value range of each variable)}",
               "\\end{itemize}",

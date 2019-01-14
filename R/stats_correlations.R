@@ -61,7 +61,6 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
   mSetObj$analSet$corr$pattern <- pattern;
-  print(1);
   return(.set.mSet(mSetObj));
 }
 
@@ -346,6 +345,13 @@ GenerateTemplates <- function(mSetObj=NA){
 FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  # test if varName is valid
+   if(!varName %in% colnames(mSetObj$dataSet$norm)){
+    AddErrMsg("Invalid feature name - not found!");
+    return(0);
+  }
+
   cbtempl.results <- apply(mSetObj$dataSet$norm, 2, template.match, mSetObj$dataSet$norm[,varName], dist.name);
   cor.res<-t(cbtempl.results);
   
@@ -361,6 +367,6 @@ FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
   mSetObj$analSet$corr$pattern <- varName;
-  print(1);
+
   return(.set.mSet(mSetObj));
 }
