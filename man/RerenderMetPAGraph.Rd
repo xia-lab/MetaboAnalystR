@@ -4,7 +4,8 @@
 \alias{RerenderMetPAGraph}
 \title{Redraw current graph for zooming or clipping then return a value}
 \usage{
-RerenderMetPAGraph(mSetObj = NA, imgName, width, height)
+RerenderMetPAGraph(mSetObj = NA, imgName, width, height,
+  zoom.factor = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

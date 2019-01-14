@@ -12,7 +12,7 @@ ClearNegatives(mSetObj = NA, method = "abs")
 \item{method}{Input the method to clear negatives}
 }
 \description{
-Operates on dataSet$procr after dealing with missing values
+Operates on dataSet$proc after dealing with missing values
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

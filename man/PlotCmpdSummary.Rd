@@ -3,7 +3,7 @@
 \name{PlotCmpdSummary}
 \alias{PlotCmpdSummary}
 \title{Plot compound summary
-change to use dataSet$procr instead of dataSet$orig in
+change to use dataSet$proc instead of dataSet$orig in
 case of too many NAs}
 \usage{
 PlotCmpdSummary(mSetObj = NA, cmpdNm, format = "png", dpi = 72,
@@ -22,7 +22,7 @@ PlotCmpdSummary(mSetObj = NA, cmpdNm, format = "png", dpi = 72,
 }
 \description{
 Plot compound summary
-change to use dataSet$procr instead of dataSet$orig in
+change to use dataSet$proc instead of dataSet$orig in
 case of too many NAs
 }
 \author{
