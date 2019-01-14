@@ -18,7 +18,9 @@ We present a new update to MetaboAnalystR (In conjuction with the release of Met
 
 To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options:
 
-**Option 1** Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. Note that we suggest you install the XCMS R package if you will be processing raw data, but is not necessary for the majority of MetaboAnalystR utilities. 
+**Option 1** 
+
+Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. Note that we suggest you install the XCMS R package if you will be processing raw data, but is not necessary for the majority of MetaboAnalystR utilities. 
 
 Function to download packages:
 
@@ -48,7 +50,9 @@ Usage of function:
 metanr_packages()
 ```
 
-**Option 2** Use the pacman R package (for those with R 3.5.1). 
+**Option 2** 
+
+Use the pacman R package (for those with >R 3.5.1). 
 
 ```R
 install.packages("pacman")
