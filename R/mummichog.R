@@ -240,7 +240,6 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
 #'@description This function maps the user selected list
 #'of compounds to its corresponding KEGG IDs and BioCyc IDs
 #'@param mSetObj Input the name of the created mSetObj object 
-#'@param 
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

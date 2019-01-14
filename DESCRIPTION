@@ -50,12 +50,12 @@ Imports: Rserve,
     tibble,
     RSQLite,
     spls,
-    siggenes,
-    plotly
+    siggenes
 Suggests: 
     knitr,
     rmarkdown,
     xcms,
     devtools,
-    testthat
+    testthat,
+    plotly
 VignetteBuilder: knitr
