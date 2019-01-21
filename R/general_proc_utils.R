@@ -262,7 +262,9 @@ ReplaceMin <- function(mSetObj=NA){
 }
 
 #'Data processing: remove variables with missing values
-#'@description Remove variables containing a user-defined percentage cut-off of missing values.
+#'@description Remove variables based upon a user-defined percentage cut-off of missing values.
+#'If a user specifies a threshold of 20% (0.2), it will remove variables that are missing
+#'in at least 20% of all samples.
 #'@usage RemoveMissingPercent(mSetObj, percent)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param percent Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5. 
