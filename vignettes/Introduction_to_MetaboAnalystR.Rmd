@@ -191,25 +191,23 @@ mSet$dataSet$proc.msg
 
 ## 2.1.3 Data integrity check
 
-After reading in the metabolomics data, it is necessary for you to perform a data integrity check to ensure that the data is valid and suitable for subsequent analyses using *SanityCheckData*. **This function must be used directly following data upload, if else, down-stream data processing functions such as *ReplaceMin* and *Normalization* will be unusable.** *SanityCheckData* evaluates the accuracy of sample and class labels, data structure, deals with non-numeric values, etc. It will return a 1 if your data is valid, or a 0 if it is not. You can use *mSet$dataSet$check.msg* to view all the collected messages that came from running the sanity check.   
+After reading in the metabolomics data, it is necessary for you to perform a data integrity check to ensure that the data is valid and suitable for subsequent analyses using *SanityCheckData*. **This function must be used directly following data upload, if else, down-stream data processing functions such as *ReplaceMin* and *Normalization* will be unusable.** *SanityCheckData* evaluates the accuracy of sample and class labels, data structure, deals with non-numeric values, etc. If successful, you will see "Successfully passed sanity check." printed on your screen, along with all the messages produced from the sanity check. Moreover, you can use *mSet$dataSet$check.msg* to view all the collected messages that came from running the sanity check.   
 
 ```{r, eval=FALSE}
 
-# Run the sanity check, it will return a 1 if the data is suitable for subsequent analyses. 
+# Run the sanity check, it will return a series of messages if the data is suitable for subsequent analyses. 
 mSet <- SanityCheckData(mSet)
-[1] 1
 
-# View messages collected from running the sanity check. 
-mSet$dataSet$check.msg
-
-# Example of collected messages
- [1] "Samples are in rows and features in columns"                                
- [2] "The uploaded file is in comma separated values (.csv) format."              
- [3] "The uploaded data file contains 77 (samples) by 63 (compounds) data matrix."
- [4] "2 groups were detected in samples."                                         
- [5] "Samples are not paired."                                                    
- [6] "All data values are numeric."                                               
- [7] "A total of 0 (0%) missing values were detected."                            
+ # [1] "Successfully passed sanity check."                                                                    
+ # [2] "Samples are not paired."                                                                              
+ # [3] "2 groups were detected in samples."                                                                   
+ # [4] "Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed."                 
+ # [5] "<font color=\"orange\">Other special characters or punctuations (if any) will be stripped off.</font>"
+ # [6] "All data values are numeric."                                                                         
+ # [7] "A total of 0 (0%) missing values were detected."                                                      
+ # [8] "<u>By default, these values will be replaced by a small value.</u>"                                   
+ # [9] "Click <b>Skip</b> button if you accept the default practice"                                          
+# [10] "Or click <b>Missing value imputation</b> to use other methods"                           
 ```
 
 ## 2.2 Processing an example dataset (Compound concentration data)
