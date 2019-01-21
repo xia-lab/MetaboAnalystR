@@ -13,9 +13,12 @@ SanityCheckData(mSetObj=NA)
 SanityCheckData is used for data processing, and performs a basic sanity 
 check of the uploaded content, ensuring that the data is suitable for further analysis. 
 The function will return a message if the data has successfully passed the check
-and is deemed suitable for further analysis. 
+and is deemed suitable for further analysis. If it fails, the function will return a 0.
 The function will perform the check directly onto the mSet$dataSet object, and must 
-be performed immediatly after reading in data.
+be performed immediatly after reading in data. 
+The sanity check function evaluates the accuracy of sample and class labels, data structure, 
+deals with non-numeric values, removes columns that are constant across all samples (variance = 0), 
+and by default replaces missing values with half of the original minimal positive value in your dataset.
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
