@@ -91,7 +91,7 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 #### Option C) Manual download of MetaboAnalyst.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_1.0.2.tar.gz). The * must be replaced by what is actually downloaded and built.  
+Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_1.0.3.tar.gz). The * must be replaced by what is actually downloaded and built.  
 
 ```R
 cd ~/Downloads
@@ -137,7 +137,7 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
-01-21-2019 - Version Update: 1.0.3 - updated underlying R code w. changes to MetaboAnalyst 4.53 + updated documentation
+02-11-2019 - Version Update: 1.0.3 - updated underlying R code w. changes to MetaboAnalyst 4.53 + updated documentation
 
 11-20-2018 - Version Update: 1.0.2 - updated links in R code (https) + underlying code w. changes to MetaboAnalyst 4.39 
 
