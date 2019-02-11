@@ -55,8 +55,7 @@ mSet<-CalculateOraScore(mSet, "rbc", "hyperg")
 mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 
 # Plot a specific metabolic pathway, in this case "Glycine, serine and threonine metabolism"
-mSet<-PlotMetPath(mSet, "Glycine, serine and threonine metabolism", 480, 420)
-
+mSet<-PlotKEGGPath(mSet, "Glycine, serine and threonine metabolism",528, 480, "png", NULL)
 ```
 
 ## 3. Sweave Report

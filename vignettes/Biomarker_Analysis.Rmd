@@ -74,7 +74,7 @@ To perform classical ROC curve analysis, you must first set the analysis mode to
 
 Use the *CalculateFeatureRanking* function to calculate the feature importance, ranked by order of most to least important, based on AUC. This creates a CSV file titled "metaboanalyst_roc_univ.csv" including the AUC, p-value, and log-2-fold-change for each metabolite feature. Keep the name "feat.rank.mat" to ensure that the sweave report will work.  
 
-```{r}
+```{r, eval=FALSE}
 # Set the biomarker analysis mode to perform Classical ROC curve analysis ("univ")
 mSet<-SetAnalysisMode(mSet, "univ")
 
