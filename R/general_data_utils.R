@@ -74,16 +74,16 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   anal.type <<- anal.type;
   
   # disable parallel prcessing in xcms for public server
-  if(data.type == "mspeak" || data.type == "msspec")
+  if(data.type == "mspeak" || data.type == "msspec"){
     library(BiocParallel);
-  register(SerialParam());
-}
+    register(SerialParam());
+  }
 
-# plotting required by all
-Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
+  # plotting required by all
+  Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
 
-print("R objects intialized ...");
-return(.set.mSet(mSetObj));
+  print("R objects intialized ...");
+  return(.set.mSet(mSetObj));
 }
 
 #'For two factor time series only
