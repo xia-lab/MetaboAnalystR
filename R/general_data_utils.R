@@ -575,95 +575,109 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
 SaveTransformedData <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   data.type <- mSetObj$dataSet$type
-if(!is.null(mSetObj$dataSet[["orig"]])){
-    lbls <- NULL;
-    tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
-    if(tsFormat){
-      lbls <- cbind(as.character(mSetObj$dataSet$orig.facA),as.character(mSetObj$dataSet$orig.facB));
-      colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-    }else{
-      lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));
-    }
-
-    orig.var.nms <- mSetObj$dataSet$orig.var.nms;
+  
+  # mummichog data is not processed, so just mSet$orig and mSet$proc
+  
+  if(anal.type=="mummichog"){
+    
     orig.data<- mSetObj$dataSet$orig;
-
-    if(anal.type != "mummichog"){
-        # convert back to original names
-        if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-            colnames(orig.data) <- orig.var.nms[colnames(orig.data)];
-        }
-        orig.data<-cbind(lbls, orig.data);
-    }
-
-    if(dim(orig.data)[2]>200){
-      orig.data<-t(orig.data);
-    }
-    write.csv(orig.data, file="data_original.csv");
-
-    if(!is.null(mSetObj$dataSet[["proc"]])){
-
-      if(!is.null(mSetObj$dataSet[["filt"]])){
-        if(tsFormat){
-          lbls <- cbind(as.character(mSetObj$dataSet$filt.facA),as.character(mSetObj$dataSet$filt.facB));
-          colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-        }else{
-          lbls <- cbind("Label"= as.character(mSetObj$dataSet$filt.cls));
-        }
-        proc.data<-mSetObj$dataSet$filt;  
+    colnames(orig.data) <- c("p.value", "m.z", "t.score")
+    write.csv(orig.data, file="data_original.csv", row.names = FALSE);
+    
+    proc.data<- mSetObj$dataSet$proc
+    colnames(proc.data) <- c("p.value", "m.z", "t.score")
+    write.csv(proc.data, file="data_processed.csv", row.names = FALSE);
+    
+  }else{
+    if(!is.null(mSetObj$dataSet[["orig"]])){
+      lbls <- NULL;
+      tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
+      if(tsFormat){
+        lbls <- cbind(as.character(mSetObj$dataSet$orig.facA),as.character(mSetObj$dataSet$orig.facB));
+        colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
       }else{
-        if(tsFormat){
-          lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
-          colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-        }else{
-          lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
-        }
-        proc.data<-mSetObj$dataSet$proc;
+        lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));
       }
+      
+      orig.var.nms <- mSetObj$dataSet$orig.var.nms;
+      orig.data<- mSetObj$dataSet$orig;
+      
       
       # convert back to original names
       if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-           colnames(proc.data) <- orig.var.nms[colnames(proc.data)];
+        colnames(orig.data) <- orig.var.nms[colnames(orig.data)];
       }
-      proc.data<-cbind(lbls, proc.data);
-  
-      if(dim(proc.data)[2]>200){
-        proc.data<-t(proc.data);
-      }
-      write.csv(proc.data, file="data_processed.csv");
+        orig.data<-cbind(lbls, orig.data);
 
-      if(!is.null(mSetObj$dataSet[["norm"]])){
-        if(tsFormat){
-          lbls <- cbind(as.character(mSetObj$dataSet$facA),as.character(mSetObj$dataSet$facB));
-          colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+      if(dim(orig.data)[2]>200){
+        orig.data<-t(orig.data);
+      }
+        
+      write.csv(orig.data, file="data_original.csv");
+      
+      if(!is.null(mSetObj$dataSet[["proc"]])){
+        
+        if(!is.null(mSetObj$dataSet[["filt"]])){
+          if(tsFormat){
+            lbls <- cbind(as.character(mSetObj$dataSet$filt.facA),as.character(mSetObj$dataSet$filt.facB));
+            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+          }else{
+            lbls <- cbind("Label"= as.character(mSetObj$dataSet$filt.cls));
+          }
+          proc.data<-mSetObj$dataSet$filt;  
         }else{
-          lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
+          if(tsFormat){
+            lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
+            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+          }else{
+            lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
+          }
+          proc.data<-mSetObj$dataSet$proc;
         }
         
-        norm.data <- mSetObj$dataSet$norm;
-
-        # for ms peaks with rt and ms, insert two columns, without labels
-        # note in memory, features in columns
-        if(!is.null(mSetObj$dataSet$three.col)){ 
+        # convert back to original names
+        if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
+          colnames(proc.data) <- orig.var.nms[colnames(proc.data)];
+        }
+        proc.data<-cbind(lbls, proc.data);
+        
+        if(dim(proc.data)[2]>200){
+          proc.data<-t(proc.data);
+        }
+        write.csv(proc.data, file="data_processed.csv");
+        
+        if(!is.null(mSetObj$dataSet[["norm"]])){
+          if(tsFormat){
+            lbls <- cbind(as.character(mSetObj$dataSet$facA),as.character(mSetObj$dataSet$facB));
+            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
+          }else{
+            lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
+          }
+          
+          norm.data <- mSetObj$dataSet$norm;
+          
+          # for ms peaks with rt and ms, insert two columns, without labels
+          # note in memory, features in columns
+          if(!is.null(mSetObj$dataSet$three.col)){ 
             ids <- matrix(unlist(strsplit(colnames(norm.data), "/")),ncol=2, byrow=T);
             colnames(ids) <- c("mz", "rt");
             new.data <- data.frame(ids, t(norm.data));
             write.csv(new.data, file="peak_normalized_rt_mz.csv");
-        }else{
+          }else{
             # convert back to original names
             if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-                colnames(norm.data) <- orig.var.nms[colnames(norm.data)];   
+              colnames(norm.data) <- orig.var.nms[colnames(norm.data)];   
             }
             norm.data<-cbind(lbls, norm.data);
             if(dim(norm.data)[2]>200){
-                norm.data<-t(norm.data);
+              norm.data<-t(norm.data);
             }
             write.csv(norm.data, file="data_normalized.csv");
+          }
         }
       }
     }
