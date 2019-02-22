@@ -55,7 +55,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
   }
   write.csv(signif(pca$x,5), file="pca_score.csv");
   write.csv(signif(pca$rotation,5), file="pca_loadings.csv");
-  
+
   mSetObj$analSet$pca <- pca;
   return(.set.mSet(mSetObj));
 }
@@ -403,27 +403,27 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   mSetObj$imgSet$pca.loading <- imgName;
   plotType <- mSetObj$analSet$pca$loading.type;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  par(mar=c(6,5,2,6));
-  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-  
-  mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-  grid(col = "lightgray", lty = "dotted", lwd = 1);
-  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
-  
-  if(plotType=="all"){
-    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
-  }else if(plotType == "custom"){
-    if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
-      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+
+    par(mar=c(6,5,2,6));
+    plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+    
+    mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+    grid(col = "lightgray", lty = "dotted", lwd = 1);
+    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+
+    if(plotType=="all"){
+        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    }else if(plotType == "custom"){
+        if(length(mSetObj$custom.cmpds) > 0){
+            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+        }
+    }else{
+        # do nothing
     }
-  }else{
-    # do nothing
-  }
-  
+
   dev.off();
   return(.set.mSet(mSetObj));
   
@@ -509,7 +509,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
-  
+
   write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
   write.csv(signif(mSetObj$analSet$plsr$loadings,5), file="plsda_loadings.csv");
   return(.set.mSet(mSetObj));
@@ -794,29 +794,29 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   mSetObj$imgSet$pls.loading <- imgName;
   plotType <- mSetObj$analSet$plsr$loading.type;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  par(mar=c(6,4,4,5));
-  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-  
-  mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-  grid(col = "lightgray", lty = "dotted", lwd = 1);
-  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
-  
-  if(plotType=="all"){
-    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
-  }else if(plotType == "custom"){
-    if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
-      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+
+    par(mar=c(6,4,4,5));
+    plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+    
+    mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+    grid(col = "lightgray", lty = "dotted", lwd = 1);
+    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+
+    if(plotType=="all"){
+        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    }else if(plotType == "custom"){
+        if(length(mSetObj$custom.cmpds) > 0){
+            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+        }
+    }else{
+        # do nothing
     }
-  }else{
-    # do nothing
-  }
-  
-  dev.off();
-  return(.set.mSet(mSetObj));
+
+    dev.off();
+    return(.set.mSet(mSetObj));
 }
 
 #'PLS-DA classification and feature selection
@@ -1300,7 +1300,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-  
+
   return(.set.mSet(mSetObj));
 }
 
@@ -1324,7 +1324,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -1526,7 +1526,7 @@ PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   # need to record the clicked compounds
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
   .set.mSet(mSetObj);
-  
+
   return(PlotCmpdView(mSetObj, cmpdNm, format, dpi, width));
 }
 

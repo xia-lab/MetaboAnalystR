@@ -4,66 +4,6 @@
 ### McGill University, Canada
 ###License: GNU GPL (>= 2)
 
-#'Merge duplicated columns or rows by their mean
-#'@description dim 1 => row,  dim 2 => column
-#'@param data Input the data
-#'@param dim Numeric, input the dimensions, default is set to 2
-#'@export
-#'
-MergeDuplicates <- function(data, dim=2){
-  
-  if(is.null(dim(data))){ # a vector
-    if(is.null(names(data))){
-      print("Cannot detect duplicate data without names!!!");
-      return();
-    }
-    nm.cls <- as.factor(names(data));
-    uniq.len <- length(levels(nm.cls));
-    if(uniq.len == length(data)){
-      return(data);
-    }
-    new.data <- vector (mode="numeric",length=uniq.len);
-    for(i in 1:uniq.len){
-      dup.inx <- nm.cls == levels(nm.cls)[i];
-      new.data[i] <- mean(data[dup.inx]);
-    }
-    names(new.data) <- levels(nm.cls);
-    rem.len <- length(data) - length(new.data);
-  }else{
-    if(dim == 1){
-      data <- t(data);
-    }
-    if(is.null(colnames(data))){
-      print("Cannot detect duplicate data without var names!!!");
-      return();
-    }
-    
-    nm.cls <- as.factor(colnames(data));
-    uniq.len <- length(levels(nm.cls));
-    
-    if(uniq.len == ncol(data)){
-      if(dim == 1){
-        data <- t(data);
-      }
-      return(data);
-    }
-    
-    new.data <- matrix (nrow=nrow(data), ncol=uniq.len);
-    for(i in 1:uniq.len){
-      dup.inx <- which(nm.cls == levels(nm.cls)[i]);
-      new.data[,i] <- apply(data[,dup.inx, drop=F], 1, mean);
-    }
-    rownames(new.data) <- rownames(data);
-    colnames(new.data) <- levels(nm.cls);
-    
-    rem.len <- ncol(data) - ncol(new.data);
-    if(dim == 1){
-      new.data <- t(new.data);
-    }
-  }
-  print(paste(rem.len, "duplicates are merged to their average"));
-  new.data;
-}
 
 #'Given a data with duplicates, remove duplicates
 #'@description Dups is the one with duplicates

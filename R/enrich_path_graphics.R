@@ -235,17 +235,20 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
+    names(x) <- names(y) <- rownames(mSetObj$analSet$ora.mat);
   }else if(mSetObj$analSet$type == "pathqea"){
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
+    names(x) <- names(y) <- rownames(mSetObj$analSet$qea.mat);
   }else if (mSetObj$analSet$type == "pathinteg"){ # this is integrative analysis
     x <-  mSetObj$dataSet$path.mat[,8];
     y <-  mSetObj$dataSet$path.mat[,4];
+    names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
   }else{
     print(paste("Unknown analysis type: ", mSetObj$analSet$type));
     return(0);
   }
-  
+
   # first sort values based on p
   y = -log(y);
   inx <- order(y, decreasing= T);
@@ -257,6 +260,12 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   sqx <- sqrt(x);
   min.x<- min(sqx, na.rm = TRUE);
   max.x <- max(sqx, na.rm = TRUE);
+    
+  if(min.x == max.x){ # only 1 value
+        max.x = 1.5*max.x;
+        min.x = 0.5*min.x;
+  }
+
   maxR <- (max.x - min.x)/40;
   minR <- (max.x - min.x)/160;
   radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
@@ -336,7 +345,7 @@ GeneratePathwayJSON<-function(pathway.nm){
   load(smpdb.path)
   
   jsons.path <- paste("../../libs/smpdb/jsons/", data.org, ".rds", sep="");
-  smpdb.jsons <<- readRDS(jsons.path)
+  smpdb.jsons <- readRDS(jsons.path) # no need to be global!
 
   if(pathway.nm == "top"){
     if(mSetObj$analSet$type == "pathora"){

@@ -644,8 +644,7 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
   # Remove groups that overlap with more "well-behaved" groups
   numsamp <- rowSums(groupmat[,(match("npeaks", colnames(groupmat))+1):ncol(groupmat),drop=FALSE])
   uorder <- order(-numsamp, groupmat[,"npeaks"])
-  uindex <- rectUnique(groupmat[,c("mzmin","mzmax","rtmin","rtmax"),drop=FALSE],
-                       uorder)
+  uindex <- rectUnique(groupmat[,c("mzmin","mzmax","rtmin","rtmax"),drop=FALSE],uorder)
   
   peakSet$groups <- groupmat[uindex,];
   peakSet$groupidx<- groupindex[uindex];

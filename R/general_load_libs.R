@@ -56,4 +56,6 @@ load_rgraphwiz <- function(){
 # Load XCMS
 load_xcms <- function(){
   suppressMessages(library(xcms))
+  # disable parallel processing on the server
+  register(SerialParam());
 }

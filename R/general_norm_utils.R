@@ -518,15 +518,18 @@ UpdateData <- function(mSetObj=NA){
   }
 }
 
+# should always init (new or overwrite previous prenorm object)
+# note in right order that dataSet$edit will always performed using dataSet$filt (if it exists)
+# note dataSet$filt can be re-performed after dataSet$edit during analysis
+# need to make sure prenorm created using the latest information (based on both)
+
 #'Prepare data for normalization
 #'@description Function should always be initialized (new or overwrite previous prenorm object).
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 
 PreparePrenormData <- function(mSetObj=NA){
-  
     mSetObj <- .get.mSet(mSetObj);
-    
     if(!is.null(mSetObj$dataSet$edit)){
         mydata <- mSetObj$dataSet$edit;
         if(!is.null(mSetObj$dataSet$filt)){
