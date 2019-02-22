@@ -21,10 +21,6 @@ PlotPLSLoading(mSetObj = NA, imgName, format = "png", dpi = 72,
 \item{inx1}{Numeric, indicate the number of the principal component for the x-axis of the loading plot.}
 
 \item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
-
-\item{plotType}{Two options, "scatter" or "barplot"}
-
-\item{lbl.feat}{1 or 0}
 }
 \description{
 Plot PLS loading plot, also set the loading matrix for display

@@ -445,6 +445,16 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
   return(.set.mSet(mSetObj));
 }
 
+#'Update PCA loadings
+#'@description Update the PCA loadings
+#'@param mSetObj Input name of the created mSet Object
+#'@param plotType Set annotation type, "all" to label all variables and
+#'"none" to label no variables.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
 UpdatePCA.Loading<- function(mSetObj=NA, plotType){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$analSet$pca$loading.type <- plotType;
@@ -454,9 +464,6 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 
 #'Plot PCA loadings and also set up the matrix for display
 #'@description Rotate PCA analysis
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
 #'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -467,10 +474,11 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
-#'@param plotType Indicate the plot type, "scatter" for a scatter plot, if blank it will create a barplot.
-#'@param lbl.feat Indicate 1 to show labeled features and 0 to not show labels. 
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
 #'@export
-#'
+
 PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -918,8 +926,6 @@ UpdatePLS.Loading<- function(mSetObj=NA, plotType){
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5. The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
-#'@param plotType Two options, "scatter" or "barplot" 
-#'@param lbl.feat 1 or 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1597,8 +1603,6 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@param plotType To create a plot of all compounds use "all", and to create a plot of custom
-#'compounds, use "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
