@@ -336,6 +336,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       sig.num = sig.num,
       paired = paired,
       raw.thresh = threshp,
+      t.score = sort(t.stat),
       p.value = sort(p.value),
       p.log = p.log,
       thresh = -log10(threshp), # only used for plot threshold line
@@ -347,6 +348,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       sig.num = sig.num,
       paired = paired,
       raw.thresh = threshp,
+      t.score = sort(t.stat),
       p.value = sort(p.value),
       p.log = p.log,
       thresh = -log10(threshp), # only used for plot threshold line
@@ -891,9 +893,9 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   my.width <- 240;
   adj.width <- 60*length(levels(cls))+20;
   if(adj.width > my.width){
-     my.width <- adj.width;
+    my.width <- adj.width;
   }
-
+  
   Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=300, type=format, bg="transparent");
   par(mar=c(4,3,1,2), oma=c(0,0,1,0));
   boxplot(mSetObj$dataSet$norm[, cmpdNm]~cls,las=2, col= unique(GetColorSchema(mSetObj)), xaxt="n");
