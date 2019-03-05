@@ -2,9 +2,9 @@
 % Please edit documentation in R/mummichog.R
 \name{UpdateMummichogParameters}
 \alias{UpdateMummichogParameters}
-\title{Upates the mSetObj with user-selected parameters}
+\title{Update the mSetObj with user-selected parameters for MS Peaks to Pathways.}
 \usage{
-UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff)
+UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff, custom=FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
@@ -14,6 +14,8 @@ UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff)
 \item{msModeOpt}{Define the mass-spec mode of the instrument used to perform untargeted metabolomics.}
 
 \item{pvalCutoff}{Numeric, specify the p-value cutoff to define significant m/z features from reference m/z features.}
+
+\item{custom}{Logical, select adducts for mummichog to consider.}
 }
 \description{
 This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function

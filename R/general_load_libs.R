@@ -59,3 +59,23 @@ load_xcms <- function(){
   # disable parallel processing on the server
   register(SerialParam());
 }
+
+# Load fGSEA
+load_fGSEA <- function(){
+  suppressMessages(library(fgsea))
+}
+
+# Load data.table
+load_data.table <- function(){
+  suppressMessages(library(data.table))
+}
+
+# Load ggplot2
+load_ggplot <- function(){
+  suppressMessages(library(ggplot2))
+}
+
+# Load camera
+load_camera <- function(){
+  suppressMessages(library(CAMERA))
+}

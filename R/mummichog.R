@@ -32,33 +32,74 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
       return (0);
     }
 
-    mSetObj$dataSet$orig <- cbind(input$p.value, input$m.z, input$t.score);
+    mSetObj$dataSet$mummi.orig <- cbind(input$p.value, input$m.z, input$t.score);
     mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), "m/z features were found in your uploaded data.");
     return(.set.mSet(mSetObj));
 
 }
 
-#'Upates the mSetObj with user-selected parameters
-#'@description This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function
-#'to specify to the organism's pathways to use (libOpt), the mass-spec mode (msModeOpt), mass-spec instrument (instrumentOpt), 
-#'the p-value cutoff (pvalCutoff), and the number of permutations (permNum).
-#'@usage UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@param instrumentOpt Define the mass-spec instrument used to perform untargeted metabolomics.
-#'@param msModeOpt Define the mass-spec mode of the instrument used to perform untargeted metabolomics.
-#'@param pvalCutoff Numeric, specify the p-value cutoff to define significant m/z features from reference m/z features.
+#'Convert mSetObj to proper format for MS Peaks to Pathways module
+#'@description Following t-test analysis, this functions converts the results from the mSetObj 
+#'to the proper format for mummichog analysis
+#'@param mSetObj Input the name of the created mSetObj.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff){
+
+Convert2Mummichog <- function(mSetObj=NA, rt=FALSE){
+  
+  tt.pval <- mSetObj$analSet$tt$p.value
+  fdr <- p.adjust(tt.pval, "fdr")
+  mz.pval <- names(tt.pval)
+  pvals <- cbind(as.numeric(mz.pval), as.numeric(fdr))
+  colnames(pvals) <- c("m.z", "p.value")
+  
+  tt.tsc <- mSetObj$analSet$tt$t.score
+  mz.tsc <- names(tt.tsc)
+  tscores <- cbind(as.numeric(mz.tsc), as.numeric(tt.tsc))
+  colnames(tscores) <- c("m.z", "t.score")
+  
+  if(rt == TRUE & !.on.public.web){
+    camera_output <- readRDS("annotated_peaklist.rds")
+    mz.cam <- round(camera_output$mz, 5) 
+    rt.cam <- round(camera_output$rt, 5) 
+    camera <- cbind(mz.cam, rt.cam)
+    colnames(camera) <- c("m.z", "r.t")
+    mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(camera, pvals, tscores))
+  }else{
+    mummi_new <- merge(pvals, tscores)
+  }
+  
+  filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
+  
+  write.table(mummi_new, filename, row.names = FALSE)
+  
+  return(.set.mSet(mSetObj))
+}
+
+#'Update the mSetObj with user-selected parameters for MS Peaks to Pathways.
+#'@description This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function
+#'to specify to the organism's pathways to use (libOpt), the mass-spec mode (msModeOpt), mass-spec instrument (instrumentOpt), 
+#'the p-value cutoff (pvalCutoff), and the number of permutations (permNum).
+#'@usage UpdateMummichogParameters(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff, custom=FALSE)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param instrumentOpt Define the mass-spec instrument used to perform untargeted metabolomics.
+#'@param msModeOpt Define the mass-spec mode of the instrument used to perform untargeted metabolomics.
+#'@param pvalCutoff Numeric, specify the p-value cutoff to define significant m/z features from reference m/z features.
+#'@param custom Logical, select adducts for mummichog to consider.
+#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+UpdateMummichogParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, pvalCutoff, custom = FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
   mSetObj$dataSet$instrument <- instrumentOpt;
   mSetObj$dataSet$mode <- msModeOpt;
   mSetObj$dataSet$cutoff <- pvalCutoff;
-  mSetObj$custom <- FALSE
+  mSetObj$custom <- custom;
   
   return(.set.mSet(mSetObj));
 }
@@ -79,7 +120,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   msg.vec <- NULL;
 
   cutoff <- mSetObj$dataSet$cutoff;
-  ndat <- mSetObj$dataSet$orig;
+  ndat <- mSetObj$dataSet$mummi.orig;
 
   # sort mzs by p-value
   ord.inx <- order(ndat[,1]);
@@ -144,8 +185,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     msg.vec <- c(msg.vec, "The number of significant features is small based on the current cutoff, possibly not accurate.");
   }
   
-  mSetObj$msgSet$check.msg <- msg.vec;
-  mSetObj$dataSet$proc <- ndat;
+  mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$check.msg, msg.vec);
+  mSetObj$dataSet$mummi.proc <- ndat;
   mSetObj$dataSet$input_mzlist <- input_mzlist;
   mSetObj$dataSet$expr_dic <- tscores;
   mSetObj$dataSet$N <- sig.size;
@@ -232,6 +273,7 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogSigPvals(mSetObj, enrichOpt, pvalOpt);
+    mSetObj$mummi.anal <- "orig"
     mummichog.lib <- NULL;
     return(.set.mSet(mSetObj));
 }
@@ -525,6 +567,297 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   return(mSetObj);
 }
 
+####
+#### NEW functions for inclusion of fgsea
+####
+
+#'New main function to perform fast pre-ranked mummichog
+#'@description This is the main function that performs the mummichog analysis.
+#'@usage PerformGSEA(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
+#'@param mSetObj Input the name of the created mSetObj object
+#'@param lib Input the name of the organism library, default is hsa
+#'@param enrichOpt Input the method to perform enrichment analysis
+#'@param pvalOpt Input the method to calculate p-values
+#'@param permNum Numeric, the number of permutations to perform
+#'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@import fgsea
+
+PerformGSEA <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  filenm <- paste(lib, ".rds", sep="")
+  biocyc <- grepl("biocyc", lib)
+  
+  if(.on.public.web){
+    load_fGSEA()
+    load_data.table()
+  }
+  
+  if(!is.null(mSetObj$curr.cust)){
+    
+    if(biocyc){
+      user.curr <- mSetObj$curr.map$BioCyc
+    }else{
+      user.curr <- mSetObj$curr.map$KEGG
+    }
+    
+    currency <<- user.curr
+    
+    if(length(currency)>0){
+      mSetObj$mummi$anal.msg <- c("Currency metabolites were successfully uploaded!")
+    }else{
+      mSetObj$mummi$anal.msg <- c("Errors in currency metabolites uploading!")
+    }
+  }
+  
+  if(.on.public.web==TRUE){
+    mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
+  }else{
+    if(!file.exists(filenm)){
+      mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
+      mummichog.lib <- readRDS(filenm);
+    }else{
+      mummichog.lib <- readRDS(filenm);
+    }
+  }
+  
+  if(!is.null(mSetObj$adduct.custom)){
+    mw <- mummichog.lib$cpd.lib$mw
+    new_adducts <- new_adduct_mzlist(mSetObj, mw)
+    
+    cpd.lib <- list(
+      mz.mat = new_adducts,
+      mw = mummichog.lib$cpd.lib$mw,
+      id = mummichog.lib$cpd.lib$id,
+      name = mummichog.lib$cpd.lib$name
+    );
+    
+  }else{
+    cpd.lib <- list(
+      mz.mat = mummichog.lib$cpd.lib$adducts[[mSetObj$dataSet$mode]],
+      mw = mummichog.lib$cpd.lib$mw,
+      id = mummichog.lib$cpd.lib$id,
+      name = mummichog.lib$cpd.lib$name
+    );
+  }
+  
+  cpd.tree <- mummichog.lib$cpd.tree[[mSetObj$dataSet$mode]];
+  
+  mSetObj$pathways <- mummichog.lib$pathways;
+  mSetObj$lib.gsea.organism <- lib; #keep track of lib organism for sweave report
+  
+  mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
+
+  mSetObj <- .compute.mummichog.fgsea(mSetObj, enrichOpt, pvalOpt, permNum);
+  mummichog.lib <- NULL;
+  
+  mSetObj$mummi.anal <- "fgsea"
+  
+  return(.set.mSet(mSetObj));
+}
+
+.compute.mummichog.fgsea <- function(mSetObj, enrichOpt, pvalOpt, permNum){
+
+  num_perm <- permNum;
+  total_cpds <- mSetObj$cpd_exp #scores from all matched compounds
+  
+  current.mset <- mSetObj$pathways$cpds; #all compounds per pathway
+  names(current.mset) <- mSetObj$pathways$name
+  path.size <- unlist(lapply(mSetObj$pathways$cpds, length)) #total size of pathways
+  
+  df.scores <- data.frame(id=names(total_cpds), scores=total_cpds)
+  ag.scores <- aggregate(id ~ scores, data = df.scores, paste, collapse = "; ")
+  
+  ag.sorted <- ag.scores[order(-ag.scores$scores),]
+  row.names(ag.sorted) <- NULL
+  
+  dt.scores <- data.table::data.table(ag.sorted)
+  dt.scores.out <- dt.scores[, list(scores=scores, id = unlist(strsplit(id, "; ", fixed = TRUE))), by=1:nrow(dt.scores)]
+  
+  rank.vec <- as.numeric(dt.scores.out$nrow)
+  names(rank.vec) <- as.character(dt.scores.out$id)
+  
+  scores.vec <- as.numeric(ag.sorted$scores)
+  names(scores.vec) <- as.character(ag.sorted$id)
+  
+  # run fgsea
+  fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
+  
+  res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=6)
+  
+  path.size <- unlist(lapply(current.mset, length))
+  matched.size <- path.size[match(fgseaRes$pathway, names(path.size))]
+  
+  # create result table
+  res.mat[,1] <- matched.size
+  res.mat[,2] <- fgseaRes$size
+  res.mat[,3] <- fgseaRes$pval
+  res.mat[,4] <- fgseaRes$padj
+  res.mat[,5] <- fgseaRes$NES
+  
+  rownames(res.mat) <- fgseaRes$pathway
+  colnames(res.mat) <- c("Pathway_Total", "Hits", "P_val", "P_adj", "NES", "Leading_Edge")
+  
+  # order by p-values
+  ord.inx <- order(res.mat[,4]);
+  res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
+  
+  res.mat[,6] <- as.character(fgseaRes$leadingEdge)[ord.inx]
+  
+  mSetObj$mummi.gsea.resmat <- res.mat;
+  
+  write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  return(mSetObj);
+}
+
+##### For local only ####
+
+#' PlotIntegPaths
+#' @description Plot both the original mummichog and the GSEA results 
+#' @param format Character, input the format of the image to create.
+#' @param dpi Numeric, input the dpi of the image to create.
+#' @param width Numeric, input the width of the image to create.
+#' @param labels Logical, default is FALSE. If set to true, it will
+#' label the all of the identified pathways.
+#' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' @import ggplot2
+#' @import plotly
+
+PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web==TRUE){
+    return(0)
+  }
+  
+  ora.all <- mSetObj$mummi.resmat
+  ora.lib <- mSetObj$lib.organism
+  
+  gsea.all <- mSetObj$mummi.gsea.resmat
+  gsea.lib <- mSetObj$lib.gsea.organism
+  
+  # check if mummichog + gsea was performed
+  if(is.null(ora.all) | is.null(gsea.all)){
+    print("Both mummichog and fGSEA must be performed!")
+    return(0)
+  }
+  
+  # check if same libraries were used
+  if(ora.lib != gsea.lib){
+    print("The same pathway library must be used for mummichog and fGSEA!")
+    return(0)
+  }
+  
+  ora.pval <- ora.all[,5]
+  ora.paths <- names(ora.pval)
+  ora.mat <- cbind(ora.paths, ora.pval)
+  
+  gsea.pval <- gsea.all[,3]
+  gsea.paths <- names(gsea.pval)
+  gsea.mat <- cbind(gsea.paths, gsea.pval)
+
+  if(length(ora.paths)>length(gsea.paths)){
+    # ora paths is bigger, need to subset
+    matched_paths <- na.omit(match(gsea.paths, ora.paths))
+    matched_ora <- ora.mat[matched_paths,]
+    mum.matrix <- cbind(matched_ora, gsea.mat)
+  }else{
+    # gsea paths is bigger, need to subset 
+    matched_paths <- na.omit(match(ora.paths, gsea.paths))
+    matched_gsea <- gsea.mat[matched_paths,]
+    mum.matrix <- cbind(ora.mat, matched_gsea)
+    mum.df <- data.frame(pathways = mum.matrix[,1], mummichog = as.numeric(mum.matrix[,2]), 
+                         gsea = as.numeric(mum.matrix[,4]))
+  }
+  
+  # Sort values based on mummichog pvalues
+  y <- -log(mum.df$mummichog);
+  y <- scales::rescale(y, c(0,5))
+  
+  x <- -log(mum.df$gsea);
+  x <- scales::rescale(x, c(0,5))
+  
+  inx <- order(y, decreasing= T);
+  
+  x <- x[inx]; 
+  y <- y[inx];
+  path.nms <- mum.df$pathways[inx];
+  
+  min.x<- min(x, na.rm = TRUE);
+  max.x <- max(x, na.rm = TRUE);
+  
+  if(min.x == max.x){ # only 1 value
+    max.x = 1.5*max.x;
+    min.x = 0.5*min.x;
+  }
+  
+  maxR <- (max.x - min.x)/40;
+  minR <- (max.x - min.x)/160;
+  radi.vec <- minR+(maxR-minR)*(x-min.x)/(max.x-min.x);
+  
+  # set background color according to y
+  bg.vec <- heat.colors(length(y));
+  
+  if(format == "png"){
+    bg = "transparent";
+  }else{
+    bg="white";
+  }
+  
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  df <- data.frame(path.nms, x, y)
+  
+  imgName = paste("integ_path_plot", "dpi", dpi, ".", format, sep="");
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  op <- par(mar=c(6,5,2,3));
+  plot(x, y, type="n", axes=F, xlab="GSEA -log(p)", ylab="Mummichog -log(p)");
+  axis(1);
+  axis(2);
+  symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+  
+  if(labels==TRUE){
+    text(x, y, labels = path.nms)
+  }
+  par(op);
+  dev.off();
+  
+  return(mSetObj);
+}
+
+# Function to return the unique m/zs from the selected pathways 
+# based on the compounds
+
+GetMummichogMZHits <- function(mSetObj=NA, msetNm){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  inx <- which(mSetObj$pathways$name == msetNm)
+  mset <- mSetObj$pathways$cpds[[inx]];
+  
+  mzs <- as.numeric(unique(unlist(mSetObj$cpd2mz_dict[mset])))
+  
+  result <- intersect(mzs, mSet$dataSet$input_mzlist)
+
+  return(result)
+}
+
 ##### For Web ################
 
 GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
@@ -763,4 +1096,258 @@ myFastList <- function(capacity = 100) {
   }
   
   methods
+}
+
+####
+####
+#### from the fgsea R package, minor edits to adapt to untargeted metabolomics
+
+#'Pre-ranked gsea adapted for untargeted metabolomics
+#'@export
+#'@import fgsea
+
+fgsea2 <- function(mSetObj, pathways, stats, ranks,
+                   nperm,
+                   minSize=1, maxSize=Inf,
+                   nproc=0,
+                   gseaParam=1,
+                   BPPARAM=NULL) {
+  
+  # Warning message for ties in stats
+  ties <- sum(duplicated(stats[stats != 0]))
+  if (ties != 0) {
+    warning("There are ties in the preranked stats (",
+            paste(round(ties * 100 / length(stats), digits = 2)),
+            "% of the list).\n",
+            "The order of those tied m/z features will be arbitrary, which may produce unexpected results.")
+  }
+  
+  # Warning message for duplicate gene names
+  if (any(duplicated(names(stats)))) {
+    warning("There are duplicate m/z feature names, fgsea may produce unexpected results")
+  }
+  
+  granularity <- 1000
+  permPerProc <- rep(granularity, floor(nperm / granularity))
+  if (nperm - sum(permPerProc) > 0) {
+    permPerProc <- c(permPerProc, nperm - sum(permPerProc))
+  }
+  seeds <- sample.int(10^9, length(permPerProc))
+  
+  if (is.null(BPPARAM)) {
+    if (nproc != 0) {
+      if (.Platform$OS.type == "windows") {
+        # windows doesn't support multicore, using snow instead
+        BPPARAM <- BiocParallel::SnowParam(workers = nproc)
+      } else {
+        BPPARAM <- BiocParallel::MulticoreParam(workers = nproc)
+      }
+    } else {
+      BPPARAM <- BiocParallel::bpparam()
+    }
+  }
+  
+  minSize <- max(minSize, 1)
+  stats <- abs(stats) ^ gseaParam
+  
+  # returns list of indexs of matches between pathways and rank names
+  pathwaysPos <- lapply(pathways, function(p) { as.vector(na.omit(fastmatch::fmatch(p, names(ranks)))) })
+  pathwaysFiltered <- lapply(pathwaysPos, function(s) { ranks[s] })
+  
+  # adjust for the fact that a single m/z feature can match to several compound identifiers
+  pathway2mzSizes <- sapply(pathways, function(z) { length(intersect(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[z]))), mSetObj$dataSet$input_mzlist))} )
+  oldpathwaysSizes <- sapply(pathwaysFiltered, length)
+  
+  pathwaysSizes <- pmin(pathway2mzSizes, oldpathwaysSizes)
+  
+  toKeep <- which(minSize <= pathwaysSizes & pathwaysSizes <= maxSize)
+  m <- length(toKeep)
+  
+  if (m == 0) {
+    return(data.table(pathway=character(),
+                      pval=numeric(),
+                      padj=numeric(),
+                      ES=numeric(),
+                      NES=numeric(),
+                      nMoreExtreme=numeric(),
+                      size=integer(),
+                      leadingEdge=list()))
+  }
+  
+  pathwaysFiltered <- pathwaysFiltered[toKeep]
+  pathwaysSizes <- pathwaysSizes[toKeep]
+  
+  K <- max(pathwaysSizes)
+  
+  #perform gsea
+  gseaStatRes <- do.call(rbind,
+                         lapply(pathwaysFiltered, fgsea::calcGseaStat,
+                                stats=stats,
+                                returnLeadingEdge=TRUE))
+  
+  leadingEdges <- mapply("[", list(names(stats)), gseaStatRes[, "leadingEdge"], SIMPLIFY = FALSE)
+  pathwayScores <- unlist(gseaStatRes[, "res"])
+  
+  #perform permutations
+  universe <- seq_along(stats)
+  
+  counts <- BiocParallel::bplapply(seq_along(permPerProc), function(i) {
+    nperm1 <- permPerProc[i]
+    leEs <- rep(0, m)
+    geEs <- rep(0, m)
+    leZero <- rep(0, m)
+    geZero <- rep(0, m)
+    leZeroSum <- rep(0, m)
+    geZeroSum <- rep(0, m)
+    if (m == 1) {
+      for (i in seq_len(nperm1)) {
+        randSample <- sample.int(length(universe), K)
+        randEsP <- fgsea::calcGseaStat(
+          stats = stats,
+          selectedStats = randSample,
+          gseaParam = 1)
+        leEs <- leEs + (randEsP <= pathwayScores)
+        geEs <- geEs + (randEsP >= pathwayScores)
+        leZero <- leZero + (randEsP <= 0)
+        geZero <- geZero + (randEsP >= 0)
+        leZeroSum <- leZeroSum + pmin(randEsP, 0)
+        geZeroSum <- geZeroSum + pmax(randEsP, 0)
+      }
+    } else {
+      aux <- fgsea:::calcGseaStatCumulativeBatch(
+        stats = stats,
+        gseaParam = 1,
+        pathwayScores = pathwayScores,
+        pathwaysSizes = pathwaysSizes,
+        iterations = nperm1,
+        seed = seeds[i])
+      leEs = get("leEs", aux)
+      geEs = get("geEs", aux)
+      leZero = get("leZero", aux)
+      geZero = get("geZero", aux)
+      leZeroSum = get("leZeroSum", aux)
+      geZeroSum = get("geZeroSum", aux)
+    }
+    data.table::data.table(pathway=seq_len(m),
+                           leEs=leEs, geEs=geEs,
+                           leZero=leZero, geZero=geZero,
+                           leZeroSum=leZeroSum, geZeroSum=geZeroSum
+    )
+  }, BPPARAM=BPPARAM)
+  
+  counts <- data.table::rbindlist(counts)
+  
+  # Getting rid of check NOTEs
+  leEs=leZero=geEs=geZero=leZeroSum=geZeroSum=NULL
+  pathway=padj=pval=ES=NES=geZeroMean=leZeroMean=NULL
+  nMoreExtreme=nGeEs=nLeEs=size=NULL
+  leadingEdge=NULL
+  .="damn notes"
+  
+  pval <- unlist(lapply(counts$pathway, function(c) min((1+sum(counts[c,]$leEs)) / (1 + sum(counts[c,]$leZero)),
+                                                        (1+sum(counts[c,]$geEs)) / (1 + sum(counts[c,]$geZero)))))
+  
+  leZeroMean <- unlist(lapply(counts$pathway, function(d) sum(counts[d,]$leZeroSum) / sum(counts[d,]$leZero)))
+  geZeroMean <- unlist(lapply(counts$pathway, function(e) sum(counts[e,]$geZeroSum) / sum(counts[e,]$geZero)))
+  nLeEs <- unlist(lapply(counts$pathway, function(f) sum(counts[f,]$leEs)))
+  nGeEs <- unlist(lapply(counts$pathway, function(g) sum(counts[g,]$geEs)))
+  
+  pvals <- data.frame(pval=pval, leZeroMean=leZeroMean, geZeroMean=geZeroMean, nLeEs=nLeEs, nGeEs=nGeEs)
+  
+  padj <- p.adjust(pvals$pval, method="fdr")
+  ES <- pathwayScores
+  NES <- ES / ifelse(ES > 0, pvals$geZeroMean, abs(pvals$leZeroMean))
+  pvals$leZeroMean <- NULL
+  pvals$geZeroMean <- NULL
+  
+  nMoreExtreme <- ifelse(ES > 0, pvals$nGeEs, pvals$nLeEs)
+  pvals$nLeEs <- NULL
+  pvals$nGeEs <- NULL
+  
+  size <- pathwaysSizes
+  pathway <- names(pathwaysFiltered)
+  
+  leadingEdge <- sapply(leadingEdges, paste0, collapse = "; ")
+  leadingEdge2 <- sapply(leadingEdge, function(x) strsplit(x, "; "))
+  pathway.cpds <- sapply(pathwaysFiltered, attributes)
+  
+  matches <- mapply(intersect, leadingEdge2, pathway.cpds)
+  
+  leadingEdgeMatched <- sapply(matches, paste0, collapse = "; ")
+  
+  pvals.done <- cbind(pathway, pvals, padj, ES, NES, nMoreExtreme, size, leadingEdgeMatched)
+  
+  return(pvals.done)
+}
+
+calcGseaStat2 <- function(stats, selectedStats, gseaParam=1,
+                          returnAllExtremes=FALSE,
+                          returnLeadingEdge=FALSE) {
+  
+  S <- selectedStats
+  r <- stats
+  p <- gseaParam
+  
+  S <- sort(S)
+  
+  # account for 1 mz can be multiple cpds
+  S.scores <- r[S]
+  u.S <- S[!duplicated(S.scores)]
+  scores <- unique(S.scores)
+  
+  m <- length(scores)
+  N <- length(r)
+  
+  if (m == N) {
+    stop("GSEA statistic is not defined when all genes are selected")
+  }
+  
+  NR <- (sum(abs(scores)^p))
+  rAdj <- abs(scores)^p
+  if (NR == 0) {
+    # this is equivalent to rAdj being rep(eps, m)
+    rCumSum <- seq_along(rAdj) / length(rAdj)
+  } else {
+    rCumSum <- cumsum(rAdj) / NR
+  }
+  
+  tops <- rCumSum - (u.S - seq_along(u.S)) / (N - m)
+  if (NR == 0) {
+    # this is equivalent to rAdj being rep(eps, m)
+    bottoms <- tops - 1 / m
+  } else {
+    bottoms <- tops - rAdj / NR
+  }
+  
+  maxP <- max(tops)
+  minP <- min(bottoms)
+  
+  if(maxP > -minP) {
+    geneSetStatistic <- maxP
+  } else if (maxP < -minP) {
+    geneSetStatistic <- minP
+  } else {
+    geneSetStatistic <- 0
+  }
+  
+  if (!returnAllExtremes && !returnLeadingEdge) {
+    return(geneSetStatistic)
+  }
+  
+  res <- list(res=geneSetStatistic)
+  if (returnAllExtremes) {
+    res <- c(res, list(tops=tops, bottoms=bottoms))
+  }
+  if (returnLeadingEdge) {
+    leadingEdge <- if (maxP > -minP) {
+      u.S[seq_along(u.S) <= which.max(bottoms)]
+    } else if (maxP < -minP) {
+      rev(u.S[seq_along(u.S) >= which.min(bottoms)])
+    } else {
+      NULL
+    }
+    
+    res <- c(res, list(leadingEdge=leadingEdge))
+  }
+  res
 }

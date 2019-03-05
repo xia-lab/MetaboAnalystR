@@ -8,6 +8,10 @@
 
 **MetaboAnalystR** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility.
 
+## Update to Version 2.0
+
+We present MetaboAnalystR 2.0, which aims to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, please refer to the MetaboAnalystR 2.0 Workflow vignette. 
+
 ## Getting Started
 
 ### Step 1. Install package dependencies 
@@ -63,7 +67,7 @@ MetaboAnalystR is freely available from GitHub. The package documentation, inclu
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
-Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR without any documentation (i.e. vignettes).  
+Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR without any documentation (i.e. vignettes). 
 
 ```R
 # Step 1: Install devtools
@@ -89,7 +93,7 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalyst.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalyst.tar.gz and install locally - to be updated to Version 2.0
 
 Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_1.0.3.tar.gz). The * must be replaced by what is actually downloaded and built.  
 
@@ -123,7 +127,7 @@ MetaboAnalystR has been developed by the [XiaLab](http://xialabresearch.com/) at
 
 The R package has been [published](https://doi.org/10.1093/bioinformatics/bty528)!
 
-We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
+We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.
 
 Within R:
 
@@ -136,6 +140,10 @@ citation("MetaboAnalystR")
 To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+03-05-2019 - Version Update: 2.0.0!
+
+03-03-2019 - Version Update: 1.0.4 - added fGSEA for mummichog, major release coming soon after bug fixes
 
 02-11-2019 - Version Update: 1.0.3 - updated underlying R code w. changes to MetaboAnalyst 4.53 + updated documentation
 
