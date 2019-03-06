@@ -33,7 +33,7 @@ We will first import the raw MS data using the *ImportRawMSData* function. Use t
 
 ```{r, eval=FALSE}
 
-# Set working directory to 10 clinical samples
+# Set working directory to 12 clinical samples
 setwd("~/Desktop/iHMP/")
 
 # Load the MetaboAnalystR package
