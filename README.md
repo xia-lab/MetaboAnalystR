@@ -6,17 +6,17 @@
 
 ## Description 
 
-**MetaboAnalystR 2.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. With version 2.0, we aim to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations leveraging the functionality of the xcms (PMIDs: 16448051, 19040729, and 20671148; version 3.4.4) and CAMERA (PMID: 22111785; version 1.38.1) R packages. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, we provide the "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights" vignette. In this vignette, we perform end-to-end metabolomics data analysis on a subset of clinical IBD samples.   
+**MetaboAnalystR 2.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. With version 2.0, we aim to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations leveraging the functionality of the xcms (PMIDs: 16448051, 19040729, and 20671148; version 3.4.4) and CAMERA (PMID: 22111785; version 1.38.1) R packages. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, we provide the "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights" vignette, available [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on a subset of clinical IBD samples.   
 
 ## Getting Started
 
 ### Step 1. Install package dependencies 
 
-To use MetaboAnalystR, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options:
+To use MetaboAnalystR 2.0, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options:
 
 **Option 1** 
 
-Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed. Note that we suggest you install the XCMS R package if you will be processing raw data, but is not necessary for the majority of MetaboAnalystR utilities. 
+Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed.  
 
 Function to download packages:
 
@@ -59,11 +59,11 @@ pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e10
 ```
 ### Step 2. Install the package
 
-MetaboAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR package. There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR github will have the most up-to-date version of the package. 
+MetaboAnalystR 2.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR 2.0 . There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 2.0 github will have the most up-to-date version of the package. 
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
-Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR without any documentation (i.e. vignettes). 
+Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 2.0 without any documentation (i.e. vignettes). 
 
 ```R
 # Step 1: Install devtools
@@ -89,9 +89,9 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalyst.tar.gz and install locally - to be updated to Version 2.0
+#### Option C) Manual download of MetaboAnalystR_2.0.0.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_1.0.3.tar.gz). The * must be replaced by what is actually downloaded and built.  
+Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2.0.0.tar.gz). The * must be replaced by what is actually downloaded and built.  
 
 ```R
 cd ~/Downloads
@@ -103,11 +103,11 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ### MetaboAnalyst 2.0 Workflow: From Raw Spectra to Biological Insights
 
-In this tutorial, we showcase how to utilize MetaboAnalyst 2.0 to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis. The dataset showcased in the tutorial consists of a subset of pediatric IBD stool samples obtained from the Integrative Human Microbiome Project Consortium (https://ibdmdb.org/).
+In this tutorial, we showcase how to utilize MetaboAnalystR 2.0 to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis. The dataset showcased in the tutorial consists of a subset of pediatric IBD stool samples obtained from the Integrative Human Microbiome Project Consortium (https://ibdmdb.org/). The tutorial is available as a PDF [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) and is also available inside the R package as a vignette.
 
 ### MetaboAnalyst 1.0
 
-To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
+To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
 
 ## Tutorials
 
