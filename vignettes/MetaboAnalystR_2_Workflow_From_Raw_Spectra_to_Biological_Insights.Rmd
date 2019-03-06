@@ -1,6 +1,6 @@
 ---
 title: "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights"
-author: "Jasmine Chong, Jeff Xia"
+author: "Jasmine Chong, Mai Yamamoto, and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -45,7 +45,7 @@ rawData <- ImportRawMSData(grpA = "Healthy", numA = 6, grpB = "IBD", numB = 6,
 
 ```
 
-Next, we will set the parameters for peak picking using the *SetPeakParam* function. This function sets all the parameters used for downstream pre-processing of user's raw MS data such as the mass error (ppm), signal to noise threshold, and bandwidth. Use ?SetPeakParam for further information of all available parameters. In this case, we set the mass error to 5. Following the setting of parameters, we will use the *PerformPeakProfiling* function to perform peak picking, grouping, retention time correction, and alignment. The subset of 10 samples used in this vignette were run on a Dell XPS 15 9570 laptop with a dual-booted Ubutnu 16.04 and 16 GB of ram. When this function was run, 13.6/16 GB of memory were used during peak picking, causing the function to fail. Therefore for users who may also run into memory issues on their desktop/laptop, either limit the number of cores used, as xcms uses multi-core parallel processing - with: register(bpstart(MulticoreParam(3))) ~ which for example, sets the number of cores used to 3, or use a smaller subset of IBD samples to demo the workflow.     
+Next, we will set the parameters for peak picking using the *SetPeakParam* function. This function sets all the parameters used for downstream pre-processing of user's raw MS data such as the mass error (ppm), signal to noise threshold, and bandwidth. Use ?SetPeakParam for further information of all available parameters. In this case, we set the mass error to 5. Following the setting of parameters, we will use the *PerformPeakProfiling* function to perform peak picking, grouping, retention time correction, and alignment. The subset of 12 samples used in this vignette were run on a Dell XPS 15 9570 laptop with a dual-booted Ubutnu 16.04 and 16 GB of ram. When this function was run, 13.6/16 GB of memory were used during peak picking, causing the function to fail. Therefore for users who may also run into memory issues on their desktop/laptop, (1) limit the number of cores used, as xcms uses multi-core parallel processing - with: register(bpstart(MulticoreParam(3))) which would set the number of cores used to 3, or (2) use a smaller subset of IBD samples to demo the workflow.     
 
 ```{r, eval=FALSE}
 # Set parameters for peak profiling
