@@ -82,7 +82,7 @@ mSet<-PlotVolcano(mSet, "volcano_0_", 1, format ="png", dpi=72, width=NA)
 
 ```
 
-## 2.4 One-way Analysis of Variance (ANOVA) - ONLY FOR MULTI-GROUP ANALYSIS
+## 2.4 One-way Analysis of Variance (ANOVA) - ONLY FOR MULTI-GROUP ANALYSIS!
 
 ANOVA can only be computed on data with more than one group. **Please note that the below example uses data from a different example dataset.**
 

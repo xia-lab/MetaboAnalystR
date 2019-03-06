@@ -99,12 +99,11 @@ mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "hyper", "genetic")
 
 **Pathway Analysis Overview**
 
-The stacked bars below show a summary of the joint evidence from enrichment analysis and topology analysis.
+The scatter plot below show a summary of the joint evidence from enrichment analysis (p-values) and topology analysis (pathway impact).
 
 ```{r, eval=FALSE}
 # Perform pathway analysis
-mSet<-PlotInmexPath(mSet, "hsa00260", 636, 513)
-
+mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 ```
 
 ## 3. Sweave Report

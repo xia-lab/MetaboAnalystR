@@ -11,7 +11,7 @@ vignette: >
 
 ## Introduction
 
-MetaboAnalystR is designed for comprehensive metabolomic data analysis, visualization, and interpretation. While it does support raw data preprocessing, we encourage users to use the XCMS R package (Smith et al. 2006) directly to process their raw LC-MS/GC-MS data, and then use MetaboAnalystR to perform a wide-range of metabolomic data analyses (statistical analysis, functional analysis, and multiple omics data integration). This tutorial will guide users through using the XCMS R package to perform peak identification, retention time correction, and peak alignment of an example dataset to create a peak table in a usable form for MetaboAnalystR. Then with the MetaboAnalystR package, users will perform various statistical analyses including fold-change analysis, PCA, and PLS-DA. The goal of this tutorial is to demonstrate the ease of using the two R packages for a holsitic metabolomic data analysis workflow. For users who wish to perform other types of analyses with their created peak table, please refer to the other MetaboAnalystR vignettes.      
+MetaboAnalystR is designed for comprehensive metabolomic data analysis, visualization, and interpretation. While it does support raw data preprocessing, users may wish to solely use the XCMS R package (Smith et al. 2006) directly to process their raw LC-MS/GC-MS data, and then use MetaboAnalystR to perform a wide-range of metabolomic data analyses (statistical analysis, functional analysis, and multiple omics data integration). This tutorial will guide users through using the XCMS R package to perform peak identification, retention time correction, and peak alignment of an example dataset to create a peak table in a usable form for MetaboAnalystR. Then with the MetaboAnalystR package, users will perform various statistical analyses including fold-change analysis, PCA, and PLS-DA. The goal of this tutorial is to demonstrate the ease of using the two R packages for a holsitic metabolomic data analysis workflow. For users who wish to perform other types of analyses with their created peak table, please refer to the other MetaboAnalystR vignettes.      
 
 ## XCMS to MetaboAnalystR Workflow
 
@@ -86,7 +86,7 @@ mSet <- Read.TextData(mSet, "met_test1.csv", "colu", "disc");
 mSet <- SanityCheckData(mSet)
 mSet <- ReplaceMin(mSet);
 mSet <- FilterVariable(mSet, "iqr", "F", 25)
-mSet<-PreparePrenormData(mSet)
+mSet <- PreparePrenormData(mSet)
 mSet <- Normalization(mSet, "NULL", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
 mSet <- PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
 mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)

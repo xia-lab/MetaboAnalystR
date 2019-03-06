@@ -83,7 +83,7 @@ mSet <- InitDataObjects("conc", "stat", FALSE)
 mSet <- Read.TextData(mSet, "http://www.metaboanalyst.ca/resources/data/human_cachexia.csv", "rowu", "disc")
 
 # To view messages from the data import and processing
-mSet$dataSet$read.msg
+mSet$msgSet$read.msg
 
 # Example of messages
 [1] "Samples are in rows and features in columns"                                
@@ -100,61 +100,6 @@ mSet <- Read.TextData(mSet, "http://www.metaboanalyst.ca/resources/data/NMRpeakl
 ```
 
 To import binned spectral data, users will use the same *Read.TextData* functions in the above two examples. However, binned spectral data is typically of lower quality than compound concentration data and therefore requires a further step of data preprocessing to convert the data into a usable data matrix. For instance, binned spectral data often contains background noise and requires filtering of such unwanted variations. 
-
-## 2.1.1.0  Importing example data (Zipped LC/GC-MS spectra) - Example file removed for the time-being
-
-Now we will use an example of using a dataset imported from a zipped file. In this case we will use the "lcms_netcdf.zip" file which you will be able download from the "data" folder of the MetaboAnalyst GitHub. 
-
-```{r, eval=FALSE}
-# Create an object for storing processed data
-mSet <- InitDataObjects("msspec", "stat", FALSE)
-
-# Unzip the uploaded zip file/s, remove it and save it as "upload"
-UnzipUploadedFile("lcms_netcdf.zip", "upload", T)
-
-# Read the unzipped LC/GC-MS spectra (.netCDF, .mzXML, mzData) 
-# Detect, align, and group peaks
-# Fill in the object (dataSet)
-mSet <- Read.MSspec(mSet, "upload", "bin", 30.0, 30.0)
-```
-
-The function *Read.MSspec* uses the XCMS R package, particularly the *xcmsSet* and the *group* functions. This function creates an object from a set of input LC/MS files for further analysis by storing, aligning, and grouping peaks. It is therefore necessary for you to specify the binning method, the full width at half maximum of the matched filtration gaussian model peak, and the bandwidth (standard deviation of the smoothing kernel) to be used to perform peak detection and alignment. Please refer to the XCMS manual for further details. 
-
-Similarly to binned spectral data, there is a further step to preprocess MS spectra data (2.1.1.1 Preprocessing example data (LC/GC-MS spectra)). 
-
-## 2.1.1.1 Preprocessing example data (LC/GC-MS spectra)
-
-Following peak detection and alignment (grouping), MetaboAnalystR will perform retention time correction (RTC), fill in missing peaks, and create a usable data matrix using the XCMS R package. First, the function *MSspec.rtCorrection* uses *retcor* from XCMS to correct for differences in retention times between different samples. This function will also re-group the peaks as the inital grouping is no longer appropriate. Following RTC, *MSspec.fillPeaks* will identify among the peak groups any groups that contain missing peaks from some samples, and will then fill in those peaks by rereading the raw data and integrating signals at those regions to create a new peak. Finally, *SetupMSdataMatrix* uses *groupval* from XCMS to create a MS spectra data matrix, where the samples are in rows and peak groups are in columns. You must specify the name of the peak column (intvalue) you wish to enter into the returned matrix. 
-
-There are also two options available to view messages from preprocessing the spectral data. *mSet$dataSet$xset.msg* which when entered in the R console will print the various messages saved throughout the preprocessing. An example of the messages can be seen below. Further, *IsSpectraProcessingOK()* will evaluate if the spectra data processing went smoothly, printing [1] if the processing went well, and if not, it will print various error messages indicating problematic areas.  
-
-```{r, eval=FALSE}
-
-# As this uses the XCMS R package, load XCMS
-library(xcms)
-
-# Perform retention time correction and re-group peaks
-mSet <- MSspec.rtCorrection(mSet, 30.0)
-
-# Fill in missing peaks
-mSet <- MSspec.fillPeaks(mSet)
-
-# Create the MS spectra data matrix of peak values for each group for further processing and analysis
-mSet <- SetupMSdataMatrix(mSet, "into")
-
-# Option to view messages from filling in missing peaks and creating the MS matrix 
-mSet$dataSet$xset.msg
-
-# Example of messages
-[1] "A total of 6069 peaks were detected from these samples"                         
-[2] "with an average of 505.75 peaks per spectrum."                                  
-[3] "These peaks were aligned 410 groups according to their mass and retention time."
-[4] "Please note, some peaks were excluded if they appear in only a few samples."  
-
-# To evaluate if processing of spectral data is ok
-mSet <- IsSpectraProcessingOK(mSet)
-```
-
 
 ## 2.1.2.0 Importing example data (Zipped Peak Lists)
 
@@ -219,7 +164,7 @@ The workflow for processing, normalizaing, and filtering the dataset are consist
 mSet <- ReplaceMin(mSet)
 
 # View messages collected during ReplaceMin()
-mSet$dataSet$replace.msg
+mSet$msgSet$replace.msg
 
 # Example of message for replacing values
 [1] "Zero or missing variables were replaced with a small value: 0.395"

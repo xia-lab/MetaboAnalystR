@@ -38,6 +38,8 @@ mSet <- SanityCheckMummichogData(mSet)
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
 mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
 
+# To view the results of the pathway analysis in R, use mSet$mummi.resmat
+
 ```
 
 ## 3. Sweave Report

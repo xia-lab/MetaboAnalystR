@@ -137,7 +137,7 @@ mSet <- PrepareVennData(mSet);
 # Get names of features overlapping between selected datasets from "vennData"
 mSet <- GetVennGeneNames(mSet, "data1.csvdata3.csvmeta_dat");
 
-# Enter the object below to obtain the names of the features that overlap between the studies
+# Enter the object below to obtain the names of the features that overlap between all of the studies
 mSet$dataSet$venn_overlap
 
 ```
