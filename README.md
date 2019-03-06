@@ -84,7 +84,7 @@ The * must be replaced by what is actually downloaded and built.
 ```R
 
 git clone https://github.com/xia-lab/MetaboAnalystR.git
-R CMD build metaboanalystr
+R CMD build MetaboAnalystR
 R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
