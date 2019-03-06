@@ -198,18 +198,16 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 
 #'Main function to perform mummichog
 #'@description This is the main function that performs the mummichog analysis. 
-#'@usage PerformMummichog(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
+#'@usage PerformMummichog(mSetObj=NA, lib, permNum = 100)
 #'@param mSetObj Input the name of the created mSetObj object 
 #'@param lib Input the name of the organism library, default is hsa 
-#'@param enrichOpt Input the method to perform enrichment analysis
-#'@param pvalOpt Input the method to calculate p-values
 #'@param permNum Numeric, the number of permutations to perform
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
+PerformMummichog <- function(mSetObj=NA, lib, permNum = 100){
   
     mSetObj <- .get.mSet(mSetObj);
   
@@ -272,7 +270,7 @@ PerformMummichog <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
   
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
-    mSetObj <- .compute.mummichogSigPvals(mSetObj, enrichOpt, pvalOpt);
+    mSetObj <- .compute.mummichogSigPvals(mSetObj);
     mSetObj$mummi.anal <- "orig"
     mummichog.lib <- NULL;
     return(.set.mSet(mSetObj));
@@ -472,7 +470,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 }
 
 # Internal function for significant p value 
-.compute.mummichogSigPvals <- function(mSetObj, enrichOpt, pvalOpt){
+.compute.mummichogSigPvals <- function(mSetObj){
   
   qset <- unique(unlist(mSetObj$input_cpdlist)); #Lsig ora.vec
   query_set_size <- length(qset); #q.size
@@ -573,11 +571,9 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 
 #'New main function to perform fast pre-ranked mummichog
 #'@description This is the main function that performs the mummichog analysis.
-#'@usage PerformGSEA(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
+#'@usage PerformGSEA(mSetObj=NA, lib, permNum = 100)
 #'@param mSetObj Input the name of the created mSetObj object
 #'@param lib Input the name of the organism library, default is hsa
-#'@param enrichOpt Input the method to perform enrichment analysis
-#'@param pvalOpt Input the method to calculate p-values
 #'@param permNum Numeric, the number of permutations to perform
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -585,7 +581,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 #'@export
 #'@import fgsea
 
-PerformGSEA <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
+PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -653,7 +649,7 @@ PerformGSEA <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
   
   mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
 
-  mSetObj <- .compute.mummichog.fgsea(mSetObj, enrichOpt, pvalOpt, permNum);
+  mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
   mummichog.lib <- NULL;
   
   mSetObj$mummi.anal <- "fgsea"
@@ -661,7 +657,7 @@ PerformGSEA <- function(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100){
   return(.set.mSet(mSetObj));
 }
 
-.compute.mummichog.fgsea <- function(mSetObj, enrichOpt, pvalOpt, permNum){
+.compute.mummichog.fgsea <- function(mSetObj, permNum){
 
   num_perm <- permNum;
   total_cpds <- mSetObj$cpd_exp #scores from all matched compounds
@@ -781,10 +777,10 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   
   # Sort values based on mummichog pvalues
   y <- -log(mum.df$mummichog);
-  y <- scales::rescale(y, c(0,5))
+  y <- scales::rescale(y, c(0,4))
   
   x <- -log(mum.df$gsea);
-  x <- scales::rescale(x, c(0,5))
+  x <- scales::rescale(x, c(0,4))
   
   inx <- order(y, decreasing= T);
   

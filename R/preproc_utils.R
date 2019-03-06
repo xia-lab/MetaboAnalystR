@@ -165,6 +165,7 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' Defaut is set to true.
 #' @param pcaPlot Logical, if true creates a PCA plot to evaluate the sample grouping.
 #' Default is set to true.
+#' @param labels Logical, if true, the PCA plot will be annotated with sample names.
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
@@ -177,7 +178,7 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' @import ggplot2
 
 PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = TRUE,
-                                 format = "png", dpi = 72, width = 9){
+                                 labels = TRUE, format = "png", dpi = 72, width = 9){
   
   if(.on.public.web){
     load_ggplot()
@@ -240,7 +241,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
                  type=format, bg="white");
     par(mfrow=c(1,2));
     
-    pca_feats <- log2(featureValues(grouped_xdata, value = "into"))
+    pca_feats <- log2(featureValues(grouped_xdata2, value = "into"))
     xdata_pca <- prcomp(t(na.omit(pca_feats)), center = TRUE, scale=T)
     sum.pca <- summary(xdata_pca)
     var.pca <- sum.pca$importance[2,] # variance explained by each PCA
@@ -250,9 +251,14 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
     
     # using ggplot2
     df <- as.data.frame(xdata_pca$x)
-    df$group <- grouped_xdata$sample_group
+    df$group <- grouped_xdata2$sample_group
+
+    if(labels==TRUE){
+      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + geom_text() + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+    }else{
+      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+    }
     
-    p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 3) + scale_color_brewer(palette="Set1")
     p <- p + xlab(xlabel) + ylab(ylabel) + theme_bw()
     print(p)
     dev.off();
