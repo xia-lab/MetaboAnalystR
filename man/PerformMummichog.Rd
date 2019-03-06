@@ -4,16 +4,12 @@
 \alias{PerformMummichog}
 \title{Main function to perform mummichog}
 \usage{
-PerformMummichog(mSetObj=NA, lib, enrichOpt, pvalOpt, permNum = 100)
+PerformMummichog(mSetObj=NA, lib, permNum = 100)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object}
 
 \item{lib}{Input the name of the organism library, default is hsa}
-
-\item{enrichOpt}{Input the method to perform enrichment analysis}
-
-\item{pvalOpt}{Input the method to calculate p-values}
 
 \item{permNum}{Numeric, the number of permutations to perform}
 }

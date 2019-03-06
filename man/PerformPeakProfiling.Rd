@@ -7,7 +7,8 @@ This function performs feature extraction of user's raw MS data using
 the rawData object created using the InspectRawMSData function.}
 \usage{
 PerformPeakProfiling(rawData, peakParams, rtPlot = TRUE,
-  pcaPlot = TRUE, format = "png", dpi = 72, width = 9)
+  pcaPlot = TRUE, labels = TRUE, format = "png", dpi = 72,
+  width = 9)
 }
 \arguments{
 \item{rawData}{The object created using the InspectRawMSData function,
@@ -22,6 +23,8 @@ Defaut is set to true.}
 
 \item{pcaPlot}{Logical, if true creates a PCA plot to evaluate the sample grouping.
 Default is set to true.}
+
+\item{labels}{Logical, if true, the PCA plot will be annotated with sample names.}
 
 \item{format}{Character, input the format of the image to create.}
 
