@@ -70,6 +70,11 @@ Due to issues with Latex, some users may find that they are only able to install
 install.packages("devtools")
 library(devtools)
 
+# For users with devtools > v2.0.0
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
+
+## For users with devtools < v2.0.0
+
 # Step 2: Install MetaboAnalystR without documentation
 devtools::install_github("xia-lab/MetaboAnalystR")
 
