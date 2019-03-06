@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Jasmine Chong, Jeff Xia" />
+
+<meta name="date" content="2019-03-06" />
+
+<title>Introduction To The MetaboAnalystR Package</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction To The MetaboAnalystR Package</h1>
+<h4 class="author"><em>Jasmine Chong, Jeff Xia</em></h4>
+<h4 class="date"><em>2019-03-06</em></h4>
+
+
+
+<div id="overview-of-metaboanalystr" class="section level2">
+<h2>1.0 Overview of MetaboAnalystR</h2>
+<p>MetaboAnalystR is a R package, synchronized with the popular MetaboAnalyst web server, designed for comprehensive metabolomic data analysis, visualization, and interpretation. This R package contains the numerous R functions and libraries underlying the web server necessary to perform data processing, normalization, statistical analysis, metabolite set enrichment analysis, metabolic pathway analysis, and biomarker analysis. This package provides support for several data types, including nuclear magnetic resonance (NMR) spectroscopy, gas chromatography mass spectrometry (GC-MS), and liquid chromatography-MS (LC-MS) data. Further, it is mainly designed to support quantitative metabolomics.</p>
+<p>Following installation and loading of MetaboAnalystR, users will be able to reproduce web server results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility.</p>
+<p>MetaboAnalystR serves as a platform to enable users to perform high-quality, comprehensive metabolomic data analysis, as well as produce computationally and statistically reproducible analytical workflows.</p>
+<p>The aim of this vignette is to provide an overview of how to use MetaboAnalystR to perform comprehensive metabolomic data analysis and visualization. In detail, this vignette will go through the steps of data import, processing, normalization, and filtering.</p>
+</div>
+<div id="loading-the-package" class="section level2">
+<h2>1.1 Loading the package</h2>
+<p>After following the installation instructions on the MetaboAnalystR Github, you will be ready to use the package. Use the library() function to load the package into R.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Load MetaboAnalystR</span>
+<span class="kw">library</span>(MetaboAnalystR)</code></pre></div>
+</div>
+<div id="tips-for-using-the-metaboanalystr-package" class="section level2">
+<h2>1.2 Tips for using the MetaboAnalystR package</h2>
+<ol style="list-style-type: decimal">
+<li><p>The first function that you will use in every module is the <em>InitDataObjects</em> function, which constructs the mSetObj object that stores user’s data for further processing and analysis. To use this function, users must specify to MetaboAnalystR the type of data and the type of analysis you will perform. On the MetaboAnalyst web-server, the suggested name of the mSetObj, which must be called consistently in your workflow, is <em>mSet</em>. It is not necessary to use this format, if users wish they can use whatever name they would prefer, as long as it is called exactly the same in each step.</p></li>
+<li><p>The MetaboAnalystR package directly creates plots/tables/analysis outputs in your current working directory. It is not necessary to call any plotting functions onto the created mSetObj.</p></li>
+<li><p>Every command must be run in sequence, please do not skip any commands as this will result in errors downstream.</p></li>
+</ol>
+</div>
+<div id="data-format" class="section level2">
+<h2>1.3 Data Format</h2>
+<div id="comma-separated-values-.csv-or-tab-delimited-text-.txt" class="section level3">
+<h3>Comma Separated Values (.csv) or Tab Delimited Text (.txt)</h3>
+<p>These two formats are used for concentration data, peak intensity tables, and MS/NMR spectral bins. Samples can be in either rows or columns. Please note:</p>
+<ol style="list-style-type: decimal">
+<li><p>Both sample and feature names must be unique and consist of a combination of common English letters, underscores and numbers for naming purpose. Latin/Greek letters are not supported.</p></li>
+<li><p>Class labels must immediately follow sample names; for two-factor and time series data, there must be two class labels corresponding to the two factors.</p></li>
+<li><p>For time-series data, the time-point group must be named as Time. In addition, the samples collected from the same subjects at different time points should be consecutive (See the screenshots demo for “Two-factor / Time series”)</p></li>
+<li><p>Data values (concentrations, bins, peak intensities) should contain only numeric and positive values (using empty or NA for missing values).</p></li>
+</ol>
+</div>
+<div id="zipped-files-.zip" class="section level3">
+<h3>Zipped files (.zip)</h3>
+<p>For NMR/MS peak list files and GC/LC-MS spectra data, users must upload a zipped folder containing data files from different groups under study (one file per spectrum and one sub-folder for each group). For paired comparison, users must upload a separate text file specifying the paired information.</p>
+<p>GC/LC-MS spectra must be in either NetCDF, mzXML, or mzDATA format. The spectra should be stored in two separate folders according to their class labels, and then compressed into .zip files. Please note, the program is not compatible with the most recent WinZip (v12.0) with default option. Make sure to select the Legacy compression (Zip 2.0 compatible) for compressing files. <strong>No spaces</strong> are allowed in either the folder names or the spectra names. The size limit for each uploaded zip file is 50M.</p>
+<p>The peak list data is composed of peak list files organized into separate folders named by their class labels. For example, if your data contains three groups, the peak list files should be organized into three folders accordingly. Compress these folders into a single zip file then upload them to MetaboAnalyst.</p>
+<p>NMR peak list files should contain two comma separated columns with the 1st column for peak positions (ppm) and the 2nd column for peak intensities; MS peak list files can be in either two-column (mass and intensities) or three-column format (mass, retention time and intensities), but not a mixture of both. The first line of each peak list file is reserved for column labels. The file must be saved in comma separated values (.csv) format.</p>
+</div>
+</div>
+<div id="example-data" class="section level2">
+<h2>2.0 Example Data</h2>
+</div>
+<div id="importing-example-data-compound-concentration-data-binned-spectral-data-peak-intensity-table" class="section level2">
+<h2>2.1.0 Importing example data (Compound concentration data, binned spectral data, peak intensity table)</h2>
+<p>MetaboAnalystR reads in both comma separated values (CSV) and text (txt) files. The package also accepts zipped files (.zip), including NMR peak, MS peak, and LC/GC-MS spectra (NetCDF, mzDATA, mzXML) data.</p>
+<p>We will first begin with an example dataset downloadable from the MetaboAnalyst web-server called “cachexia_concentrations.csv”. To begin the analysis, we first have to create an object for data processing, using the function <em>InitDataObjects</em>, and then we will read in the data file using the function <em>Read.TextData</em>. The <em>InitDataObjects</em> is the first function executed when uploading a dataset. It constructs the dataSet object, which is an R list with several variables assigned to it, including the type of data, the data format, and whether or not the data is paired. Is also creates the analSet object, and the imgSet object, which are also lists that will be filled in downstream analysis. Further, the function creates three libraries and databases which will be filled if necessary. Finally, it creates msg.vec, which is a character vector that will contain messages produced from the analysis. It it necessary for users to specify the <strong>dataType</strong>, (list, conc, specbin, pktable, nmrpeak, mspeak, msspec), and the type of analysis to be performed on the uploaded dataset, <strong>analType</strong> (stat, pathora, pathqea, msetora, msetssp, msetqea, ts, cmpdmap, smpmap). In this case, we are uploading a compound concentration dataset (“conc”), and will be performing statistical analysis on the dataset (“stat”).</p>
+<p><em>Read.TextData</em> is the second function to be executed to read in a specific file/s. You must specify the file path, the data format and the label type to provide the right parameters for MetaboAnalystR. In this case, the samples in the cachexia dataset are in rows (versus columns) and are unpaired (hence, “rowu”). Additionally, the data is discrete (“disc”) versus continuous.</p>
+<p>Note that <em>mSet<span class="math inline">\(dataSet\)</span>read.msg</em> can be used to view the messages saved from importing the dataset.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create objects for storing processed data</span>
+mSet &lt;-<span class="st"> </span><span class="kw">InitDataObjects</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;stat&quot;</span>, <span class="ot">FALSE</span>)
+
+<span class="co"># Read in the data and fill in the dataSet list </span>
+
+mSet &lt;-<span class="st"> </span><span class="kw">Read.TextData</span>(mSet, <span class="st">&quot;http://www.metaboanalyst.ca/resources/data/human_cachexia.csv&quot;</span>, <span class="st">&quot;rowu&quot;</span>, <span class="st">&quot;disc&quot;</span>)
+
+<span class="co"># To view messages from the data import and processing</span>
+mSet<span class="op">$</span>msgSet<span class="op">$</span>read.msg
+
+<span class="co"># Example of messages</span>
+[<span class="dv">1</span>] <span class="st">&quot;Samples are in rows and features in columns&quot;</span>                                
+[<span class="dv">2</span>] <span class="st">&quot;The uploaded file is in comma separated values (.csv) format.&quot;</span>              
+[<span class="dv">3</span>] <span class="st">&quot;The uploaded data file contains 77 (samples) by 63 (compounds) data matrix.&quot;</span></code></pre></div>
+<p>The steps to import a <strong>peak intensity table</strong> are very similar to importing a compound concentration dataset. In <em>InitDataObjects</em>, you need to specify that the data type is a “pktable”, and that you will be performing statistical analysis on the imported data (“stat”).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet &lt;-<span class="st"> </span><span class="kw">InitDataObjects</span>(<span class="st">&quot;pktable&quot;</span>, <span class="st">&quot;stat&quot;</span>, <span class="ot">FALSE</span>)
+
+mSet &lt;-<span class="st"> </span><span class="kw">Read.TextData</span>(mSet, <span class="st">&quot;http://www.metaboanalyst.ca/resources/data/NMRpeaklistskidney.csv&quot;</span>, <span class="st">&quot;rowu&quot;</span>, <span class="st">&quot;disc&quot;</span>)</code></pre></div>
+<p>To import binned spectral data, users will use the same <em>Read.TextData</em> functions in the above two examples. However, binned spectral data is typically of lower quality than compound concentration data and therefore requires a further step of data preprocessing to convert the data into a usable data matrix. For instance, binned spectral data often contains background noise and requires filtering of such unwanted variations.</p>
+</div>
+<div id="importing-example-data-zipped-peak-lists" class="section level2">
+<h2>2.1.2.0 Importing example data (Zipped Peak Lists)</h2>
+<p>In this example, we will import a zipped file of peak lists (“lcms_3col_peaks.zip”), which you will find in the “data” folder of the MetaboAnalystR GitHub. As above, we will first create a dataSet object, this time specifying “mspeak” as the dataType for LC-MS peak lists, and “stat” as the analysis type.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create an object for storing processed data</span>
+mSet &lt;-<span class="st"> </span><span class="kw">InitDataObjects</span>(<span class="st">&quot;mspeak&quot;</span>, <span class="st">&quot;stat&quot;</span>, <span class="ot">FALSE</span>)
+
+<span class="co"># Unzips the uploaded zip file/s, removes it and saves it as &quot;upload&quot;</span>
+<span class="kw">UnzipUploadedFile</span>(<span class="st">&quot;lcms_3col_peaks.zip&quot;</span>, <span class="st">&quot;upload&quot;</span>, F)
+
+<span class="co"># Read peak lists/intensity files</span>
+mSet &lt;-<span class="st"> </span><span class="kw">Read.PeakList</span>(mSet, <span class="st">&quot;upload&quot;</span>)</code></pre></div>
+<p>Following unzipping the files, we will use <em>Read.PeakList</em> to read in the peak lists and fill in the dataSet object. The <em>Read.PeakList</em> function creates a usable data matrix which is consistent with the XCMS matrix format, allowing for the use of XCMS functions downstream. Further, the peak lists must be formatted in 2 or 3 columns. Specifically, for NMR peak lists, the input should be formatted as 2 columns containing only numeric values (Column 1 - chemical shift, expressed in parts per million “ppm”; Column 2- intensity “int”). For MS peak lists, the lists can be formatted as two-columns (Column 1 - mass “mz”; Column 2 - intensity “int”), or as three-columns (Column 1 - mass “mz”; Column 2 - retention time “rt”; Column 3 - intensity “int”).</p>
+</div>
+<div id="preprocessing-example-data-nmr-and-ms-peak-lists" class="section level2">
+<h2>2.1.2.1 Preprocessing example data (NMR and MS Peak Lists)</h2>
+<p>Following import of NMR or MS peak lists, peaks that represent the same metabolite should be grouped together. The function <em>GroupPeakList</em> utilizes the XCMS grouping algorithm to combine peaks across samples with similar massess and retention times into groups. Further, <em>SetPeakList.GroupValues</em> cleans the peak groups, summing multiple identical peaks within groups if they originate from the same sample. Both functions work directly upon the mSet object.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform grouping of peaks</span>
+mSet &lt;-<span class="st"> </span><span class="kw">GroupPeakList</span>(mSet, <span class="fl">0.025</span>, <span class="fl">30.0</span>)
+
+<span class="co"># Form peak groups </span>
+mSet &lt;-<span class="st"> </span><span class="kw">SetPeakList.GroupValues</span>(mSet)
+
+<span class="co"># View message resulting from peak grouping (Optional, though for your benefit)</span>
+mSet<span class="op">$</span>dataSet<span class="op">$</span>proc.msg</code></pre></div>
+</div>
+<div id="data-integrity-check" class="section level2">
+<h2>2.1.3 Data integrity check</h2>
+<p>After reading in the metabolomics data, it is necessary for you to perform a data integrity check to ensure that the data is valid and suitable for subsequent analyses using <em>SanityCheckData</em>. <strong>This function must be used directly following data upload, if else, down-stream data processing functions such as <em>ReplaceMin</em> and <em>Normalization</em> will be unusable.</strong> <em>SanityCheckData</em> evaluates the accuracy of sample and class labels, data structure, deals with non-numeric values, removes columns that are constant across all samples (variance = 0), and by default replaces missing values with half of the original minimal positive value in your dataset. If the function is successful, you will see “Successfully passed sanity check!” printed on your screen, along with all the messages produced from the sanity check. Moreover, you can use <em>mSet<span class="math inline">\(dataSet\)</span>check.msg</em> to view all the collected messages that came from running the sanity check.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Run the sanity check, it will return a series of messages if the data is suitable for subsequent analyses. </span>
+mSet &lt;-<span class="st"> </span><span class="kw">SanityCheckData</span>(mSet)
+
+ <span class="co"># [1] &quot;Successfully passed sanity check!&quot;                                                                    </span>
+ <span class="co"># [2] &quot;Samples are not paired.&quot;                                                                              </span>
+ <span class="co"># [3] &quot;2 groups were detected in samples.&quot;                                                                   </span>
+ <span class="co"># [4] &quot;Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed.&quot;                 </span>
+ <span class="co"># [5] &quot;&lt;font color=\&quot;orange\&quot;&gt;Other special characters or punctuations (if any) will be stripped off.&lt;/font&gt;&quot;</span>
+ <span class="co"># [6] &quot;All data values are numeric.&quot;                                                                         </span>
+ <span class="co"># [7] &quot;A total of 0 (0%) missing values were detected.&quot;                                                      </span>
+ <span class="co"># [8] &quot;&lt;u&gt;By default, these values will be replaced by a small value.&lt;/u&gt;&quot;                                   </span>
+ <span class="co"># [9] &quot;Click &lt;b&gt;Skip&lt;/b&gt; button if you accept the default practice&quot;                                          </span>
+<span class="co"># [10] &quot;Or click &lt;b&gt;Missing value imputation&lt;/b&gt; to use other methods&quot;                           </span></code></pre></div>
+</div>
+<div id="processing-an-example-dataset-compound-concentration-data" class="section level2">
+<h2>2.2 Processing an example dataset (Compound concentration data)</h2>
+<p>The workflow for processing, normalizaing, and filtering the dataset are consistent across data types. While MetaboAnalystR was built with user’s flexibility in mind, data processing must make sense. We will now continue with the “cachexia_concentrations.csv” file for the rest of the examples. To begin with the data processing, MetaboAnalystR will first deal with missing values. <em>Please note, missing value imputation can be performed before or after normalization in MetaboAnalystR.</em> The suggested default method for missing value imputation used by MetaboAnalystR is <em>ReplaceMin</em>, which replaces all missing or zero values in the dataset with a very small value (half of the smallest positive value in the original data). The function works directly upon the dataSet object. Use <em>mSet<span class="math inline">\(dataSet\)</span>replace.msg</em> to view what the value is that all replaced missing/zero values.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Replace missing/zero values with a minimum positive value</span>
+mSet &lt;-<span class="st"> </span><span class="kw">ReplaceMin</span>(mSet)
+
+<span class="co"># View messages collected during ReplaceMin()</span>
+mSet<span class="op">$</span>msgSet<span class="op">$</span>replace.msg
+
+<span class="co"># Example of message for replacing values</span>
+[<span class="dv">1</span>] <span class="st">&quot;Zero or missing variables were replaced with a small value: 0.395&quot;</span></code></pre></div>
+<p>Other options are available to deal with missing values, consisting of 2 steps. The first is an option to remove features with too many missing values, using <em>RemoveMissingPercent</em>, the threshold being a user defined cut-off. The function also works directly upon the dataSet object. In the example below, we are removing any features within the dataset with &gt;50% missing values.</p>
+<p>The second step is to remove or replace the remaining missing values, using <em>ImputeVar</em>. There are several options to decide what to replace missing values with, such as replacement based on the minimum/mean/median value of each feature column, or several options to impute the missing values, using k-nearest neighbour (KNN), probabilistic PCA (PPCA), Bayesian PCA (BPCA), or Singular Value Decomposition (SVD). In the example below, we will exclude variables with missing values (“exclude”). An example of replacing missing values with KNN imputed values is also included (method = “knn”).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># STEP 1: Remove features containing a user-defined % cut-off of missing values</span>
+mSet &lt;-<span class="st"> </span><span class="kw">RemoveMissingPercent</span>(mSet, <span class="dt">percent=</span><span class="fl">0.5</span>)
+
+<span class="co"># STEP 2: Remove variables with missing values</span>
+mSet &lt;-<span class="st"> </span><span class="kw">ImputeVar</span>(mSet, <span class="dt">method=</span><span class="st">&quot;exclude&quot;</span>)
+
+######### Alternative Step 2: Replace missing values with KNN imputed values   
+mSet &lt;-<span class="st"> </span><span class="kw">ImputeVar</span>(mSet, <span class="dt">method=</span><span class="st">&quot;knn&quot;</span>)</code></pre></div>
+<p><em>IsSmallSmplSize(mSet)</em> is a quick check of the data, evaluating if there are too many groups that contain a very small number of replicates. It will return a 0 if the data passes the check, and will return a 1 if the sample size is too small.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Check if the sample size is too small, returns a 0 if the data passes the check</span>
+mSet&lt;-<span class="kw">IsSmallSmplSize</span>(mSet)
+[<span class="dv">1</span>] <span class="dv">0</span></code></pre></div>
+</div>
+<div id="normalizing-example-dataset-compound-concentration-data" class="section level2">
+<h2>2.3 Normalizing example dataset (Compound concentration data)</h2>
+<p>MetaboAnalystR contains 12 methods for data normalization, categorized based upon whether these methods will be used on rows (row-wise) or on columns (column-wise).</p>
+<div id="row-wise-normalization" class="section level3">
+<h3>Row-wise normalization</h3>
+<p>This category contains 6 methods for row-wise normalization, which focuses on reducing variation due to sampling. For instance, there is a method to normalize data to a reference feature (rowNorm = CompNorm), such as to an internal standard within your dataset, or to a physiological constant, such as creatine in urine.</p>
+</div>
+<div id="column-wise-normalization" class="section level3">
+<h3>Column-wise normalization</h3>
+<p>This category contains 6 methods for centering, transforming, and scaling metabolomic data. Briefly, centering data involves substracting the mean from a variable, thereby moving the mean to 0. This is useful for adjusting for outliers and variation between high and low concentration metabolites. Scaling the data means that each variable is divided by a chosen factor, the scaling factor, adjusting for fold differences in metabolite concentrations. Finally, transformation converts the data to a different scale, for instance to the logarithmic scale. This non-linear data conversion aims to reduce heteroscedasticity and make unsymmetrical data more symmetric. In total, centering, transforming, and scaling are used to “clean” the data, reducing intra-group sample variation whilst focusing on biologically relevant information.</p>
+<p><em>Normalization</em> in MetaboAnalystR is a comprehensive function which allows users to perform data normalization (row-wise Normalization), transformation (transNorm), and centering/scaling (scaleNorm). This function contains several options for each of these categories, therefore please refer to the MetaboAnalystR manual for further details.</p>
+<p>For this tutorial we will go through 3 examples of data normalization:</p>
+<ol style="list-style-type: decimal">
+<li><p>Normalize the data according to a reference sample (Probabilistic Quotient Normalization). “ProbNormF” is the mode of normalization, and “PIF_178” is the reference sample.</p></li>
+<li><p>Normalize the data according to a reference feature. “CompNorm” is the mode of normalization to select, and “1,6-Anhydro-beta-D-glucose” is the reference feature.</p></li>
+<li><p>Perform quantile normalization (“QuantileNorm”), log transformation (“LogNorm”), and mean-center scaling (“MeanCenter”).</p></li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">### OPTION 1) Perform Probabilistic Quotient Normalization based upon a reference sample
+mSet&lt;-<span class="kw">PreparePrenormData</span>(mSet)
+mSet&lt;-<span class="kw">Normalization</span>(mSet, <span class="st">&quot;ProbNormF&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;PIF_178&quot;</span>, <span class="dt">ratio=</span><span class="ot">FALSE</span>, <span class="dt">ratioNum=</span><span class="dv">20</span>)
+
+### OPTION 2) Normalize by reference feature 
+mSet&lt;-<span class="kw">PreparePrenormData</span>(mSet)
+mSet&lt;-<span class="kw">Normalization</span>(mSet, <span class="st">&quot;CompNorm&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;1,6-Anhydro-beta-D-glucose&quot;</span>, <span class="dt">ratio=</span><span class="ot">FALSE</span>, <span class="dt">ratioNum=</span><span class="dv">20</span>)
+
+### OPTION 3) Perform quantile normalization, log transformation, and mean-center scaling  
+mSet&lt;-<span class="kw">PreparePrenormData</span>(mSet)
+mSet&lt;-<span class="kw">Normalization</span>(mSet, <span class="st">&quot;QuantileNorm&quot;</span>, <span class="st">&quot;LogNorm&quot;</span>, <span class="st">&quot;MeanCenter&quot;</span>, <span class="dt">ref=</span><span class="ot">NULL</span>, <span class="dt">ratio=</span><span class="ot">FALSE</span>, <span class="dt">ratioNum=</span><span class="dv">20</span>)  </code></pre></div>
+<p>MetaboAnalystR also has 2 functions to view the results of your selected normalization strategy. <em>PlotNormSummary</em> will give a feature-wise view of the data normalization, and <em>PlotSampleNormSummary</em> will give a sample-wise view of the normalization. Both functions will create a before and after-normalization view of the data, with a density plot and a box-plot.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># View feature normalization</span>
+mSet&lt;-<span class="kw">PlotNormSummary</span>(mSet, <span class="st">&quot;feature_norm&quot;</span>, <span class="dt">format=</span><span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">300</span>, <span class="dt">width=</span><span class="dv">0</span>)
+
+<span class="co"># View sample normalization</span>
+mSet&lt;-<span class="kw">PlotSampleNormSummary</span>(mSet, <span class="st">&quot;sample_norm&quot;</span>, <span class="dt">format=</span><span class="st">&quot;pdf&quot;</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<p>For futher understanding, an excellent resource to understanding normalization of metabolomics data: van den Berg et al. 2006 (<a href="PMID:16762068" class="uri">PMID:16762068</a>).</p>
+</div>
+</div>
+<div id="filtering-an-example-dataset-compound-concentration-data" class="section level2">
+<h2>2.4 Filtering an example dataset (Compound concentration data)</h2>
+<p>When working with a high-dimensional dataset, it is necessary to filter out uninformative information and focus on key features, thereby increasing the power to detect a true effect. Filtering data is an unsupervised method of feature selection, meaning that class/group labels are ignored, and that determining the importance of variables relies solely upon the data itself. A simple example of filtering is removing variables, in this case metabolites, with low variance across all samples. As these samples do not significantly change, they are uninformative to downstream analysis. Removing such samples will increase the power in further analyses. Further, it is highly recommended that users with untargeted metabolomics datasets perform filtering, as untargeted data is known to contain background noise which can be filtered out.</p>
+<p>For metabolomics, non-informative data can be categorized into three groups:</p>
+<ol style="list-style-type: decimal">
+<li><p>Small value variables - These are variables that are very small when compared to the rest of the variables, and are close to the baseline/detection limit. Using the mean/median filtering method can identify these variables.</p></li>
+<li><p>Near constant variables - These are variables with very low variance, as mentioned above. These are likely metabolites that have to do with housekeeping or homeostasis. Using the standard deviation or the more robust interquantile range will identify these variables.</p></li>
+<li><p>Variables with low repeatability - Repeatability refers to the variation in repeat measurements of the same sample at different times. Repeatability is measured using QC samples and calculated using the RSD, which is the standard deviation divided by the mean (RSD = SD/mean). Samples with high repeatability have a low RSD, and vice-versa. Features with a high RSD can be eliminated from the dataset by specifying the “rsd” argument in the <em>FilterVariable</em> function. For LC-MS data, the recommended cut-off is 20%, and for GC-MS data, the recommended cut-off is 30%.</p></li>
+</ol>
+<p>To determine the number of variables to remove, small value and near constant variables will be subjected to these guidelines:</p>
+<p>Less than 250 variables: 5% will be filtered Between 250 - 500 variables: 10% will be filtered Between 500 - 1000 variables: 25% will be filtered Over 1000 variables: 40% will be filtered</p>
+<p>Dependent on your type of metabolomics data, select the filtering option/s as appropriate.</p>
+<p>To perform filtering, utilize the <em>FilterVariable</em> function. There are three components the user must specify, the filtering option (filter), whether or not the filtering is based on quality-control (qcFilter) samples, and the relative standard deviation (rsd). There are two examples below, the first uses the median absolute deviation to filter variables and has no QC-samples. For the second example, the filtering method is set to “none”, and instead the QC-Filter is set to true, and uses a RSD of 25 to filter the samples.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Filter variables based on the median absolute deviation</span>
+mSet &lt;-<span class="st"> </span><span class="kw">FilterVariable</span>(mSet, <span class="st">&quot;mad&quot;</span>, <span class="st">&quot;F&quot;</span>, <span class="dv">15</span>)
+
+<span class="co"># Filter variables using QC-samples and a RDS threshold of 25</span>
+mSet &lt;-<span class="st"> </span><span class="kw">FilterVariable</span>(mSet, <span class="st">&quot;none&quot;</span>, <span class="st">&quot;T&quot;</span>, <span class="dv">25</span>)</code></pre></div>
+</div>
+<div id="removing-sample-variables" class="section level2">
+<h2>2.5 Removing sample variables</h2>
+<p>Throughout the analysis of your metabolomic data, you may need to remove samples, variables, or even groups from your dataset. One reason to remove data could be that they are outliers, meaning that the value/s of that data is far from the majority of the other data, or a second reason could be that the data are accidental duplicates of other samples and their removal is necessary to have a usable data set.</p>
+<p>Several options are available to visually identify potential outliers in your data. For instance, <em>PlotNormSummary</em> or <em>PlotSampleNormSummary</em> will give a box plot summary of samples and features, or <em>PlotPCA2DScore</em> will give you a 2D PCA score plot. In the case of a PCA score plot, outliers will be far away from the main cluster. Finally, <em>PlotHCTree</em> and <em>PlotHeatMap</em> are two functions that perform hierarchical clustering, providing you with a dendogram and a heatmap of the data, respectively. More details of these functions can be found in the <strong>Statistical Analysis Module</strong> vignette.</p>
+<p>There are 3 functions to perform sample, feature, and group removal in MetaboAnalystR. For each function, the name of the variable you would like to remove must be written in quotation marks, as shown below. Sample/feature/group removal must be performed following data processing and filtering. If the data was normalized prior to removal, it is necessary to re-do the normalization.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Remove a sample from the data set, in this case sample &quot;PIF_178&quot;</span>
+mSet &lt;-<span class="st"> </span><span class="kw">UpdateSampleItems</span>(mSet, <span class="st">&quot;PIF_178&quot;</span>)
+
+<span class="co"># Remove a feature from the data set</span>
+mSet &lt;-<span class="st"> </span><span class="kw">UpdateFeatureItems</span>(mSet, <span class="st">&quot;2-Aminobutyrate&quot;</span>)
+
+<span class="co"># Remove a group from the data set, in this case remove the &quot;control&quot; samples</span>
+mSet &lt;-<span class="st"> </span><span class="kw">UpdateGroupItems</span>(mSet, <span class="st">&quot;control&quot;</span>) </code></pre></div>
+</div>
+<div id="sweave-report-generation" class="section level2">
+<h2>3. Sweave Report Generation</h2>
+<p>Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the <em>CreatePDFReport</em> function. You must ensure that you have the nexessary LaTeX libraries to generate the report (i.e. texlive and texlive-fonts-extra). The object created <em>must</em> be named <em>mSet</em>, and specify the user name in quotation marks.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create Biomarker Sweave report </span>
+<span class="kw">PreparePDFReport</span>(mSet, <span class="st">&quot;User Name&quot;</span>)
+
+<span class="co"># To save all files created during your session</span>
+<span class="kw">SaveTransformedData</span>(mSet)</code></pre></div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+---
+title: "Meta-Analysis"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Meta-Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction 
+
+A major challenge in biomarker discovery for disease detection, classification, and monitoring is the validation of potential metabolic markers. Questions have been raised about biomarker consistency and robustness across individual metabolomic studies of the same disease, and the importance of external validation to improve statistical power to validate biomarkers has been recently reviewed. Therefore to address the lack of user-friendly tools for the horizontal integration of metabolomics data, we present a second new module called “Meta-Analysis”. 
+
+The primary goal of the Meta-Analysis module is to provide a user-friendly and comprehensive tool for the integration of individual metabolomic studies to identify biomarkers of disease. The steps for Meta-Analysis occur as follows: 
+
+1) Users must upload individual data, which must be in tabular form. Prior to uploading the data, the user must clean the datasets to ensure consistency amongst named metabolites, spectral bins, or peaks, as well as consistency in the included metadata across included studies.
+
+2) The module performs differential enrichment analysis for each individual study to compute summary level-statistics for each metabolite feature (e.g. p-value). The summary level-statistical results from all studies are combined, and meta-analysis is performed using one of several statistical options: combining of p-values, vote counting, or direct merging of data into a mega-dataset.
+
+3) The results can be visualized as a Venn diagram to view all possible combinations of shared features between the datasets.
+
+## 2. Before Beginning Meta-Analysis
+
+To perform this tutorial, please download the necessary files into your current working directory (data1.csv, data2.csv, data3.csv, and data4.csv) using the R code below. 
+
+```{r, eval=FALSE}
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data1.csv", "data1.csv", "curl")
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data2.csv", "data2.csv", "curl")
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data3.csv", "data3.csv", "curl")
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/data4.csv", "data4.csv", "curl")
+
+```
+
+**Note One**
+
+The MetaboAnalystR package will create all necessary results/plots in your current working directory. In particular, this module will save user-uploaded files as RDS files, using the exact same names as the uploaded file. For instance, in the analysis workflow below, we upload a file named "data2.csv", which following the ReadIndData function, a RDS file also named "data2.csv" will be created, thereby over-writing the initial .csv file with a RDS file -- with the exact same name. Please make copies of your uploaded data and perform meta-analysis in a folder with copies of the data you wish to upload. 
+
+## 3. Biomarker Meta-Analysis
+
+The Meta-Analysis module accepts individual datasets which must be prepared by users prior to being uploaded. In general, the datasets must have been collected under comparable experimental conditions/share the same hypothesis or have the same mechanistic underpinnings. At the moment, the module only supports two-group comparisons (ex: control vs disease). Further, the module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The function to upload each individual dataset is *ReadIndData*. For this tutorial, you will be able to find example data in the "data" folder of the MetaboAnalyst github. 
+
+Before individual data analysis, a sanity check is performed to make sure that all of the necessary information has been collected, using the *SanityCheckIndData*. The class labels must be present and must contain only two classes. If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group (n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs. Compound concentration or peak intensity values must all be non-negative numbers. By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value within the data.
+
+Before differential expression analysis, datasets may be normalized using Log2 transformation using the *PerformIndNormalization* function. Additionally, users may choose to auto-scale their data. Differential expression analysis using linear models (Limma) may be performed for exploratory analysis using the *PerformLimmaDE*. Here, users must specify the p-value (FDR) cut-off and the fold-change (FC) cutoff. Before meta-analysis, one final data integrity check is performed to ensure meta-data are consistent between datasets and that there are at least more than 25% common features between the collective datasets, using the *CheckMetaDataConsistency* function.
+
+Three options are available to perform meta-analysis, whereby the summary level-statistical results from all studies are combined: combining of p-values, vote counting, or direct merging for very similar datasets including using the *PerformPvalCombination*, *PerformVoteCounting*, and *PerformMetaMerge*. The results can then be visualized as a Venn diagram to view the overlap of shared features between the datasets and the meta-analysis using the *PrepareVennData* function. 
+
+```{r, eval=FALSE}
+# Set working directory to the location of COPIES of your datasets for analysis
+setwd("set/path/to/copies")
+
+# Create objects for storing processed data from meta-analysis 
+mSet <- InitDataObjects("conc", "metadata", FALSE)
+
+# Read in example data: adenocarcinoma data2
+mSet <- ReadIndData(mSet, "data1.csv", "colu");
+
+# Sanity check data to ensure it is ready for analysis
+mSet <- SanityCheckIndData(mSet, "data1.csv")
+
+## to view any messages created during the sanity check
+mSet$dataSet$check.msg
+
+# [1] "Samples are in columns and features in rows."        "No empty rows were found in your data."             
+# [3] "No empty labels were found in your data."            "Two groups found: Adenocarcinoma and Adenocarcinoma"
+# [5] "All sample names are unique."                        "No empty feature names found"                       
+# [7] "All feature names are unique"                        "All sample names are OK"                            
+# [9] "All feature names are OK"                            "A total of 83 samples were found."                  
+# [11] "A total of 181 features were found."   
+
+# Perform log-transformation
+mSet <- PerformIndNormalization(mSet, "data1.csv", "log", 1);
+
+#Perform differential expression analysis to identify DE features
+mSet <- PerformLimmaDE(mSet, "data1.csv", 0.05, 0.0);
+
+# Repeat steps for example data3
+mSet <- ReadIndData(mSet, "data3.csv", "colu");
+mSet <- SanityCheckIndData(mSet, "data3.csv")
+mSet <- PerformIndNormalization(mSet, "data3.csv", "log", 1);
+mSet <- PerformLimmaDE(mSet, "data3.csv", 0.05, 0.0);
+
+# Repeat steps for example data4
+mSet <- ReadIndData(mSet, "data4.csv", "colu");
+mSet <- SanityCheckIndData(mSet, "data4.csv")
+mSet <- PerformIndNormalization(mSet, "data4.csv", "log", 1);
+mSet <- PerformLimmaDE(mSet, "data4.csv", 0.05, 0.0);
+
+# Check if meta-data between all uploaded datasets are consistent
+mSet <- CheckMetaDataConsistency(mSet, F);
+
+###*** Choose one of 3 methods to perform meta-analysis ***###
+
+###*** OPTION 1 - COMBINE P-VALUES ***###
+mSet <- PerformPvalCombination(mSet, "fisher", 0.05)
+
+###*** OPTION 2 - PERFORM VOTE COUNTING ***###
+mSet <- PerformVoteCounting(mSet, 0.05, 2.0)
+
+###*** OPTION 3 - MERGE INTO MEGA-DATASET ***###
+mSet <- PerformMetaMerge(mSet, 0.05)
+
+# Create results table
+mSet <- GetMetaResultMatrix(mSet, "fc")
+
+## To view the results table use mSet$analSet$meta.mat
+
+#                                            CombinedLogFC       Pval
+#pyrophosphate           -1.01060 -0.3676500      -0.69597 0.00088803
+#pyruvic acid            -1.15400 -0.0045231      -0.60135 0.00468560
+#glutamine                0.92430  0.2314200       0.58772 0.00468560
+#taurine                 -0.88704 -0.2703700      -0.58651 0.00468560
+#lactamide               -0.99086 -0.1404900      -0.57994 0.00468560
+#adenosine-5-phosphate   -0.89017 -0.1801400      -0.54611 0.00916250
+#lactic acid             -1.04110  0.0108080      -0.53555 0.01015500
+#lauric acid             -0.61304 -0.4351300      -0.52095 0.01258500
+#alpha ketoglutaric acid -0.58456 -0.4026300      -0.49103 0.02223800
+#maltotriose             -0.62125 -0.3406200      -0.48121 0.02488800
+#asparagine               0.66667  0.2802600       0.47669 0.02498000
+#hippuric acid           -0.77823 -0.1091800      -0.45495 0.03645100
+#citrulline               0.64683  0.2343900       0.44502 0.04135600
+
+# Create a box-plot of the expression pattern of a selected feature across the different datasets included in the meta-analysis
+mSet <- PlotSelectedFeature(mSet, "pyrophosphate")
+
+# Prepare data for the Venn Diagram, which will create a Integrated Venn diagram in your working directory (two overlapping circles, highlighting novel biomarker features from the meta-analysis, biomarkers that were consistently identified using meta-analysis and individual DE expression, and biomarkers that were only identified using individual DE expression.)
+mSet <- PrepareVennData(mSet);
+
+# Explore the Venn Diagram in the "vennData" object created
+
+# Get names of features overlapping between selected datasets from "vennData"
+mSet <- GetVennGeneNames(mSet, "data1.csvdata3.csvmeta_dat");
+
+# Enter the object below to obtain the names of the features that overlap between all of the studies
+mSet$dataSet$venn_overlap
+
+```
+
+## 4. Sweave Report
+
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+
+

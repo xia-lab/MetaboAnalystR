@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Jasmine Chong" />
+
+<meta name="date" content="2019-03-06" />
+
+<title>Statistical Analysis Module</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Statistical Analysis Module</h1>
+<h4 class="author"><em>Jasmine Chong</em></h4>
+<h4 class="date"><em>2019-03-06</em></h4>
+
+
+
+<div id="introduction" class="section level2">
+<h2>1. Introduction</h2>
+<p>MetaboAnalystR, in parallel with the webserver, provides a comprehensive suite of statistical analyses to perform on a user-uploaded data set. While researchers may have several goals for their metabolomics data, the ultimate goal is to identify any significant metabolite/s indicitive of a disease state, drugs, diet, environment, geographical location, etc.</p>
+<p>The standard workflow for statistical analysis is as follows:</p>
+<p><strong>Processed metabolomic data -&gt; Univariate analysis -&gt; Multivariate analysis -&gt; Biological interpretation</strong></p>
+<p>Univariate tests differ from multivariate tests in that they assess the importance of each variable seperately. Meanwhile, multivariate tests assess two or more variables at once, while also taking into consideration the relationship between the variables. Finally, biological interpretation provides a biological context for the significant metabolites identified using univariate/multivariate methods. Below, we will discuss the various statistical methods in greater detail. For the tutorial, we will be using a dataset consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - <a href="https://link.springer.com/article/10.1007%2Fs11306-010-0232-9">Eisner et al. 2010</a>.</p>
+</div>
+<div id="univariate-methods" class="section level2">
+<h2>2. Univariate Methods</h2>
+<p>To begin the SA module, we will start with identifying important features from the data set using various univariate tests, including classical methods such as the Student’s t-test and ANOVA, as well as other methods such as the volcano plot and correlation analysis.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MetaboAnalystR)
+mSet&lt;-<span class="kw">InitDataObjects</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;stat&quot;</span>, <span class="ot">FALSE</span>);</code></pre></div>
+<pre><code>## [1] &quot;MetaboAnalyst R objects intialized ...&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">Read.TextData</span>(mSet, <span class="st">&quot;https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv&quot;</span>, <span class="st">&quot;rowu&quot;</span>, <span class="st">&quot;disc&quot;</span>);
+mSet&lt;-<span class="kw">SanityCheckData</span>(mSet);</code></pre></div>
+<pre><code>##  [1] &quot;Successfully passed sanity check!&quot;                                                                    
+##  [2] &quot;Samples are not paired.&quot;                                                                              
+##  [3] &quot;2 groups were detected in samples.&quot;                                                                   
+##  [4] &quot;Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed.&quot;                 
+##  [5] &quot;&lt;font color=\&quot;orange\&quot;&gt;Other special characters or punctuations (if any) will be stripped off.&lt;/font&gt;&quot;
+##  [6] &quot;All data values are numeric.&quot;                                                                         
+##  [7] &quot;A total of 0 (0%) missing values were detected.&quot;                                                      
+##  [8] &quot;&lt;u&gt;By default, these values will be replaced by a small value.&lt;/u&gt;&quot;                                   
+##  [9] &quot;Click &lt;b&gt;Skip&lt;/b&gt; button if you accept the default practice&quot;                                          
+## [10] &quot;Or click &lt;b&gt;Missing value imputation&lt;/b&gt; to use other methods&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">ReplaceMin</span>(mSet);
+mSet&lt;-<span class="kw">PreparePrenormData</span>(mSet);
+mSet&lt;-<span class="kw">Normalization</span>(mSet, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;LogNorm&quot;</span>, <span class="st">&quot;MeanCenter&quot;</span>, <span class="st">&quot;S10T0&quot;</span>, <span class="dt">ratio=</span><span class="ot">FALSE</span>, <span class="dt">ratioNum=</span><span class="dv">20</span>);
+mSet&lt;-<span class="kw">PlotNormSummary</span>(mSet, <span class="st">&quot;norm_0_&quot;</span>, <span class="dt">format =</span><span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>);
+mSet&lt;-<span class="kw">PlotSampleNormSummary</span>(mSet, <span class="st">&quot;snorm_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>);</code></pre></div>
+<div id="fold-change-analysis" class="section level3">
+<h3>2.1 Fold-change analysis</h3>
+<p>The goal of fold-change (FC) analysis is to compare the absolute value of change between two group means. Since column-wise normalization (i.e. log transformation, mean-centering) will significantly alter absolute values, FC is calculated as the ratio between two group means using the data before column-wise normalization was applied.</p>
+<p>For paired analysis, the program first counts the number of pairs with consistent change above the given FC threshold. If this number exceeds a given count threshold, the variable will be reported as significant.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform fold-change analysis on uploaded data, unpaired</span>
+mSet&lt;-<span class="kw">FC.Anal.unpaired</span>(mSet, <span class="fl">2.0</span>, <span class="dv">0</span>)
+
+<span class="co"># Plot fold-change analysis</span>
+mSet&lt;-<span class="kw">PlotFC</span>(mSet, <span class="st">&quot;fc_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+<span class="co"># To view fold-change </span>
+mSet<span class="op">$</span>analSet<span class="op">$</span>fc<span class="op">$</span>fc.log</code></pre></div>
+<pre><code>## 1,6-Anhydro-beta-D-glucose       1-Methylnicotinamide 
+##                   0.888690                  -0.052019 
+##            2-Aminobutyrate       2-Hydroxyisobutyrate 
+##                   1.312700                   0.633520 
+##             2-Oxoglutarate         3-Aminoisobutyrate 
+##                   1.098400                   1.329100 
+##          3-Hydroxybutyrate       3-Hydroxyisovalerate 
+##                   1.563700                   1.164900 
+##           3-Indoxylsulfate     4-Hydroxyphenylacetate 
+##                   0.857170                   0.263810 
+##                    Acetate                    Acetone 
+##                   1.266100                   0.664560 
+##                    Adipate                    Alanine 
+##                   1.952900                   1.141300 
+##                 Asparagine                    Betaine 
+##                   0.852650                   1.004000 
+##                  Carnitine                    Citrate 
+##                   0.994090                   0.883620 
+##                   Creatine                 Creatinine 
+##                   1.763900                   0.932160 
+##              Dimethylamine               Ethanolamine 
+##                   1.120000                   0.729170 
+##                    Formate                     Fucose 
+##                   1.150600                   0.918770 
+##                   Fumarate                    Glucose 
+##                   1.262700                   2.553000 
+##                  Glutamine                    Glycine 
+##                   1.166100                   0.869890 
+##                  Glycolate             Guanidoacetate 
+##                   0.657790                   0.506100 
+##                  Hippurate                  Histidine 
+##                   1.075800                   1.013100 
+##               Hypoxanthine                 Isoleucine 
+##                   0.375470                   0.420550 
+##                    Lactate                    Leucine 
+##                   1.726900                   1.205400 
+##                     Lysine                Methylamine 
+##                   0.442780                   0.901220 
+##            Methylguanidine        N,N-Dimethylglycine 
+##                   0.517770                   1.342900 
+##          O-Acetylcarnitine               Pantothenate 
+##                   1.270300                  -0.397700 
+##              Pyroglutamate                   Pyruvate 
+##                   1.180400                   1.096200 
+##                Quinolinate                     Serine 
+##                   1.090600                   1.007700 
+##                  Succinate                    Sucrose 
+##                   1.416200                   1.432600 
+##                   Tartrate                    Taurine 
+##                   0.720000                   1.032700 
+##                  Threonine               Trigonelline 
+##                   0.990220                   1.460400 
+##     Trimethylamine N-oxide                 Tryptophan 
+##                   1.077700                   0.967880 
+##                   Tyrosine                     Uracil 
+##                   0.953700                   0.207270 
+##                     Valine                     Xylose 
+##                   1.178900                   1.194000 
+##              cis-Aconitate               myo-Inositol 
+##                   1.589400                   1.537500 
+##            trans-Aconitate         pi-Methylhistidine 
+##                   0.811730                   0.771640 
+##        tau-Methylhistidine 
+##                   0.708800</code></pre>
+</div>
+<div id="t-test" class="section level3">
+<h3>2.2 T-Test</h3>
+<p>MetaboAnalystR supports various options for performing T-test analysis. Users can select the analysis type (<em>paired</em>), the group variance (<em>equal.var</em>), whether the test is parametric or non-parametric (<em>nonpar</em>), and the adjusted p-value (FDR) cut-off (<em>threshp</em>).</p>
+<p>Note, for a large data set (&gt; 1000 variables), both the paired information and the group variance will be ignored, and the default parameters will be used for t-tests to save computational time. If you choose non-parametric tests (Wilcoxon rank-sum test), the group variance will be ignored.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform T-test (parametric)</span>
+mSet&lt;-<span class="kw">Ttests.Anal</span>(mSet, <span class="dt">nonpar=</span>F, <span class="dt">threshp=</span><span class="fl">0.05</span>, <span class="dt">paired=</span><span class="ot">FALSE</span>, <span class="dt">equal.var=</span><span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## [1] &quot;A total of 53 significant features were found.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot of the T-test results</span>
+mSet&lt;-<span class="kw">PlotTT</span>(mSet, <span class="dt">imgName =</span> <span class="st">&quot;tt_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi =</span> <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+</div>
+<div id="volcano-plot" class="section level2">
+<h2>2.3 Volcano Plot</h2>
+<p>The volcano plot is a combination of fold change and t-test values. Note, for unpaired samples, the x-axis is log2(FC). For paired analysis, the x-axis is number of significant counts. The y-axis is -log10(p.value) for both cases, and can be based on raw or FDR adjusted p values from the t-tests. In <em>Volcano.Anal</em>, users can specify if the data are paired, the FC threshold, the comparison type, the signigicant count threshold if data are paired, whether the test is parametric or non-parametric, the p-value threshold, and the group variance.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform the volcano analysis</span>
+mSet&lt;-<span class="kw">Volcano.Anal</span>(mSet, <span class="ot">FALSE</span>, <span class="fl">2.0</span>, <span class="dv">0</span>, <span class="fl">0.75</span>,F, <span class="fl">0.1</span>, <span class="ot">TRUE</span>, <span class="st">&quot;raw&quot;</span>)
+
+<span class="co"># Create the volcano plot</span>
+mSet&lt;-<span class="kw">PlotVolcano</span>(mSet, <span class="st">&quot;volcano_0_&quot;</span>, <span class="dv">1</span>, <span class="dt">format =</span><span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="one-way-analysis-of-variance-anova---only-for-multi-group-analysis" class="section level2">
+<h2>2.4 One-way Analysis of Variance (ANOVA) - ONLY FOR MULTI-GROUP ANALYSIS!</h2>
+<p>ANOVA can only be computed on data with more than one group. <strong>Please note that the below example uses data from a different example dataset.</strong></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform ANOVA</span>
+mSet &lt;-<span class="st"> </span><span class="kw">ANOVA.Anal</span>(mSet, F, <span class="fl">0.05</span>, <span class="st">&quot;fisher&quot;</span>)
+
+<span class="co"># Plot ANOVA</span>
+mSet &lt;-<span class="st"> </span><span class="kw">PlotANOVA</span>(mSet, <span class="st">&quot;aov_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="correlation-analysis" class="section level2">
+<h2>2.5 Correlation Analysis</h2>
+<p>To perform correlation analysis to evaluate the correlation between all features or samples, use <em>PlotCorrHeatMap</em>. Here, users must specify the mSet object, the dimensions to be correlated, the name of the heatmap that will be created, the output, dpi, and width of the image, the distance measure (Pearson, Spearman, or Kendall), to view the heatmap as an overview or detailed view, to fix the colour distribution, the colors, and whether or not to perform clustering. Please refer to the user manual for more details.</p>
+<p>Note, the heatmap will only show correlations for a maximum of 1000 features. For larger datasets, only top 1000 features will be selected based on their interquantile range (IQR). When color distribution is fixed, you can potentially compare the correlation patterns among different data sets. In this case, you can choose “do not perform clustering” for all data set, or only to perform clustering on a single reference data set, then manually re-arranged other data sets according to the clustering pattern of the reference data set.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">### OPTION 1 - Heatmap specifying pearson distance and an overview
+mSet&lt;-<span class="kw">PlotCorrHeatMap</span>(mSet, <span class="st">&quot;corr_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;col&quot;</span>, <span class="st">&quot;pearson&quot;</span>, <span class="st">&quot;bwm&quot;</span>, <span class="st">&quot;overview&quot;</span>, F, F, F, <span class="dv">100</span>)</code></pre></div>
+<p>The following command shows the detailed view (zoomed-in) of the above heatmap.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">### OPTION 2 - Heatmap specifying pearson correlation and a detailed view
+mSet&lt;-<span class="kw">PlotCorrHeatMap</span>(mSet, <span class="st">&quot;corr_1_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;col&quot;</span>, <span class="st">&quot;spearman&quot;</span>, <span class="st">&quot;bwm&quot;</span>, <span class="st">&quot;detail&quot;</span>, F, F, F, <span class="dv">999</span>)</code></pre></div>
+</div>
+<div id="pattern-searching" class="section level2">
+<h2>2.6 Pattern Searching</h2>
+<p>Correlation analysis can be performed either against a given feature or against a given pattern. The pattern is specified as a series of numbers separated by “-”. Each number corresponds to the expected expression pattern in the corresponding group. For example, a 1-2-3-4 pattern is used to search for features that increase linearly with time in a time-series data with four time points (or four groups). The order of the groups is given as the first item in the predefined patterns. Indicate the mSet object, the distance measure (Pearson, Spearman, or Kendall), and the pattern to use.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform correlation analysis on a pattern (a feature of interest in this case)</span>
+mSet&lt;-<span class="kw">FeatureCorrelation</span>(mSet, <span class="st">&quot;pearson&quot;</span>, <span class="st">&quot;1,6-Anhydro-beta-D-glucose&quot;</span>)
+
+<span class="co"># Plot the correlation analysis on a pattern</span>
+mSet&lt;-<span class="kw">PlotCorr</span>(mSet, <span class="st">&quot;ptn_3_&quot;</span>, <span class="dt">format=</span><span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="principal-component-analysis-pca" class="section level2">
+<h2>2.7 Principal Component Analysis (PCA)</h2>
+<p>To perform PCA, first use <em>PCA.Anal</em>. MetaboAnalystR has the options to create a scree plot (<em>PlotPCAScree</em>), score plot (<em>PlotPCA2DScore</em> or <em>PlotPCA3DScore</em>), loadings plot (<em>PlotPCALoading</em>), and biplot (<em>PlotPCABiplot</em>). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type “mSet$imgSet$pca.3d” into your R console. Please refer to the user manual for details about each function.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform PCA analysis</span>
+mSet&lt;-<span class="kw">PCA.Anal</span>(mSet)
+
+<span class="co"># Create PCA overview</span>
+mSet&lt;-<span class="kw">PlotPCAPairSummary</span>(mSet, <span class="st">&quot;pca_pair_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi =</span> <span class="dv">300</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">5</span>)
+
+<span class="co"># Create PCA scree plot</span>
+mSet&lt;-<span class="kw">PlotPCAScree</span>(mSet, <span class="st">&quot;pca_scree_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dt">dpi =</span> <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">5</span>)
+
+<span class="co"># Create a 2D PCA score plot</span>
+mSet&lt;-<span class="kw">PlotPCA2DScore</span>(mSet, <span class="st">&quot;pca_score2d_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">300</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="fl">0.95</span>, <span class="dv">1</span>, <span class="dv">0</span>)
+
+<span class="co"># Create a 3D PCA score plot</span>
+mSet&lt;-<span class="kw">PlotPCA3DScoreImg</span>(mSet, <span class="st">&quot;pca_score3d_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="dv">40</span>)</code></pre></div>
+<pre><code>## [1] &quot;The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create a PCA loadings Plots</span>
+mSet&lt;-<span class="kw">PlotPCALoading</span>(mSet, <span class="st">&quot;pca_loading_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="dv">2</span>);
+
+<span class="co"># Create a PCA Biplot</span>
+mSet&lt;-<span class="kw">PlotPCABiplot</span>(mSet, <span class="st">&quot;pca_biplot_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi =</span> <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># View the 3D interactive PLS-DA score plot</span>
+mSet<span class="op">$</span>imgSet<span class="op">$</span>pca.3d</code></pre></div>
+</div>
+<div id="partial-least-squares---discriminant-analysis-pls-da" class="section level2">
+<h2>2.8 Partial Least Squares - Discriminant Analysis (PLS-DA)</h2>
+<p>To perform PLS-DA, first use <em>PLSR.Anal</em>. MetaboAnalystR has the options to create a plot component pairs (<em>PlotPLSPairSummary</em>), score plot (<em>PlotPLS2DScore</em>), loadings plot (<em>PlotPLSLoading</em>), perform cross-validation and permutation (<em>PLSDA.CV</em> and <em>PLSDA.Permut</em>), and plot the results of the cross-validation and permutation (<em>PlotPLS.Imp</em> and <em>PlotPLS.Permutation</em>). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type “mSet$imgSet$plsda.3d” into your R console. Please refer to the user manual for details about each function.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PLSR.Anal</span>(mSet, <span class="dt">reg=</span><span class="ot">TRUE</span>)
+
+mSet&lt;-<span class="kw">PlotPLSPairSummary</span>(mSet, <span class="st">&quot;pls_pair_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">5</span>)
+
+mSet&lt;-<span class="kw">PlotPLS2DScore</span>(mSet, <span class="st">&quot;pls_score2d_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="dv">2</span>,<span class="fl">0.95</span>,<span class="dv">1</span>,<span class="dv">0</span>)
+
+mSet&lt;-<span class="kw">PlotPLS3DScoreImg</span>(mSet, <span class="st">&quot;pls_score3d_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>, <span class="dv">40</span>)</code></pre></div>
+<pre><code>## [1] &quot;The Interactive 3D PLS-DA plot has been created, please find it in mSet$imgSet$plsda.3d.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PlotPLSLoading</span>(mSet, <span class="st">&quot;pls_loading_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>);
+
+mSet&lt;-<span class="kw">PLSDA.CV</span>(mSet, <span class="st">&quot;T&quot;</span>,<span class="dv">5</span>, <span class="st">&quot;Q2&quot;</span>)</code></pre></div>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## 
+## Attaching package: 'caret'</code></pre>
+<pre><code>## The following object is masked from 'package:MetaboAnalystR':
+## 
+##     splsda</code></pre>
+<pre><code>## The following object is masked from 'package:pls':
+## 
+##     R2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PlotPLS.Classification</span>(mSet, <span class="st">&quot;pls_cv_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+mSet&lt;-<span class="kw">PlotPLS.Imp</span>(mSet, <span class="st">&quot;pls_imp_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;vip&quot;</span>, <span class="st">&quot;Comp. 1&quot;</span>, <span class="dv">15</span>,<span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## Warning in RColorBrewer::brewer.pal(25, colorpalette): n too large, allowed maximum for palette RdYlGn is 11
+## Returning the palette you asked for with that many colors</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PLSDA.Permut</span>(mSet, <span class="dv">100</span>, <span class="st">&quot;accu&quot;</span>)</code></pre></div>
+<pre><code>## [1] &quot;performing 100 permutations ...&quot;
+## [1] &quot;Empirical p value: p = 0.02 (2/100)&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PlotPLS.Permutation</span>(mSet, <span class="st">&quot;pls_perm_1_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># View the 3D interactive PLS-DA score plot</span>
+mSet<span class="op">$</span>imgSet<span class="op">$</span>plsda.3d</code></pre></div>
+</div>
+<div id="sparse-partial-least-squares---discriminant-analysis-spls-da" class="section level2">
+<h2>2.9 Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)</h2>
+<p>The sparse PLS-DA (sPLS-DA) algorithm can effectively reduce the number of variables (metabolites) in high-dimensional metabolomics data to produce robust and easy-to-interpret models. Users can control the “sparseness” of the model by controlling the number of components included in the model and the number of variables within each component. More details can be found from Le Cao et. al 2011 (PMC3133555).</p>
+<p>To begin, use <em>SPLSR.Anal</em>. MetaboAnalystR has the options to create an overview of the sPLS-DA analysis (<em>PlotSPLSPairSummary</em>), a score plot (<em>PlotSPLS2DScore</em> or <em>PlotSPLS3DScore</em>), loadings plot (<em>PlotSPLSLoading</em>), and classification plot (<em>PlotSPLSDA.Classification</em>). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type “mSet$imgSet$splsda.3d” into your R console. Please refer to the user manual for details about each function. Note that the loadings plot shows the variables selected by the sPLS-DA model for a given component. The variables are ranked by the absolute values of their loadings.</p>
+<p>To evaluate the performance of the created sPLS-DA models for classification, use <em>PlotSPLSDA.Classification</em>. The performance of the sPLS-DA models are evaluated using cross validations (CV) with increasing numbers of components created using the specified number of the variables. Users can choose to use either 5-fold CVs or leave one out cross-validation (LOOCV). Please note that the results from 5-fold CV may change slightly due to random subsampling procedures.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform sPLS-DA analysis</span>
+mSet&lt;-<span class="kw">SPLSR.Anal</span>(mSet, <span class="dv">5</span>, <span class="dv">10</span>, <span class="st">&quot;same&quot;</span>)
+
+<span class="co"># Plot sPLS-DA overview</span>
+mSet&lt;-<span class="kw">PlotSPLSPairSummary</span>(mSet, <span class="st">&quot;spls_pair_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">5</span>)
+
+<span class="co"># Create 2D sPLS-DA Score Plot</span>
+mSet&lt;-<span class="kw">PlotSPLS2DScore</span>(mSet, <span class="st">&quot;spls_score2d_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="fl">0.95</span>, <span class="dv">1</span>, <span class="dv">0</span>)
+
+<span class="co"># Create 3D sPLS-DA Score Plot</span>
+mSet&lt;-<span class="kw">PlotSPLS3DScoreImg</span>(mSet, <span class="st">&quot;spls_score3d_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">40</span>)</code></pre></div>
+<pre><code>## [1] &quot;The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create sPLS-DA loadings plot</span>
+mSet&lt;-<span class="kw">PlotSPLSLoading</span>(mSet, <span class="st">&quot;spls_loading_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="st">&quot;overview&quot;</span>)</code></pre></div>
+<pre><code>## Warning in RColorBrewer::brewer.pal(25, colorpalette): n too large, allowed maximum for palette RdYlGn is 11
+## Returning the palette you asked for with that many colors</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform cross-validation and plot sPLS-DA classification</span>
+mSet&lt;-<span class="kw">PlotSPLSDA.Classification</span>(mSet, <span class="st">&quot;spls_cv_0_&quot;</span>, <span class="st">&quot;Mfold&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># View the 3D interactive PLS-DA score plot</span>
+mSet<span class="op">$</span>imgSet<span class="op">$</span>splsda.3d</code></pre></div>
+</div>
+<div id="orthogonal-partial-least-squares---discriminant-analysis-orthopls-da" class="section level2">
+<h2>2.10 Orthogonal Partial Least Squares - Discriminant Analysis (orthoPLS-DA)</h2>
+<p>MetaboAnalystR can create several outputs for oPLS-DA analysis. To begin, use the <em>OPLSR.Anal</em> function. The outputs for oPLS-DA include a score plot, a plot to identify significant features, a model overview plot, and a plot of model permutations. For the significant features plot, the plot visualizes the variable influence in the orthogonal PLS-DA model. It combines the covariance and correlation loading profiles. This corresponds to combining the contribution or magnitude (covariance) with the effect and reliability (correlation) for the model variables with respect to model component scores (details). To begin, please use the <em>OPLSR.Anal</em> function. Please refer to the user manual for further details on the functions.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform oPLS-DA analysis</span>
+mSet&lt;-<span class="kw">OPLSR.Anal</span>(mSet, <span class="dt">reg=</span><span class="ot">TRUE</span>)
+
+<span class="co"># Create a 2D oPLS-DA score plot</span>
+mSet&lt;-<span class="kw">PlotOPLS2DScore</span>(mSet, <span class="st">&quot;opls_score2d_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="dv">1</span>,<span class="dv">2</span>,<span class="fl">0.95</span>,<span class="dv">1</span>,<span class="dv">0</span>)
+
+<span class="co"># Create a significant features plot</span>
+mSet&lt;-<span class="kw">PlotOPLS.Splot</span>(mSet, <span class="st">&quot;opls_splot_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>);
+
+<span class="co"># Create a plot of the model overview</span>
+mSet&lt;-<span class="kw">PlotOPLS.MDL</span>(mSet, <span class="st">&quot;opls_mdl_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+<span class="co"># Perform and plot oPLS-DA permutation </span>
+mSet&lt;-<span class="kw">PlotOPLS.Permutation</span>(mSet, <span class="st">&quot;opls_perm_2_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dv">100</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<pre><code>## [1] &quot;Empirical p-values Q2:  p &lt; 0.01 (0/100)  and R2Y:  p &lt; 0.01 (0/100)&quot;</code></pre>
+</div>
+<div id="significance-analysis-of-microarrary-and-metabolites-sam" class="section level2">
+<h2>2.11 Significance Analysis of Microarrary (and Metabolites) (SAM)</h2>
+<p>SAM is a well-established statistical method for identification of differentially expressed genes in mi- croarray data analysis. It is designed to address the false discovery rate (FDR) when running multiple tests on high-dimensional microarray data. SAM assigns a significance score to each variable based on its change relative to the standard deviation of repeated measurements. For a variable with scores greater than an adjustable threshold, its relative difference is compared to the distribution estimated by random permutations of the class labels. For each threshold, a certain proportion of the variables in the permutation set will be found to be significant by chance. The proportion is used to calculate the FDR. SAM is performed using the <em>siggenes</em> package. Users need to specify the Delta value to control FDR in order to proceed. To begin the SAM analysis, use the <em>SAM.Anal</em> function. Please refer to the user manual for further details on the functions.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform SAM analysis</span>
+mSet&lt;-<span class="kw">SAM.Anal</span>(mSet, <span class="st">&quot;d.stat&quot;</span>, <span class="ot">FALSE</span>, <span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## Warning: Expected class labels are 0 and 1. cachexic is set to 0, and
+## control is set to 1.</code></pre>
+<pre><code>## Warning: The spline based estimation of pi0 results in a non-positive value of pi0.
+## Therefore, pi0 is estimated by using lambda = 0.5.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create the SAM matrix of signifiant features</span>
+mSet&lt;-<span class="kw">SetSAMSigMat</span>(mSet, <span class="fl">1.1</span>)
+
+<span class="co"># Create a SAM plot of FDR values</span>
+mSet&lt;-<span class="kw">PlotSAM.FDR</span>(mSet, <span class="fl">1.1</span>, <span class="st">&quot;sam_view_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<pre><code>## Warning in min(mat.fdr[, &quot;FDR&quot;][hit.inx]): no non-missing arguments to min;
+## returning Inf</code></pre>
+<pre><code>## Warning in min(mat.fdr[, &quot;Called&quot;][hit.inx]): no non-missing arguments to
+## min; returning Inf</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create a SAM plot of results</span>
+mSet&lt;-<span class="kw">PlotSAM.Cmpd</span>(mSet, <span class="st">&quot;sam_imp_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="empirical-bayesian-analysis-of-microarray-and-metabolites-ebam" class="section level2">
+<h2>2.12 Empirical Bayesian Analysis of Microarray (and Metabolites) (EBAM)</h2>
+<p>EBAM is an empirical Bayesian method based on moderated t-statistics. EBAM uses a two-group mixture model for null and significant features. The prior and density parameters are estimated from the data. A feature is considered significant if its calculated posterior is larger than or equal to delta and no other features with a more extreme test score that is not called signicant. The default is delta = 0.9. The suggested fudge factor (a0) is chosen that leads to the largest number of significant features. EBAM is performed with ebam function in <em>siggenes</em> package.</p>
+<p>To perform EBAM analysis, begin with the <em>EBAM.AO.Init</em> function. To create a plot of the EBAM analysis, use <em>PlotEBAM.AO</em>. Please refer to the user manual for further details on the functions.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform EBAM analysis</span>
+mSet&lt;-<span class="kw">EBAM.A0.Init</span>(mSet, <span class="ot">FALSE</span>, <span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## Loading required package: splines</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot EBAM analysis</span>
+mSet&lt;-<span class="kw">PlotEBAM.A0</span>(mSet, <span class="st">&quot;ebam_view_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<pre><code>## Warning: Some of the logit posterior probabilites are Inf. These
+## probabilities are not plotted.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Initialize EBAM compound analysis </span>
+mSet&lt;-<span class="kw">EBAM.Cmpd.Init</span>(mSet, <span class="st">&quot;z.ebam&quot;</span>, <span class="fl">0.0</span>, <span class="ot">FALSE</span>, <span class="ot">TRUE</span>)
+
+<span class="co"># Create the EBAM matrix of significant features</span>
+mSet&lt;-<span class="kw">SetEBAMSigMat</span>(mSet, <span class="fl">0.9</span>);
+
+<span class="co"># Create a EBAM plot of results</span>
+mSet&lt;-<span class="kw">PlotEBAM.Cmpd</span>(mSet, <span class="st">&quot;ebam_imp_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="hierarchical-clustering-dendogram" class="section level2">
+<h2>2.13 Hierarchical Clustering: Dendogram</h2>
+<p>In (agglomerative) hierarchical cluster analysis, each sample begins as a separate cluster and the algo- rithm proceeds to combine them until all samples belong to one cluster. Two parameters need to be considered when performing hierarchical clustering. The first one is distance measure, including the Euclidean distance, Pearson’s correlation, or Spearman’s rank correlation. The other parameter is the clustering algorithm, which includes the average linkage (clustering uses the centroids of the observations), complete linkage (clustering uses the farthest pair of observations between the two groups), single linkage (clustering uses the closest pair of observations) and Ward’s linkage (clustering to minimize the sum of squares of any two clusters). Heatmap is often presented as a visual aid in addition to the dendrogram. Hierachical clustering is performed with the <em>hclust</em> function in package stat. Use the <em>PlotHCTree</em> to create the dendogram, where users can specify the distance measure and the clustering algorithm. Please refer to the user manual for further details on the function.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform hierarchical clustering and plot dendogram</span>
+mSet&lt;-<span class="kw">PlotHCTree</span>(mSet, <span class="st">&quot;tree_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;euclidean&quot;</span>, <span class="st">&quot;ward.D&quot;</span>)</code></pre></div>
+</div>
+<div id="hierarchical-clustering-heatmaps" class="section level2">
+<h2>2.14 Hierarchical Clustering: Heatmaps</h2>
+<p>The heatmap provides intuitive visualization of the metabolomics data table. Each colored cell on the map corresponds to a concentration value in the user’s data table, with samples in rows and features/compounds in columns. Users can use a heatmap to identify samples/features that are unusually high/low. Further, the heatmap is often presented as a visual aid in addition to the dendrogram.</p>
+<p>In (agglomerative) hierarchical cluster analysis, each sample begins as a separate cluster and the algorithm proceeds to combine them until all samples belong to one cluster. Two parameters need to be considered when performing hierarchical clustering. The first one is the similarity measure, options in MetaboAnalystR include Euclidean distance, Pearson’s correlation, and Spearman’s rank correlation. The other parameter is the choice of clustering algorithms, including average linkage (clustering uses the centroids of the observations), complete linkage (clustering uses the farthest pair of observations between the two groups), single linkage (clustering uses the closest pair of observations) and Ward’s linkage (clustering to minimize the sum of squares of any two clusters). Hierachical clustering is performed with the <em>hclust</em> function in package stat. Use the <em>PlotHeatMap</em> function, where users can specify the distance measure, the clustering algorithm, the color contrast, a detailed or overview view of the data, and options for the data input for the heatmap. Please refer to the user manual for further details.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform hierarchical clustering and plot heat map</span>
+mSet&lt;-<span class="kw">PlotHeatMap</span>(mSet, <span class="st">&quot;heatmap_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;norm&quot;</span>, <span class="st">&quot;row&quot;</span>, <span class="st">&quot;euclidean&quot;</span>, <span class="st">&quot;ward.D&quot;</span>,<span class="st">&quot;bwm&quot;</span>, <span class="st">&quot;overview&quot;</span>, T, T, <span class="ot">NA</span>, T, F)</code></pre></div>
+</div>
+<div id="partitional-clustering-k-means" class="section level2">
+<h2>2.15 Partitional Clustering: K-Means</h2>
+<p>K-means clustering is a nonhierarchical clustering technique. It begins by creating k random clusters (k is supplied by user). The program then calculates the mean of each cluster. If an observation is closer to the centroid of another cluster then the observation is made a member of that cluster. This process is repeated until none of the observations are reassigned to a different cluster. K-means analysis is performed using the <em>kmeans</em> function in the package <em>stat</em>. To begin, use the <em>Kmeans.Anal</em> function, and then the <em>PlotKmeans</em> function to create a plot of the analysis.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform K-means analysis</span>
+mSet&lt;-<span class="kw">Kmeans.Anal</span>(mSet, <span class="dv">3</span>)
+
+<span class="co"># Plot K-means analysis </span>
+mSet&lt;-<span class="kw">PlotKmeans</span>(mSet, <span class="st">&quot;km_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="partitional-clustering-self-organizing-maps-som" class="section level2">
+<h2>2.16 Partitional Clustering: Self Organizing Maps (SOM)</h2>
+<p>SOM is an unsupervised neural network algorithm used to automatically identify major trends present in high-dimensional data. SOM is based on a grid of interconnected nodes, each of which represents a model. These models begin as random values, but during the process of iterative training they are updated to represent different subsets of the training set. Users need to specify the x and y dimension of the grid to perform SOM analysis. The SOM is performed using the <em>som</em> R package. Please refer to the user manual for further details on the functions.</p>
+<p>MetaboAnalystR performs several outputs for self organizing maps. To begin, use the <em>SOM.Anal</em> function to perform SOM analysis. Then use the <em>PlotSOM</em> to create a plot of the SOM analysis.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform SOM analysis</span>
+mSet&lt;-<span class="kw">SOM.Anal</span>(mSet, <span class="dv">1</span>, <span class="dv">3</span>,<span class="st">&quot;linear&quot;</span>,<span class="st">&quot;gaussian&quot;</span>)
+
+<span class="co"># Plot SOM analysis</span>
+mSet&lt;-<span class="kw">PlotSOM</span>(mSet, <span class="st">&quot;som_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="random-forest" class="section level2">
+<h2>2.17 Random Forest</h2>
+<p>Random Forest is a supervised learning algorithm suitable for high dimensional data analysis. It uses an ensemble of classification trees, each of which is grown by random feature selection from a bootstrap sample at each branch. Class prediction is based on the majority vote of the ensemble. RF also provides other useful information such as OOB (out-of-bag) error, variable importance measure, and outlier mea- sures. During tree construction, about one-third of the instances are left out of the bootstrap sample. This OOB data is then used as test sample to obtain an unbiased estimate of the classification error (OOB error). Variable importance is evaluated by measuring the increase of the OOB error when it is permuted. The outlier measures are based on the proximities during tree construction. RF analysis is performed using the <em>randomForest</em> R package.</p>
+<p>MetaboAnalystR performs several outputs for the random forest analysis. To begin, use the <em>RF.Anal</em> function. The <em>PlotRF.Classify</em> function creates a plot of the out-of-the-bag error rate for the random forest classification. The <em>PlotRF.VIP</em> function creates a plot of the contributions of variables with high importance to the classification of the random forest model. In this plot, the features are ranked by their contributions to classification accuracy (Mean Dicrease Accuracy). The <em>PlotRF.Outlier</em> creates a plot of the outlying samples in the random forest model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform random forest analysis</span>
+mSet&lt;-<span class="kw">RF.Anal</span>(mSet, <span class="dv">500</span>, <span class="dv">7</span>, <span class="dv">1</span>)</code></pre></div>
+<pre><code>## Warning in rm(.Random.seed): object '.Random.seed' not found</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot random forest classification</span>
+mSet&lt;-<span class="kw">PlotRF.Classify</span>(mSet, <span class="st">&quot;rf_cls_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+<span class="co"># Plot random forest variables of importance</span>
+mSet&lt;-<span class="kw">PlotRF.VIP</span>(mSet, <span class="st">&quot;rf_imp_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<pre><code>## Warning in RColorBrewer::brewer.pal(25, colorpalette): n too large, allowed maximum for palette RdYlGn is 11
+## Returning the palette you asked for with that many colors</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot random forest outliers </span>
+mSet&lt;-<span class="kw">PlotRF.Outlier</span>(mSet, <span class="st">&quot;rf_outlier_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+</div>
+<div id="support-vector-machine-svm" class="section level2">
+<h2>2.18 Support Vector Machine (SVM)</h2>
+<p>SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. The SVM- based recursive feature selection and classification is performed using the R-SVM script11. The process is performed recursively using decreasing series of feature subsets (ladder) so that different classification models can be calculated. Feature importance is evaluated based on its frequencies being selected in the best classifier identified by recursive classification and cross-validation. Please note, R-SVM is very computationally intensive. Only the top 50 features (ranked by their p values from t-tests) will be evaluated.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform SVM </span>
+mSet&lt;-<span class="kw">RSVM.Anal</span>(mSet, <span class="dv">10</span>)
+
+mSet&lt;-<span class="kw">PlotRSVM.Classification</span>(mSet, <span class="st">&quot;svm_cls_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+mSet&lt;-<span class="kw">PlotRSVM.Cmpd</span>(mSet, <span class="st">&quot;svm_imp_0_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
+<pre><code>## Warning in RColorBrewer::brewer.pal(25, colorpalette): n too large, allowed maximum for palette RdYlGn is 11
+## Returning the palette you asked for with that many colors</code></pre>
+</div>
+<div id="sweave-report" class="section level2">
+<h2>3. Sweave Report</h2>
+<p>Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the <em>PreparePDFReport</em> function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created <em>must</em> be named <em>mSet</em>, and specify the user name in quotation marks.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

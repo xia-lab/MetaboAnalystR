@@ -1,0 +1,112 @@
+---
+title: "Integrated Pathway Analysis"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Integrated Pathway Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+This module performs integrated metabolic pathway analysis on results obtained from combined metabolomics and gene expression studies conducted under the same experimental conditions. This approach exploits KEGG metabolic pathway models to complete the analysis. The underlying assumption behind this module is that by combining evidence from both changes in gene expression and metabolite concentrations, one is more likely to pinpoint the pathways involved in the underlying biological processes. 
+
+To this end, users need to supply a list of genes and metabolites of interest that have been identified from the same samples or obtained under similar conditions. The metabolite list can be selected from the results of a previous analysis downloaded from MetaboAnalyst. Similarly, the gene list can be easily obtained using many excellent web-based tools such as GEPAS or INVEX. 
+
+After users have uploaded their data, the genes and metabolites are then mapped to KEGG metabolic pathways for over-representation analysis and pathway topology analysis. Topology analysis uses the structure of a given pathway to evaluate the relative importance of the genes/compounds based on their relative location. Clicking on the name of a specific pathway will generate a graphical representation of that pathway highlighted with the matched genes/metabolites. Users must keep in mind that unlike transcriptomics, where the entire transcriptome is routinely mapped, current metabolomic technologies only capture a small portion of the metabolome. This difference can lead to potentially biased results. To address this issue, the current implementation of this omic integration module allows users to explore the enriched pathways based either on joint evidence or on the evidence obtained from one particular omic platform for comparison.
+
+## 1.1 Download Necessary Files
+
+Before beginning, **two files must be downloaded** and placed in your working directory, the gene list and the metabolite list. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. Please download these files prior to using the tutorial below as per the R code below.  
+
+```{r, eval=FALSE}
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_genes.txt", "integ_genes.txt", "curl")
+
+download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_cmpds.txt", "integ_cmpds.txt", "curl")
+
+```
+
+## 2. Joint (Integrated) Pathway Analysis
+
+Enrichment analysis aims to evaluate whether the observed genes and metabolites in a particular pathway are significantly enriched (appeatr more than expected by random chance) within the dataset. You can choose over-representation analysis (ORA) based on either hypergenometrics analysis or Fisher's exact method.
+
+The topology analysis aims to evaluate whether a given gene or metabolite plays an important role in a biological response based on its position within a pathway. Degree Centrality measures the number of links that connect to a node (representing either a gene or metabolite) within a pathway; Closeness Centrality measures the overall distance from a given node to all other nodes in a pathway; Betweenness Centrality measures the number of shortest paths from all nodes to all the others that pass through a given node within a pathway.
+
+Users can choose one of three different modes of pathways: - the gene-metabolite mode (default, "integ") allows joint-analysis and visualization of both significant genes and metabolites; while the gene-centric ("genetic") or metabolite-centric ("metab") mode allows users to identify enriched pathways driven by significant genes or metabolites, respectively.
+
+### 2.1 Step 1: Perform Gene/Metabolite Name Mapping 
+
+```{r, eval=FALSE}
+library(MetaboAnalystR)
+
+# Initiate MetaboAnalyst
+mSet<-InitDataObjects("conc", "pathinteg", FALSE)
+
+# Set organism library
+mSet<-SetOrganism(mSet, "hsa")
+
+# Set the name of your file containing your gene list
+geneListFile<-"integ_genes.txt"
+
+# Read in your gene list file
+geneList<-readChar(geneListFile, file.info(geneListFile)$size)
+
+# Perform gene mapping of your file
+mSet<-PerformIntegGeneMapping(mSet, geneList, "hsa", "symbol");
+
+# Set the name of your file containing your compound list
+cmpdListFile<-"integ_cmpds.txt"
+
+# Read in your compound list file
+cmpdList<-readChar(cmpdListFile, file.info(cmpdListFile)$size)
+
+# Perform compound mapping of your file
+mSet<-PerformIntegCmpdMapping(mSet, cmpdList, "hsa", "kegg");
+
+# Create a mapping result table
+mSet<-CreateMappingResultTable(mSet)
+
+# Prepare data for joint pathway analysis
+mSet<-PrepareIntegData(mSet);
+
+```
+
+### 2.2 Step 2: Perform Joint Pathway Analysis 
+
+To perform Joint Pathway Analysis, we show two options below. Note you can only perform the analysis once per session. 
+
+```{r, eval=FALSE}
+#### OPTION 1 ####
+# Perform integrated pathway analysis, using hypergeometric test, degree centrality, and the gene-metabolite pathways
+# Saves the output as MetaboAnalyst_result_pathway.csv
+mSet<-PerformIntegPathwayAnalysis(mSet, "dc", "hyper", "integ")
+
+# View the output of the pathway analysis
+mSet$dataSet$path.mat
+
+```
+
+```{r, eval=FALSE}
+#### OPTION 2 ####
+# Perform integrated pathway analysis, using hypergeometric test, betweenness centrality, and gene-centric pathways 
+# Saves the output as MetaboAnalyst_result_pathway.csv
+mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "hyper", "genetic")
+
+```
+
+**Pathway Analysis Overview**
+
+The scatter plot below show a summary of the joint evidence from enrichment analysis (p-values) and topology analysis (pathway impact).
+
+```{r, eval=FALSE}
+# Perform pathway analysis
+mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
+```
+
+## 3. Sweave Report
+
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+

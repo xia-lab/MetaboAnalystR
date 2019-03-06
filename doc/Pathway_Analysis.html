@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Jasmine Chong, Jeff Xia" />
+
+<meta name="date" content="2019-03-06" />
+
+<title>Pathway Analysis</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Pathway Analysis</h1>
+<h4 class="author"><em>Jasmine Chong, Jeff Xia</em></h4>
+<h4 class="date"><em>2019-03-06</em></h4>
+
+
+
+<div id="introduction" class="section level2">
+<h2>1. Introduction</h2>
+<p>The pathway analysis module supports pathway analysis (integrating enrichment analysis and pathway topology analysis) and visualization for 21 model organisms, including Human, Mouse, Rat, Cow, Chicken, Zebrafish, <strong>Arabidopsis thaliana</strong>, Rice, Drosophila, Malaria, <strong>S. cerevisae</strong>, <strong>E.coli</strong>, and others, with a total of ~1600 metabolic pathways.</p>
+</div>
+<div id="pathway-analysis-example-workflow" class="section level2">
+<h2>2. Pathway Analysis Example Workflow</h2>
+<p>In this workflow, we will perform pathway analysis where the input is a list of compound names.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create vector consisting of compounds for enrichment analysis </span>
+tmp.vec &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Acetoacetic acid&quot;</span>, <span class="st">&quot;Beta-Alanine&quot;</span>, <span class="st">&quot;Creatine&quot;</span>, <span class="st">&quot;Dimethylglycine&quot;</span>, <span class="st">&quot;Fumaric acid&quot;</span>, <span class="st">&quot;Glycine&quot;</span>, <span class="st">&quot;Homocysteine&quot;</span>, <span class="st">&quot;L-Cysteine&quot;</span>, <span class="st">&quot;L-Isolucine&quot;</span>, <span class="st">&quot;L-Phenylalanine&quot;</span>, <span class="st">&quot;L-Serine&quot;</span>, <span class="st">&quot;L-Threonine&quot;</span>, <span class="st">&quot;L-Tyrosine&quot;</span>, <span class="st">&quot;L-Valine&quot;</span>, <span class="st">&quot;Phenylpyruvic acid&quot;</span>, <span class="st">&quot;Propionic acid&quot;</span>, <span class="st">&quot;Pyruvic acid&quot;</span>, <span class="st">&quot;Sarcosine&quot;</span>)
+
+<span class="co"># Create mSetObj for storing objects created during your analysis</span>
+mSet&lt;-<span class="kw">InitDataObjects</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;pathora&quot;</span>, <span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## [1] &quot;MetaboAnalyst R objects intialized ...&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Set up mSetObj with the list of compounds</span>
+mSet&lt;-<span class="kw">Setup.MapData</span>(mSet, tmp.vec);
+
+<span class="co"># Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)</span>
+mSet&lt;-<span class="kw">CrossReferencing</span>(mSet, <span class="st">&quot;name&quot;</span>);</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;
+## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">CreateMappingResultTable</span>(mSet);</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Perform matching against compound w. out matches</span>
+mSet&lt;-<span class="kw">PerformDetailMatch</span>(mSet, <span class="st">&quot;L-Isolucine&quot;</span>);</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;
+## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Get list of candidates for matching</span>
+mSet&lt;-<span class="kw">GetCandidateList</span>(mSet);</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Replace selected compound</span>
+mSet&lt;-<span class="kw">SetCandidate</span>(mSet, <span class="st">&quot;L-Isolucine&quot;</span>, <span class="st">&quot;L-Isoleucine&quot;</span>);</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Select the pathway library, ranging from mammals to prokaryotes</span>
+mSet&lt;-<span class="kw">SetKEGG.PathLib</span>(mSet, <span class="st">&quot;hsa&quot;</span>)
+
+<span class="co"># Set the metabolite filter</span>
+mSet&lt;-<span class="kw">SetMetabolomeFilter</span>(mSet, F);
+
+<span class="co"># Calculate the over representation analysis score, here we selected to use the hypergeometric test (alternative is Fisher's exact test)</span>
+<span class="co"># A results table &quot;pathway_results.csv&quot; will be created and found within your working directory</span>
+mSet&lt;-<span class="kw">CalculateOraScore</span>(mSet, <span class="st">&quot;rbc&quot;</span>, <span class="st">&quot;hyperg&quot;</span>)</code></pre></div>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot of the Pathway Analysis Overview </span>
+mSet&lt;-<span class="kw">PlotPathSummary</span>(mSet, <span class="st">&quot;path_view_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)
+
+<span class="co"># Plot a specific metabolic pathway, in this case &quot;Glycine, serine and threonine metabolism&quot;</span>
+mSet&lt;-<span class="kw">PlotKEGGPath</span>(mSet, <span class="st">&quot;Glycine, serine and threonine metabolism&quot;</span>,<span class="dv">528</span>, <span class="dv">480</span>, <span class="st">&quot;png&quot;</span>, <span class="ot">NULL</span>)</code></pre></div>
+<pre><code>## 
+## Attaching package: 'BiocGenerics'</code></pre>
+<pre><code>## The following objects are masked from 'package:parallel':
+## 
+##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+##     clusterExport, clusterMap, parApply, parCapply, parLapply,
+##     parLapplyLB, parRapply, parSapply, parSapplyLB</code></pre>
+<pre><code>## The following objects are masked from 'package:stats':
+## 
+##     IQR, mad, sd, var, xtabs</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     anyDuplicated, append, as.data.frame, basename, cbind,
+##     colMeans, colnames, colSums, dirname, do.call, duplicated,
+##     eval, evalq, Filter, Find, get, grep, grepl, intersect,
+##     is.unsorted, lapply, lengths, Map, mapply, match, mget, order,
+##     paste, pmax, pmax.int, pmin, pmin.int, Position, rank, rbind,
+##     Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+##     table, tapply, union, unique, unsplit, which, which.max,
+##     which.min</code></pre>
+<pre><code>## Warning in arrows(head_from[1], head_from[2], head_to[1], head_to[2], col =
+## edgeColor, : zero-length arrow is of indeterminate angle and so skipped</code></pre>
+<pre><code>## Warning in arrows(tail_from[1], tail_from[2], tail_to[1], tail_to[2], col =
+## edgeColor, : zero-length arrow is of indeterminate angle and so skipped</code></pre>
+<pre><code>## Warning in arrows(head_from[1], head_from[2], head_to[1], head_to[2], col =
+## edgeColor, : zero-length arrow is of indeterminate angle and so skipped</code></pre>
+<pre><code>## [1] &quot;Loaded files from MetaboAnalyst web-server.&quot;</code></pre>
+</div>
+<div id="sweave-report" class="section level2">
+<h2>3. Sweave Report</h2>
+<p>Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the <em>PreparePDFReport</em> function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created <em>must</em> be named <em>mSet</em>, and specify the user name in quotation marks.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+---
+title: "MS Peaks to Pathways"
+author: "Jasmine Chong, Jeff Xia"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MS Peaks to Pathways}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introduction
+
+Previous versions of MetaboAnalyst encompassed two modules for functional analysis, metabolic pathway analysis (MetPA) (Xia et al. 2010, https://academic.oup.com/bioinformatics/article/26/18/2342/208464) and metabolite set enrichment analysis (MSEA) (Xia et al. 2010, https://academic.oup.com/nar/article/38/suppl_2/W71/1101310). However, these modules require metabolite identifications prior to use, which remains an important challenge in untargeted metabolomics. In comparison, the mummichog algorithm (Li et al. 2013, http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003123) bypasses the bottleneck of metabolite identification prior to pathway analysis, leveraging a priori pathway and network knowledge to directly infer biological activity based on mass peaks. We have therefore implemented the mummichog algorithm in R in a new module named “MS Peaks to Pathways”. The knowledge-base for this module consists of five genome-scale metabolic models from the original Python implementation which have either been manually curated or downloaded from BioCyc, as well as an expanded library of 21 organisms derived from KEGG metabolic pathways.
+
+## 2. MS Peaks to Pathways
+
+To use this module, users must upload a table containing three columns - m/z features, p-values, and t-scores or fold-change values using the *Read.PeakListData* function. If p-values have not yet been calculated, users can use the "Statistical Analysis" module to upload their raw peak tables, process the data, perform t-tests or fold-change analysis, and then upload these results into the module. With the table, users also need to specify the type of MS instrument, the ion mode (positive or negative), and the p-value cutoff to delineate between significantly enriched and non-significantly enriched m/z features using the *UpdateMummichogParameters* function. Currently, MetaboAnalystR only supports the handling of peaks obtained from high-resolution MS instruments such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation. Following data upload, users much select the organism’s library from which to perform untargeted pathway analysis using the *SetMass.PathLib* function. Users can then perform the mummichog algorithm on their data using *PerformMummichog*.
+
+The output of this module first consists of a table of results identifying the top-pathways that are enriched in the user-uploaded data, which can be found in your working directory named "mummichog_pathway_enrichment.csv". The table consists of the total number of hits, the raw p-value (Fisher’s or Hypergeometric), the EASE score, and the adjusted p-value (for permutations) per pathway. A second table can also be found in your working directory named "mummichog_matched_compound_all.csv", that contains all matched metabolites from the user’s uploaded list of m/z features. 
+
+For this tutorial we will directly use the an example peak list data obtained from untargeted metabolomics of human monocyte-derived dendritic cells (moDC) under stimulation by a strain of yellow fever virus (YF17D, vaccine strain) collected using Orbitrap LC-MS (positive mode, human samples, p.value cutoff: 0.0001).
+
+```{r, eval=FALSE}
+# Create objects for storing processed data from the MS peaks to pathways module
+mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
+
+# Read in peak-list data
+mSet <- Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_mzs.txt");
+
+# Set parameters for analysis, in this case the mass accuracy is set to 3 ppm, the mode of the MS instrument is positive, and the p-value cut-off is 0.0001
+mSet <- UpdateMummichogParameters(mSet, "0.1", "positive", 1.0E-4);
+
+# Sanity check of the uploaded data
+mSet <- SanityCheckMummichogData(mSet)
+
+# Perform the mummichog algorith, in this case the model is the human MFN model, using Fisher's p-value and gamma-adjustment of p-
+# This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
+mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
+
+# To view the results of the pathway analysis in R, use mSet$mummi.resmat
+
+```
+
+## 3. Sweave Report
+
+Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+
+
