@@ -40,7 +40,7 @@ setwd("~/Desktop/iHMP/")
 library("MetaboAnalystR")
 
 # Import mzML files
-rawData <- ImportRawMSData(grpA = "Healthy", numA = 5, grpB = "IBD", numB = 5, 
+rawData <- ImportRawMSData(grpA = "Healthy", numA = 6, grpB = "IBD", numB = 6, 
                             format = "png", dpi = 72, width = 9)
 
 ```
