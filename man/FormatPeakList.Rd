@@ -2,8 +2,7 @@
 % Please edit documentation in R/preproc_utils.R
 \name{FormatPeakList}
 \alias{FormatPeakList}
-\title{Format Peak List
-This function formats the CAMERA output to a usable format for MetaboAanlyst.}
+\title{Format Peak List}
 \usage{
 FormatPeakList(annotPeaks, annParams, filtIso = TRUE,
   filtAdducts = FALSE, missPercent = 0.5)
@@ -27,7 +26,6 @@ missing in X% of samples. For instance, 0.5 specifies to remove features
 that are missing from 50% of all samples per group.}
 }
 \description{
-Format Peak List
 This function formats the CAMERA output to a usable format for MetaboAanlyst.
 }
 \author{

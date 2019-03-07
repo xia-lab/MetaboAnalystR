@@ -2,9 +2,7 @@
 % Please edit documentation in R/preproc_utils.R
 \name{PerformPeakAnnotation}
 \alias{PerformPeakAnnotation}
-\title{Perform peak annotation
-This function performs peak annotation on
-the xset object created using the PerformPeakPicking function.}
+\title{Perform peak annotation}
 \usage{
 PerformPeakAnnotation(xset, annParams)
 }
@@ -19,7 +17,6 @@ raw MS data pre-processing.}
 \item{deci}{Numeric, specify the number of decimal spots for?}
 }
 \description{
-Perform peak annotation
 This function performs peak annotation on
 the xset object created using the PerformPeakPicking function.
 }

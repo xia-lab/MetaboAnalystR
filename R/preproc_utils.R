@@ -310,7 +310,7 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 }
 
 #' Perform peak annotation
-#' This function performs peak annotation on
+#' @description This function performs peak annotation on
 #' the xset object created using the PerformPeakPicking function.
 #' @param xset The object created using the PerformPeakPicking function,
 #' containing the peak picked MS data.
@@ -359,7 +359,7 @@ PerformPeakAnnotation <- function(xset, annParams){
 }
 
 #' Format Peak List
-#' This function formats the CAMERA output to a usable format for MetaboAanlyst.
+#' @description This function formats the CAMERA output to a usable format for MetaboAanlyst.
 #' @param annotPeaks The object created using the PerformPeakAnnotation.
 #' @param annParams The object created using the SetAnnotationParam function, 
 #' containing user's specified or default parameters for downstream 
