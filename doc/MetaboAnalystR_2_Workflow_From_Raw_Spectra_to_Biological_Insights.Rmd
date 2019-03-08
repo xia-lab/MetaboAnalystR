@@ -147,7 +147,7 @@ mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
 # Ascorbate (Vitamin C) and Aldarate Metabolism                29         19        1 1.0000000 0.20981000 1.0000000
 ```
 
-Now we will perform GSEA, using the *PerformGSEA* function. This function is much faster than the original implementation. As you can see, Vitamin E metabolism is consistently identified between the two algorithms. Vitamin E has been shown to be decreased in patients with Crohn's disease (PMID: 22488830) and were shown to have anti-inflammatory properties (PMID: 30237488). Finally, we can visualize the comparison of the pathway analysis results of the two algorithms with a scatter plot using the *PlotIntegPaths* function. This function will check that you performed both methods (original mummichog + GSEA), and that both methods used the same selected pathway library. By adding labels = TRUE to the function, we can generate a plot with all of the dots annotated - this may be cluttered for those with many pathways identified.
+Now we will perform GSEA, using the *PerformGSEA* function. This function is much faster than the original implementation. As you can see, Vitamin E metabolism is consistently identified between the two algorithms. Vitamin E has been shown to be decreased in patients with Crohn's disease (PMID: 22488830) and were shown to have anti-inflammatory properties (PMID: 30237488). Finally, we can visualize the comparison of the pathway analysis results of the two algorithms with a scatter plot using the *PlotIntegPaths* function. This function will check that you performed both methods (original mummichog + GSEA), and that both methods used the same selected pathway library. The labels parameter sets whether all, none, or some of the top-ranked pathways should be annotated on the plot. If set to "default", the function will generate a plot with the top 5 ranked pathways  identified using GSEA or mummichog. The number of top ranked pathways can be adjusted using "labels.x" and "labels.y". 
 
 ```{r, eval=FALSE}
 # Perform GSEA 
@@ -167,7 +167,7 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
 
 # Plot with all dots annotated
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = TRUE)
+mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 
 ```
 
@@ -233,13 +233,13 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 # Arachidonic acid metabolism                               "95"          "8"  "0.09623"  "0.8288" "1.424" 
 
 # View plot with no dots labeled
-# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
+# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
 
-# View plot with all dots labeled
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = TRUE)
+# View plot with important pathways labeled
+mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 
 knitr::include_graphics("integ_path_plotdpi300.jpg")
 
 ```
 
-Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results (code below), we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis and Vitamin D3 metabolism are consistently shown to be perturbed in these IBD patients. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 
+Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results (code below), we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis is consistently shown to be perturbed in these IBD patients. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 

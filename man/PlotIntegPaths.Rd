@@ -5,7 +5,7 @@
 \title{PlotIntegPaths}
 \usage{
 PlotIntegPaths(mSetObj = NA, format = "png", dpi = 72, width = 9,
-  labels = FALSE)
+  labels = "default", labels.x = 5, labels.y = 5)
 }
 \arguments{
 \item{format}{Character, input the format of the image to create.}
@@ -14,8 +14,17 @@ PlotIntegPaths(mSetObj = NA, format = "png", dpi = 72, width = 9,
 
 \item{width}{Numeric, input the width of the image to create.}
 
-\item{labels}{Logical, default is FALSE. If set to true, it will
-label the all of the identified pathways.}
+\item{labels.x}{Numeric, indicate the number of top-ranked pathways using the fGSEA algorithm 
+to annotate on the plot.}
+
+\item{labels.y}{Numeric, indicate the number of top-ranked pathways using the original 
+mummichog algorithm to annotate on the plot.}
+
+\item{Labels}{Character, indicate if the plot should be labeled. By default
+it is set to "default", and the 5 top-ranked pathways per each algorithm will be plotted.
+Users can adjust the number of pathways to be annotated per pathway using the "labels.x" 
+and "labels.y" parameters.
+Users can set this to "none" for no annotations, or "all" to annotate all pathways.}
 }
 \description{
 Plot both the original mummichog and the GSEA results

@@ -718,8 +718,15 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
-#' @param labels Logical, default is FALSE. If set to true, it will
-#' label the all of the identified pathways.
+#' @param Labels Character, indicate if the plot should be labeled. By default
+#' it is set to "default", and the 5 top-ranked pathways per each algorithm will be plotted.
+#' Users can adjust the number of pathways to be annotated per pathway using the "labels.x" 
+#' and "labels.y" parameters.
+#' Users can set this to "none" for no annotations, or "all" to annotate all pathways. 
+#' @param labels.x Numeric, indicate the number of top-ranked pathways using the fGSEA algorithm 
+#'  to annotate on the plot. 
+#' @param labels.y Numeric, indicate the number of top-ranked pathways using the original 
+#' mummichog algorithm to annotate on the plot. 
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
@@ -727,7 +734,8 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' @import ggplot2
 #' @import plotly
 
-PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = FALSE){
+PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = "default", labels.x = 5,
+                           labels.y = 5){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -820,6 +828,12 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   
   df <- data.frame(path.nms, x, y)
   
+  if(labels == "default"){
+    mummi.inx <- GetTopInx(df$y, labels.y, T)
+    gsea.inx <- GetTopInx(df$x, labels.x, T)
+    all.inx <- mummi.inx | gsea.inx;
+  }
+
   imgName = paste("integ_path_plot", "dpi", dpi, ".", format, sep="");
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
@@ -829,9 +843,12 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   axis(2);
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
-  if(labels==TRUE){
-    text(x, y, labels = path.nms)
+  if(labels=="default"){
+    text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
+  }else if(labels == "all"){
+    text(x, y, labels = path.nms, pos=3, xpd=T, cex=0.8)
   }
+  
   par(op);
   dev.off();
   

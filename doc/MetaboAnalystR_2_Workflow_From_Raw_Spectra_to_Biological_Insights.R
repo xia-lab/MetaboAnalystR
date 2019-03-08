@@ -100,7 +100,7 @@ knitr::include_graphics("PCA_plot300.png")
 #  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
 #  
 #  # Plot with all dots annotated
-#  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = TRUE)
+#  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 #  
 
 ## ---- out.width = "70%"--------------------------------------------------
@@ -159,10 +159,10 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 # Arachidonic acid metabolism                               "95"          "8"  "0.09623"  "0.8288" "1.424" 
 
 # View plot with no dots labeled
-# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
+# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
 
-# View plot with all dots labeled
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = TRUE)
+# View plot with important pathways labeled
+mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 
 knitr::include_graphics("integ_path_plotdpi300.jpg")
 
