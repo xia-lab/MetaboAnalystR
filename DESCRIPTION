@@ -11,7 +11,8 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
-Imports: Rserve,
+Imports: 
+    Rserve,
     ellipse,
     scatterplot3d,
     Cairo,
@@ -45,7 +46,7 @@ Imports: Rserve,
     gplots,
     KEGGgraph,
     reshape,
-    RColorBrewer,    
+    RColorBrewer,
     tibble,
     RSQLite,
     spls,
@@ -54,7 +55,8 @@ Imports: Rserve,
     xcms,
     CAMERA,
     fgsea,
-    MSnbase
+    MSnbase,
+    BiocParallel
 Suggests: 
     knitr,
     rmarkdown,

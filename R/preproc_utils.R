@@ -20,8 +20,11 @@
 #' @export
 #' @import xcms
 #' @import MSnbase
+#' @import BiocParallel
 
 ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
+
+  msg.vec <<- vector(mode="character")
   
   msg <- c("The uploaded files are raw MS spectra.");
   
@@ -54,7 +57,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
   # some sanity check before proceeds
   sclass <- as.factor(sclass);
   if(length(levels(sclass))<2){
-    AddErrMsg("You must provide classes labels (at least two classes)!");
+    AddErrMsg("You must provide classes labels (two classes)!");
     return(0);
   }
   
@@ -74,7 +77,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
   if(!.on.public.web){
     cores <- parallel::detectCores()
     num_cores <- ceiling(cores/2) 
-    print(paste0("The number of CPU cores to be used is set to ", num_cores))
+    print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
     register(bpstart(MulticoreParam(num_cores)))
   }
   
