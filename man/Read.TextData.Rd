@@ -17,7 +17,8 @@ in columns and paired (colp), or in columns and unpaired (colu).}
 \item{lbl.type}{Specify the data label type, either discrete (disc) or continuous (cont).}
 }
 \description{
-This function handles reading in CSV or TXT files and filling in the dataSet object created using "InitDataObjects".
+This function handles reading in CSV or TXT files and filling in the dataSet object 
+created using "InitDataObjects".
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong

@@ -119,7 +119,8 @@ GetRCommandHistory <- function(mSetObj=NA){
 }
 
 #'Constructor to read uploaded CSV or TXT files into the dataSet object
-#'@description This function handles reading in CSV or TXT files and filling in the dataSet object created using "InitDataObjects". 
+#'@description This function handles reading in CSV or TXT files and filling in the dataSet object 
+#'created using "InitDataObjects". 
 #'@usage Read.TextData(mSetObj=NA, filePath, format, lbl.type)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@param filePath Input the path name for the CSV/TXT files to read.
@@ -366,8 +367,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 #'For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or
 #'the lists can be formatted as three-columns (mz, rt, int).
 #'@usage Read.PeakList(mSetObj=NA, foldername)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param foldername name of the folder containing the NMR or MS peak list files to read
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param foldername Name of the folder containing the NMR or MS peak list files to read.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

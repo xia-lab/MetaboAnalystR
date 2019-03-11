@@ -22,7 +22,7 @@ the xset object created using the PerformPeakPicking function.
 }
 \author{
 Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
 }

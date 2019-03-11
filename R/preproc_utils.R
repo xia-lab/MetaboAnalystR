@@ -1,37 +1,84 @@
 #' Import raw MS data
 #' @description This function handles the reading in of 
 #' raw MS data (.mzML, .CDF and .mzXML). Users must set 
-#' their working directory to the file containing their raw 
-#' data and specify the group labels. The function will output
-#' two chromatograms into the user's working directory, a 
+#' their working directory to the folder containing their raw 
+#' data, divided into two subfolders named their desired group labels. The  
+#' function will output two chromatograms into the user's working directory, a 
 #' base peak intensity chromatogram (BPIC) and a total ion 
-#' chromatogram (TIC). 
-#' @param grpA Character, input the first group label.
-#' @param numA Numeric, input the number of samples in group A.
-#' @param grpB Character, input the second group label.
-#' @param numB Numeric, input the number of samples in group B.
+#' chromatogram (TIC). Further, this function sets the number of cores
+#' to be used for parallel processing. It first determines the number of cores 
+#' within a user's computer and then sets it that number/2.  
+#' @param foldername Character, input the file path to the folder containing
+#' the raw MS spectra to be processed.
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import xcms
 #' @import MSnbase
 
-ImportRawMSData <- function(grpA = "X", numA = 1, grpB = "Y", numB = 1,
-                            format = "png", dpi = 72, width = 9){
+ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
   
-  mzmls <- dir(path = ".", full.names = TRUE, recursive = TRUE)
+  msg <- c("The uploaded files are raw MS spectra.");
   
-  pd <- data.frame(sample_name = sub(basename(mzmls), pattern = ".mzML|.CDF|.mzXML",
-                                     replacement = "", fixed = TRUE),
-                   sample_group = c(rep(grpA, numA), rep(grpB, numB)),
+  # the "upload" folder should contain two subfolders (groups, i.e. Healthy vs. Disease)
+  # each subfolder must contain samples (.mzML/.CDF/.mzXML files)
+  
+  files <- dir(foldername, pattern=".mzML|.CDF|.mzXML", recursive=T, full.name=TRUE)
+  
+  if (length(files) == 0) {
+    AddErrMsg("No spectra were found!");
+    return(0);
+  }
+  
+  snames <- gsub("\\.[^.]*$", "", basename(files));
+  msg<-c(msg, paste("A total of ", length(files), "samples were found."));
+  
+  sclass <- gsub("^\\.$", "sample", dirname(files));
+  
+  scomp <- strsplit(substr(sclass, 1, min(nchar(sclass))), "");
+  scomp <- matrix(c(scomp, recursive = TRUE), ncol = length(scomp));
+  i <- 1
+  while(all(scomp[i,1] == scomp[i,-1]) && i < nrow(scomp)){
+    i <- i + 1;
+  }
+  i <- min(i, tail(c(0, which(scomp[1:i,1] == .Platform$file.sep)), n = 1) + 1)
+  if (i > 1 && i <= nrow(scomp)){
+    sclass <- substr(sclass, i, max(nchar(sclass)))
+  }
+  
+  # some sanity check before proceeds
+  sclass <- as.factor(sclass);
+  if(length(levels(sclass))<2){
+    AddErrMsg("You must provide classes labels (at least two classes)!");
+    return(0);
+  }
+  
+  # check for unique sample names
+  if(length(unique(snames))!=length(snames)){
+    AddErrMsg("Duplcate sample names are not allowed!");
+    dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
+    AddErrMsg("Duplicate sample names are not allowed!");
+    AddErrMsg(dup.nm);
+    return(0);
+  }
+  
+  pd <- data.frame(sample_name = snames,
+                   sample_group = sclass,
                    stringsAsFactors = FALSE)
   
-  raw_data <- suppressMessages(readMSData(files = mzmls, pdata = new("NAnnotatedDataFrame", pd),
+  if(!.on.public.web){
+    cores <- parallel::detectCores()
+    num_cores <- ceiling(cores/2) 
+    print(paste0("The number of CPU cores to be used is set to ", num_cores))
+    register(bpstart(MulticoreParam(num_cores)))
+  }
+  
+  raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
                                           mode = "onDisk")) 
   
   # Plotting functions to see entire chromatogram
@@ -39,7 +86,7 @@ ImportRawMSData <- function(grpA = "X", numA = 1, grpB = "Y", numB = 1,
   tics <- chromatogram(raw_data, aggregationFun = "sum")
   
   group_colors <- paste0(brewer.pal(3, "Set1")[1:2], "60")
-  names(group_colors) <- c(grpA, grpB)
+  names(group_colors) <- levels(sclass)
   
   bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
   tics_name <- paste("TICS_", dpi, ".", format, sep="");
@@ -47,13 +94,13 @@ ImportRawMSData <- function(grpA = "X", numA = 1, grpB = "Y", numB = 1,
   Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
                type=format, bg="white");
   plot(bpis, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=unique(c(grpA, grpB)), pch=15, col=group_colors);
+  legend("topright", legend=levels(sclass), pch=15, col=group_colors);
   dev.off();
   
   Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                type=format, bg="white");
   plot(tics, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=unique(c(grpA, grpB)), pch=15, col=group_colors);
+  legend("topright", legend=levels(sclass), pch=15, col=group_colors);
   dev.off();
   
   print("Successfully imported raw MS data!")
@@ -121,7 +168,7 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
 #' @param rt_min Numeric, specify the minimum retention time.
 #' @param rt_max Numeric, specify the maximum retention time.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
@@ -170,7 +217,7 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
@@ -196,7 +243,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   
   # Peak picking
   
-  print("Step 1/3: Started peak picking!")
+  print("Step 1/3: Started peak picking! This step will take some time...")
   
   if(peakParams$algorithm == "centwave"){
     cwp <- CentWaveParam(ppm = peakParams$ppm, peakwidth = c(peakParams$min_pkw, peakParams$max_pkw),
@@ -287,7 +334,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
 #' @param mz_abs_add Numeric, set the allowed variance for the search (for adduct annotation).
 #' The default is set to 0.001.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
@@ -319,7 +366,7 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' raw MS data pre-processing.
 #' @param deci Numeric, specify the number of decimal spots for?
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
@@ -373,7 +420,7 @@ PerformPeakAnnotation <- function(xset, annParams){
 #' missing in X% of samples. For instance, 0.5 specifies to remove features
 #' that are missing from 50% of all samples per group.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
@@ -440,7 +487,7 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   feats_digits <- round(feats_info, 5) 
   
   group_info <- annotPeaks@xcmsSet@phenoData[[2]]
-  combo_info <- rbind(group_info, feats_digits)
+  combo_info <- rbind(as.character(group_info), feats_digits)
   
   mzs_rd <- round(unique_feats[,1], 5)
   mzs <- data.frame(c("Label", mzs_rd), stringsAsFactors = FALSE)
@@ -456,8 +503,8 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   ma_feats <- cbind(mzs, combo_info)
   
   # remove features missing in over X% of samples per group
-  ma_feats_miss <- ma_feats[which(rowMeans(is.na(ma_feats[,(ma_feats[1,]==unique(group_info)[1])])) 
-                                  | rowMeans(is.na(ma_feats[,(ma_feats[1,]==unique(group_info)[2])])) < missPercent), ]
+  ma_feats_miss <- ma_feats[which(rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[1])))])) 
+                                  | rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[2])))])) < missPercent), ]
   
   write.csv(ma_feats_miss, "metaboanalyst_input.csv", row.names = FALSE)
   

@@ -25,22 +25,21 @@ The *PerformPeakAnnotation* function annotates isotope and adduct peaks using th
 
 ### 1.1 Example data download
 
-Prior to starting this tutorial, please download the 12 example mzML files, containing fecal samples from 6 pediatric IBD patients and 6 healthy controls. These patients are all male, aged 11-16 years old. The data is available for download here: https://www.dropbox.com/sh/o1nqb7ioyo868nt/AADWDKRsCo6tZkWvDcFBGGhJa?dl=0. Ensure that you unzip these files into an empty folder and set your working directory to this new folder. If you have issues downloading/unzipping the zipped folder, try downloading these 6 samples individually.
+Prior to starting this tutorial, please download the 12 example mzML files, containing fecal samples from 6 pediatric IBD patients and 6 healthy controls. These patients are all male, aged 11-16 years old. The data is available for download here: https://www.dropbox.com/s/1v0a9b3y6pe0cbl/iHMP.zip?dl=0. Ensure that you unzip this folder and set your file path in the *ImportRawMSData* function to this new folder.
 
 ### 1.2 Preprocessing of example data
 
-We will first import the raw MS data using the *ImportRawMSData* function. Use the list.files() functions to view the order of the files within the folder. As you can see, the first 6 samples are the controls, and the last 6 samples are IBD patients - denoted with a CD at the beginning of their file names. Therefore, within *ImportRawMSData* we set grpA to "Healthy", numA to 6, grpB to "IBD", and numB to 6. The format refers to the format of the resulting TIC and BPC plots (i.e. "png", "jpg"), the dpi refers to the resolution (typically 300 dpi is required for publication quality images) and width refers to the size of the plot. All plots generated in MetaboAnanlystR can be found within your current working directory. For the sake of the tutorial, images that were generated using this workflow are directly inserted using "insert_graphic()". 
+We will first import the raw MS data using the *ImportRawMSData* function. Set the path to the iHMP folder, which contains two subfolders labelled "Healthy" and "IBD". Note that the names of the subfolders will be used as the group names for the samples. In this case, the healthy folder contains 6 samples which are the healthy controls, and the IBD folder contains 6 samples which are IBD patients - denoted with a CD at the beginning of their file names. In *ImportRawMSData*, the format refers to the format of the resulting TIC and BPC plots (i.e. "png", "jpg"), the dpi refers to the resolution (typically 300 dpi is required for publication quality images), and width refers to the size of the plot. All plots generated in MetaboAnanlystR can be found within your current working directory. For the sake of the tutorial, images that were generated using this workflow are directly inserted using "insert_graphic()".   
+
+The subset of 12 IBD samples used in this vignette were run on a Dell XPS 15 9570 laptop with a dual-booted Ubutnu 16.04 and 16 GB of ram. When this workflow was initially run, 13.6/16 GB of memory was used during peak picking, as xcms uses multi-core parallel processing, and therefore the workflow failed. Therefore to avoid potential memory issues on a user's desktop/laptop, the *ImportRawMSData* function will limit the number of cores used. By default, it will determing the number of cores on a user's computer and set the number of cores to half of that number. Users who wish to overwrite this can use register(bpstart(MulticoreParam(num_cores))) after *ImportRawMSData*.
 
 ```{r, eval=FALSE}
-
-# Set working directory to 12 clinical samples
-setwd("~/Desktop/iHMP/")
 
 # Load the MetaboAnalystR package
 library("MetaboAnalystR")
 
-# Import mzML files
-rawData <- ImportRawMSData(grpA = "Healthy", numA = 6, grpB = "IBD", numB = 6, 
+# Import mzML files, set path to folder containing two subfolders of samples 
+rawData <- ImportRawMSData("~/Desktop/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP", 
                             format = "png", dpi = 72, width = 9)
 
 ```
@@ -57,7 +56,7 @@ Resulting BPIS plot:
 knitr::include_graphics("BPIS_72.png")
 ```
 
-Next, we will set the parameters for peak picking using the *SetPeakParam* function. This function sets all the parameters used for downstream pre-processing of user's raw MS data such as the mass error (ppm), signal to noise threshold, and bandwidth. Use ?SetPeakParam for further information of all available parameters. In this case, we set the mass error to 5. Following the setting of parameters, we will use the *PerformPeakProfiling* function to perform peak picking, grouping, retention time correction, and alignment. The subset of 12 samples used in this vignette were run on a Dell XPS 15 9570 laptop with a dual-booted Ubutnu 16.04 and 16 GB of ram. When this function was run, 13.6/16 GB of memory were used during peak picking, causing the function to fail. Therefore for users who may also run into memory issues on their desktop/laptop, (1) limit the number of cores used, as xcms uses multi-core parallel processing - with: register(bpstart(MulticoreParam(3))) which would set the number of cores used to 3, or (2) use a smaller subset of IBD samples to demo the workflow.     
+Next, we will set the parameters for peak picking using the *SetPeakParam* function. This function sets all the parameters used for downstream pre-processing of user's raw MS data such as the mass error (ppm), signal to noise threshold, and bandwidth. Use ?SetPeakParam for further information of all available parameters. In this case, we set the mass error to 5. Following the setting of parameters, we will use the *PerformPeakProfiling* function to perform peak picking, grouping, retention time correction, and alignment. 
 
 ```{r, eval=FALSE}
 # Set parameters for peak profiling
@@ -77,7 +76,7 @@ knitr::include_graphics("PCA_plot300.png")
 
 The *PerformPeakProfiling* function outputs a PCA plot of the detected peaks per sample. Note that this function provides an option for users to label the points or not (labels = TRUE). From this plot, we can see an ok separation between the Healthy and IBD patients. Remember that this workflow utilizes only a subset of patients, and for good results, the number of samples should be maximized.
 
-Following peak profiling we will perform peak annotation. First, set the parameters for peak annotation using the *SetAnnotationParam* function. In this case, specify that the samples were collected in negative ion mode - "negative", and the allowed variance for the search (for adduct annotation) to 0.005 m/z. Next, use the *PerformPeakAnnotation* function to annotate the detected peaks to potential isotopes and  adducts. This will output a csv file named "annotated_peaklist.csv", which contains the entire list of all identified m/z features, their retention time, and their annotations. In this case, we identified ~11000 features. Finally, use the *FormatPeakList* function to format this annotated_peaklist into the correct format to be used by MetaboAnalystR (and the web version). In this function, users can choose to filter the peaks, i.e. remove features that are missing in more than 75% of features per group and filter out all isotopes. The function will output a file named "metaboanalyst_input.csv", which will be used to read in the peak table.
+Following peak profiling we will perform peak annotation. First, set the parameters for peak annotation using the *SetAnnotationParam* function. In this case, specify that the samples were collected in negative ion mode - "negative", and the allowed variance for the search (for adduct annotation) to 0.005 m/z. Next, use the *PerformPeakAnnotation* function to annotate the detected peaks to potential isotopes and  adducts. This will output a csv file named "annotated_peaklist.csv", which contains the entire list of all identified m/z features, their retention time, and their annotations. In this case, we identified ~11000 features. Finally, use the *FormatPeakList* function to format this annotated_peaklist into the correct format to be used by MetaboAnalystR (and the web version). In this function, users can choose to filter the peaks, i.e. remove features that are missing in more than 75% of features per group and filter out all isotopes. The function will output a file named "metaboanalyst_input.csv", which will be used to read in the peak table. It also outputs the "filtered_peaklist.csv", which contains a column named "Pklist_inx", which provides users with the row number of where to find the m/z feature in the "annotated_peaklist.csv". 
 
 ```{r, eval=FALSE}
 # Set parameters for peak annotation
@@ -163,10 +162,7 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 # Drug metabolism - cytochrome P450                 "53"          "1"  "0.998"  "0.998" "0.276"  
 # Ascorbate (Vitamin C) and Aldarate Metabolism     "29"          "1"  "0.998"  "0.998" "-0.6419"
 
-# Plot the integration of the two algorithms
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
-
-# Plot with all dots annotated
+# Plot with the top 5 pathways found in both algorithms annotated
 mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 
 ```

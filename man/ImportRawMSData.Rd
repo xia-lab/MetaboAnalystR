@@ -4,17 +4,11 @@
 \alias{ImportRawMSData}
 \title{Import raw MS data}
 \usage{
-ImportRawMSData(grpA = "X", numA = 1, grpB = "Y", numB = 1,
-  format = "png", dpi = 72, width = 9)
+ImportRawMSData(foldername, format = "png", dpi = 72, width = 9)
 }
 \arguments{
-\item{grpA}{Character, input the first group label.}
-
-\item{numA}{Numeric, input the number of samples in group A.}
-
-\item{grpB}{Character, input the second group label.}
-
-\item{numB}{Numeric, input the number of samples in group B.}
+\item{foldername}{Character, input the file path to the folder containing
+the raw MS spectra to be processed.}
 
 \item{format}{Character, input the format of the image to create.}
 
@@ -25,15 +19,17 @@ ImportRawMSData(grpA = "X", numA = 1, grpB = "Y", numB = 1,
 \description{
 This function handles the reading in of 
 raw MS data (.mzML, .CDF and .mzXML). Users must set 
-their working directory to the file containing their raw 
-data and specify the group labels. The function will output
-two chromatograms into the user's working directory, a 
+their working directory to the folder containing their raw 
+data, divided into two subfolders named their desired group labels. The  
+function will output two chromatograms into the user's working directory, a 
 base peak intensity chromatogram (BPIC) and a total ion 
-chromatogram (TIC).
+chromatogram (TIC). Further, this function sets the number of cores
+to be used for parallel processing. It first determines the number of cores 
+within a user's computer and then sets it that number/2.
 }
 \author{
 Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-Mai Yamamoto \email{yamamoto.mai88@gmail.com}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
 }

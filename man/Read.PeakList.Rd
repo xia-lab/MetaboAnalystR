@@ -7,9 +7,9 @@
 Read.PeakList(mSetObj=NA, foldername)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
 
-\item{foldername}{name of the folder containing the NMR or MS peak list files to read}
+\item{foldername}{Name of the folder containing the NMR or MS peak list files to read.}
 }
 \description{
 This function reads peak list files and fills the data into a dataSet object.  
