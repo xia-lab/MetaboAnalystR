@@ -1,13 +1,10 @@
 ## ---- eval=FALSE---------------------------------------------------------
 #  
-#  # Set working directory to 12 clinical samples
-#  setwd("~/Desktop/iHMP/")
-#  
 #  # Load the MetaboAnalystR package
 #  library("MetaboAnalystR")
 #  
-#  # Import mzML files
-#  rawData <- ImportRawMSData(grpA = "Healthy", numA = 6, grpB = "IBD", numB = 6,
+#  # Import mzML files, set path to folder containing two subfolders of samples
+#  rawData <- ImportRawMSData("~/Desktop/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP",
 #                              format = "png", dpi = 72, width = 9)
 #  
 
@@ -96,10 +93,7 @@ knitr::include_graphics("PCA_plot300.png")
 #  # Drug metabolism - cytochrome P450                 "53"          "1"  "0.998"  "0.998" "0.276"
 #  # Ascorbate (Vitamin C) and Aldarate Metabolism     "29"          "1"  "0.998"  "0.998" "-0.6419"
 #  
-#  # Plot the integration of the two algorithms
-#  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg")
-#  
-#  # Plot with all dots annotated
+#  # Plot with the top 5 pathways found in both algorithms annotated
 #  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 #  
 
@@ -130,7 +124,7 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-07.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-11.txt");
 mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
 mSet<-SanityCheckMummichogData(mSet)
 
