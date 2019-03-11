@@ -200,7 +200,7 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-07.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-11.txt");
 mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
 mSet<-SanityCheckMummichogData(mSet)
 
