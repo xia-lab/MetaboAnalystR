@@ -70,10 +70,15 @@ Due to issues with Latex, some users may find that they are only able to install
 install.packages("devtools")
 library(devtools)
 
-# For users with devtools > v2.0.0
+### For users with devtools > v2.0.0 ###
+
+# Step 2: Install MetaboAnalystR without documentation
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignette"))
+
+# Step 2: Install MetaboAnalystR with documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
 
-## For users with devtools < v2.0.0
+### For users with devtools < v2.0.0 ###
 
 # Step 2: Install MetaboAnalystR without documentation
 devtools::install_github("xia-lab/MetaboAnalystR")
@@ -108,7 +113,9 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ### MetaboAnalyst 2.0 Workflow: From Raw Spectra to Biological Insights
 
-In this tutorial, we showcase how to utilize MetaboAnalystR 2.0 to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis. The dataset showcased in the tutorial consists of a subset of pediatric IBD stool samples obtained from the Integrative Human Microbiome Project Consortium (https://ibdmdb.org/). The tutorial is available as a PDF [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) and is also available inside the R package as a vignette.
+The R scripts to perform all of the analysis from our manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
+
+To showcase how to utilize MetaboAnalystR 2.0, we provide a detailed tutorial to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis. The dataset showcased in the tutorial consists of a subset of pediatric IBD stool samples obtained from the Integrative Human Microbiome Project Consortium (https://ibdmdb.org/). The tutorial is available as a PDF [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) and is also available inside the R package as a vignette.
 
 ### MetaboAnalyst 1.0
 
