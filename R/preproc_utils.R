@@ -408,6 +408,7 @@ PerformPeakAnnotation <- function(xset, annParams){
   return(xsaFA)
 }
 
+
 #' Format Peak List
 #' @description This function formats the CAMERA output to a usable format for MetaboAanlyst.
 #' @param annotPeaks The object created using the PerformPeakAnnotation.
@@ -420,7 +421,7 @@ PerformPeakAnnotation <- function(xset, annParams){
 #' @param filtAdducts Logical, filter out all adducts except [M+H]+ for  
 #' positive ion more and [M-H]- for negative ion mode. By default it is set to false.
 #' @param missPercent Numeric, specify the threshold to remove features
-#' missing in X% of samples. For instance, 0.5 specifies to remove features
+#' missing in X\% of samples. For instance, 0.5 specifies to remove features
 #' that are missing from 50% of all samples per group.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}

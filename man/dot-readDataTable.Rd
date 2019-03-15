@@ -10,9 +10,8 @@
 \item{fileName}{Input filename}
 }
 \description{
-note, try to use the fread, however, it has issues with 
-some windows 10 files "Line ending is \r\r\n. .... appears to add the extra \r in text mode on Windows"
-in such as, use the slower read.table method
+Function to read in a data table. First, it will try to use fread, however, it has issues with 
+some windows 10 files. In such case, use the slower read.table method.
 }
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}

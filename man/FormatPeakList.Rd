@@ -22,7 +22,7 @@ set to true.}
 positive ion more and [M-H]- for negative ion mode. By default it is set to false.}
 
 \item{missPercent}{Numeric, specify the threshold to remove features
-missing in X% of samples. For instance, 0.5 specifies to remove features
+missing in X\% of samples. For instance, 0.5 specifies to remove features
 that are missing from 50% of all samples per group.}
 }
 \description{
