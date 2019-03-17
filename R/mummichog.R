@@ -714,7 +714,8 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 ##### For local only ####
 
 #' PlotIntegPaths
-#' @description Plot both the original mummichog and the GSEA results 
+#' @description Plots both the original mummichog and the GSEA results by combining p-values
+#' using the Fisher's method (sumlog). 
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
@@ -733,10 +734,11 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' @export
 #' @import ggplot2
 #' @import plotly
+#' @import metap
 
 PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = "default", labels.x = 5,
                            labels.y = 5){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web==TRUE){
@@ -783,21 +785,38 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
                          gsea = as.numeric(mum.matrix[,4]))
   }
   
-  # Sort values based on mummichog pvalues
+  # combine p-values
+  combo.all <- apply(mum.df[,c("mummichog", "gsea")], 1, function(x) metap::sumlog(x))
+  
+  #extract p-values
+  all.ps <- unlist(lapply(combo.all, function(z) z["p"]))
+  adjusted.p <- p.adjust(all.ps, method="BH");
+  
+  dfcombo <- cbind(mum.df, all.ps, adjusted.p)
+  colnames(dfcombo) <- c("Pathway", "Mummichog Pvals", "GSEA Pvals", "Combined Pvals", "Adj Combo Pvals")
+  
+  write.csv(dfcombo, "mummichog_combined_pathway_enrichment.csv", row.names = FALSE)
+  
+  # Sort values based on combined pvalues
   y <- -log(mum.df$mummichog);
   y <- scales::rescale(y, c(0,4))
   
   x <- -log(mum.df$gsea);
   x <- scales::rescale(x, c(0,4))
   
-  inx <- order(y, decreasing= T);
+  combo.p <- -log(all.ps)
+  combo.p <- scales::rescale(combo.p, c(0,4))
   
+  inx <- order(combo.p, decreasing= T);
+  
+  combo.p <- combo.p[inx]
   x <- x[inx]; 
   y <- y[inx];
   path.nms <- mum.df$pathways[inx];
   
-  min.x<- min(x, na.rm = TRUE);
-  max.x <- max(x, na.rm = TRUE);
+  # Sort colors based on combined pvalues
+  min.x <- min(combo.p, na.rm = TRUE);
+  max.x <- max(combo.p, na.rm = TRUE);
   
   if(min.x == max.x){ # only 1 value
     max.x = 1.5*max.x;
@@ -808,8 +827,8 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   minR <- (max.x - min.x)/160;
   radi.vec <- minR+(maxR-minR)*(x-min.x)/(max.x-min.x);
   
-  # set background color according to y
-  bg.vec <- heat.colors(length(y));
+  # set background color according to combo.p
+  bg.vec <- heat.colors(length(combo.p));
   
   if(format == "png"){
     bg = "transparent";
@@ -827,7 +846,7 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   h <- w;
   
   df <- data.frame(path.nms, x, y)
-  
+
   if(labels == "default"){
     mummi.inx <- GetTopInx(df$y, labels.y, T)
     gsea.inx <- GetTopInx(df$x, labels.x, T)

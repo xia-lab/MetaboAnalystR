@@ -27,7 +27,8 @@ and "labels.y" parameters.
 Users can set this to "none" for no annotations, or "all" to annotate all pathways.}
 }
 \description{
-Plot both the original mummichog and the GSEA results
+Plots both the original mummichog and the GSEA results by combining p-values
+using the Fisher's method (sumlog).
 }
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}

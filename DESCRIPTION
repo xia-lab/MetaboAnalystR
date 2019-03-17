@@ -56,7 +56,8 @@ Imports:
     CAMERA,
     fgsea,
     MSnbase,
-    BiocParallel
+    BiocParallel,
+    metap
 Suggests: 
     knitr,
     rmarkdown,

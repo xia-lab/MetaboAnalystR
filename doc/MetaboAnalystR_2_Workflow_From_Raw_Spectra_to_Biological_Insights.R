@@ -124,7 +124,7 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-11.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-17.txt");
 mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
 mSet<-SanityCheckMummichogData(mSet)
 
@@ -145,12 +145,12 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 
 # > head(mSet$mummi.gsea.resmat)
 #                                                           Pathway_Total Hits P_val      P_adj    NES     
-# Bile acid biosynthesis                                    "82"          "29" "0.001931" "0.1506" "-1.974"
-# Vitamin D3 (cholecalciferol) metabolism                   "16"          "10" "0.02495"  "0.7985" "-1.646"
-# Biopterin metabolism                                      "22"          "7"  "0.03071"  "0.7985" "-1.607"
-# Putative anti-Inflammatory metabolites formation from EPA "27"          "4"  "0.1062"   "0.8288" "1.408" 
-# Androgen and estrogen biosynthesis and metabolism         "95"          "11" "0.0631"   "0.8288" "-1.491"
-# Arachidonic acid metabolism                               "95"          "8"  "0.09623"  "0.8288" "1.424" 
+# Bile acid biosynthesis                                    "82"          "29" "0.001805" "0.1408" "-1.984"
+# Vitamin D3 (cholecalciferol) metabolism                   "16"          "10" "0.0239"   "0.6213" "-1.634"
+# Biopterin metabolism                                      "22"          "7"  "0.0221"   "0.6213" "-1.59" 
+# Putative anti-Inflammatory metabolites formation from EPA "27"          "4"  "0.07234"  "0.6727" "1.429" 
+# Androgen and estrogen biosynthesis and metabolism         "95"          "11" "0.07762"  "0.6727" "-1.446"
+# Arachidonic acid metabolism                               "95"          "8"  "0.07761"  "0.6727" "1.435" 
 
 # View plot with no dots labeled
 # mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
