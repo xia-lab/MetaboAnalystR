@@ -200,7 +200,7 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-17.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-18.txt");
 mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
 mSet<-SanityCheckMummichogData(mSet)
 
@@ -221,11 +221,12 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 
 # > head(mSet$mummi.gsea.resmat)
 #                                                           Pathway_Total Hits P_val      P_adj    NES     
-# Bile acid biosynthesis                                    "82"          "29" "0.001866" "0.1455" "-2.005"
-# Vitamin D3 (cholecalciferol) metabolism                   "16"          "10" "0.01294"  "0.5046" "-1.642"
-# Biopterin metabolism                                      "22"          "7"  "0.02647"  "0.6881" "-1.586"
-# Putative anti-Inflammatory metabolites formation from EPA "27"          "4"  "0.06939"  "0.902"  "1.42"  
-# Androgen and estrogen biosynthesis and metabolism         "95"          "11" "0.05225"  "0.902"  "-1.485"
+# Bile acid biosynthesis                                    "82"          "29" "0.001894" "0.1477" "-1.949"
+# Vitamin D3 (cholecalciferol) metabolism                   "16"          "10" "0.01465"  "0.5714" "-1.67" 
+# Biopterin metabolism                                      "22"          "7"  "0.02214"  "0.5756" "-1.597"
+# Putative anti-Inflammatory metabolites formation from EPA "27"          "4"  "0.06765"  "0.7451" "1.45"  
+# Androgen and estrogen biosynthesis and metabolism         "95"          "11" "0.08318"  "0.7451" "-1.476"
+# Arachidonic acid metabolism                               "95"          "8"  "0.08497"  "0.7451" "1.417" 
 
 # View plot with no dots labeled
 # mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
@@ -237,4 +238,20 @@ knitr::include_graphics("integ_path_plotdpi300.jpg")
 
 ```
 
-Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results, we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis is consistently shown to be perturbed in these IBD patients. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 
+Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results, we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis is consistently shown to be perturbed in these IBD patients. Furthermore, this plot is divided into four quadrants. In the upper left quadrant (yellow) are the pathways considered significant by the mummichog algorithm, but not significant by GSEA. In the lower right quadrant (yellow) are the pathways considered significant by the GSEA algorithm but not significant using mummichog. Finally, the upper right quadrant (red) are pathways that both mummichog and GSEA consider significant. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 
+
+## 4.2 Further exploring pathway analysis results
+
+From the integrated pathway analysis plot, we can see that Biopterin metabolism was considered a perturbed pathway using the GSEA algorithm, but not using the mummichog algorithm. To further investigate this, we can create a boxplot of the m/z features between the IBD and control samples. Similarily, the original mummichog algorithm identified Fatty Acid Metabolism as in important pathway, but GSEA did not. Once again, we can view this using the *PlotPathwayMZHits* function.   
+
+```{r, out.width = "70%"}
+# Function to get the m/z hits from a certain metabolic pathway
+mSet <- PlotPathwayMZHits(mSet, "Biopterin metabolism", format = "jpg")
+
+knitr::include_graphics("Biopterin metabolism.jpg")
+
+mSet <- PlotPathwayMZHits(mSet, "Fatty Acid Metabolism", format = "jpg")
+
+knitr::include_graphics("Fatty Acid Metabolism.jpg")
+
+```

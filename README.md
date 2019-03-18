@@ -155,6 +155,8 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
+03-18-2019 - Added function to plot m/z features hits in a pathway for the MS Peaks to Paths module, updated documentation and MetaboAnalystR 2.0 tutorial to reflect this new addition
+
 03-17-2019 - Added method for combining p-values for MS Peaks to Paths (mummichog + fGSEA pvalues), updated documentation and MetaboAnalystR 2.0 workflow
 
 03-11-2019 - Added code chunk to set the number of cores used for parallel preprocessing of raw MS data to half of the number of available cores to avoid user memory issues + updated filepath for ImportRawMSData, so users only have to provide the folder path to the samples

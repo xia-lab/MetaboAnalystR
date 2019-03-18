@@ -716,6 +716,7 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' PlotIntegPaths
 #' @description Plots both the original mummichog and the GSEA results by combining p-values
 #' using the Fisher's method (sumlog). 
+#' @param mSetObj Input the name of the created mSetObj object
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
@@ -736,8 +737,8 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' @import plotly
 #' @import metap
 
-PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = "default", labels.x = 5,
-                           labels.y = 5){
+PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = "default", 
+                           labels.x = 5, labels.y = 5){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -790,11 +791,8 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   
   #extract p-values
   all.ps <- unlist(lapply(combo.all, function(z) z["p"]))
-  adjusted.p <- p.adjust(all.ps, method="BH");
-  
-  dfcombo <- cbind(mum.df, all.ps, adjusted.p)
-  colnames(dfcombo) <- c("Pathway", "Mummichog Pvals", "GSEA Pvals", "Combined Pvals", "Adj Combo Pvals")
-  
+  dfcombo <- cbind(mum.df, all.ps)
+  colnames(dfcombo) <- c("Pathway", "Mummichog Pvals", "GSEA Pvals", "Combined Pvals")
   write.csv(dfcombo, "mummichog_combined_pathway_enrichment.csv", row.names = FALSE)
   
   # Sort values based on combined pvalues
@@ -807,6 +805,8 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   combo.p <- -log(all.ps)
   combo.p <- scales::rescale(combo.p, c(0,4))
   
+  sig.cutoff <- scales::rescale(-log(0.05), c(0,4))
+  
   inx <- order(combo.p, decreasing= T);
   
   combo.p <- combo.p[inx]
@@ -814,7 +814,7 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   y <- y[inx];
   path.nms <- mum.df$pathways[inx];
   
-  # Sort colors based on combined pvalues
+  # set circle size based on combined pvalues
   min.x <- min(combo.p, na.rm = TRUE);
   max.x <- max(combo.p, na.rm = TRUE);
   
@@ -825,7 +825,7 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   
   maxR <- (max.x - min.x)/40;
   minR <- (max.x - min.x)/160;
-  radi.vec <- minR+(maxR-minR)*(x-min.x)/(max.x-min.x);
+  radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
   
   # set background color according to combo.p
   bg.vec <- heat.colors(length(combo.p));
@@ -857,10 +857,30 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="GSEA -log(p)", ylab="Mummichog -log(p)");
+  plot(x, y, type="n", axes=F, xlab="GSEA -log(p)", ylab="Mummichog -log(p)", bty = "l");
   axis(1);
   axis(2);
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+  
+  axis.lims <- par("usr")
+  
+  # mummichog sig
+  mum.x <- c(axis.lims[1], axis.lims[1], 2, 2)
+  mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
+  polygon(mum.x, mum.y, col=rgb(1,229/255,204/255,0.3), border = NA)
+
+  # gsea sig
+  gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
+  gsea.y <- c(axis.lims[1],2,2,axis.lims[1])
+  polygon(gsea.x, gsea.y, col=rgb(1,229/255,204/255,0.3), border = NA)
+  
+  # combo sig
+  combo.x <- c(2,2,axis.lims[4],axis.lims[4])
+  combo.y <- c(2,axis.lims[4],axis.lims[4],2)
+  polygon(combo.x, combo.y, col=rgb(1,107/255,107/255,0.3), border = NA)
+  
+  abline(h=2, col="red")
+  abline(v=2, col="red")
   
   if(labels=="default"){
     text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
@@ -888,6 +908,87 @@ GetMummichogMZHits <- function(mSetObj=NA, msetNm){
   result <- intersect(mzs, mSet$dataSet$input_mzlist)
 
   return(result)
+}
+
+#' Plot m/z hits in a pathway
+#' @description Function to create a boxplot of m/z features
+#' within a specific pathway.
+#' @param mSetObj Input the name of the created mSetObj object.
+#' @param msetNM Character, input the name of the pathway. 
+#' @param format Character, input the format of the image to create. 
+#' @param dpi Numeric, input the dpi of the image to create. Default 
+#' is set to 300.
+#' @param width Numeric, input the width of the image to create.
+#' Default is set to 10.
+#' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' @import ggplot2
+
+PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
+                              width=10){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  inx <- which(mSetObj$pathways$name == msetNM)
+  
+  # Brief sanity check
+  if(length(inx) == 0){
+    print(paste0(msetNM, " is not found in the pathway library! Please verify the spelling."))
+    return(0)
+  }
+  
+  mset <- mSetObj$pathways$cpds[[inx]];
+  
+  mzs <- as.numeric(unique(unlist(mSetObj$cpd2mz_dict[mset])))
+  
+  result <- sort(intersect(mzs, mSetObj$dataSet$input_mzlist))
+  
+  data <- mSetObj$dataSet$proc
+  
+  boxdata <- as.data.frame(data[,result])
+  colnames(boxdata) <- result
+  boxdata$class <- mSetObj$dataSet$cls
+  
+  num.feats <- length(result)
+  
+  boxdata.m <- reshape2::melt(boxdata, id.vars="class")
+  boxdata.m$value <- scales::rescale(boxdata.m$value, c(0,1))
+  
+  boxplotName <- paste(msetNM, ".", format, sep="");
+  
+  if(num.feats == 1){
+    
+    w = width
+    h = width
+    p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class))
+    p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
+    p <- p + xlab("m/z feature") + ylab("Intensity")
+    
+    ggsave(p, filename = boxplotName, dpi=300, width=w, height=h, limitsize = FALSE)
+    
+    return(mSetObj)
+  
+  }else if(num.feats<10){
+    w = width
+    h <- num.feats
+    cols = 3
+  }else if(num.feats<5){
+    w = width
+    h = width
+  }else{
+    w = width
+    h <- num.feats * 0.35
+    cols = 5
+  }
+  
+  p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class))
+  p <- p + facet_wrap( ~ variable, scales="free", ncol=cols) + xlab("m/z features") + ylab("Intensity")
+  p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
+
+  ggsave(p, filename = boxplotName, dpi=300, width=w, height=h, limitsize = FALSE)
+  
+  return(mSetObj)
 }
 
 ##### For Web ################
