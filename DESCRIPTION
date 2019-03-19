@@ -63,5 +63,6 @@ Suggests:
     rmarkdown,
     devtools,
     testthat,
-    plotly
+    plotly,
+    reshape2
 VignetteBuilder: knitr

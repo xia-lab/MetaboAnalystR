@@ -124,7 +124,7 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-18.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-19.txt");
 mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
 mSet<-SanityCheckMummichogData(mSet)
 
@@ -145,12 +145,12 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 
 # > head(mSet$mummi.gsea.resmat)
 #                                                           Pathway_Total Hits P_val      P_adj    NES     
-# Bile acid biosynthesis                                    "82"          "29" "0.001894" "0.1477" "-1.949"
-# Vitamin D3 (cholecalciferol) metabolism                   "16"          "10" "0.01465"  "0.5714" "-1.67" 
-# Biopterin metabolism                                      "22"          "7"  "0.02214"  "0.5756" "-1.597"
-# Putative anti-Inflammatory metabolites formation from EPA "27"          "4"  "0.06765"  "0.7451" "1.45"  
-# Androgen and estrogen biosynthesis and metabolism         "95"          "11" "0.08318"  "0.7451" "-1.476"
-# Arachidonic acid metabolism                               "95"          "8"  "0.08497"  "0.7451" "1.417" 
+# Pyruvate Metabolism                                       "20"          "8"  "0.002128" "0.01826" "1.832" 
+# Putative anti-Inflammatory metabolites formation from EPA "27"          "20" "0.002132" "0.01826" "2.242" 
+# Squalene and cholesterol biosynthesis                     "55"          "33" "0.001779" "0.01826" "-2.039"
+# Bile acid biosynthesis                                    "82"          "52" "0.001812" "0.01826" "-2.196"
+# Propanoate metabolism                                     "31"          "11" "0.002123" "0.01826" "1.993" 
+# Biopterin metabolism                                      "22"          "12" "0.001866" "0.01826" "-1.884"
 
 # View plot with no dots labeled
 # mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
@@ -166,9 +166,5 @@ knitr::include_graphics("integ_path_plotdpi300.jpg")
 mSet <- PlotPathwayMZHits(mSet, "Biopterin metabolism", format = "jpg")
 
 knitr::include_graphics("Biopterin metabolism.jpg")
-
-mSet <- PlotPathwayMZHits(mSet, "Fatty Acid Metabolism", format = "jpg")
-
-knitr::include_graphics("Fatty Acid Metabolism.jpg")
 
 

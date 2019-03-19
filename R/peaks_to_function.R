@@ -414,7 +414,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
 
   # now update expr. profile
-  matched_mz<- matched_res[,1];
+  matched_mz <- matched_res[,1];
   matched_ts <- mSetObj$dataSet$expr_dic[matched_mz];
 
   # get the expression profile for each 
@@ -733,9 +733,8 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 100){
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-#' @import ggplot2
-#' @import plotly
 #' @import metap
+#' @import scales
 
 PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labels = "default", 
                            labels.x = 5, labels.y = 5){
@@ -865,22 +864,14 @@ PlotIntegPaths <- function(mSetObj=NA, format = "png", dpi = 72, width = 9, labe
   axis.lims <- par("usr")
   
   # mummichog sig
-  mum.x <- c(axis.lims[1], axis.lims[1], 2, 2)
+  mum.x <- c(axis.lims[1], axis.lims[1], axis.lims[2], axis.lims[2])
   mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
-  polygon(mum.x, mum.y, col=rgb(1,229/255,204/255,0.3), border = NA)
+  polygon(mum.x, mum.y, col=rgb(82/255,193/255,188/255,0.3), border = NA)
 
   # gsea sig
   gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
-  gsea.y <- c(axis.lims[1],2,2,axis.lims[1])
-  polygon(gsea.x, gsea.y, col=rgb(1,229/255,204/255,0.3), border = NA)
-  
-  # combo sig
-  combo.x <- c(2,2,axis.lims[4],axis.lims[4])
-  combo.y <- c(2,axis.lims[4],axis.lims[4],2)
-  polygon(combo.x, combo.y, col=rgb(1,107/255,107/255,0.3), border = NA)
-  
-  abline(h=2, col="red")
-  abline(v=2, col="red")
+  gsea.y <- c(axis.lims[1],axis.lims[4],axis.lims[4],axis.lims[1])
+  polygon(gsea.x, gsea.y, col=rgb(216/255,126/255,178/255,0.3), border = NA)
   
   if(labels=="default"){
     text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
@@ -905,14 +896,15 @@ GetMummichogMZHits <- function(mSetObj=NA, msetNm){
   
   mzs <- as.numeric(unique(unlist(mSetObj$cpd2mz_dict[mset])))
   
-  result <- intersect(mzs, mSet$dataSet$input_mzlist)
+  result <- intersect(mzs, mSetObj$dataSet$input_mzlist)
 
   return(result)
 }
 
 #' Plot m/z hits in a pathway
 #' @description Function to create a boxplot of m/z features
-#' within a specific pathway.
+#' within a specific pathway. m/z features used by the original
+#' mummichog algorithm are highlighted with an asterisk. 
 #' @param mSetObj Input the name of the created mSetObj object.
 #' @param msetNM Character, input the name of the pathway. 
 #' @param format Character, input the format of the image to create. 
@@ -925,11 +917,24 @@ GetMummichogMZHits <- function(mSetObj=NA, msetNm){
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import ggplot2
+#' @import reshape2
+#' @import scales
 
 PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
                               width=10){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web==TRUE){
+    return(0)
+  }
+  
+  # check if mummichog + gsea was performed
+  if(is.null(ora.all) | is.null(gsea.all)){
+    print("Both mummichog and fGSEA must be performed!")
+    return(0)
+  }
+  
   inx <- which(mSetObj$pathways$name == msetNM)
   
   # Brief sanity check
@@ -941,13 +946,26 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
   mset <- mSetObj$pathways$cpds[[inx]];
   
   mzs <- as.numeric(unique(unlist(mSetObj$cpd2mz_dict[mset])))
+
+  result <- intersect(mzs, unique(mSet$matches.res[,1]))
   
-  result <- sort(intersect(mzs, mSetObj$dataSet$input_mzlist))
+  pvals <- mSetObj$dataSet$mummi.proc[mSetObj$dataSet$mummi.proc[, 2] %in% result, ]
   
+  pval.cutoff <- mSetObj$dataSet$cutoff
+  
+  used.inx <- pvals[,1] < pval.cutoff
+  mummi <- which(used.inx)
+  mummi_mzs <- pvals[,2]
+  
+  # add astericks if used by mummichog
+  mummi_mzs_star <- mummi_mzs
+  mummi_mzs_star[mummi] <- paste(mummi_mzs_star[mummi], "*",sep="");
+  
+  # create boxdata
   data <- mSetObj$dataSet$proc
   
-  boxdata <- as.data.frame(data[,result])
-  colnames(boxdata) <- result
+  boxdata <- as.data.frame(data[,mummi_mzs])
+  colnames(boxdata) <- mummi_mzs_star
   boxdata$class <- mSetObj$dataSet$cls
   
   num.feats <- length(result)
@@ -979,7 +997,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
   }else{
     w = width
     h <- num.feats * 0.35
-    cols = 5
+    cols = 6
   }
   
   p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class))
@@ -1288,7 +1306,9 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
   pathwaysFiltered <- lapply(pathwaysPos, function(s) { ranks[s] })
   
   # adjust for the fact that a single m/z feature can match to several compound identifiers
-  pathway2mzSizes <- sapply(pathways, function(z) { length(intersect(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[z]))), mSetObj$dataSet$input_mzlist))} )
+  # subsets m/z features responsible for a compound and matches it to total set of matched m/z features
+  # returns the length
+  pathway2mzSizes <- sapply(pathways, function(z) { length(intersect(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[z]))), unique(mSet$matches.res[,1])))} )
   oldpathwaysSizes <- sapply(pathwaysFiltered, length)
   
   pathwaysSizes <- pmin(pathway2mzSizes, oldpathwaysSizes)

@@ -22,7 +22,8 @@ Default is set to 10.}
 }
 \description{
 Function to create a boxplot of m/z features
-within a specific pathway.
+within a specific pathway. m/z features used by the original
+mummichog algorithm are highlighted with an asterisk.
 }
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
