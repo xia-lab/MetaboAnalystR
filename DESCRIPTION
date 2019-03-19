@@ -57,7 +57,8 @@ Imports:
     fgsea,
     MSnbase,
     BiocParallel,
-    metap
+    metap,
+    scales
 Suggests: 
     knitr,
     rmarkdown,
