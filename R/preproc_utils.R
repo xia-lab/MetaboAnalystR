@@ -520,3 +520,91 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   
   return(ma_feats_miss)
 }
+
+###
+### Functions for MS2 Data
+###
+
+#' Extract MS2 Data
+#' @description This function returns a list of spectra that matches with 
+#' a user specified precursor m/z. 
+#' @param filename Name of the file (e.g. mzML, mzXML)
+#' @param peakParams Object containing parameters for peak picking.
+#' @param mzmin Minimum m/z when selecting a precursor from peak list 
+#' @param mzmax Maximum m/z when selecting a precursor from peak list 
+#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' @import xcms
+
+ExtractMS2data <- function(filename, peakParams, mzmin, mzmax){
+  
+  ## Function to extract MSMS spectra 
+  xrms <- readMSData(filename, mode = "onDisk", centroided = TRUE)
+  # get all MS2 spectra from DDA experiment
+  ms2spectra <- spectra(filterMsLevel(xrms, msLevel = 2))  
+  
+  ## Detect chromatographic peaks 
+  # set parameters and find chromatographic peaks 
+  ms1cwp <- CentWaveParam(snthresh = peakParams$sn_thresh, 
+                          noise = 100, ppm = peakParams$ppm, peakwidth = c(peakParams$min_pkw, peakParams$max_pkw))
+  ms1data <- findChromPeaks(xrms, param = ms1cwp, msLevel = 1)
+  
+  #get all peaks 
+  chromPeaks <- chromPeaks(ms1data)
+
+  # pick one compound 
+  ## find which row contains the mass we want
+  chp <- as.data.frame(chromPeaks)
+  rownum <- which(chp$mz >= mzmin & chp$mz <= mzmax)
+  chromPeak <- chromPeaks[rownum,]
+  
+  #filter out fitting spectra
+  filteredMs2spectra <- .getDdaMS2Scans(chromPeak, ms2spectra)
+  
+  return(filteredMs2spectra)
+}
+
+### Helper function
+### function for DDA data 
+### Credit: Michael Witting; https://github.com/michaelwitting/metabolomics2018/blob/master/R/msLevelMerge.R
+### MS2 spectra need to be list of spectrum2 objects
+.getDdaMS2Scans <- function(chromPeak, ms2spectra, mzTol = 0.01, rtTol = 20) {
+  
+  #make a new list
+  filteredMs2spectra <- list()
+  
+  #isolate only the ones within range
+  for(i in 1:length(ms2spectra)) {
+    
+    #isolate Ms2 spectrum
+    ms2spectrum <- ms2spectra[[i]]
+    
+    #check if within range of peak
+    if(abs(chromPeak[4] - ms2spectrum@rt) < rtTol & abs(chromPeak[1] - ms2spectrum@precursorMz) < mzTol) {
+      filteredMs2spectra <- c(filteredMs2spectra, ms2spectrum)
+    }
+  }
+  
+  #return list with filtered ms2 spectra
+  return(filteredMs2spectra)
+}
+
+#' Plot selected M2 spectra for an m/z feature
+#' @description This function creates a plot of the user selected precursor m/z.
+#' @param ms2 Spectrum2 class object containing all of the spectra for the selected
+#' m/z feature.
+#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' @import xcms
+
+PlotMS2Spectra <- function(ms2, spectra = 1){
+  
+  MSnbase::plot(ms2[[spectra]])
+  
+}  

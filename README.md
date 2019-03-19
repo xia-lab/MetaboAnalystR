@@ -155,6 +155,8 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
+03-19-2019 - Added support for MS2 data - function to read in MS2 data and extract/plot spectra for a specific m/z
+
 03-18-2019 - Added function to plot m/z features hits in a pathway for the MS Peaks to Paths module, updated documentation and MetaboAnalystR 2.0 tutorial to reflect this new addition
 
 03-17-2019 - Added method for combining p-values for MS Peaks to Paths (mummichog + fGSEA pvalues), updated documentation and MetaboAnalystR 2.0 workflow
