@@ -930,7 +930,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
   }
   
   # check if mummichog + gsea was performed
-  if(is.null(ora.all) | is.null(gsea.all)){
+  if(is.null(mSetObj$mummi.resmat) | is.null(mSetObj$mummi.gsea.resmat)){
     print("Both mummichog and fGSEA must be performed!")
     return(0)
   }
