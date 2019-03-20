@@ -1,4 +1,3 @@
-
 #'Check if data are ready for meta-analysis
 #'@description This function determines if all annotated data are ready for meta-analysis
 #'@param mSetObj Input name of the created mSet Object

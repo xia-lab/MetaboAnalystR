@@ -19,7 +19,7 @@
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   # record the filter for 8 major databases
   mSetObj$return.cols <- c(hmdb, pubchem, chebi, kegg, metlin);
   
@@ -27,7 +27,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, keg
   if(!exists("name.map", where = mSetObj)){
     mSetObj$name.map <- list();
   }
-
+  
   # distribute job
   mSetObj$dataSet$q.type <- q.type;
   
@@ -101,11 +101,11 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
     match.state[!is.na(hit.inx)] <- 1;
   }else if(q.type == "kegg"){
     hit.inx <- match(tolower(qvec), tolower(cmpd.db$kegg));
-    hit.inx2 <- match(tolower(qvec), rev(tolower(cmpd.db$kegg)));
+    #hit.inx2 <- match(tolower(qvec), rev(tolower(cmpd.db$kegg)));
     
     # unique hits
-    nonuniq.hits <- hit.inx + hit.inx2 != nrow(cmpd.db) + 1;
-    hit.inx[nonuniq.hits] <- NA;
+    #nonuniq.hits <- hit.inx + hit.inx2 != nrow(cmpd.db) + 1;
+    #hit.inx[nonuniq.hits] <- NA;
     match.values <- cmpd.db$name[hit.inx];
     match.state[!is.na(hit.inx)] <- 1;
     
@@ -221,7 +221,7 @@ PerformApproxMatch <- function(mSetObj=NA, q){
   matched.dist <- NULL;
   q.length <- nchar(q);
   s <- c(0, 0.1, 0.2);
-
+  
   # init withno hits, then see if any hits
   mSetObj$dataSet$candidates <- NULL;
   for (j in s) {
@@ -302,9 +302,9 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   
   mSetObj <- .get.mSet(mSetObj);
   query_inx <- which(mSetObj$name.map$query.vec == query_nm);
-
+  
   can_mat <- mSetObj$dataSet$candidates;
-
+  
   if(!is.null(can_mat)){
     cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
     can_inx <- which(can_mat[,2] == can_nm);
@@ -318,33 +318,33 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
       
       # re-generate the CSV file
       csv.res <- mSetObj$dataSet$map.table;
-        if(ncol(csv.res) > 6){ # general utilities
-            csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
-                              mSetObj$name.map$hit.values[query_inx],
-                              hit$hmdb_id,
-                              hit$pubchem_id,
-                              hit$chebi_id,
-                              hit$kegg_id,
-                              hit$metlin_id,
-                              1);
-        }else{
-            csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
-                              mSetObj$name.map$hit.values[query_inx],
-                              hit$hmdb_id,
-                              hit$pubchem_id,
-                              hit$kegg_id,
-                              1);
-        }
-        write.csv(csv.res, file="name_map.csv", row.names=F);
-        mSetObj$dataSet$map.table <- csv.res;
+      if(ncol(csv.res) > 6){ # general utilities
+        csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
+                                mSetObj$name.map$hit.values[query_inx],
+                                hit$hmdb_id,
+                                hit$pubchem_id,
+                                hit$chebi_id,
+                                hit$kegg_id,
+                                hit$metlin_id,
+                                1);
+      }else{
+        csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
+                                mSetObj$name.map$hit.values[query_inx],
+                                hit$hmdb_id,
+                                hit$pubchem_id,
+                                hit$kegg_id,
+                                1);
+      }
+      write.csv(csv.res, file="name_map.csv", row.names=F);
+      mSetObj$dataSet$map.table <- csv.res;
     }else{ #no match
-        mSetObj$name.map$hit.inx[query_inx] <- 0;
-        mSetObj$name.map$hit.values[query_inx] <- "";
-        mSetObj$name.map$match.state[query_inx] <- 0;
-        print("No name matches found.")
+      mSetObj$name.map$hit.inx[query_inx] <- 0;
+      mSetObj$name.map$hit.values[query_inx] <- "";
+      mSetObj$name.map$match.state[query_inx] <- 0;
+      print("No name matches found.")
     }
   }
-
+  
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(query_inx);
@@ -368,33 +368,33 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 #'@export
 
 GetCandidateList <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   can_hits <- mSetObj$dataSet$candidates;
-
+  
   if(is.null(can_hits)){
     can.mat <- matrix("", nrow=1, ncol= 6);
   }else{
     # contruct the result table with cells wrapped in html tags
     # the unmatched will be highlighted in different background
-  
+    
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);
     cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  
+    
     # need to exclude lipids, to be consistent with approx matching part so that same index can be used to fetch db entries
     nonLipidInx <- cmpd.db$lipid == 0;
     cmpd.db <-cmpd.db[nonLipidInx,];
-  
+    
     for (i in 1:nrow(mSetObj$dataSet$candidates)){
-        hit.inx <- mSetObj$dataSet$candidates[i, 1];
-        hit.name <- mSetObj$dataSet$candidates[i, 2];
-        hit <-cmpd.db[hit.inx, ,drop=F];
-        can.mat[i, ] <- c(hit.name,
-                      paste(ifelse(hit$hmdb_id=="NA","", paste("<a href=http://www.hmdb.ca/metabolites/", hit$hmdb_id, " target='_blank'>",hit$hmdb_id,"</a>", sep="")), sep=""),
-                      paste(ifelse(hit$pubchem_id=="NA", "", paste("<a href=http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=", hit$pubchem_id," target='_blank'>", hit$pubchem_id,"</a>", sep="")), sep=""),
-                      paste(ifelse(hit$chebi_id=="NA","", paste("<a href=http://www.ebi.ac.uk/chebi/searchId.do?chebiId=", hit$chebi_id, " target='_blank'>",hit$chebi_id,"</a>", sep="")), sep=""),
-                      paste(ifelse(hit$kegg_id=="NA","",paste("<a href=http://www.genome.jp/dbget-bin/www_bget?", hit$kegg_id, " target='_blank'>", hit$kegg_id,"</a>", sep="")), sep=""),
-                      paste(ifelse(hit$metlin_id=="NA","",paste("<a href=http://metlin.scripps.edu/metabo_info.php?molid=", hit$metlin_id," target='_blank'>",hit$metlin_id,"</a>", sep="")), sep=""));
+      hit.inx <- mSetObj$dataSet$candidates[i, 1];
+      hit.name <- mSetObj$dataSet$candidates[i, 2];
+      hit <-cmpd.db[hit.inx, ,drop=F];
+      can.mat[i, ] <- c(hit.name,
+                        paste(ifelse(hit$hmdb_id=="NA","", paste("<a href=http://www.hmdb.ca/metabolites/", hit$hmdb_id, " target='_blank'>",hit$hmdb_id,"</a>", sep="")), sep=""),
+                        paste(ifelse(hit$pubchem_id=="NA", "", paste("<a href=http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=", hit$pubchem_id," target='_blank'>", hit$pubchem_id,"</a>", sep="")), sep=""),
+                        paste(ifelse(hit$chebi_id=="NA","", paste("<a href=http://www.ebi.ac.uk/chebi/searchId.do?chebiId=", hit$chebi_id, " target='_blank'>",hit$chebi_id,"</a>", sep="")), sep=""),
+                        paste(ifelse(hit$kegg_id=="NA","",paste("<a href=http://www.genome.jp/dbget-bin/www_bget?", hit$kegg_id, " target='_blank'>", hit$kegg_id,"</a>", sep="")), sep=""),
+                        paste(ifelse(hit$metlin_id=="NA","",paste("<a href=http://metlin.scripps.edu/metabo_info.php?molid=", hit$metlin_id," target='_blank'>",hit$metlin_id,"</a>", sep="")), sep=""));
     }
     # add "none" option
     can.mat[nrow(mSetObj$dataSet$candidates)+1,] <- c("None of the above", "", "", "", "", "");
@@ -506,8 +506,8 @@ CreateMappingResultTable <- function(mSetObj=NA){
   # construct the result table with cells wrapped in html tags
   # the unmatched will be highlighted in different background
   html.res <- matrix("", nrow=length(qvec), ncol=8);
-  csv.res <- matrix("", nrow=length(qvec), ncol=8);
-  colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "Comment");
+  csv.res <- matrix("", nrow=length(qvec), ncol=9);
+  colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "SMILES", "Comment");
   
   cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
   
@@ -535,6 +535,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
                     ifelse(match.state[i]==0, "NA", hit$chebi_id),
                     ifelse(match.state[i]==0, "NA", hit$kegg_id),
                     ifelse(match.state[i]==0, "NA", hit$metlin_id),
+                    ifelse(match.state[i]==0, "NA", hit$smiles),
                     match.state[i]);
   }
   # return only columns user selected
