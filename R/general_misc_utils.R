@@ -69,13 +69,13 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 .readDataTable <- function(fileName){
   dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE));
   if(class(dat) == "try-error" || any(dim(dat) == 0)){
-      print("Using slower file reader ...");
-      formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
-      if(formatStr == "txt"){
-        dat <- try(read.table(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
-      }else{ # note, read.csv is more than read.table with sep=","
-        dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
-      }  
+    print("Using slower file reader ...");
+    formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
+    if(formatStr == "txt"){
+      dat <- try(read.table(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
+    }else{ # note, read.csv is more than read.table with sep=","
+      dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
+    }  
   }
   return(dat);
 }
@@ -91,9 +91,32 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 #'
 Perform.permutation <- function(perm.num, fun){
+ 
+  # for public server, perm.num is not always followed to make sure loop will not continue for very long time
+  # before the adventure, see how long it takes for 10 permutations
+  # if it is extremely slow (>60 sec) => max 20 (<0.05)
+  # if it is very slow (30-60 sec) => max 100 (<0.01)
+
+  start.num <- 1; 
+  perm.res <- NULL;
+  if(.on.public.web & perm.num > 20){
+    start.time <- Sys.time();
+    perm.res <- lapply(1:10, fun);
+    end.time <- Sys.time();
+
+    time.taken <- end.time - start.time;
+    print(paste("time taken for 10 permutations: ", time.taken));
+
+    if(time.taken > 60){
+        perm.num <- 20;
+    }else if(time.taken > 30){
+        perm.num <- 100;
+    }
+    start.num <- 11;
+  }
   print(paste("performing", perm.num, "permutations ..."));
-  perm.res <- lapply(2:perm.num, fun);
-  perm.res;
+  perm.res <- c(perm.res, lapply(start.num:perm.num, fun));
+  return(list(perm.res=perm.res, perm.num = perm.num));
 }
 
 #'Unzip .zip files
@@ -320,7 +343,7 @@ isEmptyMatrix <- function(mat){
   obj.mode <- napply(names, mode)
   obj.type <- ifelse(is.na(obj.class), obj.mode, obj.class)
   obj.prettysize <- napply(names, function(x) {
-  capture.output(format(utils::object.size(x), units = "auto")) })
+    capture.output(format(utils::object.size(x), units = "auto")) })
   obj.size <- napply(names, object.size)
   obj.dim <- t(napply(names, function(x)
     as.numeric(dim(x))[1:2]))
@@ -481,15 +504,15 @@ GetColorSchema <- function(mSetObj=NA, grayscale=F){
       colors <- cols;
     }else{
       pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99",
-              "#E31A1C", "#FDBF6F", "#FF7F00", "#CAB2D6", "#6A3D9A",
-              "#FFFF99", "#B15928");
+                "#E31A1C", "#FDBF6F", "#FF7F00", "#CAB2D6", "#6A3D9A",
+                "#FFFF99", "#B15928");
       dist.cols <- colorRampPalette(pal12)(grp.num);
       lvs <- levels(mSetObj$dataSet$cls);
       colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-    
-     for(i in 1:length(lvs)){
-      colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
-     }
+      
+      for(i in 1:length(lvs)){
+        colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
+      }
     }
   }else{
     if(exists("colVec") && !any(colVec =="#NA") ){

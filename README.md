@@ -6,7 +6,7 @@
 
 ## Description 
 
-  **MetaboAnalystR 2.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. With version 2.0, we aim to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations leveraging the functionality of the xcms (PMIDs: 16448051, 19040729, and 20671148; version 3.4.4) and CAMERA (PMID: 22111785; version 1.38.1) R packages. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, we provide the "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights" vignette, available [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on a subset of clinical IBD samples.   
+**MetaboAnalystR 2.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. With version 2.0, we aim to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations leveraging the functionality of the xcms (PMIDs: 16448051, 19040729, and 20671148; version 3.4.4) and CAMERA (PMID: 22111785; version 1.38.1) R packages. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, we provide the "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights" vignette, available [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on a subset of clinical IBD samples.   
 
 ## Getting Started
 
@@ -92,7 +92,6 @@ devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 The * must be replaced by what is actually downloaded and built.  
 
 ```R
-
 git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build MetaboAnalystR
 R CMD INSTALL MetaboAnalystR_*.tar.gz
@@ -137,13 +136,16 @@ browseVignettes("MetaboAnalystR")
 
 ## Citation
 
-MetaboAnalystR 2.0 has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University.
+MetaboAnalystR 2.0 has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University. The original manuscript (Version 1.0.0) can be found [here](https://doi.org/10.1093/bioinformatics/bty528). MetaboAnalystR Version 2.0.0 has been recently [published](https://www.mdpi.com/2218-1989/9/3/57)!
 
-The R package (Version 1.0.0) has been [published](https://doi.org/10.1093/bioinformatics/bty528)!
+We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
-We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.
+Chong, Jasmine, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
+Metabolites 9.3 (2019): 57.
 
-Within R:
+Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.
+
+*From within R:*
 
 ```R
 citation("MetaboAnalystR")
@@ -154,6 +156,9 @@ citation("MetaboAnalystR")
 To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+03-25-2019 - Updated MS Peaks to Paths to stop analysis if no significant peaks are identified. Updated underlying code with 
+webserver and updated documentation 
 
 03-19-2019 - Added support for MS2 data - function to read in MS2 data and extract/plot spectra for a specific m/z
 

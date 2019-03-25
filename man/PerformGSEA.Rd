@@ -4,7 +4,7 @@
 \alias{PerformGSEA}
 \title{New main function to perform fast pre-ranked mummichog}
 \usage{
-PerformGSEA(mSetObj=NA, lib, permNum = 100)
+PerformGSEA(mSetObj=NA, lib, permNum = 1000)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object}

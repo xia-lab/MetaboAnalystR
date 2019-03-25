@@ -949,8 +949,10 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
     res.orig <- Get.bwss(pred.orig, orig.cls);
     res.perm <- Perform.permutation(num, Get.pls.bw);
   }
-  
-  perm.vec <- c(res.orig, unlist(res.perm, use.names=FALSE));
+  # perm.num may be adjusted on public server
+  perm.num <- res.perm$perm.num;
+  perm.res <- res.perm$perm.res;
+  perm.vec <- c(res.orig, unlist(perm.res, use.names=FALSE));
   # check for infinite since with group variance could be zero for perfect classification
   inf.found = TRUE;
   if(sum(is.finite(perm.vec))==length(perm.vec)){
@@ -968,10 +970,10 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   # p value is < 0.01, we can not say it is zero
   better.hits <- sum(perm.vec[-1]>=perm.vec[1]);
   if(better.hits == 0) {
-    p <- paste("p < ", 1/num, " (", better.hits, "/", num, ")", sep="");
+    p <- paste("p < ", 1/perm.num, " (", better.hits, "/", perm.num, ")", sep="");
   }else{
-    p <- better.hits/num;
-    p <- paste("p = ", signif(p, digits=5), " (", better.hits, "/", num, ")", sep="");
+    p <- better.hits/perm.num;
+    p <- paste("p = ", signif(p, digits=5), " (", better.hits, "/", perm.num, ")", sep="");
   }
   
   mSetObj$analSet$plsda$permut.p <- p;
@@ -1608,25 +1610,28 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
-  #perm.res<-performOPLS(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
+ 
   perm.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
   r.vec <- perm.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- perm.res$suppLs[["permMN"]][, "Q2(cum)"];
   
+  # note, actual permutation number may be adjusted in public server
+  perm.num <- perm.res$suppLs[["permI"]];
+
   better.rhits <- sum(r.vec[-1]>=r.vec[1]);
   
   if(better.rhits == 0) {
-    pr <- paste("p < ", 1/num, " (", better.rhits, "/", num, ")", sep="");
+    pr <- paste("p < ", 1/perm.num, " (", better.rhits, "/", perm.num, ")", sep="");
   }else{
-    p <- better.rhits/num;
-    pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", num, ")", sep="");
+    p <- better.rhits/perm.num;
+    pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", perm.num, ")", sep="");
   }
   better.qhits <- sum(q.vec[-1]>=q.vec[1]);
   if(better.qhits == 0) {
-    pq <- paste("p < ", 1/num, " (", better.qhits, "/", num, ")", sep="");
+    pq <- paste("p < ", 1/perm.num, " (", better.qhits, "/", perm.num, ")", sep="");
   }else{
-    p <- better.qhits/num;
-    pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", num, ")", sep="");
+    p <- better.qhits/perm.num;
+    pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", perm.num, ")", sep="");
   }
   
   rng <- range(c(r.vec, q.vec, 1));
@@ -1703,7 +1708,9 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   opl$typeC <- "OPLS-DA";
   
   ## Permutation testing (Szymanska et al, 2012)
+
   if(permI > 0) {
+
     modSumVc <- colnames(opl$summaryDF)
     permMN <- matrix(0,
                      nrow = 1 + permI,
@@ -1713,8 +1720,39 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     perSimVn <- numeric(1 + permI)
     perSimVn[1] <- 1
     
-    permMN[1, ] <- as.matrix(opl$summaryDF)
-    for(k in 1:permI) {
+    permMN[1, ] <- as.matrix(opl$summaryDF);
+
+    # do initial evaluation time for 10 permutations
+    start.time <- Sys.time();
+    for(k in 1:10) {
+      yVcn <- drop(opl$suppLs[["yMCN"]])
+      yPerVcn <- sample(yVcn)
+      yPerMCN <- matrix(yPerVcn, ncol = 1)
+      perOpl <- .coreOPLS(xMN = xMN,
+                          yMCN = yPerMCN,
+                          orthoI = opl$summaryDF[, "ort"],
+                          predI = opl$summaryDF[, "pre"],
+                          scaleC = scaleC,
+                          crossvalI = crossvalI)
+      
+      permMN[1 + k, ] <- as.matrix(perOpl$summaryDF);
+      perSimVn[1 + k] <- .similarityF(opl$suppLs[["yMCN"]], yPerMCN)
+    }
+    end.time <- Sys.time();
+    time.taken <- end.time - start.time;
+    print(paste("time taken for 10 permutations: ", time.taken));
+
+    if(.on.public.web){
+        if(time.taken > 60){
+            permI <- 20;
+        }else if(time.taken > 30){
+            permI <- 100;
+        }
+       permMN <- permMN[1:(1+permI),]; 
+       perSimVn <- perSimVn[1:(1+permI)];
+    }
+    # continue
+    for(k in 11:permI) {
       yVcn <- drop(opl$suppLs[["yMCN"]])
       yPerVcn <- sample(yVcn)
       yPerMCN <- matrix(yPerVcn, ncol = 1)
@@ -1735,6 +1773,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     opl$summaryDF[, "pR2Y"] <- perPvaVn["pR2Y"];
     opl$summaryDF[, "pQ2"] <- perPvaVn["pQ2"];
     opl$suppLs[["permMN"]] <- permMN;
+    opl$suppLs[["permI"]] <- permI;
   }
   
   ##------------------------------------

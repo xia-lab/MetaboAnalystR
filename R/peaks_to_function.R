@@ -181,6 +181,9 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   if(sig.size > 2000){
     msg.vec <- c(msg.vec, "There are too many significant features based on the current cutoff, possibly too slow.");
+  }else if(sig.size == 0){
+    AddErrMsg("No significant features were found based on the current cutoff! Failed to perform analysis.");
+    return(0);
   }else if(sig.size < 30){
     msg.vec <- c(msg.vec, "The number of significant features is small based on the current cutoff, possibly not accurate.");
   }
@@ -650,6 +653,7 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 1000){
   mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
   
   mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+  
   mummichog.lib <- NULL;
   
   mSetObj$mummi.anal <- "fgsea"
@@ -704,10 +708,24 @@ PerformGSEA <- function(mSetObj=NA, lib, permNum = 1000){
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
   
   mSetObj$mummi.gsea.resmat <- res.mat;
-  
-  print(head(res.mat))
-  
   write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  
+  matched_cpds <- names(mSetObj$cpd_exp)
+  inx2<-na.omit(match(rownames(res.mat), mSetObj$pathways$name))
+  filt_cpds <- lapply(inx2, function(f) { mSetObj$pathways$cpds[f] })
+  
+  cpds <- lapply(filt_cpds, function(x) intersect(unlist(x), matched_cpds))
+  
+  json.res <- list(cmpd.exp = total_cpds,
+                   path.nms = rownames(res.mat),
+                   hits.all = convert2JsonList(cpds),
+                   fisher.p = as.numeric(res.mat[,3]))
+  
+  json.mat <- RJSONIO::toJSON(json.res, .na='null');
+  sink("mummichog_query.json");
+  cat(json.mat);
+  sink();
+  
   return(mSetObj);
 }
 

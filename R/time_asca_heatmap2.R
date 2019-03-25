@@ -219,8 +219,6 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   return(.set.mSet(mSetObj));
 }
 
-#'Perform OPLS-DA
-#'@description Orthogonal PLS-DA (from ropls)
 #'@usage  CalculateImpVarCutoff(mSetObj, spe.thresh, lev.thresh)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param spe.thresh alpha threshold, less is better, default less than 5 percentile based chi-square
@@ -260,7 +258,11 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     mSetLev <<- mSetObj
     
     # lev.perm is a list with each 3 col matrix (lvA, lvV, lvAB)
-    lev.perm <- Perform.permutation(20, Get.asca.leverage);
+    res.perm <- Perform.permutation(20, Get.asca.leverage);
+
+    # perm.num may be adjusted on public server  
+    perm.num <- res.perm$perm.num;
+    lev.perm <- res.perm$perm.res;
     
     rm(mSetLev, pos = ".GlobalEnv")
     
@@ -553,14 +555,14 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   );
   
   mSetPerm <<- mSetObj
-  
   perm.orig <- Get.asca.tss(dummy, perm=F);
-  
-  perm.res <- Perform.permutation(perm.num, Get.asca.tss);
-  
-  rm(mSetPerm, pos = ".GlobalEnv")
-  
+  res.perm <- Perform.permutation(perm.num, Get.asca.tss);
+  rm(mSetPerm, pos = ".GlobalEnv");
   gc(); # garbage collection
+
+  # perm.num may be adjusted on public server  
+  perm.num <- res.perm$perm.num;
+  perm.res <- res.perm$perm.res;
   
   # convert to matrix
   perm.res <- do.call(rbind, perm.res);
@@ -574,10 +576,10 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   better.mat <- sweep(perm.res[-1,], 2, perm.res[1,]); # subtract perm.res[1,] for each permutated rows
   better.hits <- apply(better.mat>=0, 2, sum);
   
-  p.vec <- better.hits/perm.num;
+  #p.vec <- better.hits/perm.num;
   p.res <- vector(mode="character", length=3);
-  p.res[p.vec == 0] <- paste("p <", 1/perm.num);
-  p.res[p.vec > 0] <- paste("p =", signif(p.vec[p.vec > 0], digits=5));
+  p.res[better.hits == 0] <- paste("p < ", 1/perm.num, " (1/", perm.num, ")", sep="");
+  p.res[better.hits > 0] <- paste("p = ", signif(better.hits[better.hits > 0]/perm.num, digits=5), " (", better.hits[better.hits > 0], "/", perm.num, ")", sep="");
   
   ## added for test
   write.csv(perm.res, file="perm.res.csv");
@@ -1168,7 +1170,6 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
   par(mfrow=c(3,1), cex=1.0);
   nms <- colnames(perm.mat);
   for(i in 1:3){
-    
     limX <-range(perm.mat[,i])*c(0.9, 1.1);
     hst <- hist(perm.mat[-1,i], breaks = "FD", freq=T, xlim = limX, axes=F, bty="l",
                 ylab="Frequency", xlab= 'Permutation test statistics', col="gray", main=nms[i]);
