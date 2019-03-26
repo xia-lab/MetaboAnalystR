@@ -219,6 +219,9 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   return(.set.mSet(mSetObj));
 }
 
+#'Calculate the Important Variable Cutoff
+#'@description This function calculates the all important features based on 
+#'a specfic cutoff. 
 #'@usage  CalculateImpVarCutoff(mSetObj, spe.thresh, lev.thresh)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param spe.thresh alpha threshold, less is better, default less than 5 percentile based chi-square

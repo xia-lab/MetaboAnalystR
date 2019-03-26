@@ -21,6 +21,7 @@
 #' @import xcms
 #' @import MSnbase
 #' @import BiocParallel
+#' @import parallel
 
 ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
 
@@ -78,7 +79,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
     cores <- parallel::detectCores()
     num_cores <- ceiling(cores/2) 
     print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
-    register(bpstart(MulticoreParam(num_cores)))
+    register(bpstart(BiocParallel::MulticoreParam(num_cores)))
   }
   
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
