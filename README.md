@@ -31,8 +31,9 @@ metanr_packages <- function(){
   
   if(length(new_pkgs)!=0){
     
-    source("https://bioconductor.org/biocLite.R")
-    biocLite(new_pkgs, dependencies = TRUE, ask = FALSE)
+    if (!requireNamespace("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install(new_pkgs, version = "3.8")
     print(c(new_pkgs, " packages added..."))
   }
   

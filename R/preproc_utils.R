@@ -13,6 +13,8 @@
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
+#' @param par.cores Logical, if true, the function will automatically 
+#' set the number of parallel cores. If false, it will not.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -23,7 +25,7 @@
 #' @import BiocParallel
 #' @import parallel
 
-ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
+ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par.cores=TRUE){
 
   msg.vec <<- vector(mode="character")
   
@@ -75,7 +77,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9){
                    sample_group = sclass,
                    stringsAsFactors = FALSE)
   
-  if(!.on.public.web){
+  if(!.on.public.web & par.cores==TRUE){
     cores <- parallel::detectCores()
     num_cores <- ceiling(cores/2) 
     print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))

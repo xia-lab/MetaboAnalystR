@@ -39,7 +39,7 @@ The subset of 12 IBD samples used in this vignette were run on a Dell XPS 15 957
 library("MetaboAnalystR")
 
 # Import mzML files, set path to folder containing two subfolders of samples 
-rawData <- ImportRawMSData("~/Desktop/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP", 
+rawData <- ImportRawMSData("~/Desktop/Mai/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP", 
                             format = "png", dpi = 72, width = 9)
 
 ```

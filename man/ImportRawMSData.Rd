@@ -4,7 +4,8 @@
 \alias{ImportRawMSData}
 \title{Import raw MS data}
 \usage{
-ImportRawMSData(foldername, format = "png", dpi = 72, width = 9)
+ImportRawMSData(foldername, format = "png", dpi = 72, width = 9,
+  par.cores = TRUE)
 }
 \arguments{
 \item{foldername}{Character, input the file path to the folder containing
@@ -15,6 +16,9 @@ the raw MS spectra to be processed.}
 \item{dpi}{Numeric, input the dpi of the image to create.}
 
 \item{width}{Numeric, input the width of the image to create.}
+
+\item{par.cores}{Logical, if true, the function will automatically 
+set the number of parallel cores. If false, it will not.}
 }
 \description{
 This function handles the reading in of 
