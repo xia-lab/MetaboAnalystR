@@ -55,7 +55,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
   }
   write.csv(signif(pca$x,5), file="pca_score.csv");
   write.csv(signif(pca$rotation,5), file="pca_loadings.csv");
-
+  
   mSetObj$analSet$pca <- pca;
   return(.set.mSet(mSetObj));
 }
@@ -306,7 +306,6 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@export
 #'
 PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
-  
   mSetObj <- .get.mSet(mSetObj);
   
   pca <-  mSetObj$analSet$pca;
@@ -343,6 +342,43 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   if(!.on.public.web){
     return(.set.mSet(mSetObj));
   }
+}
+
+PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  pca = mSetObj$analSet$pca
+  coords<-signif(as.matrix(cbind(pca$rotation[,inx1],pca$rotation[,inx2],pca$rotation[,inx3])),5);
+  pca3d <- list();
+  
+  pca3d$score$axis <- paste("PC", c(inx1, inx2, inx3), " (", 100*round( mSetObj$analSet$pca$variance[c(inx1, inx2, inx3)], 3), "%)", sep="");
+  coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
+  
+  colnames(coords) <- NULL; 
+  pca3d$score$xyz <- coords;
+  pca3d$score$name <- rownames(pca$rotation);
+  pca3d$score$entrez <-rownames(pca$rotation); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pca3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- toJSON(pca3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  return(1);
 }
 
 #'Update PCA loadings
@@ -403,27 +439,27 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   mSetObj$imgSet$pca.loading <- imgName;
   plotType <- mSetObj$analSet$pca$loading.type;
-
+  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-
-    par(mar=c(6,5,2,6));
-    plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-    
-    mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-    grid(col = "lightgray", lty = "dotted", lwd = 1);
-    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
-
-    if(plotType=="all"){
-        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
-    }else if(plotType == "custom"){
-        if(length(mSetObj$custom.cmpds) > 0){
-            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
-            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
-        }
-    }else{
-        # do nothing
+  
+  par(mar=c(6,5,2,6));
+  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+  
+  mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  
+  if(plotType=="all"){
+    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+  }else if(plotType == "custom"){
+    if(length(mSetObj$custom.cmpds) > 0){
+      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
     }
-
+  }else{
+    # do nothing
+  }
+  
   dev.off();
   return(.set.mSet(mSetObj));
   
@@ -509,7 +545,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
-
+  
   write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
   write.csv(signif(mSetObj$analSet$plsr$loadings,5), file="plsda_loadings.csv");
   return(.set.mSet(mSetObj));
@@ -697,7 +733,6 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@export
 #'
 PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
-  
   mSetObj <- .get.mSet(mSetObj);
   
   pls3d <- list();
@@ -732,6 +767,43 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink();
   mSet$imgSet$pls.score3d <- imgName;
   return(.set.mSet(mSetObj));
+}
+
+PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  pls = mSetObj$analSet$plsr
+  coords<-signif(as.matrix(cbind(pls$loadings[,inx1],pls$loadings[,inx2],pls$loadings[,inx3])),5);
+  pls3d <- list();
+  
+  pls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$plsr$Xvar[c(inx1, inx2, inx3)]/mSetObj$analSet$plsr$Xtotvar, 1), "%)", sep="");
+  coords <- data.frame(t(signif(pls$loadings[,c(inx1, inx2, inx3)], 5)));
+  
+  colnames(coords) <- NULL; 
+  pls3d$score$xyz <- coords;
+  pls3d$score$name <- rownames(pls$loadings);
+  pls3d$score$entrez <-rownames(pls$loadings); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pls3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- RJSONIO::toJSON(pls3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  return(1);
 }
 
 #'Update PLS loadings
@@ -794,29 +866,29 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   mSetObj$imgSet$pls.loading <- imgName;
   plotType <- mSetObj$analSet$plsr$loading.type;
-
+  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-
-    par(mar=c(6,4,4,5));
-    plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-    
-    mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
-    grid(col = "lightgray", lty = "dotted", lwd = 1);
-    points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
-
-    if(plotType=="all"){
-        text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
-    }else if(plotType == "custom"){
-        if(length(mSetObj$custom.cmpds) > 0){
-            hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
-            text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
-        }
-    }else{
-        # do nothing
+  
+  par(mar=c(6,4,4,5));
+  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+  
+  mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  
+  if(plotType=="all"){
+    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+  }else if(plotType == "custom"){
+    if(length(mSetObj$custom.cmpds) > 0){
+      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
     }
-
-    dev.off();
-    return(.set.mSet(mSetObj));
+  }else{
+    # do nothing
+  }
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
 }
 
 #'PLS-DA classification and feature selection
@@ -1302,7 +1374,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -1326,7 +1398,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -1528,7 +1600,7 @@ PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   # need to record the clicked compounds
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
   .set.mSet(mSetObj);
-
+  
   return(PlotCmpdView(mSetObj, cmpdNm, format, dpi, width));
 }
 
@@ -1610,14 +1682,14 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
- 
+  
   perm.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
   r.vec <- perm.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- perm.res$suppLs[["permMN"]][, "Q2(cum)"];
   
   # note, actual permutation number may be adjusted in public server
   perm.num <- perm.res$suppLs[["permI"]];
-
+  
   better.rhits <- sum(r.vec[-1]>=r.vec[1]);
   
   if(better.rhits == 0) {
@@ -1708,9 +1780,9 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   opl$typeC <- "OPLS-DA";
   
   ## Permutation testing (Szymanska et al, 2012)
-
+  
   if(permI > 0) {
-
+    
     modSumVc <- colnames(opl$summaryDF)
     permMN <- matrix(0,
                      nrow = 1 + permI,
@@ -1721,7 +1793,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     perSimVn[1] <- 1
     
     permMN[1, ] <- as.matrix(opl$summaryDF);
-
+    
     # do initial evaluation time for 10 permutations
     start.time <- Sys.time();
     for(k in 1:10) {
@@ -1741,15 +1813,15 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     end.time <- Sys.time();
     time.taken <- end.time - start.time;
     print(paste("time taken for 10 permutations: ", time.taken));
-
+    
     if(.on.public.web){
-        if(time.taken > 60){
-            permI <- 20;
-        }else if(time.taken > 30){
-            permI <- 100;
-        }
-       permMN <- permMN[1:(1+permI),]; 
-       perSimVn <- perSimVn[1:(1+permI)];
+      if(time.taken > 60){
+        permI <- 20;
+      }else if(time.taken > 30){
+        permI <- 100;
+      }
+      permMN <- permMN[1:(1+permI),]; 
+      perSimVn <- perSimVn[1:(1+permI)];
     }
     # continue
     for(k in 11:permI) {

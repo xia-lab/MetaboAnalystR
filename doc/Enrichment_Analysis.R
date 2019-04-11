@@ -53,8 +53,8 @@ mSet<-SetCandidate(mSet, "L-Isolucine", "L-Isoleucine");
 # Set the metabolite filter
 mSet<-SetMetabolomeFilter(mSet, F);
 
-# Select metabolite set library, refer to 
-mSet<-SetCurrentMsetLib(mSet, "pathway", 0);
+# Select metabolite set library
+mSet<-SetCurrentMsetLib(mSet, "smpdb_pathway", 2);
 
 # Calculate hypergeometric score, results table generated in your working directory
 mSet<-CalculateHyperScore(mSet)
@@ -95,7 +95,7 @@ mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
 mSet<-SetMetabolomeFilter(mSet, F);
 
 # Set the metabolite set library to pathway
-mSet<-SetCurrentMsetLib(mSet, "pathway", 0);
+mSet<-SetCurrentMsetLib(mSet, "smpdb_pathway", 2);
 
 # Calculate the global test score
 mSet<-CalculateGlobalTestScore(mSet)

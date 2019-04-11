@@ -116,11 +116,11 @@ mSet<-Ttests.Anal(mSet, F, 0.25, FALSE, TRUE)
 
 ## 4. From Raw Peaks to Biological Insights
 
-Even with high mass accuracy afforded by the current high-resolution MS platforms, it is often impossible to uniquely identify a given peak based on its mass alone. To get around this issue, a key concept is to shift the unit of analysis from individual compounds to individual pathways or a group of functionally related compounds (i.e. metabolite sets (PMID: 20457745)). The general assumption is that the collective behavior of a group is more robust against a certain degree of random errors of individuals. The mummichog algorithm is the first implementation of this concept to infer pathway activities from a ranked MS peaks identified in untargeted metabolomics. This algorithm is available in MetaboAnalystR (the *PerformMummichog* function). The original algorithm implements an over-representation analysis (ORA) method to evaluate pathway-level enrichment based on significant features. Users need to specify a pre-defined cutoff based on either t-statistics or fold changes. A complementary approach is the Gene Set Enrichment Analysis (GSEA) method, a widely used method to extract biological meaning from a ranked gene list (PMID: 16199517). Unlike ORA, this method considers the overall ranks without using a significance cutoff. It is able to detect subtle and consistent changes which can be missed from ORA methods. The MetaboAnalystR 2.0 offers GSEA (the *PerformGSEA function*) using the high-performance fgsea R package (https://www.biorxiv.org/content/10.1101/060012v1).
+Even with high mass accuracy afforded by the current high-resolution MS platforms, it is often impossible to uniquely identify a given peak based on its mass alone. To get around this issue, a key concept is to shift the unit of analysis from individual compounds to individual pathways or a group of functionally related compounds (i.e. metabolite sets (PMID: 20457745)). The general assumption is that the collective behavior of a group is more robust against a certain degree of random errors of individuals. The mummichog algorithm is the first implementation of this concept to infer pathway activities from a ranked MS peaks identified in untargeted metabolomics. This algorithm is available in MetaboAnalystR (the *PerformPSEA* function). The original algorithm implements an over-representation analysis (ORA) method to evaluate pathway-level enrichment based on significant features. Users need to specify a pre-defined cutoff based on either t-statistics or fold changes. A complementary approach is the Gene Set Enrichment Analysis (GSEA) method, a widely used method to extract biological meaning from a ranked gene list (PMID: 16199517). Unlike ORA, this method considers the overall ranks without using a significance cutoff. It is able to detect subtle and consistent changes which can be missed from ORA methods. The MetaboAnalystR 2.0 offers GSEA (the *PerformPSEA function*) using the high-performance fgsea R package (https://www.biorxiv.org/content/10.1101/060012v1).
 
 To perform these analyses, users must upload a table containing three columns - m/z features, p-values, and t-scores or fold-change values. In this case, as we performed t-test analysis on the peak table, we can use the new function *Convert2Mummichog*, which converts the results of the t-test to the proper format for mummichog analysis. The output of this function is a file titled "mummichog_input_XX.txt", with XX replaced by the current date. 
 
-Next, we follow the typical MS Peaks to Pathways workflow, setting the instrument options to "negative" and the p-value cut-off to 0.25. Then, we will perform the original mummichog algorithm, using the *PerformMummichog* function. We will select the hsa_mfn library, and set the permutations to 1000. This may take some time. 
+Next, we follow the MS Peaks to Pathways workflow, first setting the format of the peak table to "mpt", representing a three-column table with m/z, p.value, and t.score as column names. Next, read in the peak list data with *Read.PeakListData*. After, set the instrument options to "negative" and the instrumentation accuracy to 5 ppm with *UpdateInstrumentParameters*. Then, we will perform the original mummichog algorithm, setting the algorithm with the *SetPeakEnrichMethod* and then performing the analysis with the *PerformPSEA* function. We will select the hsa_mfn library, and set the permutations to 1000. This may take some time. The pathway summary plot created using the *PlotPeaks2Paths* function  displays all matched pathways as circles. The color and size of each circle corresponds to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant pathway hits and the expected number of compound hits within the pathway.
 
 ```{r, eval=FALSE}
 
@@ -128,12 +128,16 @@ Next, we follow the typical MS Peaks to Pathways workflow, setting the instrumen
 mSet<-Convert2Mummichog(mSet)
 
 # Read in the ranked peak list (don't forget to change the file name!)
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-06.txt");
-mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
+SetPeakFormat("mpt")
+mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
+mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
 mSet<-SanityCheckMummichogData(mSet)
 
 # Perform original mummichog algorithm
-mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
+mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
 # View the top pathway hits using head(mSet$mummi.resmat)
 # > head(mSet$mummi.resmat)
@@ -146,11 +150,13 @@ mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
 # Ascorbate (Vitamin C) and Aldarate Metabolism                29         19        1 1.0000000 0.20981000 1.0000000
 ```
 
-Now we will perform GSEA, using the *PerformGSEA* function. This function is much faster than the original implementation. As you can see, Vitamin E metabolism is consistently identified between the two algorithms. Vitamin E has been shown to be decreased in patients with Crohn's disease (PMID: 22488830) and were shown to have anti-inflammatory properties (PMID: 30237488). We can visualize the comparison of the pathway analysis results of the two algorithms with a scatter plot using the *PlotIntegPaths* function. This function will check that you performed both methods (original mummichog + GSEA), and that both methods used the same selected pathway library. The labels parameter sets whether all, none, or some of the top-ranked pathways should be annotated on the plot. If set to "default", the function will generate a plot with the top 5 ranked pathways identified using GSEA or mummichog annotated. The number of top ranked pathways can be adjusted using "labels.x" and "labels.y". Finally, the pathways on the plot are colored and sized based on their combined p-values (Fisher's method). The combined p-values are saved as a CSV file in your working directory ("mummichog_combined_pathway_enrichment.csv").
+Now we will perform GSEA, setting the algorithm to "gsea" in the *SetPeakEnrichMethod* function. This function is much faster than the original implementation. In the pathway summary plot, all matched pathways as circles. The color and size of each circle corresponds to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant pathway hits and the expected number of compound hits within the pathway. 
 
 ```{r, eval=FALSE}
 # Perform GSEA 
-mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-SetPeakEnrichMethod(mSet, "gsea")
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 72, width=NA)
 
 # View the top pathway hits using head(mSet$mummi.gsea.resmat)
 # > head(mSet$mummi.gsea.resmat)
@@ -161,11 +167,23 @@ mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
 # Androgen and estrogen biosynthesis and metabolism "95"          "1"  "0.998"  "0.998" "0.3674" 
 # Drug metabolism - cytochrome P450                 "53"          "1"  "0.998"  "0.998" "0.276"  
 # Ascorbate (Vitamin C) and Aldarate Metabolism     "29"          "1"  "0.998"  "0.998" "-0.6419"
+```
+
+The MS Peaks to Paths uses the (Fisher's method) for combining the mummichog and GSEA p-values. It takes the raw p-values (mummichog and GSEA) per pathway to perform the p-value combination.  We can visualize the comparison of the pathway analysis results of the two algorithms with a scatter plot using the *PlotIntegPaths* function. This function will check that you performed both methods (original mummichog + GSEA), and that both methods used the same selected pathway library. The labels parameter sets whether all, none, or some of the top-ranked pathways should be annotated on the plot. If set to "default", the function will generate a plot with the top 5 ranked pathways identified using GSEA or mummichog annotated. The number of top ranked pathways can be adjusted using "labels.x" and "labels.y". Finally, integrated pathway summary plot summarizes the results of the combined mummichog (y-axis) and GSEA (x-axis) p-values. The size and color of the circles correspond to their transformed combined p-values. Large and red circles are considered the most perturbed pathways. The blue and pink areas highlight the significant pathways based on either GSEA (pink) or mummichog (blue). The purple area highlights significant pathways identified by both algorithms. The combined p-values are saved as a CSV file in your working directory ("mummichog_combined_pathway_enrichment.csv").
+
+```{r, eval=FALSE}
+#Perform meta-analysis of mummichog and GSEA results
+mSet<-SetPeakEnrichMethod(mSet, "integ")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn")
+mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 72, width=NA)
+# View the results with > head(mSet$integ.resmat)
 
 # Plot with the top 5 pathways found in both algorithms annotated
 mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
-
 ```
+
+From the results, Vitamin E metabolism is consistently identified between the two algorithms. Vitamin E has been shown to be decreased in patients with Crohn's disease (PMID: 22488830) and were shown to have anti-inflammatory properties (PMID: 30237488). 
 
 ## 4.1 MetaboAnalystR 2.0 IBD Case Study
 
@@ -200,47 +218,63 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-19.txt");
-mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
+SetPeakFormat("mpt")
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-04-11.txt");
+mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
 mSet<-SanityCheckMummichogData(mSet)
 
-# First perform original mummichog algorithm
-mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
+# First perform the original mummichog algorithm
+mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
 
 # View the top enriched pathways
 # > head(mSet$mummi.resmat)
-#                                         Pathway total Hits.total Hits.sig      EASE       FET      Gamma
-# Bile acid biosynthesis                             82         52       29 0.0062805 0.0028215 0.00027637
-# Vitamin E metabolism                               54         33       20 0.0094632 0.0035614 0.00028122
-# Fatty Acid Metabolism                              63         11        9 0.0152200 0.0026797 0.00029021
-# Vitamin D3 (cholecalciferol) metabolism            16         10        8 0.0314750 0.0061618 0.00031722
-# De novo fatty acid biosynthesis                   106         15       10 0.0520170 0.0162020 0.00035507
-# Fatty acid activation                              74         15       10 0.0520170 0.0162020 0.00035507
+#                                       Pathway total Hits.total Hits.sig Expected       FET      EASE    Gamma Emp.Hits
+# Fatty Acid Metabolism                              63         11        9   9.4164 0.0026797 0.0152200 0.011247        0
+# Bile acid biosynthesis                             82         52       29  12.2560 0.0028215 0.0062805 0.011051        0
+# Vitamin E metabolism                               54         33       20   8.0712 0.0035614 0.0094632 0.011120        0
+# Vitamin D3 (cholecalciferol) metabolism            16         10        8   2.3915 0.0061618 0.0314750 0.011613        0
+# De novo fatty acid biosynthesis                   106         15       10  15.8440 0.0162020 0.0520170 0.012097      149
+# Fatty acid activation                              74         15       10  11.0610 0.0162020 0.0520170 0.012097      275
 
-mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-SetPeakEnrichMethod(mSet, "gsea")
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
 
 # > head(mSet$mummi.gsea.resmat)
-#                                                           Pathway_Total Hits P_val      P_adj    NES     
-# Pyruvate Metabolism                                       "20"          "8"  "0.002128" "0.01826" "1.832" 
-# Putative anti-Inflammatory metabolites formation from EPA "27"          "20" "0.002132" "0.01826" "2.242" 
-# Squalene and cholesterol biosynthesis                     "55"          "33" "0.001779" "0.01826" "-2.039"
-# Bile acid biosynthesis                                    "82"          "52" "0.001812" "0.01826" "-2.196"
-# Propanoate metabolism                                     "31"          "11" "0.002123" "0.01826" "1.993" 
-# Biopterin metabolism                                      "22"          "12" "0.001866" "0.01826" "-1.884"
+#                                                  Pathway_Total Hits   P_val  P_adj    NES   
+# Biopterin metabolism                                         22   12 0.01538 0.1486 -1.939
+# Squalene and cholesterol biosynthesis                        55   33 0.01562 0.1486 -2.060
+# Androgen and estrogen biosynthesis and metabolism            95   59 0.01562 0.1486 -2.354
+# Bile acid biosynthesis                                       82   52 0.01667 0.1486 -2.340
+# C21-steroid hormone biosynthesis and metabolism             112   84 0.01667 0.1486 -1.749
+# Nucleotide Sugar Metabolism                                   7    2 0.01754 0.1486 -1.476
 
-# View plot with no dots labeled
-# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
+knitr::include_graphics("peaks_to_paths_1_dpi300.png")
 
-# View plot with important pathways labeled
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
+mSet<-SetPeakEnrichMethod(mSet, "integ")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn")
+mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 300, width=10)
 
-knitr::include_graphics("integ_path_plotdpi300.jpg")
+# > head(mSet$integ.resmat)
+#                                         Total_Size Hits Sig_Hits Mummichog_Pvals GSEA_Pvals Combined_Pvals
+# Bile acid biosynthesis                          82   52       29         0.00282    0.01667        0.00052
+# Vitamin D3 (cholecalciferol) metabolism         16   10        8         0.00616    0.03175        0.00187
+# Fatty acid activation                           74   15       10         0.01620    0.08333        0.01027
+# Fatty Acid Metabolism                           63   11        9         0.00268    0.53850        0.01088
+# Biopterin metabolism                            22   12        7         0.10100    0.01538        0.01160
+# Vitamin E metabolism                            54   33       20         0.00356    0.65620        0.01650
+
+knitr::include_graphics("integ_peaks_0_dpi300.png")
 
 ```
 
 Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results, we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis is consistently shown to be perturbed in these IBD patients. Furthermore, this plot is divided into four quadrants. In the upper left quadrant (yellow) are the pathways considered significant by the mummichog algorithm, but not significant by GSEA. In the lower right quadrant (yellow) are the pathways considered significant by the GSEA algorithm but not significant using mummichog. Finally, the upper right quadrant (red) are pathways that both mummichog and GSEA consider significant. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 
 
-## 4.2 Further exploring pathway analysis results
+## 4.2 Further exploration of pathway analysis results
 
 From the integrated pathway analysis plot, we can see that Biopterin metabolism was considered a perturbed pathway using the GSEA algorithm, but not using the mummichog algorithm. To further investigate this, we can create a boxplot of the m/z features between the IBD and control samples. From the plot, we can see that the first 7 m/z features are annotated with a star. This indicates that these were the 7 significant features used by the original mummichog algorithm. In comparison, the GSEA algorithm used all 34 m/z features to calculate pathway enrichment. About 50% og these m/z features are higher in CD patients compared to controls, while the remaining 50% of the m/z features are lower in CD patients compared to controls. This demostrates why differences are observed in the identification of signifciantly perturbed pathways using the two different algorithms.
 

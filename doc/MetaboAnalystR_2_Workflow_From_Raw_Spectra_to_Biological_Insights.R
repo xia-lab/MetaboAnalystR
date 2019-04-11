@@ -4,7 +4,7 @@
 #  library("MetaboAnalystR")
 #  
 #  # Import mzML files, set path to folder containing two subfolders of samples
-#  rawData <- ImportRawMSData("~/Desktop/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP",
+#  rawData <- ImportRawMSData("~/Desktop/Mai/MetaboAnalystR_workflow/MetaboAnalystR_workflow_iHMP/iHMP",
 #                              format = "png", dpi = 72, width = 9)
 #  
 
@@ -62,12 +62,16 @@ knitr::include_graphics("PCA_plot300.png")
 #  mSet<-Convert2Mummichog(mSet)
 #  
 #  # Read in the ranked peak list (don't forget to change the file name!)
-#  mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-06.txt");
-#  mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
+#  SetPeakFormat("mpt")
+#  mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
+#  mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
 #  mSet<-SanityCheckMummichogData(mSet)
 #  
 #  # Perform original mummichog algorithm
-#  mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-SetPeakEnrichMethod(mSet, "mum")
+#  mSet<-SetMummichogPval(mSet, 0.25)
+#  mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 #  
 #  # View the top pathway hits using head(mSet$mummi.resmat)
 #  # > head(mSet$mummi.resmat)
@@ -81,7 +85,9 @@ knitr::include_graphics("PCA_plot300.png")
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  # Perform GSEA
-#  mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-SetPeakEnrichMethod(mSet, "gsea")
+#  mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 72, width=NA)
 #  
 #  # View the top pathway hits using head(mSet$mummi.gsea.resmat)
 #  # > head(mSet$mummi.gsea.resmat)
@@ -92,10 +98,17 @@ knitr::include_graphics("PCA_plot300.png")
 #  # Androgen and estrogen biosynthesis and metabolism "95"          "1"  "0.998"  "0.998" "0.3674"
 #  # Drug metabolism - cytochrome P450                 "53"          "1"  "0.998"  "0.998" "0.276"
 #  # Ascorbate (Vitamin C) and Aldarate Metabolism     "29"          "1"  "0.998"  "0.998" "-0.6419"
+
+## ---- eval=FALSE---------------------------------------------------------
+#  #Perform meta-analysis of mummichog and GSEA results
+#  mSet<-SetPeakEnrichMethod(mSet, "integ")
+#  mSet<-SetMummichogPval(mSet, 0.25)
+#  mSet<-PerformPSEA(mSet, "hsa_mfn")
+#  mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 72, width=NA)
+#  # View the results with > head(mSet$integ.resmat)
 #  
 #  # Plot with the top 5 pathways found in both algorithms annotated
 #  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
-#  
 
 ## ---- out.width = "70%"--------------------------------------------------
 
@@ -124,41 +137,57 @@ mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
 mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-03-19.txt");
-mSet<-UpdateMummichogParameters(mSet, "5", "negative", 0.25);
+SetPeakFormat("mpt")
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-04-11.txt");
+mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
 mSet<-SanityCheckMummichogData(mSet)
 
-# First perform original mummichog algorithm
-mSet<- PerformMummichog(mSet, "hsa_mfn", permNum = 1000)
+# First perform the original mummichog algorithm
+mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
 
 # View the top enriched pathways
 # > head(mSet$mummi.resmat)
-#                                         Pathway total Hits.total Hits.sig      EASE       FET      Gamma
-# Bile acid biosynthesis                             82         52       29 0.0062805 0.0028215 0.00027637
-# Vitamin E metabolism                               54         33       20 0.0094632 0.0035614 0.00028122
-# Fatty Acid Metabolism                              63         11        9 0.0152200 0.0026797 0.00029021
-# Vitamin D3 (cholecalciferol) metabolism            16         10        8 0.0314750 0.0061618 0.00031722
-# De novo fatty acid biosynthesis                   106         15       10 0.0520170 0.0162020 0.00035507
-# Fatty acid activation                              74         15       10 0.0520170 0.0162020 0.00035507
+#                                       Pathway total Hits.total Hits.sig Expected       FET      EASE    Gamma Emp.Hits
+# Fatty Acid Metabolism                              63         11        9   9.4164 0.0026797 0.0152200 0.011247        0
+# Bile acid biosynthesis                             82         52       29  12.2560 0.0028215 0.0062805 0.011051        0
+# Vitamin E metabolism                               54         33       20   8.0712 0.0035614 0.0094632 0.011120        0
+# Vitamin D3 (cholecalciferol) metabolism            16         10        8   2.3915 0.0061618 0.0314750 0.011613        0
+# De novo fatty acid biosynthesis                   106         15       10  15.8440 0.0162020 0.0520170 0.012097      149
+# Fatty acid activation                              74         15       10  11.0610 0.0162020 0.0520170 0.012097      275
 
-mSet<- PerformGSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-SetPeakEnrichMethod(mSet, "gsea")
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
 
 # > head(mSet$mummi.gsea.resmat)
-#                                                           Pathway_Total Hits P_val      P_adj    NES     
-# Pyruvate Metabolism                                       "20"          "8"  "0.002128" "0.01826" "1.832" 
-# Putative anti-Inflammatory metabolites formation from EPA "27"          "20" "0.002132" "0.01826" "2.242" 
-# Squalene and cholesterol biosynthesis                     "55"          "33" "0.001779" "0.01826" "-2.039"
-# Bile acid biosynthesis                                    "82"          "52" "0.001812" "0.01826" "-2.196"
-# Propanoate metabolism                                     "31"          "11" "0.002123" "0.01826" "1.993" 
-# Biopterin metabolism                                      "22"          "12" "0.001866" "0.01826" "-1.884"
+#                                                  Pathway_Total Hits   P_val  P_adj    NES   
+# Biopterin metabolism                                         22   12 0.01538 0.1486 -1.939
+# Squalene and cholesterol biosynthesis                        55   33 0.01562 0.1486 -2.060
+# Androgen and estrogen biosynthesis and metabolism            95   59 0.01562 0.1486 -2.354
+# Bile acid biosynthesis                                       82   52 0.01667 0.1486 -2.340
+# C21-steroid hormone biosynthesis and metabolism             112   84 0.01667 0.1486 -1.749
+# Nucleotide Sugar Metabolism                                   7    2 0.01754 0.1486 -1.476
 
-# View plot with no dots labeled
-# mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "none")
+knitr::include_graphics("peaks_to_paths_1_dpi300.png")
 
-# View plot with important pathways labeled
-mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
+mSet<-SetPeakEnrichMethod(mSet, "integ")
+mSet<-SetMummichogPval(mSet, 0.25)
+mSet<-PerformPSEA(mSet, "hsa_mfn")
+mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 300, width=10)
 
-knitr::include_graphics("integ_path_plotdpi300.jpg")
+# > head(mSet$integ.resmat)
+#                                         Total_Size Hits Sig_Hits Mummichog_Pvals GSEA_Pvals Combined_Pvals
+# Bile acid biosynthesis                          82   52       29         0.00282    0.01667        0.00052
+# Vitamin D3 (cholecalciferol) metabolism         16   10        8         0.00616    0.03175        0.00187
+# Fatty acid activation                           74   15       10         0.01620    0.08333        0.01027
+# Fatty Acid Metabolism                           63   11        9         0.00268    0.53850        0.01088
+# Biopterin metabolism                            22   12        7         0.10100    0.01538        0.01160
+# Vitamin E metabolism                            54   33       20         0.00356    0.65620        0.01650
+
+knitr::include_graphics("integ_peaks_0_dpi300.png")
 
 
 ## ---- out.width = "70%"--------------------------------------------------

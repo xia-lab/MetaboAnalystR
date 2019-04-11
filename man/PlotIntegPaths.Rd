@@ -4,11 +4,13 @@
 \alias{PlotIntegPaths}
 \title{PlotIntegPaths}
 \usage{
-PlotIntegPaths(mSetObj = NA, format = "png", dpi = 72, width = 9,
-  labels = "default", labels.x = 5, labels.y = 5)
+PlotIntegPaths(mSetObj = NA, imgName, format = "png", dpi = 72,
+  width = 9, labels = "default", labels.x = 5, labels.y = 5)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object}
+
+\item{imgName}{Input a name for the plot}
 
 \item{format}{Character, input the format of the image to create.}
 

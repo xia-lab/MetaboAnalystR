@@ -45,7 +45,6 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   current.mset <- metpa$mset.list;
   uniq.count <- metpa$uniq.count;
   
-  
   # check if need to be filtered against reference metabolome
   # TODO: address the following filtering for SMPDB if needed
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.kegg)){

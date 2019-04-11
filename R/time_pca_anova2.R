@@ -407,6 +407,96 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   }
 }
 
+
+#vertically stacked boxplot
+PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName <- gsub("\\/", "_",  cmpdNm);
+  imgName <- paste(imgName, "_summary_dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    h <- 9;
+  }else{
+    h <- width;
+  }
+  
+  if(substring(mSetObj$dataSet$format,4,5)!="ts"){
+    
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
+    par(mar=c(4,4,2,2), mfrow = c(1,2), oma=c(0,0,2,0));
+    
+    # need to consider norm data were edited, different from proc
+    smpl.nms <- rownames(mSetObj$dataSet$norm);
+    
+    mns <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, mean, na.rm=T);
+    sds <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, sd, na.rm=T);
+    
+    ups <- mns + sds;
+    dns <- mns - sds;
+    
+    # all concentration need start from 0
+    y <- c(0, dns, mns, ups);
+    
+    rg <- range(y) + 0.05 * diff(range(y)) * c(-1, 1)
+    pt <- pretty(y)
+    
+    axp=c(min(pt), max(pt[pt <= max(rg)]),length(pt[pt <= max(rg)]) - 1);
+    
+    # ymk <- pretty(c(0,ymax));
+    x <- barplot(mns, col= unique(GetColorSchema(mSetObj)), las=2, yaxp=axp, ylim=range(pt));
+    arrows(x, dns, x, ups, code=3, angle=90, length=.1);
+    axis(1, at=x, col="white", col.tick="black", labels=F);
+    box();
+    mtext("Original Conc.", line=1);
+    
+    boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= unique(GetColorSchema(mSetObj)));
+    mtext("Normalized Conc.", line=1);
+    title(main=cmpdNm, out=T);
+    dev.off();
+    
+  }else if(mSetObj$dataSet$design.type =="time0"){
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
+    plotProfile(mSetObj, cmpdNm);
+    dev.off();
+    
+  }else{
+    if(mSetObj$dataSet$design.type =="time"){ # time trend within phenotype
+      out.fac <- mSetObj$dataSet$exp.fac;
+      in.fac <- mSetObj$dataSet$time.fac;
+      xlab = "Time";
+    }else{ # factor a split within factor b
+      out.fac <- mSetObj$dataSet$facB;
+      in.fac <- mSetObj$dataSet$facA;
+      xlab = mSetObj$dataSet$facA.lbl;
+    }
+    
+    # two images per row
+    img.num <- length(levels(out.fac));
+    row.num <- ceiling(img.num/2)
+    
+    if(row.num == 1){
+      w <- h*5/9;
+    }else{
+      w <- h*0.5*row.num;
+    }
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    par(mar=c(3,4,4,2), mfrow=c(2, row.num));
+    # make sure all at the same range
+    ylim.ext <- GetExtendRange(mSetObj$dataSet$norm[, cmpdNm], 12);
+    for(lv in levels(out.fac)){
+      inx <- out.fac == lv;
+      dat <- mSetObj$dataSet$norm[inx, cmpdNm];
+      cls <- in.fac[inx];
+      boxplot(dat ~ cls, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), xlab=xlab, ylab="Abundance", main=lv);
+      stripchart(dat ~ cls, method = "jitter", ylim=ylim.ext, vertical=T, add = T, pch=19, cex=0.7, names = c("",""));
+    }
+    dev.off();
+  }
+  return(imgName);
+}
+
 # Plot Venn diagram
 # Capabilities for multiple counts and colors by Francois Pepin
 # Gordon Smyth, James Wettenhall

@@ -269,6 +269,50 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   return(.set.mSet(mSetObj));
 }
 
+PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  spls = mSetObj$analSet$splsr
+  spls3d <- list();
+
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
+    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
+  }
+    
+    colnames(coords) <- NULL; 
+    spls3d$score$xyz <- coords;
+    spls3d$score$name <- rownames(spls$loadings$X);
+    spls3d$score$entrez <-rownames(spls$loadings$X); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+
+  spls3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- RJSONIO::toJSON(spls3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  return(1);
+}
+
+
 
 #'Create SPLS-DA loading plot
 #'@description Sparse PLS-DA (from mixOmics) loading plot

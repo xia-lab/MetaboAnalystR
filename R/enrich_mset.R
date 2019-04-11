@@ -4,13 +4,13 @@
 
 #'Load metabolite set library
 #'@description Metabolite set library
-#'@param libname Input the name of the metabolite set library to load. Default set to "pathway" library.
+#'@param libname Input the name of the metabolite set library to load. Default set to "kegg_pathway" library.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-LoadMsetLib <- function(libname="pathway"){
+LoadMsetLib <- function(libname="kegg_pathway"){
   if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
     .load.metaboanalyst.lib("msets", libname);
   }
@@ -33,8 +33,8 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'creating a list of metabolite sets
 #'@usage SetCurrentMsetLib(mSetObj=NA, lib.type, excludeNum)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param lib.type Input user selected name of library, "self", "pathway", "blood", "urine", "csf", "snp", "predicted",
-#'"location", "drug"
+#'@param lib.type Input user selected name of library, "self", "kegg_pathway",
+#'"smpdb_pathway", "blood", "urine", "csf", "snp", "predicted", "location", and "drug".
 #'@param excludeNum Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada

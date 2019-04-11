@@ -60,13 +60,15 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   # some sanity check before proceeds
   sclass <- as.factor(sclass);
   if(length(levels(sclass))<2){
-    AddErrMsg("You must provide classes labels (two classes)!");
+    AddErrMsg("You must provide classes labels (at least two classes)!");
     return(0);
   }
   
+  SetClass(sclass)
+  
   # check for unique sample names
   if(length(unique(snames))!=length(snames)){
-    AddErrMsg("Duplcate sample names are not allowed!");
+    AddErrMsg("Duplicate sample names are not allowed!");
     dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
     AddErrMsg("Duplicate sample names are not allowed!");
     AddErrMsg(dup.nm);
@@ -83,10 +85,10 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
     print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
     
     if (.Platform$OS.type == "unix") {
-          register(bpstart(BiocParallel::MulticoreParam(num_cores)))
-       } else { # for windows
-          register(bpstart(BiocParallel::SnowParam(num_cores)))
-       }
+      BiocParallel::register(BiocParallel::bpstart(BiocParallel::MulticoreParam(num_cores)))
+      } else { # for windows
+      BiocParallel::register(BiocParallel::bpstart(BiocParallel::SnowParam(num_cores)))
+      }
   }
   
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
@@ -96,8 +98,10 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   bpis <- chromatogram(raw_data, aggregationFun = "max")
   tics <- chromatogram(raw_data, aggregationFun = "sum")
   
-  group_colors <- paste0(brewer.pal(3, "Set1")[1:2], "60")
-  names(group_colors) <- levels(sclass)
+  groupNum <- nlevels(groupInfo)
+  
+  group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum], "60")
+  names(group_colors) <- levels(groupInfo)
   
   bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
   tics_name <- paste("TICS_", dpi, ".", format, sep="");
@@ -105,18 +109,24 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
                type=format, bg="white");
   plot(bpis, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=levels(sclass), pch=15, col=group_colors);
+  legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
   dev.off();
   
   Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                type=format, bg="white");
   plot(tics, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=levels(sclass), pch=15, col=group_colors);
+  legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
   dev.off();
   
   print("Successfully imported raw MS data!")
   
   return(raw_data)
+}
+
+SetClass <- function(class){
+  
+  groupInfo <<- class
+  
 }
 
 #' Plot EIC
@@ -143,7 +153,9 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
   filt_mz <- filterMz(filt_data, mz = c(mz_mn, mz_mx))
   mz_slice <- chromatogram(filt_mz, aggregationFun = aggreg)
   
-  group_colors <- paste0(brewer.pal(3, "Set1")[1:2])
+  groupNum <- nlevels(groupInfo)
+  
+  group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum])
   names(group_colors) <- unique(raw_data$sample_group)
   
   eic_name <- paste("EIC_", dpi, ".", format, sep="");
@@ -278,11 +290,11 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   print("Step 2/3: Successfully performed retention time adjustment!")
   
   if(rtPlot == TRUE){
-    
+    groupNum <- nlevels(groupInfo)
     rtplot_name <- paste("RT_adjustment", dpi, ".", format, sep="")
     Cairo::Cairo(file = rtplot_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                  type=format, bg="white")
-    group_colors <- paste0(brewer.pal(3, "Set1")[1:2], "60")
+    group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum], "60")
     names(group_colors) <- unique(rt_xdata$sample_group)
     plotAdjustedRtime(rt_xdata, col = group_colors[rt_xdata$sample_group])
     legend("topright", legend=unique(rt_xdata$sample_group), pch=15, col=group_colors);

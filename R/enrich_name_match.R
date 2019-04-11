@@ -299,7 +299,6 @@ PerformApproxMatch <- function(mSetObj=NA, q){
 #'@export
 
 SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
-  
   mSetObj <- .get.mSet(mSetObj);
   query_inx <- which(mSetObj$name.map$query.vec == query_nm);
   
@@ -323,9 +322,8 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
                                 mSetObj$name.map$hit.values[query_inx],
                                 hit$hmdb_id,
                                 hit$pubchem_id,
-                                hit$chebi_id,
                                 hit$kegg_id,
-                                hit$metlin_id,
+                                hit$smiles,
                                 1);
       }else{
         csv.res[query_inx, ]<-c(csv.res[query_inx, 1],

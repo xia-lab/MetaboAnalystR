@@ -4,10 +4,10 @@
 \alias{LoadMsetLib}
 \title{Load metabolite set library}
 \usage{
-LoadMsetLib(libname = "pathway")
+LoadMsetLib(libname = "kegg_pathway")
 }
 \arguments{
-\item{libname}{Input the name of the metabolite set library to load. Default set to "pathway" library.}
+\item{libname}{Input the name of the metabolite set library to load. Default set to "kegg_pathway" library.}
 }
 \description{
 Metabolite set library

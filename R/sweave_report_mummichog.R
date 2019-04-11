@@ -30,17 +30,18 @@ CreateMummichogRnwReport<-function(mSetObj, usrName){
 #'@export
 CreateMummichogIntro <- function(){
   descr <- c("\\section{Background}\n",
-             "Understanding the functional importance of metabolites in untargeted metabolomics is limited due to challenges with metabolite ",
-             "identication. to reduce problems associated with compound misidentification and thereby pathway misinterpretation is to shift the unit of analysis from individual", 
-             " compounds to individual pathways. In particular, the mummichog algorithm offers an elegant and efficient implementation of this concept.",
-             " Mummichog bypasses the bottleneck of metabolite identification prior to pathway analysis by leveraging a priori pathway and network knowledge",
-             " to directly infer biological activity based on MS peaks. Due of its popularity and repeated user requests, we have implemented",
-             " the mummichog algorithm (Version 1.0.10) from Li et al. 2013, which has been carefully translated from the Python programming ",
-             "language to R, and includes a expanded knowledgebase of 21 organisms for pathway analysis. In particular, this module ",
-             "by-passes the bottle-neck of metabolite identification prior to pathway analysis, leveraging a priori knowledge from",
-             " genome-scale metabolic models and KEGG metabolic pathways. For instance, conventional approaches require statistically significant metabolites to be identified ",
-             "prior to pathway analysis, which can be incredibly time-consuming, whereas here, m/z features are used in conjuction with metabolic models/pathways ",
-             "to directly infer pathway level knowledge from a m/z features. For further details, please refer to Li et al. 2013 (PMC3701697).\n"
+             "Even with high mass accuracy afforded by current high-resolution MS platforms, it is often impossible to uniquely identify a given peak based on its ",
+             "mass alone. To get around this issue, a key concept is to shift the unit of analysis from individual compounds to individual pathways or a group of ",
+             "functionally related compounds (i.e. metabolite sets (PMID: 20457745)). The general assumption is that the collective behavior of a group is more ",
+             "robust against a certain degree of random errors of individuals. The mummichog algorithm is the first implementation of this concept to infer ",
+             "pathway activities from a ranked list of MS peaks identified by untargeted metabolomics. The original algorithm implements an over-representation analysis (ORA) ",
+             "method to evaluate pathway-level enrichment based on significant features. Users need to specify a pre-defined cutoff based on p-values. ",
+             "For further details about the original implementation, please refer to Li et al. 2013 (PMC3701697). ",
+             "A complementary approach is the Gene Set Enrichment Analysis (GSEA) method, a widely used method to extract biological ",
+             "meaning from a ranked gene list (PMID: 16199517). Unlike ORA, this method considers the overall ranks of MS peaks without using a significance cutoff. ", 
+             "It is able to detect subtle and consistent changes which can be missed from ORA methods. Both the mummichog algorithm (Version 1.0.10), ",
+             "which has been carefully translated from the Python programming to R, and the adapted GSEA method have been implemented in the MS Peaks to Paths module. ",
+             "The module also includes an expanded knowledgebase of 21 organisms for pathway analysis.\n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -73,37 +74,32 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   descr <- c("\\section{Data Input}\n",
-             "The MS Peaks to Pathways module accepts either a list of significant m/z features, a list of all m/z features, or a peak intensity",
-             " table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether",
-             " or not the data is paired. The data may either be .csv or .txt files.",
+             "The MS Peaks to Pathways module accepts either a three column table containing the m/z features, p-values, and statistical scores,",
+             " a two-column table containing m/z features and either p-values or t-scores, or a one-column table ranked by either",
+             " p-values or t-scores. All inputted files must be in .txt format. If the input is a three column table, both the mummichog",
+             " and GSEA algorithms can be applied. If only p-values (or ranked by p-values) are provided, only the mummichog algorithm will be applied.",
+             " If only t-scores (or ranked by t-scores) are provided, only the GSEA algorithm will be applied.",
              " \n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
-  
-  descr <- c("\\subsubsection{MS Peaks to Pathways: Reading Data}\n",
-             "The data must be uploaded as a three column table containing the m/z features, p-values, and statistical scores (e.g. t-scores or fold-change values).",
-             "\n");
-  cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
-  cat(mSetObj$msgSet$read.msg, file=rnwFile, append=TRUE, sep="\n");
+  cat(mSetObj$msgSet$check.msg, file=rnwFile, append=TRUE, sep="\n");
   
   if(!is.null(mSetObj$dataSet$instrument)){
     
     descr <- c("\\subsubsection{Parameters}\n",
-               "Users also need to specify the mass accuracy, the ion mode (positive or negative), and the p-value cutoff", 
-               " to delineate between significantly enriched and non-significantly enriched m/z features. ", 
+               "Users also need to specify the mass accuracy (ppm), the ion mode (positive or negative), and the p-value cutoff", 
+               " to delineate between significantly enriched and non-significantly enriched m/z features (for mummichog only). ", 
                "Currently, MetaboAnalyst 4.0 only supports the handling of peaks obtained from high-resolution MS instruments", 
                " such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation.",
                "\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
     
-    mum.descr <- paste("The selected mass accuracy of your MS instrument in ppm is: ",mSetObj$dataSet$instrument, "; ",
-                       "The selected mode of your MS instrument is: ",mSetObj$dataSet$mode , "; ",
-                       "The selected p-value cutoff is: ",mSetObj$dataSet$cutoff , ".", sep = "");
+    mum.descr <- paste("The selected p-value cutoff is: ",mSetObj$dataSet$cutoff , ".", sep = "");
     
     cat(mum.descr, file=rnwFile, append=TRUE, sep="\n");
-    
+
   }
   
   if(!is.null(mSetObj$lib.organism)){
@@ -117,13 +113,13 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     cat("\n\n", file=rnwFile, append=TRUE);
     
     mum.descr <- paste("The user's selected library is: ", mSetObj$lib.organism, ".");
-                       
+    
     cat(mum.descr, file=rnwFile, append=TRUE, sep="\n");
     
   }
   
   if(!is.null(mSetObj$curr.cust) && mSetObj$curr.cust){
-
+    
     descr.cust <- c("\\subsubsection{Analysis Customization}\n",
                     "The aim of this module is to use the mummichog algorithm (Li et al. 2013) to predict pathway-level activity from untargeted", 
                     "metabolomics, bypassing the need for conventional metabolite identification prior",
@@ -173,7 +169,39 @@ CreateMummichogAnalTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   mummitable <- mSetObj$mummi.resmat
-  print(xtable::xtable(mummitable, caption="Results of the mummichog pathway analysis"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(mummitable, caption="Results of the Mummichog Pathway Analysis"), caption.placement="top", size="\\scriptsize");
+  
+}
+
+#'Create Mummichog report of analyses 
+#'@description Report generation using Sweave
+#'Function to create a summary table of mummichog analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateGSEAAnalTable <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  mummitable <- mSetObj$mummi.gsea.resmat
+  print(xtable::xtable(mummitable, caption="Results of the GSEA Pathway Analysis"), caption.placement="top", size="\\scriptsize");
+  
+}
+
+#'Create Mummichog report of analyses 
+#'@description Report generation using Sweave
+#'Function to create a summary table of mummichog analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMetaAnalTable <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  mummitable <- mSetObj$integ.resmat
+  print(xtable::xtable(mummitable, caption="Meta-Analysis of Mummichog and GSEA Results"), caption.placement="top", size="\\scriptsize");
   
 }
 
@@ -189,30 +217,121 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  descr <- c("\\section{Output}\n",
-             "The aim of of this module is to leverage the power of known metabolic models/pathways to gain functional insight ",
-             "directly from m/z features. There are three steps in this module, 1) Permutations: A list of metabolites (the same length as the number ",
-             "of significant m/z features) are inferred from the user's uploaded set of m/z features, considering all potential matches ",
-             "(isotopes/adducts). These tentative compounds are then mapped onto known metabolic pathways for the selected organism. ",
-             "For each pathway, a fisher's exact or hypergeometric p-value is calculated.",
-             " 2) Step 1 is repeated multiple times to calculate the null distribution of p-values for all pathways, and ",
-             "is modeled as a Gamma distribution. 3) Following this, the significant m/z features are used to calculate the p-values for each pathway (Step 1).",
-             " These p-values are then adjusted for the permutations. \n");
-  cat(descr, file=rnwFile, append=TRUE);
+  if(!is.null(mSetObj$mummi.resmat)){
+    
+    descr <- c("\\section{Mummichog Output}\n",
+               "The aim of of this module is to leverage the power of known metabolic models/pathways to gain functional insight ",
+               "directly from m/z features. There are three steps for the mummichog algorithm, 1) Permutations: A list of metabolites (the same length as the number ",
+               "of significant m/z features) are inferred from the user's uploaded set of m/z features, considering all potential matches ",
+               "(isotopes/adducts). These tentative compounds are then mapped onto known metabolic pathways for the selected organism. ",
+               "For each pathway, a hypergeometric p-value is calculated.",
+               " 2) Step 1 is repeated multiple times to calculate the null distribution of p-values for all pathways, and ",
+               "is modeled as a Gamma distribution. 3) Following this, the significant m/z features are used to calculate the p-values for each pathway (Step 1).",
+               " These p-values are then adjusted for the permutations. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+    
+    # Because mummi.resmat is created for meta-analysis
+    if(!is.null(mSetObj$imgSet$mummi.plot)){
+      
+      descr <- c("\\subsection{Mummichog Pathway Analysis Plot}\n",
+                 "The pathway summary plot below displays all matched pathways as circles. The color and size of each circle corresponds", 
+                 " to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
+                 " pathway hits and the expected number of compound hits within the pathway. \n");
+      cat(descr, file=rnwFile, append=TRUE);
+      
+      fig <- c(  "\\begin{figure}[htp]",
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$mummi.plot,"}",sep=""),
+                 "\\caption{Summary of Pathway Analysis}",
+                 "\\end{center}",
+                 paste("\\label{",mSetObj$imgSet$mummi.plot,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage\n\n"
+      );
+      cat(fig, file=rnwFile, append=TRUE, sep="\n");
+    }
+    
+    descr <- c("\\subsection{Mummichog Pathway Analysis Results Table}\n",
+               "The output of the mummichog analysis consists of a table of results containing ranked pathways that are enriched in ",
+               "the user-uploaded data. The table includes the total number of hits per pathway (all, significant, and expected), the raw p-values (",
+               "Hypergeometric), and the p-value modeled on user data using a Gamma distribution. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+    
+    univROCtable<-c("<<echo=false, results=tex>>=",
+                    "CreateMummichogAnalTable(mSet)",
+                    "@",
+                    "\\clearpage\n\n");
+    cat(univROCtable, file=rnwFile, append=TRUE, sep="\n");
+    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  }
   
-  descr <- c("\\section{Pathway Analysis Results Table}\n",
-             "The output of the MS Peaks to Pathways module consists of a table of results containing ranked pathways that are enriched in ",
-             "the user-uploaded data. The table includes the total number of hits, their raw p-values (Fisher's exact test or ",
-             "Hypergeometric), their EASE score, and the p-value modeled on user data using a Gamma distribution. \n");
-  cat(descr, file=rnwFile, append=TRUE);
+  if(!is.null(mSetObj$mummi.gsea.resmat)){
+    descr <- c("\\section{GSEA Pathway Analysis Results}\n",
+               "The output of the GSEA analysis consists of a table of results containing ranked pathways that are enriched in ",
+               "the user-uploaded data. The table includes the total number of hits (all and expected), their raw p-values and adjusted p-values.",
+               " On the web, user's can explore the results in an interactive volcano plot. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+    
+    # Because mummi.gsea.resmat is created for meta-analysis
+    if(!is.null(mSetObj$imgSet$mummi.plot)){
+      
+      descr <- c("\\subsection{GSEA Pathway Analysis Plot}\n",
+                 "The pathway summary plot below displays all matched pathways as circles. The color and size of each circle corresponds", 
+                 " to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
+                 " pathway hits and the expected number of compound hits within the pathway. \n");
+      cat(descr, file=rnwFile, append=TRUE);
+      
+      fig <- c(  "\\begin{figure}[htp]",
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$mummi.plot,"}",sep=""),
+                 "\\caption{Summary of Pathway Analysis}",
+                 "\\end{center}",
+                 paste("\\label{",mSetObj$imgSet$mummi.plot,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage\n\n"
+      );
+      cat(fig, file=rnwFile, append=TRUE, sep="\n");
+    }
+    
+    univROCtable<-c("<<echo=false, results=tex>>=",
+                    "CreateGSEAAnalTable(mSet)",
+                    "@",
+                    "\\clearpage\n\n");
+    cat(univROCtable, file=rnwFile, append=TRUE, sep="\n");
+    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  }
   
-  univROCtable<-c("<<echo=false, results=tex>>=",
-                  "CreateMummichogAnalTable(mSet)",
-                  "@",
-                  "\\clearpage\n\n");
-  cat(univROCtable, file=rnwFile, append=TRUE, sep="\n");
-
-  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  if(!is.null(mSetObj$integ.resmat)){
+    descr <- c("\\section{Meta-Analysis of mummichog and GSEA results}\n",
+               "The MS Peaks to Paths module uses the (Fisher's method) for combining the mummichog and GSEA p-values.", 
+               "It takes the raw p-values per pathway to perform p-value combination.",
+               "The Integrated MS Peaks to Paths plot below summarizes the results of the", 
+               " Fisher's method for combining mummichog (y-axis) and GSEA (x-axis) p-values. ",
+               "The size and color of the circles correspond to their transformed combined p-values.",
+               " Large and red circles are considered the most perturbed pathways.",
+               " The blue and pink areas highlight the significant pathways based on either GSEA ",
+               "(pink) or mummichog (blue), and the purple area highlights significant pathways identified by both algorithms. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+    
+    fig <- c(  "\\begin{figure}[htp]",
+               "\\begin{center}",
+               paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$integpks.plot,"}",sep=""),
+               "\\caption{Summary of Pathway Analysis}",
+               "\\end{center}",
+               paste("\\label{",mSetObj$imgSet$integpks.plot,"}", sep=""),
+               "\\end{figure}",
+               "\\clearpage\n\n"
+    );
+    cat(fig, file=rnwFile, append=TRUE, sep="\n");
+    
+    univROCtable<-c("<<echo=false, results=tex>>=",
+                    "CreateMetaAnalTable(mSet)",
+                    "@",
+                    "\\clearpage\n\n");
+    cat(univROCtable, file=rnwFile, append=TRUE, sep="\n");
+    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+    
+  }
   
   descr <- c("\\section{Compound Matching Table}\n",
              "The output of the MS Peaks to Pathways module also consists of a comprehensive table containing the compound matching", 
@@ -222,9 +341,9 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
   
   descr <- c("\\section{Network Visualization}\n",
              "The MS Peaks to Pathways module also allows users to interactively view their data in a global KEGG metabolic network.",
-             "Users will be able to their network as a SVG or PNG file on the network viewer page of MetaboAnalyst. \n");
+             "Users will be able to their network as a SVG or PNG file on the Network Viewer page of MetaboAnalyst. \n");
   cat(descr, file=rnwFile, append=TRUE);
-
+  
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
 }

@@ -63,15 +63,17 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   if(.on.public.web){
     lib.path <<- "../../data/";
-    
+
     # disable parallel prcessing for public server
     library(BiocParallel);
     register(SerialParam());
-    
+
   }else{
     lib.path <<- "https://www.metaboanalyst.ca/resources/data/";
   }
-  
+  # for mummichog
+  peakFormat <<- "mpt"  
+
   # for meta-analysis
   mdata.all <<- list(); 
   mdata.siggenes <<- vector("list");
@@ -133,7 +135,7 @@ GetRCommandHistory <- function(mSetObj=NA){
 #'@export
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
@@ -151,7 +153,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     AddErrMsg("Make sure the file delimeters are commas.");
     return(0);
   }
-  
+
   msg <- NULL;
   if(substring(format,4,5)=="ts"){
     # two factor time series data
@@ -210,14 +212,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       conc <- t(dat[-1,]);
     }
   }
-  
+
   mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
   
   # free memory
   dat <- NULL;
   
   msg <- c(msg, "The uploaded file is in comma separated values (.csv) format.");
-  
+
   # try to remove empty line if present
   # identified if no sample names provided
   
@@ -228,7 +230,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     cls.lbl <-  cls.lbl[!empty.inx];
     conc <- conc[!empty.inx, ];
   }
-  
+ 
   # try to check & remove empty lines if class label is empty
   # Added by B. Han
   empty.inx <- is.na(cls.lbl) | cls.lbl == ""
@@ -244,14 +246,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
     }
   }
-  
+
   if(anal.type == "roc"){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
       AddErrMsg("ROC analysis is only defined for two-group comparisions!");
       return(0);
     }
   }
-  
+
   # check for uniqueness of dimension name
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
@@ -259,7 +261,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     AddErrMsg(dup.nm);
     return(0);
   }
-  
+ 
   # try to remove check & remove empty line if feature name is empty
   empty.inx <- is.na(var.nms) | var.nms == "";
   if(sum(empty.inx) > 0){
@@ -267,14 +269,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     var.nms <- var.nms[!empty.inx];
     conc <- conc[,!empty.inx];
   }
-  
+
   if(length(unique(var.nms))!=length(var.nms)){
     dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
     AddErrMsg("Duplicate feature names are not allowed!");
     AddErrMsg(dup.nm);
     return(0);
   }
-  
+
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
     na.inx <- is.na(iconv(smpl.nms));
@@ -282,7 +284,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     AddErrMsg(paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
     return(0);
   }
-  
+ 
   if(sum(is.na(iconv(var.nms)))>0){
     na.inx <- is.na(iconv(var.nms));
     nms <- paste(var.nms[na.inx], collapse="; ");
@@ -292,18 +294,18 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
   smpl.nms <- gsub("[^[:alnum:]./_-]", "", smpl.nms);
-  
+
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;
   var.nms <- gsub("[^[:alnum:][:space:],'./_-]", "", var.nms); # allow space, comma and period
   names(orig.var.nms) <- var.nms;
-  
+
   cls.lbl <- ClearStrings(as.vector(cls.lbl));
-  
+
   # now assgin the dimension names
   rownames(conc) <- smpl.nms;
   colnames(conc) <- var.nms;
-  
+
   # check if paired or not
   if(mSetObj$dataSet$paired){
     # save as it is and process in sanity check step
@@ -317,7 +319,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
         AddErrMsg("Or maybe you forgot to specify the data format?");
         return(0);
       }
-      
+     
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
       
       if(substring(format,4,5)=="ts"){
@@ -332,7 +334,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
       
     }else{ # continuous
-      
+
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- tryCatch({
         as.numeric(cls.lbl);
       },warning=function(na) {
@@ -346,17 +348,17 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
     }
   }
-  
+
   # for the current being to support MSEA and MetPA
   if(mSetObj$dataSet$type == "conc"){
     mSetObj$dataSet$cmpd <- var.nms;
   }
-  
+
   mSetObj$dataSet$orig.var.nms <- orig.var.nms;
   mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
-  
+
   return(.set.mSet(mSetObj));
 }
 
@@ -376,11 +378,11 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 
 Read.PeakList<-function(mSetObj=NA, foldername){
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(.on.public.web){
     load_xcms()
   }
-  
+
   msg <- c("The uploaded files are peak lists and intensities data.");
   
   # the "upload" folder should contain several subfolders (groups)
@@ -517,11 +519,11 @@ Read.PeakList<-function(mSetObj=NA, foldername){
 Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(.on.public.web){
     load_xcms()
   }
-  
+
   msfiles <- list.files(folderName, recursive=T, full.names=TRUE);
   
   # first do some sanity check b4 spending more time on that
@@ -582,7 +584,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   data.type <- mSetObj$dataSet$type
   
@@ -617,12 +619,12 @@ SaveTransformedData <- function(mSetObj=NA){
       if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
         colnames(orig.data) <- orig.var.nms[colnames(orig.data)];
       }
-      orig.data<-cbind(lbls, orig.data);
-      
+        orig.data<-cbind(lbls, orig.data);
+
       if(dim(orig.data)[2]>200){
         orig.data<-t(orig.data);
       }
-      
+        
       write.csv(orig.data, file="data_original.csv");
       
       if(!is.null(mSetObj$dataSet[["proc"]])){

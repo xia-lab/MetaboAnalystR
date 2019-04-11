@@ -745,3 +745,14 @@ saveNetworkInSIF <- function(network, name){
   }
   return(all.nms);
 }
+
+PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
+  mSetObj <- .get.mSet(mSetObj);
+  cls.lbls <- mSetObj$dataSet$cls;
+  y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
+  cmpd.name = paste0("Met_", cmpd, ".png")
+  Cairo::Cairo(file=cmpd.name, width=240, height=300, bg = "transparent", type="png");
+  boxplot(mSetObj$dataSet$norm[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), las=2);
+  title(main=cmpd, out=T, line=-2);
+  dev.off()
+}
