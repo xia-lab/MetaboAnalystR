@@ -100,7 +100,13 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   
   groupNum <- nlevels(groupInfo)
   
-  group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum], "60")
+  if(groupNum > 9){
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+    group_colors <- col.fun(groupNum)
+  }else{
+    group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+  }
+
   names(group_colors) <- levels(groupInfo)
   
   bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
@@ -155,7 +161,13 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
   
   groupNum <- nlevels(groupInfo)
   
-  group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum])
+  if(groupNum > 9){
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+    group_colors <- col.fun(groupNum)
+  }else{
+    group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+  }
+  
   names(group_colors) <- unique(raw_data$sample_group)
   
   eic_name <- paste("EIC_", dpi, ".", format, sep="");
@@ -294,7 +306,12 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
     rtplot_name <- paste("RT_adjustment", dpi, ".", format, sep="")
     Cairo::Cairo(file = rtplot_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                  type=format, bg="white")
-    group_colors <- paste0(brewer.pal(3, "Set1")[1:groupNum], "60")
+    if(groupNum > 9){
+      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+      group_colors <- col.fun(groupNum)
+    }else{
+      group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+    }
     names(group_colors) <- unique(rt_xdata$sample_group)
     plotAdjustedRtime(rt_xdata, col = group_colors[rt_xdata$sample_group])
     legend("topright", legend=unique(rt_xdata$sample_group), pch=15, col=group_colors);
