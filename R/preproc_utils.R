@@ -129,6 +129,15 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   return(raw_data)
 }
 
+#' Set class information for MS data
+#' @description This function sets the class information
+#' for preprocessing MS data.
+#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+
 SetClass <- function(class){
   
   groupInfo <<- class
@@ -136,7 +145,7 @@ SetClass <- function(class){
 }
 
 #' Plot EIC
-#' This functionn creates an extracted ion chromatogram (EIC) for a specific
+#' @description This functionn creates an extracted ion chromatogram (EIC) for a specific
 #' m/z and retention time. This is used for quality-control of raw m/s data.
 #' @param raw_data The object created using the InspectRawMSData function,
 #' containing the raw MS data.

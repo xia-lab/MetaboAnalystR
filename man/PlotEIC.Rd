@@ -2,9 +2,7 @@
 % Please edit documentation in R/preproc_utils.R
 \name{PlotEIC}
 \alias{PlotEIC}
-\title{Plot EIC
-This functionn creates an extracted ion chromatogram (EIC) for a specific
-m/z and retention time. This is used for quality-control of raw m/s data.}
+\title{Plot EIC}
 \usage{
 PlotEIC(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
   format = "png", dpi = 72, width = 9)
@@ -32,7 +30,6 @@ to "sum".}
 \item{width}{Numeric, input the width of the image to create.}
 }
 \description{
-Plot EIC
 This functionn creates an extracted ion chromatogram (EIC) for a specific
 m/z and retention time. This is used for quality-control of raw m/s data.
 }
