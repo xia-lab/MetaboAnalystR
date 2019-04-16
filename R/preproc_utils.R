@@ -137,11 +137,8 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-
 SetClass <- function(class){
-  
   groupInfo <<- class
-  
 }
 
 #' Plot EIC
@@ -310,8 +307,9 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   
   print("Step 2/3: Successfully performed retention time adjustment!")
   
+  groupNum <- nlevels(groupInfo)
+  
   if(rtPlot == TRUE){
-    groupNum <- nlevels(groupInfo)
     rtplot_name <- paste("RT_adjustment", dpi, ".", format, sep="")
     Cairo::Cairo(file = rtplot_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                  type=format, bg="white")
@@ -350,9 +348,21 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
     df$group <- grouped_xdata2$sample_group
 
     if(labels==TRUE){
-      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + geom_text() + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+      
+      if(groupNum>9){
+        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + geom_text() + geom_point(size = 3) + fill=col.fun(groupNum)
+      }else{
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + geom_text() + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+      }
+      
     }else{
-      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+      if(groupNum>9){
+        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 3) + scale_color_brewer(palette="Set1") + fill=col.fun(groupNum)
+      }else{
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 3) + scale_color_brewer(palette="Set1")
+      }
     }
     
     p <- p + xlab(xlabel) + ylab(ylabel) + theme_bw()
@@ -443,9 +453,13 @@ PerformPeakAnnotation <- function(xset, annParams){
   length <- ncol(camera_output)
   end <- length-3
   camnames <- colnames(camera_output)
-  camnames[10:end] <- sample_names_ed
+  
+  groupNum <- nlevels(groupInfo)
+  start <- groupNum+8
+  camnames[start:end] <- sample_names_ed
   colnames(camera_output) <- camnames
-  camera_output <- camera_output[,-c(7:9)]
+  endGroup <- 7+groupNum
+  camera_output <- camera_output[,-c(7:endGroup)]
   
   saveRDS(camera_output, "annotated_peaklist.rds")
   write.csv(camera_output, "annotated_peaklist.csv")
@@ -453,7 +467,6 @@ PerformPeakAnnotation <- function(xset, annParams){
   print("Successfully performed peak annotation!")
   return(xsaFA)
 }
-
 
 #' Format Peak List
 #' @description This function formats the CAMERA output to a usable format for MetaboAanlyst.
@@ -532,7 +545,7 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
     }
   }
   
-  # adjust decimal places
+  # adjust decimal places, feats_info contains all samples
   feats_info <- unique_feats[,7:end]  
   feats_digits <- round(feats_info, 5) 
   
