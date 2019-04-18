@@ -213,7 +213,6 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-
 SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10, 
                          max_pkw = 60, sn_thresh = 6, mzdiff = 0.01, bw = 5,
                          min_frac = 0.5, min_sample_num = 1,
@@ -264,7 +263,6 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' @export
 #' @import xcms
 #' @import ggplot2
-
 PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = TRUE,
                                  labels = TRUE, format = "png", dpi = 72, width = 9){
   
@@ -397,7 +395,6 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-
 SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_iso = 0.005,
                                max_charge = 2, max_iso = 2, corr_eic_th = 0.85,
                                mz_abs_add = 0.001){
@@ -429,7 +426,6 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import CAMERA
-
 PerformPeakAnnotation <- function(xset, annParams){
   
   if(.on.public.web){
