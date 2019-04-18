@@ -423,7 +423,6 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' @param annParams The object created using the SetAnnotationParam function, 
 #' containing user's specified or default parameters for downstream 
 #' raw MS data pre-processing.
-#' @param deci Numeric, specify the number of decimal spots for?
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -450,14 +449,16 @@ PerformPeakAnnotation <- function(xset, annParams){
   camera_output <- getPeaklist(xsaFA)
   sample_names <- xsaFA@xcmsSet@phenoData[[1]]
   sample_names_ed <- gsub(".mzML|.CDF|.mzXML", "", sample_names) 
+  
+  # Account for multiple groups
   length <- ncol(camera_output)
   end <- length-3
   camnames <- colnames(camera_output)
-  
   groupNum <- nlevels(groupInfo)
   start <- groupNum+8
   camnames[start:end] <- sample_names_ed
   colnames(camera_output) <- camnames
+  
   endGroup <- 7+groupNum
   camera_output <- camera_output[,-c(7:endGroup)]
   
