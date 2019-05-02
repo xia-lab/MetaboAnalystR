@@ -13,8 +13,6 @@ containing the peak picked MS data.}
 \item{annParams}{The object created using the SetAnnotationParam function, 
 containing user's specified or default parameters for downstream 
 raw MS data pre-processing.}
-
-\item{deci}{Numeric, specify the number of decimal spots for?}
 }
 \description{
 This function performs peak annotation on
