@@ -63,7 +63,6 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   if(.on.public.web){
     lib.path <<- "../../data/";
-
     # disable parallel prcessing for public server
     library(BiocParallel);
     register(SerialParam());

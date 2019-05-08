@@ -191,8 +191,7 @@ In this vignette, we demonstrated the workflow using a subset of IBD patients an
 
 To recreate our findings in the manuscript, using the provided peak table from the GitHub repository, use the following code snippet. Ensure that the "iHMP2_48_metaboanalyst_input.csv" file is located in your current working directory.
 
-```{r, out.width = "70%"}
-
+```{r, eval=FALSE}
 # Read in the peak table, perform data processing
 mSet<-InitDataObjects("pktable", "stat", FALSE)
 mSet<-Read.TextData(mSet, "iHMP2_48_metaboanalyst_input.csv", "colu", "disc")
@@ -205,9 +204,13 @@ mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, rati
 # View the OPLS-DA plot
 mSet<-OPLSR.Anal(mSet, reg=TRUE)
 mSet<-PlotOPLS2DScore(mSet, "opls_score2d_0_", "png", 72, width=NA, 1,2,0.95,0,0)
+```
 
+```{r, out.width = "70%"}
 knitr::include_graphics("opls_score2d_0_dpi72.png")
+```
 
+```{r, eval=FALSE}
 # Re-perform normalization, without auto-scaling 
 mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "NULL", ratio=FALSE, ratioNum=20)
 
@@ -219,7 +222,7 @@ mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
 SetPeakFormat("mpt")
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-04-11.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
 mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
 mSet<-SanityCheckMummichogData(mSet)
 
@@ -238,7 +241,13 @@ mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
 # Vitamin D3 (cholecalciferol) metabolism            16         10        8   2.3915 0.0061618 0.0314750 0.011613        0
 # De novo fatty acid biosynthesis                   106         15       10  15.8440 0.0162020 0.0520170 0.012097      149
 # Fatty acid activation                              74         15       10  11.0610 0.0162020 0.0520170 0.012097      275
+```
 
+```{r, out.width = "70%"}
+knitr::include_graphics("peaks_to_paths_0_dpi300.png")
+```
+
+```{r, eval=FALSE}
 mSet<-SetPeakEnrichMethod(mSet, "gsea")
 mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
@@ -251,9 +260,13 @@ mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
 # Bile acid biosynthesis                                       82   52 0.01667 0.1486 -2.340
 # C21-steroid hormone biosynthesis and metabolism             112   84 0.01667 0.1486 -1.749
 # Nucleotide Sugar Metabolism                                   7    2 0.01754 0.1486 -1.476
+```
 
+```{r, out.width = "70%"}
 knitr::include_graphics("peaks_to_paths_1_dpi300.png")
+```
 
+```{r, eval=FALSE}
 mSet<-SetPeakEnrichMethod(mSet, "integ")
 mSet<-SetMummichogPval(mSet, 0.25)
 mSet<-PerformPSEA(mSet, "hsa_mfn")
@@ -267,9 +280,10 @@ mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 300, width=10)
 # Fatty Acid Metabolism                           63   11        9         0.00268    0.53850        0.01088
 # Biopterin metabolism                            22   12        7         0.10100    0.01538        0.01160
 # Vitamin E metabolism                            54   33       20         0.00356    0.65620        0.01650
+```
 
+```{r, out.width = "70%"}
 knitr::include_graphics("integ_peaks_0_dpi300.png")
-
 ```
 
 Using the original mummichog algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin E metabolism. Both metabolic pathways are known to be perturbed in IBD patients. Using the GSEA algorithm, the top enriched pathways are bile acid biosynthesis and Vitamin D3 metabolism. When we plot the results of both pathway analysis results, we can see that by looking at the size and color of the dots (representing each pathway, big + red is considered most significant), bile acid biosynthesis is consistently shown to be perturbed in these IBD patients. Furthermore, this plot is divided into four quadrants. In the upper left quadrant (yellow) are the pathways considered significant by the mummichog algorithm, but not significant by GSEA. In the lower right quadrant (yellow) are the pathways considered significant by the GSEA algorithm but not significant using mummichog. Finally, the upper right quadrant (red) are pathways that both mummichog and GSEA consider significant. This workflow demonstrates how biological insights can be easily obtained directly from m/z peaks, without the need for a priori metabolite identification. 
@@ -278,10 +292,11 @@ Using the original mummichog algorithm, the top enriched pathways are bile acid 
 
 From the integrated pathway analysis plot, we can see that Biopterin metabolism was considered a perturbed pathway using the GSEA algorithm, but not using the mummichog algorithm. To further investigate this, we can create a boxplot of the m/z features between the IBD and control samples. From the plot, we can see that the first 7 m/z features are annotated with a star. This indicates that these were the 7 significant features used by the original mummichog algorithm. In comparison, the GSEA algorithm used all 34 m/z features to calculate pathway enrichment. About 50% og these m/z features are higher in CD patients compared to controls, while the remaining 50% of the m/z features are lower in CD patients compared to controls. This demostrates why differences are observed in the identification of signifciantly perturbed pathways using the two different algorithms.
 
-```{r, out.width = "70%"}
+```{r, eval=FALSE}
 # Function to get the m/z hits from a certain metabolic pathway
 mSet <- PlotPathwayMZHits(mSet, "Biopterin metabolism", format = "jpg")
+```
 
+```{r, out.width = "70%"}
 knitr::include_graphics("Biopterin metabolism.jpg")
-
 ```
