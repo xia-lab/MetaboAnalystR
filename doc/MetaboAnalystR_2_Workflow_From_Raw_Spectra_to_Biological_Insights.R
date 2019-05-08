@@ -110,90 +110,97 @@ knitr::include_graphics("PCA_plot300.png")
 #  # Plot with the top 5 pathways found in both algorithms annotated
 #  mSet <- PlotIntegPaths(mSet, dpi = 300, width = 10, format = "jpg", labels = "default")
 
+## ---- eval=FALSE---------------------------------------------------------
+#  # Read in the peak table, perform data processing
+#  mSet<-InitDataObjects("pktable", "stat", FALSE)
+#  mSet<-Read.TextData(mSet, "iHMP2_48_metaboanalyst_input.csv", "colu", "disc")
+#  mSet<-SanityCheckData(mSet)
+#  mSet<-ReplaceMin(mSet);
+#  mSet<-FilterVariable(mSet, "iqr", "F", 25)
+#  mSet<-PreparePrenormData(mSet)
+#  mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
+#  
+#  # View the OPLS-DA plot
+#  mSet<-OPLSR.Anal(mSet, reg=TRUE)
+#  mSet<-PlotOPLS2DScore(mSet, "opls_score2d_0_", "png", 72, width=NA, 1,2,0.95,0,0)
+
 ## ---- out.width = "70%"--------------------------------------------------
-
-# Read in the peak table, perform data processing
-mSet<-InitDataObjects("pktable", "stat", FALSE)
-mSet<-Read.TextData(mSet, "iHMP2_48_metaboanalyst_input.csv", "colu", "disc")
-mSet<-SanityCheckData(mSet)
-mSet<-ReplaceMin(mSet);
-mSet<-FilterVariable(mSet, "iqr", "F", 25)
-mSet<-PreparePrenormData(mSet)
-mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
-
-# View the OPLS-DA plot
-mSet<-OPLSR.Anal(mSet, reg=TRUE)
-mSet<-PlotOPLS2DScore(mSet, "opls_score2d_0_", "png", 72, width=NA, 1,2,0.95,0,0)
-
 knitr::include_graphics("opls_score2d_0_dpi72.png")
 
-# Re-perform normalization, without auto-scaling 
-mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "NULL", ratio=FALSE, ratioNum=20)
-
-# Perform t-test
-mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
-
-# Convert results to mummichog analysis
-mSet<-Convert2Mummichog(mSet)
-
-# RENAME FILE TO CREATED mummichog_input
-SetPeakFormat("mpt")
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-04-11.txt");
-mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
-mSet<-SanityCheckMummichogData(mSet)
-
-# First perform the original mummichog algorithm
-mSet<-SetPeakEnrichMethod(mSet, "mum")
-mSet<-SetMummichogPval(mSet, 0.25)
-mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
-mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
-
-# View the top enriched pathways
-# > head(mSet$mummi.resmat)
-#                                       Pathway total Hits.total Hits.sig Expected       FET      EASE    Gamma Emp.Hits
-# Fatty Acid Metabolism                              63         11        9   9.4164 0.0026797 0.0152200 0.011247        0
-# Bile acid biosynthesis                             82         52       29  12.2560 0.0028215 0.0062805 0.011051        0
-# Vitamin E metabolism                               54         33       20   8.0712 0.0035614 0.0094632 0.011120        0
-# Vitamin D3 (cholecalciferol) metabolism            16         10        8   2.3915 0.0061618 0.0314750 0.011613        0
-# De novo fatty acid biosynthesis                   106         15       10  15.8440 0.0162020 0.0520170 0.012097      149
-# Fatty acid activation                              74         15       10  11.0610 0.0162020 0.0520170 0.012097      275
-
-mSet<-SetPeakEnrichMethod(mSet, "gsea")
-mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
-mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
-
-# > head(mSet$mummi.gsea.resmat)
-#                                                  Pathway_Total Hits   P_val  P_adj    NES   
-# Biopterin metabolism                                         22   12 0.01538 0.1486 -1.939
-# Squalene and cholesterol biosynthesis                        55   33 0.01562 0.1486 -2.060
-# Androgen and estrogen biosynthesis and metabolism            95   59 0.01562 0.1486 -2.354
-# Bile acid biosynthesis                                       82   52 0.01667 0.1486 -2.340
-# C21-steroid hormone biosynthesis and metabolism             112   84 0.01667 0.1486 -1.749
-# Nucleotide Sugar Metabolism                                   7    2 0.01754 0.1486 -1.476
-
-knitr::include_graphics("peaks_to_paths_1_dpi300.png")
-
-mSet<-SetPeakEnrichMethod(mSet, "integ")
-mSet<-SetMummichogPval(mSet, 0.25)
-mSet<-PerformPSEA(mSet, "hsa_mfn")
-mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 300, width=10)
-
-# > head(mSet$integ.resmat)
-#                                         Total_Size Hits Sig_Hits Mummichog_Pvals GSEA_Pvals Combined_Pvals
-# Bile acid biosynthesis                          82   52       29         0.00282    0.01667        0.00052
-# Vitamin D3 (cholecalciferol) metabolism         16   10        8         0.00616    0.03175        0.00187
-# Fatty acid activation                           74   15       10         0.01620    0.08333        0.01027
-# Fatty Acid Metabolism                           63   11        9         0.00268    0.53850        0.01088
-# Biopterin metabolism                            22   12        7         0.10100    0.01538        0.01160
-# Vitamin E metabolism                            54   33       20         0.00356    0.65620        0.01650
-
-knitr::include_graphics("integ_peaks_0_dpi300.png")
-
+## ---- eval=FALSE---------------------------------------------------------
+#  # Re-perform normalization, without auto-scaling
+#  mSet<-Normalization(mSet, "MedianNorm", "LogNorm", "NULL", ratio=FALSE, ratioNum=20)
+#  
+#  # Perform t-test
+#  mSet<-Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
+#  
+#  # Convert results to mummichog analysis
+#  mSet<-Convert2Mummichog(mSet)
+#  
+#  # RENAME FILE TO CREATED mummichog_input
+#  SetPeakFormat("mpt")
+#  mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
+#  mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
+#  mSet<-SanityCheckMummichogData(mSet)
+#  
+#  # First perform the original mummichog algorithm
+#  mSet<-SetPeakEnrichMethod(mSet, "mum")
+#  mSet<-SetMummichogPval(mSet, 0.25)
+#  mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
+#  
+#  # View the top enriched pathways
+#  # > head(mSet$mummi.resmat)
+#  #                                       Pathway total Hits.total Hits.sig Expected       FET      EASE    Gamma Emp.Hits
+#  # Fatty Acid Metabolism                              63         11        9   9.4164 0.0026797 0.0152200 0.011247        0
+#  # Bile acid biosynthesis                             82         52       29  12.2560 0.0028215 0.0062805 0.011051        0
+#  # Vitamin E metabolism                               54         33       20   8.0712 0.0035614 0.0094632 0.011120        0
+#  # Vitamin D3 (cholecalciferol) metabolism            16         10        8   2.3915 0.0061618 0.0314750 0.011613        0
+#  # De novo fatty acid biosynthesis                   106         15       10  15.8440 0.0162020 0.0520170 0.012097      149
+#  # Fatty acid activation                              74         15       10  11.0610 0.0162020 0.0520170 0.012097      275
 
 ## ---- out.width = "70%"--------------------------------------------------
-# Function to get the m/z hits from a certain metabolic pathway
-mSet <- PlotPathwayMZHits(mSet, "Biopterin metabolism", format = "jpg")
+knitr::include_graphics("peaks_to_paths_0_dpi300.png")
 
+## ---- eval=FALSE---------------------------------------------------------
+#  mSet<-SetPeakEnrichMethod(mSet, "gsea")
+#  mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+#  mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 300, width=NA)
+#  
+#  # > head(mSet$mummi.gsea.resmat)
+#  #                                                  Pathway_Total Hits   P_val  P_adj    NES
+#  # Biopterin metabolism                                         22   12 0.01538 0.1486 -1.939
+#  # Squalene and cholesterol biosynthesis                        55   33 0.01562 0.1486 -2.060
+#  # Androgen and estrogen biosynthesis and metabolism            95   59 0.01562 0.1486 -2.354
+#  # Bile acid biosynthesis                                       82   52 0.01667 0.1486 -2.340
+#  # C21-steroid hormone biosynthesis and metabolism             112   84 0.01667 0.1486 -1.749
+#  # Nucleotide Sugar Metabolism                                   7    2 0.01754 0.1486 -1.476
+
+## ---- out.width = "70%"--------------------------------------------------
+knitr::include_graphics("peaks_to_paths_1_dpi300.png")
+
+## ---- eval=FALSE---------------------------------------------------------
+#  mSet<-SetPeakEnrichMethod(mSet, "integ")
+#  mSet<-SetMummichogPval(mSet, 0.25)
+#  mSet<-PerformPSEA(mSet, "hsa_mfn")
+#  mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 300, width=10)
+#  
+#  # > head(mSet$integ.resmat)
+#  #                                         Total_Size Hits Sig_Hits Mummichog_Pvals GSEA_Pvals Combined_Pvals
+#  # Bile acid biosynthesis                          82   52       29         0.00282    0.01667        0.00052
+#  # Vitamin D3 (cholecalciferol) metabolism         16   10        8         0.00616    0.03175        0.00187
+#  # Fatty acid activation                           74   15       10         0.01620    0.08333        0.01027
+#  # Fatty Acid Metabolism                           63   11        9         0.00268    0.53850        0.01088
+#  # Biopterin metabolism                            22   12        7         0.10100    0.01538        0.01160
+#  # Vitamin E metabolism                            54   33       20         0.00356    0.65620        0.01650
+
+## ---- out.width = "70%"--------------------------------------------------
+knitr::include_graphics("integ_peaks_0_dpi300.png")
+
+## ---- eval=FALSE---------------------------------------------------------
+#  # Function to get the m/z hits from a certain metabolic pathway
+#  mSet <- PlotPathwayMZHits(mSet, "Biopterin metabolism", format = "jpg")
+
+## ---- out.width = "70%"--------------------------------------------------
 knitr::include_graphics("Biopterin metabolism.jpg")
-
 

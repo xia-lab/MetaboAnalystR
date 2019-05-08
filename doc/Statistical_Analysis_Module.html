@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jasmine Chong" />
 
-<meta name="date" content="2019-04-11" />
+<meta name="date" content="2019-05-08" />
 
 <title>Statistical Analysis Module</title>
 
@@ -95,7 +95,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Statistical Analysis Module</h1>
 <h4 class="author">Jasmine Chong</h4>
-<h4 class="date">2019-04-11</h4>
+<h4 class="date">2019-05-08</h4>
 
 
 
@@ -310,7 +310,7 @@ mSet&lt;-<span class="kw">PlotPLS.Imp</span>(mSet, <span class="st">&quot;pls_im
 ## Returning the palette you asked for with that many colors</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PLSDA.Permut</span>(mSet, <span class="dv">100</span>, <span class="st">&quot;accu&quot;</span>)</code></pre></div>
 <pre><code>## [1] &quot;performing 100 permutations ...&quot;
-## [1] &quot;Empirical p value: p = 0.04 (4/100)&quot;</code></pre>
+## [1] &quot;Empirical p value: p = 0.02 (2/100)&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mSet&lt;-<span class="kw">PlotPLS.Permutation</span>(mSet, <span class="st">&quot;pls_perm_1_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># View the 3D interactive PLS-DA score plot</span>
 mSet<span class="op">$</span>imgSet<span class="op">$</span>plsda.3d</code></pre></div>
@@ -358,7 +358,7 @@ mSet&lt;-<span class="kw">PlotOPLS.MDL</span>(mSet, <span class="st">&quot;opls_
 
 <span class="co"># Perform and plot oPLS-DA permutation </span>
 mSet&lt;-<span class="kw">PlotOPLS.Permutation</span>(mSet, <span class="st">&quot;opls_perm_2_&quot;</span>, <span class="dt">format =</span> <span class="st">&quot;png&quot;</span>, <span class="dt">dpi=</span><span class="dv">72</span>, <span class="dv">100</span>, <span class="dt">width=</span><span class="ot">NA</span>)</code></pre></div>
-<pre><code>## [1] &quot;time taken for 10 permutations:  0.0913314819335938&quot;</code></pre>
+<pre><code>## [1] &quot;time taken for 10 permutations:  0.102765321731567&quot;</code></pre>
 <pre><code>## [1] &quot;Empirical p-values Q2:  p &lt; 0.01 (0/100)  and R2Y:  p &lt; 0.01 (0/100)&quot;</code></pre>
 </div>
 <div id="significance-analysis-of-microarrary-and-metabolites-sam" class="section level2">
