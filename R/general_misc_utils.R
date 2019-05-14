@@ -598,9 +598,12 @@ GetCMD<-function(regexp){
 
 # Memory functions
 ShowMemoryUse <- function(..., n=20) {
-  save.image("TestMem.RData");
-  print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
-  print(warnings());
+    library(pryr);
+    sink(); # make sure print to screen
+    print(mem_used());
+    print(sessionInfo());
+    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+    print(warnings());
 }
 
 #'Perform utilities for cropping images
@@ -747,12 +750,78 @@ saveNetworkInSIF <- function(network, name){
 }
 
 PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
+
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_ggplot()
+  }
+  
   cls.lbls <- mSetObj$dataSet$cls;
   y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
   cmpd.name = paste0("Met_", cmpd, ".png")
-  Cairo::Cairo(file=cmpd.name, width=240, height=300, bg = "transparent", type="png");
-  boxplot(mSetObj$dataSet$norm[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), las=2);
-  title(main=cmpd, out=T, line=-2);
+  
+  Cairo::Cairo(file=cmpd.name, width=240, height=400, bg = "transparent", type="png");
+  
+  col <- unique(GetColorSchema(mSetObj))
+  df <- data.frame(conc = mSetObj$dataSet$norm[, cmpd], class = cls.lbls)
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=TRUE) + theme_bw() + geom_jitter(size=1)
+  p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+  p <- p + stat_summary(fun.y=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
+  p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"))
+  p <- p + scale_fill_manual(values=col) + ggtitle(cmpd) + theme(axis.text.x = element_text(angle=90, hjust=1), axis.text = element_text(size=10))
+  p <- p + theme(plot.title = element_text(size = 14, hjust=0.5, face="bold", vjust=2))
+  print(p)
+  
   dev.off()
+}
+
+#'Compute within group and between group sum of squares
+#'(BSS/WSS) for each row of a matrix which may have NA
+#'@description Columns have labels, x is a numeric vector,
+#'cl is consecutive integers
+#'@param x Numeric vector
+#'@param cl Columns
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+Get.bwss<-function(x, cl){
+  K <- max(cl) - min(cl) + 1
+  tvar <- var.na(x);
+  tn <- sum(!is.na(x));
+  wvar <- wn <- numeric(K);
+  
+  for(i in (1:K)) {
+    if(sum(cl == (i + min(cl) - 1)) == 1){
+      wvar[i] <- 0;
+      wn[i] <- 1;
+    }
+    
+    if(sum(cl == (i + min(cl) - 1)) > 1) {
+      wvar[i] <- var.na(x[cl == (i + min(cl) - 1)]);
+      wn[i] <- sum(!is.na(x[cl == (i + min(cl) - 1)]));
+    }
+  }
+  
+  WSS <- sum.na(wvar * (wn - 1));
+  TSS <- tvar * (tn - 1)
+  (TSS - WSS)/WSS;
+}
+
+sum.na <- function(x,...){
+  res <- NA
+  tmp <- !(is.na(x) | is.infinite(x))
+  if(sum(tmp) > 0)
+    res <- sum(x[tmp])
+  res
+}
+
+var.na <- function(x){
+  res <- NA
+  tmp <- !(is.na(x) | is.infinite(x))
+  if(sum(tmp) > 1){
+    res <- var(x[tmp])
+  }
+  res
 }

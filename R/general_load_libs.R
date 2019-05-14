@@ -75,6 +75,12 @@ load_ggplot <- function(){
   suppressMessages(library(ggplot2))
 }
 
+# Load gridExtra
+load_grid <- function(){
+  suppressMessages(library(gridExtra))
+  suppressMessages(library(grid))
+}
+
 # Load camera
 load_camera <- function(){
   suppressMessages(library(CAMERA))

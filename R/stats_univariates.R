@@ -290,18 +290,25 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE){
   
-  mSetObj <- .get.mSet(mSetObj);
+   mSetObj <- .get.mSet(mSetObj);
+
+   # check to see if already done by microservice
+   if(.on.public.web & !nonpar & RequireFastT()){
+        res <- readRDS("fastt_out.rds");
+        t.stat <- res$t.stats;
+        p.value <- res$p.vals;
+   }else{
+        res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
+        t.stat <- res[,1];
+        p.value <- res[,2];
+   }
   
-  res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-  t.stat <- res[,1];
-  p.value <- res[,2];
+   names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   
-  names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
+   p.log <- -log10(p.value);
+   fdr.p <- p.adjust(p.value, "fdr");
   
-  p.log <- -log10(p.value);
-  fdr.p <- p.adjust(p.value, "fdr");
-  
-  inx.imp <- fdr.p <= threshp;
+   inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
   
   AddMsg(paste("A total of", sum(inx.imp), "significant features were found."));
@@ -425,10 +432,17 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   #### t-tests
-  t.res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-  p.value <- t.res[,2];
+   # check to see if already done by microservice
+   if(.on.public.web & !nonpar & RequireFastT()){
+       res <- readRDS("fastt_out.rds");
+       p.value <- res$p.vals;
+   }else{
+       res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
+       p.value <- res[,2];
+   }
+
   if(pval.type == "fdr"){
     p.value <- p.adjust(p.value, "fdr");
   }   
@@ -542,6 +556,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, widt
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 10;
   }else if(width == 0){
@@ -875,11 +890,14 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
 
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_ggplot()
+  }
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
@@ -890,18 +908,28 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
   
-  my.width <- 240;
-  adj.width <- 60*length(levels(cls))+20;
+  my.width <- 200;
+  adj.width <- 90*length(levels(cls))+20;
   if(adj.width > my.width){
      my.width <- adj.width;
   }
-
-  Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=300, type=format, bg="transparent");
-  par(mar=c(4,3,1,2), oma=c(0,0,1,0));
-  boxplot(mSetObj$dataSet$norm[, cmpdNm]~cls,las=2, col= unique(GetColorSchema(mSetObj)), xaxt="n");
-  text(1:length(levels(cls)), par("usr")[3] - 0.25, srt = 45, adj = 1, labels = levels(cls), xpd = TRUE)
-  title(main=cmpdNm, out=T);
-  dev.off();
+  
+  x <- mSetObj$dataSet$norm[, cmpdNm]
+  y <- cls
+  df <- data.frame(conc = x, class = y)
+  col <- unique(GetColorSchema(mSetObj))
+  
+  Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=325, type=format, bg="transparent");
+  
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=TRUE) + theme_bw() + geom_jitter(size=1)
+  p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+  p <- p + stat_summary(fun.y=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
+  p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.20, r=0.25, b=0.55, l=0.25, "cm"))
+  p <- p + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=45, hjust=1))
+  p <- p + theme(plot.title = element_text(size = 13, hjust=0.5, face="bold"), axis.text = element_text(size=10))
+  print(p)
+  dev.off()
+  
 }
 
 ##############################################

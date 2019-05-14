@@ -157,67 +157,14 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   kegg.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(kegg.inx);
   path.data<-mSetObj$dataSet$norm[,hit.inx];
-  
+
   if(mSetObj$pathwaylibtype == "KEGG"){
     colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
   } else if(mSetObj$pathwaylibtype == "SMPDB"){
     colnames(path.data) <- nm.map$hmdbid[kegg.inx[hit.inx]];
   }
-  
-  # now, perform the enrichment analysis
-  current.mset <- metpa$mset.list;
-  uniq.count <- metpa$uniq.count;
-  
-  # check if a reference metabolome is applied
-  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
-    current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
-    mSetObj$analSet$qea.filtered.mset <- current.mset;
-    uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
-  }
-  
-  hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
-  hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
-  hits <- hits[hit.inx]; # remove no hits
-  
-  if(method == "gt"){
-    qea.obj <- globaltest::gt(mSetObj$dataSet$cls, path.data, subsets=hits);
-    qea.res <- globaltest::result(qea.obj);
-    match.num <- qea.res[,5];
-    raw.p <- qea.res[,1];
-    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
-  }else{
-    qea.obj <- NULL;
-    qea.res <- GlobalAncova::GlobalAncova(xx=t(path.data), group=mSetObj$dataSet$cls, test.genes=hits, method="approx");
-    match.num <- qea.res[,1];
-    raw.p <- qea.res[,3];
-    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
-  }
-  
-  log.p <- -log(raw.p);
-  # add adjust p values
-  holm.p <- p.adjust(raw.p, "holm");
-  fdr.p <- p.adjust(raw.p, "fdr");
-  
-  # calculate the impact values
-  if(nodeImp == "rbc"){
-    imp.list <- metpa$rbc[hit.inx];
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{relative betweenness centrality}.";
-  }else{
-    imp.list <- metpa$dgr[hit.inx];
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
-  }
-  imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
-  
-  set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
-  res.mat <- cbind(set.num, match.num, raw.p, log.p, holm.p, fdr.p, imp.vec);
-  rownames(res.mat)<-rownames(qea.res);
-  colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
-  res.mat <- res.mat[!is.na(res.mat[,7]), , drop=FALSE];
-  
-  ord.inx<-order(res.mat[,3], -res.mat[,7]);
-  res.mat<-signif(res.mat[ord.inx,],5);
-  
-  # also calculate univariate p values
+
+  # calculate univariate p values when click indivisual compound node
   # use lm model for t-tests (with var.equal=T), one-way anova, and linear regression (continuous);
   univ.p <- apply(as.matrix(path.data), 2, function(x) {
     tmp <- try(lm(as.numeric(mSetObj$dataSet$cls)~x));
@@ -231,26 +178,84 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   names(univ.p) <- colnames(path.data);
   
-  # now store this new data
-  mSetObj$dataSet$norm.path <- path.data;
+  # now, perform topology & enrichment analysis
+  current.mset <- metpa$mset.list;
+  uniq.count <- metpa$uniq.count;
   
-  mSetObj$analSet$qea.hits <- hits;
-  mSetObj$analSet$qea.univp <- signif(univ.p,7);
-  mSetObj$analSet$qea.method <- method;
-  mSetObj$analSet$qea.obj <- qea.obj;
-  mSetObj$analSet$qea.mat <- res.mat;
-  mSetObj$analSet$node.imp <- nodeImp;
-  
-  .set.mSet(mSetObj)
-  
-  rownames(res.mat) <- GetQEA.pathNames(mSetObj);
-  write.csv(res.mat, file="pathway_results.csv");
-  
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
+  # check if a reference metabolome is applied
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
+    current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
+    mSetObj$analSet$qea.filtered.mset <- current.mset;
+    uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
   }
+  
+  hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
+  hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
+  hits <- hits[hit.inx]; # remove no hits
+
+  # store data before microservice
+  mSetObj$analSet$qea.univp <- signif(univ.p,7);
+  mSetObj$analSet$node.imp <- nodeImp;
+  mSetObj$dataSet$norm.path <- path.data;
+  mSetObj$analSet$qea.hits <- hits;
+  mSetObj$analSet$qea.method <- method;
+
+  # calculate the impact values
+  if(nodeImp == "rbc"){
+    imp.list <- metpa$rbc[hit.inx];
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{relative betweenness centrality}.";
+  }else{
+    imp.list <- metpa$dgr[hit.inx];
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
+  }
+  imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
+  set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
+  
+  if(method == "gt"){
+    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
+    if(.on.public.web){ # this is done by R microservice
+        gt.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, set.num=set.num, imp.vec=imp.vec);
+        saveRDS(gt.in, "gt_in.rds");
+        return(.set.mSet(mSetObj));
+    }    
+    qea.obj <- globaltest::gt(mSetObj$dataSet$cls, path.data, subsets=hits);
+    qea.res <- globaltest::result(qea.obj);
+    match.num <- qea.res[,5];
+    raw.p <- qea.res[,1];
+  }else{
+    qea.obj <- NULL;
+    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
+    if(.on.public.web){ # this is done by R microservice
+        ga.in <- list(data=path.data, group=mSetObj$dataSet$cls, test.genes=hits, set.num=set.num, imp.vec=imp.vec);
+        saveRDS(ga.in, "ga_in.rds");
+        return(.set.mSet(mSetObj));
+    } 
+    qea.res <- GlobalAncova::GlobalAncova(xx=t(path.data), group=mSetObj$dataSet$cls, test.genes=hits, method="approx");
+    match.num <- qea.res[,1];
+    raw.p <- qea.res[,3];
+  }
+  
+  log.p <- -log(raw.p);
+  # add adjust p values
+  holm.p <- p.adjust(raw.p, "holm");
+  fdr.p <- p.adjust(raw.p, "fdr");
+  
+  res.mat <- cbind(set.num, match.num, raw.p, log.p, holm.p, fdr.p, imp.vec);
+  rownames(res.mat)<-rownames(qea.res);
+  colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  res.mat <- res.mat[!is.na(res.mat[,7]), , drop=FALSE];
+  
+  ord.inx<-order(res.mat[,3], -res.mat[,7]);
+  res.mat<-signif(res.mat[ord.inx,],5);
+
+  hit.inx <- match(rownames(res.mat), metpa$path.ids);
+  pathNames <- names(metpa$path.ids)[hit.inx];
+  rownames(res.mat) <- pathNames;
+  write.csv(res.mat, file="pathway_results.csv");
+
+  mSetObj$analSet$qea.mat <- res.mat;
+  mSetObj$analSet$qea.pathNames <- pathNames;
+  return(.set.mSet(mSetObj)); 
 }
 
 #'Export pathway names from QEA analysis
@@ -258,8 +263,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
 #'@export
 GetQEA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  hit.inx <- match(rownames(mSetObj$analSet$qea.mat), metpa$path.ids);
-  return(names(metpa$path.ids)[hit.inx]);
+  return(mSetObj$analSet$qea.pathNames);
 }
 
 #'Only works for human (hsa.rda) data
@@ -278,7 +282,6 @@ SetupSMPDBLinks <- function(kegg.ids){
   for(i in 1:lk.len){
     lks <- strsplit(smpdb.vec[i], "; ")[[1]];
     if(!is.na(lks[1])){
-      # all.lks[i]<-paste("<a href=http://pathman.smpdb.ca/pathways/",lks,"/pathway target=_new>SMP</a>", sep="", collapse="\n");
       all.lks[i]<-paste("<a href=http://www.smpdb.ca/view/",lks," target=_new>SMP</a>", sep="", collapse="\n");
     }
   }

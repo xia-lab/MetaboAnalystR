@@ -30,7 +30,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
   mSetObj$dataSet$format <- format;
   mSetObj$dataSet$name <- dataName;
   
-  if(.on.public.web == TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(RegisterData(mSetObj, mSetObj$dataSet));
   }else{
@@ -274,7 +274,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   
   mSetObj$dataSet <- dataSet
   
-  if(.on.public.web == TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(RegisterData(mSetObj, dataSet));
   }else{
@@ -329,7 +329,7 @@ SelectMultiData <- function(mSetObj=NA){
   
   rm('nm.vec', envir = .GlobalEnv);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
@@ -389,7 +389,7 @@ PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
   
   AddMsg(msg);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(1);
   }else{
@@ -464,7 +464,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   mSetObj$dataSet$deparam <- paste(c("P value cutoff:", p.lvl, "Fold-Change cutoff:", fc.lvl))
   mSetObj$dataSet$desig <- paste(c("Number of significant features:", sig.count, "Number of non-significant features:", non.sig.count))
   # record the sig gene vec
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     
     return(c(1, sig.count, non.sig.count));

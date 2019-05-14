@@ -350,13 +350,13 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   coords<-signif(as.matrix(cbind(pca$rotation[,inx1],pca$rotation[,inx2],pca$rotation[,inx3])),5);
   pca3d <- list();
   
-  pca3d$score$axis <- paste("PC", c(inx1, inx2, inx3), " (", 100*round( mSetObj$analSet$pca$variance[c(inx1, inx2, inx3)], 3), "%)", sep="");
+  pca3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
   coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
   
   colnames(coords) <- NULL; 
-  pca3d$score$xyz <- coords;
-  pca3d$score$name <- rownames(pca$rotation);
-  pca3d$score$entrez <-rownames(pca$rotation); 
+  pca3d$loading$xyz <- coords;
+  pca3d$loading$name <- rownames(pca$rotation);
+  pca3d$loading$entrez <-rownames(pca$rotation); 
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
@@ -775,13 +775,13 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   coords<-signif(as.matrix(cbind(pls$loadings[,inx1],pls$loadings[,inx2],pls$loadings[,inx3])),5);
   pls3d <- list();
   
-  pls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$plsr$Xvar[c(inx1, inx2, inx3)]/mSetObj$analSet$plsr$Xtotvar, 1), "%)", sep="");
+  pls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
   coords <- data.frame(t(signif(pls$loadings[,c(inx1, inx2, inx3)], 5)));
   
   colnames(coords) <- NULL; 
-  pls3d$score$xyz <- coords;
-  pls3d$score$name <- rownames(pls$loadings);
-  pls3d$score$entrez <-rownames(pls$loadings); 
+  pls3d$loading$xyz <- coords;
+  pls3d$loading$name <- rownames(pls$loadings);
+  pls3d$loading$entrez <-rownames(pls$loadings); 
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
@@ -1352,7 +1352,13 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  mSetObj$analSet$opls.reg <- reg;  
+
+  # default options for feature labels on splot
+  mSetObj$custom.cmpds <- c();
+  mSetObj$analSet$oplsda$splot.type <- "all";
+
   if(reg==TRUE){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
@@ -1362,18 +1368,19 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
+  if(.on.public.web){ # this is done by R microservice
+      opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
+      saveRDS(opls.in, "opls_in.rds");
+      return(.set.mSet(mSetObj));
+  }
+
   mSetObj$analSet$oplsda <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
-  mSetObj$analSet$oplsda$reg <- reg;
   score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
   colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
   write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
   load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
   colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
   write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
-  
-  # default options for feature labels on splot
-  mSetObj$custom.cmpds <- c();
-  mSetObj$analSet$oplsda$splot.type <- "all";
   
   return(.set.mSet(mSetObj));
 }
@@ -1527,7 +1534,7 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1555,7 +1562,7 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }
   
   mSetObj$imgSet$opls.loading<-imgName;
-  plotType <- mSetObj$analSet$oplsda$splot.type;
+  mSetObj$analSet$oplsda$splot.type <- plotType;
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,4,7))
   plot(p1, pcorr1, type="n", xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance");
@@ -1669,19 +1676,24 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=100, width=NA){
+OPLSDA.Permut<-function(mSetObj=NA, num=100){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(mSetObj$analSet$oplsda$reg){
+  if(mSetObj$analSet$opls.reg){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
     cls<-model.matrix(~mSetObj$dataSet$cls-1);
   }
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
+
+  if(.on.public.web){ # this is done by R microservice
+      opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=num, orthoI=NA, crossvalI=cv.num);
+      saveRDS(opls.in, "opls_in.rds");
+      return(.set.mSet(mSetObj));
+  }
   
   perm.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
   r.vec <- perm.res$suppLs[["permMN"]][, "R2Y(cum)"];
@@ -1689,6 +1701,21 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   
   # note, actual permutation number may be adjusted in public server
   perm.num <- perm.res$suppLs[["permI"]];
+
+  mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+  return(.set.mSet(mSetObj));
+}
+
+
+PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  perm.res <- mSetObj$analSet$oplsda$perm.res;
+
+  r.vec <- perm.res$r.vec;
+  q.vec <- perm.res$q.vec;
+  perm.num <- perm.res$perm.num;
   
   better.rhits <- sum(r.vec[-1]>=r.vec[1]);
   
@@ -1730,8 +1757,6 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
        col=adjustcolor("lightblue", alpha=0.6), main="");
   hist(q.vec[-1], add=TRUE,breaks=qbins, border=F, col=adjustcolor("mistyrose", alpha=0.6));
   
-  #text(bw.vec[1], h/3.5, paste('Observed \n statistic \n', mSetObj$analSet$plsda$permut.p), xpd=T);
-  
   arrows(r.vec[1], h/3, r.vec[1], 0, length=0.1,angle=30,lwd=2);
   text(r.vec[1], h/2.5, paste('R2Y:', r.vec[1], "\n", pr), xpd=TRUE);
   
@@ -1754,486 +1779,414 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, num=10
   }
 }
 
-# Perform OPLS
-# Orthogonal PLS functions (adapted from ropls package for web-based usage)
-# Jeff Xia \email{jeff.xia@mcgill.ca}
-# McGill University, Canada
-# License: GNU GPL (>= 2)
-perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, log10L = FALSE, permI = 20, 
-                          scaleC = c("none", "center", "pareto", "standard")[4], ...) {
-  xMN <- x;
-  if(class(y) == "matrix"){
-    yMCN <- y;
+#'Perform SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) 
+#'@param mSetObj Input name of the created mSet Object
+#'@param comp.num Input the number of computations to run 
+#'@param var.num Input the number of variables
+#'@param compVarOpt Input the option to perform SPLS-DA
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
+  
+  if(compVarOpt == "same"){
+    comp.var.nums <- rep(var.num, comp.num);
   }else{
-    yMCN <- matrix(y, ncol = 1);
-  }
-  rownames(yMCN) <- rownames(xMN)
-  colnames(yMCN) <- paste0("y", 1:ncol(yMCN))
-  yLevelVc <- NULL;
-  xZeroVarVi <- NULL;
-  epsN <- .Machine[["double.eps"]]
-  
-  opl <- .coreOPLS(xMN = xMN, yMCN = yMCN, orthoI = orthoI, predI = predI, 
-                   scaleC = scaleC, crossvalI = crossvalI);
-  
-  opl$suppLs[["y"]] <- y
-  opl$typeC <- "OPLS-DA";
-  
-  ## Permutation testing (Szymanska et al, 2012)
-  
-  if(permI > 0) {
-    
-    modSumVc <- colnames(opl$summaryDF)
-    permMN <- matrix(0,
-                     nrow = 1 + permI,
-                     ncol = length(modSumVc),
-                     dimnames = list(NULL, modSumVc))
-    
-    perSimVn <- numeric(1 + permI)
-    perSimVn[1] <- 1
-    
-    permMN[1, ] <- as.matrix(opl$summaryDF);
-    
-    # do initial evaluation time for 10 permutations
-    start.time <- Sys.time();
-    for(k in 1:10) {
-      yVcn <- drop(opl$suppLs[["yMCN"]])
-      yPerVcn <- sample(yVcn)
-      yPerMCN <- matrix(yPerVcn, ncol = 1)
-      perOpl <- .coreOPLS(xMN = xMN,
-                          yMCN = yPerMCN,
-                          orthoI = opl$summaryDF[, "ort"],
-                          predI = opl$summaryDF[, "pre"],
-                          scaleC = scaleC,
-                          crossvalI = crossvalI)
-      
-      permMN[1 + k, ] <- as.matrix(perOpl$summaryDF);
-      perSimVn[1 + k] <- .similarityF(opl$suppLs[["yMCN"]], yPerMCN)
-    }
-    end.time <- Sys.time();
-    time.taken <- end.time - start.time;
-    print(paste("time taken for 10 permutations: ", time.taken));
-    
-    if(.on.public.web){
-      if(time.taken > 60){
-        permI <- 20;
-      }else if(time.taken > 30){
-        permI <- 100;
-      }
-      permMN <- permMN[1:(1+permI),]; 
-      perSimVn <- perSimVn[1:(1+permI)];
-    }
-    # continue
-    for(k in 11:permI) {
-      yVcn <- drop(opl$suppLs[["yMCN"]])
-      yPerVcn <- sample(yVcn)
-      yPerMCN <- matrix(yPerVcn, ncol = 1)
-      perOpl <- .coreOPLS(xMN = xMN,
-                          yMCN = yPerMCN,
-                          orthoI = opl$summaryDF[, "ort"],
-                          predI = opl$summaryDF[, "pre"],
-                          scaleC = scaleC,
-                          crossvalI = crossvalI)
-      
-      permMN[1 + k, ] <- as.matrix(perOpl$summaryDF);
-      perSimVn[1 + k] <- .similarityF(opl$suppLs[["yMCN"]], yPerMCN)
-    }
-    
-    permMN <- cbind(permMN, sim = perSimVn);
-    perPvaVn <- c(pR2Y = (1 + length(which(permMN[-1, "R2Y(cum)"] >= permMN[1, "R2Y(cum)"]))) / (nrow(permMN) - 1),
-                  pQ2 = (1 + length(which(permMN[-1, "Q2(cum)"] >= permMN[1, "Q2(cum)"]))) / (nrow(permMN) - 1));
-    opl$summaryDF[, "pR2Y"] <- perPvaVn["pR2Y"];
-    opl$summaryDF[, "pQ2"] <- perPvaVn["pQ2"];
-    opl$suppLs[["permMN"]] <- permMN;
-    opl$suppLs[["permI"]] <- permI;
-  }
-  
-  ##------------------------------------
-  ##   Numerical results
-  ##------------------------------------
-  
-  totN <- length(c(xMN))
-  nasN <- sum(is.na(c(xMN)))
-  
-  if(!is.null(opl$suppLs[["yMCN"]])) {
-    totN <- totN + length(c(opl$suppLs[["yMCN"]]))
-    nasN <- nasN + sum(is.na(c(opl$suppLs[["yMCN"]])))
-  }
-  
-  ## Raw summary
-  ##------------
-  
-  opl$suppLs[["topLoadI"]] <- 3
-  
-  if(ncol(xMN) > opl$suppLs[["topLoadI"]]) {
-    xVarVn <- apply(xMN, 2, var)
-    names(xVarVn) <- 1:length(xVarVn)
-    xVarVn <- sort(xVarVn)
-    xVarSorVin <- as.numeric(names(xVarVn[seq(1, length(xVarVn), length = opl$suppLs[["topLoadI"]])]))
-    opl$suppLs[["xSubIncVarMN"]] <- xMN[, xVarSorVin, drop = FALSE]
-  } else{
-    opl$suppLs[["xSubIncVarMN"]] <- xMN
-  }
-  
-  if(ncol(xMN) <= 100) {
-    xCorMN <- cor(xMN, use = "pairwise.complete.obs")
-    xCorMN[lower.tri(xCorMN, diag = TRUE)] <- 0
-    
-    if(ncol(xMN) > opl$suppLs[["topLoadI"]]) {
-      xCorNexDF <- which(abs(xCorMN) >= sort(abs(xCorMN), decreasing = TRUE)[opl$suppLs[["topLoadI"]] + 1],
-                         arr.ind = TRUE);
-      xCorDisMN <- matrix(0,
-                          nrow = nrow(xCorNexDF),
-                          ncol = nrow(xCorNexDF),
-                          dimnames = list(colnames(xMN)[xCorNexDF[, "row"]],
-                                          colnames(xMN)[xCorNexDF[, "col"]]))
-      
-      for(k in 1:nrow(xCorDisMN)){
-        xCorDisMN[k, k] <- xCorMN[xCorNexDF[k, "row"], xCorNexDF[k, "col"]]
-      }
-    } else {
-      xCorDisMN <- xCorMN
-    }
-    opl$suppLs[["xCorMN"]] <- xCorDisMN
-    rm(xCorDisMN)
-  }
-  return(invisible(opl))
-}
-
-.coreOPLS <- function (xMN, yMCN, orthoI, predI, scaleC, crossvalI) {
-  epsN <- .Machine[["double.eps"]]
-  varVn <- NULL
-  yMeanVn <- NULL
-  ySdVn <- NULL
-  wMN <- NULL
-  cMN <- NULL
-  uMN <- NULL
-  rMN <- NULL
-  bMN <- NULL
-  vipVn <- NULL
-  yPreMN <- NULL
-  yTesMN <- NULL
-  toMN <- NULL
-  poMN <- NULL
-  woMN <- NULL
-  coMN <- NULL
-  orthoVipVn <- NULL
-  naxVi <- which(is.na(c(xMN)))
-  naxL <- length(naxVi) > 0
-  nayVi <- integer()
-  nayL <- FALSE;
-  yMN <- yMCN;
-  
-  obsNamVc <- rownames(xMN)
-  
-  autNcoL <- autNcpL <- FALSE
-  autMaxN <- min(c(10, dim(xMN)))
-  if (is.na(orthoI)) {
-    if (autMaxN == 1) {
-      orthoI <- 0
-      predI <- 1
-      warning("The data contain a single variable (or sample): A PLS model with a single component will be built", 
-              call. = FALSE)
-    }
-    else {
-      orthoI <- autMaxN - 1
-      predI <- 1
-      autNcoL <- TRUE
-    }
-  }
-  if (is.na(predI)) {
-    if (orthoI > 0) {
-      if (autMaxN == 1) {
-        orthoI <- 0
-        warning("The data contain a single variable (or sample): A PLS model with a single component will be built", 
-                call. = FALSE)
-      }
-      else warning("OPLS(-DA): The number of predictive component is set to 1 for a single response model", 
-                   call. = FALSE)
-      predI <- 1
-      if ((predI + orthoI) > min(dim(xMN))) 
-        stop("The sum of 'predI' (", predI, ") and 'orthoI' (", 
-             orthoI, ") exceeds the minimum dimension of the 'x' data matrix (", 
-             min(dim(xMN)), ")", call. = FALSE)
-    }
-    else {
-      predI <- autMaxN
-      autNcpL <- TRUE
-    }
-  }
-  xVarVn <- apply(xMN, 2, function(colVn) var(colVn, na.rm = TRUE))
-  xMeanVn <- apply(xMN, 2, function(colVn) mean(colVn, na.rm = TRUE))
-  switch(scaleC, none = {
-    xMeanVn <- rep(0, ncol(xMN))
-    xSdVn <- rep(1, times = ncol(xMN))
-  }, center = {
-    xSdVn <- rep(1, times = ncol(xMN))
-  }, pareto = {
-    xSdVn <- apply(xMN, 2, function(colVn) sqrt(sd(colVn, 
-                                                   na.rm = TRUE)))
-  }, standard = {
-    xSdVn <- apply(xMN, 2, function(colVn) sd(colVn, na.rm = TRUE))
-  })
-  xMN <- scale(xMN, center = xMeanVn, scale = xSdVn)
-  if (!is.null(colnames(xMN))) {
-    xvaNamVc <- colnames(xMN)
-  }
-  else xvaNamVc <- paste("x", 1:ncol(xMN), sep = "")
-  preNamVc <- paste("p", 1:predI, sep = "")
-  pMN <- matrix(0, nrow = ncol(xMN), ncol = predI, dimnames = list(xvaNamVc, 
-                                                                   preNamVc))
-  tMN <- uMN <- matrix(0, nrow = nrow(xMN), ncol = predI, dimnames = list(obsNamVc, 
-                                                                          preNamVc))
-  ssxTotN <- sum(xMN^2, na.rm = TRUE)
-  
-  yMeanVn <- apply(yMN, 2, function(colVn) mean(colVn,na.rm = TRUE))
-  
-  yMeanVn <- rep(0, times = ncol(yMN))
-  ySdVn <- rep(1, times = ncol(yMN))
-  yMN <- scale(yMN, center = yMeanVn, scale = ySdVn)
-  yvaNamVc <- paste("y", 1:ncol(yMN), sep = "")
-  wMN <- pMN
-  uMN <- tMN
-  cMN <- matrix(0, nrow = ncol(yMN), ncol = predI, dimnames = list(yvaNamVc, preNamVc))
-  cvfNamVc <- paste("cv", 1:crossvalI, sep = "")
-  cvfOutLs <- split(1:nrow(xMN), rep(1:crossvalI, length = nrow(xMN)))
-  prkVn <- numeric(crossvalI)
-  ru1ThrN <- ifelse(orthoI == 0, ifelse(nrow(xMN) > 100, yes = 0, no = 0.05), 0.01)
-  ssyTotN <- rs0N <- sum(yMN^2, na.rm = TRUE)
-  hN <- 1
-  
-  orthoNamVc <- paste("o", 1:orthoI, sep = "");
-  toMN <- matrix(0, nrow = nrow(xMN), ncol = orthoI, 
-                 dimnames = list(obsNamVc, orthoNamVc));
-  woMN <- poMN <- matrix(0, nrow = ncol(xMN), ncol = orthoI, 
-                         dimnames = list(xvaNamVc, orthoNamVc));
-  coMN <- matrix(0, nrow = ncol(yMN), ncol = orthoI, 
-                 dimnames = list(yvaNamVc, orthoNamVc));
-  modelDF <- as.data.frame(matrix(NA, nrow = 1 + orthoI + 
-                                    1, ncol = 7, dimnames = list(c("p1", orthoNamVc, 
-                                                                   "sum"), c("R2X", "R2X(cum)", "R2Y", "R2Y(cum)", 
-                                                                             "Q2", "Q2(cum)", "Signif."))));
-  for (j in 1:ncol(modelDF)){ 
-    mode(modelDF[, j]) <- ifelse(colnames(modelDF)[j] == "Signif.", "character", "numeric")
-  }
-  xcvTraLs <- lapply(cvfOutLs, function(obsVi) xMN[-obsVi, , drop = FALSE])
-  xcvTesLs <- lapply(cvfOutLs, function(obsVi) xMN[obsVi, , drop = FALSE])
-  ycvTraLs <- lapply(cvfOutLs, function(obsVi) yMN[-obsVi, , drop = FALSE])
-  ycvTesLs <- lapply(cvfOutLs, function(obsVi) yMN[obsVi, , drop = FALSE])
-  xcvTraLs <- c(xcvTraLs, list(xMN))
-  ycvTraLs <- c(ycvTraLs, list(yMN))
-  breL <- FALSE
-  
-  for (noN in 1:(orthoI + 1)) {
-    if (breL){
-      break
-    }
-    for (cvN in 1:length(xcvTraLs)) {
-      
-      xcvTraMN <- xcvTraLs[[cvN]]
-      ycvTraMN <- ycvTraLs[[cvN]]
-      if (ncol(ycvTraMN) > 1) {
-        wwMN <- apply(ycvTraMN, 2, function(colVn) crossprod(xcvTraMN, colVn)/drop(crossprod(colVn)))
-        wwSvdLs <- svd(wwMN)
-        wwNcpVin <- which(wwSvdLs[["d"]]^2 > epsN * sum(wwSvdLs[["d"]]^2))
-        twMN <- wwSvdLs[["u"]][, wwNcpVin, drop = FALSE] %*% diag(wwSvdLs[["d"]][wwNcpVin], nrow = length(wwNcpVin))
-      }
-      uOldVn <- ycvTraMN[, 1, drop = FALSE]
-      repeat {
-        wVn <- crossprod(xcvTraMN, uOldVn)/drop(crossprod(uOldVn))
-        wVn <- wVn/sqrt(drop(crossprod(wVn)))
-        tVn <- xcvTraMN %*% wVn
-        cVn <- crossprod(ycvTraMN, tVn)/drop(crossprod(tVn))
-        uVn <- ycvTraMN %*% cVn/drop(crossprod(cVn))
-        dscN <- drop(sqrt(crossprod((uVn - uOldVn)/uVn)))
-        if (ncol(ycvTraMN) == 1 || dscN < 1e-10) {
-          break
-        }else {
-          uOldVn <- uVn
-        }
-      }
-      pVn <- crossprod(xcvTraMN, tVn)/drop(crossprod(tVn))
-      if (ncol(ycvTraMN) > 1){
-        for (j in 1:ncol(twMN)) {
-          woVn <- pVn - drop(crossprod(twMN[, 
-                                            j, drop = FALSE], pVn))/drop(crossprod(twMN[, 
-                                                                                        j, drop = FALSE])) * twMN[, j, drop = FALSE];
-        }
-      } else {
-        woVn <- pVn - drop(crossprod(wVn, pVn))/drop(crossprod(wVn)) * wVn
-      }
-      woVn <- woVn/sqrt(drop(crossprod(woVn)))
-      toVn <- xcvTraMN %*% woVn
-      coVn <- crossprod(ycvTraMN, toVn)/drop(crossprod(toVn))
-      poVn <- crossprod(xcvTraMN, toVn)/drop(crossprod(toVn))
-      
-      if (cvN <= crossvalI) {
-        xcvTesMN <- xcvTesLs[[cvN]]
-        ycvTesMN <- ycvTesLs[[cvN]]
-        if (any(is.na(xcvTesMN))) {
-          prxVn <- numeric(nrow(xcvTesMN))
-          for (r in 1:length(prxVn)) {
-            comVl <- complete.cases(xcvTesMN[r, ])
-            prxVn[r] <- crossprod(xcvTesMN[r, comVl], wVn[comVl])/drop(crossprod(wVn[comVl]))
-          }
-          prkVn[cvN] <- sum((ycvTesMN - prxVn %*% t(cVn))^2, na.rm = TRUE)
-        } else { 
-          prkVn[cvN] <- sum((ycvTesMN - xcvTesMN %*% wVn %*% t(cVn))^2, na.rm = TRUE)
-        }
-        toTesVn <- xcvTesMN %*% woVn
-        xcvTesLs[[cvN]] <- xcvTesMN - tcrossprod(toTesVn, poVn)
-        if (cvN == crossvalI) {
-          q2N <- 1 - sum(prkVn)/rs0N
-          if (noN == 1) {
-            modelDF["p1", "Q2(cum)"] <- modelDF["p1", "Q2"] <- q2N
-          } else {
-            modelDF[noN, "Q2(cum)"] <- q2N - modelDF["p1", "Q2"]
-            modelDF[noN, "Q2"] <- q2N - sum(modelDF[1:(noN - 1), "Q2"], na.rm = TRUE)
-          }
-        }
-      } else {
-        r2yN <- sum(tcrossprod(tVn, cVn)^2)/ssyTotN
-        if (noN == 1) {
-          modelDF["p1", "R2Y(cum)"] <- modelDF["p1", "R2Y"] <- r2yN
-        } else {
-          modelDF[noN, "R2Y(cum)"] <- r2yN - modelDF["p1", "R2Y"]
-          modelDF[noN, "R2Y"] <- r2yN - sum(modelDF[1:(noN - 1), "R2Y"], na.rm = TRUE)
-        }
-        if (noN <= orthoI) {
-          modelDF[paste0("o", noN), "R2X"] <- sum(tcrossprod(toVn,poVn)^2)/ssxTotN
-          poMN[, noN] <- poVn
-          toMN[, noN] <- toVn
-          woMN[, noN] <- woVn
-          coMN[, noN] <- coVn
-        }
-        
-        if (!is.na(modelDF[noN, "R2Y"]) & modelDF[noN, "R2Y"] < 0.01) {
-          modelDF[noN, "Signif."] <- "N4"
-        } else if (!is.na(modelDF[noN, "Q2"]) & modelDF[noN, "Q2"] < ru1ThrN) {
-          modelDF[noN, "Signif."] <- "NS"
-        } else {
-          modelDF[noN, "Signif."] <- "R1"
-        }
-        
-        if (autNcoL && modelDF[noN, "Signif."] !=  "R1" && noN > 2) {
-          breL <- TRUE
-          break
-        } else {
-          cMN[, 1] <- cVn
-          pMN[, 1] <- pVn
-          tMN[, 1] <- tVn
-          uMN[, 1] <- uVn
-          wMN[, 1] <- wVn
-        }
-      }
-      if (breL) {
-        break;
-      }
-      if (noN < orthoI + 1){
-        xcvTraLs[[cvN]] <- xcvTraMN - tcrossprod(toVn, poVn);
-      }
-    }
-  }
-  
-  rm(xcvTraLs)
-  rm(xcvTesLs)
-  rm(ycvTraLs)
-  
-  modelDF["p1", "R2X(cum)"] <- modelDF["p1", "R2X"] <- sum(tcrossprod(tMN, pMN)^2)/ssxTotN
-  modelDF[1:(1 + orthoI), "R2X(cum)"] <- cumsum(modelDF[1:(1 + orthoI), "R2X"]);
-  
-  if (autNcoL) {
-    if (all(modelDF[, "Signif."] == "R1", na.rm = TRUE)) {
-      orthoI <- noN - 1
+    if(exists("comp.var.nums") && all(comp.var.nums > 0)){
+      comp.var.nums <- ceiling(comp.var.nums);
     }else{
-      orthoI <- noN - 3
+      msg <- c("All values need to be positive integers!");
+      return(0);
     }
-    
-    if (orthoI == autMaxN - 1){ 
-      warning("The maximum number of orthogonal components in the automated mode (", 
-              autMaxN - 1, ") has been reached whereas R2Y (", 
-              round(modelDF[1 + orthoI, "R2Y"] * 100), 
-              "%) is above 1% and Q2Y (", round(modelDF[1 + 
-                                                          orthoI, "Q2"] * 100), "%) is still above ", 
-              round(ru1ThrN * 100), "%.", call. = FALSE)
-    }
-    poMN <- poMN[, 1:orthoI, drop = FALSE]
-    toMN <- toMN[, 1:orthoI, drop = FALSE]
-    woMN <- woMN[, 1:orthoI, drop = FALSE]
-    coMN <- coMN[, 1:orthoI, drop = FALSE]
-    orthoNamVc <- orthoNamVc[1:orthoI]
-    modelDF <- modelDF[c(1:(orthoI + 1), nrow(modelDF)), ]
+  }
+
+  mSetObj <- .get.mSet(mSetObj);  
+  
+  # note, standardize the cls, to minimize the impact of categorical to numerical impact
+  cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+
+  if(.on.public.web){ # this is done by R microservice
+      spls.in <- list(datmat=datmat, cls=cls, ncomp=comp.num, keepX=comp.var.nums, validOpt=validOpt);
+      saveRDS(spls.in, "spls_in.rds");
+      return(.set.mSet(mSetObj));
+  }
+
+  mSetObj$analSet$splsr <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
+
+  # perform validation
+  res <- perf.splsda(mSetObj$analSet$splsr, dist= "centroids.dist", validation=validOpt, folds = 5);
+  mSetObj$analSet$splsr$error.rate <- res$error.rate$overall;
+
+  score.mat <- mSetObj$analSet$splsr$variates$X;
+  write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
+  load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;
+  write.csv(signif(load.mat,5), file="splsda_loadings.csv");
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) pairwise summary plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, indicate the number of principle components
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.pair <- imgName;
+  
+  if(pc.num > mSetObj$analSet$splsr$ncomp){
+    pc.num <- mSetObj$analSet$splsr$ncomp;
+  }
+  vars <- round(100*mSetObj$analSet$splsr$explained_variance$X,1);
+  my.data <- mSetObj$analSet$splsr$variates$X[,1:pc.num];
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
+  ellipse::pairs(my.data, col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Score Plot SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric, between 1 and 0
+#'@param show Numeric, 1 or 0
+#'@param grey.scale Numeric, use grey-scale, 0 for no, and 1 for yes. 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.score2d <- imgName;
+  
+  lv1 <- mSetObj$analSet$splsr$variates$X[,inx1];
+  lv2 <- mSetObj$analSet$splsr$variates$X[,inx2];
+  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx1],1), "%)");
+  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,3,3));
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  
+  # obtain ellipse points to the scatter plot for each category
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
   }
   
-  modelDF["sum", "R2X(cum)"] <- modelDF[1 + orthoI, "R2X(cum)"]
-  modelDF["sum", "R2Y(cum)"] <- sum(modelDF[, "R2Y"], na.rm = TRUE)
-  modelDF["sum", "Q2(cum)"] <- sum(modelDF[, "Q2"], na.rm = TRUE)
-  summaryDF <- modelDF["sum", c("R2X(cum)", "R2Y(cum)", "Q2(cum)")]
-  rMN <- wMN
-  bMN <- tcrossprod(rMN, cMN)
-  yPreScaMN <- tcrossprod(tMN, cMN)
-  yPreMN <- scale(scale(yPreScaMN, FALSE, 1/ySdVn), -yMeanVn, FALSE)
-  attr(yPreMN, "scaled:center") <- NULL
-  attr(yPreMN, "scaled:scale") <- NULL
+  lvs <- levels(cls);
+  pts.array <- array(0, dim=c(100,2,length(lvs)));
+  for(i in 1:length(lvs)){
+    inx <- mSetObj$dataSet$cls == lvs[i];
+    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
+    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
+    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  }
   
-  yActMCN <- yMCN
-  yActMN <- yActMCN
-  summaryDF[, "RMSEE"] <- sqrt(.errorF(yActMN, yPreMN)^2 * nrow(yActMN)/(nrow(yActMN) - (1 + predI + orthoI)))
-  yTestMCN <- NULL
+  xrg <- range(lv1, pts.array[,1,]);
+  yrg <- range(lv2, pts.array[,2,]);
+  x.ext <- (xrg[2]-xrg[1])/12;
+  y.ext <- (yrg[2]-yrg[1])/12;
+  xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);
+  ylims <- c(yrg[1]-y.ext, yrg[2]+y.ext);
   
-  sxpVn <- sapply(1:ncol(tMN), function(h) sum(drop(tcrossprod(tMN[, h], pMN[, h])^2)))
-  sxpCumN <- sum(sxpVn)
-  sxoVn <- sapply(1:ncol(toMN), function(h) sum(drop(tcrossprod(toMN[, h], poMN[, h])^2)))
-  sxoCumN <- sum(sxoVn)
-  ssxCumN <- sxpCumN + sxoCumN
-  sypVn <- sapply(1:ncol(tMN), function(h) sum(drop(tcrossprod(tMN[, h], cMN[, h])^2)))
-  sypCumN <- sum(sypVn)
-  syoVn <- sapply(1:ncol(toMN), function(h) sum(drop(tcrossprod(toMN[, 
-                                                                     h], coMN[, h])^2)))
-  syoCumN <- sum(syoVn)
-  ssyCumN <- sypCumN + syoCumN
-  kpN <- nrow(wMN)/(sxpCumN/ssxCumN + sypCumN/ssyCumN)
-  pNorMN <- sweep(pMN, 2, sqrt(colSums(pMN^2)), "/")
-  vipVn <- sqrt(kpN * (rowSums(sweep(pNorMN^2, 2, sxpVn, 
-                                     "*"))/ssxCumN + rowSums(sweep(pNorMN^2, 2, sypVn, 
-                                                                   "*"))/ssyCumN))
-  koN <- nrow(wMN)/(sxoCumN/ssxCumN + syoCumN/ssyCumN)
-  poNorMN <- sweep(poMN, 2, sqrt(colSums(poMN^2)),"/")
-  orthoVipVn <- sqrt(koN * (rowSums(sweep(poNorMN^2, 
-                                          2, sxoVn, "*"))/ssxCumN + rowSums(sweep(poNorMN^2, 
-                                                                                  2, syoVn, "*"))/ssyCumN))
+  ## cols = as.numeric(dataSet$cls)+1;
+  cols <- GetColorSchema(mSetObj, grey.scale==1);
+  uniq.cols <- unique(cols);
   
-  summaryDF[, "pre"] <- predI
-  summaryDF[, "ort"] <- orthoI
-  rownames(summaryDF) <- "Total"
-  sigNamVc <- c("R2X", "R2X(cum)", "R2Y", "R2Y(cum)", "Q2", 
-                "Q2(cum)", "RMSEE", "RMSEP")
-  for (namC in intersect(colnames(modelDF), sigNamVc)) modelDF[, 
-                                                               namC] <- signif(modelDF[, namC], 3)
-  for (namC in intersect(colnames(summaryDF), sigNamVc)) summaryDF[, 
-                                                                   namC] <- signif(summaryDF[, namC], 3)
-  retLs <- list(typeC = NULL, modelDF = modelDF, 
-                summaryDF = summaryDF, pcaVarVn = varVn, 
-                vipVn = vipVn, orthoVipVn = orthoVipVn, fitted = NULL, 
-                tested = NULL, coefficients = bMN, residuals = NULL, 
-                xMeanVn = xMeanVn, xSdVn = xSdVn, yMeanVn = yMeanVn, 
-                ySdVn = ySdVn, xZeroVarVi = NULL, scoreMN = tMN, loadingMN = pMN, 
-                weightMN = wMN, orthoScoreMN = toMN, orthoLoadingMN = poMN, 
-                orthoWeightMN = woMN, cMN = cMN, uMN = uMN, weightStarMN = rMN, 
-                coMN = coMN, suppLs = list(yLevelVc = NULL, naxL = naxL, nayL = nayL, nayVi = nayVi, 
-                                           permMN = NULL, scaleC = scaleC, topLoadI = NULL, 
-                                           yMCN = yMCN, xSubIncVarMN = NULL, xCorMN = NULL, 
-                                           xModelMN = xMN, yModelMN = yMN, yPreMN = yPreMN, 
-                                           yTesMN = yTesMN))
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  
+  # make sure name and number of the same order DO NOT USE levels, which may be different
+  legend.nm <- unique(as.character(sort(cls)));
+  ## uniq.cols <- unique(cols);
+  
+  ## BHAN: when same color is choosen for black/white; it makes an error
+  # names(uniq.cols) <- legend.nm;
+  if (length(uniq.cols) > 1) {
+    names(uniq.cols) <- legend.nm;
+  }
+  # draw ellipse
+  for(i in 1:length(lvs)){
+    if (length(uniq.cols) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+    } else {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+    }
+    if(grey.scale) {
+      lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
+    }
+  }
+  
+  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  if(grey.scale) {
+    cols <- rep("black", length(cols));
+  }
+  if(show==1){ # display sample name set on
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    points(lv1, lv2, pch=pchs, col=cols);
+  }else{
+    if (length(uniq.cols) == 1) {
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+    } else {
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+      }else{
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+      }
+    }
+  }
+  
+  uniq.pchs <- unique(pchs);
+  if(grey.scale) {
+    uniq.cols <- "black";
+  }
+  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
 }
 
-.errorF <- function(x, y){
-  sqrt(mean(drop((x - y)^2), na.rm = TRUE))
+#'3D SPLS-DA score plot
+#'@description Sparse PLS-DA (from mixOmics) 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  spls3d <- list();
+  # need to check if only two components are generated
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2)], 5)));
+    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2, inx3)], 5)));
+  }
+  colnames(coords) <- NULL; 
+  spls3d$score$xyz <- coords;
+  spls3d$score$name <- rownames(mSetObj$dataSet$norm);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  spls3d$score$facA <- cls;
+  
+  # now set color for each group
+  cols <- unique(GetColorSchema(mSetObj));
+  rgbcols <- col2rgb(cols);
+  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
+  spls3d$score$colors <- cols;
+  
+  imgName = paste(imgName, ".", format, sep="");
+  json.obj <- RJSONIO::toJSON(spls3d, .na='null');
+  sink(imgName);
+  cat(json.obj);
+  sink();
+  mSetObj$imgSet$spls.score3d <- imgName;
+  return(.set.mSet(mSetObj));
 }
 
-.similarityF <- function(x, y) {
-  return(cor(x, y, use = "pairwise.complete.obs"))
-} 
+PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  spls = mSetObj$analSet$splsr
+  spls3d <- list();
+
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
+    spls3d$loading$axis <- c(spls3d$loading$axis, "Loading 3");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
+  }
+    
+    colnames(coords) <- NULL; 
+    spls3d$loading$xyz <- coords;
+    spls3d$loading$name <- rownames(spls$loadings$X);
+    spls3d$loading$entrez <-rownames(spls$loadings$X); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+
+  spls3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- RJSONIO::toJSON(spls3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  return(1);
+}
+
+
+#'Create SPLS-DA loading plot
+#'@description Sparse PLS-DA (from mixOmics) loading plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param inx Input the model index
+#'@param viewOpt Detailed view "detail" 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx, viewOpt="detail"){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imp.vec <- abs(mSetObj$analSet$splsr$loadings$X[,inx]);
+  imp.vec <- imp.vec[imp.vec > 0];
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+    
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.imp <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
+  dev.off();
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Create SPLS-DA classification plot
+#'@description Sparse PLS-DA (from mixOmics) plot of 
+#'classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param validOpt "Mfold"
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@import caret
+PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  res <- mSetObj$analSet$splsr$error.rate;
+  
+  edge <- (max(res)-min(res))/100; # expand y uplimit for text
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*6/8;
+  
+  mSetObj$imgSet$splsda.class <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  plot(res, type='l', xlab='Number of Components', ylab='Error Rate',
+       ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
+       main="Sparse PLS-DA Classification Error Rates")
+  text(res, labels = paste(100*round(res,3),'%'), adj=c(-0.3, -0.5), srt=45, xpd=T)
+  axis(2);
+  axis(1, 1:length(res), names(res));
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
 
 ##############################################
 ##############################################
@@ -2395,52 +2348,59 @@ GetOPLSLoadMat <- function(mSetObj=NA){
   as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
 }
 
-#'Compute within group and between group sum of squares
-#'(BSS/WSS) for each row of a matrix which may have NA
-#'@description Columns have labels, x is a numeric vector,
-#'cl is consecutive integers
-#'@param x Numeric vector
-#'@param cl Columns
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
+GetDefaultSPLSCVComp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return (min(5, dim(mSetObj$dataSet$norm)[1]-2, dim(mSetObj$dataSet$norm)[2], mSetObj$dataSet$min.grp.size));
+}
 
-Get.bwss<-function(x, cl){
-  K <- max(cl) - min(cl) + 1
-  tvar <- var.na(x);
-  tn <- sum(!is.na(x));
-  wvar <- wn <- numeric(K);
-  
-  for(i in (1:K)) {
-    if(sum(cl == (i + min(cl) - 1)) == 1){
-      wvar[i] <- 0;
-      wn[i] <- 1;
-    }
-    
-    if(sum(cl == (i + min(cl) - 1)) > 1) {
-      wvar[i] <- var.na(x[cl == (i + min(cl) - 1)]);
-      wn[i] <- sum(!is.na(x[cl == (i + min(cl) - 1)]));
-    }
+GetDefaultSPLSPairComp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return (min(5, dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
+}
+
+GetSPLS_CVRowNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$splsda$fit.info);
+}
+
+GetSPLS_CVColNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  colnames(mSetObj$analSet$splsda$fit.info);
+}
+
+GetSPLS_CVMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(signif(mSetObj$analSet$splsda$fit.info, 5));
+}
+
+GetSPLSLoadAxesSpec <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$pls.axis.lims;
+}
+
+GetSPLSLoadCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$splsr$loadings$X);
+}
+
+GetSPLSLoadCmpdInxs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$splsr$load.x.uniq;
+}
+
+GetSPLSLoadMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.matrix(signif(mSetObj$analSet$splsr$loadings$X, 5));
+}
+
+GetSPLSSigColNames <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "vip"){
+    return (colnames(mSetObj$analSet$splsda$vip.mat));
+  }else if(type == "coef"){
+    return (colnames(mSetObj$analSet$splsda$coef.mat));
+  }else{
+    return (colnames(mSetObj$analSet$splsr$loadings$X));
   }
-  
-  WSS <- sum.na(wvar * (wn - 1));
-  TSS <- tvar * (tn - 1)
-  (TSS - WSS)/WSS;
 }
 
-sum.na <- function(x,...){
-  res <- NA
-  tmp <- !(is.na(x) | is.infinite(x))
-  if(sum(tmp) > 0)
-    res <- sum(x[tmp])
-  res
-}
-
-var.na <- function(x){
-  res <- NA
-  tmp <- !(is.na(x) | is.infinite(x))
-  if(sum(tmp) > 1){
-    res <- var(x[tmp])
-  }
-  res
-}

@@ -104,8 +104,6 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
 
   # now, perform the enrichment analysis
   set.size <- length(current.msetlib);
@@ -113,6 +111,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
     return(0);
   }
+
+  mSetObj <- .get.mSet(mSetObj);
 
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
@@ -133,15 +133,23 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
 
+  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
+
   # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
-  
+  mSetObj$analSet$qea.hits <- hits;
+  mSetObj$analSet$msea.data <- msea.data;
+
   phenotype <- mSetObj$dataSet$cls;
   
+  if(.on.public.web){ # this is done by R microservice
+     mset.in <- list(cls=phenotype, data=msea.data, subsets=hits, set.num=set.num);
+     saveRDS(mset.in, "mset_in.rds");
+     return(.set.mSet(mSetObj));
+  }  
   # this step is very slow
   gt.obj <- globaltest::gt(phenotype, msea.data, subsets=hits);
   gt.res <- globaltest::result(gt.obj);
-  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
   
   match.num <- gt.res[,5];
   if(sum(match.num>0)==0){
@@ -166,15 +174,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   
   mSetObj$analSet$qea.msea <- gt.obj;
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
-  mSetObj$analSet$qea.hits <- hits;
   
-  gc();
   write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
-    return(1);
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -503,4 +504,3 @@ GetQEATable<-function(mSetObj=NA){
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }
 }
-

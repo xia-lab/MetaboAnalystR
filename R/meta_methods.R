@@ -131,7 +131,7 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   AddMsg(studyinfo)
   mSetObj$dataSet$studyinfo <- studyinfo
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     if(length(sel.nms) == 1){
       .set.mSet(mSetObj)
       return(2);
@@ -258,7 +258,7 @@ PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
   meta.mat <<- pc.mat[sig.inx, ];
   SetupMetaStats(BHth);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(length(sig.inx));
   }else{
@@ -331,7 +331,7 @@ PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
   meta.mat <<- vc.mat[sig.inx, ,drop=F];
   SetupMetaStats(BHth);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(sum(sig.inx));
   }else{
@@ -378,7 +378,7 @@ PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
   meta.mat <<- dm.mat[sig.inx,];
   SetupMetaStats(BHth);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj)
     return(length(sig.inx));
   }else{
@@ -709,7 +709,7 @@ PrepareVennData <- function(mSetObj=NA){
   
   PlotMetaVenn(mSetObj, "venn_diagram");
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
@@ -809,7 +809,7 @@ GetSelectedDataNumber <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     return(length(venn.list));
   }else{
     return(.set.mSet(mSetObj));
@@ -823,7 +823,7 @@ GetSelectedDataNames <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     return(paste(names(venn.list), collapse=";"));
   }else{
     return(.set.mSet(mSetObj));
@@ -847,7 +847,7 @@ GetVennGeneNames <- function(mSetObj=NA, areas){
   gene.vec <- unique(gene.vec);
   names(gene.vec) <- gene.vec;
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     venn.genes <<- gene.vec;
     return(paste(unique(gene.vec), collapse="||"));
   }else{

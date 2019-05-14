@@ -123,7 +123,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
                     min.score = min.score
                 );
 
-    if(.on.public.web==TRUE){
+    if(.on.public.web){
       return(c(nrow(node.res), nrow(res)));
     }else{
       return(.set.mSet(mSetObj));

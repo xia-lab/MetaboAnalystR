@@ -185,9 +185,14 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   # auc
   auc <- caTools::colAUC(x, y, plotROC=F)[1,];
   
-  # t-t pvalues
-  ttp <- GetROCTtestP(x, y);
-  
+  # t-t pvalues, check if microservice already done this
+  if(.on.public.web & RequireFastT()){
+     res <- readRDS("fastt_out.rds");
+     ttp <- res$p.vals;
+  }else{
+     ttp <- GetROCTtestP(x, y);
+  }
+
   # fold change
   # use non-transformed data, then log2
   if(mSetObj$dataSet$use.ratio){
@@ -900,7 +905,8 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   
   mSetObj <- .get.mSet(mSetObj);
   
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  imgName1 = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   x <- mSetObj$dataSet$norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
   
@@ -915,28 +921,27 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
     roc.obj <- pROC::roc(y, x, percent = F);
   }
   
-  w <- 9; h <- 6;
+  w <- h <- 6; 
   
-  mSetObj$imgSet$roc.univ.plot <- imgName;
-  mSetObj$imgSet$roc.univ.name <- feat.nm
+  mSetObj$imgSet$roc.univ.plot <- imgName1;
+  mSetObj$imgSet$roc.univ.name <- feat.nm;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  lmat <- cbind(1,2);
-  layout(lmat, widths = c(2,1));
-  par(oma = c(0,0,2,0));
-  par(mar=c(4,3,3,1));
+  Cairo::Cairo(file = imgName1, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(oma=c(0,0,1,0));
+  par(mar=c(4,4,4,4)+.1);
   
   opt.thresh = NA;
   
+  # first plot ROC curve
   if(isAUC){
     pROC::plot.roc(roc.obj, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
-             xlab = "False positive rate", ylab="True positive rate");
+             xlab = "False positive rate", ylab="True positive rate", main=feat.nm);
     ci.obj <- pROC::ci.se(roc.obj, specificities=seq(0, 1, 0.05), boot.n=200, progress="none");
     ROCR::plot(ci.obj,type="shape",col="#0000ff22");
   }else{
     pROC::plot.roc(roc.obj, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
              xlab = "False positive rate", ylab="True positive rate",
-             auc.polygon=TRUE, auc.polygon.col="#0000ff22");
+             auc.polygon=TRUE, auc.polygon.col="#0000ff22", main=feat.nm);
   }
   
   auc.ci <- pROC::ci.auc(roc.obj, method="bootstrap", boot.n=500, progress="none");
@@ -953,23 +958,61 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
     lbls=paste(signif(opt.ps["threshold",],3), "(", round(opt.ps["specificity",],1), ", ", round(opt.ps["sensitivity",],1), ")", sep="");
     text(opt.ps["specificity",], opt.ps["sensitivity",], adj=c(-.05,1.25), label=lbls);
   }
+
+  dev.off();
   
-  x <- mSetObj$dataSet$norm[, feat.nm];
+  mSetObj$analSet$opt.thresh <- opt.thresh
+
+  return(.set.mSet(mSetObj));
+}
+
+PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, isQuery){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_ggplot()
+  }
+
+  feat.nm.clean <- gsub("boxplot", "", feat.nm)
+  feat.nm.clean <- gsub("_", "/", feat.nm.clean)
+    
+  x <- mSetObj$dataSet$norm[, feat.nm.clean];
   y <- mSetObj$dataSet$cls;
-  par(mar=c(4,2,2,2));
   
-  # first increase ylim by 1/12
-  ylim.ext <- GetExtendRange(x, 12);
-  boxplot(x ~ y, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5));
-  stripchart(x ~ y, method = "jitter", ylim=ylim.ext, vertical=T, add = T, pch=c(1,19), group.names = c("",""));
+  bpName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  scale <- dpi/72;
+  w <- 200*scale;
+  h <- 400*scale; 
+  
+  mSetObj$imgSet$roc.univ.boxplot <- bpName;
+  
+  Cairo::Cairo(file=bpName, width=w, height=h, type="png", bg="white", dpi=dpi);
+  
+  df <- data.frame(conc = x, class = y)
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=TRUE) + theme_bw() + geom_jitter(size=1)
+  p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+  p <- p + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, show.legend = FALSE)
+  p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"), axis.text = element_text(size=10))
+  p <- p + scale_fill_manual(values=c("#6262ef", "#FFAE20"))
   
   if(isOpt){
-    abline(h=opt.thresh, lty=2, col="red", lwd=1);
+    opt.thresh <- mSetObj$analSet$opt.thresh
+    p <- p + geom_hline(aes(yintercept=opt.thresh), colour="red")
   }
   
-  mtext(feat.nm, outer = TRUE);
-  dev.off();
-  return(.set.mSet(mSetObj));
+  if(isQuery){
+    thresh <- as.numeric(mSetObj$analSet$roc.obj$thresh)
+    print("thresh_bp")
+    print(thresh)
+    p <- p + geom_hline(aes(yintercept=thresh), colour="red")
+  }
+  
+  print(p)
+  dev.off()
+  return(.set.mSet(mSetObj))
+  
 }
 
 #'Plot a summary view of the classification result
@@ -1030,7 +1073,6 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
   }else{
     write.table(prob.res, file="roc_pred_prob1.csv", sep=",", col.names = TRUE);
   }
-  
   
   conf.res <- table(pred.out, act.cls);
   mSetObj$analSet$conf.table <- xtable::xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
@@ -2252,36 +2294,22 @@ PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="p
 
   roc.obj <- mSetObj$analSet$roc.obj;
   
-  w <- 9; h <- 6;
+  w <- h <- 6;
   mSetObj$imgSet$roc.univ <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  lmat<-cbind(1,2);
-  layout(lmat, widths = c(2,1));
-  par(oma = c(0,0,2,0));
-  par(mar=c(4,3,3,1));
+  par(oma = c(0,0,1,0));
+  par(mar=c(4,4,4,4) + .1);
   
   pROC::plot.roc(roc.obj, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
            xlab = "False positive rate", ylab="True positive rate",
-           auc.polygon=TRUE, auc.polygon.col="#0000ff22");
+           auc.polygon=TRUE, auc.polygon.col="#0000ff22", main=current.feat.nm);
   
   points(sp, se, cex=1.8, col="red");
-  
-  x <- mSetObj$dataSet$norm[, current.feat.nm];
-  y <- mSetObj$dataSet$cls;
-  par(mar=c(4,2,2,2));
-  
-  # first increase ylim by 1/12
-  ylim.ext <- GetExtendRange (x, 12);
-  boxplot(x ~ y, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5));
-  stripchart(x ~ y, method = "jitter", ylim=ylim.ext, vertical=T, add = T, pch=c(1,19), names = c("",""));
-  
-  if(!is.na(thresh)){
-    abline(h=thresh, lty=2, col="red", lwd=1);
-  }
-  mtext(current.feat.nm, outer = TRUE);
+
   dev.off();
   return(.set.mSet(mSetObj));
+  
 }
 
 ##############################################
@@ -2512,7 +2540,7 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   
   mSetObj$analSet$thresh.obj <- NULL;
   if(fld.nm == "threshold"){
-    ci.s <- ci.thresholds(mSetObj$analSet$roc.obj, boot.n=100, thresholds=val, progress="none");
+    ci.s <- pROC::ci.thresholds(mSetObj$analSet$roc.obj, boot.n=100, thresholds=val, progress="none");
     specs <- round(ci.s$specificity,3);
     sens <- round(ci.s$sensitivity, 3);
     res[2] <- paste(res[2], "(", specs[1], "-", specs[3], ")", sep="");
@@ -2526,6 +2554,8 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   }
   
   mythresh <- res[1];
+  print("mythresh")
+  print(mythresh)
   if(is.na(res[1])){
     if(fld.nm == "sensitivity"){
       fld.vals <- mSetObj$analSet$roc.obj$sensitivities;
@@ -2570,6 +2600,7 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   }
   if(plot){
     PlotDetailROC(mSetObj, imgNm, mythresh, sp, se);
+    mSetObj$analSet$roc.obj$thresh <- mythresh;
   }
   if(.on.public.web){
     .set.mSet(mSetObj)

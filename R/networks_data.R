@@ -266,7 +266,7 @@ PrepareQueryJson <- function(mSetObj=NA){
     cat(json.mat);
     sink();
 
-    if(.on.public.web==TRUE){
+    if(.on.public.web){
       return(1);
     }else{
       return(.set.mSet(mSetObj)); 
@@ -608,7 +608,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
   if(!exists("ko.node.map.global")){
     # Read original library files for a list of pathways with assigned compounds to each
     
-    if(.on.public.web==TRUE){
+    if(.on.public.web){
       pathway.lib <- readRDS(paste("../../libs/mummichog/", lib, sep=""));
     }else{
       if(!file.exists(lib)){
@@ -628,7 +628,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     
     # Read pathway names and ids in the target pathway map (e.g. ko01100)
     
-    if(.on.public.web==TRUE){
+    if(.on.public.web){
       ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));    
     }else{
       ko.pathway.names <- .readDataTable(paste("https://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    

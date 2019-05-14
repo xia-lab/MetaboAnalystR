@@ -222,7 +222,12 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(is.null(mSetObj$imgSet$roc.univ.plot)){
-    return()}
+    return()
+  }
+  
+  if(is.null(mSetObj$imgSet$roc.univ.boxplot)){
+    return()
+  }
   
   descr <- c("\\section{Classical ROC curve analysis}\n",
              "The aim of classical ROC curve analysis is to evaluate the performance of a single feature, either",
@@ -231,7 +236,11 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
              " the overall accuracy of different biomarkers. \n");
   cat(descr, file=rnwFile, append=TRUE);
   
-  descr <- paste("Figure", fig.count<<-fig.count+1, "ROC curve and boxplot for an individual biomarker.")
+  descr <- paste("Figure", fig.count<<-fig.count+1, "ROC curve of an individual biomarker.")
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  
+  descr <- paste("Figure", fig.count<<-fig.count+1, "Boxplot of an individual biomarker.")
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -240,14 +249,28 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   univbio<-c( "\\begin{figure}[htp]",
               "\\begin{center}",
               paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.univ.plot,"}", sep=""),
-              "\\caption{The left image is a ROC curve of an individual biomarker.",
+              "\\caption{The ROC curve of an individual biomarker.",
               " The sensitivity is on the y-axis, and the specificity is on the", 
-              " x-axis. The area-under-the-curve (AUC) is in blue. The right image", 
-              " is a box-plot of the two groups within the dataset.", 
-              " A horizontal line is in red indicating the optimal cutoff.",
+              " x-axis. The area-under-the-curve (AUC) is in blue.",
               "Selected individual biomarker name :", ft.name, "}",
               "\\end{center}",
               paste("\\label{",mSetObj$imgSet$roc.univ.plot,"}", sep=""),
+              "\\end{figure}",
+              "\\clearpage"
+  );
+  cat(univbio, file=rnwFile, append=TRUE, sep="\n");
+  
+  ft.name <- paste(mSetObj$imgSet$roc.univ.name);
+  
+  univbio<-c( "\\begin{figure}[htp]",
+              "\\begin{center}",
+              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.univ.boxplot,"}", sep=""),
+              "\\caption{Box-plot of the concentrations of the selected",
+              " feature between two groups within the dataset.", 
+              " A horizontal line is in red indicating the optimal cutoff.",
+              "Selected individual biomarker name :", ft.name, "}",
+              "\\end{center}",
+              paste("\\label{",mSetObj$imgSet$roc.univ.boxplot,"}", sep=""),
               "\\end{figure}",
               "\\clearpage"
   );

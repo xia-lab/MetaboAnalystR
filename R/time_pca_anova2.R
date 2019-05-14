@@ -405,6 +405,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
           them in mSet$imgSet$time$score3d and mSet$imgSet$time$load3d.")
     return(.set.mSet(mSetObj));
   }
+  save.image(file="time.RData")
 }
 
 
@@ -412,6 +413,11 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
 PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+
+  if(.on.public.web){
+    load_ggplot()
+    load_grid()
+  }
   
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_summary_dpi", dpi, ".", format, sep="");
@@ -474,7 +480,13 @@ PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, widt
     
     # two images per row
     img.num <- length(levels(out.fac));
-    row.num <- ceiling(img.num/2)
+    row.num <- ceiling(img.num/2);
+    
+    if(img.num > 2){
+      col.num=2
+    }else{
+      col.num=1
+    }
     
     if(row.num == 1){
       w <- h*5/9;
@@ -482,17 +494,33 @@ PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, widt
       w <- h*0.5*row.num;
     }
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    par(mar=c(3,4,4,2), mfrow=c(2, row.num));
-    # make sure all at the same range
-    ylim.ext <- GetExtendRange(mSetObj$dataSet$norm[, cmpdNm], 12);
+    
+    groupNum <- length(levels(in.fac))
+    pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C",
+              "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", 
+              "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928");
+    col.fun <- grDevices::colorRampPalette(pal12)
+    group_colors <- col.fun(groupNum)
+    
+    p_all <- list()
+    
     for(lv in levels(out.fac)){
       inx <- out.fac == lv;
-      dat <- mSetObj$dataSet$norm[inx, cmpdNm];
-      cls <- in.fac[inx];
-      boxplot(dat ~ cls, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), xlab=xlab, ylab="Abundance", main=lv);
-      stripchart(dat ~ cls, method = "jitter", ylim=ylim.ext, vertical=T, add = T, pch=19, cex=0.7, names = c("",""));
+      df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = in.fac[inx])
+      p_all[[lv]] <- df.orig
     }
-    dev.off();
+    
+    alldata <- do.call(rbind, p_all)
+    
+    p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot() + theme_bw() + geom_jitter(size=1) 
+    p.time <- p.time + facet_wrap(~facA, ncol=col.num) + theme(axis.title.x = element_blank(), legend.position = "none")
+    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
+    p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+    p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+  
+    print(p.time)
+    dev.off()
   }
   return(imgName);
 }

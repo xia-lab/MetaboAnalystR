@@ -15,7 +15,7 @@
 #'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   # clean the name, some contains space and special characters, will
   # cause trouble as image name
@@ -37,16 +37,66 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$qea.mset<-imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  gt.obj<-mSetObj$analSet$qea.msea;
-  inx <- which(names(gt.obj) == setNM);
-  if(is.factor(mSetObj$dataSet$cls)){
-    colors = unique(as.numeric(mSetObj$dataSet$cls))+1;
-    globaltest::features(gt.obj[inx], cex=0.8, colors=colors, cluster=F);
-  }else{
-    globaltest::features(gt.obj[inx], cex=0.8, cluster=F);
+  # hits in the current mset
+  mset <- current.msetlib$member[[setNM]];
+  hit.cmpds <- mSetObj$analSet$qea.hits[[setNM]];
+  hit.pvals <- mSetObj$analSet$qea.pvals[hit.cmpds];
+
+  #reorder based on p vals
+  ord.inx <- order(hit.pvals);
+  hit.cmpds <- hit.cmpds[ord.inx]; 
+  hit.pvals <- signif(hit.pvals[ord.inx],3); 
+
+  if(.on.public.web){
+    load_lattice()
   }
+
+  # get p values
+    mSetObj$analSet$qea.pvals[];
+
+  # need to reshape data to be one vector
+  num <- length(hit.cmpds);
+  len <- length(mSetObj$dataSet$cls);
+  conc.vec <- lbl.vec <- cls.vec <- NULL;
+  for(i in 1:num){
+        cmpd <- hit.cmpds[i];
+        conc.vec <- c(conc.vec, mSetObj$analSet$msea.data[,cmpd]);
+        cls.vec <- c(cls.vec, as.character(mSetObj$dataSet$cls));
+        cmpd.p <- paste(cmpd, " (p=", hit.pvals[i], ")", sep="");
+        lbl.vec <- c(lbl.vec, rep(cmpd.p, len));      
+  }
+  cls.vec <- as.factor(cls.vec);
+  lbl.vec <- as.factor(lbl.vec);
+  levels(lbl.vec) <- unique(lbl.vec); # make sure the same order as p value, rather by alphabetic
+
+  num <- length(hit.cmpds);
+  # calculate width based on the dataset number
+  if(num == 1){
+    Cairo::Cairo(file = imgName, width=360, height=320, type="png", bg="white");
+    myplot <- bwplot(conc.vec ~ cls.vec | lbl.vec, fill="#0000ff22",
+                     ylab="Relative abundance", main=hit.cmpds, scales=list(x=list(rot=30)))
+  }else{
+    if(num == 3){
+        layout <- c(3, 1);
+        width=600;
+        height=280;
+    }else{
+        # calculate layout
+        rn <- ceiling(num/2);
+        layout <- c(2, rn);
+        width=560;
+        height=250*rn;
+    }
+    Cairo::Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+
+    # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
+    myplot <- bwplot(conc.vec ~ cls.vec | lbl.vec, ylab="Relative abundance", scales=list(x=list(rot=30)),
+                     fill="#0000ff22", layout=layout, as.table=TRUE);
+  }
+  
+  print(myplot); 
   dev.off();
+
   mSetObj$imgSet$current.img <- imgName;
   
   if(.on.public.web){

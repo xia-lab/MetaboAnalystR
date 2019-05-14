@@ -219,7 +219,7 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     .set.mSet(mSetObj);
     return(1)
   }

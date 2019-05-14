@@ -63,6 +63,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   if(.on.public.web){
     lib.path <<- "../../data/";
+
     # disable parallel prcessing for public server
     library(BiocParallel);
     register(SerialParam());
@@ -736,19 +737,23 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  if(.on.public.web){
+    load_ggplot()
+    load_grid()
+  }
+  
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_summary_dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 9;
+    w <- 7.5;
   }else{
     w <- width;
   }
   
   if(substring(mSetObj$dataSet$format,4,5)!="ts"){
     
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
-    par(mar=c(4,4,2,2), mfrow = c(1,2), oma=c(0,0,2,0));
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*0.65, type=format, bg="white");
     
     # need to consider norm data were edited, different from proc
     smpl.nms <- rownames(mSetObj$dataSet$norm);
@@ -767,16 +772,29 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     
     axp=c(min(pt), max(pt[pt <= max(rg)]),length(pt[pt <= max(rg)]) - 1);
     
-    # ymk <- pretty(c(0,ymax));
-    x <- barplot(mns, col= unique(GetColorSchema(mSetObj)), las=2, yaxp=axp, ylim=range(pt));
-    arrows(x, dns, x, ups, code=3, angle=90, length=.1);
-    axis(1, at=x, col="white", col.tick="black", labels=F);
-    box();
-    mtext("Original Conc.", line=1);
+    # ggplot alternative
+    col <- unique(GetColorSchema(mSetObj))
     
-    boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= unique(GetColorSchema(mSetObj)));
-    mtext("Normalized Conc.", line=1);
-    title(main=cmpdNm, out=T);
+    df.orig <- data.frame(value = as.vector(mns), name = levels(mSetObj$dataSet$cls), up = as.vector(ups), down = as.vector(dns))
+    p.orig <- ggplot(df.orig, aes(x = name, y = value, fill = name)) + geom_bar(stat = "identity") + theme_bw()
+    p.orig <- p.orig + scale_y_continuous(breaks=pt, limits = range(pt)) + ggtitle("Original Conc.")
+    p.orig <- p.orig + theme(plot.title = element_text(size = 11, hjust=0.5)) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.orig <- p.orig + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+    p.orig <- p.orig + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+    p.orig <- p.orig + geom_segment(aes(xend=name, y=up, yend=dns)) + scale_fill_manual(values=col)
+    p.orig <- p.orig + theme(plot.margin = margin(t=0.35, r=0.5, b=0.15, l=0.15, "cm"), axis.text = element_text(size=10))
+    
+    df.norm <- data.frame(value=mSetObj$dataSet$norm[, cmpdNm], name = mSetObj$dataSet$cls)
+    p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name)) + geom_boxplot(notch=TRUE) + theme_bw() + geom_jitter(size=1)
+    p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+    p.norm <- p.norm + stat_summary(fun.y=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
+    p.norm <- p.norm + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.norm <- p.norm + ggtitle("Normalized Conc.") + theme(plot.title = element_text(size = 11, hjust=0.5)) 
+    p.norm <- p.norm + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+    p.norm <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
+    
+    gridExtra::grid.arrange(p.orig, p.norm, ncol=2, top = grid::textGrob(paste(cmpdNm), gp=grid::gpar(fontsize=14, fontface="bold")))
+    
     dev.off();
     
   }else if(mSetObj$dataSet$design.type =="time0"){
@@ -805,17 +823,33 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
       h <- w*0.5*row.num;
     }
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    par(mar=c(3,4,4,2), mfrow=c(row.num, 2));
-    # make sure all at the same range
-    ylim.ext <- GetExtendRange(mSetObj$dataSet$norm[, cmpdNm], 12);
+    
+    groupNum <- length(levels(in.fac))
+    pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C",
+              "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", 
+              "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928");
+    col.fun <- grDevices::colorRampPalette(pal12)
+    group_colors <- col.fun(groupNum)
+    
+    p_all <- list()
+    
     for(lv in levels(out.fac)){
       inx <- out.fac == lv;
-      dat <- mSetObj$dataSet$norm[inx, cmpdNm];
-      cls <- in.fac[inx];
-      boxplot(dat ~ cls, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), xlab=xlab, ylab="Abundance", main=lv);
-      stripchart(dat ~ cls, method = "jitter", ylim=ylim.ext, vertical=T, add = T, pch=19, cex=0.7, names = c("",""));
+      df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = in.fac[inx])
+      p_all[[lv]] <- df.orig
     }
-    dev.off();
+    
+    alldata <- do.call(rbind, p_all)
+    
+    p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot() + theme_bw() + geom_jitter(size=1) 
+    p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
+    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
+    p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+    p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+  
+    print(p.time)
+    dev.off()
   }
   return(imgName);
 }

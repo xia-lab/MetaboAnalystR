@@ -317,20 +317,23 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
       
       # re-generate the CSV file
       csv.res <- mSetObj$dataSet$map.table;
-      if(ncol(csv.res) > 6){ # general utilities
+      if(ncol(csv.res) > 7){ # general utilities
+        csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
+                                mSetObj$name.map$hit.values[query_inx],
+                                hit$hmdb_id,
+                                hit$pubchem_id,
+                                hit$chebi_id,
+                                hit$kegg_id,
+                                hit$metlin_id,
+                                hit$smiles,
+                                1);
+      }else{ # pathway analysis
         csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
                                 mSetObj$name.map$hit.values[query_inx],
                                 hit$hmdb_id,
                                 hit$pubchem_id,
                                 hit$kegg_id,
                                 hit$smiles,
-                                1);
-      }else{
-        csv.res[query_inx, ]<-c(csv.res[query_inx, 1],
-                                mSetObj$name.map$hit.values[query_inx],
-                                hit$hmdb_id,
-                                hit$pubchem_id,
-                                hit$kegg_id,
                                 1);
       }
       write.csv(csv.res, file="name_map.csv", row.names=F);
@@ -373,7 +376,7 @@ GetCandidateList <- function(mSetObj=NA){
   if(is.null(can_hits)){
     can.mat <- matrix("", nrow=1, ncol= 6);
   }else{
-    # contruct the result table with cells wrapped in html tags
+    # construct the result table with cells wrapped in html tags
     # the unmatched will be highlighted in different background
     
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);

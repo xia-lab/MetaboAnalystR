@@ -82,7 +82,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
 }
 
 #'Set the peak format for the mummichog analysis
-#'@description Sets the peak format.
+#'@description Set the peak format for mummichog analysis.
 #'@param mSetObj Input the name of the created mSetObj.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -249,6 +249,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+
 SetMummichogPval <- function(mSetObj=NA, cutoff){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -334,7 +335,7 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
     }
   }
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
   }else{
     if(!file.exists(filenm)){
@@ -457,7 +458,7 @@ PerformCurrencyMapping <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
   
   qvec <- mSetObj$dataSet$cmpd;
-  curr_db <- .read.metaboanalyst.lib("curr_db.rds");
+  curr_db <- .read.metaboanalyst.lib("currency_cmpd.rds");
   hit.inx <- match(tolower(qvec), tolower(curr_db$Common.Name));
   match.values <- curr_db[hit.inx,];
   curr.met <- nrow(match.values)
@@ -1110,7 +1111,7 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   par(op);
   dev.off();
   
-  df <- list(pval=unname(y), enr=unname(x), pathnames=pathnames);
+  df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
   cat(RJSONIO::toJSON(df));
   sink();
@@ -1158,7 +1159,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(.on.public.web==TRUE){
+  if(.on.public.web){
     return(0)
   }
   
