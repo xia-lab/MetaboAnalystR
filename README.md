@@ -74,7 +74,7 @@ library(devtools)
 ### For users with devtools > v2.0.0 ###
 
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignette"))
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
 
 # Step 2: Install MetaboAnalystR with documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
