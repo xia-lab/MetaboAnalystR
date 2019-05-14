@@ -10,7 +10,7 @@ SetPeakFormat(type)
 \item{mSetObj}{Input the name of the created mSetObj.}
 }
 \description{
-Sets the peak format.
+Set the peak format for mummichog analysis.
 }
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
