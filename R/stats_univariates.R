@@ -293,7 +293,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
    mSetObj <- .get.mSet(mSetObj);
 
    # check to see if already done by microservice
-   if(.on.public.web & !nonpar & RequireFastT()){
+   if(.on.public.web & !nonpar & RequireFastT(mSetObj)){
         res <- readRDS("fastt_out.rds");
         t.stat <- res$t.stats;
         p.value <- res$p.vals;
@@ -435,7 +435,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 
   #### t-tests
    # check to see if already done by microservice
-   if(.on.public.web & !nonpar & RequireFastT()){
+   if(.on.public.web & !nonpar & RequireFastT(mSetObj)){
        res <- readRDS("fastt_out.rds");
        p.value <- res$p.vals;
    }else{
@@ -921,7 +921,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   
   Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=325, type=format, bg="transparent");
   
-  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=TRUE) + theme_bw() + geom_jitter(size=1)
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
   p <- p + stat_summary(fun.y=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
   p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.20, r=0.25, b=0.55, l=0.25, "cm"))

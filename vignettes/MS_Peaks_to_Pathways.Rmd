@@ -29,14 +29,17 @@ mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
 mSet <- Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_mzs.txt");
 
 # Set parameters for analysis, in this case the mass accuracy is set to 3 ppm, the mode of the MS instrument is positive, and the p-value cut-off is 0.0001
-mSet <- UpdateMummichogParameters(mSet, "0.1", "positive", 1.0E-4);
+mSet <- UpdateInstrumentParameters(mSet, "0.1", "positive");
 
 # Sanity check of the uploaded data
 mSet <- SanityCheckMummichogData(mSet)
 
-# Perform the mummichog algorith, in this case the model is the human MFN model, using Fisher's p-value and gamma-adjustment of p-
+# Perform the mummichog algorithm, in this case the pathway library is from the human MFN model. First set the 
+# algorithm to be used to mummichog, then set the p-value cutoff.
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
-mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
+mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetMummichogPval(mSet, 0.0001)
+mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
 
 # To view the results of the pathway analysis in R, use mSet$mummi.resmat
 
@@ -45,5 +48,3 @@ mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
 ## 3. Sweave Report
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
-
-

@@ -21,7 +21,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 Read.PeakListData <- function(mSetObj=NA, filename = NA) {
-  
+
   mSetObj <- .get.mSet(mSetObj);
   mumDataContainsPval = 1; #whether initial data contains pval or not
   
@@ -35,6 +35,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
       AddErrMsg("Missing information, data must contain 'm.z', 'p.value' and 't.score' column");
     }
   }else if(peakFormat == "mp"){
+print(colnames(input))
     hit <- c("m.z", "p.value") %in% colnames(input);
     if(!all(hit)){
       AddErrMsg("Missing information, data must contain both 'm.z' and 'p.value' column");
@@ -75,6 +76,13 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   
   mSetObj$dataSet$mummi.orig <- cbind(input$p.value, input$m.z, input$t.score);
   colnames(mSetObj$dataSet$mummi.orig) = c("p.value", "m.z", "t.score")
+  if(mSetObj$dataSet$mode == "positive"){
+    mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
+  }else if(mSetObj$dataSet$mode == "negative"){
+    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig) )
+  }else{
+    mSetObj$dataSet$pos_inx <- input$mode == "positive"
+  }
   mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), "m/z features were found in your uploaded data.");
   mumDataContainsPval <<- mumDataContainsPval;
   return(.set.mSet(mSetObj));
@@ -168,12 +176,14 @@ UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, cus
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   msg.vec <- NULL;
   
   ndat <- mSetObj$dataSet$mummi.orig;
-  
+  pos_inx = mSetObj$dataSet$pos_inx
+  ndat <- cbind(ndat, pos_inx)
+
   rawdat <- mSetObj$dataSet$mummi.raw
   
   read.msg <- mSetObj$msgSet$read.msg
@@ -181,6 +191,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   # sort mzs by p-value
   ord.inx <- order(ndat[,1]);
   ndat <- ndat[ord.inx,]; # order by p-vals
+  
   
   # filter based on mz
   mznew <- ndat[,2];
@@ -228,7 +239,6 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   if(ref.size > 20000){
     msg.vec <- c(msg.vec, "There are too many input features, the performance may be too slow.");
   }
-  
   if(min(ndat[,"p.value"])<0 || max(ndat[,"p.value"])>1){
     msg.vec <- c(msg.vec, "Please make sure the p-values are between 0 and 1.");
   }
@@ -237,6 +247,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$dataSet$mummi.proc <- ndat;
   mSetObj$dataSet$expr_dic <- tscores;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
+  mSetObj$dataSet$pos_inx <- ndat[,4] == 1;
   
   return(.set.mSet(mSetObj));
   
@@ -314,7 +325,7 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
 PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   filenm <- paste(lib, ".rds", sep="")
   biocyc <- grepl("biocyc", lib)
   
@@ -360,19 +371,20 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
     
   }else{
     cpd.lib <- list(
-      mz.mat = mummichog.lib$cpd.lib$adducts[[mSetObj$dataSet$mode]],
+      mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
+      mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
       mw = mummichog.lib$cpd.lib$mw,
       id = mummichog.lib$cpd.lib$id,
       name = mummichog.lib$cpd.lib$name
     );
   }
   
-  cpd.tree <- mummichog.lib$cpd.tree[[mSetObj$dataSet$mode]];
+  cpd.treep <- mummichog.lib$cpd.tree[["positive"]];
+  cpd.treen <- mummichog.lib$cpd.tree[["negative"]];
   
   mSetObj$pathways <- mummichog.lib$pathways;
   mSetObj$lib.organism <- lib; #keep track of lib organism for sweave report
-  
-  mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.tree);
+  mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   
   if(anal.type == "mummichog"){
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
@@ -535,45 +547,92 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 }
 
 # internal function for searching compound library
-.search.compoundLib <- function(mSetObj, cpd.lib, cpd.tree){
+.search.compoundLib <- function(mSetObj, cpd.lib, cpd.treep, cpd.treen){
   ref_mzlist <- mSetObj$data$ref_mzlist;
+  pos_inx <- mSetObj$data$pos_inx;
+  ref_mzlistp <- mSetObj$data$ref_mzlist[pos_inx];
+  ref_mzlistn <- mSetObj$data$ref_mzlist[!pos_inx];
   t.scores <- mSetObj$data$ref_mzlist;
   
-  modified.states <- colnames(cpd.lib$mz.mat);
-  my.tols <- mz_tolerance(ref_mzlist, mSetObj$dataSet$instrument);
-  
+  modified.statesp <- colnames(cpd.lib$mz.matp);
+  modified.statesn <- colnames(cpd.lib$mz.matn);
+  my.tolsp <- mz_tolerance(ref_mzlistp, mSetObj$dataSet$instrument);
+  my.tolsn <- mz_tolerance(ref_mzlistn, mSetObj$dataSet$instrument);
+
   # get mz ladder (pos index)
-  self.mzs <- floor(ref_mzlist);
-  all.mzs <- cbind(self.mzs-1, self.mzs, self.mzs+1);
+  self.mzsp <- floor(ref_mzlistp);
+  all.mzsp <- cbind(self.mzsp-1, self.mzsp, self.mzsp+1);
+
+  self.mzsn <- floor(ref_mzlistn);
+  all.mzsn <- cbind(self.mzsn-1, self.mzsn, self.mzsn+1);
   
   # matched_res will contain detailed result (cmpd.id. query.mass, mass.diff) for all mz;
   # use a high-performance variant of list
-  matched_res <- myFastList();
+  matched_resp <- myFastList();
+  matched_resn <- myFastList();
   
-  for(i in 1:length(ref_mzlist)){
-    mz <- ref_mzlist[i];
-    my.tol <- my.tols[i];
-    all.mz <- all.mzs[i,];
-    pos.all <- as.numeric(unique(unlist(cpd.tree[all.mz])));
+  if(mSetObj$dataSet$mode != "negative"){
+  for(i in 1:length(ref_mzlistp)){
+    mz <- ref_mzlistp[i];
+    my.tol <- my.tolsp[i];
+    all.mz <- all.mzsp[i,];
+    pos.all <- as.numeric(unique(unlist(cpd.treep[all.mz])));
     
     for(pos in pos.all){
       id <- cpd.lib$id[pos];
-      mw.all <- cpd.lib$mz.mat[pos,]; #get modified mzs
+      mw.all <- cpd.lib$mz.matp[pos,]; #get modified mzs
       diffs <- abs(mw.all - mz); #modified mzs - mz original
       hit.inx <- which(diffs < my.tol);
       if(length(hit.inx)>0){
         for(spot in 1:length(hit.inx)){
           hit.pos <- hit.inx[spot];# need to match all
           index <- paste(mz, id, hit.pos, sep = "_");
-          matched_res$add(index, c(i, id, mz, mw.all[hit.pos], modified.states[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+          matched_resp$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesp[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
         }
       }
     }
   }
+  }
+
+  if(mSetObj$dataSet$mode != "positive"){
+  for(i in 1:length(ref_mzlistn)){
+    mz <- ref_mzlistn[i];
+    my.tol <- my.tolsn[i];
+    all.mz <- all.mzsn[i,];
+    pos.all <- as.numeric(unique(unlist(cpd.treen[all.mz])));
+    
+    for(pos in pos.all){
+      id <- cpd.lib$id[pos];
+      mw.all <- cpd.lib$mz.matn[pos,]; #get modified mzs
+      diffs <- abs(mw.all - mz); #modified mzs - mz original
+      hit.inx <- which(diffs < my.tol);
+      if(length(hit.inx)>0){
+        for(spot in 1:length(hit.inx)){
+          hit.pos <- hit.inx[spot];# need to match all
+          index <- paste(mz, id, hit.pos, sep = "_");
+          matched_resn$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesn[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+        }
+      }
+    }
+  }
+  }
   
   # convert to regular list
-  matched_res <- matched_res$as.list();
-  matched_res <- data.frame(matrix(unlist(matched_res), nrow=length(matched_res), byrow=T), stringsAsFactors = FALSE);
+  if(mSetObj$dataSet$mode == "mixed"){
+  matched_resn <- matched_resn$as.list();
+  matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
+  matched_resp <- matched_resp$as.list();
+  matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
+  matched_res <- rbind(matched_resp, matched_resn)
+  }else if(mSetObj$dataSet$mode == "positive"){
+  matched_resp <- matched_resp$as.list();
+  matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
+  matched_res <- matched_resp
+  }else{
+  matched_resn <- matched_resn$as.list();
+  matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
+  matched_res <- matched_resn
+  }
   
   # re-order columns for output
   matched_res <- matched_res[, c(3,2,5,6)];
@@ -1213,7 +1272,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
     
     w = width
     h = width
-    p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class))
+    p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA)
     p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
     p <- p + xlab("m/z feature") + ylab("Intensity")
     
@@ -1234,7 +1293,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
     cols = 6
   }
   
-  p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class))
+  p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA)
   p <- p + facet_wrap( ~ variable, scales="free", ncol=cols) + xlab("m/z features") + ylab("Intensity")
   p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
   
@@ -1359,9 +1418,13 @@ GetDefaultPvalCutoff <- function(mSetObj=NA){
   }else{
     pvals <- c(0.25, 0.2, 0.15, 0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)
     ndat <- mSetObj$dataSet$mummi.proc;
-    n <- floor(0.1*length(ndat[,1]))
+    n <- floor(0.1*length(ndat[,"p.value"]))
     cutoff <- ndat[n+1,1]
+    if(!any(pvals <= cutoff)){
+    maxp <- 0.00001
+    }else{
     maxp <- max(pvals[pvals <= cutoff])
+    }
   }
   
   return(maxp)

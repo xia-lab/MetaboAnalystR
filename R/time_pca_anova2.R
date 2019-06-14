@@ -405,7 +405,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
           them in mSet$imgSet$time$score3d and mSet$imgSet$time$load3d.")
     return(.set.mSet(mSetObj));
   }
-  save.image(file="time.RData")
+  #save.image(file="time.RData")
 }
 
 
@@ -512,9 +512,9 @@ PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, widt
     
     alldata <- do.call(rbind, p_all)
     
-    p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot() + theme_bw() + geom_jitter(size=1) 
+    p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA) + theme_bw() + geom_jitter(size=1) 
     p.time <- p.time + facet_wrap(~facA, ncol=col.num) + theme(axis.title.x = element_blank(), legend.position = "none")
-    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1)) 
     p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
     p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
     p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
