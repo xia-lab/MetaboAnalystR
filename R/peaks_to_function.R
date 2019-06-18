@@ -35,7 +35,6 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
       AddErrMsg("Missing information, data must contain 'm.z', 'p.value' and 't.score' column");
     }
   }else if(peakFormat == "mp"){
-print(colnames(input))
     hit <- c("m.z", "p.value") %in% colnames(input);
     if(!all(hit)){
       AddErrMsg("Missing information, data must contain both 'm.z' and 'p.value' column");
@@ -1272,7 +1271,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
     
     w = width
     h = width
-    p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA)
+    p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA, outlier.colour=NA)
     p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
     p <- p + xlab("m/z feature") + ylab("Intensity")
     
@@ -1293,7 +1292,7 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
     cols = 6
   }
   
-  p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA)
+  p <- ggplot(data = boxdata.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=class), outlier.shape = NA, outlier.colour=NA)
   p <- p + facet_wrap( ~ variable, scales="free", ncol=cols) + xlab("m/z features") + ylab("Intensity")
   p <- p + ggtitle(msetNM) + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
   

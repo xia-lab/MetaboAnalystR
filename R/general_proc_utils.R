@@ -527,16 +527,21 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
     }else if(ncol(int.mat) < 1000){ # reduce 25%
       remain <- rk < var.num*0.75;
       msg <- paste(msg, "Further feature filtering based on", nm);
-    }else{ # reduce 40%, if still over 8000, then only use top 5000
+    }else{ # reduce 40%, if still over 5000, then only use top 5000
       remain <- rk < var.num*0.6;
       msg <- paste(msg, "Further feature filtering based on", nm);
-      if(sum(remain) > 8000){
-        remain <-rk < 8000;
-        msg <- paste(msg, "Reduced to 8000 features based on", nm);
+
+      max.allow <- 5000;
+      if(mSetObj$analSet$type == "power"){
+        max.allow <- 2500;
+      }
+      if(sum(remain) > max.allow){
+        remain <-rk < max.allow;
+        msg <- paste(msg, paste("Reduced to", max.allow, "features based on", nm));
       }
     }
   }
-
+  print(msg);
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);

@@ -765,7 +765,7 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
   
   col <- unique(GetColorSchema(mSetObj))
   df <- data.frame(conc = mSetObj$dataSet$norm[, cmpd], class = cls.lbls)
-  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA) + theme_bw() + geom_jitter(size=1)
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
   p <- p + stat_summary(fun.y=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
   p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"))
