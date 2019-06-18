@@ -104,7 +104,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
     col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
     group_colors <- col.fun(groupNum)
   }else{
-    group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
   }
 
   names(group_colors) <- levels(groupInfo)
@@ -171,7 +171,7 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
     col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
     group_colors <- col.fun(groupNum)
   }else{
-    group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
   }
   
   names(group_colors) <- unique(raw_data$sample_group)
@@ -315,7 +315,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
       col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
       group_colors <- col.fun(groupNum)
     }else{
-      group_colors <- paste0(RColorBrewer::brewer.pal(3, "Set1")[1:groupNum], "60")
+      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
     }
     names(group_colors) <- unique(rt_xdata$sample_group)
     plotAdjustedRtime(rt_xdata, col = group_colors[rt_xdata$sample_group])
