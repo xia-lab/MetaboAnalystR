@@ -15,6 +15,7 @@
 #' @param width Numeric, input the width of the image to create.
 #' @param par.cores Logical, if true, the function will automatically 
 #' set the number of parallel cores. If false, it will not.
+#' @param plot Logical, if true the function will create BPIS and TICS plots.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -25,8 +26,10 @@
 #' @import BiocParallel
 #' @import parallel
 
-ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par.cores=TRUE){
+ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, 
+                            par.cores=TRUE, plot=TRUE){
 
+  browser()
   msg.vec <<- vector(mode="character")
   
   msg <- c("The uploaded files are raw MS spectra.");
@@ -94,35 +97,37 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, par
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
                                           mode = "onDisk")) 
   
-  # Plotting functions to see entire chromatogram
-  bpis <- chromatogram(raw_data, aggregationFun = "max")
-  tics <- chromatogram(raw_data, aggregationFun = "sum")
-  
-  groupNum <- nlevels(groupInfo)
-  
-  if(groupNum > 9){
-    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-    group_colors <- col.fun(groupNum)
-  }else{
-    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
+  if(plot==TRUE){
+    # Plotting functions to see entire chromatogram
+    bpis <- chromatogram(raw_data, aggregationFun = "max")
+    tics <- chromatogram(raw_data, aggregationFun = "sum")
+    
+    groupNum <- nlevels(groupInfo)
+    
+    if(groupNum > 9){
+      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+      group_colors <- col.fun(groupNum)
+    }else{
+      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
+    }
+    
+    names(group_colors) <- levels(groupInfo)
+    
+    bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
+    tics_name <- paste("TICS_", dpi, ".", format, sep="");
+    
+    Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
+                 type=format, bg="white");
+    plot(bpis, col = group_colors[raw_data$sample_group])
+    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
+    dev.off();
+    
+    Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
+                 type=format, bg="white");
+    plot(tics, col = group_colors[raw_data$sample_group])
+    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
+    dev.off();
   }
-
-  names(group_colors) <- levels(groupInfo)
-  
-  bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
-  tics_name <- paste("TICS_", dpi, ".", format, sep="");
-  
-  Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
-               type=format, bg="white");
-  plot(bpis, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-  dev.off();
-  
-  Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
-               type=format, bg="white");
-  plot(tics, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-  dev.off();
   
   print("Successfully imported raw MS data!")
   

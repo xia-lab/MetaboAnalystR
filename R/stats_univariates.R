@@ -283,12 +283,14 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@param threshp Numeric, enter the adjusted p-value (FDR) cutoff
 #'@param paired Logical, is data paired (T) or not (F).
 #'@param equal.var Logical, evaluates if the group variance is equal (T) or not (F). 
+#'@param all_results Logical, if TRUE, returns T-Test analysis results
+#'for all compounds. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE){
+Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE, all_results=FALSE){
   
    mSetObj <- .get.mSet(mSetObj);
 
@@ -307,6 +309,22 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   
    p.log <- -log10(p.value);
    fdr.p <- p.adjust(p.value, "fdr");
+   
+   if(all_results==TRUE){
+     
+     all.mat <- data.frame(signif(t.stat,5), signif(p.value,5), signif(p.log,5), signif(fdr.p,5));
+     
+     if(nonpar){
+       tt.nm = "Wilcoxon Rank Test";  
+       file.nm <- "wilcox_rank_all.csv"
+       colnames(all.mat) <- c("V", "p.value", "-log10(p)", "FDR");
+     }else{
+       tt.nm = "T-Tests";
+       file.nm <- "t_test_all.csv";
+       colnames(all.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
+     }
+     write.csv(all.mat, file=file.nm);
+   }
   
    inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
@@ -700,13 +718,15 @@ parseFisher <- function(fisher, cut.off){
 #'@param nonpar Logical, use a non-parametric test (T) or not (F)
 #'@param thresh Numeric, from 0 to 1, indicate the p-value threshold
 #'@param post.hoc Input the name of the post-hoc test, "fisher" or "tukey"
+#'@param all_results Logical, if TRUE, it will output the ANOVA results for all compounds 
+#'with no post-hoc tests performed.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
-  
+ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_results=FALSE){
+
   mSetObj <- .get.mSet(mSetObj);
   
   sig.num <- 0;
@@ -727,6 +747,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
     #inx.imp <- p.value <= thresh;
     inx.imp <- fdr.p <= thresh;
     sig.num <- sum(inx.imp);
+    
     if(sig.num > 0){ 
       sig.f <- fstat[inx.imp];
       sig.p <- p.value[inx.imp];
@@ -758,6 +779,13 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher"){
     names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
     
     fdr.p <- p.adjust(p.value, "fdr");
+    
+    if(all_results==TRUE){
+      all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
+      rownames(all.mat) <- names(p.value);
+      colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
+      write.csv(all.mat, "anova_all_results.csv")
+    }
     
     # do post-hoc only for signficant entries
     # inx.imp <- p.value <= thresh;

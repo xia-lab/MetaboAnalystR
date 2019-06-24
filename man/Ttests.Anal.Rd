@@ -5,7 +5,7 @@
 \title{Perform t-test analysis}
 \usage{
 Ttests.Anal(mSetObj = NA, nonpar = F, threshp = 0.05,
-  paired = FALSE, equal.var = TRUE)
+  paired = FALSE, equal.var = TRUE, all_results = FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -17,6 +17,9 @@ Ttests.Anal(mSetObj = NA, nonpar = F, threshp = 0.05,
 \item{paired}{Logical, is data paired (T) or not (F).}
 
 \item{equal.var}{Logical, evaluates if the group variance is equal (T) or not (F).}
+
+\item{all_results}{Logical, if TRUE, returns T-Test analysis results
+for all compounds.}
 }
 \description{
 This function is used to perform t-test analysis.
