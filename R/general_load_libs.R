@@ -81,6 +81,16 @@ load_grid <- function(){
   suppressMessages(library(grid))
 }
 
+# Load ggrepel
+load_ggrepel <- function(){
+  suppressMessages(library(ggrepel))
+}
+
+# Load dplyr
+load_dplyr <- function(){
+  suppressMessages(library(dplyr))
+}
+
 # Load camera
 load_camera <- function(){
   suppressMessages(library(CAMERA))

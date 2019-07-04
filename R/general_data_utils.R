@@ -592,12 +592,12 @@ SaveTransformedData <- function(mSetObj=NA){
   
   if(anal.type=="mummichog"){
     
-    orig.data<- mSetObj$dataSet$orig;
-    colnames(orig.data) <- c("p.value", "m.z", "t.score")
+    orig.data<- mSetObj$dataSet$mummi.orig;
+    #colnames(orig.data) <- c("p.value", "m.z", "t.score")
     write.csv(orig.data, file="data_original.csv", row.names = FALSE);
     
-    proc.data<- mSetObj$dataSet$proc
-    colnames(proc.data) <- c("p.value", "m.z", "t.score")
+    proc.data<- mSetObj$dataSet$mummi.proc
+    #colnames(proc.data) <- c("p.value", "m.z", "t.score")
     write.csv(proc.data, file="data_processed.csv", row.names = FALSE);
     
   }else{

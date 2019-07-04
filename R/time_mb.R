@@ -11,7 +11,7 @@
 #'@export
 #'
 performMB <- function(mSetObj=NA, topPerc = 10){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   time.fac <- mSetObj$dataSet$time.fac;
@@ -45,6 +45,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
   size <- matrix(exp.len, byrow=TRUE, nrow=ncol(mSetObj$dataSet$norm), ncol=length(levels(exp.fac)));
   exp.grp <- as.character(exp.fac);
   rep.grp <- as.character(sbj);
+
   if(mSetObj$dataSet$design == "time0"){ # time series only
     time.len <- length(levels(time.fac));
     subj.len <- rep(length(levels(exp.fac)), ncol(mSetObj$dataSet$norm));

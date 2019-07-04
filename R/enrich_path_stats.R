@@ -57,6 +57,12 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   hit.num <-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
   set.size <-length(current.mset);
   set.num <- unlist(lapply(current.mset, length), use.names=FALSE);
+
+  # deal with no hits
+  if(length(hits)==0){
+    msg.vec <<- c(msg.vec, "No hits in the selected pathway library!")
+    return(0)
+  }
   
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=8);
@@ -192,6 +198,12 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
   hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
   hits <- hits[hit.inx]; # remove no hits
+
+  # deal with no hits
+  if(length(hits)==0){
+    msg.vec <<- c(msg.vec, "No hits in the selected pathway library!")
+    return(0)
+  }
 
   # store data before microservice
   mSetObj$analSet$qea.univp <- signif(univ.p,7);

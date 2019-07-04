@@ -97,7 +97,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
           node.evidence <- ""
         }
     }
-    
+
     # Retrieve gene full names
     genes.names.idx <- match(node.ids, mSetObj$dataSet$gene.map.table[,"Entrez"])
     genes.names <- mSetObj$dataSet$gene.map.table[genes.names.idx,"Name"]

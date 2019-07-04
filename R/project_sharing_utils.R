@@ -1,6 +1,5 @@
 PrepareSignatureOfMetaboAnalyst <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("check.RData");
   if(exists('sam.cmpds', where=mSetObj$analSet)){
     if(dim(mSetObj$analSet$sam.cmpds)[1] > 0){
       signature.cmpds <- mSetObj$analSet$sam.cmpds;

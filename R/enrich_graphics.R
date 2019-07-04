@@ -684,17 +684,19 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   wd <- wd[!is.na(wd[,3]),];
   g <- graph.data.frame(wd[,-3], directed=F);
   E(g)$width <- sqrt(wd[,3]*20);
-  g <- delete.edges(g, E(g)[wd[,3] < 0.2]);
-  idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
-  cols <- color_scale("red", "#E5C494");
-  V(g)$color <- cols[sapply(pvalue, getIdx, min(pvalue), max(pvalue))];
-  
+  g <- delete.edges(g, E(g)[wd[,3] < 0.25]);
+  #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
+  #cols <- color_scale("red", "#E5C494");
+  #V(g)$color <- cols[sapply(pvalue, getIdx, min(pvalue), max(pvalue))];
+  V(g)$color <- heat.colors(length(pvalue));
+
   cnt <- folds;
   names(cnt) <- id;
-  cnt2 <- cnt[V(g)$name] + 1; #make sure this is positve 
-  V(g)$size <- cnt2/sum(cnt2) * 100 #log(cnt2, base=10) * 10;
-  
-  
+  #cnt2 <- (cnt[V(g)$name])^2; #make sure this is positve 
+  #V(g)$size <- cnt2/sum(cnt2) * 100 #log(cnt2, base=10) * 10;
+  #V(g)$size <- log(cnt2, base=10) * 10 + 1;
+  V(g)$size <- cnt + 3;
+
   pos.xy <- layout.fruchterman.reingold(g,niter=500);
   
   # now create the json object

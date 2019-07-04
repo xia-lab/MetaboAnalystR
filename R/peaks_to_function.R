@@ -25,35 +25,38 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   mSetObj <- .get.mSet(mSetObj);
   mumDataContainsPval = 1; #whether initial data contains pval or not
   
-  filnm <<- filename;
-  
   input <- as.data.frame(read.table(filename, header=TRUE, as.is=TRUE));
   
   if(peakFormat == "mpt"){
     hits <- c("m.z", "p.value", "t.score") %in% colnames(input);
     if(!all(hits)){
       AddErrMsg("Missing information, data must contain 'm.z', 'p.value' and 't.score' column");
+      return(0);
     }
   }else if(peakFormat == "mp"){
     hit <- c("m.z", "p.value") %in% colnames(input);
     if(!all(hit)){
       AddErrMsg("Missing information, data must contain both 'm.z' and 'p.value' column");
+      return(0);
     }
   }else if(peakFormat == "mt"){
     hits <- c("m.z", "t.score") %in% colnames(input);
     if(!all(hits)){
       AddErrMsg("Missing information, data must contain both 'm.z' and 't.score' column");
+      return(0);
     }
   }else{
     hits <- "m.z" %in% colnames(input);
     if(!all(hits)){
       AddErrMsg("Missing information, data must contain at least a 'm.z' column");
+      return(0);
     }
   }
   
   hit <- "m.z" %in% colnames(input);
   if(!hit){
     AddErrMsg("Missing information, data must contain a 'm.z' column");
+    return(0);
   }
   
   mSetObj$dataSet$mummi.raw = input
@@ -435,6 +438,11 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   
     cpds <- lapply(filt_cpds, function(x) intersect(unlist(x), matched_cpds))
 
+    mSetObj$path.nms <- mum.matrix[ord.inx,1]
+    mSetObj$path.hits <- convert2JsonList(cpds)
+    mSetObj$path.pval <- as.numeric(dfcombo[,6])
+
+
     json.res <- list(
     cmpd.exp = mSetObj$cpd_exp,
     path.nms = mum.matrix[ord.inx,1],
@@ -452,6 +460,19 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   }
   
   mummichog.lib <- NULL;
+     mum = list(
+    path.nms = mSetObj$path.nms,
+    path.hits = mSetObj$path.hits,
+    path.pval = mSetObj$path.pval,
+   cmpds = mSetObj$cpd_exp,
+   peakToMet = mSetObj$cpd_form_dict,
+   expr = mSetObj$cpd_exp_dict
+   );
+   json.mat <- RJSONIO::toJSON(mum, .na='null');
+  sink("metaboanalyst_peaks.json");
+  cat(json.mat);
+  sink();
+
   return(.set.mSet(mSetObj));
 }
 
@@ -793,6 +814,10 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 5);
   mSetObj$mummi.resmat <- res.mat[,-9];
   
+  mSetObj$path.nms <- path.nms[ord.inx]
+  mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
+  mSetObj$path.pval <- as.numeric(res.mat[,5])
+
   json.res <- list(
     cmpd.exp = mSetObj$cpd_exp,
     path.nms = path.nms[ord.inx],
@@ -919,7 +944,9 @@ PlotMSPeaksPerm <- function(mSetObj=NA, pathway, imgName, format="png", dpi=72, 
   filt_cpds <- lapply(inx2, function(f) { mSetObj$pathways$cpds[f] })
   
   cpds <- lapply(filt_cpds, function(x) intersect(unlist(x), matched_cpds))
-  
+  mSetObj$path.nms <- rownames(res.mat)
+  mSetObj$path.hits<- convert2JsonList(cpds)
+  mSetObj$path.pval <- as.numeric(res.mat[,3])
   json.res <- list(cmpd.exp = total_cpds,
                    path.nms = rownames(res.mat),
                    hits.all = convert2JsonList(cpds),
@@ -930,7 +957,7 @@ PlotMSPeaksPerm <- function(mSetObj=NA, pathway, imgName, format="png", dpi=72, 
   sink("mummichog_query.json");
   cat(json.mat);
   sink();
-  
+
   return(mSetObj);
 }
 

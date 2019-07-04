@@ -186,7 +186,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   auc <- caTools::colAUC(x, y, plotROC=F)[1,];
   
   # t-t pvalues, check if microservice already done this
-  if(.on.public.web & RequireFastT()){
+  if(.on.public.web & RequireFastT(mSetObj)){
      res <- readRDS("fastt_out.rds");
      ttp <- res$p.vals;
   }else{
@@ -1004,8 +1004,6 @@ PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, 
   
   if(isQuery){
     thresh <- as.numeric(mSetObj$analSet$roc.obj$thresh)
-    print("thresh_bp")
-    print(thresh)
     p <- p + geom_hline(aes(yintercept=thresh), colour="red")
   }
   

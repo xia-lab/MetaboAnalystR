@@ -525,8 +525,10 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj <- .get.mSet(mSetObj);
   
   comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
+
   if(comp.num > 8) {
-    comp.num <- 8;
+    #need to deal with small number of predictors
+    comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
   }
   
   if(.on.public.web){
@@ -541,7 +543,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   }
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  mSetObj$analSet$plsr <- pls::plsr(cls~datmat,method='oscorespls', ncomp=comp.num);
+  mSetObj$analSet$plsr <- pls::plsr(cls~datmat, method='oscorespls', ncomp=comp.num);
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
@@ -1664,13 +1666,7 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'perform permutation, using training classification accuracy as
 #'indicator, for two or multi-groups
 #'@param mSetObj Input name of the created mSet Object
-#'@param imgName Input a name for the plot
-#'@param format Select the image format, "png", or "pdf".
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param num Input the number of permutations, default is set to 100.
-#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1706,6 +1702,21 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   return(.set.mSet(mSetObj));
 }
 
+#'Plot OPLS-DA permutation
+#'@description Orthogonal PLS-DA (from ropls) 
+#'perform permutation, using training classification accuracy as
+#'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 
 PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   

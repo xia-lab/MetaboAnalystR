@@ -448,12 +448,10 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   return(.set.mSet(mSetObj));
 }
 
-##############################################
-##############################################
-########## Utilities for web-server ##########
-##############################################
-##############################################
-
+#'Update data for filtering
+#'@description Function to update the mSetObj after removing features or samples.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
 UpdateData <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -560,6 +558,12 @@ PreparePrenormData <- function(mSetObj=NA){
     }
     .set.mSet(mSetObj)
 }
+
+##############################################
+##############################################
+########## Utilities for web-server ##########
+##############################################
+##############################################
 
 # get the dropdown list for sample normalization view
 GetPrenormSmplNms <-function(mSetObj=NA){
