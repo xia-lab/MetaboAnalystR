@@ -28,7 +28,7 @@
 
 ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, 
                             par.cores=TRUE, plot=TRUE){
-
+  
   browser()
   msg.vec <<- vector(mode="character")
   
@@ -89,9 +89,9 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9,
     
     if (.Platform$OS.type == "unix") {
       BiocParallel::register(BiocParallel::bpstart(BiocParallel::MulticoreParam(num_cores)))
-      } else { # for windows
+    } else { # for windows
       BiocParallel::register(BiocParallel::bpstart(BiocParallel::SnowParam(num_cores)))
-      }
+    }
   }
   
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
@@ -349,7 +349,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
     # using ggplot2
     df <- as.data.frame(xdata_pca$x)
     df$group <- grouped_xdata2$sample_group
-
+    
     if(labels==TRUE){
       
       if(groupNum>9){
@@ -615,7 +615,7 @@ ExtractMS2data <- function(filename, peakParams, mzmin, mzmax){
   
   #get all peaks 
   chromPeaks <- chromPeaks(ms1data)
-
+  
   # pick one compound 
   ## find which row contains the mass we want
   chp <- as.data.frame(chromPeaks)
