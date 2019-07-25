@@ -29,7 +29,6 @@
 ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, 
                             par.cores=TRUE, plot=TRUE){
   
-  browser()
   msg.vec <<- vector(mode="character")
   
   msg <- c("The uploaded files are raw MS spectra.");
