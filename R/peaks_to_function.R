@@ -640,16 +640,33 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   # convert to regular list
   if(mSetObj$dataSet$mode == "mixed"){
   matched_resn <- matched_resn$as.list();
+
+  if(is.null(unlist(matched_resn))){
+    msg.vec <<- "No compound matches from upload peak list!"
+    return(0)
+  }
   matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
   matched_resp <- matched_resp$as.list();
   matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
   matched_res <- rbind(matched_resp, matched_resn)
   }else if(mSetObj$dataSet$mode == "positive"){
   matched_resp <- matched_resp$as.list();
+
+  if(is.null(unlist(matched_resp))){
+    msg.vec <<- "No compound matches from upload peak list!"
+    return(0)
+  }
+  
   matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
   matched_res <- matched_resp
   }else{
   matched_resn <- matched_resn$as.list();
+
+  if(is.null(unlist(matched_resn))){
+    msg.vec <<- "No compound matches from upload peak list!"
+    return(0)
+  }
+
   matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
   matched_res <- matched_resn
   }

@@ -91,26 +91,26 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 #'
 Perform.permutation <- function(perm.num, fun){
-  
+ 
   # for public server, perm.num is not always followed to make sure loop will not continue for very long time
   # before the adventure, see how long it takes for 10 permutations
   # if it is extremely slow (>60 sec) => max 20 (<0.05)
   # if it is very slow (30-60 sec) => max 100 (<0.01)
-  
+
   start.num <- 1; 
   perm.res <- NULL;
   if(.on.public.web & perm.num > 20){
     start.time <- Sys.time();
     perm.res <- lapply(1:10, fun);
     end.time <- Sys.time();
-    
+
     time.taken <- end.time - start.time;
     print(paste("time taken for 10 permutations: ", time.taken));
-    
+
     if(time.taken > 60){
-      perm.num <- 20;
+        perm.num <- 20;
     }else if(time.taken > 30){
-      perm.num <- 100;
+        perm.num <- 100;
     }
     start.num <- 11;
   }
@@ -602,12 +602,12 @@ GetCMD<-function(regexp){
 
 # Memory functions
 ShowMemoryUse <- function(..., n=20) {
-  library(pryr);
-  sink(); # make sure print to screen
-  print(mem_used());
-  print(sessionInfo());
-  print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
-  print(warnings());
+    library(pryr);
+    sink(); # make sure print to screen
+    print(mem_used());
+    print(sessionInfo());
+    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+    print(warnings());
 }
 
 #'Perform utilities for cropping images
@@ -754,7 +754,7 @@ saveNetworkInSIF <- function(network, name){
 }
 
 PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
