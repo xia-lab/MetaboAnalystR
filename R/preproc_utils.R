@@ -36,7 +36,7 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9,
   # the "upload" folder should contain two subfolders (groups, i.e. Healthy vs. Disease)
   # each subfolder must contain samples (.mzML/.CDF/.mzXML files)
   
-  files <- dir(foldername, pattern=".mzML|.cdf|.mzXML", recursive=T, full.name=TRUE)
+  files <- dir(foldername, pattern=".mzML|.cdf|.mzXML|.mzData", recursive=T, full.name=TRUE)
   
   if (length(files) == 0) {
     AddErrMsg("No spectra were found!");
