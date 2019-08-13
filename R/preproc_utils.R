@@ -16,6 +16,8 @@
 #' @param par.cores Logical, if true, the function will automatically 
 #' set the number of parallel cores. If false, it will not.
 #' @param plot Logical, if true the function will create BPIS and TICS plots.
+#' @param bpis_name Character, input the name of the BPIS image to create.
+#' @param tics_name Character, input the name of the TICS image to create.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -27,9 +29,16 @@
 #' @import parallel
 
 ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 9, 
-                            par.cores=TRUE, plot=TRUE){
+                            par.cores=TRUE, plot=TRUE, bpis_name = "BPIS_", tics_name="TICS_"){
   
   msg.vec <<- vector(mode="character")
+
+  if(bpis_name == "BPIS_"){
+	bpis_name = paste("BPIS_", dpi, ".", format, sep="");
+  }
+  if(tics_name == "TICS_"){
+	tics_name <- paste("TICS_", dpi, ".", format, sep="");
+  }
   
   msg <- c("The uploaded files are raw MS spectra.");
   
@@ -49,7 +58,7 @@ ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 
   }
 
   snames <- dataset.meta[,1]
-  files <- dataset.meta[,2]
+  files <- dataset.meta[,2]; files <- as.character(files); # Otherwise, a factor form of files will cause an error
   sclass <- dataset.meta[,4]
 
   # some sanity check before proceeds
@@ -104,9 +113,6 @@ ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 
     }
     
     names(group_colors) <- levels(groupInfo)
-    
-    bpis_name <- paste("BPIS_", dpi, ".", format, sep="");
-    tics_name <- paste("TICS_", dpi, ".", format, sep="");
     
     Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
                  type=format, bg="white");
@@ -388,6 +394,8 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' @param format Character, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
+#' @param rtplot_name Character, input the name of the RT adjustment image to create.
+#' @param pcaplot_name Character, input the name of the PCA image to create.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -396,11 +404,17 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
 #' @import xcms
 #' @import ggplot2
 PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = TRUE,
-                                 labels = TRUE, format = "png", dpi = 72, width = 9){
-  
+                                 labels = TRUE, format = "png", dpi = 72, width = 9, rtplot_name="RT_adjustment", pcaplot_name="PCA_plot"){
   if(.on.public.web){
     load_ggplot()
     load_xcms()
+  }
+
+  if(rtplot_name=="RT_adjustment"){
+    rtplot_name <- paste("RT_adjustment", dpi, ".", format, sep="")
+  }
+  if(pcaplot_name=="PCA_plot"){
+    pcaplot_name <- paste("PCA_plot", dpi, ".", format, sep="")
   }
   
   # First check if data should be filtered by RT
@@ -440,7 +454,6 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   groupNum <- nlevels(groupInfo)
   
   if(rtPlot == TRUE){
-    rtplot_name <- paste("RT_adjustment", dpi, ".", format, sep="")
     Cairo::Cairo(file = rtplot_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                  type=format, bg="white")
     if(groupNum > 9){
@@ -459,8 +472,6 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   filled <- fillChromPeaks(grouped_xdata2)
   
   if(pcaPlot == TRUE){
-    
-    pcaplot_name <- paste("PCA_plot", dpi, ".", format, sep="")
     Cairo::Cairo(file = pcaplot_name, unit="in", dpi=dpi, width=width, height=width*6/9, 
                  type=format, bg="white");
     par(mfrow=c(1,2));
@@ -505,6 +516,7 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
   print("Step 3/3: Successfully performed peak alignment!")
   return(xset)
 }
+
 
 #' Set annotation parameters
 #' @description This function sets the parameters for peak annotation.
