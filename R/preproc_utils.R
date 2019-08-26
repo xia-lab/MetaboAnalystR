@@ -333,9 +333,12 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
 #' different features when retention times are overlapping. 
 #' @param bw Numeric, specify the band width (sd or half width at half maximum) of gaussian 
 #' smoothing kernel to be applied during peak grouping.
-#' @param min_frac Numeric, specify fraction of samples in each group that contain the feature for it to be included.
+#' @param min_frac Numeric, specify fraction of samples in each group that contain the feature for it to be grouped.
 #' @param min_sample_num Numeric, specify minimum number of sample(s) in each group that contain the feature for it to be included.
 #' @param max_feats Numeric, specify the maximum number of features to be identified.
+#' @param peakgroup Boolean, if true, PeakGroup algorithm is used for peak alignment; if false, Obiwarp method is used. 
+#' @param bin_size Numeric, specify the bin size (in m/z) to be used for the profile matrix generation used for peak alignment (Obiwarp method).
+#' @param min_frac_retcor Numeric, specify fraction of samples in all groups that contain the peaks for them to be aligned (PeakGroup method).
 #' @param rt_filt Boolean, if true, users must specify the minimum and maximum retention
 #' time to be included in the analysis. By default this is set to 200 - 1000. 
 #' @param rt_min Numeric, specify the minimum retention time.
@@ -348,7 +351,10 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
 SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10, 
                          max_pkw = 60, sn_thresh = 6, mzdiff = 0.01, bw = 5,
                          min_frac = 0.5, min_sample_num = 1,
-                         max_feats = 100, bin_size = 1, rt_filt = FALSE, 
+                         max_feats = 100, 
+                         peakgroup = FALSE,
+                         bin_size = 1, min_frac_retcor = 0.9,
+                         rt_filt = FALSE, 
                          rt_min = 200, rt_max = 1000){
   
   peakParams <- list()
@@ -364,7 +370,9 @@ SetPeakParam <- function(alg = "centwave", ppm = 10, min_pkw = 10,
   peakParams$min_frac <- min_frac
   peakParams$min_sample_num <- min_sample_num
   peakParams$max_feats <- max_feats
+  peakParams$peakgroup <- peakgroup
   peakParams$bin_size <- bin_size
+  peakParams$min_frac_retcor <- min_frac_retcor
   peakParams$rt_filt <- rt_filt
   peakParams$rt_min <- rt_min
   peakParams$rt_max <- rt_max
@@ -433,7 +441,13 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
                           maxFeatures = peakParams$max_feats)
   
   grouped_xdata <- groupChromPeaks(xdata, param = gdp)
-  rt_xdata <- adjustRtime(grouped_xdata, param = ObiwarpParam(binSize = peakParams$bin_size))
+  
+  ## RT correction 
+  if(peakParams$peakgroup == TRUE){
+    rt_xdata <- adjustRtime(grouped_xdata, param = PeakGroupsParam(minFraction = peakParams$min_frac_retcor))
+  }else{
+    rt_xdata <- adjustRtime(grouped_xdata, param = ObiwarpParam(binSize = peakParams$bin_size))
+  }
   
   print("Step 2/3: Successfully performed retention time adjustment!")
   
@@ -450,8 +464,14 @@ PerformPeakProfiling <- function(rawData, peakParams, rtPlot = TRUE, pcaPlot = T
       group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
     }
     names(group_colors) <- unique(rt_xdata$sample_group)
-    plotAdjustedRtime(rt_xdata, col = group_colors[rt_xdata$sample_group])
-    legend("topright", legend=unique(rt_xdata$sample_group), pch=15, col=group_colors);
+    # Different color parameters required for RT correction plot from Obiwarp and PeakGroup methods.
+    if(peakParams$peakgroup == TRUE){
+      plotAdjustedRtime(rt_xdata, peakGroupsCol = group_colors[rt_xdata$sample_group])
+      legend("topright", legend=unique(rt_xdata$sample_group), pch=15, col=group_colors);
+    }else{
+      plotAdjustedRtime(rt_xdata, col = group_colors[rt_xdata$sample_group])
+      legend("topright", legend=unique(rt_xdata$sample_group), pch=15, col=group_colors);
+    }
     dev.off()
   }
   
