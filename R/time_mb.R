@@ -528,11 +528,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
   M <- as.matrix(object);
   
   G <- nrow(M)
-  if(missing(k)) stop("The number of time points is missing.")
-  if(missing(mn)) stop("The sample sizes are missing.")
-  if(missing(c.grp)) stop("Biological condition assignments are missing.")
-  if(length(unique(c.grp)) != 2) stop("The biological condition group assignments are incorrect!")
-  
+
   if(!is.null(mn))
   {
     max.mn1 <- max(mn[,1])
@@ -562,7 +558,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
   
   mis <- apply(!apply(M, 1, is.na), 2, sum)
   mis <- sum((mis/k-floor(mis/k)) !=0)
-  if(mis>0) stop(mis, " genes may have within replicate missing values.")
+  if(mis>0) stop(mis, " metabolites may have within replicate missing values.")
   
   
   N <- apply(mn,1,sum)
@@ -572,8 +568,6 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
   Sp <- apply(M, 1, matrix.cov, k, trans=FALSE, c.grp=c.grp)
   diagSp <- apply(Sp, 2, function(x) diag(matrix(x,ncol=k)))
   Sp.avg <- matrix(apply(Sp, 1, mean, na.rm=TRUE),ncol=k)
-  
-  
   
   if(is.null(nu)||is.null(Lambda))
   {

@@ -158,6 +158,8 @@ To inform us of any bugs or requests, please open a new issue or send an email t
 
 ## MetaboAnalystR History & Updates
 
+09-10-2019 - Updates for MS Peaks to Paths, batch processing for preprocessing raw MS data
+
 06-14-2019 - Bug fixing for t-test + volcano analysis
 
 04-11-2019 - Version Update: 2.0.1 - updated underlying code of MS Peaks to Paths, new functions to create plots to summarize results of mummichog and GSEA analysis, fixed bugs with compound name matching, updated documentation

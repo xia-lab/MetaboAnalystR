@@ -354,6 +354,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     mSetObj$dataSet$cmpd <- var.nms;
   }
 
+  mSetObj$dataSet$mumType = "table";
   mSetObj$dataSet$orig.var.nms <- orig.var.nms;
   mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
