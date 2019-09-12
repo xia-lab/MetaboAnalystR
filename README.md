@@ -33,7 +33,7 @@ metanr_packages <- function(){
     
     if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
-    BiocManager::install(new_pkgs, version = "3.8")
+    BiocManager::install(new_pkgs)
     print(c(new_pkgs, " packages added..."))
   }
   
