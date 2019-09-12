@@ -224,10 +224,19 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9,
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
                                           mode = "onDisk")) 
   
+  if(length(pd$sample_name > 50)){
+    #subset raw_data to first 50 samples
+    print("More than 50 samples uploaded! To reduce memory usage BPI and TIC plots will be created using only 50 samples.")
+    files <- c(1:25, tail(1:length(pd$sample_name), 25))
+    raw_data_filt <- filterFile(raw_data, file=files);
+  }else{
+    raw_data_filt <- raw_data; # just for plotting
+  }
+  
   if(plot==TRUE){
     # Plotting functions to see entire chromatogram
-    bpis <- chromatogram(raw_data, aggregationFun = "max")
-    tics <- chromatogram(raw_data, aggregationFun = "sum")
+    bpis <- chromatogram(raw_data_filt, aggregationFun = "max")
+    tics <- chromatogram(raw_data_filt, aggregationFun = "sum")
     
     groupNum <- nlevels(groupInfo)
     
@@ -245,13 +254,13 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9,
     
     Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
                  type=format, bg="white");
-    plot(bpis, col = group_colors[raw_data$sample_group])
+    plot(bpis, col = group_colors[raw_data_filt$sample_group])
     legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
     dev.off();
     
     Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
                  type=format, bg="white");
-    plot(tics, col = group_colors[raw_data$sample_group])
+    plot(tics, col = group_colors[raw_data_filt$sample_group])
     legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
     dev.off();
   }
