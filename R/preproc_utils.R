@@ -144,6 +144,8 @@ ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 
 #' @param par.cores Logical, if true, the function will automatically 
 #' set the number of parallel cores. If false, it will not.
 #' @param plot Logical, if true the function will create BPIS and TICS plots.
+#' @param plot.opts By default, it will create BPIS and TICS plots using up to 10 samples
+#' per group. Set to "all" to create plots using all samples, though this may cause memory issues.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
@@ -155,7 +157,7 @@ ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 
 #' @import parallel
 
 ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9, 
-                            par.cores=TRUE, plot=TRUE){
+                            par.cores=TRUE, plot=TRUE, plot.opts="default"){
 
   msg.vec <<- vector(mode="character")
   
@@ -224,16 +226,40 @@ ImportRawMSData <- function(foldername, format = "png", dpi = 72, width = 9,
   raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
                                           mode = "onDisk")) 
   
-  if(length(pd$sample_name > 50)){
+  if(plot.opts=="default"){
     #subset raw_data to first 50 samples
-    print("More than 50 samples uploaded! To reduce memory usage BPI and TIC plots will be created using only 50 samples.")
-    files <- c(1:25, tail(1:length(pd$sample_name), 25))
-    raw_data_filt <- filterFile(raw_data, file=files);
+    print("To reduce memory usage BPIS and TICS plots will be created using only 10 samples per group.")
+    
+    grp_nms <- names(table(pd$sample_group))
+    files <- NA
+    
+    for(i in 1:length(grp_nms)){
+      numb2ext <- min(table(pd$sample_group)[i], 10)
+      filt_df <- pd[pd$sample_group==grp_nms[i],]
+      files.inx <- sample(nrow(filt_df), numb2ext)
+      sel.samples <- filt_df$sample_name[files.inx]
+      files <- c(files, which(pd$sample_name %in% sel.samples))
+    }
+    
+    raw_data_filt <- filterFile(raw_data, file=na.omit(files));
+  
   }else{
     raw_data_filt <- raw_data; # just for plotting
   }
   
   if(plot==TRUE){
+    
+    if(plot.opts=="all"){
+      h <- readline(prompt="Using all samples to create BPIS and TICS plots may cause severe memory issues! Press [0] to continue, or [1] to cancel: ")
+      h <- as.integer(h)
+      if(h==1){
+        print("ImportRawMSData function aborted!")
+        return(0)
+      }
+    }
+    
+    print("Plotting BPIS and TICS.")
+    
     # Plotting functions to see entire chromatogram
     bpis <- chromatogram(raw_data_filt, aggregationFun = "max")
     tics <- chromatogram(raw_data_filt, aggregationFun = "sum")

@@ -5,7 +5,7 @@
 \title{Import raw MS data}
 \usage{
 ImportRawMSData(foldername, format = "png", dpi = 72, width = 9,
-  par.cores = TRUE, plot = TRUE)
+  par.cores = TRUE, plot = TRUE, plot.opts = "default")
 }
 \arguments{
 \item{foldername}{Character, input the file path to the folder containing
@@ -21,6 +21,9 @@ the raw MS spectra to be processed.}
 set the number of parallel cores. If false, it will not.}
 
 \item{plot}{Logical, if true the function will create BPIS and TICS plots.}
+
+\item{plot.opts}{By default, it will create BPIS and TICS plots using up to 10 samples
+per group. Set to "all" to create plots using all samples, though this may cause memory issues.}
 }
 \description{
 This function handles the reading in of 
