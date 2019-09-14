@@ -66,7 +66,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   }
   
   rt.hit <- "r.t" %in% colnames(input)
-  if(hit){
+  if(rt.hit){
     rt = TRUE
   }else{
     rt = FALSE
