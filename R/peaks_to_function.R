@@ -21,7 +21,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 Read.PeakListData <- function(mSetObj=NA, filename = NA) {
-
+  
   mSetObj <- .get.mSet(mSetObj);
   mumDataContainsPval = 1; #whether initial data contains pval or not
   
@@ -113,7 +113,7 @@ SetPeakFormat <-function(type){
 #'@export
 
 Convert2Mummichog <- function(mSetObj=NA, rt=FALSE){
-
+  
   tt.pval <- mSetObj$analSet$tt$p.value
   fdr <- p.adjust(tt.pval, "fdr")
   mz.pval <- names(tt.pval)
@@ -183,20 +183,20 @@ UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, cus
 SanityCheckMummichogData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-    if(mSetObj$dataSet$mumType == "table"){
-
-        l = sapply(colnames(mSetObj$dataSet$orig),function(x) return(unname(strsplit(x,"/")[[1]][1])))
-        colnames(mSetObj$dataSet$orig) = l;
+  if(mSetObj$dataSet$mumType == "table"){
     
-        return(SanityCheckData(NA));
-    }
+    l = sapply(colnames(mSetObj$dataSet$orig),function(x) return(unname(strsplit(x,"/")[[1]][1])))
+    colnames(mSetObj$dataSet$orig) = l;
+    
+    return(SanityCheckData(NA));
+  }
   msg.vec <- NULL;
   mSetObj$mum_nm <- "mummichog_query.json"
   mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
   ndat <- mSetObj$dataSet$mummi.orig;
   pos_inx = mSetObj$dataSet$pos_inx
   ndat <- cbind(ndat, pos_inx)
-
+  
   rawdat <- mSetObj$dataSet$mummi.raw
   
   read.msg <- mSetObj$msgSet$read.msg
@@ -285,13 +285,13 @@ SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
     n <- floor(fraction*length(ndat[,"p.value"]))
     cutoff <- ndat[n+1,1]
     if(!any(pvals <= cutoff)){
-    maxp <- 0.00001
+      maxp <- 0.00001
     }else{
-    maxp <- max(pvals[pvals <= cutoff])
+      maxp <- max(pvals[pvals <= cutoff])
     }
   }
   mSetObj$dataSet$cutoff <- maxp
-    .set.mSet(mSetObj);
+  .set.mSet(mSetObj);
   return(SetMummichogPval("NA", maxp));
   
 }
@@ -367,7 +367,7 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
 PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   filenm <- paste(lib, ".rds", sep="")
   biocyc <- grepl("biocyc", lib)
   
@@ -471,28 +471,28 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     write.csv(dfcombo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
     mSetObj$integ.resmat <- dfcombo
-
+    
     matched_cpds <- names(mSetObj$cpd_exp)
     inx2<-na.omit(match(mum.df$pathways[ord.inx], mSetObj$pathways$name))
     filt_cpds <- lapply(inx2, function(f) { mSetObj$pathways$cpds[f] })
-  
+    
     cpds <- lapply(filt_cpds, function(x) intersect(unlist(x), matched_cpds))
-
+    
     mSetObj$path.nms <- mum.matrix[ord.inx,1]
     mSetObj$path.hits <- convert2JsonList(cpds)
     mSetObj$path.pval <- as.numeric(dfcombo[,6])
-
-
+    
+    
     json.res <- list(
-    cmpd.exp = mSetObj$cpd_exp,
-    path.nms = mum.matrix[ord.inx,1],
-    hits.all = convert2JsonList(cpds),
-    hits.sig = convert2JsonList(cpds),
-    mum.p = as.numeric(dfcombo[,4]),
-    gsea.p = as.numeric(dfcombo[,5]),
-    comb.p = as.numeric(dfcombo[,6])
+      cmpd.exp = mSetObj$cpd_exp,
+      path.nms = mum.matrix[ord.inx,1],
+      hits.all = convert2JsonList(cpds),
+      hits.sig = convert2JsonList(cpds),
+      mum.p = as.numeric(dfcombo[,4]),
+      gsea.p = as.numeric(dfcombo[,5]),
+      comb.p = as.numeric(dfcombo[,6])
     );
-  
+    
     json.mat <- RJSONIO::toJSON(json.res, .na='null');
     sink(mSetObj$mum_nm);
     cat(json.mat);
@@ -500,16 +500,16 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   }
   
   mummichog.lib <- NULL;
-     mum = list(
+  mum = list(
     path.nms = mSetObj$path.nms,
     path.hits = mSetObj$path.hits,
     path.pval = mSetObj$path.pval,
-   cmpds = mSetObj$cpd_exp,
-   peakToMet = mSetObj$cpd_form_dict,
-   peakMetTable = mSetObj$dataSet$mumResTable,
-   expr = mSetObj$cpd_exp_dict
-   );
-   json.mat <- RJSONIO::toJSON(mum, .na='null');
+    cmpds = mSetObj$cpd_exp,
+    peakToMet = mSetObj$cpd_form_dict,
+    peakMetTable = mSetObj$dataSet$mumResTable,
+    expr = mSetObj$cpd_exp_dict
+  );
+  json.mat <- RJSONIO::toJSON(mum, .na='null');
   sink("metaboanalyst_peaks.json");
   cat(json.mat);
   sink();
@@ -618,11 +618,11 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   modified.statesn <- colnames(cpd.lib$mz.matn);
   my.tolsp <- mz_tolerance(ref_mzlistp, mSetObj$dataSet$instrument);
   my.tolsn <- mz_tolerance(ref_mzlistn, mSetObj$dataSet$instrument);
-
+  
   # get mz ladder (pos index)
   self.mzsp <- floor(ref_mzlistp);
   all.mzsp <- cbind(self.mzsp-1, self.mzsp, self.mzsp+1);
-
+  
   self.mzsn <- floor(ref_mzlistn);
   all.mzsn <- cbind(self.mzsn-1, self.mzsn, self.mzsn+1);
   
@@ -632,83 +632,83 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   matched_resn <- myFastList();
   
   if(mSetObj$dataSet$mode != "negative"){
-  for(i in 1:length(ref_mzlistp)){
-    mz <- ref_mzlistp[i];
-    my.tol <- my.tolsp[i];
-    all.mz <- all.mzsp[i,];
-    pos.all <- as.numeric(unique(unlist(cpd.treep[all.mz])));
-    
-    for(pos in pos.all){
-      id <- cpd.lib$id[pos];
-      mw.all <- cpd.lib$mz.matp[pos,]; #get modified mzs
-      diffs <- abs(mw.all - mz); #modified mzs - mz original
-      hit.inx <- which(diffs < my.tol);
-      if(length(hit.inx)>0){
-        for(spot in 1:length(hit.inx)){
-          hit.pos <- hit.inx[spot];# need to match all
-          index <- paste(mz, id, hit.pos, sep = "_");
-          matched_resp$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesp[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+    for(i in 1:length(ref_mzlistp)){
+      mz <- ref_mzlistp[i];
+      my.tol <- my.tolsp[i];
+      all.mz <- all.mzsp[i,];
+      pos.all <- as.numeric(unique(unlist(cpd.treep[all.mz])));
+      
+      for(pos in pos.all){
+        id <- cpd.lib$id[pos];
+        mw.all <- cpd.lib$mz.matp[pos,]; #get modified mzs
+        diffs <- abs(mw.all - mz); #modified mzs - mz original
+        hit.inx <- which(diffs < my.tol);
+        if(length(hit.inx)>0){
+          for(spot in 1:length(hit.inx)){
+            hit.pos <- hit.inx[spot];# need to match all
+            index <- paste(mz, id, hit.pos, sep = "_");
+            matched_resp$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesp[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+          }
         }
       }
     }
-  }
   }
   all.mzsn <<- all.mzsn
   if(mSetObj$dataSet$mode != "positive"){
-  for(i in 1:length(ref_mzlistn)){
-    mz <- ref_mzlistn[i];
-    my.tol <- my.tolsn[i];
-    all.mz <- all.mzsn[i,];
-    pos.all <- as.numeric(unique(unlist(cpd.treen[all.mz])));
-    
-    for(pos in pos.all){
-      id <- cpd.lib$id[pos];
-      mw.all <- cpd.lib$mz.matn[pos,]; #get modified mzs
-      diffs <- abs(mw.all - mz); #modified mzs - mz original
-      hit.inx <- which(diffs < my.tol);
-      if(length(hit.inx)>0){
-        for(spot in 1:length(hit.inx)){
-          hit.pos <- hit.inx[spot];# need to match all
-          index <- paste(mz, id, hit.pos, sep = "_");
-          matched_resn$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesn[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+    for(i in 1:length(ref_mzlistn)){
+      mz <- ref_mzlistn[i];
+      my.tol <- my.tolsn[i];
+      all.mz <- all.mzsn[i,];
+      pos.all <- as.numeric(unique(unlist(cpd.treen[all.mz])));
+      
+      for(pos in pos.all){
+        id <- cpd.lib$id[pos];
+        mw.all <- cpd.lib$mz.matn[pos,]; #get modified mzs
+        diffs <- abs(mw.all - mz); #modified mzs - mz original
+        hit.inx <- which(diffs < my.tol);
+        if(length(hit.inx)>0){
+          for(spot in 1:length(hit.inx)){
+            hit.pos <- hit.inx[spot];# need to match all
+            index <- paste(mz, id, hit.pos, sep = "_");
+            matched_resn$add(index, c(i, id, mz, mw.all[hit.pos], modified.statesn[hit.pos], diffs[hit.pos])); #replaces previous when hit.inx>1
+          }
         }
       }
     }
-  }
   }
   
   # convert to regular list
   if(mSetObj$dataSet$mode == "mixed"){
-  matched_resn <- matched_resn$as.list();
-
-  if(is.null(unlist(matched_resn))){
-    msg.vec <<- "No compound matches from upload peak list!"
-    return(0)
-  }
-  matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
-  matched_resp <- matched_resp$as.list();
-  matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
-  matched_res <- rbind(matched_resp, matched_resn)
+    matched_resn <- matched_resn$as.list();
+    
+    if(is.null(unlist(matched_resn))){
+      msg.vec <<- "No compound matches from upload peak list!"
+      return(0)
+    }
+    matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
+    matched_resp <- matched_resp$as.list();
+    matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
+    matched_res <- rbind(matched_resp, matched_resn)
   }else if(mSetObj$dataSet$mode == "positive"){
-  matched_resp <- matched_resp$as.list();
-
-  if(is.null(unlist(matched_resp))){
-    msg.vec <<- "No compound matches from upload peak list!"
-    return(0)
-  }
-  
-  matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
-  matched_res <- matched_resp
+    matched_resp <- matched_resp$as.list();
+    
+    if(is.null(unlist(matched_resp))){
+      msg.vec <<- "No compound matches from upload peak list!"
+      return(0)
+    }
+    
+    matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
+    matched_res <- matched_resp
   }else{
-  matched_resn <- matched_resn$as.list();
-
-  if(is.null(unlist(matched_resn))){
-    msg.vec <<- "No compound matches from upload peak list!"
-    return(0)
-  }
-
-  matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
-  matched_res <- matched_resn
+    matched_resn <- matched_resn$as.list();
+    
+    if(is.null(unlist(matched_resn))){
+      msg.vec <<- "No compound matches from upload peak list!"
+      return(0)
+    }
+    
+    matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
+    matched_res <- matched_resn
   }
   
   # re-order columns for output
@@ -835,10 +835,10 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
     adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
   }, error = function(e){
     if(mSetObj$dataSet$mumType == "table"){
-    if(!exists("adjustedp")){
-      adjustedp <- rep(NA, length = length(res.mat[,1]))
-    }
-    res.mat <- cbind(res.mat, Gamma=adjustedp);
+      if(!exists("adjustedp")){
+        adjustedp <- rep(NA, length = length(res.mat[,1]))
+      }
+      res.mat <- cbind(res.mat, Gamma=adjustedp);
     }
     print(e)   
   }, finally = {
@@ -881,7 +881,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
   mSetObj$path.pval <- as.numeric(res.mat[,5])
-
+  
   json.res <- list(
     cmpd.exp = mSetObj$cpd_exp,
     path.nms = path.nms[ord.inx],
@@ -1027,7 +1027,7 @@ PlotMSPeaksPerm <- function(mSetObj=NA, pathway, imgName, format="png", dpi=72, 
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
-
+  
   return(mSetObj);
 }
 
@@ -1517,9 +1517,9 @@ GetDefaultPvalCutoff <- function(mSetObj=NA){
     n <- floor(0.1*length(ndat[,"p.value"]))
     cutoff <- ndat[n+1,1]
     if(!any(pvals <= cutoff)){
-    maxp <- 0.00001
+      maxp <- 0.00001
     }else{
-    maxp <- max(pvals[pvals <= cutoff])
+      maxp <- max(pvals[pvals <= cutoff])
     }
   }
   
@@ -1991,16 +1991,16 @@ sumlog <-function(p) {
 
 
 CreateHeatmapJson <- function(mSetObj="NA", libOpt, fileNm, filtOpt){
-mSetObj = .get.mSet(mSetObj);
-
+  mSetObj = .get.mSet(mSetObj);
+  
   data = t(mSetObj$dataSet$norm)
   dataSet <- mSetObj$dataSet
   sig.ids <- rownames(data);
-
+  
   l = sapply(rownames(data),function(x) return(unname(strsplit(x,"/")[[1]][1])))
   l = as.numeric(unname(unlist(l)))
-
-   if(length(levels(mSetObj$dataSet$cls))<3){
+  
+  if(length(levels(mSetObj$dataSet$cls))<3){
     res<-GetTtestRes(NA, FALSE, TRUE, F)
   }else{
     aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
@@ -2011,7 +2011,7 @@ mSetObj = .get.mSet(mSetObj);
     res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
   }
   rownames(res) = rownames(data);
-
+  
   if(mSetObj$dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx = rep(TRUE, nrow(data))
   }else{
@@ -2020,27 +2020,27 @@ mSetObj = .get.mSet(mSetObj);
   mSetObj$dataSet$ref_mzlist = as.numeric(rownames(data));
   mSetObj$dataSet$expr_dic= res[,1];
   names(mSetObj$dataSet$expr_dic) = rownames(res)
-
+  
   if(filtOpt == "filtered"){
-  .set.mSet(mSetObj);
-  searchCompLib(libOpt);
-  data = data[which(l %in% res_table[,"Query.Mass"]),]
-  res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
+    .set.mSet(mSetObj);
+    searchCompLib(libOpt);
+    data = data[which(l %in% res_table[,"Query.Mass"]),]
+    res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
   }
-
+  
   stat.pvals <- unname(as.vector(res[,2]));
   #stat.pvals <- unname(as.vector(data[,1]));
   org = unname(strsplit(libOpt,"_")[[1]][1])
   # scale each gene 
   dat <- t(scale(t(data)));
-
+  
   rankPval = order(as.vector(stat.pvals))
   stat.pvals = stat.pvals[rankPval]
   dat = dat[rankPval,]
-
+  
   # now pearson and euclidean will be the same after scaleing
   dat.dist <- dist(dat); 
-
+  
   orig.smpl.nms <- colnames(dat);
   orig.gene.nms <- rownames(dat);
   
@@ -2119,22 +2119,22 @@ mSetObj = .get.mSet(mSetObj);
   res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
   
   # note, use {} will lose order; use [[],[]] to retain the order
-      
-    gene.id = orig.gene.nms; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
-    json.res <- list(
-      data.type = dataSet$type,
-      gene.id = gene.id,
-      gene.entrez = gene.id,
-      gene.name = gene.id,
-      gene.cluster = gene.cluster,
-      sample.cluster = sample.cluster,
-      sample.names = orig.smpl.nms,
-      meta = data.frame(nmeta),
-      meta.anot = meta_anot,
-      data = res,
-      org = org
-    );
-
+  
+  gene.id = orig.gene.nms; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
+  json.res <- list(
+    data.type = dataSet$type,
+    gene.id = gene.id,
+    gene.entrez = gene.id,
+    gene.name = gene.id,
+    gene.cluster = gene.cluster,
+    sample.cluster = sample.cluster,
+    sample.names = orig.smpl.nms,
+    meta = data.frame(nmeta),
+    meta.anot = meta_anot,
+    data = res,
+    org = org
+  );
+  
   mSetObj$dataSet$hm_peak_names = gene.id
   mSetObj$dataSet$gene.cluster = gene.cluster
   
@@ -2155,15 +2155,15 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, lib, ids){
   mSetObj$dataSet$N <- length(gene.vec);
   mSetObj$mum_nm <- paste0(nm,".json");
   mSetObj$mum_nm_csv <- paste0(nm,".csv");
- .set.mSet(mSetObj);
+  .set.mSet(mSetObj);
   anal.type <<- "mummichog";
   PerformPSEA("NA", lib, 100);
 }
 
 searchCompLib <- function(lib){
- 
+  
   mSetObj <- .get.mSet(mSetObj);
-
+  
   filenm <- paste(lib, ".rds", sep="")
   biocyc <- grepl("biocyc", lib)
   

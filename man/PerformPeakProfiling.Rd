@@ -8,7 +8,8 @@ the rawData object created using the InspectRawMSData function.}
 \usage{
 PerformPeakProfiling(rawData, peakParams, rtPlot = TRUE,
   pcaPlot = TRUE, labels = TRUE, format = "png", dpi = 72,
-  width = 9)
+  width = 9, rtplot_name = "RT_adjustment",
+  pcaplot_name = "PCA_plot")
 }
 \arguments{
 \item{rawData}{The object created using the InspectRawMSData function,
@@ -31,6 +32,10 @@ Default is set to true.}
 \item{dpi}{Numeric, input the dpi of the image to create.}
 
 \item{width}{Numeric, input the width of the image to create.}
+
+\item{rtplot_name}{Character, input the name of the RT adjustment image to create.}
+
+\item{pcaplot_name}{Character, input the name of the PCA image to create.}
 }
 \description{
 Perform peak annotation
