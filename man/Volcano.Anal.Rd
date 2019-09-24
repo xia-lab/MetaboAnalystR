@@ -13,7 +13,7 @@ Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar
 
 \item{fcthresh}{Numeric, input the fold change threshold}
 
-\item{cmpType}{Comparison type, 1 indicates group 1 vs group 2, and 2 indicates group 2 vs group 1}
+\item{cmpType}{Comparison type, 0 indicates group 1 vs group 2, and 1 indicates group 2 vs group 1}
 
 \item{percent.thresh}{Only for paired data, numeric, indicate the significant count threshold}
 

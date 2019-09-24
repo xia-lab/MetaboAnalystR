@@ -32,6 +32,13 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE){
     sam_out <- siggenes::sam(mat, cl, rand=123);
   }
   mSetObj$analSet$sam <- sam_out;
+  data.norm = t(mSetObj$dataSet$norm)
+  colnames(data.norm) = NULL
+  lst = list(colnames(t(mSetObj$dataSet$norm)),data.norm, as.data.frame(mSetObj$dataSet$cls), as.list(mSetObj$analSet$tt$sig.mat), rownames(data.norm), org=data.org)
+  require(RJSONIO)
+  json.obj <- RJSONIO::toJSON(lst);
+  sink("MetaboAnalyst_matrix.json");
+  cat(json.obj);
   return(.set.mSet(mSetObj));
 }
 

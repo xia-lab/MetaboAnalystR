@@ -19,11 +19,6 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(mSetObj$dataSet$mumType == "table"){
-    l = sapply(colnames(mSetObj$dataSet$orig),function(x) return(unname(strsplit(x,"/")[[1]][1])))
-    colnames(mSetObj$dataSet$orig) = l;
-  }
-
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;

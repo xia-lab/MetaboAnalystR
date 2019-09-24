@@ -354,7 +354,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     mSetObj$dataSet$cmpd <- var.nms;
   }
 
-  mSetObj$dataSet$mumType = "table";
+  mSetObj$dataSet$mumType <- "table";
   mSetObj$dataSet$orig.var.nms <- orig.var.nms;
   mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
@@ -594,6 +594,14 @@ SaveTransformedData <- function(mSetObj=NA){
   if(anal.type=="mummichog"){
     
     orig.data<- mSetObj$dataSet$mummi.orig;
+
+if(mSetObj$dataSet$mode == "positive"){
+    mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
+  }else if(mSetObj$dataSet$mode == "negative"){
+    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig) )
+  }else{
+    mSetObj$dataSet$pos_inx <- input$mode == "positive"
+  }
     #colnames(orig.data) <- c("p.value", "m.z", "t.score")
     write.csv(orig.data, file="data_original.csv", row.names = FALSE);
     

@@ -222,8 +222,8 @@ mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
 SetPeakFormat("mpt")
-mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
 mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
+mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
 mSet<-SanityCheckMummichogData(mSet)
 
 # First perform the original mummichog algorithm

@@ -338,7 +338,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NA, border=T, grp.ave=F){
-  
+  filenm = paste0(imgName, ".json")
   mSetObj <- .get.mSet(mSetObj);
   
   # record the paramters
@@ -482,8 +482,30 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
              scale = scaleOpt, 
              color = colors,
              annotation_colors = ann_colors);
+  dat = t(hc.dat)
+if(scaleOpt == "row"){
+  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+}else{
+  res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
+}
+  colnames(dat) = NULL
+  netData <- list(data=res, annotation=annotation, smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
+  sink(filenm);
+  cat(RJSONIO::toJSON(netData));
+  sink();
   }else{
-    heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+  heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+  dat = t(hc.dat)
+if(scaleOpt == "row"){
+  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+}else{
+  res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
+}
+  colnames(dat) = NULL
+  netData <- list(data=res, annotation="NA", smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
+  sink(filenm);
+  cat(RJSONIO::toJSON(netData));
+  sink();
   }
   dev.off();
   return(.set.mSet(mSetObj));
