@@ -5,7 +5,8 @@
 \title{Import raw MS data}
 \usage{
 ImportRawMSDataList(dataset.meta, format = "png", dpi = 72,
-  width = 9, par.cores = TRUE, plot = TRUE)
+  width = 9, par.cores = TRUE, plot = TRUE, bpis_name = "BPIS_",
+  tics_name = "TICS_")
 }
 \arguments{
 \item{dataset.meta}{Matrix, input the meta data for files containing
@@ -21,6 +22,10 @@ the raw MS spectra to be processed.}
 set the number of parallel cores. If false, it will not.}
 
 \item{plot}{Logical, if true the function will create BPIS and TICS plots.}
+
+\item{bpis_name}{Character, input the name of the BPIS image to create.}
+
+\item{tics_name}{Character, input the name of the TICS image to create.}
 }
 \description{
 This function handles the reading in of 
