@@ -154,9 +154,11 @@ citation("MetaboAnalystR")
 
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue or send an email to #jasmine.chong@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue (and @ jsychong) or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+09-24-2019 - Updates w. web server, bug-fixing + updates to MS Peaks to Paths and MetaboAnalystR 2.0 vignettes
 
 09-10-2019 - Updates for MS Peaks to Paths, batch processing for preprocessing raw MS data
 
