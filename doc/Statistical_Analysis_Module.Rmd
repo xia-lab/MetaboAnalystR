@@ -221,7 +221,7 @@ mSet<-PlotSPLS3DScoreImg(mSet, "spls_score3d_0_", format = "png", 72, width=NA, 
 mSet<-PlotSPLSLoading(mSet, "spls_loading_0_", format = "png", dpi=72, width=NA, 1,"overview")
 
 # Perform cross-validation and plot sPLS-DA classification
-mSet<-PlotSPLSDA.Classification(mSet, "spls_cv_0_", "Mfold", format = "png", dpi=72, width=NA)
+mSet<-PlotSPLSDA.Classification(mSet, "spls_cv_0_", format = "png", dpi=72, width=NA)
 
 ```
 
@@ -243,13 +243,13 @@ mSet<-OPLSR.Anal(mSet, reg=TRUE)
 mSet<-PlotOPLS2DScore(mSet, "opls_score2d_0_", format = "png", dpi=72, width=NA, 1,2,0.95,1,0)
 
 # Create a significant features plot
-mSet<-PlotOPLS.Splot(mSet, "opls_splot_0_", "png", 72, width=NA);
+mSet<-PlotOPLS.Splot(mSet, "opls_splot_0_", format = "png", dpi=72, width=NA);
 
 # Create a plot of the model overview
 mSet<-PlotOPLS.MDL(mSet, "opls_mdl_0_", format = "png", dpi=72, width=NA)
 
 # Perform and plot oPLS-DA permutation 
-mSet<-PlotOPLS.Permutation(mSet, "opls_perm_2_", format = "png", dpi=72, 100, width=NA)
+mSet<-PlotOPLS.Permutation(mSet, "opls_perm_2_", format = "png", dpi=72, width=NA)
 ```
 
 ## 2.11 Significance Analysis of Microarrary (and Metabolites) (SAM)
