@@ -344,6 +344,7 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   }
 }
 
+#'@export
 PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   pca = mSetObj$analSet$pca
@@ -378,7 +379,12 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Update PCA loadings
@@ -771,6 +777,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   pls = mSetObj$analSet$plsr
@@ -805,7 +812,11 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Update PLS loadings
@@ -2066,6 +2077,7 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   spls = mSetObj$analSet$splsr
@@ -2106,7 +2118,11 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 

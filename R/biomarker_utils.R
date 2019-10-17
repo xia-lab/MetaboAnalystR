@@ -966,6 +966,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   return(.set.mSet(mSetObj));
 }
 
+#'@export
 PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, isQuery){
   
   mSetObj <- .get.mSet(mSetObj);
