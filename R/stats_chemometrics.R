@@ -378,7 +378,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  return(.set.mSet(mSetObj));
 }
 
 #'Update PCA loadings
@@ -805,7 +805,7 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  return(.set.mSet(mSetObj));
 }
 
 #'Update PLS loadings
@@ -2106,7 +2106,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  return(1);
+  return(.set.mSet(mSetObj));
 }
 
 
