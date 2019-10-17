@@ -379,12 +379,16 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+<<<<<<< HEAD
   
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
+=======
+  return(.set.mSet(mSetObj));
+>>>>>>> 449fabf6042ec65cc36e87fedcedc60d5333af96
 }
 
 #'Update PCA loadings
@@ -812,11 +816,13 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
+
 }
 
 #'Update PLS loadings
@@ -2118,11 +2124,13 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
+
 }
 
 
