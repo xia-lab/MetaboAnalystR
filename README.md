@@ -158,6 +158,8 @@ To inform us of any bugs or requests, please open a new issue (and @ jsychong) o
 
 ## MetaboAnalystR History & Updates
 
+10-17-2019 - Updates w. web server, updated MS Peaks to Paths vignettes to show adduct/currency customization
+
 09-24-2019 - Updates w. web server, bug-fixing + updates to MS Peaks to Paths and MetaboAnalystR 2.0 vignettes
 
 09-10-2019 - Updates for MS Peaks to Paths, batch processing for preprocessing raw MS data

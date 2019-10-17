@@ -12,8 +12,6 @@ UpdateInstrumentParameters(mSetObj=NA, instrumentOpt, msModeOpt, custom=FALSE)
 \item{instrumentOpt}{Define the mass-spec instrument used to perform untargeted metabolomics.}
 
 \item{msModeOpt}{Define the mass-spec mode of the instrument used to perform untargeted metabolomics.}
-
-\item{custom}{Logical, select adducts for mummichog to consider.}
 }
 \description{
 This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function

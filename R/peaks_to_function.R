@@ -152,19 +152,17 @@ Convert2Mummichog <- function(mSetObj=NA, rt=FALSE){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@param instrumentOpt Define the mass-spec instrument used to perform untargeted metabolomics.
 #'@param msModeOpt Define the mass-spec mode of the instrument used to perform untargeted metabolomics.
-#'@param custom Logical, select adducts for mummichog to consider.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, custom = FALSE){
+UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt){
   
   mSetObj <- .get.mSet(mSetObj);
   
   mSetObj$dataSet$instrument <- instrumentOpt;
   mSetObj$dataSet$mode <- msModeOpt;
-  mSetObj$custom <- custom;
   
   return(.set.mSet(mSetObj));
 }
