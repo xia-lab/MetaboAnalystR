@@ -436,7 +436,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param paired Logical, T if data is paired, F if data is not.
 #'@param fcthresh Numeric, input the fold change threshold
-#'@param cmpType Comparison type, 0 indicates group 1 vs group 2, and 1 indicates group 2 vs group 1
+#'@param cmpType Comparison type, 1 indicates group 1 vs group 2, and 2 indicates group 2 vs group 1
 #'@param percent.thresh Only for paired data, numeric, indicate the significant count threshold 
 #'@param nonpar Logical, indicate if a non-parametric test should be used (T or F)
 #'@param threshp Numeric, indicate the p-value threshold

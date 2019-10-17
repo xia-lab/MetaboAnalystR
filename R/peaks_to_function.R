@@ -183,13 +183,20 @@ UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, cus
 SanityCheckMummichogData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+  
   if(mSetObj$dataSet$mumType == "table"){
     
     l = sapply(colnames(mSetObj$dataSet$orig),function(x) return(unname(strsplit(x,"/")[[1]][1])))
     colnames(mSetObj$dataSet$orig) = l;
     
-    return(SanityCheckData(NA));
+    if(.on.public.web){
+      return(SanityCheckData(NA));
+    }else{
+      mSetObj <- SanityCheckData(mSetObj)
+      return(.set.mSet(mSetObj));
+    }
   }
+  
   msg.vec <- NULL;
   mSetObj$mum_nm <- "mummichog_query.json"
   mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
@@ -405,7 +412,8 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
     new_adducts <- new_adduct_mzlist(mSetObj, mw)
     
     cpd.lib <- list(
-      mz.mat = new_adducts,
+      mz.matp = new_adducts$pos,
+      mz.matn = new_adducts$neg,
       mw = mummichog.lib$cpd.lib$mw,
       id = mummichog.lib$cpd.lib$id,
       name = mummichog.lib$cpd.lib$name
@@ -568,6 +576,8 @@ PerformAdductMapping <- function(mSetObj=NA, add.mode){
     add_db <- .read.metaboanalyst.lib("pos_adduct.rds");
   }else if(add.mode == "negative"){
     add_db <- .read.metaboanalyst.lib("neg_adduct.rds");
+  }else if(add.mode == "mixed"){
+    add_db <- .read.metaboanalyst.lib("mixed_adduct.rds");
   }else{
     msg <- c("Adduct mode is not valid")
   }
@@ -582,6 +592,7 @@ PerformAdductMapping <- function(mSetObj=NA, add.mode){
     mSetObj$mummi$add.msg <- c("No adducts were selected!")
   }
   
+  mSetObj$adduct.custom <- TRUE
   mSetObj$add.map <- match.values
   
   return(.set.mSet(mSetObj));
@@ -592,22 +603,63 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  mode <- mSetObj$dataSet$mode
+  
   ion.name <- mSetObj$add.map$Ion_Name
   ion.mass <- mSetObj$add.map$Ion_Mass
   
   mw_modified <- NULL;
   
-  mass.list <- as.list(ion.mass)
-  mass.user <- lapply(mass.list, function(x) eval(parse(text = paste(x)))) 
-  
-  mw_modified <- cbind(mw, do.call(cbind, mass.user));
-  colnames(mw_modified) <- c('M[1+]', ion.name);
+  if(mode!="mixed"){ #pos or neg
+    
+    mass.list <- as.list(ion.mass)
+    mass.user <- lapply(mass.list, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
+    mw_modified <- cbind(mw, do.call(cbind, mass.user));
+    colnames(mw_modified) <- c('M[1+]', ion.name);
+    
+    if(mode == "positive"){
+      mw_modified.pos <- mw_modified
+      mw_modified.neg <- mw_modified[,1]
+    }else{ #negative
+      mw_modified.neg <- mw_modified
+      mw_modified.pos <- mw_modified[,1]
+    }
+    mw_modified <- list(mw_modified.neg, mw_modified.pos)
+    names(mw_modified) <- c("neg", "pos")
+    
+  }else{
+    #deal w. mixed ion mode, need to return pos and neg 
+    
+    neg.ions <- c("M-H [1-]", "M-2H [2-]", "M-3H [3-]", "M-H2O-H [1-]", "M-H+O [1-]", "M+K-2H [1-]", "M+Na-2H [1- ]", "M+Cl [1-]", "M+Cl37 [1-]",   
+                  "M+K-2H [1-]", "M+FA-H [1-]", "M+Hac-H [1-]", "M+Br [1-]", "M+Br81 [1-]", "M+TFA-H [1-]", "M+ACN-H [1-]", "M+HCOO [1-]", "M+CH3COO [1-]", 
+                  "2M-H [1-]", "2M+FA-H [1-]", "2M+Hac-H [1-]", "3M-H [1-]", "M(C13)-H [1-]", "M(S34)-H [1-]", "M(Cl37)-H [1-]")
+    
+    ion.name.neg <- intersect(ion.name, neg.ions)
+    ion.mass.neg <- ion.mass[which(ion.name %in% neg.ions)] 
+    
+    ion.name.pos <- setdiff(ion.name, neg.ions)
+    ion.mass.pos <- ion.mass[which(ion.name %in% ion.name.pos)] 
+    
+    mass.list.neg <- as.list(ion.mass.neg)
+    mass.user.neg <- lapply(mass.list.neg, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
+    mw_modified.neg <- cbind(mw, do.call(cbind, mass.user.neg));
+    colnames(mw_modified.neg) <- c('M[1+]', ion.name.neg);
+    
+    mass.list.pos <- as.list(ion.mass.pos)
+    mass.user.pos <- lapply(mass.list.pos, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
+    mw_modified.pos <- cbind(mw, do.call(cbind, mass.user.pos));
+    colnames(mw_modified.pos) <- c('M[1+]', ion.name.pos);
+    
+    mw_modified <- list(mw_modified.neg, mw_modified.pos)
+    names(mw_modified) <- c("neg", "pos")
+  }
   
   return(mw_modified);
 }
 
 # internal function for searching compound library
 .search.compoundLib <- function(mSetObj, cpd.lib, cpd.treep, cpd.treen){
+  
   ref_mzlist <- as.numeric(mSetObj$data$ref_mzlist);
   pos_inx <- mSetObj$data$pos_inx;
   ref_mzlistp <- mSetObj$data$ref_mzlist[pos_inx];
@@ -710,7 +762,6 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
     matched_resn <- data.frame(matrix(unlist(matched_resn), nrow=length(matched_resn), byrow=T), stringsAsFactors = FALSE);
     matched_res <- matched_resn
   }
-  
   # re-order columns for output
   matched_res <- matched_res[, c(3,2,5,6)];
   colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff");
@@ -740,7 +791,6 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   hits.index <- which(refmz %in% as.character(mSetObj$data$input_mzlist));
   cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
   cpd1 <- cpd1[!(cpd1 %in% currency)];
-  
   mSetObj$matches.res <- matched_res;
   mSetObj$mz2cpd_dict <- mz2cpd_dict;
   mSetObj$cpd_exp_dict <- cpd_exp_dict;
@@ -749,8 +799,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   mSetObj$cpd2mz_dict <- cpd2mz_dict;
   mSetObj$total_matched_cpds <- unique(as.vector(mSetObj$matches.res$Matched.Compound));
   mSetObj$input_cpdlist <- cpd1;
-  res_table <<- matched_res
-  
+  #res_table <<- matched_res
   return(mSetObj);
 }
 
@@ -1505,7 +1554,6 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt){
   return(.set.mSet(mSetObj));
 }
 
-
 GetDefaultPvalCutoff <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1527,6 +1575,17 @@ GetDefaultPvalCutoff <- function(mSetObj=NA){
   
 }
 
+GetMummiMode <- function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  mode <- mSetObj$dataSet$mode
+  return(mode);
+}
+
+GetMummiDataType <- function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  type <- mSetObj$dataSet$type
+  return(type)
+}
 
 # Replicate because do not want to have to read in stats_univariate to perform MS Peaks
 GetTopInx <- function(vec, n, dec=T){
@@ -1990,20 +2049,20 @@ sumlog <-function(p) {
 }
 
 
-CreateHeatmapJson <- function(mSetObj="NA", libOpt, fileNm, filtOpt){
-  mSetObj = .get.mSet(mSetObj);
-  
-  data = t(mSetObj$dataSet$norm)
-  dataSet <- mSetObj$dataSet
+CreateHeatmapJson <- function(mSetObj=NA, libOpt, fileNm, filtOpt){
+
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
+  data <- t(dataSet$norm)
   sig.ids <- rownames(data);
   
   l = sapply(rownames(data),function(x) return(unname(strsplit(x,"/")[[1]][1])))
   l = as.numeric(unname(unlist(l)))
   
-  if(length(levels(mSetObj$dataSet$cls))<3){
+  if(length(levels(dataSet$cls))<3){
     res<-GetTtestRes(NA, FALSE, TRUE, F)
   }else{
-    aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
+    aov.res <- apply(as.matrix(dataSet$norm), 2, aof, cls=dataSet$cls);
     anova.res <- lapply(aov.res, anova);
     
     #extract all p values
@@ -2012,7 +2071,7 @@ CreateHeatmapJson <- function(mSetObj="NA", libOpt, fileNm, filtOpt){
   }
   rownames(res) = rownames(data);
   
-  if(mSetObj$dataSet$mode == "positive"){
+  if(dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx = rep(TRUE, nrow(data))
   }else{
     mSetObj$dataSet$pos_inx = rep(FALSE, nrow(data))
@@ -2022,8 +2081,9 @@ CreateHeatmapJson <- function(mSetObj="NA", libOpt, fileNm, filtOpt){
   names(mSetObj$dataSet$expr_dic) = rownames(res)
   
   if(filtOpt == "filtered"){
-    .set.mSet(mSetObj);
-    searchCompLib(libOpt);
+    mSetObj <- searchCompLib(mSetObj, libOpt);
+    res_table <- mSetObj$matches.res;
+    print(head(res_table))
     data = data[which(l %in% res_table[,"Query.Mass"]),]
     res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
   }
@@ -2160,9 +2220,7 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, lib, ids){
   PerformPSEA("NA", lib, 100);
 }
 
-searchCompLib <- function(lib){
-  
-  mSetObj <- .get.mSet(mSetObj);
+searchCompLib <- function(mSetObj, lib){
   
   filenm <- paste(lib, ".rds", sep="")
   biocyc <- grepl("biocyc", lib)
@@ -2201,7 +2259,8 @@ searchCompLib <- function(lib){
     new_adducts <- new_adduct_mzlist(mSetObj, mw)
     
     cpd.lib <- list(
-      mz.mat = new_adducts,
+      mz.matp = new_adducts$pos,
+      mz.matn = new_adducts$neg,
       mw = mummichog.lib$cpd.lib$mw,
       id = mummichog.lib$cpd.lib$id,
       name = mummichog.lib$cpd.lib$name
@@ -2219,9 +2278,9 @@ searchCompLib <- function(lib){
   
   cpd.treep <- mummichog.lib$cpd.tree[["positive"]];
   cpd.treen <- mummichog.lib$cpd.tree[["negative"]];
-  
   mSetObj$pathways <- mummichog.lib$pathways;
   mSetObj$lib.organism <- lib; #keep track of lib organism for sweave report
   mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
-  .set.mSet(mSetObj)
+  print(head(mSetObj$matches.res))
+  return(mSetObj)
 }

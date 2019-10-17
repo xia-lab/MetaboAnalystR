@@ -825,7 +825,7 @@ var.na <- function(x){
   res <- NA
   tmp <- !(is.na(x) | is.infinite(x))
   if(sum(tmp) > 1){
-    res <- var(x[tmp])
+    res <- var(as.numeric(x[tmp]))
   }
   res
 }

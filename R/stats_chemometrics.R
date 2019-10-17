@@ -344,8 +344,6 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   }
 }
 
-#'Plot PCA 3D loading
-#'@export
 PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   pca = mSetObj$analSet$pca
