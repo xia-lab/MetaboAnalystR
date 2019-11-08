@@ -840,7 +840,9 @@ ExtractMS2data <- function(filename, peakParams, mzmin, mzmax){
     ms2spectrum <- ms2spectra[[i]]
     
     #check if within range of peak
-    if(abs(chromPeak[4] - ms2spectrum@rt) < rtTol & abs(chromPeak[1] - ms2spectrum@precursorMz) < mzTol) {
+    #if(abs(chromPeak[4] - ms2spectrum@rt) < rtTol & abs(chromPeak[1] - ms2spectrum@precursorMz) < mzTol) {
+    #I think this makes more sense to get peaks within the range specified by mzmin and mzmax in ExtractMS2data() 
+    if(min(chromPeak[,1]) - rtTol < ms2spectrum@rt & max(chromPeak[,1]) + rtTol > ms2spectrum@rt) {
       filteredMs2spectra <- c(filteredMs2spectra, ms2spectrum)
     }
   }
