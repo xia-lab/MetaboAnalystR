@@ -121,7 +121,7 @@ Correlation analysis can be performed either against a given feature or against 
 
 ```{r}
 # Perform correlation analysis on a pattern (a feature of interest in this case)
-mSet<-FeatureCorrelation(mSet, "pearson", "1,6-Anhydro-beta-D-glucose")
+mSet<-FeatureCorrelation(mSet, "pearson", "16-Anhydro-beta-D-glucose")
 
 # Plot the correlation analysis on a pattern
 mSet<-PlotCorr(mSet, "ptn_3_", format="png", dpi=72, width=NA)
@@ -384,3 +384,7 @@ mSet<-PlotRSVM.Cmpd(mSet, "svm_imp_0_", format = "png", dpi=72, width=NA)
 ## 3. Sweave Report
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+PreparePDFReport(mSet, "My Name")
+```

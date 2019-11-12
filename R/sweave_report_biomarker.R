@@ -264,7 +264,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
   univbio<-c( "\\begin{figure}[htp]",
               "\\begin{center}",
-              paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$roc.univ.boxplot,"}", sep=""),
+              paste("\\includegraphics[width=0.35\\textwidth]{", mSetObj$imgSet$roc.univ.boxplot,"}", sep=""),
               "\\caption{Box-plot of the concentrations of the selected",
               " feature between two groups within the dataset.", 
               " A horizontal line is in red indicating the optimal cutoff.",

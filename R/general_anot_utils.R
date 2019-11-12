@@ -17,16 +17,16 @@ doGeneIDMapping <- function(q.vec, org, type){
     url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
   }
   if(type == "symbol"){
-    db.path <- paste(url.pre, org, "/entrez.csv", sep="");
-    db.map <-  .readDataTable(db.path);
+    db.path <- paste(url.pre, org, "/entrez.rds", sep="");
+    db.map <-  readRDS(db.path);
     hit.inx <- match(q.vec, db.map[, "symbol"]);
     entrezs <- db.map[hit.inx, "gene_id"];
     rm(db.map, q.vec);
     gc();
     return(entrezs);
   }else if(type == "entrez"){
-    db.path <- paste(url.pre, org, "/entrez.csv", sep="");
-    db.map <-  .readDataTable(db.path);
+    db.path <- paste(url.pre, org, "/entrez.rds", sep="");
+    db.map <-  readRDS(db.path);
     hit.inx <- match(q.vec, db.map[, "gene_id"]);
     entrezs <- db.map[hit.inx, "gene_id"];
     rm(db.map, q.vec);
@@ -67,53 +67,7 @@ doGeneIDMapping <- function(q.vec, org, type){
     rm(db.map, q.vec);
     gc();
     return(entrezs);
-    
   }
-}
-
-#'Perform gene annotation
-#'@export
-#'
-PerformGeneAnnotation <- function(){
-  if(!exists("entrez.vec")){
-    print("Could not find Entrez ID list!");
-    return(0);
-  }
-  
-  if(.on.public.web){
-    url.pre <- "../../libs/";
-  }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
-  }
-  
-  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
-  gene.map <-  .readDataTable(db.path);
-  
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  
-  dat <- cbind(query=entrez.vec, gene.map[hit.inx, c("symbol","name")]);
-  write.csv(dat, file="EntrezID2Gene.csv", row.names=F);
-  rm(entrez.vec, envir = .GlobalEnv);
-  return(1);
-}
-
-doEntrez2SymbolMapping <- function(entrez.vec){
-  
-  if(.on.public.web){
-    url.pre <- "../../libs/";
-  }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
-  }
-  
-  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
-  gene.map <- .readDataTable(db.path);
-  
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  symbols <- gene.map[hit.inx, "symbol"];
-  
-  # NA to character to avoid some issues?
-  symbols[is.na(symbols)] <- 'NA';
-  return(symbols);
 }
 
 #'Perform compound mapping

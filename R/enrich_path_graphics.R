@@ -341,10 +341,10 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 GeneratePathwayJSON<-function(pathway.nm){
   mSetObj <- .get.mSet(mSetObj);
 
-  smpdb.path <- paste("../../libs/smpdb/", data.org, ".rda", sep="");
+  smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".rda", sep="");
   load(smpdb.path)
   
-  jsons.path <- paste("../../libs/smpdb/jsons/", data.org, ".rds", sep="");
+  jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".rds", sep="");
   smpdb.jsons <- readRDS(jsons.path) # no need to be global!
 
   if(pathway.nm == "top"){
@@ -405,7 +405,8 @@ RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=N
     if(font.cex < 0.6){
         font.cex=0.6;
     }
-    plotGraph(mSetObj$dataSet$current.kegg$graph, 
+    g <- upgrade_graph(mSetObj$dataSet$current.kegg$graph);
+    plotGraph(g, 
             vertex.color=mSetObj$dataSet$current.kegg$bg.color, 
             vertex.frame.color=mSetObj$dataSet$current.kegg$line.color,
             vertex.label=V(mSetObj$dataSet$current.kegg$graph)$plot_name,

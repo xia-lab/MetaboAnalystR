@@ -216,6 +216,13 @@ CleanNumber <-function(bdata){
   bdata;
 }
 
+# only keep alphabets, numbers, ",", "." "_", "-" "/"
+# note, this may leads to duplicate names
+CleanNames <- function(query){
+  query <- gsub("[^[:alnum:]./_-]", "", query);
+  return(make.unique(query));
+}
+
 #'Remove spaces
 #'@description Remove from, within, leading and trailing spaces
 #'@param query Input the query to clear

@@ -4,7 +4,7 @@
 \alias{SetSMPDB.PathLib}
 \title{Set SMPDB pathway library}
 \usage{
-SetSMPDB.PathLib(mSetObj = NA, smpdb.rda)
+SetSMPDB.PathLib(mSetObj = NA, libNm)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -219,11 +219,6 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
   
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1)
-  }
-  
   print(c("Successfully passed sanity check!", msg))
   return(.set.mSet(mSetObj));
 }

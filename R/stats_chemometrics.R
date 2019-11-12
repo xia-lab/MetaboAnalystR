@@ -385,7 +385,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   }else{
     return(.set.mSet(mSetObj));
   }
-  
+
 }
 
 #'Update PCA loadings
@@ -532,7 +532,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj <- .get.mSet(mSetObj);
   
   comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
-  
+
   if(comp.num > 8) {
     #need to deal with small number of predictors
     comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
@@ -813,13 +813,13 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  
+
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-  
+
 }
 
 #'Update PLS loadings
@@ -1368,13 +1368,13 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   mSetObj$analSet$opls.reg <- reg;  
-  
+
   # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-  
+
   if(reg==TRUE){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
@@ -1385,11 +1385,11 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
   if(.on.public.web){ # this is done by R microservice
-    opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
-    saveRDS(opls.in, "opls_in.rds");
-    return(.set.mSet(mSetObj));
+      opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
+      saveRDS(opls.in, "opls_in.rds");
+      return(.set.mSet(mSetObj));
   }
-  
+
   mSetObj$analSet$oplsda <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
   score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
   colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
@@ -1698,11 +1698,11 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
-  
+
   if(.on.public.web){ # this is done by R microservice
-    opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=num, orthoI=NA, crossvalI=cv.num);
-    saveRDS(opls.in, "opls_in.rds");
-    return(.set.mSet(mSetObj));
+      opls.in <- list(datmat=datmat, cls=cls, predI=1, permI=num, orthoI=NA, crossvalI=cv.num);
+      saveRDS(opls.in, "opls_in.rds");
+      return(.set.mSet(mSetObj));
   }
   
   perm.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
@@ -1711,7 +1711,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   
   # note, actual permutation number may be adjusted in public server
   perm.num <- perm.res$suppLs[["permI"]];
-  
+
   mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
   return(.set.mSet(mSetObj));
 }
@@ -1737,7 +1737,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
   mSetObj <- .get.mSet(mSetObj);
   
   perm.res <- mSetObj$analSet$oplsda$perm.res;
-  
+
   r.vec <- perm.res$r.vec;
   q.vec <- perm.res$q.vec;
   perm.num <- perm.res$perm.num;
@@ -1827,25 +1827,25 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
       return(0);
     }
   }
-  
+
   mSetObj <- .get.mSet(mSetObj);  
   
   # note, standardize the cls, to minimize the impact of categorical to numerical impact
   cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  
+
   if(.on.public.web){ # this is done by R microservice
-    spls.in <- list(datmat=datmat, cls=cls, ncomp=comp.num, keepX=comp.var.nums, validOpt=validOpt);
-    saveRDS(spls.in, "spls_in.rds");
-    return(.set.mSet(mSetObj));
+      spls.in <- list(datmat=datmat, cls=cls, ncomp=comp.num, keepX=comp.var.nums, validOpt=validOpt);
+      saveRDS(spls.in, "spls_in.rds");
+      return(.set.mSet(mSetObj));
   }
-  
+
   mSetObj$analSet$splsr <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
-  
+
   # perform validation
   res <- perf.splsda(mSetObj$analSet$splsr, dist= "centroids.dist", validation=validOpt, folds = 5);
   mSetObj$analSet$splsr$error.rate <- res$error.rate$overall;
-  
+
   score.mat <- mSetObj$analSet$splsr$variates$X;
   write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
   load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;
@@ -1919,7 +1919,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -2085,7 +2085,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   mSetObj <- .get.mSet(mSetObj);
   spls = mSetObj$analSet$splsr
   spls3d <- list();
-  
+
   if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
@@ -2095,11 +2095,11 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
   }
-  
-  colnames(coords) <- NULL; 
-  spls3d$loading$xyz <- coords;
-  spls3d$loading$name <- rownames(spls$loadings$X);
-  spls3d$loading$entrez <-rownames(spls$loadings$X); 
+    
+    colnames(coords) <- NULL; 
+    spls3d$loading$xyz <- coords;
+    spls3d$loading$name <- rownames(spls$loadings$X);
+    spls3d$loading$entrez <-rownames(spls$loadings$X); 
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
@@ -2110,7 +2110,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   if(all.numeric(cls)){
     cls <- paste("Group", cls);
   }
-  
+
   spls3d$cls = cls;
   # see if there is secondary
   
@@ -2121,13 +2121,13 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-  
+
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-  
+
 }
 
 
@@ -2192,7 +2192,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   res <- mSetObj$analSet$splsr$error.rate;
   
   edge <- (max(res)-min(res))/100; # expand y uplimit for text

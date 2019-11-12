@@ -55,6 +55,13 @@ mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
 # To view the results of the pathway analysis in R, use mSet$mummi.resmat
+
+# Use this function to view a table of the significant / non-significant compound hits in a selected pathway
+mSet <- GetMummichogPathSetDetails(mSet, "Vitamin E metabolism")
+
+# Use this function to view a table of matching details (i.e. adducts, t-scores, m.z) for a compound
+mSet <- GetCompoundDetails(mSet, "CE5843")
+
 ```
 
 ### 2.1 Adduct Customization
@@ -113,3 +120,7 @@ mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 ## 3. Sweave Report
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+PreparePDFReport(mSet, "My Name")
+```

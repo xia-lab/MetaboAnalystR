@@ -329,11 +329,8 @@ SelectMultiData <- function(mSetObj=NA){
   
   rm('nm.vec', envir = .GlobalEnv);
   
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
+  return(.set.mSet(mSetObj));
+  
 }
 
 #' Get all meta-analysis name data
@@ -384,17 +381,10 @@ PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
   dataSet$auto_opt <- auto.opt
   
   mSetObj$dataSet <- dataSet
-  
   RegisterData(mSetObj, dataSet);
-  
   AddMsg(msg);
   
-  if(.on.public.web){
-    .set.mSet(mSetObj)
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
+  return(.set.mSet(mSetObj));
 }
 
 PerformDataNormalization <- function(data, norm.opt){

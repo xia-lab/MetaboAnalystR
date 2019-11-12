@@ -224,7 +224,6 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   if(mSetObj$analSet$mode == "univ"){
     write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
   }
-  
   return(.set.mSet(mSetObj));  
 }
 
@@ -966,6 +965,18 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   return(.set.mSet(mSetObj));
 }
 
+#'Plot a boxplot view of a selected compound
+#'@description Plots a boxplot of the selected compound's concentration
+#'between the groups.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param feat.nm Input the name of the selected compound.
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", of "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300. 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
 #'@export
 PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, isQuery){
   

@@ -4,10 +4,13 @@
 \alias{SetKEGG.PathLib}
 \title{Set KEGG pathway library}
 \usage{
-SetKEGG.PathLib(mSetObj = NA, kegg.rda)
+SetKEGG.PathLib(mSetObj = NA, libNm, lib.version)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{lib.version}{Input the KEGG pathway version. "current" for the latest 
+KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019.}
 
 \item{kegg.rda}{Input the name of the KEGG library}
 }

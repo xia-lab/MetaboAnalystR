@@ -58,7 +58,6 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
     Sweave("Analysis_Report.Rnw", encoding="utf8");
     res <- try(tools::texi2dvi("Analysis_Report.tex", pdf = TRUE, quiet=TRUE));
   }
-
   return(1);
 }
 

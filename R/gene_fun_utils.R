@@ -4,8 +4,8 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-LoadKEGGLib.gene<-function(){
-    kegg.path <- paste(libs.path, data.org, "/kegg.rds", sep="");
+LoadKEGGLib.gene<-function(org.code){
+    kegg.path <- paste(libs.path, org.code, "/kegg.rds", sep="");
     kegg.anot <- readRDS(kegg.path)
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets;
@@ -18,9 +18,9 @@ LoadKEGGLib.gene<-function(){
     current.universe <<- unique(unlist(current.geneset));
 }
 
-LoadREACTOMELib.gene<-function(){
+LoadREACTOMELib.gene<-function(org.code){
 
-    reactome.path <- paste(libs.path, data.org, "/reactome.rds", sep="");
+    reactome.path <- paste(libs.path, org.code, "/reactome.rds", sep="");
     reactome.anot <- readRDS(reactome.path)
     current.mset <- reactome.anot$sets;
     set.ids<- names(current.mset); 
@@ -31,8 +31,8 @@ LoadREACTOMELib.gene<-function(){
     current.universe <<- unique(unlist(current.geneset));
 }
 
-LoadMotifLib<-function(){
-    motif.path <- paste(libs.path, data.org, "/motif_set.rds", sep="");
+LoadMotifLib<-function(org.code){
+    motif.path <- paste(libs.path, org.code, "/motif_set.rds", sep="");
     motif_set<-readRDS(motif.path);
     current.mset <- motif_set$set;
     set.ids<- names(current.mset); 
@@ -43,8 +43,8 @@ LoadMotifLib<-function(){
     current.universe <<- unique(unlist(current.geneset));
 }
 
-LoadGOLib<-function(onto){
-    go.path <- paste(libs.path, data.org, "/go_", tolower(onto), ".rds", sep="");
+LoadGOLib<-function(org.code, onto){
+    go.path <- paste(libs.path, org.code, "/go_", tolower(onto), ".rds", sep="");
     if(tolower(onto) == "bp"){
         go_bp <- readRDS(go.path);
         if(is.null(names(go_bp))){ # new go lib does not give names
@@ -80,29 +80,28 @@ LoadGOLib<-function(onto){
 }
 
 # note: hit.query, resTable must synchronize
-PerformNetEnrichment <- function(file.nm, fun.type, IDs){
+PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
     # prepare query
     ora.vec <- unlist(strsplit(IDs, "; "));
     names(ora.vec) <- as.character(ora.vec);
-
-    res <- PerformEnrichAnalysis(file.nm, fun.type, ora.vec);
+    mSetObj <- .get.mSet(mSetObj);
+    res <- PerformEnrichAnalysis(mSetObj$org, file.nm, fun.type, ora.vec);
     return(res);
-    
 }
 
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
-PerformEnrichAnalysis <- function(file.nm, fun.type, ora.vec){
+PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
 
     # prepare lib
     if(tolower(fun.type) == 'kegg'){ 
-        LoadKEGGLib.gene();
+        LoadKEGGLib.gene(org.code);
     }else if(tolower(fun.type) == 'reactome'){ 
-        LoadREACTOMELib.gene();
+        LoadREACTOMELib.gene(org.code);
     }else if(tolower(fun.type) == 'motif'){ 
-        LoadMotifLib();
+        LoadMotifLib(org.code);
     }else{ # GO
-        LoadGOLib(fun.type);
+        LoadGOLib(org.code,fun.type);
     }
 
     # prepare query
