@@ -609,7 +609,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   ion.mass <- mSetObj$add.map$Ion_Mass
   
   mw_modified <- NULL;
-  
+
   if(mode!="mixed"){ #pos or neg
     
     mass.list <- as.list(ion.mass)
@@ -619,11 +619,11 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
     if(mode == "positive"){
       mw_modified.pos <- mw_modified
       mw_modified.neg <- mw_modified[,1]
-      colnames(mw_modified) <- c('M[1+]', ion.name);
+      colnames(mw_modified) <- c('M', ion.name);
     }else{ #negative
       mw_modified.neg <- mw_modified
       mw_modified.pos <- mw_modified[,1]
-      colnames(mw_modified) <- c('M-H[-]', ion.name);
+      colnames(mw_modified) <- c('M', ion.name);
     }
     mw_modified <- list(mw_modified.neg, mw_modified.pos)
     names(mw_modified) <- c("neg", "pos")
@@ -644,12 +644,12 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
     mass.list.neg <- as.list(ion.mass.neg)
     mass.user.neg <- lapply(mass.list.neg, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
     mw_modified.neg <- cbind(mw, do.call(cbind, mass.user.neg));
-    colnames(mw_modified.neg) <- c('M-H[-]', ion.name.neg);
+    colnames(mw_modified.neg) <- c('M', ion.name.neg);
     
     mass.list.pos <- as.list(ion.mass.pos)
     mass.user.pos <- lapply(mass.list.pos, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
     mw_modified.pos <- cbind(mw, do.call(cbind, mass.user.pos));
-    colnames(mw_modified.pos) <- c('M[1+]', ion.name.pos);
+    colnames(mw_modified.pos) <- c('M', ion.name.pos);
     
     mw_modified <- list(mw_modified.neg, mw_modified.pos)
     names(mw_modified) <- c("neg", "pos")
