@@ -29,35 +29,46 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
-    mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj);
   
-    if(libname=="self"){
-        ms.list <- mSetObj$dataSet$user.mset;
-    }else{
-        if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
-            LoadKEGGLib("msets", libname);
-        }
+  if(libname=="self"){
+    ms.list <- mSetObj$dataSet$user.mset;
+    ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ")))
+    current.msetlib <- vector("list", 3)
+    names(current.msetlib) <- c("name", "member", "reference")
+  }else{
+    if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
+      LoadKEGGLib("msets", libname);
     }
-    
     # create a named list, use the ids for list names
     ms.list <- strsplit(current.msetlib[,3],"; ");
     names(ms.list) <- current.msetlib[,2];
-  
-    if(excludeNum > 0){
-        cmpd.count <- lapply(ms.list, length);
-        sel.inx <- cmpd.count >= excludeNum;
-        ms.list <- ms.list[sel.inx];
-        current.msetlib <- current.msetlib[sel.inx,];
+  }
+
+  if(excludeNum > 0){
+    cmpd.count <- lapply(ms.list, length);
+    sel.inx <- cmpd.count >= excludeNum;
+    ms.list <- ms.list[sel.inx];
+    
+    if(libname!="self"){
+      current.msetlib <- current.msetlib[sel.inx,];
     }
-
-    # total uniq cmpds in the mset lib
-    mSetObj$dataSet$uniq.count <- length(unique(unlist(ms.list, use.names = FALSE)));
-
-    # update current.mset and push to global env
-    current.msetlib$member <- ms.list;
-    current.msetlib <<- current.msetlib;
-
-    return(.set.mSet(mSetObj));
+  }
+  
+  # total uniq cmpds in the mset lib
+  mSetObj$dataSet$uniq.count <- length(unique(unlist(ms.list, use.names = FALSE)));
+  
+  # update current.mset and push to global env
+  current.msetlib$member <- ms.list;
+  
+  if(libname=="self"){
+    current.msetlib$name <- names(ms.list)
+    current.msetlib$reference <- rep("User-uploaded", length(ms.list))
+  }
+  
+  current.msetlib <<- current.msetlib;
+  
+  return(.set.mSet(mSetObj));
 }
 
 
