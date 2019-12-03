@@ -57,6 +57,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   # other global variables
   msg.vec <<- "";
+  err.vec <<- "";
 
   # for network analysis
   module.count <<- 0;
@@ -152,6 +153,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
 
   msg <- NULL;
+  
   if(substring(format,4,5)=="ts"){
     # two factor time series data
     if(substring(format,1,3)=="row"){ # sample in row
@@ -189,7 +191,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     if(substring(format,1,3)=="row"){ # sample in row
       msg <- c(msg, "Samples are in rows and features in columns");
       smpl.nms <-dat[,1];
-      dat[,1] <- NULL;
+      dat[,1] <- NULL; #remove sample names
       if(lbl.type == "qc"){
         rownames(dat) <- smpl.nms;
         mSetObj$dataSet$orig <- dat;
@@ -198,7 +200,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
       
       cls.lbl <- dat[,1];
-      conc <- dat[,-1];
+      conc <- dat[,-1, drop=FALSE];
       var.nms <- colnames(conc);
     }else{ # sample in col
       msg<-c(msg, "Samples are in columns and features in rows.");
@@ -290,12 +292,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
-  smpl.nms <- CleanNames(smpl.nms);
+  smpl.nms <- CleanNames(smpl.nms, "sample_name");
 
 
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;
-  var.nms <- CleanNames(var.nms); # allow space, comma and period
+  var.nms <- CleanNames(var.nms, "var_name"); # allow space, comma and period
   names(orig.var.nms) <- var.nms;
 
   cls.lbl <- ClearStrings(as.vector(cls.lbl));
@@ -706,7 +708,7 @@ if(mSetObj$dataSet$mode == "positive"){
 #'@param msg Error message to print 
 #'@export
 AddErrMsg <- function(msg){
-  msg.vec <<- c(msg.vec, msg);
+  err.vec <<- c(err.vec, msg);
   print(msg);
 }
 
@@ -935,6 +937,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 LoadKEGGLib<-function(libType, libNm){
     
     destfile <- paste(libNm, ".rda", sep = "")
+    
     if(.on.public.web){
         my.rda  <- paste("../../libs/", libType, "/", destfile, sep="");
      }else{
@@ -995,7 +998,7 @@ LoadKEGGLib_2018<-function(mSetObj=NA, libOpt){
 ##############################################
 
 GetErrMsg<-function(){
-  return(msg.vec);
+  return(err.vec);
 }
 
 GetKEGG.PathNames<-function(mSetObj=NA){

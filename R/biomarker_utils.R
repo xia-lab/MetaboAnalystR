@@ -175,7 +175,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'@export
 #'
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   LRConverged <<- "FALSE"; 
   
@@ -203,21 +203,26 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   # update in case norm filtered?
   hit.inxX <- rownames(data) %in% rownames(x);
   hit.inxY <- colnames(data) %in% colnames(x);
-  data <- data[hit.inxX,hit.inxY];
+  data <- data[hit.inxX, hit.inxY, drop=FALSE];
   min.val <- min(abs(data[data!=0]))/2;
   data <- log2((data + sqrt(data^2 + min.val))/2);
   
-  m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-  m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
+  m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), , drop=FALSE]);
+  m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), , drop=FALSE]);
   fc <- m1-m2;
   
-  # now do k-means to measure their expression similarities
-  kms <- ComputeKmeanClusters(t(x), clust.num);
-  feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
-  rownames(feat.rank.mat) <- colnames(x);
+  if(mSetObj$dataSet$roc_cols > 1){ # dont need to calc kmeans if only 1 metabolite!
+    # now do k-means to measure their expression similarities
+    kms <- ComputeKmeanClusters(t(x), clust.num);
+    feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
+    rownames(feat.rank.mat) <- colnames(x);
+    
+    ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
+    feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx, , drop=FALSE]);
+  }else{
+    feat.rank.mat <- data.matrix(data.frame(AUC=auc, Pval=ttp, FC=fc, clusters=1))
+  }
   
-  ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
-  feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx,]);
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
   
@@ -901,7 +906,7 @@ GetCIs <- function(data, param=F){
 #'@export
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName1 = paste(imgName, "dpi", dpi, ".", format, sep="");

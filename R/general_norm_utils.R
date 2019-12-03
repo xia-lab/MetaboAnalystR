@@ -34,7 +34,7 @@ CleanDataMatrix <- function(ndata){
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
-  
+browser()
   mSetObj <- .get.mSet(mSetObj);
   
   # PreparePrenormData() called already
@@ -81,18 +81,18 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     constNum <- sum(constCol, na.rm=T);
     if(constNum > 0){
       print(paste("After quantile normalization", constNum, "features with a constant value were found and deleted."));
-      data <- data[,!constCol];
+      data <- data[,!constCol, drop=FALSE];
       colNames <- colnames(data);
       rowNames <- rownames(data);
     }
     rownm<-"Quantile Normalization";
   }else if(rowNorm=="GroupPQN"){
     grp.inx <- cls == ref;
-    ref.smpl <- apply(data[grp.inx, ], 2, mean);
+    ref.smpl <- apply(data[grp.inx, , drop=FALSE], 2, mean);
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
     rownm<-"Probabilistic Quotient Normalization by a reference group";
   }else if(rowNorm=="SamplePQN"){
-    ref.smpl <- data[ref,];
+    ref.smpl <- data[ref, , drop=FALSE];
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
     rownm<-"Probabilistic Quotient Normalization by a reference sample";
   }else if(rowNorm=="CompNorm"){
@@ -132,7 +132,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # if the reference by feature, the feature column should be removed, since it is all 1
   if(rowNorm=="CompNorm" && !is.null(ref)){
     inx<-match(ref, colnames(data));
-    data<-data[,-inx];
+    data<-data[,-inx, drop=FALSE];
     colNames <- colNames[-inx];
   }
   
@@ -149,7 +149,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     fstats <- Get.Fstat(ratio.mat, cls);
     hit.inx <- rank(-fstats) < ratioNum;  # get top n
     
-    ratio.mat <- ratio.mat[, hit.inx];
+    ratio.mat <- ratio.mat[, hit.inx, drop=FALSE];
     
     data <- cbind(norm.data, ratio.mat);
     
@@ -305,8 +305,11 @@ RangeNorm<-function(x){
 #'@export
 #'
 PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+
   mSetObj <- .get.mSet(mSetObj);
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 10.5; h <- 12.5;
   }else if(width==0){
@@ -327,7 +330,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   # but density plot will use all the data
   
   pre.inx<-GetRandomSubsetIndex(ncol(mSetObj$dataSet$proc), sub.num=50);
-  namesVec <- colnames(mSetObj$dataSet$proc[,pre.inx]);
+  namesVec <- colnames(mSetObj$dataSet$proc[,pre.inx, drop=FALSE]);
   
   # only get common ones
   nm.inx <- namesVec %in% colnames(mSetObj$dataSet$norm)
@@ -337,31 +340,41 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   norm.inx<-match(namesVec, colnames(mSetObj$dataSet$norm));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
   
-  rangex.pre <- range(mSetObj$dataSet$proc[, pre.inx], na.rm=T);
-  rangex.norm <- range(mSetObj$dataSet$norm[, norm.inx], na.rm=T);
+  rangex.pre <- range(mSetObj$dataSet$proc[, pre.inx, drop=FALSE], na.rm=T);
+  rangex.norm <- range(mSetObj$dataSet$norm[, norm.inx, drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-GetVariableLabel(mSetObj$dataSet$type);
   
   # fig 1
-  op<-par(mar=c(4,7,4,0), xaxt="s");
-  plot(density(apply(mSetObj$dataSet$proc, 2, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
-  mtext("Density", 2, 5);
-  mtext("Before Normalization",3, 1)
+  if(anal.type == "roc" & mSetObj$dataSet$roc_cols == 1){
+    op<-par(mar=c(4,7,4,0), xaxt="s");
+    plot.new()
+  }else{
+    op<-par(mar=c(4,7,4,0), xaxt="s");
+    plot(density(apply(mSetObj$dataSet$proc, 2, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
+    mtext("Density", 2, 5);
+    mtext("Before Normalization",3, 1)
+  }
   
   # fig 2
   op<-par(mar=c(7,7,0,0), xaxt="s");
-  boxplot(mSetObj$dataSet$proc[,pre.inx], names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
+  boxplot(mSetObj$dataSet$proc[,pre.inx, drop=FALSE], names=namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(x.label, 1, 5);
   
   # fig 3
-  op<-par(mar=c(4,7,4,2), xaxt="s");
-  plot(density(apply(mSetObj$dataSet$norm, 2, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
-  mtext("After Normalization",3, 1);
-  
+  if(anal.type == "roc" & mSetObj$dataSet$roc_cols == 1){
+    op<-par(mar=c(4,7,4,2), xaxt="s");
+    plot.new()
+  }else{
+    op<-par(mar=c(4,7,4,2), xaxt="s");
+    plot(density(apply(mSetObj$dataSet$norm, 2, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
+    mtext("After Normalization",3, 1);
+  }
+
   # fig 4
   op<-par(mar=c(7,7,0,2), xaxt="s");
-  boxplot(mSetObj$dataSet$norm[,norm.inx], names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", horizontal=T);
+  boxplot(mSetObj$dataSet$norm[,norm.inx, drop=FALSE], names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(paste("Normalized",x.label),1, 5);
   
   dev.off();
@@ -384,8 +397,9 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'@export
 
 PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 10.5; h <- 12.5;
@@ -406,7 +420,7 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   # but density plot will use all the data
   
   pre.inx<-GetRandomSubsetIndex(nrow(mSetObj$dataSet$proc), sub.num=50);
-  namesVec <- rownames(mSetObj$dataSet$proc[pre.inx,]);
+  namesVec <- rownames(mSetObj$dataSet$proc[pre.inx, , drop=FALSE]);
   
   # only get common ones
   nm.inx <- namesVec %in% rownames(mSetObj$dataSet$norm)
@@ -416,15 +430,15 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   norm.inx<-match(namesVec, rownames(mSetObj$dataSet$norm));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
   
-  rangex.pre <- range(mSetObj$dataSet$proc[pre.inx,], na.rm=T);
-  rangex.norm <- range(mSetObj$dataSet$norm[norm.inx,], na.rm=T);
+  rangex.pre <- range(mSetObj$dataSet$proc[pre.inx, , drop=FALSE], na.rm=T);
+  rangex.norm <- range(mSetObj$dataSet$norm[norm.inx, , drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-"Samples";
   
   # fig 1
   op<-par(mar=c(5.75,8,4,0), xaxt="s");
-  boxplot(t(mSetObj$dataSet$proc[pre.inx, ]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
+  boxplot(t(mSetObj$dataSet$proc[pre.inx, , drop=FALSE]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
   mtext("Before Normalization", 3,1)
   
   # fig 2
@@ -434,9 +448,8 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   mtext("Density", 2, 5);
   
   # fig 3
-  
   op<-par(mar=c(5.75,8,4,2), xaxt="s");
-  boxplot(t(mSetObj$dataSet$norm[norm.inx,]), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
+  boxplot(t(mSetObj$dataSet$norm[norm.inx, , drop=FALSE]), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
   mtext("After Normalization", 3, 1);
   
   # fig 4
@@ -527,36 +540,38 @@ UpdateData <- function(mSetObj=NA){
 #'@export
 
 PreparePrenormData <- function(mSetObj=NA){
-    mSetObj <- .get.mSet(mSetObj);
-    if(!is.null(mSetObj$dataSet$edit)){
-        mydata <- mSetObj$dataSet$edit;
-        if(!is.null(mSetObj$dataSet$filt)){
-            # some features could be removed
-            hit.inx <- colnames(mydata) %in% colnames(mSetObj$dataSet$filt);
-            mydata <- mydata[,hit.inx];
-        }
-        mSetObj$dataSet$prenorm <- mydata;
-        mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-        if(substring(mSetObj$dataSet$format,4,5) == "ts"){
-            mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$edit.facA;
-            mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$edit.facB;
-        }
-    }else if(!is.null(mSetObj$dataSet$filt)){
-        mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
-        mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-        if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-            mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
-            mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
-        }
-    }else{
-        mSetObj$dataSet$prenorm <- mSetObj$dataSet$proc;
-        mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
-        if(substring(mSetObj$dataSet$format,4,5) == "ts"){
-            mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
-            mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
-        }
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(!is.null(mSetObj$dataSet$edit)){
+    mydata <- mSetObj$dataSet$edit;
+    if(!is.null(mSetObj$dataSet$filt)){
+      # some features could be removed
+      hit.inx <- colnames(mydata) %in% colnames(mSetObj$dataSet$filt);
+      mydata <- mydata[,hit.inx, drop=FALSE];
     }
-    .set.mSet(mSetObj)
+    mSetObj$dataSet$prenorm <- mydata;
+    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
+    if(substring(mSetObj$dataSet$format,4,5) == "ts"){
+      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$edit.facA;
+      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$edit.facB;
+    }
+  }else if(!is.null(mSetObj$dataSet$filt)){
+    mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
+    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
+    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
+      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
+    }
+  }else{
+    mSetObj$dataSet$prenorm <- mSetObj$dataSet$proc;
+    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
+    if(substring(mSetObj$dataSet$format,4,5) == "ts"){
+      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
+      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
+    }
+  }
+  .set.mSet(mSetObj)
 }
 
 ##############################################

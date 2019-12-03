@@ -47,12 +47,15 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
   if(.on.public.web){
-    db.path <- paste("../../libs/", mSetObj$org, "/entrez.csv", sep="");
+    url.pre <- "/home/glassfish/sqlite/"
   }else{
-    db.path <- paste("https://www.metaboanalyst.ca/resources/libs/", mSetObj$org, "/entrez.csv", sep="");
+    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
   }
-  
-  gene.db <- .readDataTable(db.path);
+
+  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  con <- dbConnect(SQLite(), sqlite.path); 
+  gene.db <- dbReadTable(con, "entrez")
+
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
   mSetObj$dataSet$gene.name.map$hit.inx <- hit.inx;
@@ -92,7 +95,8 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   mSetObj$dataSet$gene.map.table <- csv.res;
   
   write.csv(csv.res, file="gene_name_map.csv", row.names=F);
-  
+  dbDisconnect(con);
+
   if(.on.public.web){
     .set.mSet(mSetObj)  
     return(as.vector(html.res));

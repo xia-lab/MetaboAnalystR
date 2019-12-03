@@ -405,13 +405,17 @@ RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=N
     if(font.cex < 0.6){
         font.cex=0.6;
     }
-    g <- upgrade_graph(mSetObj$dataSet$current.kegg$graph);
+    g <- mSetObj$dataSet$current.kegg$graph;
+    if(is_igraph(g)){
+        g <- upgrade_graph(g);
+    }
     plotGraph(g, 
             vertex.color=mSetObj$dataSet$current.kegg$bg.color, 
             vertex.frame.color=mSetObj$dataSet$current.kegg$line.color,
             vertex.label=V(mSetObj$dataSet$current.kegg$graph)$plot_name,
             vertex.label.cex=font.cex
         );
+
   }else{
     KEGGgraph::plot(mSetObj$imgSet$current.metpa.graph);
   }

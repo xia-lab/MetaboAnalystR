@@ -203,180 +203,213 @@ PrepareIntegData <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libOpt="integ", integOpt="query"){
+PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libVersion="current", libOpt="integ", integOpt="query"){
 
     mSetObj <- .get.mSet(mSetObj);  
-    libPath <- paste("kegg/jointpa/",libOpt,sep="");
+    if(libVersion == "old"){
+        if(!(mSetObj$org %in% c("hsa", "mmu", "rno"))){
+            AddErrMsg("Support for this organism is only available in the current version!");
+            return(0);
+        }
+        if(libOpt == "all"){
+            AddErrMsg("Support for all pathways is only available in the current version!");
+            return(0);
+        }
+        if(integOpt == "pval"){
+            AddErrMsg("Support for combining p value is only available in the current version!");
+            return(0);
+        }
+    }
+
+    if(libVersion == "current"){
+        libPath <- paste("kegg/jointpa/",libOpt, sep="");
+    }else{
+        libPath <- paste("kegg/2018/jointpa/",libOpt, sep=""); 
+    }
+
     LoadKEGGLib(libPath, mSetObj$org);
-  
+    
     mSetObj$dataSet$pathinteg.method <- libOpt;
     mSetObj$dataSet$path.mat <- NULL;
   
-  if(libOpt == "genetic" && !is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
-    gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
-    gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
-    rownames(gene.mat) <- gene.vec;
-    impMat <- gene.mat;
-    uniq.count <- inmexpa$uniq.gene.count;
-    uniq.len <- inmexpa$gene.counts;
+    if(libOpt == "genetic" && !is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
 
-    # saving only
-    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
-    gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
-    write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
+        gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+        gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
+        rownames(gene.mat) <- gene.vec;
+        impMat <- gene.mat;
+        uniq.count <- inmexpa$uniq.gene.count;
+        uniq.len <- inmexpa$gene.counts;
+
+        # saving only
+        gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
+        gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
+        write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     
   }else if(libOpt == "metab" && !is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
 
-    cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
-    cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep="");
-    rownames(cmpd.mat) <- cmpd.vec;
-    impMat <- cmpd.mat;
-    uniq.count <- inmexpa$uniq.cmpd.count
-    uniq.len <- inmexpa$cmpd.counts;
+        cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
+        cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep=""); # no need for this as the metpa compound ID does not contain "cpd:" prefix
+        #cmpd.vec <- rownames(cmpd.mat);
+        rownames(cmpd.mat) <- cmpd.vec;
+        impMat <- cmpd.mat;
+        uniq.count <- inmexpa$uniq.cmpd.count
+        uniq.len <- inmexpa$cmpd.counts;
 
-    # saving only
-    cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
-    cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat);
-    write.csv(mSetObj$dataSet$pathinteg.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
+        # saving only
+        cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
+        cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat);
+        write.csv(mSetObj$dataSet$pathinteg.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
     
   }else{ # integ
 
-    if(is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat) | is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
-        AddErrMsg("The integrative analysis require both gene and metabolite lists");
-        return(0);
-    }
+        if(is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat) | is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
+            AddErrMsg("The integrative analysis require both gene and metabolite lists");
+            return(0);
+        }
 
-    impMat <- NULL;
-    uniq.count <- uniq.len <- 0;
+        impMat <- NULL;
+        uniq.count <- uniq.len <- 0;
 
-    cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
-    cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep="");
-    rownames(cmpd.mat) <- cmpd.vec;
-    # saving 
-    cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
-    write.csv(cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat), file="MetaboAnalyst_result_cmpds.csv");
+        cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
+        cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep="");
+        rownames(cmpd.mat) <- cmpd.vec;
+        # saving 
+        cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
+        write.csv(cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat), file="MetaboAnalyst_result_cmpds.csv");
  
-    gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
-    gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
-    rownames(gene.mat) <- gene.vec;
-    # saving 
-    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
-    write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
+        gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+        gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
+        rownames(gene.mat) <- gene.vec;
+        # saving 
+        gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
+        write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
     
-    # used by both (the merge p val only updates the p values
-    impMat <- rbind(cmpd.mat, gene.mat);
-    uniq.count <- inmexpa$uniq.cmpd.count + inmexpa$uniq.gene.count;
-    uniq.len <- inmexpa$cmpd.counts + inmexpa$gene.counts;
-
-    if(integOpt == "pval"){ #merge queries
-        impMatList <- list(cmpd=cmpd.mat, gene=gene.mat);
-        uniq.count.list <- list(cmpd=inmexpa$uniq.cmpd.count, gene=inmexpa$uniq.gene.count);
-        uniq.len.list <- list(cmpd=inmexpa$cmpd.counts, gene=inmexpa$gene.counts);
+        # used by both integ
+        impMat <- rbind(cmpd.mat, gene.mat);
+        uniq.count <- inmexpa$uniq.cmpd.count + inmexpa$uniq.gene.count;
+        uniq.len <- inmexpa$cmpd.counts + inmexpa$gene.counts;
+        
+        # used by merge p values
+        impMatList <- list(cmpd=cmpd.mat,gene=gene.mat);
     }
-  }
 
-  ora.vec <- rownames(impMat);
-  impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
-  rownames(impMat) <- ora.vec;
+    ora.vec <- rownames(impMat);
+    impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
+    rownames(impMat) <- ora.vec;
+    my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
 
-  # update pvals and save individual analysis 
-  if(libOpt == "integ" && integOpt == "pval"){
-
-    # get res
-    res.cmpd <- .performPathEnrich(rownames(impMatList$cmpd), uniq.count.list$cmpd, uniq.len.list$cmpd, enrich, topo, TRUE, FALSE);
-    res.gene <- .performPathEnrich(rownames(impMatList$gene), uniq.count.list$gene, uniq.len.list$gene, enrich, topo, TRUE, TRUE);
-
-    if(is.null(res.gene) || is.null(res.cmpd)){
-        my.res <- .performPathEnrich(ora.vec, uniq.count,uniq.len, enrich, topo);
-    }else{
-        # writecsv
+    # combine pvals require performing analysis on compounds and genes seperately. Note, we need to use the topo from merge queries 
+    if(libOpt == "integ" && integOpt != "query"){ 
+        # perform metabolite enrichment
+        res.cmpd <- .performPathEnrich(rownames(impMatList$cmpd), inmexpa$uniq.cmpd.count, inmexpa$cmpd.counts, enrich, topo);
+        if(is.null(res.cmpd)){
+            AddErrMsg("Failed to perform integration - not hits found for compound input.");
+            return(0);
+        }
         write.csv(res.cmpd$res.table, file="MetaboAnalyst_result_pathway_cmpd.csv", row.names=TRUE);
+
+        # perform gene enrichment
+        res.gene <- .performPathEnrich(rownames(impMatList$gene), inmexpa$uniq.gene.count, inmexpa$gene.counts, enrich, topo);
+        if(is.null(res.gene)){
+            AddErrMsg("Failed to perform integration - not hits found for gene input.");
+            return(0);
+        }
         write.csv(res.gene$res.table, file="MetaboAnalyst_result_pathway_gene.csv", row.names=TRUE);
 
-        # do integ
-        my.res <- .performPathEnrich(rownames(impMat), uniq.count, uniq.len, enrich, topo, TRUE, TRUE);
-        res.mat <- my.res$res.table;
-
-        # merge p val
-        jointp.res <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, res.mat);
-
-        # now update the res.integ with merge p
-        res.mat[rownames(jointp.res),4] <- jointp.res$"P raw";
-        res.mat[,5] <- -log(res.mat[,4]);
-        res.mat[,6] <- p.adjust(res.mat[,4], "holm");
-        res.mat[,7] <- p.adjust(res.mat[,4], "fdr");
-        my.res$res.table <- signif(res.mat, 5);
+        # now merge p val
+        resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);
+        my.res$res.table <- resI;
     }
 
-  }else{
-    my.res <- .performPathEnrich(ora.vec, uniq.count,uniq.len, enrich, topo);
-  }
+    resTable <- my.res$res.table;
+    hits.path <- my.res$hits.path;
 
-  resTable <- my.res$res.table;
-  hits.path <- my.res$hits.path;
+    # do some sorting
+    ord.inx<-order(resTable[,"Raw p"], resTable[,"Impact"]);   
+    resTable <- resTable[ord.inx, , drop=FALSE];
 
-  # now save to csv
-  write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
+    # now save to csv
+    write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
   
-  # for internal use, switch to pathway IDs (name containing special characters)
-  rownames(resTable) <- inmexpa$path.ids[rownames(resTable)];
+    # for internal use, switch to pathway IDs (name containing special characters)
+    rownames(resTable) <- inmexpa$path.ids[rownames(resTable)];
   
-  # store results from individual analysis
-  mSetObj$dataSet$path.mat <- resTable;
-  mSetObj$dataSet$path.hits <- hits.path;
-  mSetObj$dataSet$pathinteg.impMat <- impMat; 
+    # store results from individual analysis
+    mSetObj$dataSet$path.mat <- resTable;
+    mSetObj$dataSet$path.hits <- hits.path;
+    mSetObj$dataSet$pathinteg.impMat <- impMat; 
 
-  return(.set.mSet(mSetObj));
+    return(.set.mSet(mSetObj));
 }
 
 # merge p values for two matrices from regular enrichment analysis
-.performIntegPathMergeP <- function(res1, res2, res3){
+# resM, resG, and resI are results from enrichment analysis from metabolites, genes and mergeQuery
+.performIntegPathMergeP <- function(resM, resG, resI, opt){
 
-    inx = which(rownames(res1) %in% rownames(res2))
-    subres1 = as.data.frame(res1[inx,,drop=FALSE])
-    inx = which(rownames(res2) %in% rownames(res1))
-    subres2 = as.data.frame(res2[inx,,drop=FALSE])
-    inx = which(rownames(res3) %in% rownames(subres2))
-    subres3 = as.data.frame(res3[inx,,drop=FALSE])
+    # get the ones with hits from both omics
+    hitsM <- rownames(resM) %in% rownames(resG);
+    inx <- which(hitsM);
+ 
+    if(length(inx) > 0){
+        cm.nms <- rownames(resM)[inx];
+
+        # for overall weight
+        total.count <- inmexpa$uniq.cmpd.count + inmexpa$uniq.gene.count;
+        ow.m <- inmexpa$uniq.cmpd.count/total.count;
+        ow.g <- inmexpa$uniq.gene.count/total.count;
     
-    ord = order(rownames(subres1));
-    subres1 = subres1[ord,,drop=FALSE]
-    ord = order(rownames(subres2));
-    subres2 = subres2[ord,,drop=FALSE]
-    ord = order(rownames(subres3));
-    subres3 = subres3[ord,,drop=FALSE]
-    
-    integ=data.frame(hitsG = subres1$Hits,hitsM = subres2$Hits,hitsTotal = subres3$Hits, P.ValueG=subres1$"Raw p", P.ValueM=subres2$"Raw p", P.ValueMerge=subres3$"Raw p", P.ValueJoint=subres3$"Raw p")
-    
-    rownames(integ) = rownames(subres1)
-    for(i in 1:nrow(integ)){
-      if(integ$P.ValueG[i] != 1 && integ$P.ValueM[i] != 1){
-        integ$"P raw"[i] = metap::sumz(p=c(integ$P.ValueG[i], integ$P.ValueM[i]), weight=c(stouffer_gene_percent, stouffer_compound_percent))$p
-      }else{
-        integ$"P raw"[i]=1
-      }
+        # for pathway weights
+        path.uniq.lens <- inmexpa$cmpd.counts + inmexpa$gene.counts;
+        pw.m <- inmexpa$cmpd.counts/path.uniq.lens;
+        pw.g <- inmexpa$gene.counts/path.uniq.lens;
+        names(pw.m) <- names(pw.g) <- names(inmexpa$path.ids);
+
+        for(nm in cm.nms){
+            p.vec <- c(resM[nm, "Raw p"], resG[nm, "Raw p"]);
+            if(opt == "pvalu"){ # unweighted
+                w.vec <- c(0.5,0.5);
+            }else if(opt == "pvalo"){ # overall
+                w.vec <- c(ow.m,ow.g);
+            }else{ # pathway level
+                w.vec <- c(pw.m[nm],pw.g[nm]);
+            }
+            resI[nm, "Raw p"] = .performWeightedZtest(p.vec, w.vec)$p;
+        }
     }
+    # now replace resI two columns ("Expected" and "Hits") to individual hits
+    colnames(resI)<-c("Total", "Hits.cmpd", "Hits.gene", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+    resI[, "Hits.cmpd"] <- resI[,"Hits.gene"] <- rep(0, nrow(resI));
+    cmpd.nms <- rownames(resM);
+    resI[cmpd.nms, "Hits.cmpd"] <- resM[,"Hits"];
+    gene.nms <- rownames(resG);
+    resI[gene.nms, "Hits.gene"] <- resG[,"Hits"];
 
-    return(integ);
+    # update raw p for those with hits from one type
+    inxM.uniq <- which(!hitsM);
+    cm.uniq <- rownames(resM)[inxM.uniq];
+    resI[cm.uniq, "Raw p"] <- resM[cm.uniq,"Raw p"];
+
+    hitsG <- rownames(resG) %in% rownames(resM);
+    inxG.uniq <- which(!hitsG);
+    gn.uniq <- rownames(resG)[inxG.uniq];
+    resI[gn.uniq, "Raw p"] <- resG[gn.uniq,"Raw p"];
+
+    # now update the res.integ with merge p
+    resI[,5] <- -log(resI[,"Raw p"]);
+    resI[,6] <- p.adjust(resI[,"Raw p"], "holm");
+    resI[,7] <- p.adjust(resI[,"Raw p"], "fdr");
+    resI <- signif(resI, 5);
+    return(resI);
 }
 
 # internal function called by PerformIntegPathwayAnalysis
-.performPathEnrich <- function(ora.vec, uniq.count,uniq.len, enrich, topo, is.integp=FALSE, is.gene=FALSE){
-  
+.performPathEnrich <- function(ora.vec, uniq.count, uniq.len, enrich, topo){
+
     # set up the mset
     ms.list <- lapply(inmexpa$mset.list, function(x){strsplit(x, " ")});
     current.universe <- unique(unlist(ms.list)); 
     set.size <- length(inmexpa$mset.list);
-
-    #calculate weight for stouffer
-    if(is.integp){
-        my.hits <- ora.vec %in% current.universe;
-        if(is.gene){
-            stouffer_gene_percent <<- length(my.hits)/length(current.universe)
-        }else{
-            stouffer_compound_percent <<- length(my.hits)/length(current.universe)
-        }
-    }
 
     # need to cut to the universe covered by the pathways, not all genes 
     ora.vec <- ora.vec[ora.vec %in% current.universe]
@@ -439,8 +472,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     res.mat[,8] <- mapply(function(x, y){sum(x[y])}, imp.list, hits.path);
     res.mat <- res.mat[hit.num>0, , drop=FALSE];
     res.mat <- res.mat[!is.na(res.mat[,8]), , drop=FALSE];
-    ord.inx<-order(res.mat[,4], res.mat[,8]);
-    resTable <- signif(res.mat[ord.inx,,drop=FALSE],5);
+    resTable <- signif(res.mat,5);
     return(list(hits.path=hits.path, res.table=resTable));
 }
 
@@ -501,8 +533,16 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   csv.res<-matrix("", nrow=length(qvec), ncol=5);
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
-  db.path <- paste("../../libs/", mSetObj$org, "/entrez.csv", sep="");
-  gene.db <- .readDataTable(db.path);
+  if(.on.public.web){
+    url.pre <- "/home/glassfish/sqlite/";
+  }else{
+    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
+  }
+
+  sqlite.path <- paste0(url.pre, mSetObj$org, "_genes.sqlite");
+  conv.db <- dbConnect(SQLite(), sqlite.path); 
+  gene.db <- dbReadTable(conv.db, "entrez")
+
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
   match.state<-mSetObj$dataSet$gene.name.map$match.state;
@@ -598,8 +638,10 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 
   mSetObj <- .get.mSet(mSetObj);
   path.id <- inmexpa$path.ids[pathName];
-  g <- inmexpa$graph.list[[path.id]]
-  g <- upgrade_graph(g); # to fix warning, remove for new version
+  g <- inmexpa$graph.list[[path.id]];
+  if(is_igraph(g)){
+    g <- upgrade_graph(g); # to fix warning, can be removed for new version
+  }
   phits <- mSetObj$dataSet$path.hits[[path.id]];
   pathinteg.impTopo <- readRDS("pathinteg.impTopo");
   topo <- pathinteg.impTopo[[path.id]];
@@ -619,8 +661,10 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
   rnms <- rownames(res);
   for(inx in nd.inx){
     nm <- unlist(strsplit(V(g)$names[inx], " "));
-    hit.inx <- which(rnms %in% nm)[1];
+    #hit.inx <- which(rnms %in% nm)[1];
+    hit.inx <- which(rnms %in% nm);
     if(length(hit.inx) > 0){
+      hit.inx <- hit.inx[1];
       # use logFCs to decide up/down regulated
       if(res$logFC[hit.inx] > 0){
         bg.cols[inx]<- "#F75D59";
@@ -670,9 +714,6 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 #'
 PlotInmexGraph <- function(mSetObj, pathName, g, width=NA, height=NA, bg.color=NULL, line.color=NULL, format="png", dpi=NULL){
  
-  if(is.null(bg.color)){
-    bg.color <- V(g)$graphics_bgcolor
-  }
   if(is.null(line.color)){
     line.color <- "dimgray";
   }
@@ -772,9 +813,7 @@ GetKEGGNodeInfo <- function(pathName, g, width, height, usr = par("usr")){
                                     ", lb: \"", tags[i], 
                                     "\", lnk: \"", nm.lnks[i], 
                                     "\", topo: ", topos[i], 
-                                    ifelse(is.null(stats[[i]]), 
-                                           "", 
-                                           paste(", logFC:", stats[[i]][1], sep="")),
+                                    ifelse(is.null(stats[[i]]), "", paste(", logFC:", stats[[i]][1], sep="")),
                                     "})", sep=""), sep="\n");
     }
   }
@@ -928,20 +967,28 @@ getEdgeLty<-function(graph){
 }
 
 doEntrez2SymbolMapping <- function(entrez.vec, org.code){
+
   if(.on.public.web){
-    url.pre <- "../../libs/";
+    url.pre <- "/home/glassfish/sqlite/"
   }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
+    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
   }
-  db.path <- paste(url.pre, org.code, "/entrez.rds", sep="");
-  gene.map <- readRDS(db.path);
+
+  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  con <- dbConnect(SQLite(), sqlite.path); 
+  gene.map <- dbReadTable(con, "entrez")
   
   hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
   symbols <- gene.map[hit.inx, "symbol"];
   
-  # if not gene symbol, use id by itself
+  # if no gene symbol, use id by itself
   na.inx <- is.na(symbols);
   symbols[na.inx] <- entrez.vec[na.inx];
+
+  rm(db.map, q.vec);
+  gc(); 
+  dbDisconnect(con);
+
   return(symbols);
 }
 
@@ -953,17 +1000,29 @@ doEntrez2SymbolMapping <- function(entrez.vec, org.code){
 
 # return gene and compounds highlighted in the pathway
 GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
+
     mSetObj <- .get.mSet(mSetObj);
     path.id <- inmexpa$path.ids[[pathName]];
 
-    # pathway nodes
-    all.ids <- inmexpa$mset.list[[path.id]];
-    g <- upgrade_graph(inmexpa$graph.list[[path.id]]);
-    all.nms <- V(g)$graphics_name;
-
     phits <- mSetObj$dataSet$path.hits[[path.id]];
     nd.inx <- which(phits);
+
+    # pathway nodes
+    all.ids <- inmexpa$mset.list[[path.id]];
+    g <- inmexpa$graph.list[[path.id]];
+
+    if(is_igraph(g)){
+        g <- upgrade_graph(g);
+    }
+    all.nms <- V(g)$graphics_name;
     all.nms[nd.inx] <- paste("<font color=\"red\">", "<b>", all.nms[nd.inx], "</b>", "</font>",sep="");
 
     return(cbind(pathName, paste(unique(all.nms), collapse="; ")));
+}
+
+# perform p value combination, p.vec contain p values, w.vec contains weights
+.performWeightedZtest <- function(p, weights=c(1,1)){
+    zp <- (qnorm(p, lower.tail = FALSE) %*% weights)/sqrt(sum(weights^2));
+    res <- list(z = zp, p = pnorm(zp, lower.tail = FALSE));
+    res;
 }

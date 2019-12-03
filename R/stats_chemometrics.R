@@ -280,7 +280,15 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     if(grey.scale) {
       uniq.cols <- "black";
     }
-    legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+
+    if(length(lvs) < 6){
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+    }else if (length(lvs) < 10){
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+    }else{
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+    }
+    
   }else{
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
     points(pc1, pc2, pch=15, col="magenta");

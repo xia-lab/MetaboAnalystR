@@ -2,7 +2,7 @@
 % Please edit documentation in R/general_anot_utils.R
 \name{doGeneIDMapping}
 \alias{doGeneIDMapping}
-\title{Perform various annotation}
+\title{Convert different gene IDs into entrez IDs for downstream analysis}
 \usage{
 doGeneIDMapping(q.vec, org, type)
 }
