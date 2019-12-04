@@ -810,7 +810,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
   permutation_hits <- permutation_record <- vector("list", num_perm);
   for(i in 1:num_perm){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
-    input_mzlist <- sample(mSetObj$data$ref_mzlist, mSetObj$data$N)
+    input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_cpdlist(mSetObj, input_mzlist);
     perm <- ComputeMummichogPermPvals(t, mSetObj$total_matched_cpds, mSetObj$pathways, mSetObj$matches.res, input_mzlist, mSetObj$cpd2mz_dict);
     permutation_record[[i]] <- perm[1]
@@ -944,7 +944,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   
   write.csv(res.mat[,-8], file="mummichog_pathway_enrichment.csv", row.names=TRUE);
   matri = res.mat[,-8]
-  matri= cbind(res.mat, paste0("P",seq.int(0,nrow(res.mat))))
+  matri = suppressWarnings(cbind(res.mat, paste0("P",seq.int(0,nrow(res.mat))))) 
   colnames(matri)[ncol(matri)] = "Pathway Number"
   write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
   json.mat <- RJSONIO::toJSON(json.res, .na='null');

@@ -121,7 +121,7 @@ Correlation analysis can be performed either against a given feature or against 
 
 ```{r}
 # Perform correlation analysis on a pattern (a feature of interest in this case)
-mSet<-FeatureCorrelation(mSet, "pearson", "16-Anhydro-beta-D-glucose")
+mSet<-FeatureCorrelation(mSet, "pearson", "1,6-Anhydro-beta-D-glucose")
 
 # Plot the correlation analysis on a pattern
 mSet<-PlotCorr(mSet, "ptn_3_", format="png", dpi=72, width=NA)

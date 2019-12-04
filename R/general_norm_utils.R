@@ -34,7 +34,7 @@ CleanDataMatrix <- function(ndata){
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
-browser()
+
   mSetObj <- .get.mSet(mSetObj);
   
   # PreparePrenormData() called already
