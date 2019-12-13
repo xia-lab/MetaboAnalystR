@@ -625,7 +625,7 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import CAMERA
-PerformPeakAnnotation <- function(xset, annParams){
+PerformPeakAnnotation <- function(xset, annParams, suffix = NULL){
   
   if(.on.public.web){
     load_camera()
@@ -657,8 +657,8 @@ PerformPeakAnnotation <- function(xset, annParams){
   endGroup <- 7+groupNum
   camera_output <- camera_output[,-c(7:endGroup)]
   
-  saveRDS(camera_output, "annotated_peaklist.rds")
-  write.csv(camera_output, "annotated_peaklist.csv")
+  saveRDS(camera_output, paste0("annotated_peaklist",suffix,".rds"))
+  write.csv(camera_output, paste0("annotated_peaklist",suffix,".csv"))
   
   print("Successfully performed peak annotation!")
   return(xsaFA)
@@ -685,9 +685,9 @@ PerformPeakAnnotation <- function(xset, annParams){
 #' License: GNU GPL (>= 2)
 #' @export
 
-FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, missPercent = 0.5){
+FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, missPercent = 0.5, suffix = NULL){
   
-  camera_output <- readRDS("annotated_peaklist.rds")
+  camera_output <- readRDS(paste0("annotated_peaklist",suffix,".rds"))
   
   length <- ncol(camera_output)
   end <- length-3
@@ -767,13 +767,13 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   ma_feats_miss <- ma_feats[which(rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[1])))])) 
                                   | rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[2])))])) < missPercent), ]
   
-  write.csv(ma_feats_miss, "metaboanalyst_input.csv", row.names = FALSE)
+  write.csv(ma_feats_miss, paste0("metaboanalyst_input",suffix,".csv"), row.names = FALSE)
   
   # provide index for CAMERA output
   Pklist_inx <- row.names(ma_feats_miss)
   ma_feats_miss_inx <- cbind(ma_feats_miss, Pklist_inx) 
   
-  write.csv(ma_feats_miss_inx, "filtered_peaklist.csv", row.names = FALSE)
+  write.csv(ma_feats_miss_inx, paste0("filtered_peaklist",suffix,".csv"), row.names = FALSE)
   
   return(ma_feats_miss)
 }
