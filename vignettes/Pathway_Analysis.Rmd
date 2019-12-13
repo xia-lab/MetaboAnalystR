@@ -30,21 +30,29 @@ mSet<-Setup.MapData(mSet, tmp.vec);
 # Cross reference list of compounds against libraries (hmdb, pubchem, chebi, kegg, metlin)
 mSet<-CrossReferencing(mSet, "name");
 
+# Creates a mapping result table; shows HMDB, KEGG, PubChem, etc. IDs
+# Saved as "name_map.csv" or can be found in mSet$dataSet$map.table
+# Compounds with no hits will contain NAs across the columns
 mSet<-CreateMappingResultTable(mSet);
 
-# Perform matching against compound w. out matches
+# From the mapping result table, L-Isolucine has no matches
+# Now, perform potential matching with our database against this compound
 mSet<-PerformDetailMatch(mSet, "L-Isolucine");
 
 # Get list of candidates for matching
+# Results are found in mSet$name.map$hits.candidate.list
 mSet<-GetCandidateList(mSet);
 
-# Replace selected compound
+# Replace L-Isolucine with selected compound (L-Isoleucine)
 mSet<-SetCandidate(mSet, "L-Isolucine", "L-Isoleucine");
 
 # Select the pathway library, ranging from mammals to prokaryotes
-mSet<-SetKEGG.PathLib(mSet, "hsa")
+# Note the third parameter, where users need to input the KEGG pathway version. 
+# Use "current" for the latest KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019. 
+mSet<-SetKEGG.PathLib(mSet, "hsa", "current")
 
 # Set the metabolite filter
+# Default set to false
 mSet<-SetMetabolomeFilter(mSet, F);
 
 # Calculate the over representation analysis score, here we selected to use the hypergeometric test (alternative is Fisher's exact test)
@@ -61,3 +69,7 @@ mSet<-PlotKEGGPath(mSet, "Glycine, serine and threonine metabolism",528, 480, "p
 ## 3. Sweave Report
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+
+```{r, eval=FALSE}
+PreparePDFReport(mSet, "My Name")
+```

@@ -179,9 +179,7 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     phenotable <- dbSendQuery(pheno.db, statement);
     genespheno.res <- fetch(phenotable, n=-1); # get all records
     genespheno.res <- cbind(genespheno.res[,1:4], rep(NA, nrow(genespheno.res)), rep(NA, nrow(genespheno.res)))
-    names(genespheno.res) <- c("id1", "id2", "name1", "name2", "evidsrc", "evidtar")
-    dbDisconnect(pheno.db);
-    
+    names(genespheno.res) <- c("id1", "id2", "name1", "name2", "evidsrc", "evidtar");    
     # Combine all
     pheno.dic <- rbind(genemetab.res, metabpheno.res, genespheno.res)
     
@@ -211,9 +209,10 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     
     phenotable <- dbSendQuery(pheno.db, statement);
     pheno.dic <- fetch(phenotable, n=-1); # get all records
-    dbDisconnect(pheno.db);
+    
   }
-  return(pheno.dic);
+    dbDisconnect(pheno.db);
+    return(pheno.dic);
 }
 
 #'Utility function for PerformKOEnrichAnalysis_KO01100

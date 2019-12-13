@@ -2,20 +2,6 @@
 ## Metabolite set library
 ###############################
 
-#'Load metabolite set library
-#'@description Metabolite set library
-#'@param libname Input the name of the metabolite set library to load. Default set to "kegg_pathway" library.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-LoadMsetLib <- function(libname="kegg_pathway"){
-  if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
-    .load.metaboanalyst.lib("msets", libname);
-  }
-}
-
 #'Set the cachexia set used
 #'@description Set cachexia set used
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
@@ -41,18 +27,19 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
+SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  if(lib.type!="self"){
-    LoadMsetLib(lib.type);
-  }
-  
-  if(lib.type=="self"){
+  if(libname=="self"){
     ms.list <- mSetObj$dataSet$user.mset;
-    current.msetlib <- data.frame(name=character(), member=character(), reference=character(), stringsAsFactors = FALSE)
+    ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ")))
+    current.msetlib <- vector("list", 3)
+    names(current.msetlib) <- c("name", "member", "reference")
   }else{
+    if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
+      LoadKEGGLib("msets", libname);
+    }
     # create a named list, use the ids for list names
     ms.list <- strsplit(current.msetlib[,3],"; ");
     names(ms.list) <- current.msetlib[,2];
@@ -62,19 +49,25 @@ SetCurrentMsetLib <- function(mSetObj=NA, lib.type, excludeNum=0){
     cmpd.count <- lapply(ms.list, length);
     sel.inx <- cmpd.count >= excludeNum;
     ms.list <- ms.list[sel.inx];
-    current.msetlib <- current.msetlib[sel.inx,];
+    
+    if(libname!="self"){
+      current.msetlib <- current.msetlib[sel.inx,];
+    }
   }
-
+  
   # total uniq cmpds in the mset lib
   mSetObj$dataSet$uniq.count <- length(unique(unlist(ms.list, use.names = FALSE)));
-
+  
   # update current.mset and push to global env
   current.msetlib$member <- ms.list;
-  current.msetlib <<- current.msetlib;
-
-  if(.on.public.web){
-    .set.mSet(mSetObj);
+  
+  if(libname=="self"){
+    current.msetlib$name <- names(ms.list)
+    current.msetlib$reference <- rep("User-uploaded", length(ms.list))
   }
+  
+  current.msetlib <<- current.msetlib;
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -138,10 +131,6 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
     mSetObj$dataSet$user.mset.info <- paste("A total of", length(mset.list), "were sucessfully added to the library.");
   }
   
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
-  }
   return(.set.mSet(mSetObj));
   
 }
@@ -366,7 +355,7 @@ SearchByName <- function(mSetObj=NA, query){
   }
   if(.on.public.web){
     .set.mSet(mSetObj);
-    mSetObj$dataSet$lib.search$matched.table
+    mSetObj$dataSet$lib.search$matched.table;
   }
   return(.set.mSet(mSetObj));
 }
@@ -376,21 +365,27 @@ SearchByName <- function(mSetObj=NA, query){
 #'to force Java to wait
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param kegg.rda Input the name of the KEGG library
+#'@param lib.version Input the KEGG pathway version. "current" for the latest 
+#'KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
+SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
   
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", kegg.rda, "}(KEGG organisms abbreviation).");
-  kegglib <- .load.metaboanalyst.lib("kegg", kegg.rda)
-  mSetObj$pathwaylibtype <- "KEGG"
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
+  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
+  if(lib.version=="current"){
+    LoadKEGGLib("kegg/metpa", libNm);
+  }else{
+    if(libNm %in% c("spym", "kva", "kpn", "cvr")){
+        AddErrMsg("Support for this organism is only available in the current version!");
+        return(0);
+    }
+    LoadKEGGLib("kegg/2018/metpa", libNm);
   }
+  mSetObj$pathwaylibtype <- "KEGG"
   return(.set.mSet(mSetObj));
 }
 
@@ -404,16 +399,12 @@ SetKEGG.PathLib<-function(mSetObj=NA, kegg.rda){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-SetSMPDB.PathLib<-function(mSetObj=NA, smpdb.rda){
+SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
   
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", smpdb.rda, "}(KEGG organisms abbreviation).");
-  smpdblib <- .load.metaboanalyst.lib("smpdb", smpdb.rda)
+  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
+  LoadKEGGLib("smpdb", libNm);
   mSetObj$pathwaylibtype <- "SMPDB"
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -458,10 +449,6 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   }else{
     mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were sucessfully added to the library.");
   }
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -503,10 +490,6 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
                                              "they will be ignored during the enrichment analysis.");
   }else{
     mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were successfully added to the library.");
-  }
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
   }
   return(.set.mSet(mSetObj));
 }

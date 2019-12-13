@@ -47,12 +47,15 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
   if(.on.public.web){
-    db.path <- paste("../../libs/", pathinteg.org, "/entrez.csv", sep="");
+    url.pre <- "/home/glassfish/sqlite/"
   }else{
-    db.path <- paste("https://www.metaboanalyst.ca/resources/libs/", pathinteg.org, "/entrez.csv", sep="");
+    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
   }
-  
-  gene.db <- .readDataTable(db.path);
+
+  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  con <- dbConnect(SQLite(), sqlite.path); 
+  gene.db <- dbReadTable(con, "entrez")
+
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
   mSetObj$dataSet$gene.name.map$hit.inx <- hit.inx;
@@ -92,7 +95,8 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   mSetObj$dataSet$gene.map.table <- csv.res;
   
   write.csv(csv.res, file="gene_name_map.csv", row.names=F);
-  
+  dbDisconnect(con);
+
   if(.on.public.web){
     .set.mSet(mSetObj)  
     return(as.vector(html.res));
@@ -266,11 +270,8 @@ PrepareQueryJson <- function(mSetObj=NA){
     cat(json.mat);
     sink();
 
-    if(.on.public.web){
-      return(1);
-    }else{
-      return(.set.mSet(mSetObj)); 
-    }
+    return(.set.mSet(mSetObj)); 
+    
 }
 
 
@@ -451,67 +452,6 @@ LoadKEGGKO_lib<-function(category){
   current.setlink <<- current.setlink;
   current.setids <<- set.ids;
   current.geneset <<- current.mset;
-}
-
-# Utility function
-doProteinIDMappingNetwork <- function(q.vec, type){
-  if(type == "entrez"){
-    # need to get only our data
-    db.path <- paste(libs.path, data.org, "/entrez.rds", sep="");
-    db.map <-  readRDS(db.path);
-    hit.inx <- match(q.vec, db.map[, "gene_id"]);
-    entrezs <- db.map[hit.inx, ]
-    entrezs <- entrezs[c(1,1)]
-    colnames(entrezs) = c("gene_id", "accession");
-  }else if(type == "symbol"){
-    db.path <- paste(libs.path, data.org, "/entrez.rds", sep="");
-    gene.map <- readRDS(db.path);
-    hit.inx <- match(q.vec, gene.map[, "symbol"]);
-    entrezs <- gene.map[hit.inx, ];
-    entrezs = entrezs[c(1,2)];
-    colnames(entrezs) <- c("gene_id", "accession")     
-  }else{
-    if(type == "genbank"){
-      # note, some ID can have version number which is not in the database
-      # need to strip it off NM_001402.5 => NM_001402
-      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-      q.vec <- q.mat[,1];
-      db.path <- paste(libs.path, data.org, "/entrez.rds", sep="");
-    }else if(type == "refseq"){
-      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-      q.vec <- q.mat[,1];
-      db.path <- paste(libs.path, data.org, "/entrez_refseq.rds", sep="");
-    }else if(type == "emblgene"){
-      db.path <- paste(libs.path, data.org, "/entrez_embl_gene.rds", sep="");
-    }else if(type == "embltranscript"){
-      db.path <- paste(libs.path, data.org, "/entrez_embl_transcript.rds", sep="");
-    }else if(type == "emblprotein"){
-      db.path <- paste(libs.path, data.org, "/entrez_embl_protein.rds", sep="");
-    }else if(type == "uniprot"){
-      db.path <- paste(libs.path, data.org, "/entrez_uniprot.rds", sep="")
-    }else{
-      print("Unknown data type");
-      return(0);
-    }
-    db.map <-  readRDS(db.path);
-    hit.inx <- match(q.vec, db.map[, "accession"]);
-    entrezs <- db.map[hit.inx, ];
-  }
-  entrezs = entrezs[c(2,1)];
-  colnames(entrezs) <- c("accession", "gene_id")
-  return(entrezs);
-}
-
-#'Utility function for PerformNetEnrichment
-#'@param emblprotein.vec Input the vector containing protein embl ids
-#'@export
-doEmblProtein2EntrezMapping <- function(emblprotein.vec){
-  db.path <- paste(libs.path, data.org, "/entrez_embl_protein.rds", sep="");
-  db.map <-  readRDS(db.path);
-  hit.inx <- match(emblprotein.vec, db.map[, "accession"]);
-  entrezs <- db.map[hit.inx, "gene_id"];
-  mode(entrezs) <- "character";
-  return(entrezs);
 }
 
 # Utility function for SearchNetDB

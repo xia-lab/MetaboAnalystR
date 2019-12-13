@@ -152,17 +152,19 @@ Convert2Mummichog <- function(mSetObj=NA, rt=FALSE){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@param instrumentOpt Define the mass-spec instrument used to perform untargeted metabolomics.
 #'@param msModeOpt Define the mass-spec mode of the instrument used to perform untargeted metabolomics.
+#'@param custom Logical, select adducts for mummichog to consider.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt){
+UpdateInstrumentParameters <- function(mSetObj=NA, instrumentOpt, msModeOpt, custom = FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
   mSetObj$dataSet$instrument <- instrumentOpt;
   mSetObj$dataSet$mode <- msModeOpt;
+  mSetObj$custom <- custom;
   
   return(.set.mSet(mSetObj));
 }
@@ -607,21 +609,23 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   ion.mass <- mSetObj$add.map$Ion_Mass
   
   mw_modified <- NULL;
-  
+
   if(mode!="mixed"){ #pos or neg
     
     mass.list <- as.list(ion.mass)
     mass.user <- lapply(mass.list, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
     mw_modified <- cbind(mw, do.call(cbind, mass.user));
-    colnames(mw_modified) <- c('M[1+]', ion.name);
     
     if(mode == "positive"){
       mw_modified.pos <- mw_modified
       mw_modified.neg <- mw_modified[,1]
+      colnames(mw_modified) <- ion.name;
     }else{ #negative
       mw_modified.neg <- mw_modified
       mw_modified.pos <- mw_modified[,1]
+      colnames(mw_modified) <- ion.name;
     }
+    
     mw_modified <- list(mw_modified.neg, mw_modified.pos)
     names(mw_modified) <- c("neg", "pos")
     
@@ -640,18 +644,17 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
     
     mass.list.neg <- as.list(ion.mass.neg)
     mass.user.neg <- lapply(mass.list.neg, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
-    mw_modified.neg <- cbind(mw, do.call(cbind, mass.user.neg));
-    colnames(mw_modified.neg) <- c('M[1+]', ion.name.neg);
+    mw_modified.neg <- do.call(cbind, mass.user.neg);
+    colnames(mw_modified.neg) <- ion.name.neg;
     
     mass.list.pos <- as.list(ion.mass.pos)
     mass.user.pos <- lapply(mass.list.pos, function(x) eval(parse(text=paste(gsub("PROTON", 1.007825, x)))) )
-    mw_modified.pos <- cbind(mw, do.call(cbind, mass.user.pos));
-    colnames(mw_modified.pos) <- c('M[1+]', ion.name.pos);
+    mw_modified.pos <- do.call(cbind, mass.user.pos);
+    colnames(mw_modified.pos) <- ion.name.pos;
     
     mw_modified <- list(mw_modified.neg, mw_modified.pos)
     names(mw_modified) <- c("neg", "pos")
   }
-  
   return(mw_modified);
 }
 
@@ -807,7 +810,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
   permutation_hits <- permutation_record <- vector("list", num_perm);
   for(i in 1:num_perm){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
-    input_mzlist <- sample(mSetObj$data$ref_mzlist, mSetObj$data$N)
+    input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_cpdlist(mSetObj, input_mzlist);
     perm <- ComputeMummichogPermPvals(t, mSetObj$total_matched_cpds, mSetObj$pathways, mSetObj$matches.res, input_mzlist, mSetObj$cpd2mz_dict);
     permutation_record[[i]] <- perm[1]
@@ -941,7 +944,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
   
   write.csv(res.mat[,-8], file="mummichog_pathway_enrichment.csv", row.names=TRUE);
   matri = res.mat[,-8]
-  matri= cbind(res.mat, paste0("P",seq.int(0,nrow(res.mat))))
+  matri = suppressWarnings(cbind(res.mat, paste0("P",seq.int(0,nrow(res.mat))))) 
   colnames(matri)[ncol(matri)] = "Pathway Number"
   write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
   json.mat <- RJSONIO::toJSON(json.res, .na='null');
@@ -1442,7 +1445,72 @@ PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300,
   
   ggsave(p, filename = boxplotName, dpi=300, width=w, height=h, limitsize = FALSE)
   
-  return(mSetObj)
+  return(.set.mSet(mSetObj));
+}
+
+######## For R package #######
+
+#' Function to get compound details from a specified pathway
+#' @description Function to get compound details from a specified pathway.
+#' The results will be both printed in the console as well as saved
+#' as a csv file. Note that performing this function multiple times will
+#' overwrite previous queries.
+#' @param mSetObj Input the name of the created mSetObj object.
+#' @param msetNm Input the name of the pathway
+#' @export
+GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
+  mSetObj <- .get.mSet(mSetObj);
+  inx <- which(mSetObj$pathways$name == msetNm)
+  mset <- mSetObj$pathways$cpds[[inx]];
+  hits.all <- unique(mSetObj$total_matched_cpds) #matched compounds
+  hits.sig <- mSetObj$input_cpdlist;
+  
+  refs <- mset %in% hits.all;
+  sigs <- mset %in% hits.sig;
+  red.inx <- which(sigs);
+  blue.inx <- which(refs & !sigs);
+  
+  nms <- mset;
+  sig.cpds <- nms[red.inx]
+  nsig.cpds <- nms[blue.inx]
+  
+  path.results <- matrix(NA, 2, 1)
+  colnames(path.results) <- paste(msetNm, "Compound Hits", sep=" ")
+  rownames(path.results) <- c("Signicant Compounds", "Non-Significant Compounds")
+  path.results[1,1] <- paste(sig.cpds, collapse = "; ")
+  path.results[2,1] <- paste(nsig.cpds, collapse = "; ")
+  write.csv(path.results, "mummichog_pathway_compounds.csv")
+  print(path.results);
+  return(.set.mSet(mSetObj));
+}
+
+#' Function to get adduct details from a specified compound
+#' @description Function to get adduct details from a specified compound.
+#' The results will be both printed in the console as well as saved
+#' as a csv file. Note that performing this function multiple times will
+#' overwrite previous queries.
+#' @param mSetObj Input the name of the created mSetObj object.
+#' @param cmpd.id Input the name of the selected compound.
+#' @export
+GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  forms <- mSetObj$cpd_form_dict[[cmpd.id]];
+  
+  if(is.null(forms)){
+    print("This compound is not valid!")
+    return(0)
+  }
+  
+  mz <- mSetObj$dataSet$mumResTable[which(mSetObj$dataSet$mumResTable$Matched.Compound == cmpd.id), 1] 
+  mass.diff <- mSetObj$dataSet$mumResTable[which(mSetObj$dataSet$mumResTable$Matched.Compound == cmpd.id), 4]
+  tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
+  
+  res <- cbind(rep(cmpd.id, length(mz)), mz, forms, mass.diff, tscores) 
+  colnames(res) <- c("Matched.Compound", "m.z", "Matched.Form", "Mass.Diff", "T.Scores")
+  write.csv(res, "mummichog_compound_details.csv")
+  print(res)
+  return(.set.mSet(mSetObj));
 }
 
 ##### For Web ################
@@ -1486,7 +1554,7 @@ GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
     nms <- mset;
     nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
   }
-  return(cbind(msetNm, paste(nms, collapse="; ")));
+  return(cbind(msetNm, paste(unique(nms), collapse="; ")));
 }
 
 GetMummiResMatrix <- function(mSetObj=NA){
@@ -1545,10 +1613,6 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt){
     anal.type <<- "integ_peaks"
   }
   
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1);
-  }
   return(.set.mSet(mSetObj));
 }
 

@@ -175,7 +175,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'@export
 #'
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   LRConverged <<- "FALSE"; 
   
@@ -203,28 +203,32 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   # update in case norm filtered?
   hit.inxX <- rownames(data) %in% rownames(x);
   hit.inxY <- colnames(data) %in% colnames(x);
-  data <- data[hit.inxX,hit.inxY];
+  data <- data[hit.inxX, hit.inxY, drop=FALSE];
   min.val <- min(abs(data[data!=0]))/2;
   data <- log2((data + sqrt(data^2 + min.val))/2);
   
-  m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-  m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
+  m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), , drop=FALSE]);
+  m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), , drop=FALSE]);
   fc <- m1-m2;
   
-  # now do k-means to measure their expression similarities
-  kms <- ComputeKmeanClusters(t(x), clust.num);
-  feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
-  rownames(feat.rank.mat) <- colnames(x);
+  if(mSetObj$dataSet$roc_cols > 1){ # dont need to calc kmeans if only 1 metabolite!
+    # now do k-means to measure their expression similarities
+    kms <- ComputeKmeanClusters(t(x), clust.num);
+    feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
+    rownames(feat.rank.mat) <- colnames(x);
+    
+    ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
+    feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx, , drop=FALSE]);
+  }else{
+    feat.rank.mat <- data.matrix(data.frame(AUC=auc, Pval=ttp, FC=fc, clusters=1))
+  }
   
-  ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
-  feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx,]);
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
   
   if(mSetObj$analSet$mode == "univ"){
     write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
   }
-  
   return(.set.mSet(mSetObj));  
 }
 
@@ -902,7 +906,7 @@ GetCIs <- function(data, param=F){
 #'@export
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName1 = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -966,6 +970,18 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   return(.set.mSet(mSetObj));
 }
 
+#'Plot a boxplot view of a selected compound
+#'@description Plots a boxplot of the selected compound's concentration
+#'between the groups.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param feat.nm Input the name of the selected compound.
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", of "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300. 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
 #'@export
 PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, isQuery){
   

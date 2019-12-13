@@ -405,7 +405,6 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
           them in mSet$imgSet$time$score3d and mSet$imgSet$time$load3d.")
     return(.set.mSet(mSetObj));
   }
-  #save.image(file="time.RData")
 }
 
 

@@ -18,7 +18,6 @@
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   mSetObj <- .get.mSet(mSetObj);
-
   # make a clean dataSet$cmpd data based on name mapping
   # only valid kegg id will be used
   
@@ -109,18 +108,13 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$ora.mat <- signif(res.mat,5);
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
-  
-  .set.mSet(mSetObj)
-  
-  save.mat <- mSetObj$analSet$ora.mat;
-  rownames(save.mat) <- GetORA.pathNames(mSetObj);
+
+  save.mat <- mSetObj$analSet$ora.mat;  
+  hit.inx <- match(rownames(save.mat), metpa$path.ids);
+  rownames(save.mat) <- names(metpa$path.ids)[hit.inx];
   write.csv(save.mat, file="pathway_results.csv");
   
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
+  return(.set.mSet(mSetObj));
 }
 
 #'Export pathway names from ORA analysis
@@ -356,7 +350,7 @@ GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   # use actual cmpd names
   nms <- names(mset);
   nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
-  return(cbind(msetNm, paste(nms, collapse="; ")));
+  return(cbind(msetNm, paste(unique(nms), collapse="; ")));
 }
 
 GetORA.keggIDs <- function(mSetObj=NA){

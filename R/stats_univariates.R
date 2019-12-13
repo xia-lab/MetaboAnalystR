@@ -1039,12 +1039,6 @@ GetAnovaDnMat <- function(mSetObj=NA){
   }
 }
 
-GetAnovaLnMat <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  lod <- mSetObj$analSet$aov$p.log;
-  as.matrix(rbind(c(0, mSetObj$analSet$aov$thresh), c(length(lod)+1,mSetObj$analSet$aov$thresh)));
-}
-
 GetAnovaCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   names(mSetObj$analSet$aov$p.log);
@@ -1055,19 +1049,9 @@ GetAnovaCmpdInxs<-function(mSetObj=NA){
   return(1:length(mSetObj$analSet$aov$p.log));
 }
 
-GetMaxAnovaInx <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  which.max(mSetObj$analSet$aov$p.log);
-}
-
 GetAnovaSigFileName <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$analSet$aov$sig.nm;
-}
-
-GetTTSigNum <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$analSet$tt$sig.num);
 }
 
 #'Sig Table for T-test Analysis
@@ -1123,12 +1107,6 @@ GetTtDnMat <- function(mSetObj=NA){
   }
 }
 
-GetTtLnMat <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  lod <- analSet$tt$p.log;
-  as.matrix(rbind(c(0, mSetObj$analSet$tt$thresh), c(length(lod)+1,mSetObj$analSet$tt$thresh)));
-}
-
 GetTtCmpdInxs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(1:length(mSetObj$analSet$tt$p.log));
@@ -1137,11 +1115,6 @@ GetTtCmpdInxs <- function(mSetObj=NA){
 GetTtCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   names(mSetObj$analSet$tt$p.log);
-}
-
-GetMaxTtInxs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  which.max(mSetObj$analSet$tt$p.log);
 }
 
 GetTtestSigFileName <- function(mSetObj=NA){

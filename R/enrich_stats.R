@@ -86,13 +86,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   mSetObj$analSet$ora.hits <- hits;
   
   write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
-    return(1);
-  }
   return(.set.mSet(mSetObj));
-  
 }
 
 #'Quantitative enrichment analysis with globaltest

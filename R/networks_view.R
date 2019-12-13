@@ -19,15 +19,16 @@
 #'@export
 UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ"){
 
+  mSetObj <- .get.mSet(mSetObj);  
+  
+  libPath <- paste("kegg/jointpa/",libOpt,sep="");
+  LoadKEGGLib(libPath, mSetObj$org);
+
   qids <- do.call(rbind, strsplit(qids, "; "));
   idtypes <- unlist(sapply(qids, function(x) substring(x, 1, 1) == "C"))
   qcmpds <- qids[idtypes]
   qgenes <- qids[!idtypes]
   
-  mSetObj <- .get.mSet(mSetObj);  
-
-  LoadKEGGLib(libOpt);
-
   set.size <- length(inmexpa$mset.list);
   ms.list <- lapply(inmexpa$mset.list, function(x){strsplit(x, " ")});
   current.universe <- unique(unlist(ms.list));
@@ -41,7 +42,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   mSetObj$dataSet$path.mat <- NULL;
   
   if(libOpt == "genetic"){
-    gene.vec <- paste(pathinteg.org, ":", qgenes, sep="");
+    gene.vec <- paste(mSetObj$org, ":", qgenes, sep="");
     ora.vec <- gene.vec;
     ora.vec.ids <- c(qgenes);
     uniq.count <- inmexpa$uniq.gene.count;
@@ -57,7 +58,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   }else{ # integ
 
     cmpd.vec <- paste("cpd:", qcmpds, sep="");
-    gene.vec <- paste(pathinteg.org, ":", qgenes, sep="");
+    gene.vec <- paste(mSetObj$org, ":", qgenes, sep="");
     ora.vec <- c(cmpd.vec, gene.vec);
     ora.vec.ids <- c(qcmpds, qgenes);
     
@@ -774,7 +775,7 @@ ExtractModule<- function(nodeids){
   pheno.comps[[module.nm]] <<- g;
   UpdateSubnetStats();
   
-  module.count <<- module.count
+  module.count <<- module.count;
   
   convertIgraph2JSON(module.nm, filenm);
   return (filenm);

@@ -57,20 +57,12 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   # other global variables
   msg.vec <<- "";
+  err.vec <<- "";
+
+  # for network analysis
   module.count <<- 0;
-  smpdbpw.count <<- 0; # counter for naming different json file (pathway viewer)
-  data.org <<- NULL; 
-  
-  if(.on.public.web){
-    lib.path <<- "../../data/";
-
-    # disable parallel prcessing for public server
-    library(BiocParallel);
-    register(SerialParam());
-
-  }else{
-    lib.path <<- "https://www.metaboanalyst.ca/resources/data/";
-  }
+  # counter for naming different json file (pathway viewer)
+  smpdbpw.count <<- 0; 
   # for mummichog
   peakFormat <<- "mpt"  
 
@@ -79,6 +71,12 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mdata.siggenes <<- vector("list");
   meta.selected <<- TRUE;
   anal.type <<- anal.type;
+  
+  if(.on.public.web){
+    # disable parallel prcessing for public server
+    library(BiocParallel);
+    register(SerialParam());
+  }
   
   # plotting required by all
   Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
@@ -155,6 +153,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
 
   msg <- NULL;
+  
   if(substring(format,4,5)=="ts"){
     # two factor time series data
     if(substring(format,1,3)=="row"){ # sample in row
@@ -192,7 +191,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     if(substring(format,1,3)=="row"){ # sample in row
       msg <- c(msg, "Samples are in rows and features in columns");
       smpl.nms <-dat[,1];
-      dat[,1] <- NULL;
+      dat[,1] <- NULL; #remove sample names
       if(lbl.type == "qc"){
         rownames(dat) <- smpl.nms;
         mSetObj$dataSet$orig <- dat;
@@ -201,7 +200,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       }
       
       cls.lbl <- dat[,1];
-      conc <- dat[,-1];
+      conc <- dat[,-1, drop=FALSE];
       var.nms <- colnames(conc);
     }else{ # sample in col
       msg<-c(msg, "Samples are in columns and features in rows.");
@@ -293,11 +292,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
-  smpl.nms <- gsub("[^[:alnum:]./_-]", "", smpl.nms);
+  smpl.nms <- CleanNames(smpl.nms, "sample_name");
+
 
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;
-  var.nms <- gsub("[^[:alnum:][:space:],'./_-]", "", var.nms); # allow space, comma and period
+  var.nms <- CleanNames(var.nms, "var_name"); # allow space, comma and period
   names(orig.var.nms) <- var.nms;
 
   cls.lbl <- ClearStrings(as.vector(cls.lbl));
@@ -708,7 +708,7 @@ if(mSetObj$dataSet$mode == "positive"){
 #'@param msg Error message to print 
 #'@export
 AddErrMsg <- function(msg){
-  msg.vec <<- c(msg.vec, msg);
+  err.vec <<- c(err.vec, msg);
   print(msg);
 }
 
@@ -925,32 +925,71 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   return(my.lib)
 }
 
-# read binary RDA files (old style should be all RDS)
-# type should mset or kegg
-.load.metaboanalyst.lib <- function(libtype, libname){
-  
-  destfile <- paste(libname, ".rda", sep="");
-  if(.on.public.web){
-    destfile <- paste("../../libs/", libtype, "/", libname, ".rda", sep="");
-  }else{
-    lib.download <- FALSE;
-    if(!file.exists(destfile)){
-      lib.download <- TRUE;
+#'Load KEGG library
+#'@description Load different libraries
+# libType: kegg/metpa, kegg/jointpa, msets
+# libNm: for kegg org.code; for msets, specific names
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+LoadKEGGLib<-function(libType, libNm){
+    
+    destfile <- paste(libNm, ".rda", sep = "")
+    
+    if(.on.public.web){
+        my.rda  <- paste("../../libs/", libType, "/", destfile, sep="");
+     }else{
+        my.rda <- paste("https://www.metaboanalyst.ca/resources/libs/", libType, "/", destfile, sep="");
+    }
+
+    print(paste("adding library:", my.rda));
+    if(libType!= "msets"){
+        load_igraph();
+    }
+    if(.on.public.web){
+        load(my.rda, .GlobalEnv);
+    }else if(!file.exists(destfile)){
+        download.file(my.rda, destfile);
+        load(destfile, .GlobalEnv);
     }else{
-      time <- file.info(destfile)
-      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-      if(diff_time>30){
-        lib.download <- TRUE;
-      }
+        load(destfile, .GlobalEnv);  
     }
-    if(lib.download){
-      libPath <- paste("https://www.metaboanalyst.ca/resources/libs/", libtype, "/", libname, ".rda", sep="");
-      download.file(libPath, destfile);
-    }
-  }
-  load(destfile, .GlobalEnv);  
 }
 
+# load old (2018 version)
+LoadKEGGLib_2018<-function(mSetObj=NA, libOpt){
+
+  mSetObj <- .get.mSet(mSetObj);
+  org.code <- mSetObj$org;
+  anal.type <- mSetObj$analSet$type;
+  
+  if(anal.type == ""){ #metpa
+     if(.on.public.web){
+        kegg.rda  <- paste("../../libs/kegg/2018/metpa/", org.code, ".rda", sep="");
+     }else{
+        kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/2018/metpa/", org.code, ".rda", sep="");
+     }
+  }else{ # joint pathway
+    if(.on.public.web){
+        kegg.rda <- paste("../../libs/kegg/2018/jointpa/", libOpt, "/", org.code, ".rda", sep=""); 
+    }else{
+        kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/2018/jointpa/", libOpt, "/", org.code, ".rda", sep=""); 
+    }
+  }
+  print(paste("adding library:", kegg.rda));
+  destfile <- paste(org.code, ".rda", sep = "")
+  load_igraph();
+  if(.on.public.web){
+    load(kegg.rda, .GlobalEnv);
+  }else if(!file.exists(destfile)){
+    download.file(kegg.rda, destfile);
+    load(destfile, .GlobalEnv);
+  }else{
+    load(destfile, .GlobalEnv);  
+  }
+}
 
 ##############################################
 ##############################################
@@ -959,7 +998,7 @@ PlotCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
 ##############################################
 
 GetErrMsg<-function(){
-  return(msg.vec);
+  return(err.vec);
 }
 
 GetKEGG.PathNames<-function(mSetObj=NA){
@@ -1124,7 +1163,7 @@ GetLiteralGroupNames <- function(mSetObj=NA){
 #'@export
 SetOrganism <- function(mSetObj=NA, org){
   mSetObj <- .get.mSet(mSetObj);
-  pathinteg.org <<- data.org <<- org;
+  mSetObj$org <- org;
   return(.set.mSet(mSetObj))
 }
 

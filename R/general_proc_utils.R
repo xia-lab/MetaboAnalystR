@@ -16,7 +16,7 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   msg <- NULL;
@@ -150,7 +150,7 @@ SanityCheckData <- function(mSetObj=NA){
     }else{
       ord.inx <- order(mSetObj$dataSet$orig.cls);
       mSetObj$dataSet$orig.cls <- cls[ord.inx];
-      mSetObj$dataSet$orig <- mSetObj$dataSet$orig[ord.inx, ];
+      mSetObj$dataSet$orig <- mSetObj$dataSet$orig[ord.inx, , drop=FALSE];
       if(mSetObj$dataSet$paired){
         mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
       }
@@ -161,6 +161,17 @@ SanityCheckData <- function(mSetObj=NA){
   
   int.mat <- mSetObj$dataSet$orig;
   
+  if(ncol(int.mat)==1){
+    if(anal.type=="roc"){
+        mSetObj$dataSet$roc_cols <- 1;
+    }else{
+      AddErrMsg("<font color='red'>One-column data is only supported for biomarker analysis.</font>");
+      return(0);
+    }
+  }else{
+    mSetObj$dataSet$roc_cols <- 2;
+  }
+
   # check numerical matrix
   rowNms <- rownames(int.mat);
   colNms <- colnames(int.mat);
@@ -191,7 +202,7 @@ SanityCheckData <- function(mSetObj=NA){
   constNum <- sum(constCol, na.rm=T);
   if(constNum > 0){
     msg<-c(msg, paste("<font color=\"red\">", constNum, "features with a constant or single value across samples were found and deleted.</font>"));
-    int.mat <- int.mat[,!constCol];
+    int.mat <- int.mat[,!constCol, drop=FALSE];
   }
   
   # check zero, NA values
@@ -218,13 +229,9 @@ SanityCheckData <- function(mSetObj=NA){
   }
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(1)
+  if(!.on.public.web){
+        print(c("Successfully passed sanity check!", msg))
   }
-  
-  print(c("Successfully passed sanity check!", msg))
   return(.set.mSet(mSetObj));
 }
 
@@ -277,7 +284,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@export
 #'
 RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(!.on.public.web){
@@ -285,7 +292,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
       int.mat <- mSetObj$dataSet$norm
       minConc <- min(int.mat[int.mat>0], na.rm=T)/2;
       good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-      mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx]);
+      mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
       
       # need to update cls labels
       mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
@@ -295,7 +302,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
       int.mat <- mSetObj$dataSet$preproc
       minConc <- mSetObj$dataSet$minConc;
       good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-      mSetObj$dataSet$preproc <- as.data.frame(int.mat[,good.inx]);
+      mSetObj$dataSet$preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
       
       # need to update cls labels
       mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
@@ -305,7 +312,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     int.mat <- mSetObj$dataSet$preproc
     minConc <- mSetObj$dataSet$minConc;
     good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-    mSetObj$dataSet$preproc <- as.data.frame(int.mat[,good.inx]);
+    mSetObj$dataSet$preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
     
     # need to update cls labels
     mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
@@ -337,7 +344,7 @@ ImputeVar <- function(mSetObj=NA, method="min"){
   
   if(method=="exclude"){
     good.inx<-apply(is.na(int.mat), 2, sum)==0
-    new.mat<-int.mat[,good.inx];
+    new.mat<-int.mat[,good.inx, drop=FALSE];
     msg <- c(msg,"Variables with missing values were excluded.");
   }else if(method=="min"){
     minConc<-min(int.mat[int.mat>0], na.rm=T)/2;

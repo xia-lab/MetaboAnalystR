@@ -154,9 +154,11 @@ citation("MetaboAnalystR")
 
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue (and @ jsychong) or send an email to #jasmine.chong@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue (and @ jsychong!!) or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+11-12-2019 - Update KEGG pathway libraries + updates to Pathway Analysis and MS Peaks to Paths vignettes
 
 10-17-2019 - Updates w. web server, updated MS Peaks to Paths vignettes to show adduct/currency customization
 

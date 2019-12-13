@@ -708,12 +708,8 @@ PrepareVennData <- function(mSetObj=NA){
   venn.list <<- sel.dats;
   
   PlotMetaVenn(mSetObj, "venn_diagram");
+  return(.set.mSet(mSetObj));
   
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
 }
 
 #3

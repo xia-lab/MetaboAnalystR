@@ -1,4 +1,4 @@
-#'Perform various annotation
+#'Convert different gene IDs into entrez IDs for downstream analysis
 #'@description Gene ID mapping, gene annotation, compound
 #'mapping, KEGG mapping
 #'@param q.vec Input the query
@@ -10,110 +10,42 @@
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
-  
+
+  library(RSQLite)
+
   if(.on.public.web){
-    url.pre <- "../../libs/";
+    url.pre <- "/home/glassfish/sqlite/";
   }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
+    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
   }
-  if(type == "symbol"){
-    db.path <- paste(url.pre, org, "/entrez.csv", sep="");
-    db.map <-  .readDataTable(db.path);
-    hit.inx <- match(q.vec, db.map[, "symbol"]);
-    entrezs <- db.map[hit.inx, "gene_id"];
-    rm(db.map, q.vec);
-    gc();
-    return(entrezs);
-  }else if(type == "entrez"){
-    db.path <- paste(url.pre, org, "/entrez.csv", sep="");
-    db.map <-  .readDataTable(db.path);
-    hit.inx <- match(q.vec, db.map[, "gene_id"]);
-    entrezs <- db.map[hit.inx, "gene_id"];
-    rm(db.map, q.vec);
-    return(entrezs);
-  }else if(type == "kos"){
-    db.path <- paste(url.pre, "network/ko_dic_new.csv", sep="");
-    db.map <-  .readDataTable(db.path);
-    #db.map <- db.map[as.integer(db.map[,"Entrez_hsa"]) != -1,]
-    hit.inx <- match(q.vec, db.map[, "KO"]);
-    entrezs <- as.integer(db.map[hit.inx, "Entrez_hsa"]);
-    entrezs[entrezs==-1] <- NA
-    kos <- db.map[hit.inx, "KO"];
-    result <- list(entrezs = entrezs, kos = kos)
-    rm(db.map, q.vec);
-    return(result);
-  }else{ 
-    if(type == "genbank"){
-      db.path <- paste(url.pre, org, "/entrez_gb.rda", sep="");
-      load(db.path);
-    }else if(type == "refseq"){
-      db.path <- paste(url.pre, org, "/entrez_refseq.csv", sep="");
-      db.map <-  .readDataTable(db.path);
-      # note, ref.seq can have version number which is not in the database
-      # need to strip it off NM_001402.5 => NM_001402
-      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-      q.vec <- q.mat[,1];
-    }else if(type == "embl"){
-      db.path <- paste(url.pre, org, "/entrez_embl.csv", sep="");
-      db.map <-  .readDataTable(db.path);
+
+    sqlite.path = paste0(url.pre, org, "_genes.sqlite");
+    con <- dbConnect(SQLite(), sqlite.path); 
+
+    if(type == "symbol"){
+      db.map = dbReadTable(con, "entrez")
+      hit.inx <- match(q.vec, db.map[, "symbol"]);
+    }else if(type == "entrez"){
+      db.map = dbReadTable(con, "entrez")
+      hit.inx <- match(q.vec, db.map[, "gene_id"]);
     }else{
-      print("Unknown data type");
-      return(0);
+     if(type == "genbank"){
+        db.map = dbReadTable(con, "entrez_gb");
+      }else if(type == "embl"){
+        db.map = dbReadTable(con, "entrez_embl_gene");
+      }else if(type == "refseq"){
+        db.map = dbReadTable(con, "entrez_refseq");
+        q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
+        q.vec <- q.mat[,1];
+      }else if(type == "kos"){
+        db.map = dbReadTable(con, "entrez_ortholog");
+      }
+      hit.inx <- match(q.vec, db.map[, "accession"]);
     }
-    
-    hit.inx <- match(q.vec, db.map[, "accession"]);
-    
     entrezs=db.map[hit.inx, "gene_id"];
-    rm(db.map, q.vec);
-    gc();
+    rm(db.map, q.vec); gc();
+    dbDisconnect(con);
     return(entrezs);
-    
-  }
-}
-
-#'Perform gene annotation
-#'@export
-#'
-PerformGeneAnnotation <- function(){
-  if(!exists("entrez.vec")){
-    print("Could not find Entrez ID list!");
-    return(0);
-  }
-  
-  if(.on.public.web){
-    url.pre <- "../../libs/";
-  }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
-  }
-  
-  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
-  gene.map <-  .readDataTable(db.path);
-  
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  
-  dat <- cbind(query=entrez.vec, gene.map[hit.inx, c("symbol","name")]);
-  write.csv(dat, file="EntrezID2Gene.csv", row.names=F);
-  rm(entrez.vec, envir = .GlobalEnv);
-  return(1);
-}
-
-doEntrez2SymbolMapping <- function(entrez.vec){
-  
-  if(.on.public.web){
-    url.pre <- "../../libs/";
-  }else{
-    url.pre <- "https://www.metaboanalyst.ca/resources/libs/";
-  }
-  
-  db.path <- paste(url.pre, pathinteg.org, "/entrez.csv", sep="");
-  gene.map <- .readDataTable(db.path);
-  
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  symbols <- gene.map[hit.inx, "symbol"];
-  
-  # NA to character to avoid some issues?
-  symbols[is.na(symbols)] <- 'NA';
-  return(symbols);
 }
 
 #'Perform compound mapping
