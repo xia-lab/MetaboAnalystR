@@ -4,9 +4,16 @@
 \alias{ImportRawMSDataList}
 \title{Import raw MS data}
 \usage{
-ImportRawMSDataList(dataset.meta, format = "png", dpi = 72,
-  width = 9, par.cores = TRUE, plot = TRUE, bpis_name = "BPIS_",
-  tics_name = "TICS_")
+ImportRawMSDataList(
+  dataset.meta,
+  format = "png",
+  dpi = 72,
+  width = 9,
+  par.cores = TRUE,
+  plot = TRUE,
+  bpis_name = "BPIS_",
+  tics_name = "TICS_"
+)
 }
 \arguments{
 \item{dataset.meta}{Matrix, input the meta data for files containing

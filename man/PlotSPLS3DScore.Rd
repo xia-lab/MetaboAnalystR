@@ -4,8 +4,14 @@
 \alias{PlotSPLS3DScore}
 \title{3D SPLS-DA score plot}
 \usage{
-PlotSPLS3DScore(mSetObj = NA, imgName, format = "json", inx1 = 1,
-  inx2 = 2, inx3 = 3)
+PlotSPLS3DScore(
+  mSetObj = NA,
+  imgName,
+  format = "json",
+  inx1 = 1,
+  inx2 = 2,
+  inx3 = 3
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

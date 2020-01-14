@@ -25,24 +25,23 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   mSetObj <- .get.mSet(mSetObj);
   mumDataContainsPval = 1; #whether initial data contains pval or not
   
-  input <- as.data.frame(read.table(filename, header=TRUE, as.is=TRUE));
-  
+  input <- as.data.frame(.readDataTable(filename)); 
   if(peakFormat == "mpt"){
     hits <- c("m.z", "p.value", "t.score") %in% colnames(input);
     if(!all(hits)){
-      AddErrMsg("Missing information, data must contain 'm.z', 'p.value' and 't.score' column");
+      AddErrMsg("Missing information, data must contain 'm.z', 'p.value' and 't.score' columns");
       return(0);
     }
   }else if(peakFormat == "mp"){
     hit <- c("m.z", "p.value") %in% colnames(input);
     if(!all(hit)){
-      AddErrMsg("Missing information, data must contain both 'm.z' and 'p.value' column");
+      AddErrMsg("Missing information, data must contain both 'm.z' and 'p.value' columns");
       return(0);
     }
   }else if(peakFormat == "mt"){
     hits <- c("m.z", "t.score") %in% colnames(input);
     if(!all(hits)){
-      AddErrMsg("Missing information, data must contain both 'm.z' and 't.score' column");
+      AddErrMsg("Missing information, data must contain both 'm.z' and 't.score' columns");
       return(0);
     }
   }else{
@@ -282,8 +281,11 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'@export
 
 SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
-  fraction = pct/100
+  
   mSetObj <- .get.mSet(mSetObj);
+
+  fraction = pct/100
+
   if(peakFormat %in% c("rmp", "rmt")){
     maxp <- 0;
   }else{
@@ -362,16 +364,17 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
 #'Function to perform peak set enrichment analysis
 #'@description This is the main function that performs either the mummichog
 #'algorithm, GSEA, or both for peak set enrichment analysis. 
-#'@usage PerformPSEA(mSetObj=NA, lib, permNum = 100)
-#'@param mSetObj Input the name of the created mSetObj object 
-#'@param lib Input the name of the organism library, default is hsa 
-#'@param permNum Numeric, the number of permutations to perform
+#'@usage PerformPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
+#'@param mSetObj Input the name of the created mSetObj object. 
+#'@param lib Input the name of the organism library, default is hsa_mfn. 
+#'@param libVersion Input the version of the KEGG pathway libraries ("current" or "old").
+#'@param permNum Numeric, input the number of permutations to perform. Default is 100.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
+PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -396,10 +399,20 @@ PerformPSEA <- function(mSetObj=NA, lib, permNum = 100){
   }
   
   if(.on.public.web){
-    mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
+    if(libVersion == "old" && end.with(lib, "kegg")){
+      mum.url <- paste("../../libs/mummichog/kegg_2018/", filenm, sep="");
+    }else{
+      mum.url <- paste("../../libs/mummichog/", filenm, sep="");
+    }
+    print(paste("Adding mummichog library:", mum.url));
+    mummichog.lib <- readRDS(mum.url);
   }else{
     if(!file.exists(filenm)){
-      mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      if(libVersion == "old" && end.with(lib, "kegg")){
+         mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/kegg_2018/", filenm, sep="")
+      }else{
+         mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      }
       download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
       mummichog.lib <- readRDS(filenm);
     }else{
@@ -1103,13 +1116,13 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   mSetObj <- .get.mSet(mSetObj);
   if(anal.type == "mummichog"){
     mummi.mat <- mSetObj$mummi.resmat
-    y <- -log(mummi.mat[,5]);
+    y <- -log10(mummi.mat[,5]);
     x <- mummi.mat[,3]/mummi.mat[,4]
     pathnames <- rownames(mummi.mat)
     
   }else{
     gsea.mat <- mSetObj$mummi.gsea.resmat
-    y <- -log(gsea.mat[,3])
+    y <- -log10(gsea.mat[,3])
     x <- gsea.mat[,2]/gsea.mat[,1]
     pathnames <- rownames(gsea.mat)
   }
@@ -1163,7 +1176,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="Enrichment Factor", ylab="-log(p)", bty = "l");
+  plot(x, y, type="n", axes=F, xlab="Enrichment Factor", ylab="-log10(p)", bty = "l");
   axis(1);
   axis(2);
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
@@ -1230,13 +1243,13 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   combo.resmat <- mSetObj$integ.resmat
   pathnames <- rownames(combo.resmat)
   # Sort values based on combined pvalues
-  y <- -log(combo.resmat[,4]);
+  y <- -log10(combo.resmat[,4]);
   y <- scales::rescale(y, c(0,4))
   
-  x <- -log(combo.resmat[,5]);
+  x <- -log10(combo.resmat[,5]);
   x <- scales::rescale(x, c(0,4))
   
-  combo.p <- -log(combo.resmat[,6])
+  combo.p <- -log10(combo.resmat[,6])
   combo.p <- scales::rescale(combo.p, c(0,4))
   
   inx <- order(combo.p, decreasing= T);
@@ -1290,7 +1303,7 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="GSEA -log(p)", ylab="Mummichog -log(p)", bty = "l");
+  plot(x, y, type="n", axes=F, xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
   axis(1);
   axis(2);
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
@@ -2110,8 +2123,9 @@ sumlog <-function(p) {
   res
 }
 
+#### for heatmap view (online only)
 
-CreateHeatmapJson <- function(mSetObj=NA, libOpt, fileNm, filtOpt){
+CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt){
 
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
@@ -2121,16 +2135,8 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, fileNm, filtOpt){
   l = sapply(rownames(data),function(x) return(unname(strsplit(x,"/")[[1]][1])))
   l = as.numeric(unname(unlist(l)))
   
-  if(length(levels(dataSet$cls))<3){
-    res<-GetTtestRes(NA, FALSE, TRUE, F)
-  }else{
-    aov.res <- apply(as.matrix(dataSet$norm), 2, aof, cls=dataSet$cls);
-    anova.res <- lapply(aov.res, anova);
-    
-    #extract all p values
-    res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
-    res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
-  }
+  res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+
   rownames(res) = rownames(data);
   
   if(dataSet$mode == "positive"){
@@ -2143,9 +2149,8 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, fileNm, filtOpt){
   names(mSetObj$dataSet$expr_dic) = rownames(res)
   
   if(filtOpt == "filtered"){
-    mSetObj <- searchCompLib(mSetObj, libOpt);
+    mSetObj <- searchCompLib(mSetObj, libOpt, libVersion);
     res_table <- mSetObj$matches.res;
-    print(head(res_table))
     data = data[which(l %in% res_table[,"Query.Mass"]),]
     res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
   }
@@ -2279,10 +2284,10 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, lib, ids){
   mSetObj$mum_nm_csv <- paste0(nm,".csv");
   .set.mSet(mSetObj);
   anal.type <<- "mummichog";
-  PerformPSEA("NA", lib, 100);
+  PerformPSEA("NA", lib, "current", 100);
 }
 
-searchCompLib <- function(mSetObj, lib){
+searchCompLib <- function(mSetObj, lib, libVersion){
   
   filenm <- paste(lib, ".rds", sep="")
   biocyc <- grepl("biocyc", lib)
@@ -2305,10 +2310,18 @@ searchCompLib <- function(mSetObj, lib){
   }
   
   if(.on.public.web){
-    mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
+    if(libVersion == "old" && end.with(lib, "kegg")){
+      mummichog.lib <- readRDS(paste("../../libs/mummichog/kegg_2018/", filenm, sep=""));
+    }else{
+      mummichog.lib <- readRDS(paste("../../libs/mummichog/", filenm, sep=""));
+    }
   }else{
     if(!file.exists(filenm)){
-      mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      if(libVersion == "old" && end.with(lib, "kegg")){
+         mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/kegg_2018/", filenm, sep="")
+      }else{
+         mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="")
+      }
       download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
       mummichog.lib <- readRDS(filenm);
     }else{

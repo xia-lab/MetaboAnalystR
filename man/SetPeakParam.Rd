@@ -4,11 +4,24 @@
 \alias{SetPeakParam}
 \title{Set parameters for peak picking using XCMS and CAMERA}
 \usage{
-SetPeakParam(alg = "centwave", ppm = 10, min_pkw = 10,
-  max_pkw = 60, sn_thresh = 6, mzdiff = 0.01, bw = 5,
-  min_frac = 0.5, min_sample_num = 1, max_feats = 100,
-  peakgroup = FALSE, bin_size = 1, min_frac_retcor = 0.9,
-  rt_filt = FALSE, rt_min = 200, rt_max = 1000)
+SetPeakParam(
+  alg = "centwave",
+  ppm = 10,
+  min_pkw = 10,
+  max_pkw = 60,
+  sn_thresh = 6,
+  mzdiff = 0.01,
+  bw = 5,
+  min_frac = 0.5,
+  min_sample_num = 1,
+  max_feats = 100,
+  peakgroup = FALSE,
+  bin_size = 1,
+  min_frac_retcor = 0.9,
+  rt_filt = FALSE,
+  rt_min = 200,
+  rt_max = 1000
+)
 }
 \arguments{
 \item{alg}{Character, specify the algorithm to perform peak detection. "centwave" 

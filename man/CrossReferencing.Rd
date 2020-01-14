@@ -5,8 +5,15 @@
 \title{Various functions for mapping b/w names & database identifiers
 Given a list of compound names or ids, find matched name or ids from selected databases}
 \usage{
-CrossReferencing(mSetObj = NA, q.type, hmdb = T, pubchem = T,
-  chebi = F, kegg = T, metlin = F)
+CrossReferencing(
+  mSetObj = NA,
+  q.type,
+  hmdb = T,
+  pubchem = T,
+  chebi = F,
+  kegg = T,
+  metlin = F
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}

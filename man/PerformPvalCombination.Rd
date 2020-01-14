@@ -4,8 +4,7 @@
 \alias{PerformPvalCombination}
 \title{Meta-Analysis Method: Combining p-values}
 \usage{
-PerformPvalCombination(mSetObj = NA, method = "stouffer",
-  BHth = 0.05)
+PerformPvalCombination(mSetObj = NA, method = "stouffer", BHth = 0.05)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

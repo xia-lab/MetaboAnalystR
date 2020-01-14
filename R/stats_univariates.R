@@ -294,17 +294,13 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   
    mSetObj <- .get.mSet(mSetObj);
 
-   # check to see if already done by microservice
-   if(.on.public.web & !nonpar & RequireFastT(mSetObj)){
-        res <- readRDS("fastt_out.rds");
-        t.stat <- res$t.stats;
-        p.value <- res$p.vals;
+   if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+        res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
    }else{
         res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-        t.stat <- res[,1];
-        p.value <- res[,2];
    }
-  
+   t.stat <- res[,1];
+   p.value <- res[,2];
    names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   
    p.log <- -log10(p.value);
@@ -453,14 +449,12 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
 
   #### t-tests
    # check to see if already done by microservice
-   if(.on.public.web & !nonpar & RequireFastT(mSetObj)){
-       res <- readRDS("fastt_out.rds");
-       p.value <- res$p.vals;
+   if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+       res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
    }else{
        res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-       p.value <- res[,2];
    }
-
+  p.value <- res[,2];
   if(pval.type == "fdr"){
     p.value <- p.adjust(p.value, "fdr");
   }   
@@ -473,7 +467,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   max.xthresh <- log(fcthresh,2);
   min.xthresh <- log(1/fcthresh,2);
   
-  res <- GetFC(mSetObj, F, cmpType);
+  res <- GetFC(mSetObj, nonpar, cmpType);
   
   # create a named matrix of sig vars for display
   fc.log <- res$fc.log;
@@ -767,13 +761,16 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_r
     }
   }else{
     aov.nm <- "One-way ANOVA";
-    aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
-    anova.res <- lapply(aov.res, anova);
+    if(.on.public.web & RequireFastUnivTests(mSetObj)){
+        res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+    }else{
+        aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
+        anova.res <- lapply(aov.res, anova);
     
-    #extract all p values
-    res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
-    res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
-    
+        #extract all p values
+        res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
+        res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
+    }
     fstat <- res[,1];
     p.value <- res[,2];
     names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
@@ -791,8 +788,14 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_r
     # inx.imp <- p.value <= thresh;
     inx.imp <- fdr.p <= thresh;
     sig.num <- sum(inx.imp);
-    if(sig.num > 0){ 
-      aov.imp <- aov.res[inx.imp];
+    if(sig.num > 0){
+      # note aov obj is not avaible using fast version
+      # need to recompute using slower version for the sig ones
+      if(.on.public.web & RequireFastUnivTests(mSetObj)){
+        aov.imp <- apply(as.matrix(mSetObj$dataSet$norm[,inx.imp,drop=FALSE]), 2, aof, cls=mSetObj$dataSet$cls);
+      }else{
+        aov.imp <- aov.res[inx.imp];
+      }
       sig.f <- fstat[inx.imp];
       sig.p <- p.value[inx.imp];
       fdr.p <- fdr.p[inx.imp];

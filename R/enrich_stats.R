@@ -135,29 +135,53 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   mSetObj$analSet$msea.data <- msea.data;
 
   phenotype <- mSetObj$dataSet$cls;
+    
+  print("Performing quantitative enrichment tests ......");
+  load_RSclient()
+  rsc <- RS.connect();
+  RS.assign(rsc, "my.dir", getwd()); 
+  RS.eval(rsc, setwd(my.dir));
   
-  if(.on.public.web){ # this is done by R microservice
-     mset.in <- list(cls=phenotype, data=msea.data, subsets=hits, set.num=set.num);
-     saveRDS(mset.in, "mset_in.rds");
-     return(.set.mSet(mSetObj));
-  }  
-  # this step is very slow
-  gt.obj <- globaltest::gt(phenotype, msea.data, subsets=hits);
-  gt.res <- globaltest::result(gt.obj);
+  gt.out <- list(cls=phenotype, data=msea.data, subsets=hits, set.num=set.num);
+  RS.assign(rsc, "gt.in", gt.out); 
   
-  match.num <- gt.res[,5];
-  if(sum(match.num>0)==0){
+  # there are more steps, better drop a function to compute in the remote env.
+  my.fun <- function(){
+    gt.obj <- globaltest::gt(gt.in$cls, gt.in$data, subsets=gt.in$subsets);
+    gt.res <- globaltest::result(gt.obj);
+    
+    match.num <- gt.res[,5];
+    if(sum(match.num>0)==0){
+      return(NA);
+    }
+    all.cmpds <- unlist(gt.obj@subsets, recursive = TRUE, use.names = FALSE);
+    all.cmpds <- unique(all.cmpds);
+    stat.mat <- matrix(0, length(all.cmpds), 5);
+    colnames(stat.mat) <-  c("p", "S", "ES", "sdS", "ncov")
+    rownames(stat.mat) <- all.cmpds
+    for(i in 1:length(all.cmpds)){
+      stat.mat[i,] <- gt.obj@functions$test(all.cmpds[i]);
+    }
+    return(list(gt.res=gt.res, pvals=stat.mat[,1]));
+  }
+  RS.assign(rsc, my.fun);
+  my.res <- RS.eval(rsc, my.fun());
+  RS.close(rsc);
+  
+  if(length(my.res)==1 && is.na(my.res)){
     AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
   }
   
-  raw.p <- gt.res[,1];
+  mSetObj$analSet$qea.pvals <- my.res$pvals; # p value for individual cmpds
+  gt.res <- my.res$gt.res;
   
+  raw.p <- gt.res[,1];
   # add adjust p values
   bonf.p <- p.adjust(raw.p, "holm");
   fdr.p <- p.adjust(raw.p, "fdr");
   
-  res.mat <- cbind(set.num, match.num, gt.res[,2], gt.res[,3], raw.p, bonf.p, fdr.p);
+  res.mat <- cbind(set.num, gt.res[,5], gt.res[,2], gt.res[,3], raw.p, bonf.p, fdr.p);
   rownames(res.mat) <- rownames(gt.res);
   colnames(res.mat) <- c("Total Cmpd", "Hits", "Statistic Q", "Expected Q", "Raw p", "Holm p", "FDR");
   
@@ -165,11 +189,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   res.mat<-res.mat[hit.inx, ];
   ord.inx<-order(res.mat[,5]);
   res.mat<-res.mat[ord.inx,];
-  
-  mSetObj$analSet$qea.msea <- gt.obj;
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
-  
   write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
+  
   return(.set.mSet(mSetObj));
 }
 

@@ -4,8 +4,7 @@
 \alias{PlotEnrichNet.Overview}
 \title{Barplot height is enrichment fold change}
 \usage{
-PlotEnrichNet.Overview(folds, pvals,
-  layoutOpt = layout.fruchterman.reingold)
+PlotEnrichNet.Overview(folds, pvals, layoutOpt = layout.fruchterman.reingold)
 }
 \arguments{
 \item{folds}{Input fold-change for bar plot}

@@ -4,8 +4,18 @@
 \alias{PlotSPLS2DScore}
 \title{Score Plot SPLS-DA}
 \usage{
-PlotSPLS2DScore(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx1, inx2, reg = 0.95, show = 1, grey.scale = 0)
+PlotSPLS2DScore(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  inx1,
+  inx2,
+  reg = 0.95,
+  show = 1,
+  grey.scale = 0
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

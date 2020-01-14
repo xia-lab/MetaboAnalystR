@@ -4,9 +4,25 @@
 \alias{PlotSubHeatMap}
 \title{Create Sub Heat Map Plot}
 \usage{
-PlotSubHeatMap(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, dataOpt, scaleOpt, smplDist, clstDist, palette, method.nm,
-  top.num, viewOpt, rowV = T, colV = T, border = T, grp.ave = F)
+PlotSubHeatMap(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  dataOpt,
+  scaleOpt,
+  smplDist,
+  clstDist,
+  palette,
+  method.nm,
+  top.num,
+  viewOpt,
+  rowV = T,
+  colV = T,
+  border = T,
+  grp.ave = F
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

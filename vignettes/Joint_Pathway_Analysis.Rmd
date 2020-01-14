@@ -19,7 +19,7 @@ After users have uploaded their data, the genes and metabolites are then mapped 
 
 ## 1.1 Download Necessary Files
 
-Before beginning, **two files must be downloaded** and placed in your working directory, the gene list and the metabolite list. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. Please download these files prior to using the tutorial below as per the R code below.  
+Before beginning, **two example files must be downloaded** and placed in your working directory, the gene list and the metabolite list. The example data comes from an integrative analysis of the transcriptome and metabolome to identify (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals. Please download these files prior to using the tutorial below as per the R code below.  
 
 ```{r, eval=FALSE}
 
@@ -81,8 +81,9 @@ To perform Joint Pathway Analysis, we show two options below. Note you can only 
 ```{r, eval=FALSE}
 #### OPTION 1 ####
 # Perform integrated pathway analysis, using hypergeometric test, degree centrality, and the gene-metabolite pathways
+# Use the current integrated metabolic pathways
 # Saves the output as MetaboAnalyst_result_pathway.csv
-mSet<-PerformIntegPathwayAnalysis(mSet, "dc", "hyper", "integ")
+mSet<-PerformIntegPathwayAnalysis(mSet, "dc", "hyper", "current", "integ", "query");
 
 # View the output of the pathway analysis
 mSet$dataSet$path.mat
@@ -91,9 +92,9 @@ mSet$dataSet$path.mat
 
 ```{r, eval=FALSE}
 #### OPTION 2 ####
-# Perform integrated pathway analysis, using hypergeometric test, betweenness centrality, and gene-centric pathways 
-# Saves the output as MetaboAnalyst_result_pathway.csv
-mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "hyper", "genetic")
+# Perform integrated pathway analysis using the current library of all pathways (not just metabolic)
+# Fisher's exact test for enrichment and betweenness centrality for topology measure
+mSet<-PerformIntegPathwayAnalysis(mSet, "bc", "fisher", "current", "all", "query");
 
 ```
 

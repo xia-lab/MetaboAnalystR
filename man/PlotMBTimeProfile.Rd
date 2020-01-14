@@ -4,8 +4,7 @@
 \alias{PlotMBTimeProfile}
 \title{Plot MB Time Profile}
 \usage{
-PlotMBTimeProfile(mSetObj = NA, cmpdNm, format = "png", dpi = 72,
-  width = NA)
+PlotMBTimeProfile(mSetObj = NA, cmpdNm, format = "png", dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

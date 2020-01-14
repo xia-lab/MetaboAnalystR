@@ -4,8 +4,15 @@
 \alias{PlotBoxPlot}
 \title{Plot a boxplot view of a selected compound}
 \usage{
-PlotBoxPlot(mSetObj, feat.nm, imgName, format = "png", dpi = 72, isOpt,
-  isQuery)
+PlotBoxPlot(
+  mSetObj,
+  feat.nm,
+  imgName,
+  format = "png",
+  dpi = 72,
+  isOpt,
+  isQuery
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

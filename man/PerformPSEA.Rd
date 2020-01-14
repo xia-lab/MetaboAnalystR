@@ -4,14 +4,16 @@
 \alias{PerformPSEA}
 \title{Function to perform peak set enrichment analysis}
 \usage{
-PerformPSEA(mSetObj=NA, lib, permNum = 100)
+PerformPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj object}
+\item{mSetObj}{Input the name of the created mSetObj object.}
 
-\item{lib}{Input the name of the organism library, default is hsa}
+\item{lib}{Input the name of the organism library, default is hsa_mfn.}
 
-\item{permNum}{Numeric, the number of permutations to perform}
+\item{libVersion}{Input the version of the KEGG pathway libraries ("current" or "old").}
+
+\item{permNum}{Numeric, input the number of permutations to perform. Default is 100.}
 }
 \description{
 This is the main function that performs either the mummichog

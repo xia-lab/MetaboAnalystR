@@ -4,8 +4,15 @@
 \alias{PlotPathSummary}
 \title{Plot a scatterplot (circle) overview of the matched pathways}
 \usage{
-PlotPathSummary(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, x, y)
+PlotPathSummary(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  x,
+  y
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

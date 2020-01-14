@@ -4,8 +4,14 @@
 \alias{PlotSPLSPairSummary}
 \title{Plot SPLS-DA}
 \usage{
-PlotSPLSPairSummary(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, pc.num)
+PlotSPLSPairSummary(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  pc.num
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

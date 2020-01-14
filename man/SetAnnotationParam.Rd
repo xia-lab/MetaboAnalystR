@@ -4,9 +4,15 @@
 \alias{SetAnnotationParam}
 \title{Set annotation parameters}
 \usage{
-SetAnnotationParam(polarity = "positive", perc_fwhm = 0.6,
-  mz_abs_iso = 0.005, max_charge = 2, max_iso = 2,
-  corr_eic_th = 0.85, mz_abs_add = 0.001)
+SetAnnotationParam(
+  polarity = "positive",
+  perc_fwhm = 0.6,
+  mz_abs_iso = 0.005,
+  max_charge = 2,
+  max_iso = 2,
+  corr_eic_th = 0.85,
+  mz_abs_add = 0.001
+)
 }
 \arguments{
 \item{polarity}{Character, specify the polarity of the MS instrument. Either

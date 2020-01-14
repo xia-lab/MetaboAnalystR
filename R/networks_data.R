@@ -46,13 +46,8 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   csv.res<-matrix("", nrow=length(qvec), ncol=6);
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
-  if(.on.public.web){
-    url.pre <- "/home/glassfish/sqlite/"
-  }else{
-    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
-  }
-
-  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  org.code <- mSetObj$org;
+  sqlite.path <- paste0(gene.sqlite.path, org.code, "_genes.sqlite");
   con <- dbConnect(SQLite(), sqlite.path); 
   gene.db <- dbReadTable(con, "entrez")
 

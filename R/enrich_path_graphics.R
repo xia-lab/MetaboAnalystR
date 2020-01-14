@@ -231,7 +231,6 @@ setRendAttrs = function(g, AllBorder="transparent",
 PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x, y){
 
   mSetObj <- .get.mSet(mSetObj);
-
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];

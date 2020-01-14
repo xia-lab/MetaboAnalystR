@@ -4,8 +4,7 @@
 \alias{PlotPCA.overview}
 \title{Scatter plot colored by different batches}
 \usage{
-PlotPCA.overview(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotPCA.overview(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

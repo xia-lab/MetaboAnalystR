@@ -23,11 +23,6 @@ load_rcolorbrewer <- function(){
   suppressMessages(library(RColorBrewer))
 }
 
-# Load siggenes, necessary for SAM/EBAM
-load_siggenes <- function(){
-  suppressMessages(library(siggenes))
-}
-
 # Load RSQLite, necessary for network analysis
 load_rsqlite <- function(){
   suppressMessages(library(RSQLite))
@@ -55,14 +50,16 @@ load_rgraphwiz <- function(){
 
 # Load XCMS
 load_xcms <- function(){
-  suppressMessages(library(xcms))
-  # disable parallel processing on the server
-  register(SerialParam());
-}
-
-# Load fGSEA
-load_fGSEA <- function(){
-  suppressMessages(library(fgsea))
+  
+  installed <- "xcms" %in% rownames(installed.packages())
+  
+  if(installed){
+    suppressMessages(library(xcms))
+    # disable parallel processing on the server
+    register(SerialParam());
+  }else{
+    print("Please install the xcms R package!")
+  }
 }
 
 # Load data.table
@@ -81,17 +78,38 @@ load_grid <- function(){
   suppressMessages(library(grid))
 }
 
-# Load ggrepel
-load_ggrepel <- function(){
-  suppressMessages(library(ggrepel))
-}
-
-# Load dplyr
-load_dplyr <- function(){
-  suppressMessages(library(dplyr))
-}
-
 # Load camera
 load_camera <- function(){
   suppressMessages(library(CAMERA))
+}
+
+# Load stringr
+load_stringr <- function(){
+  suppressMessages(library(stringr))
+}
+
+# Load RSclient
+load_RSclient <- function(){
+  
+  installed <- c("RSclient") %in% rownames(installed.packages())
+  
+  if(installed){
+    suppressMessages(library(RSclient))
+  }else{
+    print("Please install RSclient R package!")
+  }
+}
+
+# Load Rserve - need to open only 1 instance for R package users
+load_Rserve <- function(){
+  
+  installed <- c("Rserve") %in% rownames(installed.packages())
+  
+  if(installed){
+    # first need to start up an Rserve instance
+    suppressMessages(library(Rserve))
+    Rserve::Rserve(args = "--no-save")
+  }else{
+    print("Please install Rserve R package!")
+  }
 }

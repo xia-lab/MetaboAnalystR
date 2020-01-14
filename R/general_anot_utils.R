@@ -11,15 +11,8 @@
 #'
 doGeneIDMapping <- function(q.vec, org, type){
 
-  library(RSQLite)
-
-  if(.on.public.web){
-    url.pre <- "/home/glassfish/sqlite/";
-  }else{
-    url.pre <- "/home/jasmine/Downloads/sqlite/"; ### to be packaged with R package /data
-  }
-
-    sqlite.path = paste0(url.pre, org, "_genes.sqlite");
+    sqlite.path <- paste0(gene.sqlite.path, org, "_genes.sqlite");
+    load_rsqlite()
     con <- dbConnect(SQLite(), sqlite.path); 
 
     if(type == "symbol"){

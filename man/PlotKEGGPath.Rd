@@ -4,8 +4,14 @@
 \alias{PlotKEGGPath}
 \title{Plot metabolome pathway}
 \usage{
-PlotKEGGPath(mSetObj = NA, pathName, width = NA, height = NA,
-  format = "png", dpi = NULL)
+PlotKEGGPath(
+  mSetObj = NA,
+  pathName,
+  width = NA,
+  height = NA,
+  format = "png",
+  dpi = NULL
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

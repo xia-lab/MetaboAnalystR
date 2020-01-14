@@ -4,8 +4,17 @@
 \alias{PlotEIC}
 \title{Plot EIC}
 \usage{
-PlotEIC(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
-  format = "png", dpi = 72, width = 9)
+PlotEIC(
+  raw_data,
+  rt_mn,
+  rt_mx,
+  mz_mn,
+  mz_mx,
+  aggreg = "sum",
+  format = "png",
+  dpi = 72,
+  width = 9
+)
 }
 \arguments{
 \item{raw_data}{The object created using the InspectRawMSData function,

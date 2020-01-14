@@ -4,8 +4,13 @@
 \alias{SearchNetDB}
 \title{Perform mapping of user's data to interaction network}
 \usage{
-SearchNetDB(mSetObj = NA, db.type, table.nm, require.exp = TRUE,
-  min.score = 900)
+SearchNetDB(
+  mSetObj = NA,
+  db.type,
+  table.nm,
+  require.exp = TRUE,
+  min.score = 900
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

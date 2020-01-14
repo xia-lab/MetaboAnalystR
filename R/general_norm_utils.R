@@ -620,17 +620,11 @@ GetRandomSubsetIndex<-function(total, sub.num = 50){
 
 # Test if data require genefilter version 
 # if so, then microservice will be used
-RequireFastT <- function(mSetObj=NA){
+RequireFastUnivTests <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(ncol(mSetObj$dataSet$norm) < 1000){
-        return(0);
+        return(FALSE);
   }else{
-        return(1);
+        return(TRUE);
   }
-}
-
-PrepareFastT <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  tt.in <- list(data=t(as.matrix(mSetObj$dataSet$norm)), cls=mSetObj$dataSet$cls);
-  saveRDS(tt.in, "fastt_in.rds");
 }

@@ -47,12 +47,16 @@ rawData <- ImportRawMSData("~/Desktop/Mai/MetaboAnalystR_workflow/MetaboAnalystR
 Resulting TIC plot:
 
 ```{r, out.width = "70%"}
+# this code is just for the vignette, do not run
+# plots will be outputted to your working directory
 knitr::include_graphics("TICS_72.png")
 ```
 
 Resulting BPIS plot:
 
 ```{r, out.width = "70%"}
+# this code is just for the vignette, do not run
+# plots will be outputted to your working directory
 knitr::include_graphics("BPIS_72.png")
 ```
 

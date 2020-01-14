@@ -164,8 +164,7 @@ mSet$imgSet$pca.3d
 
 ## 2.8 Partial Least Squares - Discriminant Analysis (PLS-DA)
 
-To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$plsda.3d" into your R console. Please refer to the user manual for details about each function.   
-
+To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$plsda.3d" into your R console. Please refer to the user manual for details about each function. 
 
 ```{r}
 mSet<-PLSR.Anal(mSet, reg=TRUE)
@@ -206,7 +205,7 @@ To evaluate the performance of the created sPLS-DA models for classification, us
 
 ```{r}
 # Perform sPLS-DA analysis
-mSet<-SPLSR.Anal(mSet, 5, 10, "same")
+mSet<-SPLSR.Anal(mSet, 5, 10, "same", "Mfold")
 
 # Plot sPLS-DA overview
 mSet<-PlotSPLSPairSummary(mSet, "spls_pair_0_", format = "png", dpi=72, width=NA, 5)
@@ -259,16 +258,13 @@ SAM is a well-established statistical method for identification of differentiall
 
 ```{r}
 # Perform SAM analysis
-mSet<-SAM.Anal(mSet, "d.stat", FALSE, TRUE)
-
-# Create the SAM matrix of signifiant features
-mSet<-SetSAMSigMat(mSet, 1.1)
+mSet<-SAM.Anal(mSet, "d.stat", FALSE, TRUE, 0.0, "sam_imp_0_")
 
 # Create a SAM plot of FDR values
-mSet<-PlotSAM.FDR(mSet, 1.1, "sam_view_0_", format = "png", dpi=72, width=NA)
+mSet<-PlotSAM.FDR(mSet, "sam_view_0_", "png", 72, width=NA)
 
 # Create a SAM plot of results
-mSet<-PlotSAM.Cmpd(mSet, "sam_imp_0_", format = "png", dpi=72, width=NA)
+mSet<-PlotSAM.Cmpd(mSet, "sam_imp_0_", "png", 72, width=NA)
 
 ```
 
@@ -280,19 +276,10 @@ To perform EBAM analysis, begin with the *EBAM.AO.Init* function. To create a pl
 
 ```{r}
 # Perform EBAM analysis
-mSet<-EBAM.A0.Init(mSet, FALSE, TRUE)
+mSet<-EBAM.Init(mSet, FALSE, TRUE, FALSE, -99.0, 0.9, "ebam_view_0_", "ebam_imp_0_")
 
 # Plot EBAM analysis
-mSet<-PlotEBAM.A0(mSet, "ebam_view_0_", format = "png", dpi=72, width=NA)
-
-# Initialize EBAM compound analysis 
-mSet<-EBAM.Cmpd.Init(mSet, "z.ebam", 0.0, FALSE, TRUE)
-
-# Create the EBAM matrix of significant features
-mSet<-SetEBAMSigMat(mSet, 0.9);
-
-# Create a EBAM plot of results
-mSet<-PlotEBAM.Cmpd(mSet, "ebam_imp_0_", format = "png", dpi=72, width=NA)
+mSet<-PlotEBAM.Cmpd(mSet, "ebam_imp_0_", "png", 72, width=NA)
 
 ```
 

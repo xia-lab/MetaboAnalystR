@@ -4,8 +4,18 @@
 \alias{fgsea2}
 \title{Pre-ranked gsea adapted for untargeted metabolomics}
 \usage{
-fgsea2(mSetObj, pathways, stats, ranks, nperm, minSize = 1,
-  maxSize = Inf, nproc = 0, gseaParam = 1, BPPARAM = NULL)
+fgsea2(
+  mSetObj,
+  pathways,
+  stats,
+  ranks,
+  nperm,
+  minSize = 1,
+  maxSize = Inf,
+  nproc = 0,
+  gseaParam = 1,
+  BPPARAM = NULL
+)
 }
 \description{
 Pre-ranked gsea adapted for untargeted metabolomics

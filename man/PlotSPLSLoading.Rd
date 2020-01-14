@@ -4,8 +4,15 @@
 \alias{PlotSPLSLoading}
 \title{Create SPLS-DA loading plot}
 \usage{
-PlotSPLSLoading(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx, viewOpt = "detail")
+PlotSPLSLoading(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  inx,
+  viewOpt = "detail"
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

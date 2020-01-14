@@ -4,9 +4,21 @@
 \alias{PlotCorrHeatMap}
 \title{Pattern hunter, corr heatmap}
 \usage{
-PlotCorrHeatMap(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, target, cor.method, colors, viewOpt, fix.col, no.clst, top,
-  topNum)
+PlotCorrHeatMap(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  target,
+  cor.method,
+  colors,
+  viewOpt,
+  fix.col,
+  no.clst,
+  top,
+  topNum
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

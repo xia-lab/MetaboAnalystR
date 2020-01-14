@@ -4,8 +4,14 @@
 \alias{Ttests.Anal}
 \title{Perform t-test analysis}
 \usage{
-Ttests.Anal(mSetObj = NA, nonpar = F, threshp = 0.05,
-  paired = FALSE, equal.var = TRUE, all_results = FALSE)
+Ttests.Anal(
+  mSetObj = NA,
+  nonpar = F,
+  threshp = 0.05,
+  paired = FALSE,
+  equal.var = TRUE,
+  all_results = FALSE
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

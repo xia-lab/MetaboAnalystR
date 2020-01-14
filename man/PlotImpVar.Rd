@@ -4,8 +4,7 @@
 \alias{PlotImpVar}
 \title{Plot PLS important variables,}
 \usage{
-PlotImpVar(mSetObj = NA, imp.vec, xlbl, feat.num = 15,
-  color.BW = FALSE)
+PlotImpVar(mSetObj = NA, imp.vec, xlbl, feat.num = 15, color.BW = FALSE)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

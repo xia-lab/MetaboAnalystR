@@ -4,9 +4,19 @@
 \alias{PlotPLS2DScore}
 \title{Plot PLS score plot}
 \usage{
-PlotPLS2DScore(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx1, inx2, reg = 0.95, show = 1, grey.scale = 0,
-  use.sparse = FALSE)
+PlotPLS2DScore(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  inx1,
+  inx2,
+  reg = 0.95,
+  show = 1,
+  grey.scale = 0,
+  use.sparse = FALSE
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

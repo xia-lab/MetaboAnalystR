@@ -4,8 +4,13 @@
 \alias{PlotOPLS.Permutation}
 \title{Plot OPLS-DA permutation}
 \usage{
-PlotOPLS.Permutation(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotOPLS.Permutation(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

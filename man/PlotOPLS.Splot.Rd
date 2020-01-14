@@ -4,8 +4,14 @@
 \alias{PlotOPLS.Splot}
 \title{S-plot for OPLS-DA}
 \usage{
-PlotOPLS.Splot(mSetObj = NA, imgName, plotType = "all",
-  format = "png", dpi = 72, width = NA)
+PlotOPLS.Splot(
+  mSetObj = NA,
+  imgName,
+  plotType = "all",
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

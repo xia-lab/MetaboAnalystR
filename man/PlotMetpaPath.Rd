@@ -4,8 +4,14 @@
 \alias{PlotMetpaPath}
 \title{Plot KEGG pathway}
 \usage{
-PlotMetpaPath(mSetObj = NA, pathName, width = NA, height = NA,
-  format = "png", dpi = NULL)
+PlotMetpaPath(
+  mSetObj = NA,
+  pathName,
+  width = NA,
+  height = NA,
+  format = "png",
+  dpi = NULL
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

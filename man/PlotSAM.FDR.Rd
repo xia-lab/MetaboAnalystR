@@ -4,13 +4,10 @@
 \alias{PlotSAM.FDR}
 \title{Plot SAM Delta Plot}
 \usage{
-PlotSAM.FDR(mSetObj = NA, delta, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotSAM.FDR(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
-
-\item{delta}{Input the delta}
 
 \item{imgName}{Input a name for the plot}
 
@@ -21,6 +18,8 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{delta}{Input the delta}
 }
 \description{
 Plot SAM Delta Plot (FDR)

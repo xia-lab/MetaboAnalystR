@@ -4,8 +4,15 @@
 \alias{PlotPeaks2Paths}
 \title{PlotPeaks2Paths}
 \usage{
-PlotPeaks2Paths(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = 9, labels = "default", num_annot = 5)
+PlotPeaks2Paths(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = 9,
+  labels = "default",
+  num_annot = 5
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object}

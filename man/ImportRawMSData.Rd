@@ -4,8 +4,15 @@
 \alias{ImportRawMSData}
 \title{Import raw MS data}
 \usage{
-ImportRawMSData(foldername, format = "png", dpi = 72, width = 9,
-  par.cores = TRUE, plot = TRUE, plot.opts = "default")
+ImportRawMSData(
+  foldername,
+  format = "png",
+  dpi = 72,
+  width = 9,
+  par.cores = TRUE,
+  plot = TRUE,
+  plot.opts = "default"
+)
 }
 \arguments{
 \item{foldername}{Character, input the file path to the folder containing

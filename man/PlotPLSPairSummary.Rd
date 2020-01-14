@@ -4,8 +4,14 @@
 \alias{PlotPLSPairSummary}
 \title{Plot PLS pairwise summary}
 \usage{
-PlotPLSPairSummary(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, pc.num)
+PlotPLSPairSummary(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  pc.num
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

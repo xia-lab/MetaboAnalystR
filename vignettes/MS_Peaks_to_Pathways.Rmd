@@ -30,7 +30,7 @@ The output of this module first consists of a table of results identifying the t
 
 For this tutorial we will first directly use the an example peak list data obtained from untargeted metabolomics of pediatric IBD (mass accuracy 5.0, negative ion mode). This is an example of the three-column table containing the m.z, p.value and t.score.
 
-```{r, eval=FALSE}
+```{r}
 # Create objects for storing processed data from the MS peaks to pathways module
 mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
 
@@ -51,7 +51,7 @@ mSet <- SanityCheckMummichogData(mSet)
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
 mSet<-SetPeakEnrichMethod(mSet, "mum")
 mSet<-SetMummichogPval(mSet, 0.2)
-mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PerformPSEA(mSet, "hsa_mfn", "current", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
 # To view the results of the pathway analysis in R, use mSet$mummi.resmat
@@ -111,7 +111,7 @@ mSet<-SetPeakEnrichMethod(mSet, "mum")
 
 mSet<-SetMummichogPval(mSet, 1.0E-5)
 
-mSet<-PerformPSEA(mSet, "hsa_mfn")
+mSet<-PerformPSEA(mSet, "hsa_mfn", "current", 100)
 
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 

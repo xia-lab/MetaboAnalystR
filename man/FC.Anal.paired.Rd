@@ -4,8 +4,12 @@
 \alias{FC.Anal.paired}
 \title{Fold change analysis, paired}
 \usage{
-FC.Anal.paired(mSetObj = NA, fc.thresh = 2, percent.thresh = 0.75,
-  cmp.type = 0)
+FC.Anal.paired(
+  mSetObj = NA,
+  fc.thresh = 2,
+  percent.thresh = 0.75,
+  cmp.type = 0
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

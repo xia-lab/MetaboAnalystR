@@ -4,10 +4,20 @@
 \alias{sparse.mint.block_iteration}
 \title{Perform Sparse Generalized Canonical Correlation (sgccak)}
 \usage{
-sparse.mint.block_iteration(A, design, study = NULL,
-  keepA.constraint = NULL, keepA = NULL, scheme = "horst",
-  init = "svd", max.iter = 100, tol = 1e-06, verbose = TRUE,
-  bias = FALSE, penalty = NULL)
+sparse.mint.block_iteration(
+  A,
+  design,
+  study = NULL,
+  keepA.constraint = NULL,
+  keepA = NULL,
+  scheme = "horst",
+  init = "svd",
+  max.iter = 100,
+  tol = 1e-06,
+  verbose = TRUE,
+  bias = FALSE,
+  penalty = NULL
+)
 }
 \arguments{
 \item{A}{Data}

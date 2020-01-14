@@ -4,8 +4,17 @@
 \alias{PlotPLS.Imp}
 \title{Plot PLS important features}
 \usage{
-PlotPLS.Imp(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, type, feat.nm, feat.num, color.BW = FALSE)
+PlotPLS.Imp(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  type,
+  feat.nm,
+  feat.num,
+  color.BW = FALSE
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

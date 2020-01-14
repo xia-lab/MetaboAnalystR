@@ -4,8 +4,7 @@
 \alias{PlotSAM.Cmpd}
 \title{Plot SAM}
 \usage{
-PlotSAM.Cmpd(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotSAM.Cmpd(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

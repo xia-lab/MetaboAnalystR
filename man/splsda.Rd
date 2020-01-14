@@ -4,10 +4,20 @@
 \alias{splsda}
 \title{Perform sPLS-DA}
 \usage{
-splsda(X, Y, ncomp = 2, mode = c("regression", "canonical",
-  "invariant", "classic"), keepX, keepX.constraint = NULL,
-  scale = TRUE, tol = 1e-06, max.iter = 100, near.zero.var = FALSE,
-  logratio = "none", multilevel = NULL)
+splsda(
+  X,
+  Y,
+  ncomp = 2,
+  mode = c("regression", "canonical", "invariant", "classic"),
+  keepX,
+  keepX.constraint = NULL,
+  scale = TRUE,
+  tol = 1e-06,
+  max.iter = 100,
+  near.zero.var = FALSE,
+  logratio = "none",
+  multilevel = NULL
+)
 }
 \arguments{
 \item{X}{numeric matrix of predictors}

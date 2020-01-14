@@ -4,8 +4,17 @@
 \alias{PlotPLS3DScoreImg}
 \title{Plot PLS 3D score plot}
 \usage{
-PlotPLS3DScoreImg(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx1, inx2, inx3, angl)
+PlotPLS3DScoreImg(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  inx1,
+  inx2,
+  inx3,
+  angl
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

@@ -4,8 +4,13 @@
 \alias{PlotSPLSDA.Classification}
 \title{Create SPLS-DA classification plot}
 \usage{
-PlotSPLSDA.Classification(mSetObj = NA, imgName, format = "png",
-  dpi = 72, width = NA)
+PlotSPLSDA.Classification(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

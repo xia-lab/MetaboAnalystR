@@ -4,8 +4,17 @@
 \alias{PlotInmexGraph}
 \title{Plot an igraph object and return the node information (position and labels)}
 \usage{
-PlotInmexGraph(mSetObj, pathName, g, width = NA, height = NA,
-  bg.color = NULL, line.color = NULL, format = "png", dpi = NULL)
+PlotInmexGraph(
+  mSetObj,
+  pathName,
+  g,
+  width = NA,
+  height = NA,
+  bg.color = NULL,
+  line.color = NULL,
+  format = "png",
+  dpi = NULL
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

@@ -185,10 +185,9 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   # auc
   auc <- caTools::colAUC(x, y, plotROC=F)[1,];
   
-  # t-t pvalues, check if microservice already done this
-  if(.on.public.web & RequireFastT(mSetObj)){
-     res <- readRDS("fastt_out.rds");
-     ttp <- res$p.vals;
+  if(.on.public.web & RequireFastUnivTests(mSetObj)){
+     res <- PerformFastUnivTests(x, y);
+     ttp <- res[,2];
   }else{
      ttp <- GetROCTtestP(x, y);
   }

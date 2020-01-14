@@ -498,52 +498,30 @@ GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
 
 GetColorSchema <- function(mSetObj=NA, grayscale=F){
   
-  mSetObj <- .get.mSet(mSetObj);
-  # test if total group number is over 9
-  grp.num <- length(levels(mSetObj$dataSet$cls));
-  
-  if(grayscale){
-    dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
-    lvs <- levels(mSetObj$dataSet$cls);
-    colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-    for(i in 1:length(lvs)){
-      colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
-    }
-  }else if(grp.num > 9){
-    if(exists("colVec") && !any(colVec =="#NA") ){
-      cols <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-      clsVec <- as.character(mSetObj$dataSet$cls)
-      grpnms <- names(colVec);
-      for(i in 1:length(grpnms)){
-        cols[clsVec == grpnms[i]] <- colVec[i];
+   mSetObj <- .get.mSet(mSetObj);
+   lvs <- levels(mSetObj$dataSet$cls); 
+   grp.num <- length(lvs);
+
+   if(grayscale){
+      dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
+   }else if(exists("colVec") && !any(colVec =="#NA")){
+      dist.cols <- colVec;
+   }else{
+      pal18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#911eb4", "#f58231", "#bfef45",
+                   "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075");
+             
+      if(grp.num <= 18){ # update color and respect default
+          dist.cols <- pal18[1:grp.num];
+      }else{
+         dist.cols <- colorRampPalette(pal18)(grp.num);
       }
-      colors <- cols;
-    }else{
-      pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99",
-                "#E31A1C", "#FDBF6F", "#FF7F00", "#CAB2D6", "#6A3D9A",
-                "#FFFF99", "#B15928");
-      dist.cols <- colorRampPalette(pal12)(grp.num);
-      lvs <- levels(mSetObj$dataSet$cls);
-      colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-      
-      for(i in 1:length(lvs)){
-        colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
-      }
-    }
-  }else{
-    if(exists("colVec") && !any(colVec =="#NA") ){
-      cols <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-      clsVec <- as.character(mSetObj$dataSet$cls)
-      grpnms <- names(colVec);
-      for(i in 1:length(grpnms)){
-        cols[clsVec == grpnms[i]] <- colVec[i];
-      }
-      colors <- cols;
-    }else{
-      colors <- as.numeric(mSetObj$dataSet$cls)+1;
-    }
-  }
-  return (colors);
+   }
+
+   colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
+   for(i in 1:length(lvs)){
+     colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
+   }
+   return (colors);
 }
 
 #'Remove folder
@@ -840,4 +818,44 @@ var.na <- function(x){
     res <- var(as.numeric(x[tmp]))
   }
   res
+}
+
+end.with <- function(bigTxt, endTxt){
+   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
+}
+
+## fast T-tests/F-tests using genefilter
+## It leverages RSclient to perform one-time memory intensive computing
+PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
+  print("Peforming fast univariate tests ....");
+  load_RSclient()
+  rsc <- RS.connect();
+  
+  RS.assign(rsc, "my.dir", getwd()); 
+  RS.eval(rsc, setwd(my.dir));
+  
+  # note, feature in rows for gene expression
+  data <- t(as.matrix(data));
+  dat.out <- list(data=data, cls=cls, var.equal=var.equal);
+  RS.assign(rsc, "dat.in", dat.out); 
+  my.fun <- function(){
+    if(length(levels(cls)) > 2){
+      res <- try(genefilter::rowFtests(dat.in$data, dat.in$cls, var.equal = dat.in$var.equal));
+    }else{
+      lvls <- levels(cls);
+      ig1 <- which(cls == lvls[1]);
+      ig2 <- which(cls == lvls[2]);
+      res <- try(genefilter::rowttests(dat.in$data, dat.in$cls));
+    }
+    if(class(res) == "try-error") {
+      res <- cbind(NA, NA);
+    }else{
+      res <- cbind(res$statistic, res$p.value);
+    }
+    return(res);
+  }
+  RS.assign(rsc, my.fun);
+  my.res <- RS.eval(rsc, my.fun());
+  RS.close(rsc);
+  return(my.res);
 }

@@ -216,30 +216,34 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
-  
+
+  load_RSclient()
+  rsc <- RS.connect();
+  RS.assign(rsc, "my.dir", getwd()); 
+  RS.eval(rsc, setwd(my.dir));
+  dat.out <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits);
+  RS.assign(rsc, "dat.in", dat.out); 
   if(method == "gt"){
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
-    if(.on.public.web){ # this is done by R microservice
-        gt.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, set.num=set.num, imp.vec=imp.vec);
-        saveRDS(gt.in, "gt_in.rds");
-        return(.set.mSet(mSetObj));
-    }    
-    qea.obj <- globaltest::gt(mSetObj$dataSet$cls, path.data, subsets=hits);
-    qea.res <- globaltest::result(qea.obj);
-    match.num <- qea.res[,5];
-    raw.p <- qea.res[,1];
+    my.fun <- function(){
+      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
+      gt.res <- globaltest::result(gt.obj);
+      return(gt.res[,c(5,1)]);
+    }
   }else{
-    qea.obj <- NULL;
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
-    if(.on.public.web){ # this is done by R microservice
-        ga.in <- list(data=path.data, group=mSetObj$dataSet$cls, test.genes=hits, set.num=set.num, imp.vec=imp.vec);
-        saveRDS(ga.in, "ga_in.rds");
-        return(.set.mSet(mSetObj));
-    } 
-    qea.res <- GlobalAncova::GlobalAncova(xx=t(path.data), group=mSetObj$dataSet$cls, test.genes=hits, method="approx");
-    match.num <- qea.res[,1];
-    raw.p <- qea.res[,3];
+    my.fun <- function(){
+      path.data <- dat.in$data;
+      ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, test.genes=dat.in$subsets, method="approx");
+      return(ga.out[,c(1,3)]);
+    }
   }
+  RS.assign(rsc, my.fun);
+  qea.res <- RS.eval(rsc, my.fun());
+  RS.close(rsc);
+  
+  match.num <- qea.res[,1];
+  raw.p <- qea.res[,2];
   
   log.p <- -log(raw.p);
   # add adjust p values
@@ -253,13 +257,13 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   ord.inx<-order(res.mat[,3], -res.mat[,7]);
   res.mat<-signif(res.mat[ord.inx,],5);
-
+  mSetObj$analSet$qea.mat <- res.mat;
+  
   hit.inx <- match(rownames(res.mat), metpa$path.ids);
   pathNames <- names(metpa$path.ids)[hit.inx];
-  rownames(res.mat) <- pathNames;
+  rownames(res.mat) <- pathNames; # change from ids to names for users
   write.csv(res.mat, file="pathway_results.csv");
-
-  mSetObj$analSet$qea.mat <- res.mat;
+  
   mSetObj$analSet$qea.pathNames <- pathNames;
   return(.set.mSet(mSetObj)); 
 }

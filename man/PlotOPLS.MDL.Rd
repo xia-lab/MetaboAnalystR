@@ -4,8 +4,7 @@
 \alias{PlotOPLS.MDL}
 \title{Plot OPLS}
 \usage{
-PlotOPLS.MDL(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA)
+PlotOPLS.MDL(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

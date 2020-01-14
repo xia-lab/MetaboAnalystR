@@ -4,8 +4,14 @@
 \alias{PlotROC.LRmodel}
 \title{Plot ROC for the logistic regression model}
 \usage{
-PlotROC.LRmodel(mSetObj = NA, imgName, format = "png", dpi = 72,
-  show.conf = FALSE, sp.bin = 0.01)
+PlotROC.LRmodel(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  show.conf = FALSE,
+  sp.bin = 0.01
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

@@ -4,8 +4,7 @@
 \alias{PlotPathwayMZHits}
 \title{Plot m/z hits in a pathway}
 \usage{
-PlotPathwayMZHits(mSetObj = NA, msetNM, format = "png", dpi = 300,
-  width = 10)
+PlotPathwayMZHits(mSetObj = NA, msetNM, format = "png", dpi = 300, width = 10)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object.}

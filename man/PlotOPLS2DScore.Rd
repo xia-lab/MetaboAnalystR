@@ -4,8 +4,18 @@
 \alias{PlotOPLS2DScore}
 \title{Create OPLS-DA score plot}
 \usage{
-PlotOPLS2DScore(mSetObj = NA, imgName, format = "png", dpi = 72,
-  width = NA, inx1, inx2, reg = 0.95, show = 1, grey.scale = 0)
+PlotOPLS2DScore(
+  mSetObj = NA,
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA,
+  inx1,
+  inx2,
+  reg = 0.95,
+  show = 1,
+  grey.scale = 0
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

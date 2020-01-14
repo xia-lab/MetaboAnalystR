@@ -23,7 +23,7 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
 
-  metr_pkgs <- c("Rserve", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes", "plotly", "xcms", "CAMERA", "fgsea", "MSnbase", "BiocParallel", "metap", "reshape2", "scales")
+  metr_pkgs <- c("Rserve", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes", "plotly", "fgsea", "metap", "reshape2", "scales")
   
   list_installed <- installed.packages()
   
@@ -56,7 +56,7 @@ install.packages("pacman")
 
 library(pacman)
 
-pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, xcms, CAMERA, fgsea, MSnbase, BiocParallel, metap, reshape2, scales)
+pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, fgsea, metap, reshape2, scales)
 ```
 ### Step 2. Install the package
 
@@ -99,9 +99,9 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalystR_2.0.0.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalystR_2.0.2.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2.0.1.tar.gz). The * must be replaced by what is actually downloaded and built.  
+Manually download the .tar.gz file from [here](https://www.dropbox.com/s/dwzx9mj0uctkrqs/MetaboAnalystR_2.0.2.tar.gz?dl=0). The * must be replaced by what is actually downloaded and built.  
 
 ```R
 cd ~/Downloads
@@ -157,6 +157,10 @@ citation("MetaboAnalystR")
 To inform us of any bugs or requests, please open a new issue (and @ jsychong!!) or send an email to #jasmine.chong@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+01-14-2020 - Version Update: 2.0.2 - updated gene mapping to use internal SQlite database (included in /inst), added Rserve engine (Rcode synchronized with web-server) + added functions for users to create their own mummichog libraries
+
+01-08-2020 - Updating code for box plots + mummichog 
 
 11-12-2019 - Update KEGG pathway libraries + updates to Pathway Analysis and MS Peaks to Paths vignettes
 

@@ -4,8 +4,7 @@
 \alias{GetTtestRes}
 \title{Retrieve T-test p-values}
 \usage{
-GetTtestRes(mSetObj = NA, paired = FALSE, equal.var = TRUE,
-  nonpar = F)
+GetTtestRes(mSetObj = NA, paired = FALSE, equal.var = TRUE, nonpar = F)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

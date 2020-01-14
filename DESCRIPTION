@@ -1,6 +1,6 @@
 Package: MetaboAnalystR
 Title: An R Package for Comprehensive Analysis of Metabolomics Data
-Version: 2.0.1
+Version: 2.0.2
 Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut", "cre")))
 Author: Jianguo Xia [aut, cre], Jasmine Chong [aut]
 Maintainer: Jasmine Chong <jasmine.chong@mail.mcgill.ca>
@@ -10,7 +10,7 @@ Depends: R (>= 3.5.2), lattice, methods, pls, data.table
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Imports: 
     Rserve,
     ellipse,
@@ -52,10 +52,6 @@ Imports:
     spls,
     siggenes,
     ggplot2,
-    xcms,
-    CAMERA,
-    fgsea,
-    MSnbase,
     BiocParallel,
     metap,
     scales
@@ -65,5 +61,8 @@ Suggests:
     devtools,
     testthat,
     plotly,
-    reshape2
+    reshape2,
+    MSnbase,
+    xcms,
+    CAMERA
 VignetteBuilder: knitr

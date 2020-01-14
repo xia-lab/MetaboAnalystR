@@ -6,10 +6,18 @@
 This function performs feature extraction of user's raw MS data using 
 the rawData object created using the InspectRawMSData function.}
 \usage{
-PerformPeakProfiling(rawData, peakParams, rtPlot = TRUE,
-  pcaPlot = TRUE, labels = TRUE, format = "png", dpi = 72,
-  width = 9, rtplot_name = "RT_adjustment",
-  pcaplot_name = "PCA_plot")
+PerformPeakProfiling(
+  rawData,
+  peakParams,
+  rtPlot = TRUE,
+  pcaPlot = TRUE,
+  labels = TRUE,
+  format = "png",
+  dpi = 72,
+  width = 9,
+  rtplot_name = "RT_adjustment",
+  pcaplot_name = "PCA_plot"
+)
 }
 \arguments{
 \item{rawData}{The object created using the InspectRawMSData function,
