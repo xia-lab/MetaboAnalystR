@@ -133,14 +133,15 @@ mSet<-Convert2Mummichog(mSet)
 
 # Read in the ranked peak list (don't forget to change the file name!)
 SetPeakFormat("mpt")
-mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
+
 mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
+mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
 mSet<-SanityCheckMummichogData(mSet)
 
 # Perform original mummichog algorithm
 mSet<-SetPeakEnrichMethod(mSet, "mum")
 mSet<-SetMummichogPval(mSet, 0.25)
-mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
+mSet<-PerformPSEA(mSet, "hsa_mfn", "old", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
 # View the top pathway hits using head(mSet$mummi.resmat)
