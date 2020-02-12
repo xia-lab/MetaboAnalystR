@@ -10,55 +10,7 @@
 
 ## Getting Started
 
-### Step 1. Install package dependencies 
-
-To use MetaboAnalystR 2.0, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options:
-
-**Option 1** 
-
-Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed.  
-
-Function to download packages:
-
-```R
-metanr_packages <- function(){
-
-  metr_pkgs <- c("Rserve", "RSclient", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes", "plotly", "fgsea", "metap", "reshape2", "scales")
-  
-  list_installed <- installed.packages()
-  
-  new_pkgs <- subset(metr_pkgs, !(metr_pkgs %in% list_installed[, "Package"]))
-  
-  if(length(new_pkgs)!=0){
-    
-    if (!requireNamespace("BiocManager", quietly = TRUE))
-        install.packages("BiocManager")
-    BiocManager::install(new_pkgs)
-    print(c(new_pkgs, " packages added..."))
-  }
-  
-  if((length(new_pkgs)<1)){
-    print("No new packages added...")
-  }
-}
-```
-Usage of function:
-```R
-metanr_packages()
-```
-
-**Option 2** 
-
-Use the pacman R package (for those with >R 3.5.1). 
-
-```R
-install.packages("pacman")
-
-library(pacman)
-
-pacman::p_load(Rserve, RSclient, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, fgsea, metap, reshape2, scales)
-```
-### Step 2. Install the package
+### Install package
 
 MetaboAnalystR 2.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR 2.0 . There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 2.0 github will have the most up-to-date version of the package. 
 
