@@ -56,7 +56,8 @@ Imports:
     BiocParallel,
     metap,
     scales,
-    CAMERA
+    CAMERA,
+    fgsea
 Suggests: 
     knitr,
     rmarkdown,
