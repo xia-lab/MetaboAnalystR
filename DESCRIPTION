@@ -57,13 +57,13 @@ Imports:
     metap,
     scales,
     CAMERA,
-    fgsea
+    fgsea,
+    plotly
 Suggests: 
     knitr,
     rmarkdown,
     devtools,
     testthat,
-    plotly,
     reshape2,
     RSclient,
     MSnbase,
