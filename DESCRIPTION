@@ -55,7 +55,8 @@ Imports:
     ggplot2,
     BiocParallel,
     metap,
-    scales
+    scales,
+    CAMERA
 Suggests: 
     knitr,
     rmarkdown,
@@ -65,6 +66,5 @@ Suggests:
     reshape2,
     RSclient,
     MSnbase,
-    xcms,
-    CAMERA
+    xcms
 VignetteBuilder: knitr
