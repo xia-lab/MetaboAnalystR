@@ -292,9 +292,20 @@ doGene2KONameMapping <- function(enIDs){
   return(kos);
 }
 
+# Utility function for Save2KEGGJSON
+MatchQueryOnKEGGMap <- function(query, ko.map){
+    hits <- lapply(query,
+                        function(x) {
+                          as.character(unique(ko.map$edge[ko.map$queryid%in%unlist(x)]));
+                        }
+    );
+
+    return(hits)
+}
+
 # Utility function for PerformKOEnrichAnalysis_List
 # for KO01100
-Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
+Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
   
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   AddMsg("Functional enrichment analysis was completed");
@@ -319,55 +330,63 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
   if(idtype == "gene"){
     ko.map <- ko.edge.map;
     colnames(ko.map) <- c("queryid", "edge", "net")
-    hits.edge <- lapply(hits.query,
-                        function(x) {
-                          as.character(unique(ko.map$edge[ko.map$queryid%in%unlist(x)]));
-                        }
-    );
+    hits.edge <- MatchQueryOnKEGGMap(hits.query, ko.map)
     hits.inx <- unlist(lapply(hits.edge, length))>0;
+    
+    #find matches for all queries without applying pathway filtering
+    hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.edge.all, length))>0;
+
   }else if(idtype == "cmpd"){
     ko.map <- ko.node.map.global;
     colnames(ko.map) <- c("queryid", "edge", "net")
-    hits.node <- lapply(hits.query,
-                        function(x) {
-                          as.character(unique(ko.map$edge[ko.map$queryid%in%unlist(x)]));
-                        }
-    );
+    hits.node <- MatchQueryOnKEGGMap(hits.query, ko.map)
     hits.inx <- unlist(lapply(hits.node, length))>0;
+
+    #find matches for all queries without applying pathway filtering
+    hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.node.all, length))>0;
   }else{
     # gene&cmpd
     ko.map1 <- ko.edge.map;
     colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
-    hits.edge <- lapply(hits.query,
-                        function(x) {
-                          as.character(unique(ko.map1$edge[ko.map1$queryid%in%unlist(x)]));
-                        }
-    );
+    hits.edge <- MatchQueryOnKEGGMap(hits.query, ko.map1)
+    #find matches for all queries without applying pathway filtering
+    hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map1)
+
     ko.map2 <- ko.node.map.global;
     colnames(ko.map2) <- c("queryid", "edge", "net"); rownames(ko.map2)<-NULL;
-    hits.node <- lapply(hits.query,
-                        function(x) {
-                          as.character(unique(ko.map2$edge[ko.map2$queryid%in%unlist(x)]));
-                        }
-    );
+    hits.node <- MatchQueryOnKEGGMap(hits.query, ko.map2)
+    #find matches for all queries without applying pathway filtering
+    hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map2)
+
     ko.map <- rbind(ko.map1, ko.map2)
     # TO-DO: combine results hits.edge and hits.node without applying again lapply over hits.query
-    hits.both <- lapply(hits.query,
-                        function(x) {
-                          as.character(unique(ko.map$edge[ko.map$queryid%in%unlist(x)]));
-                        }
-    );
+    hits.both <- MatchQueryOnKEGGMap(hits.query, ko.map)
     hits.inx <- unlist(lapply(hits.both, length))>0;
+
+    #find matches for all queries without applying pathway filtering
+    hits.both <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.both, length))>0;
   }
   
   # only keep hits with edges in the map
-  hits.query <- hits.query[hits.inx];
+  hits.query <- hits.query[hits.inx]; hits.all <- hits.all[hits.inx.all];
   resTable <- resTable[hits.inx, ];
   
   # write json
   fun.pval = resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
   hit.num = resTable$Hits; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   fun.ids <- as.vector(current.setids[names(hits.query)]); if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
+  
+  #clean non-metabolic pathways
+  rm.ids <- which(is.na(fun.ids))
+  if(length(rm.ids) != 0){
+    fun.ids <- fun.ids[-rm.ids]
+    fun.pval <- fun.pval[-rm.ids]
+    hit.num <- hit.num[-rm.ids]
+    hits.query <- hits.query[-rm.ids]
+  }
   
   expr = as.list(dataSet$data)
   names(expr) <- rownames(dataSet$data)
@@ -376,6 +395,9 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm){
     hits.query = hits.query,
     hits.edge = hits.edge,
     hits.node = hits.node,
+    hits.all = hits.all,
+    hits.edge.all = hits.edge.all,
+    hits.node.all = hits.node.all,
     path.id = fun.ids,
     fun.pval = fun.pval,
     hit.num = hit.num

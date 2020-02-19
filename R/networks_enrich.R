@@ -219,7 +219,6 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
 #'@description Please note: only return hits in map KO01100
 #'@param file.nm Input the file name 
 PerformKOEnrichAnalysis_List <- function(file.nm){
-  
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;
   } else if(idtype == "gene&cmpd"){
@@ -293,6 +292,7 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
   # now, clean up result, synchronize with hit.query
   res.mat <- res.mat[hit.num>0,,drop = F];
   hits.query <- hits.query[hit.num>0];
+  hits.all <- hits.query
   
   if(nrow(res.mat)> 1){
     # order by p value
@@ -300,7 +300,7 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
     res.mat <- signif(res.mat[ord.inx,],3);
     hits.query <- hits.query[ord.inx];
     
-    imp.inx <- res.mat[,4] <= 0.05;
+    imp.inx <- res.mat[,4] <= 0.01;
     if(sum(imp.inx) < 10){ # too little left, give the top ones
       topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
       res.mat <- res.mat[1:topn,];
@@ -316,7 +316,7 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
     }
   }
   
-  Save2KEGGJSON(hits.query, res.mat, file.nm);
+  Save2KEGGJSON(hits.query, res.mat, file.nm, hits.all);
   return(1);
 }
 

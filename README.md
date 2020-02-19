@@ -158,6 +158,8 @@ To inform us of any bugs or requests, please open a new issue (and @ jsychong!!)
 
 ## MetaboAnalystR History & Updates
 
+02-19-2020 - Version Update: 2.0.3 - update bug fixes w. web server
+
 01-14-2020 - Version Update: 2.0.2 - updated gene mapping to use internal SQlite database (included in /inst), added Rserve engine (Rcode synchronized with web-server) + added functions for users to create their own mummichog libraries
 
 01-08-2020 - Updating code for box plots + mummichog 

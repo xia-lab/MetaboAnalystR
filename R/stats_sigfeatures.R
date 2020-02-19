@@ -28,7 +28,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
                   paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName);
   
   RS.assign(rsc, "dat.in", dat.out);   
-  
+
   my.fun<-function(){  
     library(siggenes);
     if(dat.in$cls.num==2){
@@ -230,7 +230,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
   
   dat.out <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig);
   RS.assign(rsc, "dat.in", dat.out);  
-  
+
   my.fun <- function(){
     library(siggenes);
     ebam_a0 <- siggenes::find.a0(dat.in$data, dat.in$cls, var.equal=dat.in$isVarEq, gene.names=rownames(dat.in$data), rand=123);
@@ -320,7 +320,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   RS.assign(rsc, my.fun);
   my.res <- RS.eval(rsc, my.fun());
   RS.close(rsc);
-  
+
   return(.set.mSet(mSetObj));
 }
 

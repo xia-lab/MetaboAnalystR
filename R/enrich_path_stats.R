@@ -217,10 +217,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
 
-  load_RSclient()
-  rsc <- RS.connect();
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));
+  rsc <- SetupRSclient();
   dat.out <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits);
   RS.assign(rsc, "dat.in", dat.out); 
   if(method == "gt"){

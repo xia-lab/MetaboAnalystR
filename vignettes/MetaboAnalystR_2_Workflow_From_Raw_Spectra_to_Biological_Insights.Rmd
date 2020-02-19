@@ -134,7 +134,7 @@ mSet<-Convert2Mummichog(mSet)
 # Read in the ranked peak list (don't forget to change the file name!)
 SetPeakFormat("mpt")
 
-mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
+mSet<-UpdateInstrumentParameters(mSet, 5, "negative");
 mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
 mSet<-SanityCheckMummichogData(mSet)
 
@@ -227,7 +227,7 @@ mSet<-Convert2Mummichog(mSet)
 
 # RENAME FILE TO CREATED mummichog_input
 SetPeakFormat("mpt")
-mSet<-UpdateInstrumentParameters(mSet, "5", "negative");
+mSet<-UpdateInstrumentParameters(mSet, 5, "negative");
 mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
 mSet<-SanityCheckMummichogData(mSet)
 

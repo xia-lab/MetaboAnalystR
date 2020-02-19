@@ -242,7 +242,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     uniq.len <- inmexpa$gene.counts;
     
     # saving only
-    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
+    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "symbol");
     gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
     write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     
@@ -282,7 +282,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
     rownames(gene.mat) <- gene.vec;
     # saving 
-    gene.sbls <- doEntrez2SymbolMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org);
+    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "symbol");
     write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
     
     # used by both integ
@@ -958,25 +958,6 @@ getEdgeLty<-function(graph){
     edge.lty="solid"
   }
   return(edge.lty)
-}
-
-doEntrez2SymbolMapping <- function(entrez.vec, org.code){
-
-  sqlite.path <- paste0(gene.sqlite.path, org.code, "_genes.sqlite");
-  con <- dbConnect(SQLite(), sqlite.path); 
-  
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  symbols <- gene.map[hit.inx, "symbol"];
-  
-  # if no gene symbol, use id by itself
-  na.inx <- is.na(symbols);
-  symbols[na.inx] <- entrez.vec[na.inx];
-
-  rm(db.map, q.vec);
-  gc(); 
-  dbDisconnect(con);
-
-  return(symbols);
 }
 
 ##############################################

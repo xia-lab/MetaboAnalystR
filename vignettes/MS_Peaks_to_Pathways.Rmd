@@ -38,7 +38,7 @@ mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
 SetPeakFormat("mpt")
 
 # Set parameters for analysis, in this case the mass accuracy is set to 5 ppm, the mode of the MS instrument is negative
-mSet <- UpdateInstrumentParameters(mSet, "5", "negative");
+mSet <- UpdateInstrumentParameters(mSet, 5, "negative");
 
 # Read in peak-list data
 mSet <- Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_ibd.txt");
@@ -86,21 +86,21 @@ mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
 
 SetPeakFormat("mpt")
 
-mSet<-UpdateInstrumentParameters(mSet, "5.0", "mixed");
+mSet<-UpdateInstrumentParameters(mSet, 5.0, "mixed");
 
 mSet<-Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_mixed.txt");
 
 mSet<-SanityCheckMummichogData(mSet)
 
 # Customize currency
-curr.vec <- c("Carbon dioxide (C00011)","Acetoacetyl CoA (C00332)","Proton (C00080)","Hydrogen (C00282)","Water (C00001)","Hydrogen peroxide (C00027)","NADH (C00004)","NAD (C00003)","Oxygen (C00007)")
+curr.vec <- c("Water (C00001)","Proton (C00080)","Oxygen (C00007)","NADPH (C00005)","NADP (C00006)","NADH (C00004)","NAD (C00003)","Adenosine triphosphate (C00002)","Pyrophosphate (C00013)","Phosphate (C00009)","Carbon dioxide (C00011)","Hydrogen (C00282)","Hydrogen peroxide (C00027)","Sodium (C01330)")
 
 # Map selected currency to user's data
 mSet<-Setup.MapData(mSet, curr.vec);
 mSet<-PerformCurrencyMapping(mSet)
 
 # Now customize adducts
-add.vec <- c("M [1+]","M+H [1+]","M+Na [1+]","M+K [1+]","M-H2O+H [1+]","M-CO2+H [1+]","M-H [1-]","M-H2O-H [1-]","M+Cl [1-]","M+Br [1-]")
+add.vec <- c("M [1+]","M+H [1+]","M+2H [2+]","M+3H [3+]","M+Na [1+]","M+H+Na [2+]","M+K [1+]","M+H2O+H [1+]","M-H2O+H [1+]","M-H4O2+H [1+]","M(C13)+H [1+]","M(C13)+2H [2+]","M(C13)+3H [3+]","M(Cl37)+H [1+]","M-NH3+H [1+]","M-CO+H [1+]","M-CO2+H [1+]","M-HCOOH+H [1+]","M+HCOONa [1+]","M-HCOONa+H [1+]","M+NaCl [1+]","M-C3H4O2+H [1+]","M+HCOOK [1+]","M-HCOOK+H [1+]","M-H [1-]","M-2H [2-]","M-H2O-H [1-]","M-H+O [1-]","M+K-2H [1-]","M+Na-2H [1- ]","M+Cl [1-]","M+Cl37 [1-]","M+HCOO [1-]","M+CH3COO [1-]")
 
 # Set up the selected adducts
 mSet<-Setup.AdductData(mSet, add.vec);

@@ -15,5 +15,5 @@ GetMummichogPathSetDetails(mSetObj = NA, msetNm)
 Function to get compound details from a specified pathway.
 The results will be both printed in the console as well as saved
 as a csv file. Note that performing this function multiple times will
-overwrite previous queries.
+overwrite previous queries. Significant compounds will be indicated with an asterisk.
 }

@@ -38,6 +38,15 @@
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
+  if(!.on.public.web){
+    if(exists("mSet")){
+      mSetObj <- .get.mSet(mSet);
+      mSetObj$dataSet$type <- data.type;
+      mSetObj$analSet$type <- anal.type;
+      return(.set.mSet(mSetObj));
+    }
+  }
+  
   dataSet <- list();
   dataSet$type <- data.type;
   dataSet$design.type <- "regular"; # one factor to two factor
@@ -92,8 +101,12 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <- "/home/jasmine/Downloads/sqlite/";
   }else if(file.exists("/home/soufanom/Documents/Projects/Lechang/gene-id-mapping/")){ # soufan local
      url.pre <- "/home/soufanom/Documents/Projects/Lechang/gene-id-mapping/";
+  }else if(file.exists("~/Documents/Projects/gene-id-mapping/")){
+     url.pre <- "~/Documents/Projects/gene-id-mapping/"
   }else if(file.exists("/Users/xia/Dropbox/sqlite/")){ # xia local
      url.pre <- "/Users/xia/Dropbox/sqlite/";
+  }else if(file.exists("/home/zzggyy/Downloads/netsqlite/")){
+        url.pre <<-"/home/zzggyy/Downloads/netsqlite/"; #zgy local)
   }else{
     url.pre <- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
   }
@@ -123,10 +136,16 @@ SetDesignType <-function(mSetObj=NA, design){
 #'@param cmd Commands 
 #'@export
 RecordRCommand <- function(mSetObj=NA, cmd){
-  write(cmd, file = "Rhistory.R", append = TRUE);
+  #write(cmd, file = "Rhistory.R", append = TRUE);
   mSetObj <- .get.mSet(mSetObj); 
   mSetObj$cmdSet <- c(mSetObj$cmdSet, cmd);
   return(.set.mSet(mSetObj));
+}
+
+SaveRCommands <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj); 
+  cmds <- paste(mSetObj$cmdSet, collapse="\n");
+  write(cmds, file = "Rhistory.R", append = FALSE);
 }
 
 #'Export R Command History
@@ -396,7 +415,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 #'License: GNU GPL (>= 2)
 #'@export
 
-Read.PeakList<-function(mSetObj=NA, foldername){
+Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
 
   if(.on.public.web){
@@ -1192,4 +1211,15 @@ SetOrganism <- function(mSetObj=NA, org){
 }
 
 
+convertPNG2PDF <- function(filenm){
+  library(png)
+  
+  nm <- strsplit(filenm, "[.]")[[1]][1]
+  img <- readPNG(filenm)
 
+  pdf(paste0(nm, ".pdf"))
+  grid::grid.raster(img)
+  dev.off()  
+  
+  return(1)
+}

@@ -71,7 +71,7 @@ PrepareSignatureOfMetaboAnalyst <- function(mSetObj=NA){
     LoadScripts("mummichog")
     InitDataObjects("mass_all", "mummichog", FALSE)
     SetPeakFormat("rmp")
-    UpdateInstrumentParameters(mSet, "1.0", "positive");
+    UpdateInstrumentParameters(mSet, 1.0, "positive");
     m.z <- sapply(strsplit(rownames(signature.cmpds), "/"), function(x) {x[[1]]})
     write.table(x = m.z, file = "peaklist.csv", row.names = FALSE, col.names = "m.z", quote = FALSE);
     Read.PeakListData(mSet, "peaklist.csv");

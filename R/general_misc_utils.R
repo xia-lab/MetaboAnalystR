@@ -57,6 +57,28 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   }
 } 
 
+# setup microservice for R function execution
+SetupRSclient <- function(user.dir=FALSE, remote=TRUE){
+  #library(RSclient);
+  load_RSclient();
+  rsc <- try(RS.connect(host = "132.216.38.6", port = 6313));
+  if(class(rsc) == "try-error") {
+    rsc <- RS.connect(); # switch to local
+    remote <- FALSE
+  }
+
+  if(user.dir){
+    if(remote){
+     dir.name <- strsplit(getwd(), "/")[[1]]; dir.name <- dir.name [length(dir.name)]
+     RS.assign(rsc, "my.dir", paste0("/data/Rtmp/", dir.name));
+     RS.eval(rsc, dir.create(my.dir));
+    } else{
+     RS.assign(rsc, "my.dir", getwd()); RS.eval(rsc, setwd(my.dir));
+    }
+  }
+  return(rsc);
+}
+
 #'Read data table
 #'@description Function to read in a data table. First, it will try to use fread, however, it has issues with 
 #'some windows 10 files. In such case, use the slower read.table method.
@@ -67,16 +89,32 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 
 .readDataTable <- function(fileName){
-  dat <- try(data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE));
-  if(class(dat) == "try-error" || any(dim(dat) == 0)){
-    print("Using slower file reader ...");
-    formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
-    if(formatStr == "txt"){
-      dat <- try(read.table(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
-    }else{ # note, read.csv is more than read.table with sep=","
-      dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
-    }  
+
+  dat <- tryCatch(
+            data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),
+            error=function(e){
+                print(e);
+                return(.my.slowreaders(fileName));    
+            }, 
+            warning=function(w){
+                print(w);
+                return(.my.slowreaders(fileName));
+            });
+            
+  if(any(dim(dat) == 0)){
+        dat <- .my.slowreaders(fileName);
   }
+  return(dat);
+}
+
+.my.slowreaders <- function(fileName){
+  print("Using slower file reader ...");
+  formatStr <- substr(fileName, nchar(fileName)-2, nchar(fileName))
+  if(formatStr == "txt"){
+    dat <- try(read.table(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
+  }else{ # note, read.csv is more than read.table with sep=","
+    dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
+  }  
   return(dat);
 }
 
@@ -131,21 +169,27 @@ Perform.permutation <- function(perm.num, fun){
 #'
 UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   
-  a <- try(system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T));
-  
+  a <- tryCatch(
+            system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T),
+            error=function(e){
+                print(e);
+                return(unzip(inPath, outPath));    
+            }, 
+            warning=function(w){
+                print(w);
+                return(unzip(inPath, outPath));
+            });
+            
   if(class(a) == "try-error" | !length(a)>0){
-    b <- try(unzip(inPath, outPath))
-    if(length(b)==0){
       AddErrMsg("Failed to unzip the uploaded files!");
       AddErrMsg("Possible reason: file name contains space or special characters.");
       AddErrMsg("Use only alphabets and numbers, make sure there is no space in your file name.");
       AddErrMsg("For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
       return (0);
-    }
   }
-  if(rmFile){
-    RemoveFile(inPath);
-  }
+  #if(rmFile){
+  #  RemoveFile(inPath);
+  #}
   return (1);
 }
 
@@ -478,7 +522,7 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
 
 GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
   mSetObj <- .get.mSet(mSetObj);
-  if(exists("shapeVec") && all(shapeVec > 0)){
+  if(exists("shapeVec") && all(shapeVec >= 0)){
     sps <- rep(0, length=length(mSetObj$dataSet$cls));
     clsVec <- as.character(mSetObj$dataSet$cls)
     grpnms <- names(shapeVec);
@@ -827,33 +871,26 @@ end.with <- function(bigTxt, endTxt){
 ## fast T-tests/F-tests using genefilter
 ## It leverages RSclient to perform one-time memory intensive computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
-  print("Peforming fast univariate tests ....");
-  load_RSclient()
-  rsc <- RS.connect();
-  
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));
-  
-  # note, feature in rows for gene expression
-  data <- t(as.matrix(data));
-  dat.out <- list(data=data, cls=cls, var.equal=var.equal);
-  RS.assign(rsc, "dat.in", dat.out); 
-  my.fun <- function(){
-    if(length(levels(cls)) > 2){
-      res <- try(genefilter::rowFtests(dat.in$data, dat.in$cls, var.equal = dat.in$var.equal));
-    }else{
-      lvls <- levels(cls);
-      ig1 <- which(cls == lvls[1]);
-      ig2 <- which(cls == lvls[2]);
-      res <- try(genefilter::rowttests(dat.in$data, dat.in$cls));
+    print("Peforming fast univariate tests ....");
+    rsc <- SetupRSclient();;
+    
+    # note, feature in rows for gene expression
+    data <- t(as.matrix(data));
+    dat.out <- list(data=data, cls=cls, var.equal=var.equal);
+    RS.assign(rsc, "dat.in", dat.out); 
+    my.fun <- function(){
+        if(length(levels(cls)) > 2){
+            res <- try(genefilter::rowFtests(dat.in$data, dat.in$cls, var.equal = dat.in$var.equal));
+        }else{
+            res <- try(genefilter::rowttests(dat.in$data, dat.in$cls));
+        }
+        if(class(res) == "try-error") {
+            res <- cbind(NA, NA);
+        }else{
+            res <- cbind(res$statistic, res$p.value);
+        }
+        return(res);
     }
-    if(class(res) == "try-error") {
-      res <- cbind(NA, NA);
-    }else{
-      res <- cbind(res$statistic, res$p.value);
-    }
-    return(res);
-  }
   RS.assign(rsc, my.fun);
   my.res <- RS.eval(rsc, my.fun());
   RS.close(rsc);

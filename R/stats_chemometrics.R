@@ -269,7 +269,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       if(length(uniq.cols) == 1){
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
       }else{
-        if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
+        if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
           points(pc1, pc2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
         }else{
           points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
@@ -718,7 +718,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     if (length(uniq.cols) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
@@ -1393,25 +1393,10 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
   if(.on.public.web){
-    print("Peforming oplsda ....");
-    load_RSclient()
-    rsc <- RS.connect();
-    RS.assign(rsc, "my.dir", getwd()); 
-    RS.eval(rsc, setwd(my.dir));
-    dat.out <- list(datmat=datmat, cls=cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
-    RS.assign(rsc, "dat.in", dat.out); 
-    my.fun <- function(){
-      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-      oplsr.res <- perform_opls(dat.in$datmat, dat.in$cls, predI=dat.in$predI, permI=dat.in$permI, orthoI=dat.in$orthoI, crossvalI=dat.in$crossvalI);
-      return(oplsr.res);
-    }
-    RS.assign(rsc, my.fun);
-    my.res <- RS.eval(rsc, my.fun());
-    RS.close(rsc);
-  }else{
-    my.res <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
+    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
   }
-
+  my.res <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
+  
   mSetObj$analSet$oplsda <- my.res;
   score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
   colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
@@ -1522,7 +1507,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
     if (length(uniq.cols) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
@@ -1722,26 +1707,9 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
   if(.on.public.web){
-    load_RSclient()
-    print("Peforming oplsda permutations ....");
-    load_RSclient();
-    rsc <- RS.connect();
-    
-    RS.assign(rsc, "my.dir", getwd()); 
-    RS.eval(rsc, setwd(my.dir));
-    dat.out <- list(datmat=datmat, cls=cls, predI=1, permI=num, orthoI=NA, crossvalI=cv.num);
-    RS.assign(rsc, "dat.in", dat.out); 
-    my.fun <- function(){
-      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-      perm.res <- perform_opls(dat.in$datmat, dat.in$cls, predI=dat.in$predI, permI=dat.in$permI, orthoI=dat.in$orthoI, crossvalI=dat.in$crossvalI);
-      return(perm.res);
-    }
-    RS.assign(rsc, my.fun);
-    my.res <- RS.eval(rsc, my.fun());
-    RS.close(rsc);
-  }else{
-    my.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
+    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
   }
+  my.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
   
   r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
@@ -1870,31 +1838,13 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
     # note, standardize the cls, to minimize the impact of categorical to numerical impact
     cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
     datmat <- as.matrix(mSetObj$dataSet$norm);
-
     if(.on.public.web){
-      print("Peforming splsda ....");
-      load_RSclient();
-      rsc <- RS.connect();
-      RS.assign(rsc, "my.dir", getwd()); 
-      RS.eval(rsc, setwd(my.dir));
-      dat.out <- list(datmat=datmat, cls=cls, ncomp=comp.num, keepX=comp.var.nums, validOpt=validOpt);
-      RS.assign(rsc, "dat.in", dat.out); 
-      my.fun <- function(){
         compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
-        splsr <- splsda(dat.in$datmat, dat.in$cls, ncomp=dat.in$ncomp, keepX=dat.in$keepX);
-        perf.res <- perf.splsda(splsr, dist= "centroids.dist", validation=dat.in$validOpt, folds = 5);
-        splsr$error.rate <- perf.res$error.rate$overall;
-        return(splsr);
-      }
-      RS.assign(rsc, my.fun);
-      my.res <- RS.eval(rsc, my.fun());
-      RS.close(rsc);
-    }else{
-      my.res <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
-      # perform validation
-      perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
-      my.res$error.rate <- perf.res$error.rate$overall;
     }
+    my.res <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
+    # perform validation
+    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
+    my.res$error.rate <- perf.res$error.rate$overall;
     
     mSetObj$analSet$splsr <- my.res;
     score.mat <- mSetObj$analSet$splsr$variates$X;
@@ -2055,7 +2005,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
     if (length(uniq.cols) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>0))){
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);

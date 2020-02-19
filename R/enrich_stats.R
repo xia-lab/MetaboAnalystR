@@ -137,11 +137,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   phenotype <- mSetObj$dataSet$cls;
     
   print("Performing quantitative enrichment tests ......");
-  load_RSclient()
-  rsc <- RS.connect();
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));
-  
+  rsc <- SetupRSclient();;
   gt.out <- list(cls=phenotype, data=msea.data, subsets=hits, set.num=set.num);
   RS.assign(rsc, "gt.in", gt.out); 
   

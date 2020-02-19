@@ -467,7 +467,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   max.xthresh <- log(fcthresh,2);
   min.xthresh <- log(1/fcthresh,2);
   
-  res <- GetFC(mSetObj, nonpar, cmpType);
+  res <- GetFC(mSetObj, paired, cmpType);
   
   # create a named matrix of sig vars for display
   fc.log <- res$fc.log;
@@ -477,7 +477,6 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   inx.down <- fc.log < min.xthresh;
   
   if(paired){
-    res <- GetFC(mSetObj, T, cmpType);
     count.thresh<-round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
     mat.up <- res >= max.xthresh;
     mat.down <- res <= min.xthresh;
@@ -1135,44 +1134,24 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(nonpar){
+
+    mSetObj <- .get.mSet(mSetObj);
     inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
     inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
-    
-    res <- apply(as.matrix(mSetObj$dataSet$norm), 2, function(x) {
-      tmp <- try(wilcox.test(x[inx1], x[inx2], paired = paired));
-      if(class(tmp) == "try-error") {
-        return(c(NA, NA));
-      }else{
-        return(c(tmp$statistic, tmp$p.value));
-      }
-    })
-    
-  }else{
-    if(ncol(mSetObj$dataSet$norm) < 1000){
-      inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
-      inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
-      res <- apply(as.matrix(mSetObj$dataSet$norm), 2, function(x) {
-        tmp <- try(t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var));
-        if(class(tmp) == "try-error") {
-          return(c(NA, NA));
-        }else{
-          return(c(tmp$statistic, tmp$p.value));
-        }
-      })
-    }else{ # use fast version
-      res <- try(genefilter::rowttests(t(as.matrix(mSetObj$dataSet$norm)), mSetObj$dataSet$cls));
-      if(class(res) == "try-error") {
-        res <- c(NA, NA);
-      }else{
-        res <- t(cbind(res$statistic, res$p.value));
-      }
+    univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+    if(nonpar){
+        univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
     }
-  }
-  return(t(res));
+    my.fun <- function(x) {
+        tmp <- try(univ.test(x));
+        if(class(tmp) == "try-error") {
+            return(c(NA, NA));
+        }else{
+            return(c(tmp$statistic, tmp$p.value));
+        }
+    }
+    res <- apply(as.matrix(mSetObj$dataSet$norm), 2, my.fun);
+    return(t(res));
 }
 
 #'Utility method to perform the univariate analysis automatically
