@@ -101,7 +101,7 @@ R CMD INSTALL MetaboAnalystR_*.tar.gz
 
 #### Option C) Manual download of MetaboAnalystR_2.0.2.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://www.dropbox.com/s/dwzx9mj0uctkrqs/MetaboAnalystR_2.0.2.tar.gz?dl=0). The * must be replaced by what is actually downloaded and built.  
+Manually download the .tar.gz file from [here](https://www.dropbox.com/s/tdwpilim5iwe8j5/MetaboAnalystR_2.0.3.tar.gz?dl=0). The * must be replaced by what is actually downloaded and built.  
 
 ```R
 cd ~/Downloads
