@@ -66,6 +66,16 @@ mSet<-PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 mSet<-PlotKEGGPath(mSet, "Glycine, serine and threonine metabolism",528, 480, "png", NULL)
 ```
 
+#### Trouble Shooting
+
+When performing compound mapping (PerformIntegCmpdMapping), you may come across this error:
+
+[1] "Loading files from server unsuccessful. Ensure curl is downloaded on your computer."
+Error in .read.metaboanalyst.lib("compound_db.rds") : 
+  objet 'my.lib' introuvable
+  
+This means that the function was unable to download the "compound_db.rds" file from the MetaboAnalyst server. This could be because curl is not installed on your computer. Download from here: https://curl.haxx.se/download.html. curl is a command line tool for transferring files using a URL. Once curl is installed, try the function again. If it still does not work, download the "compound_db.rds" file manually from this link: https://www.dropbox.com/s/nte1ok440bt1l8w/compound_db.rds?dl=0. Make sure that the file is always in your current working directory when performing compound mapping.
+
 ## 3. Sweave Report
 
 Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 

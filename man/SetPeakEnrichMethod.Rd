@@ -4,7 +4,7 @@
 \alias{SetPeakEnrichMethod}
 \title{Set the peak enrichment method for the MS Peaks to Paths module}
 \usage{
-SetPeakEnrichMethod(mSetObj = NA, algOpt)
+SetPeakEnrichMethod(mSetObj = NA, algOpt, version = "v2")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}

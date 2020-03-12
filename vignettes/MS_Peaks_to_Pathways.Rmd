@@ -31,6 +31,8 @@ The output of this module first consists of a table of results identifying the t
 For this tutorial we will first directly use the an example peak list data obtained from untargeted metabolomics of pediatric IBD (mass accuracy 5.0, negative ion mode). This is an example of the three-column table containing the m.z, p.value and t.score.
 
 ```{r}
+library(MetaboAnalystR)
+
 # Create objects for storing processed data from the MS peaks to pathways module
 mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
 
@@ -47,16 +49,17 @@ mSet <- Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/reso
 mSet <- SanityCheckMummichogData(mSet)
 
 # Perform the mummichog algorithm, in this case the pathway library is from the human MFN model. First set the 
-# algorithm to be used to mummichog, then set the p-value cutoff.
+# algorithm to be used to mummichog, then set the p-value cutoff. We're setting the version to "v1"
+# as this data does not contain retention time information.
 # This function may take sometime for processing, and will output the pathway-results and the compound matching tables in your working directory
-mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetPeakEnrichMethod(mSet, "mum", "v1")
 mSet<-SetMummichogPval(mSet, 0.2)
 mSet<-PerformPSEA(mSet, "hsa_mfn", "current", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
 # To view the results of the pathway analysis in R, use mSet$mummi.resmat
 
-# Use this function to view a table of the significant / non-significant compound hits in a selected pathway
+# Use this function to view a table of the significant / non-significant compound hits and m/z matching details in a selected pathway
 mSet <- GetMummichogPathSetDetails(mSet, "Vitamin E metabolism")
 
 # Use this function to view a table of matching details (i.e. adducts, t-scores, m.z) for a compound
@@ -84,6 +87,7 @@ Now we will use another example peak list data obtained from untargeted metabolo
 # Create objects for storing processed data from the MS peaks to pathways module
 mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
 
+# Set peak formart - contains m/z features, p-values and t-scores
 SetPeakFormat("mpt")
 
 mSet<-UpdateInstrumentParameters(mSet, 5.0, "mixed");
@@ -106,8 +110,8 @@ add.vec <- c("M [1+]","M+H [1+]","M+2H [2+]","M+3H [3+]","M+Na [1+]","M+H+Na [2+
 mSet<-Setup.AdductData(mSet, add.vec);
 mSet<-PerformAdductMapping(mSet, "mixed")
 
-# Perform mummichog algorithm using selected currency
-mSet<-SetPeakEnrichMethod(mSet, "mum")
+# Perform mummichog algorithm using selected currency and adducts, using Version1 of the mummichog algorithm
+mSet<-SetPeakEnrichMethod(mSet, "mum", "v1")
 
 mSet<-SetMummichogPval(mSet, 1.0E-5)
 
@@ -115,6 +119,60 @@ mSet<-PerformPSEA(mSet, "hsa_mfn", "current", 100)
 
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
 
+```
+
+### 2.3 Retention Time Integration
+
+The *SetPeakEnrichMethod* now has a parameter to let users select whether to use Version 1 or Version 2 of the MS Peaks to Paths algorithms. With Version 2, users can now upload retention time information to perform pathway analysis. Note that Version 2 should only be used if user's data contains a retention time ("rt" or "r.t") column. Retention time is used to move pathway analysis from the "Compound" space to "Empirical Compound" space (details below in "How are Empirical Compounds calculated?"). The inclusion of retention time will increase the confidence and robustness of the potential compound matches. Another difference is that currency compounds are removed directly from the user's selected pathway library, versus removed from potential compound hits during the permutations.
+
+#### 2.3.1 How are Empirical Compounds calculated?
+
+Empirical Compounds are intermediaries between m/z features and compounds. The steps for how they are formed are as follows:
+
+1. As in version 1, all m/z features are matched to potential compounds considering different adducts. Then, per compound, all matching m/z features are split into Empirical Compounds based on whether they match within an expected retention time window. The retention time window (in seconds) is calculated as the maximum retention time * 0.02. This results in the initial Empirical Compounds list.
+
+2. Next, Empirical Compounds are merged if they have the same m/z, matched form/ion, and retention time. This results in the merged Empirical Compounds list.
+
+3. Finally, if primary ions are enforced, only Empirical Compounds containing at least 1 primary ion are kept. Primary ions considered are 'M+H[1+]', 'M+Na[1+]', 'M-H2O+H[1+]', 'M-H[-]', 'M-2H[2-]', 'M-H2O-H[-]', 'M+H [1+]', 'M+Na [1+]', 'M-H2O+H [1+]', 'M-H [1-]', 'M-2H [2-]', and 'M-H2O-H [1-]'. This results in the final Empirical Compounds list.
+
+4. Next, pathway libraries are converted from "Compound" space to "Empirical Compound" space. This is done by converting all compounds in each pathway to all Empirical Compound matches. Then the mummichog/GSEA algorithms work as before to calculate pathway enrichment.
+
+For this tutorial we will use the same example peak list data obtained from untargeted metabolomics of pediatric IBD (mass accuracy 5.0, negative ion mode). This time however, retention time information is included for a four-column table with the following headers: "m.z", "p.value", "t.score" and "r.t".
+
+```{r, eval=FALSE}
+
+mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
+SetPeakFormat("mprt")
+mSet<-UpdateInstrumentParameters(mSet, 5.0, "negative");
+mSet<-Read.PeakListData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_rt.txt");
+mSet<-SanityCheckMummichogData(mSet)
+mSet<-SetPeakEnrichMethod(mSet, "mum", "v2")
+mSet<-SetMummichogPval(mSet, 0.2)
+mSet<-PerformPSEA(mSet, "hsa_mfn", "current", 100)
+mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)
+
+```
+
+#### 2.3.2 Customizing Empirical Compound Formation
+
+By default, V2 of the MS Peaks to Pathways algorithms enforces primary ions to be present when creating Empirical Compounds (step 3 above). Users can disable this in the *UpdateInstrumentParameters* function by setting the "force_primary_ion" parameter to "no". Additionally, by default the retention-time window used to split Empirical Compounds is calculated as the maximum retention time in the user's data multiplied by the retention time fraction (default is 0.02). Users can either change the retention time fraction (rt_frac) or set the retention time-window (rt_tol - in seconds). Code details are shown below. 
+
+```{r, eval=FALSE}
+
+# Disable force primary ion
+mSet <- UpdateInstrumentParameters(mSet, instrumentOpt, msModeOpt, 
+                                   force_primary_ion = "no", rt_frac = 0.02, 
+                                   rt_tol = NA)
+
+# Change retention time fraction when calculating the retention time window
+mSet <- UpdateInstrumentParameters(mSet, instrumentOpt, msModeOpt, 
+                                   force_primary_ion = "yes", rt_frac = 0.025, 
+                                   rt_tol = NA)
+
+# Set the retention time window (in seconds)
+mSet <- UpdateInstrumentParameters(mSet, instrumentOpt, msModeOpt, 
+                                   force_primary_ion = "yes", rt_frac = 0.02, 
+                                   rt_tol = 25)
 ```
 
 ## 3. Sweave Report

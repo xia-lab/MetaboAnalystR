@@ -139,7 +139,7 @@ mSet<-Read.PeakListData(mSet, "INPUT_FILE_NAME");
 mSet<-SanityCheckMummichogData(mSet)
 
 # Perform original mummichog algorithm
-mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetPeakEnrichMethod(mSet, "mum", "v1")
 mSet<-SetMummichogPval(mSet, 0.25)
 mSet<-PerformPSEA(mSet, "hsa_mfn", "old", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 72, width=NA)
@@ -159,7 +159,7 @@ Now we will perform GSEA, setting the algorithm to "gsea" in the *SetPeakEnrichM
 
 ```{r, eval=FALSE}
 # Perform GSEA 
-mSet<-SetPeakEnrichMethod(mSet, "gsea")
+mSet<-SetPeakEnrichMethod(mSet, "gsea", "v1")
 mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_", "png", 72, width=NA)
 
@@ -178,7 +178,7 @@ The MS Peaks to Paths uses the (Fisher's method) for combining the mummichog and
 
 ```{r, eval=FALSE}
 #Perform meta-analysis of mummichog and GSEA results
-mSet<-SetPeakEnrichMethod(mSet, "integ")
+mSet<-SetPeakEnrichMethod(mSet, "integ", "v1")
 mSet<-SetMummichogPval(mSet, 0.25)
 mSet<-PerformPSEA(mSet, "hsa_mfn")
 mSet<-PlotIntegPaths(mSet, "integ_peaks_0_", "png", 72, width=NA)
@@ -232,7 +232,7 @@ mSet<-Read.PeakListData(mSet, "mummichog_input_2019-05-08.txt");
 mSet<-SanityCheckMummichogData(mSet)
 
 # First perform the original mummichog algorithm
-mSet<-SetPeakEnrichMethod(mSet, "mum")
+mSet<-SetPeakEnrichMethod(mSet, "mum", "v1")
 mSet<-SetMummichogPval(mSet, 0.25)
 mSet<-PerformPSEA(mSet, "hsa_mfn", permNum = 1000)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_0_", "png", 300, width=NA)

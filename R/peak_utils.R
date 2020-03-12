@@ -9,10 +9,15 @@
 #' @usage CreateMummichogLibs("~/Desktop/MetaboAnalyst/mummichog/2020_mummichog_libs/test", kegg_compounds_2020)
 #' @export
 CreateMummichogLibs <- function(folder, kegg_compounds){
-  
+
   # Step 1: Get list of pathways to make mummichog libraries from 
   folder <- folder
   files <- list.files(folder, pattern = ".rda$")
+  
+  if(length(files) == 0){
+    AddErrMsg("No .rda files found in folder!")
+    return(0)
+  }
   
   # Step2: Create the models list 
   models <- Map(rda2list, file.path(folder, files))
@@ -66,16 +71,17 @@ make_cpdlib <- function(org){
   
   all_cpds <- unlist(unique(org$cpds))
   
-  index <- which(all_cpds %in% kegg_compounds[,1])
+  index <- match(all_cpds, kegg_compounds[,1])
   
   ids <- list()
   names <- list()
   mass <- list()
   
   for(i in 1:length(index)){
-    ids[i] <- kegg_compounds[i,1]
-    names[i] <- kegg_compounds[i,2]
-    mass[i] <- kegg_compounds[i,3]
+    inx <- index[i]
+    ids[i] <- kegg_compounds[inx,1]
+    names[i] <- kegg_compounds[inx,2]
+    mass[i] <- kegg_compounds[inx,3]
   }
   
   ids <- unlist(ids)
