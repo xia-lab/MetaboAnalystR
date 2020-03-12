@@ -108,7 +108,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/zzggyy/Downloads/netsqlite/")){
         url.pre <<-"/home/zzggyy/Downloads/netsqlite/"; #zgy local)
   }else{
-    url.pre <- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/", package="MetaboAnalystR")), "/")
+    url.pre <- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
   }
 
   gene.sqlite.path <<- url.pre;
