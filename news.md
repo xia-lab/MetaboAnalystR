@@ -34,6 +34,7 @@
 # MetaboAnalystR 3.0.0
 
 - Added the new functions on raw data processing parameters' optimization; 
+- Speeded up the raw data processing and annotation process;
 - Added automatica batch effect correction;
 - Ehanced peaks to function with Mummichog2.
 
