@@ -33,10 +33,7 @@
 
 # MetaboAnalystR 3.0.0
 
-<<<<<<< HEAD
 - Added the new functions on raw data processing parameters' optimization; 
 - Added automatica batch effect correction;
 - Ehanced peaks to function with Mummichog2.
-=======
--Added the new functions on raw data processing and optimization; batch effect correction and Mummichog2
->>>>>>> 4b83ea32fa7cbb3406e5ea80afc2af3bce860458
+
