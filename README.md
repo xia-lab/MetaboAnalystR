@@ -1,4 +1,4 @@
-# MetaboAnalystR 2.0: From Raw Spectra to Biological Insights
+# MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics
 
 <p align="center">
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
@@ -6,24 +6,33 @@
 
 ## Description 
 
-**MetaboAnalystR 2.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including > 500 functions for metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. With version 2.0, we aim to address two important gaps left in its previous version. First, raw spectral processing - the previous version offered very limited support for raw spectra processing and peak annotation. Therefore, we have implemented comprehensive support for raw LC-MS spectral data processing including peak picking, peak alignment and peak annotations leveraging the functionality of the xcms (PMIDs: 16448051, 19040729, and 20671148; version 3.4.4) and CAMERA (PMID: 22111785; version 1.38.1) R packages. Second, we have enhanced support for functional interpretation directly from m/z peaks. In addition to an efficient implementation of the mummichog algorithm (PMID: 23861661), we have added a new method to support pathway activity prediction based on the well-established GSEA algorithm (PMID: 16199517). To demonstrate this new functionality, we provide the "MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights" vignette, available [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on a subset of clinical IBD samples.   
+**MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. 
+
+Besides, with version 3.0, we aim to optimize two important points for the whole pipeline. First, raw spectral processing parameters optimization. Second, we have enhanced the ability to correct batch effect by organising different algorithm. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/1F3Z2drNKFtQkekKO5-w7qWc134ZsGQ2R/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
+ 
 
 ## Getting Started
 
 ### Step 1. Install package dependencies 
 
-To use MetaboAnalystR 2.0, first install all package dependencies. Ensure that you are able to download packages from bioconductor. To install package dependencies, there are two options:
+To use MetaboAnalystR 3.0, first install all package dependencies. Ensure that you have neceaary system environment configured. 
+
+For Linux (e.g. Ubuntu): libcairo2-dev, libnetcdf-dev, libxml2 and libssl-dev should be installed at frist;
+
+For Windows (e.g. 7/8/8.1/10): Rtools should be installed.
+
+As for installation of package dependencies, there are two options:
 
 **Option 1** 
 
-Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed.  
+Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed.
 
 Function to download packages:
 
 ```R
 metanr_packages <- function(){
 
-  metr_pkgs <- c("Rserve", "RSclient", "ellipse", "scatterplot3d", "Cairo", "randomForest", "caTools", "e1071", "som", "impute", "pcaMethods", "RJSONIO", "ROCR", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "pheatmap", "SSPA", "sva", "Rcpp", "pROC", "data.table", "limma", "car", "fitdistrplus", "lars", "Hmisc", "magrittr", "methods", "xtable", "pls", "caret", "lattice", "igraph", "gplots", "KEGGgraph", "reshape", "RColorBrewer", "tibble", "siggenes", "plotly", "fgsea", "metap", "reshape2", "scales")
+  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea")
   
   list_installed <- installed.packages()
   
@@ -56,36 +65,27 @@ install.packages("pacman")
 
 library(pacman)
 
-pacman::p_load(Rserve, RSclient, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, fgsea, metap, reshape2, scales)
+pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea"))
 ```
 ### Step 2. Install the package
 
-MetaboAnalystR 2.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR 2.0 . There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 2.0 github will have the most up-to-date version of the package. 
+MetaboAnalystR 3.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR 3.0 . There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
-Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 2.0 without any documentation (i.e. vignettes). 
+Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 3.0 without any documentation (i.e. vignettes). 
 
 ```R
 # Step 1: Install devtools
 install.packages("devtools")
 library(devtools)
 
-### For users with devtools > v2.0.0 ###
-
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = FALSE)
 
 # Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = TRUE, build_manual =T)
 
-### For users with devtools < v2.0.0 ###
-
-# Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR")
-
-# Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 ```
 
 #### Option B) Clone Github and install locally
@@ -93,29 +93,34 @@ devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 The * must be replaced by what is actually downloaded and built.  
 
 ```R
-git clone https://github.com/xia-lab/MetaboAnalystR.git
+git clone https://github.com/xia-lab/MetaboAnalystR3.0.git
 R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_*.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalystR_2.0.2.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalystR_3.0.0.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0). The * must be replaced by what is actually downloaded and built.  
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1l_5RI6tECZFL0VESsXchl-eFz6lx_wVM/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
-R CMD INSTALL MetaboAnalystR_*.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ```
 
 ## Case Studies
 
+### MetaboAnalyst 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics
+
+The case studies have been preformed in our article of this version [here]() (Under review, not available for now). The example running R code of this article have been provided as a vignette inside the R package.
+
+
 ### MetaboAnalyst 2.0 Workflow: From Raw Spectra to Biological Insights
 
-The R scripts to perform all of the analysis from our manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
+The R scripts to perform all of the analysis from our previous manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
 
-To showcase how to utilize MetaboAnalystR 2.0, we provide a detailed tutorial to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis. The dataset showcased in the tutorial consists of a subset of pediatric IBD stool samples obtained from the Integrative Human Microbiome Project Consortium (https://ibdmdb.org/). The tutorial is available as a PDF [here](https://github.com/jsychong/MetaboAnalystR/blob/master/MetaboAnalystR_2_Workflow_From_Raw_Spectra_to_Biological_Insights.pdf) and is also available inside the R package as a vignette.
+The detailed tutorial of the outdated version to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis still works. The tutorial is available as a PDF is also available inside the R package as a vignette.
 
 ### MetaboAnalyst 1.0
 
@@ -137,9 +142,11 @@ browseVignettes("MetaboAnalystR")
 
 ## Citation
 
-MetaboAnalystR 2.0 has been developed by the [XiaLab](http://xialabresearch.com/) at McGill University. The original manuscript (Version 1.0.0) can be found [here](https://doi.org/10.1093/bioinformatics/bty528). MetaboAnalystR Version 2.0.0 has been recently [published](https://www.mdpi.com/2218-1989/9/3/57)!
+MetaboAnalystR 3.0 has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. The original manuscript (Version 1) can be found [here](https://doi.org/10.1093/bioinformatics/bty528) and last version 2 is [here](https://www.mdpi.com/2218-1989/9/3/57).
 
 We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
+
+Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR: Towards Optimized Workflow for Global Metabolomics".
 
 Chong, Jasmine, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
 Metabolites 9.3 (2019): 57.
@@ -152,11 +159,17 @@ Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and 
 citation("MetaboAnalystR")
 ```
 
+## Previous Version Releases
+
+MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0).
+
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue (and @ jsychong!!) or send an email to #jasmine.chong@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to #jasmine.chong@mail.mcgill.ca or zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+10-04-2020 - Version Updata:3.0.0 - adding parameters optimization and automatical batch effect correction and stable version for peaks to function
 
 03-12-2020 - Version Update: 2.0.4 - adding retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
 
