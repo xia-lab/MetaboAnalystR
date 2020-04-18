@@ -1,33 +1,36 @@
 # Parameter Function
-#' Set parameters for peak picking using XCMS and CAMERA
+#' Set parameters for peak profiling and parameters optimization
 #' @description This function sets all the parameters used for downstream
-#' pre-processing of user's raw MS data based on specific LC-MS platform. 
+#' pre-processing of user's raw MS data based on specific LC-MS platform or parameters optimization.
+#' The database will be under an real-time update based on the progress in this field.
 #' @param platform Character, specify the LC-MS platform used in pratice, including "UPLC-Q/E",
-#' "UPLC-Q/TOF","UPLC-T/TOF","UPLC-Ion_Trap","UPLC-Orbitrap","UPLC-G2S","HPLC-Q/TOF","HPLC-Ion_Trap","HPLC-Orbitrap","HPLC-S/Q"
+#' "UPLC-Q/TOF","UPLC-T/TOF","UPLC-Ion_Trap","UPLC-Orbitrap","UPLC-G2S","HPLC-Q/TOF","HPLC-Ion_Trap","HPLC-Orbitrap","HPLC-S/Q". 
+#' Default is "general", which is a more common option for all platform. If the platform is not listed above, please use this one.
 #' @param Peak_method Character, specify the algorithm to perform peak detection. "centwave" 
 #' to use the CentWave algorithm, and "matchedFilter" to use the MatchedFilter algorithm.
 #' @param RT_method Character, specify the algorithm to perform tetention time alignment, including "loess" and "obiwarp".
 #' Default is "loess".
 #' @param ppm Numeric, specify the mass error in ppm.
-#' @param min_peakwidth Numeric, specify the minimum peak width in seconds.
-#' @param max_peakwidth Numeric, specify the maximum peak width in seconds. 
+#' @param min_peakwidth Numeric, specify the minimum peak width in seconds.Only work for 'centWave'.
+#' @param max_peakwidth Numeric, specify the maximum peak width in seconds.Only work for 'centWave'. 
 #' @param snthresh Numeric, specify the signal to noise threshold.
 #' @param mzdiff Numeric, specify the minimum m/z difference for signals to be considered as 
 #' different features when retention times are overlapping. 
 #' @param bw Numeric, specify the band width (sd or half width at half maximum) of gaussian 
 #' smoothing kernel to be applied during peak grouping.
-#' @param noise Numeric, specify the noise level for peaking picking.
-#' @param min_frac Numeric, specify fraction of samples in each group that contain the feature for it to be grouped.
-#' @param min_sample_num Numeric, specify minimum number of sample(s) in each group that contain the feature for it to be included.
-#' @param max_feats Numeric, specify the maximum number of features to be identified.
-#' @param peakgroup Boolean, if true, PeakGroup algorithm is used for peak alignment; if false, Obiwarp method is used. 
-#' @param bin_size Numeric, specify the bin size (in m/z) to be used for the profile matrix generation used for peak alignment (Obiwarp method).
-#' @param min_frac_retcor Numeric, specify fraction of samples in all groups that contain the peaks for them to be aligned (PeakGroup method).
-#' @param rt_filt Boolean, if true, users must specify the minimum and maximum retention
-#' time to be included in the analysis. By default this is set to 200 - 1000. 
-#' @param rt_min Numeric, specify the minimum retention time.
-#' @param rt_max Numeric, specify the maximum retention time.
-#' @author Zhiqiang Pang \emial {zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+#' @param noise Numeric, specify the noise level for peaking picking.Only work for 'centWave'.
+#' @param prefilter Numeric, specify the scan number threshold for prefilter.Only work for 'centWave'.
+#' @param value_of_prefilter Numeric, specify the scan abundance threshold for prefilter. Only work for 'centWave'.
+#' @param fwhm numeric specifying the full width at half maximum of matched filtration gaussian model peak. Only work for 'matchedFilter'.
+#' @param steps numeric defining the number of bins to be merged before filtration. Only work for 'matchedFilter'.
+#' @param sigma numeric specifying the standard deviation (width) of the matched filtration model peak. Only work for 'matchedFilter'.
+#' @param profStep numeric defining the bin size (in mz dimension) to be used for the profile matrix generation. Only work for 'obiwarp'.
+#' @param minFraction Numeric, specify fraction of samples in each group that contain the feature for it to be grouped.
+#' @param minSamples Numeric, specify minimum number of sample(s) in each group that contain the feature for it to be included.
+#' @param maxFeatures Numeric, specify the maximum number of features to be identified.
+#' @param ... Other parameters, including max,extra,span,smooth,family,fitgauss, verbose.columns,mzCenterFun,integrate. Usually don't 
+#' need to change.
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
@@ -1819,34 +1822,3 @@ SetPeakParam <- function(platform = "general",Peak_method = "centWave",RT_method
 }
 
 
-SetPeakParam_old <- function(alg = "centwave", ppm = 10, min_pkw = 10, 
-                             max_pkw = 60, sn_thresh = 6, mzdiff = 0.01, bw = 5,
-                             min_frac = 0.5, min_sample_num = 1,
-                             max_feats = 100, 
-                             peakgroup = FALSE,
-                             bin_size = 1, min_frac_retcor = 0.9,
-                             rt_filt = FALSE, 
-                             rt_min = 200, rt_max = 1000){
-  
-  peakParams <- list()
-  
-  peakParams$algorithm <- alg
-  peakParams$polarity <- polarity
-  peakParams$ppm <- ppm
-  peakParams$min_pkw <- min_pkw
-  peakParams$max_pkw <- max_pkw
-  peakParams$sn_thresh <- sn_thresh
-  peakParams$mzdiff <- mzdiff
-  peakParams$bw <- bw
-  peakParams$min_frac <- min_frac
-  peakParams$min_sample_num <- min_sample_num
-  peakParams$max_feats <- max_feats
-  peakParams$peakgroup <- peakgroup
-  peakParams$bin_size <- bin_size
-  peakParams$min_frac_retcor <- min_frac_retcor
-  peakParams$rt_filt <- rt_filt
-  peakParams$rt_min <- rt_min
-  peakParams$rt_max <- rt_max
-  
-  return(peakParams)
-}

@@ -7,19 +7,31 @@
 #' users to inspect. This is an optional parameter, if absent, will display the MS of the whole RT range.
 #' @param mz.range Numerics, a congregation of two values to define the lower and upper mz range for 
 #' users to inspect. This is an optional parameter, if absent, will display the MS of the whole mz range.
-#' @param num Numeric, the order of the sample to inspect according to the names.
 #' @param dimension Character, the dimension for sample to display, including '2D' or '3D'. The default is '3D'.
+#' @param res Numeric, the resolution for data inspectation. The larger the value, the higher the resolution.
+#' The default value is 100. This value is usually clearly enough and also give consideration to the speed.
 #' @export
 #' @import MSnbase
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
 #' License: GNU GPL (>= 2)
 
-PerformDataInspect<-function(datapath, rt.range, mz.range,
-                             num = 1, dimension="3D", res=100){
-  require("MSnbase")
+PerformDataInspect<-function(datapath, rt.range, mz.range, dimension="3D", res=100){
   
-  mzf<-list.files(datapath,recursive = F,full.names = T)[num]
+  suppressMessages(require("MSnbase"))
+  
+  if (!grepl(pattern = c("*.mzXML"),basename(datapath)) & 
+      !grepl(pattern = c("*.mzML"),basename(datapath)) & 
+      !grepl(pattern = c("*.CDF"),basename(datapath))){
+    
+    print(paste("First file in ", datapath, " will be inspected !"))
+    
+    mzf<-list.files(datapath,recursive = F,full.names = T)
+    
+  } else {
+    mzf <- datapath
+  }
+  
   cat(basename(mzf),"\n")
   ms <- openMSfile(mzf)
   hd <- header(ms)
@@ -118,14 +130,14 @@ PerformDataInspect<-function(datapath, rt.range, mz.range,
 #' @description This function performs the raw data trimming. This function will output 
 #' an trimmed MSnExp file to memory or hardisk according to the choice of users must 
 #' provide the data path for 'datapath', and optionally provide other corresponding parameters.
-#' @param datapath Character, the path of the raw MS data files (.mzXML, .CDF and .mzML) 
-#' for parameters training
+#' @param datapath Character, the path of the raw MS data files' folder/path (.mzXML, .CDF and .mzML) 
+#' for parameters training.
 #' @param mode Character, mode for data trimming to select the chraracteristic peaks. 
-#' Default is 'ssm_trim'. Users could select random trimed according to mz value (mz_random) or 
+#' Default is 'ssm'. Users could select random trimed according to mz value (mz_random) or 
 #' RT value (rt_random). Besides, specific peaks at certain mz (mz_specific) or 
 #' RT (rt_specific) could also be extracted. 'none' will not trim the data.
-#' @param mz Numeric, mz value(s) for specific selection. Positive values means including and 
-#' negative value means excluding.
+#' @param mz Numeric, mz value(s) for specific selection. Positive values means including (the values 
+#' indicted) and negative value means excluding/removing.
 #' @param mzdiff Numeric, the deviation (ppm) of mz value(s).
 #' @param rt Numeric, rt value for specific selection. Positive values means including 
 #' and negative value means excluding.
@@ -144,10 +156,12 @@ PerformDataInspect<-function(datapath, rt.range, mz.range,
 #' Mcgill University
 #' License: GNU GPL (>= 2)
 
-PerformDataTrimming<-function(datapath, mode="ssm_trim", write=F, mz, mzdiff, rt, rtdiff, 
+PerformDataTrimming<-function(datapath, mode="ssm", write=F, mz, mzdiff, rt, rtdiff, 
                               rt.idx=1/15, plot=T){
   
   require(progress);require(Biobase);
+  
+  match.arg(mode,choices = c("ssm","mz_random","rt_random","mz_specific","rt_specific"))
   
   start.time<-Sys.time();
   
@@ -176,7 +190,7 @@ PerformDataTrimming<-function(datapath, mode="ssm_trim", write=F, mz, mzdiff, rt
       rt.idx <- 1/15
     };
     
-    if (mode=="ssm_trim"){
+    if (mode=="ssm"){
       trimed_MSnExp<-ssm_trim(raw_data,ms_list,rt.idx=rt.idx)
     }
     
@@ -594,7 +608,7 @@ mz.trim_specific<-function(raw_data, ms_list, mz, mzdiff=100){
 #' @param raw_data MSnExp object, the raw data that has been read in memory.
 #' @param ms_list List, the names list of all scans.
 #' @param mz Numeric, the specifric RT value that will be kept or removed.
-#' @param mzdiff Numeric, the deviation (ppm) for the 'rt' values. Default is 10.
+#' @param mzdiff Numeric, the deviation (ppm) for the 'rt' values. Default is 100.
 #' @import progress
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
@@ -658,7 +672,9 @@ rt.trim_specific<-function(raw_data,ms_list,rt,rtdiff=10){
   return(raw_data)
 }
 
-# Function for 'Empty scan' removal
+#' Function for 'Empty scan' removal
+#' @description Function for 'Empty scan' removal (internal use only)
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
 .emptyscan.remove<-function(raw_data,ms_list){
   
   name.set<-sort(names(raw_data@assayData))
@@ -704,17 +720,28 @@ rt.trim_specific<-function(raw_data,ms_list,rt,rtdiff=10){
   return(raw_data)
 }
 
+#' Function MS Generation
+#' @description Output the MS data. This function will generate .mzML MS data in the working dirctory.
+#' @param raw_data MS data in R environment with "MSnExp" class.
+#' @import MSnbase
+#' @export
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mcgill University
+#' License: GNU GPL (>= 2)
 PerformMSDataOutput<-function(raw_data){
   message("Data Writing...")
   writenames<-paste0("new_",raw_data@phenoData@data[["sample_name"]],sep = "")
   #dir.create(paste0(datapath,"/trimed",collapse = ""))
-  suppressMessages(writeMSData(raw_data, writenames, outformat = "mzxml"))
+  suppressMessages(writeMSData(raw_data, writenames, outformat = "mzML"))
   message("Output Data:","\n");
   message(writenames)
+  message(paste("Depositing Folder:",getwd()))
   message("Data Writing Finished !")
 }
 
-# Function for 3D ms plotting
+#' Function for 3D ms plotting
+#' @description Function for 3D ms plotting (internal use only)
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
 plot.MS_3D<-function(object) {
   
   dd <- as(object, "data.frame")

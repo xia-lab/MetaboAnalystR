@@ -1,3 +1,16 @@
+# .onAttatch
+#
+.onAttach <- function (libname, pkgname){
+  k1 <- paste("MetaboAnalystR",utils::packageVersion( "MetaboAnalystR"),"initialized Successfully !")
+  k0 <- "\n"
+  k2 <- paste("https://github.com/xia-lab/MetaboAnalystR")
+  
+  packageStartupMessage(c(k1,k0,k2))
+  
+}
+
+
+
 ### Generic DataClass Defination----------
 # 1. This xcmsSet is defined as refereced to XCMS for CAMERA annotation but not completely same
 ##' @references Smith, C.A., Want, E.J., O'Maille, G., Abagyan,R., Siuzdak, G. (2006). 

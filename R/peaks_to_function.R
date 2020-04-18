@@ -243,16 +243,16 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
   ndat <- mSetObj$dataSet$mummi.orig;
   pos_inx = mSetObj$dataSet$pos_inx
-  ndat <- cbind(ndat, pos_inx)
+  ndat <- data.frame(cbind(ndat, pos_inx), stringsAsFactors = FALSE)
   
   rawdat <- mSetObj$dataSet$mummi.raw
   
   if(mSetObj$dataSet$mumRT){
-    na.num <- sum(is.na(rawdat$rt))
+    na.num <- sum(is.na(ndat$rt))
     # filter out any reads w. NA RT
     if(na.num>0){
-      na.inx <- which(is.na(rawdat$rt))
-      rawdat <- rawdat[-na.inx,]
+      na.inx <- which(is.na(ndat$rt))
+      ndat <- ndat[-na.inx,]
       msg.vec <- c(msg.vec, paste("A total of <b>", na.num, "</b> mz features with missing retention times were removed."));
     }
   }
@@ -927,9 +927,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     saveRDS(df_ecs, "initial_ecs.rds")
     # df_ecs2 <- aggregate(. ~ ec, df_ecs, paste, collapse=";")
     merged_ecs <- aggregate(. ~ str_row_inx, df_ecs, paste, collapse=";")
-
+    
     # cleaning the df
-    merged_ecs$ec <- sapply(strsplit(merged_ecs$ec, ";"), function(x) unlist(x)[1])
+    # merged_ecs$ec <- sapply(strsplit(merged_ecs$ec, ";"), function(x) unlist(x)[1]) - keep as long name
     merged_ecs$mz <- sapply(strsplit(merged_ecs$mz, ";"), function(x) unique(unlist(x)))
     merged_ecs$form <- sapply(strsplit(merged_ecs$form, ";"), function(x) unique(unlist(x)))
     merged_ecs$rt <- sapply(strsplit(merged_ecs$rt, ";"), function(x) unique(unlist(x)))
@@ -972,9 +972,59 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     matched_res <- matched_res[,-6] #rm rt rank
     matched_res[,6] <- as.character(matched_res[,6])
     
+    # now deal with the fact that if at least one EC overlap, need to count as same EC per compound...
+    my_final_cpds <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse="_")
+    #my_final_cpds <- my_final_cpds[match(merged_final_diff[,1], my_final_cpds$Matched.Compound),] # to delete later
+    my_final_cpds_list <- lapply(split(my_final_cpds$Empirical.Compound, my_final_cpds$Matched.Compound), unlist)
+    
+    cpd2ec1 <- lapply(seq_along(my_final_cpds_list), function(x) { # function used to make grouping of ecs per cpd
+      
+      ecs <- unlist(strsplit(my_final_cpds_list[[x]], "_"))
+      
+      if(length(ecs) > 1){
+        ecs.list <- as.list(strsplit(ecs, ";"))
+        library(igraph)
+        m = sapply(ecs.list, function(x) sapply(ecs.list, function(y) length(intersect(x,y))>0))
+        g = igraph::groups(components(graph_from_adjacency_matrix(m)))
+        ecs <- paste0(sapply(g, function(z) paste0(ecs[z], collapse = "|") ), collapse = "_")
+      }
+      ecs
+    })
+    
+    names(cpd2ec1) <- names(my_final_cpds_list)
+
+    update_ecs <- lapply(seq_along(cpd2ec1), function(z) {
+      
+      ecs.old <- unlist(strsplit(my_final_cpds_list[[z]], "_"))
+      ecs.new <- unlist(strsplit(cpd2ec1[[z]], "_"))
+      
+      for(i in 1:length(ecs.new)){
+        pattern <- ecs.new[i]
+        pattern_vec <- unlist(strsplit(pattern, "\\|"))
+        up.pattern <- paste0(unique(pattern_vec), collapse = "|")
+        ecs.old[ ecs.old %in% pattern_vec  ] <- up.pattern
+      }
+      
+      ecs.old <- paste0(ecs.old, collapse = "_")
+      ecs.old
+    })
+    
+    updated_ecs <- do.call(rbind, update_ecs)
+    my_final_cpds$Empirical.Compound <- updated_ecs
+    
+    new_dt <- data.table::data.table(my_final_cpds)
+    new_dt <- new_dt[, list(Query.Mass = unlist(strsplit(as.character(Query.Mass), "_")), 
+                        Matched.Form = unlist(strsplit(as.character(Matched.Form), "_")),
+                        Retention.Time = unlist(strsplit(as.character(Retention.Time), "_")),
+                        Mass.Diff = unlist(strsplit(as.character(Mass.Diff), "_")),
+                        Empirical.Compound = unlist(strsplit(as.character(Empirical.Compound), "_"))),
+                 by = Matched.Compound]
+    
+    matched_res2 <- data.frame(new_dt)
+    
     end <- Sys.time()
     totaltime <- end-start
-    print(paste0(length(unique(matched_res$Empirical.Compound)), " empirical compounds identified in ", totaltime))
+    print(paste0(length(unique(matched_res$Empirical.Compound)), " empirical compounds identified in ", totaltime, " seconds."))
   }
   
   # now update expr. profile
@@ -1010,6 +1060,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     mSetObj$ec2mz_dict <- ec2mz_dict
     mSetObj$ecpd_cpd_dict <- ecpd_cpd_dict
     mSetObj$cpd_ecpd_dict <- cpd_ecpd_dict
+    mSetObj$cpd_ecpd_counts <- cpd2ec1
     
     # now do matching to identify significant input_ecpdlist
     # trio.list <- data.frame(mz = names(mz2ec_dict), ec = sapply(mz2ec_dict, paste, collapse="; "), cpd = sapply(mz2cpd_dict, paste, collapse="; "))
@@ -1951,12 +2002,12 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
                             num_annot = 5){
   
   mSetObj <- .get.mSet(mSetObj);
+  
   if(anal.type == "mummichog"){
     mummi.mat <- mSetObj$mummi.resmat
-    y <- -log10(mummi.mat[,5]);
+    y <- -log10(mummi.mat[,7]);
     x <- mummi.mat[,3]/mummi.mat[,4]
     pathnames <- rownames(mummi.mat)
-    
   }else{
     gsea.mat <- mSetObj$mummi.gsea.resmat
     y <- -log10(gsea.mat[,3])
@@ -2067,8 +2118,8 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
 #' @import scales
 
 PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
-                           labels.x = 5, labels.y = 5){
-  
+                           labels.x = 5, labels.y = 5, scale.axis = TRUE){
+
   mSetObj <- .get.mSet(mSetObj);
   
   # check if mummichog + gsea was performed
@@ -2081,13 +2132,30 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   pathnames <- rownames(combo.resmat)
   # Sort values based on combined pvalues
   y <- -log10(combo.resmat[,4]);
-  y <- scales::rescale(y, c(0,4))
+  
+  # Correct the Inf issue
+  
+  if (any(!is.finite(y))){
+    y1<-y[-unname(which(y==Inf))]
+    y[unname(which(!is.finite(y)))]<-max(y1,na.rm = T)+1
+  }
+  
   
   x <- -log10(combo.resmat[,5]);
-  x <- scales::rescale(x, c(0,4))
-  
   combo.p <- -log10(combo.resmat[,6])
-  combo.p <- scales::rescale(combo.p, c(0,4))
+  
+  # Correct the Inf issue
+  if (any(!is.finite(combo.p))){
+    combo.p1<-combo.p[-unname(which(combo.p==Inf))]
+    combo.p[unname(which(!is.finite(combo.p)))]<-max(combo.p1,na.rm = T)+1
+  }
+  
+  
+  if(scale.axis){
+    y <- scales::rescale(y, c(0,4))
+    x <- scales::rescale(x, c(0,4))
+    combo.p <- scales::rescale(combo.p, c(0,4))
+  }
   
   inx <- order(combo.p, decreasing= T);
   
@@ -2140,22 +2208,29 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
-  axis(1);
-  axis(2);
-  symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
-  axis.lims <- par("usr")
-  
-  # mummichog sig
-  mum.x <- c(axis.lims[1], axis.lims[1], axis.lims[2], axis.lims[2])
-  mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
-  polygon(mum.x, mum.y, col=rgb(82/255,193/255,188/255,0.3), border = NA)
-  
-  # gsea sig
-  gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
-  gsea.y <- c(axis.lims[1],axis.lims[4],axis.lims[4],axis.lims[1])
-  polygon(gsea.x, gsea.y, col=rgb(216/255,126/255,178/255,0.3), border = NA)
+  # color blocks only make sense if scaled...
+  if(scale.axis){
+    plot(x, y, type="n", axes=F, xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
+    axis(1);
+    axis(2);
+    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+    
+    axis.lims <- par("usr")
+    
+    # mummichog sig
+    mum.x <- c(axis.lims[1], axis.lims[1], axis.lims[2], axis.lims[2])
+    mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
+    polygon(mum.x, mum.y, col=rgb(82/255,193/255,188/255,0.3), border = NA)
+    
+    # gsea sig
+    gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
+    gsea.y <- c(axis.lims[1],axis.lims[4],axis.lims[4],axis.lims[1])
+    polygon(gsea.x, gsea.y, col=rgb(216/255,126/255,178/255,0.3), border = NA)
+  }else{
+    plot(x, y, type="n", xlim=c( 0, round(max(x)) ), ylim=c(0, round(max(y)) ), xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
+    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+  }
   
   if(labels=="default"){
     text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
@@ -2190,7 +2265,7 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import ggplot2
-#' @import reshape2
+#' @importFrom reshape2 melt
 #' @import scales
 
 PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300, width=10){

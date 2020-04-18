@@ -1,4 +1,13 @@
-# I. Internal Functions from Plotly Package
+#' I. Internal Functions from Plotly Package
+#' THe functions are from Plotly Package and was called internally only
+#' @references https://cran.r-project.org/package=plotly
+#' @references Sievert C (2020). Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC. ISBN 9781138331457, https://plotly-r.com.
+#' @import htmltools
+#' @import jsonlite
+#' @importFrom graphics layout
+#' @importFrom tibble as_tibble
+#' @importFrom purrr transpose
+#' 
 
 # (1). Add_markers & add_data
 add_trace <- function(p, ...,data = NULL, inherit = TRUE) {

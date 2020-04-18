@@ -579,7 +579,6 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
 #'
 GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
   mSetObj <- .get.mSet(mSetObj);
@@ -666,7 +665,6 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
 
 #'Set peak list group values
 #'@param mSetObj Input name of mSetObj, the data used is the nmr.xcmsSet object
-#'@export
 #'
 SetPeakList.GroupValues <- function(mSetObj=NA) {
   mSetObj <- .get.mSet(mSetObj);
@@ -723,8 +721,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param bw Numeric, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 #'kernel to apply to the peak density chromatogram
-#'@export
-#'
+
 MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
   mSetObj <- .get.mSet(mSetObj);
   xset2 <- xcms::retcor(mSetObj$dataSet$xset.orig)
@@ -743,7 +740,7 @@ MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@export
+
 PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -773,7 +770,7 @@ PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'integrating signals at those regions to create a new peak. 
 #'@usage MSspec.fillPeaks(mSetObj=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@export
+
 MSspec.fillPeaks <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -804,7 +801,6 @@ MSspec.fillPeaks <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
 
 SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   
@@ -827,7 +823,6 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
 
 #'Check if the spectra processing is ok
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@export
 #'
 IsSpectraProcessingOK <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -871,7 +866,6 @@ GetGroupNumber<-function(mSetObj=NA){
 #'or will return a 1 if the data does not. 
 #'@usage IsSmallSmplSize(mSetObj=NA) 
 #'@param mSetObj Input name of the created mSet Object
-#'@export
 #'
 IsSmallSmplSize<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -889,69 +883,3 @@ IsDataContainsNegative<-function(mSetObj=NA){
   return(mSetObj$dataSet$containsNegative);
 }
 
-########## Utility Functions ##############
-#'Perform utilities for peak grouping
-#'@description Perform various utilities for peak grouping
-#'@param y Input peaks
-#'@param istart Performs which.max on y
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-descendMin <- function(y, istart = which.max(y)) {
-  
-  if (!is.double(y)) y <- as.double(y)
-  unlist(.C("DescendMin",
-            y,
-            length(y),
-            as.integer(istart-1),
-            ilower = integer(1),
-            iupper = integer(1),
-            DUP = FALSE, PACKAGE = "xcms")[4:5]) + 1
-}
-
-#'Perform utilities for peak grouping
-#'@description Perform various utilities for peak grouping
-#'@param x Input the data
-#'@param values Input the values 
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-findEqualGreaterM <- function(x, values) {
-  
-  if (!is.double(x)) x <- as.double(x)
-  if (!is.double(values)) values <- as.double(values)
-  .C("FindEqualGreaterM",
-     x,
-     length(x),
-     values,
-     length(values),
-     index = integer(length(values)),
-     DUP = FALSE, PACKAGE = "xcms")$index + 1
-}
-
-#'Perform utilities for peak grouping
-#'@description Perform various utilities for peak grouping
-#'@param m Peaks
-#'@param order Performs seq(length = nrow(m))
-#'@param xdiff Default set to 0
-#'@param ydiff Default set to 0
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
-rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
-  
-  nr <- nrow(m)
-  nc <- ncol(m)
-  if (!is.double(m))
-    m <- as.double(m)
-  .C("RectUnique",
-     m,
-     as.integer(order-1),
-     nr,
-     nc,
-     as.double(xdiff),
-     as.double(ydiff),
-     logical(nrow(m)),
-     DUP = FALSE, PACKAGE = "xcms")[[7]]
-}

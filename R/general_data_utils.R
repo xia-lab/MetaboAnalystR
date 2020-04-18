@@ -20,6 +20,91 @@
   }
 }
 
+# Used to defined the parallel namespace for peak picking
+peak_function_list <- list("PerformPeakPicking",
+                           "PeakPicking_centWave_slave",
+                           "PerformPeakGrouping",
+                           "Densitygrouping_slave",
+                           "PerformPeakAlignment",
+                           "RT.Adjust_Slave",
+                           "PerformPeakFiling",
+                           "mSet2xcmsSet",
+                           "updateRawSpectraParam",
+                           "continuousPtsAboveThreshold",
+                           "getLocalNoiseEstimate",
+                           "continuousPtsAboveThresholdIdx",
+                           "MSW.cwt",
+                           "MSW.extendNBase",
+                           "MSW.extendLength",
+                           "MSW.getLocalMaximumCWT",
+                           "MSW.localMaximum",
+                           "MSW.getRidge",
+                           "descendMin",
+                           "descendMinTol",
+                           "joinOverlappingPeaks",
+                           "trimm",
+                           "findEqualGreaterM",
+                           "na.flatfill",
+                           "SSgauss",
+                           "rectUnique",
+                           ".narrow_rt_boundaries",
+                           ".rawMat",
+                           ".getPeakGroupsRtMatrix",
+                           ".peakIndex",
+                           ".applyRtAdjToChromPeaks",
+                           ".applyRtAdjustment",
+                           ".getChromPeakData",
+                           ".feature_values",
+                           ".groupval",
+                           "binYonX",
+                           "imputeLinInterpol",
+                           "colMax",
+                           "filtfft",
+                           "descendZero",
+                           "which.colMax",
+                           "breaks_on_nBins",
+                           ".aggregateMethod2int"
+                           
+                           
+)
+
+# Used to defined the parallel namespace for parameters optimization
+optimize_function_list <- c(list("PeakPicking_prep",
+                                 "Statistic_doe",
+                                 "SlaveCluster_doe",
+                                 "calculateSet_doe",
+                                 "SlaveCluster_doe",
+                                 "calculateSet_doe",
+                                 "calculatePPKs",
+                                 "calculateGPRT",
+                                 "calcPPS2",
+                                 "calcCV",
+                                 "resultIncreased_doe",
+                                 "calcRCS_GSValues",
+                                 "calcGaussianS",
+                                 "peaks_IPO",
+                                 "getClusterType",
+                                 "calcMaximumCarbon",
+                                 "getMaximumLevels",
+                                 "getMaxSettings",
+                                 "expand.grid.subset",
+                                 "typeCastParams",
+                                 "getCcdParameter",
+                                 "combineParams",
+                                 "getRGTVValues",
+                                 "findIsotopes.IPO",
+                                 "creatPeakTable",
+                                 "createModel",
+                                 "decode",
+                                 "decodeAll",
+                                 "encode",
+                                 "attachList",
+                                 "checkParams"),
+                            peak_function_list)
+
+
+
+
 #'Constructs a dataSet object for storing data 
 #'@description This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
 #'It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform. 

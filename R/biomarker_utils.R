@@ -530,6 +530,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom caret plsda
 Predict.class <- function(x.train, y.train, x.test, clsMethod="pls", lvNum, imp.out=F){
   
   # first convert class label to 0/1 so convert prob-> class will be easier
@@ -1888,6 +1889,7 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
 #'@param x.test Test X
 #'@param y.test Test Y
 #'@param clsMethod Method to predict class, by default it is PLS
+#'@importFrom caret plsda
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
