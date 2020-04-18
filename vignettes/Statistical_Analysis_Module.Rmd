@@ -4,7 +4,7 @@ author: "Jasmine Chong"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Statistical Analysis Module}
+  %\VignetteIndexEntry{c). Statistical Analysis Module}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,7 +23,7 @@ Univariate tests differ from multivariate tests in that they assess the importan
 
 To begin the SA module, we will start with identifying important features from the data set using various univariate tests, including classical methods such as the Student’s t-test and ANOVA, as well as other methods such as the volcano plot and correlation analysis. 
 
-```{r}
+```{r,eval=F}
 library(MetaboAnalystR)
 mSet<-InitDataObjects("conc", "stat", FALSE);
 mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
@@ -42,7 +42,7 @@ The goal of fold-change (FC) analysis is to compare the absolute value of change
 
 For paired analysis, the program first counts the number of pairs with consistent change above the given FC threshold. If this number exceeds a given count threshold, the variable will be reported as significant.
 
-```{r}
+```{r,eval=F}
 # Perform fold-change analysis on uploaded data, unpaired
 mSet<-FC.Anal.unpaired(mSet, 2.0, 0)
 
@@ -60,7 +60,7 @@ MetaboAnalystR supports various options for performing T-test analysis. Users ca
 
 Note, for a large data set (> 1000 variables), both the paired information and the group variance will be ignored, and the default parameters will be used for t-tests to save computational time. If you choose non-parametric tests (Wilcoxon rank-sum test), the group variance will be ignored.
 
-```{r}
+```{r,eval=F}
 # Perform T-test (parametric)
 mSet<-Ttests.Anal(mSet, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE)
 
@@ -73,7 +73,7 @@ mSet<-PlotTT(mSet, imgName = "tt_0_", format = "png", dpi = 72, width=NA)
 
 The volcano plot is a combination of fold change and t-test values. Note, for unpaired samples, the x-axis is log2(FC). For paired analysis, the x-axis is number of significant counts. The y-axis is -log10(p.value) for both cases, and can be based on raw or FDR adjusted p values from the t-tests. In *Volcano.Anal*, users can specify if the data are paired, the FC threshold, the comparison type, the signigicant count threshold if data are paired, whether the test is parametric or non-parametric, the p-value threshold, and the group variance. 
 
-```{r}
+```{r,eval=F}
 # Perform the volcano analysis
 mSet<-Volcano.Anal(mSet, FALSE, 2.0, 0, 0.75,F, 0.1, TRUE, "raw")
 
@@ -101,7 +101,7 @@ To perform correlation analysis to evaluate the correlation between all features
 
 Note, the heatmap will only show correlations for a maximum of 1000 features. For larger datasets, only top 1000 features will be selected based on their interquantile range (IQR). When color distribution is fixed, you can potentially compare the correlation patterns among different data sets. In this case, you can choose "do not perform clustering" for all data set, or only to perform clustering on a single reference data set, then manually re-arranged other data sets according to the clustering pattern of the reference data set.
 
-```{r}
+```{r,eval=F}
 ### OPTION 1 - Heatmap specifying pearson distance and an overview
 mSet<-PlotCorrHeatMap(mSet, "corr_0_", format = "png", dpi=72, width=NA, "col", "pearson", "bwm", "overview", F, F, F, 100)
 
@@ -119,7 +119,7 @@ mSet<-PlotCorrHeatMap(mSet, "corr_1_", format = "png", dpi=72, width=NA, "col", 
 
 Correlation analysis can be performed either against a given feature or against a given pattern. The pattern is specified as a series of numbers separated by "-". Each number corresponds to the expected expression pattern in the corresponding group. For example, a 1-2-3-4 pattern is used to search for features that increase linearly with time in a time-series data with four time points (or four groups). The order of the groups is given as the first item in the predefined patterns. Indicate the mSet object, the distance measure (Pearson, Spearman, or Kendall), and the pattern to use. 
 
-```{r}
+```{r,eval=F}
 # Perform correlation analysis on a pattern (a feature of interest in this case)
 mSet<-FeatureCorrelation(mSet, "pearson", "1,6-Anhydro-beta-D-glucose")
 
@@ -132,7 +132,7 @@ mSet<-PlotCorr(mSet, "ptn_3_", format="png", dpi=72, width=NA)
 
 To perform PCA, first use *PCA.Anal*. MetaboAnalystR has the options to create a scree plot (*PlotPCAScree*), score plot (*PlotPCA2DScore* or *PlotPCA3DScore*), loadings plot (*PlotPCALoading*), and biplot (*PlotPCABiplot*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$pca.3d" into your R console. Please refer to the user manual for details about each function. 
 
-```{r}
+```{r,eval=F}
 # Perform PCA analysis
 mSet<-PCA.Anal(mSet)
 
@@ -166,7 +166,7 @@ mSet$imgSet$pca.3d
 
 To perform PLS-DA, first use *PLSR.Anal*. MetaboAnalystR has the options to create a plot component pairs (*PlotPLSPairSummary*), score plot (*PlotPLS2DScore*), loadings plot (*PlotPLSLoading*), perform cross-validation and permutation (*PLSDA.CV* and *PLSDA.Permut*), and plot the results of the cross-validation and permutation (*PlotPLS.Imp* and *PlotPLS.Permutation*). For the score plots, users will create both a static as well as interactive 3D score plot. To view the interactive plot, type "mSet\$imgSet\$plsda.3d" into your R console. Please refer to the user manual for details about each function. 
 
-```{r}
+```{r,eval=F}
 mSet<-PLSR.Anal(mSet, reg=TRUE)
 
 mSet<-PlotPLSPairSummary(mSet, "pls_pair_0_", "png", 72, width=NA, 5)
@@ -203,7 +203,7 @@ To begin, use *SPLSR.Anal*. MetaboAnalystR has the options to create an overview
 
 To evaluate the performance of the created sPLS-DA models for classification, use *PlotSPLSDA.Classification*. The performance of the sPLS-DA models are evaluated using cross validations (CV) with increasing numbers of components created using the specified number of the variables. Users can choose to use either 5-fold CVs or leave one out cross-validation (LOOCV). Please note that the results from 5-fold CV may change slightly due to random subsampling procedures. 
 
-```{r}
+```{r,eval=F}
 # Perform sPLS-DA analysis
 mSet<-SPLSR.Anal(mSet, 5, 10, "same", "Mfold")
 
@@ -234,7 +234,7 @@ mSet$imgSet$splsda.3d
 
 MetaboAnalystR can create several outputs for oPLS-DA analysis. To begin, use the *OPLSR.Anal* function. The outputs for oPLS-DA include a score plot, a plot to identify significant features, a model overview plot, and a plot of model permutations. For the significant features plot, the plot visualizes the variable influence in the orthogonal PLS-DA model. It combines the covariance and correlation loading profiles. This corresponds to combining the contribution or magnitude (covariance) with the effect and reliability (correlation) for the model variables with respect to model component scores (details). To begin, please use the *OPLSR.Anal* function. Please refer to the user manual for further details on the functions.
 
-```{r}
+```{r,eval=F}
 # Perform oPLS-DA analysis
 mSet<-OPLSR.Anal(mSet, reg=TRUE)
 
@@ -256,7 +256,7 @@ mSet<-PlotOPLS.Permutation(mSet, "opls_perm_2_", format = "png", dpi=72, width=N
 
 SAM is a well-established statistical method for identification of differentially expressed genes in mi- croarray data analysis. It is designed to address the false discovery rate (FDR) when running multiple tests on high-dimensional microarray data. SAM assigns a significance score to each variable based on its change relative to the standard deviation of repeated measurements. For a variable with scores greater than an adjustable threshold, its relative difference is compared to the distribution estimated by random permutations of the class labels. For each threshold, a certain proportion of the variables in the permutation set will be found to be significant by chance. The proportion is used to calculate the FDR. SAM is performed using the *siggenes* package. Users need to specify the Delta value to control FDR in order to proceed. To begin the SAM analysis, use the *SAM.Anal* function. Please refer to the user manual for further details on the functions. 
 
-```{r}
+```{r,eval=F}
 # Perform SAM analysis
 mSet<-SAM.Anal(mSet, "d.stat", FALSE, TRUE, 0.0, "sam_imp_0_")
 
@@ -274,7 +274,7 @@ EBAM is an empirical Bayesian method based on moderated t-statistics. EBAM uses 
 
 To perform EBAM analysis, begin with the *EBAM.AO.Init* function. To create a plot of the EBAM analysis, use *PlotEBAM.AO*. Please refer to the user manual for further details on the functions.
 
-```{r}
+```{r,eval=F}
 # Perform EBAM analysis
 mSet<-EBAM.Init(mSet, FALSE, TRUE, FALSE, -99.0, 0.9, "ebam_view_0_", "ebam_imp_0_")
 
@@ -287,7 +287,7 @@ mSet<-PlotEBAM.Cmpd(mSet, "ebam_imp_0_", "png", 72, width=NA)
 
 In (agglomerative) hierarchical cluster analysis, each sample begins as a separate cluster and the algo- rithm proceeds to combine them until all samples belong to one cluster. Two parameters need to be considered when performing hierarchical clustering. The first one is distance measure, including the Euclidean distance, Pearson’s correlation, or Spearman’s rank correlation. The other parameter is the clustering algorithm, which includes the average linkage (clustering uses the centroids of the observations), complete linkage (clustering uses the farthest pair of observations between the two groups), single linkage (clustering uses the closest pair of observations) and Ward’s linkage (clustering to minimize the sum of squares of any two clusters). Heatmap is often presented as a visual aid in addition to the dendrogram. Hierachical clustering is performed with the *hclust* function in package stat. Use the *PlotHCTree* to create the dendogram, where users can specify the distance measure and the clustering algorithm. Please refer to the user manual for further details on the function. 
 
-```{r}
+```{r,eval=F}
 # Perform hierarchical clustering and plot dendogram
 mSet<-PlotHCTree(mSet, "tree_0_", format = "png", dpi=72, width=NA, "euclidean", "ward.D")
 
@@ -299,7 +299,7 @@ The heatmap provides intuitive visualization of the metabolomics data table. Eac
 
 In (agglomerative) hierarchical cluster analysis, each sample begins as a separate cluster and the algorithm proceeds to combine them until all samples belong to one cluster. Two parameters need to be considered when performing hierarchical clustering. The first one is the similarity measure, options in MetaboAnalystR include Euclidean distance, Pearson’s correlation, and Spearman’s rank correlation. The other parameter is the choice of clustering algorithms, including average linkage (clustering uses the centroids of the observations), complete linkage (clustering uses the farthest pair of observations between the two groups), single linkage (clustering uses the closest pair of observations) and Ward’s linkage (clustering to minimize the sum of squares of any two clusters). Hierachical clustering is performed with the *hclust* function in package stat. Use the *PlotHeatMap* function, where users can specify the distance measure, the clustering algorithm, the color contrast, a detailed or overview view of the data, and options for the data input for the heatmap. Please refer to the user manual for further details.
 
-```{r}
+```{r,eval=F}
 # Perform hierarchical clustering and plot heat map
 mSet<-PlotHeatMap(mSet, "heatmap_0_", format = "png", dpi=72, width=NA, "norm", "row", "euclidean", "ward.D","bwm", "overview", T, T, NA, T, F)
 
@@ -309,7 +309,7 @@ mSet<-PlotHeatMap(mSet, "heatmap_0_", format = "png", dpi=72, width=NA, "norm", 
 
 K-means clustering is a nonhierarchical clustering technique. It begins by creating k random clusters (k is supplied by user). The program then calculates the mean of each cluster. If an observation is closer to the centroid of another cluster then the observation is made a member of that cluster. This process is repeated until none of the observations are reassigned to a different cluster. K-means analysis is performed using the *kmeans* function in the package *stat*. To begin, use the *Kmeans.Anal* function, and then the *PlotKmeans* function to create a plot of the analysis. 
 
-```{r}
+```{r,eval=F}
 # Perform K-means analysis
 mSet<-Kmeans.Anal(mSet, 3)
 
@@ -324,7 +324,7 @@ SOM is an unsupervised neural network algorithm used to automatically identify m
 
 MetaboAnalystR performs several outputs for self organizing maps. To begin, use the *SOM.Anal* function to perform SOM analysis. Then use the *PlotSOM* to create a plot of the SOM analysis. 
 
-```{r}
+```{r,eval=F}
 # Perform SOM analysis
 mSet<-SOM.Anal(mSet, 1, 3,"linear","gaussian")
 
@@ -339,7 +339,7 @@ Random Forest is a supervised learning algorithm suitable for high dimensional d
 
 MetaboAnalystR performs several outputs for the random forest analysis. To begin, use the *RF.Anal* function. The *PlotRF.Classify* function creates a plot of the out-of-the-bag error rate for the random forest classification. The *PlotRF.VIP* function creates a plot of the contributions of variables with high importance to the classification of the random forest model. In this plot, the features are ranked by their contributions to classification accuracy (Mean Dicrease Accuracy). The *PlotRF.Outlier* creates a plot of the outlying samples in the random forest model. 
 
-```{r}
+```{r,eval=F}
 # Perform random forest analysis
 mSet<-RF.Anal(mSet, 500, 7, 1)
 
@@ -358,7 +358,7 @@ mSet<-PlotRF.Outlier(mSet, "rf_outlier_0_", format = "png", dpi=72, width=NA)
 
 SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. The SVM- based recursive feature selection and classification is performed using the R-SVM script11. The process is performed recursively using decreasing series of feature subsets (ladder) so that different classification models can be calculated. Feature importance is evaluated based on its frequencies being selected in the best classifier identified by recursive classification and cross-validation. Please note, R-SVM is very computationally intensive. Only the top 50 features (ranked by their p values from t-tests) will be evaluated.
 
-```{r}
+```{r,eval=F}
 # Perform SVM 
 mSet<-RSVM.Anal(mSet, 10)
 

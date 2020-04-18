@@ -4,7 +4,7 @@ author: "Jasmine Chong, Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{MS Peaks to Pathways}
+  %\VignetteIndexEntry{l). MS Peaks to Pathways}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -30,7 +30,7 @@ The output of this module first consists of a table of results identifying the t
 
 For this tutorial we will first directly use the an example peak list data obtained from untargeted metabolomics of pediatric IBD (mass accuracy 5.0, negative ion mode). This is an example of the three-column table containing the m.z, p.value and t.score.
 
-```{r}
+```{r,eval=F}
 library(MetaboAnalystR)
 
 # Create objects for storing processed data from the MS peaks to pathways module

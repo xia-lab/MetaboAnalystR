@@ -1,10 +1,10 @@
 ---
 title: "Enrichment Analysis"
-author: "Jasmine Chong, Jeff Xia"
+author: "Jasmine Chong, Zhiqiang Pang and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Enrichment Analysis}
+  %\VignetteIndexEntry{e). Enrichment Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,8 +21,12 @@ Below we will go over 2 use-cases to perform Enrichment Analysis, the first usin
 
 We will go over two analysis workflows, the first is when the input is a list to perform over representation analysis. The first step is to create a vector containing a list of compound names. The list will then be cross-referenced (*CrossReferencing*) against the MetaboAnalyst compound libraries (HMDB, PubChem, KEGG, etc.), and any compounds without a hit will have NA. This step may take long due to downloading of libraries if they do not already exist in your working directory.
 
-```{r}
+```{r, eval=FALSE, message = FALSE, warning = FALSE}  
 library(MetaboAnalystR)
+```
+
+
+```{r, eval=FALSE}
 
 ## When input is a list
 
@@ -64,7 +68,7 @@ $match.state
 ```
 
 Continute with the enrichment analysis...
-```{r}
+```{r, eval=FALSE}
 # Create the mapping results table
 mSet<-CreateMappingResultTable(mSet)
 
@@ -94,7 +98,7 @@ mSet<-PlotORA(mSet, "ora_0_", "bar", "png", 72, width=NA)
 
 Below, we will go over a second analysis workflow to perform QEA, where the data input is a concentration table consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
 
-```{r}
+```{r, eval=FALSE}
 # Create mSetObj
 mSet<-InitDataObjects("conc", "msetqea", FALSE)
 
@@ -149,7 +153,7 @@ This means that the function was unable to download the "compound_db.rds" file f
 
 ## 3. Sweave Report 
 
-To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
+To prepare the sweave report, please use the *PreparePDFReport* function. You must ensure that you have the necessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created *must* be named *mSet*, and specify the user name in quotation marks. 
 
 ```{r, eval=FALSE}
 PreparePDFReport(mSet, "My Name")

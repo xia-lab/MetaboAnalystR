@@ -4,7 +4,7 @@ author: "Jasmine Chong, Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Pathway Analysis}
+  %\VignetteIndexEntry{g). Pathway Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,7 +17,7 @@ The pathway analysis module supports pathway analysis (integrating enrichment an
 
 In this workflow, we will perform pathway analysis where the input is a list of compound names.
 
-```{r}
+```{r,eval=F}
 # Create vector consisting of compounds for enrichment analysis 
 tmp.vec <- c("Acetoacetic acid", "Beta-Alanine", "Creatine", "Dimethylglycine", "Fumaric acid", "Glycine", "Homocysteine", "L-Cysteine", "L-Isolucine", "L-Phenylalanine", "L-Serine", "L-Threonine", "L-Tyrosine", "L-Valine", "Phenylpyruvic acid", "Propionic acid", "Pyruvic acid", "Sarcosine")
 
