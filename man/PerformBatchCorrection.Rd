@@ -2,21 +2,32 @@
 % Please edit documentation in R/others_batch_check.R
 \name{PerformBatchCorrection}
 \alias{PerformBatchCorrection}
-\title{Set up two matrixes}
+\title{Batch Effect Correction}
 \usage{
-PerformBatchCorrection(mSetObj = NA, imgName)
+PerformBatchCorrection(
+  mSetObj = NA,
+  imgName = NULL,
+  Method = NULL,
+  center = NULL
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
 \item{imgName}{Input the name of the plot to create}
+
+\item{Method}{Batch effect correction method, default is "Automatically". Specific method, including "Combat",
+"WaveICA","EigenMS","QC_RLSC","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".}
+
+\item{center}{The center point of the batch effect correction, based on "QC" or "", which means correct 
+to minimize the distance between batches.}
 }
 \description{
 One is a batch containing summed concentrations of each sample
 the other contains the features aligned across all samples
 }
 \author{
-Jeff Xia \email{jeff.xia@mcgill.ca}
+Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
 }

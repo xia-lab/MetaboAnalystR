@@ -17,7 +17,7 @@ PlotEIC(
 )
 }
 \arguments{
-\item{raw_data}{The object created using the InspectRawMSData function,
+\item{raw_data}{The object created using the ImportRawMSData function,
 containing the raw MS data.}
 
 \item{rt_mn}{Numeric, specify the minimum bound of the retention time range.}

@@ -4,7 +4,7 @@
 \alias{Read.BatchCSVdata}
 \title{Data I/O for batch effect checking}
 \usage{
-Read.BatchCSVdata(mSetObj = NA, filePath, format, label)
+Read.BatchCSVdata(mSetObj = NA, filePath, format)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
