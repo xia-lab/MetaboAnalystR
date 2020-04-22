@@ -142,16 +142,16 @@ browseVignettes("MetaboAnalystR")
 
 ## Citation
 
-MetaboAnalystR 3.0 has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. The original manuscript (Version 1) can be found [here](https://doi.org/10.1093/bioinformatics/bty528) and last version 2 is [here](https://www.mdpi.com/2218-1989/9/3/57).
+MetaboAnalystR package has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. We encourage users to further develop the package to suit their needs. 
 
-We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
+If you use the R package, please cite us: 
 
-Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR: Towards Optimized Workflow for Global Metabolomics".
+Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review].
 
 Chong, Jasmine, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
-Metabolites 9.3 (2019): 57.
+Metabolites 9.3 (2019): 57. [link](https://www.mdpi.com/2218-1989/9/3/57)
 
-Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.
+Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.[link](https://doi.org/10.1093/bioinformatics/bty528)
 
 *From within R:*
 
@@ -169,9 +169,9 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 ## MetaboAnalystR History & Updates
 
-10-04-2020 - Version Updata:3.0.0 - adding parameters optimization and automatical batch effect correction and stable version for peaks to function
+04-10-2020 - Version Updata:3.0.0 - Ultra-fast parameter optimization for peak picking, automated batch effect correction, and stable version MS peaks to function (validated with mummichog v2)
 
-03-12-2020 - Version Update: 2.0.4 - adding retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
+03-12-2020 - Version Update: 2.0.4 - added retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
 
 02-19-2020 - Version Update: 2.0.3 - update bug fixes w. web server
 
