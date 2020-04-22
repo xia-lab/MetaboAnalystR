@@ -6,9 +6,9 @@
 
 ## Description 
 
-**MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. 
+**MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
 
-Besides, with version 3.0, we aim to optimize two important points for the whole pipeline. First, raw spectral processing parameters optimization. Second, we have enhanced the ability to correct batch effect by organising different algorithm. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/1F3Z2drNKFtQkekKO5-w7qWc134ZsGQ2R/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
+The version 3.0 aims to improve the current global metabolomics workflow by implementing a fast parameter optimization algorithm for peak picking, and automated identification of the most suitable method for batch effect correction from 12 well-established approaches. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/1F3Z2drNKFtQkekKO5-w7qWc134ZsGQ2R/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
  
 
 ## Getting Started
@@ -69,7 +69,7 @@ pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphvi
 ```
 ### Step 2. Install the package
 
-MetaboAnalystR 3.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the MetaboAnalylstR 3.0 . There are three options, A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
+MetaboAnalystR 3.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. You can install the MetaboAnalylstR 3.0 via any of the three options: A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
@@ -111,18 +111,18 @@ R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ## Case Studies
 
-### MetaboAnalyst 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics
+### MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics
 
-The case studies have been preformed in our article of this version [here]() (Under review, not available for now). The example running R code of this article have been provided as a vignette inside the R package.
+The case studies have been preformed in our article of this version [here]() (under review, available soon). The example running R code of this article have been provided as a vignette inside the R package.
 
 
-### MetaboAnalyst 2.0 Workflow: From Raw Spectra to Biological Insights
+### MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights
 
 The R scripts to perform all of the analysis from our previous manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
 
 The detailed tutorial of the outdated version to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis still works. The tutorial is available as a PDF is also available inside the R package as a vignette.
 
-### MetaboAnalyst 1.0
+### MetaboAnalystR 1.0
 
 To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
 
@@ -144,7 +144,7 @@ browseVignettes("MetaboAnalystR")
 
 MetaboAnalystR package has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
-* Zhiqiang Pang, Zhiqiang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review]
+* Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review]
 
 * Jasmine Chong, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
 Metabolites 9.3 (2019): 57. [link](https://www.mdpi.com/2218-1989/9/3/57)
