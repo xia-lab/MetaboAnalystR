@@ -146,12 +146,12 @@ MetaboAnalystR package has been developed by the [XiaLab](https://www.xialab.ca/
 
 If you use the R package, please cite us: 
 
-Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review].
+Zhiqiang Pang, Zhiqiang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review].
 
-Chong, Jasmine, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
+Jasmine Chong, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
 Metabolites 9.3 (2019): 57. [link](https://www.mdpi.com/2218-1989/9/3/57)
 
-Chong, Jasmine, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.[link](https://doi.org/10.1093/bioinformatics/bty528)
+Jasmine Chong, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314.[link](https://doi.org/10.1093/bioinformatics/bty528)
 
 *From within R:*
 
