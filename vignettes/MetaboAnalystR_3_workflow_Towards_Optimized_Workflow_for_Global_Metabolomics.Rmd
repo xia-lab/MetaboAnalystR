@@ -206,7 +206,8 @@ The *PerformPeakProfiling* function is an updated peak processing pipeline from 
 
 ```{r,echo=T, eval=FALSE}
 # Peak Profiling with optimized parameters
-mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,plotSettings = SetPlotParam(Plot = T))
+mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,
+                             plotSettings = SetPlotParam(Plot = T))
 
 ```
 
