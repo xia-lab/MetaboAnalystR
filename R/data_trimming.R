@@ -2,7 +2,8 @@
 #' @description This functions provide a path for users to visually inspect their raw data before the data 
 #' trimming so as to remove the dirty or significantly uneluted peaks.
 #' @param datapath Character, the path of the raw MS data files (.mzXML, .CDF and .mzML) 
-#' for the visual and intuitive data inspectation.
+#' for the visual and intuitive data inspectation or the file folder (if only a folder path provided, the first file will
+#' be inspected).
 #' @param rt.range Numerics, a congregation of two values to define the lower and upper RT range (seconds) for 
 #' users to inspect. This is an optional parameter, if absent, will display the MS of the whole RT range.
 #' @param mz.range Numerics, a congregation of two values to define the lower and upper mz range for 
@@ -26,7 +27,7 @@ PerformDataInspect<-function(datapath, rt.range, mz.range, dimension="3D", res=1
     
     print(paste("First file in ", datapath, " will be inspected !"))
     
-    mzf<-list.files(datapath,recursive = F,full.names = T)
+    mzf<-list.files(datapath,recursive = F,full.names = T)[1]
     
   } else {
     mzf <- datapath
