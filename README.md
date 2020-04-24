@@ -81,10 +81,10 @@ install.packages("devtools")
 library(devtools)
 
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = FALSE)
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
 
 # Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = TRUE, build_manual =T)
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = TRUE, build_manual =T)
 
 ```
 
