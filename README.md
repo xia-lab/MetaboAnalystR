@@ -93,7 +93,7 @@ devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes
 The * must be replaced by what is actually downloaded and built.  
 
 ```R
-git clone https://github.com/xia-lab/MetaboAnalystR3.0.git
+git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build MetaboAnalystR
 R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
