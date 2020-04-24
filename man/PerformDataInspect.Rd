@@ -8,7 +8,8 @@ PerformDataInspect(datapath, rt.range, mz.range, dimension = "3D", res = 100)
 }
 \arguments{
 \item{datapath}{Character, the path of the raw MS data files (.mzXML, .CDF and .mzML) 
-for the visual and intuitive data inspectation.}
+for the visual and intuitive data inspectation or the file folder (if only a folder path provided, the first file will
+be inspected).}
 
 \item{rt.range}{Numerics, a congregation of two values to define the lower and upper RT range (seconds) for 
 users to inspect. This is an optional parameter, if absent, will display the MS of the whole RT range.}

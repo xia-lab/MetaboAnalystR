@@ -73,6 +73,12 @@ PerformDataInspect<-function(datapath, rt.range, mz.range, dimension="3D", res=1
     min.mz<-min(hd$lowMZ);
     max.mz<-max(hd$highMZ);
     
+    if (min.mz==0 & max.mz==0 | min.mz==max.mz){
+      print("mz.range information is missing in your data file. mz between 100 and 1200 will be shown here !")
+      min.mz <- 100;
+      max.mz <- 1200;
+    }
+    
     print(paste("MZ range is:",min.mz, "and",max.mz,"Thomson !"))
     
     res.mz<-(max.mz-min.mz)/res
