@@ -207,104 +207,119 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   print(paste("Correcting using the", Method, "method !"))
   modcombat2 <- model.matrix(~1, data=pheno2);
   
-  if (Method=="Automatically"){
-    #### QCs Independent------------
-    # Correction Method 1 - Combat
-    print("Correcting with Combat...");
-    combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-    mSetObj$dataSet$combat_edata<-combat_edata;
-    
-    # Correction Method 2 - WaveICA
-    print("Correcting with WaveICA...");#require(WaveICA)
-    WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-    mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
-    
-    # Correction Method 3 - Eigens MS
-    print("Correcting with EigenMS...");
-    EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
-    mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
-    
-    #### QCs (Quality Control Sample) Dependent---------
-    ## Run QCs dependent methods
-    if (!identical(QCs,integer(0))){
-      # Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
-      if (is.null(order.lbl2)){
-        order<-c(1:nrow(commonMat))
+    if (Method=="Automatically"){
+      #### QCs Independent------------
+      # Correction Method 1 - Combat
+      
+      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+        print("Correcting with Combat...");
+        combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
+        mSetObj$dataSet$combat_edata<-combat_edata;
       }
       
-      print("Correcting with QC-RLSC...");
-      QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
-      mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
-      # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
-      # Future Options to make this script more powerful
       
-      # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
-      print("Correcting with ANCOVA...");
-      ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
-      mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
-    }
-    
-    #### QCm (Quality Control Metabolites) Dependent---------
-    QCms<-grep("IS",colnames(commonMat2));
-    if (!identical(QCms,integer(0))){
-      # Correction Method 1 - RUV_random          # Ref:doi/10.1021/ac502439y
-      print("Correcting with RUV-random...");
-      RUV_random_edata<-RUV_random(commonMat2);
-      mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
+      # Correction Method 2 - WaveICA
+      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
+          !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+        print("Correcting with WaveICA...");#require(WaveICA)
+        WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
+        mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+      }
+      # Correction Method 3 - Eigens MS
+      if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+        print("Correcting with EigenMS...");
+        EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
+        mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
+        mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
+      }
+      #### QCs (Quality Control Sample) Dependent---------
+      ## Run QCs dependent methods
+      if (!identical(QCs,integer(0))){
+        # Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
+        if (is.null(order.lbl2) | is.na(as.character(unique(order.lbl2)))){
+          order.lbl2<-c(1:nrow(commonMat2))
+        }
+          
+        if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
+            !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+            print("Correcting with QC-RLSC...");
+            QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+            mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+        }
+        # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
+        # Future Options to make this script more powerful
+        
+        # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
+        if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+          print("Correcting with ANCOVA...");
+          ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
+          mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
+        }
+      }
       
-      # Correction Method 2 - RUV2                 # Ref:De Livera, A. M.; Bowne, J. Package metabolomics for R, 2012.
-      print("Correcting with RUV-2...");
-      RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
-      mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
+      #### QCm (Quality Control Metabolites) Dependent---------
+      QCms<-grep("IS",colnames(commonMat2));
+      if (!identical(QCms,integer(0))){
+        # Correction Method 1 - RUV_random          # Ref:doi/10.1021/ac502439y
+        print("Correcting with RUV-random...");
+        RUV_random_edata<-RUV_random(commonMat2);
+        mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
+        
+        # Correction Method 2 - RUV2                 # Ref:De Livera, A. M.; Bowne, J. Package metabolomics for R, 2012.
+        print("Correcting with RUV-2...");
+        RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
+        mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
+        
+        # Correction Method 3.1 - RUV_sample        # Ref:https://www.nature.com/articles/nbt.2931
+        print("Correcting with RUVs...");
+        RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
+        mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
+        
+        # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
+        print("Correcting with RUVr...");require(edgeR)
+        RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
+        mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
+        
+        # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
+        print("Correcting with RUVg...");
+        RUV_g_edata<-RUVg_cor(commonMat2);
+        mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
+      }
       
-      # Correction Method 3.1 - RUV_sample        # Ref:https://www.nature.com/articles/nbt.2931
-      print("Correcting with RUVs...");
-      RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
-      mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
+      #### Internal standards based dependent methods--------
+      ISs <- grep("IS",colnames(commonMat2));
+      if (!identical(ISs,integer(0))){
+        
+        # Correction Method 1 - NOMIS
+        print("Correcting with NOMIS...")
+        NOMIS_edata <- NOMIS(commonMat2)
+        mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
+        
+        # Correction Method 2 - CCMN
+        if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+          print("Correcting with CCMN...")
+          CCMN_edata <- CCMN2(commonMat2,class.lbl2)
+          mSetObj$dataSet$CCMN_edata <- CCMN_edata;
+        }
+      }
       
-      # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
-      print("Correcting with RUVr...");require(edgeR)
-      RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
-      mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
+      ###################
       
-      # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
-      print("Correcting with RUVg...");
-      RUV_g_edata<-RUVg_cor(commonMat2);
-      mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
-    }
-    
-    #### Internal standards based dependent methods--------
-    ISs <- grep("IS",colnames(commonMat2));
-    if (!identical(ISs,integer(0))){
+      nms<-names(mSetObj$dataSet)
+      nms<-nms[grepl("*edata",nms)]
+      interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
+      mSetObj$dataSet$interbatch_dis <- interbatch_dis
       
-      # Correction Method 1 - NOMIS
-      print("Correcting with NOMIS...")
-      NOMIS_edata <- NOMIS(commonMat2)
-      mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
+      best.choice<-names(which(min(interbatch_dis)==interbatch_dis))
       
-      # Correction Method 2 - CCMN
-      print("Correcting with CCMN...")
-      CCMN_edata <- CCMN2(commonMat2,class.lbl2)
-      mSetObj$dataSet$CCMN_edata <- CCMN_edata;
-    }
-    
-    ###################
-    
-    nms<-names(mSetObj$dataSet)
-    nms<-nms[grepl("*edata",nms)]
-    interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
-    mSetObj$dataSet$interbatch_dis <- interbatch_dis
-    
-    best.choice<-names(which(min(interbatch_dis)==interbatch_dis))
-    
-    best.table <- mSetObj$dataSet[[best.choice]];
-    mSetObj$dataSet$adjusted.mat <- best.table;
-    
-    Method <- sub(pattern = "_edata",x = best.choice, replacement = "")
-    
-    print(paste("Best results generated by ", Method, " !"))
-    #=======================================================================/
-  } else if (Method=="Combat"){
+      best.table <- mSetObj$dataSet[[best.choice]];
+      mSetObj$dataSet$adjusted.mat <- best.table;
+      
+      Method <- sub(pattern = "_edata",x = best.choice, replacement = "")
+      
+      print(paste("Best results generated by ", Method, " !"))
+      #=======================================================================/
+    } else if (Method=="Combat"){
     
     combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
     mSetObj$dataSet$adjusted.mat<-combat_edata;
@@ -365,7 +380,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     mSetObj$dataSet$adjusted.mat <- CCMN_edata;
     
   }
-  
+  save(mSetObj,file = "mSetObj.rda")
   mSetObj <- PlotPCA.overview(mSetObj, paste(imgName,"PCA"), method=Method);
   Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
   
