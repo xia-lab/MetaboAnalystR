@@ -17,11 +17,11 @@ The version 3.0 aims to improve the current global metabolomics workflow by impl
 
 To use MetaboAnalystR 3.0, first install all package dependencies. Ensure that you have neceaary system environment configured. 
 
-For Linux (e.g. Ubuntu): libcairo2-dev, libnetcdf-dev, libxml2 and libssl-dev should be installed at frist;
+For Linux (e.g. Ubuntu 18.04/20.04): libcairo2-dev, libnetcdf-dev, libxml2, libxt-dev and libssl-dev should be installed at frist;
 
 For Windows (e.g. 7/8/8.1/10): Rtools should be installed.
 
-As for installation of package dependencies, there are two options:
+R base with version > 3.6.1 is recommended. The compatibility of latest version (v4.0.0) is under evaluation. As for installation of package dependencies, there are two options:
 
 **Option 1** 
 
@@ -32,7 +32,7 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
 
-  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea")
+  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","devtools","crmn")
   
   list_installed <- installed.packages()
   
