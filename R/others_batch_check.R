@@ -46,11 +46,12 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
     conc <- dat[,-c(1:4)];
     var.nms <- colnames(conc);
   }else{ # sample in col
-    var.nms <- as.character(dat[-1,1]);
-    cls.nms <- factor(as.character(dat[1,-1]));
-    dat <- dat[-1,-1];
-    smpl.nms <- colnames(dat);
-    conc<-t(dat);
+    smpl.nms <-dat[1,];
+    cls.nms <- factor(dat[2,]);
+    order.nms <- factor(dat[3,]);
+    batch.nms <- factor(dat[4,]);
+    conc <- t(dat[-c(1:4),]);
+    var.nms <- colnames(conc);
   }
   
   #checking and make sure QC labels are unique
