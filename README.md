@@ -15,7 +15,7 @@ The version 3.0 aims to improve the current global metabolomics workflow by impl
 
 ### Step 1. Install package dependencies 
 
-To use MetaboAnalystR 3.0, first install all package dependencies. Ensure that you have neceaary system environment configured. 
+To use MetaboAnalystR 3.0, first install all package dependencies. Ensure that you have necessary system environment configured. 
 
 For Linux (e.g. Ubuntu 18.04/20.04): libcairo2-dev, libnetcdf-dev, libxml2, libxt-dev and libssl-dev should be installed at frist;
 
@@ -80,11 +80,11 @@ Due to issues with Latex, some users may find that they are only able to install
 install.packages("devtools")
 library(devtools)
 
-# Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
-
 # Step 2: Install MetaboAnalystR with documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = TRUE, build_manual =T)
+
+# Step 2: Install MetaboAnalystR without documentation
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
 
 ```
 
@@ -95,17 +95,17 @@ The * must be replaced by what is actually downloaded and built.
 ```R
 git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalystR_3.0.0.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalystR_3.0.1.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1N70p5zEUAaQeqllXyxH7SR4dzw0STHu7/view?usp=sharing). 
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1aLGlOl8hODrpNm3Jczo-6194HkT9KAqL/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
-R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
 
 ```
 
@@ -159,6 +159,7 @@ citation("MetaboAnalystR")
 
 ## Previous Version Releases
 
+MetaboAnalystR 3.0.0 can be downloaded [here](https://drive.google.com/file/d/1N70p5zEUAaQeqllXyxH7SR4dzw0STHu7/view?usp=sharing).
 MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0).
 
 ## Bugs or feature requests
@@ -166,6 +167,8 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to #jasmine.chong@mail.mcgill.ca or zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+05-01-2020 - Version Update:3.0.1 - update bug fixes for batch effect correction and compatible with web server;
 
 04-10-2020 - Version Updata:3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
 
