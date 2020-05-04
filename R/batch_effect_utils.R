@@ -410,7 +410,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
       print("Correcting with EigenMS...");
       EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
       mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
-      if (is.na(as.character(unique(batch.lbl2))) | is.null(batch.lbl2)){  
+      if (all(is.na(as.character(unique(batch.lbl2)))) | is.null(batch.lbl2)){  
         mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
       }
     }
@@ -432,7 +432,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
       # Future Options to make this script more powerful
       
       # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
-      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+      if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
         print("Correcting with ANCOVA...");
         ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
         mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
