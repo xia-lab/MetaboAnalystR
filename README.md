@@ -1,4 +1,4 @@
-# MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics
+# MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
 
 <p align="center">
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
@@ -8,7 +8,7 @@
 
 **MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
 
-The version 3.0 aims to improve the current global metabolomics workflow by implementing a fast parameter optimization algorithm for peak picking, and automated identification of the most suitable method for batch effect correction from 12 well-established approaches. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/13PRxRicyKhLSyA9PD7UmV4RsjecaQOkq/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
+The version 3.0 aims to improve the current global metabolomics workflow by implementing a fast parameter optimization algorithm for peak picking, and automated identification of the most suitable method for batch effect correction from 12 well-established approaches. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multi'omics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards an Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/13PRxRicyKhLSyA9PD7UmV4RsjecaQOkq/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
  
 
 ## Getting Started
@@ -111,7 +111,7 @@ R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ## Case Studies
 
-### MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics
+### MetaboAnalystR 3.0 Workflow: Towards an Optimized Workflow for Global Metabolomics
 
 The case studies have been preformed in our article of this version [here]() (under review, available soon). The example running R code of this article have been provided as a vignette inside the R package.
 
@@ -167,7 +167,7 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 ## MetaboAnalystR History & Updates
 
-04-10-2020 - Version Updata:3.0.0 - Ultra-fast parameter optimization for peak picking, automated batch effect correction, and stable version MS peaks to function (validated with mummichog v2)
+04-10-2020 - Version Updata:3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
 
 03-12-2020 - Version Update: 2.0.4 - added retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
 
