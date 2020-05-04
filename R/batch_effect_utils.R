@@ -149,10 +149,9 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   }
 }
 
-
 #'Data I/O for batch effect checking
 #'
-#'@description Read multiple user uploaded CSV data one by one
+#'@description Read peak data tale.
 #'format: row, col
 #'@param mSetObj Input name of the created mSet Object
 #'@param filePath Input the path to the batch files
@@ -308,9 +307,167 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   }
 }
 
+#'Data I/O for signal drift checking
+#'
+#'@description Read peak data tale.
+#'format: row, col
+#'@param mSetObj Input name of the created mSet Object
+#'@param filePath Input the path to the batch files
+#'@param format Input the format of the batch files
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
+  
+  #dat <- .readDataTable(filePath);
+  dat <- .readDataTable2(filePath);
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(class(dat) == "try-error") {
+    AddErrMsg("Data format error. Failed to read in the data!");
+    AddErrMsg("Please check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique;");
+    AddErrMsg("Missing values should be blank or NA without quote.");
+    return("F");
+  }
+  
+  if(ncol(dat) == 1){
+    AddErrMsg("Error: Make sure the data table is saved as comma separated values (.csv) format!");
+    AddErrMsg("Please also check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+    AddErrMsg("Missing values should be blank or NA without quote.");
+    return("F");
+  }
+  
+  if(format=="row"){ # sample in row
+    smpl.nms <-dat[,1];
+    cls.nms <- factor(dat[,2]);
+    order.nms <- factor(dat[,3]);
+    batch.nms <- factor(dat[,4]);
+    conc <- dat[,-c(1:4)];
+    var.nms <- colnames(conc);
+  }else{ # sample in col
+    smpl.nms <-dat[1,];
+    cls.nms <- factor(dat[2,]);
+    order.nms <- factor(dat[3,]);
+    batch.nms <- factor(dat[4,]);
+    conc <- t(dat[-c(1:4),]);
+    var.nms <- colnames(conc);
+  }
+  
+  #checking and make sure QC labels are unique
+  # qc.inx <- toupper(substr(smpl.nms, 0, 2)) == "QC"; # Old code, delete !
+  qc.inx <- grepl("QC",smpl.nms)
+  
+  qc.nms <- smpl.nms[qc.inx];
+  qc.len <- sum(qc.inx);
+  if(length(unique(qc.nms))!=length(qc.nms)){
+    smpl.nms[qc.inx] <- paste(qc.nms,as.character(batch.nms),as.character(order.nms),sep = "_");
+  }
+  
+  # check the class labels
+  if(!is.null(mSetObj$dataSet$batch.cls)){
+    if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]]))){
+      AddErrMsg("The class labels in current data is different from the previous!");
+      return("F");
+    }
+  }
+  
+  if(length(unique(smpl.nms))!=length(smpl.nms)){
+    dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
+    AddErrMsg("Duplicate sample names (except QC) are not allowed!");
+    AddErrMsg(dup.nm);
+    return("F");
+  }
+  
+  if(length(unique(var.nms))!=length(var.nms)){
+    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+    AddErrMsg("Duplicate feature names are not allowed!");
+    AddErrMsg(dup.nm);
+    return("F");
+  }
+  # now check for special characters in the data labels
+  if(sum(is.na(iconv(smpl.nms)))>0){
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in sample names!");
+    return("F");
+  }
+  
+  if(sum(is.na(iconv(var.nms)))>0){
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in feature names!");
+    return("F");
+  }
+  
+  # now assgin the dimension names
+  rownames(conc) <- smpl.nms;
+  colnames(conc) <- var.nms;
+  
+  #label <- gsub("[/-]", "_",  label);
+  
+  #if(nchar(label) > 10){
+  #  label <- toupper(paste(substr(label, 0, 5), substr(label, nchar(label)-5, nchar(label)), sep=""));
+  #}
+  
+  # store the data into list of list with the name order index
+  # first clean the label to get rid of unusually chars
+  
+  #if(label %in% names(mSetObj$dataSet$batch) || label=="F"){
+  #  label <- paste("Dataset", length(mSetObj$dataSet$batch) + 1, sep="");
+  #}
+  
+  # check numerical matrix
+  int.mat <- conc;
+  rowNms <- rownames(int.mat);
+  colNms <- colnames(int.mat);
+  naNms <- sum(is.na(int.mat));
+  num.mat<-apply(int.mat, 2, as.numeric)
+  
+  msg<-NULL;
+  if(sum(is.na(num.mat)) > naNms){
+    # try to remove "," in thousand seperator if it is the cause
+    num.mat <- apply(int.mat,2,function(x) as.numeric(gsub(",", "", x)));
+    if(sum(is.na(num.mat)) > naNms){
+      msg<-c(msg,"<font color=\"red\">Non-numeric values were found and replaced by NA.</font>");
+    }else{
+      msg<-c(msg,"All data values are numeric.");
+    }
+  }else{
+    msg<-c(msg,"All data values are numeric.");
+  }
+  
+  int.mat <- num.mat;
+  
+  rownames(int.mat)<-rowNms;
+  colnames(int.mat)<-colNms;
+  
+  # replace NA
+  minConc<-min(int.mat[int.mat>0], na.rm=T)/5;
+  int.mat[is.na(int.mat)] <- minConc;
+  
+  mSetObj$dataSet$table <- int.mat;
+  mSetObj$dataSet$class.cls <- cls.nms;
+  mSetObj$dataSet$batch.cls <- batch.nms;
+  mSetObj$dataSet$order.cls <- order.nms;
+  
+  # free memory
+  gc();
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    # return(label);
+  }else{
+    # print(label);
+    return(.set.mSet(mSetObj));
+  }
+}
+
 #'Batch Effect Correction
-#'@description One is a batch containing summed concentrations of each sample
-#'the other contains the features aligned across all samples
+#'@description This function is designed to perform the batch effect correction
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input the name of the plot to create
 #'@param Method Batch effect correction method, default is "Automatically". Specific method, including "Combat",
@@ -594,6 +751,57 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   
   end.time <- Sys.time()
   return(.set.mSet(mSetObj));
+}
+
+#'Signal Drift Correction
+#'@description This function is designed to perform the signal drift correction. 
+#'Batch effect and signal drift correction will be performed with QC-RLSC method in this function.
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input the name of the plot to create
+#'@import data.table
+#'@importFrom plyr join ddply . summarise id
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
+#'@import edgeR
+#'@importFrom pcaMethods pca
+#'@importFrom crmn standardsFit
+#'@import impute
+#'@import BiocParallel
+#'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
+  if (is.null(imgName)){
+    imgName<-"image_sg"
+  }
+  
+  ## Extract the information from the mSetObj Object
+  commonMat2 <- mSetObj[["dataSet"]][["table"]];
+  batch.lbl2 <- mSetObj[["dataSet"]][["batch.cls"]];
+  class.lbl2 <- mSetObj[["dataSet"]][["class.cls"]];
+  order.lbl2 <- mSetObj[["dataSet"]][["order.cls"]];
+  QCs<-grep("QC",as.character(class.lbl2));
+  
+  if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
+      all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2) &
+      all(!is.na(as.character(unique(order.lbl2)))) & !is.null(order.lbl2)){
+    print("Correcting with QC-RLSC...");
+    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+  } else {
+    AddErrMsg("Please double check the batch, class and order information is not missing ")
+  }
+  
+  Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
+  
+  best.table <- mSetObj$dataSet$adjusted.mat
+  
+  # save the meta-dataset
+  res <- data.frame(colnames(t(best.table)), class.lbl2, batch.lbl2, best.table);
+  colnames(res) <- c('NAME', 'CLASS', 'Dataset', colnames(best.table));
+  write.table(res, sep=",", file="MetaboAnalyst_signal_drift.csv", row.names=F, quote=FALSE);
+  
 }
 
 #'Scatter plot colored by different batches

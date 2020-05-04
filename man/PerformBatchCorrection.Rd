@@ -23,8 +23,7 @@ PerformBatchCorrection(
 to minimize the distance between batches.}
 }
 \description{
-One is a batch containing summed concentrations of each sample
-the other contains the features aligned across all samples
+This function is designed to perform the batch effect correction
 }
 \author{
 Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
