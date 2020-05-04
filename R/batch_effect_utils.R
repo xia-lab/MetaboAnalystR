@@ -478,7 +478,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
       mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
       
       # Correction Method 2 - CCMN
-      if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+      if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
         print("Correcting with CCMN...")
         CCMN_edata <- CCMN2(commonMat2,class.lbl2)
         mSetObj$dataSet$CCMN_edata <- CCMN_edata;
