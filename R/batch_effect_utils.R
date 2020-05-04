@@ -772,6 +772,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'@export
 #'
 PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
+  
   if (is.null(imgName)){
     imgName<-"image_sg"
   }
@@ -783,6 +784,10 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
   order.lbl2 <- mSetObj[["dataSet"]][["order.cls"]];
   QCs<-grep("QC",as.character(class.lbl2));
   
+  if (identical(QCs,integer(0))){
+    stop("QC samples are required for signal driift correction. Please double check your data !")
+  }
+  
   if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
       all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2) &
       all(!is.na(as.character(unique(order.lbl2)))) & !is.null(order.lbl2)){
@@ -790,7 +795,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
     QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
     mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
   } else {
-    AddErrMsg("Please double check the batch, class and order information is not missing ")
+    stop("Please double check the batch, class and order information is not missing ")
   }
   
   Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
