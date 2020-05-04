@@ -324,7 +324,6 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
 #'@importFrom pcaMethods pca
 #'@importFrom crmn standardsFit
 #'@import impute
-#'@import data.table
 #'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -392,7 +391,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     #### QCs Independent------------
     # Correction Method 1 - Combat
     
-    if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+    if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
       print("Correcting with Combat...");
       combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
       mSetObj$dataSet$combat_edata<-combat_edata;
@@ -400,14 +399,14 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     
     
     # Correction Method 2 - WaveICA
-    if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
-        !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+    if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
+        all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
       print("Correcting with WaveICA...");#require(WaveICA)
       WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
       mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
     }
     # Correction Method 3 - Eigens MS
-    if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+    if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
       print("Correcting with EigenMS...");
       EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
       mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
@@ -576,8 +575,6 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     mSetObj$dataSet$interbatch_dis <- interbatch_dis
     
   }
-  
-  save(mSetObj,file="mSetObj1.rda")
   
   mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method);
   Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
