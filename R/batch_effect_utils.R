@@ -1,5 +1,4 @@
 #'Data I/O for batch effect checking
-#'
 #'@description Read multiple user uploaded CSV data one by one
 #'format: row, col
 #'@param mSetObj Input name of the created mSet Object
@@ -11,9 +10,160 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
+Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   
-  #dat <- .readDataTable(filePath);
+  dat <- .readDataTable(filePath);
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(class(dat) == "try-error") {
+    AddErrMsg("Data format error. Failed to read in the data!");
+    AddErrMsg("Please check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique;");
+    AddErrMsg("Missing values should be blank or NA without quote.");
+    return("F");
+  }
+  
+  if(ncol(dat) == 1){
+    AddErrMsg("Error: Make sure the data table is saved as comma separated values (.csv) format!");
+    AddErrMsg("Please also check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+    AddErrMsg("Missing values should be blank or NA without quote.");
+    return("F");
+  }
+  
+  if(format=="row"){ # sample in row
+    smpl.nms <-dat[,1];
+    cls.nms <- factor(dat[,2]);
+    conc <- dat[,-c(1,2)];
+    var.nms <- colnames(conc);
+  }else{ # sample in col
+    var.nms <- as.character(dat[-1,1]);
+    cls.nms <- factor(as.character(dat[1,-1]));
+    dat <- dat[-1,-1];
+    smpl.nms <- colnames(dat);
+    conc<-t(dat);
+  }
+  
+  #checking and make sure QC labels are unique
+  qc.inx <- toupper(substr(smpl.nms, 0, 2)) == "QC";
+  
+  qc.nms <- smpl.nms[qc.inx];
+  qc.len <- sum(qc.inx);
+  if(length(unique(qc.nms))!=length(qc.nms)){
+    smpl.nms[qc.inx] <- paste("QC", length(mSetObj$dataSet$batch) + 1, 1:qc.len, sep="");
+  }
+  
+  # check the class labels
+  if(!is.null(mSetObj$dataSet$batch.cls)){
+    if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]]))){
+      AddErrMsg("The class labels in current data is different from the previous!");
+      return("F");
+    }
+  }
+  
+  if(length(unique(smpl.nms))!=length(smpl.nms)){
+    dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
+    AddErrMsg("Duplicate sample names (except QC) are not allowed!");
+    AddErrMsg(dup.nm);
+    return("F");
+  }
+  
+  if(length(unique(var.nms))!=length(var.nms)){
+    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+    AddErrMsg("Duplicate feature names are not allowed!");
+    AddErrMsg(dup.nm);
+    return("F");
+  }
+  # now check for special characters in the data labels
+  if(sum(is.na(iconv(smpl.nms)))>0){
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in sample names!");
+    return("F");
+  }
+  
+  if(sum(is.na(iconv(var.nms)))>0){
+    AddErrMsg("No special letters (i.e. Latin, Greek) are allowed in feature names!");
+    return("F");
+  }
+  
+  # now assgin the dimension names
+  rownames(conc) <- smpl.nms;
+  colnames(conc) <- var.nms;
+  
+  label <- gsub("[/-]", "_",  label);
+  
+  if(nchar(label) > 10){
+    label <- toupper(paste(substr(label, 0, 5), substr(label, nchar(label)-5, nchar(label)), sep=""));
+  }
+  
+  # store the data into list of list with the name order index
+  # first clean the label to get rid of unusually chars
+  if(label %in% names(mSetObj$dataSet$batch) || label=="F"){
+    label <- paste("Dataset", length(mSetObj$dataSet$batch) + 1, sep="");
+  }
+  
+  # check numerical matrix
+  int.mat <- conc;
+  rowNms <- rownames(int.mat);
+  colNms <- colnames(int.mat);
+  naNms <- sum(is.na(int.mat));
+  num.mat<-apply(int.mat, 2, as.numeric)
+  
+  msg<-NULL;
+  if(sum(is.na(num.mat)) > naNms){
+    # try to remove "," in thousand seperator if it is the cause
+    num.mat <- apply(int.mat,2,function(x) as.numeric(gsub(",", "", x)));
+    if(sum(is.na(num.mat)) > naNms){
+      msg<-c(msg,"<font color=\"red\">Non-numeric values were found and replaced by NA.</font>");
+    }else{
+      msg<-c(msg,"All data values are numeric.");
+    }
+  }else{
+    msg<-c(msg,"All data values are numeric.");
+  }
+  
+  int.mat <- num.mat;
+  
+  rownames(int.mat)<-rowNms;
+  colnames(int.mat)<-colNms;
+  
+  # replace NA
+  minConc<-min(int.mat[int.mat>0], na.rm=T)/5;
+  int.mat[is.na(int.mat)] <- minConc;
+  
+  mSetObj$dataSet$batch[[label]] <- int.mat;
+  mSetObj$dataSet$batch.cls[[label]] <- cls.nms;
+  
+  # free memory
+  gc();
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(label);
+  }else{
+    print(label);
+    return(.set.mSet(mSetObj));
+  }
+}
+
+
+#'Data I/O for batch effect checking
+#'
+#'@description Read multiple user uploaded CSV data one by one
+#'format: row, col
+#'@param mSetObj Input name of the created mSet Object
+#'@param filePath Input the path to the batch files
+#'@param format Input the format of the batch files
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
+  
   dat <- .readDataTable2(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -41,17 +191,17 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
     cls.nms <- factor(dat[,2]);
-    order.nms <- factor(dat[,3]);
-    batch.nms <- factor(dat[,4]);
-    conc <- dat[,-c(1:4)];
+    #order.nms <- factor(dat[,3]);
+    batch.nms <- factor(dat[,3]);
+    conc <- dat[,-c(1:3)];
     var.nms <- colnames(conc);
   }else{ # sample in col
     smpl.nms <-dat[1,];
     cls.nms <- factor(dat[2,]);
-    order.nms <- factor(dat[3,]);
-    batch.nms <- factor(dat[4,]);
-    conc <- t(dat[-c(1:4),]);
-    var.nms <- colnames(conc);
+    #order.nms <- factor(dat[3,]);
+    batch.nms <- factor(dat[3,]);
+    conc <- t(dat[-c(1:3),]);
+    var.nms <- rownames(conc);
   }
   
   #checking and make sure QC labels are unique
@@ -145,7 +295,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
   mSetObj$dataSet$batch.cls <- batch.nms;
-  mSetObj$dataSet$order.cls <- order.nms;
+  #mSetObj$dataSet$order.cls <- order.nms;
   
   # free memory
   gc();
@@ -164,7 +314,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input the name of the plot to create
 #'@param Method Batch effect correction method, default is "Automatically". Specific method, including "Combat",
-#'"WaveICA","EigenMS","QC_RLSC","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".
+#'"WaveICA","EigenMS","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".
 #'@param center The center point of the batch effect correction, based on "QC" or "", which means correct 
 #'to minimize the distance between batches.
 #'@import data.table
@@ -185,6 +335,38 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   
   mSetObj <- .get.mSet(mSetObj);
   start.time <- Sys.time()
+  
+  if(class(mSetObj[["dataSet"]][["batch.cls"]])=="list"){
+    
+    nms <- names(mSetObj$dataSet$batch);
+    nm.list <- vector(length=length(mSetObj$dataSet$batch), mode="list");
+    cls.lbls <- batch.lbls <- NULL; # record all batch labels
+    
+    for (i in 1:length(mSetObj$dataSet$batch)){
+      batch <- mSetObj$dataSet$batch[[i]];
+      cls <- as.character(mSetObj$dataSet$batch.cls[[i]]);
+      nm.list[[i]] <- colnames(batch);
+      cls.lbls <- c(cls.lbls,cls); 
+      batch.lbls <- c(batch.lbls, rep(nms[i], length=nrow(batch)));
+    }
+    
+    cm.nms <- Reduce(intersect, nm.list); # get common names
+    
+    # now align all the batches
+    mSetObj$dataSet$batch <- lapply(mSetObj$dataSet$batch, function(x){x[,cm.nms]});
+    mSetObj[["dataSet"]][["table"]] <- commonMat2 <- do.call(rbind, mSetObj$dataSet$batch);
+    mSetObj[["dataSet"]][["batch.cls"]] <- batch.lbl2 <- factor(batch.lbls,levels=names(mSetObj$dataSet$batch), ordered=T);
+    mSetObj[["dataSet"]][["class.cls"]] <- class.lbl2 <- factor(cls.lbls);
+    
+  } else if (class(mSetObj[["dataSet"]][["batch.cls"]])=="factor") {
+    commonMat2 <- mSetObj[["dataSet"]][["table"]];
+    batch.lbl2 <- mSetObj[["dataSet"]][["batch.cls"]];
+    class.lbl2 <- mSetObj[["dataSet"]][["class.cls"]];
+  } else {
+    AddErrMsg("There is something wrong with your data !")
+  }
+  
+  
   if (is.null(Method)){
     Method<-"Automatically"
   }
@@ -198,192 +380,208 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   }
   
   ## Extract the information from the mSetObj Object
-  commonMat2 <- mSetObj[["dataSet"]][["table"]];
-  batch.lbl2 <- mSetObj[["dataSet"]][["batch.cls"]];
-  class.lbl2 <- mSetObj[["dataSet"]][["class.cls"]];
-  order.lbl2 <- mSetObj[["dataSet"]][["order.cls"]];
+  
+  #order.lbl2 <- mSetObj[["dataSet"]][["order.cls"]];
   QCs<-grep("QC",as.character(class.lbl2));
   
   pheno2 <- data.frame(cbind(class.lbl2, batch.lbl2));
   print(paste("Correcting using the", Method, "method !"))
   modcombat2 <- model.matrix(~1, data=pheno2);
   
-    if (Method=="Automatically"){
-      #### QCs Independent------------
-      # Correction Method 1 - Combat
-      
-      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
-        print("Correcting with Combat...");
-        combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-        mSetObj$dataSet$combat_edata<-combat_edata;
-      }
-      
-      
-      # Correction Method 2 - WaveICA
-      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
-          !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
-        print("Correcting with WaveICA...");#require(WaveICA)
-        WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-        mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
-      }
-      # Correction Method 3 - Eigens MS
-      if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
-        print("Correcting with EigenMS...");
-        EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
-        mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
+  if (Method=="Automatically"){
+    #### QCs Independent------------
+    # Correction Method 1 - Combat
+    
+    if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+      print("Correcting with Combat...");
+      combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
+      mSetObj$dataSet$combat_edata<-combat_edata;
+    }
+    
+    
+    # Correction Method 2 - WaveICA
+    if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
+        !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+      print("Correcting with WaveICA...");#require(WaveICA)
+      WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
+      mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+    }
+    # Correction Method 3 - Eigens MS
+    if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+      print("Correcting with EigenMS...");
+      EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
+      mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
+      if (is.na(as.character(unique(batch.lbl2))) | is.null(batch.lbl2)){  
         mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
       }
-      #### QCs (Quality Control Sample) Dependent---------
-      ## Run QCs dependent methods
-      if (!identical(QCs,integer(0))){
-        # Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
-        if (is.null(order.lbl2) | is.na(as.character(unique(order.lbl2)))){
-          order.lbl2<-c(1:nrow(commonMat2))
-        }
-          
-        if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
-            !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
-            print("Correcting with QC-RLSC...");
-            QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
-            mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
-        }
-        # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
-        # Future Options to make this script more powerful
-        
-        # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
-        if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
-          print("Correcting with ANCOVA...");
-          ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
-          mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
-        }
+    }
+    #### QCs (Quality Control Sample) Dependent---------
+    ## Run QCs dependent methods
+    if (!identical(QCs,integer(0))){
+      # Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
+      #if (is.null(order.lbl2) | is.na(as.character(unique(order.lbl2)))){
+      #  order.lbl2 <- c(1:nrow(commonMat2))
+      #}
+      
+      #if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
+      #    !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+      #    print("Correcting with QC-RLSC...");
+      #    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+      #    mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+      #}
+      # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
+      # Future Options to make this script more powerful
+      
+      # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
+      if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2)){
+        print("Correcting with ANCOVA...");
+        ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
+        mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
       }
+    }
+    
+    #### QCm (Quality Control Metabolites) Dependent---------
+    QCms<-grep("IS",colnames(commonMat2));
+    if (!identical(QCms,integer(0))){
+      # Correction Method 1 - RUV_random          # Ref:doi/10.1021/ac502439y
+      print("Correcting with RUV-random...");
+      RUV_random_edata<-RUV_random(commonMat2);
+      mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
       
-      #### QCm (Quality Control Metabolites) Dependent---------
-      QCms<-grep("IS",colnames(commonMat2));
-      if (!identical(QCms,integer(0))){
-        # Correction Method 1 - RUV_random          # Ref:doi/10.1021/ac502439y
-        print("Correcting with RUV-random...");
-        RUV_random_edata<-RUV_random(commonMat2);
-        mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
-        
-        # Correction Method 2 - RUV2                 # Ref:De Livera, A. M.; Bowne, J. Package metabolomics for R, 2012.
-        print("Correcting with RUV-2...");
-        RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
-        mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
-        
-        # Correction Method 3.1 - RUV_sample        # Ref:https://www.nature.com/articles/nbt.2931
-        print("Correcting with RUVs...");
-        RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
-        mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
-        
-        # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
-        print("Correcting with RUVr...");require(edgeR)
-        RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
-        mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
-        
-        # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
-        print("Correcting with RUVg...");
-        RUV_g_edata<-RUVg_cor(commonMat2);
-        mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
+      # Correction Method 2 - RUV2                 # Ref:De Livera, A. M.; Bowne, J. Package metabolomics for R, 2012.
+      print("Correcting with RUV-2...");
+      RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
+      mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
+      
+      # Correction Method 3.1 - RUV_sample        # Ref:https://www.nature.com/articles/nbt.2931
+      print("Correcting with RUVs...");
+      RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
+      mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
+      
+      # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
+      print("Correcting with RUVr...");require(edgeR)
+      RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
+      mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
+      
+      # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
+      print("Correcting with RUVg...");
+      RUV_g_edata<-RUVg_cor(commonMat2);
+      mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
+    }
+    
+    #### Internal standards based dependent methods--------
+    ISs <- grep("IS",colnames(commonMat2));
+    if (!identical(ISs,integer(0))){
+      
+      # Correction Method 1 - NOMIS
+      print("Correcting with NOMIS...")
+      NOMIS_edata <- NOMIS(commonMat2)
+      mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
+      
+      # Correction Method 2 - CCMN
+      if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
+        print("Correcting with CCMN...")
+        CCMN_edata <- CCMN2(commonMat2,class.lbl2)
+        mSetObj$dataSet$CCMN_edata <- CCMN_edata;
       }
-      
-      #### Internal standards based dependent methods--------
-      ISs <- grep("IS",colnames(commonMat2));
-      if (!identical(ISs,integer(0))){
-        
-        # Correction Method 1 - NOMIS
-        print("Correcting with NOMIS...")
-        NOMIS_edata <- NOMIS(commonMat2)
-        mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
-        
-        # Correction Method 2 - CCMN
-        if (!is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
-          print("Correcting with CCMN...")
-          CCMN_edata <- CCMN2(commonMat2,class.lbl2)
-          mSetObj$dataSet$CCMN_edata <- CCMN_edata;
-        }
-      }
-      
-      ###################
-      
-      nms<-names(mSetObj$dataSet)
-      nms<-nms[grepl("*edata",nms)]
-      interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
-      mSetObj$dataSet$interbatch_dis <- interbatch_dis
-      
-      best.choice<-names(which(min(interbatch_dis)==interbatch_dis))
-      
-      best.table <- mSetObj$dataSet[[best.choice]];
-      mSetObj$dataSet$adjusted.mat <- best.table;
-      
-      Method <- sub(pattern = "_edata",x = best.choice, replacement = "")
-      
-      print(paste("Best results generated by ", Method, " !"))
-      #=======================================================================/
-    } else if (Method=="Combat"){
+    }
+    
+    ###################
+    
+    nms<-names(mSetObj$dataSet)
+    nms<-nms[grepl("*edata",nms)]
+    nms<- c("table",nms)
+    
+    interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
+    mSetObj$dataSet$interbatch_dis <- interbatch_dis
+    
+    best.choice<-names(which(min(interbatch_dis)==interbatch_dis))
+    
+    best.table <- mSetObj$dataSet[[best.choice]];
+    mSetObj$dataSet$adjusted.mat <- best.table;
+    
+    Method <- sub(pattern = "_edata",x = best.choice, replacement = "")
+    
+    print(paste("Best results generated by ", Method, " !"))
+    #=======================================================================/
+  } else if (Method=="Combat"){
     
     combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-    mSetObj$dataSet$adjusted.mat<-combat_edata;
+    mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$Combat_edata <- combat_edata;
     
   } else if (Method=="WaveICA"){
     
     WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-    mSetObj$dataSet$adjusted.mat<-WaveICA_edata;
+    mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$WaveICA_edata <- WaveICA_edata;
     
   } else if (Method=="EigenMS"){
     
     EigenMS_edata<-EigenMS(commonMat2,class.lbl2);
-    mSetObj$dataSet$adjusted.mat<-EigenMS_edata;
+    mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$EigenMS_edata <- EigenMS_edata;
     
-  } else if (Method=="QC_RLSC"){
+ # } else if (Method=="QC_RLSC"){
     
-    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
-    mSetObj$dataSet$adjusted.mat <- QC_RLSC_edata;
+ #   QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+ #   mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
     
   } else if (Method=="ANCOVA"){
     
     ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
-    mSetObj$dataSet$adjusted.mat <- ANCOVA_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
     
   } else if (Method=="RUV_random"){
     
     RUV_random_edata<-RUV_random(commonMat2);
-    mSetObj$dataSet$adjusted.mat <- RUV_random_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
     
   } else if (Method=="RUV_2"){
     
     RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
-    mSetObj$dataSet$adjusted.mat <- RUV_2_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
     
   } else if (Method=="RUV_s"){
     
     RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
-    mSetObj$dataSet$adjusted.mat <- RUV_s_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
     
   } else if (Method=="RUV_r"){
     
     RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
-    mSetObj$dataSet$adjusted.mat <- RUV_r_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
     
   } else if (Method=="RUV_g"){
     
     RUV_g_edata<-RUVg_cor(commonMat2);
-    mSetObj$dataSet$adjusted.mat <- RUV_g_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
     
   } else if (Method=="NOMIS"){
     
     NOMIS_edata <- NOMIS(commonMat2)
-    mSetObj$dataSet$adjusted.mat <- NOMIS_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
     
   } else if (Method=="CCMN"){
     
     CCMN_edata <- CCMN2(commonMat2,class.lbl2)
-    mSetObj$dataSet$adjusted.mat <- CCMN_edata;
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;
     
   }
-  save(mSetObj,file = "mSetObj.rda")
-  mSetObj <- PlotPCA.overview(mSetObj, paste(imgName,"PCA"), method=Method);
+  
+  if (Method != "Automatically"){
+    
+    nms<-names(mSetObj$dataSet)
+    nms<-nms[grepl("*edata",nms)]
+    nms<- c("table",nms)
+    
+    interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
+    mSetObj$dataSet$interbatch_dis <- interbatch_dis
+    
+  }
+  
+  save(mSetObj,file="mSetObj1.rda")
+  
+  mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method);
   Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
+  plot.dist(mSetObj,paste(imgName,"dist"))
   
   best.table <- mSetObj$dataSet$adjusted.mat
   
@@ -407,7 +605,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 300. It is suggested that for high-resolution images, select a dpi of 600.  
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 600.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -415,9 +613,9 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=300, width=NA,method){
+PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
   
-  mSetObj <- .get.mSet(mSetObj);
+  #mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -485,10 +683,10 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
   }
   
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(mSetObj);
+  #return(.set.mSet(mSetObj));
   
 }
-
 
 #'Sample Trend Scatter
 #'@description Scatter sample trend comparison between all sample of different batches
@@ -496,7 +694,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 300. It is suggested that for high-resolution images, select a dpi of 600.  
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 600.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
 #'@author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -504,9 +702,9 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=300, width=NA,method){
+Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
   
-  mSetObj <- .get.mSet(mSetObj)
+  #mSetObj <- .get.mSet(mSetObj)
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -528,7 +726,7 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
   
   complete_all_center = t(scale(t(adjusted.data), center = TRUE, scale = FALSE))
   toplot3 = svd(complete_all_center)
-
+  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   # Define the image
@@ -542,6 +740,41 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
   dev.off()
 }
 
+#'Batch Distance Plotting
+#'@description Scatter sample trend comparison between all sample of different batches
+plot.dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72){
+  library(ggplot2)
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w  <- length(mSetObj[["dataSet"]])*0.4+2.6;
+  }else{
+    w <- width;
+  }
+  h <- w*6/11;
+  
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  Methods<-gsub("_edata",names(mSetObj[["dataSet"]][["interbatch_dis"]]),replacement = "")
+  Methods[1] <- "Original_Table"
+  Distance<-unname(mSetObj[["dataSet"]][["interbatch_dis"]])
+  dist.sort <- order(Distance)
+  
+  data<-data.frame(Methods,Distance,dist.sort)
+  
+  p<-ggplot2::ggplot(data,aes(fill=factor(Distance),y=Distance,x=Methods)) +
+    geom_bar(position="dodge", stat="identity",width = 0.7) + 
+    scale_fill_grey(start = 0.1,end = 0.85) + 
+    theme_bw() + 
+    theme(legend.position = "none",
+          axis.text.x = element_text( angle=45, hjust = 1),
+          axis.text.y = element_text( angle=-30)) +
+    scale_x_discrete(limits=Methods[dist.sort])+ 
+    geom_text(x=1, y=min(data$Distance)*1.1, label="*",size=10, color="black")
+  print(p)
+  dev.off();
+}
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -550,7 +783,7 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=300, width=NA,m
 
 GetAllBatchNames <- function(mSetObj=NA){
   
-  mSetObj <- .get.mSet(mSetObj);
+  #mSetObj <- .get.mSet(mSetObj);
   
   if(is.null(mSetObj$dataSet$batch)){
     return(0);
@@ -559,7 +792,7 @@ GetAllBatchNames <- function(mSetObj=NA){
 }
 
 ResetBatchData <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
+  #mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;
   return(.set.mSet(mSetObj));
 }
@@ -571,7 +804,6 @@ ResetBatchData <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'
-
 CreateSemiTransColors <- function(cls){
   
   # note, the first color (red) is for QC
@@ -601,6 +833,12 @@ ToSemiTransParent <- function (col.nms, alpha=0.5){
 # 1. WaveICA Function
 WaveICA<-function(data,batch,group){
   ### Wavelet Decomposition
+  
+  if(.on.public.web){
+    dyn.load("../../rscripts/metaboanalystr/src/MetaboAnalyst.so");
+  }
+  
+  
   batch<-as.character(batch)
   group<-as.character(group)
   wf="haar";
@@ -911,30 +1149,30 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   
   
   cvStatForEachBatch <- reshape2::melt(cvStat,id.vars = c("ID","batch"),
-                             variable.name = "CV")
+                                       variable.name = "CV")
   cvStatForEachBatch$batch <- as.factor(cvStatForEachBatch$batch)
   
   #message("Summary information of the CV for QC samples:")
   cvTable <- plyr::ddply(cvStatForEachBatch,plyr::.(batch,CV),plyr::summarise,
-                   lessThan30=sum(value<=0.3,na.rm = TRUE),
-                   total=length(value),ratio=lessThan30/total)
+                         lessThan30=sum(value<=0.3,na.rm = TRUE),
+                         total=length(value),ratio=lessThan30/total)
   #print(cvTable)
   #res$cvBatch <- cvTable
   #message("\n")
   
   cvStat <- plyr::ddply(peaksData[is.na(peaksData$class),],plyr::.(ID),
                         plyr::summarise,
-                  rawCV=sd(value,na.rm = TRUE)/mean(value,na.rm = TRUE),
-                  normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
+                        rawCV=sd(value,na.rm = TRUE)/mean(value,na.rm = TRUE),
+                        normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
   
   
   cvStatForAll <- reshape2::melt(cvStat,id.vars = c("ID"),
-                       variable.name = "CV")
+                                 variable.name = "CV")
   ## output information
   #message("Summary information of the CV for QC samples:")
   cvTable <- plyr::ddply(cvStatForAll,plyr::.(CV),plyr::summarise,
-                   lessThan30=sum(value<=0.3,na.rm = TRUE),
-                   total=length(value),ratio=lessThan30/total)
+                         lessThan30=sum(value<=0.3,na.rm = TRUE),
+                         total=length(value),ratio=lessThan30/total)
   #print(cvTable)
   
   
@@ -1127,8 +1365,7 @@ CCMN2<-function(data,class){
   model <- .model.evaluation(mSetObj,data.type);
   
   if (center=="QC"){
-    QC_methods<-c("")
-      #c("combat_edata","WaveICA_edata","EigenMS_edata","QC_RLSC_edata","ANCOVA_edata");
+    QC_methods<-c("combat_edata","WaveICA_edata","EigenMS_edata","QC_RLSC_edata","ANCOVA_edata");
   } else {
     QC_methods<-c("");
   }
@@ -1278,7 +1515,7 @@ unbiased_stICA <- function(X,k=10,alpha) {
   
   p <- nrow(X)
   n <- ncol(X)
-
+  
   dimmin <- min(n,p)
   
   if (dimmin < k) {
@@ -1359,7 +1596,7 @@ modwt<-function (x, wf = "la8", n.levels = 4, boundary = "periodic") {
   storage.mode(V) <- "double"
   for (j in 1:J) {
     out <- C_modwt_r(as.double(x), N, as.integer(j), L, 
-              ht, gt, W = W, V = V)
+                     ht, gt, W = W, V = V)
     y[[j]] <- out$W
     x <- out$V
   }
@@ -1735,7 +1972,7 @@ imodwt <- function(y){
   for(j in J:1) {
     jj <- paste("d", j, sep="")
     X <- C_imodwt_r(as.double(y[[jj]]), as.double(X), N, as.integer(j), 
-            L, ht, gt, XX)
+                    L, ht, gt, XX)
   }
   if(attr(y, "boundary") == "reflection") return(X[1:(N/2)])
   else return(X)
@@ -1743,101 +1980,101 @@ imodwt <- function(y){
 
 ### Internal Functions - JADE 
 rjd <-function(X, eps = 1e-06, maxiter = 100, na.action = na.fail){
-    X <- na.action(X)
-    dim.X <- dim(X)
-    
-    if (length(dim.X)==2) type <- "Matrix"
-    if (length(dim.X)==3) type <- "Array"
-    if ((length(dim.X) %in% c(2,3))==FALSE) stop("'X' must have two or three dimensions")
-    
-    if (type == "Array")
-    {
-      if (dim.X[1] != dim.X[2]) stop("'X' must be an array with dim of the form c(p,p,k)")
-      p <- dim.X[1]
-      Xt <- aperm(X, c(1,3,2))
-      X <- matrix(Xt, ncol=p)
-    }
-    
-    if (!all(sapply(X, is.numeric)))  stop("'X' must be numeric")
-    X <- as.matrix(X)
-    X.data <- X
-    
-    p <- dim(X)[2]
-    if (p==1) stop("'X' must be at least bivariate")
-    kp <- dim(X)[1]
-    
-    
-    k <- kp/p
-    if (floor(k) != ceiling(k)) stop("'X' must me a matrix of k stacked pxp matrices")
-    
-    V <- diag(p)
-    encore <- TRUE
-    iter <- 0
-    while (encore==TRUE)
-    {
-      iter <- iter +1
-      encore <- FALSE
-      for (i in 1:(p-1))
-      {
-        for (j in (i+1):(p))
-        {
-          Ii <- seq(i,kp,p)
-          Ij <- seq(j,kp,p)
-          
-          g1 <- X[Ii,i]-X[Ij,j]
-          g2 <- X[Ij,i]+X[Ii,j]
-          
-          g <- cbind(g1,g2)
-          
-          gg <- crossprod(g)
-          ton <- gg[1,1]-gg[2,2]
-          toff <- gg[1,2]+gg[2,1]
-          theta <- 0.5*atan2(toff, ton+sqrt(ton*ton+toff*toff))
-          
-          cos.theta <- cos(theta)
-          sin.theta <- sin(theta)
-          
-          if (abs(sin.theta)>eps)
-          {
-            encore <- TRUE
-            
-            Mi <- X[Ii,]
-            Mj <- X[Ij,]
-            
-            X[Ii,] <- cos.theta * Mi + sin.theta * Mj
-            X[Ij,] <- cos.theta * Mj - sin.theta * Mi
-            
-            col.i <- X[,i]
-            col.j <- X[,j]
-            
-            X[,i] <- cos.theta * col.i + sin.theta * col.j
-            X[,j] <- cos.theta * col.j - sin.theta * col.i
-            
-            temp <- V[i,]
-            V[i,] <- cos.theta * V[i,] + sin.theta * V[j,]
-            V[j,] <- cos.theta * V[j,] - sin.theta * temp
-          }
-        }
-        
-      }
-      if (iter >= maxiter) stop("maxiter reached without convergence")    
-    }
-    
-    recomp <- function(X,V)
-    {as.data.frame(V %*% tcrossprod(as.matrix(X), V))}
-    Z <- split(as.data.frame(X.data), rep(1:k, each=p))
-    Z2 <- sapply(Z, recomp, V=as.matrix(V), simplify=FALSE)
-    Z3 <- matrix(unlist(lapply(Z2, t)), ncol=p, byrow=TRUE) 
-    if (type == "Array")
-    {
-      D <- aperm(array(t(Z3), dim = c(p,p,k)), c(2,1,3), resize = FALSE)
-    }
-    else
-    {
-      D <- Z3
-    }
-    return(list(V=t(V),D=D))
+  X <- na.action(X)
+  dim.X <- dim(X)
+  
+  if (length(dim.X)==2) type <- "Matrix"
+  if (length(dim.X)==3) type <- "Array"
+  if ((length(dim.X) %in% c(2,3))==FALSE) stop("'X' must have two or three dimensions")
+  
+  if (type == "Array")
+  {
+    if (dim.X[1] != dim.X[2]) stop("'X' must be an array with dim of the form c(p,p,k)")
+    p <- dim.X[1]
+    Xt <- aperm(X, c(1,3,2))
+    X <- matrix(Xt, ncol=p)
   }
+  
+  if (!all(sapply(X, is.numeric)))  stop("'X' must be numeric")
+  X <- as.matrix(X)
+  X.data <- X
+  
+  p <- dim(X)[2]
+  if (p==1) stop("'X' must be at least bivariate")
+  kp <- dim(X)[1]
+  
+  
+  k <- kp/p
+  if (floor(k) != ceiling(k)) stop("'X' must me a matrix of k stacked pxp matrices")
+  
+  V <- diag(p)
+  encore <- TRUE
+  iter <- 0
+  while (encore==TRUE)
+  {
+    iter <- iter +1
+    encore <- FALSE
+    for (i in 1:(p-1))
+    {
+      for (j in (i+1):(p))
+      {
+        Ii <- seq(i,kp,p)
+        Ij <- seq(j,kp,p)
+        
+        g1 <- X[Ii,i]-X[Ij,j]
+        g2 <- X[Ij,i]+X[Ii,j]
+        
+        g <- cbind(g1,g2)
+        
+        gg <- crossprod(g)
+        ton <- gg[1,1]-gg[2,2]
+        toff <- gg[1,2]+gg[2,1]
+        theta <- 0.5*atan2(toff, ton+sqrt(ton*ton+toff*toff))
+        
+        cos.theta <- cos(theta)
+        sin.theta <- sin(theta)
+        
+        if (abs(sin.theta)>eps)
+        {
+          encore <- TRUE
+          
+          Mi <- X[Ii,]
+          Mj <- X[Ij,]
+          
+          X[Ii,] <- cos.theta * Mi + sin.theta * Mj
+          X[Ij,] <- cos.theta * Mj - sin.theta * Mi
+          
+          col.i <- X[,i]
+          col.j <- X[,j]
+          
+          X[,i] <- cos.theta * col.i + sin.theta * col.j
+          X[,j] <- cos.theta * col.j - sin.theta * col.i
+          
+          temp <- V[i,]
+          V[i,] <- cos.theta * V[i,] + sin.theta * V[j,]
+          V[j,] <- cos.theta * V[j,] - sin.theta * temp
+        }
+      }
+      
+    }
+    if (iter >= maxiter) stop("maxiter reached without convergence")    
+  }
+  
+  recomp <- function(X,V)
+  {as.data.frame(V %*% tcrossprod(as.matrix(X), V))}
+  Z <- split(as.data.frame(X.data), rep(1:k, each=p))
+  Z2 <- sapply(Z, recomp, V=as.matrix(V), simplify=FALSE)
+  Z3 <- matrix(unlist(lapply(Z2, t)), ncol=p, byrow=TRUE) 
+  if (type == "Array")
+  {
+    D <- aperm(array(t(Z3), dim = c(p,p,k)), c(2,1,3), resize = FALSE)
+  }
+  else
+  {
+    D <- Z3
+  }
+  return(list(V=t(V),D=D))
+}
 
 ### Internal Functions - corpcor
 pseudoinverse = function (m, tol) {
@@ -1914,6 +2151,22 @@ nsmall.svd = function(m, tol) {
   return(list(d=d,u=u,v=v))
 }
 
+positive.svd = function(m, tol)
+{
+  s = svd(m)
+  
+  if( missing(tol) ) 
+    tol = max(dim(m))*max(s$d)*.Machine$double.eps
+  Positive = s$d > tol
+  
+  return(list(
+    d=s$d[Positive],
+    u=s$u[, Positive, drop=FALSE],
+    v=s$v[, Positive, drop=FALSE]
+  ))
+}
+
+
 ##### Internal Functions for ANCOVA
 ANCOVA_doBC <- function(Xvec, ref.idx, batch.idx, seq.idx,
                         result = c("correctedX", "corrections"),
@@ -1986,7 +2239,7 @@ ANCOVA_doBC <- function(Xvec, ref.idx, batch.idx, seq.idx,
                      ###                     tobit = AER:::tobit(correctionFormula, data = fitdf,
                      ###                                         left = imputeVal),
                      tobit = .crch(correctionFormula, data = fitdf,
-                                        left = imputeVal))
+                                   left = imputeVal))
     
     ## Now make predictions for each sample, not just the ref samples
     ## The actual correction is the following:
@@ -2301,7 +2554,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
     fun.fit <- function(x,y,span) {smooth.spline(x = x,y =y ,spar = span)}
     fun.predict <- function(fit,x0) {predict(fit,x0)$y}
     y.cv <- .crossval(x,y,fun.fit,fun.predict,span=span,
-                                ngroup = length(x))$cv.fit
+                      ngroup = length(x))$cv.fit
     fltr <- !is.na(y.cv)
     return(mean(abs(y[fltr]-y.cv[fltr])))
   }
@@ -2340,29 +2593,29 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
 
 .runFit2=function(id,qcData,maxOrder,loessSpan){
   #out <- tryCatch({
-    dat <- data.frame(newOrder=1:maxOrder)
-    
-    piece <- qcData[ qcData$ID_batch==id,]
-    dat$valuePredict=predict(smooth.spline(piece$order,
-                                           piece$value,
-                                           spar = loessSpan),
-                             dat$newOrder)$y
-    dat$ID <- piece$ID[1]
-    dat$batch <- piece$batch[1]
-    dat
- # },
+  dat <- data.frame(newOrder=1:maxOrder)
+  
+  piece <- qcData[ qcData$ID_batch==id,]
+  dat$valuePredict=predict(smooth.spline(piece$order,
+                                         piece$value,
+                                         spar = loessSpan),
+                           dat$newOrder)$y
+  dat$ID <- piece$ID[1]
+  dat$batch <- piece$batch[1]
+  dat
+  # },
   #error=function(e){
-    #message("Please see the file: runFit_error.rda for related data!")
-    #save(e,id,qcData,maxOrder,file="runFit_error.rda")
+  #message("Please see the file: runFit_error.rda for related data!")
+  #save(e,id,qcData,maxOrder,file="runFit_error.rda")
   #  stop("error in runFit!")
   #  return(NULL)
   #},
- # warning=function(cond){
-    #message("Please see the file: runFit_warning.rda for related data!")
-    #save(cond,id,qcData,maxOrder,file="runFit_warning.rda")
- #   return(NULL)
+  # warning=function(cond){
+  #message("Please see the file: runFit_warning.rda for related data!")
+  #save(cond,id,qcData,maxOrder,file="runFit_warning.rda")
+  #   return(NULL)
   #})
- # return(out)
+  # return(out)
 }
 
 .glogfit=function (x, a = 1, inverse = FALSE) {
@@ -2773,11 +3026,11 @@ eig_norm1 = function(m, treatment, prot.info, write_to_file=''){
   toplot1$u = toplot1$v
   toplot1$v = temp
   
-  par(mfcol=c(3,2))
-  par(mar = c(2,2,2,2))
+  #par(mfcol=c(3,2))
+  #par(mar = c(2,2,2,2))
   
-  plot.eigentrends(toplot1, "Raw Data")
-  plot.eigentrends(my.svd, "Residual Data")
+  #plot.eigentrends(toplot1, "Raw Data")
+  #plot.eigentrends(my.svd, "Residual Data")
   
   d = my.svd$d;  ss = d^2;
   Tk = signif(ss/sum(ss)* 100, 2)
@@ -2854,7 +3107,7 @@ eig_norm2 = function(rv) {
   } else { # got 2+ treatment groups
     for (ii in 1:nrow(pres)) {
       if(ii %% 100 == 0) { #print(paste('Processing peptide ',ii))  
-        }
+      }
       pep = pres[ii, ] 
       pos = !is.na(pep)
       peptemp = as.matrix(pep[pos]) # take only the observed values, may not be needed in R? but this works
@@ -2914,14 +3167,14 @@ eig_norm2 = function(rv) {
   complete_all = y_rescaled[rowSums(is.na(y_rescaled))==0,,drop=F]
   
   #  x11() # make R open new figure window
-  par(mfcol=c(3,2))
-  par(mar = c(2,2,2,2))
+  #par(mfcol=c(3,2))
+  #par(mar = c(2,2,2,2))
   # center each peptide around zero (subtract its mean across samples)
   # note: we are not changing matrix itself, only centerig what we pass to svd
   complete_all_center = t(scale(t(complete_all), center = TRUE, scale = FALSE))
   toplot3 = svd(complete_all_center)
-  plot.eigentrends(toplot1, "Raw Data")
-  plot.eigentrends(toplot3, "Normalized Data")
+  #plot.eigentrends(toplot1, "Raw Data")
+  #plot.eigentrends(toplot3, "Normalized Data")
   
   #print("Done with normalization!!!")
   colnames(V0) =  paste("Trend", 1:ncol(V0), sep="_")
@@ -3081,7 +3334,7 @@ standardsFit <- function(object, factors, ncomp=NULL, lg=TRUE, fitfunc=lm, stand
   #if(compareVersion(ver, "1.26.0") == 1)
   #  pc <- pca(zbzhate, nPcs=np, verbose=FALSE)
   #else
-  withCallingHandlers(pc <- pca(zbzhate, nPcs=np, method="nipals", verbose=FALSE),
+  withCallingHandlers(pc <- pcaMethods::pca(zbzhate, nPcs=np, method="nipals", verbose=FALSE),
                       warning=pcaMuffle
   )
   
@@ -3116,8 +3369,8 @@ standardsPred <- function(model, newdata, factors, lg=TRUE, standards) {
 
 pcaMuffle <- function(w) {
   if(any(grepl("Precision for components", w),
-                                grepl("Validation incomplete", w)))
-  invokeRestart( "muffleWarning" )}
+         grepl("Validation incomplete", w)))
+    invokeRestart( "muffleWarning" )}
 
 # Define Internal Functions - RUV-2
 naiveRandRUV <- function(Y, cIdx, nu.coeff=1e-3, k=min(nrow(Y), length(cIdx)), tol=1e-6){
@@ -3598,7 +3851,7 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
 
 # Define Inernal Function - "spread" (tidyr package)
 spread <- function(data, key, value, fill = NA, convert = FALSE,
-                              drop = TRUE, sep = NULL) {
+                   drop = TRUE, sep = NULL) {
   key_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(key))
   value_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(value))
   
@@ -3746,125 +3999,125 @@ reconstruct_tibble <- function(input, output, ungrouped_vars = character()) {
 
 #### Internal Function - RUVSeq Package
 RUVs<-function(x, cIdx, k, scIdx, round=TRUE, epsilon=1, tolerance=1e-8, isLog=FALSE) {
-    
-    if(!isLog && !all(.isWholeNumber(x))) {
-      warning(paste0("The expression matrix does not contain counts.\n",
-                     "Please, pass a matrix of counts (not logged) or set isLog to TRUE to skip the log transformation"))
+  
+  if(!isLog && !all(.isWholeNumber(x))) {
+    warning(paste0("The expression matrix does not contain counts.\n",
+                   "Please, pass a matrix of counts (not logged) or set isLog to TRUE to skip the log transformation"))
+  }
+  
+  if(isLog) {
+    Y <- t(x)
+  } else {
+    Y <- t(log(x+epsilon))
+  }
+  
+  scIdx <- scIdx[rowSums(scIdx > 0) >= 2, , drop = FALSE]
+  Yctls <- matrix(0, prod(dim(scIdx)), ncol(Y))
+  m <- nrow(Y)
+  n <- ncol(Y)
+  c <- 0
+  for (ii in 1:nrow(scIdx)) {
+    for (jj in 1:(ncol(scIdx))) {
+      if (scIdx[ii, jj] == -1)
+        next
+      c <- c + 1
+      Yctls[c, ] <- Y[scIdx[ii, jj], , drop = FALSE] -
+        colMeans(Y[scIdx[ii, (scIdx[ii, ] > 0)], , drop = FALSE])
     }
-    
-    if(isLog) {
-      Y <- t(x)
+  }
+  Yctls <- Yctls[rowSums(Yctls) != 0, ]
+  Y <- rbind(Y, Yctls)
+  sctl <- (m + 1):(m + nrow(Yctls))
+  svdRes <- svd(Y[sctl, ], nu = 0, nv = k)
+  k <- min(k, max(which(svdRes$d > tolerance)))
+  a <- diag(as.vector(svdRes$d[1:k]), ncol=k, nrow=k) %*% t(as.matrix(svdRes$v[, 1:k]))
+  colnames(a) <- colnames(Y)
+  W <- Y[, cIdx] %*% t(solve(a[, cIdx, drop = FALSE] %*% t(a[, cIdx, drop = FALSE]), a[, cIdx, drop = FALSE]))
+  Wa <- W %*% a
+  correctedY <- Y[1:m, ] - W[1:m, ] %*% a
+  
+  if(!isLog && all(.isWholeNumber(x))) {
+    if(round) {
+      correctedY <- round(exp(correctedY) - epsilon)
+      correctedY[correctedY<0] <- 0
     } else {
-      Y <- t(log(x+epsilon))
+      correctedY <- exp(correctedY) - epsilon
     }
-    
-    scIdx <- scIdx[rowSums(scIdx > 0) >= 2, , drop = FALSE]
-    Yctls <- matrix(0, prod(dim(scIdx)), ncol(Y))
-    m <- nrow(Y)
-    n <- ncol(Y)
-    c <- 0
-    for (ii in 1:nrow(scIdx)) {
-      for (jj in 1:(ncol(scIdx))) {
-        if (scIdx[ii, jj] == -1)
-          next
-        c <- c + 1
-        Yctls[c, ] <- Y[scIdx[ii, jj], , drop = FALSE] -
-          colMeans(Y[scIdx[ii, (scIdx[ii, ] > 0)], , drop = FALSE])
-      }
-    }
-    Yctls <- Yctls[rowSums(Yctls) != 0, ]
-    Y <- rbind(Y, Yctls)
-    sctl <- (m + 1):(m + nrow(Yctls))
-    svdRes <- svd(Y[sctl, ], nu = 0, nv = k)
-    k <- min(k, max(which(svdRes$d > tolerance)))
-    a <- diag(as.vector(svdRes$d[1:k]), ncol=k, nrow=k) %*% t(as.matrix(svdRes$v[, 1:k]))
-    colnames(a) <- colnames(Y)
-    W <- Y[, cIdx] %*% t(solve(a[, cIdx, drop = FALSE] %*% t(a[, cIdx, drop = FALSE]), a[, cIdx, drop = FALSE]))
-    Wa <- W %*% a
-    correctedY <- Y[1:m, ] - W[1:m, ] %*% a
-    
-    if(!isLog && all(.isWholeNumber(x))) {
-      if(round) {
-        correctedY <- round(exp(correctedY) - epsilon)
-        correctedY[correctedY<0] <- 0
-      } else {
-        correctedY <- exp(correctedY) - epsilon
-      }
-    }
-    
-    W <- as.matrix(W[1:m,])
-    colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
-    return(list(W = W, normalizedCounts = t(correctedY)))
+  }
+  
+  W <- as.matrix(W[1:m,])
+  colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
+  return(list(W = W, normalizedCounts = t(correctedY)))
 }
 
 RUVr<-function(x, cIdx, k, residuals, center=TRUE, round=TRUE, epsilon=1, tolerance=1e-8, isLog=FALSE) {
-    
-    Y <- t(log(x+epsilon))
   
-    if(center) {
-      E <- apply(residuals, 1, function(x) scale(x, center=TRUE, scale=FALSE))
+  Y <- t(log(x+epsilon))
+  
+  if(center) {
+    E <- apply(residuals, 1, function(x) scale(x, center=TRUE, scale=FALSE))
+  } else {
+    E <- t(residuals)
+  }
+  m <- nrow(Y)
+  n <- ncol(Y)
+  svdWa <- svd(E[, cIdx])
+  k <- min(k, max(which(svdWa$d > tolerance)))
+  W <- svdWa$u[, (1:k), drop = FALSE]
+  alpha <- solve(t(W) %*% W) %*% t(W) %*% Y
+  correctedY <- Y - W %*% alpha
+  if(!isLog && all(.isWholeNumber(x))) {
+    if(round) {
+      correctedY <- round(exp(correctedY) - epsilon)
+      correctedY[correctedY<0] <- 0
     } else {
-      E <- t(residuals)
+      correctedY <- exp(correctedY) - epsilon
     }
-    m <- nrow(Y)
-    n <- ncol(Y)
-    svdWa <- svd(E[, cIdx])
-    k <- min(k, max(which(svdWa$d > tolerance)))
-    W <- svdWa$u[, (1:k), drop = FALSE]
-    alpha <- solve(t(W) %*% W) %*% t(W) %*% Y
-    correctedY <- Y - W %*% alpha
-    if(!isLog && all(.isWholeNumber(x))) {
-      if(round) {
-        correctedY <- round(exp(correctedY) - epsilon)
-        correctedY[correctedY<0] <- 0
-      } else {
-        correctedY <- exp(correctedY) - epsilon
-      }
-    }
-    colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
-    return(list(W = W, normalizedCounts = t(correctedY)))
+  }
+  colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
+  return(list(W = W, normalizedCounts = t(correctedY)))
 }
 
 RUVg<-function(x, cIdx, k, drop=0, center=TRUE, round=TRUE, epsilon=1, tolerance=1e-8, isLog=FALSE) {
-    
-    if(!isLog && !all(.isWholeNumber(x))) {
-      warning(paste0("The expression matrix does not contain counts.\n",
-                     "Please, pass a matrix of counts (not logged) or set isLog to TRUE to skip the log transformation"))
-    }
-    
-    if(isLog) {
-      Y <- t(x)
-    } else {
-      Y <- t(log(x+epsilon))
-    }
-    
-    if (center) {
-      Ycenter <- apply(Y, 2, function(x) scale(x, center = TRUE, scale=FALSE))
-    } else {
-      Ycenter <- Y
-    }
-    if (drop >= k) {
-      stop("'drop' must be less than 'k'.")
-    }
-    m <- nrow(Y)
-    n <- ncol(Y)
-    svdWa <- svd(Ycenter[, cIdx])
-    first <- 1 + drop
-    k <- min(k, max(which(svdWa$d > tolerance)))
-    W <- svdWa$u[, (first:k), drop = FALSE]
-    alpha <- solve(t(W) %*% W) %*% t(W) %*% Y
-    correctedY <- Y - W %*% alpha
-    if(!isLog && all(.isWholeNumber(x))) {
-      if(round) {
-        correctedY <- round(exp(correctedY) - epsilon)
-        correctedY[correctedY<0] <- 0
-      } else {
-        correctedY <- exp(correctedY) - epsilon
-      }
-    }
-    colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
-    return(list(W = W, normalizedCounts = t(correctedY)))
+  
+  if(!isLog && !all(.isWholeNumber(x))) {
+    warning(paste0("The expression matrix does not contain counts.\n",
+                   "Please, pass a matrix of counts (not logged) or set isLog to TRUE to skip the log transformation"))
   }
+  
+  if(isLog) {
+    Y <- t(x)
+  } else {
+    Y <- t(log(x+epsilon))
+  }
+  
+  if (center) {
+    Ycenter <- apply(Y, 2, function(x) scale(x, center = TRUE, scale=FALSE))
+  } else {
+    Ycenter <- Y
+  }
+  if (drop >= k) {
+    stop("'drop' must be less than 'k'.")
+  }
+  m <- nrow(Y)
+  n <- ncol(Y)
+  svdWa <- svd(Ycenter[, cIdx])
+  first <- 1 + drop
+  k <- min(k, max(which(svdWa$d > tolerance)))
+  W <- svdWa$u[, (first:k), drop = FALSE]
+  alpha <- solve(t(W) %*% W) %*% t(W) %*% Y
+  correctedY <- Y - W %*% alpha
+  if(!isLog && all(.isWholeNumber(x))) {
+    if(round) {
+      correctedY <- round(exp(correctedY) - epsilon)
+      correctedY[correctedY<0] <- 0
+    } else {
+      correctedY <- exp(correctedY) - epsilon
+    }
+  }
+  colnames(W) <- paste("W", seq(1, ncol(W)), sep="_")
+  return(list(W = W, normalizedCounts = t(correctedY)))
+}
 
 .isWholeNumber <- function(x, tol = .Machine$double.eps^0.5) {
   !is.na(x) & abs(x - round(x)) < tol
@@ -3906,127 +4159,127 @@ residuals.DGEGLM <- function(object, type=c("deviance", "pearson"), ...) {
 
 ### Internal Function - MASS package
 negative.binomial <- function(theta = stop("'theta' must be specified"), link = "log")  {
-    linktemp <- substitute(link)
-    if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-    if (linktemp %in% c("log", "identity", "sqrt"))
-      stats <- make.link(linktemp)
-    else if (is.character(link)) {
-      stats <- make.link(link)
-      linktemp <- link
-    } else {
-      ## what else shall we allow?  At least objects of class link-glm.
-      if(inherits(link, "link-glm")) {
-        stats <- link
-        if(!is.null(stats$name)) linktemp <- stats$name
-      } else
-        stop(gettextf("\"%s\" link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"", linktemp))
-    }
-    .Theta <- theta ## avoid codetools warnings
-    env <- new.env(parent=.GlobalEnv)
-    assign(".Theta", theta, envir=env)
-    variance <- function(mu)
-      mu + mu^2/.Theta
-    validmu <- function(mu)
-      all(mu > 0)
-    dev.resids <- function(y, mu, wt)
-      2 * wt * (y * log(pmax(1, y)/mu) - (y + .Theta) *
-                  log((y + .Theta)/ (mu + .Theta)))
-    aic <- function(y, n, mu, wt, dev) {
-      term <- (y + .Theta) * log(mu + .Theta) - y * log(mu) +
-        lgamma(y + 1) - .Theta * log(.Theta) + lgamma(.Theta) - lgamma(.Theta+y)
-      2 * sum(term * wt)
-    }
-    initialize <- expression({
-      if (any(y < 0))
-        stop("negative values not allowed for the negative binomial family")
-      n <- rep(1, nobs)
-      mustart <- y + (y == 0)/6
-    })
-    simfun <- function(object, nsim) {
-      ftd <- fitted(object)
-      rnegbin(nsim * length(ftd), ftd, .Theta)
-    }
-    environment(variance) <- environment(validmu) <-
-      environment(dev.resids) <- environment(aic) <-
-      environment(simfun) <- env
-    famname <- paste("Negative Binomial(", format(round(theta, 4)), ")",
-                     sep = "")
-    structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
-                   linkinv = stats$linkinv, variance = variance,
-                   dev.resids = dev.resids, aic = aic, mu.eta = stats$mu.eta,
-                   initialize = initialize, validmu = validmu,
-                   valideta = stats$valideta, simulate = simfun),
-              class = "family")
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("log", "identity", "sqrt"))
+    stats <- make.link(linktemp)
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    ## what else shall we allow?  At least objects of class link-glm.
+    if(inherits(link, "link-glm")) {
+      stats <- link
+      if(!is.null(stats$name)) linktemp <- stats$name
+    } else
+      stop(gettextf("\"%s\" link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"", linktemp))
   }
+  .Theta <- theta ## avoid codetools warnings
+  env <- new.env(parent=.GlobalEnv)
+  assign(".Theta", theta, envir=env)
+  variance <- function(mu)
+    mu + mu^2/.Theta
+  validmu <- function(mu)
+    all(mu > 0)
+  dev.resids <- function(y, mu, wt)
+    2 * wt * (y * log(pmax(1, y)/mu) - (y + .Theta) *
+                log((y + .Theta)/ (mu + .Theta)))
+  aic <- function(y, n, mu, wt, dev) {
+    term <- (y + .Theta) * log(mu + .Theta) - y * log(mu) +
+      lgamma(y + 1) - .Theta * log(.Theta) + lgamma(.Theta) - lgamma(.Theta+y)
+    2 * sum(term * wt)
+  }
+  initialize <- expression({
+    if (any(y < 0))
+      stop("negative values not allowed for the negative binomial family")
+    n <- rep(1, nobs)
+    mustart <- y + (y == 0)/6
+  })
+  simfun <- function(object, nsim) {
+    ftd <- fitted(object)
+    rnegbin(nsim * length(ftd), ftd, .Theta)
+  }
+  environment(variance) <- environment(validmu) <-
+    environment(dev.resids) <- environment(aic) <-
+    environment(simfun) <- env
+  famname <- paste("Negative Binomial(", format(round(theta, 4)), ")",
+                   sep = "")
+  structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
+                 linkinv = stats$linkinv, variance = variance,
+                 dev.resids = dev.resids, aic = aic, mu.eta = stats$mu.eta,
+                 initialize = initialize, validmu = validmu,
+                 valideta = stats$valideta, simulate = simfun),
+            class = "family")
+}
 
 ### Internal Function - Vegan Package
 decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
-            before = NULL, after = NULL)  {
-    Const1 <- 1e-10
-    Const2 <- 5
-    Const3 <- 1e-11
-    veg <- as.matrix(veg)
-    aidot <- rowSums(veg)
-    if (any(aidot <= 0))
-      stop("all row sums must be >0 in the community matrix: remove empty sites")
-    if (any(veg < 0))
-      stop("'decorana' cannot handle negative data entries")
-    adotj <- colSums(veg)
-    if (any(adotj <= 0))
-      warning("some species were removed because they were missing in the data")
-    if (mk < 10)
-      mk <- 10
-    if (mk > 46)
-      mk <- 46
-    if (ira)
-      iresc <- 0
-    if (!is.null(before)) {
-      if (is.unsorted(before))
-        stop("'before' must be sorted")
-      if (length(before) != length(after))
-        stop("'before' and 'after' must have same lengths")
-      for (i in seq_len(nrow(veg))) {
-        tmp <- veg[i, ] > 0
-        veg[i, tmp] <- approx(before, after, veg[i, tmp],
-                              rule = 2)$y
-      }
+                      before = NULL, after = NULL)  {
+  Const1 <- 1e-10
+  Const2 <- 5
+  Const3 <- 1e-11
+  veg <- as.matrix(veg)
+  aidot <- rowSums(veg)
+  if (any(aidot <= 0))
+    stop("all row sums must be >0 in the community matrix: remove empty sites")
+  if (any(veg < 0))
+    stop("'decorana' cannot handle negative data entries")
+  adotj <- colSums(veg)
+  if (any(adotj <= 0))
+    warning("some species were removed because they were missing in the data")
+  if (mk < 10)
+    mk <- 10
+  if (mk > 46)
+    mk <- 46
+  if (ira)
+    iresc <- 0
+  if (!is.null(before)) {
+    if (is.unsorted(before))
+      stop("'before' must be sorted")
+    if (length(before) != length(after))
+      stop("'before' and 'after' must have same lengths")
+    for (i in seq_len(nrow(veg))) {
+      tmp <- veg[i, ] > 0
+      veg[i, tmp] <- approx(before, after, veg[i, tmp],
+                            rule = 2)$y
     }
-    if (iweigh) {
-      veg <- downweight(veg, Const2)
-      aidot <- rowSums(veg)
-      adotj <- colSums(veg)
-    }
-    v <- attr(veg, "v")
-    v.fraction <- attr(veg, "fraction")
-    adotj[adotj < Const3] <- Const3
-    CA <- .Call(C_do_decorana, veg, ira, iresc, short, mk, as.double(aidot),
-                as.double(adotj))
-    if (ira)
-      dnames <- paste("RA", 1:4, sep = "")
-    else dnames <- paste("DCA", 1:4, sep = "")
-    dimnames(CA$rproj) <- list(rownames(veg), dnames)
-    dimnames(CA$cproj) <- list(colnames(veg), dnames)
-    names(CA$evals) <- dnames
-    origin <- apply(CA$rproj, 2, weighted.mean, aidot)
-    if (ira) {
-      evals.decorana <- NULL
-    }
-    else {
-      evals.decorana <- CA$evals
-      var.r <- diag(cov.wt(CA$rproj, aidot, method = "ML")$cov)
-      var.c <- diag(cov.wt(CA$cproj, adotj, method = "ML")$cov)
-      CA$evals <- var.r/var.c
-      if (any(ze <- evals.decorana <= 0))
-        CA$evals[ze] <- 0
-    }
-    additems <- list(evals.decorana = evals.decorana, origin = origin,
-                     v = v, fraction = v.fraction, iweigh = iweigh,
-                     before = before, after = after,
-                     call = match.call())
-    CA <- c(CA, additems)
-    class(CA) <- "decorana" # c() strips class
-    CA
   }
+  if (iweigh) {
+    veg <- downweight(veg, Const2)
+    aidot <- rowSums(veg)
+    adotj <- colSums(veg)
+  }
+  v <- attr(veg, "v")
+  v.fraction <- attr(veg, "fraction")
+  adotj[adotj < Const3] <- Const3
+  CA <- .Call(C_do_decorana, veg, ira, iresc, short, mk, as.double(aidot),
+              as.double(adotj))
+  if (ira)
+    dnames <- paste("RA", 1:4, sep = "")
+  else dnames <- paste("DCA", 1:4, sep = "")
+  dimnames(CA$rproj) <- list(rownames(veg), dnames)
+  dimnames(CA$cproj) <- list(colnames(veg), dnames)
+  names(CA$evals) <- dnames
+  origin <- apply(CA$rproj, 2, weighted.mean, aidot)
+  if (ira) {
+    evals.decorana <- NULL
+  }
+  else {
+    evals.decorana <- CA$evals
+    var.r <- diag(cov.wt(CA$rproj, aidot, method = "ML")$cov)
+    var.c <- diag(cov.wt(CA$cproj, adotj, method = "ML")$cov)
+    CA$evals <- var.r/var.c
+    if (any(ze <- evals.decorana <= 0))
+      CA$evals[ze] <- 0
+  }
+  additems <- list(evals.decorana = evals.decorana, origin = origin,
+                   v = v, fraction = v.fraction, iweigh = iweigh,
+                   before = before, after = after,
+                   call = match.call())
+  CA <- c(CA, additems)
+  class(CA) <- "decorana" # c() strips class
+  CA
+}
 
 # New .readDataTable2 Function
 .readDataTable2<-function(filePath){
@@ -4077,4 +4330,58 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
     return (1);
   }
   return(mSetObj);
+}
+
+
+##############################################
+##############################################
+########## Utilities for web-server ##########
+##############################################
+##############################################
+
+GetAllBatchNames <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(is.null(mSetObj$dataSet$batch)){
+    return(0);
+  }
+  names(mSetObj$dataSet$batch);
+}
+
+ResetBatchData <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;
+  return(.set.mSet(mSetObj));
+}
+
+#'Create semitransparant colors
+#'@description Create semitransparant colors for a given class label
+#'@param cls Input class labels
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+
+CreateSemiTransColors <- function(cls){
+  
+  # note, the first color (red) is for QC
+  col.nms <- rainbow(length(levels(cls)));
+  
+  # convert to semi-transparent
+  semi.nms <- ToSemiTransParent(col.nms);
+  
+  # now expand to the one-to-one match to cls element
+  col.vec <- vector(mode="character", length=length(cls));
+  for (i in 1:length(levels(cls))){
+    lv <- levels(cls)[i];
+    col.vec[cls==lv] <- semi.nms[i];
+  }
+  return(col.vec);
+}
+
+# convert rgb color i.e. "#00FF00FF" to semi transparent
+ToSemiTransParent <- function (col.nms, alpha=0.5){
+  rgb.mat <- t(col2rgb(col.nms));
+  rgb(rgb.mat/255, alpha=alpha);
 }
