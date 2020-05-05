@@ -166,6 +166,10 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   dat <- .readDataTable2(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj[["dataSet"]][["table"]]<-
+    mSetObj[["dataSet"]][["class.cls"]]<-
+    mSetObj[["dataSet"]][["batch.cls"]]<-
+    mSetObj[["dataSet"]][["order.cls"]] <- NULL
   
   if(class(dat) == "try-error") {
     AddErrMsg("Data format error. Failed to read in the data!");
@@ -214,12 +218,6 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   }
   
   # check the class labels
-  if(!is.null(mSetObj$dataSet$batch.cls)){
-    if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]]))){
-      AddErrMsg("The class labels in current data is different from the previous!");
-      return("F");
-    }
-  }
   
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
