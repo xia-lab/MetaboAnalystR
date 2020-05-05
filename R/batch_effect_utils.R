@@ -190,16 +190,16 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
     cls.nms <- factor(dat[,2]);
-    #order.nms <- factor(dat[,3]);
+    order.nms <- factor(dat[,4]);
     batch.nms <- factor(dat[,3]);
-    conc <- dat[,-c(1:3)];
+    conc <- dat[,-c(1:4)];
     var.nms <- colnames(conc);
   }else{ # sample in col
     smpl.nms <-dat[1,];
     cls.nms <- factor(dat[2,]);
-    #order.nms <- factor(dat[3,]);
+    order.nms <- factor(dat[4,]);
     batch.nms <- factor(dat[3,]);
-    conc <- t(dat[-c(1:3),]);
+    conc <- t(dat[-c(1:4),]);
     var.nms <- rownames(conc);
   }
   
@@ -294,7 +294,7 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
   mSetObj$dataSet$batch.cls <- batch.nms;
-  #mSetObj$dataSet$order.cls <- order.nms;
+  mSetObj$dataSet$order.cls <- order.nms;
   
   # free memory
   gc();
@@ -349,15 +349,15 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
     cls.nms <- factor(dat[,2]);
-    order.nms <- factor(dat[,3]);
-    batch.nms <- factor(dat[,4]);
+    order.nms <- factor(dat[,4]);
+    batch.nms <- factor(dat[,3]);
     conc <- dat[,-c(1:4)];
     var.nms <- colnames(conc);
   }else{ # sample in col
     smpl.nms <-dat[1,];
     cls.nms <- factor(dat[2,]);
-    order.nms <- factor(dat[3,]);
-    batch.nms <- factor(dat[4,]);
+    order.nms <- factor(dat[4,]);
+    batch.nms <- factor(dat[3,]);
     conc <- t(dat[-c(1:4),]);
     var.nms <- colnames(conc);
   }
@@ -514,10 +514,16 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     mSetObj[["dataSet"]][["batch.cls"]] <- batch.lbl2 <- factor(batch.lbls,levels=names(mSetObj$dataSet$batch), ordered=T);
     mSetObj[["dataSet"]][["class.cls"]] <- class.lbl2 <- factor(cls.lbls);
     
+    working_mode <- "file";
+    
   } else if (class(mSetObj[["dataSet"]][["batch.cls"]])=="factor") {
     commonMat2 <- mSetObj[["dataSet"]][["table"]];
     batch.lbl2 <- mSetObj[["dataSet"]][["batch.cls"]];
     class.lbl2 <- mSetObj[["dataSet"]][["class.cls"]];
+    order.lbl2 <- mSetObj[["dataSet"]][["order.cls"]];
+    
+    working_mode <- "table";
+    
   } else {
     AddErrMsg("There is something wrong with your data !")
   }
@@ -574,17 +580,21 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     #### QCs (Quality Control Sample) Dependent---------
     ## Run QCs dependent methods
     if (!identical(QCs,integer(0))){
-      # Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
-      #if (is.null(order.lbl2) | is.na(as.character(unique(order.lbl2)))){
-      #  order.lbl2 <- c(1:nrow(commonMat2))
-      #}
+      #Correction Method 1 - QC-RLSC             # Ref:doi: 10.1093/bioinformatics/btp426
       
-      #if (!is.na(as.character(unique(batch.lbl2))) & !is.null(batch.lbl2) & 
-      #    !is.na(as.character(unique(class.lbl2))) & !is.null(class.lbl2)){
-      #    print("Correcting with QC-RLSC...");
-      #    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
-      #    mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
-      #}
+      if (working_mode == "table" & (.on.public.web == F | as.numeric(object.size(mSetObj[["dataSet"]][["table"]])/1024/1024) < 0.82)){
+        
+        if (is.null(order.lbl2) | all(is.na(as.character(unique(order.lbl2))))){
+          order.lbl2 <- c(1:nrow(commonMat2))
+        }
+        
+        if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
+            all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
+          print("Correcting with QC-RLSC...");
+          QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+          mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+        }
+      }
       # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
       # Future Options to make this script more powerful
       
@@ -675,10 +685,10 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     EigenMS_edata<-EigenMS(commonMat2,class.lbl2);
     mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$EigenMS_edata <- EigenMS_edata;
     
- # } else if (Method=="QC_RLSC"){
+  } else if (Method=="QC_RLSC"){
     
- #   QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
- #   mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
+    mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
     
   } else if (Method=="ANCOVA"){
     
@@ -956,7 +966,7 @@ plot.dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72)
   library(ggplot2)
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w  <- length(mSetObj[["dataSet"]])*0.4+2.6;
+    w  <- length(mSetObj[["dataSet"]])*0.4+1.6;
   }else{
     w <- width;
   }
@@ -980,7 +990,7 @@ plot.dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72)
           axis.text.x = element_text( angle=45, hjust = 1),
           axis.text.y = element_text( angle=-30)) +
     scale_x_discrete(limits=Methods[dist.sort])+ 
-    geom_text(x=1, y=min(data$Distance)*1.1, label="*",size=10, color="black")
+    geom_text(x=1, y=min(data$Distance)*1.05, label="*",size=10, color="black")
   print(p)
   dev.off();
 }
