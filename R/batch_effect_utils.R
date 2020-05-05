@@ -16,6 +16,21 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  if (class(mSetObj[["dataSet"]][["batch.cls"]]) == "factor"){
+    
+    mSetObj[["dataSet"]][["table"]]<-
+      mSetObj[["dataSet"]][["class.cls"]]<-
+      mSetObj[["dataSet"]][["batch.cls"]]<-
+      mSetObj[["dataSet"]][["order.cls"]] <- NULL;
+    
+    if (any(grepl("_edata",names(mSetObj[["dataSet"]])))){
+      
+      mSetObj[["dataSet"]][which(grepl("_edata",names(mSetObj[["dataSet"]])))]<-NULL;
+      
+    }
+    
+  }
+  
   if(class(dat) == "try-error") {
     AddErrMsg("Data format error. Failed to read in the data!");
     AddErrMsg("Please check the followings: ");
@@ -166,10 +181,18 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   dat <- .readDataTable2(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
+  
   mSetObj[["dataSet"]][["table"]]<-
     mSetObj[["dataSet"]][["class.cls"]]<-
     mSetObj[["dataSet"]][["batch.cls"]]<-
-    mSetObj[["dataSet"]][["order.cls"]] <- NULL
+    mSetObj[["dataSet"]][["order.cls"]] <- NULL;
+  
+  if (any(grepl("_edata",names(mSetObj[["dataSet"]])))){
+    
+    mSetObj[["dataSet"]][which(grepl("_edata",names(mSetObj[["dataSet"]])))]<-NULL;
+    
+  }
+  
   
   if(class(dat) == "try-error") {
     AddErrMsg("Data format error. Failed to read in the data!");
@@ -468,7 +491,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'@description This function is designed to perform the batch effect correction
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input the name of the plot to create
-#'@param Method Batch effect correction method, default is "Automatically". Specific method, including "Combat",
+#'@param Method Batch effect correction method, default is "auto". Specific method, including "Combat",
 #'"WaveICA","EigenMS","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".
 #'@param center The center point of the batch effect correction, based on "QC" or "", which means correct 
 #'to minimize the distance between batches.
@@ -528,7 +551,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   
   
   if (is.null(Method)){
-    Method<-"Automatically"
+    Method<-"auto"
   }
   
   if (is.null(center)){
@@ -548,14 +571,14 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   print(paste("Correcting using the", Method, "method !"))
   modcombat2 <- model.matrix(~1, data=pheno2);
   
-  if (Method=="Automatically"){
+  if (Method=="auto"){
     #### QCs Independent------------
     # Correction Method 1 - Combat
     
     if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
       print("Correcting with Combat...");
-      combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-      mSetObj$dataSet$combat_edata<-combat_edata;
+      Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
+      mSetObj$dataSet$Combat_edata<-Combat_edata;
     }
     
     
@@ -670,8 +693,8 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     #=======================================================================/
   } else if (Method=="Combat"){
     
-    combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-    mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$Combat_edata <- combat_edata;
+    Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
+    mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$Combat_edata <- Combat_edata;
     
   } else if (Method=="WaveICA"){
     
@@ -730,7 +753,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     
   }
   
-  if (Method != "Automatically"){
+  if (Method != "auto"){
     
     nms<-names(mSetObj$dataSet)
     nms<-nms[grepl("*edata",nms)]
@@ -1583,7 +1606,7 @@ CCMN2<-function(data,class){
   model <- .model.evaluation(mSetObj,data.type);
   
   if (center=="QC"){
-    QC_methods<-c("combat_edata","WaveICA_edata","EigenMS_edata","QC_RLSC_edata","ANCOVA_edata");
+    QC_methods<-c("Combat_edata","WaveICA_edata","EigenMS_edata","QC_RLSC_edata","ANCOVA_edata");
   } else {
     QC_methods<-c("");
   }
