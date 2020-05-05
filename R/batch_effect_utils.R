@@ -808,7 +808,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
     stop("Please double check the batch, class and order information is not missing ")
   }
   
-  Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
+  Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method="QC_RLSC");
   
   best.table <- mSetObj$dataSet$adjusted.mat
   
