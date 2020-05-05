@@ -101,7 +101,7 @@ R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
 
 #### Option C) Manual download of MetaboAnalystR_3.0.1.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1aLGlOl8hODrpNm3Jczo-6194HkT9KAqL/view?usp=sharing). 
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1DbznsthKr9SqfmVayt36zh3xUvqs3T5w/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
@@ -168,7 +168,7 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 ## MetaboAnalystR History & Updates
 
-05-01-2020 - Version Update:3.0.1 - update bug fixes for batch effect correction and compatible with web server;
+05-01-2020 - Version Update:3.0.1 - update bug fixes for batch effect correction and compatible with web server, and added Signal Drift Correction Method;
 
 04-10-2020 - Version Updata:3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
 
@@ -180,28 +180,7 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 01-08-2020 - Updating code for box plots + mummichog 
 
-11-12-2019 - Update KEGG pathway libraries + updates to Pathway Analysis and MS Peaks to Paths vignettes
-
-10-17-2019 - Updates w. web server, updated MS Peaks to Paths vignettes to show adduct/currency customization
-
-09-24-2019 - Updates w. web server, bug-fixing + updates to MS Peaks to Paths and MetaboAnalystR 2.0 vignettes
-
-09-10-2019 - Updates for MS Peaks to Paths, batch processing for preprocessing raw MS data
-
-06-14-2019 - Bug fixing for t-test + volcano analysis
-
 04-11-2019 - Version Update: 2.0.1 - updated underlying code of MS Peaks to Paths, new functions to create plots to summarize results of mummichog and GSEA analysis, fixed bugs with compound name matching, updated documentation
-
-03-25-2019 - Updated MS Peaks to Paths to stop analysis if no significant peaks are identified. Updated underlying code with 
-webserver and updated documentation 
-
-03-19-2019 - Added support for MS2 data - function to read in MS2 data and extract/plot spectra for a specific m/z
-
-03-18-2019 - Added function to plot m/z features hits in a pathway for the MS Peaks to Paths module, updated documentation and MetaboAnalystR 2.0 tutorial to reflect this new addition
-
-03-17-2019 - Added method for combining p-values for MS Peaks to Paths (mummichog + fGSEA pvalues), updated documentation and MetaboAnalystR 2.0 workflow
-
-03-11-2019 - Added code chunk to set the number of cores used for parallel preprocessing of raw MS data to half of the number of available cores to avoid user memory issues + updated filepath for ImportRawMSData, so users only have to provide the folder path to the samples
 
 03-05-2019 - Version Update: 2.0.0! - added function for graphical integration of results from mummichog and fGSEA, added new tutorial with example data from the fecal metabolome of IBD patients
 
@@ -210,12 +189,6 @@ webserver and updated documentation
 02-11-2019 - Version Update: 1.0.3 - updated underlying R code w. changes to MetaboAnalyst 4.53 + updated documentation
 
 11-20-2018 - Version Update: 1.0.2 - updated links in R code (https) + underlying code w. changes to MetaboAnalyst 4.39 
-
-07-03-2018 - Addition of XCMS to MetaboAnalystR tutorial  
-
-06-25-2018 - Publication of MetaboAnalystR in Bioinformatics 
-
-06-13-2018 - Addition of case studies + unit-testing + 3D visualization with plotly
 
 05-25-2018 - Version Update: 1.0.1 - updated underlying R code w. changes to MetaboAnalyst 4.09
 
