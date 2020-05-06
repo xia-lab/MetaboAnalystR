@@ -35,7 +35,6 @@ Imports:
     Rcpp,
     pROC,
     limma,
-    car,
     fitdistrplus,
     lars,
     Hmisc,
@@ -65,5 +64,6 @@ Suggests:
     RSclient,
     MSnbase,
     xcms,
-    CAMERA
+    CAMERA,
+    car
 VignetteBuilder: knitr

@@ -56,7 +56,7 @@ fillpathways <- function(f){
   
   for(i in 1:length(cpds)){
     all_cpds <- as.vector(unlist(cpds[[i]]))
-    matched_cpds <- all_cpds[which(all_cpds %in% kegg_compounds_2020)] 
+    matched_cpds <- all_cpds[which(all_cpds %in% kegg_compounds)] 
     p[[i]] <- matched_cpds
   }
   
@@ -69,7 +69,7 @@ fillpathways <- function(f){
 #' Gets names and exact mass of all cpds (cpd.lib)
 make_cpdlib <- function(org){
   
-  all_cpds <- unlist(unique(org$cpds))
+  all_cpds <- unique(unlist(org$cpds))
   
   index <- match(all_cpds, kegg_compounds[,1])
   

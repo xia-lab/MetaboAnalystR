@@ -136,8 +136,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
   
   if(.on.public.web){
-    load_rsqlite()
-    pheno.db <- dbConnect(SQLite(), "../../libs/network/MetPriCNet.sqlite");
+    pheno.db <- .get.sqlite.con("../../libs/network/MetPriCNet.sqlite");
   }else{
     download.file("https://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
     pheno.db <- dbConnect(SQLite(), "MetPriCNet.sqlite");

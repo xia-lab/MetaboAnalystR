@@ -1138,6 +1138,9 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
     mSetObj <- .get.mSet(mSetObj);
     inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
     inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
+    if(length(inx1) ==1 || length(inx2) == 1){
+        equal.var <- TRUE; # overwrite use option if one does not have enough replicates
+    }
     univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
     if(nonpar){
         univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};

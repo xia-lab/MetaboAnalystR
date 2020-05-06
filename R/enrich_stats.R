@@ -15,6 +15,7 @@
 #'@export
 #'
 CalculateHyperScore <- function(mSetObj=NA){
+  
   mSetObj <- .get.mSet(mSetObj);
   
   # make a clean dataSet$cmpd data based on name mapping
@@ -28,6 +29,50 @@ CalculateHyperScore <- function(mSetObj=NA){
   if(is.na(ora.vec) || q.size==0) {
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
+  }
+
+  # move to api only if R package + KEGG msets
+  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
+    
+    mSetObj$api$oraVec <- ora.vec; 
+    
+    if(mSetObj$api$filter){
+      mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
+      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, filterData = mSetObj$api$filterData,
+                     excludeNum = mSetObj$api$excludeNum)
+    }else{
+      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, excludeNum = mSetObj$api$excludeNum)
+    }
+    
+    #json to be sent to server
+    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
+    #write(oraData, file="ora_test.JSON")
+    # code to send to server
+    # change path when on server, use local for now
+    
+    load_httr()
+    base <- api.base
+    endpoint <- "/enrichmentora"
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    
+    if(is.null(query_results_json$enrichRes)){
+      AddErrMsg("Error! Enrichment ORA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+    
+    # parse json response from server to results
+    oraDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
+    colnames(oraDataRes) <- query_results_json$enrichResColNms
+    rownames(oraDataRes) <- query_results_json$enrichResRowNms
+    
+    write.csv(oraDataRes, file="msea_ora_result.csv");
+    mSetObj$analSet$ora.mat <- oraDataRes
+    mSetObj$api$guestName <- query_results_json$guestName
+    print("Pathway ORA via api.metaboanalyst.ca successful!")
+    return(.set.mSet(mSetObj));
   }
   
   current.mset <- current.msetlib$member
@@ -47,7 +92,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
     return(0);
   }
-
+  
   hits<-lapply(current.mset, function(x){x[x %in% ora.vec]});
   # lapply(current.mset, function(x) grepl("Ammonia", x))
   #hits<-lapply(current.mset, function(x) grepl(paste(ora.vec, collapse = "|"), x))
@@ -98,16 +143,22 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
-
-  # now, perform the enrichment analysis
-  set.size <- length(current.msetlib);
-  if(set.size == 1){
-    AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
-    return(0);
-  }
-
+  
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    .prepare.globaltest.score(mSetObj);
+    .perform.computing();   
+    save.globaltest.score(mSetObj);  
+    return(.set.mSet(mSetObj));
+  } 
+  
+  mSetObj <- .prepare.globaltest.score(mSetObj);
+  return(.set.mSet(mSetObj));
+}
 
+.prepare.globaltest.score <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
   nm.map <- GetFinalNameMap(mSetObj);
@@ -119,6 +170,63 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   hit.inx <- !is.na(hmdb.inx);
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
+
+  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
+
+    mSetObj$api$mseaDataColNms <- colnames(msea.data)
+    msea.data <- as.matrix(msea.data)
+    dimnames(msea.data) = NULL
+    mSetObj$api$mseaData <- msea.data; 
+    mSetObj$api$cls <- mSetObj$dataSet$cls
+    
+    if(mSetObj$api$filter){
+      mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.hmdb
+      
+      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+                     filterData = mSetObj$api$filterData, cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
+    }else{
+      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+                     cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
+    }
+    
+    #json to be sent to server
+    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
+    #write(oraData, file="ora_test.JSON")
+    # code to send to server
+    # change path when on server, use local for now
+    
+    load_httr()
+    base <- api.base
+    endpoint <- "/enrichmentqea"
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    
+    if(is.null(query_results_json$enrichRes)){
+      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+    
+    # parse json response from server to results
+    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
+    colnames(qeaDataRes) <- query_results_json$enrichResColNms
+    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
+    
+    write.csv(qeaDataRes, file="msea_qea_result.csv");
+    mSetObj$analSet$qea.mat <- qeaDataRes
+    mSetObj$api$guestName <- query_results_json$guestName
+    print("Enrichment QEA via api.metaboanalyst.ca successful!")
+    return(.set.mSet(mSetObj));
+  }
+  
+  # now, perform the enrichment analysis
+  set.size <- length(current.msetlib);
+  if(set.size == 1){
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
+    return(0);
+  }
+  
   current.mset <- current.msetlib$member; 
   
   # make a clean metabolite set based on reference metabolome filtering
@@ -126,24 +234,16 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
-
+  
   set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
-
+  
   # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
-  mSetObj$analSet$qea.hits <- hits;
-  mSetObj$analSet$msea.data <- msea.data;
-
   phenotype <- mSetObj$dataSet$cls;
-    
-  print("Performing quantitative enrichment tests ......");
-  rsc <- SetupRSclient();;
-  gt.out <- list(cls=phenotype, data=msea.data, subsets=hits, set.num=set.num);
-  RS.assign(rsc, "gt.in", gt.out); 
   
   # there are more steps, better drop a function to compute in the remote env.
   my.fun <- function(){
-    gt.obj <- globaltest::gt(gt.in$cls, gt.in$data, subsets=gt.in$subsets);
+    gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
     gt.res <- globaltest::result(gt.obj);
     
     match.num <- gt.res[,5];
@@ -160,10 +260,23 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     }
     return(list(gt.res=gt.res, pvals=stat.mat[,1]));
   }
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
   
+  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits, my.fun=my.fun);
+  saveRDS(dat.in, file="dat.in.rds");
+  
+  # store necessary data 
+  mSetObj$analSet$set.num <- set.num;
+  mSetObj$analSet$qea.hits <- hits;
+  mSetObj$analSet$msea.data <- msea.data;
+  return(.set.mSet(mSetObj));
+}
+
+.save.globaltest.score <- function(mSetObj = NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  my.res <- dat.in$my.res;
+  set.num <- mSetObj$analSet$set.num;
   if(length(my.res)==1 && is.na(my.res)){
     AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
@@ -468,7 +581,7 @@ GetORATable<-function(mSetObj=NA){
   }else{
     rownames(res)<-GetORA.pathNames(mSetObj);
     print(xtable::xtable(res,align="p{5cm}|l|l|l|l||ll|l|l", display=c("s","d","f","d","E","E", "E","E", "f"),
-                 caption="Result from Pathway Analysis"),
+                         caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }      
 }
@@ -507,12 +620,12 @@ GetQEATable<-function(mSetObj=NA){
   res <- mSetObj$analSet$qea.mat;
   if(substr(mSetObj$analSet$type, 0, 4) == 'mset'){
     print(xtable::xtable(res,align="p{4cm}|l|l|l|l|l|l|l", display=c("s","d","d","f","f","E","E","E"),
-                 caption="Result from Quantitative Enrichment Analysis"),
+                         caption="Result from Quantitative Enrichment Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }else{
     rownames(res)<- GetQEA.pathNames();
     print(xtable::xtable(res,align="p{5cm}|l|l|l|l|l|l|l", display=c("s","d","d","E","E", "E","E","f"),
-                 caption="Result from Pathway Analysis"),
+                         caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }
 }

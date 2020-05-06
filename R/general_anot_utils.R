@@ -12,8 +12,7 @@
 doGeneIDMapping <- function(q.vec, org, type){
 
     sqlite.path <- paste0(gene.sqlite.path, org, "_genes.sqlite");
-    load_rsqlite()
-    con <- dbConnect(SQLite(), sqlite.path); 
+    con <- .get.sqlite.con(sqlite.path); 
 
     if(type == "symbol"){
       db.map = dbReadTable(con, "entrez")
@@ -35,7 +34,13 @@ doGeneIDMapping <- function(q.vec, org, type){
       }
       hit.inx <- match(q.vec, db.map[, "accession"]);
     }
-    entrezs=db.map[hit.inx, "gene_id"];
+    
+    if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
+      entrezs=db.map[hit.inx, "gene_id"];
+    }else{
+      entrezs=db.map[hit.inx, "symbol"];
+    }
+    
     rm(db.map, q.vec); gc();
     dbDisconnect(con);
     return(entrezs);

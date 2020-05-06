@@ -214,7 +214,7 @@ CreateGraph <- function(mSetObj=NA){
   substats <- DecomposeGraph(overall.graph);
   overall.graph <<- overall.graph;
   
-  mSetObj <- PlotNetwork(mSetObj, network.type);
+  #tmp-test-js; mSetObj <- PlotNetwork(mSetObj, network.type);
   
   if(.on.public.web){
     mSetObj <- .get.mSet(mSetObj);

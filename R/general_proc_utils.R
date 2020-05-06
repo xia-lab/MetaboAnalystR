@@ -212,8 +212,8 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   msg<-c(msg, "<u>By default, these values will be replaced by a small value.</u>",
-         "Click <b>Skip</b> button if you accept the default practice",
-         "Or click <b>Missing value imputation</b> to use other methods");
+         "Click the <b>Skip</b> button if you accept the default practice;",
+         "Or click the <b>Missing value imputation</b> to use other methods.");
   
   # obtain original half of minimal positive value (threshold)
   minConc<-min(int.mat[int.mat>0], na.rm=T)/2;
@@ -548,7 +548,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       }
     }
   }
-  print(msg);
+
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);
@@ -898,7 +898,7 @@ IsDataContainsNegative<-function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 descendMin <- function(y, istart = which.max(y)) {
-  
+   
   if (!is.double(y)) y <- as.double(y)
   unlist(.C("DescendMin",
             y,
@@ -906,7 +906,7 @@ descendMin <- function(y, istart = which.max(y)) {
             as.integer(istart-1),
             ilower = integer(1),
             iupper = integer(1),
-            DUP = FALSE, PACKAGE = "xcms")[4:5]) + 1
+            DUP = FALSE)[4:5]) + 1
 }
 
 #'Perform utilities for peak grouping
@@ -920,13 +920,13 @@ findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
   if (!is.double(values)) values <- as.double(values)
-  .C("FindEqualGreaterM",
+    .C("FindEqualGreaterM",
      x,
      length(x),
      values,
      length(values),
      index = integer(length(values)),
-     DUP = FALSE, PACKAGE = "xcms")$index + 1
+     DUP = FALSE)$index + 1
 }
 
 #'Perform utilities for peak grouping
@@ -953,5 +953,5 @@ rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
      as.double(xdiff),
      as.double(ydiff),
      logical(nrow(m)),
-     DUP = FALSE, PACKAGE = "xcms")[[7]]
+     DUP = FALSE)[[7]]
 }

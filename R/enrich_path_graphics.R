@@ -1,5 +1,5 @@
 #'Plot metabolome pathway
-#'@description Orthogonal PLS-DA (from ropls)
+#'@description Plot KEGG pathway graph
 #'@param mSetObj Input name of the created mSet Object
 #'@param pathName Input the name of the selected pathway
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
@@ -11,16 +11,67 @@
 #'@export
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
+
+  mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
     load_kegggraph()
     load_rgraphwiz()
-  }
-  mSetObj <- .get.mSet(mSetObj);
-  if(mSetObj$analSet$type == "pathinteg"){
-    return(PlotInmexPath(mSetObj, pathName, width, height, format, dpi));
+    
+    if(mSetObj$analSet$type == "pathinteg"){
+      return(PlotInmexPath(mSetObj, pathName, width, height, format, dpi));
+    }else{
+      return(PlotMetpaPath(mSetObj, pathName, width, height, format, dpi));
+    }
+    
+    # plotting via microservice   
   }else{
-    return(PlotMetpaPath(mSetObj, pathName, width, height, format, dpi));
+    
+    mSetObj$api$analType <- mSetObj$analSet$type
+    
+    if(is.null(dpi)){
+      dpi <- 72
+    }
+    
+    if(is.na(width)){
+      width <- 8;
+    }
+    
+    if(is.na(height)){
+      height <- 8;
+    }
+    
+    # first need to post to create image on server
+    if(mSetObj$api$analType == "pathinteg"){
+      toSend <- list(guestName = mSetObj$api$guestName, analType = mSetObj$api$analType, pathName = pathName,
+                     width = width, height = height, format = format, dpi = dpi, pathintegImpMatName = mSetObj$dataSet$pathinteg.impMat[,1],
+                     pathintegImpMatFC = mSetObj$dataSet$pathinteg.impMat[,2])
+    }else{
+      toSend <- list(guestName = mSetObj$api$guestName, analType = mSetObj$api$analType, pathName = pathName,
+                     width = width, height = height, format = format, dpi = dpi)
+    }
+    
+    load_httr()
+    base <- api.base
+    endpoint <- paste0("/createimage/", mSetObj$api$guestName)
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    mSetObj$api$imageName <- query_results_json$plotName
+    
+    if(is.null(mSetObj$api$imageName)){
+      AddErrMsg("Error! Unable to connect to api.metaboanalyst.ca!")
+      return(0)
+    }
+    
+    # second need to get image from server
+    endpoint_image <- paste0("/getFile/", mSetObj$api$guestName, "/", mSetObj$api$imageName)
+    image_call <- paste(base, endpoint_image, sep="")
+    download.file(image_call, destfile = basename(mSetObj$api$imageName))
+    print(paste0(mSetObj$api$imageName, " saved to current working directory!"))
+    
+    return(.set.mSet(mSetObj));
   }
 }
 
@@ -37,17 +88,17 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotMetpaPath<-function(mSetObj=NA, pathName,width=NA, height=NA, format="png", dpi=NULL){
-
-    path.id <- metpa$path.ids[pathName];
-    g <- metpa$graph.list[[path.id]];
-    tooltip <- names(KEGGgraph::nodes(g));
+PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
   
-    nm.vec <- NULL;
+  path.id <- metpa$path.ids[pathName];
+  g <- metpa$graph.list[[path.id]];
+  tooltip <- names(KEGGgraph::nodes(g));
   
-    fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
-    pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
-    names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
+  nm.vec <- NULL;
+  
+  fillcolvec <- rep("lightblue", length(KEGGgraph::nodes(g)));
+  pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
+  names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
   
   if(mSetObj$analSet$type == "pathora"){
     if(!is.null(mSetObj$analSet$ora.hits)){
@@ -98,47 +149,47 @@ PlotMetpaPath<-function(mSetObj=NA, pathName,width=NA, height=NA, format="png", 
     }
   }
   
-    if(is.null(dpi)){
-        if(is.null(mSetObj$analSet$node.imp) || mSetObj$analSet$node.imp == "rbc"){
-            impvec <- metpa$rbc[[path.id]];
-        }else{
-            impvec <- metpa$dgr[[path.id]];
-        }
-  
-        imgName <- paste(pathName, ".png", sep="");
-  
-        ## Open plot device
-        Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
-        par(mai=rep(0,4));
-        g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
-        nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
-        dev.off();
-        mSetObj$imgSet$current.metpa.graph <- g.obj;
-        mSetObj$analSet$nodeInfo <- nodeInfo;
-  
-        if(.on.public.web){
-            .set.mSet(mSetObj);
-            return(nodeInfo);
-        }else{
-            return(.set.mSet(mSetObj));
-        }
+  if(is.null(dpi)){
+    if(is.null(mSetObj$analSet$node.imp) || mSetObj$analSet$node.imp == "rbc"){
+      impvec <- metpa$rbc[[path.id]];
     }else{
-        pathName <- gsub("\\s","_", pathName);
-        pathName <- gsub(",","", pathName);
-
-       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
-
-        if(is.na(width)){
-            width <- 8;
-        }
-        w <- h <- width;
-        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-        par(mai=rep(0,4));
-        g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
-        dev.off();
-
-        return(imgName);
+      impvec <- metpa$dgr[[path.id]];
     }
+    
+    imgName <- paste(pathName, ".png", sep="");
+    
+    ## Open plot device
+    Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+    par(mai=rep(0,4));
+    g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+    nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
+    dev.off();
+    mSetObj$imgSet$current.metpa.graph <- g.obj;
+    mSetObj$analSet$nodeInfo <- nodeInfo;
+    
+    if(.on.public.web){
+      .set.mSet(mSetObj);
+      return(nodeInfo);
+    }else{
+      return(.set.mSet(mSetObj));
+    }
+  }else{
+    pathName <- gsub("\\s","_", pathName);
+    pathName <- gsub(",","", pathName);
+    
+    imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+    
+    if(is.na(width)){
+      width <- 8;
+    }
+    w <- h <- width;
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    par(mai=rep(0,4));
+    g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
+    dev.off();
+    
+    return(imgName);
+  }
 }
 
 # Used in higher function
@@ -229,25 +280,41 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@export
 #'
 PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x, y){
-
+  
   mSetObj <- .get.mSet(mSetObj);
+  
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
     names(x) <- names(y) <- rownames(mSetObj$analSet$ora.mat);
+    
+    if(!.on.public.web){
+      path.nms <- rownames(mSetObj$analSet$ora.mat);
+    }
+    
   }else if(mSetObj$analSet$type == "pathqea"){
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
     names(x) <- names(y) <- rownames(mSetObj$analSet$qea.mat);
+    
+    if(!.on.public.web){
+      path.nms <- rownames(mSetObj$analSet$qea.mat);
+    }
+    
   }else if (mSetObj$analSet$type == "pathinteg"){ # this is integrative analysis
     x <-  mSetObj$dataSet$path.mat[,8];
     y <-  mSetObj$dataSet$path.mat[,4];
     names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
+    
+    if(!.on.public.web){
+      path.nms <- rownames(mSetObj$analSet$jointPAMatches);
+    }
+    
   }else{
     print(paste("Unknown analysis type: ", mSetObj$analSet$type));
     return(0);
   }
-
+  
   # first sort values based on p
   y = -log(y);
   inx <- order(y, decreasing= T);
@@ -259,32 +326,36 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   sqx <- sqrt(x);
   min.x<- min(sqx, na.rm = TRUE);
   max.x <- max(sqx, na.rm = TRUE);
-    
+  
   if(min.x == max.x){ # only 1 value
-        max.x = 1.5*max.x;
-        min.x = 0.5*min.x;
+    max.x = 1.5*max.x;
+    min.x = 0.5*min.x;
   }
-
+  
   maxR <- (max.x - min.x)/40;
   minR <- (max.x - min.x)/160;
   radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
   
   # set background color according to y
   bg.vec <- heat.colors(length(y));
-
-  if(mSetObj$analSet$type == "pathinteg"){
-     path.nms <- names(inmexpa$path.ids)[match(names(x),inmexpa$path.ids)];
-  }else{
-     path.nms <- names(metpa$path.ids)[match(names(x),metpa$path.ids)];
+  
+  if(.on.public.web){
+    if(mSetObj$analSet$type == "pathinteg"){
+      path.nms <- names(inmexpa$path.ids)[match(names(x),inmexpa$path.ids)];
+    }else{
+      path.nms <- names(metpa$path.ids)[match(names(x),metpa$path.ids)];
+    }
   }
-
+  
   ## Open plot device
   if(format == "png"){
     bg = "transparent";
   }else{
     bg="white";
   }
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 7;
   }else if(width == 0){
@@ -303,7 +374,7 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   axis(2);
   grid(col="blue");
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
-
+  
   # convert to pixel positions, only for web interaction dpi=72
   if(dpi == 72){
     width.px <- height.px <- w*dpi;
@@ -329,7 +400,6 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
     jscode <- paste(jscode, paste("circleArray.push({xc:", xyrc[1,1], ", yc:", xyrc[1,2], 
                                   ", r:", radius, ", lb: \"", lbls[i], "\"})", sep=""), sep="\n");
   }
-
   return(jscode);
 }
 
@@ -339,33 +409,33 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 # License: GNU GPL (>= 2)
 GeneratePathwayJSON<-function(pathway.nm){
   mSetObj <- .get.mSet(mSetObj);
-
+  
   smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".rda", sep="");
   load(smpdb.path)
   
   jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".rds", sep="");
   smpdb.jsons <- readRDS(jsons.path) # no need to be global!
-
+  
   if(pathway.nm == "top"){
     if(mSetObj$analSet$type == "pathora"){
-        pathway.id <- rownames(mSetObj$analSet$ora.mat)[1]
+      pathway.id <- rownames(mSetObj$analSet$ora.mat)[1]
     } else{
-        pathway.id <- rownames(mSetObj$analSet$qea.mat)[1]
+      pathway.id <- rownames(mSetObj$analSet$qea.mat)[1]
     }
     pathway.nm <- names(metpa$path.ids)[which(metpa$path.ids == pathway.id)]
   } else {
     pathway.id <- metpa$path.ids[which(names(metpa$path.ids) == pathway.nm)]
   }
-
+  
   # Get matched metabolites
   if(mSetObj$analSet$type == "pathora"){
     metab.matches <- paste(mSetObj$analSet$ora.hits[[pathway.id]], collapse=",");
   } else{
     metab.matches <- paste(mSetObj$analSet$qea.hits[[pathway.id]], collapse=",");
   }
-
+  
   title <- paste(pathway.id, ";", pathway.nm, sep="");
-   
+  
   # store json file  
   smpdbpw.nm <- paste("smpdb_pathway_netview", smpdbpw.count, ".json", sep="");
   smpdbpw.count <<- smpdbpw.count + 1;
@@ -402,19 +472,19 @@ RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=N
   if(mSetObj$analSet$type == "pathinteg"){
     font.cex <- 0.7*zoom.factor/100;
     if(font.cex < 0.6){
-        font.cex=0.6;
+      font.cex=0.6;
     }
     g <- mSetObj$dataSet$current.kegg$graph;
     if(is_igraph(g)){
-        g <- upgrade_graph(g);
+      g <- upgrade_graph(g);
     }
     plotGraph(g, 
-            vertex.color=mSetObj$dataSet$current.kegg$bg.color, 
-            vertex.frame.color=mSetObj$dataSet$current.kegg$line.color,
-            vertex.label=V(mSetObj$dataSet$current.kegg$graph)$plot_name,
-            vertex.label.cex=font.cex
-        );
-
+              vertex.color=mSetObj$dataSet$current.kegg$bg.color, 
+              vertex.frame.color=mSetObj$dataSet$current.kegg$line.color,
+              vertex.label=V(mSetObj$dataSet$current.kegg$graph)$plot_name,
+              vertex.label.cex=font.cex
+    );
+    
   }else{
     KEGGgraph::plot(mSetObj$imgSet$current.metpa.graph);
   }

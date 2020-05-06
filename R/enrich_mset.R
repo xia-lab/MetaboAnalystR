@@ -31,12 +31,21 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
   mSetObj <- .get.mSet(mSetObj);
   
+  mSetObj$analSet$msetlibname <- libname;
+  
   if(libname=="self"){
     ms.list <- mSetObj$dataSet$user.mset;
     ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ")))
     current.msetlib <- vector("list", 3)
     names(current.msetlib) <- c("name", "member", "reference")
   }else{
+    
+    if(!.on.public.web & grepl("kegg", libname)){ # api only for KEGG msets
+      mSetObj$api$libname <- libname
+      mSetObj$api$excludeNum = excludeNum
+      return(.set.mSet(mSetObj));
+    }
+    
     if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
       LoadKEGGLib("msets", libname);
     }
@@ -67,7 +76,6 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
   }
   
   current.msetlib <<- current.msetlib;
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -376,15 +384,27 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
-  if(lib.version=="current"){
-    LoadKEGGLib("kegg/metpa", libNm);
+  
+  if(!.on.public.web){
+    if(libNm %in% c("spym", "kva", "kpn", "cvr") & lib.version != "current"){
+      AddErrMsg("Support for this organism is only available in the current version!");
+      return(0);
+    }
+    mSetObj$api <- list()
+    mSetObj$api$libVersion <- lib.version
+    mSetObj$api$libNm <- libNm
   }else{
-    if(libNm %in% c("spym", "kva", "kpn", "cvr")){
+    if(lib.version=="current"){
+      LoadKEGGLib("kegg/metpa", libNm);
+    }else{
+      if(libNm %in% c("spym", "kva", "kpn", "cvr")){
         AddErrMsg("Support for this organism is only available in the current version!");
         return(0);
+      }
+      LoadKEGGLib("kegg/2018/metpa", libNm);
     }
-    LoadKEGGLib("kegg/2018/metpa", libNm);
   }
+  
   mSetObj$pathwaylibtype <- "KEGG"
   return(.set.mSet(mSetObj));
 }
@@ -531,7 +551,13 @@ GetRefLibCheckMsg<-function(mSetObj=NA){
 #'@param TorF Input metabolome filter
 #'@export
 SetMetabolomeFilter<-function(mSetObj=NA, TorF){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(!.on.public.web){
+    mSetObj$api$filter <- TorF
+  }
+  
   mSetObj$dataSet$use.metabo.filter <- TorF;
   return(.set.mSet(mSetObj));
 }
