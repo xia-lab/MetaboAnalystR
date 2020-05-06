@@ -10,3 +10,31 @@
 # MetaboAnalyst 1.02
 
 - Updated underlying R code with updates to MetaboAnalyst 4.39
+
+# MetaboAnalystR 2.0.0
+
+- Updata underlysing R code to do the raw spectra data processing
+
+# MetaboAnalystR 2.0.1
+
+- Updata funtions and fix issues
+
+# MetaboAnalystR 2.0.2
+
+-  Updata funtions and fix issues
+
+# MetaboAnalystR 2.0.3
+
+- Updata funtions and fix issues
+
+# MetaboAnalystR 2.0.4
+
+- Updata funtions and fix issues
+
+# MetaboAnalystR 3.0.0
+
+- Added the new functions on raw data processing parameters' optimization; 
+- Speeded up the raw data processing and annotation process;
+- Added automatica batch effect correction;
+- Ehanced peaks to function with Mummichog2.
+

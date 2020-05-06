@@ -4,7 +4,7 @@ author: "Jasmine Chong, Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Power Analysis Module}
+  %\VignetteIndexEntry{i). Power Analysis Module}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,7 +19,7 @@ The power analysis uses the entire set of pilot data to estimate effect size dis
 
 For the tutorial, we will be using a dataset consisting of concentrations of 77 urine samples from cancer patients (cachexic vs. control) measured by 1H NMR - [Eisner et al. 2010](https://link.springer.com/article/10.1007%2Fs11306-010-0232-9). 
 
-```{r}
+```{r,eval=F}
 mSet<-InitDataObjects("conc", "power", FALSE);
 mSet<-Read.TextData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
 mSet<-SanityCheckData(mSet);
@@ -34,7 +34,7 @@ To begin power analysis, you will use the *InitPowerAnal* function, which uses t
 
 The *PlotPowerStat* will create an image containing four exploratory plots of the pilot-data, the top two will be bar charts, and the bottom two will be quantile-quantile (QQ) plots of the test-statistics and the p-values, respectively. This image is created to allow users to visually inspect that their data follows a standard normal distribution. For the test-statistic bar chart (top right), you should expect to see a bell-curve. For the p-value bar chart, you should expect that the two groups to perform the power analysis upon are different from eachother, resulting in the majority of the p-values hovering around 0. As for the qq-plots, if the test-statistics and the p-values follow a normal distribution, the data points will follow the straight line.      
 
-```{r}
+```{r,eval=F}
 # Initiate the power analysis 
 mSet<-InitPowerAnal(mSet, "NA")
 
@@ -47,7 +47,7 @@ Following the above steps, you will once again use the *InitPowerAnal* function,
 
 The *PlotPowerProfile* will create a plot of the predicted power curve. From these plots, you will be able to determine the best minimal sample size and its associated predicted power for future studies. This provides invaluable insight for proper experimental design, as well as strengthen the ability to detect true differences within a metabolomic data set.
 
-```{r}
+```{r,eval=F}
 mSet<-InitPowerAnal(mSet, "cachexic vs. control")
 
 # Perform power analysis, specifying the FDR and the max sample size

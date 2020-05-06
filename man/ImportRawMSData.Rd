@@ -4,33 +4,18 @@
 \alias{ImportRawMSData}
 \title{Import raw MS data}
 \usage{
-ImportRawMSData(
-  foldername,
-  format = "png",
-  dpi = 72,
-  width = 9,
-  par.cores = TRUE,
-  plot = TRUE,
-  plot.opts = "default"
-)
+ImportRawMSData(foldername, mode = "onDisk", ncores = 4, plotSettings)
 }
 \arguments{
 \item{foldername}{Character, input the file path to the folder containing
 the raw MS spectra to be processed.}
 
-\item{format}{Character, input the format of the image to create.}
+\item{mode}{Character, the data input mode. Default is "onDisk" to avoid memory crash. "inMemory" will 
+absorb data into the memory.}
 
-\item{dpi}{Numeric, input the dpi of the image to create.}
-
-\item{width}{Numeric, input the width of the image to create.}
-
-\item{par.cores}{Logical, if true, the function will automatically 
-set the number of parallel cores. If false, it will not.}
-
-\item{plot}{Logical, if true the function will create BPIS and TICS plots.}
-
-\item{plot.opts}{By default, it will create BPIS and TICS plots using up to 10 samples
-per group. Set to "all" to create plots using all samples, though this may cause memory issues.}
+\item{plotSettings}{List, plotting parameters produced by SetPlotParam Function. "plot.opts" can be added through this 
+function for samples numbers for plotting. Defalut is "default", "all" will apply all samples for plotting and may cause 
+memory crash, especially for large sample dataset.}
 }
 \description{
 This function handles the reading in of 
@@ -44,7 +29,7 @@ to be used for parallel processing. It first determines the number of cores
 within a user's computer and then sets it that number/2.
 }
 \author{
-Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)

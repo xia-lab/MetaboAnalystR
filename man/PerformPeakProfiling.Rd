@@ -2,56 +2,32 @@
 % Please edit documentation in R/preproc_utils.R
 \name{PerformPeakProfiling}
 \alias{PerformPeakProfiling}
-\title{Perform peak annotation
+\title{Perform peak profiling
 This function performs feature extraction of user's raw MS data using 
-the rawData object created using the InspectRawMSData function.}
+the rawData object created using the ImportRawMSData function.}
 \usage{
-PerformPeakProfiling(
-  rawData,
-  peakParams,
-  rtPlot = TRUE,
-  pcaPlot = TRUE,
-  labels = TRUE,
-  format = "png",
-  dpi = 72,
-  width = 9,
-  rtplot_name = "RT_adjustment",
-  pcaplot_name = "PCA_plot"
-)
+PerformPeakProfiling(rawData, Params, plotSettings, ncore)
 }
 \arguments{
-\item{rawData}{The object created using the InspectRawMSData function,
+\item{rawData}{The object created using the ImportRawMSData function,
 containing the raw MS data.}
 
-\item{peakParams}{The object created using the SetPeakParam function, 
+\item{Params}{The object created using the SetPeakParam function, 
 containing user's specified or default parameters for downstream 
 raw MS data pre-processing.}
 
-\item{rtPlot}{Logical, if true creates a plot of retention time correction.
+\item{plotSettings}{List, plotting parameters produced by SetPlotParam Function.
 Defaut is set to true.}
 
-\item{pcaPlot}{Logical, if true creates a PCA plot to evaluate the sample grouping.
-Default is set to true.}
-
-\item{labels}{Logical, if true, the PCA plot will be annotated with sample names.}
-
-\item{format}{Character, input the format of the image to create.}
-
-\item{dpi}{Numeric, input the dpi of the image to create.}
-
-\item{width}{Numeric, input the width of the image to create.}
-
-\item{rtplot_name}{Character, input the name of the RT adjustment image to create.}
-
-\item{pcaplot_name}{Character, input the name of the PCA image to create.}
+\item{ncore}{Numeric, used to define the cores' number for Peak Profiling.}
 }
 \description{
-Perform peak annotation
+Perform peak profiling
 This function performs feature extraction of user's raw MS data using 
-the rawData object created using the InspectRawMSData function.
+the rawData object created using the ImportRawMSData function.
 }
 \author{
-Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)

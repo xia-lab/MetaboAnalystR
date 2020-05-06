@@ -303,7 +303,6 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom plotly plot_ly add_markers layout
 #'
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   

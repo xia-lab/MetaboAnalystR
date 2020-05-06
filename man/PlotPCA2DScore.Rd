@@ -19,6 +19,8 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
+\item{style}{Numeric, the ratio style of the figure (width/height), defalt is 1, 1:1. 2 means 4:3, while 3 means 16:9.}
+
 \item{pcx}{Specify the principal component on the x-axis}
 
 \item{pcy}{Specify the principal component on the y-axis}

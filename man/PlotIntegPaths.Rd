@@ -12,7 +12,8 @@ PlotIntegPaths(
   width = 9,
   labels = "default",
   labels.x = 5,
-  labels.y = 5
+  labels.y = 5,
+  scale.axis = TRUE
 )
 }
 \arguments{

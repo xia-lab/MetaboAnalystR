@@ -397,7 +397,6 @@ Plot3D <- function(x, y = NULL, z = NULL, color = par("col"), pch = NULL,
 #'@param angl Input the angle 
 #'@usage mSet <- PlotPCA3DScore(mSetObj=NA, imgName, format="json", dpi=72, width=NA, inx1, inx2, inx3, angl)
 #'@export
-#'@importFrom plotly plot_ly add_markers layout
 
 PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
@@ -443,10 +442,10 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
         col <- c("#1972A4", "#FF7070")
       }
       
-      p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
+      p <- plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
                  color = mSetObj$dataSet$cls, colors = col) 
-      p <- plotly::add_markers(p, sizes = 5)
-      p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+      p <- add_markers(p, sizes = 5)
+      p <- layout(p, scene = list(xaxis = list(title = xlabel),
                           yaxis = list(title = ylabel),
                           zaxis = list(title = zlabel)))
       mSetObj$imgSet$pca.3d <- p;
@@ -462,11 +461,11 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
     if(!.on.public.web){
       # 3D View using plotly
       col <- c("#C61951", "#1972A4")
-      p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
+      p <- plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
                            color = pchs, colors = col, marker = list(colorbar = list(len = 1, tickmode = array, tickvals = range(unique(pchs)),
                                                                                      ticktext = levels(mSetObj$dataSet$cls)))); 
-      p <- plotly::add_markers(p, sizes = 1000);
-      p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+      p <- add_markers(p, sizes = 1000);
+      p <- layout(p, scene = list(xaxis = list(title = xlabel),
                                           yaxis = list(title = ylabel),
                                           zaxis = list(title = zlabel)));
       mSetObj$imgSet$pca.3d <- p;
@@ -495,7 +494,7 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom plotly plot_ly add_markers layout
+
 PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -550,10 +549,10 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
     }else{
       col <- c("#1972A4", "#FF7070")
     }
-    p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
+    p <- plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
                          color = mSetObj$dataSet$cls, colors = col)
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+    p <- add_markers(p, sizes = 5)
+    p <- layout(p, scene = list(xaxis = list(title = xlabel),
                                         yaxis = list(title = ylabel),
                                         zaxis = list(title = zlabel)))
     
@@ -583,7 +582,7 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom plotly plot_ly add_markers layout
+
 PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -638,10 +637,10 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
     }else{
       col <- c("#1972A4", "#FF7070")
     }
-    p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
+    p <- plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
                          color = mSetObj$dataSet$cls, colors = col)
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+    p <- add_markers(p, sizes = 5)
+    p <- layout(p, scene = list(xaxis = list(title = xlabel),
                                         yaxis = list(title = ylabel),
                                         zaxis = list(title = zlabel)))
     
@@ -671,7 +670,6 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom plotly plot_ly add_markers layout
 
 PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
   
@@ -713,10 +711,10 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
     }else{
       col <- c("#1972A4", "#FF7070")
     }
-    p <- plotly::plot_ly(x = mSetObj$analSet$plsr$score[, inx1], y = mSetObj$analSet$plsr$score[, inx2], z = mSetObj$analSet$plsr$score[, inx3],
+    p <- plot_ly(x = mSetObj$analSet$plsr$score[, inx1], y = mSetObj$analSet$plsr$score[, inx2], z = mSetObj$analSet$plsr$score[, inx3],
                          color = mSetObj$dataSet$cls, colors = col) 
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
+    p <- add_markers(p, sizes = 5)
+    p <- layout(p, scene = list(xaxis = list(title = xlabel),
                                         yaxis = list(title = ylabel),
                                         zaxis = list(title = zlabel)))
     

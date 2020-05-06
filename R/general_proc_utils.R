@@ -579,7 +579,6 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
 #'
 GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
   mSetObj <- .get.mSet(mSetObj);
@@ -666,7 +665,6 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
 
 #'Set peak list group values
 #'@param mSetObj Input name of mSetObj, the data used is the nmr.xcmsSet object
-#'@export
 #'
 SetPeakList.GroupValues <- function(mSetObj=NA) {
   mSetObj <- .get.mSet(mSetObj);
@@ -723,8 +721,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param bw Numeric, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 #'kernel to apply to the peak density chromatogram
-#'@export
-#'
+
 MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
   mSetObj <- .get.mSet(mSetObj);
   xset2 <- xcms::retcor(mSetObj$dataSet$xset.orig)
@@ -743,7 +740,7 @@ MSspec.rtCorrection <- function(mSetObj=NA, bw=30){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@export
+
 PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -773,7 +770,7 @@ PlotMS.RT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'integrating signals at those regions to create a new peak. 
 #'@usage MSspec.fillPeaks(mSetObj=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@export
+
 MSspec.fillPeaks <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -804,7 +801,6 @@ MSspec.fillPeaks <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
 
 SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
   
@@ -827,7 +823,6 @@ SetupMSdataMatrix <- function(mSetObj=NA, intvalue = c("into","maxo","intb")){
 
 #'Check if the spectra processing is ok
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@export
 #'
 IsSpectraProcessingOK <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -871,7 +866,6 @@ GetGroupNumber<-function(mSetObj=NA){
 #'or will return a 1 if the data does not. 
 #'@usage IsSmallSmplSize(mSetObj=NA) 
 #'@param mSetObj Input name of the created mSet Object
-#'@export
 #'
 IsSmallSmplSize<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

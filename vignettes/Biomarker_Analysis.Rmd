@@ -4,7 +4,7 @@ author: "Jasmine Chong, Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Biomarker Analysis}
+  %\VignetteIndexEntry{d). Biomarker Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,7 +31,7 @@ The normalization step for biomarker analysis, however, includes an additional o
 
 For the tutorial, we will be using a dataset consisting of metabolite concentrations of 90 human plasma samples measured by 1H NMR. Phenotype labels: 0 - Controls; 1 - Patients.
 
-```{r}
+```{r,eval=F}
 library(MetaboAnalystR)
 
 # Create objects for storing processed data from biomarker analysis 
@@ -109,7 +109,7 @@ The aim of the multivariate exploratory ROC curve analysis is to evaluate the pe
 
 There are several options to visualize the multivariate ROC curve exploration. The *PlotROC* function creates a plot of ROC curves for all of the top biomarker models or a single biomarker model based on its average performance across all Monte-Carlo cross validation runs. For a single biomarker, the 95% confidence interval can be computed (show.conf = 1). Meanwhile, the *PlotProbView* function creates a plot of the predicted class probabilities of all samples using a single biomarker model. Users have the option to label wrongly classified samples. The *PlotAccuracy* function creates a plot of the predictive accuracy of the top biomarker models with an increasing number of features on the x-axis. Finally, the *PlotImpVars* function creates a plot of the top ranked important variables of a selected model. Users have the option to change the number of important features to include in the plot (feat.num) as well as the method to rank the features by (measure). 
 
-```{r}
+```{r,eval=F}
 # Set the biomarker analysis mode to perform Multivariate exploratory ROC curve analysis ("explore")
 mSet<-SetAnalysisMode(mSet, "explore")
 
