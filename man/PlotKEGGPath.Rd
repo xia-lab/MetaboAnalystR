@@ -24,7 +24,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{height}{Input the height of the created plot.}
 }
 \description{
-Orthogonal PLS-DA (from ropls)
+Plot KEGG pathway graph
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

@@ -16,8 +16,8 @@ PerformBatchCorrection(
 
 \item{imgName}{Input the name of the plot to create}
 
-\item{Method}{Batch effect correction method, default is "Automatically". Specific method, including "Combat",
-"WaveICA","EigenMS","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".}
+\item{Method}{Batch effect correction method, default is "auto". Specific method, including "Combat",
+"WaveICA","EigenMS","QC_RLSC","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".}
 
 \item{center}{The center point of the batch effect correction, based on "QC" or "", which means correct 
 to minimize the distance between batches.}
