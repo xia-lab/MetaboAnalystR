@@ -192,8 +192,10 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <- "/Users/xia/Dropbox/sqlite/";
   }else if(file.exists("/home/zzggyy/Downloads/netsqlite/")){
      url.pre <<-"/home/zzggyy/Downloads/netsqlite/"; #zgy local)
-  }else{
+  }else if (packageVersion("MetaboAnalystR") < "3.0.2") {
      url.pre <- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
+  }else {
+    url.pre <- "https://github.com/xia-lab/MetaboAnalystR3.0/raw/master/inst/database/sqlite/GeneID_25Species_JE/"
   }
 
   gene.sqlite.path <<- url.pre;

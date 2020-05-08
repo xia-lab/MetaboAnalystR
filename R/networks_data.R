@@ -1,5 +1,6 @@
 #'Exports Gene-Mapping result into a table
 #'@param mSetObj Input name of the created mSet Object
+#'@import RSQLite
 #'@export
 GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   load_rsqlite()
@@ -48,8 +49,40 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   
   org.code <- mSetObj$org;
   sqlite.path <- paste0(gene.sqlite.path, org.code, "_genes.sqlite");
-  con <- .get.sqlite.con(sqlite.path); ; 
-  gene.db <- dbReadTable(con, "entrez")
+  
+  ## Perfrom online DB getting ----
+  filenm <- paste0(org.code, "_genes.sqlite")
+  lib.url <- sqlite.link <- paste0(gene.sqlite.path, filenm);
+  lib.download <- FALSE;
+  
+  if(!file.exists(filenm)){
+    lib.download <- TRUE;
+  }else{
+    time <- file.info(filenm)
+    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+    if(diff_time>30){
+      lib.download <- TRUE;
+    }
+  }
+  # Deal with curl issues
+  
+  if(lib.download){
+    tryCatch(
+      {
+        download.file(lib.url, destfile=filenm, method="auto")
+      }, warning = function(w){ print() },
+      error = function(e) {
+        print("Download unsucceful. Ensure that curl is downloaded on your computer.")
+        print("Attempting to re-try download using wget...")
+        download.file(lib.url, destfile=filenm, method="wget")
+      }
+    )
+  }
+  
+  ## SQLite data downloding finished !
+  
+  con <- .get.sqlite.con(filenm);
+  gene.db <- dbReadTable(con, "entrez");
 
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
