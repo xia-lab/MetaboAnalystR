@@ -240,9 +240,9 @@ ImportRawMSData <- function(foldername, mode="onDisk", ncores=4, plotSettings){
   if(plotSettings$Plot==TRUE){
     
     if (is.null(plotSettings$plot.opts)){
-      plot.opts=="default"
+      plot.opts <- "default";
     } else {
-      plot.opts <- plotSettings$plot.opts
+      plot.opts <- plotSettings$plot.opts;
     }
     
     if(plot.opts=="default"){
