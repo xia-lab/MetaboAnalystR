@@ -3093,14 +3093,23 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
         geZeroSum <- geZeroSum + pmax(randEsP, 0)
       }
     } else {
-      aux <- fgsea:::calcGseaStatCumulativeBatch(
-        stats = stats,
-        gseaParam = 1,
-        pathwayScores = pathwayScores,
-        pathwaysSizes = pathwaysSizes,
-        iterations = nperm1,
-        seed = seeds[i],
-        scoreType = "std")
+          if (packageVersion("fgsea") > "1.12.0"){
+              aux <- fgsea:::calcGseaStatCumulativeBatch(
+                stats = stats,
+                gseaParam = 1,
+                pathwayScores = pathwayScores,
+                pathwaysSizes = pathwaysSizes,
+                iterations = nperm1,
+                seed = seeds[i],
+                scoreType = "std")} else {
+                  aux <- fgsea:::calcGseaStatCumulativeBatch(
+                    stats = stats,
+                    gseaParam = 1,
+                    pathwayScores = pathwayScores,
+                    pathwaysSizes = pathwaysSizes,
+                    iterations = nperm1,
+                    seed = seeds[i])
+                }
       leEs = get("leEs", aux)
       geEs = get("geEs", aux)
       leZero = get("leZero", aux)
