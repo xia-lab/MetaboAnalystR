@@ -3019,7 +3019,8 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
         pathwayScores = pathwayScores,
         pathwaysSizes = pathwaysSizes,
         iterations = nperm1,
-        seed = seeds[i])
+        seed = seeds[i],
+        scoreType = "std")
       leEs = get("leEs", aux)
       geEs = get("geEs", aux)
       leZero = get("leZero", aux)

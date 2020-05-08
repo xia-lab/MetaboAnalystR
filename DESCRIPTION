@@ -71,7 +71,5 @@ Suggests:
     reshape2,
     RSclient,
     MSnbase,
-    xcms,
-    CAMERA,
     car
 VignetteBuilder: knitr
