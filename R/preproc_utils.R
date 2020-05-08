@@ -218,11 +218,12 @@ ImportRawMSData <- function(foldername, mode="onDisk", ncores=4, plotSettings){
     
     cores <- parallel::detectCores()
     
-    if(is.na(cores)){
-      cores <- ncores
+    if(missing(ncores)){
+      num_cores <- ceiling(cores*2/3) 
+    } else{
+      ncores -> num_cores
     }
     
-    num_cores <- ceiling(cores*2/3) 
     print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
     
     if (.Platform$OS.type == "unix") {
@@ -294,8 +295,8 @@ ImportRawMSData <- function(foldername, mode="onDisk", ncores=4, plotSettings){
     
     names(group_colors) <- levels(groupInfo)
     
-    bpis_name <- paste("BPIS_", dpi, ".", plotSettings$format, sep="");
-    tics_name <- paste("TICS_", dpi, ".", plotSettings$format, sep="");
+    bpis_name <- paste("BPIS_", plotSettings$dpi, ".", plotSettings$format, sep="");
+    tics_name <- paste("TICS_", plotSettings$dpi, ".", plotSettings$format, sep="");
     
     Cairo::Cairo(file = bpis_name, unit="in", dpi=plotSettings$dpi, width=plotSettings$width, 
                  height= plotSettings$width*5/9, type=plotSettings$format, bg="white");
