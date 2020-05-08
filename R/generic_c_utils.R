@@ -16,17 +16,28 @@ NULL
 
 #' Internal C fucntion - C_imodwt_r
 #' @references Percival, D. B. and A. T. Walden (2000) Wavelet Methods for Time Series Analysis, Cambridge University Press.
-C_imodwt_r <- function(y,z,N,j, L, ht, gt, XX){
+if (.on.public.web){
+  C_imodwt_r <- function(y,z,N,j, L, ht, gt, XX){
+    .C("imodwt", y, z, N, j, 
+       L, ht, gt, out=XX)$out
+  }
+  
+  C_modwt_r <- function(X,N,j, L, ht, gt,W, V){
+    .C("modwt", X, N, as.integer(j), L, 
+       ht, gt, W = W, V = V)[7:8]
+  }
+  
+} else {
+  C_imodwt_r <- function(y,z,N,j, L, ht, gt, XX){
   .C(C_imodwt, y, z, N, j, 
           L, ht, gt, out=XX, PACKAGE = "MetaboAnalystR")$out
-}
-
-
-#' Internal C fucntion - C_modwt_r
-#' @references Percival, D. B. and A. T. Walden (2000) Wavelet Methods for Time Series Analysis, Cambridge University Press.
-C_modwt_r <- function(X,N,j, L, ht, gt,W, V){
-  .C(C_modwt, X, N, as.integer(j), L, 
-     ht, gt, W = W, V = V, PACKAGE = "MetaboAnalystR")[7:8]
+  }
+  
+  C_modwt_r <- function(X,N,j, L, ht, gt,W, V){
+    .C(C_modwt, X, N, as.integer(j), L, 
+       ht, gt, W = W, V = V, PACKAGE = "MetaboAnalystR")[7:8]
+  }
+  
 }
 
 ############# ============ ------------- Bin bottom ----------- ============ ###########
