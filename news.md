@@ -38,3 +38,10 @@
 - Added automatica batch effect correction;
 - Ehanced peaks to function with Mummichog2.
 
+# MetaboAnalystR 3.0.1
+
+- Stablize batch effect correction and add signal drift correction
+
+# MetaboAnalystR 3.0.2
+
+- Update functions and fix issues
