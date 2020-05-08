@@ -21,7 +21,8 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$peaks.alg <- algOpt
-  mSetObj$mum.version <- version
+  
+  mum.version <<- version
   
   if(algOpt == "gsea"){
     anal.type <<- "gsea_peaks"
@@ -47,6 +48,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   
   mSetObj <- .get.mSet(mSetObj);
   
+  file_name <- tools::file_path_sans_ext(basename(filename)) 
   mumDataContainsPval = 1; #whether initial data contains pval or not
   input <- as.data.frame(.readDataTable(filename)); 
   user_cols <- gsub("[^[:alnum:]]", "", colnames(input));
@@ -113,6 +115,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA) {
   mSetObj$dataSet$mumRT = rt
   mSetObj$dataSet$mumType = "list";
   mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), "m/z features were found in your uploaded data.");
+  mSetObj$dataSet$fileName <- file_name
   mumDataContainsPval <<- mumDataContainsPval;
   peakFormat <<- peakFormat
   print(peakFormat)
@@ -446,90 +449,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  # need to move to microservice if KEGG library
-  if(!.on.public.web & grepl("kegg", lib)){
-    
-    save.image("API_Image.RData")
-    
-    load_httr()
-    base <- "http://localhost:8987"
-    
-    # first create user and send R Image to server to perform mummichog
-    endpoint2 <- paste0("/sendMetaboAnalystRFile")
-    call2 <- paste(base, endpoint2, sep="")
-    query_results <- httr::POST(call2, body = list(file = upload_file("API_Image.RData")))
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
-    guestName <- query_results_json$guestName
-    
-    if(query_results$status_code == 200){
-      mum_uploaded <- TRUE
-    }else{
-      AddErrMsg("Could not connect to api.metaboanalyst.ca to perform MS Peaks to Paths microservice!")
-      return(0)
-    }
-    
-    if(permNum > 1000){
-      permNum <- 1000
-      print("Max number of permutations is 1000!")
-    }
-    
-    # third perform mummichog 
-    toSend <- list(libNm = lib, libVersion = libVersion, permNum = permNum)
-    
-    endpoint3 <- paste0("/mspeakstopath", "/", guestName)
-    call3 <- paste(base, endpoint3, sep="")
-    query_results <- httr::POST(call3, body = toSend, encode = "json")
-    
-    if(query_results$status_code == 200 & content(query_results, "text") == "success"){
-      mum_performed <- TRUE
-      print("PSEA successfully performed on api.metaboanalyst.ca!")
-    }else{
-      AddErrMsg("Could not connect to api.metaboanalyst.ca to perform MS Peaks to Paths microservice!")
-      return(0)
-    }
-    
-    matchedRes <- "mummichog_matched_compound_all.csv"
-    integFileName <- "mummichog_integ_pathway_enrichment.csv"
-    mumFileName <- "mummichog_pathway_enrichment.csv"
-    gseaFileName <- "mummichog_fgsea_pathway_enrichment.csv"
-    
-    if(anal.type == "mummichog"){
-      files <- c(matchedRes, mumFileName)
-    }else if(anal.type == "gsea_peaks"){
-      files <- c(matchedRes, gseaFileName)
-    }else{
-      files <- c(matchedRes, integFileName, mumFileName, gseaFileName)
-    }
-    
-    for(i in 1:length(files)){
-      filename <- files[i]
-      endpoint4 <- paste0("/getFile", "/", guestName, "/", filename)
-      call4 <- paste(base, endpoint4, sep="")
-      download.file(call4, destfile = basename(filename))
-    }
-    
-    mSetObj$dataSet$mumResTable <- read.csv(matchedRes, stringsAsFactors = FALSE)
-    
-    if(anal.type == "mummichog"){
-      mSetObj$mummi.resmat <- read.csv(mumFileName, row.names = 1, stringsAsFactors = FALSE)
-    }else if(anal.type == "gsea_peaks"){
-      mSetObj$mummi.gsea.resmat <- read.csv(gseaFileName, row.names = 1, stringsAsFactors = FALSE)
-    }else{
-      mSetObj$integ.resmat <- read.csv(integFileName, row.names = 1, stringsAsFactors = FALSE)
-      mSetObj$mummi.resmat <- read.csv(mumFileName, row.names = 1, stringsAsFactors = FALSE)
-      mSetObj$mummi.gsea.resmat <- read.csv(gseaFileName, row.names = 1, stringsAsFactors = FALSE)
-    }
-    
-    mSetObj$api$lib <- lib;
-    mSetObj$api$guestName <- guestName;
-    print("PSEA successfully performed!")
-    
-    return(.set.mSet(mSetObj));
-  }
-  
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion)
-  version <- mSetObj$mum.version
+  version <- mum.version
   
   if(mSetObj$dataSet$mumRT & version=="v2"){
     mSetObj <- .init.RT.Permutations(mSetObj, permNum)
@@ -706,7 +627,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
 # Internal function to set up library for PSEA
 .setup.psea.library <- function(mSetObj = NA, lib, libVersion){
   
-  version <- mSetObj$mum.version
+  version <- mum.version
   print(version)
   
   filenm <- paste(lib, ".rds", sep="")
@@ -812,7 +733,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   pos_inx <- mSetObj$dataSet$pos_inx;
   ref_mzlistp <- ref_mzlist[pos_inx];
   ref_mzlistn <- ref_mzlist[!pos_inx];
-  version <- mSetObj$mum.version
+  version <- mum.version
   
   # for empirical compounds
   if(mSetObj$dataSet$mumRT & version=="v2"){ 
@@ -959,7 +880,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   if(!mSetObj$dataSet$mumRT & version=="v2"){
     matched_res <- matched_res[,-(5:6)]
   }
-  
   
   #print(paste0(length(unique(matched_res[,2])), " matched compounds! cpd2mz"))
   
@@ -2489,7 +2409,7 @@ GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
     return(.set.mSet(mSetObj));
   }
   
-  version <- mSetObj$mum.version 
+  version <- mum.version 
   inx <- which(mSetObj$pathways$name == msetNm)
   
   if(is.na(inx)){
@@ -2660,7 +2580,7 @@ GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
   inx <- which(mSetObj$pathways$name == msetNm)
   
   
-  if(mSetObj$mum.version == "v2" & mSetObj$dataSet$mumRT){
+  if(mum.version == "v2" & mSetObj$dataSet$mumRT){
     
     mset <- mSetObj$pathways$emp_cpds[[inx]];
     hits.all <- unique(mSetObj$total_matched_ecpds)
@@ -3274,7 +3194,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, v
   mSetObj$dataSet$ref_mzlist = as.numeric(rownames(data));
   mSetObj$dataSet$expr_dic= res[,1];
   names(mSetObj$dataSet$expr_dic) = rownames(res)
-  mSetObj$mum.version <- version
+  mum.version <<- version
   mSetObj$dataSet$mumRT <- FALSE
   
   if(filtOpt == "filtered"){
