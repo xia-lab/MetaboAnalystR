@@ -166,12 +166,11 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
     rownames(aov.mat) <- colnames(mSetObj$dataSet$norm);
     
     if(use.interact){
-      if(p.cor != "none"){
-        aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
+
+      aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
                           p.adjust(aov.mat[,5], p.cor),
                           p.adjust(aov.mat[,6], p.cor));
-      }
-      
+
       sig.facA <-(aov.mat2[,7] <= thresh);
       sig.facB <-(aov.mat2[,8] <= thresh);
       sig.intr <-(aov.mat2[,9] <= thresh);
@@ -194,10 +193,8 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
       aov.mat2 <- aov.mat2[, c(1,4,7,2,5,8,3,6,9),drop=F] 
       
     }else{
-      if(p.cor != "none"){
-        aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,3], p.cor), p.adjust(aov.mat[,4], p.cor));
-      }
-      
+      aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,3], p.cor), p.adjust(aov.mat[,4], p.cor));
+
       sig.facA <-(aov.mat2[,5] <= thresh);
       sig.facB <-(aov.mat2[,6] <= thresh);
       

@@ -42,11 +42,11 @@ PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
 #'@export
 #'
 PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   gene.mat <- getDataFromTextArea(geneIDs);
   gene.vec <- rownames(gene.mat);
-  
+
   #record the info
   mSetObj$dataSet$q.type.gene <- idType;
   mSetObj$dataSet$gene.orig <- geneIDs;
@@ -138,7 +138,7 @@ RemoveGene <- function(mSetObj=NA, inx){
 #'@export
 #'
 PrepareIntegData <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   done <- 0;
@@ -206,6 +206,7 @@ PrepareIntegData <- function(mSetObj=NA){
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libVersion="current", libOpt="integ", integOpt="query"){
 
   mSetObj <- .get.mSet(mSetObj);  
+  
   if(libVersion == "old"){
     if(!(mSetObj$org %in% c("hsa", "mmu", "rno"))){
       AddErrMsg("Support for this organism is only available in the current version!");
@@ -221,13 +222,15 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     }
   }
   
-  if(libVersion == "current"){
-    libPath <- paste("kegg/jointpa/",libOpt, sep="");
-  }else{
-    libPath <- paste("kegg/2018/jointpa/",libOpt, sep=""); 
+  # shift actual enrichment to api.metaboanalyst.ca
+  if(.on.public.web){
+    if(libVersion == "current"){
+      libPath <- paste("kegg/jointpa/",libOpt, sep="");
+    }else{
+      libPath <- paste("kegg/2018/jointpa/",libOpt, sep=""); 
+    }
+    LoadKEGGLib(libPath, mSetObj$org);
   }
-  
-  LoadKEGGLib(libPath, mSetObj$org);
   
   mSetObj$dataSet$pathinteg.method <- libOpt;
   mSetObj$dataSet$path.mat <- NULL;
@@ -238,13 +241,16 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
     rownames(gene.mat) <- gene.vec;
     impMat <- gene.mat;
-    uniq.count <- inmexpa$uniq.gene.count;
-    uniq.len <- inmexpa$gene.counts;
     
     # saving only
-    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "symbol");
+    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
     write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
+    
+    if(.on.public.web){
+      uniq.count <- inmexpa$uniq.gene.count;
+      uniq.len <- inmexpa$gene.counts;
+    }
     
   }else if(libOpt == "metab" && !is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
     
@@ -253,13 +259,16 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     #cmpd.vec <- rownames(cmpd.mat);
     rownames(cmpd.mat) <- cmpd.vec;
     impMat <- cmpd.mat;
-    uniq.count <- inmexpa$uniq.cmpd.count
-    uniq.len <- inmexpa$cmpd.counts;
-    
+
     # saving only
     cmpd.nms <- doKEGG2NameMapping(rownames(mSetObj$dataSet$pathinteg.imps$cmpd.mat));
     cmpd.mat <- cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat);
     write.csv(mSetObj$dataSet$pathinteg.imps$cmpd.mat, file="MetaboAnalyst_result_cmpds.csv");
+    
+    if(.on.public.web){
+      uniq.count <- inmexpa$uniq.cmpd.count
+      uniq.len <- inmexpa$cmpd.counts;
+    }
     
   }else{ # integ
     
@@ -282,21 +291,74 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
     rownames(gene.mat) <- gene.vec;
     # saving 
-    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "symbol");
+    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
     
     # used by both integ
     impMat <- rbind(cmpd.mat, gene.mat);
-    uniq.count <- inmexpa$uniq.cmpd.count + inmexpa$uniq.gene.count;
-    uniq.len <- inmexpa$cmpd.counts + inmexpa$gene.counts;
-    
+
     # used by merge p values
     impMatList <- list(cmpd=cmpd.mat,gene=gene.mat);
+    
+    if(.on.public.web){
+      uniq.count <- inmexpa$uniq.cmpd.count + inmexpa$uniq.gene.count;
+      uniq.len <- inmexpa$cmpd.counts + inmexpa$gene.counts;
+    }
   }
   
   ora.vec <- rownames(impMat);
   impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
   rownames(impMat) <- ora.vec;
+
+  if(!.on.public.web){
+    
+    if(libOpt == "integ"){
+      toSend = list(oraVec = ora.vec, libVersion = libVersion, libOpt = libOpt, integOpt = integOpt, topoMethod = topo, enrichAnal = enrich,
+                    org = mSetObj$org, integCmpds = rownames(impMatList$cmpd), integGenes = rownames(impMatList$gene))
+    }else{
+      toSend = list(oraVec = ora.vec, libVersion = libVersion, libOpt = libOpt, integOpt = integOpt, topoMethod = topo, enrichAnal = enrich,
+                    org = mSetObj$org)
+    }
+    
+    #json to be sent to server
+    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
+    #write(oraData, file="ora_test.JSON")
+    # code to send to server
+    # change path when on server, use local for now
+    
+    load_httr()
+    base <- api.base
+    endpoint <- "/jointpath"
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    
+    if(is.null(query_results_json$enrichRes)){
+      AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+    
+    # parse json response from server to results
+    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
+    colnames(qeaDataRes) <- query_results_json$enrichResColNms
+    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
+    write.csv(qeaDataRes, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
+    
+    rownames(qeaDataRes) <- query_results_json$enrichPathIds
+    
+    jointpa_matches <- as.matrix(query_results_json$jointPAMatches)
+    colnames(jointpa_matches) <- "Hits"
+    rownames(jointpa_matches) <- query_results_json$enrichResRowNms
+    
+    mSetObj$api$guestName <- query_results_json$guestName;
+    mSetObj$dataSet$path.mat <- qeaDataRes;
+    mSetObj$dataSet$pathinteg.impMat <- impMat; 
+    mSetObj$analSet$jointPAMatches <- jointpa_matches;
+    
+    return(.set.mSet(mSetObj));
+  }
+  
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
   
   # combine pvals require performing analysis on compounds and genes seperately. Note, we need to use the topo from merge queries 
@@ -534,10 +596,17 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
   sqlite.path <- paste0(gene.sqlite.path, mSetObj$org, "_genes.sqlite");
-  conv.db <- dbConnect(SQLite(), sqlite.path); 
+  conv.db <- .get.sqlite.con(sqlite.path); 
   gene.db <- dbReadTable(conv.db, "entrez")
-
-  hit.inx <- match(enIDs, gene.db[, "gene_id"]);
+  
+  org <- mSetObj$org
+   
+  if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
+    hit.inx <- match(enIDs, gene.db[, "gene_id"]);
+  }else{
+    hit.inx <- match(enIDs, gene.db[, "symbol"]);
+  }
+  
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
   match.state<-mSetObj$dataSet$gene.name.map$match.state;
   mSetObj$dataSet$gene.name.map$hit.inx <- hit.inx;
@@ -986,6 +1055,44 @@ GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
     all.nms[nd.inx] <- paste("<font color=\"red\">", "<b>", all.nms[nd.inx], "</b>", "</font>",sep="");
 
     return(cbind(pathName, paste(unique(all.nms), collapse="; ")));
+}
+
+CreateIntegMatchingTable <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(!.on.public.web){
+    
+    if(is.null(mSet$analSet$jointPAMatches)){
+      AddErrMsg("Perform integrative pathway analysis first!")
+      return(0)
+    }
+    
+    res <- mSetObj$analSet$jointPAMatches
+    write.csv(res, "jointpa_matched_features.csv", row.names = T)
+    return(.set.mSet(mSetObj));
+  }
+  
+  results <- mSetObj$dataSet$path.mat
+  match_paths <- rownames(results)
+  
+  ms.list <- lapply(inmexpa$mset.list, function(x){strsplit(x, " ")})
+  ms.list <- ms.list[match(match_paths, names(ms.list))]
+  ms.list.list <- lapply(ms.list, function(x) unique(unlist(x)))
+  
+  ora.vec <- rownames(mSetObj$dataSet$pathinteg.impMat)
+  overlap.results <- lapply(ms.list.list, function(overlap) paste0(intersect(overlap, ora.vec), collapse="; ") )
+  
+  res <- data.frame(matrix(unlist(overlap.results), nrow=length(overlap.results), byrow=T), stringsAsFactors=FALSE)
+  rownames(res) <- names(inmexpa$path.ids)[match(match_paths, inmexpa$path.ids)] 
+  colnames(res) <- "matched_features"
+  write.csv(res, "jointpa_matched_features.csv", row.names = T)
+  
+  if(!.on.public.web){
+    return(1)
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 # perform p value combination, p.vec contain p values, w.vec contains weights

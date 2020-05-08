@@ -57,26 +57,11 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   }
 } 
 
-# setup microservice for R function execution
-SetupRSclient <- function(user.dir=FALSE, remote=TRUE){
-  #library(RSclient);
-  load_RSclient();
-  rsc <- try(RS.connect(host = "132.216.38.6", port = 6313));
-  if(class(rsc) == "try-error") {
-    rsc <- RS.connect(); # switch to local
-    remote <- FALSE
-  }
-
-  if(user.dir){
-    if(remote){
-     dir.name <- strsplit(getwd(), "/")[[1]]; dir.name <- dir.name [length(dir.name)]
-     RS.assign(rsc, "my.dir", paste0("/data/Rtmp/", dir.name));
-     RS.eval(rsc, dir.create(my.dir));
-    } else{
-     RS.assign(rsc, "my.dir", getwd()); RS.eval(rsc, setwd(my.dir));
-    }
-  }
-  return(rsc);
+# in public web, this is done by microservice
+.perform.computing <- function(){
+  dat.in <- readRDS("dat.in.rds"); 
+  dat.in$my.res <- dat.in$my.fun();
+  saveRDS(dat.in, file="dat.in.rds");    
 }
 
 #'Read data table
@@ -116,6 +101,11 @@ SetupRSclient <- function(user.dir=FALSE, remote=TRUE){
     dat <- try(read.csv(fileName, header=TRUE, comment.char = "", check.names=F, as.is=T));
   }  
   return(dat);
+}
+
+.get.sqlite.con <- function(sqlite.path){
+    load_rsqlite();
+    return(dbConnect(SQLite(), sqlite.path)); 
 }
 
 #'Permutation
@@ -168,29 +158,16 @@ Perform.permutation <- function(perm.num, fun){
 #'@export
 #'
 UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
-  
-  a <- tryCatch(
-            system(paste("unzip",  "-o", inPath, "-d", outPath), intern=T),
-            error=function(e){
-                print(e);
-                return(unzip(inPath, outPath));    
-            }, 
-            warning=function(w){
-                print(w);
-                return(unzip(inPath, outPath));
-            });
-            
-  if(class(a) == "try-error" | !length(a)>0){
-      AddErrMsg("Failed to unzip the uploaded files!");
-      AddErrMsg("Possible reason: file name contains space or special characters.");
-      AddErrMsg("Use only alphabets and numbers, make sure there is no space in your file name.");
-      AddErrMsg("For WinZip 12.x, use \"Legacy compression (Zip 2.0 compatible)\"");
-      return (0);
+  sys.cmd <- paste("unzip",  "-o", inPath, "-d", outPath);
+  #print(sys.cmd);
+  sys.res <- try(system(sys.cmd));
+  if(sys.res == 0){ # success code for system call
+     return (1);
+  }else{  # success code for system call
+     print(sys.res);
+     r.res <- unzip(inPath, exdir=outPath);
+     return(length(r.res)>0);
   }
-  #if(rmFile){
-  #  RemoveFile(inPath);
-  #}
-  return (1);
 }
 
 #'Perform data cleaning
@@ -596,22 +573,6 @@ RemoveFile<-function(fileName){
   }
 }
 
-#'Clear folder and memory
-#'@description Clear the current folder and objects in memory
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-ClearUserDir<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  # remove physical files
-  unlink(dir(), recursive=T);
-  mSetObj$dataSet <- mSetObj$analSet <- list();
-  res <- .set.mSet(mSetObj);
-  cleanMem();
-  return(res);
-}
-
 # do memory cleaning after removing many objects
 cleanMem <- function(n=10) { for (i in 1:n) gc() }
 
@@ -871,28 +832,21 @@ end.with <- function(bigTxt, endTxt){
 ## fast T-tests/F-tests using genefilter
 ## It leverages RSclient to perform one-time memory intensive computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
-    print("Peforming fast univariate tests ....");
-    rsc <- SetupRSclient();;
-    
+    print("Performing fast univariate tests ....");
+
     # note, feature in rows for gene expression
     data <- t(as.matrix(data));
-    dat.out <- list(data=data, cls=cls, var.equal=var.equal);
-    RS.assign(rsc, "dat.in", dat.out); 
-    my.fun <- function(){
-        if(length(levels(cls)) > 2){
-            res <- try(genefilter::rowFtests(dat.in$data, dat.in$cls, var.equal = dat.in$var.equal));
-        }else{
-            res <- try(genefilter::rowttests(dat.in$data, dat.in$cls));
-        }
-        if(class(res) == "try-error") {
-            res <- cbind(NA, NA);
-        }else{
-            res <- cbind(res$statistic, res$p.value);
-        }
-        return(res);
+    if(length(levels(cls)) > 2){
+        res <- try(genefilter::rowFtests(data, cls, var.equal = var.equal));
+    }else{
+        res <- try(genefilter::rowttests(data, cls));
     }
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
-  return(my.res);
+    
+    if(class(res) == "try-error") {
+        res <- cbind(NA, NA);
+    }else{
+        res <- cbind(res$statistic, res$p.value);
+    }
+
+    return(res);
 }

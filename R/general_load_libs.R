@@ -51,9 +51,7 @@ load_rgraphwiz <- function(){
 # Load XCMS
 load_xcms <- function(){
   
-  installed <- "xcms" %in% rownames(installed.packages())
-  
-  if(installed){
+  if(.on.public.web){
     suppressMessages(library(xcms))
     # disable parallel processing on the server
     register(SerialParam());
@@ -88,11 +86,14 @@ load_stringr <- function(){
   suppressMessages(library(stringr))
 }
 
+# Load httr
+load_httr <- function(){
+  suppressMessages(library(httr))
+}
+
 # Load RSclient
 load_RSclient <- function(){
-  
   installed <- c("RSclient") %in% rownames(installed.packages())
-  
   if(installed){
     suppressMessages(library(RSclient))
   }else{

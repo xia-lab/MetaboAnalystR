@@ -2,7 +2,7 @@
 #'@param mSetObj Input name of the created mSet Object
 #'@export
 GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
-  
+  load_rsqlite()
   mSetObj <- .get.mSet(mSetObj);
   
   qvec <- mSetObj$dataSet$gene;
@@ -48,7 +48,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   
   org.code <- mSetObj$org;
   sqlite.path <- paste0(gene.sqlite.path, org.code, "_genes.sqlite");
-  con <- dbConnect(SQLite(), sqlite.path); 
+  con <- .get.sqlite.con(sqlite.path); ; 
   gene.db <- dbReadTable(con, "entrez")
 
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
@@ -306,7 +306,6 @@ MatchQueryOnKEGGMap <- function(query, ko.map){
 # Utility function for PerformKOEnrichAnalysis_List
 # for KO01100
 Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
-  
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   AddMsg("Functional enrichment analysis was completed");
   
@@ -326,6 +325,8 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
   
   hits.edge <- list();
   hits.node <- list();
+  hits.edge.all <- list();
+  hits.node.all <- list();
   
   if(idtype == "gene"){
     ko.map <- ko.edge.map;

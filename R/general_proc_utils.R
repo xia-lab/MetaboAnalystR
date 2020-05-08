@@ -212,8 +212,8 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   msg<-c(msg, "<u>By default, these values will be replaced by a small value.</u>",
-         "Click <b>Skip</b> button if you accept the default practice",
-         "Or click <b>Missing value imputation</b> to use other methods");
+         "Click the <b>Skip</b> button if you accept the default practice;",
+         "Or click the <b>Missing value imputation</b> to use other methods.");
   
   # obtain original half of minimal positive value (threshold)
   minConc<-min(int.mat[int.mat>0], na.rm=T)/2;
@@ -548,7 +548,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       }
     }
   }
-  print(msg);
+
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);
@@ -883,3 +883,69 @@ IsDataContainsNegative<-function(mSetObj=NA){
   return(mSetObj$dataSet$containsNegative);
 }
 
+########## Utility Functions ##############
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@param y Input peaks
+#'@param istart Performs which.max on y
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+descendMin <- function(y, istart = which.max(y)) {
+   
+  if (!is.double(y)) y <- as.double(y)
+  unlist(.C("DescendMin",
+            y,
+            length(y),
+            as.integer(istart-1),
+            ilower = integer(1),
+            iupper = integer(1),
+            DUP = FALSE)[4:5]) + 1
+}
+
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@param x Input the data
+#'@param values Input the values 
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+findEqualGreaterM <- function(x, values) {
+  
+  if (!is.double(x)) x <- as.double(x)
+  if (!is.double(values)) values <- as.double(values)
+    .C("FindEqualGreaterM",
+     x,
+     length(x),
+     values,
+     length(values),
+     index = integer(length(values)),
+     DUP = FALSE)$index + 1
+}
+
+#'Perform utilities for peak grouping
+#'@description Perform various utilities for peak grouping
+#'@param m Peaks
+#'@param order Performs seq(length = nrow(m))
+#'@param xdiff Default set to 0
+#'@param ydiff Default set to 0
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
+  
+  nr <- nrow(m)
+  nc <- ncol(m)
+  if (!is.double(m))
+    m <- as.double(m)
+  .C("RectUnique",
+     m,
+     as.integer(order-1),
+     nr,
+     nc,
+     as.double(xdiff),
+     as.double(ydiff),
+     logical(nrow(m)),
+     DUP = FALSE)[[7]]
+}

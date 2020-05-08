@@ -154,8 +154,12 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    msg <- c(msg, "Duplicate feature names are not allowed!");
+    dup.inx <- which(duplicated(var.nms));
+    msg <- c(msg, paste("Error: a total of", length(dup.inx), "duplicate feature names found!"));
+    if(length(dup.inx) > 9){
+        dup.inx <- dup.inx[1:9];
+    }
+    dup.nm <- paste("Duplicated names [max 9]: ", var.nms[dup.inx], collapse=" ");
     AddErrMsg(dup.nm);
     current.msg <<- msg;
     return(0);

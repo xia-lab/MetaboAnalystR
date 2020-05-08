@@ -196,11 +196,10 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
 
   networkplot <- c( "\\begin{figure}[htp]",
                         "\\begin{center}",
-                        paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$networkplot,"}", sep=""),
-                        "\\caption{", paste("Plot of the selected interaction network. Grey nodes represent diseases,", 
-                        " blue nodes represent genes, and yellow nodes represent metabolites.", sep=""),"}",
+                        paste("\\includegraphics[width=1.0\\textwidth]{", "network.png","}", sep=""),
+                        "\\caption{", "Plot of the selected interaction network","}",
                         "\\end{center}", 
-                        paste("\\label{",mSetObj$imgSet$networkplot,"}", sep=""),
+                        paste("\\label{", "network.png" ,"}", sep=""),
                         "\\end{figure}",
                         "\\clearpage"
     );

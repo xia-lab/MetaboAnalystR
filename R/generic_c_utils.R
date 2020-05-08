@@ -29,8 +29,8 @@ if (.on.public.web){
   
 } else {
   C_imodwt_r <- function(y,z,N,j, L, ht, gt, XX){
-  .C(C_imodwt, y, z, N, j, 
-          L, ht, gt, out=XX, PACKAGE = "MetaboAnalystR")$out
+    .C(C_imodwt, y, z, N, j, 
+       L, ht, gt, out=XX, PACKAGE = "MetaboAnalystR")$out
   }
   
   C_modwt_r <- function(X,N,j, L, ht, gt,W, V){

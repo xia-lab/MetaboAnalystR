@@ -410,7 +410,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
   data <- mSetObj$dataSet$norm;
   cls <- mSetObj$dataSet$cls;    
   
-  if( method == "lr") {
+  if(method == "lr") {
     # check cls (response variable) whether it is number 0/1 or not
     if( length(levels(mSetObj$dataSet$cls)) == 2 ) {
       mSetObj$dataSet$cls.lbl <- levels(mSetObj$dataSet$cls);  # already sorted
@@ -418,9 +418,16 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
       mSetObj$dataSet$cls.lbl.new <- sort(unique(cls));
       mSetObj$dataSet$cls01 <- cls; # integer values for response of logistic regression
     } else {
-      print("# level of response variable y/class has more than 2");
+       AddErrMsg("level of response variable y/class has more than 2!");
+       return(0);
     }
   } else {
+    if(method == "pls"){# make sure the feature # > comp #
+        if(lvNum > ncol(data)){
+            AddErrMsg("PLS components cannot be more than total features selected!");
+            return(0);
+        }
+    }
     cls <- mSetObj$dataSet$cls;
   }
   
@@ -493,8 +500,8 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
     
     tbl.cls <- table(cls);
     if( (tbl.cls[[1]] < 10) & (tbl.cls[[2]] < 10) ) {
-      cat("# in Logistic Regression 10-fold CV:\n");
-      cat("Error: to use the 10-fold cross validation, the sample size of each group should be more than 10.\n"); 
+       AddErrMsg("The sample size of each group should be more than 10!");
+       return (0);
     } else {
       genLogisticRegMdl(x.train.all, y.train.all, x.test.all, y.test.all);
     }
@@ -609,7 +616,8 @@ genLREquation <- function(coef.mdl){
 #'License: GNU GPL (>= 2)
 
 CVTest.LRmodel <- function(data.in, fmla.in, kfold=10, run.stepwise=FALSE){
-  
+
+
   dw.case <- data.in[which(data.in$y == 1), ]; nrow(dw.case)
   dw.ctrl <- data.in[which(data.in$y == 0), ]; nrow(dw.ctrl)
   
@@ -648,15 +656,20 @@ CVTest.LRmodel <- function(data.in, fmla.in, kfold=10, run.stepwise=FALSE){
   # 10-fold cross validation
   cv.r <- pROC::roc(all.validation.y ~ all.validation.fit, ci=T, ci.se=T, sp=seq(0,1,0.01)) # of: se (sensitivity), sp (specificity), thresholds, auc 
   # cv.threshold <- coords(cv.r, "best", ret=c("threshold"), best.method="youden", best.weights=c(5, nrow(dw.case)/nrow(data.in)) ); 
-  cv.threshold <- pROC::coords(cv.r, "best", ret=c("threshold"), best.method="closest.topleft"); 
+  cv.threshold <- as.numeric(pROC::coords(cv.r, "best", ret=c("threshold"), best.method="closest.topleft", transpose=TRUE)); 
   cv.rstat <- multi.stat(all.validation.fit > cv.threshold, all.validation.y);
+  if(length(cv.rstat) == 1 && cv.rstat == 0){
+    return(0);
+  }
   cv.tbl <- table(all.validation.fit > cv.threshold, all.validation.y);
   
   # training performance
   train.r <- pROC::roc(all.trainning.y ~  all.trainning.fit, ci=T, ci.se=T, sp=seq(0,1,0.01)) # of: se (sensitivity), sp (specificity), thresholds, auc 
-  train.threshold <- pROC::coords(train.r, "best", ret=c("threshold"), best.method="youden"); 
+  train.threshold <- pROC::coords(train.r, "best", ret=c("threshold"), best.method="youden", transpose=TRUE); 
   train.rstat <- multi.stat(all.trainning.fit > cv.threshold, all.trainning.y) 
-  
+  if(length(train.rstat) == 1 && train.rstat == 0){
+    return(0);
+  } 
   return(list(
     train.r = train.r$ci,
     train.threshold = train.threshold,
@@ -823,7 +836,17 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 multi.stat <- function(pred, resp) {
-  # ts <- table(pred > threshold, resp)
+  
+  in.dat <- na.omit(cbind(pred,resp));
+  
+  if(nrow(in.dat) < length(pred)/2){ # abort if over half is invalid
+    AddErrMsg("More than half of tests return NA! Insufficent sample size?");
+    return(0);
+  }
+    
+  pred <- in.dat[,1];
+  resp <- in.dat[,2];
+
   ts <- table(pred, resp)
   
   TP <- ts[2,2]
@@ -850,7 +873,7 @@ multi.stat <- function(pred, resp) {
   CIsens <- c(sensitivity - 1.96 * SEsens, ifelse( cise.u > 1.0, 1.0, cise.u) )
   CIspec <- c(specificity - 1.96 * SEspec, ifelse( cisp.u > 1.0, 1.0, cisp.u) )
   
-  return( list(sens=sensitivity, sensCI=CIsens, spec=specificity, specCI=CIspec) );
+  return(list(sens=sensitivity, sensCI=CIsens, spec=specificity, specCI=CIspec) );
 }
 
 #'Get confidence intervals
@@ -956,7 +979,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   
   if(isOpt){
     par(xpd=T);
-    opt.ps <- data.frame(pROC::coords(roc.obj, "best", best.method=optMethod));
+    opt.ps <- data.frame(pROC::coords(roc.obj, "best", best.method=optMethod, transpose = TRUE));
     opt.thresh <- opt.ps["threshold",]
     points(opt.ps["specificity",], opt.ps["sensitivity",], pch=19, col="red");
     lbls=paste(signif(opt.ps["threshold",],3), "(", round(opt.ps["specificity",],1), ", ", round(opt.ps["sensitivity",],1), ")", sep="");
@@ -1010,7 +1033,7 @@ PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, 
   df <- data.frame(conc = x, class = y)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-  p <- p + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, show.legend = FALSE)
+  p <- p + stat_summary(fun=mean, colour="darkred", geom="point", shape=18, size=3, show.legend = FALSE)
   p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"), axis.text = element_text(size=10))
   p <- p + scale_fill_manual(values=c("#6262ef", "#FFAE20"))
   
@@ -2548,7 +2571,7 @@ Get.Fstat <-  function(x, fac, var.equal=TRUE) {
 GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   
   mSetObj <- .get.mSet(mSetObj);
-  res <- pROC::coords(mSetObj$analSet$roc.obj, val, input=fld.nm);
+  res <- pROC::coords(mSetObj$analSet$roc.obj, val, input=fld.nm, transpose=TRUE);
   
   sp <- res[2];
   se <- res[3];

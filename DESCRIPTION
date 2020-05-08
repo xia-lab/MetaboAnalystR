@@ -38,7 +38,6 @@ Imports:
     Rcpp,
     pROC,
     limma,
-    car,
     fitdistrplus,
     lars,
     Hmisc,
@@ -61,7 +60,8 @@ Imports:
     MSnbase,
     progress,
     entropy,
-    rsm
+    rsm,
+    httr
 Suggests: 
     knitr,
     rmarkdown,
@@ -69,4 +69,7 @@ Suggests:
     testthat,
     plotly,
     reshape2,
+    RSclient,
+    MSnbase,
+    car
 VignetteBuilder: knitr

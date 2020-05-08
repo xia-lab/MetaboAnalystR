@@ -10,24 +10,17 @@
 #'@export
 #'@import siggenes
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
-  
+    .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName);
+    .perform.computing();
+    .save.sam.anal(mSetObj);
+}
+
+.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi72.png", sep="");
-  mSetObj$imgSet$sam.cmpd <- imgName;
-  
-  load_RSclient()
-  rsc <- RS.connect();
-  
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));
-  
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
   cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
-  dat.out <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
-                  paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName);
-  
-  RS.assign(rsc, "dat.in", dat.out);   
 
   my.fun<-function(){  
     library(siggenes);
@@ -87,16 +80,24 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     
     return(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat, img=imgName));
   }
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
-  
+
+  dat.in <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
+                  paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName, my.fun=my.fun);
+
+  saveRDS(dat.in, file="dat.in.rds");
+  mSetObj$imgSet$sam.cmpd <- imgName;  
+  return(.set.mSet(mSetObj));
+}
+
+.save.sam.anal <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  my.res <- dat.in$my.res;
   mSetObj$analSet$sam <- my.res$sam.res;
   mSetObj$analSet$sam.delta  <- my.res$sam.delta;
   mSetObj$analSet$sam.cmpds <- my.res$sig.mat;
   return(.set.mSet(mSetObj));
 }
-
 
 #'Plot SAM Delta Plot 
 #'@description Plot SAM Delta Plot (FDR)
@@ -160,7 +161,12 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
+    .prepare.sam.cmpd(mSetObj, imgName, format, dpi, width);
+    .perform.computing();
+    # no need to collect as it is an image
+}
+
+.prepare.sam.cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   # note, this is now a remote call and only used for other formats by users
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -173,24 +179,14 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }
   h <- w;
   
-  mSetObj$imgSet$sam.cmpd <- imgName;
-  
-  load_RSclient();
-  rsc <- RS.connect();
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));  
-  
-  dat.out <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
-  RS.assign(rsc, "dat.in", dat.out); 
   my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
     siggenes::plot(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
     dev.off();
   }
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
-  
+  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
+  saveRDS(dat.in, file="dat.in.rds");
+  mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
 
@@ -205,6 +201,12 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'
 EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig){
+    .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig);
+    .perform.computing();
+    .save.ebam.init(mSetObj);
+}
+
+.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig){
   mSetObj <- .get.mSet(mSetObj);
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
@@ -219,17 +221,6 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
   
   imgA0 = paste(imgA0, "dpi72.png", sep="");
   imgSig = paste(imgSig, "dpi72.png", sep="");
-  mSetObj$imgSet$ebam.a0 <- imgA0;
-  mSetObj$imgSet$ebam.cmpd <-imgSig;
-  
-  load_RSclient();
-  rsc <- RS.connect();
-  
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));
-  
-  dat.out <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig);
-  RS.assign(rsc, "dat.in", dat.out);  
 
   my.fun <- function(){
     library(siggenes);
@@ -262,10 +253,18 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     return(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, a0=A0, delta=delta));
   }
   
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
-  
+  dat.in <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig, my.fun=my.fun); 
+  saveRDS(dat.in, file="dat.in.rds");
+
+  mSetObj$imgSet$ebam.a0 <- imgA0;
+  mSetObj$imgSet$ebam.cmpd <-imgSig;
+  return(.set.mSet(mSetObj));
+}
+
+.save.ebam.init <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  my.res <- dat.in$my.res;
   mSetObj$analSet$ebam <- my.res$ebam_out;
   mSetObj$analSet$ebam.cmpds <- my.res$sig.mat;
   mSetObj$analSet$ebam.a0 <- my.res$ebam_a0;
@@ -289,7 +288,12 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'@export
 #'
 PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
+    .prepare.ebam.cmpd(mSetObj, imgName, format, dpi, width);
+    .perform.computing();
+}
+ 
+.prepare.ebam.cmpd <-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+
   mSetObj <- .get.mSet(mSetObj);
   
   # note, this is now a remote call and only used for other formats by users
@@ -303,24 +307,15 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <- h <- width;
   }
   
-  mSetObj$imgSet$sam.cmpd <- imgName;
-  
-  load_RSclient();
-  rsc <- RS.connect();
-  RS.assign(rsc, "my.dir", getwd()); 
-  RS.eval(rsc, setwd(my.dir));  
-  
-  dat.out <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
-  RS.assign(rsc, "dat.in", dat.out); 
   my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
     siggenes::plot(dat.in$mSetObj$analSet$ebam, dat.in$mSetObj$analSet$ebam.delta);
     dev.off();
   }
-  RS.assign(rsc, my.fun);
-  my.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
+  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
+  saveRDS(dat.in, file="dat.in.rds");
 
+  mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
 

@@ -1387,7 +1387,13 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
-  
+    .prepare.oplsr.anal(mSetObj, reg);
+    .perform.computing();
+    .save.oplsr.anal(mSetObj);
+}
+
+.prepare.oplsr.anal <-function(mSetObj=NA, reg=FALSE){
+ 
   mSetObj <- .get.mSet(mSetObj);
 
   mSetObj$analSet$opls.reg <- reg;  
@@ -1405,20 +1411,31 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
-  if(.on.public.web){
-    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+  my.fun <- function(){
+     if(!exists("perform_opls")){ # public web on same user dir
+         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+     }
+     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
+     return(my.res);
   }
-  my.res <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
-  
-  mSetObj$analSet$oplsda <- my.res;
-  score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
-  colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
-  write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
-  load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
-  colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
-  write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
-  
+
+  dat.in <- list(data=datmat, cls=cls, cv.num=cv.num, my.fun=my.fun);
+
+  saveRDS(dat.in, file="dat.in.rds");
   return(.set.mSet(mSetObj));
+}
+
+.save.oplsr.anal <- function(mSetObj = NA){
+    mSetObj <- .get.mSet(mSetObj);
+    dat.in <- readRDS("dat.in.rds"); 
+    mSetObj$analSet$oplsda <- dat.in$my.res;
+    score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
+    colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
+    write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
+    load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
+    colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
+    write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
+    return(.set.mSet(mSetObj));
 }
 
 #'Create OPLS-DA score plot
@@ -1707,6 +1724,12 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
+    .prepare.oplsda.permut(mSetObj, num);
+    .perform.computing();
+    .save.oplsda.permut(mSetObj);
+}
+
+.prepare.oplsda.permut <-function(mSetObj=NA, num=100){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1718,20 +1741,31 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
-  
-  if(.on.public.web){
-    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+  my.fun <- function(){
+     if(!exists("perform_opls")){ # public web on same user dir
+         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+     }
+     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
   }
-  my.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
-  
-  r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
-  q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
-  
-  # note, actual permutation number may be adjusted in public server
-  perm.num <- my.res$suppLs[["permI"]];
+  dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num, my.fun=my.fun);
 
-  mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+  saveRDS(dat.in, file="dat.in.rds");
   return(.set.mSet(mSetObj));
+}
+
+.save.oplsda.permut <- function(mSetObj = NA){
+    mSetObj <- .get.mSet(mSetObj);
+    dat.in <- readRDS("dat.in.rds"); 
+    my.res <- dat.in$my.res;
+
+    r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
+    q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  
+    # note, actual permutation number may be adjusted in public server
+    perm.num <- my.res$suppLs[["permI"]];
+
+    mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+    return(.set.mSet(mSetObj));
 }
 
 #'Plot OPLS-DA permutation
@@ -1834,32 +1868,52 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
-  
-  if(compVarOpt == "same"){
-    comp.var.nums <- rep(var.num, comp.num);
-  }else{
-    if(exists("comp.var.nums") && all(comp.var.nums > 0)){
-      comp.var.nums <- ceiling(comp.var.nums);
+    .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
+    .perform.computing();
+    .save.splsr.anal(mSetObj);
+}
+
+.prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
+
+    if(compVarOpt == "same"){
+        comp.var.nums <- rep(var.num, comp.num);
     }else{
-      msg <- c("All values need to be positive integers!");
-      return(0);
+        if(exists("comp.var.nums") && all(comp.var.nums > 0)){
+            comp.var.nums <- ceiling(comp.var.nums);
+        }else{
+            msg <- c("All values need to be positive integers!");
+            return(0);
+        }
     }
-  }
 
     mSetObj <- .get.mSet(mSetObj);  
   
     # note, standardize the cls, to minimize the impact of categorical to numerical impact
     cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
     datmat <- as.matrix(mSetObj$dataSet$norm);
-    if(.on.public.web){
-        compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
+
+    my.fun <- function(){
+        if(!exists("splsda")){ # public web on same user dir
+            compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
+        }
+        my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
+
+        # perform validation
+        perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
+        my.res$error.rate <- perf.res$error.rate$overall;
+        return(my.res);
     }
-    my.res <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
-    # perform validation
-    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
-    my.res$error.rate <- perf.res$error.rate$overall;
-    
-    mSetObj$analSet$splsr <- my.res;
+
+  dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums, my.fun=my.fun);
+
+  saveRDS(dat.in, file="dat.in.rds");
+  return(.set.mSet(mSetObj));
+}
+
+.save.splsr.anal <- function(mSetObj = NA){
+    mSetObj <- .get.mSet(mSetObj);
+    dat.in <- readRDS("dat.in.rds"); 
+    mSetObj$analSet$splsr <- dat.in$my.res;
     score.mat <- mSetObj$analSet$splsr$variates$X;
     write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
     load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;

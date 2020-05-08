@@ -16,7 +16,7 @@
 #'@export
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   # make a clean dataSet$cmpd data based on name mapping
   # only valid kegg id will be used
@@ -41,6 +41,46 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     return(0);
   }
   
+  if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
+    mSetObj$api$nodeImp <- nodeImp;
+    mSetObj$api$method <- method;
+    mSetObj$api$oraVec <- ora.vec; 
+    
+    if(mSetObj$api$filter){
+      mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
+      
+      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+                     method = mSetObj$api$method, oraVec = mSetObj$api$oraVec, filterData = mSetObj$api$filterData)
+    }else{
+      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+                     method = mSetObj$api$method, oraVec = mSetObj$api$oraVec)
+    }
+    
+    #json to be sent to server
+    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
+    #write(oraData, file="ora_test.JSON")
+    # code to send to server
+    # change path when on server, use local for now
+    
+    load_httr()
+    base <- api.base
+    endpoint <- "/pathwayora"
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    
+    # parse json response from server to results
+    oraDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
+    colnames(oraDataRes) <- query_results_json$enrichResColNms
+    rownames(oraDataRes) <- query_results_json$enrichResRowNms
+    
+    write.csv(oraDataRes, file="pathway_results.csv");
+    mSetObj$analSet$ora.mat <- oraDataRes
+    mSetObj$api$guestName <- query_results_json$guestName
+    return(.set.mSet(mSetObj));
+  }
+  
   current.mset <- metpa$mset.list;
   uniq.count <- metpa$uniq.count;
   
@@ -56,7 +96,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   hit.num <-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
   set.size <-length(current.mset);
   set.num <- unlist(lapply(current.mset, length), use.names=FALSE);
-
+  
   # deal with no hits
   if(length(hits)==0){
     msg.vec <<- c(msg.vec, "No hits in the selected pathway library!")
@@ -108,7 +148,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$ora.mat <- signif(res.mat,5);
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
-
+  
   save.mat <- mSetObj$analSet$ora.mat;  
   hit.inx <- match(rownames(save.mat), metpa$path.ids);
   rownames(save.mat) <- names(metpa$path.ids)[hit.inx];
@@ -138,8 +178,22 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
+# contains three inner functions to be compatible with microservice
 CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method); # on local, everything is done
+  
+  if(.on.public.web){
+    .perform.computing();
+    mSetObj <- .save.qea.score(mSetObj);  
+  }
+  
+  return(.set.mSet(mSetObj));
+}
+
+.prepare.qea.score <- function(mSetObj=NA, nodeImp, method){
+
   mSetObj <- .get.mSet(mSetObj);
   
   # first, need to make a clean dataSet$norm data based on name mapping
@@ -151,19 +205,20 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   } else if(mSetObj$pathwaylibtype == "SMPDB"){
     valid.inx <- !(is.na(nm.map$hmdbid)| duplicated(nm.map$hmdbid));
   }
+  
   nm.map <- nm.map[valid.inx,];
   orig.nms <- nm.map$query;
   
   kegg.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(kegg.inx);
   path.data<-mSetObj$dataSet$norm[,hit.inx];
-
+  
   if(mSetObj$pathwaylibtype == "KEGG"){
     colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
   } else if(mSetObj$pathwaylibtype == "SMPDB"){
     colnames(path.data) <- nm.map$hmdbid[kegg.inx[hit.inx]];
   }
-
+  
   # calculate univariate p values when click indivisual compound node
   # use lm model for t-tests (with var.equal=T), one-way anova, and linear regression (continuous);
   univ.p <- apply(as.matrix(path.data), 2, function(x) {
@@ -177,6 +232,59 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   });
   
   names(univ.p) <- colnames(path.data);
+  
+  if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
+    mSetObj$api$nodeImp <- nodeImp;
+    mSetObj$api$method <- method;
+    mSetObj$api$pathDataColNms <- colnames(path.data)
+    path.data <- as.matrix(path.data)
+    dimnames(path.data) = NULL
+    mSetObj$api$pathData <- path.data; 
+    mSetObj$api$univP <- as.numeric(univ.p);
+    mSetObj$api$cls <- mSetObj$dataSet$cls
+    
+    if(mSetObj$api$filter){
+      mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
+      
+      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
+                     filterData = mSetObj$api$filterData, univP = mSetObj$api$univP, cls = mSetObj$api$cls)
+    }else{
+      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
+                     univP = mSetObj$api$univP, cls = mSetObj$api$cls)
+    }
+    
+    #json to be sent to server
+    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
+    #write(oraData, file="ora_test.JSON")
+    # code to send to server
+    # change path when on server, use local for now
+    
+    load_httr()
+    base <- api.base
+    endpoint <- "/pathwayqea"
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    
+    if(is.null(query_results_json$enrichRes)){
+      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+    
+    # parse json response from server to results
+    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
+    colnames(qeaDataRes) <- query_results_json$enrichResColNms
+    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
+    
+    write.csv(qeaDataRes, file="pathway_results.csv");
+    mSetObj$analSet$qea.mat <- qeaDataRes
+    mSetObj$api$guestName <- query_results_json$guestName
+    print("Pathway QEA via api.metaboanalyst.ca successful!")
+    return(.set.mSet(mSetObj));
+  }
   
   # now, perform topology & enrichment analysis
   current.mset <- metpa$mset.list;
@@ -192,20 +300,13 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
   hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
   hits <- hits[hit.inx]; # remove no hits
-
+  
   # deal with no hits
   if(length(hits)==0){
     msg.vec <<- c(msg.vec, "No hits in the selected pathway library!")
     return(0)
   }
-
-  # store data before microservice
-  mSetObj$analSet$qea.univp <- signif(univ.p,7);
-  mSetObj$analSet$node.imp <- nodeImp;
-  mSetObj$dataSet$norm.path <- path.data;
-  mSetObj$analSet$qea.hits <- hits;
-  mSetObj$analSet$qea.method <- method;
-
+  
   # calculate the impact values
   if(nodeImp == "rbc"){
     imp.list <- metpa$rbc[hit.inx];
@@ -216,10 +317,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
-
-  rsc <- SetupRSclient();
-  dat.out <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits);
-  RS.assign(rsc, "dat.in", dat.out); 
+  
   if(method == "gt"){
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
     my.fun <- function(){
@@ -235,9 +333,27 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
       return(ga.out[,c(1,3)]);
     }
   }
-  RS.assign(rsc, my.fun);
-  qea.res <- RS.eval(rsc, my.fun());
-  RS.close(rsc);
+  
+  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, my.fun=my.fun);
+  saveRDS(dat.in, file="dat.in.rds");
+  
+  # store data before microservice
+  mSetObj$analSet$qea.univp <- signif(univ.p,7);
+  mSetObj$analSet$node.imp <- nodeImp;
+  mSetObj$dataSet$norm.path <- path.data;
+  mSetObj$analSet$qea.hits <- hits;
+  mSetObj$analSet$imp.vec <- imp.vec;
+  mSetObj$analSet$set.num <- set.num;
+  
+  return(.set.mSet(mSetObj));
+}
+
+.save.qea.score <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  qea.res <- dat.in$my.res;
+  set.num <- mSetObj$analSet$set.num;
+  imp.vec <- mSetObj$analSet$imp.vec;
   
   match.num <- qea.res[,1];
   raw.p <- qea.res[,2];
@@ -287,7 +403,7 @@ SetupSMPDBLinks <- function(kegg.ids){
   lk.len <- length(smpdb.vec);
   all.lks <- vector(mode="character", length=lk.len);
   for(i in 1:lk.len){
-    lks <- strsplit(smpdb.vec[i], "; ")[[1]];
+    lks <- strsplit(as.character(smpdb.vec[i]), "; ")[[1]];
     if(!is.na(lks[1])){
       all.lks[i]<-paste("<a href=http://www.smpdb.ca/view/",lks," target=_new>SMP</a>", sep="", collapse="\n");
     }
