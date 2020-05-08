@@ -162,13 +162,13 @@ Model Parsing Done !
 No Increase Stopping !
 best parameter settings:
 min_peakwidth: 6.25
-max_peakwidth: 44.5
-mzdiff: 0.0048
+max_peakwidth: 47.5
+mzdiff: 0.012
 snthresh: 11.5
 bw: 2
 Peak_method: centWave
 RT_method: peakgroup
-ppm: 2.12
+ppm: 2.15
 noise: 7195.33
 prefilter: 2
 value_of_prefilter: 13151.02
@@ -498,7 +498,7 @@ mSet<-Ttests.Anal(mSet, F, 0.25, FALSE, TRUE)
 cat('[1] "A total of 1329 significant features were found."')
 ```
 
-
+#### From peaks to pathways with Mummichog 1 
 
 ```{r,eval=F}
 mSet<-Convert2Mummichog(mSet, rt=TRUE)
@@ -520,6 +520,40 @@ cat('
 [1] "MetaboAnalyst R objects initialized ..."
 [1] "mprt"
 [1] "Retention time tolerance is 22.7888654"
+[1] "Only a small percentage (below 10%) peaks in your input peaks should be significant."                        
+[2] "The algorithm works best for <u>200~500 significant peaks in 3000~7000 total peaks</u>."                     
+[3] "A total of 1097 or 21.88 percent signficant mz features were found based on the selected p-value cutoff: 0.2"
+[1] "v1"','
+[1] "Got 5014 mass features."
+[1] "1227 matched compounds! cpd2mz"
+[1] "A total of 3636 of duplicates were merged."
+[1] "A total of 3348 of duplicates were merged."
+[1] "A total of 3636 of duplicates were merged."
+[1] "A total of 3636 of duplicates were merged."
+[1] "Resampling,  100 permutations to estimate background ..."')
+```
+
+```{r echo=FALSE, fig.width=80}
+knitr::include_graphics("vignette_figures/v1_integ_mummi.png",dpi = 120)
+```
+
+#### From peaks to pathways with Mummichog 2
+
+```{r,eval=F}
+### Perform the Mummichog Analysis with version 2
+mSet<-SetPeakEnrichMethod(mSet, "integ", version="v2")
+# Please set the appropriate p value according to your data
+mSet<-SetMummichogPval(mSet, 0.15)
+mSet<-PerformPSEA(mSet, "hsa_mfn", "current", permNum = 100)
+mSet<-PlotIntegPaths(mSet, "peaks_to_paths_", "png", 144)
+
+```
+
+```{r,echo=F}
+cat('
+[1] "MetaboAnalyst R objects initialized ..."
+[1] "mprt"
+[1] "Retention time tolerance is 22.7888654"
 [1] "Only a small percentage (below 10%) peaks in your input peaks should be significant."                       
 [2] "The algorithm works best for <u>200~500 significant peaks in 3000~7000 total peaks</u>."                    
 [3] "A total of 221 or 4.41 percent signficant mz features were found based on the selected p-value cutoff: 0.05"
@@ -528,10 +562,10 @@ cat('
 'Content length 634759 bytes (619 KB)
 downloaded 619 KB
 
-[1] "Got 5012 mass features."
-[1] "1226 matched compounds! cpd2mz"
-[1] "2857 inital ECs created!"
-[1] "1430 merged ECs identified!"
+[1] "Got 5014 mass features."
+[1] "1227 matched compounds! cpd2mz"
+[1] "2923 inital ECs created!"
+[1] "1442 merged ECs identified!"
 
 Attaching package: igraph
 
@@ -543,22 +577,21 @@ The following object is masked from package:base:
 
     union
 
-[1] "352 empirical compounds identified in 1.93101406097412 seconds."
-[1] "A total of 1364 of duplicates were merged."
-[1] "A total of 1269 of duplicates were merged."
-[1] "A total of 1269 of duplicates were merged."
-[1] "A total of 1364 of duplicates were merged."
-[1] "A total of 1087 of duplicates were merged."
-[1] "A total of 1087 of duplicates were merged."
-[1] "A total of 1364 of duplicates were merged."
-[1] "A total of 1269 of duplicates were merged."
+[1] "350 empirical compounds identified in 1.09545636177063 seconds."
+[1] "A total of 1358 of duplicates were merged."
+[1] "A total of 1261 of duplicates were merged."
+[1] "A total of 1261 of duplicates were merged."
+[1] "A total of 1358 of duplicates were merged."
+[1] "A total of 1079 of duplicates were merged."
+[1] "A total of 1079 of duplicates were merged."
+[1] "A total of 1358 of duplicates were merged."
+[1] "A total of 1261 of duplicates were merged."
 [1] "Resampling,  100 permutations to estimate background ..."')
 ```
 
 ```{r echo=FALSE, fig.width=80}
-knitr::include_graphics("vignette_figures/peaks_to_paths_dpi144.png",dpi = 240)
+knitr::include_graphics("vignette_figures/v2_integ_mummi.png",dpi = 120)
 ```
-
 
 
 ## 3. Case Study 2
