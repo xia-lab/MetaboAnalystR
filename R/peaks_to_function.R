@@ -2399,7 +2399,7 @@ GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
     query_results <- httr::POST(call, body = toSend, encode= "json")
     
     if(query_results$status_code == 200){
-      filename <- content(query_results, "text")
+      filename <- httr::content(query_results, "text")
     }
     
     endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
@@ -2492,7 +2492,7 @@ GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
     query_results <- httr::POST(call, body = toSend, encode= "json")
     
     if(query_results$status_code == 200){
-      filename <- content(query_results, "text")
+      filename <- httr::content(query_results, "text")
     }
     
     endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
@@ -2539,7 +2539,7 @@ GetMummichogMZHits <- function(mSetObj=NA, msetNm){
     query_results <- httr::POST(call, body = toSend, encode= "json")
     
     if(query_results$status_code == 200){
-      result <- content(query_results, "text")
+      result <- httr::content(query_results, "text")
     }
     mSetObj$mz.hits <- result
     print(paste0("Unique m/z features in ", msetNm, ": ", result))
