@@ -252,7 +252,8 @@ optimizxcms.doe.peakpicking <- function(object = NULL, params = params,
     mSet_OPT[["response"]]<-tmp_matrix
     
     message("Round ",iterator," Finished !")
-    
+    save(object,file="object.rda");save(object_mslevel,file="object_mslevel");save(mSet_OPT,file="mSet_OPT.rda");save(index.set,file = "index.set.rda")
+    save(isotopeIdentification,file="isotopeIdentification.rda");save(params,file = "params.rda")
     mSet_OPT <-
       Statistic_doe(
         object = object,
