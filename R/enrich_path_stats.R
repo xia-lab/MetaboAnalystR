@@ -14,6 +14,7 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom httr content POST
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
 

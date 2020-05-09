@@ -9,7 +9,7 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import httr
+#'@importFrom httr content POST
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
 

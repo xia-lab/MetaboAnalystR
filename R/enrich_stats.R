@@ -13,6 +13,7 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom httr content POST
 #'
 CalculateHyperScore <- function(mSetObj=NA){
   
