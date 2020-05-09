@@ -95,17 +95,17 @@ The * must be replaced by what is actually downloaded and built.
 ```R
 git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.2.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalystR_3.0.1.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalystR_3.0.2.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1l6Lp1VbLTlXzyViVKDr1uWWH3KNoyWty/view?usp=sharing). 
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1SGv6IxhDYayTO5hqOU-uoumoHxUUAiLC/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
-R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.2.tar.gz
 
 ```
 
@@ -113,7 +113,7 @@ R CMD INSTALL MetaboAnalystR_3.0.1.tar.gz
 
 ### MetaboAnalystR 3.0 Workflow: Towards an Optimized Workflow for Global Metabolomics
 
-The case studies have been preformed in our article of this version [here]() (under review, available soon). The example running R code of this article have been provided as a vignette inside the R package.
+The case studies have been preformed in our article of this version [here](https://www.mdpi.com/2218-1989/10/5/186) (available online now). The example running R code of this article have been provided as a vignette inside the R package.
 
 
 ### MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights
@@ -128,7 +128,7 @@ To demonstrate the functionality, flexibility, and scalability of the MetaboAnal
 
 ## Tutorials
 
-For detailed tutorials on how to use MetaboAnalystR 2.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 2.0 modules (11), a case-study showcasing the new end-to-end functionality of MetaboAnalystR 2.0, as well as an example that demonstrates the ease of using XCMS and MetaboAnalystR 1.0 for a holisitic metabolomic data analysis (deprecated). Note, the functions below work only if the R package vignettes were built. 
+For detailed tutorials on how to use MetaboAnalystR 3.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 3.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 3.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
 
 Within R:
 ```R
@@ -144,7 +144,7 @@ browseVignettes("MetaboAnalystR")
 
 MetaboAnalystR package has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
-* Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics" [under review]
+* Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics" [link](https://doi.org/10.3390/metabo10050186)
 
 * Jasmine Chong, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
 Metabolites 9.3 (2019): 57. [link](https://www.mdpi.com/2218-1989/9/3/57)
@@ -159,6 +159,7 @@ citation("MetaboAnalystR")
 
 ## Previous Version Releases
 
+MetaboAnalystR 3.0.1 can be downloaded [here](https://drive.google.com/file/d/1l6Lp1VbLTlXzyViVKDr1uWWH3KNoyWty/view?usp=sharing).
 MetaboAnalystR 3.0.0 can be downloaded [here](https://drive.google.com/file/d/1N70p5zEUAaQeqllXyxH7SR4dzw0STHu7/view?usp=sharing).
 MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0).
 
@@ -167,6 +168,8 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to #jasmine.chong@mail.mcgill.ca or zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+05-08-2020 - Version Update:3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;
 
 05-01-2020 - Version Update:3.0.1 - update bug fixes for batch effect correction and compatible with web server, and added Signal Drift Correction Method;
 
