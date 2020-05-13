@@ -68,7 +68,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
     query_results_text <- httr::content(query_results,"text", encoding = "UTF-8")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    query_results_json <- RJSONIO::fromJSON(str(query_results_text), flatten = TRUE)
     
     # parse json response from server to results
     oraDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
