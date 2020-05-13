@@ -177,7 +177,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   }
   
   # plotting required by all
-  Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
+  # Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
   
   # sqlite db path for gene annotation
   if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
@@ -1272,7 +1272,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
       tryCatch(
         {
           download.file(lib.url, destfile=filenm, method="curl")
-        }, warning = function(w){ print() },
+        }, warning = function(w){ print('warning in curl download') },
         error = function(e) {
           print("Download unsucceful. Ensure that curl is downloaded on your computer.")
           print("Attempting to re-try download using libcurl...")
@@ -1288,7 +1288,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     my.lib <- readRDS(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
     print("Loaded files from MetaboAnalyst web-server.")
   },
-  warning = function(w) { print() },
+  warning = function(w) { print('warning in read') },
   error = function(err) {
     print("Reading data unsuccessful, attempting to re-download file...")
     tryCatch(
@@ -1298,7 +1298,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
         my.lib <- readRDS(lib.path);
         print("Loaded necessary files.")
       },
-      warning = function(w) { print() },
+      warning = function(w) { print('warning in final try again') },
       error = function(err) {
         print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
       }
