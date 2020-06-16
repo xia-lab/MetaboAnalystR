@@ -1316,6 +1316,11 @@ PerformPeakAnnotation <- function(mSet, annotaParam, ncore=1){
 #' missing in X\% of samples. For instance, 0.5 specifies to remove features
 #' that are missing from 50\% of all samples per group. Method is only valid
 #' when there are two groups.
+#' @param includeRT Logical, set to TRUE to include retention time information in
+#' the feature names. Feature names must be formatted
+#' so that the mz and retention time for a single peak is separated by two
+#' underscores. For instance, m/z of 410.2148 and retention time of 42.46914 seconds
+#' must be formatted as 410.2148__42.46914.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
