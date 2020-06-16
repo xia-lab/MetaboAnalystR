@@ -9,7 +9,8 @@ FormatPeakList(
   annParams,
   filtIso = TRUE,
   filtAdducts = FALSE,
-  missPercent = 0.5
+  missPercent = 0.5,
+  includeRT = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ positive ion more and [M-H]- for negative ion mode. By default it is set to fals
 missing in X\% of samples. For instance, 0.5 specifies to remove features
 that are missing from 50\% of all samples per group. Method is only valid
 when there are two groups.}
+
+\item{includeRT}{Logical, set to TRUE to include retention time information in
+the feature names. Feature names must be formatted
+so that the mz and retention time for a single peak is separated by two
+underscores. For instance, m/z of 410.2148 and retention time of 42.46914 seconds
+must be formatted as 410.2148__42.46914.}
 }
 \description{
 This function formats the CAMERA output to a usable format for MetaboAanlyst.
