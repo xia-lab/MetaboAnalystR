@@ -1316,13 +1316,19 @@ PerformPeakAnnotation <- function(mSet, annotaParam, ncore=1){
 #' missing in X\% of samples. For instance, 0.5 specifies to remove features
 #' that are missing from 50\% of all samples per group. Method is only valid
 #' when there are two groups.
+#' @param includeRT Logical, set to TRUE to include retention time information in
+#' the feature names. Feature names must be formatted
+#' so that the mz and retention time for a single peak is separated by two
+#' underscores. For instance, m/z of 410.2148 and retention time of 42.46914 seconds
+#' must be formatted as 410.2148__42.46914.
 #' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
 
-FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, missPercent = 0.5){
+FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, 
+                           missPercent = 0.5, includeRT = TRUE){
   
   camera_output <- readRDS("annotated_peaklist.rds")
   
@@ -1387,14 +1393,24 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   combo_info <- rbind(as.character(group_info), feats_digits)
   
   mzs_rd <- round(unique_feats[,1], 5)
-  mzs <- data.frame(c("Label", mzs_rd), stringsAsFactors = FALSE)
   
-  # ensure features are unique
-  mzs_unq <- mzs[duplicated(mzs),] 
-  
-  while(length(mzs_unq)>0){
-    mzs[duplicated(mzs),] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)));
+  if(includeRT){
+    
+    r_rd <- round(unique_feats[,4], 5)
+    mz_rt <- paste(mzs_rd, r_rd, sep="__")
+    mzs <- data.frame(c("Label", mz_rt), stringsAsFactors = FALSE)
+
+  }else{
+    
+    mzs <- data.frame(c("Label", mzs_rd), stringsAsFactors = FALSE)
+    
+    # ensure features are unique
     mzs_unq <- mzs[duplicated(mzs),] 
+    
+    while(length(mzs_unq)>0){
+      mzs[duplicated(mzs),] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)));
+      mzs_unq <- mzs[duplicated(mzs),] 
+    }
   }
   
   colnames(mzs) <- "Sample" 

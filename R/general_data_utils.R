@@ -197,7 +197,6 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   }
 
   gene.sqlite.path <<- url.pre;
-  api.base <<- "api.metaboanalyst.ca" #"localhost:8987"
 
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));
