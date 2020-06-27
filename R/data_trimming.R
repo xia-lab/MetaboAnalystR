@@ -677,6 +677,43 @@ rt.trim_specific<-function(raw_data,ms_list,rt,rtdiff=10){
   return(raw_data)
 }
 
+#' Empty scan removal
+#' @description Function for 'Empty scan' removal
+#' @param datapath Character, the path of the raw MS data files' folder/path (.mzXML, .mzData, .CDF and .mzML).
+#' The empty scan free MS will be save as .mzXML format automaticaly.
+#' @import MSnbase
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
+#' @export
+#' License: GNU GPL (>= 2)
+RemoveEmptyScan <- function(datapath){
+  
+  dda_file1 <- list.files(datapath, recursive = T, full.names = TRUE)
+  format <- unique(sapply(dda_file1, FUN=function(x){tail(strsplit(basename(x), split="\\.")[[1]],1)}));
+  if (length(format) > 1){
+    stop("Cannot Handle Multiple formats at the same time !")
+  }
+  pd <- data.frame(sample_name = sub(basename(dda_file1), pattern = paste0(".",format),
+                                     replacement = "", fixed = TRUE),
+                   stringsAsFactors = FALSE)
+  
+  message("Data Loading...")
+  
+  raw_data <- #suppressMessages(try(
+    MetaboAnalystR:::read.MSdata(dda_file1, pdata = new("NAnnotatedDataFrame", pd), msLevel. = 1, mode = "inMemory")#,
+  # silent = T))
+  
+  a<-suppressMessages(unlist(lapply(ls(raw_data@assayData), FUN=function(x){unlockBinding(sym = x,env = raw_data@assayData)})));
+  ms_list<-sapply(ls(raw_data@assayData),FUN=function(x) raw_data@assayData[[x]]@mz);
+  
+  raw_data_to_write<-.emptyscan.remove(raw_data,ms_list);
+  
+  writenames<-paste0(datapath,"EmptyScanFree_",pd$sample_name,".mzML",sep = "")
+  suppressMessages(writeMSData(raw_data_to_write, writenames, outformat = "mzml"))
+  
+  message("Removed successfully !")
+  
+}
+
 #' Function for 'Empty scan' removal
 #' @description Function for 'Empty scan' removal (internal use only)
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
