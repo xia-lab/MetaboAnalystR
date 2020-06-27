@@ -21,6 +21,8 @@ For Linux (e.g. Ubuntu 18.04/20.04): libcairo2-dev, libnetcdf-dev, libxml2, libx
 
 For Windows (e.g. 7/8/8.1/10): Rtools should be installed.
 
+For Mac OS: In order to compile R for Mac OS, you need Xcode and GNU Fortran compiler [installed](https://mac.r-project.org/tools/). We suggest you follow these [steps](https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/) to help with your installation.
+
 R base with version > 3.6.1 is recommended. The compatibility of latest version (v4.0.0) is under evaluation. As for installation of package dependencies, there are two options:
 
 **Option 1** 
@@ -95,17 +97,17 @@ The * must be replaced by what is actually downloaded and built.
 ```R
 git clone https://github.com/xia-lab/MetaboAnalystR.git
 R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_3.0.2.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
 
 ```
 
-#### Option C) Manual download of MetaboAnalystR_3.0.2.tar.gz and install locally
+#### Option C) Manual download of MetaboAnalystR_3.0.3.tar.gz and install locally
 
 Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1SGv6IxhDYayTO5hqOU-uoumoHxUUAiLC/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
-R CMD INSTALL MetaboAnalystR_3.0.2.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
 
 ```
 
@@ -159,6 +161,7 @@ citation("MetaboAnalystR")
 
 ## Previous Version Releases
 
+MetaboAnalystR 3.0.2 can be downloaded [here](https://drive.google.com/file/d/1SGv6IxhDYayTO5hqOU-uoumoHxUUAiLC/view?usp=sharing).
 MetaboAnalystR 3.0.1 can be downloaded [here](https://drive.google.com/file/d/1l6Lp1VbLTlXzyViVKDr1uWWH3KNoyWty/view?usp=sharing).
 MetaboAnalystR 3.0.0 can be downloaded [here](https://drive.google.com/file/d/1N70p5zEUAaQeqllXyxH7SR4dzw0STHu7/view?usp=sharing).
 MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0).
