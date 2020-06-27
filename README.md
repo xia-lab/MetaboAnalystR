@@ -103,7 +103,7 @@ R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
 
 #### Option C) Manual download of MetaboAnalystR_3.0.3.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1SGv6IxhDYayTO5hqOU-uoumoHxUUAiLC/view?usp=sharing). 
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1W586cUkMEVrxANI0wtAO3l1KgR1Hagf9/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
@@ -171,6 +171,8 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to #jasmine.chong@mail.mcgill.ca or zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+05-08-2020 - Version Update:3.0.3 - update bug fixes for raw data processing, and added functions for Empty MS scan removal and MS data centroid;
 
 05-08-2020 - Version Update:3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;
 
