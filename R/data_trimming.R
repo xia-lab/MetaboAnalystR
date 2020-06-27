@@ -683,8 +683,8 @@ rt.trim_specific<-function(raw_data,ms_list,rt,rtdiff=10){
 #' The empty scan free MS will be save as .mzXML format automaticaly.
 #' @import MSnbase
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
-#' @export
 #' License: GNU GPL (>= 2)
+#' @export
 RemoveEmptyScan <- function(datapath){
   
   dda_file1 <- list.files(datapath, recursive = T, full.names = TRUE)
