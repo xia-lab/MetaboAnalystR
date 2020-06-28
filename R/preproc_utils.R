@@ -1447,7 +1447,7 @@ CentroidMSData <- function(in_path, ncore=1, rm=F) {
       files.list2 <- NULL;
       for(i in files.list){
         
-        profile_data <- read.InMemMSd.data(i, NULL, 1, NA, NA, 1);
+        profile_data <- read.InMemMSd.data(i, NULL, 1, F, NA, 1);
         fileNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(i));
         filepath <-  strsplit(i, basename(i))[[1]][1];
         files.mzml <- paste0(in_path, fileNM, ".mzML");
