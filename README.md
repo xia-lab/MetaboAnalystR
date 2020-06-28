@@ -103,7 +103,7 @@ R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
 
 #### Option C) Manual download of MetaboAnalystR_3.0.3.tar.gz and install locally
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1W586cUkMEVrxANI0wtAO3l1KgR1Hagf9/view?usp=sharing). 
+Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1OHRUzXFDukWXEKxTLMF9X1fHRN06uFFu/view?usp=sharing). 
 
 ```R
 cd ~/Downloads
