@@ -158,7 +158,6 @@ PerformDataInspect<-function(datapath, rt.range, mz.range, dimension="3D", res=1
 #' @export
 #' @import MSnbase
 #' @import progress
-#' @import Biobase
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
 #' License: GNU GPL (>= 2)
@@ -267,7 +266,6 @@ PerformDataTrimming<-function(datapath, mode="ssm", write=F, mz, mzdiff, rt, rtd
 #' @param rt.idx Numeric, the retention time percentage, from 0 to 1. Default is 1/15.
 #' @import progress
 #' @import BiocParallel
-#' @import Biobase
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
 #' License: GNU GPL (>= 2)

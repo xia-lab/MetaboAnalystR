@@ -528,9 +528,13 @@ GetColorSchema <- function(mSetObj=NA, grayscale=F){
    }else if(exists("colVec") && !any(colVec =="#NA")){
       dist.cols <- colVec;
    }else{
-      pal18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#911eb4", "#f58231", "#bfef45",
-                   "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075");
+
+      cb_pal_18 <- c("#E69F00", "#b12c6f", "#56B4E9", "#009E73", "#F0E442", "#004488", 
+                     "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
+                     "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933")
              
+      #scales::show_col(cb_pal_18)
+      
       if(grp.num <= 18){ # update color and respect default
           dist.cols <- pal18[1:grp.num];
       }else{

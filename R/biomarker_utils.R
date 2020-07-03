@@ -1784,7 +1784,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   names(imp.vec) <- NULL;
   
   xlim.ext <- GetExtendRange(imp.vec, 12);
-  dotchart(imp.vec, bg="blue", xlab= xlbl, xlim=xlim.ext);
+  dotchart(imp.vec, bg="darkgrey", xlab= xlbl, xlim=xlim.ext);
   
   mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1)
   names(imp.vec) <- nms.orig;
@@ -1804,7 +1804,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   lowhigh <- mSetObj$analSet$multiROC$lowhigh[feat.num:1,];
   
   nc <- ncol(lowhigh);
-  col <- colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlGn"))(nc);
+  col <- colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(nc);
   
   # calculate background
   bg <- matrix("", nrow(lowhigh), nc);

@@ -7,12 +7,43 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import RSQLite
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
 
-    sqlite.path <- paste0(gene.sqlite.path, org, "_genes.sqlite");
-    con <- .get.sqlite.con(sqlite.path); 
+    ## Perfrom online DB getting ----
+    filenm <- paste0(org, "_genes.sqlite")
+    lib.url <- sqlite.link <- paste0(gene.sqlite.path, filenm);
+    lib.download <- FALSE;
+    
+    if(!file.exists(filenm)){
+      lib.download <- TRUE;
+    }else{
+      time <- file.info(filenm)
+      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+      if(diff_time>30){
+        lib.download <- TRUE;
+      }
+    }
+    # Deal with curl issues
+    
+    if(lib.download){
+      tryCatch(
+        {
+          download.file(lib.url, destfile=filenm, method="auto")
+        }, warning = function(w){ print() },
+        error = function(e) {
+          print("Download unsucceful. Ensure that curl is downloaded on your computer.")
+          print("Attempting to re-try download using wget...")
+          download.file(lib.url, destfile=filenm, method="wget")
+        }
+      )
+    }
+    
+    ## SQLite data downloding finished !
+    
+    con <- .get.sqlite.con(filenm); 
 
     if(type == "symbol"){
       db.map = dbReadTable(con, "entrez")

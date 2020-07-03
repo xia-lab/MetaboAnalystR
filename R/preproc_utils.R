@@ -1329,7 +1329,7 @@ PerformPeakAnnotation <- function(mSet, annotaParam, ncore=1){
 
 FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, 
                            missPercent = 0.5, includeRT = TRUE){
-  
+
   camera_output <- readRDS("annotated_peaklist.rds")
   
   length <- ncol(camera_output)
@@ -1393,23 +1393,18 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   combo_info <- rbind(as.character(group_info), feats_digits)
   
   mzs_rd <- round(unique_feats[,1], 5)
-  
+
   if(includeRT){
-    
     r_rd <- round(unique_feats[,4], 5)
     mz_rt <- paste(mzs_rd, r_rd, sep="__")
     mzs <- data.frame(c("Label", mz_rt), stringsAsFactors = FALSE)
-
   }else{
-    
     mzs <- data.frame(c("Label", mzs_rd), stringsAsFactors = FALSE)
-    
     # ensure features are unique
-    mzs_unq <- mzs[duplicated(mzs),] 
-    
+    mzs_unq <- mzs[duplicated(mzs),]
     while(length(mzs_unq)>0){
       mzs[duplicated(mzs),] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)));
-      mzs_unq <- mzs[duplicated(mzs),] 
+      mzs_unq <- mzs[duplicated(mzs),]
     }
   }
   

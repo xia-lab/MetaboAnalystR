@@ -2337,6 +2337,8 @@ SSgauss <- selfStart(~ h*exp(-(x-mu)^2/(2*sigma^2)), function(mCall, data, LHS) 
         mz = masses[massidx],
         intensity = int)
 }
+
+#' @importFrom Biobase rowMedians
 .getPeakGroupsRtMatrix <- function(peaks, peakIndex, sampleIndex, missingSample, extraPeaks) {
   ## For each feature:
   ## o extract the retention time of the peak with the highest intensity.

@@ -252,7 +252,7 @@ optimizxcms.doe.peakpicking <- function(object = NULL, params = params,
     mSet_OPT[["response"]]<-tmp_matrix
     
     message("Round ",iterator," Finished !")
-    
+
     mSet_OPT <-
       Statistic_doe(
         object = object,
@@ -449,11 +449,16 @@ ExperimentsCluster_doe <-function(object, object_mslevel,params,
     ncount<-object@phenoData@data[["sample_name"]];
     data.size<-round(as.numeric(object.size(object)/1024/1024),1);
     if(.Platform$OS.type=="unix" ){
-      memtotal <- ceiling(as.numeric(system("awk '/MemTotal/ {print $2}' /proc/meminfo", intern=TRUE))/1024/1024)
+      memtotal <- try(ceiling(as.numeric(system("awk '/MemTotal/ {print $2}' /proc/meminfo", intern=TRUE))/1024/1024),silent = T)
     }
     if(.Platform$OS.type=="windows"){
       memtotal <- ceiling(as.numeric(gsub("\r","",gsub("TotalVisibleMemorySize=","",system('wmic OS get TotalVisibleMemorySize /Value',intern=TRUE)[3])))/1024/1024)
     }
+    
+    if (class(memtotal) == "try-error"){
+      memtotal <- 8;
+    }
+    
     if(data.size<1){
       data.size<-0.5
     }

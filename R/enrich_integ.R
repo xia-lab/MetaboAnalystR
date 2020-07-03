@@ -202,6 +202,7 @@ PrepareIntegData <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom httr content POST
 #'
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libVersion="current", libOpt="integ", integOpt="query"){
 
@@ -331,7 +332,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     endpoint <- "/jointpath"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     
     if(is.null(query_results_json$enrichRes)){
@@ -569,6 +570,9 @@ GetGeneHitsRowNumber<-function(mSetObj=NA){
   return(length(mSetObj$dataSet$gene.name.map$match.state));
 }
 
+
+#' GetGeneMappingResultTable
+#' @import RSQLite
 GetGeneMappingResultTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -595,8 +599,38 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   csv.res<-matrix("", nrow=length(qvec), ncol=5);
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
-  sqlite.path <- paste0(gene.sqlite.path, mSetObj$org, "_genes.sqlite");
-  conv.db <- .get.sqlite.con(sqlite.path); 
+  ## Perfrom online DB getting ----
+  filenm <- paste0(mSetObj$org, "_genes.sqlite")
+  lib.url <- sqlite.link <- paste0(gene.sqlite.path, filenm);
+  lib.download <- FALSE;
+  
+  if(!file.exists(filenm)){
+    lib.download <- TRUE;
+  }else{
+    time <- file.info(filenm)
+    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+    if(diff_time>30){
+      lib.download <- TRUE;
+    }
+  }
+  # Deal with curl issues
+  
+  if(lib.download){
+   tryCatch(
+      {
+        download.file(lib.url, destfile=filenm, method="auto")
+      }, warning = function(w){ print() },
+      error = function(e) {
+        print("Download unsucceful. Ensure that curl is downloaded on your computer.")
+        print("Attempting to re-try download using wget...")
+        download.file(lib.url, destfile=filenm, method="wget")
+      }
+    )
+  }
+  
+  ## SQLite data downloding finished !
+  
+  conv.db <- .get.sqlite.con(filenm); 
   gene.db <- dbReadTable(conv.db, "entrez")
   
   org <- mSetObj$org

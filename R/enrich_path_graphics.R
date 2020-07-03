@@ -9,6 +9,7 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom httr content POST
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
 
@@ -56,7 +57,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
     endpoint <- paste0("/createimage/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     mSetObj$api$imageName <- query_results_json$plotName
     

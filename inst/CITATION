@@ -1,12 +1,11 @@
 citHeader("To cite MetaboAnalystR in publications use, please use:")
 
 citEntry(entry = "Article",
-  author = personList(as.person("Jasmine Chong"),
-                   as.person("Jianguo Xia")),
-  title = "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data",
-  journal = "Bioinformatics",
-  year = "2018",
-  doi = "doi: 10.1093/bioinformatics/bty528"
-  url = "https://doi.org/10.1093/bioinformatics/bty528"",
-  textVersion  = "Chong, Jasmine, Jianguo Xia (2018). MetaboAnalystR: an R package for flexible and reproducibl analysis of metabolomics data. Bioinformatics."
+  author = personList(as.person("Zhiqiang Pang"),as.person("Jasmine Chong"),as.person("Shuzhao Li"),as.person("Jianguo Xia")),
+  title = "MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics",
+  journal = "Metabolites",
+  year = "2020",
+  doi = "doi: 10.3390/metabo10050186"
+  url = "https://www.mdpi.com/2218-1989/10/5/186#cite",
+  textVersion  = "Pang, Z.; Chong, J.; Li, S.; Xia, J. MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics. Metabolites 2020, 10, 186."
 )

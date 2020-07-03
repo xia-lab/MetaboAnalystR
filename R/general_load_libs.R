@@ -48,17 +48,6 @@ load_rgraphwiz <- function(){
   suppressMessages(library(Rgraphviz))
 }
 
-# Load XCMS
-load_xcms <- function(){
-  
-  if(.on.public.web){
-    suppressMessages(library(xcms))
-    # disable parallel processing on the server
-    register(SerialParam());
-  }else{
-    print("Please install the xcms R package!")
-  }
-}
 
 # Load data.table
 load_data.table <- function(){
