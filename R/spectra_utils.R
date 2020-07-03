@@ -5154,10 +5154,10 @@ read.InMemMSd.data <- function(files, pdata, msLevel., centroided., smoothed., c
   fullhdordercounter <- 1
   .instrumentInfo <- list()
   ## List eventual limitations
-  if (MSnbase:::isCdfFile(files)) {
-    message("Polarity can not be extracted from netCDF files, please set ",
-            "manually the polarity with the 'polarity' method.")
-  }
+  #if (MSnbase:::isCdfFile(files)) {
+  #  message("Polarity can not be extracted from netCDF files, please set ",
+  #          "manually the polarity with the 'polarity' method.")
+  #}
   ## ## Idea:
   ## ## o initialize a featureData-data.frame,
   ## ## o for each file, extract header info and put that into
@@ -5507,5 +5507,6 @@ read.OnDiskMS.data <- function(files, pdata, msLevel., centroided., smoothed.) {
   }
   return(res)
 }
+
 
 

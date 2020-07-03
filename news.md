@@ -45,3 +45,7 @@
 # MetaboAnalystR 3.0.2
 
 - Update functions and fix issues
+
+# MetaboAnalystR 3.0.3
+
+- Add functions for MS data centroid and Empty Scan removal
