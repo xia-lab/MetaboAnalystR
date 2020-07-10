@@ -4,6 +4,22 @@
 ### McGill University, Canada
 ###License: GNU GPL (>= 2)
 
+# Limit of detection (1/5 of min for each var)
+.replace.by.lod <- function(x){
+  lod <- min(x[x>0], na.rm=T)/5;
+  x[x==0|is.na(x)] <- lod;
+  return(x);
+}
+
+ReplaceMissingByLoD <- function(int.mat){
+  int.mat <- as.matrix(int.mat);  
+  rowNms <- rownames(int.mat);
+  colNms <- colnames(int.mat);
+  int.mat <- apply(int.mat, 2, .replace.by.lod);
+  rownames(int.mat) <- rowNms;
+  colnames(int.mat) <- colNms;
+  return (int.mat);
+}
 
 #'Given a data with duplicates, remove duplicates
 #'@description Dups is the one with duplicates
@@ -74,20 +90,20 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 
 .readDataTable <- function(fileName){
-
+  
   dat <- tryCatch(
-            data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),
-            error=function(e){
-                print(e);
-                return(.my.slowreaders(fileName));    
-            }, 
-            warning=function(w){
-                print(w);
-                return(.my.slowreaders(fileName));
-            });
-            
+    data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),
+    error=function(e){
+      print(e);
+      return(.my.slowreaders(fileName));    
+    }, 
+    warning=function(w){
+      print(w);
+      return(.my.slowreaders(fileName));
+    });
+  
   if(any(dim(dat) == 0)){
-        dat <- .my.slowreaders(fileName);
+    dat <- .my.slowreaders(fileName);
   }
   return(dat);
 }
@@ -104,8 +120,8 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 }
 
 .get.sqlite.con <- function(sqlite.path){
-    load_rsqlite();
-    return(dbConnect(SQLite(), sqlite.path)); 
+  load_rsqlite();
+  return(dbConnect(SQLite(), sqlite.path)); 
 }
 
 #'Permutation
@@ -119,26 +135,26 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 #'
 Perform.permutation <- function(perm.num, fun){
- 
+  
   # for public server, perm.num is not always followed to make sure loop will not continue for very long time
   # before the adventure, see how long it takes for 10 permutations
   # if it is extremely slow (>60 sec) => max 20 (<0.05)
   # if it is very slow (30-60 sec) => max 100 (<0.01)
-
+  
   start.num <- 1; 
   perm.res <- NULL;
   if(.on.public.web & perm.num > 20){
     start.time <- Sys.time();
     perm.res <- lapply(1:10, fun);
     end.time <- Sys.time();
-
+    
     time.taken <- end.time - start.time;
     print(paste("time taken for 10 permutations: ", time.taken));
-
+    
     if(time.taken > 60){
-        perm.num <- 20;
+      perm.num <- 20;
     }else if(time.taken > 30){
-        perm.num <- 100;
+      perm.num <- 100;
     }
     start.num <- 11;
   }
@@ -162,11 +178,11 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   #print(sys.cmd);
   sys.res <- try(system(sys.cmd));
   if(sys.res == 0){ # success code for system call
-     return (1);
+    return (1);
   }else{  # success code for system call
-     print(sys.res);
-     r.res <- unzip(inPath, exdir=outPath);
-     return(length(r.res)>0);
+    print(sys.res);
+    r.res <- unzip(inPath, exdir=outPath);
+    return(length(r.res)>0);
   }
 }
 
@@ -490,9 +506,24 @@ CalculatePairwiseDiff <- function(mat){
 # col.vec should already been created
 UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
   mSetObj <- .get.mSet(mSetObj);
-  grpnms <- GetGroupNames(mSetObj);
+  grpnms <- levels(mSetObj$dataSet$cls);
+  
+  # default styles
+  grp.num <- length(grpnms);
+  if(grp.num <= 18){ 
+    cols <- pal_18[1:grp.num];
+  }else{
+    cols <- colorRampPalette(pal_18)(grp.num);
+  }
+  
+  # make sure the NA
+  na.inx <- colVec == "#NA";
+  colVec[na.inx] <- cols[na.inx];
+  shapeVec[shapeVec == 0] <- 21;
+  
   names(colVec) <- grpnms;
   names(shapeVec) <- grpnms;
+  
   colVec <<- colVec;
   shapeVec <<- shapeVec;
 }
@@ -511,42 +542,43 @@ GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
     if(show.name | grey.scale){
       shapes <- as.numeric(mSetObj$dataSet$cls)+1;
     }else{
-      shapes <- rep(19, length(mSetObj$dataSet$cls));
+      shapes <- rep(21, length(mSetObj$dataSet$cls));
     }
   }
   return(shapes);
 }
 
+pal_18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#911eb4", "#f58231", "#bfef45",
+            "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075");
+cb_pal_18 <- c("#E69F00", "#b12c6f", "#56B4E9", "#009E73", "#F0E442", "#004488", 
+               "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
+               "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933");
+
 GetColorSchema <- function(mSetObj=NA, grayscale=F){
   
-   mSetObj <- .get.mSet(mSetObj);
-   lvs <- levels(mSetObj$dataSet$cls); 
-   grp.num <- length(lvs);
-
-   if(grayscale){
-      dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
-   }else if(exists("colVec") && !any(colVec =="#NA")){
-      dist.cols <- colVec;
-   }else{
-
-      cb_pal_18 <- c("#E69F00", "#b12c6f", "#56B4E9", "#009E73", "#F0E442", "#004488", 
-                     "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
-                     "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933")
-             
-      #scales::show_col(cb_pal_18)
-      
-      if(grp.num <= 18){ # update color and respect default
-          dist.cols <- pal18[1:grp.num];
-      }else{
-         dist.cols <- colorRampPalette(pal18)(grp.num);
-      }
-   }
-
-   colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-   for(i in 1:length(lvs)){
-     colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
-   }
-   return (colors);
+  mSetObj <- .get.mSet(mSetObj);
+  lvs <- levels(mSetObj$dataSet$cls); 
+  grp.num <- length(lvs);
+  
+  if(grayscale){
+    dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
+  }else if(exists("colVec") && !any(colVec =="#NA")){
+    dist.cols <- colVec;
+  }else{             
+    if(grp.num <= 18){ # update color and respect default
+      dist.cols <- pal_18[1:grp.num];
+      #dist.cols <- cb_pal_18[1:grp.num];
+    }else{
+      dist.cols <- colorRampPalette(pal_18)(grp.num);
+      #dist.cols <- colorRampPalette(cb_pal_18)(grp.num);
+    }
+  }
+  
+  colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
+  for(i in 1:length(lvs)){
+    colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
+  }
+  return (colors);
 }
 
 #'Remove folder
@@ -601,12 +633,12 @@ GetCMD<-function(regexp){
 
 # Memory functions
 ShowMemoryUse <- function(..., n=20) {
-    library(pryr);
-    sink(); # make sure print to screen
-    print(mem_used());
-    print(sessionInfo());
-    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
-    print(warnings());
+  library(pryr);
+  sink(); # make sure print to screen
+  print(mem_used());
+  print(sessionInfo());
+  print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+  print(warnings());
 }
 
 #'Perform utilities for cropping images
@@ -753,7 +785,7 @@ saveNetworkInSIF <- function(network, name){
 }
 
 PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -830,27 +862,33 @@ var.na <- function(x){
 }
 
 end.with <- function(bigTxt, endTxt){
-   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
+  return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
 
 ## fast T-tests/F-tests using genefilter
 ## It leverages RSclient to perform one-time memory intensive computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
-    print("Performing fast univariate tests ....");
+  print("Performing fast univariate tests ....");
+  
+  # note, feature in rows for gene expression
+  data <- t(as.matrix(data));
+  if(length(levels(cls)) > 2){
+    res <- try(genefilter::rowFtests(data, cls, var.equal = var.equal));
+  }else{
+    res <- try(genefilter::rowttests(data, cls));
+  }
+  
+  if(class(res) == "try-error") {
+    res <- cbind(NA, NA);
+  }else{
+    res <- cbind(res$statistic, res$p.value);
+  }
+  
+  return(res);
+}
 
-    # note, feature in rows for gene expression
-    data <- t(as.matrix(data));
-    if(length(levels(cls)) > 2){
-        res <- try(genefilter::rowFtests(data, cls, var.equal = var.equal));
-    }else{
-        res <- try(genefilter::rowttests(data, cls));
-    }
-    
-    if(class(res) == "try-error") {
-        res <- cbind(NA, NA);
-    }else{
-        res <- cbind(res$statistic, res$p.value);
-    }
-
-    return(res);
+GetCurrentPathForScheduler <- function(){
+  path <-getwd();
+  path <- gsub(basename(path), "", path)
+  return(path)
 }
