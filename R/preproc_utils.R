@@ -679,7 +679,7 @@ PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
     object_od@featureData$retentionTime <- adj_rt
     
     res <- MSnbase::chromatogram(object_od, 
-                                 aggregationFun = "sum",
+                                 aggregationFun = "max",
                                  missing = NA_real_, msLevel = 1,
                                  BPPARAM = bpparam())
     
