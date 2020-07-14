@@ -468,11 +468,11 @@ PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
     if (.on.public.web){
       load_ggplot();
     }
-    save(mSet, file="mSet.rda");
+    
     PlotSpectraPCA(mSet, paste0(plotSettings$name_PCA,".",plotSettings$format), plotSettings$format, plotSettings$dpi, 8);
     
     ### 3. Adjusted RT plotting -----
-    #PlotSpectraRTadj(mSet, paste0(plotSettings$name_adj_RT,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width);
+    PlotSpectraRTadj(mSet, paste0(plotSettings$name_adj_RT,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width);
     
     ### 4. Chromatogram Generation -----
     PlotSpectraBPIadj(mSet, paste0(plotSettings$name_adj_BPI,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width)
