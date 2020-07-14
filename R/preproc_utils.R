@@ -444,252 +444,42 @@ PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
   
   
   #  ---------------====------IV. Plotting Results --------========-----------
+
   sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
   
+  
   if (missing(plotSettings)){
-    plotSettings <- SetPlotParam(name_peal_in="Peak_Intensity",
-                                name_PCA="PCA",
-                                name_adj_RT="Adjusted_RT",
-                                name_adj_BPI="Adjusted_BPI")
+    plotSettings <- SetPlotParam(name_peak_in="Peak_Intensity",
+                                 name_PCA="PCA",
+                                 name_adj_RT="Adjusted_RT",
+                                 name_adj_BPI="Adjusted_BPI")
   } else {
-    plotSettings$name_peal_in="Peak_Intensity";
+    plotSettings$name_peak_in="Peak_Intensity";
     plotSettings$name_PCA="PCA";
     plotSettings$name_adj_RT="Adjusted_RT";
     plotSettings$name_adj_BPI="Adjusted_BPI"
   }
   
   if (plotSettings$Plot ==T){
-    
     ### 1. Peak Intensity plotting -----
-    
-    Cairo::Cairo(file = paste0(plotSettings$name_peal_in,".",plotSettings$format), 
-                 unit="in", dpi=plotSettings$dpi,
-                 width=plotSettings$width,
-                 height=plotSettings$width*7/9,
-                 type=plotSettings$format,
-                 bg="white")
-    
-    if(length(unique(sample_idx)) > 9){
-      
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      group_colors <- col.fun(length(unique(sample_idx)))
-      
-    }else{
-      
-      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
-    }
-    
-    ints <- split(log2(mSet[["msFeatureData"]][["chromPeaks"]][, "into"]),
-                  f = mSet[["msFeatureData"]][["chromPeaks"]][, "sample"])
-    
-    names(ints) <- as.character(sample_idx)
-    group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
-      rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
-    })
-    
-    boxplot(ints, varwidth = TRUE, col = as.character(unlist(group_colors)),
-            ylab = expression(log[2]~intensity), 
-            main = "Peak intensities")
-    
-    grid(nx = NA, ny = NULL)
-    
-    dev.off()
+    PlotSpectraInsensityStistics(mSet, paste0(plotSettings$name_peak_in,".",plotSettings$format), plotSettings$format, plotSettings$dpi, 8);
     
     ### 2. PCA plotting -----
-    
-    Cairo::Cairo(file = paste0(plotSettings$name_PCA,".",plotSettings$format),
-                 unit="in", dpi=plotSettings$dpi, 
-                 width=plotSettings$width,
-                 height=plotSettings$width*7/9,
-                 type=plotSettings$format,
-                 bg="white")
-    
-    feature_value <-  .feature_values(pks = mSet[["msFeatureData"]][["chromPeaks"]], 
-                                      fts = mSet[["FeatureGroupTable"]],
-                                      method = "medret", value = "into",
-                                      intensity = "into", 
-                                      colnames = mSet[["onDiskData"]]@phenoData@data[["sample_name"]],
-                                      missing = NA)
-    
-    pca_feats <- log2(feature_value)
-    mSet_pca <- prcomp(t(na.omit(pca_feats)), center = TRUE, scale=T)
-    sum.pca <- summary(mSet_pca)
-    var.pca <- sum.pca$importance[2,] # variance explained by each PCA
-    
-    xlabel <- paste("PC1", "(", round(100*var.pca[1],1), "% variance)");
-    ylabel <- paste("PC2", "(", round(100*var.pca[2],1), "% variance)");
-    
-    # using ggplot2
-    df <- as.data.frame(mSet_pca$x)
-    df$group <- sample_idx
-    
-    if(plotSettings$labels==TRUE){
-      
-      if(length(unique(sample_idx))>9){
-        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
-          geom_text() + geom_point(size = 3) + fill=col.fun(length(unique(sample_idx)))
-        
-      }else{
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
-          geom_text() + geom_point(size = 3) + scale_color_brewer(palette="Set1")
-      }
-      
-    }else{
-      if(length(unique(sample_idx))>9){
-        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
-          geom_point(size = 3) + scale_color_brewer(palette="Set1") + fill=col.fun(length(unique(sample_idx)))
-        
-      }else{
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
-          geom_point(size = 3) + scale_color_brewer(palette="Set1")
-      }
+    if (.on.public.web){
+      load_ggplot();
     }
-    
-    p <- p + xlab(xlabel) + ylab(ylabel) + theme_bw()
-    print(p)
-    
-    dev.off()
+    save(mSet, file="mSet.rda");
+    PlotSpectraPCA(mSet, paste0(plotSettings$name_PCA,".",plotSettings$format), plotSettings$format, plotSettings$dpi, 8);
     
     ### 3. Adjusted RT plotting -----
-    
-    Cairo::Cairo(file = paste0(plotSettings$name_adj_RT,".",plotSettings$format), 
-                 unit="in", dpi=plotSettings$dpi,
-                 width=plotSettings$width,
-                 height=plotSettings$width*7/9,
-                 type=plotSettings$format,
-                 bg="white")
-    
-    if(length(unique(sample_idx)) > 9){
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      group_colors <- col.fun(length(unique(sample_idx)))
-    }else{
-      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
-    }
-    
-    
-    names(group_colors) <- unique(sample_idx)
-    
-    ## Extract RT information
-    
-    rt.set <- list(mSet[["xcmsSet"]]@rt$raw,unlist(mSet[["xcmsSet"]]@rt$corrected));
-    diffRt <- rt.set[[1]] - rt.set[[2]];
-    diffRt <- split(diffRt, fromFile(mSet$onDiskData));
-    
-    xRt <- mSet[["msFeatureData"]][["adjustedRT"]];
-    col = "#00000080"; lty = 1; lwd = 1;
-    col <- rep(col, length(diffRt));
-    lty <- rep(lty, length(diffRt));
-    lwd <- rep(lwd, length(diffRt));
-    
-    ylim <- range(diffRt, na.rm = TRUE);
-    plot(3, 3, pch = NA, xlim = range(xRt, na.rm = TRUE),
-         ylim = ylim, xlab = "RT_adj", ylab = "RT_diff");
-    
-    for (i in 1:length(diffRt)){
-      points(x = xRt[[i]], y = diffRt[[i]], col = col[i], lty = lty[i],
-             type = "l", lwd = lwd[i])
-    }
-    
-    rawRt <- split(mSet[["xcmsSet"]]@rt$raw, fromFile(mSet$onDiskData));
-    adjRt <- xRt;
-    
-    ####
-    peaks_0 <- mSet[["msFeatureData"]][["chromPeaks"]]
-    subs <- seq_along(mSet[["onDiskData"]]@phenoData@data[["sample_name"]])
-    nSamples <- length(subs)
-    subset_names <- original_names <- mSet[["msFeatureData"]][["chromPeakData"]]@rownames
-    mSet[["FeatureGroupTable"]]$peakidx <- lapply(mSet[["FeatureGroupTable"]]$peakidx, function(z) {
-      idx <- base::match(original_names[z], subset_names)
-      idx[!is.na(idx)]
-    })
-    peakIndex_0 <- mSet[["FeatureGroupTable"]][lengths(mSet[["FeatureGroupTable"]]$peakidx) > 0, ]
-    peakIndex <- .peakIndex(peakIndex_0)
-    pkGroup <- .getPeakGroupsRtMatrix(peaks = peaks_0,
-                                      peakIndex = peakIndex,
-                                      sampleIndex = subs,
-                                      missingSample = nSamples - (nSamples * param$minFraction),
-                                      extraPeaks = param$extraPeaks
-    )
-    colnames(pkGroup) <- mSet[["onDiskData"]]@phenoData@data[["sample_name"]][subs]
-    
-    rawRt <- rawRt[subs]
-    adjRt <- adjRt[subs]
-    ## Have to "adjust" these:
-    pkGroupAdj <- pkGroup
-    
-    for (i in 1:ncol(pkGroup)) {
-      pkGroupAdj[, i] <- .applyRtAdjustment(pkGroup[, i], rawRt[[i]], adjRt[[i]])
-    }
-    
-    diffRt <- pkGroupAdj - pkGroup
-    
-    xRt <- pkGroupAdj
-    
-    ## Loop through the rows and plot points - ordered by diffRt!
-    for (i in 1:nrow(xRt)) {
-      idx <- order(diffRt[i, ])
-      points(x = xRt[i, ][idx], diffRt[i, ][idx],
-             col = group_colors, type = "b",
-             pch = 16, lty = 3)
-    }
-    legend("topright", legend=unique(sample_idx), pch=15, col=group_colors);
-    
-    dev.off()
-    
-    
+    #PlotSpectraRTadj(mSet, paste0(plotSettings$name_adj_RT,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width);
     
     ### 4. Chromatogram Generation -----
-    
-    Cairo::Cairo(file = paste0(plotSettings$name_adj_BPI,".",plotSettings$format), 
-                 unit="in", dpi=plotSettings$dpi,
-                 width=plotSettings$width,
-                 height=plotSettings$width*7/9,
-                 type=plotSettings$format,
-                 bg="white")
-    
-    
-    if(length(unique(sample_idx)) > 9){
-      
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      group_colors <- col.fun(length(unique(sample_idx)))
-      
-    }else{
-      
-      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
-    }
-    group_colors2 <- group_colors;
-    names(group_colors2) <- unique(sample_idx);
-    
-    group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
-      rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
-    })
-    
-    object_od <- mSet$onDiskData
-    adj_rt <- unlist(mSet$msFeatureData$adjustedRT)
-    
-    object_od <- selectFeatureData(
-      object_od, fcol = c("fileIdx", "spIdx", "seqNum",
-                          "acquisitionNum", "msLevel",
-                          "polarity", "retentionTime",
-                          "precursorScanNum"))
-    object_od@featureData$retentionTime <- adj_rt
-    
-    res <- MSnbase::chromatogram(object_od, 
-                                 aggregationFun = "max",
-                                 missing = NA_real_, msLevel = 1,
-                                 BPPARAM = bpparam())
-    
-    plot(res,col=as.character(unlist(group_colors)))
-    
-    legend("topright", legend=unique(sample_idx), pch=15, col=group_colors2)
-    
-    dev.off()
+    PlotSpectraBPIadj(mSet, paste0(plotSettings$name_adj_BPI,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width)
     
   }
+  
+  
   return(mSet)
 }
 
@@ -1568,4 +1358,283 @@ CentroidMSData <- function(in_path, ncore=1, rm=F) {
   }
   
 }
+
+
+
+## Functions for other plotting
+PlotSpectraInsensityStistics <- function(mSet, imgName, format="png", dpi=72, width=NA){
+  
+  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
+  sample_num <- mSet[["onDiskData"]]@phenoData@data[["sample_name"]];
+  
+  Cairo::Cairo(file = imgName, 
+               unit="in", 
+               dpi=dpi,
+               width=width,
+               height= length(sample_num)*0.65,
+               type=format,
+               bg="white")
+  
+  if(length(unique(sample_idx)) > 9){
+    
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+    group_colors <- col.fun(length(unique(sample_idx)))
+    
+  }else{
+    
+    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
+  }
+  
+  ints <- split(log2(mSet[["msFeatureData"]][["chromPeaks"]][, "into"]),
+                f = mSet[["msFeatureData"]][["chromPeaks"]][, "sample"])
+  
+  names(ints) <- as.character(sample_num);
+  group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
+    rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
+  })
+  
+  op<-par(mar=c(3.5,10,4,1.5), xaxt="s");
+  boxplot(ints, 
+          varwidth = TRUE, 
+          col = as.character(unlist(group_colors)),
+          ylab = "", 
+          horizontal = TRUE,
+          las = 2,
+          main = expression(log[2]~intensity),
+          cex.lab = 0.8,
+          cex.main = 1.25)
+  
+  #title(ylab=expression(log[2]~intensity), line=7.5, cex.lab=1.2)
+  grid(nx = NA, ny = NULL)
+  
+  dev.off()
+  
+}
+
+PlotSpectraPCA <- function(mSet, imgName, format="png", dpi=72, width=NA){
+  
+  Cairo::Cairo(file = imgName,
+               unit="in", 
+               dpi=dpi, 
+               width=width,
+               height=width*0.80,
+               type=format,
+               bg="white")
+  
+  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
+  
+  feature_value <-  .feature_values(pks = mSet[["msFeatureData"]][["chromPeaks"]], 
+                                    fts = mSet[["FeatureGroupTable"]],
+                                    method = "medret", value = "into",
+                                    intensity = "into", 
+                                    colnames = mSet[["onDiskData"]]@phenoData@data[["sample_name"]],
+                                    missing = NA);
+  
+  pca_feats <- log2(feature_value);
+  
+  
+  df0 <- na.omit(pca_feats);
+  df1 <- df0[is.finite(rowSums(df0)),]
+  df <- t(df1);
+  
+  
+  mSet_pca <- prcomp(df, center = TRUE, scale=T)
+  sum.pca <- summary(mSet_pca)
+  var.pca <- sum.pca$importance[2,] # variance explained by each PCA
+  
+  xlabel <- paste("PC1", "(", round(100*var.pca[1],1), "%)");
+  ylabel <- paste("PC2", "(", round(100*var.pca[2],1), "%)");
+  
+  # using ggplot2
+  df <- as.data.frame(mSet_pca$x)
+  df$group <- sample_idx
+  
+  if(.on.public.web){
+    require("ggrepel");
+    
+    if(nrow(df) < 30){
+      
+      if(length(unique(sample_idx))>9){
+        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+        
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
+          geom_text_repel(force=1.5) + geom_point(size = 5) + fill=col.fun(length(unique(sample_idx))) + theme(axis.text=element_text(size=12))
+        
+      }else{
+        
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
+          geom_text_repel(force=1.5) + geom_point(size = 5) + scale_color_brewer(palette="Set1") + theme(axis.text=element_text(size=12))
+      }
+      
+    } else {
+      
+      if(length(unique(sample_idx))>9){
+        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+        
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 5) + fill=col.fun(length(unique(sample_idx)))
+        
+      }else{
+        
+        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 5) + scale_color_brewer(palette="Set1")
+        
+      }
+      
+    }
+    
+  }else{
+    
+    if(length(unique(sample_idx))>9){
+      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+      
+      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
+        geom_point(size = 3) + scale_color_brewer(palette="Set1") + fill=col.fun(length(unique(sample_idx)))
+      
+    }else{
+      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
+        geom_point(size = 3) + scale_color_brewer(palette="Set1")
+    }
+    
+  }
+  
+  p <- p + xlab(xlabel) + ylab(ylabel) + theme_bw() + theme(axis.title=element_text(size=12))
+  print(p)
+  
+  dev.off()    
+  
+}
+
+PlotSpectraRTadj <- function(mSet, imgName, format="png", dpi=72, width=NA){
+  
+  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
+  
+  Cairo::Cairo(file = imgName, 
+               unit="in", 
+               dpi=dpi,
+               width=width,
+               height=width*0.618,
+               type=format,
+               bg="white")
+  
+  if(length(unique(sample_idx)) > 9){
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+    group_colors <- col.fun(length(unique(sample_idx)))
+  }else{
+    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
+  }
+  
+  
+  names(group_colors) <- unique(sample_idx)
+  
+  ## Extract RT information
+  
+  rt.set <- list(mSet[["xcmsSet"]]@rt$raw, unlist(mSet[["xcmsSet"]]@rt$corrected));
+  diffRt <- rt.set[[2]] - rt.set[[1]];
+  diffRt <- split(diffRt, fromFile(mSet$onDiskData));
+  
+  xRt <- mSet[["msFeatureData"]][["adjustedRT"]];
+  col = group_colors[sample_idx]; 
+  lty = 1; 
+  lwd = 1;
+  col <- rep(col, length(diffRt));
+  lty <- rep(lty, length(diffRt));
+  lwd <- rep(lwd, length(diffRt));
+  
+  ylim <- range(diffRt, na.rm = TRUE);
+  plot(3, 3, pch = NA, xlim = range(xRt, na.rm = TRUE),
+       ylim = ylim, xlab = "RT_adj", ylab = "RT_diff");
+  
+  for (i in 1:length(diffRt)){
+    points(x = xRt[[i]], y = diffRt[[i]], col = col[i], lty = lty[i],
+           type = "l", lwd = lwd[i])
+  }
+  
+  rawRt <- split(mSet[["xcmsSet"]]@rt$raw, fromFile(mSet$onDiskData));
+  adjRt <- xRt;
+  
+  ####
+  peaks_0 <- mSet[["msFeatureData"]][["chromPeaks"]]
+  subs <- seq_along(mSet[["onDiskData"]]@phenoData@data[["sample_name"]])
+  ####
+  pkGroup <- mSet[["msFeatureData"]][["pkGrpMat_Raw"]];
+  ####
+  
+  rawRt <- rawRt[subs]
+  adjRt <- adjRt[subs]
+  ## Have to "adjust" these:
+  pkGroupAdj <- pkGroup
+  
+  for (i in 1:ncol(pkGroup)) {
+    pkGroupAdj[, i] <- MetaboAnalystR:::.applyRtAdjustment(pkGroup[, i], rawRt[[i]], adjRt[[i]])
+  }
+  
+  diffRt <- pkGroupAdj - pkGroup
+  
+  xRt <- pkGroupAdj
+  
+  ## Loop through the rows and plot points - ordered by diffRt!
+  for (i in 1:nrow(xRt)) {
+    idx <- order(diffRt[i, ])
+    points(x = xRt[i, ][idx], diffRt[i, ][idx],
+           col = "#00000080", type = "b",
+           pch = 16, lty = 3)
+  }
+  legend("topright", legend=unique(sample_idx), pch=15, col=group_colors);
+  
+  dev.off()
+  
+}
+
+PlotSpectraBPIadj <- function(mSet, imgName, format="png", dpi=72, width=NA){
+  
+  Cairo::Cairo(file = imgName, 
+               unit="in", 
+               dpi=dpi,
+               width=width,
+               height=width*0.618,
+               type=format,
+               bg="white")
+  
+  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
+  
+  if(length(unique(sample_idx)) > 9){
+    
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+    group_colors <- col.fun(length(unique(sample_idx)))
+    
+  }else{
+    
+    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
+  }
+  group_colors2 <- group_colors;
+  names(group_colors2) <- unique(sample_idx);
+  
+  group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
+    rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
+  })
+  
+  object_od <- mSet$onDiskData
+  adj_rt <- unlist(mSet$msFeatureData$adjustedRT)
+  
+  object_od <- selectFeatureData(
+    object_od, fcol = c("fileIdx", "spIdx", "seqNum",
+                        "acquisitionNum", "msLevel",
+                        "polarity", "retentionTime",
+                        "precursorScanNum"))
+  object_od@featureData$retentionTime <- adj_rt
+  
+  res <- MSnbase::chromatogram(object_od, 
+                               aggregationFun = "sum",
+                               missing = NA_real_, msLevel = 1,
+                               BPPARAM = bpparam())
+  
+  plot(res,col=as.character(unlist(group_colors)))
+  
+  legend("topright", legend=unique(sample_idx), pch=15, col=group_colors2)
+  
+  dev.off()    
+}
+
+
+
+
 

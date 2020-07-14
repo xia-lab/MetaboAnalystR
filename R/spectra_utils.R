@@ -973,8 +973,9 @@ PerformPeakAlignment<-function(mSet,param){
   fts <- .applyRtAdjToChromPeaks(mSet[["msFeatureData"]][["chromPeaks"]],
                                  rtraw = rtime,
                                  rtadj = res)
-  mSet[["msFeatureData"]][["chromPeaks"]] <- fts
-  mSet[["msFeatureData"]][["adjustedRT"]] <- res
+  mSet[["msFeatureData"]][["pkGrpMat_Raw"]] <- pkGrpMat;
+  mSet[["msFeatureData"]][["chromPeaks"]] <- fts;
+  mSet[["msFeatureData"]][["adjustedRT"]] <- res;
   # 
   message("Done !")
   
