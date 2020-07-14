@@ -1117,8 +1117,9 @@ PerformPeakAnnotation <- function(mSet, annotaParam, ncore=1){
 #' License: GNU GPL (>= 2)
 #' @export
 
-FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, missPercent = 0.5, includeRT = TRUE){
-  
+FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, 
+                           missPercent = 0.5, includeRT = TRUE){
+
   camera_output <- readRDS("annotated_peaklist.rds")
   
   length <- ncol(camera_output)
@@ -1182,6 +1183,7 @@ FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = 
   combo_info <- rbind(as.character(group_info), feats_digits)
   
   mzs_rd <- round(unique_feats[,1], 5)
+
   if(includeRT){
     r_rd <- round(unique_feats[,4], 5)
     mz_rt <- paste(mzs_rd, r_rd, sep="__")

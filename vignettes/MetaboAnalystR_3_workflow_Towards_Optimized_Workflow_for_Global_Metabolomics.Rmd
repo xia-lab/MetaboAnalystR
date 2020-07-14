@@ -999,6 +999,42 @@ calcGaussianS(mSet,object,useNoise = param_optimized$best_parameters$noise)
 cat('[1] 0.644')
 ```
 
+### 4.0 Compound Name Mapping (using the MetaboAnalyst API)
 
+MetaboAnalyst now provides a microservice for users to perform compound name mapping using our comprehensive in-house metabolite database (>200, 000 compounds). In R, to use this microservice, users first must have the httr R package installed. The request must be a POST request, with the list of compounds, the input compound type, and sent to api.metaboanalyst.ca/mapcompounds. The code below will show a step-by-step how to perform compound name mapping using the MetaboAnalyst API. 
+
+```{r,eval=F, echo=T}
+
+# First create a list containing a vector of the compounds to be queried (separated by a semi-colon)  
+# and another character vector containing the compound id type.
+# The items in the list MUST be queryList and inputType
+# Valid input types are: "name", "hmdb", "kegg", "pubchem", "chebi", "metlin"
+name.vec <- c("1,3-Diaminopropane;2-Ketobutyric acid;2-Hydroxybutyric acid;2-Methoxyestrone")
+toSend = list(queryList = name.vec, inputType = "name")
+
+oraData <- RJSONIO::toJSON(toSend, .na='null') 
+write(oraData, file="ora_test.JSON")
+
+library(httr)
+
+# The MetaboAnalyst API url
+call <- "http://api.xialab.ca/mapcompounds"
+
+# Use httr::POST to send the request to the MetaboAnalyst API
+# The response will be saved in query_results
+query_results <- httr::POST(call, body = toSend, encode = "json")
+
+# Check if response is ok
+# 200 is ok! 401 means an error has occured on the user's end.
+query_results$status_code==200
+
+# Parse the response into a table
+# Will show mapping to "hmdb_id", "kegg_id", "pubchem_id", "chebi_id", "metlin_id", "smiles" 
+query_results_text <- content(query_results, "text", encoding = "UTF-8")
+query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+query_results_table <- t(rbind.data.frame(query_results_json))
+rownames(query_results_table) <- query_results_table[,1]
+
+```
 
 ########### ------------ ENd of This Vignette ------------ ###############

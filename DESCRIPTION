@@ -51,7 +51,7 @@ Imports:
     RColorBrewer,
     tibble,
     RSQLite,
-    spls,
+        spls,
     siggenes,
     ggplot2,
     BiocParallel,

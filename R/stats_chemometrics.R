@@ -169,8 +169,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
-#'@param style Numeric, the ratio style of the figure (width/height), defalt is 1, 1:1. 2 means 4:3, while 3 means 16:9.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param pcx Specify the principal component on the x-axis
 #'@param pcy Specify the principal component on the y-axis
 #'@param reg Numeric, input a number between 0 and 1, 0.95 will display the 95 percent confidence regions, and 0 will not.
@@ -181,7 +180,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, style=1, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -199,14 +198,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }else{
     w <- width;
   }
-  
-  if (style==2){
-    h <- w*3/4;
-  } else if (style ==3){
-    h <- w*9/16;
-  } else {
-    h <- w
-  }
+  h <- w;
   
   mSetObj$imgSet$pca.score2d <- imgName;
   
@@ -278,7 +270,9 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
       }else{
         if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
-          points(pc1, pc2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+          my.cols <- adjustcolor(cols, alpha.f = 0.4);
+          my.cols[pchs == 21] <- "black";
+          points(pc1, pc2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
         }else{
           points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
         }
@@ -401,7 +395,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 #'Update PCA loadings
@@ -442,7 +436,11 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   mSetObj <- .get.mSet(mSetObj);
   
-  loadings<-signif(as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2])),5);
+  loadings<-as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2]));
+  # sort based on absolute values of 1, 2 
+  ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
+  loadings <- signif(loadings[ord.inx,],5);
+  
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
@@ -548,7 +546,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj <- .get.mSet(mSetObj);
   
   comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
-
+  
   if(comp.num > 8) {
     #need to deal with small number of predictors
     comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
@@ -727,7 +725,9 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
-        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        my.cols <- adjustcolor(cols, alpha.f = 0.4);
+        my.cols[pchs == 21] <- "black";
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
@@ -829,13 +829,13 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-
+  
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 #'Update PLS loadings
@@ -876,11 +876,15 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   # named vector
   load1<-mSetObj$analSet$plsr$loadings[,inx1];
   load2<-mSetObj$analSet$plsr$loadings[,inx2];
-  loadings = signif(as.matrix(cbind(load1, load2)),5);
+  loadings = as.matrix(cbind(load1, load2));
+  # sort based on absolute values of 1, 2 
+  ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
+  loadings <- signif(loadings[ord.inx,],5);
   
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2)
   colnames(loadings)<-c(ldName1, ldName2);
+  
   load.x.uniq <- jitter(loadings[,1]);
   names(load.x.uniq) <- rownames(loadings);
   mSetObj$analSet$plsr$load.x.uniq <- load.x.uniq;
@@ -929,13 +933,10 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param methodName Logical, by default set to TRUE
 #'@param compNum GetDefaultPLSCVComp()
 #'@param choice Input the choice, by default it is Q2
-#'@import pls
-#'@importFrom caret train trainControl varImp
-#'@export
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
 PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1000,10 +1001,14 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
   vips <- sqrt(nrow(SSW) * apply(SSW, 1, cumsum) / cumsum(SS));
   if(compNum > 1){
     vip.mat <- as.matrix(t(vips));
+    ord.inx <- order(-abs(vip.mat[,1]), -abs(vip.mat[,2]));
   }else{
     vip.mat <- as.matrix(vips);
+    ord.inx <- order(-abs(vip.mat[,1]));
   }
+  vip.mat <- vip.mat[ord.inx,];
   colnames(vip.mat) <- paste("Comp.", 1:ncol(vip.mat));
+  
   write.csv(signif(vip.mat,5),file="plsda_vip.csv");
   
   mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, vip.mat=vip.mat, fit.info=all.info);
@@ -1016,13 +1021,11 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
 #'@param mSetObj Input name of the created mSet Object
 #'@param num Numeric, input the number of permutations
 #'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
-#'@export
-#'@import pls
-#'@importFrom caret plsda
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1118,7 +1121,7 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import pls
+#'
 PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1162,7 +1165,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import pls
+#'
 PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1211,7 +1214,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   names(imp.vec) <- NULL;
   
   # modified for B/W color
-  dotcolor <- ifelse(color.BW, "darkgrey", "blue");
+  dotcolor <- ifelse(color.BW, "darkgrey", "#585855");
   dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.3);
   
   mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1)
@@ -1229,7 +1232,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   nc <- ncol(mns);
   
   # modified for B/W color
-  colorpalette <- ifelse(color.BW, "Greys", "RdYlGn");
+  colorpalette <- ifelse(color.BW, "Greys", "RdYlBu");
   col <- colorRampPalette(RColorBrewer::brewer.pal(10, colorpalette))(nc); # set colors for each class
   if(color.BW) col <- rev(col);
   
@@ -1288,7 +1291,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import pls
+#'
 PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1343,7 +1346,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import pls
+#'
 PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1387,21 +1390,21 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
-    .prepare.oplsr.anal(mSetObj, reg);
-    .perform.computing();
-    .save.oplsr.anal(mSetObj);
+  .prepare.oplsr.anal(mSetObj, reg);
+  .perform.computing();
+  .save.oplsr.anal(mSetObj);
 }
 
 .prepare.oplsr.anal <-function(mSetObj=NA, reg=FALSE){
- 
+  
   mSetObj <- .get.mSet(mSetObj);
-
+  
   mSetObj$analSet$opls.reg <- reg;  
-
+  
   # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-
+  
   if(reg==TRUE){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
@@ -1412,30 +1415,30 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
   my.fun <- function(){
-     if(!exists("perform_opls")){ # public web on same user dir
-         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-     }
-     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
-     return(my.res);
+    if(!exists("perform_opls")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+    }
+    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
+    return(my.res);
   }
-
+  
   dat.in <- list(data=datmat, cls=cls, cv.num=cv.num, my.fun=my.fun);
-
+  
   saveRDS(dat.in, file="dat.in.rds");
   return(.set.mSet(mSetObj));
 }
 
 .save.oplsr.anal <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- readRDS("dat.in.rds"); 
-    mSetObj$analSet$oplsda <- dat.in$my.res;
-    score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
-    colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
-    write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
-    load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
-    colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
-    write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
-    return(.set.mSet(mSetObj));
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  mSetObj$analSet$oplsda <- dat.in$my.res;
+  score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
+  colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
+  write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
+  load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
+  colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
+  write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
+  return(.set.mSet(mSetObj));
 }
 
 #'Create OPLS-DA score plot
@@ -1538,7 +1541,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
-        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        my.cols <- adjustcolor(cols, alpha.f = 0.4);
+        my.cols[pchs == 21] <- "black";
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
@@ -1636,6 +1641,10 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   splot.mat <- cbind(jitter(p1),p1, pcorr1);
   rownames(splot.mat) <- colnames(s); 
   colnames(splot.mat) <- c("jitter", "p[1]","p(corr)[1]");
+  
+  ord.inx <- order(-splot.mat[,2], -splot.mat[,3]);
+  splot.mat <- signif(splot.mat[ord.inx,],5);
+  
   write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv"); 
   mSetObj$analSet$oplsda$splot.mat <- splot.mat;
   mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;   
@@ -1724,9 +1733,9 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
-    .prepare.oplsda.permut(mSetObj, num);
-    .perform.computing();
-    .save.oplsda.permut(mSetObj);
+  .prepare.oplsda.permut(mSetObj, num);
+  .perform.computing();
+  .save.oplsda.permut(mSetObj);
 }
 
 .prepare.oplsda.permut <-function(mSetObj=NA, num=100){
@@ -1742,30 +1751,30 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   my.fun <- function(){
-     if(!exists("perform_opls")){ # public web on same user dir
-         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-     }
-     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
+    if(!exists("perform_opls")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+    }
+    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
   }
   dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num, my.fun=my.fun);
-
+  
   saveRDS(dat.in, file="dat.in.rds");
   return(.set.mSet(mSetObj));
 }
 
 .save.oplsda.permut <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- readRDS("dat.in.rds"); 
-    my.res <- dat.in$my.res;
-
-    r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
-    q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  my.res <- dat.in$my.res;
   
-    # note, actual permutation number may be adjusted in public server
-    perm.num <- my.res$suppLs[["permI"]];
-
-    mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
-    return(.set.mSet(mSetObj));
+  r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
+  q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  
+  # note, actual permutation number may be adjusted in public server
+  perm.num <- my.res$suppLs[["permI"]];
+  
+  mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+  return(.set.mSet(mSetObj));
 }
 
 #'Plot OPLS-DA permutation
@@ -1789,7 +1798,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
   mSetObj <- .get.mSet(mSetObj);
   
   perm.res <- mSetObj$analSet$oplsda$perm.res;
-
+  
   r.vec <- perm.res$r.vec;
   q.vec <- perm.res$q.vec;
   perm.num <- perm.res$perm.num;
@@ -1868,57 +1877,63 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
-    .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
-    .perform.computing();
-    .save.splsr.anal(mSetObj);
+  .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
+  .perform.computing();
+  .save.splsr.anal(mSetObj);
 }
 
 .prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
-
-    if(compVarOpt == "same"){
-        comp.var.nums <- rep(var.num, comp.num);
-    }else{
-        if(exists("comp.var.nums") && all(comp.var.nums > 0)){
-            comp.var.nums <- ceiling(comp.var.nums);
-        }else{
-            msg <- c("All values need to be positive integers!");
-            return(0);
-        }
-    }
-
-    mSetObj <- .get.mSet(mSetObj);  
   
-    # note, standardize the cls, to minimize the impact of categorical to numerical impact
-    cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
-    datmat <- as.matrix(mSetObj$dataSet$norm);
-
-    my.fun <- function(){
-        if(!exists("splsda")){ # public web on same user dir
-            compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
-        }
-        my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
-
-        # perform validation
-        perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
-        my.res$error.rate <- perf.res$error.rate$overall;
-        return(my.res);
+  if(compVarOpt == "same"){
+    comp.var.nums <- rep(var.num, comp.num);
+  }else{
+    if(exists("comp.var.nums") && all(comp.var.nums > 0)){
+      comp.var.nums <- ceiling(comp.var.nums);
+    }else{
+      msg <- c("All values need to be positive integers!");
+      return(0);
     }
-
+  }
+  
+  mSetObj <- .get.mSet(mSetObj);  
+  
+  # note, standardize the cls, to minimize the impact of categorical to numerical impact
+  cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  
+  my.fun <- function(){
+    if(!exists("splsda")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
+    }
+    my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
+    
+    # perform validation
+    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
+    my.res$error.rate <- perf.res$error.rate$overall;
+    return(my.res);
+  }
+  
   dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums, my.fun=my.fun);
-
+  
   saveRDS(dat.in, file="dat.in.rds");
   return(.set.mSet(mSetObj));
 }
 
 .save.splsr.anal <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- readRDS("dat.in.rds"); 
-    mSetObj$analSet$splsr <- dat.in$my.res;
-    score.mat <- mSetObj$analSet$splsr$variates$X;
-    write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
-    load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;
-    write.csv(signif(load.mat,5), file="splsda_loadings.csv");
-    return(.set.mSet(mSetObj));
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- readRDS("dat.in.rds"); 
+  mSetObj$analSet$splsr <- dat.in$my.res;
+  score.mat <- mSetObj$analSet$splsr$variates$X;
+  write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
+  load.mat <- mSetObj$analSet$splsr$loadings$X;
+  
+  # sort based on absolute values of 1, 2 
+  ord.inx <- order(-abs(load.mat[,1]), -abs(load.mat[,2]));
+  load.mat <- signif(load.mat[ord.inx,],5);
+  write.csv(load.mat, file="splsda_loadings.csv");
+  
+  mSetObj$analSet$splsr$loadings$X <- load.mat;
+  return(.set.mSet(mSetObj));
 }
 
 #'Plot SPLS-DA
@@ -1987,7 +2002,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -2073,7 +2088,9 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
-        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        my.cols <- adjustcolor(cols, alpha.f = 0.4);
+        my.cols[pchs == 21] <- "black";
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
       }else{
         points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
       }
@@ -2153,7 +2170,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   mSetObj <- .get.mSet(mSetObj);
   spls = mSetObj$analSet$splsr
   spls3d <- list();
-
+  
   if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
@@ -2163,11 +2180,11 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
   }
-    
-    colnames(coords) <- NULL; 
-    spls3d$loading$xyz <- coords;
-    spls3d$loading$name <- rownames(spls$loadings$X);
-    spls3d$loading$entrez <-rownames(spls$loadings$X); 
+  
+  colnames(coords) <- NULL; 
+  spls3d$loading$xyz <- coords;
+  spls3d$loading$name <- rownames(spls$loadings$X);
+  spls3d$loading$entrez <-rownames(spls$loadings$X); 
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
@@ -2178,7 +2195,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   if(all.numeric(cls)){
     cls <- paste("Group", cls);
   }
-
+  
   spls3d$cls = cls;
   # see if there is secondary
   
@@ -2189,13 +2206,13 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   cat(json.mat);
   sink();
   current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-
+  
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 
@@ -2252,16 +2269,15 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@export
-#'@importFrom caret plsda train trainControl varImp
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-
+#'@export
+#'@import caret
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   res <- mSetObj$analSet$splsr$error.rate;
   
   edge <- (max(res)-min(res))/100; # expand y uplimit for text
@@ -2308,12 +2324,13 @@ GetPLSBestTune<-function(mSetObj=NA){
 GetPLSSigMat<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "vip"){
-    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsda$vip.mat),5)));
+    sig.mat <- mSetObj$analSet$plsda$vip.mat;
   }else if(type == "coef"){
-    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsda$coef.mat),5)));
+    sig.mat <- mSetObj$analSet$plsda$coef.mat;
   }else{
-    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsr$imp.loads),5)));
+    sig.mat <- mSetObj$analSet$plsr$imp.loads;
   }
+  return(CleanNumber(signif(as.matrix(sig.mat),5)));
 }
 
 GetPLSSigRowNames<-function(mSetObj=NA, type){
@@ -2504,4 +2521,3 @@ GetSPLSSigColNames <- function(mSetObj=NA, type){
     return (colnames(mSetObj$analSet$splsr$loadings$X));
   }
 }
-
