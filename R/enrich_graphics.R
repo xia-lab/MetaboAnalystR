@@ -321,6 +321,94 @@ PlotMSEA.Overview <- function(folds, pvals){
   par(op);
 }
 
+#'Plot MSEA Dot Plot
+#'@description Dot plot of enrichment analysis results.
+#'@usage PlotEnrichDotPlot(mSet)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param enrichType Input whether the enrichment analysis was over-respresentation
+#'analysis (ora) or quantitative enrichment analysis (qea).
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@import ggplot2
+
+PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_ggplot()
+  }
+  
+  if(enrichType == "ora"){
+    results <- mSetObj$analSet$ora.mat
+    
+    if(nrow(results) > 25){
+      results <- results[1:25,]
+    }
+    
+    df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
+                     rawp = results[,4],
+                     logp = -log10(results[,4]),
+                     hits = results[,3])
+    
+  }else if(enrichType == "qea"){
+    results <- mSetObj$analSet$qea.mat
+    
+    if(nrow(results) > 25){
+      results <- results[1:25,]
+    }
+    
+    df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
+                     rawp = results[,5],
+                     logp = -log10(results[,5]),
+                     hits = results[,2])
+    
+  }
+
+  maxp <- max(df$rawp)
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  p <- ggplot(df, 
+              aes(x = logp, y = Name)) + 
+    geom_point(aes(size = hits, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
+    theme_bw(base_size = 14.5) +
+    scale_colour_gradient(limits=c(0, maxp), low="red", high = "blue") +
+    ylab(NULL) + xlab("-log10 (p-value)") + 
+    ggtitle("Metabolite Sets Enrichment Overview")
+  
+  p$labels$colour <- "P-Value"
+  p$labels$size <- "Number of Hits"
+  
+  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h)
+  
+  if(enrichType == "ora"){
+    mSetObj$imgSet$ora <- imgName
+  }else if(enrichType == "qea"){
+    mSetObj$imgSet$qea <-imgName;
+  }
+  
+  mSetObj$imgSet$current.img <- imgName;
+  return(.set.mSet(mSetObj));
+}
+
 # Utility function
 concplot <- function(mn, lower, upper, labels=NULL,
                      xlab = "Odds ratio", ylab = "Study Reference",

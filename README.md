@@ -172,6 +172,8 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 ## MetaboAnalystR History & Updates
 
+07-23-2020 - added new function for dot plots for enrichment analysis (PlotEnrichDotPlot).
+
 06-27-2020 - Version Update:3.0.3 - update bug fixes for raw data processing, and added functions for Empty MS scan removal and MS data centroid;
 
 05-08-2020 - Version Update:3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;

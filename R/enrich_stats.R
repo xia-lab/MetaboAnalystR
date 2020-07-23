@@ -152,9 +152,12 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     .perform.computing();   
     save.globaltest.score(mSetObj);  
     return(.set.mSet(mSetObj));
+  }else{
+    mSetObj <- .prepare.globaltest.score(mSetObj);
+    .perform.computing();
+    mSetObj <- .save.globaltest.score(mSetObj);  
   } 
   
-  mSetObj <- .prepare.globaltest.score(mSetObj);
   return(.set.mSet(mSetObj));
 }
 

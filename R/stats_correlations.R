@@ -23,7 +23,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   if(is.null(pattern)){
     pattern <- paste(1:length(levels(mSetObj$dataSet$cls)), collapse="-");
   }
-  templ <- as.numeric(ClearStrings(strsplit(pattern, "-")[[1]]));
+  templ <- as.numeric(ClearStrings(strsplit(pattern, "-", fixed=TRUE)[[1]]));
   
   if(all(templ==templ[1])){
     AddErrMsg("Cannot calculate correlation on constant values!");
@@ -146,11 +146,13 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, viewOpt, fix.col, no.clst, top, topNum){
+                          colors, viewOpt, fix.col, no.clst, top, topNum, corrCutoff=0){
   
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
+  corrCutoff <- as.numeric(corrCutoff)
+  
   if(target == 'row'){
     data <- t(data);
   }
@@ -162,12 +164,35 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     
     print("Data is reduced to 1000 vars ..");
   }
-  
+
+  # compare p-values w. hmisc + cor.test
   colnames(data) <- substr(colnames(data), 1, 18);
   corr.mat <- cor(data, method=cor.method);
   
-  # little added value, too much memory consumption
+  # NA gives error w. hclust
+  corr.mat[abs(corr.mat) < corrCutoff] <- 0
+  
+  # little added value, too much memorfy consumption
   # pval.mat <- Hmisc::rcorr(as.matrix(data), type=cor.method)$P;
+  
+  # alternative method to get p-values 
+  # does also compute the R but can't make corr.mat without tidyverse
+  vars = data.frame(t(combn(colnames(data), 2)), stringsAsFactors = FALSE)
+  
+  if(cor.method == "spearman"){
+    cor.results <- do.call(rbind, mapply(SpearmanCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
+  }else if(cor.method == "kendall"){
+    cor.results <- do.call(rbind, mapply(KendallCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
+  }else if(cor.method == "pearson"){
+    cor.results <- do.call(rbind, mapply(PearsonCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
+  }else{
+    AddErrMsg("Invalid correlation method!")
+    return(0)
+  }
+  
+  colnames(cor.results) <- c("Feature1", "Feature2", "Correlation", "P.value", "Statistic", "Method")
+  cor.results.filt <- cor.results[(abs(cor.results[,3]) > corrCutoff),]
+  cor.results.filt[,3:5] <- signif(cor.results.filt[,3:5], 5)
   
   # use total abs(correlation) to select
   if(top){
@@ -192,7 +217,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }else if(colors == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"))(256);
   }else{
-    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(c(RColorBrewer::brewer.pal(10, "RdBu"), "#001833"))(256));
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -234,6 +259,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
+  
   if(no.clst){
     rowv=FALSE;
     colv=FALSE;
@@ -247,29 +273,29 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   if(fix.col){
     breaks <- seq(from = -1, to = 1, length = 257);
     res <- pheatmap::pheatmap(corr.mat, 
-                    fontsize=8, fontsize_row=8, 
-                    cluster_rows = colv, 
-                    cluster_cols = rowv,
-                    color = colors,
-                    breaks = breaks
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors,
+                              breaks = breaks
     );
   }else{
     res <- pheatmap::pheatmap(corr.mat, 
-                    fontsize=8, fontsize_row=8, 
-                    cluster_rows = colv, 
-                    cluster_cols = rowv,
-                    color = colors
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors
     );
   }
+  
   dev.off();
-
+  
   if(!no.clst){ # when no clustering, tree_row is NA
     new.ord <- res$tree_row$order;
     corr.mat <- corr.mat[new.ord, new.ord];
-    #pval.mat <- pval.mat[new.ord, new.ord];
   }
-  write.csv(signif(corr.mat,5), file="correlation_table.csv");
-  #write.csv(signif(pval.mat,5), file="pval_corr_table.csv");
+  write.csv(signif(corr.mat, 5), file="correlation_table.csv");
+  write.csv(cor.results, file="pval_corr_table.csv");
   return(.set.mSet(mSetObj));
 }
 
@@ -348,11 +374,11 @@ FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   mSetObj <- .get.mSet(mSetObj);
   
   # test if varName is valid
-   if(!varName %in% colnames(mSetObj$dataSet$norm)){
+  if(!varName %in% colnames(mSetObj$dataSet$norm)){
     AddErrMsg("Invalid feature name - not found!");
     return(0);
   }
-
+  
   cbtempl.results <- apply(mSetObj$dataSet$norm, 2, template.match, mSetObj$dataSet$norm[,varName], dist.name);
   cor.res<-t(cbtempl.results);
   
@@ -368,6 +394,26 @@ FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
   mSetObj$analSet$corr$pattern <- varName;
-
+  
   return(.set.mSet(mSetObj));
+}
+
+###########################################
+############ Utility Functions ############
+###########################################
+
+# Set of functions to perform cor.test
+PearsonCorrFunc <- function(var1, var2, data){
+  result <- cor.test(data[,var1], data[,var2])
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
+}
+
+SpearmanCorrFunc <- function(var1, var2, data){
+  result <- cor.test(data[,var1], data[,var2], method = "spearman", exact = FALSE)
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
+}
+
+KendallCorrFunc <- function(var1, var2, data){
+  result <- cor.test(data[,var1], data[,var2], method = "kendall", exact = FALSE)
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
 }
