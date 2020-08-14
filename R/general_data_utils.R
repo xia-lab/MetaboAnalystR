@@ -198,7 +198,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     url.pre <- "https://github.com/xia-lab/MetaboAnalystR3.0/raw/master/inst/database/sqlite/GeneID_25Species_JE/"
   }
 
-  api.base <- "http://api.xialab.ca"
+  api.base <<- "http://api.xialab.ca"
   gene.sqlite.path <<- url.pre;
 
   print("MetaboAnalyst R objects initialized ...");
