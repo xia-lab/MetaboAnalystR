@@ -234,7 +234,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   current.mset <- current.msetlib$member; 
   
   # make a clean metabolite set based on reference metabolome filtering
-  if(mSetObj$dataSet$use.metabo.filter && !is.null('mSetObj$dataSet$metabo.filter.hmdb')){
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
