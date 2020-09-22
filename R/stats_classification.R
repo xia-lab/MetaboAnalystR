@@ -41,7 +41,7 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   sigmat <- impmat[,"MeanDecreaseAccuracy", drop=F];
   sigmat <- signif(sigmat, 5);
   
-  write.csv(sigmat, file="randomforests_sigfeatures.csv");
+  fast.write.csv(sigmat, file="randomforests_sigfeatures.csv");
   mSetObj$analSet$rf <- rf_out;
   mSetObj$analSet$rf.sigmat <- sigmat;
   return(.set.mSet(mSetObj));
@@ -162,14 +162,14 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  cols <- GetColorSchema(mSetObj);
-  uniq.cols <- unique(cols);
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
   }else{
     cls <- mSetObj$dataSet$cls;
   }
+  cols <- GetColorSchema(cls);
+  uniq.cols <- unique(cols);
   
   legend.nm <- unique(as.character(sort(cls)));
   dist.res <- randomForest::outlier(mSetObj$analSet$rf);
@@ -238,7 +238,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
   sig.var <- as.matrix(sig.var); # 1-column matrix
   colnames(sig.var) <- "Freqency";
   
-  write.csv(sig.var, file="svm_sigfeatures.csv");
+  fast.write.csv(sig.var, file="svm_sigfeatures.csv");
   
   # add sorted features frequencies as importance indicator
   svm.out <- append(svm.out, list(sig.mat=sig.var, best.inx=ERInd));

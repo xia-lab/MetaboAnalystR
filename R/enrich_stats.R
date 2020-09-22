@@ -13,7 +13,6 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom httr content POST
 #'
 CalculateHyperScore <- function(mSetObj=NA){
   
@@ -52,11 +51,11 @@ CalculateHyperScore <- function(mSetObj=NA){
     # change path when on server, use local for now
     
     load_httr()
-    base <- api.base
+    base <- "localhost:8987"
     endpoint <- "/enrichmentora"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- content(query_results, "text")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     
     if(is.null(query_results_json$enrichRes)){
@@ -69,19 +68,21 @@ CalculateHyperScore <- function(mSetObj=NA){
     colnames(oraDataRes) <- query_results_json$enrichResColNms
     rownames(oraDataRes) <- query_results_json$enrichResRowNms
     
-    write.csv(oraDataRes, file="msea_ora_result.csv");
+    fast.write.csv(oraDataRes, file="msea_ora_result.csv");
     mSetObj$analSet$ora.mat <- oraDataRes
     mSetObj$api$guestName <- query_results_json$guestName
-    print("Pathway ORA via api.metaboanalyst.ca successful!")
     return(.set.mSet(mSetObj));
   }
   
   current.mset <- current.msetlib$member
   
   # make a clean metabilite set based on reference metabolome filtering
+  # also need to update ora.vec to the updated mset
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
+    ora.vec <- ora.vec[ora.vec %in% unique(unlist(current.mset, use.names = FALSE))]
+    q.size <- length(ora.vec);
   }
   
   # total uniq cmpds in the current mset lib
@@ -131,7 +132,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx,],3);
   mSetObj$analSet$ora.hits <- hits;
   
-  write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
+  fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   return(.set.mSet(mSetObj));
 }
 
@@ -152,12 +153,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     .perform.computing();   
     save.globaltest.score(mSetObj);  
     return(.set.mSet(mSetObj));
-  }else{
-    mSetObj <- .prepare.globaltest.score(mSetObj);
-    .perform.computing();
-    mSetObj <- .save.globaltest.score(mSetObj);  
   } 
   
+  mSetObj <- .prepare.globaltest.score(mSetObj);
   return(.set.mSet(mSetObj));
 }
 
@@ -200,11 +198,11 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     # change path when on server, use local for now
     
     load_httr()
-    base <- api.base
+    base <- "localhost:8987"
     endpoint <- "/enrichmentqea"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- content(query_results, "text")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     
     if(is.null(query_results_json$enrichRes)){
@@ -217,7 +215,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     colnames(qeaDataRes) <- query_results_json$enrichResColNms
     rownames(qeaDataRes) <- query_results_json$enrichResRowNms
     
-    write.csv(qeaDataRes, file="msea_qea_result.csv");
+    fast.write.csv(qeaDataRes, file="msea_qea_result.csv");
     mSetObj$analSet$qea.mat <- qeaDataRes
     mSetObj$api$guestName <- query_results_json$guestName
     print("Enrichment QEA via api.metaboanalyst.ca successful!")
@@ -266,7 +264,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   }
   
   dat.in <- list(cls=phenotype, data=msea.data, subsets=hits, my.fun=my.fun);
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
   
   # store necessary data 
   mSetObj$analSet$set.num <- set.num;
@@ -278,7 +276,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 .save.globaltest.score <- function(mSetObj = NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  dat.in <- readRDS("dat.in.rds"); 
+  dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
   set.num <- mSetObj$analSet$set.num;
   if(length(my.res)==1 && is.na(my.res)){
@@ -303,7 +301,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   ord.inx<-order(res.mat[,5]);
   res.mat<-res.mat[ord.inx,];
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
-  write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
+  fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
   
   return(.set.mSet(mSetObj));
 }
@@ -335,7 +333,7 @@ CalculateSSP<-function(mSetObj=NA){
   ssp.nm <- as.character(nm.map$hmdb[hmdb.inx[match.inx]]);
   ssp.vec <- mSetObj$dataSet$norm[match.inx];
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  cmpd.db <- .get.my.lib("compound_db.qs");
   
   hit.inx <- match(tolower(ssp.nm), tolower(cmpd.db$name));
   
@@ -370,7 +368,7 @@ CalculateSSP<-function(mSetObj=NA){
         ssp.pmids[[i]]<-NA;
         ssp.notes[[i]] <- NA;
       }else{ # concentration info
-        concs<-as.numeric(unlist(strsplit(hits$conc, " - "), use.names = FALSE));
+        concs<-as.numeric(unlist(strsplit(hits$conc, " - ", fixed=TRUE), use.names = FALSE));
         pmid <- hits$pmid;
         refs <- hits$refs;
         
@@ -515,14 +513,20 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
   }
   
   # highlighting with different colors
+  # this is meaningless for very large (>200) metabolite sets (i.e. chemical class)
   mset <- current.msetlib$member[[msetNm]];
-  red.inx <- which(mset %in% hits[[msetNm]]);
+  if(length(mset) < 200){
+    red.inx <- which(mset %in% hits[[msetNm]]);
+  }else{
+    mset <- hits[[msetNm]];
+    red.inx <- 1:length(mset);
+  }
+
   mset[red.inx] <- paste("<font color=\"red\">", "<b>", mset[red.inx], "</b>", "</font>",sep="");
   if(mSetObj$dataSet$use.metabo.filter && exists('filtered.mset')){
-    grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
-    mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
+      grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
+      mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
   }
-  
   # get references
   matched.inx <- match(tolower(msetNm), tolower(current.msetlib$name))[1];
   return(cbind(msetNm, paste(mset, collapse="; "), current.msetlib$reference[matched.inx]));

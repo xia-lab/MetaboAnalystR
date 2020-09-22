@@ -16,7 +16,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
   if(clsOpts == "NA"){
     grp.nms <- levels(mSetObj$dataSet$cls)[1:2];
   }else{
-    grp.nms <- strsplit(clsOpts, " vs. ")[[1]];
+    grp.nms <- strsplit(clsOpts, " vs. ", fixed=TRUE)[[1]];
   }
   inx1 <- which(mSetObj$dataSet$cls==grp.nms[1]);
   inx2 <- which(mSetObj$dataSet$cls==grp.nms[2]);

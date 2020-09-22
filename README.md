@@ -34,7 +34,7 @@ Function to download packages:
 ```R
 metanr_packages <- function(){
 
-  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","devtools","crmn","httr")
+  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","devtools","crmn","httr","qs")
   
   list_installed <- installed.packages()
   
@@ -67,7 +67,7 @@ install.packages("pacman")
 
 library(pacman)
 
-pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","httr"))
+pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "SSPA", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","httr","qs"))
 ```
 ### Step 2. Install the package
 
@@ -172,15 +172,17 @@ To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PA
 
 ## MetaboAnalystR History & Updates
 
+09-22-2020 - Sync R code w. web, change .rds files to .qs (requires .qs R package). 
+
 07-23-2020 - added new function for dot plots for enrichment analysis (PlotEnrichDotPlot).
 
-06-27-2020 - Version Update:3.0.3 - update bug fixes for raw data processing, and added functions for Empty MS scan removal and MS data centroid;
+06-27-2020 - Version Update: 3.0.3 - update bug fixes for raw data processing, and added functions for Empty MS scan removal and MS data centroid;
 
-05-08-2020 - Version Update:3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;
+05-08-2020 - Version Update: 3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;
 
-05-01-2020 - Version Update:3.0.1 - update bug fixes for batch effect correction and compatible with web server, and added Signal Drift Correction Method;
+05-01-2020 - Version Update: 3.0.1 - update bug fixes for batch effect correction and compatible with web server, and added Signal Drift Correction Method;
 
-04-10-2020 - Version Updata:3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
+04-10-2020 - Version Update: 3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
 
 03-12-2020 - Version Update: 2.0.4 - added retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
 

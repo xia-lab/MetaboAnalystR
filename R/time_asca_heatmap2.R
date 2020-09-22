@@ -333,8 +333,8 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     out.list[[nm]]<- out.mat;
     
     nm <- gsub("\\.", "_",  nm);
-    write.csv(sig.mat, file=paste("Sig_features_", nm, ".csv", sep=""));
-    write.csv(out.mat, file=paste("Outliers_", nm, ".csv", sep=""));
+    fast.write.csv(sig.mat, file=paste("Sig_features_", nm, ".csv", sep=""));
+    fast.write.csv(out.mat, file=paste("Outliers_", nm, ".csv", sep=""));
   }
   mSetObj$analSet$asca$sig.list <- sig.list;
   mSetObj$analSet$asca$out.list <- out.list;
@@ -540,7 +540,7 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   facAB <- as.factor(paste(facA, facB, sep=":"));
   
   lvAB <- levels(facAB);
-  lvAB.mat <- do.call(rbind, strsplit(lvAB, ":"))
+  lvAB.mat <- do.call(rbind, strsplit(lvAB, ":", fixed=TRUE))
   lvAB.mat <- cbind(lvAB,lvAB.mat);
   
   # factor size is needed for each iteration
@@ -585,7 +585,7 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   p.res[better.hits > 0] <- paste("p = ", signif(better.hits[better.hits > 0]/perm.num, digits=5), " (", better.hits[better.hits > 0], "/", perm.num, ")", sep="");
   
   ## added for test
-  write.csv(perm.res, file="perm.res.csv");
+  fast.write.csv(perm.res, file="perm.res.csv");
   
   mSetObj$analSet$asca$perm.p <- p.res;
   mSetObj$analSet$asca$perm.mat <- perm.res;
@@ -1237,7 +1237,7 @@ GetAscaSigMat <- function(mSetObj=NA, type){
   }
   
   fileNm <- paste("asca_",type, ".csv", sep="");
-  write.csv(signif(sig.mat,5), file=fileNm);
+  fast.write.csv(signif(sig.mat,5), file=fileNm);
   mSetObj$analSet$asca$sig.nm <- fileNm;
   
   if(.on.public.web){

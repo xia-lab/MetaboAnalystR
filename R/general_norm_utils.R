@@ -38,7 +38,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj <- .get.mSet(mSetObj);
   
   # PreparePrenormData() called already
-  data <- mSetObj$dataSet$prenorm;
+  data <- qs::qread("prenorm.qs");
   cls <- mSetObj$dataSet$prenorm.cls;
 
   # note, setup time factor
@@ -116,18 +116,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     rownm<-"N/A";
   }
   
-  # use apply will lose dimesion info (i.e. row names and colnames)
+  # use apply will lose dimension info (i.e. row names and colnames)
   rownames(data)<-rowNames;
   colnames(data)<-colNames;
-  
-  # note: row-normed data is based on biological knowledge, since the previous
-  # replacing zero/missing values by half of the min positive (a constant) 
-  # now may become different due to different norm factor, which is artificial
-  # variance and should be corrected again
-  #
-  # stopped, this step cause troubles
-  # minConc<-round(min(data)/2, 5);
-  # data[dataSet$fill.inx]<-minConc;
   
   # if the reference by feature, the feature column should be removed, since it is all 1
   if(rowNorm=="CompNorm" && !is.null(ref)){
@@ -143,7 +134,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   if(ratio){
     min.val <- min(abs(data[data!=0]))/2;
     norm.data <- log2((data + sqrt(data^2 + min.val))/2);
-    transnm<-"Log Normalization";
+    transnm<-"Log2 Normalization";
     ratio.mat <- CalculatePairwiseDiff(norm.data);
     
     fstats <- Get.Fstat(ratio.mat, cls);
@@ -164,7 +155,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     if(transNorm=='LogNorm'){
       min.val <- min(abs(data[data!=0]))/10;
       data<-apply(data, 2, LogNorm, min.val);
-      transnm<-"Log Normalization";
+      transnm<-"Log10 Normalization";
     }else if(transNorm=='CrNorm'){
       norm.data <- abs(data)^(1/3);
       norm.data[data<0] <- - norm.data[data<0];
@@ -211,19 +202,19 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$combined.method <- FALSE;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
-  processedObj <- list();#for omicsanalyst
-  processedObj$name <- "met_t_omicsanalyst.json"
-  processedObj$type <- "met.t"
-  processedObj$data.proc <- as.matrix(t(mSetObj$dataSet$norm))
-  processedObj$feature.nms <- rownames(processedObj$data.proc)
-  processedObj$sample.nms <- colnames(processedObj$data.proc)
-  meta = data.frame(Condition = mSetObj$dataSet$cls)
-  rownames(meta) <-  colnames(processedObj$data.proc)
-  processedObj$meta <- meta
-  library(RJSONIO)
-  sink(processedObj$name);
-  cat(toJSON(processedObj));
-  sink();
+#  processedObj <- list();#for omicsanalyst
+#  processedObj$name <- "met_t_omicsanalyst.json"
+#  processedObj$type <- "met.t"
+#  processedObj$data.proc <- as.matrix(t(mSetObj$dataSet$norm))
+#  processedObj$feature.nms <- rownames(processedObj$data.proc)
+#  processedObj$sample.nms <- colnames(processedObj$data.proc)
+#  meta = data.frame(Condition = mSetObj$dataSet$cls)
+#  rownames(meta) <-  colnames(processedObj$data.proc)
+#  processedObj$meta <- meta
+#  library(RJSONIO)
+#  sink(processedObj$name);
+#  cat(toJSON(processedObj));
+#  sink();
   return(.set.mSet(mSetObj));
 }
 
@@ -276,7 +267,7 @@ QuantileNormalize <- function(data){
 
 # generalize log, tolerant to 0 and negative values
 LogNorm<-function(x, min.val){
-  log2((x + sqrt(x^2 + min.val^2))/2)
+  log10((x + sqrt(x^2 + min.val^2))/2)
 }
 
 # normalize to zero mean and unit variance
@@ -483,7 +474,7 @@ UpdateData <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   #Reset to default
-  mSetObj$dataSet$edit <- mSetObj$dataSet$prenorm <- NULL; 
+  mSetObj$dataSet$edit <- NULL; 
 
   if(is.null(mSetObj$dataSet$filt)){
     data <- mSetObj$dataSet$proc;
@@ -563,27 +554,30 @@ PreparePrenormData <- function(mSetObj=NA){
       hit.inx <- colnames(mydata) %in% colnames(mSetObj$dataSet$filt);
       mydata <- mydata[,hit.inx, drop=FALSE];
     }
-    mSetObj$dataSet$prenorm <- mydata;
+    prenorm <- mydata;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
     if(substring(mSetObj$dataSet$format,4,5) == "ts"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$edit.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$edit.facB;
     }
   }else if(!is.null(mSetObj$dataSet$filt)){
-    mSetObj$dataSet$prenorm <- mSetObj$dataSet$filt;
+    prenorm <- mSetObj$dataSet$filt;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
     if(substring(mSetObj$dataSet$format,4,5)=="ts"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
     }
   }else{
-    mSetObj$dataSet$prenorm <- mSetObj$dataSet$proc;
+    prenorm <- mSetObj$dataSet$proc;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
     if(substring(mSetObj$dataSet$format,4,5) == "ts"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
     }
   }
+  qs::qsave(prenorm, "prenorm.qs");
+  mSetObj$dataSet$prenorm.smpl.nms <- rownames(prenorm);
+  mSetObj$dataSet$prenorm.feat.nms <- colnames(prenorm);
   .set.mSet(mSetObj)
 }
 
@@ -596,22 +590,22 @@ PreparePrenormData <- function(mSetObj=NA){
 # get the dropdown list for sample normalization view
 GetPrenormSmplNms <-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(rownames(mSetObj$dataSet$prenorm));
+  return(mSetObj$dataSet$prenorm.smpl.nms);
 }
 
 GetPrenormFeatureNum <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(ncol(mSetObj$dataSet$prenorm));
+  return(length(mSetObj$dataSet$prenorm.feat.nms));
 }
 
 GetPrenormFeatureNms <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(colnames(mSetObj$dataSet$prenorm));
+  return(mSetObj$dataSet$prenorm.feat.nms);
 }
 
 ValidateFeatureName<- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
-  if(nm %in% colnames(mSetObj$dataSet$prenorm)){
+  if(nm %in% mSetObj$dataSet$prenorm.feat.nms){
     return(1);
   }
   return(0);

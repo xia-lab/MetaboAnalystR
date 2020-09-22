@@ -6,7 +6,14 @@
 change to use dataSet$proc instead of dataSet$orig in
 case of too many NAs}
 \usage{
-PlotCmpdSummary(mSetObj = NA, cmpdNm, format = "png", dpi = 72, width = NA)
+PlotCmpdSummary(
+  mSetObj = NA,
+  cmpdNm,
+  version,
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

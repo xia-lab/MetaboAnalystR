@@ -16,8 +16,7 @@ PlotCorrHeatMap(
   viewOpt,
   fix.col,
   no.clst,
-  top,
-  topNum
+  corrCutoff = 0
 )
 }
 \arguments{

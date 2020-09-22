@@ -71,7 +71,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     # get the signficant features
     summary.mat <- summary(sam_out, delta)@mat.sig;
     sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5));
-    write.csv(sig.mat, file="sam_sigfeatures.csv");
+    data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE);
     
     # plot SAM plot
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=72, width=8, height=8, type="png", bg="white");
@@ -84,14 +84,14 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
   dat.in <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
                   paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName, my.fun=my.fun);
 
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
   mSetObj$imgSet$sam.cmpd <- imgName;  
   return(.set.mSet(mSetObj));
 }
 
 .save.sam.anal <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
-  dat.in <- readRDS("dat.in.rds"); 
+  dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
   mSetObj$analSet$sam <- my.res$sam.res;
   mSetObj$analSet$sam.delta  <- my.res$sam.delta;
@@ -185,7 +185,7 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     dev.off();
   }
   dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
   mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
@@ -248,13 +248,13 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     
     summary.mat <- summary(ebam_out, delta)@mat.sig;
     sig.mat <- as.matrix(signif(summary.mat[,-1],5));
-    write.csv(signif(sig.mat,5),file="ebam_sigfeatures.csv");
+    data.table::fwrite(as.data.frame(sig.mat),file="ebam_sigfeatures.csv", row.names=TRUE);
     
     return(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, a0=A0, delta=delta));
   }
   
   dat.in <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig, my.fun=my.fun); 
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
 
   mSetObj$imgSet$ebam.a0 <- imgA0;
   mSetObj$imgSet$ebam.cmpd <-imgSig;
@@ -263,7 +263,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 
 .save.ebam.init <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
-  dat.in <- readRDS("dat.in.rds"); 
+  dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
   mSetObj$analSet$ebam <- my.res$ebam_out;
   mSetObj$analSet$ebam.cmpds <- my.res$sig.mat;
@@ -313,7 +313,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     dev.off();
   }
   dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
 
   mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));

@@ -227,7 +227,7 @@ CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   results <- mSetObj$dataSet$path.mat;  
-  colnames(results) <- c("Total", "Expected", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  colnames(results) <- c("Total", "Expected", "Hits", "Raw p", "-log10(p)", "Holm adjust", "FDR", "Impact");
   path.nms <- names(rownames(results));  
   rownames(results) <- path.nms;
 

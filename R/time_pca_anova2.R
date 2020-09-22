@@ -219,7 +219,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
   }
   
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
-  write.csv(aov.mat, file=fileName);
+  fast.write.csv(aov.mat, file=fileName);
   
   aov2<-list (
     type = type,
@@ -303,6 +303,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+#'@importFrom plotly plot_ly add_markers layout
 #'
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   
@@ -339,7 +340,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   pca3d$loadings$name <- colnames(mSetObj$dataSet$norm);
   
   # now set color for each group
-  cols <- unique(GetColorSchema(mSetObj));
+  cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
   rgbcols <- col2rgb(cols);
   cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")});
   pca3d$score$colors <- cols;
@@ -445,14 +446,15 @@ PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, widt
     
     axp=c(min(pt), max(pt[pt <= max(rg)]),length(pt[pt <= max(rg)]) - 1);
     
-    # ymk <- pretty(c(0,ymax));
-    x <- barplot(mns, col= unique(GetColorSchema(mSetObj)), las=2, yaxp=axp, ylim=range(pt));
+    my.col <- unique(GetColorSchema(mSetObj$dataSet$cls));
+
+    x <- barplot(mns, col= my.col, las=2, yaxp=axp, ylim=range(pt));
     arrows(x, dns, x, ups, code=3, angle=90, length=.1);
     axis(1, at=x, col="white", col.tick="black", labels=F);
     box();
     mtext("Original Conc.", line=1);
     
-    boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= unique(GetColorSchema(mSetObj)));
+    boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= my.col);
     mtext("Normalized Conc.", line=1);
     title(main=cmpdNm, out=T);
     dev.off();

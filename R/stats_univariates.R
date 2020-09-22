@@ -32,7 +32,7 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   sig.mat <- sig.mat[inx.ord,,drop=F];
   
   fileName <- "fold_change.csv";
-  write.csv(sig.mat,file=fileName);
+  fast.write.csv(sig.mat,file=fileName);
   
   # create a list object to store fc
   mSetObj$analSet$fc<-list (
@@ -71,8 +71,8 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
   fc.mat <- GetFC(mSetObj, T, cmp.type);
   
   count.thresh <- round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
-  mat.up <- fc.mat >= log(max.thresh,2);
-  mat.down <- fc.mat <= log(min.thresh,2);
+  mat.up <- fc.mat >= log2(max.thresh);
+  mat.down <- fc.mat <= log2(min.thresh);
   
   count.up <- apply(mat.up, 2, sum);
   count.down <- apply(mat.down, 2, sum);
@@ -91,7 +91,7 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
   sig.var <- sig.var[inx,,drop=F];
   
   fileName <- "fold_change.csv";
-  write.csv(signif(sig.var,5),file=fileName);
+  fast.write.csv(signif(sig.var,5),file=fileName);
   
   # create a list object to store fc
   mSetObj$analSet$fc <-list (
@@ -167,8 +167,8 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
            col= ifelse(fc$inx.imp, "magenta", "darkgrey"));
       axis(2);
       axis(4); # added by Beomsoo
-      abline(h=log(fc$max.thresh,2), lty=3);
-      abline(h=log(fc$min.thresh,2), lty=3);
+      abline(h=log2(fc$max.thresh), lty=3);
+      abline(h=log2(fc$min.thresh), lty=3);
       abline(h=0, lwd=1);
     }else{ # plot side by side
       
@@ -227,7 +227,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
     }else{
-      data <- log(mSetObj$dataSet$row.norm,2);
+      data <- log2(mSetObj$dataSet$row.norm);
     }
     
     G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
@@ -319,9 +319,9 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
        file.nm <- "t_test_all.csv";
        colnames(all.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
      }
-     write.csv(all.mat, file=file.nm);
+     fast.write.csv(all.mat, file=file.nm);
    }
-  
+
    inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
   
@@ -349,7 +349,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       file.nm <- "t_test.csv";
       colnames(sig.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
     }
-    write.csv(sig.mat, file=file.nm);
+    fast.write.csv(sig.mat, file=file.nm);
     
     tt <- list (
       tt.nm = tt.nm,
@@ -378,10 +378,10 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   }
   
   mSetObj$analSet$tt <- tt;
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
-    return(sig.num);
+    return(as.numeric(sig.num));
   }
   return(.set.mSet(mSetObj));
 }
@@ -464,8 +464,8 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   ### fold change analysis
   # make sure threshold is above 1
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);
-  max.xthresh <- log(fcthresh,2);
-  min.xthresh <- log(1/fcthresh,2);
+  max.xthresh <- log2(fcthresh);
+  min.xthresh <- log2(1/fcthresh);
   
   res <- GetFC(mSetObj, paired, cmpType);
   
@@ -524,7 +524,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   }
   
   fileName <- "volcano.csv";
-  write.csv(signif(sig.var,5), file=fileName);
+  fast.write.csv(signif(sig.var,5), file=fileName);
   volcano <- list (
     raw.threshx = fcthresh,
     raw.threshy = threshp,
@@ -780,7 +780,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_r
       all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
       rownames(all.mat) <- names(p.value);
       colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
-      write.csv(all.mat, "anova_all_results.csv")
+      fast.write.csv(all.mat, "anova_all_results.csv")
     }
     
     # do post-hoc only for signficant entries
@@ -827,7 +827,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_r
   AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
   if(sig.num> 0){
     res <- 1;
-    write.csv(sig.mat,file=fileName);
+    fast.write.csv(sig.mat,file=fileName);
     aov<-list (
       aov.nm = aov.nm,
       sig.num = sig.num,
@@ -947,7 +947,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   x <- mSetObj$dataSet$norm[, cmpdNm]
   y <- cls
   df <- data.frame(conc = x, class = y)
-  col <- unique(GetColorSchema(mSetObj))
+  col <- unique(GetColorSchema(y))
   
   Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=325, type=format, bg="transparent");
   

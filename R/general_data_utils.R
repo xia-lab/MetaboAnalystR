@@ -20,90 +20,14 @@
   }
 }
 
-# Used to defined the parallel namespace for peak picking
-peak_function_list <- list("PerformPeakPicking",
-                           "PeakPicking_centWave_slave",
-                           "PerformPeakGrouping",
-                           "Densitygrouping_slave",
-                           "PerformPeakAlignment",
-                           "RT.Adjust_Slave",
-                           "PerformPeakFiling",
-                           "mSet2xcmsSet",
-                           "updateRawSpectraParam",
-                           "continuousPtsAboveThreshold",
-                           "getLocalNoiseEstimate",
-                           "continuousPtsAboveThresholdIdx",
-                           "MSW.cwt",
-                           "MSW.extendNBase",
-                           "MSW.extendLength",
-                           "MSW.getLocalMaximumCWT",
-                           "MSW.localMaximum",
-                           "MSW.getRidge",
-                           "descendMin",
-                           "descendMinTol",
-                           "joinOverlappingPeaks",
-                           "trimm",
-                           "findEqualGreaterM",
-                           "na.flatfill",
-                           "SSgauss",
-                           "rectUnique",
-                           ".narrow_rt_boundaries",
-                           ".rawMat",
-                           ".getPeakGroupsRtMatrix",
-                           ".peakIndex",
-                           ".applyRtAdjToChromPeaks",
-                           ".applyRtAdjustment",
-                           ".getChromPeakData",
-                           ".feature_values",
-                           ".groupval",
-                           "binYonX",
-                           "imputeLinInterpol",
-                           "colMax",
-                           "filtfft",
-                           "descendZero",
-                           "which.colMax",
-                           "breaks_on_nBins",
-                           ".aggregateMethod2int"
-                           
-                           
-)
+# user data will be saved on disc, to save mem
+.set.data <- function(my.dat, my.nm){
+   qs::qsave(my.dat, paste0(".", my.nm, ".qs"));
+}
 
-# Used to defined the parallel namespace for parameters optimization
-optimize_function_list <- c(list("PeakPicking_prep",
-                                 "Statistic_doe",
-                                 "SlaveCluster_doe",
-                                 "calculateSet_doe",
-                                 "SlaveCluster_doe",
-                                 "calculateSet_doe",
-                                 "calculatePPKs",
-                                 "calculateGPRT",
-                                 "calcPPS2",
-                                 "calcCV",
-                                 "resultIncreased_doe",
-                                 "calcRCS_GSValues",
-                                 "calcGaussianS",
-                                 "peaks_IPO",
-                                 "getClusterType",
-                                 "calcMaximumCarbon",
-                                 "getMaximumLevels",
-                                 "getMaxSettings",
-                                 "expand.grid.subset",
-                                 "typeCastParams",
-                                 "getCcdParameter",
-                                 "combineParams",
-                                 "getRGTVValues",
-                                 "findIsotopes.IPO",
-                                 "creatPeakTable",
-                                 "createModel",
-                                 "decode",
-                                 "decodeAll",
-                                 "encode",
-                                 "attachList",
-                                 "checkParams"),
-                            peak_function_list)
-
-
-
+.get.data <- function(my.nm){
+   return(qs::qread(paste0(".", my.nm, ".qs")));
+}
 
 #'Constructs a dataSet object for storing data 
 #'@description This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
@@ -160,6 +84,9 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   # for mummichog
   peakFormat <<- "mpt"  
 
+  # raw data processing
+  rawfilenms.vec <<- vector();
+
   # for meta-analysis
   mdata.all <<- list(); 
   mdata.siggenes <<- vector("list");
@@ -181,26 +108,25 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   # sqlite db path for gene annotation
   if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
-     url.pre <- "/home/glassfish/sqlite/";
+     url.pre <<- "/home/glassfish/sqlite/";
   }else if(file.exists("/home/jasmine/Downloads/sqlite/")){ #jasmine's local
-     url.pre <- "/home/jasmine/Downloads/sqlite/";
+     url.pre <<- "/home/jasmine/Downloads/sqlite/";
   }else if(file.exists("/Users/soufanom/Documents/Projects/gene-id-mapping/")){ # soufan laptop
-     url.pre <- "/Users/soufanom/Documents/Projects/gene-id-mapping/";
+     url.pre <<- "/Users/soufanom/Documents/Projects/gene-id-mapping/";
   }else if(file.exists("~/Documents/Projects/gene-id-mapping/")){
-     url.pre <- "~/Documents/Projects/gene-id-mapping/"
+     url.pre <<- "~/Documents/Projects/gene-id-mapping/"
   }else if(file.exists("/Users/xia/Dropbox/sqlite/")){ # xia local
-     url.pre <- "/Users/xia/Dropbox/sqlite/";
-  }else if(file.exists("/home/zzggyy/Downloads/netsqlite/")){
-     url.pre <<-"/home/zzggyy/Downloads/netsqlite/"; #zgy local)
-  }else if (packageVersion("MetaboAnalystR") < "3.0.2") {
-     url.pre <- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
-  }else {
-    url.pre <- "https://github.com/xia-lab/MetaboAnalystR3.0/raw/master/inst/database/sqlite/GeneID_25Species_JE/"
+     url.pre <<- "/Users/xia/Dropbox/sqlite/";
+  }else if(file.exists("/media/zzggyy/disk/sqlite/")){
+     url.pre <<-"/media/zzggyy/disk/sqlite/"; #zgy local)
+  }else if(file.exists("/home/zgy/sqlite/")){
+     url.pre <<-"/home/zgy/sqlite/"; #zgy local)
+  } else if(file.exists("/home/le/sqlite/GeneID_25Species_JE/")){# le local
+    url.pre <<-"/home/le/sqlite/GeneID_25Species_JE/";
+  }else{
+     url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
   }
-
-  api.base <<- "http://api.xialab.ca"
-  gene.sqlite.path <<- url.pre;
-
+    
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));
 }
@@ -401,6 +327,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     return(0);
   }
 
+  if(anal.type == "mummichog"){
+    mzs <- as.numeric(var.nms);
+    if(sum(is.na(mzs) > 0)){
+        AddErrMsg("Make sure that feature names are numeric values (mass or m/z)!");
+        return(0);
+    }
+  }
+
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
     na.inx <- is.na(iconv(smpl.nms));
@@ -488,201 +422,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   return(.set.mSet(mSetObj));
 }
 
-#'Read peak list files
-#'@description This function reads peak list files and fills the data into a dataSet object.  
-#'For NMR peak lists, the input should be formatted as two-columns containing numeric values (ppm, int).
-#'Further, this function will change ppm to mz, and add a dummy 'rt'.
-#'For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or
-#'the lists can be formatted as three-columns (mz, rt, int).
-#'@usage Read.PeakList(mSetObj=NA, foldername)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@param foldername Name of the folder containing the NMR or MS peak list files to read.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-
-Read.PeakList<-function(mSetObj=NA, foldername="upload"){
-  mSetObj <- .get.mSet(mSetObj);
-
-  if(.on.public.web){
-       dyn.load("../../rscripts/metaboanalystr/src/MetaboAnalyst.so")
-  }
-
-  msg <- c("The uploaded files are peak lists and intensities data.");
-  
-  # the "upload" folder should contain several subfolders (groups)
-  # each of the subfolder contains samples (.csv files)
-  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.name=TRUE)
-  if (length(files) == 0) {
-    AddErrMsg("No peak list files (.csv) were found.");
-    return(0);
-  }
-  
-  snames <- gsub("\\.[^.]*$", "", basename(files));
-  msg<-c(msg, paste("A total of ", length(files), "samples were found."));
-  
-  sclass <- gsub("^\\.$", "sample", dirname(files));
-  
-  scomp <- strsplit(substr(sclass, 1, min(nchar(sclass))), "");
-  scomp <- matrix(c(scomp, recursive = TRUE), ncol = length(scomp));
-  i <- 1
-  while(all(scomp[i,1] == scomp[i,-1]) && i < nrow(scomp)){
-    i <- i + 1;
-  }
-  i <- min(i, tail(c(0, which(scomp[1:i,1] == .Platform$file.sep)), n = 1) + 1)
-  if (i > 1 && i <= nrow(scomp)){
-    sclass <- substr(sclass, i, max(nchar(sclass)))
-  }
-  
-  # some sanity check before proceeds
-  sclass <- as.factor(sclass);
-  if(length(levels(sclass))<2){
-    AddErrMsg("You must provide classes labels (at least two classes)!");
-    return(0);
-  }
-  
-  # check for class labels at least three replicates per class
-  if(min(table(sclass)) < 3){
-    AddErrMsg("At least three replicates are required in each group!");
-    return(0);
-  }
-  
-  # check for unique sample names
-  if(length(unique(snames))!=length(snames)){
-    AddErrMsg("Duplcate sample names are not allowed!");
-    dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
-    AddErrMsg("Duplicate sample names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
-  }
-  
-  # change sample names to numbers
-  samp.num<-seq(1:length(snames));
-  names(samp.num)<-snames;
-  
-  # create a matrix "all.peaks" which is compatible with the xcmsSet@peaks matrix, so that the grouping algorithm can be used directly
-  # the matrix should have "mz", "rt", "into", "sample" - 4 columns used for grouping
-  # check 2 or 3 column
- 
-  ############## use try block to catch any error ##############
-  pks<- .readDataTable(files[1]);
-  if(class(pks) == "try-error") {
-    AddErrMsg("The CSV file is not formatted correctly!");
-    return(0);
-  };
-  pks <- as.matrix(pks);
-  ########################################################
-  
-  n.col<-ncol(pks);
-  if(n.col==2){
-    add=TRUE;
-  }else if(n.col==3){
-    add=FALSE;
-  }else{
-    AddErrMsg("The peak list file can only contain 2 or 3 columns.");
-    return(0);
-  }
-  
-  all.peaks<-NULL;
-  
-  for(i in 1:length(files)){
-    print(files[i]);
-    pks<- as.matrix(.readDataTable(files[i]));
-    if(ncol(pks)!=n.col){
-      AddErrMsg("The number of columns in each file are not the same!");
-      return(0);
-    }
-    
-    if(add){ # NMR ppm+int or MS mz+int
-      pks<-cbind(pks[,1], 1000, pks[,2],samp.num[i]);
-    }else{
-      pks<-cbind(pks,samp.num[i]);
-    }
-    all.peaks<-rbind(all.peaks, pks);
-  }
-
-
-  # make sure all values are numeric, sometimes users give other text values, need to exclude them
-  all.peaks <- apply(all.peaks, 2, as.numeric);
-  gd.inx <- complete.cases(all.peaks);
-  all.peaks <- all.peaks[gd.inx,]
-   
-  if(sum(!gd.inx) > 0){
-    msg<-c(msg, paste("<font color='red'>A total of", sum(!gd.inx), "peaks were excluded due to non-numeric values. </font>" ));
-  }
-  msg<-c(msg, paste("These samples contain a total of ", dim(all.peaks)[1], "peaks," ));
-  msg<-c(msg, paste("with an average of ", round(dim(all.peaks)[1]/length(files), 1), "peaks per sample" ));
-  
-  colnames(all.peaks)<-c("mz","rt","int","sample");
-  
-  peakSet<-list(
-    peaks = all.peaks,
-    ncol = n.col,
-    sampclass = sclass,
-    sampnames = snames
-  );
-
-  mSetObj$dataSet$peakSet <- peakSet;
-  mSetObj$msgSet$read.msg <- msg;
-  return(.set.mSet(mSetObj));
-}
-
-#'Read LC/GC-MS spectra (.netCDF, .mzXML, mzData)
-#'@description This function handles reading in LC/GC-MS spectra files and fills in the dataSet object.
-#'It uses functions from the XCMS package to perform peak detection and alignment (grouping).
-#'@usage Read.MSspec(mSetObj, folderName, profmethod, fwhm, bw)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param folderName the name of the folder containing the MS spectra
-#'@param profmethod specify the method to use for profile generation, supports "bin", "binlin",
-#'"binlinbase" and "intlin" 
-#'@param fwhm  specify the full width at half maximum of the matched filtration
-#'gaussian model peak
-#'@param bw define the bandwidth (standard deviation of the smoothing kernel) to be used
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-Read.MSspec<-function(mSetObj=NA, folderName, profmethod='bin', fwhm=30, bw=30){
-  
-  mSetObj <- .get.mSet(mSetObj);
-
-  if(.on.public.web){
-    load_xcms()
-  }
-
-  msfiles <- list.files(folderName, recursive=T, full.names=TRUE);
-  
-  # first do some sanity check b4 spending more time on that
-  # note the last level is the file names, previous one should be the class label
-  
-  dir.table <- t(data.frame(strsplit(msfiles, "/")));
-  cls.all <- dir.table[,ncol(dir.table)-1];
-  smpl.all <- dir.table[,ncol(dir.table)];
-  
-  # check for groups
-  if(length(levels(as.factor(cls.all))) < 2){
-    mSetObj$msgSet$read.msg <- "<font color='red'>At least two groups are required!</font>";
-    return(0);
-  }
-  
-  # check for unique sample names
-  if(length(unique(smpl.all))!=length(smpl.all)){
-    mSetObj$msgSet$read.msg <- "<font color='red'>Duplcate sample names are not allowed!</font>";
-    return(0);
-  }
-  
-  xset <- xcms::xcmsSet(msfiles, profmethod = profmethod, fwhm=fwhm);
-  msg<-c(paste("In total,", length(xset@filepaths), "sample files were detected. "),
-         paste("They are divided into ", length(levels(xset@phenoData[,1]))," classes: ", paste(levels(xset@phenoData[,1]), collapse=', '), ".", sep=""));
-  
-  xset <- xcms::group(xset, bw=bw);
-  mSetObj$dataSet$xset.orig <- xset;
-  mSetObj$msgSet$read.msg <- msg;
-  return(.set.mSet(mSetObj));
-}
-
 #'Read paired peak or spectra files
 #'@description This function reads paired peak lists or spectra files. The pair information
 #'is stored in a file where each line is a pair and names are separated by ":".
@@ -697,260 +436,10 @@ ReadPairFile <- function(filePath="pairs.txt"){
   labels <- as.vector(rbind(1:length(all.pairs), -(1:length(all.pairs))));
   all.names <- NULL;
   for(i in 1:length(all.pairs)){
-    all.names=c(all.names, unlist(strsplit(all.pairs[i],":"), use.names=FALSE));
+    all.names=c(all.names, unlist(strsplit(all.pairs[i],":", fixed=TRUE), use.names=FALSE));
   }
   names(labels) <- all.names;
   return(labels);
-}
-
-#' Read an mzTab tab separated file from the passed in file.
-#' Adapted from: https://github.com/lifs-tools/rmzTab-m/blob/master/R/MzTabReader.r
-#' @param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#' @param filename The name of the mzTab file to parse.
-#' @param identifier The identifier to be used when the table is parsed. Use "name"
-#' to use the chemical_name, "mass" to use the theoretical_neutral_mass and "sml_id"
-#' to use the SML_ID. If the number of missing name and mass entries is greater than 90%,
-#' then the SML_ID will be used.
-#' @export
-Read.MzTab <- function(mSetObj=NA, filename, identifier = "name") {
-
-  mSetObj <- .get.mSet(mSetObj);
-  
-  msg <- NULL;
-  
-  # read maximum number of columns in file
-  ncol <- max(stats::na.omit(utils::count.fields(file=filename, sep = "\t")))
-  
-  mztab.table = utils::read.table(file=filename, header=FALSE,
-                                  row.names=NULL, dec = ".", fill = TRUE,
-                                  col.names = paste0("V", seq_len(ncol)),
-                                  sep="\t", na.strings="null", quote = "",
-                                  stringsAsFactors = FALSE)
-  
-  # first sanity check
-  # check if contains MTD, SMH and SML
-  if(sum(sapply(c("MTD", "SMH", "SML"), grepl, unique(mztab.table$V1))) == 3){
-    msg <- ("mzTab format ok!")
-  }else{
-    AddErrMsg("Invalid mzTab format! Make sure mzTab file has been validated!")
-    return(0)
-  } 
-  
-  # first set up metadata
-  metadata <- mztab.table[startsWith(as.character(mztab.table$V1), "MTD"),]
-  variables <- metadata[grepl("study_variable", metadata$V2),]
-  
-  if(length(variables) < 1){
-    AddErrMsg("Invalid mzTab format! Make sure mzTab file has been validated!")
-    return(0)
-  }
-  
-  variables.groups <- unique(gsub("-.*", "", variables$V2))
-  group.names <- metadata$V3[match(variables.groups, metadata$V2)] 
-  
-  variables.list <- vector("list", length=length(variables.groups)) 
-  names(variables.list) <- variables.groups
-  
-  for(i in 1:length(variables.groups)){
-    group2match <- gsub("\\[", "\\\\[", variables.groups[i])
-    group2match <- gsub("\\]", "\\\\]", group2match)
-    all.info <- variables[grepl(group2match, variables$V2),] 
-    assay.refs <- all.info$V3[grepl("assay_refs", all.info$V2)]
-    variables.list[i] <- assay.refs
-  }
-  
-  # second set up small molecule summary
-  smh <- mztab.table[startsWith(as.character(mztab.table$V1), "SMH"),,drop=FALSE]
-  sml <- mztab.table[startsWith(as.character(mztab.table$V1), "SML"),,drop=FALSE]
-  
-  if(nrow(sml) < 1){
-    AddErrMsg("Invalid mzTab format! Make sure mzTab file has been validated!")
-    return(0)
-  }
-  
-  sml.data.frame <- data.frame(sml, stringsAsFactors = FALSE)
-  colnames(sml.data.frame) <- as.character(smh[1,])
-  
-  # sanity check to see if selected identifier is valid
-  # if more than 90% of names are null, switch to use m/z
-  # if more than 90% of m/z are null, switch to use sml_id
-  if(sum(is.null(sml.data.frame$chemical_name))/length(sml.data.frame$chemical_name) > 0.1) {
-    msg <- c(msg, "Too many missing chemical names, will use theoretical neutral mass instead!")
-    identifier <- "mass"
-  }else if(sum(is.null(sml.data.frame$theoretical_neutral_mass))/length(sml.data.frame$theoretical_neutral_mass) > 0.1){
-    msg <- c(msg, "Too many missing m/z, will use mzTab SML_ID instead!")
-    identifier <- "sml_id"
-  }else if(sum(is.na(sml.data.frame$theoretical_neutral_mass))/length(sml.data.frame$theoretical_neutral_mass) > 0.1){ # sometime it's NA
-    msg <- c(msg, "Too many missing m/z, will use mzTab SML_ID instead!")
-    identifier <- "sml_id"
-  }
-  
-  # deal with duplicates in selected ids
-  if(identifier == "name"){
-    id.og <- id <- sml.data.frame$chemical_name
-    dup.id <- paste(sml.data.frame$chemical_name, sml.data.frame$adduct_ions, sep="_")
-    id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] <- dup.id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] 
-  }else if(identifier == "mass"){
-    id.og <- id <- round(as.numeric(sml.data.frame$theoretical_neutral_mass), 5)
-    dup.id <- paste( round(as.numeric(sml.data.frame$theoretical_neutral_mass), 5), sml.data.frame$adduct_ions, sep="_")
-    id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] <- dup.id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] 
-  }else{
-    id <- sml.data.frame$SML_ID;
-  }
-  
-  # sanity check to see if selected id is valid
-  # if ids are still duplicates, switch to append sml_id
-  if(sum(duplicated(id)) > 1){
-    id <- paste(id.og, sml.data.frame$SML_ID, sep="_")
-  }
-  
-  assay_data <- trimws(unlist( lapply(variables.list, function(x) strsplit(x, "\\|")) ))
-  assay_data <- paste("abundance_", assay_data, sep="")
-  assay_df <- sml.data.frame[,match(assay_data, colnames(sml.data.frame))]
-  
-  assay_table <- cbind.data.frame(Sample=id, assay_df, stringsAsFactors = FALSE)
-
-  # replace colnames with actual variable groups
-  samples <- colnames(assay_table)[-1]
-  samples_base <- gsub("abundance_", "", samples)
-  variables.list <- lapply(variables.list, function(x) trimws(unlist(strsplit(x, "\\|"))))
-  
-  samples2groups <- vector(length = length(samples_base))
-  
-  for(i in 1:length(samples_base)){
-    samples2groups[i] <- group.names[sapply(variables.list, function(x) samples_base[i] %in% x)]
-  } 
-  
-  # remove blank from dataframe
-  blank.inx <- grepl("blank", samples2groups, ignore.case = TRUE)
-  
-  if(sum(blank.inx) > 0){
-    samples2groups <- samples2groups[!blank.inx]
-    assay_table <- cbind.data.frame(Sample=id, assay_df[,!blank.inx], stringsAsFactors = FALSE) 
-  }
-  
-  assay_table_all <- rbind.data.frame(c("Group", samples2groups), assay_table)
-  colnames(assay_table_all) <- gsub("\\[|\\]", "", colnames(assay_table_all))
-  
-  write.csv(assay_table_all, "mzTab_parsed.csv", row.names = F)
-  
-  mSetObj$dataSet$cls.type <- "disc";
-  mSetObj$dataSet$format <- "colu";
-  
-  dat <- assay_table_all 
-  msg <- c(msg, "Samples are in columns and features in rows.");
-  var.nms <- dat[-1,1];
-  dat[,1] <- NULL;
-  smpl.nms <- colnames(dat);
-  cls.lbl <- unname(unlist(dat[1,]));
-  conc <- t(dat[-1,]);
-  mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
- 
-  # free memory
-  dat <- NULL;
-  
-  msg <- c(msg, "The uploaded file is in the mzTab format.");
-  
-  # try to remove empty line if present
-  # identified if no sample names provided
-  
-  empty.inx <- is.na(smpl.nms) | smpl.nms == ""
-  if(sum(empty.inx) > 0){
-    msg <- c(msg, paste("<font color=\"red\">", sum(empty.inx), "empty rows</font> were detected and excluded from your data."));
-    smpl.nms <- smpl.nms[!empty.inx];
-    cls.lbl <-  cls.lbl[!empty.inx];
-    conc <- conc[!empty.inx, ];
-  }
-  
-  # try to check & remove empty lines if class label is empty
-  # Added by B. Han
-  empty.inx <- is.na(cls.lbl) | cls.lbl == ""
-  if(sum(empty.inx) > 0){
-    if(mSetObj$analSet$type != "roc"){
-      msg <- c(msg, paste("<font color=\"red\">", sum(empty.inx), "empty labels</font> were detected and excluded from your data."));
-      smpl.nms <- smpl.nms[!empty.inx];
-      cls.lbl <-  cls.lbl[!empty.inx];
-      conc <- conc[!empty.inx, ];
-    }else{
-      # force all NA to empty string, otherwise NA will become "NA" class label
-      cls.lbl[is.na(cls.lbl)] <- "";
-      msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
-    }
-  }
-  
-  # check for uniqueness of dimension name
-  if(length(unique(smpl.nms))!=length(smpl.nms)){
-    dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
-    AddErrMsg("Duplicate sample names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
-  }
-  
-  # try to remove check & remove empty line if feature name is empty
-  empty.inx <- is.na(var.nms) | var.nms == "";
-  if(sum(empty.inx) > 0){
-    msg <- c(msg, paste("<font color=\"red\">", sum(empty.inx), "empty features</font> were detected and excluded from your data."));
-    var.nms <- var.nms[!empty.inx];
-    conc <- conc[,!empty.inx];
-  }
-  
-  if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
-  }
-  
-  # now check for special characters in the data labels
-  if(sum(is.na(iconv(smpl.nms)))>0){
-    na.inx <- is.na(iconv(smpl.nms));
-    nms <- paste(smpl.nms[na.inx], collapse="; ");
-    AddErrMsg(paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
-    return(0);
-  }
-  
-  if(sum(is.na(iconv(var.nms)))>0){
-    na.inx <- is.na(iconv(var.nms));
-    nms <- paste(var.nms[na.inx], collapse="; ");
-    AddErrMsg(paste("No special letters (i.e. Latin, Greek) are allowed in feature names!", nms, collapse=" "));
-    return(0);
-  }
-  
-  # only keep alphabets, numbers, ",", "." "_", "-" "/"
-  smpl.nms <- CleanNames(smpl.nms, "sample_name");
-  
-  
-  # keep a copy of original names for saving tables 
-  orig.var.nms <- var.nms;
-  var.nms <- CleanNames(var.nms, "var_name"); # allow space, comma and period
-  names(orig.var.nms) <- var.nms;
-  
-  cls.lbl <- ClearStrings(as.vector(cls.lbl));
-  
-  # now assgin the dimension names
-  rownames(conc) <- smpl.nms;
-  colnames(conc) <- var.nms;
-  
-  # check for class labels at least two replicates per class
-  if(min(table(cls.lbl)) < 3){
-    AddErrMsg(paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
-    AddErrMsg("At least three replicates are required in each group!");
-    AddErrMsg("Or maybe you forgot to specify the data format?");
-    return(0);
-  }
-
-  if(length(unique(cls.lbl)) == 1){
-    AddErrMsg("At least two groups are required for statistical analysis!");
-    return(0);
-  }
-  
-  mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
-  mSetObj$dataSet$mumType <- "table";
-  mSetObj$dataSet$orig.var.nms <- orig.var.nms;
-  mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
-  mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
-                                          " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
-  return(.set.mSet(mSetObj));
 }
 
 #'Save the processed data with class names
@@ -969,23 +458,8 @@ SaveTransformedData <- function(mSetObj=NA){
   # mummichog data is not processed, so just mSet$orig and mSet$proc
   
   if(anal.type=="mummichog"){
-    
-    orig.data<- mSetObj$dataSet$mummi.orig;
-
-if(mSetObj$dataSet$mode == "positive"){
-    mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
-  }else if(mSetObj$dataSet$mode == "negative"){
-    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig) )
-  }else{
-    mSetObj$dataSet$pos_inx <- input$mode == "positive"
-  }
-    #colnames(orig.data) <- c("p.value", "m.z", "t.score")
-    write.csv(orig.data, file="data_original.csv", row.names = FALSE);
-    
-    proc.data<- mSetObj$dataSet$mummi.proc
-    #colnames(proc.data) <- c("p.value", "m.z", "t.score")
-    write.csv(proc.data, file="data_processed.csv", row.names = FALSE);
-    
+    fast.write.csv(mSetObj$dataSet$mummi.orig, file="data_original.csv", row.names = FALSE);
+    fast.write.csv(mSetObj$dataSet$mummi.proc, file="data_processed.csv", row.names = FALSE);
   }else{
     if(!is.null(mSetObj$dataSet[["orig"]])){
       lbls <- NULL;
@@ -1011,7 +485,7 @@ if(mSetObj$dataSet$mode == "positive"){
         orig.data<-t(orig.data);
       }
         
-      write.csv(orig.data, file="data_original.csv");
+      fast.write.csv(orig.data, file="data_original.csv");
       
       if(!is.null(mSetObj$dataSet[["proc"]])){
         
@@ -1042,7 +516,7 @@ if(mSetObj$dataSet$mode == "positive"){
         if(dim(proc.data)[2]>200){
           proc.data<-t(proc.data);
         }
-        write.csv(proc.data, file="data_processed.csv");
+        fast.write.csv(proc.data, file="data_processed.csv");
         
         if(!is.null(mSetObj$dataSet[["norm"]])){
           if(tsFormat){
@@ -1057,10 +531,10 @@ if(mSetObj$dataSet$mode == "positive"){
           # for ms peaks with rt and ms, insert two columns, without labels
           # note in memory, features in columns
           if(!is.null(mSetObj$dataSet$three.col)){ 
-            ids <- matrix(unlist(strsplit(colnames(norm.data), "/")),ncol=2, byrow=T);
+            ids <- matrix(unlist(strsplit(colnames(norm.data), "/", fixed=TRUE)),ncol=2, byrow=T);
             colnames(ids) <- c("mz", "rt");
             new.data <- data.frame(ids, t(norm.data));
-            write.csv(new.data, file="peak_normalized_rt_mz.csv");
+            fast.write.csv(new.data, file="peak_normalized_rt_mz.csv");
           }else{
             # convert back to original names
             if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
@@ -1070,7 +544,7 @@ if(mSetObj$dataSet$mode == "positive"){
             if(dim(norm.data)[2]>200){
               norm.data<-t(norm.data);
             }
-            write.csv(norm.data, file="data_normalized.csv");
+            fast.write.csv(norm.data, file="data_normalized.csv");
           }
         }
       }
@@ -1119,7 +593,7 @@ GetMetaCheckMsg <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
+PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1129,7 +603,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   }
   
   imgName <- gsub("\\/", "_",  cmpdNm);
-  imgName <- paste(imgName, "_summary_dpi", dpi, ".", format, sep="");
+  imgName <- paste(imgName, "_", version, "_summary_dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
     w <- 7.5;
@@ -1159,7 +633,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     axp=c(min(pt), max(pt[pt <= max(rg)]),length(pt[pt <= max(rg)]) - 1);
     
     # ggplot alternative
-    col <- unique(GetColorSchema(mSetObj));
+    col <- unique(GetColorSchema(mSetObj$dataSet$cls));
     
     df.orig <- data.frame(value = as.vector(mns), name = levels(mSetObj$dataSet$cls), up = as.vector(ups), down = as.vector(dns))
     p.orig <- ggplot(df.orig, aes(x = name, y = value, fill = name)) + geom_bar(stat = "identity", colour = "black") + theme_bw()
@@ -1210,13 +684,8 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     }
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     
-    groupNum <- length(levels(in.fac))
-    pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C",
-              "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", 
-              "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928");
-    col.fun <- grDevices::colorRampPalette(pal12)
-    group_colors <- col.fun(groupNum)
-    
+    col <- unique(GetColorSchema(in.fac));
+
     p_all <- list()
     
     for(lv in levels(out.fac)){
@@ -1229,7 +698,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     
     p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1) 
     p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
-    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.time <- p.time + scale_fill_manual(values=col) + theme(axis.text.x = element_text(angle=90, hjust=1))
     p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
     p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
     p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
@@ -1245,133 +714,6 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   }
 }
 
-#' Read RDS files from the internet
-#' @description Function downloads the required file and reads it only if not already in working directory.
-#' Need to specify the file URL and the destfile. 
-#' @param filenm Input the name of the file to download
-
-# read binary RDS files
-.read.metaboanalyst.lib <- function(filenm){
-  if(.on.public.web){
-    lib.path <- paste("../../libs/", filenm, sep="");
-    return(readRDS(lib.path));
-  }else{
-    lib.download <- FALSE;
-    if(!file.exists(filenm)){
-      lib.download <- TRUE;
-    }else{
-      time <- file.info(filenm)
-      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-      if(diff_time>30){
-        lib.download <- TRUE;
-      }
-    }
-    # Deal with curl issues
-    if(lib.download){
-      lib.url <- paste("https://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
-      tryCatch(
-        {
-          download.file(lib.url, destfile=filenm, method="curl")
-        }, warning = function(w){ print() },
-        error = function(e) {
-          print("Download unsucceful. Ensure that curl is downloaded on your computer.")
-          print("Attempting to re-try download using libcurl...")
-          download.file(lib.url, destfile=filenm, method="libcurl")
-        }
-      )
-    }
-    lib.path <- filenm;
-  }
-  
-  # Deal w. corrupt downloaded files
-  tryCatch({
-    my.lib <- readRDS(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
-    print("Loaded files from MetaboAnalyst web-server.")
-  },
-  warning = function(w) { print() },
-  error = function(err) {
-    print("Reading data unsuccessful, attempting to re-download file...")
-    tryCatch(
-      {
-        lib.url <- paste("https://www.metaboanalyst.ca/resources/libs/", filenm, sep="");
-        download.file(lib.url, destfile=filenm, method="curl")
-        my.lib <- readRDS(lib.path);
-        print("Loaded necessary files.")
-      },
-      warning = function(w) { print() },
-      error = function(err) {
-        print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
-      }
-    )
-  })
-  return(my.lib)
-}
-
-#'Load KEGG library
-#'@description Load different libraries
-# libType: kegg/metpa, kegg/jointpa, msets
-# libNm: for kegg org.code; for msets, specific names
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-LoadKEGGLib<-function(libType, libNm){
-    
-    destfile <- paste(libNm, ".rda", sep = "")
-    
-    if(.on.public.web){
-        my.rda  <- paste("../../libs/", libType, "/", destfile, sep="");
-     }else{
-        my.rda <- paste("https://www.metaboanalyst.ca/resources/libs/", libType, "/", destfile, sep="");
-    }
-
-    print(paste("adding library:", my.rda));
-    if(libType!= "msets"){
-        load_igraph();
-    }
-    if(.on.public.web){
-        load(my.rda, .GlobalEnv);
-    }else if(!file.exists(destfile)){
-        download.file(my.rda, destfile);
-        load(destfile, .GlobalEnv);
-    }else{
-        load(destfile, .GlobalEnv);  
-    }
-}
-
-# load old (2018 version)
-LoadKEGGLib_2018<-function(mSetObj=NA, libOpt){
-
-  mSetObj <- .get.mSet(mSetObj);
-  org.code <- mSetObj$org;
-  anal.type <- mSetObj$analSet$type;
-  
-  if(anal.type == ""){ #metpa
-     if(.on.public.web){
-        kegg.rda  <- paste("../../libs/kegg/2018/metpa/", org.code, ".rda", sep="");
-     }else{
-        kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/2018/metpa/", org.code, ".rda", sep="");
-     }
-  }else{ # joint pathway
-    if(.on.public.web){
-        kegg.rda <- paste("../../libs/kegg/2018/jointpa/", libOpt, "/", org.code, ".rda", sep=""); 
-    }else{
-        kegg.rda <- paste("https://www.metaboanalyst.ca/resources/libs/kegg/2018/jointpa/", libOpt, "/", org.code, ".rda", sep=""); 
-    }
-  }
-  print(paste("adding library:", kegg.rda));
-  destfile <- paste(org.code, ".rda", sep = "")
-  load_igraph();
-  if(.on.public.web){
-    load(kegg.rda, .GlobalEnv);
-  }else if(!file.exists(destfile)){
-    download.file(kegg.rda, destfile);
-    load(destfile, .GlobalEnv);
-  }else{
-    load(destfile, .GlobalEnv);  
-  }
-}
 
 ##############################################
 ##############################################
@@ -1381,81 +723,6 @@ LoadKEGGLib_2018<-function(mSetObj=NA, libOpt){
 
 GetErrMsg<-function(){
   return(err.vec);
-}
-
-GetKEGG.PathNames<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(names(metpa$path.ids));
-}
-
-#'Given a vector containing KEGGIDs, returns a vector of KEGG compound names
-#'@description This function, given a vector containing KEGGIDs, returns a vector of KEGG compound names.
-#'@param ids Vector of KEGG ids
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-KEGGID2Name<-function(ids){
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  hit.inx<- match(ids, cmpd.db$kegg);
-  return(cmpd.db[hit.inx, 3]);
-}
-
-#'Given a vector containing KEGG pathway IDs, return a vector containing SMPDB IDs (only for hsa)
-#'@description This function, when given a vector of KEGG pathway IDs, return a vector of SMPDB IDs (only for hsa).
-#'SMPDB standing for the Small Molecule Pathway Database, and hsa standing for human serum albumin. 
-#'@param ids Vector of KEGG pathway IDs
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-KEGGPATHID2SMPDBIDs<-function(ids){
-  hit.inx<-match(ids, path.map[,1]);
-  return(path.map[hit.inx, 3]);
-}
-
-#'Given a vector of HMDBIDs, return a vector of HMDB compound names
-#'@description This function, when given a vector of HMDBIDs, return a vector of HMDB compound names. HMDB standing
-#'for the Human Metabolome Database. 
-#'@param ids Input the vector of HMDB Ids
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-HMDBID2Name<-function(ids){
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  hit.inx<- match(ids, cmpd.db$hmdb);
-  return(cmpd.db[hit.inx, "name"]);
-}
-
-#'Given a vector of KEGGIDs, return a vector of HMDB ID
-#'@description This functionn, when given a vector of KEGGIDs, returns a vector of HMDB IDs. HMDB standing
-#'for the Human Metabolome Database. 
-#'@param ids Vector of KEGG ids
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-KEGGID2HMDBID<-function(ids){
-  
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  
-  hit.inx<- match(ids, cmpd.db$kegg);
-  return(cmpd.db[hit.inx, "hmdb_id"]);
-}
-
-#'Given a vector of HMDBIDs, return a vector of KEGG IDs
-#'@description This function, when given a vector of HMDBIDs, returns a vector of KEGG ID. HMDB standing
-#'for the Human Metabolome Database. 
-#'@param ids Input the vector of HMDB Ids
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-HMDBID2KEGGID<-function(ids){
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
-  hit.inx<- match(ids, cmpd.db$hmdb);
-  return(cmpd.db[hit.inx, "kegg_id"]);
 }
 
 #'Save compound name for mapping
@@ -1472,60 +739,37 @@ Setup.MapData <- function(mSetObj=NA, qvec){
   return(.set.mSet(mSetObj));
 }
 
-#'Save adduct names for mapping
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param qvec Input the vector to query
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-Setup.AdductData <- function(mSetObj=NA, qvec){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$adduct.list <- qvec;
-  mSetObj$adduct.custom <- TRUE
-  return(.set.mSet(mSetObj));
-}
-
-#'Save concentration data
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param conc Input the concentration data
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-Setup.ConcData<-function(mSetObj=NA, conc){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$norm <- conc;
-  return(.set.mSet(mSetObj));
-}
-
-#'Save biofluid type for SSP
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param type Input the biofluid type
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-Setup.BiofluidType<-function(mSetObj=NA, type){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$biofluid <- type;
-  return(.set.mSet(mSetObj));
+GetMetaInfo <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    if(mSetObj$dataSet$design.type == "regular"){
+        return("Group");
+    }else{
+        return(c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl));
+    }
 }
 
 # all groups
-GetGroupNames <- function(mSetObj=NA){
+GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
   mSetObj <- .get.mSet(mSetObj);
-  cls.lbl <- mSetObj$dataSet$prenorm.cls;
-  if(mSetObj$analSet$type=="roc"){
-    empty.inx <- is.na(cls.lbl) | cls.lbl == "";
-    # make sure re-factor to drop level
-    lvls <- levels(factor(cls.lbl[!empty.inx]));
+  if(mSetObj$dataSet$design.type == "regular"){
+    cls.lbl <- mSetObj$dataSet$prenorm.cls;
+    if(mSetObj$analSet$type=="roc"){
+        empty.inx <- is.na(cls.lbl) | cls.lbl == "";
+        # make sure re-factor to drop level
+        my.cls <- factor(cls.lbl[!empty.inx]);
+    }else{
+        my.cls <- cls.lbl;
+    }
   }else{
-    lvls <- levels(cls.lbl);
+    if(exp.fac == mSetObj$dataSet$facA.lbl){
+        my.cls <- mSetObj$dataSet$facA;  
+    }else{
+        my.cls <- mSetObj$dataSet$facB;
+    }
+    my.fac <- exp.fac;
   }
-  return(lvls);
+  current.cls <<- my.cls;
+  return(levels(my.cls));
 }
 
 # groups entering analysis
@@ -1539,26 +783,12 @@ GetLiteralGroupNames <- function(mSetObj=NA){
   as.character(mSetObj$dataSet$prenorm.cls);
 }
 
-#'Set organism for further analysis
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param org Set organism ID
-#'@export
-SetOrganism <- function(mSetObj=NA, org){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$org <- org;
-  return(.set.mSet(mSetObj))
+GetFilesToBeSaved <-function(naviString){
+    partialToBeSaved <- c("Rload.RData");
+    return(unique(partialToBeSaved));
 }
 
-
-convertPNG2PDF <- function(filenm){
-  library(png)
-  
-  nm <- strsplit(filenm, "[.]")[[1]][1]
-  img <- readPNG(filenm)
-
-  pdf(paste0(nm, ".pdf"))
-  grid::grid.raster(img)
-  dev.off()  
-  
-  return(1)
+GetExampleDataPath<-function(naviString){
+    return(url.pre);
 }
+

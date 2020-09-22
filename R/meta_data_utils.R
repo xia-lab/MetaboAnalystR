@@ -41,7 +41,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
 
 #'Register data in R
 #'@description When there are multiple datasets, record their name and save the inputted data as
-#'a .RDS file to save memory. Note, the memory will only contain one mSetObj$dataSet object. By default the last one
+#'a .qs file to save memory. Note, the memory will only contain one mSetObj$dataSet object. By default the last one
 #'will be the most recent/current dataSet object. Users can switch which data to load into memory.
 #'@param mSetObj Input name of the created mSet Object
 #'@param dataSet Input dataset to be registered in R. 
@@ -54,7 +54,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
   
   mSetObj <- .get.mSet(mSetObj);
   dataName <- dataSet$name;
-  saveRDS(dataSet, file=dataName);
+  qs::qsave(dataSet, file=dataName);
   dataSet <<- dataSet; # redundant? have mSetObj$dataSet = 2 copies
   mdata.all[[dataName]] <<- 1;
   return(1);
@@ -76,7 +76,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -359,7 +359,7 @@ PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -397,8 +397,8 @@ PerformDataNormalization <- function(data, norm.opt){
   row.nms <- rownames(data);
   col.nms <- colnames(data);
   if(norm.opt=="log"){
-    data <- log2(data);
-    msg <- paste(msg, "Log2 transformation.", collapse=" ");
+    data <- log10(data);
+    msg <- paste(msg, "Log10 transformation.", collapse=" ");
   }else if(norm.opt=="vsn"){
     data <- limma::normalizeVSN(data);
     msg <- paste(msg, "VSN normalization.", collapse=" ");
@@ -431,7 +431,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -448,7 +448,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   # rm .txt suffix for new names
   shortNm <- substring(dataName, 0, nchar(dataName)-4);
   fileName <- paste("SigFeatures_", shortNm, ".csv",sep="")
-  write.csv(signif(res[,-1],5), file=fileName);
+  fast.write.csv(signif(res[,-1],5), file=fileName);
   
   sig.count <- nrow(res);
   non.sig.count <- nrow(res.all)-sig.count;
@@ -574,7 +574,7 @@ GetMetaSanityCheckMsg <- function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }
   return(dataSet$check.msg);
 } 
@@ -584,7 +584,7 @@ GetDataDims <- function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }
   data <- dataSet$data;
   dm <- dim(data);
@@ -598,7 +598,7 @@ GetMetaGroupNames <-function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
   }
   return(levels(dataSet$cls));
 }
@@ -673,6 +673,6 @@ SetupMetaStats <- function(BHth){
   # save the result
   res <- cbind(ID=metade.genes, meta.mat);
   
-  write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
+  fast.write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
 }
 

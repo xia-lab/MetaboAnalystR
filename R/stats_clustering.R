@@ -54,7 +54,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   par(cex=0.8, mar=c(4,2,2,8));
   if(mSetObj$dataSet$cls.type == "disc"){
     clusDendro <- as.dendrogram(hc_tree);
-    cols <- GetColorSchema(mSetObj);
+    cols <- GetColorSchema(mSetObj$dataSet$cls);
     names(cols) <- rownames(hc.dat);
     labelColors <- cols[hc_tree$order];
     colLab <- function(n){
@@ -105,7 +105,6 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
   return(.set.mSet(mSetObj));
 }
 
-
 #'SOM Plot
 #'@description Plot SOM map for  less than 20 clusters
 #'@param mSetObj Input name of the created mSet Object
@@ -115,16 +114,26 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param colpal Character, input "default" to use the default ggplot color scheme or "colblind" to use
+#'the color-blind friendly palette.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import ggplot2
 #'@export
 #'
-PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal = "default", facet=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
-  xdim<-mSetObj$analSet$som$xdim;
-  ydim<-mSetObj$analSet$som$ydim;
+  
+  if(.on.public.web){
+    load_ggplot()
+    load_data.table()
+  }
+  
+  xdim <- mSetObj$analSet$som$xdim;
+  ydim <- mSetObj$analSet$som$ydim;
+  
   total<-xdim*ydim;
   if(total>20) { return();}
   
@@ -132,6 +141,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   clust<-mSetObj$analSet$som$visual;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
@@ -141,28 +151,61 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }
   h <- w*8/9;
   
+  if(xdim > 5){
+    w <- w + 7.5
+  }else if(xdim > 3){
+    w <- w + 5
+  }else if(xdim > 1){
+    w <- w + 3
+  }
+  
   mSetObj$imgSet$som <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mfrow = GetXYCluster(total), mar=c(5,4,2,2));
-  for (i in 0:(xdim-1)) {
-    xTrue<-clust$x == i;
-    for (j in 0:(ydim-1)) {
-      yTrue<-clust$y == j;
-      sel.inx<-xTrue & yTrue; # selected row
-      if(sum(sel.inx)>0){ # some cluster may not contain any member
-        matplot(t(mSetObj$dataSet$norm[sel.inx, ]), type="l", col='grey', axes=F, ylab=ylabel,
-                main=paste("Cluster(", i, ",", j,")", ", n=", sum(sel.inx), sep=""))
-        lines(apply(mSetObj$dataSet$norm[sel.inx, ], 2, median), type="l", col='blue', lwd=1);
-      }else{ # plot a dummy 
-        plot(t(mSetObj$dataSet$norm[1, ]), type="n", axes=F, ylab=ylabel,
-             main=paste("Cluster(", i, ",", j,")",", n=", sum(sel.inx),sep=""))
-      }
-      axis(2);
-      axis(1, 1:ncol(mSetObj$dataSet$norm), substr(colnames(mSetObj$dataSet$norm), 1, 7), las=2);
-    }
+  ### NEW PLOTS
+  group <- paste(clust[,1], clust[,2], sep = "_")
+  clust.num <- length(unique(group))
+  
+  df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = group, clust[,-3], mSetObj$dataSet$norm, check.names = F)
+  long <- melt(setDT(df), id.vars = c("Samples", "Cluster", "x", "y"), variable.name = "Feature")
+  long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
+  long.dt <- setDF(long.dt)
+  
+  p <- ggplot(long.dt, aes(x = Feature, y = median, group = Cluster, color = Cluster)) + 
+    geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=Cluster), linetype=0, alpha = 0.25) + 
+    geom_line() + xlab("") + ylab("Concentration") + guides(x =  guide_axis(angle = 90)) +
+    theme(
+      # Remove panel border
+      panel.border = element_blank(),  
+      # Remove panel grid lines
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      # Remove panel background
+      panel.background = element_blank(),
+      # Add axis line
+      axis.line = element_line(colour = "grey"))
+  
+  if(facet){
+    p <- p + facet_grid(y ~ x)
   }
-  dev.off();
+  
+  if(colpal == "colblind"){
+    if(clust.num <= 18){ # update color and respect default
+      dist.cols <- cb_pal_18[1:clust.num];
+    }else{
+      dist.cols <- colorRampPalette(cb_pal_18)(clust.num);
+    }
+    p <- p + scale_fill_manual(values=dist.cols) + scale_color_manual(values=dist.cols)
+  }
+  
+  if(xdim < 3){
+    p <- p + theme(text = element_text(size=10))
+  }else{
+    p <- p + theme(text = element_text(size=8))
+  }
+  
+  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   
   return(.set.mSet(mSetObj));
 }
@@ -191,12 +234,19 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param colpal Character, input "default" to use the default ggplot color scheme or "colblind" to use
+#'the color-blind friendly palette.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal="default", facet=FALSE){
+
+  if(.on.public.web){
+    load_ggplot()
+    load_data.table()
+  }
   
   mSetObj <- .get.mSet(mSetObj);
   clust.num <- max(mSetObj$analSet$kmeans$cluster);
@@ -216,16 +266,137 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$kmeans <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mfrow = GetXYCluster(clust.num), mar=c(5,4,2,2));
-  for (loop in 1:clust.num) {
-    matplot(t(mSetObj$dataSet$norm[mSetObj$analSet$kmeans$cluster==loop,]), type="l", col='grey', ylab=ylabel, axes=F,
-            main=paste("Cluster ",loop, ", n=", mSetObj$analSet$kmeans$size[loop], sep=""))
-    lines(apply(mSetObj$dataSet$norm[mSetObj$analSet$kmeans$cluster==loop,], 2, median), type="l", col='blue', lwd=1);
-    axis(2);
-    axis(1, 1:ncol(mSetObj$dataSet$norm), substr(colnames(mSetObj$dataSet$norm), 1, 7), las=2);
+  df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = as.factor(mSetObj$analSet$kmeans$cluster), mSetObj$dataSet$norm, check.names = F)
+  long <- melt(setDT(df), id.vars = c("Samples","Cluster"), variable.name = "Feature")
+  long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
+  long.dt <- setDF(long.dt)
+  
+  p <- ggplot(long.dt, aes(x = Feature, y = median, group = Cluster, color = Cluster)) + 
+    geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=Cluster), linetype=0, alpha = 0.25) + 
+    geom_line() + xlab("") + ylab("Concentration") + guides(x =  guide_axis(angle = 90)) +
+    theme(
+      # Remove panel border
+      panel.border = element_blank(),  
+      # Remove panel grid lines
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      # Remove panel background
+      panel.background = element_blank(),
+      # Add axis line
+      axis.line = element_line(colour = "grey")
+    )
+  
+  if(facet){
+    p <- p + facet_grid(Cluster ~ .)
   }
-  dev.off();
+  
+  if(colpal == "colblind"){
+    if(clust.num <= 18){ # update color and respect default
+      dist.cols <- cb_pal_18[1:clust.num];
+    }else{
+      dist.cols <- colorRampPalette(cb_pal_18)(clust.num);
+    }
+    p <- p + scale_fill_manual(values=dist.cols) + scale_color_manual(values=dist.cols)
+  }
+
+  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot K-means summary PCA plot
+#'@description Plot K-means summary PCA plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@import ggplot2
+#'@export
+
+PlotClustPCA <- function(mSetObj, imgName, format="png", dpi=72, width=NA, colpal="default", anal="km", 
+                         labels = "T"){
+  
+  if(.on.public.web){
+    load_ggplot()
+    load_data.table()
+  }
+
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(anal == "km"){
+    clust.num <- max(mSetObj$analSet$kmeans$cluster);
+    clusters <- as.factor(mSetObj$analSet$kmeans$cluster)
+    mSetObj$imgSet$kmeans.pca <- imgName;
+  }else{
+    clust<-mSetObj$analSet$som$visual;
+    clusters <- paste(clust[,1], clust[,2], sep = "_")
+    clust.num <- length(unique(clusters))
+    mSetObj$imgSet$som.pca <- imgName;
+  }
+  
+  if(clust.num>20) return();
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*8/9;
+  
+  data <- mSetObj$dataSet$norm
+  
+  # Set class labels
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  res.pca <- stats::prcomp(data, scale = FALSE, center = TRUE)
+  
+  sum.pca <- summary(res.pca);
+  imp.pca <- sum.pca$importance;
+  var.pca <- imp.pca[2,];
+  
+  df_out <- as.data.frame(res.pca$x)
+  df_out$Cluster <- clusters
+  df_out$Class <- cls
+  
+  text.lbls <- substr(names(res.pca$x[,1]), 1, 14)
+  
+  xlabel = paste("PC",1, "(", round(100*var.pca[1],1), "%)");
+  ylabel = paste("PC",2, "(", round(100*var.pca[2],1), "%)");
+  
+  p <- ggplot(df_out, aes(x=PC1, y=PC2, color=Class))
+  p <- p + geom_point(size = 5) + xlab(xlabel) + ylab(ylabel) + theme_bw() 
+  p <- p + stat_ellipse(geom = "polygon", alpha = 0.15, aes(group = Cluster, fill = Cluster))
+  
+  if(colpal == "colblind"){
+    if(clust.num <= 18){ # update color and respect default
+      dist.cols <- cb_pal_18[1:clust.num];
+    }else{
+      dist.cols <- colorRampPalette(cb_pal_18)(clust.num);
+    }
+    p <- p + scale_fill_manual(values = dist.cols) + scale_color_manual(values = dist.cols)
+  }
+
+  if(labels == "T"){
+    p <- p + geom_text(aes(label = text.lbls), vjust="inward", hjust="inward")
+  }
+  
+  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   return(.set.mSet(mSetObj));
 }
 
@@ -337,7 +508,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@export
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, smplDist, 
-                        clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NA, border=T, grp.ave=F){
+                        clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NULL, border=T, grp.ave=F){
   filenm = paste0(imgName, ".json")
   mSetObj <- .get.mSet(mSetObj);
   
@@ -348,10 +519,10 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
   }else{
-    my.data <- mSetObj$dataSet$prenorm;
+    my.data <- qs::qread("prenorm.qs");
   }
   
-  if(is.na(var.inx)){
+  if(is.null(var.inx)){
     hc.dat<-as.matrix(my.data);
   }else{
     hc.dat<-as.matrix(my.data[,var.inx]);
@@ -453,14 +624,9 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
     rownames(annotation) <- rownames(hc.dat); 
     
     # set up color schema for samples
-    if(palette == "gray"){
-      cols <- GetColorSchema(mSetObj, T);
-      uniq.cols <- unique(cols);
-    }else{
-      cols <- GetColorSchema(mSetObj);
-      uniq.cols <- unique(cols);
-    }
-    
+    cols <- GetColorSchema(mSetObj$dataSet$cls, palette == "gray");
+    uniq.cols <- unique(cols);
+
     if(mSetObj$dataSet$type.cls.lbl=="integer"){
       cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
     }else{
@@ -483,11 +649,11 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
              color = colors,
              annotation_colors = ann_colors);
   dat = t(hc.dat)
-if(scaleOpt == "row"){
-  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
-}else{
-  res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
-}
+  if(scaleOpt == "row"){
+    res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+  }else{
+    res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
+  }
   colnames(dat) = NULL
   netData <- list(data=res, annotation=annotation, smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
   sink(filenm);
@@ -532,7 +698,7 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   yTrue <- clust$y == j;
   hit.inx <- xTrue & yTrue;
   
-  all.cols <- GetColorSchema(mSetObj);
+  all.cols <- GetColorSchema(mSetObj$dataSet$cls);
   paste("<font color=\"", all.cols[hit.inx], "\">", rownames(mSetObj$dataSet$norm)[hit.inx], "</font>",collapse =", ");
 }
 
@@ -592,7 +758,7 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'License: GNU GPL (>= 2)
 GetKMClusterMembers <- function(mSetObj=NA, i){
   mSetObj <- .get.mSet(mSetObj);
-  all.cols <- GetColorSchema(mSetObj);
+  all.cols <- GetColorSchema(mSetObj$dataSet$cls);
   hit.inx <- mSetObj$analSet$kmeans$cluster== i;
   
   paste("<font color=\"", all.cols[hit.inx], "\">", rownames(mSetObj$dataSet$norm)[hit.inx], "</font>",collapse =", ");

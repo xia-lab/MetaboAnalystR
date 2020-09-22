@@ -4,85 +4,10 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-LoadKEGGLib.gene<-function(org.code){
-    kegg.path <- paste(libs.path, org.code, "/kegg.rds", sep="");
-    kegg.anot <- readRDS(kegg.path)
-    current.setlink <- kegg.anot$link;
-    current.mset <- kegg.anot$sets;
-    set.ids<- names(current.mset); 
-    names(set.ids) <- names(current.mset) <- kegg.anot$term;
-
-    current.setlink <<- current.setlink;
-    current.setids <<- set.ids;
-    current.geneset <<- current.mset;
-    current.universe <<- unique(unlist(current.geneset));
-}
-
-LoadREACTOMELib.gene<-function(org.code){
-
-    reactome.path <- paste(libs.path, org.code, "/reactome.rds", sep="");
-    reactome.anot <- readRDS(reactome.path)
-    current.mset <- reactome.anot$sets;
-    set.ids<- names(current.mset); 
-    names(set.ids) <- names(current.mset) <- reactome.anot$term;
-    current.setlink <<- reactome.anot$link;
-    current.setids <<- set.ids;
-    current.geneset <<- current.mset;
-    current.universe <<- unique(unlist(current.geneset));
-}
-
-LoadMotifLib<-function(org.code){
-    motif.path <- paste(libs.path, org.code, "/motif_set.rds", sep="");
-    motif_set<-readRDS(motif.path);
-    current.mset <- motif_set$set;
-    set.ids<- names(current.mset); 
-    names(set.ids) <- names(current.mset) <- motif_set$term;
-    current.setlink <<- motif_set$link;
-    current.setids <<- set.ids;
-    current.geneset <<- current.mset;
-    current.universe <<- unique(unlist(current.geneset));
-}
-
-LoadGOLib<-function(org.code, onto){
-    go.path <- paste(libs.path, org.code, "/go_", tolower(onto), ".rds", sep="");
-    if(tolower(onto) == "bp"){
-        go_bp <- readRDS(go.path);
-        if(is.null(names(go_bp))){ # new go lib does not give names
-            names(go_bp) <- c("link", "term", "sets");
-        }
-        current.link <- go_bp$link;
-        current.mset <- go_bp$sets;
-        set.ids<- names(current.mset); 
-        names(set.ids) <- names(current.mset) <- go_bp$term;
-    }else if(tolower(onto) == "mf"){
-        go_mf <- readRDS(go.path);
-        if(is.null(names(go_mf))){
-            names(go_mf) <- c("link", "term", "sets");
-        }
-        current.link <- go_mf$link;
-        current.mset <- go_mf$sets;
-        set.ids<- names(current.mset); 
-        names(set.ids) <- names(current.mset) <- go_mf$term;
-    }else{
-        go_cc <- readRDS(go.path);
-        if(is.null(names(go_cc))){
-            names(go_cc) <- c("link", "term", "sets");
-        }
-        current.link <- go_cc$link;
-        current.mset <- go_cc$sets;
-        set.ids<- names(current.mset); 
-        names(set.ids) <- names(current.mset) <- go_cc$term;
-    }
-    current.setlink <<- current.link;
-    current.setids <<- set.ids;
-    current.geneset <<- current.mset;
-    current.universe <<- unique(unlist(current.geneset));
-}
-
 # note: hit.query, resTable must synchronize
 PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
     # prepare query
-    ora.vec <- unlist(strsplit(IDs, "; "));
+    ora.vec <- unlist(strsplit(IDs, "; ", fixed=TRUE));
     names(ora.vec) <- as.character(ora.vec);
     mSetObj <- .get.mSet(mSetObj);
     res <- PerformEnrichAnalysis(mSetObj$org, file.nm, fun.type, ora.vec);
@@ -93,16 +18,7 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
 
-    # prepare lib
-    if(tolower(fun.type) == 'kegg'){ 
-        LoadKEGGLib.gene(org.code);
-    }else if(tolower(fun.type) == 'reactome'){ 
-        LoadREACTOMELib.gene(org.code);
-    }else if(tolower(fun.type) == 'motif'){ 
-        LoadMotifLib(org.code);
-    }else{ # GO
-        LoadGOLib(org.code,fun.type);
-    }
+    .load.enrich.lib(org.code, fun.type);
 
     # prepare query
     ora.nms <- names(ora.vec);
@@ -200,6 +116,40 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     fun.pval <<- resTable[,5];
     hit.num <<- resTable[,4];
     csv.nm <- paste(file.nm, ".csv", sep="");
-    write.csv(resTable, file=csv.nm, row.names=F);
+    fast.write.csv(resTable, file=csv.nm, row.names=F);
     return(1);
+}
+
+# these are geneset libraries
+.load.enrich.lib<-function(org.code, fun.type){
+    # prepare lib
+    is.go <- FALSE;
+    if(tolower(fun.type) == 'kegg'){ 
+        nm <- "kegg";
+    }else if(tolower(fun.type) == 'reactome'){ 
+        nm <- "reactome";
+    }else if(tolower(fun.type) == 'motif'){ 
+        nm <- "motif_set";
+    }else{ # GO
+        is.go <- TRUE;
+        nm <- paste0("go_", tolower(fun.type));
+    }
+    lib.nm <- paste0(nm, ".qs");
+    sub.dir <- paste0("genesets/", org.code);
+    my.lib <- .get.my.lib(lib.nm, sub.dir);
+    if(is.go){ # fix some issue in go lib
+        if(is.null(names(my.lib))){
+            names(my.lib) <- c("link", "term", "sets");
+        }
+    }
+
+    current.setlink <- my.lib$link;
+    current.mset <- my.lib$sets;
+    set.ids<- names(current.mset); 
+    names(set.ids) <- names(current.mset) <- my.lib$term;
+
+    current.setlink <<- current.setlink;
+    current.setids <<- set.ids;
+    current.geneset <<- current.mset;
+    current.universe <<- unique(unlist(current.geneset));
 }

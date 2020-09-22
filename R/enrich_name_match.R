@@ -76,11 +76,15 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   match.values <- vector(mode='character', length=length(qvec)); # the best matched values (hit names), initial ""
   match.state <- vector(mode='numeric', length=length(qvec));  # match status - 0, no match; 1, exact match; initial 0 
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
   
   if(q.type == "hmdb"){
     n <- 5 # Number of digits for V3 of HMDB
-    hmdb.digits <- as.vector(sapply(cmpd.db$hmdb, function(x) strsplit(x, "HMDB")[[1]][2]))
+    hmdb.digits <- as.vector(sapply(cmpd.db$hmdb, function(x) strsplit(x, "HMDB", fixed=TRUE)[[1]][2]))
     hmdb.v3.ids <- paste0("HMDB", substr(hmdb.digits, nchar(hmdb.digits)-n+1, nchar(hmdb.digits)))
     hit.inx.v3 <- match(tolower(qvec), tolower(hmdb.v3.ids));
     hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
@@ -115,10 +119,16 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
     match.values <- cmpd.db$name[hit.inx];
     match.state[!is.na(hit.inx)] <- 1;
     
-    # then try to find exact match to synanyms for the remaining unmatched query names one by one
-    syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
+    # then try to find exact match to synonyms for the remaining unmatched query names one by one
+    if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+      syn.db <- .get.my.lib("class_syn_nms_2020.qs")
+    }else{
+      syn.db <- .get.my.lib("syn_nms.qs")
+    }
+
     syns.list <-  syn.db$syns.list;
     todo.inx <-which(is.na(hit.inx));
+
     if(length(todo.inx) > 0){
       for(i in 1:length(syns.list)){
         syns <-  syns.list[[i]];
@@ -187,7 +197,13 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 PerformMultiMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
+
   matched.inx <- which(cmpd.db$kegg %in% q);
   if(length(matched.inx) > 0) {
     # record all the candidates,
@@ -209,12 +225,22 @@ PerformApproxMatch <- function(mSetObj=NA, q){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
+
   # only for none lipids
   nonLipidInx <- cmpd.db$lipid == 0;
   com.nms <- cmpd.db$name[nonLipidInx];
   
-  syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    syn.db <- .get.my.lib("class_syn_nms_2020.qs")
+  }else{
+    syn.db <- .get.my.lib("syn_nms.qs")
+  }
+
   syns.vec <- syn.db$syns.vec[nonLipidInx];
   syns.list <- syn.db$syns.list[nonLipidInx];
   
@@ -305,7 +331,13 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   can_mat <- mSetObj$dataSet$candidates;
   
   if(!is.null(can_mat)){
-    cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+
+    if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    }else{
+      cmpd.db <- .get.my.lib("compound_db.qs");
+    }
+
     can_inx <- which(can_mat[,2] == can_nm);
     
     if(can_inx <= nrow(can_mat)){
@@ -336,7 +368,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
                                 hit$smiles,
                                 1);
       }
-      write.csv(csv.res, file="name_map.csv", row.names=F);
+      fast.write.csv(csv.res, file="name_map.csv", row.names=F);
       mSetObj$dataSet$map.table <- csv.res;
     }else{ #no match
       mSetObj$name.map$hit.inx[query_inx] <- 0;
@@ -380,7 +412,12 @@ GetCandidateList <- function(mSetObj=NA){
     # the unmatched will be highlighted in different background
     
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);
-    cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+    
+    if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    }else{
+      cmpd.db <- .get.my.lib("compound_db.qs");
+    }
     
     # need to exclude lipids, to be consistent with approx matching part so that same index can be used to fetch db entries
     nonLipidInx <- cmpd.db$lipid == 0;
@@ -445,7 +482,11 @@ GetFinalNameMap <- function(mSetObj=NA){
   nm.mat <- matrix(nrow=length(qvec), ncol=4);
   colnames(nm.mat) <- c("query", "hmdb",  "kegg", "hmdbid");
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
   
   for (i in 1:length(qvec)){
     hit <-cmpd.db[hit.inx[i], ,drop=F];
@@ -510,7 +551,11 @@ CreateMappingResultTable <- function(mSetObj=NA){
   csv.res <- matrix("", nrow=length(qvec), ncol=9);
   colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "SMILES", "Comment");
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
   
   for (i in 1:length(qvec)){
     if(match.state[i]==1){
@@ -548,7 +593,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
   
   # store the value for report
   mSetObj$dataSet$map.table <- csv.res;
-  write.csv(csv.res, file="name_map.csv", row.names=F);
+  fast.write.csv(csv.res, file="name_map.csv", row.names=F);
   
   if(.on.public.web){
     .set.mSet(mSetObj);

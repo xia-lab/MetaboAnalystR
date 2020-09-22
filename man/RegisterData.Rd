@@ -13,7 +13,7 @@ RegisterData(mSetObj = NA, dataSet)
 }
 \description{
 When there are multiple datasets, record their name and save the inputted data as
-a .RDS file to save memory. Note, the memory will only contain one mSetObj$dataSet object. By default the last one
+a .qs file to save memory. Note, the memory will only contain one mSetObj$dataSet object. By default the last one
 will be the most recent/current dataSet object. Users can switch which data to load into memory.
 }
 \author{

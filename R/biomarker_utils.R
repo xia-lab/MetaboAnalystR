@@ -184,7 +184,6 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   # auc
   auc <- caTools::colAUC(x, y, plotROC=F)[1,];
-  
   if(.on.public.web & RequireFastUnivTests(mSetObj)){
      res <- PerformFastUnivTests(x, y);
      ttp <- res[,2];
@@ -212,6 +211,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   if(mSetObj$dataSet$roc_cols > 1){ # dont need to calc kmeans if only 1 metabolite!
     # now do k-means to measure their expression similarities
+
     kms <- ComputeKmeanClusters(t(x), clust.num);
     feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
     rownames(feat.rank.mat) <- colnames(x);
@@ -226,7 +226,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
   
   if(mSetObj$analSet$mode == "univ"){
-    write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+    fast.write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
   }
   return(.set.mSet(mSetObj));  
 }
@@ -234,9 +234,16 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
 
 # return a vector contain the cluster index 
 ComputeKmeanClusters <- function(data, clust.num){
-  set.seed(28051968);
-  kmeans.res <- kmeans(data, clust.num, nstart=100);
-  return(kmeans.res$cluster);
+    set.seed(28051968);
+    # if feature number is too low, change clust.num
+    if(nrow(data) <= clust.num){
+        clust.num <- nrow(data)-1;
+    }
+    if(clust.num < 2){
+        clust.num <- 1;
+    }
+    kmeans.res <- kmeans(data, clust.num, nstart=100);
+    return(kmeans.res$cluster);
 }
 
 # recomputing based on new cluster number
@@ -537,7 +544,6 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom caret plsda
 Predict.class <- function(x.train, y.train, x.test, clsMethod="pls", lvNum, imp.out=F){
   
   # first convert class label to 0/1 so convert prob-> class will be easier
@@ -705,6 +711,11 @@ genLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
   names.x.origin <- names(x);
   names(x) <- paste0("V", 1:(ncol(x)));
   names(x.cv.test) <- names(x);
+
+  # glm can only take numeric + factor
+  if(class(y) == "character"){
+    y <- as.factor(y)
+  }
   
   # LR Model generation
   data.xy <- data.frame(y, x);
@@ -786,7 +797,7 @@ genLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
 #'@export
 #'
 PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf=FALSE, sp.bin=0.01) {
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -928,11 +939,12 @@ GetCIs <- function(data, param=F){
 #'License: GNU GPL (>= 2)
 #'@export
 
-Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
+Perform.UnivROC <- function(mSetObj=NA, feat.nm, version, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  imgName1 = paste(imgName, "dpi", dpi, ".", format, sep="");
+  imgName <- gsub("\\/", "_",  feat.nm);
+  imgName = paste(imgName, "_", version, "dpi", dpi, ".", format, sep="");
   
   x <- mSetObj$dataSet$norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
@@ -950,10 +962,10 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   
   w <- h <- 6; 
   
-  mSetObj$imgSet$roc.univ.plot <- imgName1;
+  mSetObj$imgSet$roc.univ.plot <- imgName;
   mSetObj$imgSet$roc.univ.name <- feat.nm;
   
-  Cairo::Cairo(file = imgName1, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(oma=c(0,0,1,0));
   par(mar=c(4,4,4,4)+.1);
   
@@ -990,7 +1002,12 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
   
   mSetObj$analSet$opt.thresh <- opt.thresh
 
-  return(.set.mSet(mSetObj));
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(imgName);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Plot a boxplot view of a selected compound
@@ -1006,7 +1023,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, 
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, isQuery){
+PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, isOpt, isQuery){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1014,28 +1031,26 @@ PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, 
     load_ggplot()
   }
 
-  feat.nm.clean <- gsub("boxplot", "", feat.nm)
-  feat.nm.clean <- gsub("_", "/", feat.nm.clean)
-    
-  x <- mSetObj$dataSet$norm[, feat.nm.clean];
+  imgName <- gsub("\\/", "_",  feat.nm);
+  imgName = paste(imgName, "_box_", version, "dpi", dpi, ".", format, sep="");
+  
+  x <- mSetObj$dataSet$norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
-  
-  bpName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
   scale <- dpi/72;
   w <- 200*scale;
   h <- 400*scale; 
+  col <- unique(GetColorSchema(y));
+
+  mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
-  mSetObj$imgSet$roc.univ.boxplot <- bpName;
-  
-  Cairo::Cairo(file=bpName, width=w, height=h, type="png", bg="white", dpi=dpi);
+  Cairo::Cairo(file=imgName, width=w, height=h, type="png", bg="white", dpi=dpi);
   
   df <- data.frame(conc = x, class = y)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-  p <- p + stat_summary(fun=mean, colour="darkred", geom="point", shape=18, size=3, show.legend = FALSE)
+  p <- p + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
   p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"), axis.text = element_text(size=10))
-  p <- p + scale_fill_manual(values=c("#6262ef", "#FFAE20"))
+  p <- p + scale_fill_manual(values=col)
   
   if(isOpt){
     opt.thresh <- mSetObj$analSet$opt.thresh
@@ -1049,7 +1064,12 @@ PlotBoxPlot <- function(mSetObj, feat.nm, imgName, format="png", dpi=72, isOpt, 
   
   print(p)
   dev.off()
-  return(.set.mSet(mSetObj))
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(imgName);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
   
 }
 
@@ -1761,7 +1781,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   
   temp.dat <- data.frame(imp.mat, lowhigh);
   colnames(temp.dat) <- c(colnames(imp.mat), levels(cls));
-  write.csv(temp.dat, file="imp_features_cv.csv");
+  fast.write.csv(temp.dat, file="imp_features_cv.csv");
   temp.dat <- NULL;
   
   # record the imp.mat for table show
@@ -1784,7 +1804,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   names(imp.vec) <- NULL;
   
   xlim.ext <- GetExtendRange(imp.vec, 12);
-  dotchart(imp.vec, bg="darkgrey", xlab= xlbl, xlim=xlim.ext);
+  dotchart(imp.vec, bg="blue", xlab= xlbl, xlim=xlim.ext);
   
   mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1)
   names(imp.vec) <- nms.orig;
@@ -1823,7 +1843,7 @@ PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, meas
   }
   
   # now add color key, padding with more intermediate colors for contiuous band
-  col <- colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlGn"))(20)
+  col <- colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(20)
   nc <- length(col);
   x <- rep(x[1] + shift, nc);
   
@@ -1912,7 +1932,6 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
 #'@param x.test Test X
 #'@param y.test Test Y
 #'@param clsMethod Method to predict class, by default it is PLS
-#'@importFrom caret plsda
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -2297,7 +2316,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
   ));
   
   filename <- paste(gsub("\\/", "_",  feat.nm), "_roc.csv", sep="");
-  write.csv(signif(roc.mat,4), file=filename, row.names=F);
+  fast.write.csv(signif(roc.mat,4), file=filename, row.names=F);
   # need to clean NA/Inf/-Inf
   #analSet$roc.mat <- ClearNumerics(roc.mat);
   mSetObj$analSet$roc.mat <- signif(roc.mat, 6);
@@ -2515,7 +2534,7 @@ Get.Fisher <- function(x, fac, var.equal=TRUE) {
                        return(tmp$p.value);
                      }
                    });
-  -log(p.value);
+  -log10(p.value);
 }
 
 Get.Fstat <-  function(x, fac, var.equal=TRUE) {
@@ -2593,8 +2612,6 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
   }
   
   mythresh <- res[1];
-  print("mythresh")
-  print(mythresh)
   if(is.na(res[1])){
     if(fld.nm == "sensitivity"){
       fld.vals <- mSetObj$analSet$roc.obj$sensitivities;

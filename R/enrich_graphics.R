@@ -26,6 +26,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
     imgNM <-substr(imgNM, 0, 18);
   }
   imgName <- paste(imgNM, "dpi", dpi, ".", format, sep="");
+  
   if(is.na(width)){
     w <- 7;
   }else if(width == 0){
@@ -33,6 +34,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   }else{
     w <- width;
   }
+  
   h <- w;
   
   mSetObj$imgSet$qea.mset<-imgName;
@@ -49,15 +51,17 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 
   if(.on.public.web){
     load_lattice()
+    load_ggplot()
   }
 
   # get p values
-    mSetObj$analSet$qea.pvals[];
+  mSetObj$analSet$qea.pvals[];
 
   # need to reshape data to be one vector
   num <- length(hit.cmpds);
   len <- length(mSetObj$dataSet$cls);
   conc.vec <- lbl.vec <- cls.vec <- NULL;
+  
   for(i in 1:num){
         cmpd <- hit.cmpds[i];
         conc.vec <- c(conc.vec, mSetObj$analSet$msea.data[,cmpd]);
@@ -65,37 +69,47 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
         cmpd.p <- paste(cmpd, " (p=", hit.pvals[i], ")", sep="");
         lbl.vec <- c(lbl.vec, rep(cmpd.p, len));      
   }
+  
   cls.vec <- as.factor(cls.vec);
   lbl.vec <- as.factor(lbl.vec);
   levels(lbl.vec) <- unique(lbl.vec); # make sure the same order as p value, rather by alphabetic
 
   num <- length(hit.cmpds);
+  boxdata <- data.frame(Feature = lbl.vec, Abundance = conc.vec, Class = cls.vec)
+  
   # calculate width based on the dataset number
   if(num == 1){
-    Cairo::Cairo(file = imgName, width=360, height=320, type="png", bg="white");
-    myplot <- bwplot(conc.vec ~ cls.vec | lbl.vec, fill="#0000ff22",
-                     ylab="Relative abundance", main=hit.cmpds, scales=list(x=list(rot=30)))
-  }else{
-    if(num == 3){
-        layout <- c(3, 1);
-        width=600;
-        height=280;
-    }else{
-        # calculate layout
-        rn <- ceiling(num/2);
-        layout <- c(2, rn);
-        width=560;
-        height=250*rn;
-    }
-    Cairo::Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+    
+    p <- ggplot(data = boxdata, aes(x=Class, y=Abundance)) + geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA)
+    p <- p + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
+    p <- p + xlab("") + ylab("Relative Abundance") + theme_bw()
+    
+    ggsave(p, filename = imgName, dpi=dpi, width=7, height=6, limitsize = FALSE)
 
-    # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-    myplot <- bwplot(conc.vec ~ cls.vec | lbl.vec, ylab="Relative abundance", scales=list(x=list(rot=30)),
-                     fill="#0000ff22", layout=layout, as.table=TRUE);
+  }else{
+
+    if(num<10){
+      w = 10
+      h <- 10 * num/10
+      cols = 3
+    }else if(num<5){
+      w = 7
+      h = 7
+      cols = 2
+    }else{
+      w = 10
+      h <- num * 0.55
+      cols = 4
+    }
+
+    bp <- ggplot(boxdata, aes(x=Class, y=Abundance, group=Class)) + 
+      geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA) + theme_bw()
+    
+    bp <- bp + facet_wrap(. ~ Feature) + theme(strip.text.x = element_text(size=7), strip.background = element_rect(size=1)) + 
+      xlab("") + ylab("Relative Abundance")
+    
+    ggsave(bp, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   }
-  
-  print(myplot); 
-  dev.off();
 
   mSetObj$imgSet$current.img <- imgName;
   
@@ -308,7 +322,7 @@ PlotMSEA.Overview <- function(folds, pvals){
   ht.col <- rev(heat.colors(length(folds)));
   
   barplot(rev(folds), horiz=T, col=ht.col,
-          xlab="Fold Enrichment", las=1, cex.name=0.75, space=c(0.5, 0.5),
+          xlab="Enrichment Ratio", las=1, cex.name=0.75, space=c(0.5, 0.5),
           main= title);
   
   minP <- min(pvals);
@@ -337,7 +351,6 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import ggplot2
 
 PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=72, width=NA){
   
@@ -357,7 +370,7 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
     df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
                      rawp = results[,4],
                      logp = -log10(results[,4]),
-                     hits = results[,3])
+                     folds = results[,3]/results[,2])
     
   }else if(enrichType == "qea"){
     results <- mSetObj$analSet$qea.mat
@@ -365,11 +378,11 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
     if(nrow(results) > 25){
       results <- results[1:25,]
     }
-    
     df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
                      rawp = results[,5],
                      logp = -log10(results[,5]),
-                     hits = results[,2])
+                     folds = results[,3]/results[,4]
+                    )
     
   }
 
@@ -388,14 +401,14 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   
   p <- ggplot(df, 
               aes(x = logp, y = Name)) + 
-    geom_point(aes(size = hits, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
+    geom_point(aes(size = folds, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
     theme_bw(base_size = 14.5) +
     scale_colour_gradient(limits=c(0, maxp), low="red", high = "blue") +
     ylab(NULL) + xlab("-log10 (p-value)") + 
-    ggtitle("Metabolite Sets Enrichment Overview")
+    ggtitle("Metabolite Sets Enrichment Overview") 
   
-  p$labels$colour <- "P-Value"
-  p$labels$size <- "Number of Hits"
+  p$labels$colour <- "P-value"
+  p$labels$size <- "Enrichment Ratio"
   
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h)
   

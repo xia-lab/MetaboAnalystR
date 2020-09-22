@@ -14,7 +14,6 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom httr content POST
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
 
@@ -64,11 +63,11 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     # change path when on server, use local for now
     
     load_httr()
-    base <- api.base
+    base <- "localhost:8987"
     endpoint <- "/pathwayora"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- content(query_results, "text")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     
     # parse json response from server to results
@@ -76,14 +75,14 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     colnames(oraDataRes) <- query_results_json$enrichResColNms
     rownames(oraDataRes) <- query_results_json$enrichResRowNms
     
-    write.csv(oraDataRes, file="pathway_results.csv");
+    fast.write.csv(oraDataRes, file="pathway_results.csv");
     mSetObj$analSet$ora.mat <- oraDataRes
     mSetObj$api$guestName <- query_results_json$guestName
     return(.set.mSet(mSetObj));
   }
   
-  current.mset <- metpa$mset.list;
-  uniq.count <- metpa$uniq.count;
+  current.mset <- current.kegglib$mset.list;
+  uniq.count <- current.kegglib$uniq.count;
   
   # check if need to be filtered against reference metabolome
   # TODO: address the following filtering for SMPDB if needed
@@ -107,13 +106,13 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=8);
   rownames(res.mat)<-names(current.mset);
-  colnames(res.mat)<-c("Total", "Expected", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  colnames(res.mat)<-c("Total", "Expected", "Hits", "Raw p", "-log10(p)", "Holm adjust", "FDR", "Impact");
   
   if(nodeImp == "rbc"){
-    imp.list <- metpa$rbc;
+    imp.list <- current.kegglib$rbc;
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{relative betweenness centrality}.";
   }else{
-    imp.list <- metpa$dgr;
+    imp.list <- current.kegglib$dgr;
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
   }
   
@@ -130,7 +129,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is \\textbf{Hypergeometric test}.";
   }
   
-  res.mat[,5] <- -log(res.mat[,4]);
+  res.mat[,5] <- -log10(res.mat[,4]);
   
   # adjust for multiple testing problems
   res.mat[,6] <- p.adjust(res.mat[,4], "holm");
@@ -151,9 +150,9 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$node.imp <- nodeImp;
   
   save.mat <- mSetObj$analSet$ora.mat;  
-  hit.inx <- match(rownames(save.mat), metpa$path.ids);
-  rownames(save.mat) <- names(metpa$path.ids)[hit.inx];
-  write.csv(save.mat, file="pathway_results.csv");
+  hit.inx <- match(rownames(save.mat), current.kegglib$path.ids);
+  rownames(save.mat) <- names(current.kegglib$path.ids)[hit.inx];
+  fast.write.csv(save.mat, file="pathway_results.csv");
   
   return(.set.mSet(mSetObj));
 }
@@ -163,8 +162,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
 #'@export
 GetORA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  hit.inx <- match(rownames(mSetObj$analSet$ora.mat), metpa$path.ids);
-  return(names(metpa$path.ids)[hit.inx]);
+  hit.inx <- match(rownames(mSetObj$analSet$ora.mat), current.kegglib$path.ids);
+  return(names(current.kegglib$path.ids)[hit.inx]);
 }
 
 #'Calculate quantitative enrichment score
@@ -263,11 +262,11 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     # change path when on server, use local for now
     
     load_httr()
-    base <- api.base
+    base <- "localhost:8987"
     endpoint <- "/pathwayqea"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- content(query_results, "text")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     
     if(is.null(query_results_json$enrichRes)){
@@ -280,7 +279,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     colnames(qeaDataRes) <- query_results_json$enrichResColNms
     rownames(qeaDataRes) <- query_results_json$enrichResRowNms
     
-    write.csv(qeaDataRes, file="pathway_results.csv");
+    fast.write.csv(qeaDataRes, file="pathway_results.csv", row.names=TRUE);
     mSetObj$analSet$qea.mat <- qeaDataRes
     mSetObj$api$guestName <- query_results_json$guestName
     print("Pathway QEA via api.metaboanalyst.ca successful!")
@@ -288,8 +287,8 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   
   # now, perform topology & enrichment analysis
-  current.mset <- metpa$mset.list;
-  uniq.count <- metpa$uniq.count;
+  current.mset <- current.kegglib$mset.list;
+  uniq.count <- current.kegglib$uniq.count;
   
   # check if a reference metabolome is applied
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
@@ -310,10 +309,10 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   # calculate the impact values
   if(nodeImp == "rbc"){
-    imp.list <- metpa$rbc[hit.inx];
+    imp.list <- current.kegglib$rbc[hit.inx];
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{relative betweenness centrality}.";
   }else{
-    imp.list <- metpa$dgr[hit.inx];
+    imp.list <- current.kegglib$dgr[hit.inx];
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
   }
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
@@ -336,7 +335,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   
   dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, my.fun=my.fun);
-  saveRDS(dat.in, file="dat.in.rds");
+  qs::qsave(dat.in, file="dat.in.qs");
   
   # store data before microservice
   mSetObj$analSet$qea.univp <- signif(univ.p,7);
@@ -351,7 +350,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
 
 .save.qea.score <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
-  dat.in <- readRDS("dat.in.rds"); 
+  dat.in <- qs::qread("dat.in.qs"); 
   qea.res <- dat.in$my.res;
   set.num <- mSetObj$analSet$set.num;
   imp.vec <- mSetObj$analSet$imp.vec;
@@ -359,24 +358,24 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   match.num <- qea.res[,1];
   raw.p <- qea.res[,2];
   
-  log.p <- -log(raw.p);
+  log.p <- -log10(raw.p);
   # add adjust p values
   holm.p <- p.adjust(raw.p, "holm");
   fdr.p <- p.adjust(raw.p, "fdr");
   
   res.mat <- cbind(set.num, match.num, raw.p, log.p, holm.p, fdr.p, imp.vec);
   rownames(res.mat)<-rownames(qea.res);
-  colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log(p)", "Holm adjust", "FDR", "Impact");
+  colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log10(p)", "Holm adjust", "FDR", "Impact");
   res.mat <- res.mat[!is.na(res.mat[,7]), , drop=FALSE];
   
   ord.inx<-order(res.mat[,3], -res.mat[,7]);
   res.mat<-signif(res.mat[ord.inx,],5);
   mSetObj$analSet$qea.mat <- res.mat;
   
-  hit.inx <- match(rownames(res.mat), metpa$path.ids);
-  pathNames <- names(metpa$path.ids)[hit.inx];
+  hit.inx <- match(rownames(res.mat), current.kegglib$path.ids);
+  pathNames <- names(current.kegglib$path.ids)[hit.inx];
   rownames(res.mat) <- pathNames; # change from ids to names for users
-  write.csv(res.mat, file="pathway_results.csv");
+  fast.write.csv(res.mat, file="pathway_results.csv");
   
   mSetObj$analSet$qea.pathNames <- pathNames;
   return(.set.mSet(mSetObj)); 
@@ -400,11 +399,11 @@ GetQEA.pathNames <- function(mSetObj=NA){
 #'@export
 #'
 SetupSMPDBLinks <- function(kegg.ids){
-  smpdb.vec <- names(metpa$path.smps)[match(kegg.ids,metpa$path.smps)]
+  smpdb.vec <- names(current.kegglib$path.smps)[match(kegg.ids,current.kegglib$path.smps)]
   lk.len <- length(smpdb.vec);
   all.lks <- vector(mode="character", length=lk.len);
   for(i in 1:lk.len){
-    lks <- strsplit(as.character(smpdb.vec[i]), "; ")[[1]];
+    lks <- strsplit(as.character(smpdb.vec[i]), "; ", fixed=TRUE)[[1]];
     if(!is.na(lks[1])){
       all.lks[i]<-paste("<a href=http://www.smpdb.ca/view/",lks," target=_new>SMP</a>", sep="", collapse="\n");
     }
@@ -422,11 +421,11 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'@export
 #'
 SetupKEGGLinks <- function(smpdb.ids){
-  kegg.vec <- metpa$path.keggs[match(smpdb.ids,names(metpa$mset.list))]
+  kegg.vec <- current.kegglib$path.keggs[match(smpdb.ids,names(current.kegglib$mset.list))]
   lk.len <- length(kegg.vec);
   all.lks <- vector(mode="character", length=lk.len);
   for(i in 1:lk.len){
-    lks <- strsplit(kegg.vec[i], "; ")[[1]];
+    lks <- strsplit(kegg.vec[i], "; ", fixed=TRUE)[[1]];
     if(!is.na(lks[1])){
       all.lks[i] <- paste("<a href=http://www.genome.jp/kegg-bin/show_pathway?",lks," target=_new>KEGG</a>", sep="");
       # all.lks[i]<-paste("<a href=http://pathman.smpdb.ca/pathways/",lks,"/pathway target=_new>SMP</a>", sep="", collapse="\n");
@@ -452,8 +451,8 @@ SetupKEGGLinks <- function(smpdb.ids){
 #'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   mSetObj <- .get.mSet(mSetObj);
-  pathid <- metpa$path.ids[msetNm]; 
-  mset <- metpa$mset.list[[pathid]];
+  pathid <- current.kegglib$path.ids[msetNm]; 
+  mset <- current.kegglib$mset.list[[pathid]];
   
   hits <- NULL;
   if(mSetObj$analSet$type=="pathora"){

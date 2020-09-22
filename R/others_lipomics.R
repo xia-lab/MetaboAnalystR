@@ -173,8 +173,8 @@ calculateConcISO<-function(dat, cls.name, cls.num, min.file, prob.file){
   min.mat<-cbind(min.mat, "Average" = apply(min.mat, 1, mean), "SD" = apply(min.mat, 1, sd));
   rownames(prob.mat)<-nm.vec;
   prob.mat<-cbind(prob.mat, "Average" = apply(prob.mat, 1, mean), "SD" = apply(prob.mat, 1, sd));
-  write.csv(min.mat, file=min.file);
-  write.csv(prob.mat, file=prob.file);
+  fast.write.csv(min.mat, file=min.file);
+  fast.write.csv(prob.mat, file=prob.file);
 }
 
 calculateConcNoISO<-function(dat, cls.name, cls.num, min.file, prob.file){
@@ -252,6 +252,6 @@ calculateConcNoISO<-function(dat, cls.name, cls.num, min.file, prob.file){
   min.mat<-cbind(min.mat, "Average" = apply(min.mat, 1, mean), "SD" = apply(min.mat, 1, sd));
   rownames(prob.mat)<-nm.vec;
   prob.mat<-cbind(prob.mat, "Average" = apply(prob.mat, 1, mean), "SD" = apply(prob.mat, 1, sd));
-  write.csv(min.mat, file=min.file);
-  write.csv(prob.mat, file=prob.file);
+  fast.write.csv(min.mat, file=min.file);
+  fast.write.csv(prob.mat, file=prob.file);
 }

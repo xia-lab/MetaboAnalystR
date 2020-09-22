@@ -1,3 +1,118 @@
+
+
+#'Save concentration data
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param conc Input the concentration data
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Setup.ConcData<-function(mSetObj=NA, conc){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$norm <- conc;
+  return(.set.mSet(mSetObj));
+}
+
+#'Save biofluid type for SSP
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param type Input the biofluid type
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+Setup.BiofluidType<-function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$biofluid <- type;
+  return(.set.mSet(mSetObj));
+}
+
+#'Set organism for further analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param org Set organism ID
+#'@export
+SetOrganism <- function(mSetObj=NA, org){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$org <- org;
+  return(.set.mSet(mSetObj))
+}
+
+GetKEGG.PathNames<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(names(current.kegglib$path.ids));
+}
+
+#'Given a vector containing KEGGIDs, returns a vector of KEGG compound names
+#'@description This function, given a vector containing KEGGIDs, returns a vector of KEGG compound names.
+#'@param ids Vector of KEGG ids
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+KEGGID2Name<-function(ids){
+  cmpd.db <- .get.my.lib("compound_db.qs");
+  hit.inx<- match(ids, cmpd.db$kegg);
+  return(cmpd.db[hit.inx, 3]);
+}
+
+#'Given a vector containing KEGG pathway IDs, return a vector containing SMPDB IDs (only for hsa)
+#'@description This function, when given a vector of KEGG pathway IDs, return a vector of SMPDB IDs (only for hsa).
+#'SMPDB standing for the Small Molecule Pathway Database, and hsa standing for human serum albumin. 
+#'@param ids Vector of KEGG pathway IDs
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+KEGGPATHID2SMPDBIDs<-function(ids){
+  hit.inx<-match(ids, path.map[,1]);
+  return(path.map[hit.inx, 3]);
+}
+
+#'Given a vector of HMDBIDs, return a vector of HMDB compound names
+#'@description This function, when given a vector of HMDBIDs, return a vector of HMDB compound names. HMDB standing
+#'for the Human Metabolome Database. 
+#'@param ids Input the vector of HMDB Ids
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+HMDBID2Name<-function(ids){
+  cmpd.db <- .get.my.lib("compound_db.qs");
+  hit.inx<- match(ids, cmpd.db$hmdb);
+  return(cmpd.db[hit.inx, "name"]);
+}
+
+#'Given a vector of KEGGIDs, return a vector of HMDB ID
+#'@description This functionn, when given a vector of KEGGIDs, returns a vector of HMDB IDs. HMDB standing
+#'for the Human Metabolome Database. 
+#'@param ids Vector of KEGG ids
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+KEGGID2HMDBID<-function(ids){
+  
+  cmpd.db <- .get.my.lib("compound_db.qs");
+  
+  hit.inx<- match(ids, cmpd.db$kegg);
+  return(cmpd.db[hit.inx, "hmdb_id"]);
+}
+
+#'Given a vector of HMDBIDs, return a vector of KEGG IDs
+#'@description This function, when given a vector of HMDBIDs, returns a vector of KEGG ID. HMDB standing
+#'for the Human Metabolome Database. 
+#'@param ids Input the vector of HMDB Ids
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+
+HMDBID2KEGGID<-function(ids){
+  cmpd.db <- .get.my.lib("compound_db.qs");
+  hit.inx<- match(ids, cmpd.db$hmdb);
+  return(cmpd.db[hit.inx, "kegg_id"]);
+}
+
+
 #'Convert different gene IDs into entrez IDs for downstream analysis
 #'@description Gene ID mapping, gene annotation, compound
 #'mapping, KEGG mapping
@@ -7,43 +122,12 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import RSQLite
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
 
-    ## Perfrom online DB getting ----
-    filenm <- paste0(org, "_genes.sqlite")
-    lib.url <- sqlite.link <- paste0(gene.sqlite.path, filenm);
-    lib.download <- FALSE;
-    
-    if(!file.exists(filenm)){
-      lib.download <- TRUE;
-    }else{
-      time <- file.info(filenm)
-      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-      if(diff_time>30){
-        lib.download <- TRUE;
-      }
-    }
-    # Deal with curl issues
-    
-    if(lib.download){
-      tryCatch(
-        {
-          download.file(lib.url, destfile=filenm, method="auto")
-        }, warning = function(w){ print() },
-        error = function(e) {
-          print("Download unsucceful. Ensure that curl is downloaded on your computer.")
-          print("Attempting to re-try download using wget...")
-          download.file(lib.url, destfile=filenm, method="wget")
-        }
-      )
-    }
-    
-    ## SQLite data downloding finished !
-    
-    con <- .get.sqlite.con(filenm); 
+    sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
+    con <- .get.sqlite.con(sqlite.path); 
 
     if(type == "symbol"){
       db.map = dbReadTable(con, "entrez")
@@ -83,7 +167,7 @@ doGeneIDMapping <- function(q.vec, org, type){
 #'@export
 doCompoundMapping<-function(cmpd.vec, q.type){
   
-  cmpd.map <- .read.metaboanalyst.lib("compound_db.rds");
+  cmpd.map <- .get.my.lib("compound_db.qs");
   
   if(q.type == "name"){
     
@@ -94,7 +178,7 @@ doCompoundMapping<-function(cmpd.vec, q.type){
     todo.inx <-which(is.na(hit.inx));
     if(length(todo.inx) > 0){
       # then try to find exact match to synanyms for the remaining unmatched query names one by one
-      syn.db <- .read.metaboanalyst.lib("syn_nms.rds")
+      syn.db <- .get.my.lib("syn_nms.qs")
       syns.list <-  syn.db$syns.list;
       for(i in 1:length(syns.list)){
         syns <-  syns.list[[i]];
@@ -135,7 +219,7 @@ doCompoundMapping<-function(cmpd.vec, q.type){
 #'@param kegg.vec Input vector of KEGG compounds
 #'@export
 doKEGG2NameMapping <- function(kegg.vec){
-  cmpd.map <- .read.metaboanalyst.lib("compound_db.rds");
+  cmpd.map <- .get.my.lib("compound_db.qs");
   hit.inx <- match(tolower(kegg.vec), tolower(cmpd.map$kegg));
   nms <- cmpd.map[hit.inx, "name"];
   return(nms);

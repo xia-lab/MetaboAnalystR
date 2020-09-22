@@ -52,7 +52,7 @@ fillpathways <- function(f){
   pathways <- list()
   p <- list()
   
-  cpds <- unname(f$metpa$mset.list)
+  cpds <- unname(f$current.kegglib$mset.list)
   
   for(i in 1:length(cpds)){
     all_cpds <- as.vector(unlist(cpds[[i]]))
@@ -61,7 +61,7 @@ fillpathways <- function(f){
   }
   
   pathways$cpds <- p
-  pathways$name <- names(f$metpa$path.ids)
+  pathways$name <- names(f$current.kegglib$path.ids)
   
   return(pathways)
 }
@@ -141,9 +141,9 @@ CreateLibFromKEGG <- function(cpd.lib, pathways, org){
   )
   
   print(paste0(org, " mummichog library created!"))
-  file_name <- paste0(org, "_kegg.rds")
+  file_name <- paste0(org, "_kegg.qs")
   
-  saveRDS(mummichog.lib, file=file_name);
+  qs::qsave(mummichog.lib, file=file_name);
 }
 
 #' Makes adducts

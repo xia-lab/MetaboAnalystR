@@ -63,7 +63,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
 
 # this is for PDF report generation from bash
 SaveCurrentSession <- function(){
-    file.copy("../../libs/Sweave.sty", ".")
+    file.copy("../../rscripts/_sweave.sty", ".")
     save.image("SweaveImage.RData");
 }
 
@@ -109,7 +109,7 @@ CreateSummaryTable <- function(mSetObj=NA){
     colnames(sum.dat)<-c("Features (positive)","Missing/Zero","Features (processed)");
     rownames(sum.dat)<-row.names(mSetObj$dataSet$orig);
   }else if(mSetObj$dataSet$type=="nmrpeak"| mSetObj$dataSet$type=="mspeak"){ # peak list
-    pkSet<-mSetObj$dataSet$peakSet;
+    pkSet<-qs::qread("peakSet.qs");
     snames<-pkSet$sampnames;
     for(i in 1:length(snames)){
       samp.inx<-pkSet$peaks[,"sample"]==i;

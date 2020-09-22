@@ -35,7 +35,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'License: GNU GPL (>= 2)
 #'@export
 #'@import RSQLite
-SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){ 
+SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){
 
     mSetObj <- .get.mSet(mSetObj);
   
@@ -86,7 +86,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
           edge.res <- data.frame(Source=res[,src],Target=res[,target]);
         }
         row.names(edge.res) <- 1:nrow(res);
-        write.csv(edge.res, file="orig_edge_list.csv",row.names=FALSE);
+        fast.write.csv(edge.res, file="orig_edge_list.csv",row.names=FALSE);
     
         node.ids <- c(res[,src], res[,target])
         node.nms <- c(res[,src.nm], res[,target.nm]);
@@ -102,15 +102,19 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
     genes.names.idx <- match(node.ids, mSetObj$dataSet$gene.map.table[,"Entrez"])
     genes.names <- mSetObj$dataSet$gene.map.table[genes.names.idx,"Name"]
 
-    if(node.evidence != ""){
+    if(node.evidence != "" && !is.null(genes.names)){
       # Evidence is related to the STITCH database accessions for chemicals/proteins
       node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names, Evidence=node.evidence);
-    } else{
+    } else if (node.evidence != "") {
+      node.res <- data.frame(Id=node.ids, Label=node.nms, Evidence=node.evidence);
+    } else if (!is.null(genes.names) ){
       node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names);
+    } else {
+      node.res <- data.frame(Id=node.ids, Label=node.nms);
     }
     node.res <- node.res[!duplicated(node.res$Id),];
     nodeListu <<- node.res
-    write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
+    fast.write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
 
     pheno.net <<- list(
                     db.type=db.type,
@@ -136,7 +140,8 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
 QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
   
   if(.on.public.web){
-    pheno.db <- .get.sqlite.con("../../libs/network/MetPriCNet.sqlite");
+    sqlite.path <- paste0(url.pre, "MetPriCNet.sqlite");
+    pheno.db <- .get.sqlite.con(sqlite.path);
   }else{
     download.file("https://www.metaboanalyst.ca/resources/libs/network/MetPriCNet.sqlite", "MetPriCNet.sqlite")
     pheno.db <- dbConnect(SQLite(), "MetPriCNet.sqlite");
@@ -212,6 +217,120 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
   }
     dbDisconnect(pheno.db);
     return(pheno.dic);
+}
+
+# Perform DSPC network analysis
+#'@import gdata
+#'@import gplots
+#'@import huge
+#'@import ppcor
+#'@import ctc
+PerformDSPC <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  .preparePhenoListSeeds
+  require(gdata)
+  require(gplots)
+  require(huge)
+  require(ppcor)
+  require(ctc)
+  dat <- mSetObj$dataSet$norm;
+  node.ids <- mSetObj$dataSet$map.table[,"KEGG"]; #TO-DO: to support unknown features 
+  node.nms <- mSetObj$dataSet$map.table[,"Match"];
+  DGlasso.fit <- DGlasso(dat, alpha=.01, FDR.type='BH');
+  coeff <- DGlasso.fit$coeff;
+  pval <- DGlasso.fit$pvalue;
+  qval <- DGlasso.fit$qvalue;
+  coeff <- signif(coeff, digits = 3);
+  pval <- signif(pval, digits = 3);
+  qval <- signif(qval, digits = 3);
+  res <- GetSourceTarget(node.ids);
+  dspc.res <- cbind(res, coeff, pval, qval);
+
+  node.res <- data.frame(Id=node.ids, Label=node.nms);
+  node.res <- node.res[!duplicated(node.res$Id),];
+  fast.write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
+  
+  edge.res <- data.frame(Source=dspc.res[,"source"],Target=dspc.res[,"target"],Coefficient=dspc.res[,"coeff"],Pval=dspc.res[,"pval"],Adj_Pval=dspc.res[,"qval"]);
+  row.names(edge.res) <- 1:nrow(res);
+  fast.write.csv(edge.res, file="orig_edge_list.csv",row.names=FALSE);
+  nodeListu <<- node.res;
+  
+
+  pheno.net <<- list(
+    order=1, 
+    seeds=node.ids,  
+    table.nm="dspc", 
+    node.data = node.res, 
+    edge.data = edge.res,
+    require.exp = "TRUE",
+    min.score = 900
+  );
+  
+  if(.on.public.web){
+    return(c(nrow(node.res), nrow(res)));
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+    
+  
+}
+
+# Utility function for PerformDSPC
+#'@import glasso
+DGlasso = function(X, alpha = 0.05, lambda = NULL, FDRctrl = FALSE, FDR.type='bonferroni', quiet=TRUE){
+  require(glasso);
+  n = nrow(X)
+  p = ncol(X)
+  
+  if (is.null(lambda)){
+    lambda = sqrt(log(p)/n)
+  }
+  
+  Sigma.hat_X = var(X)
+  
+  if (!quiet){print('fit glasso')}
+  Theta.hat_glasso = glasso(s=Sigma.hat_X, rho=lambda, penalize.diagonal=FALSE)$wi
+  if (!quiet){print('done')}
+  
+  if (!quiet){print('calc kronecker product')}
+  #	T.hat = as.vector(Theta.hat_glasso)-kronecker(Theta.hat_glasso,Theta.hat_glasso,"*") %*% as.vector(Sigma.hat_X - chol2inv(chol(Theta.hat_glasso)))
+  # reduce memory consumption from O(n^4) to O(n^2) by avoiding kronecker calculation
+  temp.mat = Sigma.hat_X - chol2inv(chol(Theta.hat_glasso))
+  temp.vec = as.vector(Theta.hat_glasso %*% temp.mat %*% t(Theta.hat_glasso))
+  T.hat = as.vector(Theta.hat_glasso) - temp.vec
+  if (!quiet){print('done')}
+  
+  T.hat.vec = upperTriangle(matrix(T.hat,nrow = p),diag=FALSE)
+  
+  sigma.hat2 = array(0,c(p,p))
+  for (i in 1:p){
+    for (j in 1:p){
+      sigma.hat2[i,j] = Theta.hat_glasso[i,j]^2+Theta.hat_glasso[i,i]*Theta.hat_glasso[j,j]
+    }
+  }
+  sigma.hat2.vec = upperTriangle(sigma.hat2,diag=FALSE)
+  
+  test.stat = sqrt(n)*T.hat.vec/sqrt(sigma.hat2.vec)
+  pvals = 2*(pnorm(abs(test.stat), lower.tail=FALSE))
+  adj.p = p.adjust(pvals, FDR.type)
+  
+  return(list(coeff=-pmax(pmin(T.hat.vec, 1), -1), pvalue=pvals, qvalue=adj.p))
+}
+
+# Utility function for PerformDSPC
+#'@param metab.list Input the metabolite list 
+GetSourceTarget <- function(metab.list) {
+  source = c()
+  target = c()
+  for (i in 2:length(metab.list)) {
+    for (j in 1:(i - 1)) {
+      source = c(source, metab.list[j])
+      target = c(target, metab.list[i])
+    }
+  }
+  source_target <- data.frame("source" = source,
+                              "target" = target)
+  return(source_target)
 }
 
 #'Utility function for PerformKOEnrichAnalysis_KO01100

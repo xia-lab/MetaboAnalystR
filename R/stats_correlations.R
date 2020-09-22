@@ -56,7 +56,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
   sig.mat <- signif(cor.res[ord.inx,],5);
   
   fileName <- "correlation_pattern.csv";
-  write.csv(sig.mat,file=fileName);
+  fast.write.csv(sig.mat,file=fileName);
   
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
@@ -146,7 +146,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, viewOpt, fix.col, no.clst, top, topNum, corrCutoff=0){
+                          colors, viewOpt, fix.col, no.clst, corrCutoff=0){
   
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
@@ -168,40 +168,16 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   # compare p-values w. hmisc + cor.test
   colnames(data) <- substr(colnames(data), 1, 18);
   corr.mat <- cor(data, method=cor.method);
-  
+
   # NA gives error w. hclust
-  corr.mat[abs(corr.mat) < corrCutoff] <- 0
+  corr.mat[abs(corr.mat) < corrCutoff] <- 0;
   
-  # little added value, too much memorfy consumption
-  # pval.mat <- Hmisc::rcorr(as.matrix(data), type=cor.method)$P;
-  
-  # alternative method to get p-values 
-  # does also compute the R but can't make corr.mat without tidyverse
-  vars = data.frame(t(combn(colnames(data), 2)), stringsAsFactors = FALSE)
-  
-  if(cor.method == "spearman"){
-    cor.results <- do.call(rbind, mapply(SpearmanCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
-  }else if(cor.method == "kendall"){
-    cor.results <- do.call(rbind, mapply(KendallCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
-  }else if(cor.method == "pearson"){
-    cor.results <- do.call(rbind, mapply(PearsonCorrFunc, vars[,1], vars[,2], MoreArgs = list(data=data), SIMPLIFY = FALSE))
-  }else{
-    AddErrMsg("Invalid correlation method!")
-    return(0)
-  }
-  
-  colnames(cor.results) <- c("Feature1", "Feature2", "Correlation", "P.value", "Statistic", "Method")
-  cor.results.filt <- cor.results[(abs(cor.results[,3]) > corrCutoff),]
-  cor.results.filt[,3:5] <- signif(cor.results.filt[,3:5], 5)
-  
-  # use total abs(correlation) to select
-  if(top){
-    cor.sum <- apply(abs(corr.mat), 1, sum);
-    cor.rk <- rank(-cor.sum);
-    var.sel <- cor.rk <= topNum;
-    corr.mat <- corr.mat[var.sel, var.sel];
-  }
-  
+  # save data for lazy pval computing
+  mSetObj$analSet$pwcor <- list();
+  mSetObj$analSet$pwcor$data <- data;
+  mSetObj$analSet$pwcor$cor.method <- cor.method;
+  mSetObj$analSet$pwcor$no.clst <- no.clst;
+
   if(.on.public.web){
     load_gplots()
     load_rcolorbrewer()
@@ -289,14 +265,32 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }
   
   dev.off();
-  
+
   if(!no.clst){ # when no clustering, tree_row is NA
     new.ord <- res$tree_row$order;
     corr.mat <- corr.mat[new.ord, new.ord];
+    mSetObj$analSet$pwcor$new.ord <- new.ord;
   }
-  write.csv(signif(corr.mat, 5), file="correlation_table.csv");
-  write.csv(cor.results, file="pval_corr_table.csv");
+
+  fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
   return(.set.mSet(mSetObj));
+}
+
+# this is for p values for correlation heatmap (all pair-wise). 
+# use Hmisc for fast but lazy computing 
+ComputeCorrP <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+
+  data <- mSetObj$analSet$pwcor$data;
+  cor.method <- mSetObj$analSet$pwcor$cor.method;
+  pval.mat <- Hmisc::rcorr(as.matrix(data), type=cor.method)$P;
+
+  if(!mSetObj$analSet$pwcor$no.clst){
+    new.ord <- mSetObj$analSet$pwcor$new.ord;
+    pval.mat <- pval.mat[new.ord, new.ord];
+  }
+  fast.write.csv(signif(pval.mat,5), file="pval_corr_table.csv");
+  return(1);
 }
 
 ##############################################
@@ -355,7 +349,7 @@ GenerateTemplates <- function(mSetObj=NA){
   # turn into string
   res <- apply(res, 1, paste, collapse="-");
   
-  # add the ledgends
+  # add the legends
   res <- c(paste(levels(mSetObj$dataSet$cls), collapse="-"), res);
   return(res);
 }
@@ -389,7 +383,7 @@ FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   sig.mat <-signif(cor.res[ord.inx,],5);
   
   fileName <- "correlation_feature.csv";
-  write.csv(sig.mat,file=fileName);
+  fast.write.csv(sig.mat,file=fileName);
   
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
@@ -405,15 +399,15 @@ FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
 # Set of functions to perform cor.test
 PearsonCorrFunc <- function(var1, var2, data){
   result <- cor.test(data[,var1], data[,var2])
-  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic")], stringsAsFactors = FALSE)
 }
 
 SpearmanCorrFunc <- function(var1, var2, data){
   result <- cor.test(data[,var1], data[,var2], method = "spearman", exact = FALSE)
-  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic")], stringsAsFactors = FALSE)
 }
 
 KendallCorrFunc <- function(var1, var2, data){
   result <- cor.test(data[,var1], data[,var2], method = "kendall", exact = FALSE)
-  data.frame(var1, var2, result[c("estimate", "p.value", "statistic", "method")], stringsAsFactors = FALSE)
+  data.frame(var1, var2, result[c("estimate", "p.value", "statistic")], stringsAsFactors = FALSE)
 }

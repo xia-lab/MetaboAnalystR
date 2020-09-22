@@ -11,8 +11,6 @@ Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt
 
 \item{feat.nm}{Input the name of the feature to perform univariate ROC analysis}
 
-\item{imgName}{Input a name for the plot}
-
 \item{format}{Select the image format, png, of pdf.}
 
 \item{dpi}{Input the dpi. If the image format is pdf, users need not define the dpi. For png images, 
@@ -31,6 +29,8 @@ youden for farthest to the diagonal line (Youden)}
 and sp for the Y-axis, representing the minimum true positive-rate}
 
 \item{cutoff}{Input the threshold to limit the calculation of the partial ROC curve, the number must be between 0 and 1.}
+
+\item{imgName}{Input a name for the plot}
 }
 \description{
 Perform Classical Univariate ROC

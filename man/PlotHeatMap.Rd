@@ -18,7 +18,7 @@ PlotHeatMap(
   viewOpt = "detail",
   rowV = T,
   colV = T,
-  var.inx = NA,
+  var.inx = NULL,
   border = T,
   grp.ave = F
 )

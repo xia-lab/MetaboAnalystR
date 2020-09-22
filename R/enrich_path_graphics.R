@@ -9,7 +9,6 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@importFrom httr content POST
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
 
@@ -53,11 +52,11 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
     }
     
     load_httr()
-    base <- api.base
+    base <- "localhost:8987"
     endpoint <- paste0("/createimage/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- httr::content(query_results, "text", encoding = "UTF-8")
+    query_results_text <- content(query_results, "text")
     query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
     mSetObj$api$imageName <- query_results_json$plotName
     
@@ -91,8 +90,8 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'
 PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
   
-  path.id <- metpa$path.ids[pathName];
-  g <- metpa$graph.list[[path.id]];
+  path.id <- current.kegglib$path.ids[pathName];
+  g <- current.kegglib$graph.list[[path.id]];
   tooltip <- names(KEGGgraph::nodes(g));
   
   nm.vec <- NULL;
@@ -126,7 +125,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
           if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
             cls.lbls <- as.factor(abbreviate(as.character(cls.lbls), 6));
           }
-          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(mSetObj)), ylab=y.label, las=2);
+          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(cls.lbls)), ylab=y.label, las=2);
         }else{
           Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
           abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
@@ -152,9 +151,9 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
   
   if(is.null(dpi)){
     if(is.null(mSetObj$analSet$node.imp) || mSetObj$analSet$node.imp == "rbc"){
-      impvec <- metpa$rbc[[path.id]];
+      impvec <- current.kegglib$rbc[[path.id]];
     }else{
-      impvec <- metpa$dgr[[path.id]];
+      impvec <- current.kegglib$dgr[[path.id]];
     }
     
     imgName <- paste(pathName, ".png", sep="");
@@ -212,7 +211,7 @@ GetMetPANodeInfo<-function(pathName, object, tags, histvec, pvec, impvec, width,
   names(xl) = names(xr) = names(yu) = names(yl) = nn;
   
   # create the javascript code
-  jscode <- paste("keggPathLnk=\'<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", metpa$path.ids[pathName], "\\',\\'KEGG\\');\">", pathName,"</a>\'", sep="");
+  jscode <- paste("keggPathLnk=\'<a href=\"javascript:void(0);\" onclick=\"window.open(\\'http://www.genome.jp/kegg-bin/show_pathway?", current.kegglib$path.ids[pathName], "\\',\\'KEGG\\');\">", pathName,"</a>\'", sep="");
   tag.ids <- names(tags);
   kegg.ids <- names(tags);
   hmdb.ids <- KEGGID2HMDBID(kegg.ids);
@@ -317,7 +316,7 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   }
   
   # first sort values based on p
-  y = -log(y);
+  y = -log10(y);
   inx <- order(y, decreasing= T);
   x <- x[inx]; 
   y <- y[inx];
@@ -342,9 +341,9 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   
   if(.on.public.web){
     if(mSetObj$analSet$type == "pathinteg"){
-      path.nms <- names(inmexpa$path.ids)[match(names(x),inmexpa$path.ids)];
+      path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
     }else{
-      path.nms <- names(metpa$path.ids)[match(names(x),metpa$path.ids)];
+      path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
     }
   }
   
@@ -370,7 +369,7 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log(p)");
+  plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log10(p)");
   axis(1);
   axis(2);
   grid(col="blue");
@@ -411,11 +410,11 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 GeneratePathwayJSON<-function(pathway.nm){
   mSetObj <- .get.mSet(mSetObj);
   
-  smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".rda", sep="");
-  load(smpdb.path)
-  
-  jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".rds", sep="");
-  smpdb.jsons <- readRDS(jsons.path) # no need to be global!
+  smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".qs", sep="");
+  current.kegglib <- qs::qread(smpdb.path);
+
+  jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".qs", sep="");
+  smpdb.jsons <- qs::qread(jsons.path) # no need to be global!
   
   if(pathway.nm == "top"){
     if(mSetObj$analSet$type == "pathora"){
@@ -423,9 +422,9 @@ GeneratePathwayJSON<-function(pathway.nm){
     } else{
       pathway.id <- rownames(mSetObj$analSet$qea.mat)[1]
     }
-    pathway.nm <- names(metpa$path.ids)[which(metpa$path.ids == pathway.id)]
+    pathway.nm <- names(current.kegglib$path.ids)[which(current.kegglib$path.ids == pathway.id)]
   } else {
-    pathway.id <- metpa$path.ids[which(names(metpa$path.ids) == pathway.nm)]
+    pathway.id <- current.kegglib$path.ids[which(names(current.kegglib$path.ids) == pathway.nm)]
   }
   
   # Get matched metabolites

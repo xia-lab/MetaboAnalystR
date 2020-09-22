@@ -25,17 +25,16 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  mSetObj$analSet$msetlibname <- libname;
-  
   if(libname=="self"){
     ms.list <- mSetObj$dataSet$user.mset;
-    ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ")))
+    ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ", fixed=TRUE)))
     current.msetlib <- vector("list", 3)
     names(current.msetlib) <- c("name", "member", "reference")
   }else{
@@ -46,11 +45,22 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
       return(.set.mSet(mSetObj));
     }
     
-    if(!exists("current.msetlib") || "current.msetlib$lib.name"!=libname) {
-      LoadKEGGLib("msets", libname);
+    if(!exists("current.msetlib") || mSetObj$analSet$msetlibname != libname) {
+        destfile <- paste(libname, ".qs", sep = "");
+        if(.on.public.web){
+            my.qs  <- paste("../../libs/msets/", destfile, sep="");
+            current.msetlib <- qs::qread(my.qs);
+        }else{
+            my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
+            if(!file.exists(destfile)){
+                download.file(my.qs, destfile);
+            }
+            current.msetlib <- qs::qread(destfile);
+        }
+        mSetObj$analSet$msetlibname <- libname;
     }
     # create a named list, use the ids for list names
-    ms.list <- strsplit(current.msetlib[,3],"; ");
+    ms.list <- strsplit(current.msetlib[,3],"; ", fixed=TRUE);
     names(ms.list) <- current.msetlib[,2];
   }
 
@@ -74,7 +84,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
     current.msetlib$name <- names(ms.list)
     current.msetlib$reference <- rep("User-uploaded", length(ms.list))
   }
-  
+
   current.msetlib <<- current.msetlib;
   return(.set.mSet(mSetObj));
 }
@@ -108,12 +118,12 @@ Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
   }
   
   # create a named list, use the ids for list names
-  mset.list<-strsplit(dat[,2],"; ");
+  mset.list<-strsplit(dat[,2],"; ", fixed=TRUE);
   mset.ids <- paste("USER", sprintf("%04d",1:nrow(dat)), sep="");
   names(mset.list)<-dat[,1];
   names(mset.ids)<-dat[,1];
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  cmpd.db <- .get.my.lib("compound_db.qs");
   
   # now need to check all metabolites match HMDB names
   # and get the statistics
@@ -174,24 +184,6 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
     return(NA);
   }
   return(list(concs = matches$conc, pmid = matches$pubmed, refs = matches$references, note = matches$notes));
-}
-
-#'Load pathway library
-#'@description Load pathway library
-#'@param mSetObj Input name of the created mSet Object
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-LoadSmpLib<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  paths <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/smp_path.csv");
-  path.list<-strsplit(paths[,2],"; ");
-  names(path.list)<-paths[,1];
-  mSetObj$dataSet$path.list <- path.list;
-  mSetObj$dataSet$path.link <- paths[,3];
-  return(.set.mSet(mSetObj));
 }
 
 #'Search metabolite set libraries
@@ -394,15 +386,10 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
     mSetObj$api$libVersion <- lib.version
     mSetObj$api$libNm <- libNm
   }else{
-    if(lib.version=="current"){
-      LoadKEGGLib("kegg/metpa", libNm);
-    }else{
-      if(libNm %in% c("spym", "kva", "kpn", "cvr")){
-        AddErrMsg("Support for this organism is only available in the current version!");
-        return(0);
-      }
-      LoadKEGGLib("kegg/2018/metpa", libNm);
-    }
+    sub.dir <- "kegg/metpa";
+    destfile <- paste0(libNm, ".qs");
+    current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    load_igraph();
   }
   
   mSetObj$pathwaylibtype <- "KEGG"
@@ -421,11 +408,15 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
 #'
 SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
   
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
-  LoadKEGGLib("smpdb", libNm);
-  mSetObj$pathwaylibtype <- "SMPDB"
-  return(.set.mSet(mSetObj));
+    mSetObj <- .get.mSet(mSetObj);
+    mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
+
+    destfile <- paste0(libNm, ".qs");
+    current.kegglib <<- .get.my.lib(destfile, "smpdb");
+    load_igraph();
+
+    mSetObj$pathwaylibtype <- "SMPDB"
+    return(.set.mSet(mSetObj));
 }
 
 #'Read user uploaded metabolome as a list of KEGG pathway ids
@@ -453,7 +444,11 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
     return(0);
   }
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
   
   # now need to check all metabolites match HMDB names
   # and get the statistics
@@ -495,7 +490,11 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
     return(0);
   }
   
-  cmpd.db <- .read.metaboanalyst.lib("compound_db.rds");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  }else{
+    cmpd.db <- .get.my.lib("compound_db.qs");
+  }
   
   # now need to check all metabolites match HMDB names
   # and get the statistics

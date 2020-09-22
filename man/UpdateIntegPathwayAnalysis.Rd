@@ -13,8 +13,8 @@ UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper",
 
 \item{file.nm}{Input the name of the file}
 
-\item{topo}{Select the mode for topology analysis: Degree Centrality ("dc") measures the number of links that connect to a node 
-(representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures the overall distance from a given node 
+\item{topo}{Select the mode for topology analysis: Degree Centrality ("dc") measures the number of links that connect to a node
+(representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures the overall distance from a given node
 to all other nodes in a pathway; Betweenness Centrality ("bc")measures the number of shortest paths from all nodes to all the others that pass through a given node within a pathway.}
 
 \item{enrich}{Method to perform over-representation analysis (ORA) based on either hypergenometrics analysis ("hyper")
@@ -25,7 +25,7 @@ and visualization of both significant genes and metabolites or the gene-centric 
 to identify enriched pathways driven by significant genes or metabolites, respectively.}
 }
 \description{
-used for integrative analysis 
+used for integrative analysis
 as well as general pathways analysis for meta-analysis results
 }
 \author{

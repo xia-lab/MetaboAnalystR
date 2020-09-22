@@ -62,7 +62,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
     mSetObj$analSet$MB <- NULL;
     return(0);
   }
-  write.csv(signif(MB.stats, 5), file="meba_sig_features.csv");
+  fast.write.csv(signif(MB.stats, 5), file="meba_sig_features.csv");
   mSetObj$analSet$MB <-list(stats=MB.stats);
   return(.set.mSet(mSetObj));
 }
@@ -81,11 +81,11 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm,  format="png", dpi=72, width=NA){
+PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName <- gsub("\\/", "_",  cmpdNm);
-  imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
+  imgName <- paste(imgName, "_", version, "_dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 5.6;
   }else if(width == 0){
@@ -303,8 +303,8 @@ plotProfile <-function (mSetObj=NA, varName) {
   time.fac <- mSetObj$dataSet$time.fac;
   exp.fac <- mSetObj$dataSet$exp.fac;
   
-  cols <- (1:length(levels(exp.fac))) + 1;
-  
+  cols <- unique(GetColorSchema(exp.fac));
+
   # fold the var into a matrix with
   # each row contains values for one time poinst
   tpNum <- length(levels(time.fac));

@@ -10,6 +10,12 @@ Read.PeakListData(mSetObj=NA, filename = NA)
 \item{mSetObj}{Input the name of the created mSetObj.}
 
 \item{filename}{Input the path name for the CSV/TXT files to read.}
+
+\item{meta.anal}{Logical, TRUE if data will be used for meta-analysis.}
+
+\item{method}{Input the type of statistical scores included in the
+mummichog input. "pvalue" for p-values, "es" for effect-sizes, and
+"both" for both p-values and effect-sizes.}
 }
 \description{
 This function handles reading in CSV or TXT files and filling in the mSet object

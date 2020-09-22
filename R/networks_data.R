@@ -1,6 +1,5 @@
 #'Exports Gene-Mapping result into a table
 #'@param mSetObj Input name of the created mSet Object
-#'@import RSQLite
 #'@export
 GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   load_rsqlite()
@@ -48,41 +47,9 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "KO", "Name", "Comment");
   
   org.code <- mSetObj$org;
-  sqlite.path <- paste0(gene.sqlite.path, org.code, "_genes.sqlite");
-  
-  ## Perfrom online DB getting ----
-  filenm <- paste0(org.code, "_genes.sqlite")
-  lib.url <- sqlite.link <- paste0(gene.sqlite.path, filenm);
-  lib.download <- FALSE;
-  
-  if(!file.exists(filenm)){
-    lib.download <- TRUE;
-  }else{
-    time <- file.info(filenm)
-    diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
-    if(diff_time>30){
-      lib.download <- TRUE;
-    }
-  }
-  # Deal with curl issues
-  
-  if(lib.download){
-    tryCatch(
-      {
-        download.file(lib.url, destfile=filenm, method="auto")
-      }, warning = function(w){ print() },
-      error = function(e) {
-        print("Download unsucceful. Ensure that curl is downloaded on your computer.")
-        print("Attempting to re-try download using wget...")
-        download.file(lib.url, destfile=filenm, method="wget")
-      }
-    )
-  }
-  
-  ## SQLite data downloding finished !
-  
-  con <- .get.sqlite.con(filenm);
-  gene.db <- dbReadTable(con, "entrez");
+  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  con <- .get.sqlite.con(sqlite.path); ; 
+  gene.db <- dbReadTable(con, "entrez")
 
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
   hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
@@ -122,7 +89,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   # store the value for report
   mSetObj$dataSet$gene.map.table <- csv.res;
   
-  write.csv(csv.res, file="gene_name_map.csv", row.names=F);
+  fast.write.csv(csv.res, file="gene_name_map.csv", row.names=F);
   dbDisconnect(con);
 
   if(.on.public.web){
@@ -188,13 +155,17 @@ PrepareNetworkData <- function(mSetObj=NA){
   }
   
   # prepare compound list
-  if(!is.null(mSetObj$dataSet$cmpd.mat)){
+  if((!is.null(mSetObj$dataSet$cmpd.mat) || (!is.null(mSetObj$dataSet$cmpd)))){
     nm.map <- GetFinalNameMap(mSetObj);
     valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
     cmpd.vec <- nm.map$query[valid.inx];
     kegg.id <- nm.map$kegg[valid.inx];
     
     cmpd.mat <- mSetObj$dataSet$cmpd.mat;
+    if(is.null(mSetObj$dataSet$cmpd.mat)){
+      cmpd <- as.matrix(mSetObj$dataSet$cmpd); # when the input is concentration table
+      cmpd.mat <- cbind(cmpd, rep("0", nrow(cmpd)))
+    }
     hit.inx <- match(cmpd.vec, rownames(cmpd.mat));
     
     cmpd.mat <- cmpd.mat[hit.inx, ,drop=F];
@@ -447,32 +418,19 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
   fun.pval <<- resTable[,5];
   hit.num <<- resTable[,4];
   csv.nm <- paste(file.nm, ".csv", sep="");
-  write.csv(resTable, file=csv.nm, row.names=F);
+  fast.write.csv(resTable, file=csv.nm, row.names=F);
 }
 
 #'Utility function for PerformKOEnrichAnalysis_KO01100
 #'@param category Module or pathway
 LoadKEGGKO_lib<-function(category){
+
   if(category == "module"){
-    if(.on.public.web){
-      kegg.rda <- "../../libs/network/ko_modules.rda";
-      load(kegg.rda);
-    }else{
-      kegg.rda <- "https://www.metaboanalyst.ca/resources/libs/network/ko_modules.rda";
-      download.file(kegg.rda, destfile = "ko_modules.rda", method="libcurl", mode = "wb");
-      load("ko_modules.rda", .GlobalEnv);
-    }
+    kegg.anot <- .get.my.lib("ko_modules.qs", "network");
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$"Pathway module";
   }else{
-    if(.on.public.web){
-      kegg.rda <- "../../libs/network/ko_pathways.rda";
-      load(kegg.rda);
-    }else{
-      kegg.rda <- "https://www.metaboanalyst.ca/resources/libs/network/ko_pathways.rda";
-      download.file(kegg.rda, destfile = "ko_pathways.rda", method="libcurl", mode = "wb")
-      load("ko_pathways.rda", .GlobalEnv);
-    }
+    kegg.anot <- .get.my.lib("ko_pathways.qs", "network");
     current.setlink <- kegg.anot$link;
     current.mset <- kegg.anot$sets$Metabolism;
   }
@@ -595,19 +553,19 @@ MapKO2KEGGEdges<- function(kos, net="ko01100"){
 #'@param net Input the network name
 MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
   
-  lib <- "hsa_kegg.rds" # TO-DO: change for other species
+  lib <- "hsa_kegg.qs" # TO-DO: change for other species
   if(!exists("ko.node.map.global")){
     # Read original library files for a list of pathways with assigned compounds to each
     
     if(.on.public.web){
-      pathway.lib <- readRDS(paste("../../libs/mummichog/", lib, sep=""));
+      pathway.lib <- qs::qread(paste("../../libs/mummichog/", lib, sep=""));
     }else{
       if(!file.exists(lib)){
         path.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
         download.file(path.url, destfile = lib, method="libcurl", mode = "wb")
-        pathway.lib <- readRDS(lib);
+        pathway.lib <- qs::qread(lib);
       }else{
-        pathway.lib <- readRDS(lib);
+        pathway.lib <- qs::qread(lib);
       }
     }
 

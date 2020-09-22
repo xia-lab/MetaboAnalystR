@@ -10,7 +10,7 @@ Depends: R (>= 3.6.2), methods
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Imports: 
     data.table,
     pls,
@@ -51,7 +51,7 @@ Imports:
     RColorBrewer,
     tibble,
     RSQLite,
-        spls,
+    spls,
     siggenes,
     ggplot2,
     BiocParallel,
@@ -61,7 +61,8 @@ Imports:
     progress,
     entropy,
     rsm,
-    httr
+    httr,
+    qs
 Suggests: 
     knitr,
     rmarkdown,

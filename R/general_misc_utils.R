@@ -6,19 +6,19 @@
 
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
-  lod <- min(x[x>0], na.rm=T)/5;
-  x[x==0|is.na(x)] <- lod;
-  return(x);
+    lod <- min(x[x>0], na.rm=T)/5;
+    x[x==0|is.na(x)] <- lod;
+    return(x);
 }
 
 ReplaceMissingByLoD <- function(int.mat){
-  int.mat <- as.matrix(int.mat);  
-  rowNms <- rownames(int.mat);
-  colNms <- colnames(int.mat);
-  int.mat <- apply(int.mat, 2, .replace.by.lod);
-  rownames(int.mat) <- rowNms;
-  colnames(int.mat) <- colNms;
-  return (int.mat);
+    int.mat <- as.matrix(int.mat);  
+    rowNms <- rownames(int.mat);
+    colNms <- colnames(int.mat);
+    int.mat <- apply(int.mat, 2, .replace.by.lod);
+    rownames(int.mat) <- rowNms;
+    colnames(int.mat) <- colNms;
+    return (int.mat);
 }
 
 #'Given a data with duplicates, remove duplicates
@@ -75,9 +75,9 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 
 # in public web, this is done by microservice
 .perform.computing <- function(){
-  dat.in <- readRDS("dat.in.rds"); 
+  dat.in <- qs::qread("dat.in.qs"); 
   dat.in$my.res <- dat.in$my.fun();
-  saveRDS(dat.in, file="dat.in.rds");    
+  qs::qsave(dat.in, file="dat.in.qs");    
 }
 
 #'Read data table
@@ -90,20 +90,20 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 
 .readDataTable <- function(fileName){
-  
+
   dat <- tryCatch(
-    data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),
-    error=function(e){
-      print(e);
-      return(.my.slowreaders(fileName));    
-    }, 
-    warning=function(w){
-      print(w);
-      return(.my.slowreaders(fileName));
-    });
-  
+            {
+                data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
+            }, error=function(e){
+                print(e);
+                return(.my.slowreaders(fileName));    
+            }, warning=function(w){
+                print(w);
+                return(.my.slowreaders(fileName));
+            });
+            
   if(any(dim(dat) == 0)){
-    dat <- .my.slowreaders(fileName);
+        dat <- .my.slowreaders(fileName);
   }
   return(dat);
 }
@@ -120,8 +120,8 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 }
 
 .get.sqlite.con <- function(sqlite.path){
-  load_rsqlite();
-  return(dbConnect(SQLite(), sqlite.path)); 
+    load_rsqlite();
+    return(dbConnect(SQLite(), sqlite.path)); 
 }
 
 #'Permutation
@@ -135,26 +135,26 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 #'
 Perform.permutation <- function(perm.num, fun){
-  
+ 
   # for public server, perm.num is not always followed to make sure loop will not continue for very long time
   # before the adventure, see how long it takes for 10 permutations
   # if it is extremely slow (>60 sec) => max 20 (<0.05)
   # if it is very slow (30-60 sec) => max 100 (<0.01)
-  
+
   start.num <- 1; 
   perm.res <- NULL;
   if(.on.public.web & perm.num > 20){
     start.time <- Sys.time();
     perm.res <- lapply(1:10, fun);
     end.time <- Sys.time();
-    
+
     time.taken <- end.time - start.time;
     print(paste("time taken for 10 permutations: ", time.taken));
-    
+
     if(time.taken > 60){
-      perm.num <- 20;
+        perm.num <- 20;
     }else if(time.taken > 30){
-      perm.num <- 100;
+        perm.num <- 100;
     }
     start.num <- 11;
   }
@@ -178,11 +178,11 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
   #print(sys.cmd);
   sys.res <- try(system(sys.cmd));
   if(sys.res == 0){ # success code for system call
-    return (1);
+     return (1);
   }else{  # success code for system call
-    print(sys.res);
-    r.res <- unzip(inPath, exdir=outPath);
-    return(length(r.res)>0);
+     print(sys.res);
+     r.res <- unzip(inPath, exdir=outPath);
+     return(length(r.res)>0);
   }
 }
 
@@ -260,7 +260,7 @@ CleanNames <- function(query, type){
   if(type=="sample_name"){
     query <- gsub("[^[:alnum:]./_-]", "", query);
   }else{
-    query <- gsub("[^[:alnum:][:space:],'./_-]", "", query)
+    query <- gsub("[^[:alnum:][:space:],'./_./@-]", "", query)
   }
   return(make.unique(query));
 }
@@ -505,27 +505,27 @@ CalculatePairwiseDiff <- function(mat){
 #'@export
 # col.vec should already been created
 UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
-  mSetObj <- .get.mSet(mSetObj);
-  grpnms <- levels(mSetObj$dataSet$cls);
-  
-  # default styles
-  grp.num <- length(grpnms);
-  if(grp.num <= 18){ 
-    cols <- pal_18[1:grp.num];
-  }else{
-    cols <- colorRampPalette(pal_18)(grp.num);
-  }
-  
-  # make sure the NA
-  na.inx <- colVec == "#NA";
-  colVec[na.inx] <- cols[na.inx];
-  shapeVec[shapeVec == 0] <- 21;
-  
-  names(colVec) <- grpnms;
-  names(shapeVec) <- grpnms;
-  
-  colVec <<- colVec;
-  shapeVec <<- shapeVec;
+    mSetObj <- .get.mSet(mSetObj);
+    grpnms <- levels(current.cls);
+
+    # default styles
+    grp.num <- length(grpnms);
+    if(grp.num <= 18){ 
+       cols <- pal_18[1:grp.num];
+    }else{
+       cols <- colorRampPalette(pal_18)(grp.num);
+    }
+
+    # make sure the NA
+    na.inx <- colVec == "#NA";
+    colVec[na.inx] <- cols[na.inx];
+    shapeVec[shapeVec == 0] <- 21;
+
+    names(colVec) <- grpnms;
+    names(shapeVec) <- grpnms;
+
+    colVec <<- colVec;
+    shapeVec <<- shapeVec;
 }
 
 GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
@@ -549,36 +549,32 @@ GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
 }
 
 pal_18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#911eb4", "#f58231", "#bfef45",
-            "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075");
+                  "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075");
 cb_pal_18 <- c("#E69F00", "#b12c6f", "#56B4E9", "#009E73", "#F0E442", "#004488", 
-               "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
-               "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933");
+                     "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
+                     "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933");
 
-GetColorSchema <- function(mSetObj=NA, grayscale=F){
+GetColorSchema <- function(my.cls, grayscale=F){
   
-  mSetObj <- .get.mSet(mSetObj);
-  lvs <- levels(mSetObj$dataSet$cls); 
-  grp.num <- length(lvs);
-  
-  if(grayscale){
-    dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
-  }else if(exists("colVec") && !any(colVec =="#NA")){
-    dist.cols <- colVec;
-  }else{             
-    if(grp.num <= 18){ # update color and respect default
-      dist.cols <- pal_18[1:grp.num];
-      #dist.cols <- cb_pal_18[1:grp.num];
-    }else{
-      dist.cols <- colorRampPalette(pal_18)(grp.num);
-      #dist.cols <- colorRampPalette(cb_pal_18)(grp.num);
-    }
-  }
-  
-  colors <- vector(mode="character", length=length(mSetObj$dataSet$cls));
-  for(i in 1:length(lvs)){
-    colors[mSetObj$dataSet$cls == lvs[i]] <- dist.cols[i];
-  }
-  return (colors);
+   lvs <- levels(my.cls); 
+   grp.num <- length(lvs);
+   if(grayscale){
+      dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
+   }else if(exists("colVec") && !any(colVec =="#NA") && length(colVec) == length(levels(my.cls))){
+      dist.cols <- colVec;
+   }else{             
+      if(grp.num <= 18){ # update color and respect default
+          dist.cols <- pal_18[1:grp.num];
+      }else{
+          dist.cols <- colorRampPalette(pal_18)(grp.num);
+      }
+   }
+
+   colors <- vector(mode="character", length=length(my.cls));
+   for(i in 1:length(lvs)){
+     colors[my.cls == lvs[i]] <- dist.cols[i];
+   }
+   return (colors);
 }
 
 #'Remove folder
@@ -633,12 +629,12 @@ GetCMD<-function(regexp){
 
 # Memory functions
 ShowMemoryUse <- function(..., n=20) {
-  library(pryr);
-  sink(); # make sure print to screen
-  print(mem_used());
-  print(sessionInfo());
-  print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
-  print(warnings());
+    library(pryr);
+    sink(); # make sure print to screen
+    print(mem_used());
+    print(sessionInfo());
+    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+    print(warnings());
 }
 
 #'Perform utilities for cropping images
@@ -687,7 +683,7 @@ XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
   data <- xcms::groupval(xset, "medret", "into");
   data2 <- rbind(class= as.character(phenoData(xset)$class), data);
   rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"));
-  write.csv(data2, file="PeakTable.csv");
+  fast.write.csv(data2, file="PeakTable.csv");
   mSet <- InitDataObjects("dataType", "analType", paired)
   mSet <- Read.TextData(mSet, "PeakTable.csv", "format", "lbl.type")
   print("mSet successfully created...")
@@ -785,7 +781,7 @@ saveNetworkInSIF <- function(network, name){
 }
 
 PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -798,7 +794,7 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
   
   Cairo::Cairo(file=cmpd.name, width=240, height=400, bg = "transparent", type="png");
   
-  col <- unique(GetColorSchema(mSetObj))
+  col <- unique(GetColorSchema(cls.lbls))
   df <- data.frame(conc = mSetObj$dataSet$norm[, cmpd], class = cls.lbls)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
@@ -862,33 +858,211 @@ var.na <- function(x){
 }
 
 end.with <- function(bigTxt, endTxt){
-  return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
+   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
 
 ## fast T-tests/F-tests using genefilter
-## It leverages RSclient to perform one-time memory intensive computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
-  print("Performing fast univariate tests ....");
-  
-  # note, feature in rows for gene expression
-  data <- t(as.matrix(data));
-  if(length(levels(cls)) > 2){
-    res <- try(genefilter::rowFtests(data, cls, var.equal = var.equal));
-  }else{
-    res <- try(genefilter::rowttests(data, cls));
-  }
-  
-  if(class(res) == "try-error") {
-    res <- cbind(NA, NA);
-  }else{
-    res <- cbind(res$statistic, res$p.value);
-  }
-  
-  return(res);
+    print("Performing fast univariate tests ....");
+
+    # note, feature in rows for gene expression
+    data <- t(as.matrix(data));
+    if(length(levels(cls)) > 2){
+        res <- try(rowcolFt(data, cls, var.equal = var.equal));
+    }else{
+        res <- try(rowcoltt(data, cls, FALSE, 1L, FALSE));
+    }  
+
+    if(class(res) == "try-error") {
+        res <- cbind(NA, NA);
+    }else{
+        res <- cbind(res$statistic, res$p.value);
+    }
+
+    return(res);
 }
 
 GetCurrentPathForScheduler <- function(){
-  path <-getwd();
-  path <- gsub(basename(path), "", path)
-  return(path)
+    path <-getwd();
+    path <- gsub(basename(path), "", path)
+    return(path)
+}
+
+fast.write.csv <- function(dat, file, row.names=TRUE){
+    tryCatch(
+        {
+           if(is.data.frame(dat)){
+                # there is a rare bug in data.table (R 3.6) which kill the R process in some cases 
+                data.table::fwrite(dat, file, row.names=row.names);
+           }else{
+                write.csv(dat, file, row.names=row.names);  
+           }
+        }, error=function(e){
+            print(e);
+            write.csv(dat, file, row.names=row.names);   
+        }, warning=function(w){
+            print(w);
+            write.csv(dat, file, row.names=row.names); 
+        });
+}
+
+rowcolFt =  function(x, fac, var.equal, which = 1L) {
+  
+  if(!(which %in% c(1L, 2L)))
+    stop(sQuote("which"), " must be 1L or 2L.")
+  
+  if(which==2L)
+    x = t(x)
+
+  if (typeof(x) == "integer")
+      x[] <- as.numeric(x)
+
+  sqr = function(x) x*x
+  
+  stopifnot(length(fac)==ncol(x), is.factor(fac), is.matrix(x))
+  x   <- x[,!is.na(fac), drop=FALSE]
+  fac <- fac[!is.na(fac)]
+
+  ## Number of levels (groups)
+  k <- nlevels(fac)
+
+  ## xm: a nrow(x) x nlevels(fac) matrix with the means of each factor
+  ## level
+  xm <- matrix(
+     sapply(levels(fac), function(fl) rowMeans(x[,which(fac==fl), drop=FALSE])),
+     nrow = nrow(x),
+     ncol = nlevels(fac))
+
+  ## x1: a matrix of group means, with as many rows as x, columns correspond to groups 
+  x1 <- xm[,fac, drop=FALSE]
+
+  ## degree of freedom 1
+  dff    <- k - 1
+
+  if(var.equal){
+    ## x0: a matrix of same size as x with overall means
+    x0 <- matrix(rowMeans(x), ncol=ncol(x), nrow=nrow(x))
+  
+    ## degree of freedom 2
+    dfr    <- ncol(x) - dff - 1
+
+    ## mean sum of squares
+    mssf   <- rowSums(sqr(x1 - x0)) / dff
+    mssr   <- rowSums(sqr( x - x1)) / dfr
+
+    ## F statistic
+    fstat  <- mssf/mssr
+
+  } else{
+
+    ## a nrow(x) x nlevels(fac) matrix with the group size  of each factor
+    ## level
+    ni <- t(matrix(tapply(fac,fac,length),ncol=nrow(x),nrow=k))
+
+    ## wi: a nrow(x) x nlevels(fac) matrix with the variance * group size of each factor
+    ## level
+    sss <- sqr(x-x1)
+    x5 <- matrix(
+       sapply(levels(fac), function(fl) rowSums(sss[,which(fac==fl), drop=FALSE])),
+       nrow = nrow(sss),
+       ncol = nlevels(fac))          
+    wi <- ni*(ni-1) /x5
+
+    ## u : Sum of wi
+    u  <- rowSums(wi)
+
+    ## F statistic
+    MR <- rowSums(sqr((1 - wi/u)) * 1/(ni-1))*1/(sqr(k)-1)
+    fsno <- 1/dff * rowSums(sqr(xm - rowSums(wi*xm)/u) * wi)
+    fsdeno <- 1+ 2* (k-2)*MR
+    fstat <- fsno/fsdeno
+
+    ## degree of freedom 2: Vector with length nrow(x)
+    dfr <- 1/(3 * MR)
+  
+  }
+  
+  res = data.frame(statistic = fstat,
+                   p.value   = pf(fstat, dff, dfr, lower.tail=FALSE),
+                   row.names = rownames(x))
+
+  attr(res, "df") = c(dff=dff, dfr=dfr)
+  return(res)
+}
+
+rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
+    
+  if(.on.public.web){
+    dyn.load(.getDynLoadPath());
+  }
+
+  if (!missing(tstatOnly) && (!is.logical(tstatOnly) || is.na(tstatOnly)))
+      stop(sQuote("tstatOnly"), " must be TRUE or FALSE.")
+  
+  f = checkfac(fac)
+  if ((f$nrgrp > 2) || (f$nrgrp <= 0))
+    stop("Number of groups is ", f$nrgrp, ", but must be >0 and <=2 for 'rowttests'.")
+
+  if (typeof(x) == "integer")
+      x[] <- as.numeric(x)
+
+  cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
+    
+  res = data.frame(statistic = cc$statistic,
+                   dm        = cc$dm,
+                   row.names = dimnames(x)[[which]])
+
+  if (!tstatOnly)
+    res = cbind(res, p.value = 2*pt(abs(res$statistic), cc$df, lower.tail=FALSE))
+
+  attr(res, "df") = cc$df    
+  return(res)
+}
+
+checkfac = function(fac) {
+
+  if(is.numeric(fac)) {
+    nrgrp = as.integer(max(fac, na.rm=TRUE)+1)
+    fac   = as.integer(fac)
+  }
+  ## this must precede the factor test
+  if(is.character(fac))
+    fac = factor(fac)
+
+  if (is.factor(fac)) {
+    nrgrp = nlevels(fac)
+    fac   = as.integer(as.integer(fac)-1)
+  } 
+  if(!is.integer(fac))
+    stop("'fac' must be factor, character, numeric, or integer.")
+  
+  if(any(fac<0, na.rm=TRUE))
+    stop("'fac' must not be negative.")
+    
+  return(list(fac=fac, nrgrp=nrgrp))
+}
+
+# to convert all rds files to qs file for faster access
+convert.rds2qs <- function(){
+ rds.files <- list.files(".", pattern=".rds$");
+ for(rds in rds.files){
+    lib.rds <- readRDS(rds);
+    nm <- substr(rds, 1, nchar(rds)-4);
+    qs::qsave(lib.rds,paste0(nm, ".qs"));
+ }
+}
+
+# to convert all rda files to qs file for faster access
+convert.rda2qs <- function(){
+ rda.files <- list.files(".", pattern=".rda$");
+ for(rda in rda.files){
+    nm <- substr(rda, 1, nchar(rda)-4);
+    lib.rda <- load(rda);
+    # here the name is inmexpa (jointpa)
+    # qs::qsave(inmexpa,paste0(nm, ".qs"));
+    # here the name is metpa (metpa)
+    qs::qsave(metpa,paste0(nm, ".qs"));
+    # here the name is current.msetlib (msets)
+    #qs::qsave(current.msetlib,paste0(nm, ".qs"));
+ }
 }

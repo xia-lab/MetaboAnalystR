@@ -26,7 +26,7 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   sel.nms <- names(mdata.all)[include.inx];
   
   # first check that all class labels are consistent
-  dataSet <- readRDS(sel.nms[1]);
+  dataSet <- qs::qread(sel.nms[1]);
   lvls <- levels(dataSet$cls);
   id.type <- dataSet$id.type;
   
@@ -34,7 +34,7 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   nms <- colnames(dataSet$data);
   shared.nms <- nms;
   for(i in 2:length(sel.nms)){
-    dataSet <- readRDS(sel.nms[i]);
+    dataSet <- qs::qread(sel.nms[i]);
     # check if class label is consistent
     if(!all(levels(dataSet$cls) == lvls)){
       AddErrMsg(paste(sel.nms[i], "has different group labels", paste(levels(dataSet$cls), collapse=":"), "from", sel.nms[1], paste(lvls, collapse=":")));
@@ -52,14 +52,14 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   
   # now construct a common matrix to faciliate plotting across all studies
   dataName <- sel.nms[1];
-  dataSet <- readRDS(dataName);
+  dataSet <- qs::qread(dataName);
   common.matrix <- dataSet$data[, shared.nms];
   data.lbl <- rep(dataName, nrow(common.matrix));
   cls.lbl <- dataSet$cls;
   
   for(i in 2:length(sel.nms)){
     dataName <- sel.nms[i];
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
     ndat <- dataSet$data[, shared.nms];
     
     # note, there could be duplicate sample names across studies
@@ -165,7 +165,7 @@ PerformEachDEAnal <- function(mSetObj=NA){
     group <- factor(metastat.meta$cls.lbl[sel.inx]); # note regenerate factor to drop levels 
     data <- metastat.meta$data[, sel.inx];
     
-    dataSet <- readRDS(dataName);
+    dataSet <- qs::qread(dataName);
     grp.lvl <- levels(dataSet$cls);
     
     # update data set
@@ -218,7 +218,7 @@ PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
   
   for (i in 1:nbstudies){
     data.nm <- sel.nms[i];
-    dataSet <- readRDS(data.nm);
+    dataSet <- qs::qread(data.nm);
     classes[[i]] <- dataSet$cls; 
     
     fit2i <- dataSet$fit.obj;
@@ -550,7 +550,7 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
   }
   
   fishersum <- function(pvec){
-    return(sum(-2*log(pvec)))
+    return(sum(-2*log10(pvec)))
   }
   
   if(method=="stouffer"){
@@ -590,7 +590,7 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
 }
 
 PlotDataProfile<-function(dataName, boxplotName, pcaName){
-  dataSet <- readRDS(dataName);
+  dataSet <- qs::qread(dataName);
   if(.on.public.web){
     load_lattice()
   }
