@@ -57,8 +57,7 @@ PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   enIDs <- doGeneIDMapping(gene.vec, org, idType);
   
   if(idType == "kos"){
-    kos <- enIDs$kos;
-    enIDs <- enIDs$entrezs;
+    kos <- gene.vec;
     mSetObj$dataSet$kos.name.map <- kos
   }
   
