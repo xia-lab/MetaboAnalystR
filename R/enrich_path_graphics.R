@@ -52,7 +52,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
     }
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- paste0("/createimage/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")

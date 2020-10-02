@@ -90,20 +90,20 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 
 .readDataTable <- function(fileName){
-
+  
   dat <- tryCatch(
-            {
-                data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
-            }, error=function(e){
-                print(e);
-                return(.my.slowreaders(fileName));    
-            }, warning=function(w){
-                print(w);
-                return(.my.slowreaders(fileName));
-            });
-            
+    {
+      data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
+    }, error=function(e){
+      print(e);
+      return(.my.slowreaders(fileName));    
+    }, warning=function(w){
+      print(w);
+      return(.my.slowreaders(fileName));
+    });
+  
   if(any(dim(dat) == 0)){
-        dat <- .my.slowreaders(fileName);
+    dat <- .my.slowreaders(fileName);
   }
   return(dat);
 }
@@ -226,7 +226,7 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
     constCol <- (varCol == 0 | is.na(varCol));
     constNum <- sum(constCol, na.rm=T);
     if(constNum > 0){
-      bdata <- data.frame(bdata[,!constCol, drop=FALSE]); # got an error of incorrect number of dimensions, added drop=FALSE to avoid vector conversion
+      bdata <- data.frame(bdata[,!constCol, drop=FALSE], check.names = F); # got an error of incorrect number of dimensions, added drop=FALSE to avoid vector conversion
     }
   }
   bdata;

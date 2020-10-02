@@ -51,7 +51,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     # change path when on server, use local for now
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- "/enrichmentora"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
@@ -198,7 +198,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     # change path when on server, use local for now
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- "/enrichmentqea"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")

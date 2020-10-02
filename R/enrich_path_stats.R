@@ -63,7 +63,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     # change path when on server, use local for now
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- "/pathwayora"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
@@ -262,7 +262,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     # change path when on server, use local for now
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- "/pathwayqea"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")

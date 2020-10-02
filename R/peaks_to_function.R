@@ -170,22 +170,64 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA, meta.anal = FALSE,
 
 # function to format peak table from mzmine to right format for metaboanalyst
 # @format "row" for features in rows, "col" for features in columns.
-.format_mzmine_pktable <- function(fileName, group1, group2, format="row"){
+.format_mzmine_pktable <- function(mSetObj=NA, fileName, format="rowu", group1=NA, group2=NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  mzmine_table <- .readDataTable(fileName)
   
-  mzmine_table <- read.csv(fileName, row.names = 1, stringsAsFactors = F, check.names = F)
+  if(class(mzmine_table) == "try-error" || ncol(mzmine_table) == 1){
+    AddErrMsg("Data format error. Failed to read in the data!");
+    AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
+    AddErrMsg("Please also check the followings: ");
+    AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+    AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+    AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+    AddErrMsg("Missing values should be blank or NA without quote.");
+    AddErrMsg("Make sure the file delimeters are commas.");
+    return(0);
+  }
   
-  if(format == "row"){
-    keep.inx <- mzmine_table[1, ] %in% c(group1, group2)
-    mzmine_table <- mzmine_table[, keep.inx]
+  rownames(mzmine_table) <- mzmine_table[,1]
+  mzmine_table <- mzmine_table[,-1]
+  
+  if(!is.na(group1) & !is.na(group2)){
+    if(format == "row"){
+      keep.inx <- mzmine_table[1, ] %in% c(group1, group2)
+      mzmine_table <- mzmine_table[, keep.inx]
+    }else{
+      keep.inx <- mzmine_table[, 1] %in% c(group1, group2)
+      mzmine_table <- mzmine_table[keep.inx, ]
+    }
+    newnames <- paste0(tools::file_path_sans_ext(basename(fileName)), "_", group1, "_", group2, ".csv")
+  }else{
+    
+    mzmine_table[1, ] <- tolower(mzmine_table[1, ])
+    groups <- unique(unlist(mzmine_table[1, ]))
+    
+    if(length(groups) > 2){
+      AddErrMsg("Only two groups permitted!");
+      if("qc" %in% groups){
+        AddErrMsg("Remove QCs prior to uploading the mzmine table!");
+      }
+      return(0);
+    }
+    
+    if(.on.public.web){
+      newnames <- "mzmine_peaktable_metaboanalyst.csv"
+    }else{
+      newnames <- paste0(tools::file_path_sans_ext(basename(fileName)), "_formatted.csv")
+    }
+  }
+  
+  if(format == "colu"){ # samples in columns so features are in row
     feats <- gsub("/", "__", rownames(mzmine_table) )
     feats <- sub(".*?__", "", feats )
     feats <- sub("min", "", feats )
     feats <- sub("mz", "", feats )
     feats <- make.unique(feats, sep="")
     rownames(mzmine_table) <- feats
-  }else{ # column
-    keep.inx <- mzmine_table[, 1] %in% c(group1, group2)
-    mzmine_table <- mzmine_table[keep.inx, ]
+  }else{ # features in columns
     feats <- gsub("/", "__", colnames(mzmine_table) )
     feats <- sub(".*?__", "", feats )
     feats <- sub("min", "", feats )
@@ -193,9 +235,8 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA, meta.anal = FALSE,
     feats <- make.unique(feats, sep="")
     colnames(mzmine_table) <- feats
   }
-  
-  newnames <- paste0(tools::file_path_sans_ext(basename(fileName)), "_", group1, "_", group2, ".csv")
   write.csv(mzmine_table, newnames, row.names = TRUE)
+  return(.set.mSet(mSetObj))
 }
 
 #'Set the peak format for the mummichog analysis
@@ -356,8 +397,12 @@ Convert2Mummichog <- function(mSetObj=NA, rt=FALSE, rds.file=FALSE, rt.type="sec
   
   mummi_new[,1] <- as.numeric(make.unique(as.character(mummi_new[,1]), sep=""))
   
-  filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
-  
+  if(!.on.public.web){
+    filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
+  }else{
+    filename <- paste0("mummichog_input.txt")
+  }
+
   write.table(mummi_new, filename, row.names = FALSE)
   
   return(.set.mSet(mSetObj))
@@ -668,7 +713,6 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
-  
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion)
   version <- mum.version
   
@@ -677,7 +721,13 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   }else{
     mSetObj <- .init.Permutations(mSetObj, permNum)
   }
-  
+
+  if(class(mSetObj) != "list"){
+    if(mSetObj == 0){
+      AddErrMsg("MS Peaks to Paths analysis failed! Likely not enough m/z to compound hits for pathway analysis!")
+      return(0)
+    }
+  }
   return(.set.mSet(mSetObj));
 }
 
@@ -762,7 +812,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
 
 #' Internal function to perform PSEA, with RT
 .init.RT.Permutations <- function(mSetObj, permNum){
-  
+
   if(anal.type == "mummichog"){
     mSetObj <- .perform.mummichogRTPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
@@ -3832,7 +3882,7 @@ GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
     toSend = list(pathName = msetNm)
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- paste0("/pathsetdetails/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
@@ -3926,7 +3976,7 @@ GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
     toSend = list(cmpdId = cmpd.id)
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- paste0("/compounddetails/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
@@ -3973,7 +4023,7 @@ GetMummichogMZHits <- function(mSetObj=NA, msetNm){
     toSend = list(pathName = msetNm)
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- paste0("/mzhits/", mSetObj$api$guestName)
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")
@@ -4113,7 +4163,6 @@ GetAdductMsg <- function(mSetObj=NA){
 
 GetECMsg <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(mSetObj$mummi$ec.msg)
   return(mSetObj$mummi$ec.msg)
 }
 
@@ -4621,32 +4670,71 @@ sumlog <-function(p) {
 ####
 #### for heatmap view (online only)
 
-CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, version="v1"){
+.rt.included <- function(mSetObj = NA, rt){
   
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(rt %in% c("minutes", "seconds")){
+    is.rt <<- TRUE
+    mumRT.type <<- rt
+  }else{
+    is.rt <<- FALSE
+    mumRT.type <<- rt
+  }
+  return(.set.mSet(mSetObj));
+}
+
+CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, 
+                              version="v1"){
+
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
   data <- t(dataSet$norm)
   sig.ids <- rownames(data);
   
-  l = sapply(rownames(data),function(x) return(unname(strsplit(x,"/")[[1]][1])))
-  l = as.numeric(unname(unlist(l)))
-  
   res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
-  
-  rownames(res) = rownames(data);
-  
+
   if(dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx = rep(TRUE, nrow(data))
   }else{
     mSetObj$dataSet$pos_inx = rep(FALSE, nrow(data))
   }
   
-  mSetObj$dataSet$ref_mzlist = as.numeric(rownames(data));
-  mSetObj$dataSet$expr_dic= res[,1];
-  names(mSetObj$dataSet$expr_dic) = rownames(res)
-  mum.version <<- version
-  mSetObj$dataSet$mumRT <- FALSE
+  mSetObj$dataSet$mumRT <- is.rt
+  mSetObj$dataSet$mumRT.type <- mumRT.type
   
+  if(mSetObj$dataSet$mumRT){
+    feat_info <- rownames(data)
+    feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
+    colnames(feat_info_split) <- c("m.z", "r.t")
+    
+    if(mSetObj$dataSet$mumRT.type == "minutes"){
+      rtime <- as.numeric(feat_info_split[,2])
+      rtime <- rtime * 60
+      feat_info_split[,2] <- rtime
+    }
+    
+    rownames(res) <- l <- mSetObj$dataSet$ref_mzlist <- as.numeric(feat_info_split[,1]);
+    retention_time <- as.numeric(feat_info_split[,2]);
+    names(retention_time) <- mSetObj$dataSet$ref_mzlist;
+    mSetObj$dataSet$ret_time <- retention_time;
+    
+    if(is.na(mSetObj$dataSet$rt_tol)){
+      rt_tol <- max(mSetObj$dataSet$ret_time) * mSetObj$dataSet$rt_frac 
+      print(paste0("Retention time tolerance is ", rt_tol))
+      mSetObj$dataSet$rt_tol <- rt_tol
+    }
+    mSetObj$dataSet$expr_dic= res[,1];
+    names(mSetObj$dataSet$expr_dic) = rownames(res)
+  }else{
+    l <- sapply(rownames(data), function(x) return(unname(strsplit(x,"/")[[1]][1])))
+    mSetObj$dataSet$ref_mzlist <- rownames(res) <- l <- as.numeric(unname(unlist(l)))
+    mSetObj$dataSet$expr_dic= res[,1];
+    names(mSetObj$dataSet$expr_dic) = rownames(data)
+  }
+
+  mum.version <<- version
+
   if(filtOpt == "filtered"){
     mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion);
     matched_res <- qs::qread("mum_res.qs");
@@ -4654,7 +4742,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, v
     data = data[which(l %in% res_table[,"Query.Mass"]),]
     res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
   }
-  
+
   stat.pvals <- unname(as.vector(res[,2]));
   #stat.pvals <- unname(as.vector(data[,1]));
   org = unname(strsplit(libOpt,"_")[[1]][1])
@@ -4780,8 +4868,18 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, lib, ids){
   mSetObj<-.get.mSet(mSetObj);
   gene.vec <- unlist(strsplit(ids, "; "));
   
-  mSetObj$dataSet$input_mzlist <- gene.vec;
-  mSetObj$dataSet$N <- length(gene.vec);
+  if(is.rt){
+    feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)
+    colnames(feat_info_split) <- c("m.z", "r.t")
+    mSetObj$dataSet$input_mzlist <- as.numeric(feat_info_split[,1]);
+    print("heatmap")
+    print(head(mSetObj$dataSet$input_mzlist))
+    mSetObj$dataSet$N <- length(mSetObj$dataSet$input_mzlist);
+  }else{
+    mSetObj$dataSet$input_mzlist <- gene.vec;
+    mSetObj$dataSet$N <- length(gene.vec);
+  }
+
   mSetObj$mum_nm <- paste0(nm,".json");
   mSetObj$mum_nm_csv <- paste0(nm,".csv");
   .set.mSet(mSetObj);

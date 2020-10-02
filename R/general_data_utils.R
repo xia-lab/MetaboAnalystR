@@ -111,6 +111,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <<- "/home/glassfish/sqlite/";
   }else if(file.exists("/home/jasmine/Downloads/sqlite/")){ #jasmine's local
      url.pre <<- "/home/jasmine/Downloads/sqlite/";
+     api.base <<- "localhost:8987"
   }else if(file.exists("/Users/soufanom/Documents/Projects/gene-id-mapping/")){ # soufan laptop
      url.pre <<- "/Users/soufanom/Documents/Projects/gene-id-mapping/";
   }else if(file.exists("~/Documents/Projects/gene-id-mapping/")){
@@ -125,8 +126,9 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     url.pre <<-"/home/le/sqlite/GeneID_25Species_JE/";
   }else{
      url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
+     api.base <<- "http://api.xialab.ca"
   }
-    
+
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));
 }
@@ -328,10 +330,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
 
   if(anal.type == "mummichog"){
-    mzs <- as.numeric(var.nms);
-    if(sum(is.na(mzs) > 0)){
+    if(!is.rt){
+      mzs <- as.numeric(var.nms);
+      if(sum(is.na(mzs) > 0)){
         AddErrMsg("Make sure that feature names are numeric values (mass or m/z)!");
         return(0);
+      }
     }
   }
 
@@ -352,7 +356,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
   smpl.nms <- CleanNames(smpl.nms, "sample_name");
-
 
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;

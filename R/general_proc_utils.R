@@ -477,10 +477,14 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       remain <- rk < var.num*0.6;
       msg <- paste(msg, "Further feature filtering based on", nm);
 
-      max.allow <- 5000;
-      if(mSetObj$analSet$type == "power"){
+      if(mSetObj$analSet$type == "mummichog"){
+        max.allow <- 10000;
+      }else if(mSetObj$analSet$type == "power"){
+        max.allow <- 5000;
+      }else{
         max.allow <- 2500;
       }
+
       if(sum(remain) > max.allow){
         remain <-rk < max.allow;
         msg <- paste(msg, paste("Reduced to", max.allow, "features based on", nm));

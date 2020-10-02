@@ -324,7 +324,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     # change path when on server, use local for now
     
     load_httr()
-    base <- "localhost:8987"
+    base <- api.base
     endpoint <- "/jointpath"
     call <- paste(base, endpoint, sep="")
     query_results <- httr::POST(call, body = toSend, encode= "json")

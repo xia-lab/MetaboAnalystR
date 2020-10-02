@@ -27,11 +27,8 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
       mSetObj[["dataSet"]][["batch"]] <- NULL;
     
     if (any(grepl("_edata",names(mSetObj[["dataSet"]])))){
-      
       mSetObj[["dataSet"]][which(grepl("_edata",names(mSetObj[["dataSet"]])))]<-NULL;
-      
     }
-    
   }
   
   if(class(dat) == "try-error") {
@@ -149,9 +146,8 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   rownames(int.mat)<-rowNms;
   colnames(int.mat)<-colNms;
   
-  # replace NA
-  minConc<-min(int.mat[int.mat>0], na.rm=T)/5;
-  int.mat[is.na(int.mat)] <- minConc;
+  # replace NA by LoD
+  int.mat <- ReplaceMissingByLoD(int.mat);
   
   mSetObj$dataSet$batch[[label]] <- int.mat;
   mSetObj$dataSet$batch.cls[[label]] <- cls.nms;
@@ -315,8 +311,7 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   colnames(int.mat)<-colNms;
   
   # replace NA
-  minConc<-min(int.mat[int.mat>0], na.rm=T)/5;
-  int.mat[is.na(int.mat)] <- minConc;
+  int.mat <- ReplaceMissingByLoD(int.mat);
   
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
@@ -329,7 +324,6 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
     .set.mSet(mSetObj);
     # return(label);
   }else{
-    # print(label);
     return(.set.mSet(mSetObj));
   }
 }
@@ -599,18 +593,19 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
       }
       
       # Correction Method 2 - WaveICA
-      if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
-          all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-        print("Correcting with WaveICA...");#require(WaveICA)
-        WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-        mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+      if(!.on.public.web){
+        if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
+            all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
+          print("Correcting with WaveICA...");#require(WaveICA)
+          WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
+          mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+        }
       }
       # Correction Method 3 - Eigens MS
       if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
         print("Correcting with EigenMS...");
         
         EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
-        
         mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
         if (all(is.na(as.character(unique(batch.lbl2)))) | is.null(batch.lbl2)){  
           mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
@@ -1231,18 +1226,16 @@ ToSemiTransParent <- function (col.nms, alpha=0.5){
 # 1. WaveICA Function
 WaveICA<-function(data,batch,group){
   ### Wavelet Decomposition
-  
   if(.on.public.web){
-    dyn.load("../../rscripts/metaboanalystr/src/MetaboAnalyst.so");
+    dyn.load(.getDynLoadPath());
   }
-  
   
   batch<-as.character(batch)
   group<-as.character(group)
   wf="haar";
   K=20;t=0.05;t2=0.05;alpha=0;
   #library(waveslim)
-  level<-floor(log(nrow(data),2))
+  level<-floor(log10(nrow(data),2))
   if (is.null(colnames(data))){
     stop("data must have colnames")
   };
@@ -1320,9 +1313,9 @@ RUVs_cor<-function(data,class){
   }
   
   data[data<=0]<-0.0001
-  data.log<-log(data)
+  data.log<-log10(data)
   
-  data.cor<-RUVs(log(data),
+  data.cor<-RUVs(log10(data),
                  cIdx = QCm,
                  k = 1,
                  scIdx = differences,
@@ -1360,7 +1353,7 @@ RUVr_cor<-function(data,class){
   fit <- glmFit(y, design)
   res <- residuals(fit, type="deviance")
   #res <- fit[["deviance"]]
-  data.log<-log(data)
+  data.log<-log10(data)
   
   seqRUVr <- RUVr(data.log,
                   QCm,
@@ -1395,7 +1388,7 @@ RUVg_cor<-function(data){
 
 # 6. RUV-random Function
 RUV_random<-function(data){
-  Y <- log(data)
+  Y <- log10(data)
   if (any(grepl("IS",colnames(Y)))){
     IS<-Y[,grepl("IS",colnames(Y))] 
   } 
@@ -1554,9 +1547,6 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   cvTable <- plyr::ddply(cvStatForEachBatch,plyr::.(batch,CV),plyr::summarise,
                          lessThan30=sum(value<=0.3,na.rm = TRUE),
                          total=length(value),ratio=lessThan30/total)
-  #print(cvTable)
-  #res$cvBatch <- cvTable
-  #message("\n")
   
   cvStat <- plyr::ddply(peaksData[is.na(peaksData$class),],plyr::.(ID),
                         plyr::summarise,
@@ -1704,7 +1694,7 @@ CCMN2<-function(data,class){
   model <-  list(fit=pfit,sds=sds, means=means)
   
   if(lg){
-    lana <- log2(ana)
+    lana <- log10(ana)
   } else{
     lana <- ana
   }
@@ -2891,10 +2881,6 @@ RuvRandIter <- function(RUVRand,maxIter,wUpdate=maxIter+1, lambdaUpdate=TRUE,p=p
     }  
     dObj <- (oldObj-currObj)/oldObj
     
-    #print(sprintf('iter %d, dXb/Xb=%g, dWa/Wa=%g, dW/W=%g,l2Err=%g, dObj/obj=%g, obj=%g',
-    #              iter,dXb,dWa,dW,l2Err,dObj,currObj))
-    
-    
     if(iter >= maxIter || (!is.nan(max(dXb,dWa)) && max(dXb,dWa) < cEps)){
       converged = 1
     }
@@ -3020,7 +3006,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
   if (inverse) {
     out <- 0.25 * exp(-x) * (4 * exp(2 * x) - (a * a))
   }else{
-    out <- log((x + sqrt(x^2 + a^2))/2)
+    out <- log10((x + sqrt(x^2 + a^2))/2)
   }
   return(out)
 }
@@ -3717,7 +3703,7 @@ standardsFit <- function(object, factors, ncomp=NULL, lg=TRUE, fitfunc=lm, stand
   X <- factors
   
   if(lg)
-    lsta <- log2(t(object[standards,]))
+    lsta <- log10(t(object[standards,]))
   else
     lsta <- t(object[standards,])
   
@@ -3751,7 +3737,7 @@ standardsPred <- function(model, newdata, factors, lg=TRUE, standards) {
   X <- factors
   object <- newdata
   if(lg) {
-    lsta <- log2(t(object[standards,]))
+    lsta <- log10(t(object[standards,]))
   } else {
     lsta <- t(object[standards,])
   }
@@ -4119,7 +4105,7 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
     beta <- auxreg$coefficients
     gamma <- c(linkfun(sqrt(sum(weights * auxreg$residuals^2)/
                               auxreg$df.residual)), rep(0, ncol(z) - 1))
-    start <- if(dfest) c(beta, gamma, log(10)) else c(beta, gamma)
+    start <- if(dfest) c(beta, gamma, log10(10)) else c(beta, gamma)
   }
   if(is.list(start)) start <- do.call("c", start) 
   if(length(start) > k + q + dfest) {
@@ -4406,7 +4392,7 @@ RUVs<-function(x, cIdx, k, scIdx, round=TRUE, epsilon=1, tolerance=1e-8, isLog=F
   if(isLog) {
     Y <- t(x)
   } else {
-    Y <- t(log(x+epsilon))
+    Y <- t(log10(x+epsilon))
   }
   
   scIdx <- scIdx[rowSums(scIdx > 0) >= 2, , drop = FALSE]
@@ -4450,7 +4436,7 @@ RUVs<-function(x, cIdx, k, scIdx, round=TRUE, epsilon=1, tolerance=1e-8, isLog=F
 
 RUVr<-function(x, cIdx, k, residuals, center=TRUE, round=TRUE, epsilon=1, tolerance=1e-8, isLog=FALSE) {
   
-  Y <- t(log(x+epsilon))
+  Y <- t(log10(x+epsilon))
   
   if(center) {
     E <- apply(residuals, 1, function(x) scale(x, center=TRUE, scale=FALSE))
@@ -4486,7 +4472,7 @@ RUVg<-function(x, cIdx, k, drop=0, center=TRUE, round=TRUE, epsilon=1, tolerance
   if(isLog) {
     Y <- t(x)
   } else {
-    Y <- t(log(x+epsilon))
+    Y <- t(log10(x+epsilon))
   }
   
   if (center) {
