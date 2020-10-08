@@ -145,21 +145,25 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
     .prepare.globaltest.score(mSetObj);
     .perform.computing();   
-    save.globaltest.score(mSetObj);  
+    .save.globaltest.score(mSetObj);  
     return(.set.mSet(mSetObj));
+  }else{
+    mSetObj <- .prepare.globaltest.score(mSetObj);
+    .perform.computing();   
+    mSetObj <- .save.globaltest.score(mSetObj);  
   } 
-  
-  mSetObj <- .prepare.globaltest.score(mSetObj);
+
   return(.set.mSet(mSetObj));
 }
 
 .prepare.globaltest.score <- function(mSetObj=NA){
+
   mSetObj <- .get.mSet(mSetObj);
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
@@ -224,6 +228,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   
   # now, perform the enrichment analysis
   set.size <- length(current.msetlib);
+  
   if(set.size == 1){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
     return(0);
@@ -279,6 +284,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
   set.num <- mSetObj$analSet$set.num;
+  
   if(length(my.res)==1 && is.na(my.res)){
     AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
@@ -297,9 +303,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   colnames(res.mat) <- c("Total Cmpd", "Hits", "Statistic Q", "Expected Q", "Raw p", "Holm p", "FDR");
   
   hit.inx<-res.mat[,2]>0;
-  res.mat<-res.mat[hit.inx, ];
+  res.mat<-res.mat[hit.inx, , drop = FALSE];
   ord.inx<-order(res.mat[,5]);
-  res.mat<-res.mat[ord.inx,];
+  res.mat<-res.mat[ord.inx, , drop = FALSE];
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
   fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
   

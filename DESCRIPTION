@@ -36,7 +36,6 @@ Imports:
     SSPA,
     sva,
     Rcpp,
-    pROC,
     limma,
     fitdistrplus,
     lars,
@@ -72,5 +71,12 @@ Suggests:
     reshape2,
     RSclient,
     MSnbase,
-    car
+    car,
+    gdata,
+    gplots,
+    huge,
+    ppcor,
+    ctc,
+    glasso,
+    crmn
 VignetteBuilder: knitr

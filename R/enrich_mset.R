@@ -41,6 +41,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
     
     if(!.on.public.web & grepl("kegg", libname)){ # api only for KEGG msets
       mSetObj$api$libname <- libname
+      mSetObj$analSet$msetlibname <- libname;
       mSetObj$api$excludeNum = excludeNum
       return(.set.mSet(mSetObj));
     }

@@ -4714,6 +4714,9 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt,
       feat_info_split[,2] <- rtime
     }
     
+    new_feats <- paste(feat_info_split[,1], feat_info_split[,2], sep = "__")
+    rownames(data) <- new_feats
+    
     rownames(res) <- l <- mSetObj$dataSet$ref_mzlist <- as.numeric(feat_info_split[,1]);
     retention_time <- as.numeric(feat_info_split[,2]);
     names(retention_time) <- mSetObj$dataSet$ref_mzlist;

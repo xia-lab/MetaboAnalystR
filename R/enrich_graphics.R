@@ -285,7 +285,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   h <- w;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  PlotMSEA.Overview(folds, pvals);
+  PlotMSEA.Overview(folds, pvals);  
   dev.off();
   
   if(.on.public.web){
@@ -309,7 +309,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'@export
 #'
 PlotMSEA.Overview <- function(folds, pvals){
-  
+
   # due to space limitation, plot top 50 if more than 50 were given
   title <- "Metabolite Sets Enrichment Overview";
   if(length(folds) > 50){
