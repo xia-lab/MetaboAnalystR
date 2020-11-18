@@ -68,6 +68,8 @@ Suggests:
     devtools,
     testthat,
     plotly,
+    visnetwork,
+    ggraph,
     reshape2,
     RSclient,
     MSnbase,

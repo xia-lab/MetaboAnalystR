@@ -198,7 +198,7 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
 #'
 
 CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
-  
+
   if(sum(bdata==Inf, na.rm=TRUE)>0){
     inx <- bdata == Inf;
     bdata[inx] <- NA;

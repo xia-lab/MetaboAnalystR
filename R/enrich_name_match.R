@@ -17,7 +17,7 @@
 #'@export
 
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   # record the filter for 8 major databases

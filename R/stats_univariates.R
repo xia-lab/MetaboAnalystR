@@ -444,7 +444,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
 
   #### t-tests
@@ -476,6 +476,11 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   inx.up <- fc.log > max.xthresh;
   inx.down <- fc.log < min.xthresh;
   
+  # subset inx.p to inx.up/down
+  keep.inx <- names(inx.p) %in% names(inx.up)
+  inx.p <- inx.p[keep.inx]
+  p.log <- p.log[keep.inx]
+
   if(paired){
     count.thresh<-round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
     mat.up <- res >= max.xthresh;

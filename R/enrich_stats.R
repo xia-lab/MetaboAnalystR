@@ -177,7 +177,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
 
-  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
+  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname) & !exists("current.msetlib")){
 
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
@@ -243,7 +243,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   }
   
   set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
-  
+
   # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   phenotype <- mSetObj$dataSet$cls;

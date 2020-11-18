@@ -180,14 +180,12 @@ GetORA.pathNames <- function(mSetObj=NA){
 
 # contains three inner functions to be compatible with microservice
 CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method); # on local, everything is done
   
-  if(.on.public.web){
-    .perform.computing();
-    mSetObj <- .save.qea.score(mSetObj);  
-  }
+  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method); # on local, everything is done
+  .perform.computing();
+  mSetObj <- .save.qea.score(mSetObj);  
   
   return(.set.mSet(mSetObj));
 }
@@ -233,7 +231,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   names(univ.p) <- colnames(path.data);
   
-  if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
+  if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG" & !exists("current.kegglib")){
     mSetObj$api$nodeImp <- nodeImp;
     mSetObj$api$method <- method;
     mSetObj$api$pathDataColNms <- colnames(path.data)
@@ -296,7 +294,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     mSetObj$analSet$qea.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
   }
-  
+
   hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
   hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
   hits <- hits[hit.inx]; # remove no hits

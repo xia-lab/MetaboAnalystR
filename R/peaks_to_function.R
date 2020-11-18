@@ -460,8 +460,10 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   if(mSetObj$dataSet$mumType == "table"){
     
-    l = sapply(colnames(mSetObj$dataSet$orig),function(x) return(unname(strsplit(x,"/", fixed=TRUE)[[1]][1])))
-    colnames(mSetObj$dataSet$orig) = l;
+    orig.data<- qs::qread("data_orig.qs");
+    l = sapply(colnames(orig.data),function(x) return(unname(strsplit(x,"/", fixed=TRUE)[[1]][1])))
+    colnames(orig.data) <- l;
+    qs::qsave(orig.data, file="data_orig.qs");
     
     if(.on.public.web){
       return(SanityCheckData(NA));
@@ -900,7 +902,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
 # Internal function to set up library for PSEA
 .setup.psea.library <- function(mSetObj = NA, lib, libVersion, metaAnalysis = FALSE,
                                 metaLevel = "pathway", combine.level,
-                                pval.method, es.method, rank.metric){
+                                pval.method, es.method, rank.metric, 
+                                mutual.feats = TRUE, votep.alpha){
   
   version <- mum.version
   print(version)
@@ -975,7 +978,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   
   if(metaAnalysis & metaLevel %in% c("cpd", "ec")){
     mSetObj <- .search.compoundLibMeta(mSetObj, cpd.lib, cpd.treep, cpd.treen, metaLevel, combine.level,
-                                       pval.method, es.method, rank.metric);
+                                       pval.method, es.method, rank.metric, mutual.feats, votep.alpha);
   }else{
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   }
@@ -1317,10 +1320,14 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     # make EC names
     ec <- matched_res$Empirical.Compound
     ec.unique <- unique(matched_res$Empirical.Compound)
-    
+
     for(i in seq_along(ec.unique)){
-      ec <- gsub(paste0("\\b", ec.unique[i], "\\b"), paste0("EC000", i), ec)
+      ec <- replace(ec, grep(paste0("\\b", ec.unique[i], "\\b"), ec, perl=TRUE), paste0("EC000", i))
     }
+    
+    #for(i in seq_along(ec.unique)){
+    #  ec <- gsub(paste0("\\b", ec.unique[i], "\\b"), paste0("EC000", i), ec)
+    #}
     
     matched_res$Empirical.Compound <- gsub("\\|.*", "", ec)
     end <- Sys.time()
@@ -1329,12 +1336,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   }
   
   fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
+  qs::qsave(matched_res, "mum_res.qs");
   
   # now update expr. profile
   matched_mz <- matched_res[,1];
   matched_ts <- mSetObj$dataSet$expr_dic[matched_mz];
-  
-  qs::qsave(matched_res, "mum_res.qs");
   
   if(mSetObj$dataSet$mumRT & version=="v2"){ # RT need to be in EC space
     # first create ecpd to expression dict
@@ -1408,7 +1414,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
 # internal function for searching compound library
 .search.compoundLibMeta <- function(mSetObjMeta, cpd.lib, cpd.treep, cpd.treen, metaLevel = "cpd",
                                     combine.level = "pvalue", pval.method = "fisher", es.method = "fixed",
-                                    rank.metric = "mean"){
+                                    rank.metric = "mean", mutual.feats = TRUE, votep.alpha = 0.5){
   
   metaFiles <- unique(metaFiles)
   
@@ -1418,7 +1424,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   # first do compound mapping
   for(meta_file in seq_along(metaFiles)){
     
-    mSetObj <- readRDS(metaFiles[meta_file])
+    mSetObj <- qs::qread(metaFiles[meta_file])
     
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
     print(paste0("Got ", length(ref_mzlist), " mass features."))
@@ -1600,7 +1606,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     metaMsetObj[[metafile]]$matched_ts <- matched_ts;
     metaMsetObj[[metafile]]$mumRT <-mSetObj$dataSet$mumRT
   }
-  
+
   # second fill in p-value and effect size information
   mSetObj <- mSetObjMeta;
   
@@ -1624,29 +1630,38 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   }
   
   matched_res <- cbind(matched_res, Matched.Pval = matched_pval, matched_es)
-  
+
   # combine at compound level
   if(metaLevel == "cpd"){
     
-    matched_res_ag <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse=";")
-    
-    # keep compounds that only match across all files
-    matched <- strsplit(matched_res_ag$.id, ";", fixed=TRUE)
-    matched.inx <- vapply(matched, function(x) length(unique(x))==length(metaFiles), logical(1))
-    
-    if(sum(matched.inx) == 0){
-      AddErrMsg("No compounds found across all files!")
-      return(0)
+    if(mutual.feats){
+      matched_res_ag <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse=";")
+      
+      # keep compounds that only match across all files
+      matched <- strsplit(matched_res_ag$.id, ";", fixed=TRUE)
+      matched.inx <- vapply(matched, function(x) length(unique(x))==length(metaFiles), logical(1))
+      
+      if(sum(matched.inx) == 0){
+        AddErrMsg("No compounds found across all files!")
+        return(0)
+      }
+      
+      matched_res_ag <- matched_res_ag[matched.inx,]
+      # undo aggregate
+      matched_res <- splitstackshape::cSplit(matched_res_ag, c(".id", "Query.Mass", "Matched.Form", "Mass.Diff", "Retention.Time", "matched_ts", 
+                                                               "Matched.Pval", "effect.size", "lower.ci", "upper.ci"), 
+                                             ";", "long", makeEqual = FALSE, type.convert = "as.character")
+      
+      matched_res <- data.table::setDF(matched_res)
+      colnames(matched_res)[2] <- "File.Name"
+      colnames(matched_res)[7:11] <- c("Matched.Scores", "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI")
+    }else{
+      matched_res <- matched_res[, c(3,1,2,4:11)]
+      matched_res <- data.table::setDF(matched_res)
+      colnames(matched_res)[2] <- "File.Name"
+      colnames(matched_res)[7:11] <- c("Matched.Scores", "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI")
     }
-    
-    matched_res_ag <- matched_res_ag[matched.inx,]
-    # undo aggregate
-    matched_res <- splitstackshape::cSplit(matched_res_ag, c(".id", "Query.Mass", "Matched.Form", "Mass.Diff", "Retention.Time", "matched_ts", 
-                                                             "Matched.Pval", "effect.size", "lower.ci", "upper.ci"), 
-                                           ";", "long", makeEqual = FALSE, type.convert = "as.character")
-    matched_res <- data.table::setDF(matched_res)
-    colnames(matched_res)[2] <- "File.Name"
-    colnames(matched_res)[7:11] <- c("Matched.Scores", "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI")
+
     fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
     
     # or empirical compound combining here!  
@@ -1855,34 +1870,39 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
       end <- Sys.time()
       totaltime <- end-start
       print(paste0(length(unique(matched_res$Empirical.Compound)), " empirical compounds identified in ", totaltime, " seconds."))
-      
-      # keep empirical compounds that only match across all files
-      matched_res <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
-      matched <- strsplit(matched_res$File.Name, ";|___")
-      matched.inx <- vapply(matched, function(x) length(unique(x))==length(metaFiles), logical(1))
-      
-      if(sum(matched.inx)==0){
-        AddErrMsg("No empirical compounds found across all studies!")
-        return(0)
-      }else if(sum(matched.inx) < 50){
-        AddErrMsg("Not enough empirical compounds matched across all studies! Try meta-analysis at a higher level (compound or pathway).")
-        return(0)
+
+      if(mutual.feats){
+        # keep empirical compounds that only match across all files
+        matched_res <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
+        matched <- strsplit(matched_res$File.Name, ";|___")
+        matched.inx <- vapply(matched, function(x) length(unique(x))==length(metaFiles), logical(1))
+        
+        if(sum(matched.inx)==0){
+          AddErrMsg("No empirical compounds found across all studies!")
+          return(0)
+        }else if(sum(matched.inx) < 50){
+          AddErrMsg("Not enough empirical compounds matched across all studies! Try meta-analysis at a higher level (compound or pathway).")
+          return(0)
+        }
+        
+        print(paste0(sum(matched.inx), "matched empirical compounds identified across all studies!"))
+        
+        matched_res <- matched_res[matched.inx,]
+        matched_res <- splitstackshape::cSplit(matched_res, c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "Matched.Scores", 
+                                                              "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI", "File.Name"), 
+                                               "___", "long", makeEqual = FALSE, type.convert = "as.character")
+        matched_res <- data.table::setDF(matched_res)
+      }else{
+        matched_res <- matched_res[,c(11,1:10,12)]
+        matched_res <- data.table::setDF(matched_res)
       }
-      
-      print(paste0(sum(matched.inx), "matched empirical compounds identified across all studies!"))
-      
-      matched_res <- matched_res[matched.inx,]
-      matched_res <- splitstackshape::cSplit(matched_res, c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "Matched.Scores", 
-                                                            "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI", "File.Name"), 
-                                             "___", "long", makeEqual = FALSE, type.convert = "as.character")
-      matched_res <- data.table::setDF(matched_res)
       fast.write.csv(matched_res, file="mummichog_matched_compound_postmerge.csv", row.names=FALSE);
     }else{
       AddErrMsg("Meta-analysis at empirical compound level is invalid!")
       return(0)
     }
   }
-  
+
   ref_mzlist <- lapply(metaMsetObj, "[[", "ref_mzlist") 
   ref_mzlist <- unlist(unique(ref_mzlist))
   mSetObj$dataSet$ref_mzlist <- ref_mzlist
@@ -1909,11 +1929,22 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
         all_p <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
         old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
         scores <- strsplit(all_p$Matched.Pvalue, ";|___")
+        scores <- lapply(scores, function(x) {
+          if(length(x) == 1){
+            x <- rep(x, 2)
+          }
+          x;}) 
+        
       }else{
         # merge to compounds
         all_p <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse="___")
         old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
         scores <- strsplit(all_p$Matched.Pvalue, ";|___")
+        scores <- lapply(scores, function(x) {
+          if(length(x) == 1){
+            x <- rep(x, 2)
+          }
+          x;}) 
       }
       
       # combine p-values
@@ -1924,7 +1955,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
       }else if(pval.method=="stouffer"){
         meta.pvals <- lapply(scores, function(x) metap::sumz(x))
       }else if(pval.method=="vote"){
-        meta.pvals <- lapply(scores, function(x) metap::votep(x))
+        meta.pvals <- lapply(scores, function(x) metap::votep(x, alpha = as.numeric(votep.alpha)))
       }else if(pval.method=="min"){
         Meta.P <- lapply(scores, function(x) min(x) )
       }else if(pval.method=="max") {
@@ -2014,9 +2045,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
       }else if(pval.method=="edgington"){ 
         both.meta.pvals <- lapply(both.pval.list, function(x) metap::sump(as.numeric(x)))
       }else if(pval.method=="stouffer"){
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::sumz(x))
+        both.meta.pvals <- lapply(both.pval.list, function(x) metap::sumz(as.numeric(x)))
       }else if(pval.method=="vote"){
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::votep(x))
+        both.meta.pvals <- lapply(both.pval.list, function(x) metap::votep(as.numeric(x), alpha = as.numeric(votep.alpha)))
       }else if(pval.method=="min"){
         Both.Meta.P <- lapply(both.pval.list, function(x) min(x) )
       }else if(pval.method=="max") {
@@ -2045,7 +2076,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
       my.inx <- matched_res[,"Meta.ES.Pval"] < cutoff
     }
     
-    input_mzlist <- unique(matched_res[my.inx, "Query.Mass"])
+    input_mzlist <- unlist(unique(matched_res[as.vector(my.inx), "Query.Mass"]))
     
   }else{ # gsea
     input_mzlist <- lapply(metaMsetObj, "[[", "input_mzlist") 
@@ -2057,7 +2088,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   mSetObj$dataSet$input_mzlist <- input_mzlist
   
   if(all(mumRT) & version=="v2" & metaLevel=="ec"){ # RT need to be in EC space
-    
+
     # for GSEA
     # need to merge t-scores if same m/z in the data
     if(rank.metric == "mean"){     # default using the mean
@@ -2107,7 +2138,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     hits.index <- which(refmz %in% as.character(input_mzlist));
     ec1 <- unique(unlist(mz2ec_dict[hits.index]));
     mSetObj$input_ecpdlist <- ec1;
-    mSetObj$total_matched_ecpds <- unique(as.vector(mSetObj$dataSet$mumResTable$Empirical.Compound));
+    mSetObj$total_matched_ecpds <- unique(as.vector(matched_res$Empirical.Compound));
     form.mat <- cbind(matched_res[,2], matched_res[,4]);
     
   }else{ # compound level
@@ -2479,7 +2510,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   fishermatrix <- cbind(unsize-1, set.num, (query_set_size + unlist(negneg) - unsize), query_set_size); 
   first <- unlist(lapply(sizes, function(x) max(0, x-1)));
   easematrix <- cbind(first, (set.num - unsize + 1), (query_set_size - unsize), unlist(negneg)); 
-  
+
   res.mat[,1] <- path.num;  
   res.mat[,2] <- set.num;
   res.mat[,3] <- unsize;
@@ -2693,7 +2724,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
 
 #' Internal function for calculating GSEA, with RT
 .compute.mummichog.RT.fgsea <- function(mSetObj, permNum){
-  
+
   # Need to perform in EC space
   num_perm <- permNum;
   total_ecpds <- mSetObj$ec_exp #scores from all matched compounds
@@ -2833,6 +2864,11 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@param es.method Character, input the method to perform effect-size meta-analysis.
 #'@param rank.metric Character, input how to calculate pre-ranking metric. "mean"
 #'to use the average, "min" to use the lowest score, "max" to use the highest score.
+#'@param mutual.feats Boolean. If true, the analysis is subsetted to only the compounds
+#'or empirical compounds shared across all studies. If false, all predicted compounds and 
+#'empirical compounds will be used for pathway annotation.
+#'@param votep.alpha Numeric. Input the p-value cutoff to be used for vote counting p-value integration
+#'(if selected).
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -2841,27 +2877,45 @@ savePeakListMetaData <- function(mSetObj=NA){
 
 performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLevel = "cpd",
                             combine.level="pvalue", pval.method = "fisher", es.method = "fixed",
-                            rank.metric="mean"){
-  
+                            rank.metric="mean", mutual.feats=TRUE, votep.alpha = 0.5){
+
   metaFiles <- unique(metaFiles)
+  version <- mum.version
   
   if(length(unique(meta.anal.type)) > 1){
     AddErrMsg("Selected algorithms are not consistent!")
     return(0)
   }
-  
+
   if(metaLevel == "pathway"){
+    
+    # now save compound matching results
+    # and which compounds are significant - note if GSEA it's all
+    cpdMatchResults <- list()
+    #sigCpds <- list()
+    
     for(i in 1:length(metaFiles)){
       mSetObj <- qs::qread(metaFiles[i])
       mSetObj <- .setup.psea.library(mSetObj, lib, libVersion)
       qs::qsave(mSetObj, metaFiles[i])
+      cpdMatchResults[[metaFiles[i]]] <- qs::qread("mum_res.qs")
+      
+      #if(mSetObj$dataSet$mumRT & version=="v2"){
+      #  sigCpds[[metaFiles[i]]] <- mSetObj$input_ecpdlist
+      #}else{
+      #  sigCpds[[metaFiles[i]]] <- mSetObj$input_cpdlist
+      #}
     } 
+    
+    sink("ms_peaks_meta_anal_cpd_matching.json");
+    cat(RJSONIO::toJSON(cpdMatchResults));
+    sink();
+    
   }else if(metaLevel %in% c("ec", "cpd")){
     mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, TRUE, metaLevel,
-                                   combine.level, pval.method, es.method, rank.metric)
+                                   combine.level, pval.method, es.method, rank.metric, 
+                                   mutual.feats, votep.alpha)
   }
-  
-  version <- mum.version
   
   if(metaLevel %in% c("ec", "cpd")){
     
@@ -2874,7 +2928,8 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
   }else if(metaLevel == "pathway"){ # need to integrate pathway results
     
     pathResults <- list()
-    
+    pathResultsWhole <- list()
+
     for(i in 1:length(metaFiles)){
       
       mSetObj <- qs::qread(metaFiles[i])
@@ -2898,17 +2953,23 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
       if(i != length(metaFiles)){
         rm(mSetObj)
       }
+      pathResultsWhole[[metaFiles[i]]] <- read.csv("mummichog_pathway_enrichment.csv")
     }
+
+    sink("ms_peaks_meta_anal_path_res.json");
+    cat(RJSONIO::toJSON(pathResultsWhole));
+    sink();
     
     num_files <- length(metaFiles)
     path.names.all <- lapply(pathResults, rownames)
     path.intersect <- Reduce(intersect, path.names.all)
-    
+
     # remove paths not found by all three - complete.cases
     path.intersected <- lapply(pathResults, function(x) x[row.names(x) %in% path.intersect,])
     #li_2 <- lapply(seq_along(path.intersected), function(i) {colnames(path.intersected[[i]]) <- paste0(colnames(path.intersected[[i]]), names(path.intersected)[[i]]) ; path.intersected[[i]] } )
-    path2 <- data.table::setDF(Reduce(merge, lapply(path.intersected, data.table::data.table, keep.rownames = TRUE, key = "rn")))
-    
+    #path2 <- data.table::setDF(Reduce(merge, lapply(path.intersected, data.table::data.table, keep.rownames = TRUE, key = "rn")))
+    path_full <- path2 <- data.table::setDF(do.call("cbind", lapply(path.intersected, data.table::data.table, keep.rownames = TRUE, key = "rn")))
+
     # now do the integration
     # extract the p-values from each option into path2
     # first if just mummichog
@@ -2925,11 +2986,13 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
     }else{ # third if both
       path2_keep <- grep("rn|Combined_Pvals", colnames(path2))
     }   
-    
+
+    # create df of just p-values for meta-analysis
     path2 <- path2[,path2_keep]
     path2[path2==0] <- 0.00001 # for sumlog to work
-    rownames(path2) <- path2[,1]
-    path2 <- path2[,-1]
+    rownames(path_full) <- rownames(path2) <- path2[,1]
+    rm_col_inx <- grep("rn", colnames(path2))
+    path2 <- path2[,-rm_col_inx]
     
     # rename path2
     if(.on.public.web){
@@ -2946,7 +3009,7 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
     }else if(pval.method=="stouffer"){
       meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sumz(x))
     }else if(pval.method=="vote"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::votep(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::votep(x, alpha = as.numeric(votep.alpha)))
     }else if(pval.method=="min"){
       Meta.P <- apply(as.matrix(path2), 1, function(x) min(x) )
     }else if(pval.method=="max") {
@@ -2960,12 +3023,18 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
     if(exists("meta.pvals")){
       Meta.P <- unlist(lapply(meta.pvals, function(z) z["p"]))
     }
-    
+
     path2 <- cbind(path2, Meta.P)
     path2 <- path2[order(path2$Meta.P),]
     mSetObj$meta_results <- path2
+    
     mSetObj$metaLevel <- metaLevel
-    fast.write.csv(path2, "mspeaks_meta_anal_results.csv", row.names = TRUE)
+        
+    path_full <- cbind(path_full, Meta.P)
+    col2_rm <- grep("qs.rn", colnames(path_full))
+    path_full <- path_full[,-col2_rm]
+    path_full <- path_full[order(path_full$Meta.P),]
+    fast.write.csv(path_full, "mspeaks_meta_anal_all_results.csv", row.names = TRUE)
     
   }else{
     AddErrMsg("Invalid meta-analysis level selected!")
@@ -2975,25 +3044,73 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
   return(.set.mSet(mSetObj));
 }
 
-#'@param colorType Character, "brewer" for R Color Brewer scales or
-#'"viridis" for viridis color scales.
-#'@param palette Character, input the preferred color palette according
-#'to R Color Brewer or viridis (e.g. "RdBu").
-#'@param interactive Boolean. FALSE to create a non-interactive plot
-#'and TRUE for plotly generated interactive plot.
-#'@param square Boolean. TRUE for the heatmap to be squares versus
-#'rectangles (FALSE).
-#'@param allPaths Boolean. TRUE to use all paths when plotting the heatmap.
-#'FALSE to use a subset of paths, number defined in npaths.
-#'@param npaths Numeric. The number of pathways to subset the pathway
+#'Function to create summary plot of MS Peaks to Paths
+#'meta-analysis at the pathway level.
+#'@description This function creates a summary plot of the
+#'MS Peaks to Paths meta-analysis at the pathway level. The plot
+#'can either be a heatmap or a network, both of which can
+#'be made interactive. 
+#'NETWORK: The size of the nodes in the network correspond to the number of
+#'studies in which that pathway was significant. The color of the nodes correspond
+#'to the meta-p-value for each pathway, with (default coloring) red being the most 
+#'significant and yellow the least. 
+#'@param mSetObj Input the name of the created mSetObj object. 
+#'@param plotType Use "heatmap" to create a heatmap summary, "network" to create 
+#'a network summary, or "bubble" to create a bubble plot summary of the meta-analysis
 #'results.
-#'@param vertical Boolean. TRUE, plot will be vertical. FALSE, plot
+#'@param heatmap_colorType Character, "brewer" for R Color Brewer scales or
+#'"viridis" for viridis color scales. Used for creating the heatmap
+#'color scheme.
+#'@param heatmap_palette Character, input the preferred color palette according
+#'to R Color Brewer or viridis (e.g. "RdBu").
+#'@param heatmap_interactive Boolean. FALSE to create a non-interactive plot
+#'and TRUE for plotly generated interactive plot.
+#'@param heatmap_square Boolean. TRUE for the heatmap to be squares versus
+#'rectangles (FALSE).
+#'@param heatmap_allPaths Boolean. TRUE to use all paths when plotting the heatmap.
+#'FALSE to use a subset of paths, number defined in npaths.
+#'@param heatmap_npaths Numeric. The number of pathways to subset the pathway
+#'results.
+#'@param heatmap_vertical Boolean. TRUE, heatmap plot will be vertical. FALSE, heatmap plot
 #'will be horizontal.
+#'@param heatmap_fontSize Numeric, input the preferred font size to be used in the heatmap
+#'plot.
+#'@param pvalCutoff The size of the nodes in the network correspond to the number of
+#'studies in which that pathway was significant. This pvalCutoff (Numeric) is thus used
+#'to determine whether or not a pathway was found to be significant in each
+#'individual study. 
+#'@param overlap Numeric, this number is used to create edges between the nodes.
+#'By default it is set to 0.25, meaning that if 2 pathways (nodes) share 25% of
+#'the same compounds/empirical compounds, they will be connected by a node.
+#'@param networkType Character, "static" to create a static image or
+#'"interactive" to create an interactive network saved as an html 
+#'in your working directory.
+#'@param layout Character, layout from ggraph. "kk" for the spring-based algorithm by Kamada and Kawai
+#'as default. "drl" for force directed algorithm from the DrL toolbox. "lgl" for Large Graph Layout. "fr" for
+#'force-directed of Fruchterman and Reingold.
+#'@param net_palette Character, input the color code for the nodes in the network. Default is
+#'"YlOrRd". Uses the hcl palettes from the grDevices. Use hcl.pals()
+#'to view the name of all available palettes.
+#'@param netTextSize Numeric, input the preferred font size to be used in the network
+#'plot.
+#'@param netPlotSize Numeric, input the preferred dimensions (in inches) of the network
+#'to be saved.
+#'@param bubble_colorType  Character, "brewer" for R Color Brewer scales or
+#'"viridis" for viridis color scales. Used for creating the bubble plot
+#'color scheme.
+#'@param bubble_palette Character, use two/three colors max if using R ColorBrewer palettes
+#'for pleasing looking plots.
+#'@export
 PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap", 
-                                    colorType = "brewer", palette = "RdYlBu",
-                                    interactive = FALSE, square = TRUE,
-                                    allPaths = TRUE, npaths = 25, vertical = TRUE,
-                                    fontSize = 9){
+                                    heatmap_colorType = "brewer", heatmap_palette = "RdYlBu",
+                                    heatmap_interactive = FALSE, heatmap_square = TRUE,
+                                    heatmap_allPaths = TRUE, heatmap_npaths = 25, heatmap_vertical = TRUE,
+                                    heatmap_fontSize = 9, pvalCutoff = 0.05, overlap = 0.25,
+                                    networkType = "static", layout="kk", net_palette = "YlOrRd",
+                                    netTextSize = 2.5, netPlotSize = 7.5, 
+                                    bubble_interactive = FALSE, bubbleMaxPaths = 15,
+                                    bubble_colorType = "brewer", bubble_palette = "RdBu",
+                                    bubbleFontSize = 9, bubblePlotSize = 7.5){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -3005,29 +3122,30 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap",
   }
   
   path_results <- mSetObj$meta_results
-  path_results <- data.frame(apply(path_results, 2, rev), stringsAsFactors = FALSE)
-  path_results$pathways <- factor(rownames(path_results), as.character(unique(rownames(path_results))))
-  
-  if(nrow(path_results) > npaths & !allPaths){
-    path_results <- tail(path_results, npaths)
-  }
-  
-  library(reshape2)
-  
-  path_results <- melt(path_results, id = "pathways")
   
   if(plotType == "heatmap"){
     
-    if(colorType == "brewer"){
+    path_results <- data.frame(apply(path_results, 2, rev), stringsAsFactors = FALSE)
+    path_results$pathways <- factor(rownames(path_results), as.character(unique(rownames(path_results))))
+    
+    if(nrow(path_results) > heatmap_npaths & !heatmap_allPaths){
+      path_results <- tail(path_results, heatmap_npaths)
+    }
+    
+    library(reshape2)
+    
+    path_results <- melt(path_results, id = "pathways")
+    
+    if(heatmap_colorType == "brewer"){
       library(RColorBrewer)
-      pal <- colorRampPalette(brewer.pal(n = 9, palette))
+      pal <- colorRampPalette(brewer.pal(n = 9, heatmap_palette))
       size = length(unique(path_results$value))
       pal.pal <- pal(size)
     }
     
     library(ggplot2)
     
-    if(vertical){
+    if(heatmap_vertical){
       path.heatmap <- ggplot(data = path_results, mapping = aes(x = variable, y = pathways, fill = value))
     }else{
       path_results <- path_results[nrow(path_results):1,]
@@ -3042,7 +3160,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap",
       scale_y_discrete(expand=c(0,0)) +
       scale_x_discrete(expand=c(0,0)) +
       #set a base size for all fonts
-      theme_grey(base_size=fontSize) +
+      theme_grey(base_size=heatmap_fontSize) +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
       #theme options
       theme(
@@ -3055,7 +3173,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap",
         #remove plot border
         panel.border=element_blank())
     
-    if(colorType == "brewer"){
+    if(heatmap_colorType == "brewer"){
       path.heatmap <- path.heatmap +
         scale_fill_gradient2(low = pal.pal[1],
                              mid = pal.pal[size/2],
@@ -3066,35 +3184,250 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap",
     }else{
       
       library(viridis)
-      check.palette <- palette %in% c("viridis", "magma", "plasma", "inferno")
+      check.palette <- heatmap_palette %in% c("viridis", "magma", "plasma", "inferno")
       
       if(!check.palette){
-        palette <- "viridis"
+        heatmap_palette <- "viridis"
       }
       
       path.heatmap <- path.heatmap +
-        scale_fill_viridis(option=palette)+
+        scale_fill_viridis(option=heatmap_palette)+
         labs(fill="P-Value") 
     }
     
-    if(square){
+    if(heatmap_square){
       path.heatmap <- path.heatmap + coord_fixed()
     }
     
     ggsave("mspeaks_pathway_heatmap.png")
     
-    if(interactive){
-      library(plotly)
-      ax <- list(
-        zeroline = FALSE,
-        showline = FALSE,
-        showgrid = FALSE
-      )
-      p <- plotly::ggplotly(path.heatmap)
-      p <- p %>% layout(xaxis = ax, yaxis = ax)
-      htmlwidgets::saveWidget(p, "mspeaks_pathway_heatmap_interactive.html")
+    if(heatmap_interactive){
+      if("plotly" %in% rownames(installed.packages())){
+        library(plotly)
+        ax <- list(
+          zeroline = FALSE,
+          showline = FALSE,
+          showgrid = FALSE
+        )
+        p <- plotly::ggplotly(path.heatmap)
+        p <- p %>% layout(xaxis = ax, yaxis = ax)
+        htmlwidgets::saveWidget(p, "mspeaks_pathway_heatmap_interactive.html")
+      }else{
+        message("Please install the plotly R package to view an interactive heatmap!")
+        return(.set.mSet(mSetObj));
+      }
     }
     
+  }else if(plotType == "network"){
+
+    hits_sig <- rowSums(path_results[, -ncol(path_results)] < pvalCutoff) + 1 # account for 0 studies < cutoff
+    folds <- scales::rescale(hits_sig, to = c(1,10))
+    names(folds) <- GetShortNames(rownames(path_results));
+    pvals <- path_results[,ncol(path_results)];
+    names(pvals) <- rownames(path_results)
+    title <- "MS Peaks to Pathway Network Overview";
+    
+    if("emp_cpds" %in% names(mSet$pathways)){
+      path.names <- mSetObj$pathways$name
+      current.mset <- mSetObj$pathways$emp_cpds;
+      names(current.mset) <- path.names
+    }else{
+      path.names <- mSetObj$pathways$name
+      current.mset <- mSetObj$pathways$cpds;
+      names(current.mset) <- path.names
+    }
+    
+    if(length(folds) > 50){
+      folds <- folds[1:50];
+      pvals <- pvals[1:50];
+      title <- "MS Peaks to Pathway Network Overview (Top 50)";
+    }
+    
+    if(.on.public.web){
+      load_igraph()
+      load_reshape()
+    }
+    
+    pvalue <- pvals;
+    id <- names(pvalue);
+    geneSets <- current.mset;
+    n <- length(pvalue);
+    w <- matrix(NA, nrow=n, ncol=n);
+    colnames(w) <- rownames(w) <- id;
+    
+    for (i in 1:n) {
+      for (j in i:n) {
+        w[i,j] = overlap_ratio(geneSets[id[i]], geneSets[id[j]])
+      }
+    }
+    
+    wd <- melt(w);
+    wd <- wd[wd[,1] != wd[,2],];
+    wd <- wd[!is.na(wd[,3]),];
+    g <- graph.data.frame(wd[,-3], directed=F);
+    E(g)$width <- sqrt(wd[,3]*20);
+    g <- delete.edges(g, E(g)[wd[,3] < overlap]); # change 
+    V(g)$color <- hcl.colors(length(pvalue), net_palette);
+    
+    cnt <- folds;
+    names(cnt) <- id;
+    
+    if(networkType == "static"){
+      V(g)$size <- cnt + 3;
+    }else{
+      V(g)$size <- cnt + 20;
+    }
+    
+    pos.xy <- layout.fruchterman.reingold(g,niter=500);
+    
+    # now create the json object
+    nodes <- vector(mode="list");
+    node.nms <- V(g)$name;
+    node.sizes <- V(g)$size;
+    node.cols <- V(g)$color;
+    
+    if(.on.public.web){
+      for(i in 1:length(node.sizes)){
+        nodes[[i]] <- list(
+          id = node.nms[i],
+          label=node.nms[i], 
+          size=node.sizes[i], 
+          color=node.cols[i],
+          x = pos.xy[i,1],
+          y = pos.xy[i,2]
+        );
+      }
+      
+      edge.mat <- get.edgelist(g);
+      edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
+      # covert to json
+      netData <- list(nodes=nodes, edges=edge.mat);
+      sink("ms_peaks_network.json");
+      cat(RJSONIO::toJSON(netData));
+      sink();
+      return(g);  
+    }else{
+      if(networkType == "static"){
+        # static plot
+        library(ggraph)
+        p <- ggraph(g, layout=layout) + theme_void() +
+          geom_edge_fan(color="gray20", width=0.5, alpha=0.5) +
+          geom_node_point(color=V(g)$color, size=V(g)$size, alpha = 0.95) +
+          geom_node_text(aes(label = V(g)$name), size = netTextSize, repel=TRUE, nudge_y = 0.05, nudge_x = 0.05, check_overlap = TRUE) +
+          # 10% space above/to the side of x
+          scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+          scale_x_continuous(expand = expansion(mult = c(.1, .1)))
+        
+        filename <- paste0(anal.type, "_network", ".png")
+        ggsave(p, file=filename, width = netPlotSize, height = netPlotSize)
+        
+      }else{ 
+        # interactive plot
+        library(visNetwork)
+        data <- toVisNetworkData(g)
+        network <- visNetwork(nodes = data$nodes, edges = data$edges, 
+                              idToLabel = TRUE, height = "900px", width = "100%") %>% visEdges(color=list(color="grey", highlight="red")) %>% visNodes(font = list(size = 30))
+        
+        filename <- paste0(anal.type, "_network", ".html")
+        visSave(network, file = filename)
+      }
+    }
+  }else if(plotType == "bubble"){
+
+    full_results <- read.csv("mspeaks_meta_anal_all_results.csv", row.names = 1)
+    
+    if(nrow(path_results) > bubbleMaxPaths){
+      path_results <- path_results[seq_len(bubbleMaxPaths),]
+      full_results <- full_results[seq_len(bubbleMaxPaths),]
+    }
+
+    if(anal.type=="gsea_peaks"){
+      
+      studies <- colnames(path_results)[-length(colnames(path_results))] # remove the Meta.P
+      studies_pathway_total <- paste0(studies, ".qs.Pathway_Total")
+      studies_sig_hits <- paste0(studies, ".qs.Hits")
+      
+    }else if(anal.type=="mummichog"){
+
+      studies <- colnames(path_results)[-length(colnames(path_results))] # remove the Meta.P
+      studies_pathway_total <- paste0(studies, ".qs.Pathway.total")
+      studies_sig_hits <- paste0(studies, ".qs.Hits.sig")
+
+    }else{ #integ
+      
+      studies <- colnames(path_results)[-length(colnames(path_results))] # remove the Meta.P
+      studies_pathway_total <- paste0(studies, ".qs.Total_Size")
+      studies_sig_hits <- paste0(studies, ".qs.Sig_Hits")
+
+    }
+    
+    studies_pathway_total <- full_results[,grepl(paste(studies_pathway_total, collapse="|"), colnames(full_results))]
+    studies_pathway_total_list <- lapply(split(t(studies_pathway_total), 1:nrow(t(studies_pathway_total))), unlist)
+    
+    studies_sig_hits <- full_results[,grepl(paste(studies_sig_hits, collapse="|"), colnames(full_results))]
+    studies_sig_hits_list <- lapply(split(t(studies_sig_hits), 1:nrow(t(studies_sig_hits))), unlist)
+    
+    ratio <- as.data.frame(mapply(function(X, Y) {
+      x = unlist(X)
+      y = unlist(Y)
+      ratio = x/y
+      return(ratio)
+    }, X = studies_sig_hits_list, Y = studies_pathway_total_list  ))
+    
+    colnames(ratio) <- studies
+    ratio$Pathway <- rownames(path_results)
+    ratio2 <- reshape2::melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "Enrichment_Ratio")
+    
+    path_results <- path_results[, -length(colnames(path_results))]
+    path_results$Pathway <- rownames(path_results)
+    path_results2 <- reshape2::melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "P_Value")
+    
+    df <- merge(path_results2, ratio2, by = c("Pathway", "Study"))
+    df$Pathway <- factor(df$Pathway, levels = rownames(path_results))
+    df$Study <- factor(df$Study, levels = studies)
+    
+    p <- ggplot(df, aes(x = Study, y = Pathway)) +
+      geom_point(aes(size = Enrichment_Ratio, col = P_Value)) + 
+      theme(legend.key=element_blank(), 
+            axis.text = element_text(size = bubbleFontSize),
+            axis.text.x = element_text(angle = 90, vjust = 0.3, hjust = 1),
+            panel.background = element_blank(),
+            panel.border = element_rect(colour = "black", fill = NA, size = 0.5)) +
+      scale_y_discrete(limits = rev(levels(df$Pathway))) 
+    
+    if(bubble_colorType == "brewer"){
+      pal <- brewer.pal(n = 8, bubble_palette)
+      p <- p + scale_colour_gradientn(colours = pal)
+    }else{
+      
+      check.palette <- bubble_palette %in% c("viridis", "magma", "plasma", "inferno")
+      
+      if(!check.palette){
+        bubble_palette <- "viridis"
+      }
+      
+      p <- p + scale_color_viridis_c(option=bubble_palette, direction = -1)
+    }
+    
+    filename <- paste0(anal.type, "_bubble_plot", ".png")
+    ggsave(p, file=filename, width = bubblePlotSize, height = bubblePlotSize)
+    
+    if(bubble_interactive){
+      if("plotly" %in% rownames(installed.packages())){
+        library(plotly)
+        ax <- list(
+          zeroline = FALSE,
+          showline = FALSE,
+          showgrid = FALSE
+        )
+        p <- plotly::ggplotly(p)
+        p <- p %>% layout(xaxis = ax, yaxis = ax)
+        htmlwidgets::saveWidget(p, "mspeaks_pathway_bubble_interactive.html")
+      }else{
+        message("Please install the plotly R package to view the interactive bubble plot!")
+        return(.set.mSet(mSetObj));
+      }
+    }
   }
   return(.set.mSet(mSetObj));
 }
@@ -3107,6 +3440,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, plotType = "heatmap",
 #'force-directed of Fruchterman and Reingold.
 #'@param palette Character, using hcl palettes from the grDevices. Use hcl.pals()
 #'to view the name of all available palettes.
+#'@export
 PlotMSPeaksCpdEcpdNetwork <- function(mSetObj=NA, level="cpd", overlap = 0.25,
                                       networkType = "static", layout="kk", palette = "YlOrRd",
                                       textSize = 2.5){
@@ -3230,28 +3564,39 @@ PlotMSPeaksCpdEcpdNetwork <- function(mSetObj=NA, level="cpd", overlap = 0.25,
     return(g);  
   }else{
     if(networkType == "static"){
-      # static plot
-      library(ggraph)
-      p <- ggraph(g, layout=layout) + theme_void() +
-        geom_edge_fan(color="gray20", width=0.5, alpha=0.5) +
-        geom_node_point(color=V(g)$color, size=V(g)$size, alpha = 0.95) +
-        geom_node_text(aes(label = V(g)$name), size = textSize, repel=TRUE, nudge_y = 0.05, nudge_x = 0.05, check_overlap = TRUE) +
-        # 10% space above/to the side of x
-        scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
-        scale_x_continuous(expand = expansion(mult = c(.1, .1)))
       
-      filename <- paste0(anal.type, "_", level, "_network", ".png")
-      ggsave(p, file=filename)
-      
+      if("ggraph" %in% rownames(installed.packages())){
+        # static plot
+        library(ggraph)
+        p <- ggraph(g, layout=layout) + theme_void() +
+          geom_edge_fan(color="gray20", width=0.5, alpha=0.5) +
+          geom_node_point(color=V(g)$color, size=V(g)$size, alpha = 0.95) +
+          geom_node_text(aes(label = V(g)$name), size = textSize, repel=TRUE, nudge_y = 0.05, nudge_x = 0.05, check_overlap = TRUE) +
+          # 10% space above/to the side of x
+          scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+          scale_x_continuous(expand = expansion(mult = c(.1, .1)))
+        
+        filename <- paste0(anal.type, "_", level, "_network", ".png")
+        ggsave(p, file=filename)
+      }else{
+        message("Please install the ggraph R package to view the static network!")
+        return(.set.mSet(mSetObj));
+      }
     }else{ 
       # interactive plot
-      library(visNetwork)
-      data <- toVisNetworkData(g)
-      network <- visNetwork(nodes = data$nodes, edges = data$edges, 
-                            idToLabel = TRUE, height = "900px", width = "100%") %>% visEdges(color=list(color="grey", highlight="red")) %>% visNodes(font = list(size = 30))
       
-      filename <- paste0(anal.type, "_", level, "_network", ".html")
-      visSave(network, file = filename)
+      if("visNetwork" %in% rownames(installed.packages())){
+        library(visNetwork)
+        data <- toVisNetworkData(g)
+        network <- visNetwork(nodes = data$nodes, edges = data$edges, 
+                              idToLabel = TRUE, height = "900px", width = "100%") %>% visEdges(color=list(color="grey", highlight="red")) %>% visNodes(font = list(size = 30))
+        
+        filename <- paste0(anal.type, "_", level, "_network", ".html")
+        visSave(network, file = filename)
+      }else{
+        message("Please install the visNetwork R package to view the interactive network!")
+        return(.set.mSet(mSetObj));
+      }
     }
   }
   return(.set.mSet(mSetObj));
@@ -4875,8 +5220,6 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, lib, ids){
     feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
     mSetObj$dataSet$input_mzlist <- as.numeric(feat_info_split[,1]);
-    print("heatmap")
-    print(head(mSetObj$dataSet$input_mzlist))
     mSetObj$dataSet$N <- length(mSetObj$dataSet$input_mzlist);
   }else{
     mSetObj$dataSet$input_mzlist <- gene.vec;
