@@ -71,8 +71,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   }
   
   cls.vec <- as.factor(cls.vec);
-  lbl.vec <- as.factor(lbl.vec);
-  levels(lbl.vec) <- unique(lbl.vec); # make sure the same order as p value, rather by alphabetic
+  lbl.vec <- factor(lbl.vec, levels = unique(lbl.vec)); # make sure the same order as p value, rather by alphabetic
 
   num <- length(hit.cmpds);
   boxdata <- data.frame(Feature = lbl.vec, Abundance = conc.vec, Class = cls.vec)
