@@ -27,7 +27,7 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
-#'
+
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -41,7 +41,6 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
     
     if(!.on.public.web & grepl("kegg", libname)){ # api only for KEGG msets
       mSetObj$api$libname <- libname
-      mSetObj$analSet$msetlibname <- libname;
       mSetObj$api$excludeNum = excludeNum
       return(.set.mSet(mSetObj));
     }

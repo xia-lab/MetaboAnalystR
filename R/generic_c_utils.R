@@ -12,7 +12,7 @@ NULL
 #> NULL
 
 
-############# =========== ------------- C function Bin ----------- =========== ###########
+######### ======= ------------- C function Bin: Batch Effect Module ----------- ======== #########
 
 #' Internal C fucntion - C_imodwt_r
 #' @references Percival, D. B. and A. T. Walden (2000) Wavelet Methods for Time Series Analysis, Cambridge University Press.
@@ -29,3 +29,5 @@ NULL
   }
 
 ############# ============ ------------- Bin bottom ----------- ============ ###########
+
+

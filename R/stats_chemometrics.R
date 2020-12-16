@@ -340,9 +340,7 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   
   # now set color for each group
   cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
-  rgbcols <- col2rgb(cols);
-  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
-  pca3d$score$colors <- cols;
+  pca3d$score$colors <- my.col2rgb(cols);
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- RJSONIO::toJSON(pca3d, .na='null');
   sink(imgName);
@@ -444,9 +442,6 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
-  load.x.uniq <- jitter(loadings[,1]);
-  names(load.x.uniq) <- rownames(loadings);
-  mSetObj$analSet$pca$load.x.uniq <- load.x.uniq;
   mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -781,9 +776,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   
   # now set color for each group
   cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
-  rgbcols <- col2rgb(cols);
-  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
-  pls3d$score$colors <- cols;
+  pls3d$score$colors <- my.col2rgb(cols);
   
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- RJSONIO::toJSON(pls3d, .na='null');
@@ -884,10 +877,6 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2)
   colnames(loadings)<-c(ldName1, ldName2);
-
-  load.x.uniq <- jitter(loadings[,1]);
-  names(load.x.uniq) <- rownames(loadings);
-  mSetObj$analSet$plsr$load.x.uniq <- load.x.uniq;
   mSetObj$analSet$plsr$imp.loads<-loadings; # set up loading matrix
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -2150,9 +2139,7 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   
   # now set color for each group
   cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
-  rgbcols <- col2rgb(cols);
-  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
-  spls3d$score$colors <- cols;
+  spls3d$score$colors <- my.col2rgb(cols);
   
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- RJSONIO::toJSON(spls3d, .na='null');
@@ -2395,17 +2382,12 @@ GetPLSLoadAxesSpec<-function(mSetObj=NA){
 
 GetPLSLoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  names(mSetObj$analSet$plsr$load.x.uniq);
-}
-
-GetPLSLoadCmpdInxs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$plsr$load.x.uniq;
+  rownames(mSetObj$analSet$plsr$imp.loads);
 }
 
 GetPLSLoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  as.matrix(cbind(mSetObj$analSet$plsr$load.x.uniq, mSetObj$analSet$plsr$imp.loads[,2]));
+  as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]);
 }
 
 GetPCALoadAxesSpec <- function(mSetObj=NA){
@@ -2415,17 +2397,12 @@ GetPCALoadAxesSpec <- function(mSetObj=NA){
 
 GetPCALoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  names(mSetObj$analSet$pca$load.x.uniq);
-}
-
-GetPCALoadCmpdInxs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$pca$load.x.uniq;
+  rownames(mSetObj$analSet$pca$imp.loads);
 }
 
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  as.matrix(cbind(mSetObj$analSet$pca$load.x.uniq, mSetObj$analSet$pca$imp.loads[,2]));
+  as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]);
 }
 
 #'For plotting PCA, selects max top 9 components
@@ -2452,11 +2429,6 @@ GetOPLSLoadCmpds <- function(mSetObj=NA){
 
 GetOPLSLoadColNames <- function(mSetObj=NA){
   return(c("p[1]","p(corr)[1]"));
-}
-
-GetOPLSLoadCmpdInxs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$oplsda$splot.mat[,1];
 }
 
 GetOPLSLoadMat <- function(mSetObj=NA){
@@ -2497,11 +2469,6 @@ GetSPLSLoadAxesSpec <- function(mSetObj=NA){
 GetSPLSLoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   rownames(mSetObj$analSet$splsr$loadings$X);
-}
-
-GetSPLSLoadCmpdInxs <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$splsr$load.x.uniq;
 }
 
 GetSPLSLoadMat <- function(mSetObj=NA){

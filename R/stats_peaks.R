@@ -10,6 +10,7 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
@@ -352,8 +353,9 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   }
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
+  orig.smp.nms <- smpl.nms;
   smpl.nms <- CleanNames(smpl.nms, "sample_name");
-  
+  names(orig.smp.nms) <- smpl.nms;
   
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;
@@ -382,7 +384,9 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
   mSetObj$dataSet$mumType <- "table";
   mSetObj$dataSet$orig.var.nms <- orig.var.nms;
-  mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
+  mSetObj$dataSet$orig.smp.nms <- orig.smp.nms;
+  #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
+  qs::qsave(conc, file="data_orig.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   return(.set.mSet(mSetObj));
@@ -411,6 +415,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
 GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
@@ -498,6 +503,7 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
 
 #'Set peak list group values
 #'@param mSetObj Input name of mSetObj, the data used is the nmr.xcmsSet object
+#'@import qs
 #'@export
 #'
 SetPeakList.GroupValues <- function(mSetObj=NA) {
@@ -541,7 +547,8 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
     mSetObj$dataSet$three.col <- TRUE;
   }
   
-  mSetObj$dataSet$orig <- t(values);
+  #mSetObj$dataSet$orig <- t(values);
+  qs::qsave(t(values), file="data_orig.qs");
   mSetObj$msgSet$proc.msg <- msg
   mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
   mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);

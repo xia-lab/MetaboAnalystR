@@ -36,7 +36,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@export
 #'@import RSQLite
 SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){
-
+  
     mSetObj <- .get.mSet(mSetObj);
   
     if(.on.public.web){
@@ -227,15 +227,18 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
 #'@import ctc
 PerformDSPC <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  .preparePhenoListSeeds
+  result.list <- .preparePhenoListSeeds(mSetObj, "metabo_metabolites");
+  genes <- result.list$genes;
+  protein.vec <- seed.graph;
+  cmpds <- result.list$cmpds; 
   require(gdata)
   require(gplots)
   require(huge)
   require(ppcor)
   require(ctc)
   dat <- mSetObj$dataSet$norm;
-  node.ids <- mSetObj$dataSet$map.table[,"KEGG"]; #TO-DO: to support unknown features 
-  node.nms <- mSetObj$dataSet$map.table[,"Match"];
+  node.ids <- cmpds;  
+  node.nms <- mSetObj$dataSet$orig.var.nms;
   DGlasso.fit <- DGlasso(dat, alpha=.01, FDR.type='BH');
   coeff <- DGlasso.fit$coeff;
   pval <- DGlasso.fit$pvalue;

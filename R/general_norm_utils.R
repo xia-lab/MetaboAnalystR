@@ -31,6 +31,7 @@ CleanDataMatrix <- function(ndata){
 #'@param ratioNum Relevant only for biomarker analysis.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
+#'@import qs
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
@@ -128,8 +129,8 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
   
   # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
-  mSetObj$dataSet$row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
-  
+  row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
+  qs::qsave(row.norm, file="row_norm.qs");
   # this is for biomarker analysis only (for compound concentration data)
   if(ratio){
     min.val <- min(abs(data[data!=0]))/2;
@@ -202,6 +203,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$combined.method <- FALSE;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
+
 #  processedObj <- list();#for omicsanalyst
 #  processedObj$name <- "met_t_omicsanalyst.json"
 #  processedObj$type <- "met.t"
@@ -541,6 +543,7 @@ UpdateData <- function(mSetObj=NA){
 #'Prepare data for normalization
 #'@description Function should always be initialized (new or overwrite previous prenorm object).
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@import qs
 #'@export
 
 PreparePrenormData <- function(mSetObj=NA){
@@ -629,6 +632,7 @@ GetRandomSubsetIndex<-function(total, sub.num = 50){
 # if so, then microservice will be used
 RequireFastUnivTests <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+save(mSetObj, file = "mSetObj.rda")
   if(ncol(mSetObj$dataSet$norm) < 1000){
         return(FALSE);
   }else{

@@ -12,7 +12,8 @@ CrossReferencing(
   pubchem = T,
   chebi = F,
   kegg = T,
-  metlin = F
+  metlin = F,
+  lipid = F
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg
 \item{kegg}{Logical, T to cross reference to KEGG, F to not.}
 
 \item{metlin}{Logical, T to cross reference to MetLin, F to not.}
+
+\item{lipid}{Logical, if features are lipids (T), a different database will be used for
+compound matching.}
 }
 \description{
 Given a list of compound names or ids

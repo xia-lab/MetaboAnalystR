@@ -23,7 +23,9 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   fc.all <- res$fc.all;
   fc.log <- res$fc.log;
   
-  imp.inx <- fc.all > max.thresh | fc.all < min.thresh;
+  inx.up <- fc.all > max.thresh;
+  inx.down <- fc.all < min.thresh;
+  imp.inx <- inx.up | inx.down;
   sig.mat <- cbind(fc.all[imp.inx, drop=F], fc.log[imp.inx, drop=F]);
   colnames(sig.mat) <- c("Fold Change", "log2(FC)");
   
@@ -42,6 +44,8 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
     min.thresh = min.thresh,
     fc.all = fc.all, # note a vector
     fc.log = fc.log,
+    inx.up = inx.up,
+    inx.down = inx.down,
     inx.imp = imp.inx,
     sig.mat = sig.mat
   );
@@ -69,7 +73,7 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
   min.thresh = 1/fc.thresh;
   
   fc.mat <- GetFC(mSetObj, T, cmp.type);
-  
+
   count.thresh <- round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
   mat.up <- fc.mat >= log2(max.thresh);
   mat.down <- fc.mat <= log2(min.thresh);
@@ -93,10 +97,13 @@ FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.typ
   fileName <- "fold_change.csv";
   fast.write.csv(signif(sig.var,5),file=fileName);
   
+  # for plotting, the average paired difference
+  fc.log <- apply(fc.mat, 2, mean);
+
   # create a list object to store fc
   mSetObj$analSet$fc <-list (
     paired = TRUE,
-    fc.mat = fc.mat,
+    fc.log = fc.log,
     raw.thresh = fc.thresh,
     max.thresh = count.thresh,
     min.thresh = -count.thresh,
@@ -227,7 +234,8 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
     }else{
-      data <- log2(mSetObj$dataSet$row.norm);
+      row.norm <- qs::qread("row_norm.qs");
+      data <- log2(row.norm);
     }
     
     G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
@@ -240,6 +248,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     }
     return (fc.mat);
   }else{
+    data <- NULL;
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
       m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
@@ -253,7 +262,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
       }
       fc.all <- signif(2^fc.log, 5);
     }else{
-      data <- mSetObj$dataSet$row.norm;
+      data <- qs::qread("row_norm.qs");
       m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
       m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
       
@@ -266,12 +275,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
       fc.all <- signif(ratio, 5);
       fc.log <- signif(log2(ratio), 5);
     }
-    
-    if(mSetObj$dataSet$combined.method){
-      names(fc.all) <- names(fc.log) <- colnames(mSetObj$dataSet$norm);  
-    }else{
-      names(fc.all) <- names(fc.log) <- colnames(mSetObj$dataSet$row.norm) # make even vectors
-    }
+    names(fc.all) <- names(fc.log) <- colnames(data);  
     return(list(fc.all = fc.all, fc.log = fc.log));
   }
 }
@@ -325,8 +329,13 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
    inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
   
-  AddMsg(paste("A total of", sum(inx.imp), "significant features were found."));
-  sig.num <- sum(inx.imp);
+    sig.num <- sum(inx.imp);
+    if(is.na(sig.num)){
+    AddMsg(paste("No significant features were found."));
+    return(0)
+    }else{
+    AddMsg(paste("A total of", sig.num, "significant features were found."));
+    }
   
   if(sig.num > 0){
     sig.t <- t.stat[inx.imp];
@@ -444,7 +453,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
-
+  
   mSetObj <- .get.mSet(mSetObj);
 
   #### t-tests
@@ -455,6 +464,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
        res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
    }
   p.value <- res[,2];
+  names(p.value) <- rownames(res); # make sure named entries
   if(pval.type == "fdr"){
     p.value <- p.adjust(p.value, "fdr");
   }   
@@ -475,12 +485,13 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
   
   inx.up <- fc.log > max.xthresh;
   inx.down <- fc.log < min.xthresh;
-  
+
   # subset inx.p to inx.up/down
   keep.inx <- names(inx.p) %in% names(inx.up)
   inx.p <- inx.p[keep.inx]
   p.log <- p.log[keep.inx]
 
+  
   if(paired){
     count.thresh<-round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
     mat.up <- res >= max.xthresh;
@@ -539,7 +550,6 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
     thresh.y = -log10(threshp),
     fc.all = fc.all,
     fc.log = fc.log,
-    fc.log.uniq = jitter(fc.log),
     inx.up = inx.up,
     inx.down = inx.down,
     p.log = p.log,
@@ -991,6 +1001,72 @@ GetFCSigRowNames <- function(mSetObj=NA){
   rownames(mSetObj$analSet$fc$sig.mat);
 }
 
+GetFcSigUpMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$fc$fc.log;
+  red.inx<- which(mSetObj$analSet$fc$inx.up);
+  if(sum(red.inx) > 0){
+    return(as.matrix(cbind(red.inx, lod[red.inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
+}
+
+GetFcSigUpIDs  <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  red.inx<- which(mSetObj$analSet$fc$inx.up);
+  if(sum(red.inx) > 0){
+    return(names(mSetObj$analSet$fc$fc.log)[red.inx]);
+  }else{
+    return("NA");
+  }
+}
+
+GetFcSigDnMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$fc$fc.log;
+  blue.inx<- which(mSetObj$analSet$fc$inx.down);
+  if(sum(blue.inx) > 0){
+    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
+}
+
+GetFcSigDnIDs  <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  blue.inx<- which(mSetObj$analSet$fc$inx.down);
+  if(sum(blue.inx) > 0){
+    return(names(mSetObj$analSet$fc$fc.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
+}
+
+GetFcUnsigMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$fc$fc.log;
+  inx.imp <- mSetObj$analSet$fc$inx.up | mSetObj$analSet$fc$inx.down;
+  blue.inx<- which(!inx.imp);
+  if(sum(blue.inx) > 0){
+    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
+}
+
+GetFcUnsigIDs  <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$fc$fc.log;
+  inx.imp <- mSetObj$analSet$fc$inx.up | mSetObj$analSet$fc$inx.down;
+  blue.inx<- which(!inx.imp);
+  if(sum(blue.inx) > 0){
+    return(names(mSetObj$analSet$fc$fc.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
+}
+
 GetFCSigColNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   colnames(mSetObj$analSet$fc$sig.mat);
@@ -1035,6 +1111,16 @@ GetAnovaUpMat <- function(mSetObj=NA){
   }
 }
 
+GetAovUpIDs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  red.inx<- which(mSetObj$analSet$aov$inx.imp);
+  if(sum(red.inx) > 0){
+    return(names(mSetObj$analSet$aov$p.log)[red.inx]);
+  }else{
+    return("NA");
+  }
+}
+
 GetAnovaDnMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$aov$p.log;
@@ -1046,14 +1132,19 @@ GetAnovaDnMat <- function(mSetObj=NA){
   }
 }
 
+GetAovDnIDs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  blue.inx<- which(!mSetObj$analSet$aov$inx.imp);
+  if(sum(blue.inx) > 0){
+    return(names(mSetObj$analSet$aov$p.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
+}
+
 GetAnovaCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   names(mSetObj$analSet$aov$p.log);
-}
-
-GetAnovaCmpdInxs<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(1:length(mSetObj$analSet$aov$p.log));
 }
 
 GetAnovaSigFileName <- function(mSetObj=NA){
@@ -1102,6 +1193,16 @@ GetTtUpMat <- function(mSetObj=NA){
   }
 }
 
+GetTtUpIDs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  red.inx<-which(mSetObj$analSet$tt$inx.imp);;
+  if(sum(red.inx) > 0){
+    return(names(mSetObj$analSet$tt$p.log)[red.inx]);
+  }else{
+    return("NA");
+  }
+}
+
 GetTtDnMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$tt$p.log;
@@ -1114,9 +1215,14 @@ GetTtDnMat <- function(mSetObj=NA){
   }
 }
 
-GetTtCmpdInxs <- function(mSetObj=NA){
+GetTtDnIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(1:length(mSetObj$analSet$tt$p.log));
+  blue.inx<-which(!mSetObj$analSet$tt$inx.imp);;
+  if(sum(blue.inx) > 0){
+    return(names(mSetObj$analSet$tt$p.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
 }
 
 GetTtCmpds <- function(mSetObj=NA){
@@ -1259,9 +1365,9 @@ GetUnivReport <- function(mSetObj=NA){
   
   ## generate subset with the threshold (p-value)
   sigones <- which(as.numeric(as.character(univAnal.mat$p.value.origin)) <= threshp);
-  
-  sigDataSet.orig <- cbind(SampleID=rownames(mSetObj$dataSet$orig), Label=mSetObj$dataSet$cls, mSetObj$dataSet$orig[,c(sigones)])
-  sigDataSet.norm <- cbind(SampleID=rownames(mSetObj$dataSet$orig), Label=mSetObj$dataSet$cls, mSetObj$dataSet$norm[,c(sigones)])
+  orig.data<- qs::qread("data_orig.qs");
+  sigDataSet.orig <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
+  sigDataSet.norm <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
   
   write.table(sigDataSet.orig, file=paste("data_subset_orig_p", threshp, ".csv", sep=''), append=FALSE, sep=",", row.names=FALSE);
   write.table(sigDataSet.norm, file=paste("data_subset_norm_p", threshp, ".csv", sep=''), append=FALSE, sep=",", row.names=FALSE);
@@ -1282,7 +1388,7 @@ GetVolcanoDnMat <- function(mSetObj=NA){
   blue.inx <- which(!imp.inx);
   
   if(sum(blue.inx)>0){
-    xs <- vcn$fc.log.uniq[blue.inx]
+    xs <- vcn$fc.log[blue.inx]
     ys <- vcn$p.log[blue.inx];
     return(as.matrix(cbind(xs, ys)));
   }else{
@@ -1290,13 +1396,13 @@ GetVolcanoDnMat <- function(mSetObj=NA){
   }
 }
 
-GetVolcanoUpMat <- function(mSetObj=NA){
+GetVolcanoUpLftMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   vcn <- mSetObj$analSet$volcano;
-  imp.inx <- (vcn$inx.up | vcn$inx.down) & vcn$inx.p;
+  imp.inx <- vcn$inx.down & vcn$inx.p;
   red.inx <- which(imp.inx);
   if(sum(red.inx)>0){
-    xs <- vcn$fc.log.uniq[red.inx]
+    xs <- vcn$fc.log[red.inx]
     ys <- vcn$p.log[red.inx];
     return(as.matrix(cbind(xs, ys)));
   }else{
@@ -1304,40 +1410,59 @@ GetVolcanoUpMat <- function(mSetObj=NA){
   }
 }
 
-GetVolcanoVlMat <- function(mSetObj=NA){
+GetVolcanoUpRgtMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   vcn <- mSetObj$analSet$volcano;
-  limy <- GetExtendRange(vcn$fc.log);
-  as.matrix(rbind(c(vcn$min.xthresh, limy[1]), c(vcn$min.xthresh,limy[2])));
+  imp.inx <- vcn$inx.up & vcn$inx.p;
+  red.inx <- which(imp.inx);
+  if(sum(red.inx)>0){
+    xs <- vcn$fc.log[red.inx]
+    ys <- vcn$p.log[red.inx];
+    return(as.matrix(cbind(xs, ys)));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
 }
 
-GetVolcanoVrMat <- function(mSetObj=NA){
+GetVolcanoUpLftIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   vcn <- mSetObj$analSet$volcano;
-  limy <- GetExtendRange(vcn$fc.log);
-  as.matrix(rbind(c(vcn$max.xthresh, limy[1]), c(vcn$max.xthresh,limy[2])));
+  imp.inx <- vcn$inx.down & vcn$inx.p;
+  red.inx <- which(imp.inx);
+  if(sum(red.inx)>0){
+    return(names(mSetObj$analSet$volcano$fc.log)[red.inx]);
+  }else{
+    return("NA");
+  }
 }
 
-GetVolcanoHlMat <- function(mSetObj=NA){
+GetVolcanoUpRgtIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  vcn<-mSetObj$analSet$volcano;
-  limx <- GetExtendRange(vcn$fc.log);
-  as.matrix(rbind(c(limx[1], vcn$thresh.y), c(limx[2],vcn$thresh.y)));
+  vcn <- mSetObj$analSet$volcano;
+  imp.inx <- vcn$inx.up & vcn$inx.p;
+  red.inx <- which(imp.inx);
+  if(sum(red.inx)>0){
+    return(names(mSetObj$analSet$volcano$fc.log)[red.inx]);
+  }else{
+    return("NA");
+  }
 }
 
-GetVolcanoRangeX <- function(mSetObj=NA){
+GetVolcanoDnIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  range(mSetObj$analSet$volcano$fc.log.uniq);
+  vcn <- mSetObj$analSet$volcano;
+  imp.inx <- (vcn$inx.up | vcn$inx.down) & vcn$inx.p;
+  blue.inx <- which(!imp.inx);
+  if(sum(blue.inx)>0){
+    return(names(mSetObj$analSet$volcano$fc.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
 }
 
 GetVolcanoCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   names(mSetObj$analSet$volcano$fc.log);
-}
-
-GetVolcanoCmpdInxs <-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$volcano$fc.log.uniq
 }
 
 #'Volcano indices

@@ -86,7 +86,7 @@ mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", format = "png", dpi=300, isA
                       optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
 
 # Create box plot showing the concentrations of the selected compound between the groups
-mSet<-PlotBoxPlot(mSet, "Isoleucine", "Isoleucineboxplot_0_", "png", 72, T, FALSE)
+mSet<-PlotRocUnivBoxPlot(mSet, "Isoleucine", 1, "png", 72, T, FALSE)
 
 # Perform calculation of feature importance (AUC, p value, fold change)
 mSet<-CalculateFeatureRanking(mSet)

@@ -189,7 +189,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 #'@export
 #'@import igraph
 CreateGraph <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
 
   if(.on.public.web){
@@ -202,7 +202,15 @@ CreateGraph <- function(mSetObj=NA){
 
   seed.proteins <- pheno.net$seeds;
   if(net.type == "dspc"){
-    overall.graph <-simplify(graph_from_data_frame(edge.list, directed=FALSE, vertices=NULL), edge.attr.comb="first");
+    if(nrow(edge.list) < 1000 ){
+      top.percent <- round(nrow(edge.list)*0.2);
+      top.edge <- sort(unique(edge.list$Pval))[1:top.percent]; #default only show top 20% significant edges when #edges<1000
+    }else{                                                    #default only show top 100 significant edges when #edges>1000   
+      top.edge <- sort(unique(edge.list$Pval))[1:100];
+    }
+    top.inx <- match(edge.list$Pval, top.edge);
+    topedge.list <- edge.list[!is.na(top.inx), ,drop=F];
+    overall.graph <-simplify(graph_from_data_frame(topedge.list, directed=FALSE, vertices=NULL), edge.attr.comb="first");
     seed.graph <<- seed.proteins;
   }else{
     overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
@@ -906,12 +914,6 @@ rescale2NewRange <- function(qvec, a, b){
     new.vec <- coef.a*qvec + const.b;
   }
   return(new.vec);
-}
-
-
-# #FFFFFF to rgb(1, 0, 0)
-hex2rgba <- function(cols){
-  return(apply(sapply(cols, col2rgb), 2, function(x){paste("rgba(", x[1], ",", x[2], ",", x[3], ",0.8)", sep="")}));
 }
 
 # re-arrange one vector elements according to another vector values

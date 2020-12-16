@@ -93,7 +93,7 @@ CreateHeader <- function(usrName){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'
+#'@import qs
 CreateSummaryTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -101,24 +101,26 @@ CreateSummaryTable <- function(mSetObj=NA){
   sum.dat<-NULL;
   plenth<-dim(mSetObj$dataSet$proc)[2];
   if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin'){
-    for(i in 1:nrow(mSetObj$dataSet$orig)){
-      srow<-mSetObj$dataSet$orig[i,];
+    orig.data<- qs::qread("data_orig.qs");
+    for(i in 1:nrow(orig.data)){
+      srow<-orig.data[i,];
       newrow<-c(sum(srow[!is.na(srow)]>0), (sum(is.na(srow)) + sum(srow[!is.na(srow)]<=0)), plenth);
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Features (positive)","Missing/Zero","Features (processed)");
-    rownames(sum.dat)<-row.names(mSetObj$dataSet$orig);
+    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
   }else if(mSetObj$dataSet$type=="nmrpeak"| mSetObj$dataSet$type=="mspeak"){ # peak list
     pkSet<-qs::qread("peakSet.qs");
+    orig.data<- qs::qread("data_orig.qs");
     snames<-pkSet$sampnames;
     for(i in 1:length(snames)){
       samp.inx<-pkSet$peaks[,"sample"]==i;
-      srow<-mSetObj$dataSet$orig[i,];
+      srow <- orig.data[i,];
       newrow<-c(sum(samp.inx),(sum(is.na(srow)) + sum(srow[!is.na(srow)]<=0)), plenth);
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Peaks (raw)","Missing/Zero", "Peaks (processed)");
-    rownames(sum.dat)<-row.names(mSetObj$dataSet$orig);
+    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
   }else{ # spectra
     rawxset<-mSetObj$dataSet$xset.orig;
     fillxset<-mSetObj$dataSet$xset.fill;
@@ -131,7 +133,7 @@ CreateSummaryTable <- function(mSetObj=NA){
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Peaks (raw)","Peaks (fill)", "Peaks(processed)");
-    rownames(sum.dat)<-row.names(mSetObj$dataSet$orig);
+    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
   }
   print(xtable::xtable(sum.dat, caption="Summary of data processing results"), caption.placement="top", size="\\scriptsize");
 }

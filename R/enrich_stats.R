@@ -177,7 +177,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
 
-  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname) & !exists("current.msetlib")){
+  if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
 
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
@@ -243,7 +243,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   }
   
   set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
-
+  
   # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   phenotype <- mSetObj$dataSet$cls;
@@ -419,6 +419,119 @@ CalculateSSP<-function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+#'Create a pie chart for compound classes
+#'@description This function creates a pie-chart for compound classes
+#'in the enrichment analysis if the library is based on chemical ontologies.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Numeric, input the width, the default is 8.
+#'@param maxClass Numeric, input the maximum number of lipid classes to
+#'include in the pie-chart. By default this is set to 15.
+#'@param colPal Character, input the preferred R Color Brewer palette to be
+#'used for the pie chart. By default this is set to "Set1".
+#'@import ggplot2
+
+PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=72, width=8,
+                                 maxClass = 15, colPal = "Set1"){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(.on.public.web){
+    load_ggplot()
+  }
+  
+  # make a clean dataSet$cmpd data based on name mapping
+  # only valid hmdb name will be used
+  nm.map <- GetFinalNameMap(mSetObj);
+  valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
+  ora.vec <- nm.map$hmdb[valid.inx];
+  
+  q.size <- length(ora.vec);
+  
+  if(is.na(ora.vec) || q.size==0) {
+    AddErrMsg("No valid HMDB compound names found!");
+    return(0);
+  }
+  
+  current.mset <- current.msetlib$member
+  
+  # make a clean metabilite set based on reference metabolome filtering
+  # also need to update ora.vec to the updated mset
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
+    current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
+    mSetObj$dataSet$filtered.mset <- current.mset;
+    ora.vec <- ora.vec[ora.vec %in% unique(unlist(current.mset, use.names = FALSE))]
+    q.size <- length(ora.vec);
+  }
+  
+  set.size <- length(current.mset);
+  
+  if(set.size ==1){
+    AddErrMsg("Cannot create pie-chart for a single metabolite set!");
+    return(0);
+  }
+  
+  hits <- lapply(current.mset, function(x){x[x %in% ora.vec]});
+  hit.num <- unlist(lapply(hits, function(x) length(x)), use.names = FALSE);
+  
+  if(sum(hit.num>0)==0){
+    AddErrMsg("No matches were found to the selected metabolite set library!");
+    return(0);
+  }
+  
+  hit.members <- unlist(lapply(hits, function(x) paste(x, collapse = "; ")))
+  
+  pie.data <- data.frame(Group = names(hits), Hits = as.numeric(hit.num), Members = hit.members)
+  pie.data <- pie.data[!(pie.data[,2]==0), ]
+  ord.inx <- order(pie.data[,2], decreasing = T);
+  pie.data <- pie.data[ord.inx, , drop = FALSE];
+  
+  if(nrow(pie.data) > maxClass){
+    pie.data <- pie.data[1:maxClass,]
+  }
+
+  mSetObj$analSet$enrich.pie.data <- pie.data
+  
+  if(nrow(pie.data) > 9){
+    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, colPal))
+    group_colors <- col.fun(nrow(pie.data))
+  }else{
+    group_colors <- RColorBrewer::brewer.pal(8, colPal)[1:nrow(pie.data)]
+  }
+  
+  names(group_colors) <- pie.data[,1]
+  mSetObj$analSet$enrich.pie.cols <- group_colors
+  
+  # Basic piechart
+  p <- ggplot(pie.data, aes(x="", y=Hits, fill=Group)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) + theme_void() +
+    scale_fill_manual(values = group_colors) +
+    theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt")) +
+    theme(legend.text=element_text(size=12),
+          legend.title=element_text(size=13))
+
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  long.name <- max(nchar(pie.data[,1]))
+  
+  if(long.name > 25){
+    w <- 10
+    h <- 7
+  }else{
+    h <- width - 1 
+    w <- width
+  }
+
+  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
+  fast.write.csv(mSetObj$analSet$enrich.pie.data, file="msea_pie_data.csv");
+  return(.set.mSet(mSetObj));
+}
+
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -560,13 +673,9 @@ GetMetSetName<-function(mSetObj=NA, msetInx){
 GetORA.colorBar<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   len <- nrow(mSetObj$analSet$ora.mat);
-  if(len > 50){
-    ht.col <- c(substr(heat.colors(50), 0, 7), rep("#FFFFFF", len-50));
-  }else{
-    # reduce to hex by remove the last character so HTML understand
-    ht.col <- substr(heat.colors(len), 0, 7);
-  }
-  return (ht.col);
+  ht.col <- GetMyHeatCols(len);
+  rbg.cols <- hex2rgb(ht.col);
+  return (rbg.cols);
 }
 
 GetORA.rowNames<-function(mSetObj=NA){
@@ -603,12 +712,7 @@ GetORATable<-function(mSetObj=NA){
 GetQEA.colorBar<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   len <- nrow(mSetObj$analSet$qea.mat);
-  if(len > 50){
-    ht.col <- c(substr(heat.colors(50), 0, 7), rep("#FFFFFF", len-50));
-  }else{
-    # reduce to hex by remove the last character so HTML understand
-    ht.col <- substr(heat.colors(len), 0, 7);
-  }
+  ht.col <- GetMyHeatCols(len);
   return (ht.col);
 }
 
@@ -642,4 +746,19 @@ GetQEATable<-function(mSetObj=NA){
                          caption="Result from Pathway Analysis"),
           tabular.environment = "longtable", caption.placement="top", size="\\scriptsize");
   }
+}
+
+GetEnrichPieNames <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$enrich.pie.data$Group)
+}
+
+GetEnrichPieHits <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(as.matrix(as.numeric(mSetObj$analSet$enrich.pie.data[,2])))
+}
+
+GetEnrichPieColors <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$enrich.pie.cols)
 }

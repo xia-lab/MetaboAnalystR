@@ -1043,7 +1043,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
 
   mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
-  Cairo::Cairo(file=imgName, width=w, height=h, type="png", bg="white", dpi=dpi);
+  Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
   
   df <- data.frame(conc = x, class = y)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)

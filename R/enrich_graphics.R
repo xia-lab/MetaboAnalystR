@@ -272,7 +272,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   #calculate the enrichment fold change
   folds <- mSetObj$analSet$qea.mat[,3]/mSetObj$analSet$qea.mat[,4];
   names(folds) <- GetShortNames(rownames(mSetObj$analSet$qea.mat));
-  pvals <- mSetObj$analSet$qea.mat[,6];
+  pvals <- mSetObj$analSet$qea.mat[, "Raw p"];
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -285,7 +285,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   h <- w;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  PlotMSEA.Overview(folds, pvals);  
+  PlotMSEA.Overview(folds, pvals);
   dev.off();
   
   if(.on.public.web){
@@ -309,19 +309,22 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'@export
 #'
 PlotMSEA.Overview <- function(folds, pvals){
-
-  # due to space limitation, plot top 50 if more than 50 were given
+  
+  # due to space limitation, plot top 25 if more than 25 were given
   title <- "Metabolite Sets Enrichment Overview";
-  if(length(folds) > 50){
-    folds <- folds[1:50];
-    pvals <- pvals[1:50];
-    title <- "Enrichment Overview (top 50)";
+  
+  ht.col <- GetMyHeatCols(length(folds));
+  
+  if(length(folds) > 25){
+    folds <- folds[1:25];
+    pvals <- pvals[1:25];
+    ht.col <- ht.col[1:25];
+    title <- "Enrichment Overview (top 25)";
   }
   
   op <- par(mar=c(5,20,4,6), oma=c(0,0,0,4));
-  ht.col <- rev(heat.colors(length(folds)));
   
-  barplot(rev(folds), horiz=T, col=ht.col,
+  barplot(rev(folds), horiz=T, col=rev(ht.col),
           xlab="Enrichment Ratio", las=1, cex.name=0.75, space=c(0.5, 0.5),
           main= title);
   
@@ -330,7 +333,7 @@ PlotMSEA.Overview <- function(folds, pvals){
   medP <- (minP+maxP)/2;
   
   axs.args <- list(at=c(minP, medP, maxP), labels=format(c(maxP, medP, minP), scientific=T, digit=1), tick = F);
-  image.plot(legend.only=TRUE, zlim=c(minP, maxP), col=ht.col,
+  image.plot(legend.only=TRUE, zlim=c(minP, maxP), col=rev(ht.col),
              axis.args=axs.args, legend.shrink = 0.4, legend.lab="P value");
   par(op);
 }
@@ -362,9 +365,10 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   
   if(enrichType == "ora"){
     results <- mSetObj$analSet$ora.mat
-    
+    my.cols <- GetMyHeatCols(nrow(results));
     if(nrow(results) > 25){
       results <- results[1:25,]
+      my.cols <- my.cols[1:25];
     }
     
     df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
@@ -374,9 +378,10 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
     
   }else if(enrichType == "qea"){
     results <- mSetObj$analSet$qea.mat
-    
+    my.cols <- GetMyHeatCols(nrow(results));   
     if(nrow(results) > 25){
       results <- results[1:25,]
+      my.cols <- my.cols[1:25];
     }
     df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
                      rawp = results[,5],
@@ -386,26 +391,27 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
     
   }
 
-  maxp <- max(df$rawp)
-  
+  maxp <- max(df$rawp);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 9;
+    w <- 12;
+    h <- 9;
   }else if(width == 0){
-    w <- 7;
+    h <- w <- 7;
   }else{
-    w <- width;
+    h <- w <- width;
   }
-  h <- w;
   
   p <- ggplot(df, 
               aes(x = logp, y = Name)) + 
     geom_point(aes(size = folds, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
     theme_bw(base_size = 14.5) +
-    scale_colour_gradient(limits=c(0, maxp), low="red", high = "blue") +
+    scale_colour_gradient(limits=c(0, maxp), low=my.cols[1], high = my.cols[length(my.cols)]) +
     ylab(NULL) + xlab("-log10 (p-value)") + 
-    ggtitle("Metabolite Sets Enrichment Overview") 
+    ggtitle("Overview of Enriched Metabolite Sets (Top 25)") +
+    theme(legend.text=element_text(size=14),
+          legend.title=element_text(size=15))
   
   p$labels$colour <- "P-value"
   p$labels$size <- "Enrichment Ratio"
@@ -891,4 +897,14 @@ GetShortNames<-function(nm.vec, max.len= 45){
     }
   }
   return(new.nms);
+}
+
+# return heat colors of given length
+GetMyHeatCols <- function(len){
+  if(len > 50){
+    ht.col <- c(substr(heat.colors(50), 0, 7), rep("#FFFFFF", len-50));
+  }else{
+    # reduce to hex by remove the last character so HTML understand
+    ht.col <- substr(heat.colors(len), 0, 7);
+  }
 }

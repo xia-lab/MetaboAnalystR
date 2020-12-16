@@ -20,15 +20,6 @@
   }
 }
 
-# user data will be saved on disc, to save mem
-.set.data <- function(my.dat, my.nm){
-   qs::qsave(my.dat, paste0(".", my.nm, ".qs"));
-}
-
-.get.data <- function(my.nm){
-   return(qs::qread(paste0(".", my.nm, ".qs")));
-}
-
 #'Constructs a dataSet object for storing data 
 #'@description This functions handles the construction of a mSetObj object for storing data for further processing and analysis.
 #'It is necessary to utilize this function to specify to MetaboAnalystR the type of data and the type of analysis you will perform. 
@@ -46,7 +37,7 @@
 #'@import methods
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
-  
+
   if(!.on.public.web){
     if(exists("mSet")){
       mSetObj <- .get.mSet(mSet);
@@ -73,6 +64,40 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
   mSetObj$cmdSet <- vector(mode="character"); # store R command
   
+  .init.global.vars(anal.type);
+  print("MetaboAnalyst R objects initialized ...");
+  return(.set.mSet(mSetObj));
+}
+
+# this is for switching module
+UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
+
+    mSetObj <- .get.mSet(NA);
+    mSetObj$dataSet$type <- data.type;
+    mSetObj$analSet$type <- anal.type;
+    .init.global.vars(anal.type);    
+    
+    # some specific setup 
+    if(anal.type == "mummichog"){
+        .init.MummiMSet();
+        load("params.rda");        
+        mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
+        mSetObj <- .rt.included(mSetObj, "seconds");
+        mSetObj <- Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
+        mSetObj <- .get.mSet(NA);
+    }
+    return(.set.mSet(mSetObj));
+}
+
+.init.MummiMSet <- function(mSetObj=NA) {  
+  SetPeakFormat("pvalue");
+  TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
+  anal.type <<- "mummichog";
+  api.base <<- "http://api.xialab.ca";
+  err.vec <<- "";
+}
+
+.init.global.vars <- function(anal.type){
   # other global variables
   msg.vec <<- "";
   err.vec <<- "";
@@ -102,7 +127,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     # start Rserve engine for Rpackage
     load_Rserve();
   }
-  
+
   # plotting required by all
   Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
   
@@ -128,11 +153,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
      api.base <<- "http://api.xialab.ca"
   }
-
-  print("MetaboAnalyst R objects initialized ...");
-  return(.set.mSet(mSetObj));
 }
-
 #'For two factor time series only
 #'@description For two factor time series only
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
@@ -247,28 +268,37 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
       dat[,1] <- NULL; #remove sample names
       if(lbl.type == "qc"){
         rownames(dat) <- smpl.nms;
-        mSetObj$dataSet$orig <- dat;
+        #mSetObj$dataSet$orig <- dat;
+        qs::qsave(dat, file="data_orig.qs");
         mSetObj$dataSet$cmpd <- colnames(dat);
         return(1);
       }
-      
       cls.lbl <- dat[,1];
       conc <- dat[,-1, drop=FALSE];
       var.nms <- colnames(conc);
+      if(lbl.type == "no"){ #no class label
+        cls.lbl <- rep(1, nrow(dat));
+        conc <- dat[,, drop=FALSE]; 
+        var.nms <- colnames(conc);
+      }
     }else{ # sample in col
       msg<-c(msg, "Samples are in columns and features in rows.");
-      var.nms <- dat[-1,1];
-      dat[,1] <- NULL;
-      smpl.nms <- colnames(dat);
-      cls.lbl <- dat[1,];
-      conc <- t(dat[-1,]);
+      if(lbl.type == "no"){
+        cls.lbl <- rep(1, ncol(dat));
+        conc <- t(dat[,-1]);
+        var.nms <- dat[,1];
+        smpl.nms <- colnames(dat[,-1]);
+      }else{
+        var.nms <- dat[-1,1];
+        dat[,1] <- NULL;
+        smpl.nms <- colnames(dat);
+        cls.lbl <- dat[1,];
+        conc <- t(dat[-1,]);
+      }
     }
   }
 
   mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
-  
-  # free memory
-  dat <- NULL;
   
   msg <- c(msg, "The uploaded file is in comma separated values (.csv) format.");
 
@@ -329,7 +359,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
     return(0);
   }
 
-  if(anal.type == "mummichog"){
+  if(anal.type == "mummichog"){  
     if(!is.rt){
       mzs <- as.numeric(var.nms);
       if(sum(is.na(mzs) > 0)){
@@ -355,7 +385,9 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
+  orig.smp.nms <- smpl.nms;
   smpl.nms <- CleanNames(smpl.nms, "sample_name");
+  names(orig.smp.nms) <- smpl.nms;
 
   # keep a copy of original names for saving tables 
   orig.var.nms <- var.nms;
@@ -375,12 +407,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
   }else{
     if(lbl.type == "disc"){
       # check for class labels at least two replicates per class
-      if(min(table(cls.lbl)) < 3){
-        AddErrMsg(paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
-        AddErrMsg("At least three replicates are required in each group!");
-        AddErrMsg("Or maybe you forgot to specify the data format?");
-        return(0);
-      }
+      #if(min(table(cls.lbl)) < 3){
+      #  AddErrMsg(paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
+      #  AddErrMsg("At least three replicates are required in each group!");
+      #  AddErrMsg("Or maybe you forgot to specify the data format?");
+      #  return(0);
+      #}
      
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
       
@@ -418,7 +450,9 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu", lbl.type="disc"){
 
   mSetObj$dataSet$mumType <- "table";
   mSetObj$dataSet$orig.var.nms <- orig.var.nms;
-  mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
+  mSetObj$dataSet$orig.smp.nms <- orig.smp.nms;
+  #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
+  qs::qsave(conc, file="data_orig.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
 
@@ -464,7 +498,7 @@ SaveTransformedData <- function(mSetObj=NA){
     fast.write.csv(mSetObj$dataSet$mummi.orig, file="data_original.csv", row.names = FALSE);
     fast.write.csv(mSetObj$dataSet$mummi.proc, file="data_processed.csv", row.names = FALSE);
   }else{
-    if(!is.null(mSetObj$dataSet[["orig"]])){
+    if(file.exists("data_orig.qs")){
       lbls <- NULL;
       tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
       if(tsFormat){
@@ -475,8 +509,7 @@ SaveTransformedData <- function(mSetObj=NA){
       }
       
       orig.var.nms <- mSetObj$dataSet$orig.var.nms;
-      orig.data<- mSetObj$dataSet$orig;
-      
+      orig.data<- qs::qread("data_orig.qs");
       
       # convert back to original names
       if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
@@ -795,3 +828,54 @@ GetExampleDataPath<-function(naviString){
     return(url.pre);
 }
 
+Read.TextDataMumMixed <- function(mSetObj=NA, filePath,filePath2, format="rowu", lbl.type="disc", order=NULL){
+
+    temp_mSet1 <- Read.TextData(NA, filePath, format, lbl.type)
+    temp_mSet1 <- .get.mSet(mSetObj);
+    qs::qsave(temp_mSet1, file="data_orig_temp1.qs");
+
+    temp_mSet1 <- qs::qread("data_orig_temp1.qs");
+    orig1 <- qs::qread("data_orig.qs");
+
+    temp_mSet2 <- Read.TextData(NA, filePath2, format, lbl.type)
+    temp_mSet2 <-.get.mSet(mSetObj);
+    orig2 <- qs::qread("data_orig.qs");
+    mSetObj <- temp_mSet1
+    mSetObj$dataSet$mumType <- "table";
+    mSetObj$dataSet$orig.var.nms <- c(mSetObj$dataSet$orig.var.nms, temp_mSet2$dataSet$orig.var.nms);
+    mSetObj$dataSet$mode <- "mixed"
+    orig <- cbind(orig1, orig2);
+    mSetObj$dataSet$pos_inx <- c(rep(TRUE, ncol(orig1)), rep(FALSE, ncol(orig2)))
+    qs::qsave(orig, file="data_orig.qs");
+    .set.mSet(mSetObj)
+
+    return(1);
+}
+
+
+TableFormatCoerce <- function(oriFile = NULL, oriFormat = "Unknown", targetModule = "mummichog", sampleIn = "col"){
+  
+  df <- read.csv(oriFile);
+  df[is.na(df)] <- df[df == ""] <- 0;
+
+  if (targetModule == "mummichog") {
+    ## This is used to convert the data format from Spectral Processing to Mummichog
+    if (oriFormat == "OptiLCMS") {
+      if (sampleIn == "col") {
+        newFea <- strsplit(df[, 1], "@")
+        
+        newFea <- lapply(newFea, function(x) {
+          return(paste0(x[1], "__", x[2]))
+        })
+      } else {
+        # cannot be in row for OptiLCMS source
+      }
+      
+      df[, 1] <- unlist(newFea)
+      df[1, 1] <- "Label"  
+    }
+  }
+  
+  write.csv(df, file = oriFile, quote = FALSE, row.names = FALSE)
+  
+}

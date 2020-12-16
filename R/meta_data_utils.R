@@ -48,6 +48,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 RegisterData <- function(mSetObj=NA, dataSet){
@@ -69,19 +70,21 @@ RegisterData <- function(mSetObj=NA, dataSet){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 # 
 SanityCheckIndData<-function(mSetObj=NA, dataName){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(mSetObj$dataSet$name != dataName){
     dataSet <- qs::qread(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
-  
+
   dat <- dataSet$data.orig;
+
   msg <- NULL;
   if(substring(dataSet$format,1,3)=="row"){ # sample in row
     msg <- "Samples are in rows and features in columns";
@@ -98,7 +101,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     cls.lbl <- dat[1,];
     conc <- t(dat[-1,]);
   }
-  
+
   dataSet$cls.orig <- cls.lbl;
   
   empty.inx <- is.na(smpl.nms) | smpl.nms == ""
@@ -110,7 +113,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   }else{
     msg <- c(msg, "No empty rows were found in your data.");
   }
-  
+
   # try to check & remove empty lines if class label is empty
   # Added by B. Han
   empty.inx <- is.na(cls.lbl) | cls.lbl == ""
@@ -122,7 +125,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   }else{
     msg <- c(msg, "No empty labels were found in your data.");
   }
-  
+
   if(length(unique(cls.lbl[!empty.inx])) > 2){
     msg <- c(msg, paste(c("Groups found:", unique(cls.lbl[!empty.inx])), collapse=" "));
     msg <- c(msg, "<font color=\"red\">Meta-analysis is only defined for two-group comparisions!</font>");
@@ -352,6 +355,7 @@ GetAllDataNames <- function(){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
@@ -425,6 +429,7 @@ PerformDataNormalization <- function(data, norm.opt){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   
