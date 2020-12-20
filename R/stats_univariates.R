@@ -329,7 +329,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
    inx.imp <- fdr.p <= threshp;
   # if there is no sig cmpds, it will be errors, need to improve
   
-    sig.num <- sum(inx.imp);
+    sig.num <- sum(inx.imp, na.rm = T);
     if(is.na(sig.num)){
     AddMsg(paste("No significant features were found."));
     return(0)
