@@ -77,7 +77,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type){
   match.state <- vector(mode='numeric', length=length(qvec));  # match status - 0, no match; 1, exact match; initial 0 
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -199,7 +199,7 @@ PerformMultiMatch <- function(mSetObj=NA, q){
   mSetObj <- .get.mSet(mSetObj);
 
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -226,7 +226,7 @@ PerformApproxMatch <- function(mSetObj=NA, q){
   mSetObj <- .get.mSet(mSetObj);
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -333,7 +333,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   if(!is.null(can_mat)){
 
     if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+      cmpd.db <- .get.my.lib("master_compound_db.qs");
     }else{
       cmpd.db <- .get.my.lib("compound_db.qs");
     }
@@ -414,7 +414,7 @@ GetCandidateList <- function(mSetObj=NA){
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);
     
     if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+      cmpd.db <- .get.my.lib("master_compound_db.qs");
     }else{
       cmpd.db <- .get.my.lib("compound_db.qs");
     }
@@ -483,7 +483,7 @@ GetFinalNameMap <- function(mSetObj=NA){
   colnames(nm.mat) <- c("query", "hmdb",  "kegg", "hmdbid");
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -552,7 +552,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
   colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "SMILES", "Comment");
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
