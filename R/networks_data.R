@@ -157,6 +157,7 @@ PrepareNetworkData <- function(mSetObj=NA){
   # prepare compound list
   if((!is.null(mSetObj$dataSet$cmpd.mat) || (!is.null(mSetObj$dataSet$cmpd)))){
     nm.map <- GetFinalNameMap(mSetObj);
+    nm.map$kegg <- ifelse(is.na(nm.map$kegg), paste("unmapped", rownames(nm.map), sep = "_"), nm.map$kegg); #also accept unmapped cmpd
     valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
     cmpd.vec <- nm.map$query[valid.inx];
     kegg.id <- nm.map$kegg[valid.inx];

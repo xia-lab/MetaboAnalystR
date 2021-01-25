@@ -13,7 +13,7 @@
 Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   
   err.vec <<- "";
-  
+
   dat <- .readDataTable(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -178,11 +178,11 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
 Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   
   err.vec <<- "";
-  
+
   dat <- .readDataTable(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   mSetObj[["dataSet"]][["table"]]<-
     mSetObj[["dataSet"]][["class.cls"]]<-
     mSetObj[["dataSet"]][["batch.cls"]]<-
@@ -312,7 +312,7 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   
   # replace NA
   int.mat <- ReplaceMissingByLoD(int.mat);
-  
+
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
   mSetObj$dataSet$batch.cls <- batch.nms;
@@ -581,7 +581,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   }
   
   
-  try(
+    try(
     if (Method=="auto"){
       #### QCs Independent------------
       # Correction Method 1 - Combat
@@ -596,11 +596,11 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
       if(!.on.public.web){
         if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
             all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with WaveICA...");#require(WaveICA)
-          WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-          mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+            print("Correcting with WaveICA...");#require(WaveICA)
+            WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
+            mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
         }
-      }
+     }
       # Correction Method 3 - Eigens MS
       if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
         print("Correcting with EigenMS...");
@@ -622,9 +622,9 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
               all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2) &
               !(is.null(order.lbl2) | all(is.na(as.character(unique(order.lbl2)))) | any(is.na(order.lbl2)))){
             print("Correcting with QC-RLSC...");
-            
+
             QC_RLSC_edata<-QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs);
-            
+
             mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
           }
         }
@@ -753,10 +753,10 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("order inforamtion is required for ",Method," !"))
         return(F)
       }
-      
+   
       if(any(is.na(QCs)) | is.null(QCs) | identical(QCs, integer(0))){
         AddErrMsg(paste0("QC inforamtion is required for ",Method," !"))
-        
+
         return(F)
       }
       
@@ -786,7 +786,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-      
+
       
       RUV_random_edata<-RUV_random(commonMat2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
@@ -799,8 +799,8 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-      
-      
+
+
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -817,8 +817,8 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-      
-      
+
+
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -835,8 +835,8 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-      
-      
+
+
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -853,21 +853,21 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-      
-      
+
+
       RUV_g_edata<-RUVg_cor(commonMat2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
       
     } else if (Method=="NOMIS"){
-      
+        
       ISs <- grep("IS",colnames(commonMat2));
       
       if(any(is.na(ISs)) | is.null(ISs) | identical(ISs, integer(0))){
         AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
         return(F)
       }
-      
-      
+
+
       NOMIS_edata <- NOMIS(commonMat2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
       
@@ -884,7 +884,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
         AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
         return(F)
       }
-      
+
       CCMN_edata <- CCMN2(commonMat2,class.lbl2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;
       

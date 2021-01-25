@@ -13,12 +13,13 @@
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+  orig.data <- qs::qread("data_orig.qs");
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
@@ -43,12 +44,12 @@ SanityCheckData <- function(mSetObj=NA){
         if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" )){
           pairs <- ReadPairFile();
           # check if they are of the right length
-          if(length(pairs)!=nrow(mSetObj$dataSet$orig)){
+          if(length(pairs)!=length(mSetObj$dataSet$orig.smp.nms)){
             AddErrMsg("Error: the total paired names are not equal to sample names.");
             return(0);
           }else{
             # matching the names of the files
-            inx<-match(rownames(mSetObj$dataSet$orig), names(pairs));
+            inx<-match(mSetObj$dataSet$orig.smp.nms, names(pairs));
             #check if all matched exactly
             if(sum(is.na(inx))>0){
               AddErrMsg("Error: some paired names not match the sample names.");
@@ -63,7 +64,6 @@ SanityCheckData <- function(mSetObj=NA){
         
         # check if QC samples are present
         qc.hits <- tolower(as.character(cls)) %in% "qc";
-        mSetObj$dataSet$orig <- mSetObj$dataSet$orig;
         if(sum(qc.hits) > 0){
           AddErrMsg("<font color='red'>Error: QC samples not supported in paired analysis mode.</font>");
           AddErrMsg("You can perform QC filtering using regular two-group labels.");
@@ -105,7 +105,8 @@ SanityCheckData <- function(mSetObj=NA){
           pairs <- pairs[index];
           mSetObj$dataSet$pairs <- pairs;
           mSetObj$dataSet$orig.cls <- cls;
-          mSetObj$dataSet$orig <- mSetObj$dataSet$orig[index,];
+          orig.data<- orig.data[index,];
+          qs::qsave(orig.data, file="data_orig.qs");
         }
       }else{
         msg <- c(msg,"Samples are not paired.");
@@ -113,8 +114,12 @@ SanityCheckData <- function(mSetObj=NA){
       
       # checking if too many groups but a few samples in each group
       cls.lbl <- mSetObj$dataSet$orig.cls;
+      # need to exclude QC or blank
+      qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+      if(sum(qb.inx) > 0){
+          cls.lbl <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+      }
       min.grp.size <- min(table(cls.lbl));
-      
       cls.num <- length(levels(cls.lbl));
       if(cls.num/min.grp.size > 3){
         mSetObj$dataSet$small.smpl.size <- 1;
@@ -146,13 +151,15 @@ SanityCheckData <- function(mSetObj=NA){
         ord.inx <- order(nfacA);
       }
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
-      mSetObj$dataSet$orig <- mSetObj$dataSet$orig[ord.inx, ];
       mSetObj$dataSet$facA <- mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA[ord.inx];
       mSetObj$dataSet$facB <- mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB[ord.inx];
+      orig.data <- orig.data[ord.inx,];
+      qs::qsave(orig.data, file="data_orig.qs");
     }else{
       ord.inx <- order(mSetObj$dataSet$orig.cls);
       mSetObj$dataSet$orig.cls <- cls[ord.inx];
-      mSetObj$dataSet$orig <- mSetObj$dataSet$orig[ord.inx, , drop=FALSE];
+      orig.data <- orig.data[ord.inx, , drop=FALSE];
+      qs::qsave(orig.data, file="data_orig.qs");
       if(mSetObj$dataSet$paired){
         mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
       }
@@ -161,7 +168,7 @@ SanityCheckData <- function(mSetObj=NA){
   msg<-c(msg,"Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed.");
   msg<-c(msg,"<font color=\"orange\">Other special characters or punctuations (if any) will be stripped off.</font>");
   
-  int.mat <- mSetObj$dataSet$orig;
+  int.mat <- orig.data;
   
   if(ncol(int.mat)==1){
     if(anal.type=="roc"){
@@ -243,6 +250,7 @@ SanityCheckData <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
 ReplaceMin <- function(mSetObj=NA){
@@ -274,6 +282,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
 RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
@@ -295,7 +304,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 
 #'Data processing: Replace missing variables
 #'@description Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.
-#'@usage ImputeVar(mSetObj, method)
+#'@usage ImputeMissingVar(mSetObj, method)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param method Select the option to replace missing variables, either 
 #'replacement based on the minimum ("min), the mean ("mean"), or the median ("median") value of each feature columns,
@@ -304,9 +313,10 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 #'
-ImputeVar <- function(mSetObj=NA, method="min"){
+ImputeMissingVar <- function(mSetObj=NA, method="min"){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -347,9 +357,10 @@ ImputeVar <- function(mSetObj=NA, method="min"){
     });
     msg <- c(msg,"Missing variables were replaced with the median for each feature column.");
   }else{
-    if(method == "knn"){
-      #print("loading for KNN...");
+    if(method == "knn_var"){
       new.mat<-t(impute::impute.knn(t(int.mat))$data);
+    }else if(method == "knn_smp"){
+      new.mat<-impute::impute.knn(data.matrix(int.mat))$data;
     }else{
       if(method == "bpca"){
         new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="bpca", center=T)@completeObs;
@@ -478,7 +489,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       msg <- paste(msg, "Further feature filtering based on", nm);
 
       if(mSetObj$analSet$type == "mummichog"){
-        max.allow <- 5000;
+        max.allow <- 7500;
       }else if(mSetObj$analSet$type == "power"){
         max.allow <- 5000;
       }else{
@@ -538,7 +549,9 @@ IsDataContainsNegative<-function(mSetObj=NA){
 UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
     mSetObj <- .get.mSet(mSetObj);
     if(!is.null(mSetObj$dataSet[["orig"]])){
-        mSetObj$dataSet$orig <- .update.feature.nm(mSetObj$dataSet$orig, old.nm, new.nm);
+        orig.data <- qs::qread("data_orig.qs");
+        orig.data <- .update.feature.nm(orig.data, old.nm, new.nm);
+        qs::qsave(orig.data, file="data_orig.qs");
     }
 
     if(!is.null(mSetObj$dataSet[["proc"]])){

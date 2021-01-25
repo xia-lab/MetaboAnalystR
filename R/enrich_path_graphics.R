@@ -348,11 +348,11 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   }
   
   ## Open plot device
-  if(format == "png"){
-    bg = "transparent";
-  }else{
+ # if(format == "png"){
+ #   bg = "transparent";
+ # }else{
     bg="white";
-  }
+ # }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -372,7 +372,7 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log10(p)");
   axis(1);
   axis(2);
-  grid(col="blue");
+  #grid(col="blue");
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
   # convert to pixel positions, only for web interaction dpi=72
@@ -407,7 +407,9 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
 # License: GNU GPL (>= 2)
+
 GeneratePathwayJSON<-function(pathway.nm){
+
   mSetObj <- .get.mSet(mSetObj);
   
   smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".qs", sep="");

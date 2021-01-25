@@ -6,6 +6,7 @@
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
@@ -152,6 +153,7 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 PerformEachDEAnal <- function(mSetObj=NA){
@@ -200,6 +202,7 @@ PerformEachDEAnal <- function(mSetObj=NA){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#'@import qs
 #'@export
 
 PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){

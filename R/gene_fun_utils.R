@@ -17,11 +17,16 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
-
+    if(fun.type %in% c("keggc", "smpdb")){
+    .load.enrich.compound.lib(org.code, fun.type);
+    }else{
     .load.enrich.lib(org.code, fun.type);
+    }
+
 
     # prepare query
     ora.nms <- names(ora.vec);
+    ora <<- ora.vec
 
     # prepare for the result table
     set.size<-length(current.geneset);
@@ -37,11 +42,18 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     q.size<-length(ora.vec);
 
     # get the matched query for each pathway
+
+    if(fun.type %in% c("keggc", "smpdb")){
+ 
+  hits.query <- lapply(current.geneset, function(x){x[names(x) %in% ora.vec]});
+hits.query<- lapply(hits.query, function(x){names(x)});
+}else{
     hits.query <- lapply(current.geneset, 
         function(x) {
             ora.nms[ora.vec%in%unlist(x)];
         }
     );
+}
 
     names(hits.query) <- names(current.geneset);
     hit.num<-unlist(lapply(hits.query, function(x){length(x)}), use.names=FALSE);
@@ -95,7 +107,13 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     fun.anot = hits.query; 
     fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
     hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
+    if(fun.type %in% c("keggc", "smpdb")){
+fun.ids <- as.vector(current.setids[which(current.setids %in% names(fun.anot))]); 
+names(fun.anot) = as.vector(names(current.setids[which(current.setids %in% names(fun.anot))]));
+
+}else{
     fun.ids <- as.vector(current.setids[names(fun.anot)]); 
+}
     if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
         json.res <- list(
                     fun.link = current.setlink[1],
@@ -119,6 +137,7 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     fast.write.csv(resTable, file=csv.nm, row.names=F);
     return(1);
 }
+
 
 # these are geneset libraries
 .load.enrich.lib<-function(org.code, fun.type){
@@ -152,4 +171,32 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     current.setids <<- set.ids;
     current.geneset <<- current.mset;
     current.universe <<- unique(unlist(current.geneset));
+}
+
+
+# these are geneset libraries
+.load.enrich.compound.lib<-function(org.code, fun.type){
+    # prepare lib
+    is.go <- FALSE;
+    mSetObj <- .get.mSet();
+    if(tolower(fun.type) == 'smpdb'){ 
+        nm <- mSetObj$org;
+        sub.dir <- paste0("smpdb");
+    }else if(tolower(fun.type) == 'keggc'){ 
+        nm <- mSetObj$org;
+        sub.dir <- paste0("kegg/metpa");
+    }
+
+    lib.nm <- paste0(nm, ".qs");
+
+    my.lib <- .get.my.lib(lib.nm, sub.dir);
+
+    current.setlink <- my.lib$link;
+    current.mset <- my.lib$mset.list;
+    set.ids<- my.lib$path.ids;
+
+    current.setlink <<- current.setlink;
+    current.setids <<- set.ids;
+    current.geneset <<- current.mset;
+    current.universe <<- unique(names(unlist(unname(current.geneset))));
 }

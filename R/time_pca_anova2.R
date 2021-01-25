@@ -341,9 +341,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   
   # now set color for each group
   cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
-  rgbcols <- col2rgb(cols);
-  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")});
-  pca3d$score$colors <- cols;
+  pca3d$score$colors <- my.col2rgb(cols);
   
   json.obj <- RJSONIO::toJSON(pca3d, .na='null');
   sink(fileNm);

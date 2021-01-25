@@ -90,20 +90,20 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@export
 
 .readDataTable <- function(fileName){
-  
+
   dat <- tryCatch(
-    {
-      data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
-    }, error=function(e){
-      print(e);
-      return(.my.slowreaders(fileName));    
-    }, warning=function(w){
-      print(w);
-      return(.my.slowreaders(fileName));
-    });
-  
+            {
+                data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
+            }, error=function(e){
+                print(e);
+                return(.my.slowreaders(fileName));    
+            }, warning=function(w){
+                print(w);
+                return(.my.slowreaders(fileName));
+            });
+            
   if(any(dim(dat) == 0)){
-    dat <- .my.slowreaders(fileName);
+        dat <- .my.slowreaders(fileName);
   }
   return(dat);
 }
@@ -198,7 +198,7 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
 #'
 
 CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
-
+  
   if(sum(bdata==Inf, na.rm=TRUE)>0){
     inx <- bdata == Inf;
     bdata[inx] <- NA;
@@ -375,6 +375,21 @@ isEmptyMatrix <- function(mat){
     return(TRUE);
   }
   return(FALSE);
+}
+
+# from color names or code 1, 2, 3 the rbg strings
+my.col2rgb <- function(cols){
+  rgbcols <- col2rgb(cols);
+  return(apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")}));
+}
+
+# #FFFFFF to rgb(1, 0, 0)
+hex2rgba <- function(cols, alpha=0.8){
+  return(apply(sapply(cols, col2rgb), 2, function(x){paste("rgba(", x[1], ",", x[2], ",", x[3], ",",  alpha, ")", sep="")}));
+}
+
+hex2rgb <- function(cols){
+  return(apply(sapply(cols, col2rgb), 2, function(x){paste("rgb(", x[1], ",", x[2], ",", x[3], ")", sep="")}));
 }
 
 # List of objects
@@ -876,7 +891,9 @@ PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
     if(class(res) == "try-error") {
         res <- cbind(NA, NA);
     }else{
-        res <- cbind(res$statistic, res$p.value);
+        # res <- cbind(res$statistic, res$p.value);
+        # make sure row names are kept
+        res <- res[, c("statistic", "p.value")];
     }
 
     return(res);
@@ -1006,8 +1023,9 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
   if (typeof(x) == "integer")
       x[] <- as.numeric(x)
 
-  cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
-    
+  #cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
+   cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
+
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,
                    row.names = dimnames(x)[[which]])
