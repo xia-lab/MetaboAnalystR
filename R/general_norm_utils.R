@@ -112,6 +112,12 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     }
     rownm<-"Normalization by sample-specific factor";
     data<-data/norm.vec;
+  }else if (rowNorm == "ProbNormT") {
+    ## PQN using "mean" as reference 
+    rownm <- "Normalization by Probabilistic Quotient Normalization without using a reference sample"
+    m <- t(data)
+    m <- m/apply(m/rowMeans(m, na.rm = TRUE), 2, median, na.rm = TRUE)
+    data <- t(m)
   }else{
     # nothing to do
     rownm<-"N/A";
