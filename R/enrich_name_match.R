@@ -702,15 +702,12 @@ CreateMappingResultTable <- function(mSetObj=NA){
   csv.res <- matrix("", nrow=length(qvec), ncol=9);
   colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "SMILES", "Comment");
   
-<<<<<<< HEAD
-  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("master_compound_db.qs");
-=======
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
->>>>>>> 0d61192ccfd7f6e7c5f0d13da8d1c3c0e28cfdd8
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
-    cmpd.db <- .get.my.lib("compound_db.qs");
+    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
   }
   
   for (i in 1:length(qvec)){
