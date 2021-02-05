@@ -63,6 +63,11 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
         time.fac <- nfacB;
         exp.fac <- nfacA;
       }
+      # now make sure time fac is ordered
+      lvls <- levels(time.fac);
+      time.points <- as.numeric(as.character(lvls));
+      ord.lvls <- lvls[order(time.points)];
+      time.fac <- ordered(time.fac, levels = ord.lvls);
       mSetObj$dataSet$time.fac <- time.fac;
       mSetObj$dataSet$exp.fac <- exp.fac;
     }
@@ -196,6 +201,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
   
   mSetObj$dataSet$norm <- as.data.frame(data);
+  qs::qsave(as.data.frame(data), file="complete_norm.qs");
   mSetObj$dataSet$cls <- cls;
   
   mSetObj$dataSet$rownorm.method <- rownm;
@@ -632,7 +638,6 @@ GetRandomSubsetIndex<-function(total, sub.num = 50){
 # if so, then microservice will be used
 RequireFastUnivTests <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-save(mSetObj, file = "mSetObj.rda")
   if(ncol(mSetObj$dataSet$norm) < 1000){
         return(FALSE);
   }else{

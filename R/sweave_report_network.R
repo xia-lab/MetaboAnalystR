@@ -32,7 +32,7 @@ CreateNetworkExplorerIntr <- function(){
              "The aim of the Network Explorer module is to provide a comprehensive tool to describe user's biological data as a network,", 
              " as well as to explore interactions between biological entities and their potential impacts to help inform hypothesis generation.", 
              " This module supports network visualization of both metabolomic and gene list data. Here, we aim to provide support for the", 
-             " integration of transcriptomics and metabolomics data, as well as metagenomics and metabolomics data. MetaboAnalyst 4.0 implements ", 
+             " integration of transcriptomics and metabolomics data, as well as metagenomics and metabolomics data. MetaboAnalyst 5.0 implements ", 
              "a knowledge-based network approach, whereby user's data (metabolites and genes) can be projected onto five existing biological", 
              " networks: 1) Pathway-based network discovery, 2) Gene-metabolite interaction network, 3) Metabolite-phenotype interaction network, ", 
              "4) Metabolite-metabolite interaction network, and 5) Metabolite-gene-phenotype interaction network.\n"
@@ -69,7 +69,7 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
   
   descr <- c("\\section{Data Input}\n",
              "For this module, users may upload either a list of metabolites, a list of genes, or both metabolites and genes. ",
-             "MetaboAnalyst 4.0 currently accepts only compound names, HMDB IDs, or KEGG IDs as metabolite identifiers. As well,", 
+             "MetaboAnalyst 5.0 currently accepts only compound names, HMDB IDs, or KEGG IDs as metabolite identifiers. As well,", 
              "we only accept Entrez IDs, RefSeqIDs, Genbank accession numbers, ENSEMBL gene accession numbers, Official Gene Symbol IDs, ",
              "or KEGG orthologs (KO) as gene identifiers. The uploaded list of metabolites and/or genes is then mapped using our internal ",
              "databases of metabolites and gene annotations. Following this step, users can select which of the five networks to begin", 

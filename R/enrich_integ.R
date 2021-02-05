@@ -12,7 +12,7 @@
 PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   mSetObj$dataSet$cmpd.orig <- cmpdIDs;
   mSetObj$dataSet$cmpd.org <- org;
   if(idType == "name"){

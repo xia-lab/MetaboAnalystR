@@ -405,7 +405,7 @@ PlotMetaVenn<-function(mSetObj=NA, imgNM=NA){
   mSetObj$imgSet$venn <- imgName;
   
   Cairo::Cairo(file = imgName, width=420, height=300,  type="png", bg="transparent");
-  plotVennDiagram(meta.stat$venn, circle.col=c("blue", "forestgreen"), mar=c(0,0,2,0));
+    plotVennDiagram(meta.stat$venn, circle.col=c("blue", "forestgreen"), mar=c(0,0,2,0));
   dev.off();
   
   sums <- unlist(lapply(metastat.de, length))
@@ -426,7 +426,8 @@ PlotMetaVenn<-function(mSetObj=NA, imgNM=NA){
 # Gordon Smyth, James Wettenhall.
 # Capabilities for multiple counts and colors by Francois Pepin.
 # 4 July 2003.  Last modified 12 March 2010.
-plotVennDiagram <- function(object,include="both",names,mar=rep(0,4),cex=1.2,lwd=1,circle.col,counts.col,show.include,...){
+plotVennDiagram <- function(object, include="both", names, mar=rep(0,4), cex=1.2, lwd=1, 
+                            circle.col, counts.col, show.include,...){
   
   nsets <- ncol(object)-1
   if(missing(names)) names <- colnames(object)[1:nsets]
@@ -709,7 +710,10 @@ PrepareVennData <- function(mSetObj=NA){
     return(0);
   }
   venn.list <<- sel.dats;
-  
+
+  save(sel.dats, file = "sel.dats.rda");
+  save(mSetObj, file = "mSetObj__venn.rda");
+  save.image(file = "image__venn.RData")
   PlotMetaVenn(mSetObj, "venn_diagram");
   return(.set.mSet(mSetObj));
   
@@ -760,6 +764,7 @@ Prepare3Venn <- function(dat){
 
 # 15
 Prepare4Venn <- function(dat){
+
   nms <- names(dat);  
   a <- nms[1];
   b <- nms[2];
@@ -799,6 +804,7 @@ Prepare4Venn <- function(dat){
   vennData[[bcd]] <- setdiff(intersect(intersect(b.l, c.l), d.l), a.l);
   vennData[[abcd]] <- intersect(intersect(a.l, b.l), intersect(c.l, d.l));
   vennData <<- vennData;
+
 }
 
 #'Retrieve selected data numbers

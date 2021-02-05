@@ -4,7 +4,7 @@
 \alias{PerformMultiMatch}
 \title{Perform multiple name matches}
 \usage{
-PerformMultiMatch(mSetObj = NA, q)
+PerformMultiMatch(mSetObj = NA, q, lipid)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

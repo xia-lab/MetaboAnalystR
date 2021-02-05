@@ -441,3 +441,117 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
   return(1);
 }
 
+PerformKOEnrichAnalysis_ListOld <- function(file.nm){
+  if(idtype == "cmpd"){
+    current.set <- current.cmpd.set;
+  } else if(idtype == "gene&cmpd"){
+    matchidx <- match(names(current.cmpd.set), names(current.geneset))
+    current.set <- list()
+    # TO-DO: Fix code to handle case if length(current.cmpd.set) > length(current.geneset).
+    #   Then, start loop with current.cmpd.set
+    for(i in c(1:length(current.geneset))){
+      if(i %in% matchidx){
+        cidx <- which(matchidx==i) 
+        mergels <- c(current.cmpd.set[cidx][[1]], current.geneset[i][[1]])
+        current.set[[names(current.cmpd.set[cidx])]] <- mergels
+      } else{
+        current.set[[names(current.geneset[i])]] <- current.geneset[i][[1]]
+      }
+    }
+    # Add compound sets that did not match
+    cidx <- which(is.na(matchidx))
+    for(i in c(1:length(cidx))){
+      current.set[[names(current.cmpd.set[cidx[i]])]] <- current.cmpd.set[cidx[i]][[1]]
+    }
+  } else{
+    current.set <- current.geneset;
+    
+  }
+  current.universe <- unique(unlist(current.set));
+  
+  # prepare for the result table
+  set.size<-length(current.set);
+  res.mat<-matrix(0, nrow=set.size, ncol=5);
+  rownames(res.mat)<-names(current.set);
+  colnames(res.mat)<-c("Total", "Expected", "Hits", "Pval", "FDR");
+  
+  # prepare query
+  ora.vec <- NULL;
+  exp.vec <- dataSet$data[,1]; # drop dim for json
+  ora.vec <- names(exp.vec);
+  
+  # need to cut to the universe covered by the pathways, not all genes 
+  hits.inx <- ora.vec %in% current.universe;
+  ora.vec <- ora.vec[hits.inx];
+  #ora.nms <- ora.nms[hits.inx];
+  
+  q.size<-length(ora.vec);
+  
+  # get the matched query for each pathway
+  hits.query <- lapply(current.set, 
+                       function(x) {
+                         ora.vec[ora.vec%in%unlist(x)];
+                       }
+  );
+  names(hits.query) <- names(current.set);
+  
+  hit.num<-unlist(lapply(hits.query, function(x){length(x)}), use.names=FALSE);
+  
+  # total unique gene number
+  uniq.count <- length(current.universe);
+  
+  # unique gene count in each pathway
+  set.size <- unlist(lapply(current.set, length));
+  
+  res.mat[,1]<-set.size;
+  res.mat[,2]<-q.size*(set.size/uniq.count);
+  res.mat[,3]<-hit.num;
+  
+  # use lower.tail = F for P(X>x)
+  raw.pvals <- phyper(hit.num-1, set.size, uniq.count-set.size, q.size, lower.tail=F);
+  res.mat[,4]<- raw.pvals;
+  res.mat[,5] <- p.adjust(raw.pvals, "fdr");
+  
+  # now, clean up result, synchronize with hit.query
+  res.mat <- res.mat[hit.num>0,,drop = F];
+  hits.query <- hits.query[hit.num>0];
+  hits.all <- hits.query
+  
+  if(nrow(res.mat)> 1){
+    # order by p value
+    ord.inx<-order(res.mat[,4]);
+    res.mat <- signif(res.mat[ord.inx,],3);
+    hits.query <- hits.query[ord.inx];
+    
+    imp.inx <- res.mat[,4] <= 0.01;
+    if(sum(imp.inx) < 10){ # too little left, give the top ones
+      topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
+      res.mat <- res.mat[1:topn,];
+      hits.query <- hits.query[1:topn];
+    }else{
+      res.mat <- res.mat[imp.inx,];
+      hits.query <- hits.query[imp.inx];
+      if(sum(imp.inx) > 120){
+        # now, clean up result, synchronize with hit.query
+        res.mat <- res.mat[1:120,];
+        hits.query <- hits.query[1:120];
+      }
+    }
+  }
+  
+  Save2KEGGJSONOld(hits.query, res.mat, file.nm, hits.all);
+  return(1);
+}
+
+PerformKOEnrichAnalysis_KO01100Old <- function(mSetObj=NA, category, file.nm){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  LoadKEGGKO_libOld(category);
+  #if(enrich.type == "hyper"){ else PerformKOEnrichAnalysis_Table
+  PerformKOEnrichAnalysis_ListOld(file.nm);
+  
+  if(.on.public.web == FALSE){
+    return(.set.mSet(mSetObj)); 
+  }
+}
+

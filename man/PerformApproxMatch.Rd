@@ -4,7 +4,7 @@
 \alias{PerformApproxMatch}
 \title{Perform approximate compound matches}
 \usage{
-PerformApproxMatch(mSetObj = NA, q)
+PerformApproxMatch(mSetObj = NA, q, lipid)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}

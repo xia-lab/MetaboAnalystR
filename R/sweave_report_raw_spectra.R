@@ -8,65 +8,55 @@
 #'License: GNU GPL (>= 2)
 #'@export
 
-CreateStatRnwReport <- function(mSetObj, usrName){
+CreateRawAnalysisRnwReport <- function(mSetObj, usrName){
   
   load("mSet.rda");
   # Creat the header & introduction of the report
   CreateHeader(usrName); # done
-  CreateStatIntr(); # done
-  
-  CreateSpectraIOdoc(mSetObj); # done
+  CreateRawIntr(); # done
 
-  InitStatAnalMode();
-  if(exists("analSet", where = mSetObj)){
-    CreateUNIVdoc(mSetObj);
-    CreateANOVAdoc(mSetObj);
-    CreateCorrDoc(mSetObj);
-    CreatePCAdoc(mSetObj);
-    CreatePLSdoc(mSetObj);
-    CreateOPLSDAdoc(mSetObj);
-    CreateSPLSDAdoc(mSetObj);
-  }else{
-    CreateAnalNullMsg();
-  }
-  CreateRHistAppendix();
-  CreateFooter();
+  CreateSpectraIOdoc(); # done
+
+  CreateRawAnalMethod(); # done
+  CreateRawAnalDetails(); # doing
+
+  CreateSampleSum(); # done
+  CreateFeatureSum(); # done
+  
+
+  CreateRHistAppendix(); # done
+  CreateFooter(); # done
   
 }
 
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create header
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
 
-CreateStatIntr <- function(){
-  descr <- c("\\section{Raw Spectra Processing}\n",
+
+
+### Section 1 - Background
+CreateRawIntr <- function(){
+  descr0 <- c("\\section{Raw Spectra Processing}\n",
+              "Global or untargeted metabolomics is increasingly used to investigate metabolic changes of various biological
+              or environmental systems in an unbiased manner. Liquid chromatography coupled to high-resolution mass 
+              spectrometry (LC-HRMS) has become the main workhorse for global metabolomics. The typical LC-HRMS metabolomics 
+              workflow involves spectra collection, raw data processing, statistical and functional analysis.\n\n")
+  
+  descr1 <- c("MetaboAnalyst aims to provide an efficient pipeline to support end-to-end analysis of LC-HRMS metabolomics 
+              data in a high-throughput manner. \n\n")
+  
+  descr <- c(descr0, descr1,
              "This module is designed to provide an automated workflow to process the raw spectra. 5 steps including parameters ",
              "optimization/custimization, peak picking, peak alignment, peak gap filing and peak annotation.");
+  
   cat(descr, file=rnwFile, append=TRUE);
 }
 
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Read and process raw data
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-CreateSpectraIOdoc <- function(mSetObj=NULL){
-  
-  if(missing(mSetObj) | is.null(mSetObj)){
-    load("mSet.rda");
-  }
+### Section 2 - Method Description
+CreateSpectraIOdoc <- function(){
   
   descr <- c("\\subsection{Reading and Processing the Raw Data}\n",
              "MetaboAnalyst MS Spectral Processing Module accepts several common MS formats",
-             "including mzXML, mzML, mzData. But all of them have to be centroided before processing.",
+             "including mzXML, mzML, mzData, CDF formats. Other vendor format will be supported soon.
+             But all of them have to be centroided before processing.",
              "The Data Integrity Check is performed before the data processing starts. The basic information",
              "of all spetra is summaried in Table", table.count<<-table.count+1,"shows the details of all spectra."
   );
@@ -79,19 +69,11 @@ CreateSpectraIOdoc <- function(mSetObj=NULL){
   cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
-}
-
-
-
-#' CreateSpectraInfoTable
-#'
-#' @return
-#' @noRd
-#' @noMd
+};
 CreateSpectraInfoTable <- function(){
   
   if(file.exists("mSet.rda")){
-    load("mSet.rda");
+    load("mSet.rda"); require("OptiLCMS"); require(MSnbase)
     
     filesize <- file.size(fileNames(mSet@rawOnDisk))/(1024*1024);
     filename <- basename(fileNames(mSet@rawOnDisk));
@@ -105,9 +87,9 @@ CreateSpectraInfoTable <- function(){
     sum.dat[,3] <- round(filesize,2);
     sum.dat[,4] <- GroupInfo;
     
-    colnames(sum.dat)<-c("Spectra","Centroid", "Size", "Group");
+    colnames(sum.dat)<-c("Spectra","Centroid", "Size (MB)", "Group");
     print(xtable::xtable(sum.dat, 
-                         caption="Summary of data processing results"), 
+                         caption="Summary of data uploading results"), 
           caption.placement="top", 
           size="\\scriptsize");
   } else {
@@ -154,666 +136,422 @@ CreateSpectraInfoTable <- function(){
     }
   }
   
-}
-
-#'Introduction for statistical analysis module report
-#'Initialize Statistical Analysis Report
-#'@export
-InitStatAnalMode <- function(){
-  descr <- c("\\section{Statistical and Machine Learning Data Analysis}",
-             "MetaboAnalyst offers a variety of methods commonly used in metabolomic data analyses.",
-             "They include:\n");
+};
+CreateRawAnalMethod <- function(){
+  descr <- c("\\subsection{Raw Spectral Processing and Analyzing}",
+             "MetaboAnalyst offers several algorithms to process the spectral raw file, 
+             including MatchedFilter, centWave and Massifquant (launch soon) for peak pciking, and obiwarp and loess for Retention time alignment.", 
+             "Here the detailed algorithms and parameters' used in this study.");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
+  
+  load("params.rda");
+  
+  paramVec <- vector();
+  for (i in seq(length(peakParams))){
+    
+    if(names(peakParams[i]) == "Peak_method"){
+      paramVec <- c(paramVec, paste0("\\item{Peak Picking Algorithm: ", peakParams[["Peak_method"]], "}"))
+    } else if(names(peakParams[i]) == "RT_method"){
+      paramVec <- c(paramVec, paste0("\\item{RT Alignment Algorithm: ", peakParams[["RT_method"]], "}"))
+    } else {
+      paramVec <- c(paramVec, paste0("\\item{", gsub(pattern = "_", replacement = " ",names(peakParams[i])), ": ", peakParams[i], "}"))
+    }
+    
+  }
   
   descr2 <- c(
     "\\begin{enumerate}",
-    "\\item{Univariate analysis methods: }",
-    "\\begin{itemize}",
-    "\\item{Fold Change Analysis }",
-    "\\item{T-tests}",
-    "\\item{Volcano Plot}",
-    "\\item{One-way ANOVA and post-hoc analysis}",
-    "\\item{Correlation analysis}",
-    "\\end{itemize}",
-    "\\item{Multivariate analysis methods: }",
-    "\\begin{itemize}",
-    "\\item{Principal Component Analysis (PCA) }",
-    "\\item{Partial Least Squares - Discriminant Analysis (PLS-DA) }",
-    "\\end{itemize}",
-    "\\item{Robust Feature Selection Methods in microarray studies }",
-    "\\begin{itemize}",
-    "\\item{Significance Analysis of Microarray (SAM)}",
-    "\\item{Empirical Bayesian Analysis of Microarray (EBAM)}",
-    "\\end{itemize}",
-    "\\item{Clustering Analysis}",
-    "\\begin{itemize}",
-    "\\item{Hierarchical Clustering}",
-    "\\begin{itemize}",
-    "\\item{Dendrogram}",
-    "\\item{Heatmap}",
-    "\\end{itemize}",
-    "\\item{Partitional Clustering}",
-    "\\begin{itemize}",
-    "\\item{K-means Clustering}",
-    "\\item{Self-Organizing Map (SOM)}",
-    "\\end{itemize}",
-    "\\end{itemize}",
-    "\\item{Supervised Classification and Feature Selection methods}",
-    "\\begin{itemize}",
-    "\\item{Random Forest}",
-    "\\item{Support Vector Machine (SVM)}",
-    "\\end{itemize}",
+    paramVec,
     "\\end{enumerate}",
-    "\\texttt{Please note: some advanced methods are available only for two-group sample analyais.}",
+    "\\texttt{All parameters used to do the raw spectral processing are shown as above. 
+    The detailed usage of every parameters are explanied in next page.}",
     "\\clearpage"
   );
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
-}
-
-
-#'Create null message for analysis
-#'Creates a message for the Sweave report
-#'@description Creates a message stating that no analyses were performed on your data.
-#'@export
-CreateAnalNullMsg <- function(){
-  descr <- c("No analysis was performed on your data.\n");
+  
+  descr3 <- c(
+    "\\begin{enumerate}",
+    
+    "\\item{Peak Picking Algorithm -- centWave (For high resolution): }",
+    "\\begin{itemize}",
+    "\\item{peakwidth min: expected approximate minimum peak width in chromatographic space. }",
+    "\\item{peakwidth max: expected approximate maximum peak width in chromatographic space.}",
+    "\\item{snthresh: defining the signal to noise ratio cutoff.}",
+    "\\item{prefilter: ROI detection prefilter values: 'prefilter' minimum scan number;}",
+    "\\item{value-of-prefilter: minimum peak intensity.}",
+    "\\item{noise: allowing to set a minimum intensity cut-off to be considered as a peak.}",
+    "\\item{mzdiff: minimum difference in m/z for peaks with overlapping retention times.}",
+    "\\end{itemize}",
+    
+    "\\item{Peak Picking Algorithm -- MatchedFilter (For low resolution):}",
+    "\\begin{itemize}",
+    "\\item{fwhm: full width at half maximum of matched filtration gaussian model peak.}",
+    "\\item{sigma: specifying the standard deviation (width) of the matched filtration model peak.}",
+    "\\item{steps: defining the number of bins to be merged before filtration.}",
+    "\\item{max: the maximum number of peaks that are expected/will be identified per slice.}",
+    "\\end{itemize}",
+    
+    "\\item{Retention Time Alignment Algorithm -- loess:}",
+    "\\begin{itemize}",
+    "\\item{Bandwidth: bandwidth (standard deviation or half width at half maximum) of gaussian smoothing kernel.}",
+    "\\item{minFraction: minimum fraction of samples necessary in at least one of the sample groups for it to be a valid group.}",
+    "\\item{integrate: Integration method. Can be 1 and 2.}",
+    "\\item{extra: number of extra peaks to allow in retention time correction correction groups }",
+    "\\item{span: degree of smoothing for local polynomial regression fitting }",
+    "\\item{profStep: step size (in m/z) to use for profile generation}",
+    "\\end{itemize}",
+    
+    "\\item{Retention Time Alignment Algorithm -- obiwarp:}",
+    "\\begin{itemize}",
+    "\\item{binSize: bin size (in mz dimension) to be used for the profile matrix generation.}",
+    "\\end{itemize}",
+    
+    "\\item{Peak Grouping -- Group-density:}",
+    "\\begin{itemize}",
+    "\\item{Bandwidth: bandwidth (standard deviation or half width at half maximum) of gaussian smoothing kernel.}",
+    "\\item{maxFeatures: maximum number of peak groups to be identified in a single mz slice.}",
+    "\\item{minSamples: minimum number of samples necessary in at least one of the sample groups for it to be a valid group.}",
+    "\\end{itemize}",
+    
+    "\\item{Others:}",
+    "\\begin{itemize}",
+    "\\item{polarity: ion mode, can be negative or positive.}",
+    "\\item{max charge: maximum number of charge for adducts annotation.}",
+    "\\item{max iso: maximum number of charge for isotopes annotation.}",
+    "\\item{rmConts: whether to remove the potentail contaminants for further parameters' optimization.}",
+    "\\end{itemize}",
+    
+    "\\end{enumerate}",
+    "\\clearpage"
+  );
+  
+  cat(descr3, file=rnwFile, append=TRUE, sep="\n");
+  
+};
+CreateRawAnalDetails <- function(){
+  
+  descr <- c("\\subsection{Raw Spectral Processing Platform}",
+             paste0("The spectra files are processed with OptiLCMS R package (", packageVersion("OptiLCMS"), ") 
+                    based on Intel Xeon Processor equiped platform. Total of 4 cores are allocated for this task." ),
+             "The customized or automated pipeline has been implemented based on your previous choice. \n\n",
+             "Detailed description of the mechanism of automated pipeline has been published. Please find out more 
+             introduction on the optimization process from the following paper.",
+             "\\begin{itemize}",
+             "\\item{Pang Z, Chong J, Li S, Xia J. MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics. Metabolites. 2020 May 7;10(5):186. doi: 10.3390/metabo10050186. PMID: 32392884; PMCID: PMC7281575.}",
+             "\\end{itemize}",
+             "\n\n",
+             "Please cite this publication if you are using this module to do your processing.");
+  
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
 }
 
-
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create univariate analyses document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreateUNIVdoc <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$fc) & is.null(mSetObj$analSet$tt) & is.null(mSetObj$analSet$volcano)){
-    return();
-  }
-  
-  if(isEmptyMatrix(mSetObj$analSet$fc$sig.mat)){
-    fc.img <- fc.tab<-NULL;
-  }else{
-    fc.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by fold change analysis.");
-    fc.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
-  }
-  if(isEmptyMatrix(mSetObj$analSet$tt$sig.mat)){
-    tt.img <- tt.tab<-NULL;
-  }else{
-    tt.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by t-tests.");
-    tt.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
-  }
-  if(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat)){
-    volcano.img <- volcano.tab<-NULL;
-  }else{
-    volcano.img <-paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by volcano plot.");
-    volcano.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features.");
-  }
-  
-  descr <- c("\\subsection{Univariate Analysis}\n",
-             "Univariate analysis methods are the most common methods used for exploratory data analysis. ",
-             "For two-group data, MetaboAnalyst provides Fold Change (FC) analysis, t-tests, and volcano",
-             "plot which is a combination of the first two methods. All three these methods support both",
-             "unpaired and paired analyses. For multi-group analysis, MetaboAnalyst provides two types of",
-             "analysis - one-way analysis of variance (ANOVA) with associated post-hoc analyses, and correlation",
-             "analysis to identify signficant compounds that follow a given pattern. The univariate analyses provide",
-             "a preliminary overview about features that are potentially significant in discriminating",
-             "the conditions under study.",
-             "\n\n",
-             "For paired fold change analysis, the algorithm first counts the total number of pairs with fold changes",
-             "that are consistently above/below the specified FC threshold for each variable. A variable will be",
-             "reported as significant if this number is above a given count threshold (default > 75\\% of pairs/variable)",
-             "\n\n",
-             fc.img,
-             fc.tab,
-             tt.img,
-             tt.tab,
-             volcano.img,
-             volcano.tab,
-             "\n\n",
-             "Please note, the purpose of fold change is to compare absolute value changes between two group means.",
-             "Therefore, the data before column normalization will be used instead. Also note, the result is plotted",
-             "in log2 scale, so that same fold change (up/down regulated) will have the same distance to the zero baseline.",
-             "\n");
-  
+### Section 3 - Processing result
+CreateSampleSum <- function(){
+  descr <- c("\\section{Raw Spectra Processing - Spectra Summary}\n",
+             "All spectra files included for processing in this module have been processed.",
+             "All sample processing result are shown as below, including the Base Peak Ion (BPI), Total Ion Chromatogram (TIC),
+             Peak intensity stats and a breif PCA display (under log transformation). 
+             Meanwhile, the statistics of all spectra files has also been provided in this section.");
   cat(descr, file=rnwFile, append=TRUE);
   
-  # Fold change
-  if(!(isEmptyMatrix(mSetObj$analSet$fc$sig.mat))){
-    cmdhist <- c(
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$fc,"}", sep=""),
-      "\\caption{", paste("Important features selected by fold-change analysis with threshold ", mSetObj$analSet$fc$raw.thresh, ". ",
-                          "The red circles represent features above the threshold. Note the values are on log scale, so that both up-regulated ",
-                          "and down-regulated features can be plotted in a symmetrical way", sep=""), "}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$fc,"}", sep=""),
-      "\\end{figure}"
-    );
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
-    
-    cmdhist2 <- c("<<echo=false, results=tex>>=",
-                  "GetSigTable.FC(mSet)",
-                  "@");
-    cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
-    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-  }
+  descr1 <- c(
+    "Here is a brief content of this section",
+    "\\begin{itemize}",
+    "\\item{Total Ion Chromatogram (TIC) }",
+    "\\item{Base Peak Ion (BPI) Chromatogram}",
+    "\\item{Spectral Intensity Stats}",
+    "\\item{Principal Component Analysis (PCA)}",
+    "\\item{Spectral peaks summary}",
+    "\\end{itemize}")
   
-  # T-tests
-  if(!(isEmptyMatrix(mSetObj$analSet$tt$sig.mat))){
-    cmdhist <- c(
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$tt,"}", sep=""),
-      "\\caption{", paste("Important features selected by t-tests with threshold ", mSetObj$analSet$tt$raw.thresh, ". ",
-                          "The red circles represent features above the threshold. Note the p values are transformed by -log10 so that the more significant ",
-                          "features (with smaller p values) will be plotted higher on the graph. ", sep=""),"}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$tt,"}", sep=""),
-      "\\end{figure}"
-    );
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
-    
-    cmdhist2<-c("<<echo=false, results=tex>>=",
-                "GetSigTable.TT(mSet)",
-                "@");
-    cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
-    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-  }
+  cat(descr1, file=rnwFile, append=TRUE);
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
-  # Volcano plot
-  if(!(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat))){
-    cmdhist <- c( 
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$volcano,"}", sep=""),
-      "\\caption{", paste("Important features selected by volcano plot with fold change threshold (x) ",
-                          mSetObj$analSet$volcano$raw.threshx, " and t-tests threshold (y) ", mSetObj$analSet$volcano$raw.threshy, ". ",
-                          "The red circles represent features above the threshold. Note both fold changes and p values are log ",
-                          "transformed. The further its position away from the (0,0), the more significant the feature is. ", sep=""),"}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$volcano,"}", sep=""),
-      "\\end{figure}"
-    );
-    
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
-    
-    cmdhist2 <- c("<<echo=false, results=tex>>=",
-                  "GetSigTable.Volcano(mSet)",
-                  "@");
-    cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
-    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-  }
-}
-
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create ANOVA document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreateANOVAdoc <- function(mSetObj=NA){
+  CreateTIC(); # Done
+  CreateBPI(); # Done
+  CreateIntensityStats(); # Done
+  CreatePCA(); # Done
+  createSpectraSumDoc(); # Done
+  createSpectraTIC(); # Done
   
-  mSetObj <- .get.mSet(mSetObj);
+};
+CreateTIC<- function(){
   
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$aov)){
-    return();
-  }
-  
-  if(isEmptyMatrix(mSetObj$analSet$aov$sig.mat)){
-    anova.tab<-NULL;
-  }else{
-    anova.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.",
-                       "The \\texttt{post-hoc Sig. Comparison} column shows the comparisons between different levels",
-                       "that are significant given the p value threshold. ");
-  }
-  
-  descr <- c("\\subsection{One-way ANOVA}\n",
-             "Univariate analysis methods are the most common methods used for exploratory data analysis. ",
-             "For multi-group analysis, MetaboAnalyst provides one-way Analysis",
-             "of Variance (ANOVA). As ANOVA only tells whether the overall comparison is significant or not,",
-             "it is usually followed by post-hoc analyses in order to identify which two levels are different.",
-             "MetaboAnalyst provides two most commonly used methods for this purpose - Fisher's",
-             "least significant difference method (Fisher's LSD) and Tukey's Honestly Significant Difference",
-             "(Tukey's HSD). The univariate analyses provide a preliminary overview about features that are",
-             "potentially significant in discriminating the conditions under study.",
-             "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by ANOVA analysis."),
-             anova.tab,
-             "\n");
+  descr <- c("\\subsection{Total Ion Chromatogram (TIC)}\n",
+             "TIC is a chromatogram summed the intensities of all mass spectral peaks from same scan.",
+             "All signals including noise and peak components are included in TIC", 
+             "In other words, TIC is a sum of all the separate ion contributing to a mass spectrum",
+             "The spectra TIC signal (ion) flow of all files is displayed in Figure", fig.count<<-fig.count+1,", as below."
+  );
   
   cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
   
-  # ANOVA
-  cmdhist<-c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$anova,"}", sep=""),
-    "\\caption{", paste("Important features selected by ANOVA plot with p value threshold ",
-                        mSetObj$analSet$aov$raw.thresh, ". ", sep=""),"}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$anova,"}", sep=""),
-    "\\end{figure}"
+  cmdhist <- c( "\\begin{figure}[htp]",
+                "\\begin{center}",
+                paste("\\includegraphics[width=0.75\\textwidth]{TICS_72.png}", sep=""),
+                "\\caption{Total Ion Chromatogram plot of the spectral processing.}",
+                "\\end{center}",
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
+CreateIntensityStats<- function(){
+  
+  descr <- c("\\subsection{Peak Intensity Statistics}\n",
+             "The general peaks' intensity is analyzed from different spectral files to show the peaks' intensity distribution",
+             "The statistics all spectral peaks is displayed in Figure", fig.count<<-fig.count+1,", as below."
+  );
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  
+  cmdhist <- c( "\\begin{figure}[htp]",
+                "\\begin{center}",
+                paste("\\includegraphics[width=0.75\\textwidth]{Peak_Intensity.png}", sep=""),
+                "\\caption{Peak Intensity Statistics of all spectral files.}",
+                "\\end{center}",
+                "\\end{figure}",
+                "\\clearpage"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
+CreatePCA<- function(){
+  
+  descr <- c("\\subsection{Principal component analysis (PCA)}\n",
+             "PCA is a dimension-reduction method used to increase the interpretability of high-dimension datasets and minimizing the information loss.", 
+             "Here a primary PCA was performed with the log-transformed data.",
+             "The PCA score plot is shown in ", fig.count<<-fig.count+1,", as below. Please try to play your data with different modules (e.g. Statistic Analysis) to find out more statistic sense."
+  );
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  
+  cmdhist <- c( "\\begin{figure}[htp]",
+                "\\begin{center}",
+                paste("\\includegraphics[width=0.75\\textwidth]{PCA.png}", sep=""),
+                "\\caption{Principal component analysis (PCA). Samples from different groups are marked with different colors.}",
+                "\\end{center}",
+                "\\end{figure}",
+                "\\clearpage"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
+createSpectraSumDoc<- function(){
+  
+  descr <- c("\\subsection{Spectra Summary}\n",
+             "The peaks information from different spectra after processing is summarized in", 
+             table.count<<-table.count+1,", as below."
+  );
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
   
   cmdhist2 <- c("<<echo=false, results=tex>>=",
-                "GetSigTable.Anova(mSet)",
+                "createSpectraSumTable()",
                 "@");
   cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
-  
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-}
-
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create correlation document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreateCorrDoc <- function(mSetObj=NA){
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$cor.res) & is.null(mSetObj$imgSet$corr.heatmap)){
-    return();
+};
+createSpectraSumTable <- function(){
+  if(file.exists("peak_result_summary.txt")){
+    dt <- read.table("peak_result_summary.txt")
+    colnames(dt)<-c("Spectra","Groups", " RT range", "m/z Range", "Peak Number", "Missing (%)");
+    print(xtable::xtable(dt, 
+                         caption="Summary of peaks information of all spectra after processing"), 
+          caption.placement="top", 
+          size="\\scriptsize");
   }
+};
+CreateBPI<- function(){
   
-  # need to check if this process is executed
-  if(!is.null(mSetObj$imgSet$corr.heatmap)){
-    descr <- c("\\subsection{Correlation Analysis}\n",
-               "Correlation analysis can be used to visualize the overall correlations between different features",
-               "It can also be used to identify which features are correlated with a feature of interest.",
-               "Correlation analysis can also be used to identify if certain features show particular patterns",
-               "under different conditions. Users first need to define a pattern in the form of a series of hyphenated numbers.",
-               "For example, in a time-series study with four time points, a pattern of of",
-               "\\texttt{1-2-3-4} is used to search compounds with increasing the concentration as",
-               "time changes; while a pattern of \\texttt{3-2-1-3} can be used to search compounds",
-               "that decrease at first, then bounce back to the original level.",
-               "\n\n",
-               paste("Figure", fig.count<<-fig.count+1, "shows the overall correlation heatmap."),
-               "\n");
-    
-    cat(descr, file=rnwFile, append=TRUE);
-    
-    cmdhist<-c(
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$corr.heatmap,"}", sep=""),
-      "\\caption{Correlation Heatmaps}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$corr.heatmap,"}", sep=""),
-      "\\end{figure}"
-    );
-    
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
-  }
-  
-  if(!is.null(mSetObj$analSet$cor.res)){
-    if(isEmptyMatrix(mSetObj$analSet$cor.res)){
-      cor.tab <- NULL;
-    }else{
-      cor.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.");
-    }
-    
-    descr <- c("\\subsection{Correlation Analysis}\n",
-               "Correlation analysis can be used to identify which features are correlated with a feature of interest.",
-               "Correlation analysis can also be used to identify if certain features show particular patterns",
-               "under different conditions. Users first need to define a pattern in the form of a series of hyphenated numbers.",
-               "For example, in a time-series study with four time points, a pattern of of",
-               "\\texttt{1-2-3-4} is used to search compounds with increasing the concentration as",
-               "time changes; while a pattern of \\texttt{3-2-1-3} can be used to search compounds",
-               "that decrease at first, then bounce back to the original level.",
-               "\n\n",
-               paste("Figure", fig.count<<-fig.count+1, "shows the important features identified by correlation analysis."),
-               cor.tab,
-               "\n");
-    
-    cat(descr, file=rnwFile, append=TRUE);
-    
-    cmdhist <- c(
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$corr,"}", sep=""),
-      "\\caption{Important features selected by correlation analysis with light",
-      "purple indicates positive correlation and blue indicate negative correlations.}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$corr,"}", sep=""),
-      "\\end{figure}"
-    );
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rnwFile, append=TRUE, sep="\n");
-    
-    cmdhist2<-c("<<echo=false, results=tex>>=",
-                "GetSigTable.Corr(mSet)",
-                "@");
-    cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
-  }
-  
-  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-}
-
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create PCA document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreatePCAdoc <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$pca)){
-    return();
-  }
-  
-  descr <- c("\\subsection{Principal Component Analysis (PCA)}\n",
-             "PCA is an unsupervised method aiming to find the directions that best",
-             "explain the variance in a data set (X) without referring to class labels (Y).",
-             "The data are summarized into much fewer variables called \\textit{scores} which",
-             "are weighted average of the original variables. The weighting profiles are called",
-             "\\textit{loadings}. The PCA analysis is performed using the \\texttt{prcomp} package.",
-             "The calculation is based on singular value decomposition.",
-             "\n\n",
-             "The Rscript \\texttt{chemometrics.R} is required.",
-             paste("Figure", fig.count<<-fig.count+1,"is pairwise score plots providing an overview of the various seperation patterns among the most significant PCs;"),
-             paste("Figure", fig.count<<-fig.count+1,"is the scree plot showing the variances explained by the selected PCs;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected PCs;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected PCs;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the loadings plot between the selected PCs;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the biplot between the selected PCs.\n"));
+  descr <- c("\\subsection{Base Peak Ion (BPI) Chromatogram}\n",
+             "The base peak chromatogram is similar to the TIC, however it only shows the intensity of the most intense signal at every scan across the whole spectrum.", 
+             "Base peak chromatograms always have a cleaner and clearer shape and thus are more informative than TIC.",
+             "The spectra signal (ion) flow of all files is displayed in Figure", fig.count<<-fig.count+1,", as below."
+  );
   
   cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
   
-  cmdhist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pca.pair,"}", sep=""),
-    "\\caption{Pairwise score plots between the selected PCs. The explained variance of each PC is shown in the corresponding diagonal cell. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pca.pair,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pca.scree,"}", sep=""),
-    "\\caption{Scree plot shows the variance explained by PCs. The green line on top shows the accumulated variance explained; the blue line underneath shows the variance explained by individual PC.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pca.scree,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pca.score2d,"}", sep=""),
-    "\\caption{Scores plot between the selected PCs. The explained variances are shown in brackets.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pca.score2d,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", "scores3D.png","}", sep=""),
-    "\\caption{3D score plot between the selected PCs. The explained variances are shown in brackets.}",
-    "\\end{center}",
-    paste("\\label{","scores3D.png","}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", "loadings3D.png","}", sep=""),
-    "\\caption{Loadings plot for the selected PCs. }",
-    "\\end{center}",
-    paste("\\label{","loadings3D.png","}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pca.biplot,"}", sep=""),
-    "\\caption{PCA biplot between the selected PCs. Note, you may want to test different centering and scaling
-    normalization methods for the biplot to be displayed properly.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pca.biplot,"}", sep=""),
-    "\\end{figure}"
+  cmdhist <- c( "\\begin{figure}[htp]",
+                "\\begin{center}",
+                paste("\\includegraphics[width=0.75\\textwidth]{BPIS_72.png}", sep=""),
+                "\\caption{Base Peak Ion plot of the spectral processing.}",
+                "\\end{center}",
+                "\\end{figure}",
+                "\\clearpage"
   );
   cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-}
-
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create PLS document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreatePLSdoc <- function(mSetObj=NA){
+};
+createSpectraTIC <- function(){
   
-  mSetObj <- .get.mSet(mSetObj);
+  descr <- c("\\subsection{TIC of individual spectra}\n",
+             "The TIC plots you are interested in are shown as below."
+  );
   
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$plsr) & is.null(mSetObj$analSet$plsda)){
-    return();
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  
+  load("mSet.rda");
+  files <- mSet@rawOnDisk@phenoData@data[["sample_name"]];
+  
+  for (i in files){
+    if(file.exists(paste0(i, ".png"))){
+      fig.count<<-fig.count+1;
+      cmdhist <- c( "\\begin{figure}[htp]",
+                    "\\begin{center}",
+                    paste("\\includegraphics[width=0.75\\textwidth]{", paste0(i, ".png"), "}", sep=""),
+                    paste0("\\caption{TIC plot of this spectra: ", gsub("_","-",sub(".png","",i)) ,".}"),
+                    "\\end{center}",
+                    "\\end{figure}",
+                    "\\clearpage"
+      );
+      cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+    }
   }
-  
-  descr <- c("\\subsection{Partial Least Squares - Discriminant Analysis (PLS-DA)}\n",
-             "PLS is a supervised method that uses multivariate regression techniques to extract via",
-             "linear combination of original variables (X) the information that can predict the",
-             "class membership (Y). The PLS regression is performed using the \\texttt{plsr} function",
-             "provided by R \\texttt{pls} package\\footnote{Ron Wehrens and Bjorn-Helge Mevik.\\textit{pls: Partial Least",
-             "Squares Regression (PLSR) and Principal Component Regression (PCR)}, 2007,",
-             "R package version 2.1-0}. The classification and cross-validation are performed using the corresponding wrapper",
-             "function offered by the \\texttt{caret} package\\footnote{Max Kuhn. Contributions from",
-             "Jed Wing and Steve Weston and Andre Williams.\\textit{caret: Classification and Regression",
-             "Training}, 2008, R package version 3.45}.",
-             "\n\n",
-             "To assess the significance of class discrimination, a permutation test was performed. In each permutation, a PLS-DA model was",
-             "built between the data (X) and the permuted class labels (Y) using the optimal number of components determined",
-             "by cross validation for the model based on the original class assignment. MetaboAnalyst supports two types of test",
-             "statistics for measuring the class discrimination. The first one is based on prediction accuracy during training.",
-             "The second one is separation distance based on the ratio of the between group sum of the squares and the within",
-             "group sum of squares (B/W-ratio).",
-             "If the observed test statistic is part of the distribution based on the permuted class assignments,",
-             "the class discrimination cannot be considered significant from a statistical point of",
-             "view.\\footnote{Bijlsma et al.\\textit{Large-Scale Human Metabolomics Studies: A Strategy for Data",
-             "(Pre-) Processing and Validation}, Anal Chem. 2006, 78 567 - 574}.",
-             "\n\n",
-             "There are two variable importance measures in PLS-DA. The first, Variable Importance in Projection (VIP) is",
-             "a weighted sum of squares of the PLS loadings taking into account the amount of explained Y-variation",
-             "in each dimension. Please note, VIP scores are calculated for each components. When more than components are used to calculate", 
-             "the feature importance, the average of the VIP scores are used. The other importance measure is based",
-             "on the weighted sum of PLS-regression. The weights are a function of the reduction of the sums of squares across the number",
-             "of PLS components. Please note, for multiple-group (more than two) analysis, the same number of predictors will be built for each",
-             "group. Therefore, the coefficient of each feature will be different depending on which group you want to predict.",
-             "The average of the feature coefficients are used to indicate the overall coefficient-based importance. ",
-             "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the overview of scores plots;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the loading plot between the selected components;"));
+
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+};
+
+### Section 4 - Processing feature
+CreateFeatureSum <- function(){
+  descr <- c("\\section{Raw Spectra Processing - Feature summary}\n",
+             "All spectra files included for processing in this module have been processed.",
+             "All features processing result across the different spectra are shown as below, including peak feature summary,
+              and the corresponding Extracted Ion Chromatogram (EIC/XIC) of the features you are interested in.");
   cat(descr, file=rnwFile, append=TRUE);
   
+  descr1 <- c(
+    "Here is a brief content of this section",
+    "\\begin{itemize}",
+    "\\item{EIC/XIC}",
+    "\\item{Feature (EIC/XIC) Stats}",
+    #"\\item{Peak Feature Detail}",
+    "\\end{itemize}")
   
-  descr <- c(paste("Figure", fig.count<<-fig.count+1,"shows the classification performance with different number of components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the results of permutation test for model validation;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows important features identified by PLS-DA.\n"));
-  cat(descr, file=rnwFile, append=TRUE);
-  
-  
-  plsrhist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.pair,"}", sep=""),
-    "\\caption{Pairwise scores plots between the selected components. The explained variance of each component is shown in the corresponding diagonal cell. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.pair,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.score2d,"}", sep=""),
-    "\\caption{Scores plot between the selected PCs. The explained variances are shown in brackets. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.score2d,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.score3d,"}", sep=""),
-    "\\caption{3D scores plot between the selected PCs. The explained variances are shown in brackets.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.score3d,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.loading,"}", sep=""),
-    "\\caption{Loadings plot between the selected PCs. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.loading,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(plsrhist, file=rnwFile, append=TRUE, sep="\n");
-  
-  plsdahist <- c(
-    # classification fig
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.class,"}", sep=""),
-    "\\caption{PLS-DA classification using different number of components. The red star indicates the best classifier.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.class,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(plsdahist, file=rnwFile, append=TRUE, sep="\n");
-  
-  if(!is.null(mSetObj$imgSet$pls.permut)){ # may not be performed (not by default)
-    plsdahist <- c(
-      # permutation fig
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.permut,"}", sep=""),
-      paste("\\caption{PLS-DA model validation by permutation tests based on ", mSetObj$analSet$plsda$permut.type, ". ",
-            "The p value based on permutation is ", mSetObj$analSet$plsda$permut.p, ".", sep=""), "}",
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$pls.permut,"}", sep=""),
-      "\\end{figure}"
-    );
-    cat(plsdahist, file=rnwFile, append=TRUE, sep="\n");
-  }
-  
-  plsdahist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.imp,"}", sep=""),
-    paste("\\caption{Important features identified by PLS-DA. The colored boxes on the right indicate the relative concentrations of the corresponding metabolite in each group
-          under study. }"),
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.imp,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(plsdahist, file=rnwFile, append=TRUE, sep="\n");
-  
-  
-  cat("\\clearpage", file=rnwFile, append=TRUE);
-}
+  cat(descr1, file=rnwFile, append=TRUE);
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create sPLS-DA document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-CreateSPLSDAdoc <- function(mSetObj=NA){
+  createFeatureEIC(); # Done
+  createFeatureEICStats(); # Done
+  #createFeatureSumDoc(); # Cancelled
   
-  mSetObj <- .get.mSet(mSetObj);
+  # Adding more and do some optimization in future
   
-  # need to check if this process is executed
-  if(is.null(mSetObj$analSet$splsr)){
-    return();
-  }
+};
+createFeatureEIC <- function(){
   
-  descr <- c("\\subsection{Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)}\n",
-             "The sparse PLS-DA (sPLS-DA) algorithm can be used to effectively reduce the number of variables (metabolites)", 
-             "in high-dimensional metabolomics data to produce robust and easy-to-interpret models.", 
-             "Users can control the sparseness of the model by controlling the number of components in the model and the number ",
-             "of variables in each component. For more information, please refer to Cao et al. 2011 (PMC3133555). ",
-             "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the overview of scores plots;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the loading plot of the top ranked features;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluated using cross-validations;"));
-  cat(descr, file=rnwFile, append=TRUE);
-  
-  
-  plsrhist <- c(
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$spls.pair,"}", sep=""),
-    "\\caption{Pairwise scores plots between the selected components. The explained variance of each component is shown in the corresponding diagonal cell. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$spls.pair,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$spls.score2d,"}", sep=""),
-    "\\caption{Scores plot between the selected PCs. The explained variances are shown in brackets. }",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$spls.score2d,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$spls.score3d,"}", sep=""),
-    "\\caption{3D scores plot between the selected PCs. The explained variances are shown in brackets.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.score3d,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$spls.imp,"}", sep=""),
-    "\\caption{Plot showing the variables selected by the sPLS-DA model for a given component. The variables are ranked by the absolute values of their loadings.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$spls.imp,"}", sep=""),
-    "\\end{figure}",
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$splsda.class,"}", sep=""),
-    "\\caption{Plot of the performance of the sPLS-DA model evaluated using cross validations (CV) with increasing numbers
-    of components created using the specified number of the variables. The error rate is on the y-axis and the number of components
-    is on the x-axis.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$splsda.class,"}", sep=""),
-    "\\end{figure}"
+  descr <- c("\\subsection{EIC/XIC of individual feature}\n",
+             "The ones you are interested in at the analyzing stage are shown as below."
   );
-  cat(plsrhist, file=rnwFile, append=TRUE, sep="\n");
   
-  
-  cat("\\clearpage", file=rnwFile, append=TRUE);
-}
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
 
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create OPLSDA document
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
+  files <- list.files(pattern = "^EIC.*mz@")
+  
+  for (i in files){
+    if(file.exists(i)){
+      
+      if(grepl("s_sample_", i)){
+        fig.count<<-fig.count+1;
+        cmdhist <- c( "\\begin{figure}[htp]",
+                      "\\begin{center}",
+                      paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
+                      paste0("\\caption{EIC of feature of individual samples: ", gsub("_","-",sub(".png","",i)),"}"),
+                      "\\end{center}",
+                      "\\end{figure}",
+                      "\\clearpage"
+        )
+        cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+      }
+      
+      if(grepl("s_group_", i)){
+        fig.count<<-fig.count+1;
+        cmdhist <- c( "\\begin{figure}[htp]",
+                      "\\begin{center}",
+                      paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
+                      paste0("\\caption{EIC of feature of groups: ", gsub("_","-",sub(".png","",i)),"}"),
+                      "\\end{center}",
+                      "\\end{figure}",
+                      "\\clearpage"
+        )
+        cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+      }
+      
+      cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+    }
+  }
+ 
+};
+createFeatureEICStats <- function(){
+  
+  descr <- c("\\subsection{EIC/XIC Stats of individual feature}\n",
+             "The ones you are interested in at the analyzing stage are shown as below."
+  );
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  
+  files <- list.files(pattern = "^[^(EIC)].*mz@.*s.png")
+  
+  for (i in files){
+    if(file.exists(i)){
+      if(grepl("mz@", i)){
+        fig.count<<-fig.count+1;
+        cmdhist <- c( "\\begin{figure}[htp]",
+                      "\\begin{center}",
+                      paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
+                      paste0("\\caption{Feature intensity statis box plot of different groups: ", gsub("_","-",sub(".png","",i)),"}"),
+                      "\\end{center}",
+                      "\\end{figure}",
+                      "\\clearpage"
+        )
+        cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+        #cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+      }
+    }
+  }
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+};
+createFeatureSumDoc <- function(){
+  
+  descr <- c("\\subsection{Spectra Summary}\n",
+             "The features basic information and its annotation results after processing is summarized in", 
+             table.count<<-table.count+1,", as below."
+  );
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  cmdhist2 <- c("<<echo=false, results=tex>>=",
+                "createFeatureSumTable()",
+                "@");
+  cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
+createFeatureSumTable <- function(){
+  
+  # if(file.exists("peak_feature_summary.csv")){
+  #   dt <- read.csv("peak_feature_summary.csv");
+  #   print(xtable::xtable(dt, 
+  #                        caption="Summary of features information after processing"), 
+  #         caption.placement="top", 
+  #         size="\\scriptsize",tabular.environment = "longtable");
+  # }
+  
+};
+
+
+

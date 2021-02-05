@@ -45,8 +45,10 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
   
   # do some sanity check
   todo.inx <- which(is.na(mSetObj$name.map$hit.inx));
-  
-  if(length(todo.inx)/length(mSetObj$name.map$hit.inx) > 0.5){
+  if(length(mSetObj$name.map$hit.inx) == 0){
+    mSetObj$msgSet$nmcheck.msg <- c(0, "No hits found for the given compound ID. Please make 
+                                    sure that correct compound IDs or common compound names are used.");
+  }else if(length(todo.inx)/length(mSetObj$name.map$hit.inx) > 0.5){
     mSetObj$msgSet$nmcheck.msg <- c(0, "Over half of the compound IDs could not be matched to our database. Please make 
                                     sure that correct compound IDs or common compound names are used.");
   }else if (length(todo.inx) > 15){
@@ -54,6 +56,16 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
   }else{
     mSetObj$msgSet$nmcheck.msg <- c(1, "Name matching OK, please inspect (and manual correct) the results then proceed.");   
   }
+  
+  if(!.on.public.web){
+    print(mSetObj$msgSet$nmcheck.msg)
+    
+    if(length(todo.inx) == length(mSetObj$name.map$hit.inx)){
+      AddErrMsg("Name matching failed! Please make sure that correct standardized feature names are used!")
+      return(0)
+    }
+  }
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -72,7 +84,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
 #'@export
 #'
 MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   if(lipid & anal.type == "msetqea"){
@@ -80,7 +92,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
   }else{
     qvec <- mSetObj$dataSet$cmpd;
   }
-
+  
   # variables to record results
   hit.inx <- vector(mode='numeric', length=length(qvec)); # record hit index, initial 0
   names(hit.inx) <- qvec;
@@ -89,6 +101,8 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -133,16 +147,14 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
     # then try to find exact match to synonyms for the remaining unmatched query names one by one
     if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
       syn.db <- .get.my.lib("lipid_syn_nms.qs")
+    }else if(anal.type == "utils"){
+      syn.db <- .get.my.lib("master_syn_nms.qs")
     }else{
       syn.db <- .get.my.lib("syn_nms.qs")
     }
-
+    
     syns.list <-  syn.db$syns.list;
     todo.inx <- which(is.na(hit.inx));
-
-    if(length(todo.inx) > 0 & lipid){
-      qvec[todo.inx] <- CleanLipidNames(qvec[todo.inx])
-    }
     
     if(length(todo.inx) > 0){
       for(i in 1:length(syns.list)){
@@ -196,8 +208,8 @@ CleanLipidNames <- function(qvec){
   qvec <- gsub("/B", "", qvec, fixed = TRUE)
   qvec <- gsub("_B", "", qvec, fixed = TRUE)
   
-  dash <- paste0(c("-1", "-2"), collapse = "|")
-  qvec <- gsub(dash, "", qvec, fixed = TRUE)
+  dash <- paste(c("-1", "-2", "_1", "_2", "_3", "_4", "_5"), collapse = "|")
+  qvec <- gsub(dash, "", qvec)
   
   # second remove any RT and adduct info
   load_stringr()
@@ -222,7 +234,7 @@ CleanLipidNames <- function(qvec){
   if(sum(coq.inx) > 0){
     qvec[coq.inx] <-  trimws(gsub("[()]", " ", gsub("Co", "Coenzyme", qvec[coq.inx], fixed = TRUE)))
   }
-
+  
   acca.inx <- str_detect(qvec, "AcCa")
   if(sum(acca.inx) > 0){
     qvec[acca.inx] <-  trimws(gsub("[()]", " ", gsub("AcCa", "CAR", qvec[acca.inx], fixed = TRUE)))
@@ -247,7 +259,7 @@ CleanLipidNames <- function(qvec){
   if(sum(pe.inx) > 0){
     qvec[pe.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[pe.inx], fixed("Plasmenyl-", ignore_case=TRUE), "")))
   }
-
+  
   foura.inx <- str_detect(qvec, fixed("aaaa-", ignore_case=TRUE))
   if(sum(foura.inx) > 0){
     qvec[foura.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[foura.inx], fixed("aaaa-", ignore_case=TRUE), "")))
@@ -262,19 +274,34 @@ CleanLipidNames <- function(qvec){
   if(sum(phy.inx) > 0){
     qvec[phy.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[phy.inx], fixed("Phytocer", ignore_case=TRUE), "Cer")))
   }
-
+  
   dec.inx <- str_detect(qvec, fixed("deoxy-Cer", ignore_case=TRUE))
   if(sum(dec.inx) > 0){
     qvec[dec.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[dec.inx], fixed("deoxy-Cer", ignore_case=TRUE), "1-DeoxyCer")))
   }
-
+  
   hex.inx <- str_detect(qvec, fixed("Hex-Cer", ignore_case=TRUE))
   if(sum(hex.inx) > 0){
     qvec[hex.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[hex.inx], fixed("Hex-Cer", ignore_case=TRUE), "HexCer")))
   }
-
+  
+  cerp.inx <- str_detect(qvec, fixed("CerP", ignore_case=TRUE))
+  if(sum(cerp.inx) > 0){
+    qvec[cerp.inx] <- trimws(gsub(";O2", "", gsub("[()]", " ", str_replace(qvec[cerp.inx], " ", " d"))))
+  }
+  
+  lpc.inx <- str_detect(qvec, fixed("LPC", ignore_case=TRUE))
+  if(sum(lpc.inx) > 0){
+    qvec[lpc.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[lpc.inx], fixed("LPC", ignore_case=TRUE), "LysoPC")))
+  }
+  
+  lpe.inx <- str_detect(qvec, fixed("LPE", ignore_case=TRUE))
+  if(sum(lpe.inx) > 0){
+    qvec[lpe.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[lpe.inx], fixed("LPE", ignore_case=TRUE), "LysoPE")))
+  }
+  
   # last replace . _ ; to slash if no instances of slash in qvec
-
+  
   slash.inx <- str_detect(qvec, "/")
   
   if(sum(slash.inx) == 0){
@@ -319,13 +346,15 @@ CleanLipidNames <- function(qvec){
 #'@export
 #'
 PerformDetailMatch <- function(mSetObj=NA, q){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
+  lipid = mSetObj$lipid.feats
+
   if(mSetObj$dataSet$q.type == "name"){
-    PerformApproxMatch(mSetObj, q);
+    PerformApproxMatch(mSetObj, q, lipid);
   }else{
-    PerformMultiMatch(mSetObj, q);
+    PerformMultiMatch(mSetObj, q, lipid);
   }
 }
 
@@ -335,16 +364,18 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 #'@param q Input the query.
 #'@export
 #'
-PerformMultiMatch <- function(mSetObj=NA, q){
+PerformMultiMatch <- function(mSetObj=NA, q, lipid){
   
   mSetObj <- .get.mSet(mSetObj);
-
-  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  
+  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
-
+  
   matched.inx <- which(cmpd.db$kegg %in% q);
   if(length(matched.inx) > 0) {
     # record all the candidates,
@@ -362,94 +393,137 @@ PerformMultiMatch <- function(mSetObj=NA, q){
 #'@param q Input the q vector.
 #'@export
 #'
-PerformApproxMatch <- function(mSetObj=NA, q){
-  
+PerformApproxMatch <- function(mSetObj=NA, q, lipid){
+
   mSetObj <- .get.mSet(mSetObj);
   
-  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
-
-  # only for none lipids
-  nonLipidInx <- cmpd.db$lipid == 0;
-  com.nms <- cmpd.db$name[nonLipidInx];
   
-  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    syn.db <- .get.my.lib("class_syn_nms_2020.qs")
+  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+    syn.db <- .get.my.lib("lipid_syn_nms.qs")
+  }else if(anal.type == "utils"){
+    syn.db <- .get.my.lib("master_syn_nms.qs")
   }else{
     syn.db <- .get.my.lib("syn_nms.qs")
   }
-
-  syns.vec <- syn.db$syns.vec[nonLipidInx];
-  syns.list <- syn.db$syns.list[nonLipidInx];
   
-  matched.dist <- NULL;
-  q.length <- nchar(q);
-  s <- c(0, 0.1, 0.2);
-  
-  # init withno hits, then see if any hits
-  mSetObj$dataSet$candidates <- NULL;
-  for (j in s) {
-    new.q <- q;
-    if(q.length > 32){ # note: agrep fail for exact match when length over 32 characters
-      new.q<-substr(q, 1, 32);
-    }
-    matched <- FALSE;
-    matched.inx <- agrep(new.q, syns.vec, ignore.case=T, max.distance=j, useBytes=T);
+  if(!lipid){
+    # only for none lipids
+    nonLipidInx <- cmpd.db$lipid == 0;
+    com.nms <- cmpd.db$name[nonLipidInx];
     
-    if(length(matched.inx) > 0) {
-      # record all the candidates,
-      # don't use cbind, since all will be converted to character mode
-      # for data.frame specify "stringsAsFactors" to prevent convert value col into factor
+    syns.vec <- syn.db$syns.vec[nonLipidInx];
+    syns.list <- syn.db$syns.list[nonLipidInx];
+    
+    matched.dist <- NULL;
+    q.length <- nchar(q);
+    s <- c(0, 0.1, 0.2);
+    
+    # init withno hits, then see if any hits
+    mSetObj$dataSet$candidates <- NULL;
+    
+    for (j in s) {
+      new.q <- q;
+      if(q.length > 32){ # note: agrep fail for exact match when length over 32 characters
+        new.q<-substr(q, 1, 32);
+      }
+      matched <- FALSE;
+      matched.inx <- agrep(new.q, syns.vec, ignore.case=T, max.distance=j, useBytes=T);
+      
+      if(length(matched.inx) > 0) {
+        # record all the candidates,
+        # don't use cbind, since all will be converted to character mode
+        # for data.frame specify "stringsAsFactors" to prevent convert value col into factor
+        candidates <- data.frame(index=vector(mode = "numeric", length=length(matched.inx)),
+                                 value=vector(mode = "character", length=length(matched.inx)),
+                                 score=vector(mode = "numeric", length=length(matched.inx)),
+                                 stringsAsFactors = FALSE);
+        
+        for(n in 1:length(matched.inx)){
+          nm.vec<-syns.list[[matched.inx[n]]];
+          # try approximate match, note: in some cases, split into element will break match using whole string
+          hit3.inx <- agrep(q,nm.vec,ignore.case=T, max.distance=j, useBytes=T);
+          if(length(hit3.inx)>0){
+            hit3.nm <- vector(mode = "character", length=length(hit3.inx));
+            hit3.score <- vector(mode = "numeric", length=length(hit3.inx));
+            for(k in 1:length(hit3.inx)){
+              idx <- hit3.inx[k];
+              hit3.nm[k] <- nm.vec[idx];
+              hit3.score[k] <- j + abs(nchar(nm.vec[idx])-nchar(q))/(10*nchar(q));
+            }
+            
+            # now get the best match, the rule is that the first two character should matches
+            # first check if first two character are digits or characters, otherwise will cause error
+            matches2 <- c();
+            if(length(grep("^[1-9a-z]{2}", q, ignore.case=T))>0){
+              matches2 <- grep(paste("^", substr(q, 1, 2), sep=""), hit3.nm);
+            }else if (length(grep("^[1-9a-z]", q, ignore.case=T))>0){
+              matches2 <- grep(paste("^", substr(q, 1, 1), sep=""), hit3.nm);
+            }
+            
+            if(length(matches2)>0){
+              hit3.score[matches2] <- hit3.score[matches2] - 0.05;
+            }
+            
+            best.inx<-which(hit3.score==min(hit3.score))[1];
+            candidates[n,1]<-matched.inx[n];
+            #    candidates[n,2]<-hit3.nm[best.inx]; # show matched syn names
+            candidates[n,2]<-com.nms[matched.inx[n]] # show common names
+            candidates[n,3]<-hit3.score[best.inx];
+          }      
+        }
+        
+        rm.inx <- is.na(candidates[,2]) | candidates[,2]=="NA" | candidates[,2]=="";
+        mSetObj$dataSet$candidates<-candidates[!rm.inx, ];  
+        mSetObj$dataSet$candidates<-candidates[order(candidates[,3], decreasing=F), , drop=F];    
+        
+        if(nrow(candidates) > 10){
+          mSetObj$dataSet$candidates<-candidates[1:10,];
+        }
+        return(.set.mSet(mSetObj));
+      }
+    }
+  }else{
+    
+    mSetObj$dataSet$candidates <- NULL;
+    
+    new.q <- CleanLipidNames(q)
+    syns.vec <- syn.db$syns.vec;
+    com.nms <- cmpd.db$name
+    
+    matched.inx <- agrep(new.q, syns.vec, ignore.case=T, max.distance=0, useBytes=T);
+    
+    if(length(matched.inx) == 0){
+      matched.inx <- agrep(new.q, syns.vec, ignore.case=T, max.distance=0.1, useBytes=T);
+    }
+    
+    if(length(matched.inx) > 0){
+
       candidates <- data.frame(index=vector(mode = "numeric", length=length(matched.inx)),
                                value=vector(mode = "character", length=length(matched.inx)),
                                score=vector(mode = "numeric", length=length(matched.inx)),
                                stringsAsFactors = FALSE);
       
-      for(n in 1:length(matched.inx)){
-        nm.vec<-syns.list[[matched.inx[n]]];
-        # try approximate match, note: in some cases, split into element will break match using whole string
-        hit3.inx <- agrep(q,nm.vec,ignore.case=T, max.distance=j, useBytes=T);
-        if(length(hit3.inx)>0){
-          hit3.nm <- vector(mode = "character", length=length(hit3.inx));
-          hit3.score <- vector(mode = "numeric", length=length(hit3.inx));
-          for(k in 1:length(hit3.inx)){
-            idx <- hit3.inx[k];
-            hit3.nm[k] <- nm.vec[idx];
-            hit3.score[k] <- j + abs(nchar(nm.vec[idx])-nchar(q))/(10*nchar(q));
-          }
-          
-          # now get the best match, the rule is that the first two character should matches
-          # first check if first two character are digits or characters, otherwise will cause error
-          matches2 <- c();
-          if(length(grep("^[1-9a-z]{2}", q, ignore.case=T))>0){
-            matches2 <- grep(paste("^", substr(q, 1, 2), sep=""), hit3.nm);
-          }else if (length(grep("^[1-9a-z]", q, ignore.case=T))>0){
-            matches2 <- grep(paste("^", substr(q, 1, 1), sep=""), hit3.nm);
-          }
-          
-          if(length(matches2)>0){
-            hit3.score[matches2] <- hit3.score[matches2] - 0.05;
-          }
-          
-          best.inx<-which(hit3.score==min(hit3.score))[1];
-          candidates[n,1]<-matched.inx[n];
-          #    candidates[n,2]<-hit3.nm[best.inx]; # show matched syn names
-          candidates[n,2]<-com.nms[matched.inx[n]] # show common names
-          candidates[n,3]<-hit3.score[best.inx];
-        }      
+      for(n in seq_along(matched.inx)){
+        candidates[n,1] <- matched.inx[n];
+        candidates[n,2] <- com.nms[matched.inx[n]] # show common names
+        candidates[n,3] <- min(as.numeric(adist(new.q, unlist(strsplit(syns.vec[matched.inx[1]], "; ")) )))
       }
       
-      rm.inx <- is.na(candidates[,2]) | candidates[,2]=="NA" | candidates[,2]=="";
-      mSetObj$dataSet$candidates<-candidates[!rm.inx, ];  
-      mSetObj$dataSet$candidates<-candidates[order(candidates[,3], decreasing=F), , drop=F];    
+      
+      candidates <- candidates[order(candidates[,3]),]
       
       if(nrow(candidates) > 10){
-        mSetObj$dataSet$candidates<-candidates[1:10,];
+        matched.inx <- candidates[1:10, ]
       }
-      return(.set.mSet(mSetObj));
+      
+      mSetObj$dataSet$candidates <- candidates    
     }
   }
   return(.set.mSet(mSetObj));
@@ -466,19 +540,25 @@ PerformApproxMatch <- function(mSetObj=NA, q){
 #'@export
 
 SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
+  
   mSetObj <- .get.mSet(mSetObj);
+  
+  lipid = mSetObj$lipid.feats
+  
   query_inx <- which(mSetObj$name.map$query.vec == query_nm);
   
   can_mat <- mSetObj$dataSet$candidates;
   
   if(!is.null(can_mat)){
-
-    if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    
+    if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+      cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+    }else if(anal.type == "utils"){
+      cmpd.db <- .get.my.lib("master_compound_db.qs");
     }else{
       cmpd.db <- .get.my.lib("compound_db.qs");
     }
-
+    
     can_inx <- which(can_mat[,2] == can_nm);
     
     if(can_inx <= nrow(can_mat)){
@@ -541,9 +621,12 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 #'License: GNU GPL (>= 2)
 #'@export
 
-GetCandidateList <- function(mSetObj=NA){
-  
+GetCandidateList <- function(mSetObj=NA, lipid){
+
   mSetObj <- .get.mSet(mSetObj);
+  
+  lipid = mSetObj$lipid.feats
+  
   can_hits <- mSetObj$dataSet$candidates;
   
   if(is.null(can_hits)){
@@ -554,20 +637,24 @@ GetCandidateList <- function(mSetObj=NA){
     
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);
     
-    if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-      cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+    if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+      cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+    }else if(anal.type == "utils"){
+      cmpd.db <- .get.my.lib("master_compound_db.qs");
     }else{
       cmpd.db <- .get.my.lib("compound_db.qs");
     }
     
-    # need to exclude lipids, to be consistent with approx matching part so that same index can be used to fetch db entries
-    nonLipidInx <- cmpd.db$lipid == 0;
-    cmpd.db <-cmpd.db[nonLipidInx,];
+    if(!lipid){
+      # need to exclude lipids, to be consistent with approx matching part so that same index can be used to fetch db entries
+      nonLipidInx <- cmpd.db$lipid == 0;
+      cmpd.db <-cmpd.db[nonLipidInx,];
+    }
     
     for (i in 1:nrow(mSetObj$dataSet$candidates)){
       hit.inx <- mSetObj$dataSet$candidates[i, 1];
       hit.name <- mSetObj$dataSet$candidates[i, 2];
-      hit <-cmpd.db[hit.inx, ,drop=F];
+      hit <- cmpd.db[hit.inx, ,drop=F];
       can.mat[i, ] <- c(hit.name,
                         paste(ifelse(hit$hmdb_id=="NA","", paste("<a href=http://www.hmdb.ca/metabolites/", hit$hmdb_id, " target='_blank'>",hit$hmdb_id,"</a>", sep="")), sep=""),
                         paste(ifelse(hit$pubchem_id=="NA", "", paste("<a href=http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=", hit$pubchem_id," target='_blank'>", hit$pubchem_id,"</a>", sep="")), sep=""),
@@ -586,6 +673,7 @@ GetCandidateList <- function(mSetObj=NA){
   }
   
   mSetObj$name.map$hits.candidate.list <- can.mat[,mSetObj$return.cols, drop=F]
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -612,9 +700,12 @@ GetQuery <- function(mSetObj=NA, inx){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-GetFinalNameMap <- function(mSetObj=NA){
+GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
+  
+  lipid = mSetObj$lipid.feats
+  
   hit.inx <- mSetObj$name.map$hit.inx;
   hit.values <- mSetObj$name.map$hit.values;
   match.state <- mSetObj$name.map$match.state;
@@ -623,8 +714,10 @@ GetFinalNameMap <- function(mSetObj=NA){
   nm.mat <- matrix(nrow=length(qvec), ncol=4);
   colnames(nm.mat) <- c("query", "hmdb",  "kegg", "hmdbid");
   
-  if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
+  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
+    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -662,7 +755,7 @@ GetMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 CreateMappingResultTable <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   lipid <- mSetObj$lipid.feats
@@ -701,6 +794,8 @@ CreateMappingResultTable <- function(mSetObj=NA){
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type == "utils"){
+    cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }

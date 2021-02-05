@@ -71,7 +71,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA, meta.anal = FALSE,
   
   file_name <- tools::file_path_sans_ext(basename(filename)) 
   mumDataContainsPval = 1; #whether initial data contains pval or not
-  input <- as.data.frame(.readDataTable(filename)); 
+  input <- as.data.frame(.readDataTable(filename));
   user_cols <- gsub("[^[:alnum:]]", "", colnames(input));
   mummi.cols <- c("m.z", "p.value", "t.score", "r.t")
   
@@ -127,14 +127,6 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA, meta.anal = FALSE,
   
   if(!"t.score" %in% colnames(input)){
     input[,'t.score'] <- rep(0, length=nrow(input))
-  }
-  
-  if(meta.anal & method %in% c("es", "both")){
-    user.cols.inx <- c("effect.size", "lower.ci", "upper.ci") %in% colnames(input)
-    if(!all(user.cols.inx)){
-      AddErrMsg("Missing columns for meta-analysis! (effect.size, lower.ci, upper.ci)")
-      return(0)
-    }
   }
   
   if(rt){
@@ -282,20 +274,19 @@ GetPeakFormat <- function(mSetObj=NA){
 Convert2Mummichog <- function(mSetObj=NA, rt=FALSE, rds.file=FALSE, rt.type="seconds", 
                               test="tt", mode=NA){
   
-  if(test=="tt"|test=="all"){
-    tt.pval <- mSetObj$analSet$tt$p.value
-    
-    if(is.null(tt.pval)){
+  if(test=="tt"|test=="all"){    
+    if(is.null(mSetObj$analSet$tt)){
       AddErrMsg("T-test was not performed!")
       return(0)
     }
     
+    tt.pval <- sort(mSetObj$analSet$tt$p.value);
     fdr <- p.adjust(tt.pval, "fdr")
     mz.pval <- names(tt.pval)
     pvals <- cbind(mz.pval, as.numeric(fdr))
     colnames(pvals) <- c("m.z", "p.value")
     
-    tt.tsc <- mSetObj$analSet$tt$t.score
+    tt.tsc <- sort(mSetObj$analSet$tt$t.score);
     mz.tsc <- names(tt.tsc)
     tscores <- cbind(mz.tsc, as.numeric(tt.tsc))
     colnames(tscores) <- c("m.z", "t.score")
@@ -508,9 +499,17 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   my.inx <- mznew > 50 & mznew < 2001;
   trim.num <- sum(!my.inx);
   range = paste0(min(ndat[,1], "-", max(ndat[,1])))
+  if(length(unique(mSetObj[["dataSet"]][["pos_inx"]])) > 1){
+    colNMadd <- "and mode";
+    colnumadd <- 1;
+  } else {
+    colnumadd <- 0;
+    colNMadd <- NULL;
+  }
+  
   msg.vec <- c(msg.vec, paste("The instrument's mass accuracy is <b>", mSetObj$dataSet$instrument , "</b> ppm."));
   msg.vec <- c(msg.vec, paste("The instrument's analytical mode is <b>", mSetObj$dataSet$mode , "</b>."));
-  msg.vec <- c(msg.vec, paste("The uploaded data contains <b>", length(colnames(rawdat)), "</b> columns."));
+  msg.vec <- c(msg.vec, paste("The uploaded data contains <b>", length(colnames(rawdat)) + colnumadd, "</b> columns."));
   
   if(peakFormat == "rmp"){
     msg.vec <- c(msg.vec, paste("The peaks are ranked by <b>p-values</b>."));
@@ -518,7 +517,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     msg.vec <- c(msg.vec, paste("The peaks are ranked by <b>t-scores</b>."));
   }
   
-  msg.vec <- c(msg.vec, paste("The column headers of uploaded data are <b>", paste(colnames(rawdat),collapse=", "), "</b>."));
+  msg.vec <- c(msg.vec, paste("The column headers of uploaded data are <b>", paste(colnames(rawdat),collapse=", "), colNMadd ,"</b>."));
   msg.vec <- c(msg.vec, paste("The range of m/z peaks is trimmed to 50-2000. <b>", trim.num, "</b> features have been trimmed."));
   
   if(trim.num > 0){
@@ -539,7 +538,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mzs <- ndat[,2]
   # ensure features are unique
   mzs_unq <- mzs[duplicated(mzs)]
-  
+  set.seed(123);
   while(length(mzs_unq)>0){
     mzs[duplicated(mzs)] <- sapply(mzs_unq, function(x) paste0(x, sample(1:9, 1, replace = TRUE)));
     mzs_unq <- mzs[duplicated(mzs)]
@@ -591,7 +590,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$dataSet$mummi.proc <- ndat;
   mSetObj$dataSet$expr_dic <- tscores;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
-  save(mSetObj, file ="mSetObj_SanityCheckMummichogData.rda");
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -639,7 +638,6 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
   
   msg.vec <- NULL;
   mSetObj$dataSet$cutoff <- cutoff;
-save(mSetObj, file = "mSetObj_SetMummichogPval.rda");
   ndat <- mSetObj$dataSet$mummi.proc;
   msg.vec <- c(msg.vec, "Only a small percentage (below 10%) peaks in your input peaks should be significant.");
   msg.vec <- c(msg.vec, "The algorithm works best for <u>200~500 significant peaks in 3000~7000 total peaks</u>.");
@@ -660,7 +658,7 @@ save(mSetObj, file = "mSetObj_SetMummichogPval.rda");
   
   sig.size <- length(input_mzlist);
   sig.part <- round(100*sig.size/length(ref_mzlist),2);
-
+  
   if(sig.part > 25){
     msg.vec <- c(msg.vec, paste("<font color=\"orange\">Warning: over", sig.part, "percent were significant based on your cutoff</font>."));
     msg.vec <- c(msg.vec, "You should adjust p-value cutoff to control the percentage");
@@ -680,7 +678,13 @@ save(mSetObj, file = "mSetObj_SetMummichogPval.rda");
   print(msg.vec)
   mSetObj$dataSet$input_mzlist <- input_mzlist;
   mSetObj$dataSet$N <- sig.size;
-  return(.set.mSet(mSetObj));
+  
+  if(.on.public.web){
+    mSet <<- mSetObj;
+    return(round(sig.part, 0))
+  } else {
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #' For meta-analysis, set the p-value
@@ -695,10 +699,12 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'Function to perform peak set enrichment analysis
 #'@description This is the main function that performs either the mummichog
 #'algorithm, GSEA, or both for peak set enrichment analysis. 
-#'@usage PerformPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
+#'@usage PerformPSEA(mSetObj=NA, lib, libVersion, minLib, permNum = 100)
 #'@param mSetObj Input the name of the created mSetObj object. 
 #'@param lib Input the name of the organism library, default is hsa_mfn. 
 #'@param libVersion Input the version of the KEGG pathway libraries ("current" or "old").
+#'@param minLib Numeric, input the minimum number of metabolites needed to consider the pathway 
+#'or metabolite set. 
 #'@param permNum Numeric, input the number of permutations to perform. Default is 100.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -706,10 +712,10 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'@export
 #'@import qs
 
-PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
+PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj <- .setup.psea.library(mSetObj, lib, libVersion)
+  mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib)
   version <- mum.version
   
   if(mSetObj$dataSet$mumRT & version=="v2"){
@@ -903,13 +909,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
 }
 
 # Internal function to set up library for PSEA
-.setup.psea.library <- function(mSetObj = NA, lib, libVersion, metaAnalysis = FALSE,
+.setup.psea.library <- function(mSetObj = NA, lib, libVersion, minLib=3, metaAnalysis = FALSE,
                                 metaLevel = "pathway", combine.level,
                                 pval.method, es.method, rank.metric, mutual.feats = TRUE){
   
   version <- mum.version
-  print(version)
-  
   filenm <- paste(lib, ".qs", sep="")
   biocyc <- grepl("biocyc", lib)
   
@@ -969,14 +973,17 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   cpd.treep <- mummichog.lib$cpd.tree[["positive"]];
   cpd.treen <- mummichog.lib$cpd.tree[["negative"]];
   
-  if(version=="v2"){
-    # in V2, get rid of currency from pathways
-    pathways <- mummichog.lib$pathways;
-    pathways$cpds <- lapply(pathways$cpds, setdiff, currency)
-    pathways$name <- lapply(pathways$name, setdiff, currency)
-  }
+  # build empirical compound library after
+  path.length <- sapply(mummichog.lib$pathways$cpds, length)
   
-  mSetObj$pathways <- mummichog.lib$pathways;
+  min.inx <- which(path.length >= minLib)
+  
+  cleaned.pathways <- vector("list")
+  cleaned.pathways$cpds <- mummichog.lib$pathways$cpds[min.inx]
+  cleaned.pathways$id <- mummichog.lib$pathways$id[min.inx]
+  cleaned.pathways$name <- mummichog.lib$pathways$name[min.inx]
+  
+  mSetObj$pathways <- cleaned.pathways;
   
   if(metaAnalysis & metaLevel %in% c("cpd", "ec")){
     mSetObj <- .search.compoundLibMeta(mSetObj, cpd.lib, cpd.treep, cpd.treen, metaLevel, combine.level,
@@ -984,19 +991,21 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   }else{
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   }
-  
+
   if(mSetObj$dataSet$mumRT & version=="v2"){
     # only for empirical compounds
-    if(metaLevel %in% c("ec", "pathway")){
+    if(metaLevel %in% c("ec", "pathway", "pooled")){
       # map cpds to empirical cpds
-      pathways$emp_cpds <- lapply(pathways$cpds, function(x) unique(unlist(mSetObj$cpd_ecpd_dict[na.omit(match(x, names(mSetObj$cpd_ecpd_dict)))])) )
+      cleaned.pathways$emp_cpds <- lapply(cleaned.pathways$cpds, function(x) unique(unlist(mSetObj$cpd_ecpd_dict[na.omit(match(x, names(mSetObj$cpd_ecpd_dict)))])))
       
       # delete emp_cpds, cpds and names with no emp_cpds
-      null.inx <- sapply(pathways$emp_cpds, is.null)
+      null.inx <- sapply(cleaned.pathways$emp_cpds, is.null)
+      
       new_pathways <- vector("list")
-      new_pathways$cpds <- pathways$cpds[!null.inx]
-      new_pathways$name <- pathways$name[!null.inx]
-      new_pathways$emp_cpds <- pathways$emp_cpds[!null.inx]
+      new_pathways$cpds <- cleaned.pathways$cpds[!null.inx]
+      new_pathways$name <- cleaned.pathways$name[!null.inx]
+      new_pathways$emp_cpds <- cleaned.pathways$emp_cpds[!null.inx]
+      
       mSetObj$pathways <- new_pathways;
     }
   }
@@ -1427,7 +1436,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   for(meta_file in seq_along(metaFiles)){
     
     mSetObj <- qs::qread(metaFiles[meta_file])
-    
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
     print(paste0("Got ", length(ref_mzlist), " mass features."))
     pos_inx <- mSetObj$dataSet$pos_inx;
@@ -1435,12 +1443,10 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     ref_mzlistn <- ref_mzlist[!pos_inx];
     
     # for empirical compounds
-    if(mSetObj$dataSet$mumRT & version=="v2"){ 
-      
+    if(mSetObj$dataSet$mumRT){ 
       ret_time_pos <- mSetObj$dataSet$ret_time[pos_inx];
       ret_time_neg <- mSetObj$dataSet$ret_time[!pos_inx]
       rt_tol <- mSetObj$dataSet$rt_tol
-      
     }else{
       # add fake RT
       ret_time_pos <- rep(1, length(ref_mzlistp))
@@ -1570,10 +1576,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     matched_res <- matched_res[, c(3,2,6,7,4)];
     colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time");
     
-    if(version=="v1"){
-      matched_res <- matched_res[,-5]
-    }
-    
     if(metaLevel == "cpd"){
       fileName = paste0("mummichog_matched_compound_", mSetObj$dataSet$fileName, "_all.csv")
       fast.write.csv(matched_res, file=fileName, row.names=FALSE);
@@ -1587,7 +1589,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     matched_mz <- matched_res[,1];
     matched_ts <- mSetObj$dataSet$expr_dic[matched_mz];
     
-    if(combine.level %in% c("pvalue", "both")){
+    if(combine.level %in% c("pvalue", "both", "pool")){
       pvals <- mSetObj$dataSet$mummi.proc$p.value
       names(pvals) <- mSetObj$dataSet$mummi.proc$m.z
       matched_pvals <- pvals[matched_mz]
@@ -1617,7 +1619,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   matched_ts <- unlist(lapply(metaMsetObj, "[[", "matched_ts"))
   matched_res <- cbind(matched_res, matched_ts)
   
-  if(combine.level %in% c("pvalue", "both")){
+  if(combine.level %in% c("pvalue", "both", "pool")){
     matched_pval <- unlist(lapply(metaMsetObj, "[[", "matched_pvals"))
   }else{ # initialize empty
     matched_pval <- rep(NA, length(matched_ts))
@@ -1627,7 +1629,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     matched_es <- lapply(metaMsetObj, "[[", "matched_es")
     matched_es <- Reduce(rbind, matched_es)
   }else{ # initialize empty
-    matched_es <- matrix("", nrow = length(matched_ts), ncol=3)
+    matched_es <- matrix("1", nrow = length(matched_ts), ncol=3)
     colnames(matched_es) <- c("effect.size", "lower.ci", "upper.ci") 
   }
   
@@ -1650,13 +1652,14 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
       
       matched_res_ag <- matched_res_ag[matched.inx,]
       # undo aggregate
+      
       matched_res <- splitstackshape::cSplit(matched_res_ag, c(".id", "Query.Mass", "Matched.Form", "Mass.Diff", "Retention.Time", "matched_ts", 
                                                                "Matched.Pval", "effect.size", "lower.ci", "upper.ci"), 
                                              ";", "long", makeEqual = FALSE, type.convert = "as.character")
-      
       matched_res <- data.table::setDF(matched_res)
       colnames(matched_res)[2] <- "File.Name"
       colnames(matched_res)[7:11] <- c("Matched.Scores", "Matched.Pvalue", "Matched.ES", "Matched.L.CI", "Matched.U.CI")
+      
     }else{
       matched_res <- matched_res[, c(3,1,2,4:11)]
       matched_res <- data.table::setDF(matched_res)
@@ -1665,7 +1668,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
     }
     
     fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
-    
     # or empirical compound combining here!  
   }else{
     
@@ -1910,7 +1912,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   mSetObj$dataSet$ref_mzlist <- ref_mzlist
   
   mumRT <- unlist(lapply(metaMsetObj, "[[", "mumRT")) 
-  
   qs::qsave(matched_res, "mum_res.qs");
   
   ##############################################
@@ -1920,151 +1921,59 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   # then re-make input_cpdlist and input_ecpdlist
   # gsea uses rank metric only
   
-  if(anal.type %in% c("mummichog", "integ_peaks")){
+  #  if(anal.type %in% c("mummichog", "integ_peaks")){
+  
+  if(combine.level %in% c("pvalue", "both")){
     
-    if(combine.level %in% c("pvalue", "both")){
-      
-      library(metap)
-      
-      if(metaLevel %in% "ec"){
-        # merge to empirical compounds
-        all_p <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
-        old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
-        scores <- strsplit(all_p$Matched.Pvalue, ";|___")
-        scores <- lapply(scores, function(x) {
-          if(length(x) == 1){
-            x <- rep(x, 2)
-          }
-          x;}) 
-        
-      }else{
-        # merge to compounds
-        all_p <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse="___")
-        old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
-        scores <- strsplit(all_p$Matched.Pvalue, ";|___")
-        scores <- lapply(scores, function(x) {
-          if(length(x) == 1){
-            x <- rep(x, 2)
-          }
-          x;}) 
-      }
-      
-      # combine p-values
-      if(pval.method=="fisher"){
-        meta.pvals <- lapply(scores, function(x) metap::sumlog(as.numeric(x)))
-      }else if(pval.method=="edgington"){ 
-        meta.pvals <- lapply(scores, function(x) metap::sump(as.numeric(x)))
-      }else if(pval.method=="stouffer"){
-        meta.pvals <- lapply(scores, function(x) metap::sumz(x))
-      }else if(pval.method=="vote"){
-        meta.pvals <- lapply(scores, function(x) metap::votep(x))
-      }else if(pval.method=="min"){
-        Meta.P <- lapply(scores, function(x) min(x) )
-      }else if(pval.method=="max") {
-        Meta.P <- lapply(scores, function(x) max(x) )
-      }else{
-        AddErrMsg("Invalid meta-analysis method!")
-        return(0)
-      }
-      
-      #extract p-values
-      if(exists("meta.pvals")){
-        Meta.P <- unlist(lapply(meta.pvals, function(z) z["p"]))
-      }
-      
-      Meta.P2 <- rep(Meta.P, vapply(old_p, length, numeric(1)))
-      matched_res$Meta.P <- Meta.P2
-    }
-    
-    if(combine.level %in% c("es", "both")){
-      
-      if(metaLevel %in% "ec"){
-        # merge to empirical compounds
-        if(!exists("all_p")){
-          all_p <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
+    if(metaLevel %in% "ec"){
+      # merge to empirical compounds
+      all_p <- aggregate(. ~ Empirical.Compound, matched_res, paste, collapse="___")
+      old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
+      scores <- strsplit(all_p$Matched.Pvalue, ";|___")
+      scores <- lapply(scores, function(x) {
+        if(length(x) == 1){
+          x <- rep(x, 2)
         }
-        old_p <- strsplit(all_p$Matched.ES, "___", fixed=TRUE)
-        es <- strsplit(all_p$Matched.ES, ";|___")
-        lci <- strsplit(all_p$Matched.L.CI, ";|___")
-        uci <- strsplit(all_p$Matched.U.CI, ";|___")
-      }else{
-        # merge to compounds
-        if(!exists("all_p")){
-          all_p <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse="___")
+        x;}) 
+      
+    }else{
+      # merge to compounds
+      all_p <- aggregate(. ~ Matched.Compound, matched_res, paste, collapse="___")
+      old_p <- strsplit(all_p$Matched.Pvalue, "___", fixed=TRUE)
+      scores <- strsplit(all_p$Matched.Pvalue, ";|___")
+      scores <- lapply(scores, function(x) {
+        if(length(x) == 1){
+          x <- rep(x, 2)
         }
-        old_p <- strsplit(all_p$Matched.ES, "___", fixed=TRUE)
-        es <- strsplit(all_p$Matched.ES, ";|___")
-        lci <- strsplit(all_p$Matched.L.CI, ";|___")
-        uci <- strsplit(all_p$Matched.U.CI, ";|___")
-      }
-      
-      # Fixed-effects model using lower/upper ci level to estimate standard error
-      # assume all studies come from the same population
-      # https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/random.html
-      if(es.method == "fixed"){
-        
-        # use adapted functions
-        my.meta.es <- lapply(seq_along(es), function(i) {
-          x <- my_metagen(TE = as.numeric(es[[i]]), lower = as.numeric(lci[[i]]), upper = as.numeric(uci[[i]]), 
-                          comb.fixed = TRUE, comb.random = FALSE)
-          res <- list(SMD=x$TE.fixed, Model.Pval=x$pval.fixed)
-          res
-        })
-        
-      }else{ # random-effects model, let users select method for method.tau?
-        
-        # use adapted functions
-        my.meta.es <- lapply(seq_along(es), function(i) {
-          x <- my_metagen(TE = as.numeric(es[[i]]), lower = as.numeric(lci[[i]]), upper = as.numeric(uci[[i]]), 
-                          comb.fixed = FALSE, comb.random = TRUE)
-          res <- list(SMD=x$TE.random, Model.Pval=x$pval.random)
-          res
-        })
-      }
-      
-      SMD <- unlist(lapply(my.meta.es, "[[", "SMD")) 
-      Model.Pval <- unlist(lapply(my.meta.es, "[[", "Model.Pval")) 
-      
-      Meta.SMD <- rep(SMD, vapply(old_p, length, numeric(1)))
-      Meta.SMD.Pval <- rep(Model.Pval, vapply(old_p, length, numeric(1)))
-      
-      matched_res$Meta.ES <- Meta.SMD
-      matched_res$Meta.ES.Pval <- Meta.SMD.Pval
+        x;}) 
     }
     
-    if(combine.level == "both"){
-      # now here combine p-values from p-values and effect size models!
-      
-      if(metaLevel %in% "ec"){
-        both.pval.list <- lapply(1:nrow(matched_res), function(x) as.numeric(matched_res[x,c(13,15)]) )
-      }else{
-        both.pval.list <- lapply(1:nrow(matched_res), function(x) as.numeric(matched_res[x,c(12,14)]) )
-      }
-      
-      # combine p-values
-      if(pval.method=="fisher"){
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::sumlog(as.numeric(x)))
-      }else if(pval.method=="edgington"){ 
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::sump(as.numeric(x)))
-      }else if(pval.method=="stouffer"){
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::sumz(x))
-      }else if(pval.method=="vote"){
-        both.meta.pvals <- lapply(both.pval.list, function(x) metap::votep(x))
-      }else if(pval.method=="min"){
-        Both.Meta.P <- lapply(both.pval.list, function(x) min(x) )
-      }else if(pval.method=="max") {
-        Both.Meta.P <- lapply(both.pval.list, function(x) max(x) )
-      }else{
-        AddErrMsg("Invalid meta-analysis method!")
-        return(0)
-      }
-      
-      #extract p-values
-      if(exists("both.meta.pvals")){
-        Both.Meta.P <- unlist(lapply(both.meta.pvals, function(z) z["p"]))
-      }
-      matched_res$Meta.P.Both <- Both.Meta.P
+    # combine p-values
+    if(pval.method=="fisher"){
+      meta.pvals <- lapply(scores, function(x) metap::sumlog(as.numeric(x)))
+    }else if(pval.method=="edgington"){ 
+      meta.pvals <- lapply(scores, function(x) metap::sump(as.numeric(x)))
+    }else if(pval.method=="stouffer"){
+      meta.pvals <- lapply(scores, function(x) metap::sumz(x))
+    }else if(pval.method=="vote"){
+      meta.pvals <- lapply(scores, function(x) metap::votep(x))
+    }else if(pval.method=="min"){
+      Meta.P <- lapply(scores, function(x) min(x) )
+    }else if(pval.method=="max") {
+      Meta.P <- lapply(scores, function(x) max(x) )
+    }else{
+      AddErrMsg("Invalid meta-analysis method!")
+      return(0)
     }
+    
+    #extract p-values
+    if(exists("meta.pvals")){
+      Meta.P <- unlist(lapply(meta.pvals, function(z) z["p"]))
+    }
+    
+    Meta.P2 <- rep(Meta.P, vapply(old_p, length, numeric(1)))
+    matched_res$Meta.P <- Meta.P2
+    #    }
     
     # now create input mzlist - used to create
     # input cpd/ec list
@@ -2089,18 +1998,18 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   mSetObj$dataSet$N <- sig.size;
   mSetObj$dataSet$input_mzlist <- input_mzlist
   
-  if(all(mumRT) & version=="v2" & metaLevel=="ec"){ # RT need to be in EC space
+  if(all(mumRT) & version=="v2"){ # RT need to be in EC space
     
     # for GSEA
     # need to merge t-scores if same m/z in the data
     if(rank.metric == "mean"){     # default using the mean
-      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) mean(as.numeric(unlist(strsplit(x, ";", fixed=TRUE)))), numeric(1))
+      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) mean(as.numeric(unlist(strsplit(as.character(x), ";", fixed=TRUE)))), numeric(1))
     }else if(rank.metric == "min"){
-      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) min(as.numeric(unlist(strsplit(x, ";", fixed=TRUE)))), numeric(1))
+      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) min(as.numeric(unlist(strsplit(as.character(x), ";", fixed=TRUE)))), numeric(1))
     }else if(rank.metric == "max"){
-      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) max(as.numeric(unlist(strsplit(x, ";", fixed=TRUE)))), numeric(1))
+      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) max(as.numeric(unlist(strsplit(as.character(x), ";", fixed=TRUE)))), numeric(1))
     }else if(rank.metric == "median"){
-      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) median(as.numeric(unlist(strsplit(x, ";", fixed=TRUE)))), numeric(1))
+      matched_res$Matched.Scores <- vapply(matched_res$Matched.Scores, function(x) median(as.numeric(unlist(strsplit(as.character(x), ";", fixed=TRUE)))), numeric(1))
     }else{
       AddErrMsg("Invalid method selected for merging scores!")
       return(0)
@@ -2173,7 +2082,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100){
   
   cpd_form_dict <- Convert2Dictionary(form.mat);
   mSetObj$cpd_form_dict <- cpd_form_dict;
-  
   return(mSetObj);
 }
 
@@ -2221,7 +2129,7 @@ CalculateEffectSize <- function(mSetObj=NA, paired=FALSE, method="cohen"){
   print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
   permutation_hits <- permutation_record <- vector("list", num_perm);
   matched_res <- qs::qread("mum_res.qs");
-  
+  set.seed(123)
   for(i in 1:num_perm){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
     input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_cpdlist(mSetObj, input_mzlist);
@@ -2274,7 +2182,7 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
   print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
   permutation_hits <- permutation_record <- vector("list", num_perm);
   matched_res <- qs::qread("mum_res.qs");
-  
+  set.seed(123)
   for(i in 1:num_perm){ # for each permutation, create list of input emp compounds and calculate pvalues for each pathway
     input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_ecpdlist(mSetObj, input_mzlist);
@@ -2578,7 +2486,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   res.mat <- res.mat[hit.inx, , drop=FALSE];
   
   if(nrow(res.mat) <= 1){
-    AddErrMsg("Not enough m/z to compound hits for pathway analysis!")
+    AddErrMsg("Not enough m/z to compound hits for pathway analysis! Try Version 1 (no RT considerations)!")
     return(0)
   }
   
@@ -2696,9 +2604,10 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   mSetObj$mummi.gsea.resmat <- res.mat;
   
   Cpd.Hits <- qs::qread("pathwaysFiltered.qs")
-  Cpd.Hits <- lapply(seq_along(Cpd.Hits), function(i) paste(names(Cpd.Hits[[i]]), collapse = ";"))
+  Cpd.Hits <- unlist(lapply(seq_along(Cpd.Hits), function(i) paste(names(Cpd.Hits[[i]]), collapse = ";")))
+  Cpd.Hits <- Cpd.Hits[Cpd.Hits != ""]
   
-  res.mat <- cbind(res.mat, Cpd.Hits)
+  res.mat <- cbind(res.mat, Cpd.Hits[ord.inx])
   fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
   
   matched_cpds <- names(mSetObj$cpd_exp)
@@ -3613,60 +3522,46 @@ GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
 }
 
 GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   inx <- which(mSetObj$pathways$name == msetNm)
   
+  mset <- mSetObj$pathways$cpds[[inx]];
+  
+  # all matched compounds
   if(mum.version == "v2" & mSetObj$dataSet$mumRT){
-    
-    mset <- mSetObj$pathways$emp_cpds[[inx]];
-    hits.all <- unique(mSetObj$total_matched_ecpds)
-    
-    if(anal.type == "mummichog" | anal.type == "integ_peaks"){
-      hits.sig <- mSetObj$input_ecpdlist;
-      
-      refs <- mset %in% hits.all;
-      sigs <- mset %in% hits.sig;
-      
-      red.inx <- which(sigs);
-      blue.inx <- which(refs & !sigs);
-      
-      # use actual cmpd names
-      nms <- mset;
-      nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
-      nms[blue.inx] <- paste("<font color=\"blue\">", "<b>", nms[blue.inx], "</b>", "</font>",sep="");
-    }else{
-      refs <- mset %in% hits.all;
-      red.inx <- which(refs);
-      nms <- mset;
-      nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
-    }
-    
+    hits.all <- unique(unlist(mSetObj$ecpd_cpd_dict))
   }else{
-    mset <- mSetObj$pathways$cpds[[inx]];
-    hits.all <- unique(mSetObj$total_matched_cpds) #matched compounds
+    hits.all <- unique(mSetObj$total_matched_cpds) 
+  }
+
+  if(anal.type == "mummichog"|anal.type == "integ_peaks"){
     
-    if(anal.type == "mummichog"|anal.type == "integ_peaks"){
-      
-      hits.sig <- mSetObj$input_cpdlist;
-      
-      # highlighting with different colors
-      refs <- mset %in% hits.all;
-      sigs <- mset %in% hits.sig;
-      
-      red.inx <- which(sigs);
-      blue.inx <- which(refs & !sigs);
-      
-      # use actual cmpd names
-      nms <- mset;
-      nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
-      nms[blue.inx] <- paste("<font color=\"blue\">", "<b>", nms[blue.inx], "</b>", "</font>",sep="");
+    # get the sig compounds
+    if(mum.version == "v2" & mSetObj$dataSet$mumRT){
+      hits.sig <- mSetObj$input_ecpdlist;
+      hits.sig.inx <- match(hits.sig, names(mSetObj$ecpd_cpd_dict))
+      hits.sig <- unlist(mSetObj$ecpd_cpd_dict[hits.sig.inx])
     }else{
-      refs <- mset %in% hits.all;
-      red.inx <- which(refs);
-      nms <- mset;
-      nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
+      hits.sig <- mSetObj$input_cpdlist;
     }
+    
+    # highlighting with different colors
+    refs <- mset %in% hits.all;
+    sigs <- mset %in% hits.sig;
+    
+    red.inx <- which(sigs);
+    blue.inx <- which(refs & !sigs);
+    
+    # use actual cmpd names
+    nms <- mset;
+    nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
+    nms[blue.inx] <- paste("<font color=\"blue\">", "<b>", nms[blue.inx], "</b>", "</font>",sep="");
+  }else{
+    refs <- mset %in% hits.all;
+    red.inx <- which(refs);
+    nms <- mset;
+    nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
   }
   
   # for large number, return only hits (context already enough)
@@ -3722,13 +3617,24 @@ GetECMsg <- function(mSetObj=NA){
 GetDefaultPvalCutoff <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet();
+  
   if(peakFormat %in% c("rmp", "rmt")){
     maxp <- 0;
   }else{
     pvals <- c(0.25, 0.2, 0.15, 0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)
     ndat <- mSetObj$dataSet$mummi.proc;
-    n <- floor(0.1*length(ndat[,"p.value"]))
-    cutoff <- ndat[n+1,1]
+    
+    ### Handle something very wrong for mass table
+    if(is.null(ndat)){
+      res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=TRUE);
+      ndat <- res[order(res[,2]),];
+      n <- floor(0.1*length(ndat[,2]))
+      cutoff <- ndat[n+1,2]
+    } else {
+      n <- floor(0.1*length(ndat[,"p.value"]))
+      cutoff <- ndat[n+1,1]
+    }
+    
     if(!any(pvals <= cutoff)){
       maxp <- 0.00001
     }else{
@@ -3964,6 +3870,7 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
   if (nperm - sum(permPerProc) > 0) {
     permPerProc <- c(permPerProc, nperm - sum(permPerProc))
   }
+  set.seed(123)
   seeds <- sample.int(10^9, length(permPerProc))
   
   if (is.null(BPPARAM)) {
@@ -4031,7 +3938,7 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
   
   #perform permutations
   universe <- seq_along(stats)
-  
+  set.seed(123)
   counts <- BiocParallel::bplapply(seq_along(permPerProc), function(i) {
     nperm1 <- permPerProc[i]
     leEs <- rep(0, m)
@@ -4238,7 +4145,7 @@ sumlog <-function(p) {
   return(.set.mSet(mSetObj));
 }
 
-CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, 
+CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, 
                               version="v1"){
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
@@ -4260,12 +4167,12 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt,
     feat_info <- rownames(data)
     feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
-
+    
     if(length(unique(feat_info_split[,1])) != length(feat_info_split[,1])){
       
       # ensure features are unique
       mzs_unq <- feat_info_split[,1][duplicated(feat_info_split[,1])] 
-      
+      set.seed(123)
       if(length(mzs_unq)>0){
         feat_info_split[,1][duplicated(feat_info_split[,1])] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)))
       }
@@ -4302,7 +4209,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt,
   mum.version <<- version
   
   if(filtOpt == "filtered"){
-    mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion);
+    mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion, minLib);
     matched_res <- qs::qread("mum_res.qs");
     res_table <- matched_res;
     data = data[which(l %in% res_table[,"Query.Mass"]),]
@@ -4318,7 +4225,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt,
   rankPval = order(as.vector(stat.pvals))
   stat.pvals = stat.pvals[rankPval]
   dat = dat[rankPval,]
-
+  
   t.stat = t.stat[rankPval]
   
   # now pearson and euclidean will be the same after scaleing
@@ -4471,11 +4378,11 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   mSetObj$mum_nm <- paste0(nm,".json");
   mSetObj$mum_nm_csv <- paste0(nm,".csv");
   .set.mSet(mSetObj);
-  PerformPSEA("NA", libNm, "current", 100);
+  PerformPSEA("NA", libNm, "current", 3, 100);
 }
 
 DoPeakConversion <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
@@ -4510,7 +4417,7 @@ DoPeakConversion <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
-CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOpt, version="v1"){
+CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, version="v1"){
   
   mSetObj <- .get.mSet();
   sig.ids <- as.character(mSetObj$dataSet$mummi.proc[,"m.z"]);
@@ -4571,7 +4478,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOp
   }
   
   if(filtOpt == "filtered"){
-    mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion);
+    mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion, minLib);
     matched_res <- qs::qread("mum_res.qs");
     res_table <- matched_res;
     data = data[which(l %in% res_table[,"Query.Mass"]),]
@@ -4633,7 +4540,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOp
     }
     res = datall;
   }else{
-
+    
     zero.inx <- dat == 0
     res <- dat;
     res[zero.inx] <- 32
@@ -4680,10 +4587,10 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, fileNm, filtOp
     complete = gene.complete.rk,
     pval = stat.pvals
   );
-
-if(t.stat != 0){
+  
+  if(t.stat != 0){
     gene.cluster[["stat"]] = t.stat;
-}
+  }
   
   sample.cluster <- list(
     ward = smpl.ward.rk,

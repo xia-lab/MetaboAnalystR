@@ -86,14 +86,17 @@ PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72,
   mSetObj <- .get.mSet(mSetObj);
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- paste(imgName, "_", version, "_dpi", dpi, ".", format, sep="");
+
+  # adjust width based on the time points
+  time.len <- length(levels(mSetObj$dataSet$time.fac));
   if(is.na(width)){
-    w <- 5.6;
+    w <- 5.0 + time.len/4; # 4 time points per inch? 
   }else if(width == 0){
-    w <- 5;
+    w <- 5.4;
   }else{
     w <- width;
   }
-  h <- w;
+  h <- min(5.4, w);
   mSetObj$imgSet$mb <- imgName;
   Cairo::Cairo(file = imgName,  unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plotProfile(mSetObj, cmpdNm);

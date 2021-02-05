@@ -15,7 +15,7 @@
 #'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
-
+browser()
   mSetObj <- .get.mSet(mSetObj);
   # clean the name, some contains space and special characters, will
   # cause trouble as image name
@@ -71,8 +71,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   }
   
   cls.vec <- as.factor(cls.vec);
-  lbl.vec <- as.factor(lbl.vec);
-  levels(lbl.vec) <- unique(lbl.vec); # make sure the same order as p value, rather by alphabetic
+  lbl.vec <- factor(lbl.vec, levels = unique(lbl.vec));
 
   num <- length(hit.cmpds);
   boxdata <- data.frame(Feature = lbl.vec, Abundance = conc.vec, Class = cls.vec)
@@ -310,11 +309,9 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'
 PlotMSEA.Overview <- function(folds, pvals){
   
-  # due to space limitation, plot top 25 if more than 25 were given
+  # due to space limitation, plot top 50 if more than 50 were given
   title <- "Metabolite Sets Enrichment Overview";
-  
   ht.col <- GetMyHeatCols(length(folds));
-  
   if(length(folds) > 25){
     folds <- folds[1:25];
     pvals <- pvals[1:25];

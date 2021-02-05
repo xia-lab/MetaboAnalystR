@@ -48,13 +48,13 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
       
-      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+      toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, oraVec = mSetObj$api$oraVec, filterData = mSetObj$api$filterData)
     }else{
-      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+      toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, oraVec = mSetObj$api$oraVec)
     }
-    
+    browser()
     #json to be sent to server
     #oraData <- RJSONIO::toJSON(toSend, .na='null') 
     #write(oraData, file="ora_test.JSON")

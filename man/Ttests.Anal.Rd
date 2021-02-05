@@ -10,6 +10,7 @@ Ttests.Anal(
   threshp = 0.05,
   paired = FALSE,
   equal.var = TRUE,
+  pvalType = "fdr",
   all_results = FALSE
 )
 }

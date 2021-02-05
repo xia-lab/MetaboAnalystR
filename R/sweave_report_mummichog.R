@@ -11,15 +11,250 @@
 CreateMummichogRnwReport<-function(mSetObj, usrName){
   
   CreateHeader(usrName);
-  CreateMummichogIntro();
   
-  CreateMummichogOverview();
-  CreateMummichogInputDoc(mSetObj);
-  CreateMummichogAnalysisDoc(mSetObj);
+  if(exists("metaFiles")){
+    CreateMummichogMetaAnalReport(mSetObj)
+  }else{
+    CreateMummichogIntro();
+    CreateMummichogOverview();
+    CreateMummichogInputDoc(mSetObj);
+    CreateMummichogAnalysisDoc(mSetObj);
+  }
   
   CreateRHistAppendix();
   CreateFooter();
 }
+
+#'Create analysis report: Functional Meta-Analysis
+#'@description Report generation using Sweave
+#'Functional Meta-Analysis Report 
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMummichogMetaAnalReport<-function(mSetObj){
+  CreateMetaMummichogIntro()
+  CreateMetaMummichogInputDoc(mSetObj)
+  CreateMetaMummichogResults(mSetObj)
+}
+
+#'Create analysis report: Functional Meta-Analysis Introduction  
+#'@description Report generation using Sweave
+#'Mummichog analysis report introduction
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMetaMummichogIntro <- function(){
+  
+  back.descr <- c("\\section{Background}\n",
+                  "Metabolomics is becoming an increasingly popular tool for biological research, however while individual studies may identify certain biological functions to be important,", 
+                  " such results may not be reproducible in other independent studies researching the same biological question due to low sample size, sample heterogeneity,",
+                  " the type of LC-MS platform used, or even metrics used for interpreting results. Meta-analysis, which is the combination of findings from independent studies,", 
+                  " can be used to overcome such limitations and ultimately increase the power, precision, and generalizability of a single study.",
+                  "With the increased use of metabolomics and global efforts towards science transparency and reproducibility, the amount of publicly available metabolomics data deposited in", 
+                  " dedicated metabolomics repositories such as The Metabolomics Workbench, MetaboLights and OmicsDI has grown tremendously. The potential for researchers in the", 
+                  " metabolomics community to enhance their findings with publicly available data is immense, but little effort has been applied for the meta-analysis of untargeted", 
+                  " metabolomics data. Such a method would also reduce the bias individual studies may carry towards specific sample processing protocols or LC-MS instruments. \n"
+  );
+  cat(back.descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  mum.descr <- c("\\section{Algorithm Overview}\n",
+                 "High-resolution LC-MS has become dominant platform for global metabolomics. The typical LC-MS workflow starts with data acquisition, followed by data pre-processing,", 
+                 " feature selection, compound identification and then pathway analysis. However, peak identification requires significant effort and is a major challenge for downstream", 
+                 " functional interpretation. One strategy is to completely bypass the bottleneck of metabolite identification and directly infer functional activity from MS peaks by leveraging", 
+                 " the collective knowledge of metabolic pathways and networks. This is the idea of the mummichog algorithm (Li et al. 2013). Using this algorithm, a list of significant peaks,", 
+                 " are matched to potential compounds using their molecular weight considering different adducts/isotopes. These putatively matched compounds are then mapped onto known biological pathways.", 
+                 "If a list of truly significant features reflect biological activity, then the representation of these true metabolites would be enriched on functional structures,", 
+                 " while false matches would be distributed at random. We have extended this idea to support the meta-analysis of untargeted metabolomics data. \n"
+                 
+  );
+  cat(mum.descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  meta.descr <- c("\\section{Functional Meta-Analysis Workflow}\n",
+                 "The Functional Meta-Analysis module supports meta-analysis at either i) the pathway level or ii) by pooling all MS peaks. Each method of integration has their own merits,", 
+                 " for instance at the pathway level, compounds do not have to be matched across all studies whereas pooling all MS peaks will better bring out weaker signals.",  
+                 "The workflow also considers data heterogeneity, meaning that the accuracy of the LC-MS instrument and the MS ionization mode are taken into account when performing putative", 
+                 " metabolite annotation. Ultimately, the goal of this workflow is to enable the reuse/repurposong of multiple datasets to identify a robust meta-signature for the phenotype in question. \n"
+                 
+  );
+  cat(meta.descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  descr <- c("\\section{Functional Meta-Analysis Overview}\n",
+             "The Functional Meta-Analysis module consists of three steps - 1) uploading the user's data, 2) parameter selection,",
+             " and 3) functional enrichment meta-analysis. \n"
+  );
+  cat(descr, file=rnwFile, append=TRUE);
+}
+
+#'Create analysis report: Functional Meta-Analysis Data Input
+#'@description Report generation using Sweave
+#'Mummichog analysis report, data input documentation. 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMetaMummichogInputDoc <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  descr <- c("\\section{Data Input}\n",
+             "The Functional Meta-Analysis module accepts multiple peak tables with or without retention time information.",  
+             "All inputted files must be in .csv format. \n");
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  sanity_msg <- vector("list")
+  
+  for(i in 1:length(metaFiles)){
+    metaSetObj <- qs::qread(metaFiles[i]) 
+    sanity_msg[metaFiles[i]] <- paste0(gsub("mummichoginput.qs", "", metaFiles[i]), ": ", paste0(metaSetObj$msgSet$check.msg, collapse = " "))
+  }
+
+  cat(unlist(sanity_msg), file=rnwFile, append=TRUE, sep="\n");
+  
+  if(exists("mum.version")){
+    
+    descr <- c("\\subsubsection{Parameters}\n",
+               "Depending on the meta-analysis method, users must select the algorithm (original mummichog or GSEA), p-value cutoff", 
+               " to delineate between significantly and non-significantly enriched pathways (pathway-level only), and pathway library used.", 
+               " Currently, MetaboAnalyst 5.0 only supports the handling of peaks obtained from high-resolution MS instruments", 
+               " such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation.",
+               "\n");
+    cat(descr, file=rnwFile, append=TRUE);
+    cat("\n\n", file=rnwFile, append=TRUE);
+    
+    if(mSetObj$metaLevel == "pathway"){
+      if(!is.null("mSet$meta_results")){
+        # pathway level
+        metaLevel <- paste("The selected method for meta-analysis is 'Pathway-Level Integration'.")
+        anal.descr <- paste("The selected algorithm is: ", anal.type, ".", sep = "");
+        integ.desrc <- paste("The selected p-value cutoff for integrating pathways is: ", mSetObj$meta.pval.method, ".", sep = "");
+        
+        cat(anal.descr, file=rnwFile, append=TRUE, sep="\n");
+        cat(metaLevel, file=rnwFile, append=TRUE, sep="\n");
+        cat(integ.desrc, file=rnwFile, append=TRUE, sep="\n");
+      }
+    }else{
+      # pooled
+      metaLevel <- paste("The selected method for meta-analysis is 'Pooled Peaks'.")
+      anal.descr <- paste("The selected algorithm is: ", anal.type, " ", mum.version, ".", sep = "");
+      pval.descr <- paste("The selected p-value cutoff: ", mSetObj$pooled_cutoff, ".", sep = "");
+      
+      cat(metaLevel, file=rnwFile, append=TRUE, sep="\n");
+      cat(anal.descr, file=rnwFile, append=TRUE, sep="\n");
+      cat(pval.descr, file=rnwFile, append=TRUE, sep="\n");
+    }
+  }
+  
+  if(!is.null(mSetObj$lib.organism)){
+    
+    descr <- c("\\subsubsection{Pathway Library}\n",
+               "The knowledge-base for this module consists of five genome-scale metabolic models obtained", 
+               " from the original Python implementation which have either been manually curated or downloaded from BioCyc,", 
+               " as well as an expanded library of 21 organisms derived from KEGG metabolic pathways. ",
+               "Users must select one of 21 KEGG pathway libraries, or one of five metabolic models.\n");
+    cat(descr, file=rnwFile, append=TRUE);
+    cat("\n\n", file=rnwFile, append=TRUE);
+    
+    mum.descr <- paste("The user's selected library is: ", gsub("_", ".", mSetObj$lib.organism), ".");
+    
+    cat(mum.descr, file=rnwFile, append=TRUE, sep="\n");
+    
+  }
+  
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+}
+
+#'Create analysis report: Functional Meta-Analysis Results
+#'@description Report generation using Sweave
+#'Mummichog analysis report overview
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMetaMummichogResults <- function(mSetObj){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(mSetObj$metaLevel == "pathway"){
+    
+    if(!is.null("mSet$meta_results")){
+      descr <- c("\\section{Pathway-Level Integration Results}\n",
+                 "The aim of the Pathway-Level Integration method is to improve the biological consistency across studies to identify a robust meta-signature for the phenotype in question.",
+                 " For pathway-level integration, each individual study undergoes the steps of calculating m/z level statistics and", 
+                 " putative metabolite annotation, followed by pathway activity prediction to ultimately create a unified matrix of pathway-level results (keeping only pathways found across all-studies).", 
+                 " Pathway activity scores are then combined using one of several p-value integration methods. \n");
+      cat(descr, file=rnwFile, append=TRUE);
+    }
+    
+    if(!is.null(mSetObj$imgSet$mummi.meta.path.plot)){
+      
+      descr <- c("\\subsection{Pathway-Level Integration Plot}\n",
+                 "The bubble plot below represents the results of the Pathway-Level Integration. The plot displays all matched pathways per study as circles.", 
+                 "The color and size of each circle corresponds to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
+                 " hits and the expected number of hits within the pathway. \n");
+      cat(descr, file=rnwFile, append=TRUE);
+      
+      fig <- c(  "\\begin{figure}[htp]",
+                 "\\begin{center}",
+                 paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$mummi.meta.path.plot,"}",sep=""),
+                 "\\caption{Summary of Pathway-Level Integration Meta-Analysis}",
+                 "\\end{center}",
+                 paste("\\label{",mSetObj$imgSet$mummi.meta.path.plot,"}", sep=""),
+                 "\\end{figure}",
+                 "\\clearpage\n\n"
+      );
+      cat(fig, file=rnwFile, append=TRUE, sep="\n");
+      
+      descr <- c("\\subsection{Pathway-Level Integration Meta-Analysis Results Table}\n",
+                 "The output of the Pathway-Level Integration Meta-Analysis consists of a table of results containing ranked pathways that are enriched in ",
+                 "the user-uploaded datasets. The table includes the raw p-values (per individual study), the mean enrichment ratio and finally the integrated p-value (Meta.P). \n");
+      cat(descr, file=rnwFile, append=TRUE);
+      
+      pathMetatable<-c("<<echo=false, results=tex>>=",
+                      "CreateMummichogMetaAnalPathTable(mSet)",
+                      "@",
+                      "\\clearpage\n\n");
+      cat(pathMetatable, file=rnwFile, append=TRUE, sep="\n");
+      cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+    }
+  }else{
+    
+    descr <- c("\\section{Pooled Peaks Results}\n",
+               "The aim of of the Pooling Peaks method is to computationally combine the outputs from different instruments that measure the same set of samples.", 
+               " In this case, all uploaded peaks are merged into a single input for putative compound annotation (with consideration for different mass tolerances)", 
+               " followed by pathway activity prediction. This method should be used when samples are homogeneous but instruments are complementary,",  
+               " for instance samples that comes from the same lab but were obtained using different columns, extraction methods or data collected using complementary LC-MS instruments. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+    
+    CreateMummichogAnalysisDoc(mSetObj)
+  }
+}
+
+#'Create analysis report: Functional Meta-Analysis Results Table
+#'@description Report generation using Sweave
+#'Function to create a summary table of mummichog analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jasmine Chong
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+CreateMummichogMetaAnalPathTable <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mummitable <- mSetObj$meta_results
+  print(xtable::xtable(mummitable, caption="Results of the Pathway-Level Integration Meta-Analysis"), caption.placement="top", size="\\scriptsize");
+}
+
+####################################################
+####################################################
 
 #'Create mummichog analysis report: Introduction  
 #'@description Report generation using Sweave
@@ -90,7 +325,7 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     descr <- c("\\subsubsection{Parameters}\n",
                "Users also need to specify the mass accuracy (ppm), the ion mode (positive or negative), and the p-value cutoff", 
                " to delineate between significantly enriched and non-significantly enriched m/z features (for mummichog only). ", 
-               "Currently, MetaboAnalyst 4.0 only supports the handling of peaks obtained from high-resolution MS instruments", 
+               "Currently, MetaboAnalyst 5.0 only supports the handling of peaks obtained from high-resolution MS instruments", 
                " such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation.",
                "\n");
     cat(descr, file=rnwFile, append=TRUE);
@@ -99,7 +334,7 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     mum.descr <- paste("The selected p-value cutoff is: ",mSetObj$dataSet$cutoff , ".", sep = "");
     
     cat(mum.descr, file=rnwFile, append=TRUE, sep="\n");
-
+    
   }
   
   if(!is.null(mSetObj$lib.organism)){
@@ -107,7 +342,7 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     descr <- c("\\subsubsection{Library}\n",
                "The knowledge-base for this module consists of five genome-scale metabolic models obtained", 
                " from the original Python implementation which have either been manually curated or downloaded from BioCyc,", 
-               " as well as an expanded library of 21 organisms derived from KEGG metabolic pathways. ",
+               " an expanded library of 21 organisms derived from KEGG metabolic pathways, and 10 distinct metabolite set libraries. ",
                "Users must select one of 21 KEGG pathway libraries, or one of five metabolic models.\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);

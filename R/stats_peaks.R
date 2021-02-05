@@ -15,7 +15,7 @@
 
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
-
+  
   if(.on.public.web){
     dyn.load(.getDynLoadPath());
   }
@@ -75,7 +75,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   # create a matrix "all.peaks" which is compatible with the xcmsSet@peaks matrix, so that the grouping algorithm can be used directly
   # the matrix should have "mz", "rt", "into", "sample" - 4 columns used for grouping
   # check 2 or 3 column
- 
+  
   ############## use try block to catch any error ##############
   pks<- .readDataTable(files[1]);
   if(class(pks) == "try-error") {
@@ -112,13 +112,13 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
     }
     all.peaks<-rbind(all.peaks, pks);
   }
-
-
+  
+  
   # make sure all values are numeric, sometimes users give other text values, need to exclude them
   all.peaks <- apply(all.peaks, 2, as.numeric);
   gd.inx <- complete.cases(all.peaks);
   all.peaks <- all.peaks[gd.inx,]
-   
+  
   if(sum(!gd.inx) > 0){
     msg<-c(msg, paste("<font color='red'>A total of", sum(!gd.inx), "peaks were excluded due to non-numeric values. </font>" ));
   }
@@ -133,7 +133,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
     sampclass = sclass,
     sampnames = snames
   );
-
+  
   qs::qsave(peakSet, "peakSet.qs");
   mSetObj$msgSet$read.msg <- msg;
   return(.set.mSet(mSetObj));
@@ -149,7 +149,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
 #' then the SML_ID will be used.
 #' @export
 Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   msg <- NULL;
@@ -245,7 +245,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   assay_df <- sml.data.frame[,match(assay_data, colnames(sml.data.frame))]
   
   assay_table <- cbind.data.frame(Sample=id, assay_df, stringsAsFactors = FALSE)
-
+  
   # replace colnames with actual variable groups
   samples <- colnames(assay_table)[-1]
   samples_base <- gsub("abundance_", "", samples)
@@ -281,7 +281,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   cls.lbl <- unname(unlist(dat[1,]));
   conc <- t(dat[-1,]);
   mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
- 
+  
   # free memory
   dat <- NULL;
   
@@ -375,7 +375,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
     AddErrMsg("Or maybe you forgot to specify the data format?");
     return(0);
   }
-
+  
   if(length(unique(cls.lbl)) == 1){
     AddErrMsg("At least two groups are required for statistical analysis!");
     return(0);
@@ -564,7 +564,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 descendMin <- function(y, istart = which.max(y)) {
-   
+  
   if (!is.double(y)) y <- as.double(y)
   unlist(.C("DescendMin",
             y,
@@ -586,7 +586,7 @@ findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
   if (!is.double(values)) values <- as.double(values)
-    .C("FindEqualGreaterM",
+  .C("FindEqualGreaterM",
      x,
      length(x),
      values,

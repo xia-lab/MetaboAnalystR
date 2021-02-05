@@ -84,7 +84,7 @@ The **vote counting** method is limited to answering the question is there any e
 
 #### 1.2.4 Combining Effect Sizes ####
 
-The effect size is a way to quantify the strength of the difference of phenotype in question between two groups. One of the most recommended methods for calculating the effect size is the Hedge's g. This method controls for bias in small studies to overestimate the effect. Cohen's d. To combine the effect sizes across the studies, there are two possible methods: 1) the fixed effects model or 2) the random effects model. 
+  The effect size is a way to quantify the strength of the difference of phenotype in question between two groups. One of the most recommended methods for calculating the effect size is the Hedge's g. This method controls for bias in small studies to overestimate the effect. Cohen's d. To combine the effect sizes across the studies, there are two possible methods: 1) the fixed effects model or 2) the random effects model. 
 
 The **fixed effects model** is a linear model that assumes that the different studies share an underlying common true effect and that observed differences are due to sampling error. This model should therefore be used when the datasets are rather homogeneous (e.g. samples come from the same population). 
 

@@ -4,7 +4,7 @@
 \alias{GetFinalNameMap}
 \title{Return the final (after user selection) map as dataframe}
 \usage{
-GetFinalNameMap(mSetObj = NA)
+GetFinalNameMap(mSetObj = NA, lipid = FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

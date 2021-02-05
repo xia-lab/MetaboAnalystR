@@ -15,6 +15,9 @@ Read.TextData(mSetObj=NA, filePath, format, lbl.type)
 in columns and paired (colp), or in columns and unpaired (colu).}
 
 \item{lbl.type}{Specify the data label type, either discrete (disc) or continuous (cont).}
+
+\item{nmdr}{Boolean. Default set to FALSE (data is uploaded by the user and not fetched
+through an API call to the Metabolomics Workbench).}
 }
 \description{
 This function handles reading in CSV or TXT files and filling in the dataSet object 

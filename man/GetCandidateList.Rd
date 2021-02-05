@@ -4,7 +4,7 @@
 \alias{GetCandidateList}
 \title{Get all candidate compound names for a given index}
 \usage{
-GetCandidateList(mSetObj = NA)
+GetCandidateList(mSetObj = NA, lipid)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

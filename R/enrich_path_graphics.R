@@ -279,7 +279,7 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x, y){
+PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, width=NA, x, y){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -372,7 +372,9 @@ PlotPathSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, x
   plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log10(p)");
   axis(1);
   axis(2);
-  #grid(col="blue");
+  if(show.grid){
+    grid(col="blue");
+  }
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
   # convert to pixel positions, only for web interaction dpi=72

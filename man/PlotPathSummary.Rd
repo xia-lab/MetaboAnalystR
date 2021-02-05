@@ -6,6 +6,7 @@
 \usage{
 PlotPathSummary(
   mSetObj = NA,
+  show.grid,
   imgName,
   format = "png",
   dpi = 72,

@@ -17,12 +17,18 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(file.exists("peakSet.qs") & !file.exists("data_orig.qs")){
+    return(.set.mSet(mSetObj));
+  }
+  
   orig.data <- qs::qread("data_orig.qs");
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
+  
   # check class info
   if(mSetObj$dataSet$cls.type == "disc"){
     if(substring(mSetObj$dataSet$format,4,5)=="ts"){
@@ -93,7 +99,7 @@ SanityCheckData <- function(mSetObj=NA){
                             " and 1, and between 1 and ",uni.cl.abs,".",sep=""));
           }
           return(0);
-        }else{  
+        } else {  
           msg <- c(msg,"The labels of paired samples passed sanity check.");
           msg <- c(msg, paste("A total of", uni.cl.abs, "pairs were detected."));
           # make sure paired samples are sorted 1:n/2 and -1:-n/2
@@ -108,7 +114,30 @@ SanityCheckData <- function(mSetObj=NA){
           orig.data<- orig.data[index,];
           qs::qsave(orig.data, file="data_orig.qs");
         }
-      }else{
+      } else {
+        
+        # check for class labels at least two replicates per class but QC and BLANK
+        cls.lbl <- mSetObj$dataSet$orig.cls;
+        qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+        if(sum(qb.inx) > 0){
+          cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+        } else {
+          cls.Clean <- cls.lbl;
+        }
+        
+        # allow it pass to sanity check and correct there
+        if(anal.type != "network"){ # add exception for DSPC correlation network 
+          if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
+            AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
+            AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
+            AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
+            return(-1);
+          }
+        }
+        
+        if("NMDR_id" %in% names(mSetObj$dataSet)){
+          msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "was successfully downloaded from the Metabolomics Workbench!"))
+        }
         msg <- c(msg,"Samples are not paired.");
       }
       
@@ -117,7 +146,7 @@ SanityCheckData <- function(mSetObj=NA){
       # need to exclude QC or blank
       qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
       if(sum(qb.inx) > 0){
-          cls.lbl <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+        cls.lbl <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
       }
       min.grp.size <- min(table(cls.lbl));
       cls.num <- length(levels(cls.lbl));
@@ -128,6 +157,11 @@ SanityCheckData <- function(mSetObj=NA){
       }
       
       msg <- c(msg, paste(cls.num, "groups were detected in samples."));
+      
+      if("NMDR_id" %in% names(mSetObj$dataSet)){
+        msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "group labels:", paste0(unique(cls.lbl), collapse = ", ")))
+      }
+      
       mSetObj$dataSet$cls.num <- cls.num;
       mSetObj$dataSet$min.grp.size <- min.grp.size;
     }
@@ -172,7 +206,7 @@ SanityCheckData <- function(mSetObj=NA){
   
   if(ncol(int.mat)==1){
     if(anal.type=="roc"){
-        mSetObj$dataSet$roc_cols <- 1;
+      mSetObj$dataSet$roc_cols <- 1;
     }else{
       AddErrMsg("<font color='red'>One-column data is only supported for biomarker analysis.</font>");
       return(0);
@@ -180,7 +214,7 @@ SanityCheckData <- function(mSetObj=NA){
   }else{
     mSetObj$dataSet$roc_cols <- 2;
   }
-
+  
   # check numerical matrix
   rowNms <- rownames(int.mat);
   colNms <- colnames(int.mat);
@@ -219,6 +253,8 @@ SanityCheckData <- function(mSetObj=NA){
   naCount <- sum(is.na(int.mat));
   naPercent <- round(100*naCount/totalCount,1)
   
+  mSetObj$dataSet$missingCount <- naCount;
+  
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>",
          "Click the <b>Skip</b> button if you accept the default practice;",
@@ -234,7 +270,7 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
   if(!.on.public.web){
-        print(c("Successfully passed sanity check!", msg))
+    print(c("Successfully passed sanity check!", msg))
   }
   return(.set.mSet(mSetObj));
 }
@@ -256,19 +292,19 @@ SanityCheckData <- function(mSetObj=NA){
 ReplaceMin <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   #Reset to default
   mSetObj$dataSet$proc <- mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- NULL;
   
   # replace zero and missing values using Detection Limit for each variable 
   preproc <- qs::qread("preproc.qs");
   int.mat <- ReplaceMissingByLoD(preproc);  
-    
+  
   # note, this is last step of processing, also save to proc
   mSetObj$dataSet$proc <- as.data.frame(int.mat);
   mSetObj$msgSet$replace.msg <- paste("Zero or missing values were replaced by 1/5 of the min positive value for each variable.");
   invisible(gc()); # suppress gc output
-
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -286,20 +322,20 @@ ReplaceMin <- function(mSetObj=NA){
 #'@export
 #'
 RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
-
-    mSetObj <- .get.mSet(mSetObj);
-    if(!.on.public.web & !is.null(mSetObj$dataSet$norm)){    
-        int.mat <- mSetObj$dataSet$norm;
-        good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-        mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
-    }else{  
-        int.mat <- qs::qread("preproc.qs");
-        good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-        preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
-        qs::qsave(preproc, "preproc.qs");
-    }
-    mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
-    return(.set.mSet(mSetObj));
+  
+  mSetObj <- .get.mSet(mSetObj);
+  if(!.on.public.web & !is.null(mSetObj$dataSet$norm)){    
+    int.mat <- mSetObj$dataSet$norm;
+    good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
+    mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
+  }else{  
+    int.mat <- qs::qread("preproc.qs");
+    good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
+    preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
+    qs::qsave(preproc, "preproc.qs");
+  }
+  mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
+  return(.set.mSet(mSetObj));
 }
 
 #'Data processing: Replace missing variables
@@ -328,7 +364,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
     good.inx<-apply(is.na(int.mat), 2, sum)==0
     new.mat<-int.mat[,good.inx, drop=FALSE];
     msg <- c(msg,"Variables with missing values were excluded.");
-
+    
   }else if(method=="min"){
     new.mat<- ReplaceMissingByLoD(int.mat);
     msg <- c(msg,"Missing variables were replaced by LoDs (1/5 of the min positive value for each variable)");
@@ -372,7 +408,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
     }
     msg <- c(msg, paste("Missing variables were imputated using", toupper(method)));
   }
-
+  
   mSetObj$dataSet$proc <- as.data.frame(new.mat);
   mSetObj$msgSet$replace.msg <- msg;
   return(.set.mSet(mSetObj))
@@ -401,7 +437,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   #Reset to default
   mSetObj$dataSet$filt <- NULL; 
   
@@ -473,7 +509,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
     
     # get the rank of the filtered variables
     rk <- rank(-filter.val, ties.method='random');
-
+    
     var.num <- ncol(int.mat);
     if(var.num < 250){ # reduce 5%
       remain <- rk < var.num*0.95;
@@ -487,7 +523,7 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
     }else{ # reduce 40%, if still over 5000, then only use top 5000
       remain <- rk < var.num*0.6;
       msg <- paste(msg, "Further feature filtering based on", nm);
-
+      
       if(mSetObj$analSet$type == "mummichog"){
         max.allow <- 7500;
       }else if(mSetObj$analSet$type == "power"){
@@ -495,18 +531,18 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       }else{
         max.allow <- 2500;
       }
-
+      
       if(sum(remain) > max.allow){
         remain <-rk < max.allow;
         msg <- paste(msg, paste("Reduced to", max.allow, "features based on", nm));
       }
     }
   }
-
+  
   mSetObj$dataSet$filt <- int.mat[, remain];
   mSetObj$msgSet$filter.msg <- msg;
   AddMsg(msg);
-
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -515,6 +551,16 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
+
+GetOrigSmplNms <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$dataSet$orig.smp.nms);
+}
+
+GetOrigGrpNms <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$dataSet$orig.cls);
+}
 
 GetGroupNumber<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -547,30 +593,61 @@ IsDataContainsNegative<-function(mSetObj=NA){
 
 # users can manually update sample names
 UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
-    mSetObj <- .get.mSet(mSetObj);
-    if(!is.null(mSetObj$dataSet[["orig"]])){
-        orig.data <- qs::qread("data_orig.qs");
-        orig.data <- .update.feature.nm(orig.data, old.nm, new.nm);
-        qs::qsave(orig.data, file="data_orig.qs");
+  mSetObj <- .get.mSet(mSetObj);
+  if(!is.null(mSetObj$dataSet[["orig"]])){
+    orig.data <- qs::qread("data_orig.qs");
+    orig.data <- .update.feature.nm(orig.data, old.nm, new.nm);
+    qs::qsave(orig.data, file="data_orig.qs");
+  }
+  
+  if(!is.null(mSetObj$dataSet[["proc"]])){
+    mSetObj$dataSet$proc <- .update.feature.nm(mSetObj$dataSet$proc, old.nm, new.nm);
+    if(!is.null(mSetObj$dataSet[["filt"]])){
+      mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
     }
-
-    if(!is.null(mSetObj$dataSet[["proc"]])){
-        mSetObj$dataSet$proc <- .update.feature.nm(mSetObj$dataSet$proc, old.nm, new.nm);
-        if(!is.null(mSetObj$dataSet[["filt"]])){
-            mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
-        }
-    }
-
-    if(!is.null(mSetObj$dataSet[["norm"]])){
-        mSetObj$dataSet$norm <- .update.feature.nm(mSetObj$dataSet$norm, old.nm, new.nm);
-    }
-   return(.set.mSet(mSetObj));
+  }
+  
+  if(!is.null(mSetObj$dataSet[["norm"]])){
+    mSetObj$dataSet$norm <- .update.feature.nm(mSetObj$dataSet$norm, old.nm, new.nm);
+  }
+  return(.set.mSet(mSetObj));
 }
 
 .update.feature.nm<-function(dat, old.nm, new.nm){
-    hit.inx <- match(old.nm, colnames(dat));
-    if(!is.na(hit.inx)){
-        colnames(dat)[hit.inx] <- new.nm; 
+  hit.inx <- match(old.nm, colnames(dat));
+  if(!is.na(hit.inx)){
+    colnames(dat)[hit.inx] <- new.nm; 
+  }
+  return(dat);
+}
+
+UpdateSampleGroups<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  cls.lbl <- ClearStrings(as.vector(grp.vec));
+  mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+  return(.set.mSet(mSetObj));
+}
+
+#'Check for missing data
+#'@description ContainMissing is used to check if any missing data exists in the uploaded file.
+#'@usage ContainMissing(mSetObj=NA)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+ContainMissing <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if(.on.public.web){
+    if(mSetObj$dataSet$missingCount > 0){
+      return(1);
     }
-    return(dat);
+    return(0);
+  }else{
+    if(mSetObj$dataSet$missingCount > 0){
+      print("Contains missing data - will be dealt with in next step.");
+    }
+    print("Does not contain missing data.");
+    return(.set.mSet(mSetObj));
+  }
 }

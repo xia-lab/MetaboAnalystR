@@ -1,6 +1,6 @@
 #'Fold change analysis, unpaired
 #'@description Perform fold change analysis, method can be mean or median
-#'@usage FC.Anal.unpaired(mSetObj, fc.thresh=2, cmp.type = 0)
+#'@usage FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fc.thresh Fold-change threshold, numeric input
 #'@param cmp.type Comparison type, 0 for group 1 minus group 2, and 1 for group 
@@ -10,7 +10,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
+FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -19,12 +19,13 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   max.thresh = fc.thresh;
   min.thresh = 1/fc.thresh;
   
-  res <- GetFC(mSetObj, F, cmp.type);
+  res <- GetFC(mSetObj, paired, cmp.type);
   fc.all <- res$fc.all;
   fc.log <- res$fc.log;
   
   inx.up <- fc.all > max.thresh;
   inx.down <- fc.all < min.thresh;
+  names(inx.up) <- names(inx.down) <- names(fc.all);
   imp.inx <- inx.up | inx.down;
   sig.mat <- cbind(fc.all[imp.inx, drop=F], fc.log[imp.inx, drop=F]);
   colnames(sig.mat) <- c("Fold Change", "log2(FC)");
@@ -52,68 +53,6 @@ FC.Anal.unpaired <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0){
   return(.set.mSet(mSetObj));
 }
 
-#'Fold change analysis, paired
-#'@description Perform paired fold change analysis
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param fc.thresh Fold-change threshold, numeric input
-#'@param percent.thresh Numeric input, from 0 to 1 to indicate the significant count threshold
-#'@param cmp.type Comparison type, 0 for group 1 minus group 2, and 1 for group 
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-FC.Anal.paired <- function(mSetObj=NA, fc.thresh=2, percent.thresh=0.75, cmp.type=0){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # make sure threshold is above 1
-  fc.thresh = ifelse(fc.thresh>1, fc.thresh, 1/fc.thresh);
-  max.thresh = fc.thresh;
-  min.thresh = 1/fc.thresh;
-  
-  fc.mat <- GetFC(mSetObj, T, cmp.type);
-
-  count.thresh <- round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
-  mat.up <- fc.mat >= log2(max.thresh);
-  mat.down <- fc.mat <= log2(min.thresh);
-  
-  count.up <- apply(mat.up, 2, sum);
-  count.down <- apply(mat.down, 2, sum);
-  fc.all <- rbind(count.up, count.down);
-  
-  inx.up <- count.up>=count.thresh;
-  inx.down <- count.down>=count.thresh;
-  
-  colnames(fc.all) <- colnames(mSetObj$dataSet$norm);
-  rownames(fc.all) <- c("Count (up)", "Count (down)");
-  sig.var <- t(fc.all[,(inx.up|inx.down), drop=F]);
-  
-  # sort sig.var using absolute difference between count(up)-count(down)
-  sig.dff <- abs(sig.var[,1]-sig.var[,2])
-  inx <- order(sig.dff, decreasing=T);
-  sig.var <- sig.var[inx,,drop=F];
-  
-  fileName <- "fold_change.csv";
-  fast.write.csv(signif(sig.var,5),file=fileName);
-  
-  # for plotting, the average paired difference
-  fc.log <- apply(fc.mat, 2, mean);
-
-  # create a list object to store fc
-  mSetObj$analSet$fc <-list (
-    paired = TRUE,
-    fc.log = fc.log,
-    raw.thresh = fc.thresh,
-    max.thresh = count.thresh,
-    min.thresh = -count.thresh,
-    fc.all = fc.all, # note: a 2-row matrix!
-    inx.up = inx.up,
-    inx.down = inx.down,
-    sig.mat = sig.var
-  );
-  return(.set.mSet(mSetObj));
-}
 
 #'Plot fold change 
 #'@description Plot fold change analysis
@@ -230,7 +169,8 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(paired){
+  if(paired){ 
+    # compute the average of paired FC (unit is pair)
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
     }else{
@@ -246,8 +186,10 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     }else{
       fc.mat <- G2-G1;
     }
-    return (fc.mat);
+    fc.log <- apply(fc.mat, 2, mean);
+    fc.all <- signif(2^fc.log, 5);
   }else{
+    # compute the FC of two group means (unit is group)
     data <- NULL;
     if(mSetObj$dataSet$combined.method){
       data <- mSetObj$dataSet$norm;
@@ -275,9 +217,9 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
       fc.all <- signif(ratio, 5);
       fc.log <- signif(log2(ratio), 5);
     }
-    names(fc.all) <- names(fc.log) <- colnames(data);  
-    return(list(fc.all = fc.all, fc.log = fc.log));
   }
+  names(fc.all) <- names(fc.log) <- colnames(data);  
+  return(list(fc.all = fc.all, fc.log = fc.log));
 }
 
 #'Perform t-test analysis
@@ -294,48 +236,46 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE, all_results=FALSE){
+Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE, pvalType="fdr", all_results=FALSE){
   
-   mSetObj <- .get.mSet(mSetObj);
-
-   if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
-        res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
-   }else{
-        res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-   }
-   t.stat <- res[,1];
-   p.value <- res[,2];
-   names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
+  mSetObj <- .get.mSet(mSetObj);
   
-   p.log <- -log10(p.value);
-   fdr.p <- p.adjust(p.value, "fdr");
-   
-   if(all_results==TRUE){
-     
-     all.mat <- data.frame(signif(t.stat,5), signif(p.value,5), signif(p.log,5), signif(fdr.p,5));
-     
-     if(nonpar){
-       tt.nm = "Wilcoxon Rank Test";  
-       file.nm <- "wilcox_rank_all.csv"
-       colnames(all.mat) <- c("V", "p.value", "-log10(p)", "FDR");
-     }else{
-       tt.nm = "T-Tests";
-       file.nm <- "t_test_all.csv";
-       colnames(all.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
-     }
-     fast.write.csv(all.mat, file=file.nm);
-   }
-
-   inx.imp <- fdr.p <= threshp;
-  # if there is no sig cmpds, it will be errors, need to improve
+  if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+    res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
+  }else{
+    res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
+  }
+  t.stat <- res[,1];
+  p.value <- res[,2];
+  names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   
-    sig.num <- sum(inx.imp);
-    if(is.na(sig.num)){
-    AddMsg(paste("No significant features were found."));
-    return(0)
+  p.log <- -log10(p.value);
+  fdr.p <- p.adjust(p.value, "fdr");
+  
+  if(all_results==TRUE){
+    
+    all.mat <- data.frame(signif(t.stat,5), signif(p.value,5), signif(p.log,5), signif(fdr.p,5));
+    
+    if(nonpar){
+      tt.nm = "Wilcoxon Rank Test";  
+      file.nm <- "wilcox_rank_all.csv"
+      colnames(all.mat) <- c("V", "p.value", "-log10(p)", "FDR");
     }else{
-    AddMsg(paste("A total of", sig.num, "significant features were found."));
+      tt.nm = "T-Tests";
+      file.nm <- "t_test_all.csv";
+      colnames(all.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
     }
+    fast.write.csv(all.mat, file=file.nm);
+  }
+  
+  if(pvalType=="fdr"){
+    inx.imp <- fdr.p <= threshp;
+  }else{
+    inx.imp <- p.value <= threshp;
+  }
+  
+  sig.num <- sum(inx.imp);
+  AddMsg(paste("A total of", sig.num, "significant features were found."));
   
   if(sig.num > 0){
     sig.t <- t.stat[inx.imp];
@@ -366,8 +306,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       sig.num = sig.num,
       paired = paired,
       raw.thresh = threshp,
-      t.score = sort(t.stat),
-      p.value = sort(p.value),
+      t.score = t.stat,
+      p.value = p.value,
       p.log = p.log,
       thresh = -log10(threshp), # only used for plot threshold line
       inx.imp = inx.imp,
@@ -378,8 +318,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       sig.num = sig.num,
       paired = paired,
       raw.thresh = threshp,
-      t.score = sort(t.stat),
-      p.value = sort(p.value),
+      t.score = t.stat,
+      p.value = p.value,
       p.log = p.log,
       thresh = -log10(threshp), # only used for plot threshold line
       inx.imp = inx.imp
@@ -387,7 +327,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   }
   
   mSetObj$analSet$tt <- tt;
-
+  
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(as.numeric(sig.num));
@@ -437,11 +377,11 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Perform Volcano Analysis
 #'@description Perform volcano analysis
-#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
+#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param paired Logical, T if data is paired, F if data is not.
 #'@param fcthresh Numeric, input the fold change threshold
-#'@param cmpType Comparison type, 1 indicates group 1 vs group 2, and 2 indicates group 2 vs group 1
+#'@param cmpType Comparison type, 0 indicates group 1 vs group 2, and 1 indicates group 2 vs group 1
 #'@param percent.thresh Only for paired data, numeric, indicate the significant count threshold 
 #'@param nonpar Logical, indicate if a non-parametric test should be used (T or F)
 #'@param threshp Numeric, indicate the p-value threshold
@@ -452,95 +392,76 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
-  
-  mSetObj <- .get.mSet(mSetObj);
+Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
 
-  #### t-tests
-   # check to see if already done by microservice
-   if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
-       res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
-   }else{
-       res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
-   }
-  p.value <- res[,2];
-  names(p.value) <- rownames(res); # make sure named entries
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Note, volcano is based on t-tests and fold change analysis
+  #### t-tests and p values
+  if(is.null(mSetObj$analSet$tt) || mSetObj$analSet$tt$paired != paired){
+    mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
+    mSetObj <- .get.mSet(mSetObj);
+  }else{
+     if(mSetObj$analSet$tt$raw.thresh != threshp){
+       mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
+       mSetObj <- .get.mSet(mSetObj);
+     }
+  }
+  
+  p.value <- mSetObj$analSet$tt$p.value;
+  
   if(pval.type == "fdr"){
     p.value <- p.adjust(p.value, "fdr");
   }   
+  
   inx.p <- p.value <= threshp;
   p.log <- -log10(p.value);
   
-  ### fold change analysis
-  # make sure threshold is above 1
+  print("p")
+  print(threshp)
+  #### fc analysis
+  if(is.null(mSetObj$analSet$fc) || mSetObj$analSet$fc$paired != paired){
+    mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
+    mSetObj <- .get.mSet(mSetObj);
+  }else{ # check if FC is different
+    if(mSetObj$analSet$fc$raw.thresh != fcthresh){
+      mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
+      mSetObj <- .get.mSet(mSetObj);
+    }
+  }
+  
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);
   max.xthresh <- log2(fcthresh);
   min.xthresh <- log2(1/fcthresh);
   
-  res <- GetFC(mSetObj, paired, cmpType);
+  print("fc")
+  print(max.xthresh)
+  print(min.xthresh)
   
-  # create a named matrix of sig vars for display
-  fc.log <- res$fc.log;
-  fc.all <- res$fc.all;
+  fc.log <- mSetObj$analSet$fc$fc.log;
+  fc.all <- mSetObj$analSet$fc$fc.all;
   
-  inx.up <- fc.log > max.xthresh;
-  inx.down <- fc.log < min.xthresh;
-
-  # subset inx.p to inx.up/down
-  keep.inx <- names(inx.p) %in% names(inx.up)
-  inx.p <- inx.p[keep.inx]
-  p.log <- p.log[keep.inx]
-
-  
-  if(paired){
-    count.thresh<-round(nrow(mSetObj$dataSet$norm)/2*percent.thresh);
-    mat.up <- res >= max.xthresh;
-    mat.down <- res <= min.xthresh;
-    
-    count.up <- apply(mat.up, 2, sum);
-    count.down <- apply(mat.down, 2, sum);
-    fc.all <- rbind(count.up, count.down);
-    
-    inx.up <- count.up>=count.thresh;
-    inx.down <- count.down>=count.thresh;
-    
-    colnames(fc.all) <- colnames(mSetObj$dataSet$norm);
-    rownames(fc.all) <- c("Count (up)", "Count (down)");
-    
-    # replace the count.thresh for plot
-    max.xthresh <- count.thresh;
-    min.xthresh <- -count.thresh;
-  }
+  inx.up <- mSetObj$analSet$fc$inx.up;
+  inx.down <- mSetObj$analSet$fc$inx.down;
   
   # create named sig table for display
   inx.imp <- (inx.up | inx.down) & inx.p;
-  if(paired){ 
-    sig.var <- cbind(fc.all[1,][inx.imp,drop=F], fc.all[2,][inx.imp, drop=F], p.value[inx.imp, drop=F], p.log[inx.imp, drop=F]);
-    if(pval.type == "fdr"){
-      colnames(sig.var)<-c("Counts (up)","Counts (down)", "p.adjusted", "-log10(p)");
-    }else{
-      colnames(sig.var)<-c("Counts (up)","Counts (down)", "raw.pval", "-log10(p)");
-    }
-    # first order by count difference, then by log(p)
-    dif.count<-abs(sig.var[,1]-sig.var[,2]);
-    ord.inx<-order(dif.count, sig.var[,4], decreasing=T);
-    sig.var<-sig.var[ord.inx,,drop=F];
-    sig.var[,c(3,4)]<-signif(sig.var[,c(3,4)],5);
+  sig.var <- cbind(fc.all[inx.imp,drop=F], fc.log[inx.imp,drop=F], p.value[inx.imp,drop=F], p.log[inx.imp,drop=F]);
+  
+  if(pval.type == "fdr"){
+    colnames(sig.var) <- c("FC", "log2(FC)", "p.ajusted", "-log10(p)");
   }else{
-    sig.var <- cbind(fc.all[inx.imp,drop=F], fc.log[inx.imp,drop=F], p.value[inx.imp,drop=F], p.log[inx.imp,drop=F]);
-    if(pval.type == "fdr"){
-      colnames(sig.var) <- c("FC", "log2(FC)", "p.ajusted", "-log10(p)");
-    }else{
-      colnames(sig.var) <- c("FC", "log2(FC)", "raw.pval", "-log10(p)");
-    }
-    # first order by log(p), then by log(FC)
-    ord.inx <- order(sig.var[,4], abs(sig.var[,2]), decreasing=T);
-    sig.var <- sig.var[ord.inx,,drop=F];
-    sig.var <- signif(sig.var,5);
+    colnames(sig.var) <- c("FC", "log2(FC)", "raw.pval", "-log10(p)");
   }
+  
+  # first order by log(p), then by log(FC)
+  ord.inx <- order(sig.var[,4], abs(sig.var[,2]), decreasing=T);
+  sig.var <- sig.var[ord.inx,,drop=F];
+  sig.var <- signif(sig.var,5);
   
   fileName <- "volcano.csv";
   fast.write.csv(signif(sig.var,5), file=fileName);
+  
   volcano <- list (
     raw.threshx = fcthresh,
     raw.threshy = threshp,
@@ -556,6 +477,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.th
     inx.p = inx.p,
     sig.mat = sig.var
   );
+  
   mSetObj$analSet$volcano <- volcano;
   return(.set.mSet(mSetObj));
 }
@@ -600,59 +522,28 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, widt
   MyGray <- rgb(t(col2rgb("black")), alpha=40, maxColorValue=255);
   MyHighlight <- rgb(t(col2rgb("magenta")), alpha=80, maxColorValue=255);
   
-  if(vcn$paired){
-    xlim<-c(-nrow(mSetObj$dataSet$norm)/2, nrow(mSetObj$dataSet$norm)/2)*1.2;
-    
-    # merge fc.all two rows into one, bigger one win
-    fc.all <- apply(vcn$fc.all, 2, function(x){ if(x[1] > x[2]){return(x[1])}else{return(-x[2])}})
-    
-    hit.inx <- vcn$inx.p & (vcn$inx.up | vcn$inx.down);
-    plot(fc.all, vcn$p.log, xlim=xlim, pch=20, cex=ifelse(hit.inx, 1.2, 0.8),
-         col = ifelse(hit.inx, MyHighlight, MyGray),
-         xlab="Count of Significant Pairs", ylab="-log10(p)");
-    
-    sig.upInx <- vcn$inx.p & vcn$inx.up;
-    p.topInx <- GetTopInx(vcn$p.log, 5, T) & vcn$inx.up;
-    fc.rtInx <- GetTopInx(vcn$fc.all[1,], 5, T);
-    lblInx <- p.topInx & sig.upInx & fc.rtInx;
-    if(plotLbl & sum(lblInx, na.rm=T) > 0){
-      text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-      text(vcn$fc.all[1,lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
-    }
-    
-    sig.dnInx <- vcn$inx.p & vcn$inx.down;
-    p.topInx <- GetTopInx(vcn$p.log, 5, T) & vcn$inx.down;
-    fc.leftInx <- GetTopInx(vcn$fc.all[2,], 5, T) & vcn$inx.down;
-    lblInx <-p.topInx & sig.dnInx & fc.leftInx;
-    if(plotLbl & sum(lblInx, na.rm=T) > 0){
-      text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-      text(-vcn$fc.all[2,lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
-    }
-    
-  }else{
-    imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
-    plot(vcn$fc.log, vcn$p.log, pch=20, cex=ifelse(imp.inx, 1.2, 0.7),
-         col = ifelse(imp.inx, MyHighlight, MyGray),
-         xlab="log2 (FC)", ylab="-log10(p)");
-    
-    sig.inx <- imp.inx;
-    p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.down);
-    fc.leftInx <- GetTopInx(vcn$fc.log, 5, F);
-    lblInx <-  sig.inx & (p.topInx | fc.leftInx);
-    if(plotLbl &  sum(lblInx, na.rm=T) > 0){
-      text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-      text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
-    }
-    
-    p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.up);
-    fc.rtInx <- GetTopInx(vcn$fc.log, 5, T);
-    lblInx <- sig.inx & (p.topInx | fc.rtInx);
-    if(plotLbl & sum(lblInx, na.rm=T) > 0){
-      text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-      text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
-    }
+  
+  imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
+  plot(vcn$fc.log, vcn$p.log, pch=20, cex=ifelse(imp.inx, 1.2, 0.7),
+       col = ifelse(imp.inx, MyHighlight, MyGray),
+       xlab="log2 (FC)", ylab="-log10(p)");
+  
+  sig.inx <- imp.inx;
+  p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.down);
+  fc.leftInx <- GetTopInx(vcn$fc.log, 5, F);
+  lblInx <-  sig.inx & (p.topInx | fc.leftInx);
+  if(plotLbl &  sum(lblInx, na.rm=T) > 0){
+    text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
+    text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
   }
   
+  p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.up);
+  fc.rtInx <- GetTopInx(vcn$fc.log, 5, T);
+  lblInx <- sig.inx & (p.topInx | fc.rtInx);
+  if(plotLbl & sum(lblInx, na.rm=T) > 0){
+    text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
+    text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
+  }
   abline (v = vcn$max.xthresh, lty=3);
   abline (v = vcn$min.xthresh, lty=3);
   abline (h = vcn$thresh.y, lty=3);
@@ -734,7 +625,7 @@ parseFisher <- function(fisher, cut.off){
 #'@export
 #'
 ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_results=FALSE){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   sig.num <- 0;
@@ -776,14 +667,14 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_r
   }else{
     aov.nm <- "One-way ANOVA";
     if(.on.public.web & RequireFastUnivTests(mSetObj)){
-        res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+      res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
     }else{
-        aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
-        anova.res <- lapply(aov.res, anova);
-    
-        #extract all p values
-        res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
-        res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
+      aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
+      anova.res <- lapply(aov.res, anova);
+      
+      #extract all p values
+      res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
+      res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
     }
     fstat <- res[,1];
     p.value <- res[,2];
@@ -956,7 +847,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   my.width <- 200;
   adj.width <- 90*length(levels(cls))+20;
   if(adj.width > my.width){
-     my.width <- adj.width;
+    my.width <- adj.width;
   }
   
   x <- mSetObj$dataSet$norm[, cmpdNm]
@@ -1217,7 +1108,7 @@ GetTtDnMat <- function(mSetObj=NA){
 
 GetTtDnIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  blue.inx<-which(!mSetObj$analSet$tt$inx.imp);;
+  blue.inx<-which(!mSetObj$analSet$tt$inx.imp);
   if(sum(blue.inx) > 0){
     return(names(mSetObj$analSet$tt$p.log)[blue.inx]);
   }else{
@@ -1245,27 +1136,27 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
-
-    mSetObj <- .get.mSet(mSetObj);
-    inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
-    inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
-    if(length(inx1) ==1 || length(inx2) == 1){
-        equal.var <- TRUE; # overwrite use option if one does not have enough replicates
+  
+  mSetObj <- .get.mSet(mSetObj);
+  inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
+  inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
+  if(length(inx1) ==1 || length(inx2) == 1){
+    equal.var <- TRUE; # overwrite use option if one does not have enough replicates
+  }
+  univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+  if(nonpar){
+    univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
+  }
+  my.fun <- function(x) {
+    tmp <- try(univ.test(x));
+    if(class(tmp) == "try-error") {
+      return(c(NA, NA));
+    }else{
+      return(c(tmp$statistic, tmp$p.value));
     }
-    univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
-    if(nonpar){
-        univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
-    }
-    my.fun <- function(x) {
-        tmp <- try(univ.test(x));
-        if(class(tmp) == "try-error") {
-            return(c(NA, NA));
-        }else{
-            return(c(tmp$statistic, tmp$p.value));
-        }
-    }
-    res <- apply(as.matrix(mSetObj$dataSet$norm), 2, my.fun);
-    return(t(res));
+  }
+  res <- apply(as.matrix(mSetObj$dataSet$norm), 2, my.fun);
+  return(t(res));
 }
 
 #'Utility method to perform the univariate analysis automatically

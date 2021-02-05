@@ -1009,9 +1009,9 @@ rowcolFt =  function(x, fac, var.equal, which = 1L) {
 
 rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
     
-  if(.on.public.web){
-    dyn.load(.getDynLoadPath());
-  }
+  #if(.on.public.web){
+  #  dyn.load(.getDynLoadPath());
+  #}
 
   if (!missing(tstatOnly) && (!is.logical(tstatOnly) || is.na(tstatOnly)))
       stop(sQuote("tstatOnly"), " must be TRUE or FALSE.")

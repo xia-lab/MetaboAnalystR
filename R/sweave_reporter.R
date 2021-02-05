@@ -25,7 +25,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
   table.count <<- 0;
   
   anal.type <- mSetObj$analSet$type;
-    
+  
   if(anal.type == "stat" ){
     CreateStatRnwReport(mSetObj, usrName);
   }else if(anal.type == "ts"){
@@ -43,9 +43,13 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
   }else if(anal.type == "network"){
     CreateNetworkExplorerRnwReport(mSetObj, usrName);
   }else if(anal.type == "mummichog"){
-     CreateMummichogRnwReport(mSetObj, usrName);
+    CreateMummichogRnwReport(mSetObj, usrName);
   }else if(anal.type == "metadata"){
     CreateMetaAnalysisRnwReport(mSetObj, usrName);
+  }else if(anal.type == "raw"){
+    CreateRawAnalysisRnwReport(mSetObj, usrName);
+  }else if(exists(meta.anal.type)){
+    CreateMummichogRnwReport(mSetObj, usrName);
   }else{
     AddErrMsg(paste("No template found for this module:", anal.type));
     return(0);
@@ -55,7 +59,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
   close(rnwFile);
   
   if(!.on.public.web){
-    Sweave("Analysis_Report.Rnw", encoding="utf8");
+    utils::Sweave("Analysis_Report.Rnw", encoding="utf8");
     res <- try(tools::texi2dvi("Analysis_Report.tex", pdf = TRUE, quiet=TRUE));
   }
   return(1);
@@ -63,19 +67,21 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
 
 # this is for PDF report generation from bash
 SaveCurrentSession <- function(){
-    file.copy("../../rscripts/_sweave.sty", ".")
-    save.image("SweaveImage.RData");
+  file.copy("../../rscripts/_sweave.sty", ".")
+  save.image("SweaveImage.RData");
 }
 
 CreateHeader <- function(usrName){
   header <- c("\\documentclass[a4paper]{article}",
               "\\usepackage[margin=1.0in]{geometry}",
               "\\usepackage{longtable}",
+              "\\usepackage{graphicx}",
+              "\\usepackage{grffile}",
               "<<echo=false>>=",
               "options(width=60);",
               "@",
               "\\SweaveOpts{eps=FALSE,pdf=TRUE}",
-              "\\title{Metabolomic Data Analysis with MetaboAnalyst 4.0}",
+              "\\title{Metabolomic Data Analysis with MetaboAnalyst 5.0}",
               paste("\\author{ Name: ", usrName, " }", sep=""),
               "\\begin{document}",
               "\\parskip=.3cm",
@@ -234,7 +240,6 @@ CreateNORMdoc <- function(mSetObj=NA){
   }
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
-
 
 #'Create report of analyses
 #'@description Report generation using Sweave

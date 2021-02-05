@@ -581,6 +581,7 @@ GetMetaSanityCheckMsg <- function(mSetObj=NA, dataName){
   if(mSetObj$dataSet$name != dataName){
     dataSet <- qs::qread(dataName);
   }
+
   return(dataSet$check.msg);
 } 
 

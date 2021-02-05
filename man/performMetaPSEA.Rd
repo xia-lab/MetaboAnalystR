@@ -20,7 +20,7 @@ performMetaPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
 \item{metaLevel}{Character, input whether the meta-analysis is at the empirical compound ("ec"),
 compound ("cpd"), or pathway level ("pathway").}
 
-\item{combine.level}{Character, input whether to combine p-values, effect size, or both.}
+\item{combine.level}{Character, input whether to combine p-values or pool the peaks.}
 
 \item{pval.method}{Character, input the method to perform p-value combination.}
 

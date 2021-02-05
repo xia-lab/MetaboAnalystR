@@ -30,7 +30,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }
-
+  
   # move to api only if R package + KEGG msets
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     
@@ -145,7 +145,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
-
+  browser()
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -158,12 +158,12 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     .perform.computing();   
     mSetObj <- .save.globaltest.score(mSetObj);  
   } 
-
+  
   return(.set.mSet(mSetObj));
 }
 
 .prepare.globaltest.score <- function(mSetObj=NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
@@ -176,9 +176,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   hit.inx <- !is.na(hmdb.inx);
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
-
+  
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
-
+    
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
     dimnames(msea.data) = NULL
@@ -279,7 +279,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 }
 
 .save.globaltest.score <- function(mSetObj = NA){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
@@ -435,10 +435,10 @@ CalculateSSP<-function(mSetObj=NA){
 #'@import ggplot2
 
 PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=72, width=8,
-                                 maxClass = 15, colPal = "Set1"){
+                               maxClass = 15, colPal = "Set1"){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   if(.on.public.web){
     load_ggplot()
   }
@@ -492,7 +492,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
   if(nrow(pie.data) > maxClass){
     pie.data <- pie.data[1:maxClass,]
   }
-
+  
   mSetObj$analSet$enrich.pie.data <- pie.data
   
   if(nrow(pie.data) > 9){
@@ -513,7 +513,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt")) +
     theme(legend.text=element_text(size=12),
           legend.title=element_text(size=13))
-
+  
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   
   long.name <- max(nchar(pie.data[,1]))
@@ -525,7 +525,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     h <- width - 1 
     w <- width
   }
-
+  
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   fast.write.csv(mSetObj$analSet$enrich.pie.data, file="msea_pie_data.csv");
   return(.set.mSet(mSetObj));
@@ -640,11 +640,11 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
     mset <- hits[[msetNm]];
     red.inx <- 1:length(mset);
   }
-
+  
   mset[red.inx] <- paste("<font color=\"red\">", "<b>", mset[red.inx], "</b>", "</font>",sep="");
   if(mSetObj$dataSet$use.metabo.filter && exists('filtered.mset')){
-      grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
-      mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
+    grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
+    mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
   }
   # get references
   matched.inx <- match(tolower(msetNm), tolower(current.msetlib$name))[1];

@@ -4,7 +4,7 @@
 \alias{Volcano.Anal}
 \title{Perform Volcano Analysis}
 \usage{
-Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
+Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -13,9 +13,7 @@ Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar
 
 \item{fcthresh}{Numeric, input the fold change threshold}
 
-\item{cmpType}{Comparison type, 1 indicates group 1 vs group 2, and 2 indicates group 2 vs group 1}
-
-\item{percent.thresh}{Only for paired data, numeric, indicate the significant count threshold}
+\item{cmpType}{Comparison type, 0 indicates group 1 vs group 2, and 1 indicates group 2 vs group 1}
 
 \item{nonpar}{Logical, indicate if a non-parametric test should be used (T or F)}
 
@@ -24,6 +22,8 @@ Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, percent.thresh, nonpar
 \item{equal.var}{Logical, indicates if the group variance is equal (T) or unequal (F)}
 
 \item{pval.type}{To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".}
+
+\item{percent.thresh}{Only for paired data, numeric, indicate the significant count threshold}
 }
 \description{
 Perform volcano analysis

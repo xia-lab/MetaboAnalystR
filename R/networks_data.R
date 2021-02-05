@@ -274,6 +274,88 @@ PrepareQueryJson <- function(mSetObj=NA){
     
 }
 
+PrepareQueryJsonOld <- function(mSetObj=NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Map query matched KOs with the KO database
+  kos <- mSetObj$dataSet$gene.name.map$hit.kos
+  expr.mat <- mSetObj$dataSet$pathinteg.imps$kos.mat
+  kos <- cbind(kos, expr.mat)
+  # Retreive compounds information
+  cmpds.expr <- mSetObj$dataSet$pathinteg.imps$cmpd.mat
+  cmpds <- cbind(rownames(cmpds.expr), cmpds.expr)
+  
+  enrich.type <- "hyper";
+  
+  # Perform gene enrichment
+  gene.mat <- list()
+  if(length(kos) > 0){
+    dataSet.gene <- PerformMapping(kos, "ko")
+    if(length(dataSet.gene)==0){
+      return(0);
+    }
+    
+    if(enrich.type == "hyper"){
+      exp.vec <- dataSet.gene$data[,1]; # drop dim for json
+    }else{
+      # for global test, all KO measured should be highlighted
+      genemat <- as.data.frame(t(otu_table(dataSet.gene$norm.phyobj)));
+      exp.vec <- rep(2, ncol(genemat));
+      names(exp.vec) <- colnames(genemat);
+    }
+    gene.mat <- MapKO2KEGGEdgesOld(exp.vec);
+  }
+  
+  # Perform compound enrichment
+  cmpd.mat <- list()
+  if(length(cmpds) > 1){
+    dataSet.cmpd <- PerformMapping(cmpds, "cmpd")
+    if(length(dataSet.cmpd)==0){
+      return(0);
+    }
+    
+    if(enrich.type == "hyper"){
+      exp.vec <- dataSet.cmpd$data[,1]; # drop dim for json
+    }else{
+      # for global test, all KO measured should be highlighted
+      genemat <- as.data.frame(t(otu_table(dataSet.cmpd$norm.phyobj)));
+      exp.vec <- rep(2, ncol(genemat));
+      names(exp.vec) <- colnames(genemat);
+    }
+    cmpd.mat <- MapCmpd2KEGGNodesOld(exp.vec);
+  }
+  
+  # TO-DO: Refactor the following part of code for better readability
+  if(length(cmpd.mat) != 0 && length(gene.mat) != 0){
+    edge.mat <- as.data.frame(rbind(as.matrix(cmpd.mat), as.matrix(gene.mat)));
+    dataSet <<- MergeDatasets(dataSet.cmpd, dataSet.gene);
+    idtype <<- "gene&cmpd";
+  } else if(length(cmpd.mat) != 0){
+    edge.mat <- cmpd.mat;
+    dataSet <<- dataSet.cmpd;
+    idtype <<- "cmpd";
+  } else{
+    edge.mat <- gene.mat;
+    dataSet <<- dataSet.gene;
+    idtype <<- "gene";
+  }
+  
+  row.names(edge.mat) <- eids <- rownames(edge.mat);
+  query.ko <- edge.mat[,1];
+  net.orig <- edge.mat[,2];
+  query.res <- edge.mat[,3];# abundance
+  names(query.res) <- eids; # named by edge
+  
+  json.mat <- RJSONIO::toJSON(query.res, .na='null');
+  sink("network_query.json");
+  cat(json.mat);
+  sink();
+  
+  return(.set.mSet(mSetObj)); 
+  
+}
+
 
 # Utility function for PrepareNetworkData
 doGene2KONameMapping <- function(enIDs){
@@ -422,6 +504,118 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
   fast.write.csv(resTable, file=csv.nm, row.names=F);
 }
 
+Save2KEGGJSONOld <- function(hits.query, res.mat, file.nm, hits.all){
+  resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
+  AddMsg("Functional enrichment analysis was completed");
+  
+  if(!exists("ko.edge.map")){
+    
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/old/ko_edge.csv", sep="");
+      ko.edge.map <- .readDataTable(ko.edge.path);
+    }else{
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/old/ko_edge.csv", sep="");
+      download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
+      ko.edge.map <- .readDataTable("ko_edge.csv"); 
+    }
+    ko.edge.map <- ko.edge.map[ko.edge.map$net=="ko01100",];  #only one map
+    ko.edge.map <<- ko.edge.map;
+  }
+  
+  hits.edge <- list();
+  hits.node <- list();
+  hits.edge.all <- list();
+  hits.node.all <- list();
+  
+  if(idtype == "gene"){
+    ko.map <- ko.edge.map;
+    colnames(ko.map) <- c("queryid", "edge", "net")
+    hits.edge <- MatchQueryOnKEGGMap(hits.query, ko.map)
+    hits.inx <- unlist(lapply(hits.edge, length))>0;
+    
+    #find matches for all queries without applying pathway filtering
+    hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.edge.all, length))>0;
+    
+  }else if(idtype == "cmpd"){
+    ko.map <- ko.node.map.global;
+    colnames(ko.map) <- c("queryid", "edge", "net")
+    hits.node <- MatchQueryOnKEGGMap(hits.query, ko.map)
+    hits.inx <- unlist(lapply(hits.node, length))>0;
+    
+    #find matches for all queries without applying pathway filtering
+    hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.node.all, length))>0;
+  }else{
+    # gene&cmpd
+    ko.map1 <- ko.edge.map;
+    colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
+    hits.edge <- MatchQueryOnKEGGMap(hits.query, ko.map1)
+    #find matches for all queries without applying pathway filtering
+    hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map1)
+    
+    ko.map2 <- ko.node.map.global;
+    colnames(ko.map2) <- c("queryid", "edge", "net"); rownames(ko.map2)<-NULL;
+    hits.node <- MatchQueryOnKEGGMap(hits.query, ko.map2)
+    #find matches for all queries without applying pathway filtering
+    hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map2)
+    
+    ko.map <- rbind(ko.map1, ko.map2)
+    # TO-DO: combine results hits.edge and hits.node without applying again lapply over hits.query
+    hits.both <- MatchQueryOnKEGGMap(hits.query, ko.map)
+    hits.inx <- unlist(lapply(hits.both, length))>0;
+    
+    #find matches for all queries without applying pathway filtering
+    hits.both <- MatchQueryOnKEGGMap(hits.all, ko.map)
+    hits.inx.all <- unlist(lapply(hits.both, length))>0;
+  }
+  
+  # only keep hits with edges in the map
+  hits.query <- hits.query[hits.inx]; hits.all <- hits.all[hits.inx.all];
+  resTable <- resTable[hits.inx, ];
+  
+  # write json
+  fun.pval = resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
+  hit.num = resTable$Hits; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
+  fun.ids <- as.vector(current.setids[names(hits.query)]); if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
+  
+  #clean non-metabolic pathways
+  rm.ids <- which(is.na(fun.ids))
+  if(length(rm.ids) != 0){
+    fun.ids <- fun.ids[-rm.ids]
+    fun.pval <- fun.pval[-rm.ids]
+    hit.num <- hit.num[-rm.ids]
+    hits.query <- hits.query[-rm.ids]
+  }
+  
+  expr = as.list(dataSet$data)
+  names(expr) <- rownames(dataSet$data)
+  json.res <- list(
+    expr.mat = expr,
+    hits.query = hits.query,
+    hits.edge = hits.edge,
+    hits.node = hits.node,
+    hits.all = hits.all,
+    hits.edge.all = hits.edge.all,
+    hits.node.all = hits.node.all,
+    path.id = fun.ids,
+    fun.pval = fun.pval,
+    hit.num = hit.num
+  );
+  json.mat <- RJSONIO::toJSON(json.res, .na='null');
+  json.nm <- paste(file.nm, ".json", sep="");
+  sink(json.nm)
+  cat(json.mat);
+  sink();
+  
+  # write csv
+  fun.hits <<- hits.query;
+  fun.pval <<- resTable[,5];
+  hit.num <<- resTable[,4];
+  csv.nm <- paste(file.nm, ".csv", sep="");
+  fast.write.csv(resTable, file=csv.nm, row.names=F);
+}
+
 #'Utility function for PerformKOEnrichAnalysis_KO01100
 #'@param category Module or pathway
 LoadKEGGKO_lib<-function(category){
@@ -442,6 +636,46 @@ LoadKEGGKO_lib<-function(category){
       ko.edge.map <<- .readDataTable(ko.edge.path); 
     }else{
       ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
+      download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
+      ko.edge.map <<- .readDataTable("ko_edge.csv"); 
+    }
+  } 
+  
+  kos.01100 <- ko.edge.map$gene[ko.edge.map$net == "ko01100"];
+  current.mset <- lapply(current.mset, 
+                         function(x) {
+                           as.character(unique(x[x %in% kos.01100]));
+                         }
+  );
+  # remove those empty ones
+  mset.ln <- lapply(current.mset, length);
+  current.mset <- current.mset[mset.ln > 0];
+  set.ids<- names(current.mset); 
+  names(set.ids) <- names(current.mset) <- kegg.anot$term[set.ids];
+  
+  current.setlink <<- current.setlink;
+  current.setids <<- set.ids;
+  current.geneset <<- current.mset;
+}
+
+LoadKEGGKO_libOld<-function(category){
+  
+  if(category == "module"){
+    kegg.anot <- .get.my.lib("ko_modules.qs", "network");
+    current.setlink <- kegg.anot$link;
+    current.mset <- kegg.anot$sets$"Pathway module";
+  }else{
+    kegg.anot <- .get.my.lib("ko_pathways.qs", "network");
+    current.setlink <- kegg.anot$link;
+    current.mset <- kegg.anot$sets$Metabolism;
+  }
+  # now need to update the msets to contain only those in ko01100 map
+  if(!exists("ko.edge.map")){
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/old/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path); 
+    }else{
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/old/ko_edge.csv", sep="");
       download.file(ko.edge.path, destfile = "ko_edge.csv", method="libcurl", mode = "wb")
       ko.edge.map <<- .readDataTable("ko_edge.csv"); 
     }
@@ -549,6 +783,31 @@ MapKO2KEGGEdges<- function(kos, net="ko01100"){
   return(dat[,-2]);
 }
 
+MapKO2KEGGEdgesOld<- function(kos, net="ko01100"){
+  if(!exists("ko.edge.map")){
+    if(.on.public.web){
+      ko.edge.path <- paste("../../libs/network/old/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path);     
+    }else{
+      ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/old/ko_edge.csv", sep="");
+      ko.edge.map <<- .readDataTable(ko.edge.path);     
+    }
+  } 
+  all.hits <- ko.edge.map$gene %in% names(kos) & ko.edge.map$net == net;
+  my.map <- ko.edge.map[all.hits, ];
+  q.map <- data.frame(gene=names(kos), expr=as.numeric(kos));
+  
+  # first merge to get ko abundance to each edge
+  dat <- merge(my.map, q.map, by="gene");
+  
+  # now merge duplicated edge to sum
+  dup.inx <- duplicated(dat[,2]);
+  dat <- dat[!dup.inx,];
+  rownames(dat) <- dat[,2];
+  
+  return(dat[,-2]);
+}
+
 #'Utility function for PrepareQueryJson
 #'@param cmpds Input the compounds
 #'@param net Input the network name
@@ -582,6 +841,63 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
       ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));    
     }else{
       ko.pathway.names <- .readDataTable(paste("https://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    
+    }
+    
+    #ko.node.map <- do.call(rbind, lapply(1:length(pathways$name), function(i) cbind(unlist(pathways$cpds[i]), pathways$name[i])));
+    #ko.node.matches <- ko.pathway.names[match(ko.node.map[,2], ko.pathway.names$name),2]
+    # Replace pathway names with ids
+    #ko.node.map[,2] <- ko.node.matches
+    # Clean missing cases
+    #ko.node.map <- ko.node.map[!is.na(ko.node.matches),]
+    #ko.node.map.global <<- data.frame(cmpd = ko.node.map[,1], edge = ko.node.map[,2], net = rep("ko01100", nrow(ko.node.map)))
+    ko.node.map.global <<- data.frame(cmpd = ko.pathway.names[,1], edge = ko.pathway.names[,2], net = rep("ko01100", nrow(ko.pathway.names)))
+  }
+  
+  all.hits <- ko.node.map.global$cmpd %in% names(cmpds) & ko.node.map.global$net == net;
+  my.map <- ko.node.map.global[all.hits, ];
+  q.map <- data.frame(cmpd=names(cmpds), expr=as.numeric(cmpds));
+  
+  # first merge to get cmpd abundance to each edge
+  dat <- merge(my.map, q.map, by="cmpd");
+  
+  # now merge duplicated edge to sum
+  dup.inx <- duplicated(dat[,2]);
+  dat <- dat[!dup.inx,];
+  rownames(dat) <- dat[,2];
+  
+  return(dat[,-2]);
+}
+
+MapCmpd2KEGGNodesOld <- function(cmpds, net="ko01100"){
+  
+  lib <- "hsa_kegg.qs" # TO-DO: change for other species
+  if(!exists("ko.node.map.global")){
+    # Read original library files for a list of pathways with assigned compounds to each
+    
+    if(.on.public.web){
+      pathway.lib <- qs::qread(paste("../../libs/mummichog/", lib, sep=""));
+    }else{
+      if(!file.exists(lib)){
+        path.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
+        download.file(path.url, destfile = lib, method="libcurl", mode = "wb")
+        pathway.lib <- qs::qread(lib);
+      }else{
+        pathway.lib <- qs::qread(lib);
+      }
+    }
+    
+    pathways <- pathway.lib$pathways;
+    
+    # Store universe for enrichment analysis
+    names(pathways$cpds) <- pathways$name
+    current.cmpd.set <<- pathways$cpds;
+    
+    # Read pathway names and ids in the target pathway map (e.g. ko01100)
+    
+    if(.on.public.web){
+      ko.pathway.names <- .readDataTable(paste("../../libs/network/old/ko01100_compounds_ids.csv", sep=""));    
+    }else{
+      ko.pathway.names <- .readDataTable(paste("https://www.metaboanalyst.ca/resources/libs/network/old/ko01100_compounds_ids.csv", sep=""));    
     }
     
     #ko.node.map <- do.call(rbind, lapply(1:length(pathways$name), function(i) cbind(unlist(pathways$cpds[i]), pathways$name[i])));

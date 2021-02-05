@@ -7,6 +7,7 @@ meta-analysis at the pathway level.}
 \usage{
 PlotPathwayMetaAnalysis(
   mSetObj = NA,
+  imgName,
   plotType = "heatmap",
   heatmap_colorType = "brewer",
   heatmap_palette = "RdYlBu",
@@ -28,7 +29,7 @@ PlotPathwayMetaAnalysis(
   bubble_colorType = "brewer",
   bubble_palette = "RdBu",
   bubbleFontSize = 9,
-  bubblePlotSize = 7.5
+  bubblePlotSize = 7
 )
 }
 \arguments{
