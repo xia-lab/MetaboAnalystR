@@ -20,7 +20,7 @@
 
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, 
                              chebi=F, kegg=T, metlin=F, lipid=F){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   # record the filter for 8 major databases
@@ -346,11 +346,11 @@ CleanLipidNames <- function(qvec){
 #'@export
 #'
 PerformDetailMatch <- function(mSetObj=NA, q){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   lipid = mSetObj$lipid.feats
-
+  
   if(mSetObj$dataSet$q.type == "name"){
     PerformApproxMatch(mSetObj, q, lipid);
   }else{
@@ -394,7 +394,7 @@ PerformMultiMatch <- function(mSetObj=NA, q, lipid){
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q, lipid){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
@@ -504,7 +504,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
     }
     
     if(length(matched.inx) > 0){
-
+      
       candidates <- data.frame(index=vector(mode = "numeric", length=length(matched.inx)),
                                value=vector(mode = "character", length=length(matched.inx)),
                                score=vector(mode = "numeric", length=length(matched.inx)),
@@ -622,7 +622,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 #'@export
 
 GetCandidateList <- function(mSetObj=NA, lipid){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   lipid = mSetObj$lipid.feats
@@ -705,6 +705,10 @@ GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
   mSetObj <- .get.mSet(mSetObj);
   
   lipid = mSetObj$lipid.feats
+  
+  if (is.null(lipid)) {
+    lipid = FALSE
+  }
   
   hit.inx <- mSetObj$name.map$hit.inx;
   hit.values <- mSetObj$name.map$hit.values;
