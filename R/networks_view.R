@@ -20,7 +20,11 @@
 UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ"){
 
   mSetObj <- .get.mSet(mSetObj);
-
+  # make sure this is annotated   
+  if(is.null(mSetObj$org)){
+    AddErrMsg("It appears that data is not annotated yet - unknown organism and ID types! Please use other modules (pathway/network) to access this function.");
+    return(0);
+  }
   sub.dir <- paste0("kegg/jointpa/",libOpt);
   destfile <- paste0(mSetObj$org, ".qs");
   current.kegglib <<- .get.my.lib(destfile, sub.dir);
@@ -189,7 +193,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 #'@export
 #'@import igraph
 CreateGraph <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
 
   if(.on.public.web){
@@ -202,11 +206,11 @@ CreateGraph <- function(mSetObj=NA){
 
   seed.proteins <- pheno.net$seeds;
   if(net.type == "dspc"){
-    if(nrow(edge.list) < 1000 ){
+    if(nrow(edge.list) < 1000){
       top.percent <- round(nrow(edge.list)*0.2);
       top.edge <- sort(unique(edge.list$Pval))[1:top.percent]; #default only show top 20% significant edges when #edges<1000
     }else{                                                    #default only show top 100 significant edges when #edges>1000   
-      top.edge <- sort(unique(edge.list$Pval))[1:100];
+      top.edge <- sort(edge.list$Pval)[1:100];
     }
     top.inx <- match(edge.list$Pval, top.edge);
     topedge.list <- edge.list[!is.na(top.inx), ,drop=F];
@@ -379,7 +383,7 @@ ComputeSubnetStats <- function(comps){
   return(net.stats);
 }
 
-    UpdateSubnetStats <- function(){
+UpdateSubnetStats <- function(){
   old.nms <- names(pheno.comps);
   net.stats <- ComputeSubnetStats(pheno.comps);
   ord.inx <- order(net.stats[,1], decreasing=TRUE);
@@ -1023,11 +1027,16 @@ scale_vec_colours = function(x, col = rainbow(10), breaks = NA){
 # for a given graph, obtain the smallest subgraphs that contain
 # all the seed nodes. This is acheived by iteratively remove
 # the marginal nodes (degree = 1) that are not in the seeds
-GetMinConnectedGraphs <- function(max.len = 200){
+GetMinConnectedGraphs <- function(mSetObj=NA, max.len = 200){
+  mSetObj <- .get.mSet(mSetObj);
   # need to test
   set.seed(8574);
   # first get shortest paths for all pair-wise seeds
-  my.seeds <- seed.proteins;
+  my.seeds <- seed.graph;
+
+  # remove seeds not in the network
+  keep.inx <- my.seeds %in% V(overall.graph)$name;
+  my.seeds <- my.seeds[keep.inx]; 
   sd.len <- length(my.seeds);
   paths.list <-list();
 
@@ -1066,67 +1075,48 @@ GetMinConnectedGraphs <- function(max.len = 200){
 
   nodeList <- get.data.frame(g, "vertices");
   colnames(nodeList) <- c("Id", "Label");
-  fast.write(nodeList, file="orig_node_list.csv", row.names=F);
+  fast.write.csv(nodeList, file="orig_node_list.csv", row.names=F);
 
   edgeList <- get.data.frame(g, "edges");
   edgeList <- cbind(rownames(edgeList), edgeList);
   colnames(edgeList) <- c("Id", "Source", "Target");
-  fast.write(edgeList, file="orig_edge_list.csv", row.names=F);
+  fast.write.csv(edgeList, file="orig_edge_list.csv", row.names=F);
 
   path.list <- NULL;
   substats <- DecomposeGraph(g);
   net.stats<<-net.stats
-  if(!is.null(substats)){
-    overall.graph <<- g;
-    return(c(length(seed.genes),length(seed.proteins), nrow(nodeList), nrow(edgeList), length(ppi.comps), substats));
-  }else{
-    return(0);
-  }
-}
 
-FilterMirNetByList <- function(ids, id.type, remove){
-  # need to fix this function
-  lines <- strsplit(ids, "\r|\n|\r\n")[[1]];
-  lines<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", lines, perl=TRUE);
-  nms.vec = unique(unlist(dataSet$mir.res[, c(1,2,3,4)]))
-  # need to first convert to correct id used in the graph
-  hit.inx <- nms.vec %in% lines;
-  nodes2rm = nms.vec[hit.inx]
-
-  if(remove== "true"){
-    nodes2rm <- nodes2rm[nodes2rm %in% V(mir.graph)$name];    # make sure they are in the igraph object
+  if(.on.public.web){
+    mSetObj <- .get.mSet(mSetObj);
+    if(!is.null(substats)){
+      overall.graph <<- overall.graph;
+      return(c(length(seed.graph),length(seed.proteins), vcount(overall.graph), ecount(overall.graph), length(pheno.comps), substats));
+    }else{
+      return(0);
+    }
   }else{
-    nodes2rm <- V(mir.graph)$name[!(V(mir.graph)$name %in% nodes2rm)];    # make sure they are in the igraph object
-  }
-  mir.graph <- simplify(delete.vertices(mir.graph, nodes2rm));
-  current.msg <<- paste("A total of", length(nodes2rm) , "was reduced.");
-  substats <- DecomposeMirGraph(mir.graph, 2);
-  if(!is.null(substats)){
-    mir.graph <<- mir.graph;
-    return(c(nrow(dataSet$mir.orig), length(unique(dataSet$mir.filtered[,1])), length(unique(dataSet$mir.filtered[,3])), ecount(mir.graph), length(mir.nets), substats));
-  }else{
-    return(0);
+    return(.set.mSet(mSetObj));
   }
 }
 
 FilterNetByCor <- function(min.pval, min.qval, neg.coeff1, neg.coeff2, pos.coeff1, pos.coeff2){
   mSetObj <- .get.mSet(mSetObj);
-  min.pval<<-min.pval;
-  min.qval<<-min.qval;
-  neg.coeff1<<-neg.coeff1;
-  neg.coeff2<<-neg.coeff2;
-  pos.coeff1<<-pos.coeff1;
-  pos.coeff2<<-pos.coeff2;
+  
   edge.list <- pheno.net$edge.data;
+  # filter by correlation coefficient only
+  edge.list.filter.neg <- edge.list[which(edge.list$Coefficient >= neg.coeff1 & edge.list$Coefficient < neg.coeff2),];
+  edge.list.filter.pos <- edge.list[which(edge.list$Coefficient >= pos.coeff1 & edge.list$Coefficient < pos.coeff2),];
+  edge.list.filter <- rbind(edge.list.filter.neg, edge.list.filter.pos);
+  # filter by both correlation coefficient and p values
+  # also apply to filter by p values only b/c correlation coefficient were set to -1, 0, 0, 1 in java 
   if(min.pval > 0){
-    edge.list.filter <- edge.list[which(edge.list$Pval < min.pval),];
+    edge.list.filter.neg <- edge.list[which(edge.list$Pval <= min.pval & edge.list$Coefficient >= neg.coeff1 & edge.list$Coefficient < neg.coeff2),];
+    edge.list.filter.pos <- edge.list[which(edge.list$Pval <= min.pval & edge.list$Coefficient >= pos.coeff1 & edge.list$Coefficient < pos.coeff2),];
+    edge.list.filter <- rbind(edge.list.filter.neg, edge.list.filter.pos);
   }
   if(min.qval > 0){
-    edge.list.filter <- edge.list[which(edge.list$Adj_Pval < min.qval),];
-  }
-  if(neg.coeff1 > -1 || neg.coeff2 < 0 || pos.coeff1 > 0 || pos.coeff2 < 1){
-    edge.list.filter.neg <- edge.list[which(edge.list$Coefficient > neg.coeff1 & edge.list$Coefficient < neg.coeff2),];
-    edge.list.filter.pos <- edge.list[which(edge.list$Coefficient > pos.coeff1 & edge.list$Coefficient < pos.coeff2),];
+    edge.list.filter.neg <- edge.list[which(edge.list$Adj_Pval <= min.qval & edge.list$Coefficient >= neg.coeff1 & edge.list$Coefficient < neg.coeff2),];
+    edge.list.filter.pos <- edge.list[which(edge.list$Adj_Pval <= min.qval & edge.list$Coefficient >= pos.coeff1 & edge.list$Coefficient < pos.coeff2),];
     edge.list.filter <- rbind(edge.list.filter.neg, edge.list.filter.pos);
   }
   overall.graph <-simplify(graph_from_data_frame(edge.list.filter, directed=FALSE, vertices=NULL), edge.attr.comb="first");
@@ -1146,12 +1136,8 @@ FilterNetByCor <- function(min.pval, min.qval, neg.coeff1, neg.coeff2, pos.coeff
 }
 
 FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
- # need to fix
-  nd.type<<-nd.type;
-  min.dgr<<-min.dgr;
-  min.btw<<-min.btw;
-  mSetObj <- .get.mSet(mSetObj);
 
+  mSetObj <- .get.mSet(mSetObj);
   all.nms <- V(overall.graph)$name;
   edge.mat <- get.edgelist(overall.graph);
   dgrs <- degree(overall.graph);
@@ -1176,8 +1162,10 @@ FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
   }
 
   nodes2rm <- unique(c(nodes2rm.dgr, nodes2rm.btw));
-  overall.graph <- simplify(delete.vertices(overall.graph, nodes2rm));
-  current.msg <<- paste("A total of", length(nodes2rm) , "was reduced.");
+  overall.graph <- simplify(delete.vertices(overall.graph, nodes2rm), edge.attr.comb=list("first"));
+  # the simplify() function removes the edge attributes by default
+  # added edge.attr.comb=list("first") to always chooses the first attribute value
+  AddMsg(paste("A total of", length(nodes2rm) , "was reduced."));
   substats <- DecomposeGraph(overall.graph);
   if(.on.public.web){
     mSetObj <- .get.mSet(mSetObj);
@@ -1190,4 +1178,58 @@ FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
   }else{
     return(.set.mSet(mSetObj));
   }
+}
+
+GetMaxRawPVal<-function(mSetObj=NA){
+  edge.attr <- edge_attr(overall.graph);
+  res <- round(max(edge.attr$Pval), digits = 6);
+  return(res)
+}
+
+GetMinNegCoeff<-function(mSetObj=NA){
+  edge.attr <- edge_attr(overall.graph);
+  coeff <- edge.attr$Coefficient;
+  neg.coeff <- coeff[coeff<0];
+  if(length(neg.coeff) == 0){ # when there is no negative coefficnets
+    res <- 0;
+  }else {
+    res <- round(min(neg.coeff), digits = 6);
+  }
+  return(res)
+}
+
+GetMaxNegCoeff<-function(mSetObj=NA){
+  edge.attr <- edge_attr(overall.graph);
+  coeff <- edge.attr$Coefficient;
+  neg.coeff <- coeff[coeff<0];
+  if(length(neg.coeff) == 0){ # when there is no negative coefficnets
+    res <- 0;
+  }else {
+    res <- round(max(neg.coeff), digits = 6);
+  }
+  return(res)
+}
+
+GetMinPosCoeff<-function(mSetObj=NA){
+  edge.attr <- edge_attr(overall.graph);
+  coeff <- edge.attr$Coefficient;
+  pos.coeff <- coeff[coeff>0];
+  if(length(pos.coeff) == 0){ # when there is no positive coefficnets
+    res <- 0;
+  }else {
+    res <- round(min(pos.coeff), digits = 6);
+  }
+  return(res)
+}
+
+GetMaxPosCoeff<-function(mSetObj=NA){
+  edge.attr <- edge_attr(overall.graph);
+  coeff <- edge.attr$Coefficient;
+  pos.coeff <- coeff[coeff>0];
+  if(length(pos.coeff) == 0){ # when there is no positive coefficnets
+    res <- 0;
+  }else {
+    res <- round(max(pos.coeff), digits = 6);
+  }
+  return(res)
 }

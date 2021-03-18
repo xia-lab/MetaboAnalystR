@@ -56,7 +56,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   dataSet$paired <- paired;
   analSet <- list();
   analSet$type <- anal.type;
-  
+  Sys.setenv("OMP_NUM_THREADS" = 2); # to control parallel computing for some packages
   mSetObj <- list();
   mSetObj$dataSet <- dataSet;
   mSetObj$analSet <- analSet;
@@ -64,10 +64,17 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj$msgSet <- list(); # store various message during data processing
   mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
   mSetObj$cmdSet <- vector(mode="character"); # store R command
-  
+
   .init.global.vars(anal.type);
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));
+}
+
+# for switching from spec to other modules
+PrepareSpec4Switch <- function(){
+    InitDataObjects("conc", "stat", FALSE);
+    TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
+    Read.TextData(NA, "metaboanalyst_input.csv", "colu", "disc");
 }
 
 # this is for switching module
@@ -77,16 +84,18 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     mSetObj$dataSet$type <- data.type;
     mSetObj$analSet$type <- anal.type;
     .init.global.vars(anal.type);    
-    
+
     # some specific setup 
     if(anal.type == "mummichog"){
+        .set.mSet(mSetObj);
         .init.MummiMSet();
         load("params.rda");        
         mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
         mSetObj <- .rt.included(mSetObj, "seconds");
-        mSetObj <- Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
+        #mSetObj <- Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
         mSetObj <- .get.mSet(NA);
     }
+
     return(.set.mSet(mSetObj));
 }
 
@@ -109,6 +118,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   smpdbpw.count <<- 0; 
   # for mummichog
   peakFormat <<- "mpt"  
+  mumRT.type <<- "NA";
 
   # raw data processing
   rawfilenms.vec <<- vector();
@@ -137,7 +147,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <<- "/home/glassfish/sqlite/";
   }else if(file.exists("/home/jasmine/Downloads/sqlite/")){ #jasmine's local
      url.pre <<- "/home/jasmine/Downloads/sqlite/";
-     api.base <<- "localhost:8987"
+     #api.base <<- "localhost:8686"
   }else if(file.exists("/Users/soufanom/Documents/Projects/gene-id-mapping/")){ # soufan laptop
      url.pre <<- "/Users/soufanom/Documents/Projects/gene-id-mapping/";
   }else if(file.exists("~/Documents/Projects/gene-id-mapping/")){
@@ -150,10 +160,15 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
      url.pre <<-"/home/zgy/sqlite/"; #zgy local)
   } else if(file.exists("/home/le/sqlite/")){# le local
     url.pre <<-"/home/le/sqlite/";
+  }else if(file.exists("/home/qiang/Music/")){# qiang local
+    url.pre <<-"/home/qiang/sqlite/";
   }else{
      url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
-     api.base <<- "http://api.xialab.ca"
   }
+
+  api.base <<- "http://api.xialab.ca"
+  #api.base <<- "132.216.38.6:8987"
+
 }
 #'For two factor time series only
 #'@description For two factor time series only
@@ -180,8 +195,10 @@ RecordRCommand <- function(mSetObj=NA, cmd){
 }
 
 SaveRCommands <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj); 
+  mSetObj <- .get.mSet(mSetObj);  
   cmds <- paste(mSetObj$cmdSet, collapse="\n");
+  pid.info <- paste0("# PID of current job: ", Sys.getpid());
+  cmds <- c(pid.info, cmds);
   write(cmds, file = "Rhistory.R", append = FALSE);
 }
 
@@ -190,6 +207,9 @@ SaveRCommands <- function(mSetObj=NA){
 #'@export
 GetRCommandHistory <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj); 
+  if(length(mSetObj$cmdSet) == 0){
+    return("No commands found");
+  }
   return(mSetObj$cmdSet);
 }
 
@@ -393,14 +413,11 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   }
   
   # only keep alphabets, numbers, ",", "." "_", "-" "/"
-  orig.smp.nms <- smpl.nms;
-  smpl.nms <- CleanNames(smpl.nms, "sample_name");
-  names(orig.smp.nms) <- smpl.nms;
+  url.smp.nms <- CleanNames(smpl.nms);
+  names(url.smp.nms) <- smpl.nms;
 
-  # keep a copy of original names for saving tables 
-  orig.var.nms <- var.nms;
-  var.nms <- CleanNames(var.nms, "var_name"); # allow space, comma and period
-  names(orig.var.nms) <- var.nms;
+  url.var.nms <- CleanNames(var.nms); # allow space, comma and period
+  names(url.var.nms) <- var.nms;
 
   cls.lbl <- ClearStrings(as.vector(cls.lbl));
 
@@ -413,15 +430,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     # save as it is and process in sanity check step
     mSetObj$dataSet$orig.cls <- mSetObj$dataSet$pairs <- cls.lbl;
   } else {
-    if(lbl.type == "disc"){
-      # check for class labels at least two replicates per class
-      #if(min(table(cls.lbl)) < 3){
-      #  AddErrMsg(paste ("A total of", length(levels(as.factor(cls.lbl))), "groups found with", length(smpl.nms), "samples."));
-      #  AddErrMsg("At least three replicates are required in each group!");
-      #  AddErrMsg("Or maybe you forgot to specify the data format?");
-      #  return(0);
-      #}
-     
+    if(lbl.type == "disc"){     
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
       
       if(substring(format,4,5)=="ts"){
@@ -457,8 +466,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   }
 
   mSetObj$dataSet$mumType <- "table";
-  mSetObj$dataSet$orig.var.nms <- orig.var.nms;
-  mSetObj$dataSet$orig.smp.nms <- orig.smp.nms;
+  mSetObj$dataSet$url.var.nms <- url.var.nms;
+  mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   qs::qsave(conc, file="data_orig.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
@@ -466,6 +475,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
 
   return(.set.mSet(mSetObj));
 }
+
 
 #'Read paired peak or spectra files
 #'@description This function reads paired peak lists or spectra files. The pair information
@@ -496,105 +506,51 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
-
-  mSetObj <- .get.mSet(mSetObj);
-  data.type <- mSetObj$dataSet$type
-  
-  # mummichog data is not processed, so just mSet$orig and mSet$proc
-  
-  if(anal.type=="mummichog"){
-    fast.write.csv(mSetObj$dataSet$mummi.orig, file="data_original.csv", row.names = FALSE);
-    fast.write.csv(mSetObj$dataSet$mummi.proc, file="data_processed.csv", row.names = FALSE);
-  }else{
-    if(file.exists("data_orig.qs")){
-      lbls <- NULL;
-      tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
-      if(tsFormat){
-        lbls <- cbind(as.character(mSetObj$dataSet$orig.facA),as.character(mSetObj$dataSet$orig.facB));
-        colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-      }else{
-        lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));
-      }
-      
-      orig.var.nms <- mSetObj$dataSet$orig.var.nms;
-      orig.data<- qs::qread("data_orig.qs");
-      
-      # convert back to original names
-      if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-        colnames(orig.data) <- orig.var.nms[colnames(orig.data)];
-      }
-        orig.data<-cbind(lbls, orig.data);
-
-      if(dim(orig.data)[2]>200){
-        orig.data<-t(orig.data);
-      }
-        
-      fast.write.csv(orig.data, file="data_original.csv");
-      
-      if(!is.null(mSetObj$dataSet[["proc"]])){
-        
-        if(!is.null(mSetObj$dataSet[["filt"]])){
-          if(tsFormat){
-            lbls <- cbind(as.character(mSetObj$dataSet$filt.facA),as.character(mSetObj$dataSet$filt.facB));
-            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-          }else{
-            lbls <- cbind("Label"= as.character(mSetObj$dataSet$filt.cls));
-          }
-          proc.data<-mSetObj$dataSet$filt;  
-        }else{
-          if(tsFormat){
-            lbls <- cbind(as.character(mSetObj$dataSet$proc.facA),as.character(mSetObj$dataSet$proc.facB));
-            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-          }else{
-            lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
-          }
-          proc.data<-mSetObj$dataSet$proc;
-        }
-        
-        # convert back to original names
-        if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-          colnames(proc.data) <- orig.var.nms[colnames(proc.data)];
-        }
-        proc.data<-cbind(lbls, proc.data);
-        
-        if(dim(proc.data)[2]>200){
-          proc.data<-t(proc.data);
-        }
-        fast.write.csv(proc.data, file="data_processed.csv");
-        
-        if(!is.null(mSetObj$dataSet[["norm"]])){
-          if(tsFormat){
-            lbls <- cbind(as.character(mSetObj$dataSet$facA),as.character(mSetObj$dataSet$facB));
-            colnames(lbls) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-          }else{
-            lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
-          }
-          
-          norm.data <- mSetObj$dataSet$norm;
-          
-          # for ms peaks with rt and ms, insert two columns, without labels
-          # note in memory, features in columns
-          if(!is.null(mSetObj$dataSet$three.col)){ 
-            ids <- matrix(unlist(strsplit(colnames(norm.data), "/", fixed=TRUE)),ncol=2, byrow=T);
-            colnames(ids) <- c("mz", "rt");
-            new.data <- data.frame(ids, t(norm.data));
-            fast.write.csv(new.data, file="peak_normalized_rt_mz.csv");
-          }else{
-            # convert back to original names
-            if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-              colnames(norm.data) <- orig.var.nms[colnames(norm.data)];   
-            }
-            norm.data<-cbind(lbls, norm.data);
-            if(dim(norm.data)[2]>200){
-              norm.data<-t(norm.data);
-            }
-            fast.write.csv(norm.data, file="data_normalized.csv");
-          }
-        }
-      }
+    # make this lazy load
+    if(!exists("my.save.data")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/metaboanalystr/_util_savedata.Rc");    
     }
-  }
-  return(.set.mSet(mSetObj));
+    return(my.save.data(mSetObj));
+}
+
+#' Read an mzTab tab separated file from the passed in file.
+#' Adapted from: https://github.com/lifs-tools/rmzTab-m/blob/master/R/MzTabReader.r
+#' @param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#' @param filename The name of the mzTab file to parse.
+#' @param identifier The identifier to be used when the table is parsed. Use "name"
+#' to use the chemical_name, "mass" to use the theoretical_neutral_mass and "sml_id"
+#' to use the SML_ID. If the number of missing name and mass entries is greater than 90%,
+#' then the SML_ID will be used.
+#' @export
+Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
+    # make this lazy load
+    if(!exists("my.parse.mztab")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/metaboanalystr/_util_mztab.Rc");    
+    }
+    return(my.parse.mztab(mSetObj, filename, identifier));
+}
+
+#'Read peak list files
+#'@description This function reads peak list files and fills the data into a dataSet object.  
+#'For NMR peak lists, the input should be formatted as two-columns containing numeric values (ppm, int).
+#'Further, this function will change ppm to mz, and add a dummy 'rt'.
+#'For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or
+#'the lists can be formatted as three-columns (mz, rt, int).
+#'@usage Read.PeakList(mSetObj=NA, foldername)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#'@param foldername Name of the folder containing the NMR or MS peak list files to read.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@import qs
+#'@export
+
+Read.PeakList<-function(mSetObj=NA, foldername="upload"){
+    # make this lazy load
+    if(!exists("my.parse.peaklist")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/metaboanalystr/_util_peaks.Rc");    
+    }
+    return(my.parse.peaklist(mSetObj, foldername));
 }
 
 #' Adds an error message
@@ -646,7 +602,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, w
     load_grid()
   }
   
-  imgName <- gsub("\\/", "_",  cmpdNm);
+  imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
   imgName <- paste(imgName, "_", version, "_summary_dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -792,7 +748,13 @@ GetMetaInfo <- function(mSetObj=NA){
     }
 }
 
-# all groups
+#'Get all group names
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+# 
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$dataSet$design.type == "regular"){
@@ -813,7 +775,12 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
     my.fac <- exp.fac;
   }
   current.cls <<- my.cls;
-  return(levels(my.cls));
+  
+  if(.on.public.web){
+    return(levels(my.cls));
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 # groups entering analysis
@@ -822,7 +789,12 @@ GetNormGroupNames <- function(mSetObj=NA){
   levels(mSetObj$dataSet$cls);
 }
 
-GetLiteralGroupNames <- function(mSetObj=NA){
+GetOrigSmplGroupNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.character(mSetObj$dataSet$orig.cls);
+}
+
+GetPrenormSmplGroupNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   as.character(mSetObj$dataSet$prenorm.cls);
 }
@@ -850,7 +822,6 @@ Read.TextDataMumMixed <- function(mSetObj=NA, filePath,filePath2, format="rowu",
     orig2 <- qs::qread("data_orig.qs");
     mSetObj <- temp_mSet1
     mSetObj$dataSet$mumType <- "table";
-    mSetObj$dataSet$orig.var.nms <- c(mSetObj$dataSet$orig.var.nms, temp_mSet2$dataSet$orig.var.nms);
     mSetObj$dataSet$mode <- "mixed"
     orig <- cbind(orig1, orig2);
     mSetObj$dataSet$pos_inx <- c(rep(TRUE, ncol(orig1)), rep(FALSE, ncol(orig2)))

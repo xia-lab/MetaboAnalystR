@@ -84,7 +84,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  imgName <- gsub("\\/", "_",  cmpdNm);
+  imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
   imgName <- paste(imgName, "_", version, "_dpi", dpi, ".", format, sep="");
 
   # adjust width based on the time points

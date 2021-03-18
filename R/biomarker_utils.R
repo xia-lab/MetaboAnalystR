@@ -203,12 +203,17 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   hit.inxY <- colnames(data) %in% colnames(x);
   data <- data[hit.inxX, hit.inxY, drop=FALSE];
   min.val <- min(abs(data[data!=0]))/2;
-  data <- log2((data + sqrt(data^2 + min.val))/2);
+  #data <- log2((data + sqrt(data^2 + min.val))/2);
   
   m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), , drop=FALSE]);
   m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), , drop=FALSE]);
-  fc <- m1-m2;
-  
+  #fc <- m1-m2;
+  ratio <- m1/m2;
+  ratio[ratio < 0] <- 0;
+  fc <- signif(log2(ratio), 5);
+  fc[is.infinite(fc) & fc < 0] <- -99;
+  fc[is.infinite(fc) & fc > 0] <- 99;
+
   if(mSetObj$dataSet$roc_cols > 1){ # dont need to calc kmeans if only 1 metabolite!
     # now do k-means to measure their expression similarities
 
@@ -943,7 +948,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, version, format="png", dpi=72, 
 
   mSetObj <- .get.mSet(mSetObj);
   
-  imgName <- gsub("\\/", "_",  feat.nm);
+  imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
   imgName = paste(imgName, "_", version, "dpi", dpi, ".", format, sep="");
   
   x <- mSetObj$dataSet$norm[, feat.nm];
@@ -1031,7 +1036,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
     load_ggplot()
   }
 
-  imgName <- gsub("\\/", "_",  feat.nm);
+  imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
   imgName = paste(imgName, "_box_", version, "dpi", dpi, ".", format, sep="");
   
   x <- mSetObj$dataSet$norm[, feat.nm];
@@ -1914,10 +1919,17 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
   
   # get the AUROC for permuted data
   pred <- ROCR::prediction(perf.outp, actualCls);
-  perf.obj <- ROCR::performance(pred, "tpr", "fpr");
-  aucs <- unlist(slot(ROCR::performance(pred, "auc"), "y.values"));
+  aucs <- try(unlist(slot(ROCR::performance(pred, "auc"), "y.values")));
+  if (class(aucs)=="try-error"){
+     AddErrMsg("Not enough distinct predictions to compute area under the ROC curve. Increase sample size or reduce permutation number.");
+     return(0);
+  }
   accs <- unlist(slot(ROCR::performance(pred, "acc"), "y.values"));
-  
+  perf.obj <- try(ROCR::performance(pred, "tpr", "fpr"));
+  if (class(perf.obj)=="try-error"){
+     AddErrMsg("Something wrong with the task. Increase sample size or reduce permutation number.");
+     return(0);
+  }
   # now, insert the average value of the original performance
   accs <- c(mean(mSetObj$analSet$ROCtest$accu.mat[1,]), accs);
   aucs <- c(mean(mSetObj$analSet$ROCtest$auc.vec), aucs);
@@ -2315,7 +2327,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
     "LRN" = (1-roc.res$sensitivities)/roc.res$specificities
   ));
   
-  filename <- paste(gsub("\\/", "_",  feat.nm), "_roc.csv", sep="");
+  filename <- paste(mSetObj$dataSet$url.var.nms[feat.nm], "_roc.csv", sep="");
   fast.write.csv(signif(roc.mat,4), file=filename, row.names=F);
   # need to clean NA/Inf/-Inf
   #analSet$roc.mat <- ClearNumerics(roc.mat);

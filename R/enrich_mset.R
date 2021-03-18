@@ -446,7 +446,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   }
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("master_compound_db.qs");
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -492,7 +492,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   }
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea")){
-    cmpd.db <- .get.my.lib("master_compound_db.qs");
+    cmpd.db <- .get.my.lib("class_compound_db_2020.qs");
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
@@ -562,28 +562,6 @@ SetMetabolomeFilter<-function(mSetObj=NA, TorF){
   return(.set.mSet(mSetObj));
 }
 
-getBestHit<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$dataSet$lib.search$best.hit);
-}
 
 
-#'Return metset search results
-#'@description since String[][] is not supported, have to return as 1D vector, 
-#'matrix can be directly convert to vector, note default will be column first
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
 
-GetMsetLibSearchResult<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(as.vector(mSetObj$dataSet$lib.search$matched.table));
-}
-
-GetSMPDBimg<-function(mSetObj=NA, msetInx){
-  mSetObj <- .get.mSet(mSetObj);
-  msetNm <- GetMetSetName(msetInx);
-  inx <- which(current.msetlib$name == msetNm);
-  return(current.msetlib$image[inx]);
-}

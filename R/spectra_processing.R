@@ -15,10 +15,9 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }else {
     users.path <-getwd();
   }
-  
+  print(getwd());
   ## Prepare Configuration script for slurm running
   conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=360:00\n#SBATCH --mem-per-cpu=5000\n#SBATCH --cpus-per-task=4\n"
-  
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -54,6 +53,15 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   cat(paste0("\nsrun R -e \"\n", str, "\n\""));
       
   sink();
+    
+  # record the R command
+  mSetObj <- .get.mSet(mSetObj); 
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, str);
+  .set.mSet(mSetObj);
+  
+  # add job cancel control button: 0 means running, 1 means kill!
+  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = "JobKill");
+  
   return(as.integer(1))
 }
 
@@ -152,6 +160,187 @@ verifyParam <- function(param0_path, users.path) {
   
 }
 
+#' spectraInclusion
+#' @description save the spectra file info for project loading
+#' @author Zhiqiang Pang
+spectraInclusion <- function(files, number){
+    qs::qsave(list(files, number), file = "IncludedSpectra.qs");
+}
+
+#' getSpectraInclusion
+#' @description read the spectra file info for project loading
+#' @author Zhiqiang Pang
+getSpectraInclusion <- function(){
+    return(qs::qread("IncludedSpectra.qs"));
+}
+
+#' updateSpectra3DPCA
+#' @description update Spectra 3D PCA, mainly json file
+#' @author Zhiqiang Pang
+updateSpectra3DPCA <- function(featureNM = 100){
+  load("mSet.rda");
+  #.feature_values <- OptiLCMS:::.feature_values;
+  
+  if(!exists("mSet")){
+    return(0);
+  }
+  
+  if(!is.numeric(featureNM)){
+    return(-1);
+  }
+  
+  sample_idx <-
+    mSet@rawOnDisk@phenoData@data[["sample_group"]];
+  
+  # feature_value <-
+  #   .feature_values(
+  #     pks = mSet@peakfilling$msFeatureData$chromPeaks,
+  #     fts = mSet@peakfilling$FeatureGroupTable,
+  #     method = "medret",
+  #     value = "into",
+  #     intensity = "into",
+  #     colnames = mSet@rawOnDisk@phenoData@data[["sample_name"]],
+  #     missing = NA
+  #   );
+  
+  ## Pre-process here
+  feature_value0 <- mSet@dataSet[-1,];
+  rownames(feature_value0) <- feature_value0[,1];
+  feature_value <- feature_value0[,-1];
+  feature_value[is.na(feature_value)] <- 0;
+  
+  int.mat <- as.matrix(feature_value)
+  rowNms <- rownames(int.mat);
+  colNms <- colnames(int.mat);
+  int.mat <- t(apply(int.mat, 1, function(x) .replace.by.lod(as.numeric(x))));
+  rownames(int.mat) <- rowNms;
+  colnames(int.mat) <- colNms; 
+  feature_value <- int.mat;
+  feature_value[feature_value==0] <- 1;
+
+  # feature_value[is.na(feature_value)] <- 0;
+  # int.mat <- feature_value
+  # rowNms <- rownames(int.mat);
+  # colNms <- colnames(int.mat);
+  # int.mat <- t(apply(int.mat, 1, .replace.by.lod));
+  # 
+  # rownames(int.mat) <- rowNms;
+  # colnames(int.mat) <- colNms; 
+  # feature_value <- int.mat;
+  # 
+  # feature_value[feature_value==0] <- 1;
+  
+  min.val <- min(abs(feature_value[feature_value!=0]))/10;
+  pca_feats <- log10((feature_value + sqrt(feature_value^2 + min.val^2))/2);
+  
+  pca_feats[is.na(pca_feats)] <- 0;
+  df0 <- na.omit(pca_feats);
+  df1 <- df0[is.finite(rowSums(df0)),];
+  df <- t(df1);
+
+  ## Filtering
+  mSet_pca <- prcomp(df, center = TRUE, scale = FALSE);
+  imp.pca<-summary(mSet_pca)$importance;
+  coords0 <- coords <- data.frame(t(signif(mSet_pca$rotation[,1:3], 5)));
+  colnames(coords) <- NULL; 
+
+  weights <- imp.pca[2,][1:3]
+  mypos <- t(coords);
+  meanpos <- apply(abs(mypos),1, function(x){weighted.mean(x, weights)})
+  
+  df.idx <- data.frame(pos = meanpos, inx = seq.int(1,length(meanpos)))
+  df.idx <- df.idx[order(-df.idx$pos),]
+
+  selectRow_idx <- df.idx[c(1:featureNM), 2]
+  feature_value1 <- feature_value[sort(selectRow_idx),];
+  
+  dists <- GetDist3D(coords0);
+  colset <- GetRGBColorGradient(dists);
+  cols <- colset[sort(selectRow_idx)];
+  
+  ## Processing to save Json
+  coords0 <- coords <- df0 <- df1 <- df <- NULL;
+  min.val <- min(abs(feature_value1[feature_value1!=0]))/10;
+  pca_feats <- log10((feature_value1 + sqrt(feature_value1^2 + min.val^2))/2);
+  
+  pca_feats[is.na(pca_feats)] <- 0;
+  df0 <- na.omit(pca_feats);
+  df1 <- df0[is.finite(rowSums(df0)),];
+  df <- t(df1);
+  
+  mSet_pca <- prcomp(df, center = TRUE, scale = FALSE);
+  
+  sum.pca <- summary(mSet_pca);
+  var.pca <-
+    sum.pca$importance[2,]; # variance explained by each PCA
+  
+  xlabel <- paste("PC1", "(", round(100 * var.pca[1], 1), "%)");
+  ylabel <- paste("PC2", "(", round(100 * var.pca[2], 1), "%)");
+  zlabel <- paste("PC2", "(", round(100 * var.pca[3], 1), "%)");
+  
+  # using ggplot2
+  df <- as.data.frame(mSet_pca$x);
+  df$group <- sample_idx;
+  
+  ## For score plot
+  pca3d <- list();
+  pca3d$score$axis <- c(xlabel, ylabel, zlabel);
+  xyz0 <- df[,c(1:3)];
+  colnames(xyz0) <- rownames(xyz0) <- NULL;
+  pca3d$score$xyz <- data.frame(t(xyz0));
+  colnames(pca3d$score$xyz) <- NULL;
+  pca3d$score$name <- rownames(df);
+  pca3d$score$facA <- df$group;
+  
+  if(length(unique(df$group)) < 9){
+    col.fun <-
+      grDevices::colorRampPalette(RColorBrewer::brewer.pal(length(unique(df$group)), "Set1"));
+  } else {
+    col.fun <-
+      grDevices::colorRampPalette(RColorBrewer::brewer.pal(length(unique(df$group)), "Set3"));
+  }
+  
+  pca3d$score$colors <- col.fun(length(unique(df$group)));
+  
+  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  
+  sink(paste0("spectra_3d_score", featureNM,".json"));
+  cat(json.obj);
+  sink();
+  
+  ## For loading plot
+  pca3d <- list();
+  
+  pca3d$loading$axis <- paste("Loading ", c(1:3), sep="");
+  coords0 <- coords <- data.frame(t(signif(mSet_pca$rotation[,1:3], 5)));
+  colnames(coords) <- NULL; 
+  pca3d$loading$xyz <- coords;
+  pca3d$loading$name <- rownames(mSet_pca$rotation);
+  pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
+                                 "@", 
+                                 round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
+  
+  pca3d$loading$cols <- cols;
+  
+  pca3d$cls =  df$group;
+  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  
+  sink(paste0("spectra_3d_loading", featureNM,".json"));
+  
+  cat(json.obj);
+  sink();
+  return(1);
+}
+
+#' mzrt2ID
+#' @description convert mzATrt as Feature ID
+#' @author Zhiqiang Pang
+mzrt2ID <- function(mzrt){
+  load("mSet.rda");
+  FTID = 1;
+  FTID <- which(mSet@dataSet[["Sample"]] == mzrt)-1;
+  return(as.integer(FTID));
+}
 ################## ------------- Shell function here below ------------- ######################
 
 #' InitializePlan
@@ -183,16 +372,16 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
                          polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, #used for annotation
                          rmConts #used to control remove contamination or not
                          ){
-    OptiLCMS::SetPeakParam(platform = "general", Peak_method = "centWave", RT_method = "loess",
-                           mzdiff, snthresh, bw, # used for both "centwave" and "matchedFilter"
-                           ppm, min_peakwidth, max_peakwidth, noise, prefilter, value_of_prefilter, # used for "centwave"
-                           fwhm, steps, sigma, peakBinSize, max, # used for "matchedFilter"
-                           criticalValue, consecMissedLimit, unions, checkBack, withWave, # used for "massifquant"
-                           profStep, # used for "obiwarp"
-                           minFraction, minSamples, maxFeatures, mzCenterFun, integrate,# used for grouping
-                           extra, span, smooth, family, fitgauss, # used for RT correction with peakgroup "loess"
+    OptiLCMS::SetPeakParam(platform = platform, Peak_method = Peak_method, RT_method = RT_method,
+                           mzdiff, snthresh, bw, 
+                           ppm, min_peakwidth, max_peakwidth, noise, prefilter, value_of_prefilter, 
+                           fwhm, steps, sigma, peakBinSize, max, 
+                           criticalValue, consecMissedLimit, unions, checkBack, withWave, 
+                           profStep, 
+                           minFraction, minSamples, maxFeatures, mzCenterFun, integrate,
+                           extra, span, smooth, family, fitgauss, 
                            polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, #used for annotation
-                           rmConts #used to control remove contamination or not
+                           rmConts 
   )
   #return nothing
 }
@@ -207,22 +396,49 @@ GeneratePeakList <- function(userPath){
 #' plotSingleTIC
 #' @description plotSingleTIC is used to plot single TIC
 #' @author Zhiqiang Pang
-plotSingleTIC <- function(filename, imagename){
-  OptiLCMS::plotSingleTIC(NULL, filename, imagename)
+plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width = NA){
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 7;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  if(imageNumber == -1){
+    imgName <- paste0(filename,".", format);
+  } else {
+    imgName <- paste0("TIC_", filename, "_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  }
+  print(imgName);
+  OptiLCMS::plotSingleTIC(NULL, filename, imgName, format = format, dpi = dpi, width = width);
+  return(imgName);
 }
 
 #' plotMSfeature
 #' @description plotMSfeature is used to plot MS feature stats for different groups
 #' @author Zhiqiang Pang
-plotMSfeature <- function(FeatureNM){
-  OptiLCMS::plotMSfeature(NULL, FeatureNM)
+plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
+  if (is.na(width)) {
+    #width <- 6;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = dpi, format = format, width = width)
+  print(imgName);
+  return(imgName)
 }
 
 #' PlotXIC
 #' @description PlotXIC is used to plot both MS XIC/EIC features of different group and samples
 #' @author Zhiqiang Pang
-PlotXIC <- function(featureNum){
-  OptiLCMS::PlotXIC(NULL, featureNum)
+PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
+  if(is.na(width)){
+    width <- 6;
+  }
+  return(OptiLCMS::PlotXIC(NULL, featureNum, format = format, dpi = dpi, width = width))
 }
 
 #' PerformDataInspect
@@ -252,3 +468,104 @@ FastRunningShow_auto <- function(fullUserPath){
   OptiLCMS:::FastRunningShow_auto(fullUserPath)
 }
 
+#' centroidMSData
+#' @description centroidMSData is used to centroid MS Data
+#' @author Zhiqiang Pang
+centroidMSData <- function(fileName, outFolder, ncore = 1){
+  
+  .CentroidSpectra <- OptiLCMS:::.CentroidSpectra;
+  writeMSData <- MSnbase::writeMSData;
+  
+  if(tolower(tools::file_ext(fileName)) %in% c("mzml", "mzxml")){
+    CMS <- try(.CentroidSpectra(paste0(outFolder, "/" , fileName)),silent = TRUE)
+    
+    if(class(CMS) == "try-error") {return(-1)}
+    
+    files.mzml <- paste0(outFolder, "/", fileName)
+    file.remove(files.mzml)
+    writeMSData(CMS, file = files.mzml)
+    
+  } else {
+    return(-2)
+  }
+  
+  return(1)
+}
+
+PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- paste0("Adjusted_RT_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraRTadj (mSet = NULL,
+                              imgName = imgName, format = format, dpi = dpi, width = width)
+
+  return(imgName); 
+}
+
+PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default";
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- paste0("Adjusted_BPI_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraBPIadj (mSet = NULL,
+                               imgName = imgName, format = format, dpi = dpi, width = width)
+
+  return(imgName); 
+}
+
+PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- paste0("Insensity_Statics_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraInsensityStistics (mSet = NULL, 
+                                          imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
+}
+
+plotTICs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- paste0("TICs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::plotTICs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
+}
+
+plotBPIs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- paste0("BPIs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::plotBPIs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
+}

@@ -215,7 +215,10 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
         ratio <- m2/m1;
       }
       fc.all <- signif(ratio, 5);
+      ratio[ratio < 0] <- 0;
       fc.log <- signif(log2(ratio), 5);
+      fc.log[is.infinite(fc.log) & fc.log < 0] <- -99;
+      fc.log[is.infinite(fc.log) & fc.log > 0] <- 99;
     }
   }
   names(fc.all) <- names(fc.log) <- colnames(data);  
@@ -305,6 +308,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
       sig.nm = file.nm,
       sig.num = sig.num,
       paired = paired,
+      pval.type = pvalType,
       raw.thresh = threshp,
       t.score = t.stat,
       p.value = p.value,
@@ -317,6 +321,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
     tt <- list (
       sig.num = sig.num,
       paired = paired,
+      pval.type = pvalType,
       raw.thresh = threshp,
       t.score = t.stat,
       p.value = p.value,
@@ -397,17 +402,9 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, 
   mSetObj <- .get.mSet(mSetObj);
   
   # Note, volcano is based on t-tests and fold change analysis
-  #### t-tests and p values
-  if(is.null(mSetObj$analSet$tt) || mSetObj$analSet$tt$paired != paired){
-    mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
-    mSetObj <- .get.mSet(mSetObj);
-  }else{
-     if(mSetObj$analSet$tt$raw.thresh != threshp){
-       mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
-       mSetObj <- .get.mSet(mSetObj);
-     }
-  }
-  
+  #### t-tests and p values. If performed and identical parameters
+  mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
+  mSetObj <- .get.mSet(mSetObj);
   p.value <- mSetObj$analSet$tt$p.value;
   
   if(pval.type == "fdr"){
@@ -416,33 +413,25 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, 
   
   inx.p <- p.value <= threshp;
   p.log <- -log10(p.value);
-  
-  print("p")
-  print(threshp)
+
   #### fc analysis
-  if(is.null(mSetObj$analSet$fc) || mSetObj$analSet$fc$paired != paired){
-    mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
-    mSetObj <- .get.mSet(mSetObj);
-  }else{ # check if FC is different
-    if(mSetObj$analSet$fc$raw.thresh != fcthresh){
-      mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
-      mSetObj <- .get.mSet(mSetObj);
-    }
-  }
+  mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
+  mSetObj <- .get.mSet(mSetObj);
   
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);
   max.xthresh <- log2(fcthresh);
   min.xthresh <- log2(1/fcthresh);
-  
-  print("fc")
-  print(max.xthresh)
-  print(min.xthresh)
-  
+
   fc.log <- mSetObj$analSet$fc$fc.log;
   fc.all <- mSetObj$analSet$fc$fc.all;
   
   inx.up <- mSetObj$analSet$fc$inx.up;
   inx.down <- mSetObj$analSet$fc$inx.down;
+
+  # subset inx.p to inx.up/down
+  keep.inx <- names(inx.p) %in% names(inx.up)
+  inx.p <- inx.p[keep.inx]
+  p.log <- p.log[keep.inx]
   
   # create named sig table for display
   inx.imp <- (inx.up | inx.down) & inx.p;
@@ -463,6 +452,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, 
   fast.write.csv(signif(sig.var,5), file=fileName);
   
   volcano <- list (
+    pval.type = pval.type,
     raw.threshx = fcthresh,
     raw.threshy = threshp,
     paired = paired,
@@ -841,7 +831,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
     cls <- mSetObj$dataSet$cls;
   }
   
-  imgName <- gsub("\\/", "_",  cmpdNm);
+  imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
   
   my.width <- 200;
@@ -865,7 +855,7 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
   p <- p + theme(plot.title = element_text(size = 13, hjust=0.5, face="bold"), axis.text = element_text(size=10))
   print(p)
   dev.off()
-  
+  return(imgName);
 }
 
 ##############################################
@@ -1143,20 +1133,31 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   if(length(inx1) ==1 || length(inx2) == 1){
     equal.var <- TRUE; # overwrite use option if one does not have enough replicates
   }
-  univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
-  if(nonpar){
-    univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
-  }
-  my.fun <- function(x) {
-    tmp <- try(univ.test(x));
-    if(class(tmp) == "try-error") {
-      return(c(NA, NA));
-    }else{
-      return(c(tmp$statistic, tmp$p.value));
+    data <- as.matrix(mSetObj$dataSet$norm);
+    if(!exists("mem.tt")){
+        require("memoise");
+        mem.tt <<- memoise(.get.ttest.res);
     }
-  }
-  res <- apply(as.matrix(mSetObj$dataSet$norm), 2, my.fun);
-  return(t(res));
+    return(mem.tt(data, inx1, inx2, paired, equal.var, nonpar));
+}
+
+.get.ttest.res <- function(data, inx1, inx2, paired=FALSE, equal.var=TRUE, nonpar=F){
+
+   print("Performing regular t-tests ....");
+   univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+   if(nonpar){
+     univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
+   }
+   my.fun <- function(x) {
+     tmp <- try(univ.test(x));
+     if(class(tmp) == "try-error") {
+       return(c(NA, NA));
+     }else{
+       return(c(tmp$statistic, tmp$p.value));
+     }
+   }
+   res <- apply(data, 2, my.fun);
+   return(t(res));
 }
 
 #'Utility method to perform the univariate analysis automatically
@@ -1168,100 +1169,11 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
 #'License: GNU GPL (>= 2)
 
 GetUnivReport <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  paired <- mSetObj$analSet$tt$paired;
-  threshp <- mSetObj$analSet$tt$raw.thresh;
-  
-  inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
-  inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
-  
-  # output list (mean(sd), mean(sd), p-value, FoldChange, Up/Down) 
-  univStat.mat <- apply(as.matrix(mSetObj$dataSet$norm), 2, function(x) {
-    
-    # normality test for each group
-    # ks <- ks.test(x[inx1], x[inx2]); 
-    if( var(x[inx1], na.rm=T) == 0 |var(x[inx2], na.rm=T) == 0 ){ # shapiro cannot work when all values are same
-      method = "";
-    }else{
-      sw.g1 <- shapiro.test(x[inx1]); 
-      sw.g2 <- shapiro.test(x[inx2]); 
-      method <- ifelse( ((sw.g1$p.value <= 0.05) | (sw.g2$p.value <= 0.05)), "(W)","")
+    # make this lazy load
+    if(!exists("my.univ.report")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/metaboanalystr/_util_univreport.Rc");    
     }
-    if (method == "(W)") {
-      # wilcoxon test
-      tmp <- try(wilcox.test(x[inx1], x[inx2], paired = paired));
-    } else {
-      # t-test
-      equal.var <- TRUE;
-      if(var(x, na.rm=TRUE) != 0) {
-        anal.var <- var.test(x[inx1], x[inx2]);
-        equal.var <- ifelse(anal.var$p.value <= 0.05, FALSE, TRUE);
-      }
-      
-      tmp <- try(t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var));
-    }
-    if(class(tmp) == "try-error") {
-      return(NA);
-    }else{            
-      mean1 <- mean(x[inx1]);
-      mean2 <- mean(x[inx2]);
-      sd1 <- sd(x[inx1]);
-      sd2 <- sd(x[inx2]);
-      p.value <- paste(ifelse(tmp$p.value < 0.0001, "< 0.0001", sprintf("%.4f", tmp$p.value,4))," ", method, sep="");
-      p.value.origin <- tmp$p.value;
-      foldChange <- mean1 / mean2;
-      foldChange <- round(ifelse( foldChange >= 1, foldChange, (-1/foldChange) ), 2);
-      upDown <- ifelse(mean1 > mean2, "Up","Down");
-      
-      univStat <- c(
-        meanSD1   = sprintf("%.3f (%.3f)", mean1, sd1),
-        meanSD2   = sprintf("%.3f (%.3f)", mean2, sd2),
-        p.value = p.value,
-        foldChange = foldChange,
-        upDown  = upDown,
-        p.value.origin = sprintf("%.5f", p.value.origin)
-      );
-      return(univStat);
-    }
-  })
-  
-  univStat.mat <- as.data.frame(t(univStat.mat));
-  
-  # add FDR/q-value
-  q.value <- sprintf("%.4f", p.adjust(p=as.numeric(levels(univStat.mat$p.value.origin))[univStat.mat$p.value.origin], method='fdr'));
-  univStat.mat <- cbind(univStat.mat[, c(1,2,3)], q.value, univStat.mat[, c(4,5)], univStat.mat[,6]);
-  names(univStat.mat)[1] <- paste("Mean (SD) of ", levels(mSetObj$dataSet$cls)[1], sep='');
-  names(univStat.mat)[2] <- paste("Mean (SD) of ", levels(mSetObj$dataSet$cls)[2], sep='');
-  names(univStat.mat)[3] <- "p-value";
-  names(univStat.mat)[4] <- "q-value (FDR)";
-  names(univStat.mat)[5] <- "Fold Change";
-  names(univStat.mat)[6] <- paste(levels(mSetObj$dataSet$cls)[1],"/", levels(mSetObj$dataSet$cls)[2], sep='');
-  names(univStat.mat)[7] <- "p.value.origin";
-  
-  univStat.mat <- cbind(Name=rownames(univStat.mat), univStat.mat);
-  rownames(univStat.mat) <- NULL
-  
-  ## generate univariate report file (univAnalReport.csv).
-  ## mixed with t-test and wilcoxon test depend on each metabolite's distribution
-  univAnal.mat <- univStat.mat;
-  note.str <- paste("\n Univariate Analysis Result for each variable/metabolite\n\n",
-                    "[NOTE]\n", 
-                    "    p-value is calculated with t-test as a default.\n",
-                    "    p-value with (W) is calculated by the Wilcoxon Mann Whitney test\n\n\n", sep='');
-  
-  cat(note.str, file="univAnalReport.csv", append=FALSE);
-  write.table(univAnal.mat, file="univAnalReport.csv", append=TRUE, sep=",", row.names=FALSE);
-  
-  ## generate subset with the threshold (p-value)
-  sigones <- which(as.numeric(as.character(univAnal.mat$p.value.origin)) <= threshp);
-  orig.data<- qs::qread("data_orig.qs");
-  sigDataSet.orig <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
-  sigDataSet.norm <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
-  
-  write.table(sigDataSet.orig, file=paste("data_subset_orig_p", threshp, ".csv", sep=''), append=FALSE, sep=",", row.names=FALSE);
-  write.table(sigDataSet.norm, file=paste("data_subset_norm_p", threshp, ".csv", sep=''), append=FALSE, sep=",", row.names=FALSE);
+    return(my.univ.report(mSetObj));
 }
 
 ContainInfiniteTT<-function(mSetObj=NA){

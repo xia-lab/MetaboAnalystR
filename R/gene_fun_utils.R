@@ -18,11 +18,10 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     if(fun.type %in% c("keggc", "smpdb")){
-    .load.enrich.compound.lib(org.code, fun.type);
+        .load.enrich.compound.lib(org.code, fun.type);
     }else{
-    .load.enrich.lib(org.code, fun.type);
+        .load.enrich.lib(org.code, fun.type);
     }
-
 
     # prepare query
     ora.nms <- names(ora.vec);
@@ -44,16 +43,11 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     # get the matched query for each pathway
 
     if(fun.type %in% c("keggc", "smpdb")){
- 
-  hits.query <- lapply(current.geneset, function(x){x[names(x) %in% ora.vec]});
-hits.query<- lapply(hits.query, function(x){names(x)});
-}else{
-    hits.query <- lapply(current.geneset, 
-        function(x) {
-            ora.nms[ora.vec%in%unlist(x)];
-        }
-    );
-}
+        hits.query <- lapply(current.geneset, function(x){x[names(x) %in% ora.vec]});
+        hits.query<- lapply(hits.query, function(x){names(x)});
+    }else{
+        hits.query <- lapply(current.geneset, function(x) { ora.nms[ora.vec%in%unlist(x)];});
+    }
 
     names(hits.query) <- names(current.geneset);
     hit.num<-unlist(lapply(hits.query, function(x){length(x)}), use.names=FALSE);
@@ -77,27 +71,30 @@ hits.query<- lapply(hits.query, function(x){names(x)});
     res.mat <- res.mat[hit.num>0,,drop = F];
     hits.query <- hits.query[hit.num>0];
 
-    if(nrow(res.mat)> 1){
-        # order by p value
-        ord.inx<-order(res.mat[,4]);
-        res.mat <- signif(res.mat[ord.inx,],3);
-        hits.query <- hits.query[ord.inx];
+    if(nrow(res.mat) == 0){
+        AddErrMsg("No hits found for your query!");
+        return(0);
+    }
 
-        imp.inx <- res.mat[,4] <= 0.05;
-        if(sum(imp.inx) < 10){ # too little left, give the top ones
-            topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
-            res.mat <- res.mat[1:topn,];
-            hits.query <- hits.query[1:topn];
-        }else{
-            res.mat <- res.mat[imp.inx,];
-            hits.query <- hits.query[imp.inx];
-            if(sum(imp.inx) > 120){
-                # now, clean up result, synchronize with hit.query
-                res.mat <- res.mat[1:120,];
-                hits.query <- hits.query[1:120];
-            }
+    # order by p value
+    ord.inx<-order(res.mat[,4]);
+    res.mat <- signif(res.mat[ord.inx,],3);
+    hits.query <- hits.query[ord.inx];
+    imp.inx <- res.mat[,4] <= 0.05;
+    if(sum(imp.inx) < 10){ # too little left, give the top ones
+        topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
+        res.mat <- res.mat[1:topn,];
+        hits.query <- hits.query[1:topn];
+    }else{
+        res.mat <- res.mat[imp.inx,];
+        hits.query <- hits.query[imp.inx];
+        if(sum(imp.inx) > 120){
+            # now, clean up result, synchronize with hit.query
+            res.mat <- res.mat[1:120,];
+            hits.query <- hits.query[1:120];
         }
     }
+    
 
     #get gene symbols
     resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
@@ -108,12 +105,12 @@ hits.query<- lapply(hits.query, function(x){names(x)});
     fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
     hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
     if(fun.type %in% c("keggc", "smpdb")){
-fun.ids <- as.vector(current.setids[which(current.setids %in% names(fun.anot))]); 
-names(fun.anot) = as.vector(names(current.setids[which(current.setids %in% names(fun.anot))]));
+        fun.ids <- as.vector(current.setids[which(current.setids %in% names(fun.anot))]); 
+        names(fun.anot) = as.vector(names(current.setids[which(current.setids %in% names(fun.anot))]));
+    }else{
+        fun.ids <- as.vector(current.setids[names(fun.anot)]); 
+    }
 
-}else{
-    fun.ids <- as.vector(current.setids[names(fun.anot)]); 
-}
     if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
         json.res <- list(
                     fun.link = current.setlink[1],
@@ -137,7 +134,6 @@ names(fun.anot) = as.vector(names(current.setids[which(current.setids %in% names
     fast.write.csv(resTable, file=csv.nm, row.names=F);
     return(1);
 }
-
 
 # these are geneset libraries
 .load.enrich.lib<-function(org.code, fun.type){

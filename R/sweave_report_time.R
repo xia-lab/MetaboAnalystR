@@ -55,7 +55,7 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$orig.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$facA) | is.null(mSetObj$dataSet$facB)){
+  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$facA) | is.null(mSetObj$dataSet$facB)){
     errorMsg<- c(descr, "Error occured during reading the raw data ....",
                  "Failed to proceed. Please check if the data format you uploaded is correct.",
                  "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");

@@ -9,7 +9,7 @@
 PCA.Anal <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
   
   # obtain variance explained
@@ -279,10 +279,35 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       }
     }
     uniq.pchs <- unique(pchs);
+    
     if(grey.scale) {
       uniq.cols <- "black";
     }
 
+    if(length(uniq.cols) != length(levels(cls))){
+      
+      if(mSetObj$dataSet$type.cls.lbl=="integer"){
+        names(cols) <- as.numeric(cls)
+      }else{
+        names(cols) <- as.character(cls)
+      }
+      
+      match.inx <- match(levels(cls), names(cols))
+      uniq.cols <- cols[match.inx]
+    }
+    
+    if(length(uniq.pchs) != length(levels(cls))){
+      
+      if(mSetObj$dataSet$type.cls.lbl=="integer"){
+        names(pchs) <- as.numeric(cls)
+      }else{
+        names(pchs) <- as.character(cls)
+      }
+      
+      match.inx <- match(levels(cls), names(pchs))
+      uniq.pchs <- pchs[match.inx]
+    }
+    
     if(length(lvs) < 6){
         legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
     }else if (length(lvs) < 10){
@@ -355,13 +380,19 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 #'@export
 PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
-  pca = mSetObj$analSet$pca
-  coords<-signif(as.matrix(cbind(pca$rotation[,inx1],pca$rotation[,inx2],pca$rotation[,inx3])),5);
+  pca <- mSetObj$analSet$pca
   pca3d <- list();
   
   pca3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
   coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
-  
+
+  dists <- GetDist3D(coords);
+
+  # color based on dist;
+  pca3d$loading$cols <- GetRGBColorGradient(dists);
+
+  # size based on dist
+  # pca3d$loading$sizes <- GetSizeGradient(dists);
   colnames(coords) <- NULL; 
   pca3d$loading$xyz <- coords;
   pca3d$loading$name <- rownames(pca$rotation);
@@ -379,7 +410,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   
   pca3d$cls = cls;
   # see if there is secondary
-  
+
   require(RJSONIO);
   imgName = paste(imgName, ".", format, sep="");
   json.mat <- toJSON(pca3d, .na='null');
@@ -469,7 +500,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
   }else if(plotType == "custom"){
     if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      hit.inx <- rownames(loadings) %in% mSetObj$custom.cmpds;
       text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
     }
   }else{
@@ -632,7 +663,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@export
 #'
 PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, use.sparse=FALSE){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -730,9 +761,35 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }
   
   uniq.pchs <- unique(pchs);
+  
   if(grey.scale) {
     uniq.cols <- "black";
   }
+  
+  if(length(uniq.cols) != length(levels(cls))){
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      names(cols) <- as.numeric(cls)
+    }else{
+      names(cols) <- as.character(cls)
+    }
+    
+    match.inx <- match(levels(cls), names(cols))
+    uniq.cols <- cols[match.inx]
+  }
+  
+  if(length(uniq.pchs) != length(levels(cls))){
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      names(pchs) <- as.numeric(cls)
+    }else{
+      names(pchs) <- as.character(cls)
+    }
+    
+    match.inx <- match(levels(cls), names(pchs))
+    uniq.pchs <- pchs[match.inx]
+  }
+  
   legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   
   dev.off();
@@ -761,7 +818,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   colnames(coords) <- NULL;
   pls3d$score$xyz <- coords;
   pls3d$score$name <- rownames(mSetObj$dataSet$norm);
-  
+
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
   }else{
@@ -795,12 +852,16 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   pls3d <- list();
   
   pls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
-  coords <- data.frame(t(signif(pls$loadings[,c(inx1, inx2, inx3)], 5)));
+  coords0 <- coords <- data.frame(t(signif(pls$loadings[,c(inx1, inx2, inx3)], 5)));
   
   colnames(coords) <- NULL; 
   pls3d$loading$xyz <- coords;
   pls3d$loading$name <- rownames(pls$loadings);
   pls3d$loading$entrez <-rownames(pls$loadings); 
+  
+  dists <- GetDist3D(coords0);
+  cols <- GetRGBColorGradient(dists);
+  pls3d$loading$cols <- cols;
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
@@ -1639,26 +1700,11 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   return(.set.mSet(mSetObj));
 }
 
-#'Plot loading compounds
-#'@description Plot loading compounds
-#'@param mSetObj Input name of the created mSet Object
-#'@param cmpdNm Input the name of the selected compound
-#'@param format Select the image format, "png", or "pdf".
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
-#'@export
-#'
-PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
-  
+UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
   mSetObj <- .get.mSet(mSetObj);
-  
   # need to record the clicked compounds
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
-  .set.mSet(mSetObj);
-  
-  return(PlotCmpdView(mSetObj, cmpdNm, format, dpi, width));
+  return(.set.mSet(mSetObj));
 }
 
 #'Plot OPLS 
@@ -2085,9 +2131,35 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }
   
   uniq.pchs <- unique(pchs);
+  
   if(grey.scale) {
     uniq.cols <- "black";
   }
+  
+  if(length(uniq.cols) != length(levels(cls))){
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      names(cols) <- as.numeric(cls)
+    }else{
+      names(cols) <- as.character(cls)
+    }
+    
+    match.inx <- match(levels(cls), names(cols))
+    uniq.cols <- cols[match.inx]
+  }
+  
+  if(length(uniq.pchs) != length(levels(cls))){
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      names(pchs) <- as.numeric(cls)
+    }else{
+      names(pchs) <- as.character(cls)
+    }
+    
+    match.inx <- match(levels(cls), names(pchs))
+    uniq.pchs <- pchs[match.inx]
+  }
+  
   legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   
   dev.off();
@@ -2160,17 +2232,21 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
     spls3d$loading$axis <- c(spls3d$loading$axis, "Loading 3");
-    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+    coords0 <- coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
   }else{
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
-    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
+    coords0 <- coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
   }
     
     colnames(coords) <- NULL; 
     spls3d$loading$xyz <- coords;
     spls3d$loading$name <- rownames(spls$loadings$X);
     spls3d$loading$entrez <-rownames(spls$loadings$X); 
-  
+    
+    dists <- GetDist3D(coords0);
+    cols <- GetRGBColorGradient(dists);
+    spls3d$loading$cols <- cols;
+    
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
   }else{

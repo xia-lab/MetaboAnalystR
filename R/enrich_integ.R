@@ -1,88 +1,3 @@
-#'Perform compound mapping for integrative analysis methods
-#'@description Perform compound mapping
-#'@param mSetObj Input name of the created mSet Object
-#'@param cmpdIDs Input the list of compound IDs 
-#'@param org Input the organism code
-#'@param idType Input the ID type
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-PerformIntegCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
-  
-  mSetObj <- .get.mSet(mSetObj);
-
-  mSetObj$dataSet$cmpd.orig <- cmpdIDs;
-  mSetObj$dataSet$cmpd.org <- org;
-  if(idType == "name"){
-    cmpd.mat <- getDataFromTextArea(cmpdIDs, "tab");
-  }else{ # all other id should not contains space
-    cmpd.mat <- getDataFromTextArea(cmpdIDs, "space");
-  }
-  mSetObj$dataSet$cmpd <- rownames(cmpd.mat); # this is for compatibility with name_match function
-  mSetObj$dataSet$cmpd.mat <- cmpd.mat;
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);  
-    return(CrossReferencing(mSetObj, idType, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F));
-  }
-  
-  mSetObjCR <- CrossReferencing(mSetObj, idType, hmdb=T, pubchem=T, chebi=F, kegg=T, metlin=F)
-  
-  return(.set.mSet(mSetObjCR));
-}
-
-#'Perform integrated gene mapping
-#'@description Used for the pathinteg module
-#'@param mSetObj Input name of the created mSet Object
-#'@param geneIDs Input the list of gene IDs 
-#'@param org Input the organism code
-#'@param idType Input the ID type
-#'@export
-#'
-PerformIntegGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
-
-  mSetObj <- .get.mSet(mSetObj);
-  gene.mat <- getDataFromTextArea(geneIDs);
-  gene.vec <- rownames(gene.mat);
-
-  #record the info
-  mSetObj$dataSet$q.type.gene <- idType;
-  mSetObj$dataSet$gene.orig <- geneIDs;
-  mSetObj$dataSet$gene.org <- org;
-  mSetObj$dataSet$gene.mat <- gene.mat;
-  mSetObj$dataSet$gene <- gene.vec;
-  
-  enIDs <- doGeneIDMapping(gene.vec, org, idType);
-  
-  if(idType == "kos"){
-    kos <- gene.vec;
-    mSetObj$dataSet$kos.name.map <- kos
-  }
-  
-  # Handle case when only KOs are mapped with no corresponding entrez id
-  na.inx <- is.na(enIDs);
-  if(sum(!na.inx) == 0 && idType == "kos"){
-    na.inx <- is.na(kos);
-  }
-  
-  mSetObj$dataSet$gene.name.map <- list(
-    hit.values=enIDs,
-    match.state = ifelse(is.na(enIDs), 0, 1)
-  );
-  
-  AddMsg(paste("A total of ", length(unique(enIDs)), "unique genes were uploaded."));
-  if(sum(!na.inx) > 0){
-    return(.set.mSet(mSetObj));
-  }else{
-    AddErrMsg("Error: no hits found!");
-    if(.on.public.web){ 
-      return(0);
-    }
-    return(.set.mSet(mSetObj));
-  }
-}
 
 #'Remove selected compounds
 #'@description Remove compounds
@@ -202,25 +117,16 @@ PrepareIntegData <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libVersion="current", libOpt="integ", integOpt="query"){
+PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libOpt="integ", integOpt="query"){
 
   mSetObj <- .get.mSet(mSetObj);  
-  
-  if(libVersion == "old"){
-    if(!(mSetObj$org %in% c("hsa", "mmu", "rno"))){
-      AddErrMsg("Support for this organism is only available in the current version!");
-      return(0);
-    }
-    if(libOpt == "all"){
-      AddErrMsg("Support for all pathways is only available in the current version!");
-      return(0);
-    }
-    if(integOpt == "pval"){
-      AddErrMsg("Support for combining p value is only available in the current version!");
-      return(0);
-    }
+
+  # make sure this is annotated   
+  if(is.null(mSetObj$org)){
+    AddErrMsg("It appears that data is not annotated yet - unknown organism and ID types! Please use other modules (pathway/network) to access this function.");
+    return(0);
   }
-  
+
   # shift actual enrichment to api.metaboanalyst.ca
   if(.on.public.web){
     sub.dir <- paste0("kegg/jointpa/",libOpt);
@@ -310,48 +216,48 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   if(!.on.public.web){
     
     if(libOpt == "integ"){
-      toSend = list(oraVec = ora.vec, libVersion = libVersion, libOpt = libOpt, integOpt = integOpt, topoMethod = topo, enrichAnal = enrich,
-                    org = mSetObj$org, integCmpds = rownames(impMatList$cmpd), integGenes = rownames(impMatList$gene))
+      toSend = list(mSet = mSetObj, oraVec = ora.vec,
+                    libOpt = libOpt, integOpt = integOpt, 
+                    topoMethod = topo, enrichAnal = enrich,
+                    org = mSetObj$org, integCmpds = rownames(impMatList$cmpd),
+                    integGenes = rownames(impMatList$gene))
     }else{
-      toSend = list(oraVec = ora.vec, libVersion = libVersion, libOpt = libOpt, integOpt = integOpt, topoMethod = topo, enrichAnal = enrich,
-                    org = mSetObj$org)
+      toSend = list(mSet = mSetObj, oraVec = ora.vec,
+                    libOpt = libOpt, integOpt = integOpt, 
+                    topoMethod = topo, enrichAnal = enrich, org = mSetObj$org)
     }
-    
-    #json to be sent to server
-    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
-    #write(oraData, file="ora_test.JSON")
-    # code to send to server
-    # change path when on server, use local for now
-    
+
     load_httr()
     base <- api.base
     endpoint <- "/jointpath"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    print(call)
     
-    if(is.null(query_results_json$enrichRes)){
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+    
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
+      return(0)
+    }
+    
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
+    
+    if(is.null(mSetObj$dataSet$path.mat)){
       AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
       return(0)
     }
     
-    # parse json response from server to results
-    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
-    colnames(qeaDataRes) <- query_results_json$enrichResColNms
-    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
-    fast.write.csv(qeaDataRes, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
+    print("Joint Pathway Analysis via api.metaboanalyst.ca successful!")
     
-    rownames(qeaDataRes) <- query_results_json$enrichPathIds
+    rownames(mSetObj$dataSet$path.mat) <- mSetObj$dataSet$jointpa.pathnames
+    fast.write.csv(mSetObj$dataSet$path.mat, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
     
-    jointpa_matches <- as.matrix(query_results_json$jointPAMatches)
-    colnames(jointpa_matches) <- "Hits"
-    rownames(jointpa_matches) <- query_results_json$enrichResRowNms
-    
-    mSetObj$api$guestName <- query_results_json$guestName;
-    mSetObj$dataSet$path.mat <- qeaDataRes;
     mSetObj$dataSet$pathinteg.impMat <- impMat; 
-    mSetObj$analSet$jointPAMatches <- jointpa_matches;
     
     return(.set.mSet(mSetObj));
   }
@@ -641,42 +547,6 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   }else{
     return(.set.mSet(mSetObj));
   }
-}
-
-#'Transform two column text to data matrix
-#'@description Transform two column input text to data matrix (single column data frame)
-#'@param txtInput Input text
-#'@param sep.type Indicate the seperator type for input text. Default set to "space"
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-getDataFromTextArea <- function(txtInput, sep.type="space"){
-  
-  lines <- unlist(strsplit(txtInput, "\r|\n|\r\n")[1]);
-  if(substring(lines[1],1,1)=="#"){
-    lines <- lines[-1];
-  }
-  
-  # separated by tab 
-  if(sep.type=="tab"){
-    my.lists <- strsplit(lines, "\\t");
-  }else{ # from any space
-    my.lists <- strsplit(lines, "\\s+");
-  }
-  my.mat <- do.call(rbind, my.lists);
-  
-  if(dim(my.mat)[2] == 1){ # add 0
-    my.mat <- cbind(my.mat, rep(0, nrow(my.mat)));
-  }else if(dim(my.mat)[2] > 2){
-    my.mat <- my.mat[,1:2];
-    msg <- "More than two columns found in the list. Only first two columns will be used."
-    AddErrMsg(msg);
-  }
-  rownames(my.mat) <- data.matrix(my.mat[,1]);
-  my.mat <- my.mat[,-1, drop=F];
-  return(my.mat);
 }
 
 

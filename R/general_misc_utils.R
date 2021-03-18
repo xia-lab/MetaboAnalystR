@@ -12,7 +12,8 @@
 }
 
 ReplaceMissingByLoD <- function(int.mat){
-    int.mat <- as.matrix(int.mat);  
+    int.mat <- as.matrix(int.mat);
+
     rowNms <- rownames(int.mat);
     colNms <- colnames(int.mat);
     int.mat <- apply(int.mat, 2, .replace.by.lod);
@@ -122,6 +123,42 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 .get.sqlite.con <- function(sqlite.path){
     load_rsqlite();
     return(dbConnect(SQLite(), sqlite.path)); 
+}
+
+#'Transform two column text to data matrix
+#'@description Transform two column input text to data matrix (single column data frame)
+#'@param txtInput Input text
+#'@param sep.type Indicate the seperator type for input text. Default set to "space"
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+getDataFromTextArea <- function(txtInput, sep.type="space"){
+  
+  lines <- unlist(strsplit(txtInput, "\r|\n|\r\n")[1]);
+  if(substring(lines[1],1,1)=="#"){
+    lines <- lines[-1];
+  }
+  
+  # separated by tab 
+  if(sep.type=="tab"){
+    my.lists <- strsplit(lines, "\\t");
+  }else{ # from any space
+    my.lists <- strsplit(lines, "\\s+");
+  }
+  my.mat <- do.call(rbind, my.lists);
+  
+  if(dim(my.mat)[2] == 1){ # add 0
+    my.mat <- cbind(my.mat, rep(0, nrow(my.mat)));
+  }else if(dim(my.mat)[2] > 2){
+    my.mat <- my.mat[,1:2];
+    msg <- "More than two columns found in the list. Only first two columns will be used."
+    AddErrMsg(msg);
+  }
+  rownames(my.mat) <- data.matrix(my.mat[,1]);
+  my.mat <- my.mat[,-1, drop=F];
+  return(my.mat);
 }
 
 #'Permutation
@@ -253,15 +290,9 @@ CleanNumber <-function(bdata){
   bdata;
 }
 
-# only keep alphabets, numbers, ",", "." "_", "-" "/"
-# note, this may leads to duplicate names
-CleanNames <- function(query, type){
-  
-  if(type=="sample_name"){
-    query <- gsub("[^[:alnum:]./_-]", "", query);
-  }else{
-    query <- gsub("[^[:alnum:][:space:],'./_./@-]", "", query)
-  }
+# only keep alphabets, numbers, "." "_", "-" and @
+CleanNames <- function(query){
+  query <- gsub("[^[:alnum:].@_-]", "", query);
   return(make.unique(query));
 }
 
@@ -383,9 +414,16 @@ my.col2rgb <- function(cols){
   return(apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")}));
 }
 
+my.col2rgba <- function(cols, alpha){
+  rgbcols <- col2rgb(cols);
+  rgbcols <- rbind(rgbcols, alpha);
+  return(as.vector(apply(rgbcols, 2, function(x){paste("rgba(", paste(x, collapse=","), ")", sep="")})));
+}
+
 # #FFFFFF to rgb(1, 0, 0)
 hex2rgba <- function(cols, alpha=0.8){
-  return(apply(sapply(cols, col2rgb), 2, function(x){paste("rgba(", x[1], ",", x[2], ",", x[3], ",",  alpha, ")", sep="")}));
+  my.cols <- apply(sapply(cols, col2rgb), 2, function(x){paste("rgba(", x[1], ",", x[2], ",", x[3], ",",  alpha, ")", sep="")});
+  return(as.vector(my.cols));
 }
 
 hex2rgb <- function(cols){
@@ -541,6 +579,7 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
 
     colVec <<- colVec;
     shapeVec <<- shapeVec;
+    return(.set.mSet(mSetObj));
 }
 
 GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
@@ -568,6 +607,37 @@ pal_18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#
 cb_pal_18 <- c("#E69F00", "#b12c6f", "#56B4E9", "#009E73", "#F0E442", "#004488", 
                      "#D55E00", "#EE6677", "#CCBB44", "#A95AA1", "#DCB69F", "#661100", 
                      "#63ACBE", "#332288", "#EE7733", "#EE3377", "#0072B2", "#999933");
+
+# return a gradient color vec based on value 
+GetRGBColorGradient <- function(vals){
+    library(RColorBrewer);
+    #seed.cols <- brewer.pal(3, "YlOrRd");
+    #seed.cols <- brewer.pal(9, "Oranges")[c(2,5,7)]
+    seed.cols <- c("#FCF5DF", "#FFEDA0", "#F03B20")
+    cols <- colorRampPalette(seed.cols)(length(vals));
+
+    # set alpha for 
+    my.alpha <- signif(seq(from=0.3, to=0.8, length.out=length(vals)),2);
+    rgb.cols <- my.col2rgba(cols, alpha=my.alpha);
+
+    # now need make sure values and colors are matched using names
+    nms.orig <- names(vals);
+    names(rgb.cols) <- names(sort(vals));
+    ord.cols <- rgb.cols[nms.orig];
+    return(as.vector(ord.cols)); # note remove names
+}
+
+
+GetSizeGradient <- function(vals){
+
+    my.sizes <- round(seq(from=4, to=6, length.out=length(vals)));
+
+    # now need make sure values and colors are matched using names
+    nms.orig <- names(vals);
+    names(my.sizes) <- names(sort(vals));
+    ord.sizes <- my.sizes[nms.orig];
+    return(as.vector(ord.sizes)); # note remove names
+}
 
 GetColorSchema <- function(my.cls, grayscale=F){
   
@@ -643,7 +713,7 @@ GetCMD<-function(regexp){
 }
 
 # Memory functions
-ShowMemoryUse <- function(..., n=20) {
+ShowMemoryUse <- function(..., n=40) {
     library(pryr);
     sink(); # make sure print to screen
     print(mem_used());
@@ -802,7 +872,7 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
   if(.on.public.web){
     load_ggplot()
   }
-  
+
   cls.lbls <- mSetObj$dataSet$cls;
   y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
   cmpd.name = paste0("Met_", cmpd, ".png")
@@ -855,6 +925,14 @@ Get.bwss<-function(x, cl){
   (TSS - WSS)/WSS;
 }
 
+# compute the distance to the centroid of the given data
+# note each col is a x,y,z
+# since this is centered, the centroid is origin
+GetDist3D <-function(mat, target=c(0,0,0)){
+    dist.vec <- apply(mat, 2, function(x) dist(rbind(x, target)));
+    return(dist.vec);
+}
+
 sum.na <- function(x,...){
   res <- NA
   tmp <- !(is.na(x) | is.infinite(x))
@@ -876,10 +954,18 @@ end.with <- function(bigTxt, endTxt){
    return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
 
-## fast T-tests/F-tests using genefilter
+## fast T-tests/F-tests, and use cache to avoid redundant computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
-    print("Performing fast univariate tests ....");
+    if(!exists("mem.univ")){
+        require("memoise");
+        mem.univ <<- memoise(.perform.fast.univ.tests);
+    }
+    return(mem.univ(data, cls, var.equal));
+}
 
+.perform.fast.univ.tests <- function(data, cls, var.equal=TRUE){
+
+    print("Performing fast univariate tests ....");
     # note, feature in rows for gene expression
     data <- t(as.matrix(data));
     if(length(levels(cls)) > 2){
@@ -1083,4 +1169,10 @@ convert.rda2qs <- function(){
     # here the name is current.msetlib (msets)
     #qs::qsave(current.msetlib,paste0(nm, ".qs"));
  }
+}
+
+overlap_ratio <- function(x, y) {
+  x <- unlist(x)
+  y <- unlist(y)
+  length(intersect(x, y))/length(unique(c(x,y)))
 }

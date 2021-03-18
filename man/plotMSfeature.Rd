@@ -4,7 +4,7 @@
 \alias{plotMSfeature}
 \title{plotMSfeature}
 \usage{
-plotMSfeature(FeatureNM)
+plotMSfeature(FeatureNM, format = "png", dpi = 72, width = NA)
 }
 \description{
 plotMSfeature is used to plot MS feature stats for different groups

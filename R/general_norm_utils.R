@@ -201,7 +201,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
   
   mSetObj$dataSet$norm <- as.data.frame(data);
-  qs::qsave(as.data.frame(data), file="complete_norm.qs");
+  qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
   mSetObj$dataSet$cls <- cls;
   
   mSetObj$dataSet$rownorm.method <- rownm;
@@ -223,6 +223,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
 #  sink(processedObj$name);
 #  cat(toJSON(processedObj));
 #  sink();
+
   return(.set.mSet(mSetObj));
 }
 

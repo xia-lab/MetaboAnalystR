@@ -4,7 +4,7 @@
 \alias{plotSingleTIC}
 \title{plotSingleTIC}
 \usage{
-plotSingleTIC(filename, imagename)
+plotSingleTIC(filename, imageNumber, format = "png", dpi = 72, width = NA)
 }
 \description{
 plotSingleTIC is used to plot single TIC

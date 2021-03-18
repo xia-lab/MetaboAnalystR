@@ -30,7 +30,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }
-  
+
   # move to api only if R package + KEGG msets
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     
@@ -38,39 +38,43 @@ CalculateHyperScore <- function(mSetObj=NA){
     
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
-      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, filterData = mSetObj$api$filterData,
+      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter,
+                     oraVec = mSetObj$api$oraVec, filterData = mSetObj$api$filterData,
                      excludeNum = mSetObj$api$excludeNum)
     }else{
-      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, excludeNum = mSetObj$api$excludeNum)
+      toSend <- list(mSet = mSetObj,libNm = mSetObj$api$libname, 
+                     filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, excludeNum = mSetObj$api$excludeNum)
     }
-    
-    #json to be sent to server
-    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
-    #write(oraData, file="ora_test.JSON")
-    # code to send to server
-    # change path when on server, use local for now
     
     load_httr()
     base <- api.base
-    endpoint <- "/enrichmentora"
+    endpoint <- "/msetora"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    print(call)
     
-    if(is.null(query_results_json$enrichRes)){
-      AddErrMsg("Error! Enrichment ORA via api.metaboanalyst.ca unsuccessful!")
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
       return(0)
     }
     
-    # parse json response from server to results
-    oraDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
-    colnames(oraDataRes) <- query_results_json$enrichResColNms
-    rownames(oraDataRes) <- query_results_json$enrichResRowNms
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
     
-    fast.write.csv(oraDataRes, file="msea_ora_result.csv");
-    mSetObj$analSet$ora.mat <- oraDataRes
-    mSetObj$api$guestName <- query_results_json$guestName
+    # parse json response from server to results
+    if(is.null(mSetObj$analSet$ora.mat)){
+      AddErrMsg("Error! Mset ORA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+
+    print("Mset ORA via api.metaboanalyst.ca successful!")
+    
+    fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
     return(.set.mSet(mSetObj));
   }
   
@@ -145,7 +149,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
-  browser()
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -155,15 +159,18 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     return(.set.mSet(mSetObj));
   }else{
     mSetObj <- .prepare.globaltest.score(mSetObj);
-    .perform.computing();   
-    mSetObj <- .save.globaltest.score(mSetObj);  
+    
+    if(!grepl("kegg", mSetObj$analSet$msetlibname)){
+      .perform.computing();   
+      mSetObj <- .save.globaltest.score(mSetObj);  
+    }
   } 
-  
+
   return(.set.mSet(mSetObj));
 }
 
 .prepare.globaltest.score <- function(mSetObj=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   # now, need to make a clean dataSet$norm data based on name mapping
   # only contain valid hmdb hit will be used
@@ -176,9 +183,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   hit.inx <- !is.na(hmdb.inx);
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
-  
+
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
-    
+
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
     dimnames(msea.data) = NULL
@@ -188,41 +195,41 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.hmdb
       
-      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
                      filterData = mSetObj$api$filterData, cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
     }else{
-      toSend <- list(libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
                      cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
     }
     
-    #json to be sent to server
-    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
-    #write(oraData, file="ora_test.JSON")
-    # code to send to server
-    # change path when on server, use local for now
-    
     load_httr()
     base <- api.base
-    endpoint <- "/enrichmentqea"
+    endpoint <- "/msetqea"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    print(call)
     
-    if(is.null(query_results_json$enrichRes)){
-      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+    
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
       return(0)
     }
     
-    # parse json response from server to results
-    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
-    colnames(qeaDataRes) <- query_results_json$enrichResColNms
-    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
     
-    fast.write.csv(qeaDataRes, file="msea_qea_result.csv");
-    mSetObj$analSet$qea.mat <- qeaDataRes
-    mSetObj$api$guestName <- query_results_json$guestName
+    if(is.null(mSetObj$analSet$qea.mat)){
+      AddErrMsg("Error! Mset QEA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+
     print("Enrichment QEA via api.metaboanalyst.ca successful!")
+    
+    fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
     return(.set.mSet(mSetObj));
   }
   
@@ -279,7 +286,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 }
 
 .save.globaltest.score <- function(mSetObj = NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
@@ -435,10 +442,10 @@ CalculateSSP<-function(mSetObj=NA){
 #'@import ggplot2
 
 PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=72, width=8,
-                               maxClass = 15, colPal = "Set1"){
+                                 maxClass = 15, colPal = "Set1"){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(.on.public.web){
     load_ggplot()
   }
@@ -492,7 +499,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
   if(nrow(pie.data) > maxClass){
     pie.data <- pie.data[1:maxClass,]
   }
-  
+
   mSetObj$analSet$enrich.pie.data <- pie.data
   
   if(nrow(pie.data) > 9){
@@ -513,7 +520,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt")) +
     theme(legend.text=element_text(size=12),
           legend.title=element_text(size=13))
-  
+
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   
   long.name <- max(nchar(pie.data[,1]))
@@ -525,7 +532,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     h <- width - 1 
     w <- width
   }
-  
+
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   fast.write.csv(mSetObj$analSet$enrich.pie.data, file="msea_pie_data.csv");
   return(.set.mSet(mSetObj));
@@ -640,11 +647,11 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
     mset <- hits[[msetNm]];
     red.inx <- 1:length(mset);
   }
-  
+
   mset[red.inx] <- paste("<font color=\"red\">", "<b>", mset[red.inx], "</b>", "</font>",sep="");
   if(mSetObj$dataSet$use.metabo.filter && exists('filtered.mset')){
-    grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
-    mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
+      grey.inx <- which(!(mset %in% filtered.mset[[msetNm]]));
+      mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
   }
   # get references
   matched.inx <- match(tolower(msetNm), tolower(current.msetlib$name))[1];

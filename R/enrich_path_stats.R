@@ -54,30 +54,36 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, oraVec = mSetObj$api$oraVec)
     }
-    browser()
-    #json to be sent to server
-    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
-    #write(oraData, file="ora_test.JSON")
-    # code to send to server
-    # change path when on server, use local for now
-    
+
+    # rds file to be sent to server
     load_httr()
     base <- api.base
     endpoint <- "/pathwayora"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    print(call)
     
-    # parse json response from server to results
-    oraDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
-    colnames(oraDataRes) <- query_results_json$enrichResColNms
-    rownames(oraDataRes) <- query_results_json$enrichResRowNms
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
     
-    fast.write.csv(oraDataRes, file="pathway_results.csv");
-    mSetObj$analSet$ora.mat <- oraDataRes
-    mSetObj$api$guestName <- query_results_json$guestName
-    return(.set.mSet(mSetObj));
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
+      return(0)
+    }
+    
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
+    
+    # check if result is there
+    if(nrow(mSetObj$analSet$ora.mat) == 0){
+      AddErrMsg("Failed to perform pathway analysis!")
+      return(0)
+    }
+    
+    fast.write.csv(mSetObj$analSet$ora.mat, file="pathway_results.csv");
+    return(.set.mSet(mSetObj))
   }
   
   current.mset <- current.kegglib$mset.list;
@@ -246,43 +252,45 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
       
-      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+      toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
                      filterData = mSetObj$api$filterData, univP = mSetObj$api$univP, cls = mSetObj$api$cls)
     }else{
-      toSend <- list(libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
+      toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
                      univP = mSetObj$api$univP, cls = mSetObj$api$cls)
     }
     
-    #json to be sent to server
-    #oraData <- RJSONIO::toJSON(toSend, .na='null') 
-    #write(oraData, file="ora_test.JSON")
-    # code to send to server
-    # change path when on server, use local for now
-    
+    # send RDS to xialab api
+
     load_httr()
     base <- api.base
     endpoint <- "/pathwayqea"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
+    print(call)
     
-    if(is.null(query_results_json$enrichRes)){
-      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+    
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
       return(0)
     }
     
-    # parse json response from server to results
-    qeaDataRes <- do.call(rbind.data.frame, query_results_json$enrichRes)
-    colnames(qeaDataRes) <- query_results_json$enrichResColNms
-    rownames(qeaDataRes) <- query_results_json$enrichResRowNms
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
     
-    fast.write.csv(qeaDataRes, file="pathway_results.csv", row.names=TRUE);
-    mSetObj$analSet$qea.mat <- qeaDataRes
-    mSetObj$api$guestName <- query_results_json$guestName
+    if(is.null(mSetObj$analSet$qea.mat)){
+      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+      return(0)
+    }
+
     print("Pathway QEA via api.metaboanalyst.ca successful!")
+    
+    fast.write.csv(mSetObj$analSet$qea.mat, file="pathway_results.csv");
     return(.set.mSet(mSetObj));
   }
   

@@ -31,7 +31,7 @@ Convert2MummichogMetaPath <- function(mSetObj=NA, rt=FALSE, rds.file=FALSE, rt.t
   # JX: we will only support tt on web. It is not clear if 
   # other options will be really useful or simply bewildering to users
   
-  tt.pval <- mSetObj$analSet$tt$p.value
+  tt.pval <- sort(mSetObj$analSet$tt$p.value);
   
   if(is.null(tt.pval)){
     AddErrMsg("T-test was not performed!")
@@ -43,7 +43,7 @@ Convert2MummichogMetaPath <- function(mSetObj=NA, rt=FALSE, rds.file=FALSE, rt.t
   pvals <- cbind(mz.pval, as.numeric(fdr))
   colnames(pvals) <- c("m.z", "p.value")
   
-  tt.tsc <- mSetObj$analSet$tt$t.score
+  tt.tsc <- sort(mSetObj$analSet$tt$t.score);
   mz.tsc <- names(tt.tsc)
   tscores <- cbind(mz.tsc, as.numeric(tt.tsc))
   colnames(tscores) <- c("m.z", "t.score")
@@ -157,7 +157,7 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@import qs
 #'@export
 
-performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLevel = "pathway",
+performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, metaLevel = "pathway",
                             combine.level="pvalue", pval.method = "fisher", es.method = "fixed",
                             rank.metric="mean", mutual.feats = TRUE, pooled_cutoff = 0.05){
   
@@ -194,7 +194,7 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
     
     for(i in 1:length(metaFiles)){
       mSetObj <- qs::qread(metaFiles[i])
-      mSetObj <- .setup.psea.library(mSetObj, lib, libVersion)
+      mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
       cpdMatchResults[[metaFiles[i]]] <- qs::qread("mum_res.qs")
       
       # don't need to write path result CSV files for meta-analysis in indiv' runs
@@ -250,11 +250,11 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
       
       if(version == "v2"){
         mSetObj$dataSet$mumRT <- TRUE
-        mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, TRUE, "ec", 
+        mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib, TRUE, "ec", 
                                        combine.level, pval.method, es.method, rank.metric, FALSE)
         mSetObj <- .init.RT.Permutations(mSetObj, permNum)
       }else{
-        mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, TRUE, "cpd", 
+        mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib, TRUE, "cpd", 
                                        combine.level, pval.method, es.method, rank.metric, FALSE)
         mSetObj <- .init.Permutations(mSetObj, permNum)
       }
@@ -296,7 +296,7 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, permNum = 100, metaLeve
       mSetObj$dataSet$mumRT <- TRUE
     }
     
-    mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, FALSE, "pooled")
+    mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib, FALSE, "pooled")
     
     if(version == "v2"){
       mSetObj <- .init.RT.Permutations(mSetObj, permNum)
@@ -772,11 +772,11 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     
     ratio_String <- cbind(rownames(path_results), ratio_String);
     
-    ratio2 <- reshape2::melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "Enrichment_Ratio")
+    ratio2 <- reshape2::melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "enrichment ratio")
     
     #path_results <- path_results[, -length(colnames(path_results))]
     path_results$Pathway <- rownames(path_results)
-    path_results2 <- reshape2::melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "P_Value");
+    path_results2 <- reshape2::melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "p-value");
     
     res_table <- cbind(ratio_String, path_results$Meta.P);
     colnames(res_table)[c(1, length(colnames(res_table)))] <- c("Pathways", "Meta.P")
@@ -790,7 +790,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     
     ## This oder matrix is used to order the metap (first by P value, second by enrichment ratio)
     order_matrix0 <- merge(path_results, ratio, by = c("Pathway"));
-    ColNMs <- c("Pathway", paste0(sub("mummichoginput", "",studies),"P_value"),"Meta.P",paste0(sub("mummichoginput", "",studies),"Enrich"),"Average_Enrich")
+    ColNMs <- c("Pathway", paste0(sub("mummichoginput", "",studies),"p-value"),"Meta.P",paste0(sub("mummichoginput", "",studies),"Enrich"),"Average_Enrich")
     
     order_matrix <- cbind(order_matrix0$Pathway, order_matrix0$Meta.P.x, order_matrix0$Meta.P.y);
     metap_order <- order_matrix[order(order_matrix[,2], -as.numeric(order_matrix[,3]))]
@@ -802,9 +802,10 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     df$Pathway <- factor(df$Pathway, levels = rownames(path_results))
     df$Study <- sub("mummichoginput", "", df$Study);
     df$Study <- as.factor(df$Study);
-    
+    save(df, file = "df.rda")
+    save(metap_order, file = "metap_order.rda")
     p <- ggplot(df, aes(x = Study, y = Pathway)) +
-      geom_point(aes(size = Enrichment_Ratio, col = P_Value)) + 
+      geom_point(aes(col = `p-value`, size = `enrichment ratio`)) + 
       theme(legend.key=element_blank(), 
             axis.text = element_text(size = bubbleFontSize),
             axis.text.x = element_text(angle = 45, hjust = 1),
@@ -812,7 +813,8 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
             panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
             axis.title.x=element_blank(),
             axis.title.y=element_blank()) +
-      scale_y_discrete(limits = rev(metap_order))
+      scale_y_discrete(limits = rev(metap_order)) + 
+      guides(size = guide_legend(order = 0))
     
     if(bubble_colorType == "brewer"){
       pal <- brewer.pal(n = 8, bubble_palette)
@@ -858,9 +860,9 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
 ## R functions used to prepare for meta-mummichog analysis
 PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30, 
                             version = "v2", pcutoff = 0.05, rt.type = "seconds") {
-
+  
   if(file.exists("mSet.qs") & .on.public.web){
-    mSetObj <<- qs::qread("mSet.qs")
+    mSet <<- mSetObj <- qs::qread("mSet.qs")
   } else {
     mSetObj <- .get.mSet(mSetObj);
     qs::qsave(mSetObj, file = "mSet.qs")
@@ -881,10 +883,10 @@ PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30,
   }
   
   rt.studies <<- c(rt.studies, rt)
-  
   CMDSet <- mSetObj$cmdSet
   
   if(length(mSetObj$dataSet2) == 0) {
+    
     # Here is dealing with the single ion mode data
     mSetObj <- Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE);
     mSetObj <- .get.mSet(mSetObj);
@@ -1096,9 +1098,8 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName){
     }
     
     cls.lbl <-  dataSet$cls.orig <- dataSet$orig.cls;
-    smpl.nms <- dataSet$orig.smp.nms;
-    var.nms <- dataSet$orig.var.nms;
-    
+    smpl.nms <- rownames(conc);
+    var.nms <- colnames(conc);
     empty.inx <- is.na(smpl.nms) | smpl.nms == ""
     if(sum(empty.inx) > 0){
       msg <- c(msg, paste("<font color=\"red\">", sum(empty.inx), "empty rows</font> were detected and excluded from your data."));
@@ -1445,14 +1446,13 @@ Prepare4Network <- function(){
   cmpdList <- PrepareCMPDList()
   
   cmpdList <- paste(cmpdList, collapse = "\n")
-  mSetObj <- PerformIntegCmpdMapping(mSetObj, cmpdList, "hsa", "kegg")
+  mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg")
   
-  mSetObj <- CreateMappingResultTable(mSetObj)
-  
+  #mSetObj <- CreateMappingResultTable(mSetObj)
   mSetObj <- PrepareNetworkData(mSetObj)
   
   idtype <<- "cmpd";
-  mSetObj <- PrepareQueryJson(mSetObj);
+  mSetObj <- PrepareKeggQueryJson(mSetObj);
   mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
   
   return(1)

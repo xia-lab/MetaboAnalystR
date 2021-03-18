@@ -220,7 +220,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
   
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
   fast.write.csv(aov.mat, file=fileName);
-  
+  names(p.value) <- colnames(mSetObj$dataSet$norm);
   aov2<-list (
     type = type,
     sig.nm = fileName,
@@ -334,11 +334,16 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   pca3d$score$facB <- facB;
   
   pca3d$loadings$axis <- paste("Loadings", 1:3);
-  coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
+  coords0 <- coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
   colnames(coords) <- NULL; 
   pca3d$loadings$xyz <- coords;
   pca3d$loadings$name <- colnames(mSetObj$dataSet$norm);
-  
+
+  dists <- GetDist3D(coords0);
+  colset <- GetRGBColorGradient(dists);
+  pca3d$loadings$cols <- colset;
+    
+
   # now set color for each group
   cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
   pca3d$score$colors <- my.col2rgb(cols);
@@ -402,123 +407,6 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   }
 }
 
-
-#vertically stacked boxplot
-PlotVerticalCmpdSummary<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-
-  if(.on.public.web){
-    load_ggplot()
-    load_grid()
-  }
-  
-  imgName <- gsub("\\/", "_",  cmpdNm);
-  imgName <- paste(imgName, "_summary_dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    h <- 9;
-  }else{
-    h <- width;
-  }
-  
-  if(substring(mSetObj$dataSet$format,4,5)!="ts"){
-    
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*5/9, type=format, bg="white");
-    par(mar=c(4,4,2,2), mfrow = c(1,2), oma=c(0,0,2,0));
-    
-    # need to consider norm data were edited, different from proc
-    smpl.nms <- rownames(mSetObj$dataSet$norm);
-    
-    mns <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, mean, na.rm=T);
-    sds <- by(as.numeric(mSetObj$dataSet$proc[smpl.nms, cmpdNm]), mSetObj$dataSet$cls, sd, na.rm=T);
-    
-    ups <- mns + sds;
-    dns <- mns - sds;
-    
-    # all concentration need start from 0
-    y <- c(0, dns, mns, ups);
-    
-    rg <- range(y) + 0.05 * diff(range(y)) * c(-1, 1)
-    pt <- pretty(y)
-    
-    axp=c(min(pt), max(pt[pt <= max(rg)]),length(pt[pt <= max(rg)]) - 1);
-    
-    my.col <- unique(GetColorSchema(mSetObj$dataSet$cls));
-
-    x <- barplot(mns, col= my.col, las=2, yaxp=axp, ylim=range(pt));
-    arrows(x, dns, x, ups, code=3, angle=90, length=.1);
-    axis(1, at=x, col="white", col.tick="black", labels=F);
-    box();
-    mtext("Original Conc.", line=1);
-    
-    boxplot(mSetObj$dataSet$norm[, cmpdNm]~mSetObj$dataSet$cls,las=2, col= my.col);
-    mtext("Normalized Conc.", line=1);
-    title(main=cmpdNm, out=T);
-    dev.off();
-    
-  }else if(mSetObj$dataSet$design.type =="time0"){
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
-    plotProfile(mSetObj, cmpdNm);
-    dev.off();
-    
-  }else{
-    if(mSetObj$dataSet$design.type =="time"){ # time trend within phenotype
-      out.fac <- mSetObj$dataSet$exp.fac;
-      in.fac <- mSetObj$dataSet$time.fac;
-      xlab = "Time";
-    }else{ # factor a split within factor b
-      out.fac <- mSetObj$dataSet$facB;
-      in.fac <- mSetObj$dataSet$facA;
-      xlab = mSetObj$dataSet$facA.lbl;
-    }
-    
-    # two images per row
-    img.num <- length(levels(out.fac));
-    row.num <- ceiling(img.num/2);
-    
-    if(img.num > 2){
-      col.num=2
-    }else{
-      col.num=1
-    }
-    
-    if(row.num == 1){
-      w <- h*5/9;
-    }else{
-      w <- h*0.5*row.num;
-    }
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    
-    groupNum <- length(levels(in.fac))
-    pal12 = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C",
-              "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", 
-              "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928");
-    col.fun <- grDevices::colorRampPalette(pal12)
-    group_colors <- col.fun(groupNum)
-    
-    p_all <- list()
-    
-    for(lv in levels(out.fac)){
-      inx <- out.fac == lv;
-      df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = in.fac[inx])
-      p_all[[lv]] <- df.orig
-    }
-    
-    alldata <- do.call(rbind, p_all)
-    
-    p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA) + theme_bw() + geom_jitter(size=1) 
-    p.time <- p.time + facet_wrap(~facA, ncol=col.num) + theme(axis.title.x = element_blank(), legend.position = "none")
-    p.time <- p.time + scale_fill_manual(values=group_colors) + theme(axis.text.x = element_text(angle=90, hjust=1)) 
-    p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
-    p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-    p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
-  
-    print(p.time)
-    dev.off()
-  }
-  return(imgName);
-}
 
 # Plot Venn diagram
 # Capabilities for multiple counts and colors by Francois Pepin
@@ -638,28 +526,41 @@ GetAnova2UpMat<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$aov2$p.log;
   red.inx<- which(mSetObj$analSet$aov2$inx.imp);
-  as.matrix(cbind(red.inx, lod[red.inx]));
+  if(sum(red.inx) > 0){
+    return(as.matrix(cbind(red.inx, lod[red.inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
+}
+
+GetAov2UpIDs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  red.inx<- which(mSetObj$analSet$aov2$inx.imp);
+  if(sum(red.inx) > 0){
+    return(names(mSetObj$analSet$aov2$p.log)[red.inx]);
+  }else{
+    return("NA");
+  }
 }
 
 GetAnova2DnMat<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  lod <- mSetObj$analSet$aov$p.log;
-  blue.inx <- which(!mSetObj$analSet$aov2$inx.imp);
-  as.matrix(cbind(blue.inx, lod[blue.inx]));
-}
-
-GetAnova2LnMat<-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$aov2$p.log;
-  as.matrix(rbind(c(0, mSetObj$analSet$aov2$thresh), c(length(lod)+1,mSetObj$analSet$aov2$thresh)));
+  blue.inx <- which(!mSetObj$analSet$aov2$inx.imp);
+  if(sum(blue.inx) > 0){
+    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
 }
 
-GetAnova2Cmpds<-function(mSetObj=NA){
+GetAov2DnIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  names(mSetObj$analSet$aov2$p.log);
+  blue.inx<- which(!mSetObj$analSet$aov2$inx.imp);
+  if(sum(blue.inx) > 0){
+    return(names(mSetObj$analSet$aov2$p.log)[blue.inx]);
+  }else{
+    return("NA");
+  }
 }
 
-GetMaxAnova2Inx <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  which.max(mSetObj$analSet$aov2$p.log);
-}

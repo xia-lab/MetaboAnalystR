@@ -411,3 +411,12 @@ KendallCorrFunc <- function(var1, var2, data){
   result <- cor.test(data[,var1], data[,var2], method = "kendall", exact = FALSE)
   data.frame(var1, var2, result[c("estimate", "p.value", "statistic")], stringsAsFactors = FALSE)
 }
+
+# inject functions from the Network-DSPC script
+ComputeDSPC <- function(mSetObj=NA){
+     if(!exists("PerformDSPC")){ # public web on same user dir
+         compiler::loadcmp("../../rscripts/metaboanalystr/networks_enrich.Rc");  
+         compiler::loadcmp("../../rscripts/metaboanalystr/networks_view.Rc");      
+     }
+     return(PerformDSPC(mSetObj));
+}

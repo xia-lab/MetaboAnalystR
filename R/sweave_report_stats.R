@@ -79,7 +79,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$orig.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$cls)){
+  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$cls)){
     errorMsg <- c(descr, "Error occured during reading the raw data ....",
                   "Failed to proceed. Please check if the data format you uploaded is correct.",
                   "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");
@@ -143,7 +143,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
                "comma separated values. The first line is assumed to be column labels.",
                "The files should be saved in .csv format. For paired analysis, users need to upload separately",
                "a text file specifying the paired information. Each pair is indicated by their sample names",
-               "seperated by a colon \":\" with one pair per line.\n");
+               "separated by a colon \":\" with one pair per line.\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
     cat(mSetObj$msgSet$read.msg, file=rnwFile, append=TRUE, sep="\n");

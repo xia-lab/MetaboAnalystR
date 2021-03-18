@@ -29,47 +29,81 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
     
     mSetObj$api$analType <- mSetObj$analSet$type
     
-    if(is.null(dpi)){
-      dpi <- 72
-    }
-    
-    if(is.na(width)){
-      width <- 8;
-    }
-    
-    if(is.na(height)){
-      height <- 8;
-    }
-    
     # first need to post to create image on server
     if(mSetObj$api$analType == "pathinteg"){
-      toSend <- list(guestName = mSetObj$api$guestName, analType = mSetObj$api$analType, pathName = pathName,
-                     width = width, height = height, format = format, dpi = dpi, pathintegImpMatName = mSetObj$dataSet$pathinteg.impMat[,1],
-                     pathintegImpMatFC = mSetObj$dataSet$pathinteg.impMat[,2])
+      toSend <- list(mSet = mSetObj, analType = mSetObj$api$analType, pathName = pathName,
+                     pathintegImpMatName = mSetObj$dataSet$pathinteg.impMat[,1],
+                     pathintegImpMatFC = mSetObj$dataSet$pathinteg.impMat[,2],
+                     libNm = mSetObj$api$libNm, dpi = dpi, format = format)
     }else{
-      toSend <- list(guestName = mSetObj$api$guestName, analType = mSetObj$api$analType, pathName = pathName,
-                     width = width, height = height, format = format, dpi = dpi)
+      toSend <- list(mSet = mSetObj, analType = mSetObj$api$analType, 
+                     libNm = mSetObj$api$libNm, pathName = pathName,
+                     dpi = dpi, format = format)
     }
-    
+
     load_httr()
     base <- api.base
-    endpoint <- paste0("/createimage/", mSetObj$api$guestName)
+    endpoint <- "/pathway_kegg_plot"
     call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    query_results_text <- content(query_results, "text")
-    query_results_json <- RJSONIO::fromJSON(query_results_text, flatten = TRUE)
-    mSetObj$api$imageName <- query_results_json$plotName
+    print(call)
     
-    if(is.null(mSetObj$api$imageName)){
-      AddErrMsg("Error! Unable to connect to api.metaboanalyst.ca!")
+    saveRDS(toSend, "tosend.rds")
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+    
+    # check if successful
+    if(request$status_code != 200){
+      AddErrMsg("Failed to connect to Xia Lab API Server!")
       return(0)
     }
     
-    # second need to get image from server
-    endpoint_image <- paste0("/getFile/", mSetObj$api$guestName, "/", mSetObj$api$imageName)
-    image_call <- paste(base, endpoint_image, sep="")
-    download.file(image_call, destfile = basename(mSetObj$api$imageName))
-    print(paste0(mSetObj$api$imageName, " saved to current working directory!"))
+    # now process return
+    mSetObj <- httr::content(request, "raw")
+    mSetObj <- unserialize(mSetObj)
+    
+    # second create image from g object from server
+    
+    if(mSetObj$api$analType == "pathinteg"){
+      
+      # joint pathway
+      g <- mSetObj$api$inmex.plot
+      
+      pathName <- gsub("\\s","_", mSetObj$api$inmex.pathname);
+      pathName <- gsub(",","", pathName);
+      
+      dpi <- 72
+      width <- 8;
+      w <- h <- width;
+      
+      imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+      
+      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+      par(mai=rep(0,4));
+      plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=mSetObj$api$inmex.plot.bg.cols,
+                vertex.frame.color=mSetObj$api$inmex.plot.line.cols);
+      dev.off();
+      
+    }else{
+      
+      imgName <- mSetObj$api$imgName
+      
+      # pathway
+      if(is.null(dpi)){
+        Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+      }else{
+        if(is.na(width)){
+          width <- 8;
+          w <- h <- width;
+        }
+        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+      }
+      
+      par(mai=rep(0,4));
+      plot(mSetObj$api$metpa.plot)
+      dev.off();
+    }
+    
+    print(paste0(mSetObj$api$imgName, " saved to current working directory!"))
     
     return(.set.mSet(mSetObj));
   }

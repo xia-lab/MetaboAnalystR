@@ -15,7 +15,7 @@
 #'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
-browser()
+
   mSetObj <- .get.mSet(mSetObj);
   # clean the name, some contains space and special characters, will
   # cause trouble as image name
@@ -833,12 +833,6 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
 PrepareSifDownloads <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   saveNetworkInSIF(mSetObj$analSet$enrich.net, "metaboanalyst_enrich");
-}
-
-overlap_ratio <- function(x, y) {
-  x <- unlist(x)
-  y <- unlist(y)
-  length(intersect(x, y))/length(unique(c(x,y)))
 }
 
 ##' @importFrom grDevices colorRampPalette

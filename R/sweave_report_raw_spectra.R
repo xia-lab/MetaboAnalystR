@@ -18,7 +18,7 @@ CreateRawAnalysisRnwReport <- function(mSetObj, usrName){
   CreateSpectraIOdoc(); # done
 
   CreateRawAnalMethod(); # done
-  CreateRawAnalDetails(); # doing
+  CreateRawAnalDetails(); # done
 
   CreateSampleSum(); # done
   CreateFeatureSum(); # done
@@ -28,8 +28,6 @@ CreateRawAnalysisRnwReport <- function(mSetObj, usrName){
   CreateFooter(); # done
   
 }
-
-
 
 
 ### Section 1 - Background
@@ -406,6 +404,14 @@ createSpectraTIC <- function(){
   load("mSet.rda");
   files <- mSet@rawOnDisk@phenoData@data[["sample_name"]];
   
+  if(!any(file.exists(paste0(files, ".png")))){
+    
+    descr3 <- c("\n\nNo Spectral TIC was viewed by you. Please try to explore from result page.");
+    cat(descr3, file=rnwFile, append=TRUE);
+    cat("\n", file=rnwFile, append=TRUE);
+    
+  }
+  
   for (i in files){
     if(file.exists(paste0(i, ".png"))){
       fig.count<<-fig.count+1;
@@ -461,6 +467,14 @@ createFeatureEIC <- function(){
 
   files <- list.files(pattern = "^EIC.*mz@")
   
+  if(length(files) == 0){
+    
+    descr3 <- c("\n\nNo features' EIC was viewed by you. Please try to explore from result page.");
+    cat(descr3, file=rnwFile, append=TRUE);
+    cat("\n", file=rnwFile, append=TRUE);
+    
+  }
+  
   for (i in files){
     if(file.exists(i)){
       
@@ -505,6 +519,14 @@ createFeatureEICStats <- function(){
   cat("\n", file=rnwFile, append=TRUE);
   
   files <- list.files(pattern = "^[^(EIC)].*mz@.*s.png")
+  
+  if(length(files) == 0){
+    
+    descr3 <- c("\n\nNo features' EIC stats was viewed by you. Please try to explore from result page.");
+    cat(descr3, file=rnwFile, append=TRUE);
+    cat("\n", file=rnwFile, append=TRUE);
+    
+  }
   
   for (i in files){
     if(file.exists(i)){
@@ -551,7 +573,7 @@ createFeatureSumTable <- function(){
   #         size="\\scriptsize",tabular.environment = "longtable");
   # }
   
-};
+}
 
 
 

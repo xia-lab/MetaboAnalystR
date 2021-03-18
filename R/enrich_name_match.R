@@ -1,342 +1,10 @@
-#'Various functions for mapping b/w names & database identifiers
-
-#'Given a list of compound names or ids, find matched name or ids from selected databases
-#'@description Given a list of compound names or ids
-#'find matched name or IDs from selected databases
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@param q.type Input the query type, "name" for compound names, "hmdb" for HMDB IDs, "kegg" for KEGG IDs, "pubchem"
-#'for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.
-#'@param hmdb Logical, T to cross reference to HMDB, F to not.
-#'@param pubchem Logical, T to cross reference to PubChem, F to not.
-#'@param chebi Logical, T to cross reference to CheBI, F to not.
-#'@param kegg Logical, T to cross reference to KEGG, F to not.
-#'@param metlin Logical, T to cross reference to MetLin, F to not.
-#'@param lipid Logical, if features are lipids (T), a different database will be used for
-#'compound matching.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-
-CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, 
-                             chebi=F, kegg=T, metlin=F, lipid=F){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # record the filter for 8 major databases
-  mSetObj$return.cols <- c(hmdb, pubchem, chebi, kegg, metlin);
-  mSetObj$lipid.feats <- lipid
-  
-  # record all the data
-  if(!exists("name.map", where = mSetObj)){
-    mSetObj$name.map <- list();
-  }
-  
-  # distribute job
-  mSetObj$dataSet$q.type <- q.type;
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    MetaboliteMappingExact(mSetObj, q.type, lipid);
-    mSetObj <- .get.mSet(mSetObj);
-  }else{
-    mSetObj <- MetaboliteMappingExact(mSetObj, q.type, lipid);
-  }
-  
-  # do some sanity check
-  todo.inx <- which(is.na(mSetObj$name.map$hit.inx));
-  if(length(mSetObj$name.map$hit.inx) == 0){
-    mSetObj$msgSet$nmcheck.msg <- c(0, "No hits found for the given compound ID. Please make 
-                                    sure that correct compound IDs or common compound names are used.");
-  }else if(length(todo.inx)/length(mSetObj$name.map$hit.inx) > 0.5){
-    mSetObj$msgSet$nmcheck.msg <- c(0, "Over half of the compound IDs could not be matched to our database. Please make 
-                                    sure that correct compound IDs or common compound names are used.");
-  }else if (length(todo.inx) > 15){
-    mSetObj$msgSet$nmcheck.msg <- c(2, "There are >15 compounds without matches. You can either proceed or if necessary, update these compound IDs and upload again.");        
-  }else{
-    mSetObj$msgSet$nmcheck.msg <- c(1, "Name matching OK, please inspect (and manual correct) the results then proceed.");   
-  }
-  
-  if(!.on.public.web){
-    print(mSetObj$msgSet$nmcheck.msg)
-    
-    if(length(todo.inx) == length(mSetObj$name.map$hit.inx)){
-      AddErrMsg("Name matching failed! Please make sure that correct standardized feature names are used!")
-      return(0)
-    }
-  }
-  
-  return(.set.mSet(mSetObj));
-}
-
-#'Mapping from different metabolite IDs
-#'@description For compound names to other ids, can do exact or approximate matches
-#'For other IDs, except HMDB ID, all others may return multiple/non-unique hits
-#'Multiple hits or non-unique hits will allow users to manually select
-#'@param mSetObj Input the name of the created mSetObj.
-#'@param q.type Inpute the query-type, "name" for compound names, "hmdb" for HMDB IDs, "kegg" for KEGG IDs, "pubchem"
-#'for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.
-#'@param lipid Boolean, if features are lipids, a different database will be used for
-#'compound matching.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(lipid & anal.type == "msetqea"){
-    qvec <- unname(mSet$dataSet$orig.var.nms)
-  }else{
-    qvec <- mSetObj$dataSet$cmpd;
-  }
-  
-  # variables to record results
-  hit.inx <- vector(mode='numeric', length=length(qvec)); # record hit index, initial 0
-  names(hit.inx) <- qvec;
-  match.values <- vector(mode='character', length=length(qvec)); # the best matched values (hit names), initial ""
-  match.state <- vector(mode='numeric', length=length(qvec));  # match status - 0, no match; 1, exact match; initial 0 
-  
-  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
-    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
-  }else if(anal.type == "utils"){
-    cmpd.db <- .get.my.lib("master_compound_db.qs");
-  }else{
-    cmpd.db <- .get.my.lib("compound_db.qs");
-  }
-  
-  if(q.type == "hmdb"){
-    n <- 5 # Number of digits for V3 of HMDB
-    hmdb.digits <- as.vector(sapply(cmpd.db$hmdb, function(x) strsplit(x, "HMDB", fixed=TRUE)[[1]][2]))
-    hmdb.v3.ids <- paste0("HMDB", substr(hmdb.digits, nchar(hmdb.digits)-n+1, nchar(hmdb.digits)))
-    hit.inx.v3 <- match(tolower(qvec), tolower(hmdb.v3.ids));
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
-    hit.inx[is.na(hit.inx)] <- hit.inx.v3[is.na(hit.inx)]
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-  }else if(q.type == "pubchem"){
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$pubchem));
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-  }else if(q.type == "chebi"){
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$chebi));
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-  }else if(q.type == "metlin"){
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$metlin));
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-  }else if(q.type == "kegg"){
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$kegg));
-    #hit.inx2 <- match(tolower(qvec), rev(tolower(cmpd.db$kegg)));
-    
-    # unique hits
-    #nonuniq.hits <- hit.inx + hit.inx2 != nrow(cmpd.db) + 1;
-    #hit.inx[nonuniq.hits] <- NA;
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-    
-  }else if(q.type == "name"){
-    # first find exact match to the common compound names
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$name));
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-    
-    # then try to find exact match to synonyms for the remaining unmatched query names one by one
-    if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
-      syn.db <- .get.my.lib("lipid_syn_nms.qs")
-    }else if(anal.type == "utils"){
-      syn.db <- .get.my.lib("master_syn_nms.qs")
-    }else{
-      syn.db <- .get.my.lib("syn_nms.qs")
-    }
-    
-    syns.list <-  syn.db$syns.list;
-    todo.inx <- which(is.na(hit.inx));
-    
-    if(length(todo.inx) > 0){
-      for(i in 1:length(syns.list)){
-        syns <-  syns.list[[i]];
-        hitInx <- match(tolower(qvec[todo.inx]), tolower(syns));
-        
-        hitPos <- which(!is.na(hitInx));
-        if(length(hitPos)>0){
-          # record matched ones
-          orig.inx<-todo.inx[hitPos];
-          hit.inx[orig.inx] <- i;                  
-          # match.values[orig.inx] <- syns[hitInx[hitPos]];  # show matched synnames
-          match.values[orig.inx] <- cmpd.db$name[i];    # show common name
-          match.state[orig.inx] <- 1;
-          
-          # update unmatched list
-          todo.inx<-todo.inx[is.na(hitInx)];
-        }
-        if(length(todo.inx) == 0) break;
-      }
-    }
-  }else{
-    print(paste("Unknown compound ID type:", q.type));
-    # guess a mix of kegg and hmdb ids
-    hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
-    hit.inx2 <- match(tolower(qvec), tolower(cmpd.db$kegg));
-    nohmdbInx <- is.na(hit.inx);
-    hit.inx[nohmdbInx]<-hit.inx2[nohmdbInx]
-    match.values <- cmpd.db$name[hit.inx];
-    match.state[!is.na(hit.inx)] <- 1;
-    
-  }
-  # empty memory
-  gc();
-  
-  mSetObj$name.map$query.vec <- qvec; 
-  mSetObj$name.map$hit.inx <- hit.inx;
-  mSetObj$name.map$hit.values <- match.values;
-  mSetObj$name.map$match.state <- match.state;
-  
-  return(.set.mSet(mSetObj));
-}
 
 CleanLipidNames <- function(qvec){
-  
-  qvec <- qvec
-  
-  # first remove A/B 
-  qvec <- gsub("/A", "", qvec, fixed = TRUE)
-  qvec <- gsub("_A", "", qvec, fixed = TRUE)
-  qvec <- gsub("/B", "", qvec, fixed = TRUE)
-  qvec <- gsub("_B", "", qvec, fixed = TRUE)
-  
-  dash <- paste(c("-1", "-2", "_1", "_2", "_3", "_4", "_5"), collapse = "|")
-  qvec <- gsub(dash, "", qvec)
-  
-  # second remove any RT and adduct info
-  load_stringr()
-  
-  rt.pat <- paste0(c("@", "\\[M"), collapse = "|")
-  at.inx <- str_detect(qvec, rt.pat)
-  
-  if(sum(at.inx) > 0){
-    qvec[at.inx] <- gsub("[;].*", "", qvec[at.inx], fixed = TRUE)
-  }
-  
-  # third remove everything inside + including square brackets 
-  square.pattern <- paste0(c("\\[", "\\]"), collapse = "|") 
-  square.inx <- str_detect(qvec, square.pattern)
-  
-  if(sum(square.inx)>0){
-    qvec <- gsub("\\[.*?\\]", "", qvec, fixed = TRUE)
-  }
-  
-  # fix up non-standard acronyms
-  coq.inx <- str_detect(qvec, "Co\\(Q")
-  if(sum(coq.inx) > 0){
-    qvec[coq.inx] <-  trimws(gsub("[()]", " ", gsub("Co", "Coenzyme", qvec[coq.inx], fixed = TRUE)))
-  }
-  
-  acca.inx <- str_detect(qvec, "AcCa")
-  if(sum(acca.inx) > 0){
-    qvec[acca.inx] <-  trimws(gsub("[()]", " ", gsub("AcCa", "CAR", qvec[acca.inx], fixed = TRUE)))
-  }
-  
-  ac.inx <- str_detect(qvec, "AC\\(")
-  if(sum(ac.inx) > 0){
-    qvec[ac.inx] <-  trimws(gsub("[()]", " ", gsub("AC", "CAR", qvec[ac.inx], fixed = TRUE)))
-  }
-  
-  a.dash.inx <- str_detect(qvec, "\\(a-")
-  if(sum(a.dash.inx) > 0){
-    qvec[a.dash.inx] <- trimws(gsub("[()]", " ", gsub("a-", "", qvec[a.dash.inx], fixed = TRUE)))
-  }
-  
-  pa.inx <- str_detect(qvec, fixed("Plasmanyl-", ignore_case=TRUE))
-  if(sum(pa.inx) > 0){
-    qvec[pa.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[pa.inx], fixed("Plasmanyl-", ignore_case=TRUE), "")))
-  }
-  
-  pe.inx <- str_detect(qvec, fixed("Plasmenyl-", ignore_case=TRUE))
-  if(sum(pe.inx) > 0){
-    qvec[pe.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[pe.inx], fixed("Plasmenyl-", ignore_case=TRUE), "")))
-  }
-  
-  foura.inx <- str_detect(qvec, fixed("aaaa-", ignore_case=TRUE))
-  if(sum(foura.inx) > 0){
-    qvec[foura.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[foura.inx], fixed("aaaa-", ignore_case=TRUE), "")))
-  }
-  
-  twoa.inx <- str_detect(qvec, fixed("aaaa-", ignore_case=TRUE))
-  if(sum(twoa.inx) > 0){
-    qvec[twoa.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[twoa.inx], fixed("aa-", ignore_case=TRUE), "")))
-  }
-  
-  phy.inx <- str_detect(qvec, fixed("Phytocer", ignore_case=TRUE))
-  if(sum(phy.inx) > 0){
-    qvec[phy.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[phy.inx], fixed("Phytocer", ignore_case=TRUE), "Cer")))
-  }
-  
-  dec.inx <- str_detect(qvec, fixed("deoxy-Cer", ignore_case=TRUE))
-  if(sum(dec.inx) > 0){
-    qvec[dec.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[dec.inx], fixed("deoxy-Cer", ignore_case=TRUE), "1-DeoxyCer")))
-  }
-  
-  hex.inx <- str_detect(qvec, fixed("Hex-Cer", ignore_case=TRUE))
-  if(sum(hex.inx) > 0){
-    qvec[hex.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[hex.inx], fixed("Hex-Cer", ignore_case=TRUE), "HexCer")))
-  }
-  
-  cerp.inx <- str_detect(qvec, fixed("CerP", ignore_case=TRUE))
-  if(sum(cerp.inx) > 0){
-    qvec[cerp.inx] <- trimws(gsub(";O2", "", gsub("[()]", " ", str_replace(qvec[cerp.inx], " ", " d"))))
-  }
-  
-  lpc.inx <- str_detect(qvec, fixed("LPC", ignore_case=TRUE))
-  if(sum(lpc.inx) > 0){
-    qvec[lpc.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[lpc.inx], fixed("LPC", ignore_case=TRUE), "LysoPC")))
-  }
-  
-  lpe.inx <- str_detect(qvec, fixed("LPE", ignore_case=TRUE))
-  if(sum(lpe.inx) > 0){
-    qvec[lpe.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[lpe.inx], fixed("LPE", ignore_case=TRUE), "LysoPE")))
-  }
-  
-  # last replace . _ ; to slash if no instances of slash in qvec
-  
-  slash.inx <- str_detect(qvec, "/")
-  
-  if(sum(slash.inx) == 0){
-    
-    period.inx <- str_detect(qvec, "[.]")
-    under.inx <- str_detect(qvec, "[_]")
-    semi.inx <- str_detect(qvec, "[;]")
-    
-    if(sum(period.inx) > 0){
-      qvec <- gsub(".", "/", qvec, fixed = TRUE)
+    # make this lazy load
+    if(!exists("my.clean.lipid")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/metaboanalystr/_util_lipid.Rc");    
     }
-    
-    if(sum(under.inx) > 0){
-      qvec <- gsub("_", "/", qvec, fixed = TRUE)
-    }
-    
-    if(sum(semi.inx) > 0){
-      
-      qvec <- lapply(seq_along(qvec), function(i) {
-        
-        change <- semi.inx[i]
-        lipid <- qvec[i]
-        
-        if(change & nchar(lipid) > 25){
-          lipid <- gsub(".*[;]", "", lipid, fixed = TRUE)
-        }else{
-          lipid <- gsub(";", "/", lipid, fixed = TRUE)
-        }
-        lipid
-      } )    
-      
-      qvec <- unlist(qvec)
-    }
-  }
-  return(trimws(qvec))
+    return(my.clean.lipid(qvec));
 }
 
 #' Perform detailed name match
@@ -346,11 +14,11 @@ CleanLipidNames <- function(qvec){
 #'@export
 #'
 PerformDetailMatch <- function(mSetObj=NA, q){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   lipid = mSetObj$lipid.feats
-  
+
   if(mSetObj$dataSet$q.type == "name"){
     PerformApproxMatch(mSetObj, q, lipid);
   }else{
@@ -367,7 +35,7 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 PerformMultiMatch <- function(mSetObj=NA, q, lipid){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
   }else if(anal.type == "utils"){
@@ -394,9 +62,9 @@ PerformMultiMatch <- function(mSetObj=NA, q, lipid){
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q, lipid){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
   }else if(anal.type == "utils"){
@@ -404,7 +72,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
   }else{
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
-  
+
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     syn.db <- .get.my.lib("lipid_syn_nms.qs")
   }else if(anal.type == "utils"){
@@ -504,7 +172,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
     }
     
     if(length(matched.inx) > 0){
-      
+
       candidates <- data.frame(index=vector(mode = "numeric", length=length(matched.inx)),
                                value=vector(mode = "character", length=length(matched.inx)),
                                score=vector(mode = "numeric", length=length(matched.inx)),
@@ -521,6 +189,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
       
       if(nrow(candidates) > 10){
         matched.inx <- candidates[1:10, ]
+        candidates <- candidates[1:10, ]
       }
       
       mSetObj$dataSet$candidates <- candidates    
@@ -550,7 +219,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   can_mat <- mSetObj$dataSet$candidates;
   
   if(!is.null(can_mat)){
-    
+
     if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
       cmpd.db <- .get.my.lib("lipid_compound_db.qs");
     }else if(anal.type == "utils"){
@@ -607,6 +276,46 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
   }
 }
 
+CrossReferencingAPI <- function(mSetObj=NA, inputType){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  toSend <- list(mSet = mSetObj, 
+                 inputType = inputType,
+                 analType = anal.type)
+  
+  load_httr()
+  base <- api.base
+  endpoint <- "/internal_mapcompounds"
+  call <- paste(base, endpoint, sep="")
+  print(call)
+  
+  saveRDS(toSend, "tosend.rds")
+  request <- httr::POST(url = call, 
+                        body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
+  
+  # check if successful
+  if(request$status_code != 200){
+    AddErrMsg("Failed to connect to Xia Lab API Server!")
+    return(0)
+  }
+  
+  # now process return
+  request <- httr::content(request, "raw")
+  request <- unserialize(request)
+  
+  if(is.null(request$name.map)){
+    AddErrMsg("Error! Compound name mapping via api.metaboanalyst.ca unsuccessful!")
+    return(0)
+  }else{
+    mSetObj <- request
+  }
+  
+  print("Compound name mapping via api.metaboanalyst.ca successful!")
+  
+  return(.set.mSet(mSetObj));
+}
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -622,7 +331,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 #'@export
 
 GetCandidateList <- function(mSetObj=NA, lipid){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   lipid = mSetObj$lipid.feats
@@ -636,7 +345,7 @@ GetCandidateList <- function(mSetObj=NA, lipid){
     # the unmatched will be highlighted in different background
     
     can.mat <- matrix("", nrow=nrow(can_hits)+1, ncol= 6);
-    
+
     if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
       cmpd.db <- .get.my.lib("lipid_compound_db.qs");
     }else if(anal.type == "utils"){
@@ -691,56 +400,7 @@ GetQuery <- function(mSetObj=NA, inx){
   return(mSetObj$dataSet$cmpd[inx]);
 }
 
-#'Return the final (after user selection) map as dataframe
-#'@description Returns three columns: original name, HMDB name and KEGG ID,
-#'for enrichment and pathway analysis, respectively
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  lipid = mSetObj$lipid.feats
-  
-  if (is.null(lipid)) {
-    lipid = FALSE
-  }
-  
-  hit.inx <- mSetObj$name.map$hit.inx;
-  hit.values <- mSetObj$name.map$hit.values;
-  match.state <- mSetObj$name.map$match.state;
-  
-  qvec <- mSetObj$dataSet$cmpd;
-  nm.mat <- matrix(nrow=length(qvec), ncol=4);
-  colnames(nm.mat) <- c("query", "hmdb",  "kegg", "hmdbid");
-  
-  if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
-    cmpd.db <- .get.my.lib("lipid_compound_db.qs");
-  }else if(anal.type == "utils"){
-    cmpd.db <- .get.my.lib("master_compound_db.qs");
-  }else{
-    cmpd.db <- .get.my.lib("compound_db.qs");
-  }
-  
-  for (i in 1:length(qvec)){
-    hit <-cmpd.db[hit.inx[i], ,drop=F];
-    if(match.state[i]==0){
-      hmdb.hit <- NA;
-      hmdb.hit.id <- NA;
-      kegg.hit <- NA;
-    }else{
-      hmdb.hit <- ifelse(nchar(hit.values[i])==0, NA, hit.values[i]);
-      hmdb.hit.id <- ifelse(nchar(hit$hmdb_id)==0, NA, hit$hmdb_id);
-      kegg.hit <- ifelse(nchar(hit$kegg_id)==0, NA, hit$kegg_id);
-    }
-    nm.mat[i, ]<-c(qvec[i], hmdb.hit, kegg.hit, hmdb.hit.id);
-  }
-  return(as.data.frame(nm.mat));
-}
+
 
 #'Get mapping table
 #'@description Return results from compound name mapping in a table
@@ -765,7 +425,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
   lipid <- mSetObj$lipid.feats
   
   if(lipid & anal.type == "msetqea"){
-    qvec <- unname(mSet$dataSet$orig.var.nms)
+    qvec <- names(mSet$dataSet$url.var.nms);
   }else{
     qvec <- mSetObj$dataSet$cmpd;
   }
@@ -795,7 +455,7 @@ CreateMappingResultTable <- function(mSetObj=NA){
   html.res <- matrix("", nrow=length(qvec), ncol=8);
   csv.res <- matrix("", nrow=length(qvec), ncol=9);
   colnames(csv.res) <- c("Query", "Match", "HMDB", "PubChem", "ChEBI", "KEGG", "METLIN", "SMILES", "Comment");
-  
+
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
   }else if(anal.type == "utils"){

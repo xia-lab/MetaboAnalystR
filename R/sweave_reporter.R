@@ -114,7 +114,7 @@ CreateSummaryTable <- function(mSetObj=NA){
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Features (positive)","Missing/Zero","Features (processed)");
-    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
+    rownames(sum.dat)<-names(mSetObj$dataSet$url.smp.nms);
   }else if(mSetObj$dataSet$type=="nmrpeak"| mSetObj$dataSet$type=="mspeak"){ # peak list
     pkSet<-qs::qread("peakSet.qs");
     orig.data<- qs::qread("data_orig.qs");
@@ -126,7 +126,7 @@ CreateSummaryTable <- function(mSetObj=NA){
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Peaks (raw)","Missing/Zero", "Peaks (processed)");
-    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
+    rownames(sum.dat)<-names(mSetObj$dataSet$url.smp.nms);
   }else{ # spectra
     rawxset<-mSetObj$dataSet$xset.orig;
     fillxset<-mSetObj$dataSet$xset.fill;
@@ -139,7 +139,7 @@ CreateSummaryTable <- function(mSetObj=NA){
       sum.dat<-rbind(sum.dat, newrow);
     }
     colnames(sum.dat)<-c("Peaks (raw)","Peaks (fill)", "Peaks(processed)");
-    rownames(sum.dat)<-mSetObj$dataSet$orig.smp.nms;
+    rownames(sum.dat)<-names(mSetObj$dataSet$url.smp.nms);
   }
   print(xtable::xtable(sum.dat, caption="Summary of data processing results"), caption.placement="top", size="\\scriptsize");
 }

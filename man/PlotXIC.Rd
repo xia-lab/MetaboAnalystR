@@ -4,7 +4,7 @@
 \alias{PlotXIC}
 \title{PlotXIC}
 \usage{
-PlotXIC(featureNum)
+PlotXIC(featureNum, format = "png", dpi = 72, width = NA)
 }
 \description{
 PlotXIC is used to plot both MS XIC/EIC features of different group and samples
