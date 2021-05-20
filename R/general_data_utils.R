@@ -163,7 +163,8 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{
-    url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
+    print("Please download the sqlite zipped folder from Google Drive (link in vignette) and 
+          create an R objected named url.pre with the path to the sqlite folder.")
   }
 
   api.base <<- "http://api.xialab.ca"

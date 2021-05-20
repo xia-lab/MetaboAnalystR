@@ -29,6 +29,20 @@ download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_c
 
 ```
 
+Another necessary file to download IF YOU PLAN ON MAPPING GENES is to download the MetaboAnalyst gene-database from here: . Once you unzip the file, *rename the folder to "sqlite" and create an R object named url.pre with the path to the sqlite folder. For example:
+
+```{r, eval=FALSE}
+
+# Step 1. Download zipped sqlite file
+
+# Step 2. Unzip and rename to "sqlite"
+
+# Step 3. Within R, create the url.pre object containing the path to the unzipped files
+
+url.pre <<- "/home/jasmine/Downloads/sqlite/"
+
+```
+
 ## 2. Joint (Integrated) Pathway Analysis
 
 Enrichment analysis aims to evaluate whether the observed genes and metabolites in a particular pathway are significantly enriched (appeatr more than expected by random chance) within the dataset. You can choose over-representation analysis (ORA) based on either hypergenometrics analysis or Fisher's exact method.
