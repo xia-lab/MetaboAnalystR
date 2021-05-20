@@ -283,7 +283,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   
   msg<-c(msg, paste("A total of", length(groupindex), "peak groups were formed. "));
   msg<-c(msg, paste("Peaks of the same group were summed if they are from one sample. "));
-  msg<-c(msg, paste("Peaks appearing in less than half of all samples in each group were ignored."));
+  msg<-c(msg, paste("Peaks must appear in at least half of the samples in at least one group to be included."));
   
   colnames(values) <- peakSet$sampnames;
   

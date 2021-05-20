@@ -17,7 +17,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }
   print(getwd());
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=360:00\n#SBATCH --mem-per-cpu=5000\n#SBATCH --cpus-per-task=4\n"
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=480:00\n#SBATCH --mem-per-cpu=6000\n#SBATCH --cpus-per-task=4\n"
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -341,6 +341,40 @@ mzrt2ID <- function(mzrt){
   FTID <- which(mSet@dataSet[["Sample"]] == mzrt)-1;
   return(as.integer(FTID));
 }
+
+#' readAdductsList
+#' @description readAdductsList for user customization
+#' @author Zhiqiang Pang
+readAdductsList <- function(polarity = NULL){
+  
+  res <- NULL;
+  r <- OptiLCMS:::.exportmSetRuleClass();
+  
+  setDefaultLists <- OptiLCMS:::setDefaultLists;
+  readLists <- OptiLCMS:::readLists;
+  setParams <- OptiLCMS:::setParams;
+  generateRules <- OptiLCMS:::generateRules;
+  
+  r <- setDefaultLists(r, lib.loc=.libPaths());
+  r <- readLists(r);
+  
+  if(polarity == "positive" || is.null(polarity)){
+    r <- setParams(r, maxcharge=3, mol=3, nion=2,
+                   nnloss=1, nnadd=1, nh=2, polarity="positive", lib.loc = .libPaths());
+    r <- generateRules(r);
+    rules <- unique(r@rules);
+    res <- rules[order(rules$ips,decreasing = TRUE),][["name"]];
+  } else {
+    r <- setParams(r, maxcharge=3, mol=3, nion=2,
+                   nnloss=1, nnadd=1, nh=2, polarity="negative", lib.loc = .libPaths());
+    r <- generateRules(r);
+    rules <- unique(r@rules);
+    res <- rules[order(rules$ips,decreasing = TRUE),][["name"]];
+  }
+  
+  return(res);
+}
+
 ################## ------------- Shell function here below ------------- ######################
 
 #' InitializePlan
@@ -369,7 +403,7 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
                          profStep, # used for "obiwarp"
                          minFraction, minSamples, maxFeatures, mzCenterFun, integrate,# used for grouping
                          extra, span, smooth, family, fitgauss, # used for RT correction with peakgroup "loess"
-                         polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, #used for annotation
+                         polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
                          rmConts #used to control remove contamination or not
                          ){
     OptiLCMS::SetPeakParam(platform = platform, Peak_method = Peak_method, RT_method = RT_method,
@@ -380,7 +414,7 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
                            profStep, 
                            minFraction, minSamples, maxFeatures, mzCenterFun, integrate,
                            extra, span, smooth, family, fitgauss, 
-                           polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, #used for annotation
+                           polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
                            rmConts 
   )
   #return nothing
@@ -402,9 +436,12 @@ plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width
     width <- 7;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
+  
   if(imageNumber == -1){
     imgName <- paste0(filename,".", format);
   } else {
@@ -423,6 +460,8 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
     #width <- 6;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "enlarged"
   } else {
     widthm <- "full"
   }
@@ -498,8 +537,10 @@ PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) 
     width <- 9;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
   imgName <- paste0("Adjusted_RT_", dpi, "_", widthm, "_",  imageNumber, ".", format);
   OptiLCMS::PlotSpectraRTadj (mSet = NULL,
@@ -510,12 +551,14 @@ PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) 
 
 PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
   if (is.na(width)) {
-    widthm <- "default";
+    widthm <- "default"
     width <- 9;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
   imgName <- paste0("Adjusted_BPI_", dpi, "_", widthm, "_",  imageNumber, ".", format);
   OptiLCMS::PlotSpectraBPIadj (mSet = NULL,
@@ -527,11 +570,13 @@ PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA)
 PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = 72, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
-    width <- 9;
+    width <- 8;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
   imgName <- paste0("Insensity_Statics_", dpi, "_", widthm, "_",  imageNumber, ".", format);
   OptiLCMS::PlotSpectraInsensityStistics (mSet = NULL, 
@@ -546,8 +591,10 @@ plotTICs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
     width <- 9;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
   imgName <- paste0("TICs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
   OptiLCMS::plotTICs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);
@@ -561,8 +608,10 @@ plotBPIs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
     width <- 9;
   } else if (width < 5) {
     widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    widthm <- "full"
+    widthm <- "7in"
   }
   imgName <- paste0("BPIs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
   OptiLCMS::plotBPIs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);

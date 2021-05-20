@@ -175,11 +175,11 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
     network.type <<- table.nm 
 
     # now do the database search
-    
+
     if(db.type == "pheno"){
         res <- QueryPhenoSQLite(table.nm, genes, cmpds, min.score);
         if(nrow(res)==0){ return(c(0,0)); }
-
+  
         if(table.nm == "gene_metabolites"){
             src <- "entrez"; src.nm <- "symbol";
             src.evidence <- "protein"
@@ -211,10 +211,10 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
         }
         row.names(edge.res) <- 1:nrow(res);
         fast.write.csv(edge.res, file="orig_edge_list.csv",row.names=FALSE);
-    
+ 
         node.ids <- c(res[,src], res[,target])
         node.nms <- c(res[,src.nm], res[,target.nm]);
-        
+    
         if(table.nm == "metabo_metabolites" || table.nm == "gene_metabolites" || table.nm == "global"){
           node.evidence <- c(res[,src.evidence], res[,target.evidence]);
         } else{

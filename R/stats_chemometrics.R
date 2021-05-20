@@ -279,34 +279,34 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       }
     }
     uniq.pchs <- unique(pchs);
-    
-    if(grey.scale) {
-      uniq.cols <- "black";
-    }
 
-    if(length(uniq.cols) != length(levels(cls))){
-      
+    if(length(uniq.cols) != length(levels(cls))){     
       if(mSetObj$dataSet$type.cls.lbl=="integer"){
         names(cols) <- as.numeric(cls)
       }else{
         names(cols) <- as.character(cls)
       }
-      
       match.inx <- match(levels(cls), names(cols))
       uniq.cols <- cols[match.inx]
     }
-    
-    if(length(uniq.pchs) != length(levels(cls))){
-      
-      if(mSetObj$dataSet$type.cls.lbl=="integer"){
-        names(pchs) <- as.numeric(cls)
-      }else{
-        names(pchs) <- as.character(cls)
-      }
-      
-      match.inx <- match(levels(cls), names(pchs))
-      uniq.pchs <- pchs[match.inx]
+
+    # after the fix above
+    if(grey.scale) {
+      uniq.cols <- "black";
     }
+
+# JX: This patch breaks plot for multi-group legend; If it occurs, 
+# need to fix source - why col or pch are not unique when requested
+    
+#    if(length(uniq.pchs) != length(levels(cls))){     
+#      if(mSetObj$dataSet$type.cls.lbl=="integer"){
+#        names(pchs) <- as.numeric(cls)
+#      }else{
+#        names(pchs) <- as.character(cls)
+#     }      
+#      match.inx <- match(levels(cls), names(pchs))
+#      uniq.pchs <- pchs[match.inx]
+#    }
     
     if(length(lvs) < 6){
         legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);

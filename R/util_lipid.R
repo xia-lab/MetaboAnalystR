@@ -39,6 +39,16 @@ my.clean.lipid <- function(qvec){
   # sixth remove parantheses containing OH or C
   qvec <- trimws(gsub("\\h*\\([^)]*\\b(?:OH||C)\\b[^)]*\\)", "", qvec))
   
+  # seventh remove nega/posi
+  qvec <-trimws(gsub("-nega", "", qvec))
+  qvec <-trimws(gsub("-posi", "", qvec))
+  qvec <-trimws(gsub("-neg", "", qvec))
+  qvec <-trimws(gsub("-pos", "", qvec))
+  qvec <-trimws(gsub("_nega", "", qvec))
+  qvec <-trimws(gsub("_posi", "", qvec))
+  qvec <-trimws(gsub("_neg", "", qvec))
+  qvec <-trimws(gsub("_pos", "", qvec))
+  
   # fix up non-standard acronyms
   coq.inx <- str_detect(qvec, "Co\\(Q")
   if(sum(coq.inx) > 0){
@@ -108,6 +118,16 @@ my.clean.lipid <- function(qvec){
   lpe.inx <- str_detect(qvec, fixed("LPE", ignore_case=TRUE))
   if(sum(lpe.inx) > 0){
     qvec[lpe.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[lpe.inx], fixed("LPE", ignore_case=TRUE), "LysoPE")))
+  }
+  
+  dg.inx <- str_detect(qvec, fixed("Diglyceride ", ignore_case=TRUE))
+  if(sum(dg.inx) > 0){
+    qvec[dg.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[dg.inx], fixed("Diglyceride ", ignore_case=TRUE), "DG")))
+  }
+  
+  tg.inx <- str_detect(qvec, fixed("Triglyceride ", ignore_case=TRUE))
+  if(sum(tg.inx) > 0){
+    qvec[tg.inx] <- trimws(gsub("[()]", " ", str_replace(qvec[tg.inx], fixed("Triglyceride ", ignore_case=TRUE), "TG")))
   }
   
   # last replace . _ ; to slash if no instances of slash in qvec

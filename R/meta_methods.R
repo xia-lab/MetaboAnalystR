@@ -604,7 +604,7 @@ PlotDataProfile<-function(dataName, boxplotName, pcaName){
 
 qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-  
+  require("lattice");
   subgene=10000;
   if (nrow(dat)>subgene) {
     set.seed(28051968);
@@ -673,7 +673,7 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
 PrepareVennData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # create a list store all possible combination (for a max of 4)
   # note, the whole region is divided into small areas (16 for 4; 7 for 3, 3 for 2)
   # for instance:
@@ -699,6 +699,7 @@ PrepareVennData <- function(mSetObj=NA){
     AddErrMsg("No signficant features for any dataset!");
     return(0);
   }
+
   if(length(sel.dats) == 2){
     Prepare2Venn(sel.dats);
   }else if(length(sel.dats) == 3){
@@ -711,12 +712,8 @@ PrepareVennData <- function(mSetObj=NA){
   }
   venn.list <<- sel.dats;
 
-  save(sel.dats, file = "sel.dats.rda");
-  save(mSetObj, file = "mSetObj__venn.rda");
-  save.image(file = "image__venn.RData")
   PlotMetaVenn(mSetObj, "venn_diagram");
-  return(.set.mSet(mSetObj));
-  
+  return(.set.mSet(mSetObj));  
 }
 
 #3

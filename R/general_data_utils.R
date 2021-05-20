@@ -163,7 +163,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{
-     url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
+    url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
   }
 
   api.base <<- "http://api.xialab.ca"
@@ -506,11 +506,15 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.save.data")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_savedata.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_savedata.Rc");    
     }
     return(my.save.data(mSetObj));
+  }else{
+    return(my.save.data(mSetObj));
+  }
 }
 
 #' Read an mzTab tab separated file from the passed in file.
@@ -523,11 +527,15 @@ SaveTransformedData <- function(mSetObj=NA){
 #' then the SML_ID will be used.
 #' @export
 Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.mztab")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_mztab.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_mztab.Rc");    
     }
     return(my.parse.mztab(mSetObj, filename, identifier));
+  }else{
+    return(my.parse.mztab(mSetObj, filename, identifier));
+  }
 }
 
 #'Read peak list files
@@ -546,11 +554,15 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 #'@export
 
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.peaklist")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_peaks.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_peaks.Rc");    
     }
     return(my.parse.peaklist(mSetObj, foldername));
+  }else{
+    return(my.parse.peaklist(mSetObj, foldername));
+  }
 }
 
 #' Adds an error message

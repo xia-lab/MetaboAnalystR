@@ -155,8 +155,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA, meta.anal = FALSE,
   mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), "m/z features were found in your uploaded data.");
   mSetObj$dataSet$fileName <- file_name
   mumDataContainsPval <<- mumDataContainsPval;
-  peakFormat <<- peakFormat
-  print(peakFormat)
+  peakFormat <<- peakFormat;
   return(.set.mSet(mSetObj));
 }
 
@@ -674,8 +673,7 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
   }else if(sig.size < 30){
     msg.vec <- c(msg.vec, "The number of significant features is small based on the current cutoff, possibly not accurate.");
   }
-  
-  print(msg.vec)
+
   mSetObj$dataSet$input_mzlist <- input_mzlist;
   mSetObj$dataSet$N <- sig.size;
   
@@ -915,17 +913,17 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   
   version <- mum.version
   filenm <- paste(lib, ".qs", sep="")
-  biocyc <- grepl("biocyc", lib)
+  biocyc <- grepl("biocyc", lib);
   
   if(!is.null(mSetObj$curr.cust)){
     
     if(biocyc){
-      user.curr <- mSetObj$curr.map$BioCyc
+      user.curr <- mSetObj$curr.map$BioCyc;
     }else{
-      user.curr <- mSetObj$curr.map$KEGG
+      user.curr <- mSetObj$curr.map$KEGG;
     }
     
-    currency <<- user.curr
+    currency <<- user.curr;
     
     if(length(currency)>0){
       mSetObj$mummi$anal.msg <- c("Currency metabolites were successfully uploaded!")
@@ -933,7 +931,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
       mSetObj$mummi$anal.msg <- c("Errors in currency metabolites uploading!")
     }
   }
-  
+ 
   if(.on.public.web){
     mum.url <- paste("../../libs/mummichog/", filenm, sep="");
     print(paste("Adding mummichog library:", mum.url));
@@ -949,8 +947,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   }
   
   if(!is.null(mSetObj$adduct.custom)){
-    mw <- mummichog.lib$cpd.lib$mw
-    new_adducts <- new_adduct_mzlist(mSetObj, mw)
+    mw <- mummichog.lib$cpd.lib$mw;
+    new_adducts <- new_adduct_mzlist(mSetObj, mw);
+    ms0 <- new_adducts$pos;
     
     cpd.lib <- list(
       mz.matp = new_adducts$pos,
@@ -961,6 +960,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     );
     
   }else{
+    ms <- mummichog.lib$cpd.lib$adducts[["positive"]];
     cpd.lib <- list(
       mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
       mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
@@ -1000,8 +1000,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
       
       # delete emp_cpds, cpds and names with no emp_cpds
       null.inx <- sapply(cleaned.pathways$emp_cpds, is.null)
+     
+      new_pathways <- vector("list");
       
-      new_pathways <- vector("list")
       new_pathways$cpds <- cleaned.pathways$cpds[!null.inx]
       new_pathways$name <- cleaned.pathways$name[!null.inx]
       new_pathways$emp_cpds <- cleaned.pathways$emp_cpds[!null.inx]
@@ -1017,7 +1018,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
 # version 2
 # internal function for searching compound library
 .search.compoundLib <- function(mSetObj, cpd.lib, cpd.treep, cpd.treen){
-  
+
   ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   pos_inx <- mSetObj$dataSet$pos_inx;
@@ -1150,10 +1151,10 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     }
     
     matched_resp <- data.frame(matrix(unlist(matched_resp), nrow=length(matched_resp), byrow=T), stringsAsFactors = FALSE);
-    matched_res <- matched_resp
+    matched_res <- matched_resp;
+    
   }else{
     matched_resn <- matched_resn$as.list();
-    
     if(is.null(unlist(matched_resn))){
       msg.vec <<- "No compound matches from upload peak list!"
       return(0)
@@ -1950,13 +1951,13 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     
     # combine p-values
     if(pval.method=="fisher"){
-      meta.pvals <- lapply(scores, function(x) metap::sumlog(as.numeric(x)))
+      meta.pvals <- lapply(scores, function(x) sumlog(as.numeric(x)))
     }else if(pval.method=="edgington"){ 
-      meta.pvals <- lapply(scores, function(x) metap::sump(as.numeric(x)))
+      meta.pvals <- lapply(scores, function(x) sump(as.numeric(x)))
     }else if(pval.method=="stouffer"){
-      meta.pvals <- lapply(scores, function(x) metap::sumz(x))
+      meta.pvals <- lapply(scores, function(x) sumz(x))
     }else if(pval.method=="vote"){
-      meta.pvals <- lapply(scores, function(x) metap::votep(x))
+      meta.pvals <- lapply(scores, function(x) votep(x))
     }else if(pval.method=="min"){
       Meta.P <- lapply(scores, function(x) min(x) )
     }else if(pval.method=="max") {
@@ -2796,12 +2797,12 @@ PerformAdductMapping <- function(mSetObj=NA, add.mode){
   hits <- length(na.omit(hit.inx))
   
   if(hits == 0){
-    mSetObj$mummi$add.msg <- c("No adducts were selected!")
+    mSetObj$mummi$add.msg <- c("No adducts were selected!");
     return(0)
   }
   
   match.values <- add_db[na.omit(hit.inx),];
-  sel.add <- nrow(match.values)
+  sel.add <- nrow(match.values);
   
   if(sel.add > 0){
     mSetObj$mummi$add.msg <- paste("A total of ", sel.add ," adducts were successfully selected!", sep = "")
@@ -2816,9 +2817,11 @@ PerformAdductMapping <- function(mSetObj=NA, add.mode){
 # internal function to create new mz matrix from user-curated list of adducts
 new_adduct_mzlist <- function(mSetObj=NA, mw){
   
-  mSetObj <- .get.mSet(mSetObj);
+  if(!exists("metaFiles")){
+    mSetObj <- .get.mSet(mSetObj);
+  }
   
-  mode <- mSetObj$dataSet$mode
+  mode <- mSetObj$dataSet$mode;
   
   ion.name <- mSetObj$add.map$Ion_Name
   ion.mass <- mSetObj$add.map$Ion_Mass
@@ -3091,7 +3094,6 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-#' @import metap
 #' @import scales
 
 PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
@@ -3850,11 +3852,20 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
                    nproc=0,
                    gseaParam=1,
                    BPPARAM=NULL) {
+  
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.fgsea")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_fgsea.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_fgsea.Rc");    
     }
-    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm, minSize, maxSize, nproc, gseaParam,BPPARAM));
+    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
+                    minSize, maxSize, nproc, gseaParam, BPPARAM));
+  }else{
+    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm, 
+                    minSize, maxSize, nproc, gseaParam, BPPARAM));
+  }
+  
+
 }
 
 calcGseaStat2 <- function(stats, selectedStats, gseaParam=1,
@@ -3929,22 +3940,6 @@ calcGseaStat2 <- function(stats, selectedStats, gseaParam=1,
   res
 }
 
-sumlog <-function(p) {
-  keep <- (p > 0) & (p <= 1)
-  lnp <- log(p[keep])
-  chisq <- (-2) * sum(lnp)
-  df <- 2 * length(lnp)
-  if(sum(1L * keep) < 2)
-    stop("Must have at least two valid p values")
-  if(length(lnp) != length(p)) {
-    warning("Some studies omitted")
-  }
-  res <- list(chisq = chisq, df = df,
-              p = pchisq(chisq, df, lower.tail = FALSE), validp = p[keep])
-  class(res) <- c("sumlog", "metap")
-  res
-}
-
 ####
 ####
 #### for heatmap view (online only)
@@ -3964,12 +3959,18 @@ sumlog <-function(p) {
   return(.set.mSet(mSetObj));
 }
 
-CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, version="v1"){
+CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, 
+                              fileNm, filtOpt, version="v1"){
+  
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.heatmap.json")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_heatmap.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_heatmap.Rc");    
     }
     return(my.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+  }else{
+    return(my.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+  }
 }
 
 DoPeakConversion <- function(mSetObj=NA){
@@ -3977,13 +3978,11 @@ DoPeakConversion <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
+  
   ####### NOTE: need to use Ttests.Anal because Convert2Mummichog function takes as input result list from Ttests.anal: mSetObj$analSet$tt
   
   if(.on.public.web){
-    if(res==0){
-      AddErrMsg("T-test failed, please consider trying different data normalization option!");
-      return(0);
-    }
+
     mSetObj <- .get.mSet();
     .on.public.web <<- F;
     mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$dataSet$mumRT.type, "tt", mSetObj$dataSet$mode);
@@ -3993,12 +3992,18 @@ DoPeakConversion <- function(mSetObj=NA){
     mSetObj<-SanityCheckMummichogData(mSetObj)
     .on.public.web <<- T;
     .set.mSet(mSetObj);
+    
     return(1)
+    
   }else{
+    
+    mSetObj <- res
+    
     if(mSetObj$analSet$tt$sig.num == 0){
       AddErrMsg("T-test failed, please consider trying different data normalization option!");
       return(0);
     }
+    
     mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$dataSet$mumRT.type, "tt", mSetObj$dataSet$mode);
     SetPeakFormat("mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
@@ -4008,12 +4013,18 @@ DoPeakConversion <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
-CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, version="v1"){
+CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 
+                                  minLib, fileNm, filtOpt, version="v1"){
+  
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.list.heatmap")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_listheatmap.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_listheatmap.Rc");    
     }
     return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+  }else{
+    return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+  }
 }
 
 #'Set organism for further analysis
@@ -4025,3 +4036,136 @@ SetOrganism <- function(mSetObj=NA, org){
   mSetObj$org <- org;
   return(.set.mSet(mSetObj))
 }
+
+
+###### Functions got from metap package ######
+sumlog <-
+  function(p) {
+    keep <- (p > 0) & (p <= 1)
+    invalid <- sum(1L * keep) < 2
+    if(invalid) {
+      warning("Must have at least two valid p values")
+      res <- list(chisq = NA_real_, df = NA_integer_,
+                  p = NA_real_, validp = p[keep])
+    } else {
+      lnp <- log(p[keep])
+      chisq <- (-2) * sum(lnp)
+      df <- 2 * length(lnp)
+      if(length(lnp) != length(p)) {
+        warning("Some studies omitted")
+      }
+      res <- list(chisq = chisq, df = df,
+                  p = pchisq(chisq, df, lower.tail = FALSE), validp = p[keep])
+    }
+    class(res) <- c("sumlog", "metap")
+    res
+  }
+
+sump <-
+  function(p)  {
+    keep <- (p >= 0) & (p <= 1)
+    invalid <- sum(1L * keep) < 2
+    if(invalid) {
+      warning("Must have at least two valid p values")
+      res <- list(p = NA_real_, conservativep = NA_real_, validp = p[keep])
+    } else {
+      sigmap <- sum(p[keep])
+      k <- length(p[keep])
+      conservativep <- exp( k * log(sigmap) - lgamma(k + 1))
+      nterm <- floor(sigmap) + 1 # how many values of sump
+      denom <- lfactorial(k)
+      psum <- 0
+      terms <- vector("numeric", nterm)
+      for (i in 1:nterm) {
+        terms[i] <- lchoose(k, i - 1) + k * log(sigmap - i + 1) - denom
+        pm <- 2 * (i %% 2) - 1
+        psum <- psum + pm * exp(terms[i])
+      }
+      if(k != length(p)) {
+        warning("Some studies omitted")
+      }
+      if(sigmap > 20) {
+        warning("Likely to be unreliable, check with another method")
+      }
+      res <- list(p = psum, conservativep = conservativep, validp = p[keep])
+    }
+    class(res) <- c("sump", "metap")
+    res
+  }
+
+sumz <-
+  function(p, weights = NULL, data = NULL, subset = NULL, na.action = na.fail)  {
+    if(is.null(data)) data <- sys.frame(sys.parent())
+    mf <- match.call()
+    mf$data <- NULL
+    mf$subset <- NULL
+    mf$na.action <- NULL
+    mf[[1]] <- as.name("data.frame")
+    mf <- eval(mf, data)
+    if(!is.null(subset)) mf <- mf[subset,]
+    mf <- na.action(mf)
+    p <- as.numeric(mf$p)
+    weights <- mf$weights
+    noweights <- is.null(weights)
+    if(noweights) weights <- rep(1, length(p))
+    if(length(p) != length(weights)) warning("Length of p and weights differ")
+    keep <- (p > 0) & (p < 1)
+    invalid <- sum(1L * keep) < 2
+    if(invalid) {
+      warning("Must have at least two valid p values")
+      res <- list(z = NA_real_, p = NA_real_,
+                  validp = p[keep], weights = weights)
+    } else {
+      if(sum(1L * keep) != length(p)) {
+        warning("Some studies omitted")
+        omitw <- weights[!keep]
+        if((sum(1L * omitw) > 0) & !noweights)
+          warning("Weights omitted too")
+      }
+      zp <- (qnorm(p[keep], lower.tail = FALSE) %*% weights[keep]) /
+        sqrt(sum(weights[keep]^2))
+      res <- list(z = zp, p = pnorm(zp, lower.tail = FALSE),
+                  validp = p[keep], weights = weights)
+    }
+    class(res) <- c("sumz", "metap")
+    res
+  }
+
+votep <-
+  function(p, alpha = 0.5) {
+    alpha <- ifelse(alpha > 1, alpha / 100, alpha) # if percent
+    stopifnot(alpha > 0, alpha < 1)
+    keep <- (p >= 0) & (p <= 1)
+    alp <- vector("numeric", 2)
+    if(alpha <= 0.5) {
+      alp[1] <- alpha
+      alp[2] <- 1 - alpha
+    } else {
+      alp[2] <- alpha
+      alp[1] <- 1 - alpha
+    }
+    invalid <- sum(1L * keep) < 2
+    if(invalid) {
+      warning("Must have at least two valid p values")
+      res = list(p = NA_real_, pos = NA_integer_, neg = NA_integer_,
+                 alpha = alpha, validp = p[keep])
+    } else {
+      pi <- p[keep]
+      k <- length(pi)
+      pos <- sum(1L * (pi < alp[1]))
+      neg <- sum(1L * (pi > alp[2]))
+      if(k != length(p)) {
+        warning("Some studies omitted")
+      }
+      if((pos + neg) <= 0) {
+        warning("All p values are within specified limits of alpha")
+        p <- 1
+      } else {
+        p = binom.test(pos, pos + neg, 0.5, alternative = "greater")$p.value
+      }
+      res = list(p = p, pos = pos, neg = neg, alpha = alpha, validp = pi)
+    }
+    class(res) <- c("votep", "metap")
+    res
+  }
+

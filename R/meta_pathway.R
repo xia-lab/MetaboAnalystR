@@ -193,7 +193,11 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
     cpdMatchResults <- list()
     
     for(i in 1:length(metaFiles)){
-      mSetObj <- qs::qread(metaFiles[i])
+      mSetObj <- qs::qread(metaFiles[i]);
+      if(!is.null(mSetObj$adduct.custom)){
+        mSetObj <- AdductMapping(mSetObj);
+      }
+      
       mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
       cpdMatchResults[[metaFiles[i]]] <- qs::qread("mum_res.qs")
       
@@ -229,13 +233,21 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
     # finally for pooled
     # this method will not handle RT (empirical cpd level)
     metaMsetObj <- vector("list")
+    adduct.list <- list();
     
     for(metafile in seq_along(metaFiles)){
-      mSetObj <- qs::qread(metaFiles[metafile])
-      metafile <- metaFiles[metafile]
-      metaMsetObj[[metafile]]$dat <- mSetObj$dataSet$mummi.proc
-      metaMsetObj[[metafile]]$pos_inx <- mSetObj$dataSet$pos_inx
-      metaMsetObj[[metafile]]$ins_tol <- mSetObj$dataSet$instrument
+      mSetObj <- qs::qread(metaFiles[metafile]);
+      
+      if(!is.null(mSetObj$adduct.custom)){
+        mSetObj <- AdductMapping(mSetObj);
+        qs::qsave(mSetObj, file = metaFiles[metafile]);
+      }
+      
+      metafile <- metaFiles[metafile];
+      metaMsetObj[[metafile]]$dat <- mSetObj$dataSet$mummi.proc;
+      metaMsetObj[[metafile]]$pos_inx <- mSetObj$dataSet$pos_inx;
+      metaMsetObj[[metafile]]$ins_tol <- mSetObj$dataSet$instrument;
+      adduct.list[[metafile]] <- metaMsetObj[[metafile]]$adducts <- mSetObj$dataSet$adduct.list
     }
     
     # first check that all instrument tol are equal
@@ -243,7 +255,7 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
     
     # if different instrument tols
     # do individual putative compound annotation
-    if(length(ins_tol) > 1){
+    if((length(ins_tol) > 1) || (length(unique(adduct.list)) > 1)){
       
       mSetObj$mum_nm <- "mummichog_query.json"
       mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
@@ -259,6 +271,7 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
         mSetObj <- .init.Permutations(mSetObj, permNum)
       }
       
+      mSetObj$cmdSet <- CMDSet;
       return(.set.mSet(mSetObj));
     }
     
@@ -286,11 +299,11 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
       mSetObj$dataSet$N <- length(input_mzlist)
     }
     
-    mSetObj$dataSet$mummi.proc <- metadat
-    mSetObj$dataSet$ref_mzlist <- ref_mzlist
-    mSetObj$dataSet$pos_inx <- pos_inx
-    mSetObj$dataSet$expr_dic <- expr_dic
-    names(mSetObj$dataSet$expr_dic) <- ref_mzlist
+    mSetObj$dataSet$mummi.proc <- metadat;
+    mSetObj$dataSet$ref_mzlist <- ref_mzlist;
+    mSetObj$dataSet$pos_inx <- pos_inx;
+    mSetObj$dataSet$expr_dic <- expr_dic;
+    names(mSetObj$dataSet$expr_dic) <- ref_mzlist;
     
     if(version == "v2"){
       mSetObj$dataSet$mumRT <- TRUE
@@ -374,13 +387,13 @@ performMetaPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 1
     
     # combine p-values
     if(pval.method=="fisher"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sumlog(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) sumlog(x))
     }else if(pval.method=="edgington"){ 
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sump(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) sump(x))
     }else if(pval.method=="stouffer"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sumz(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) sumz(x))
     }else if(pval.method=="vote"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::votep(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) votep(x))
     }else if(pval.method=="min"){
       Meta.P <- apply(as.matrix(path2), 1, function(x) min(x) )
     }else if(pval.method=="max") {
@@ -802,8 +815,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     df$Pathway <- factor(df$Pathway, levels = rownames(path_results))
     df$Study <- sub("mummichoginput", "", df$Study);
     df$Study <- as.factor(df$Study);
-    save(df, file = "df.rda")
-    save(metap_order, file = "metap_order.rda")
+    
     p <- ggplot(df, aes(x = Study, y = Pathway)) +
       geom_point(aes(col = `p-value`, size = `enrichment ratio`)) + 
       theme(legend.key=element_blank(), 
@@ -857,6 +869,68 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
 ########################################
 ########################################
 
+## R functions used to define the adducts for met-analysis
+Customize.MetaAdduct <- function(name, name2, qvec, mode){
+  
+  fileNM <- tools::file_path_sans_ext(basename(name));
+  fileNM <- gsub("_", "", fileNM);
+  
+  if(name2 != "null"){
+    fileNM <- gsub("\\.[^.]*$", "", basename(fileNM));
+    filename <- paste0(fileNM, "mixedmummichoginput.qs");
+  } else {
+    fileNM <- gsub("\\.[^.]*$", "", basename(fileNM));
+    filename <- paste0(fileNM, "mummichoginput.qs");
+  }
+  
+  mSetObj <- qs::qread(filename);
+  
+  mSetObj$dataSet$mode <- mode;
+  mSetObj$dataSet$adduct.list <- qvec;
+  mSetObj$adduct.custom <- TRUE;
+  mSetObj$dataSet$fileName <- fileNM;
+  
+  qs::qsave(mSetObj, file = filename);
+  
+  return(1);
+}
+
+AdductMapping <- function(mSetObj){
+  
+  adducts <- mSetObj$dataSet$adduct.list;
+  add.mode <- mSetObj[["dataSet"]][["mode"]];
+  
+  if(add.mode == "positive"){
+    add_db <- .get.my.lib("pos_adduct.qs");
+  }else if(add.mode == "negative"){
+    add_db <- .get.my.lib("neg_adduct.qs");
+  }else if(add.mode == "mixed"){
+    add_db <- .get.my.lib("mixed_adduct.qs");
+  }else{
+    msg <- c("Adduct mode is not valid")
+  }
+  
+  hit.inx <- match(tolower(adducts), tolower(add_db$Ion_Name));  
+  hits <- length(na.omit(hit.inx))
+  
+  if(hits == 0){
+    mSetObj$mummi$add.msg <- c("No adducts were selected!");
+    return(0)
+  }
+  
+  match.values <- add_db[na.omit(hit.inx),];
+  sel.add <- nrow(match.values);
+  
+  if(sel.add > 0){
+    mSetObj$mummi$add.msg <- paste("A total of ", sel.add ," adducts were successfully selected!", sep = "")
+  }
+  
+  mSetObj$adduct.custom <- TRUE;
+  mSetObj$add.map <- match.values;
+  
+  return(mSetObj);
+}
+
 ## R functions used to prepare for meta-mummichog analysis
 PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30, 
                             version = "v2", pcutoff = 0.05, rt.type = "seconds") {
@@ -888,7 +962,7 @@ PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30,
   if(length(mSetObj$dataSet2) == 0) {
     
     # Here is dealing with the single ion mode data
-    mSetObj <- Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE);
+    mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, rt, rds.file=FALSE, rt.type, "all", mode);
     
@@ -909,7 +983,7 @@ PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30,
     mSetObj1$dataSet <- mSetObj$dataSet
     mSetObj2$dataSet <- mSetObj$dataSet2
     .set.mSet(mSetObj1)
-    mSetObj1 <- Ttests.Anal(mSetObj1, F, 0.05, FALSE, TRUE);
+    mSetObj1 <- Ttests.Anal(mSetObj1, F, pcutoff, FALSE, TRUE);
     mSetObj1 <- Convert2MummichogMetaPath(mSetObj1, rt, rds.file=FALSE, rt.type, "all", "positive");
     mSetObj1 <- .get.mSet(mSetObj1);
     dataset_pos <- mSetObj1$dataSet;
@@ -951,13 +1025,13 @@ PrepareMetaPath <- function(mSetObj = NA, mode = "negative", ppm = 30,
     mSetObj <- SetMummichogPval(mSetObj, pcutoff);
   }
   
-  mSetObj <- savePeakListMetaData(mSetObj)
+  mSetObj <- savePeakListMetaData(mSetObj);
   
   if(.on.public.web){
     mSetObj <- InitDataObjects("conc", "metapaths", FALSE)
     mSet$cmdSet <<- CMDSet;
     return(res)
-  }else{
+  } else {
     mSetObj$analSet$type <- "metapaths";
     anal.type <<- "metapaths"
     return(.set.mSet(mSetObj))
@@ -1330,7 +1404,7 @@ GetMetaPathGroupNames <-function(mSetObj=NA, dataName){
   return(levels(mSetObj$dataSet$cls));
 }
 
-PlotPathDataProfile<-function(dataName, boxplotName, pcaName, dataformat){
+PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotName2 =NULL, dataformat){
   #dataSet <- qs::qread(dataName);
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1338,6 +1412,14 @@ PlotPathDataProfile<-function(dataName, boxplotName, pcaName, dataformat){
     load_lattice()
   }
   datatable <- mSetObj$dataSet$data;
+
+  if(length(mSetObj[["dataSet"]][["name"]]) > 0) {
+    if(mSetObj[["dataSet"]][["name"]] != dataName){
+      datatable <- NULL;
+    }
+  } else {
+    datatable <- NULL;
+  }
   
   if(is.null(datatable)){
     
@@ -1352,25 +1434,48 @@ PlotPathDataProfile<-function(dataName, boxplotName, pcaName, dataformat){
       dt <- dt[-1,]
     }
     datatable <- dt;
-    is.na(datatable) <-0 ;
+    is.na(datatable) <-0;
   }
-  
-  qc.boxplot(datatable, boxplotName);
+  dataName <- tools::file_path_sans_ext(basename(dataName))
+  qc.boxplot(datatable, paste0(dataName, boxplotName));
+
+  if(!is.null(dataName2) && (dataName2 != "null")){
+    if (dataformat == "colu") {
+      dt <- t(read.csv(dataName2)[-1, ])
+      colnames(dt) <- dt[1, ]
+    } else if (dataformat == "rowu") {
+      dt <- read.csv(dataName2, header = FALSE);
+      rownames(dt) <- dt[, 1]
+      dt <- dt[, -c(1, 2)]
+      colnames(dt) <- dt[1, ]
+      dt <- dt[-1, ]
+    }
+    datatable <- dt;
+    is.na(datatable) <-0;
+    dataName2 <- tools::file_path_sans_ext(basename(dataName2))
+    qc.boxplot(datatable, paste0(dataName2, boxplotName2));
+  }
+
 }
 
-MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale){
+MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale, name, name2){
   
   mSetObj <- .get.mSet(mSetObj);
   
   if(length(mSetObj$dataSet2) == 0){
+
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- ReplaceMin(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "iqr", "F", 25)
     mSetObj <- PreparePrenormData(mSetObj)
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, "NULL", ratio=FALSE, ratioNum=20) #TODO: to enable scale function later
-    mSetObj <- PlotNormSummary(mSetObj, "norm")
+    #mSetObj <- PlotNormSummary(mSetObj, "norm")
     mSetObj <- .get.mSet(mSetObj);
+    
+    qc.boxplot(as.matrix(mSetObj$dataSet$norm), paste0(tools::file_path_sans_ext(basename(name)), "_cc_box"));
+
   } else {
+
     ## This is used to deal with the mix data files
     # 1st step, process dataset 1 (pos data)
     file.rename("data_orig1.qs", "data_orig.qs");
@@ -1379,7 +1484,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale){
     mSetObj <- FilterVariable(mSetObj, "iqr", "F", 25)
     mSetObj <- PreparePrenormData(mSetObj)
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, "NULL", ratio=FALSE, ratioNum=20) #TODO: to enable scale function later
-    mSetObj <- PlotNormSummary(mSetObj, "norm_pos")
+    #mSetObj <- PlotNormSummary(mSetObj, "norm_pos")
     file.rename("data_orig.qs", "data_orig1.qs");
     file.rename("complete_norm.qs", "complete_norm1.qs");
     mSetObj <- .get.mSet(mSetObj);
@@ -1402,6 +1507,9 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale){
     # refine the mSet
     mSetObj$dataSet <- dataset_pos;
     mSetObj$dataSet2 <- dataset_neg;
+    
+    qc.boxplot(as.matrix(mSetObj$dataSet$norm), paste0(tools::file_path_sans_ext(basename(name)), "_cc_box"));
+    qc.boxplot(as.matrix(mSetObj$dataSet2$norm), paste0(tools::file_path_sans_ext(basename(name2)), "_cc_box2"));
   }
   
   if(.on.public.web){
@@ -1458,21 +1566,28 @@ Prepare4Network <- function(){
   return(1)
 }
 
-pathsum <- function(pvalCutoff){
-  
+GetSigPathNums <- function(pvalCutoff){
+
   mSetObj <- .get.mSet(NA);
-  
   pathSet <- mSetObj$dataSet$pathResults;
   
-  if(anal.type == "mummichog"){
-    pathSum <- lapply(pathSet, function(x)  return(rownames(x)[as.data.frame(x)$FET < pvalCutoff]));
-  }else{
-    pathSum <- lapply(pathSet, function(x) return(rownames(x)[as.data.frame(x)$P_val < pvalCutoff]));
+  if(class(pathSet[[1]])[1] == "matrix"){
+    qs::qsave(pathSet, file = "pathSet_tmp.qs")
+  } else {
+    pathSet <- qs::qread("pathSet_tmp.qs")
   }
   
-  names(pathSum) <- gsub("mummichoginput.qs", "", names(pathSum));
-  mSetObj$dataSet$pathSumData <- pathSum;
-  res <- .set.mSet(mSetObj);
+  if(anal.type == "mummichog"){
+    sig.paths <- lapply(pathSet, function(x)  return(rownames(x)[as.data.frame(x)$FET <= pvalCutoff]));
+  }else{
+    sig.paths <- lapply(pathSet, function(x) return(rownames(x)[as.data.frame(x)$P_val <= pvalCutoff]));
+  }
+  
+  names(sig.paths) <- gsub("mummichoginput.qs", "", names(sig.paths));
+
+  mSetObj$dataSet$pathSumData <- sig.paths;
+  .set.mSet(mSetObj);
+  pathSum <- unlist(lapply(sig.paths, length));
   return(pathSum)
 }
 
@@ -1493,7 +1608,6 @@ SelectMultiPathData <- function(mSetObj=NA, nmVec = NA){
 PrepareMetaPathData <- function(mSetObj = NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
   # do something here later
   dat <- mSetObj[["dataSet"]][["pathSumData"]];
   datNum <- length(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]]);
@@ -1518,12 +1632,111 @@ GetVennPathsNames <- function(mSetObj=NA, areas){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  res <- vennData[[areas]];
-  if(length(res) ==0){
+  nms <- strsplit(areas, "\\|\\|")[[1]];
+  path.vec <- NULL;
+  for(nm in nms){
+    path.vec <- c(path.vec, vennData[[nm]]);
+  }
+  path.vec <- unique(path.vec);
+  names(path.vec) <- path.vec;
+
+  if(length(path.vec) ==0){
     return("NA")
   } else {
-    return(paste(res, collapse="||"))
+    return(paste(path.vec, collapse="||"))
   } 
 }
 
+plotPrettyVennDiagram <- function(mSetObj = NULL, format = "png", dpi = 72, width = 7) {
+  
+  require("VennDiagram");
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  dat <- mSetObj[["dataSet"]][["pathSumData"]];
+  datNum <- length(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]]);
+  dat <- dat[c(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]])];
+  
+  dataList <- as.list(dat)
+  
+  if(is.null(dataList)){
+    return (0);
+  }
+  
+  if(length(dataList) == 3) {
+    venn.plot <- venn.diagram(
+      dataList,
+      filename = NULL,
+      euler.d = FALSE,
+      scaled = FALSE,
+      col = "transparent",
+      fill = c( "green", "yellow", "darkorchid1"),
+      alpha = 0.50,
+      cex = 2.5,
+      cat.cex = 2.5,
+      cat.pos = c(-20, 20, 180)
+    );
+  } else if(length(dataList) == 4){
+    venn.plot <- venn.diagram(
+      dataList,
+      filename = NULL,
+      euler.d = FALSE,
+      scaled = FALSE,
+      col = "transparent",
+      fill = c("cornflowerblue", "green", "yellow", "darkorchid1"),
+      alpha = 0.50,
+      label.col = c("orange", "white", "darkorchid4", "white", 
+                    "white", "white", "white", "white", "darkblue", "white", 
+                    "white", "white", "white", "darkgreen", "white"),
+      cex = 1.5,
+      fontfamily = "serif",
+      fontface = "bold",
+      cat.col = c("darkblue", "darkgreen", "orange", "darkorchid4"),
+      cat.cex = 1.5,
+      cat.pos = 0,
+      cat.dist = 0.07,
+      cat.fontfamily = "serif",
+      rotation.degree = 0,
+      margin = 0.2
+    );
+  } else if(length(dataList) == 5){
+    venn.plot <- venn.diagram(
+      dataList,
+      filename = NULL,
+      euler.d = FALSE,
+      scaled = FALSE,
+      col = "black",
+      fill = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
+      alpha = 0.50,
+      cex = c(1.5, 1.5, 1.5, 1.5, 1.5, 1, 0.8, 1, 0.8, 1, 0.8, 1, 0.8,
+              1, 0.8, 1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 1, 1, 1, 1, 1.5),
+      cat.col = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
+      cat.cex = 1.5,
+      cat.fontface = "bold",
+      margin = 0.05
+    );
+  } else {
+    venn.plot <- venn.diagram(
+      dataList, 
+      filename = NULL,
+      col = "black",
+      fill = c("dodgerblue", "goldenrod1")
+    );
+  }
+  
+  fileName <- paste0("VennPlot_", dpi, "_", width, ".", format);
+  Cairo::Cairo(
+    file = fileName,
+    unit = "in",
+    dpi = dpi,
+    width = width,
+    height = width,
+    type = format,
+    bg = "white"
+  )
+  grid.draw(venn.plot);
+  dev.off();
+  
+  return (fileName);
+}
 

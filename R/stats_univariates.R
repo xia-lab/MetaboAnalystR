@@ -1169,11 +1169,15 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
 #'License: GNU GPL (>= 2)
 
 GetUnivReport <- function(mSetObj=NA){
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.univ.report")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_univreport.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_univreport.Rc");    
     }
     return(my.univ.report(mSetObj));
+  }else{
+    return(my.univ.report(mSetObj));
+  }
 }
 
 ContainInfiniteTT<-function(mSetObj=NA){

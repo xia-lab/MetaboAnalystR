@@ -349,11 +349,15 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 #'@export
 #'
 ImputeMissingVar <- function(mSetObj=NA, method="min"){
+  if(.on.public.web){
     # make this lazy load
     if(!exists("my.impute.missing")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_missing.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_missing.Rc");    
     }
     return(my.impute.missing(mSetObj, method));
+  }else{
+    return(my.impute.missing(mSetObj, method));
+  }
 }
 
 
@@ -377,12 +381,15 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'@export
 
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
-      # make this lazy load
+  if(.on.public.web){
+    # make this lazy load
     if(!exists("my.filter.var")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/metaboanalystr/_util_filter.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_filter.Rc");    
     }
     return(my.filter.var(mSetObj, filter, qcFilter, rsd));
-
+  }else{
+    return(my.filter.var(mSetObj, filter, qcFilter, rsd));
+  }
 }
 
 ##############################################
