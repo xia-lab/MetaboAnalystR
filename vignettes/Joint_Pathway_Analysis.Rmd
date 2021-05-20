@@ -29,7 +29,7 @@ download.file("https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/integ_c
 
 ```
 
-Another necessary file to download IF YOU PLAN ON MAPPING GENES is to download the MetaboAnalyst gene-database from here: . Once you unzip the file, *rename the folder to "sqlite" and create an R object named url.pre with the path to the sqlite folder. For example:
+Another necessary file to download IF YOU PLAN ON MAPPING GENES is to download the MetaboAnalyst gene-database from here: https://www.dropbox.com/s/dbkryotgziiaz63/metaboanalyst_genes_sqlite.zip?dl=0. Once you unzip the file, *rename the folder to "sqlite" and create an R object named url.pre with the path to the sqlite folder. 
 
 ```{r, eval=FALSE}
 
