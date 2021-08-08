@@ -308,7 +308,9 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  # RhpcBLASctl::blas_set_num_threads(1);
+  # RhpcBLASctl::omp_set_num_threads(1);
+
   pca <- prcomp(mSetObj$dataSet$norm, center=T, scale=F);
   imp.pca <- summary(pca)$importance;
   

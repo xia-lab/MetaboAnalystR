@@ -44,6 +44,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
       mSetObj$dataSet$type <- data.type;
       mSetObj$dataSet$paired <- paired;
       mSetObj$analSet$type <- anal.type;
+      mSetObj<-CleanDataObjects(mSetObj, anal.type);
       return(.set.mSet(mSetObj));
     }
   }
@@ -57,6 +58,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   analSet <- list();
   analSet$type <- anal.type;
   Sys.setenv("OMP_NUM_THREADS" = 2); # to control parallel computing for some packages
+  Sys.setenv("OPENBLAS_NUM_THREADS" = 2);
   mSetObj <- list();
   mSetObj$dataSet <- dataSet;
   mSetObj$analSet <- analSet;
@@ -65,15 +67,74 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
   mSetObj$cmdSet <- vector(mode="character"); # store R command
 
+  if (anal.type == "mummichog") {
+    # Define this parameter set to avoid global variable
+    # Author: Zhiqiang
+    mSetObj$paramSet$mumRT <- NA;
+    mSetObj$paramSet$mumRT.type <- NA;
+    mSetObj$paramSet$version <- NA;
+    mSetObj$paramSet$mumDataContainsPval <- 1;
+    mSetObj$paramSet$mode <- NA;
+    mSetObj$paramSet$adducts <- NA;
+    mSetObj$paramSet$peakFormat <- "mpt";
+  } else if (anal.type == "metapaths") {
+    # Define this parameter set to avoid global variable
+    # Author: Zhiqiang
+    paramSet <- list();
+    paramSet$mumRT <- NA;
+    paramSet$mumRT.type <- NA;
+    paramSet$version <- NA;
+    paramSet$mumDataContainsPval <- 1;
+    paramSet$mode <- NA;
+    paramSet$adducts <- NA;
+    paramSet$peakFormat <- "mpt";
+    paramSet$metaNum <- 0;
+    mSetObj$paramSet <- paramSet;
+    # This is an empty paramSet, and will be copied for multiple datasets
+    dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
+    if(length(dataNMs)>0){
+      for(n in dataNMs){
+        mSetObj[[n]] <- NULL;
+      }
+    }
+  }
+  
   .init.global.vars(anal.type);
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));
 }
 
+# Clean Data Objects to avoid interference
+CleanDataObjects <- function(mSetObj, anal.type){
+  if(anal.type == "metapaths") {
+    # Define this parameter set to avoid global variable
+    # Author: Zhiqiang
+    paramSet <- list();
+    paramSet$mumRT <- NA;
+    paramSet$mumRT.type <- NA;
+    paramSet$version <- NA;
+    paramSet$mumDataContainsPval <- 1;
+    paramSet$mode <- NA;
+    paramSet$adducts <- NA;
+    paramSet$peakFormat <- "mpt";
+    paramSet$metaNum <- 0;
+    mSetObj$paramSet <- paramSet;
+    # This is an empty paramSet, and will be copied for multiple datasets
+    dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
+    if(length(dataNMs)>0){
+      for(n in dataNMs){
+        mSetObj[[n]] <- NULL;
+      }
+    }
+  }
+  return(mSetObj)
+}
+
+
 # for switching from spec to other modules
 PrepareSpec4Switch <- function(){
     InitDataObjects("conc", "stat", FALSE);
-    TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
+    #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
     Read.TextData(NA, "metaboanalyst_input.csv", "colu", "disc");
 }
 
@@ -88,23 +149,24 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     # some specific setup 
     if(anal.type == "mummichog"){
         .set.mSet(mSetObj);
-        .init.MummiMSet();
+        mSetObj<-.init.MummiMSet(mSetObj);
         load("params.rda");        
-        mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
-        mSetObj <- .rt.included(mSetObj, "seconds");
-        #mSetObj <- Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
-        mSetObj <- .get.mSet(NA);
+        mSetObj<-UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
+        mSetObj<-.rt.included(mSetObj, "seconds");
+        #mSetObj<-Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
+        mSetObj<-.get.mSet(NA);
     }
 
     return(.set.mSet(mSetObj));
 }
 
-.init.MummiMSet <- function(mSetObj=NA) {  
-  SetPeakFormat("pvalue");
-  TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
+.init.MummiMSet <- function(mSetObj) {  
+  mSetObj<-SetPeakFormat(mSetObj, "pvalue");
+  #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
   anal.type <<- "mummichog";
   api.base <<- "http://api.xialab.ca";
   err.vec <<- "";
+  return(mSetObj)
 }
 
 .init.global.vars <- function(anal.type){
@@ -117,11 +179,11 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   # counter for naming different json file (pathway viewer)
   smpdbpw.count <<- 0; 
   # for mummichog
-  peakFormat <<- "mpt"  
-  mumRT.type <<- "NA";
+  #peakFormat <<- "mpt"  
+  # mumRT.type <<- "NA";
 
   # raw data processing
-  rawfilenms.vec <<- vector();
+  # rawfilenms.vec <<- vector(); # Disable for now
 
   # for meta-analysis
   mdata.all <<- list(); 
@@ -133,8 +195,11 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     # disable parallel prcessing for public server
     library(BiocParallel);
     register(SerialParam());
-  }else{
-    if("stat" %in% anal.type | "msetqea" %in% anal.type | "pathqea" %in% anal.type | "roc" %in% anal.type)
+  } else {
+    if("stat" %in% anal.type | 
+       "msetqea" %in% anal.type | 
+       "pathqea" %in% anal.type | 
+       "roc" %in% anal.type)
     # start Rserve engine for Rpackage
     load_Rserve();
   }
@@ -163,8 +228,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{
-    print("Please download the sqlite zipped folder from Google Drive (link in vignette) and 
-          create an R objected named url.pre with the path to the sqlite folder.")
+     url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
   }
 
   api.base <<- "http://api.xialab.ca"
@@ -236,7 +300,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
-  
+ 
   if(nmdr){
     dat <- qs::qread("nmdr_study.qs")
   }else{
@@ -388,7 +452,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     return(0);
   }
 
-  if(anal.type == "mummichog"){  
+  if(anal.type == "mummichog"){
+    is.rt <- mSetObj$paramSet$mumRT;
     if(!is.rt){
       mzs <- as.numeric(var.nms);
       if(sum(is.na(mzs) > 0)){
@@ -431,9 +496,9 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     # save as it is and process in sanity check step
     mSetObj$dataSet$orig.cls <- mSetObj$dataSet$pairs <- cls.lbl;
   } else {
-    if(lbl.type == "disc"){     
+    if(lbl.type == "disc"){
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
-      
+    
       if(substring(format,4,5)=="ts"){
         
         mSetObj$dataSet$facA.type <- is.numeric(facA);
@@ -445,7 +510,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
         mSetObj$dataSet$facB.lbl <- facB.lbl;
       }
       
-    }else{ # continuous
+    } else { # continuous
 
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- tryCatch({
         as.numeric(cls.lbl);
@@ -769,7 +834,7 @@ GetMetaInfo <- function(mSetObj=NA){
 #'@export
 # 
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
-  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj);  
   if(mSetObj$dataSet$design.type == "regular"){
     cls.lbl <- mSetObj$dataSet$prenorm.cls;
     if(mSetObj$analSet$type=="roc"){

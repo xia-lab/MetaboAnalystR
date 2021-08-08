@@ -603,6 +603,7 @@ PlotDataProfile<-function(dataName, boxplotName, pcaName){
 }
 
 qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
+
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require("lattice");
   subgene=10000;
@@ -631,7 +632,7 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
                strip = function(..., bg) strip.default(..., bg ="#cce6ff"),
                horizontal = TRUE,
                pch = "|",  col = "black", do.out = FALSE, box.ratio = 2,
-               xlab = "", ylab = "Samples",
+               xlab = "", ylab = "Features",
                fill = "#1c61b6AA",
                panel = panel.superpose,
                scales = list(x=list(relation="free"), y=list(axs="i")),

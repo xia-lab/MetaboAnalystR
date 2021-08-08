@@ -13,10 +13,11 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     mSetObj$dataSet$pos_inx = rep(FALSE, nrow(data))
   }
   
-  mSetObj$dataSet$mumRT <- is.rt
-  mSetObj$dataSet$mumRT.type <- mumRT.type
+  is.rt <- mSetObj$paramSet$mumRT;
+  #mSetObj$dataSet$mumRT <- is.rt
+  #mSetObj$dataSet$mumRT.type <- mumRT.type
   
-  if(mSetObj$dataSet$mumRT){
+  if(mSetObj$paramSet$mumRT){
     feat_info <- rownames(data)
     feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
@@ -31,7 +32,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
       }
     }
     
-    if(mSetObj$dataSet$mumRT.type == "minutes"){
+    if(mSetObj$paramSet$mumRT.type == "minutes"){
       rtime <- as.numeric(feat_info_split[,2])
       rtime <- rtime * 60
       feat_info_split[,2] <- rtime
@@ -58,8 +59,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     mSetObj$dataSet$expr_dic= res[,1];
     names(mSetObj$dataSet$expr_dic) = rownames(data)
   }
-  
-  mum.version <<- version
+  mum.version <- mSetObj$paramSet$version <- version
   
   if(filtOpt == "filtered"){
     mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion, minLib);
@@ -198,10 +198,11 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   
   if(ids == "overall"){
     .on.public.web <<- F;
+    is.rt <- mSetObj$paramSet$mumRT;
     mSetObj<-PreparePrenormData(mSetObj)
     mSetObj<-Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
     mSetObj<-Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE)
-    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$dataSet$mumRT.type, "tt", mSetObj$dataSet$mode);
+    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode);
     mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE)
     SetPeakFormat("mpt")
     #mSetObj<-UpdateInstrumentParameters(mSetObj, 10, mSetObj$dataSet$mode);
@@ -216,7 +217,7 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   }else{
     gene.vec <- unlist(strsplit(ids, "; "));
     anal.type <<- "mummichog";
-    
+    is.rt <- mSetObj$paramSet$mumRT;
     if(is.rt){
       feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)
       colnames(feat_info_split) <- c("m.z", "r.t")

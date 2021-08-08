@@ -4,6 +4,8 @@
 #' @description used to create a running for raw spectra processing
 #' this file will be run by spring daemon by using OptiLCMS rather than relay on the local 
 #' compiling RC files
+#' @noRd
+#' @import OptiLCMS
 #' @author Guangyan Zhou, Zhiqiang Pang
 CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec){
   
@@ -67,7 +69,9 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
 
 #' SetRawFileNames
 #' @description #TODO: SetRawFileNames
+#' @noRd
 #' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
 SetRawFileNames <- function(filenms){
   print(filenms)
   rawfilenms.vec <<- filenms
@@ -76,7 +80,9 @@ SetRawFileNames <- function(filenms){
 
 #' #Raw Spectra Upload
 #' @description function used to process during uploading stage
+#' @noRd
 #' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
 ReadRawMeta<-function(fileName){
   if(grepl(".txt", fileName, fixed=T)){
     tbl=read.table(fileName,header=TRUE, stringsAsFactors = F);
@@ -103,10 +109,14 @@ ReadRawMeta<-function(fileName){
   return(1);
 }
 
+#' @noRd
+#' @import OptiLCMS
 GetRawFileNms <- function(){
   return(rawFileNms)
 }
 
+#' @noRd
+#' @import OptiLCMS
 GetRawClassNms <- function(){
   return(rawClassNms)
 }
@@ -131,7 +141,9 @@ SetUserPath<-function(path){
 
 #' verifyParam
 #' @description Verify the example params has changed or not
+#' @noRd
 #' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
 verifyParam <- function(param0_path, users.path) {
   
   load(paste0(users.path, "/params.rda"));
@@ -162,20 +174,26 @@ verifyParam <- function(param0_path, users.path) {
 
 #' spectraInclusion
 #' @description save the spectra file info for project loading
+#' @noRd
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @importFrom qs qsave
 spectraInclusion <- function(files, number){
     qs::qsave(list(files, number), file = "IncludedSpectra.qs");
 }
 
 #' getSpectraInclusion
 #' @description read the spectra file info for project loading
+#' @noRd
 #' @author Zhiqiang Pang
+#' @importFrom qs qread
 getSpectraInclusion <- function(){
     return(qs::qread("IncludedSpectra.qs"));
 }
 
 #' updateSpectra3DPCA
 #' @description update Spectra 3D PCA, mainly json file
+#' @noRd
 #' @author Zhiqiang Pang
 updateSpectra3DPCA <- function(featureNM = 100){
   load("mSet.rda");
@@ -334,6 +352,7 @@ updateSpectra3DPCA <- function(featureNM = 100){
 
 #' mzrt2ID
 #' @description convert mzATrt as Feature ID
+#' @noRd
 #' @author Zhiqiang Pang
 mzrt2ID <- function(mzrt){
   load("mSet.rda");
@@ -344,7 +363,9 @@ mzrt2ID <- function(mzrt){
 
 #' readAdductsList
 #' @description readAdductsList for user customization
+#' @noRd
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
 readAdductsList <- function(polarity = NULL){
   
   res <- NULL;
@@ -375,11 +396,26 @@ readAdductsList <- function(polarity = NULL){
   return(res);
 }
 
+#' readAdductsList
+#' @description readAdductsList for user customization
+#' @noRd
+#' @author Zhiqiang Pang
+retrieveModeInfo <- function(){
+  plantext <- read.delim("ExecuteRawSpec.sh")
+  if(grepl("PerformROIExtraction", plantext) && grepl("PerformParamsOptimization", plantext)){
+    return("auto")
+  } else {
+    return("customized")
+  }
+}
+
 ################## ------------- Shell function here below ------------- ######################
 
 #' InitializePlan
 #' @description this function is used to initialize a plan before submit job to spring daemon
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 InitializaPlan <- function(){
   plan <- OptiLCMS::InitializaPlan();
   # Nothing to return
@@ -388,6 +424,8 @@ InitializaPlan <- function(){
 #' CentroidCheck
 #' @description CentroidCheck function used to check centroid or not 
 #' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
 CentroidCheck <- function(filename){
   return(OptiLCMS::CentroidCheck(filename));
 }
@@ -395,6 +433,8 @@ CentroidCheck <- function(filename){
 #' SetPeakParam
 #' @description SetPeakParam, used to set the peak param 
 #' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
 SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_method = "loess",
                          mzdiff, snthresh, bw, # used for both "centwave" and "matchedFilter"
                          ppm, min_peakwidth, max_peakwidth, noise, prefilter, value_of_prefilter, # used for "centwave"
@@ -423,6 +463,8 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
 #' GeneratePeakList
 #' @description GeneratePeakList is used to generate the peak summary list for result page
 #' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
 GeneratePeakList <- function(userPath){
   return(OptiLCMS:::GeneratePeakList(userPath))
 }
@@ -430,6 +472,8 @@ GeneratePeakList <- function(userPath){
 #' plotSingleTIC
 #' @description plotSingleTIC is used to plot single TIC
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width = NA){
   if (is.na(width)) {
     widthm <- "default"
@@ -455,6 +499,8 @@ plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width
 #' plotMSfeature
 #' @description plotMSfeature is used to plot MS feature stats for different groups
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
   if (is.na(width)) {
     #width <- 6;
@@ -473,6 +519,8 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
 #' PlotXIC
 #' @description PlotXIC is used to plot both MS XIC/EIC features of different group and samples
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
   if(is.na(width)){
     width <- 6;
@@ -483,6 +531,8 @@ PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
 #' PerformDataInspect
 #' @description PerformDataInspect is used to plot 2D/3D structure of the MS data
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 PerformDataInspect <- function(datapath = NULL,
                                rt.range = c(0,0),
                                mz.range = c(0,0),
@@ -496,6 +546,7 @@ PerformDataInspect <- function(datapath = NULL,
 #' FastRunningShow_customized
 #' @description FastRunningShow_customized is used to showcase the customized running pipeline
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
 FastRunningShow_customized <- function(fullUserPath){
   OptiLCMS:::FastRunningShow_customized(fullUserPath)
 }
@@ -503,6 +554,7 @@ FastRunningShow_customized <- function(fullUserPath){
 #' FastRunningShow_auto
 #' @description FastRunningShow_auto is used to showcase the AUTO running pipeline
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
 FastRunningShow_auto <- function(fullUserPath){
   OptiLCMS:::FastRunningShow_auto(fullUserPath)
 }
@@ -510,6 +562,8 @@ FastRunningShow_auto <- function(fullUserPath){
 #' centroidMSData
 #' @description centroidMSData is used to centroid MS Data
 #' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
 centroidMSData <- function(fileName, outFolder, ncore = 1){
   
   .CentroidSpectra <- OptiLCMS:::.CentroidSpectra;

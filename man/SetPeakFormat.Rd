@@ -4,10 +4,10 @@
 \alias{SetPeakFormat}
 \title{Set the peak format for the mummichog analysis}
 \usage{
-SetPeakFormat(type)
+SetPeakFormat(mSetObj = NA, type = "mpt")
 }
 \arguments{
-\item{mSetObj}{Input the name of the created mSetObj.}
+\item{type}{Input the name of mummichog analysis type, usually 'mpt'.}
 }
 \description{
 Set the peak format for mummichog analysis.

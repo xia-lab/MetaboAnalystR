@@ -743,17 +743,16 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
   return(list(smallplot = smallplot, bigplot = bigplot))
 }
 
-#'Barplot height is enrichment fold change
-#'@description Used in higher functions, the color is based on p values
-#'@param folds Input fold-change for bar plot
-#'@param pvals Input p-values for bar plot
-#'@param layoutOpt Input the layout option, default is set to layout.fruchterman.reingold
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'@import igraph
-#'@import reshape
+#' PlotEnrichNet.Overview
+#' @description Used in higher functions, the color is based on p values
+#' @param folds Input fold-change for bar plot
+#' @param pvals Input p-values for bar plot
+#' @param layoutOpt Input the layout option, default is set to layout.fruchterman.reingold
+#' @author Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' @import igraph
 
 PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
   
@@ -767,7 +766,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   
   if(.on.public.web){
     load_igraph()
-    load_reshape()
+    #load_reshape()
   }
 
   pvalue <- pvals;

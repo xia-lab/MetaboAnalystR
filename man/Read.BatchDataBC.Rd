@@ -4,7 +4,7 @@
 \alias{Read.BatchDataBC}
 \title{Data I/O for batch effect checking}
 \usage{
-Read.BatchDataBC(mSetObj = NA, filePath, format, label)
+Read.BatchDataBC(mSetObj = NA, filePath, format, label, missingEstimate)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
@@ -14,6 +14,8 @@ Read.BatchDataBC(mSetObj = NA, filePath, format, label)
 \item{format}{Input the format of the batch files}
 
 \item{label}{Input the label-type of the files}
+
+\item{missingEstimate}{Approach to estimate the missing values}
 }
 \description{
 Read multiple user uploaded CSV data one by one

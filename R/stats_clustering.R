@@ -510,8 +510,11 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NULL, border=T, grp.ave=F){
+  
   filenm = paste0(imgName, ".json")
   mSetObj <- .get.mSet(mSetObj);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$heatmap <- imgName;
   
   # record the paramters
   mSetObj$analSet$htmap <- list(dist.par=smplDist, clust.par=clstDist);
@@ -562,28 +565,24 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }else{
     colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
+
+  # compute natural height (fully visible)
+  plot_dims <- get_pheatmap_dims(t(hc.dat));
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+
+  #myH <- ncol(hc.dat)*20 + 150;
+  #h <- round(myH/72,2);
   
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    minW <- 630;
-    myW <- nrow(hc.dat)*18 + 150;
-    
-    if(myW < minW){
-      myW <- minW;
-    }   
-    w <- round(myW/72,2);
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- 7.2;
+  myW <- nrow(hc.dat)*20 + 200;  
+  if(myW < 650){
+      myW <- 650;
+  }   
+  myW <- round(myW/72,2);
+  if(w < myW){
+    w <- myW;
   }
-  
-  mSetObj$imgSet$heatmap <- imgName;
-  
-  myH <- ncol(hc.dat)*18 + 150;
-  h <- round(myH/72,2);
-  
+
   if(viewOpt == "overview"){
     if(is.na(width)){
       if(w > 9){
@@ -600,8 +599,6 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
     if(h > w){
       h <- w;
     }
-    
-    mSetObj$imgSet$heatmap <- imgName;
   }
   
   # make the width smaller fro group average
@@ -615,6 +612,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }else{
     border.col <- NA;
   }
+
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
@@ -636,9 +634,10 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
     
     names(uniq.cols) <- unique(as.character(sort(cls)));
     ann_colors <- list(class= uniq.cols);
-    
+  
     pheatmap::pheatmap(t(hc.dat), 
              annotation=annotation, 
+             annotation_colors = ann_colors,
              fontsize=8, fontsize_row=8, 
              clustering_distance_rows = smplDist,
              clustering_distance_cols = smplDist,
@@ -647,32 +646,31 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
              cluster_rows = colV, 
              cluster_cols = rowV,
              scale = scaleOpt, 
-             color = colors,
-             annotation_colors = ann_colors);
-  dat = t(hc.dat)
-  if(scaleOpt == "row"){
-    res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+             color = colors);
+    dat = t(hc.dat)
+    if(scaleOpt == "row"){
+        res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+    }else{
+        res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
+    }
+    colnames(dat) = NULL
+    netData <- list(data=res, annotation=annotation, smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
+    sink(filenm);
+    cat(RJSONIO::toJSON(netData));
+    sink();
   }else{
-    res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
-  }
-  colnames(dat) = NULL
-  netData <- list(data=res, annotation=annotation, smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
-  sink(filenm);
-  cat(RJSONIO::toJSON(netData));
-  sink();
-  }else{
-  heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
-  dat = t(hc.dat)
-if(scaleOpt == "row"){
-  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
-}else{
-  res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
-}
-  colnames(dat) = NULL
-  netData <- list(data=res, annotation="NA", smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
-  sink(filenm);
-  cat(RJSONIO::toJSON(netData));
-  sink();
+    heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+    dat = t(hc.dat)
+    if(scaleOpt == "row"){
+        res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+    }else{
+        res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
+    }
+    colnames(dat) = NULL
+    netData <- list(data=res, annotation="NA", smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
+    sink(filenm);
+    cat(RJSONIO::toJSON(netData));
+    sink();
   }
   dev.off();
   return(.set.mSet(mSetObj));

@@ -81,14 +81,15 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   qs::qsave(dat.in, file="dat.in.qs");    
 }
 
-#'Read data table
-#'@description Function to read in a data table. First, it will try to use fread, however, it has issues with 
-#'some windows 10 files. In such case, use the slower read.table method.
-#'@param fileName Input filename
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
+#' Read data table
+#' @description Function to read in a data table. First, it will try to use fread, however, it has issues with 
+#' some windows 10 files. In such case, use the slower read.table method.
+#' @param fileName Input filename
+#' @author Jeff Xia\email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @importFrom data.table fread
+#' @export
 
 .readDataTable <- function(fileName){
 
@@ -765,14 +766,14 @@ GetBashFullPath<-function(){
 
 XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
   
-  data <- xcms::groupval(xset, "medret", "into");
-  data2 <- rbind(class= as.character(phenoData(xset)$class), data);
-  rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"));
-  fast.write.csv(data2, file="PeakTable.csv");
-  mSet <- InitDataObjects("dataType", "analType", paired)
-  mSet <- Read.TextData(mSet, "PeakTable.csv", "format", "lbl.type")
-  print("mSet successfully created...")
-  return(.set.mSet(mSetObj));
+  # data <- xcms::groupval(xset, "medret", "into");
+  # data2 <- rbind(class= as.character(phenoData(xset)$class), data);
+  # rownames(data2) <- c("group", paste(round(groups(xset)[,"mzmed"], 3), round(groups(xset)[,"rtmed"]/60, 1), sep="/"));
+  # fast.write.csv(data2, file="PeakTable.csv");
+  # mSet <- InitDataObjects("dataType", "analType", paired)
+  # mSet <- Read.TextData(mSet, "PeakTable.csv", "format", "lbl.type")
+  # print("mSet successfully created...")
+  # return(.set.mSet(mSetObj));
 }
 
 #'Get fisher p-values
@@ -1175,4 +1176,15 @@ overlap_ratio <- function(x, y) {
   x <- unlist(x)
   y <- unlist(y)
   length(intersect(x, y))/length(unique(c(x,y)))
+}
+
+# a utility function to get pheatmap image size (before saving to PNG)
+# https://stackoverflow.com/questions/61874876/get-size-of-plot-in-pixels-in-r
+get_pheatmap_dims <- function(dat, cellheight = 15, cellwidth = 15){
+  png("NUL"); # trick to avoid open device in server 
+  heat_map <- pheatmap::pheatmap(dat, cellheight = cellheight, cellwidth = cellwidth);
+  plot_height <- sum(sapply(heat_map$gtable$heights, grid::convertHeight, "in"));
+  plot_width  <- sum(sapply(heat_map$gtable$widths, grid::convertWidth, "in"));
+  dev.off();
+  return(list(height = plot_height, width = plot_width));
 }

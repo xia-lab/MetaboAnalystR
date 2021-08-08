@@ -799,6 +799,8 @@ genLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+#' @importFrom pROC smooth plot.roc
+#' @importFrom Cairo Cairo
 #'@export
 #'
 PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf=FALSE, sp.bin=0.01) {
@@ -828,7 +830,7 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf
     pROC::plot.roc(r.new, add=F, ci.type="bars", ci.col="green", col="darkolivegreen", lty="dotted", legacy.axes=T,
              xlab="1 - Specificity (False positive rate)", ylab="Sensitivity (True positive rate)",
              cex.axis=1.0, cex.lab=1.0);
-    pROC::plot.roc(smooth(r.new, method="density", n=512), add=T, col="blue", lwd=1);
+    pROC::plot.roc(pROC::smooth(r.new, method="density", n=512), add=T, col="blue", lwd=1);
     legend("bottomright", legend=c("Empirical","Smoothed", "95% CI"), cex=1.0, col=c(par("fg"), "blue", "green"), lwd=3, lty=c(3,1,1) );
     
     text(0.7, 0.4, perform.lbl, adj=c(0,1), col="black", cex=1.0);

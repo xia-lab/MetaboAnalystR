@@ -599,8 +599,10 @@ PreparePrenormData <- function(mSetObj=NA){
 
 # get the dropdown list for sample normalization view
 GetPrenormSmplNms <-function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$dataSet$prenorm.smpl.nms);
+  mSetObj <- .get.mSet(mSetObj);  
+  smp.nms <- mSetObj$dataSet$prenorm.smpl.nms;
+  if(is.null(smp.nms)){smp.nms <- mSetObj[["dataSet"]][["url.smp.nms"]]}
+  return(smp.nms);
 }
 
 GetPrenormFeatureNum <- function(mSetObj=NA){

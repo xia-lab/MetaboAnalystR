@@ -5,7 +5,7 @@ citEntry(entry = "Article",
   title = "MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics",
   journal = "Metabolites",
   year = "2020",
-  doi = "doi: 10.3390/metabo10050186"
+  doi = "doi: 10.3390/metabo10050186",
   url = "https://www.mdpi.com/2218-1989/10/5/186#cite",
   textVersion  = "Pang, Z.; Chong, J.; Li, S.; Xia, J. MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics. Metabolites 2020, 10, 186."
 )

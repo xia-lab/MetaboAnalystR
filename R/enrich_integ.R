@@ -155,7 +155,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
       uniq.len <- current.kegglib$gene.counts;
     }
     
-  }else if(libOpt == "metab" && !is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
+  } else if (libOpt == "metab" && !is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat)){
     
     cmpd.mat <- mSetObj$dataSet$pathinteg.imps$cmpd.mat;
     cmpd.vec <- paste("cpd:", rownames(cmpd.mat), sep=""); # no need for this as the metpa compound ID does not contain "cpd:" prefix
@@ -173,7 +173,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
       uniq.len <- current.kegglib$cmpd.counts;
     }
     
-  }else{ # integ
+  } else { # integ
     
     if(is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat) | is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
       AddErrMsg("The integrative analysis require both gene and metabolite lists");
@@ -264,8 +264,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
   
-  # combine pvals require performing analysis on compounds and genes seperately. Note, we need to use the topo from merge queries 
-  if(libOpt == "integ" && integOpt != "query"){ 
+  # combine pvals require performing analysis on compounds and genes separately. Note, we need to use the top from merge queries 
+  if(libOpt == "integ" && integOpt != "query"){
     # perform metabolite enrichment
     res.cmpd <- .performPathEnrich(rownames(impMatList$cmpd), current.kegglib$uniq.cmpd.count, current.kegglib$cmpd.counts, enrich, topo);
     if(is.null(res.cmpd)){
@@ -284,6 +284,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     
     # now merge p val
     resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);
+    
     my.res$res.table <- resI;
   }
   

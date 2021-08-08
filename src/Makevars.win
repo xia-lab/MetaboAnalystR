@@ -1,0 +1,15 @@
+MQOBJECTS=massifquant/xcms_massifquant.o massifquant/TrMgr.o massifquant/Tracker.o massifquant/SegProc.o massifquant/DataKeeper.o massifquant/OpOverload.o
+
+OBIOBJECTS=obiwarp/mat.o obiwarp/vec.o obiwarp/xcms_dynprog.o obiwarp/xcms_lmat.o xcms_obiwarp.o
+
+XCMSOBJECTS=mzROI.o util.o xcms_binners.o
+
+INITOBJECT=init.o
+
+OBJECTS= $(MQOBJECTS) $(OBIOBJECTS) $(XCMSOBJECTS) $(BATCHOBJECTS) $(INITOBJECT)
+
+
+all: $(SHLIB)
+
+clean:
+	rm -f $(OBJECTS)

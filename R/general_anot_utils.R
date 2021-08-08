@@ -461,42 +461,48 @@ HMDBID2KEGGID<-function(ids){
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
-
-    sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
-    con <- .get.sqlite.con(sqlite.path); 
-
-    if(type == "symbol"){
-      db.map = dbReadTable(con, "entrez")
-      hit.inx <- match(q.vec, db.map[, "symbol"]);
-    }else if(type == "entrez"){
-      db.map = dbReadTable(con, "entrez")
-      hit.inx <- match(q.vec, db.map[, "gene_id"]);
-    }else{
-     if(type == "genbank"){
-        db.map = dbReadTable(con, "entrez_gb");
-      }else if(type == "embl"){
-        db.map = dbReadTable(con, "entrez_embl_gene");
-      }else if(type == "refseq"){
-        db.map = dbReadTable(con, "entrez_refseq");
-        q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-        q.vec <- q.mat[,1];
-      }else if(type == "kos"){
-        db.map = dbReadTable(con, "entrez_ortholog");
-      }else if(type == "uniprot"){
-        db.map = dbReadTable(con, "entrez_uniprot");
-      }
-      hit.inx <- match(q.vec, db.map[, "accession"]);
+  
+  sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
+  con <- .get.sqlite.con(sqlite.path); 
+  
+  if(type == "symbol"){
+    db.map = dbReadTable(con, "entrez")
+    
+    if(org == "dme"){
+      q.vec <- paste0("Dmel_", q.vec)
+      #print(q.vec)
     }
     
-    if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
-      entrezs=db.map[hit.inx, "gene_id"];
-    }else{
-      entrezs=db.map[hit.inx, "symbol"];
+    hit.inx <- match(q.vec, db.map[, "symbol"]);
+  }else if(type == "entrez"){
+    db.map = dbReadTable(con, "entrez")
+    hit.inx <- match(q.vec, db.map[, "gene_id"]);
+  }else{
+    if(type == "genbank"){
+      db.map = dbReadTable(con, "entrez_gb");
+    }else if(type == "embl"){
+      db.map = dbReadTable(con, "entrez_embl_gene");
+    }else if(type == "refseq"){
+      db.map = dbReadTable(con, "entrez_refseq");
+      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
+      q.vec <- q.mat[,1];
+    }else if(type == "kos"){
+      db.map = dbReadTable(con, "entrez_ortholog");
+    }else if(type == "uniprot"){
+      db.map = dbReadTable(con, "entrez_uniprot");
     }
-    
-    rm(db.map, q.vec); gc();
-    dbDisconnect(con);
-    return(entrezs);
+    hit.inx <- match(q.vec, db.map[, "accession"]);
+  }
+  
+  if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
+    entrezs=db.map[hit.inx, "gene_id"];
+  }else{
+    entrezs=db.map[hit.inx, "symbol"];
+  }
+  
+  rm(db.map, q.vec); gc();
+  dbDisconnect(con);
+  return(entrezs);
 }
 
 #'Perform compound mapping

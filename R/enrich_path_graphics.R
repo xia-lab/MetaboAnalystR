@@ -13,7 +13,7 @@
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(.on.public.web){
     load_kegggraph()
     load_rgraphwiz()

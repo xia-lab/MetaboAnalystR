@@ -805,13 +805,13 @@ ExtractModule<- function(nodeids){
   module.nm <- paste("module", module.count, sep="");
   colnames(nodeList) <- c("Id", "Label");
   ndFileNm = paste(module.nm, "_node_list.csv", sep="");
-  fast.write.csv(nodeList, file=ndFileNm, row.names=F, quote=F);
+  fast.write.csv(nodeList, file=ndFileNm, row.names=FALSE);
 
   edgeList <- igraph::get.data.frame(g, "edges");
   edgeList <- cbind(rownames(edgeList), edgeList);
   colnames(edgeList) <- c("Id", "Source", "Target");
   edgFileNm = paste(module.nm, "_edge_list.csv", sep="");
-  fast.write.csv(edgeList, file=edgFileNm, row.names=F, quote=F);
+  fast.write.csv(edgeList, file=edgFileNm, row.names=FALSE);
 
   filenm <- paste(module.nm, ".json", sep="");
 

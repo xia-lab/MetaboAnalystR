@@ -2,7 +2,7 @@
 % Please edit documentation in R/enrich_graphics.R
 \name{PlotEnrichNet.Overview}
 \alias{PlotEnrichNet.Overview}
-\title{Barplot height is enrichment fold change}
+\title{PlotEnrichNet.Overview}
 \usage{
 PlotEnrichNet.Overview(folds, pvals, layoutOpt = layout.fruchterman.reingold)
 }

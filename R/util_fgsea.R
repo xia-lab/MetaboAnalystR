@@ -1,3 +1,18 @@
+#' my.fgsea
+#'
+#' @param mSetObj mSetObj
+#' @param pathways pathways
+#' @param stats stats
+#' @param ranks ranks
+#' @param nperm nperm
+#' @param minSize minSize
+#' @param maxSize maxSize
+#' @param nproc nproc
+#' @param gseaParam gseaParam
+#' @param BPPARAM BPPARAM
+#' @noRd
+#' @importFrom data.table data.table rbindlist
+#' @return
 
 my.fgsea <- function(mSetObj, pathways, stats, ranks,
                    nperm,
@@ -45,7 +60,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   stats <- abs(stats) ^ gseaParam
   
   # returns list of indexs of matches between pathways and rank names
-  pathwaysPos <- lapply(pathways, function(p) { as.vector(na.omit(fastmatch::fmatch(p, names(ranks)))) })
+  pathwaysPos <- lapply(pathways, function(p) { as.vector(na.omit(fmatch_r(p, names(ranks)))) })
   pathwaysFiltered <- lapply(pathwaysPos, function(s) { ranks[s] })
   qs::qsave(pathwaysFiltered, "pathwaysFiltered.qs")
   
@@ -55,7 +70,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   
   matched_res <- qs::qread("mum_res.qs");
   
-  if(mSetObj$dataSet$mumRT){
+  if(mSetObj$paramSet$mumRT){
     pathwaysSizes <- sapply(pathwaysFiltered, length)
   }else{
     pathway2mzSizes <- sapply(pathways, function(z) { length(intersect(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[z]))), unique(matched_res[,1])))} )

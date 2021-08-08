@@ -19,8 +19,11 @@
 SanityCheckData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
-  orig.data <- qs::qread("data_orig.qs");
+  if(file.exists("data_orig.qs")){  
+    orig.data <- qs::qread("data_orig.qs");
+  } else {
+    return(0);
+  }  
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
@@ -111,7 +114,7 @@ SanityCheckData <- function(mSetObj=NA){
           qs::qsave(orig.data, file="data_orig.qs");
         }
       } else {
-        
+      
         # check for class labels at least two replicates per class but QC and BLANK
         cls.lbl <- mSetObj$dataSet$orig.cls;
         qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
@@ -181,6 +184,7 @@ SanityCheckData <- function(mSetObj=NA){
         ord.inx <- order(nfacA);
       }
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
+      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
       mSetObj$dataSet$facA <- mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA[ord.inx];
       mSetObj$dataSet$facB <- mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB[ord.inx];
       orig.data <- orig.data[ord.inx,];
@@ -188,6 +192,7 @@ SanityCheckData <- function(mSetObj=NA){
     }else{
       ord.inx <- order(mSetObj$dataSet$orig.cls);
       mSetObj$dataSet$orig.cls <- cls[ord.inx];
+      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
       orig.data <- orig.data[ord.inx, , drop=FALSE];
       qs::qsave(orig.data, file="data_orig.qs");
       if(mSetObj$dataSet$paired){
@@ -203,11 +208,11 @@ SanityCheckData <- function(mSetObj=NA){
   if(ncol(int.mat)==1){
     if(anal.type=="roc"){
       mSetObj$dataSet$roc_cols <- 1;
-    }else{
+    } else {
       AddErrMsg("<font color='red'>One-column data is only supported for biomarker analysis.</font>");
       return(0);
     }
-  }else{
+  } else {
     mSetObj$dataSet$roc_cols <- 2;
   }
   
@@ -215,6 +220,12 @@ SanityCheckData <- function(mSetObj=NA){
   rowNms <- rownames(int.mat);
   colNms <- colnames(int.mat);
   naNms <- sum(is.na(int.mat));
+  
+  for(c in 1:ncol(int.mat)) {
+    if(class(int.mat[,c]) == "integer64"){
+      int.mat[,c] <- as.double(int.mat[,c]);
+    }
+  }
   
   num.mat <- apply(int.mat, 2, as.numeric)
   
@@ -248,7 +259,7 @@ SanityCheckData <- function(mSetObj=NA){
   totalCount <- nrow(int.mat)*ncol(int.mat);
   naCount <- sum(is.na(int.mat));
   naPercent <- round(100*naCount/totalCount,1)
-#  print(naCount)
+  #  print(naCount)
   mSetObj$dataSet$missingCount <- naCount;
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
@@ -268,6 +279,7 @@ SanityCheckData <- function(mSetObj=NA){
   if(!.on.public.web){
     print(c("Successfully passed sanity check!", msg))
   }
+
   return(.set.mSet(mSetObj));
 }
 

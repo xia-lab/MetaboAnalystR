@@ -118,7 +118,8 @@ CreateMetaMummichogInputDoc <- function(mSetObj=NA){
 
   cat(unlist(sanity_msg), file=rnwFile, append=TRUE, sep="\n");
   
-  if(exists("mum.version")){
+  if(!is.na(mSetObj$paramSet$version)){
+    mum.version <- mSet$paramSet$version;
     
     descr <- c("\\subsubsection{Parameters}\n",
                "Depending on the meta-analysis method, users must select the algorithm (original mummichog or GSEA), p-value cutoff", 

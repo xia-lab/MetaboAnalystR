@@ -48,7 +48,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
     CreateMetaAnalysisRnwReport(mSetObj, usrName);
   }else if(anal.type == "raw"){
     CreateRawAnalysisRnwReport(mSetObj, usrName);
-  }else if(exists(meta.anal.type)){
+  }else if(anal.type == "metapaths"){
     CreateMummichogRnwReport(mSetObj, usrName);
   }else{
     AddErrMsg(paste("No template found for this module:", anal.type));

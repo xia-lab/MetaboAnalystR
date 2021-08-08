@@ -24,7 +24,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   
   # the "upload" folder should contain several subfolders (groups)
   # each of the subfolder contains samples (.csv files)
-  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.name=TRUE)
+  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.names=TRUE)
   if (length(files) == 0) {
     AddErrMsg("No peak list files (.csv) were found.");
     return(0);
@@ -567,8 +567,7 @@ descendMin <- function(y, istart = which.max(y)) {
             length(y),
             as.integer(istart-1),
             ilower = integer(1),
-            iupper = integer(1),
-            DUP = FALSE)[4:5]) + 1
+            iupper = integer(1))[4:5]) + 1
 }
 
 #'Perform utilities for peak grouping
@@ -587,8 +586,7 @@ findEqualGreaterM <- function(x, values) {
      length(x),
      values,
      length(values),
-     index = integer(length(values)),
-     DUP = FALSE)$index + 1
+     index = integer(length(values)))$index + 1
 }
 
 #'Perform utilities for peak grouping
@@ -614,6 +612,5 @@ rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
      nc,
      as.double(xdiff),
      as.double(ydiff),
-     logical(nrow(m)),
-     DUP = FALSE)[[7]]
+     logical(nrow(m)))[[7]]
 }

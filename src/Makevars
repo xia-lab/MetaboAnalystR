@@ -1,0 +1,20 @@
+BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o
+
+UTILSOBJECTS=c/util.o cpp/melt.o c/fastmatch.o
+
+XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
+
+INITOBJECT=Exports.o
+
+OBJECTS= $(BATCHOBJECTS) $(UTILSOBJECTS) $(XCMSOBJECTS) $(INITOBJECT)
+
+all: clean $(SHLIB)
+
+clean:
+	rm -f $(OBJECTS)
+
+
+CXX_STD = CXX11
+
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) 
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)

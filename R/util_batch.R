@@ -70,7 +70,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     return(F)
   }
   
-  
     try(
     if (Method=="auto"){
       #### QCs Independent------------
@@ -184,7 +183,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       nms<-nms[grepl("*edata",nms)]
       nms<- c("table",nms)
       
-      interbatch_dis<-sapply(nms,FUN=.evaluate.dis,mSetObj=mSetObj,center=center)
+      interbatch_dis<-sapply(nms, FUN=.evaluate.dis, mSetObj=mSetObj, center=center)
       mSetObj$dataSet$interbatch_dis <- interbatch_dis
       
       best.choice<-names(which(min(interbatch_dis)==interbatch_dis))
@@ -326,7 +325,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
 
-
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -344,7 +342,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
 
-
       RUV_g_edata<-RUVg_cor(commonMat2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
       
@@ -356,7 +353,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
         return(F)
       }
-
 
       NOMIS_edata <- NOMIS(commonMat2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
@@ -377,7 +373,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
 
       CCMN_edata <- CCMN2(commonMat2,class.lbl2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;
-      
     }
     
     ,silent=F)

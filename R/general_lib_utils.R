@@ -21,7 +21,7 @@
       lib.download <- TRUE;
     }else{
       time <- file.info(filenm)
-      diff_time <- difftime(Sys.time(), time[,"mtime"], unit="days") 
+      diff_time <- difftime(Sys.time(), time[,"mtime"], units="days") 
       if(diff_time>30){
         lib.download <- TRUE;
       }
@@ -76,6 +76,7 @@
     }
     return(path)
 }
+
 
 # Load lattice, necessary for power analysis
 load_lattice <- function(){
@@ -132,31 +133,6 @@ load_data.table <- function(){
   suppressMessages(library(data.table))
 }
 
-# Load Biobase
-load_biobase <- function(){
-  suppressMessages(library(Biobase))
-}
-
-# Load MSnbase
-load_msnbase <- function(){
-  suppressMessages(library(MSnbase))
-}
-
-# Load progress
-load_progress <- function(){
-  suppressMessages(library(progress))
-}
-
-# Load graph
-load_graph <- function(){
-  suppressMessages(library(graph))
-}
-
-# Load RBGL
-load_RBGL <- function(){
-  suppressMessages(library(RBGL))
-}
-
 # Load ggplot2
 load_ggplot <- function(){
   suppressMessages(library(ggplot2))
@@ -168,11 +144,6 @@ load_grid <- function(){
   suppressMessages(library(grid))
 }
 
-# Load camera
-load_camera <- function(){
-  suppressMessages(library(CAMERA))
-}
-
 # Load stringr
 load_stringr <- function(){
   suppressMessages(library(stringr))
@@ -181,11 +152,6 @@ load_stringr <- function(){
 # Load httr
 load_httr <- function(){
   suppressMessages(library(httr))
-}
-
-# Load BiocParallel
-load_biocparallel <- function(){
-  suppressMessages(library(BiocParallel))
 }
 
 # Load RSclient
@@ -212,7 +178,29 @@ load_Rserve <- function(){
   }
 }
 
-# load mzR
-load_mzR <- function(){
-    library(mzR);
+# Load MSnbase
+load_msnbase <- function(){
+  suppressMessages(library(MSnbase))
 }
+
+# Load progress
+load_progress <- function(){
+  suppressMessages(library(progress))
+}
+
+# Load graph
+load_graph <- function(){
+  suppressMessages(library(graph))
+}
+
+# Load RBGL
+load_RBGL <- function(){
+  suppressMessages(library(RBGL))
+}
+
+# Load BiocParallel
+load_biocparallel <- function(){
+  suppressMessages(library(BiocParallel))
+}
+
+

@@ -1,16 +1,17 @@
-#'Data I/O for batch effect checking
-#'@description Read multiple user uploaded CSV data one by one
-#'format: row, col
-#'@param mSetObj Input name of the created mSet Object
-#'@param filePath Input the path to the batch files
-#'@param format Input the format of the batch files
-#'@param label Input the label-type of the files
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
+#' Data I/O for batch effect checking
+#' @description Read multiple user uploaded CSV data one by one
+#' format: row, col
+#' @param mSetObj Input name of the created mSet Object
+#' @param filePath Input the path to the batch files
+#' @param format Input the format of the batch files
+#' @param label Input the label-type of the files
+#' @param missingEstimate Approach to estimate the missing values
+#' @author Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
+#' 
+Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate){
   
   err.vec <<- "";
 
@@ -146,8 +147,30 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
   rownames(int.mat)<-rowNms;
   colnames(int.mat)<-colNms;
   
-  # replace NA by LoD
-  int.mat <- ReplaceMissingByLoD(int.mat);
+  # replace NA by Estimating
+  if(missingEstimate == "lods") {
+    int.mat <- ReplaceMissingByLoD(int.mat);
+  } else if(missingEstimate == "rmean") {
+    int.mat<-apply(int.mat, 2, function(x){
+      if(sum(is.na(x))>0){
+        x[is.na(x)]<-mean(x,na.rm=T);
+      }
+      x;
+    });
+  } else if(missingEstimate == "rmed") {
+    int.mat<-apply(int.mat, 2, function(x){
+      if(sum(is.na(x))>0){
+        x[is.na(x)]<-median(x,na.rm=T);
+      }
+      x;
+    });
+  } else if(missingEstimate == "knn") {
+    int.mat<-t(impute::impute.knn(t(int.mat))$data);
+  } else if(missingEstimate == "ppca") {
+    int.mat<-pcaMethods::pca(int.mat, nPcs =5, method="ppca", center=T)@completeObs;
+  } else {
+    int.mat <- ReplaceMissingByLoD(int.mat);
+  }
   
   mSetObj$dataSet$batch[[label]] <- int.mat;
   mSetObj$dataSet$batch.cls[[label]] <- cls.nms;
@@ -170,12 +193,13 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label){
 #'@param mSetObj Input name of the created mSet Object
 #'@param filePath Input the path to the batch files
 #'@param format Input the format of the batch files
+#'@param missingEstimate Approach to estimate the missing values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
+Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
   
   err.vec <<- "";
 
@@ -310,9 +334,40 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format){
   rownames(int.mat)<-rowNms;
   colnames(int.mat)<-colNms;
   
-  # replace NA
-  int.mat <- ReplaceMissingByLoD(int.mat);
-
+  # replace NA by Estimating
+  if(missingEstimate == "lods") {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat <- ReplaceMissingByLoD(int.mat);
+  } else if(missingEstimate == "rmean") {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat<-apply(int.mat, 2, function(x){
+      if(sum(is.na(x))>0){
+        x[is.na(x)]<-mean(x,na.rm=T);
+      }
+      x;
+    });
+  } else if(missingEstimate == "rmed") {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat<-apply(int.mat, 2, function(x){
+      if(sum(is.na(x))>0){
+        x[is.na(x)]<-median(x,na.rm=T);
+      }
+      x;
+    });
+  } else if(missingEstimate == "knn") {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat<-t(impute::impute.knn(t(int.mat))$data);
+  } else if(missingEstimate == "ppca") {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat<-pcaMethods::pca(int.mat, nPcs =5, method="ppca", center=T)@completeObs;
+  } else {
+    cat("missing value estimate: ", missingEstimate, "\n")
+    int.mat <- ReplaceMissingByLoD(int.mat);
+  }
+  
+  int.mat[is.na(int.mat)] <- 0;
+  int.mat[is.nan(int.mat)] <- 0;
+  
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
   mSetObj$dataSet$batch.cls <- batch.nms;
@@ -495,9 +550,8 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'"WaveICA","EigenMS","QC_RLSC","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".
 #'@param center The center point of the batch effect correction, based on "QC" or "", which means correct 
 #'to minimize the distance between batches.
-#'@import data.table
 #'@importFrom plyr join ddply . summarise id
-#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars
 #'@import edgeR
 #'@importFrom pcaMethods pca
 #'@importFrom crmn standardsFit
@@ -525,9 +579,8 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'Batch effect and signal drift correction will be performed with QC-RLSC method in this function.
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input the name of the plot to create
-#'@import data.table
 #'@importFrom plyr join ddply . summarise id
-#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars
 #'@import edgeR
 #'@importFrom pcaMethods pca
 #'@importFrom crmn standardsFit
@@ -639,8 +692,20 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
     } else {x}
   })
   
+  
+  table<-df_tmp;
+  table[is.na(table)] <- 0;
+  table[is.nan(table)] <- 0;
+  table[table < 10^-20] <- 0;
+  table[is.infinite(table)] <- max(table[!is.infinite(table)]);
+  same <- apply(table, 2, function(.col){all(.col[1L] == .col)})
+  if(length(which(same)) > 0){
+    table <- table[, -which(same)]
+  }
+  
+  
   #a1<-mSetObj$dataSet$adjusted.mat
-  mSetObj$dataSet$adjusted.mat <- df_tmp
+  mSetObj$dataSet$adjusted.mat <- table;
   pca <- prcomp(mSetObj$dataSet$adjusted.mat, center=T, scale=T);
   sum.pca<-summary(pca);
   var.pca<-sum.pca$importance[2,]; # variance explained by each PC
@@ -994,7 +1059,7 @@ RUV_random<-function(data){
     r[j]<-mean(cor(IS,Y[,j]))
   }
   ctl<-logical(length(r))
-  ctl[which(r>round(quantile(r,0.7),2))]<-TRUE 
+  ctl[which(r>round(quantile(r,0.7,na.rm = TRUE),2))]<-TRUE 
   
   ruv<-NormalizeRUVRand(Y=Y,ctl=ctl,k=1) 
   
@@ -1018,7 +1083,6 @@ ANCOVA<-function(data,batch,QCs){
   imputeValues <- rep(NA, length(experiments)) #create a vector the same length as experiments with repeating NAs
   #PosFF.Refs <- list("Q" = which(PosMeta$SCode == "ref"))
   strategies <- rep("Q", each = length(conditions)) #make a repeating vector of Qs and Ss
-  
   
   PosFF.Final <- lapply(seq(along = experiments), function(x)
     apply(data, 2, ANCOVA_doBC,
@@ -1131,8 +1195,8 @@ QC_RLSC<-function(data,batch,class,order,QCs){
                         normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
   
   
-  cvStatForEachBatch <- reshape2::melt(cvStat,id.vars = c("ID","batch"),
-                                       variable.name = "CV")
+  cvStatForEachBatch <- melt(cvStat,id.vars = c("ID","batch"),
+                             variable.name = "CV")
   cvStatForEachBatch$batch <- as.factor(cvStatForEachBatch$batch)
   
   #message("Summary information of the CV for QC samples:")
@@ -1146,8 +1210,9 @@ QC_RLSC<-function(data,batch,class,order,QCs){
                         normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
   
   
-  cvStatForAll <- reshape2::melt(cvStat,id.vars = c("ID"),
-                                 variable.name = "CV")
+  cvStatForAll <- melt(cvStat,
+                       id.vars = c("ID"),
+                       variable.name = "CV")
   ## output information
   #message("Summary information of the CV for QC samples:")
   cvTable <- plyr::ddply(cvStatForAll,plyr::.(CV),plyr::summarise,
@@ -1329,9 +1394,14 @@ CCMN2<-function(data,class){
 }
 
 # 2.3 Distance Calculation
-.evaluate.dis<-function(mSetObj,data.type,center){
+.evaluate.dis<-function(mSetObj, data.type, center){
   
   table <- mSetObj$dataSet[[data.type]];
+  
+  if(all(is.na(table)) || all(is.infinite(table))){
+    # TO FIX the potential all na failure of correction, use original for this case
+    table <- mSetObj$dataSet[["table"]];
+  }
   
   df_tmp<-apply(table,2,FUN = function(x){
     if(length(which(x==0))==length(x)){
@@ -1340,9 +1410,17 @@ CCMN2<-function(data,class){
     } else {x}
   })
   
-  table<-df_tmp
+  table<-df_tmp;
+  table[is.na(table)] <- 0;
+  table[is.nan(table)] <- 0;
+  table[table < 10^-20] <- 0;
+  table[is.infinite(table)] <- max(table[!is.infinite(table)]);
+  same <- apply(table, 2, function(.col){all(.col[1L] == .col)})
+  if(length(which(same)) > 0){
+    table <- table[, -which(same)]
+  }
   
-  model <- .model.evaluation(mSetObj,data.type);
+  model <- .model.evaluation(mSetObj, data.type);
   
   if (center=="QC"){
     QC_methods<-c("Combat_edata","WaveICA_edata","EigenMS_edata","QC_RLSC_edata","ANCOVA_edata");
@@ -1354,7 +1432,7 @@ CCMN2<-function(data,class){
     
     #### Dustances between QCS
     if (model=="PCA"){
-      pc.original<-prcomp(table,scale.=T);
+      pc.original<-prcomp(table,scale.=TRUE);
       nnms<-rownames(pc.original$x);
       pc.original_select<-pc.original$x[grepl("QC",nnms),1:3];
       
@@ -2148,6 +2226,7 @@ positive.svd = function(m, tol)
 
 
 ##### Internal Functions for ANCOVA
+#' @importFrom MASS rlm
 ANCOVA_doBC <- function(Xvec, ref.idx, batch.idx, seq.idx,
                         result = c("correctedX", "corrections"),
                         method = c("lm", "rlm", "tobit"),
@@ -2634,7 +2713,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
   #message("<=0 value in total after missing value inputation: ",
   #        sum(x<=0))
   x$ID <- row.names(x)
-  y <- reshape2::melt(x,id.vars = "ID",variable.name = "sample",value.name = "newValue")
+  y <- melt(x,id.vars = "ID",variable.name = "sample",value.name = "newValue")
   m <- plyr::join(peaksData,y,by=c("ID","sample"))
   m[,valueID] <- m$newValue
   m$newValue <- NULL
@@ -3530,6 +3609,7 @@ crch.control <- function(method = "BFGS", maxit = NULL,
 crch.fit <- function(x, z, y, left, right, truncated = FALSE, 
                      dist = "gaussian", df = NULL, link.scale = "log", type = "ml",
                      weights = NULL, offset = NULL, control = .crch.control()) {
+  
   ## response and regressor matrix
   n <- NROW(x)  
   k <- NCOL(x)
@@ -3558,7 +3638,6 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
   control$method <- control$hessian <- control$start <- control$lower <- control$upper <- NULL
   
   if(is.character(dist)){
-    if(type == "ml") {
       ## distribution functions for maximum likelihood
       if(truncated) {
         ddist2 <- switch(dist, 
@@ -3578,66 +3657,7 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
       ddist <- if(dist == "student") ddist2 else function(..., df) ddist2(...)
       sdist <- if(dist == "student") sdist2 else function(..., df) sdist2(...)
       hdist <- if(dist == "student") hdist2 else function(..., df) hdist2(...)
-    } else {
-      stopifnot(requireNamespace("scoringRules"))
-      ## loss function for CRPS minimization  
-      if(truncated) {   
-        ddist2 <-  switch(dist, 
-                          "student"  = crps_tt, 
-                          "gaussian" = crps_tnorm, 
-                          "logistic" = crps_tlogis)    
-        sdist2 <-  switch(dist, 
-                          "student"  = gradcrps_tt, 
-                          "gaussian" = gradcrps_tnorm, 
-                          "logistic" = gradcrps_tlogis) 
-        hdist2 <-  switch(dist, 
-                          "student"  = hesscrps_tt, 
-                          "gaussian" = hesscrps_tnorm, 
-                          "logistic" = hesscrps_tlogis) 
-      } else {
-        ddist2 <- switch(dist, 
-                         "student"  = crps_ct, 
-                         "gaussian" = crps_cnorm, 
-                         "logistic" = crps_clogis)
-        sdist2 <- switch(dist, 
-                         "student"  = gradcrps_ct, 
-                         "gaussian" = gradcrps_cnorm, 
-                         "logistic" = gradcrps_clogis)
-        hdist2 <- switch(dist, 
-                         "student"  = hesscrps_ct, 
-                         "gaussian" = hesscrps_cnorm, 
-                         "logistic" = hesscrps_clogis)
-      }
-      ddist3 <- if(dist == "student") ddist2 else function(..., df) ddist2(...)
-      sdist3 <- if(dist == "student") sdist2 else function(..., df) sdist2(...)
-      hdist3 <- if(dist == "student") hdist2 else function(..., df) hdist2(...)
-      ddist <- function(x, location, scale, df, left = -Inf, right = Inf, log = TRUE) {    
-        - ddist3(x, location = location, scale = scale, lower = left, 
-                 upper = right, df = df)
-      }
-      sdist <- function(x, location, scale, df, left = -Inf, right = Inf) {
-        rval <- - sdist3(x, df = df, location = location, scale = scale, 
-                         lower = left, upper = right)
-        colnames(rval) <- c("dmu", "dsigma")
-        rval
-      }
-      hdist <- function(x, location, scale, df, left = -Inf, right = Inf, which) {
-        rval <- - hdist3(x, df = df, location = location, scale = scale, 
-                         lower = left, upper = right)
-        colnames(rval) <- c("d2mu", "d2sigma", "dmu.dsigma", "dsigma.dmu")
-        rval
-      }
-      
-      ## density function required for log-likelihood
-      if(truncated) {
-        ddist4 <- switch(dist, 
-                         "student"  = dtt, "gaussian" = dtnorm, "logistic" = dtlogis)
-      } else {
-        ddist4 <- switch(dist, 
-                         "student"  = dct, "gaussian" = dcnorm, "logistic" = dclogis)
-      }
-      lldist <- if(dist == "student") ddist4 else function(..., df) ddist4(...)
-    }
+    
   } else { 
     ## for user defined distribution (requires list with ddist, sdist (optional)
     ## and hdist (optional), ddist, sdist, and hdist must be functions with
@@ -3689,7 +3709,6 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
   linkinv <- linkobj$linkinv
   mu.eta <- linkobj$mu.eta
   dmu.deta <- linkobj$dmu.deta
-  
   
   ## starting values
   if(is.null(start)) {
@@ -3826,14 +3845,15 @@ crch.fit <- function(x, z, y, left, right, truncated = FALSE,
 }
 
 # Define Inernal Function - "spread" (tidyr package)
+#' @importFrom plyr split_labels id
 spread <- function(data, key, value, fill = NA, convert = FALSE,
                    drop = TRUE, sep = NULL) {
-  key_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(key))
-  value_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(value))
+  key_var <- vars_pull(names(data), !! dplyr::enquo(key))
+  value_var <- vars_pull(names(data), !! dplyr::enquo(value))
   
   col <- data[key_var]
   col_id <- plyr::id(col, drop = drop)
-  col_labels <- split_labels(col, col_id, drop = drop)
+  col_labels <- plyr::split_labels(col, col_id, drop = drop)
   
   rows <- data[setdiff(names(data), c(key_var, value_var))]
   if (ncol(rows) == 0 && nrow(rows) > 0) {
@@ -3842,7 +3862,7 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
     row_labels <- as.data.frame(matrix(nrow = 1, ncol = 0))
   } else {
     row_id <- plyr::id(rows, drop = drop)
-    row_labels <- split_labels(rows, row_id, drop = drop)
+    row_labels <- plyr::split_labels(rows, row_id, drop = drop)
     rownames(row_labels) <- NULL
   }
   
@@ -3885,9 +3905,10 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
   
   ordered <- as_tibble_matrix(ordered)
   
-  if (convert) {
-    ordered[] <- map(ordered, type.convert, as.is = TRUE)
-  }
+  # TODO: disable it for now bc convert is always F, no need to use 'map' function
+  # if (convert) {
+  #   ordered[] <- map(ordered, type.convert, as.is = TRUE)
+  # }
   
   out <- append_df(row_labels, ordered)
   reconstruct_tibble(data, out, c(key_var, value_var))
@@ -3913,34 +3934,34 @@ as_tibble_matrix <- function(x) {
   get("as_tibble.matrix", asNamespace("tibble"), mode = "function")(x)
 }
 
-split_labels <- function(df, id, drop = TRUE) {
-  if (length(df) == 0) {
-    return(df)
-  }
-  
-  if (drop) {
-    representative <- match(sort(unique(id)), id)
-    out <- df[representative, , drop = FALSE]
-    rownames(out) <- NULL
-    out
-  } else {
-    unique_values <- map(df, ulevels)
-    rev(expand.grid(rev(unique_values), stringsAsFactors = FALSE))
-  }
-}
-
-ulevels <- function(x) {
-  if (is.factor(x)) {
-    orig_levs <- levels(x)
-    x <- addNA(x, ifany = TRUE)
-    levs <- levels(x)
-    factor(levs, levels = orig_levs, ordered = is.ordered(x), exclude = NULL)
-  } else if (is.list(x)) {
-    unique(x)
-  } else {
-    sort(unique(x), na.last = TRUE)
-  }
-}
+# split_labels <- function(df, id, drop = TRUE) {
+#   if (length(df) == 0) {
+#     return(df)
+#   }
+#   
+#   if (drop) {
+#     representative <- match(sort(unique(id)), id)
+#     out <- df[representative, , drop = FALSE]
+#     rownames(out) <- NULL
+#     out
+#   } else {
+#     unique_values <- map(df, ulevels)
+#     rev(expand.grid(rev(unique_values), stringsAsFactors = FALSE))
+#   }
+# }
+# 
+# ulevels <- function(x) {
+#   if (is.factor(x)) {
+#     orig_levs <- levels(x)
+#     x <- addNA(x, ifany = TRUE)
+#     levs <- levels(x)
+#     factor(levs, levels = orig_levs, ordered = is.ordered(x), exclude = NULL)
+#   } else if (is.list(x)) {
+#     unique(x)
+#   } else {
+#     sort(unique(x), na.last = TRUE)
+#   }
+# }
 
 append_df <- function(x, y, after = length(x), remove = FALSE) {
   if (is.character(after)) {
@@ -3960,6 +3981,7 @@ append_df <- function(x, y, after = length(x), remove = FALSE) {
   structure(y, class = class(x), row.names = .row_names_info(x, 0L))
 }
 
+#' @importFrom dplyr grouped_df group_vars
 reconstruct_tibble <- function(input, output, ungrouped_vars = character()) {
   if (inherits(input, "grouped_df")) {
     old_groups <- dplyr::group_vars(input)
@@ -4228,8 +4250,8 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
   v <- attr(veg, "v")
   v.fraction <- attr(veg, "fraction")
   adotj[adotj < Const3] <- Const3
-  CA <- .Call(C_do_decorana, veg, ira, iresc, short, mk, as.double(aidot),
-              as.double(adotj))
+  CA <- .Call('do_decorana', veg, ira, iresc, short, mk, as.double(aidot),
+              as.double(adotj), PACKAGE = "MetaboAnalystR")
   if (ira)
     dnames <- paste("RA", 1:4, sep = "")
   else dnames <- paste("DCA", 1:4, sep = "")
@@ -4258,6 +4280,7 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
 }
 
 # New .readDataTable2 Function
+#' @importFrom data.table fread
 .readDataTable2<-function(filePath){
   
   dat <- try(data.table::fread(filePath, header=T, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),silent=T);

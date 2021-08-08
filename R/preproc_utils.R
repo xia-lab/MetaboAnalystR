@@ -1,1642 +1,674 @@
-#' Import raw MS data
-#' @description This function handles the reading in of 
-#' raw MS data (.mzML, .CDF and .mzXML). Users must provide 
-#' a matrix with meta information about file such that each file has the name,
-#' file path, group class and extension type.
-#' The function will output two chromatograms into the user's working directory, a 
-#' base peak intensity chromatogram (BPIC) and a total ion 
-#' chromatogram (TIC). Further, this function sets the number of cores
-#' to be used for parallel processing. It first determines the number of cores 
-#' within a user's computer and then sets it that number/2.  
-#' @param dataset.meta Matrix, input the meta data for files containing
-#' the raw MS spectra to be processed.
-#' @param format Character, input the format of the image to create.
-#' @param dpi Numeric, input the dpi of the image to create.
-#' @param width Numeric, input the width of the image to create.
-#' @param par.cores Logical, if true, the function will automatically 
-#' set the number of parallel cores. If false, it will not.
-#' @param plot Logical, if true the function will create BPIS and TICS plots.
-#' @param bpis_name Character, input the name of the BPIS image to create.
-#' @param tics_name Character, input the name of the TICS image to create.
-#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-#' @import MSnbase
-#' @import BiocParallel
-#' @import parallel
+### This is a online script to do some pre-define before job scheduler
 
-ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 9, 
-                                par.cores=TRUE, plot=TRUE, bpis_name = "BPIS_", tics_name="TICS_"){
+#' CreateRawRscript
+#' @description used to create a running for raw spectra processing
+#' this file will be run by spring daemon by using OptiLCMS rather than relay on the local 
+#' compiling RC files
+#' @noRd
+#' @import OptiLCMS
+#' @author Guangyan Zhou, Zhiqiang Pang
+CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec){
   
-  msg.vec <<- vector(mode="character")
+  guestName <- guestName;
+  planString <- planString;
   
-  if(bpis_name == "BPIS_"){
-    bpis_name = paste("BPIS_", dpi, ".", format, sep="");
+  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+    users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
+  }else {
+    users.path <-getwd();
   }
-  if(tics_name == "TICS_"){
-    tics_name <- paste("TICS_", dpi, ".", format, sep="");
-  }
+  print(getwd());
+  ## Prepare Configuration script for slurm running
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=480:00\n#SBATCH --mem-per-cpu=6000\n#SBATCH --cpus-per-task=4\n"
   
-  msg <- c("The uploaded files are raw MS spectra.");
+  ## Prepare R script for running
+  # need to require("OptiLCMS")
+  str <- paste0('library(OptiLCMS)');
   
-  # The dataset.meta should be a matrix such that each row has the following:
-  #   1- file name, 2- file path, 3- group and 4- file extension type
-  # provided. The accepted file extensions are (.mzML/.CDF/.mzXML files)
+  # Set working dir & files included
+  str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
+  str <- paste0(str, ";\n", "mSet <- InitDataObjects(\'spec\', \'raw\', FALSE)");
+  str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");
   
-  if(nrow(dataset.meta) == 0 || is.na(dataset.meta)){
-    AddErrMsg("No spectra were found!");
-    return(0);    
-  }
-  
-  compfile.types <- sum(sapply(dataset.meta[,3], function(x){x %in% c("mzml", "cdf", "mzxml")}))
-  if(compfile.types < nrow(dataset.meta)){
-    AddErrMsg("Only mzML, cdf and mzXML input types can be handled!");
-    return(0);    
-  }
-  
-  snames <- dataset.meta[,1]
-  files <- dataset.meta[,2]; files <- as.character(files); # Otherwise, a factor form of files will cause an error
-  sclass <- dataset.meta[,4]
-  
-  # some sanity check before proceeds
-  sclass <- as.factor(sclass);
-  if(length(levels(sclass))<2){
-    AddErrMsg("You must provide classes labels (at least two classes)!");
-    return(0);
+  ## Construct the opt pipeline
+  if(planString2 == "opt"){
+    str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_opt\')')
+    str <- paste0(str, ';\n',  planString)
+    str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
   
-  SetClass(sclass)
-  
-  # check for unique sample names
-  if(length(unique(snames))!=length(snames)){
-    AddErrMsg("Duplicate sample names are not allowed!");
-    dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
-    AddErrMsg("Duplicate sample names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
+  ## Construct the default pipeline
+  if(planString2 == "default"){
+    str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
+    str <- paste0(str, ';\n',  planString)
+    str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
   
-  pd <- data.frame(sample_name = snames,
-                   sample_group = sclass,
-                   stringsAsFactors = FALSE)
+  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
   
-  if(!.on.public.web & par.cores==TRUE){
-    cores <- parallel::detectCores()
-    num_cores <- ceiling(cores/2) 
-    print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
+  # sink command for running
+  sink("ExecuteRawSpec.sh");
+  
+  cat(conf_inf);
+  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+      
+  sink();
     
-    if (.Platform$OS.type == "unix") {
-      BiocParallel::register(BiocParallel::bpstart(BiocParallel::MulticoreParam(num_cores)))
-    } else { # for windows
-      BiocParallel::register(BiocParallel::bpstart(BiocParallel::SnowParam(num_cores)))
-    }
-  }
+  # record the R command
+  mSetObj <- .get.mSet(mSetObj); 
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, str);
+  .set.mSet(mSetObj);
   
-  raw_data <- suppressMessages(read.MSdata(files = files, pdata = new("NAnnotatedDataFrame", pd),
-                                          mode = "onDisk")) 
+  # add job cancel control button: 0 means running, 1 means kill!
+  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = "JobKill");
   
-  if(plot==TRUE){
-    # Plotting functions to see entire chromatogram
-    bpis <- chromatogram(raw_data, aggregationFun = "max")
-    tics <- chromatogram(raw_data, aggregationFun = "sum")
-    
-    groupNum <- nlevels(groupInfo)
-    
-    if(groupNum > 9){
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      group_colors <- col.fun(groupNum)
-    }else{
-      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
-    }
-    
-    names(group_colors) <- levels(groupInfo)
-    
-    Cairo::Cairo(file = bpis_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
-                 type=format, bg="white");
-    plot(bpis, col = group_colors[raw_data$sample_group])
-    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-    dev.off();
-    
-    Cairo::Cairo(file = tics_name, unit="in", dpi=dpi, width=width, height=width*5/9, 
-                 type=format, bg="white");
-    plot(tics, col = group_colors[raw_data$sample_group])
-    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-    dev.off();
-  }
-  
-  print("Successfully imported raw MS data!")
-  
-  return(raw_data)
+  return(as.integer(1))
 }
 
-#' Import raw MS data
-#' @description This function handles the reading in of 
-#' raw MS data (.mzML, .CDF and .mzXML). Users must set 
-#' their working directory to the folder containing their raw 
-#' data, divided into two subfolders named their desired group labels. The  
-#' function will output two chromatograms into the user's working directory, a 
-#' base peak intensity chromatogram (BPIC) and a total ion 
-#' chromatogram (TIC). Further, this function sets the number of cores
-#' to be used for parallel processing. It first determines the number of cores 
-#' within a user's computer and then sets it that number/2.  
-#' @param foldername Character, input the file path to the folder containing
-#' the raw MS spectra to be processed.
-#' @param mode Character, the data input mode. Default is "onDisk" to avoid memory crash. "inMemory" will 
-#' absorb data into the memory.
-#' @param plotSettings List, plotting parameters produced by SetPlotParam Function. "plot.opts" can be added through this 
-#' function for samples numbers for plotting. Defalut is "default", "all" will apply all samples for plotting and may cause 
-#' memory crash, especially for large sample dataset.
-#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-#' @import MSnbase
-#' @import BiocParallel
-#' @import parallel
-
-ImportRawMSData <- function(foldername, mode="onDisk", ncores=4, plotSettings){
-  
-  msg.vec <<- vector(mode="character")
-  
-  msg <- c("The uploaded files are raw MS spectra.");
-  
-  # the "upload" folder should contain two subfolders (groups, i.e. Healthy vs. Disease)
-  # each subfolder must contain samples (.mzML/.CDF/.mzXML files)
-  
-  files <- dir(foldername, pattern=".mzML|.cdf|.mzXML|.mzData", recursive=T, full.name=TRUE)
-  
-  if (length(files) == 0) {
-    AddErrMsg("No spectra were found!");
-    return(0);
-  }
-  
-  snames <- gsub("\\.[^.]*$", "", basename(files));
-  msg<-c(msg, paste("A total of ", length(files), "samples were found."));
-  
-  sclass <- gsub("^\\.$", "sample", dirname(files));
-  
-  scomp <- strsplit(substr(sclass, 1, min(nchar(sclass))), "");
-  scomp <- matrix(c(scomp, recursive = TRUE), ncol = length(scomp));
-  i <- 1
-  
-  while(all(scomp[i,1] == scomp[i,-1]) && i < nrow(scomp)){
-    i <- i + 1;
-  }
-  
-  i <- min(i, tail(c(0, which(scomp[1:i,1] == .Platform$file.sep)), n = 1) + 1)
-  
-  if (i > 1 && i <= nrow(scomp)){
-    sclass <- substr(sclass, i, max(nchar(sclass)))
-  }
-  
-  # some sanity check before proceeds
-  sclass <- as.factor(sclass);
-  if(length(levels(sclass))<2){
-    AddErrMsg("You must provide classes labels (at least two classes)!");
-    return(0);
-  }
-  
-  SetClass(sclass)
-  
-  # check for unique sample names
-  if(length(unique(snames))!=length(snames)){
-    AddErrMsg("Duplicate sample names are not allowed!");
-    dup.nm <- paste(snames[duplicated(snames)], collapse=" ");
-    AddErrMsg("Duplicate sample names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
-  }
-  
-  pd <- data.frame(sample_name = snames,
-                   sample_group = sclass,
-                   stringsAsFactors = FALSE)
-  
-  if(!.on.public.web){
-    
-    cores <- parallel::detectCores()
-    
-    if(missing(ncores)){
-      num_cores <- ceiling(cores*2/3) 
-    } else{
-      ncores -> num_cores
-    }
-    
-    print(paste0("The number of CPU cores to be used is set to ", num_cores, "."))
-    
-    if (.Platform$OS.type == "unix") {
-      BiocParallel::register(BiocParallel::bpstart(BiocParallel::MulticoreParam(num_cores)))
-    } else { # for windows
-      BiocParallel::register(BiocParallel::bpstart(BiocParallel::SnowParam(num_cores)))
-    }
-    
-  }
-  
-  raw_data <- suppressMessages(readMSData(files = files, pdata = new("NAnnotatedDataFrame", pd),
-                                          mode = mode, msLevel =1)) 
-  
-  
-  if(plotSettings$Plot==TRUE){
-    
-    if (is.null(plotSettings$plot.opts)){
-      plot.opts <- "default";
-    } else {
-      plot.opts <- plotSettings$plot.opts;
-    }
-    
-    if(plot.opts=="default"){
-      #subset raw_data to first 50 samples
-      print("To reduce memory usage BPIS and TICS plots will be created using only 10 samples per group.")
-      
-      grp_nms <- names(table(pd$sample_group))
-      files <- NA
-      
-      for(i in 1:length(grp_nms)){
-        numb2ext <- min(table(pd$sample_group)[i], 10)
-        filt_df <- pd[pd$sample_group==grp_nms[i],]
-        files.inx <- sample(nrow(filt_df), numb2ext)
-        sel.samples <- filt_df$sample_name[files.inx]
-        files <- c(files, which(pd$sample_name %in% sel.samples))
-      }
-      
-      raw_data_filt <- filterFile(raw_data, file=na.omit(files));
-      
-    }else{
-      
-      raw_data_filt <- raw_data; # just for plotting
-      
-    }
-    
-    if(plot.opts=="all"){
-      h <- readline(prompt="Using all samples to create BPIS and TICS plots may cause severe memory issues! Press [0] to continue, or [1] to cancel: ")
-      h <- as.integer(h)
-      if(h==1){
-        print("ImportRawMSData function aborted!")
-        return(0)
-      }
-    }
-    
-    print("Plotting BPIS and TICS.")
-    
-    # Plotting functions to see entire chromatogram
-    bpis <- chromatogram(raw_data_filt, aggregationFun = "max")
-    tics <- chromatogram(raw_data_filt, aggregationFun = "sum")
-    
-    groupNum <- nlevels(groupInfo)
-    
-    if(groupNum > 9){
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      group_colors <- col.fun(groupNum)
-    }else{
-      group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
-    }
-    
-    names(group_colors) <- levels(groupInfo)
-    
-    bpis_name <- paste("BPIS_", plotSettings$dpi, ".", plotSettings$format, sep="");
-    tics_name <- paste("TICS_", plotSettings$dpi, ".", plotSettings$format, sep="");
-    
-    Cairo::Cairo(file = bpis_name, unit="in", dpi=plotSettings$dpi, width=plotSettings$width, 
-                 height= plotSettings$width*5/9, type=plotSettings$format, bg="white");
-    
-    plot(bpis, col = group_colors[raw_data_filt$sample_group])
-    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-    
-    dev.off();
-    
-    Cairo::Cairo(file = tics_name, unit="in", dpi=plotSettings$dpi, width=plotSettings$width, 
-                 height=plotSettings$width*5/9, type=plotSettings$format, bg="white");
-    
-    plot(tics, col = group_colors[raw_data_filt$sample_group])
-    legend("topright", legend=levels(groupInfo), pch=15, col=group_colors);
-    
-    dev.off();
-  }
-  
-  print("Successfully imported raw MS data!")
-  
-  return(raw_data)
+#' SetRawFileNames
+#' @description #TODO: SetRawFileNames
+#' @noRd
+#' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
+SetRawFileNames <- function(filenms){
+  print(filenms)
+  rawfilenms.vec <<- filenms
+  return(1);
 }
 
-#' Set class information for MS data
-#' @description This function sets the class information
-#' for preprocessing MS data.
-#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-SetClass <- function(class){
-  groupInfo <<- class
-}
-
-#' Plot EIC
-#' @description This functionn creates an extracted ion chromatogram (EIC) for a specific
-#' m/z and retention time. This is used for quality-control of raw m/s data.
-#' @param raw_data The object created using the ImportRawMSData function,
-#' containing the raw MS data.
-#' @param rt_mn Numeric, specify the minimum bound of the retention time range.
-#' @param rt_mx Numeric, specify the maximum bound of the retention time range.
-#' @param mz_mn Numeric, specify the minimum bound of the m/z range.
-#' @param mz_mx Numeric, specify the maximum bound of the m/z range.
-#' @param aggreg Character, if "sum", creates a total ion chromatogram. 
-#' If "max", creates a base peak chromatogram. By default it is set 
-#' to "sum". 
-#' @param format Character, input the format of the image to create.
-#' @param dpi Numeric, input the dpi of the image to create.
-#' @param width Numeric, input the width of the image to create. 
-#' @export
-
-PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
-                    format = "png", dpi = 72, width = 9){
-  
-  filt_data <- filterRt(raw_data, rt = c(rt_mn, rt_mx))
-  filt_mz <- filterMz(filt_data, mz = c(mz_mn, mz_mx))
-  mz_slice <- chromatogram(filt_mz, aggregationFun = aggreg)
-  
-  groupNum <- nlevels(groupInfo)
-  
-  if(groupNum > 9){
-    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-    group_colors <- col.fun(groupNum)
+#' #Raw Spectra Upload
+#' @description function used to process during uploading stage
+#' @noRd
+#' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
+ReadRawMeta<-function(fileName){
+  if(grepl(".txt", fileName, fixed=T)){
+    tbl=read.table(fileName,header=TRUE, stringsAsFactors = F);
+  }else if(grepl(".csv", fileName, fixed=T)){
+    tbl = read.csv(fileName,header=TRUE, stringsAsFactors = F);
   }else{
-    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:groupNum], "60")
+    print("wrongfiletype")
   }
   
-  names(group_colors) <- unique(raw_data$sample_group)
+  rawFileNms <-as.vector(tbl[,1])
+  rawClassNms <-as.vector(tbl[,2])
+  rawFileNms <- sapply(strsplit(rawFileNms, "\\."), function(x) paste0(head(x,-1), collapse="."));
+  clsTable = table(rawClassNms)
+  #check replicate number
+  clsTypes = names(table(rawClassNms))
+  for(name in clsTypes){
+    if(toupper(name) !="QC"){
+      replicateNum = clsTable[[name]]
+    }
+  }
   
-  eic_name <- paste("EIC_", dpi, ".", format, sep="");
+  rawFileNms<<-rawFileNms
+  rawClassNms<<-rawClassNms
+  return(1);
+}
+
+#' @noRd
+#' @import OptiLCMS
+GetRawFileNms <- function(){
+  return(rawFileNms)
+}
+
+#' @noRd
+#' @import OptiLCMS
+GetRawClassNms <- function(){
+  return(rawClassNms)
+}
+
+#' Set User Path
+#' @description play roles at the first uploading and login stage
+#' @author Guangyan Zhou, Zhiqiang Pang
+#' TODO: can be delete in the future
+SetUserPath<-function(path){
+  fullUserPath <<- path;
+}
+.getDataPath<- function() {
+  if(file.exists("/home/zgy/scheduler/MetaboAnalyst.so")){
+    path = "/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/data/"
+  }else if(dir.exists("/media/zzggyy/disk/")){
+    path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/data/"
+  }else if(.on.public.web){
+    path = "../../data/";
+  }
+  return(path)
+}
+
+#' verifyParam
+#' @description Verify the example params has changed or not
+#' @noRd
+#' @author Guangyan Zhou, Zhiqiang Pang
+#' @import OptiLCMS
+verifyParam <- function(param0_path, users.path) {
   
-  Cairo::Cairo(file = eic_name, unit="in", dpi=dpi, width=width, height= width*5/9, 
-               type=format, bg="white");
-  plot(mz_slice, col = group_colors[raw_data$sample_group])
-  legend("topright", legend=unique(raw_data$sample_group), pch=15, col=group_colors);
-  dev.off();
+  load(paste0(users.path, "/params.rda"));
   
-  print("EIC created!") 
+  load(param0_path);
+ 
+  verify.vec <- NULL
+  
+  for (i in 1:length(peakParams)) {
+    for (j in 1:length(peakParams0)) {
+      if (names(peakParams[i]) == names(peakParams0[j])) {
+        verify.vec_tmp <- peakParams[[i]] == peakParams0[[j]]
+        verify.vec <- c(verify.vec, verify.vec_tmp)
+      }
+    }
+  }
+  
+  if (all(verify.vec)) {
+    print("Examples' param not changed !")
+    return(1)
+    
+  } else{
+    print("Examples' param changed !")
+    return(0)
+  }
+  
+}
+
+#' spectraInclusion
+#' @description save the spectra file info for project loading
+#' @noRd
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @importFrom qs qsave
+spectraInclusion <- function(files, number){
+    qs::qsave(list(files, number), file = "IncludedSpectra.qs");
+}
+
+#' getSpectraInclusion
+#' @description read the spectra file info for project loading
+#' @noRd
+#' @author Zhiqiang Pang
+#' @importFrom qs qread
+getSpectraInclusion <- function(){
+    return(qs::qread("IncludedSpectra.qs"));
+}
+
+#' updateSpectra3DPCA
+#' @description update Spectra 3D PCA, mainly json file
+#' @noRd
+#' @author Zhiqiang Pang
+updateSpectra3DPCA <- function(featureNM = 100){
+  load("mSet.rda");
+  #.feature_values <- OptiLCMS:::.feature_values;
+  
+  if(!exists("mSet")){
+    return(0);
+  }
+  
+  if(!is.numeric(featureNM)){
+    return(-1);
+  }
+  
+  sample_idx <-
+    mSet@rawOnDisk@phenoData@data[["sample_group"]];
+  
+  # feature_value <-
+  #   .feature_values(
+  #     pks = mSet@peakfilling$msFeatureData$chromPeaks,
+  #     fts = mSet@peakfilling$FeatureGroupTable,
+  #     method = "medret",
+  #     value = "into",
+  #     intensity = "into",
+  #     colnames = mSet@rawOnDisk@phenoData@data[["sample_name"]],
+  #     missing = NA
+  #   );
+  
+  ## Pre-process here
+  feature_value0 <- mSet@dataSet[-1,];
+  rownames(feature_value0) <- feature_value0[,1];
+  feature_value <- feature_value0[,-1];
+  feature_value[is.na(feature_value)] <- 0;
+  
+  int.mat <- as.matrix(feature_value)
+  rowNms <- rownames(int.mat);
+  colNms <- colnames(int.mat);
+  int.mat <- t(apply(int.mat, 1, function(x) .replace.by.lod(as.numeric(x))));
+  rownames(int.mat) <- rowNms;
+  colnames(int.mat) <- colNms; 
+  feature_value <- int.mat;
+  feature_value[feature_value==0] <- 1;
+
+  # feature_value[is.na(feature_value)] <- 0;
+  # int.mat <- feature_value
+  # rowNms <- rownames(int.mat);
+  # colNms <- colnames(int.mat);
+  # int.mat <- t(apply(int.mat, 1, .replace.by.lod));
+  # 
+  # rownames(int.mat) <- rowNms;
+  # colnames(int.mat) <- colNms; 
+  # feature_value <- int.mat;
+  # 
+  # feature_value[feature_value==0] <- 1;
+  
+  min.val <- min(abs(feature_value[feature_value!=0]))/10;
+  pca_feats <- log10((feature_value + sqrt(feature_value^2 + min.val^2))/2);
+  
+  pca_feats[is.na(pca_feats)] <- 0;
+  df0 <- na.omit(pca_feats);
+  df1 <- df0[is.finite(rowSums(df0)),];
+  df <- t(df1);
+
+  ## Filtering
+  mSet_pca <- prcomp(df, center = TRUE, scale = FALSE);
+  imp.pca<-summary(mSet_pca)$importance;
+  coords0 <- coords <- data.frame(t(signif(mSet_pca$rotation[,1:3], 5)));
+  colnames(coords) <- NULL; 
+
+  weights <- imp.pca[2,][1:3]
+  mypos <- t(coords);
+  meanpos <- apply(abs(mypos),1, function(x){weighted.mean(x, weights)})
+  
+  df.idx <- data.frame(pos = meanpos, inx = seq.int(1,length(meanpos)))
+  df.idx <- df.idx[order(-df.idx$pos),]
+
+  selectRow_idx <- df.idx[c(1:featureNM), 2]
+  feature_value1 <- feature_value[sort(selectRow_idx),];
+  
+  dists <- GetDist3D(coords0);
+  colset <- GetRGBColorGradient(dists);
+  cols <- colset[sort(selectRow_idx)];
+  
+  ## Processing to save Json
+  coords0 <- coords <- df0 <- df1 <- df <- NULL;
+  min.val <- min(abs(feature_value1[feature_value1!=0]))/10;
+  pca_feats <- log10((feature_value1 + sqrt(feature_value1^2 + min.val^2))/2);
+  
+  pca_feats[is.na(pca_feats)] <- 0;
+  df0 <- na.omit(pca_feats);
+  df1 <- df0[is.finite(rowSums(df0)),];
+  df <- t(df1);
+  
+  mSet_pca <- prcomp(df, center = TRUE, scale = FALSE);
+  
+  sum.pca <- summary(mSet_pca);
+  var.pca <-
+    sum.pca$importance[2,]; # variance explained by each PCA
+  
+  xlabel <- paste("PC1", "(", round(100 * var.pca[1], 1), "%)");
+  ylabel <- paste("PC2", "(", round(100 * var.pca[2], 1), "%)");
+  zlabel <- paste("PC2", "(", round(100 * var.pca[3], 1), "%)");
+  
+  # using ggplot2
+  df <- as.data.frame(mSet_pca$x);
+  df$group <- sample_idx;
+  
+  ## For score plot
+  pca3d <- list();
+  pca3d$score$axis <- c(xlabel, ylabel, zlabel);
+  xyz0 <- df[,c(1:3)];
+  colnames(xyz0) <- rownames(xyz0) <- NULL;
+  pca3d$score$xyz <- data.frame(t(xyz0));
+  colnames(pca3d$score$xyz) <- NULL;
+  pca3d$score$name <- rownames(df);
+  pca3d$score$facA <- df$group;
+  
+  if(length(unique(df$group)) < 9){
+    col.fun <-
+      grDevices::colorRampPalette(RColorBrewer::brewer.pal(length(unique(df$group)), "Set1"));
+  } else {
+    col.fun <-
+      grDevices::colorRampPalette(RColorBrewer::brewer.pal(length(unique(df$group)), "Set3"));
+  }
+  
+  pca3d$score$colors <- col.fun(length(unique(df$group)));
+  
+  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  
+  sink(paste0("spectra_3d_score", featureNM,".json"));
+  cat(json.obj);
+  sink();
+  
+  ## For loading plot
+  pca3d <- list();
+  
+  pca3d$loading$axis <- paste("Loading ", c(1:3), sep="");
+  coords0 <- coords <- data.frame(t(signif(mSet_pca$rotation[,1:3], 5)));
+  colnames(coords) <- NULL; 
+  pca3d$loading$xyz <- coords;
+  pca3d$loading$name <- rownames(mSet_pca$rotation);
+  pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
+                                 "@", 
+                                 round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
+  
+  pca3d$loading$cols <- cols;
+  
+  pca3d$cls =  df$group;
+  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  
+  sink(paste0("spectra_3d_loading", featureNM,".json"));
+  
+  cat(json.obj);
+  sink();
+  return(1);
+}
+
+#' mzrt2ID
+#' @description convert mzATrt as Feature ID
+#' @noRd
+#' @author Zhiqiang Pang
+mzrt2ID <- function(mzrt){
+  load("mSet.rda");
+  FTID = 1;
+  FTID <- which(mSet@dataSet[["Sample"]] == mzrt)-1;
+  return(as.integer(FTID));
+}
+
+#' readAdductsList
+#' @description readAdductsList for user customization
+#' @noRd
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+readAdductsList <- function(polarity = NULL){
+  
+  res <- NULL;
+  r <- OptiLCMS:::.exportmSetRuleClass();
+  
+  setDefaultLists <- OptiLCMS:::setDefaultLists;
+  readLists <- OptiLCMS:::readLists;
+  setParams <- OptiLCMS:::setParams;
+  generateRules <- OptiLCMS:::generateRules;
+  
+  r <- setDefaultLists(r, lib.loc=.libPaths());
+  r <- readLists(r);
+  
+  if(polarity == "positive" || is.null(polarity)){
+    r <- setParams(r, maxcharge=3, mol=3, nion=2,
+                   nnloss=1, nnadd=1, nh=2, polarity="positive", lib.loc = .libPaths());
+    r <- generateRules(r);
+    rules <- unique(r@rules);
+    res <- rules[order(rules$ips,decreasing = TRUE),][["name"]];
+  } else {
+    r <- setParams(r, maxcharge=3, mol=3, nion=2,
+                   nnloss=1, nnadd=1, nh=2, polarity="negative", lib.loc = .libPaths());
+    r <- generateRules(r);
+    rules <- unique(r@rules);
+    res <- rules[order(rules$ips,decreasing = TRUE),][["name"]];
+  }
+  
+  return(res);
+}
+
+#' readAdductsList
+#' @description readAdductsList for user customization
+#' @noRd
+#' @author Zhiqiang Pang
+retrieveModeInfo <- function(){
+  plantext <- read.delim("ExecuteRawSpec.sh")
+  if(grepl("PerformROIExtraction", plantext) && grepl("PerformParamsOptimization", plantext)){
+    return("auto")
+  } else {
+    return("customized")
+  }
+}
+
+################## ------------- Shell function here below ------------- ######################
+
+#' InitializePlan
+#' @description this function is used to initialize a plan before submit job to spring daemon
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+InitializaPlan <- function(){
+  plan <- OptiLCMS::InitializaPlan();
+  # Nothing to return
+}
+
+#' CentroidCheck
+#' @description CentroidCheck function used to check centroid or not 
+#' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
+CentroidCheck <- function(filename){
+  return(OptiLCMS::CentroidCheck(filename));
+}
+
+#' SetPeakParam
+#' @description SetPeakParam, used to set the peak param 
+#' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
+SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_method = "loess",
+                         mzdiff, snthresh, bw, # used for both "centwave" and "matchedFilter"
+                         ppm, min_peakwidth, max_peakwidth, noise, prefilter, value_of_prefilter, # used for "centwave"
+                         fwhm, steps, sigma, peakBinSize, max, # used for "matchedFilter"
+                         criticalValue, consecMissedLimit, unions, checkBack, withWave, # used for "massifquant"
+                         profStep, # used for "obiwarp"
+                         minFraction, minSamples, maxFeatures, mzCenterFun, integrate,# used for grouping
+                         extra, span, smooth, family, fitgauss, # used for RT correction with peakgroup "loess"
+                         polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
+                         rmConts #used to control remove contamination or not
+                         ){
+    OptiLCMS::SetPeakParam(platform = platform, Peak_method = Peak_method, RT_method = RT_method,
+                           mzdiff, snthresh, bw, 
+                           ppm, min_peakwidth, max_peakwidth, noise, prefilter, value_of_prefilter, 
+                           fwhm, steps, sigma, peakBinSize, max, 
+                           criticalValue, consecMissedLimit, unions, checkBack, withWave, 
+                           profStep, 
+                           minFraction, minSamples, maxFeatures, mzCenterFun, integrate,
+                           extra, span, smooth, family, fitgauss, 
+                           polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
+                           rmConts 
+  )
+  #return nothing
+}
+
+#' GeneratePeakList
+#' @description GeneratePeakList is used to generate the peak summary list for result page
+#' @author Zhiqiang Pang
+#' @export
+#' @import OptiLCMS
+GeneratePeakList <- function(userPath){
+  return(OptiLCMS:::GeneratePeakList(userPath))
+}
+
+#' plotSingleTIC
+#' @description plotSingleTIC is used to plot single TIC
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width = NA){
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 7;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
+  } else {
+    widthm <- "7in"
+  }
+  
+  if(imageNumber == -1){
+    imgName <- paste0(filename,".", format);
+  } else {
+    imgName <- paste0("TIC_", filename, "_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  }
+  print(imgName);
+  OptiLCMS::plotSingleTIC(NULL, filename, imgName, format = format, dpi = dpi, width = width);
+  return(imgName);
+}
+
+#' plotMSfeature
+#' @description plotMSfeature is used to plot MS feature stats for different groups
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
+  if (is.na(width)) {
+    #width <- 6;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "enlarged"
+  } else {
+    widthm <- "full"
+  }
+  imgName <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = dpi, format = format, width = width)
+  print(imgName);
+  return(imgName)
+}
+
+#' PlotXIC
+#' @description PlotXIC is used to plot both MS XIC/EIC features of different group and samples
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
+  if(is.na(width)){
+    width <- 6;
+  }
+  return(OptiLCMS::PlotXIC(NULL, featureNum, format = format, dpi = dpi, width = width))
+}
+
+#' PerformDataInspect
+#' @description PerformDataInspect is used to plot 2D/3D structure of the MS data
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+PerformDataInspect <- function(datapath = NULL,
+                               rt.range = c(0,0),
+                               mz.range = c(0,0),
+                               dimension = "3D",
+                               res = 100){
+  OptiLCMS::PerformDataInspect(datapath, rt.range,
+                               mz.range, dimension,
+                               res)
+}
+
+#' FastRunningShow_customized
+#' @description FastRunningShow_customized is used to showcase the customized running pipeline
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+FastRunningShow_customized <- function(fullUserPath){
+  OptiLCMS:::FastRunningShow_customized(fullUserPath)
+}
+
+#' FastRunningShow_auto
+#' @description FastRunningShow_auto is used to showcase the AUTO running pipeline
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+FastRunningShow_auto <- function(fullUserPath){
+  OptiLCMS:::FastRunningShow_auto(fullUserPath)
+}
+
+#' centroidMSData
+#' @description centroidMSData is used to centroid MS Data
+#' @author Zhiqiang Pang
+#' @import OptiLCMS
+#' @export
+centroidMSData <- function(fileName, outFolder, ncore = 1){
+  
+  .CentroidSpectra <- OptiLCMS:::.CentroidSpectra;
+  writeMSData <- MSnbase::writeMSData;
+  
+  if(tolower(tools::file_ext(fileName)) %in% c("mzml", "mzxml")){
+    CMS <- try(.CentroidSpectra(paste0(outFolder, "/" , fileName)),silent = TRUE)
+    
+    if(class(CMS) == "try-error") {return(-1)}
+    
+    files.mzml <- paste0(outFolder, "/", fileName)
+    file.remove(files.mzml)
+    writeMSData(CMS, file = files.mzml)
+    
+  } else {
+    return(-2)
+  }
+  
   return(1)
 }
 
-
-#' Perform peak profiling
-#' This function performs feature extraction of user's raw MS data using 
-#' the rawData object created using the ImportRawMSData function.
-#' @param rawData The object created using the ImportRawMSData function,
-#' containing the raw MS data.
-#' @param Params The object created using the SetPeakParam function, 
-#' containing user's specified or default parameters for downstream 
-#' raw MS data pre-processing.
-#' @param plotSettings List, plotting parameters produced by SetPlotParam Function.
-#' Defaut is set to true.
-#' @param ncore Numeric, used to define the cores' number for Peak Profiling.
-#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-#' @import stats
-#' @import MSnbase
-#' @import BiocParallel
-#' @import ggplot2
-
-PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
-  
-  ### Update parameters' style 
-  param <- updateRawSpectraParam (Params);
-  
-  ### Setting the different parallel method for linux or windows
-  if (missing(ncore)){
-    total_threads <- detectCores()*2/3
+PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    total_threads <- ncore
+    widthm <- "7in"
   }
-  
-  
-  if(.Platform$OS.type=="unix" ){
-    register(bpstart(MulticoreParam(ceiling(total_threads))))
-  } else if(.Platform$OS.type=="windows"){
-    register(bpstart(SnowParam(ceiling(total_threads))))
-  }
-  
-  print(paste0(ceiling(total_threads)," CPU Threads will be used for peak profiling !"))
-  
-  #   ---------===========----- I. Peak picking -----===========------------
-  
-  print("Step 1/3: Started peak picking! This step will take some time...")
-  
-  mSet <- PerformPeakPicking(rawData, param = param); gc()
-  
-  #   --------===========----- II. Peak alignment -----===========------------
-  
-  print("Step 2/3: Started peak alignment! This step is running...")
-  
-  mSet <- PerformPeakAlignment(mSet, param); gc()
-  
-  #   --------===========----- III. Peak filling -----===========------------
-  
-  print("Step 3/3: Started peak filling! This step may take some time...")
-  
-  mSet <- PerformPeakFiling (mSet, param); gc()
-  
-  print("Peak picking finished successfully !")
-  
-  
-  #  ---------------====------IV. Plotting Results --------========-----------
+  imgName <- paste0("Adjusted_RT_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraRTadj (mSet = NULL,
+                              imgName = imgName, format = format, dpi = dpi, width = width)
 
-  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
-  
-  
-  if (missing(plotSettings)){
-    plotSettings <- SetPlotParam(name_peak_in="Peak_Intensity",
-                                 name_PCA="PCA",
-                                 name_adj_RT="Adjusted_RT",
-                                 name_adj_BPI="Adjusted_BPI")
+  return(imgName); 
+}
+
+PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    plotSettings$name_peak_in="Peak_Intensity";
-    plotSettings$name_PCA="PCA";
-    plotSettings$name_adj_RT="Adjusted_RT";
-    plotSettings$name_adj_BPI="Adjusted_BPI"
+    widthm <- "7in"
   }
-  
-  if (plotSettings$Plot ==T){
-    ### 1. Peak Intensity plotting -----
-    PlotSpectraInsensityStistics(mSet, paste0(plotSettings$name_peak_in,".",plotSettings$format), plotSettings$format, plotSettings$dpi, 8);
-    
-    ### 2. PCA plotting -----
-    if (.on.public.web){
-      load_ggplot();
-    }
-    
-    PlotSpectraPCA(mSet, paste0(plotSettings$name_PCA,".",plotSettings$format), plotSettings$format, plotSettings$dpi, 8);
-    
-    ### 3. Adjusted RT plotting -----
-    PlotSpectraRTadj(mSet, paste0(plotSettings$name_adj_RT,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width);
-    
-    ### 4. Chromatogram Generation -----
-    PlotSpectraBPIadj(mSet, paste0(plotSettings$name_adj_BPI,".",plotSettings$format), plotSettings$format, plotSettings$dpi, plotSettings$width)
-    
-  }
-  
-  
-  return(mSet)
+  imgName <- paste0("Adjusted_BPI_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraBPIadj (mSet = NULL,
+                               imgName = imgName, format = format, dpi = dpi, width = width)
+
+  return(imgName); 
 }
 
-#' Set generic Plotting Parameters
-#' @description This function sets the generic Plotting Parameters for different functions
-#' @param Plot Logical, if true, the function will plot internal figures for different functions.
-#' @param labels Logical, if true, the labels in the plot will be added.
-#' @param format Numeric, input the format of the image to create.
-#' @param dpi Numeric, input the dpi of the image to create.
-#' @param width Numeric, input the width of the image to create.
-#' @param ... Other specific parameters for specific function. Please set them according to the corresponding function.
-#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-
-SetPlotParam<-function(Plot = F, labels = TRUE, format = "png", dpi = 72, width = 9,...){
-  
-  return(list(Plot = Plot,
-              labels = labels,
-              format = format,
-              dpi = dpi,
-              width = width,
-              ...))
-}
-
-#' Set annotation parameters
-#' @description This function sets the parameters for peak annotation.
-#' @param polarity Character, specify the polarity of the MS instrument. Either
-#' "negative" or "positive".
-#' @param perc_fwhm Numeric, set the percentage of the width of the FWHM for peak grouping. 
-#' Default is set to 0.6.
-#' @param mz_abs_iso Numeric, set the allowed variance for the search (for isotope annotation).
-#' The default is set to 0.005.
-#' @param max_charge Numeric, set the maximum number of the isotope charge. For example,
-#' the default is 2, therefore the max isotope charge is 2+/-. 
-#' @param max_iso Numeric, set the maximum number of isotope peaks. For example, the default
-#' is 2, therefore the max number of isotopes per peaks is 2.
-#' @param corr_eic_th Numeric, set the threshold for intensity correlations across samples.
-#' Default is set to 0.85.
-#' @param mz_abs_add Numeric, set the allowed variance for the search (for adduct annotation).
-#' The default is set to 0.001.
-#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_iso = 0.005,
-                               max_charge = 2, max_iso = 2, corr_eic_th = 0.85,
-                               mz_abs_add = 0.001){
-  
-  annParams <- list()
-  
-  annParams$polarity <- polarity
-  annParams$perf.whm <- perc_fwhm
-  annParams$mz.abs.iso <- mz_abs_iso
-  annParams$max.charge <- max_charge
-  annParams$max.iso <- max_iso
-  annParams$corr.eic.th <- corr_eic_th
-  annParams$mz.abs.add <- mz_abs_add
-  
-  return(annParams)
-}
-
-#' Perform peak annotation
-#' @description This function performs peak annotation on
-#' the xset object created using the PerformPeakPicking function.
-#' @param xset The object created using the PerformPeakPicking function,
-#' containing the peak picked MS data.
-#' @param annParams The object created using the SetAnnotationParam function, 
-#' containing user's specified or default parameters for downstream 
-#' raw MS data pre-processing.
-#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-#' @import MSnbase
-#' @importFrom graph ftM2graphNEL
-#' @importFrom RBGL highlyConnSG
-#' @references Kuhl C, Tautenhahn R, Boettcher C, Larson TR, Neumann S (2012). 
-#' "CAMERA: an integrated strategy for compound spectra extraction and annotation of 
-#' liquid chromatography/mass spectrometry data sets." Analytical Chemistry, 84, 283-289. 
-#' http://pubs.acs.org/doi/abs/10.1021/ac202450g.
-
-PerformPeakAnnotation <- function(mSet, annotaParam, ncore=1){
-  
-  if (ncore > 1){
-    print("Only single core mode is supported now. Parallel will be supported later !")
-    ncore <- 1
-  }
-  
-  ## 1. Prepare the Annotation Object-------
-  
-  xs <- mSet$xcmsSet
-  
-  if(is.null(xs)) {
-    stop("No xcmsSet object in 'mSet' was given !")
-  } else if (!class(xs)=="xcmsSet"){
-    stop("There is correct xcmsSet object in mSet !")
-  }
-  
-  
-  mSet$AnnotateObject <- list();
-  
-  if(length(xs@phenoData[["sample_name"]]) > 1 && !nrow(xs@groups) > 0) {  
-    stop ('No group information found or contain only one sample.') 
-  }
-  mSet$AnnotateObject$sample   <-  as.numeric(NA)
-  
-  mSet$AnnotateObject$groupInfo <- getPeaks_selection(xs);
-  runParallel <- list()
-  runParallel$enable   <-  0;
-  
-  if (ncore > 1) {
-    ## If MPI is available ...
-    rmpi = "Rmpi"
-    opt.warn <- options("warn")$warn
-    options("warn" = -1) 
-    if ((Sys.info()["sysname"] != "Windows") && require(rmpi,character.only=TRUE) && !is.null(ncore)) {
-      if (is.loaded('mpi_initialize')) {
-        #test if not already slaves are running!
-        if(mpi.comm.size() >0){ 
-          warning("There are already intialized mpi slaves on your machine.\nCamera will try to uses them!\n");
-          runParallel$enable <-1;
-          runParallel$mode <- rmpi;
-        }else{
-          mpi.spawn.Rslaves(ncore=ncore, needlog=FALSE)
-          if(mpi.comm.size() > 1){
-            #Slaves have successfull spawned
-            runParallel$enable <-1;
-            runParallel$mode <- rmpi;
-          }else{ warning("Spawning of mpi slaves have failed. CAMERA will run without parallelization.\n");}
-        }
-      }else {
-        #And now??
-        warning("DLL mpi_initialize is not loaded. Run single core mode!\n");
-      }
-    } else {
-      #try local sockets using snow package
-      snow = "snow"
-      if (try(require(snow,character.only=TRUE,quietly=TRUE))) {
-        cat("Starting snow cluster with",ncore,"local sockets.\n")
-        snowclust <- makeCluster(ncore, type = "SOCK")
-        runParallel$enable <- 1
-        runParallel$mode <- snow;
-        runParallel$cluster <- snowclust
-      }
-    }
-    options("warn" = opt.warn)
-    cat("Run cleanParallel after processing to remove the spawned slave processes!\n")
-  }
-  
-  if(!is.null(annotaParam[["polarity"]])){
-    if(is.na(match.arg(annotaParam[["polarity"]], c("positive","negative")))){
-      stop("Parameter polarity has to be 'positive' or 'negative' !")  
-    }else{
-      mSet$AnnotateObject$polarity <- annotaParam[["polarity"]];
-    }
-  }
-  mSet$AnnotateObject$runParallel<-runParallel;
-  
-  mSet$AnnotateObject$annoID <- matrix(ncol=4, nrow=0)
-  mSet$AnnotateObject$annoGrp <- matrix(ncol=4, nrow=0)
-  mSet$AnnotateObject$isoID <- matrix(ncol=4, nrow=0)
-  
-  colnames(mSet$AnnotateObject$annoID) <-  c("id","grpID","ruleID","parentID");
-  colnames(mSet$AnnotateObject$annoGrp)<-  c("id","mass","ips","psgrp");
-  colnames(mSet$AnnotateObject$isoID)  <-  c("mpeak","isopeak","iso","charge")
-  
-  ## 2. Group peaks according to their retention time into pseudospectra-groups-----
-  
-  intval <- "maxo"; perfwhm <- annotaParam$perf.whm; sigma <- 6;
-  
-  sample    <- mSet$AnnotateObject$sample;
-  pspectra  <- list();
-  psSamples <- NA;
-  
-  print("Start grouping after retention time.")
-  
-  if(mSet$AnnotateObject$groupInfo[1, "rt"] == -1) {
-    # Like FTICR Data
-    warning("Warning: no retention times avaiable. Do nothing\n");
-    return(invisible(mSet$AnnotateObject));
-  }else{
-    if(is.na(sample[1]) || length(mSet$xcmsSet@filepaths) > 1) {
-      # grouped peaktable within automatic selection or sub selection
-      if(is.na(sample[1])){
-        index <- 1:length(mSet$xcmsSet@filepaths);
-      }else{
-        index <- sample;
-      }
-      
-      gvals    <- groupval(mSet$xcmsSet)[,index,drop=FALSE];
-      peakmat  <- mSet$xcmsSet@peaks;
-      groupmat <- mSet$xcmsSet@groups;
-      
-      #calculate highest peaks
-      maxo      <- as.numeric(apply(gvals, 1, function(x, peakmat){
-        val <- na.omit(peakmat[x, intval]);
-        if(length(val) == 0){
-          return(NA);
-        }else{
-          return(max(val))
-        }
-      }, peakmat));
-      
-      maxo[which(is.na(maxo))] <- -1;
-      maxo      <- cbind(1:length(maxo),maxo);
-      
-      #highest peak index 
-      int.max   <- as.numeric(apply(gvals, 1, function(x, peakmat){which.max(peakmat[x, intval])}, peakmat));
-      
-      peakrange <- matrix(apply(gvals, 1, function(x, peakmat) { 
-        val <- peakmat[x, intval];
-        if(length(na.omit(val)) == 0){
-          return(c(0,1));
-        } else {
-          return(peakmat[x[which.max(val)], c("rtmin", "rtmax")]);
-        }
-      }, peakmat), ncol=2, byrow=TRUE); 
-      
-      colnames(peakrange) <- c("rtmin", "rtmax")
-      
-      while(length(maxo) > 0){
-        iint   <- which.max(maxo[,2]);
-        rtmed  <- groupmat[iint, "rtmed"]; #highest peak in whole spectra
-        rt.min <- peakrange[iint, "rtmin"];
-        rt.max <- peakrange[iint, "rtmax"]; #begin and end of the highest peak
-        hwhm   <- ((rt.max-rt.min) / sigma * 2.35 * perfwhm) / 2; #fwhm of the highest peak
-        #all other peaks whose retensiontimes are in the fwhm of the highest peak
-        irt    <- which(groupmat[, 'rtmed'] > (rtmed-hwhm) & groupmat[, 'rtmed'] < (rtmed + hwhm)) 
-        if(length(irt) > 0){
-          #if peaks are found
-          idx <- maxo[irt,1];
-          pspectra[[length(pspectra)+1]] <- idx; #create groups
-          psSamples[length(pspectra)]  <- index[int.max[maxo[iint,1]]] # saves the sample of the peak which is in charge for this pspectrum
-          maxo <- maxo[-irt, ,drop=FALSE]; #set itensities of peaks to NA, due to not to be found in the next cycle
-          groupmat   <- groupmat[-irt, ,drop=FALSE];
-          peakrange  <- peakrange[-irt, ,drop=FALSE];
-        }else{              
-          idx <- maxo[iint,1];
-          cat("Warning: Feature ",idx," looks odd for at least one peak. Please check afterwards.\n");
-          pspectra[[length(pspectra)+1]] <- idx; #create groups
-          psSamples[length(pspectra)]  <- index[int.max[maxo[iint,1]]] # saves the sample of the peak which is in charge for this pspectrum
-          maxo <- maxo[-iint, ,drop=FALSE]; #set itensities of peaks to NA, due to not to be found in the next cycle
-          groupmat   <- groupmat[-iint, ,drop=FALSE];
-          peakrange  <- peakrange[-iint, ,drop=FALSE];
-        }
-      }
-      
-    }else{
-      #One sample experiment
-      peakmat <- mSet$xcmsSet@peaks;
-      maxo    <- peakmat[, intval]; #max intensities of all peaks
-      maxo    <- cbind(1:length(maxo),maxo);
-      
-      while(length(maxo)> 0){
-        iint   <- which.max(maxo[,2]);
-        rtmed  <- peakmat[iint, "rt"]; #highest peak in whole spectra
-        rt.min <- peakmat[iint, "rtmin"];
-        rt.max <- peakmat[iint, "rtmax"]; #begin and end of the highest peak
-        hwhm   <- ((rt.max - rt.min) / sigma * 2.35 * perfwhm) / 2; #fwhm of the highest peak
-        #all other peaks whose retensiontimes are in the fwhm of the highest peak
-        irt    <- which(peakmat[, 'rt'] > (rtmed - hwhm) & peakmat[, 'rt'] < (rtmed + hwhm)) 
-        if(length(irt)>0){
-          #if peaks are found
-          idx <- maxo[irt,1];
-          pspectra[[length(pspectra)+1]] <- idx; #create groups
-          maxo <- maxo[-irt, ,drop=FALSE]; #set itensities of peaks to NA, due to not to be found in the next cycle
-          peakmat <- peakmat[-irt, ,drop=FALSE];
-        }else{
-          idx <- maxo[iint,1];
-          cat("Warning: Feature ",idx," looks odd for at least one peak. Please check afterwards.\n");
-          pspectra[[length(pspectra)+1]] <- idx; #create groups
-          maxo       <- maxo[-iint, ,drop=FALSE]; #set itensities of peaks to NA, due to not to be found in the next cycle
-          peakmat  <- peakmat[-iint, ,drop=FALSE];
-        }
-      }
-      psSamples <- rep(sample, length(pspectra))
-    }
-    
-    mSet$AnnotateObject$pspectra  <- pspectra;
-    mSet$AnnotateObject$psSamples <- psSamples;
-    message (paste("Created", length(mSet$AnnotateObject$pspectra), "pseudospectra."))
-  }
-  
-  
-  ## 3. Annotate isotope peaks -----
-  
-  maxcharge <- annotaParam$max.charge; maxiso <- annotaParam$max.iso; 
-  mzabs <- annotaParam$mz.abs.add; intval=c("maxo");
-  minfrac=0.5;  isotopeMatrix=NULL;  filter=TRUE; ppm <- 5;
-  
-  if(!is.wholenumber(maxcharge) || maxcharge < 1){
-    stop("Invalid argument 'maxcharge'. Must be integer and > 0.\n")
-  }
-  if(!is.wholenumber(maxiso) || maxiso < 1){
-    stop("Invalid argument 'maxiso'. Must be integer and > 0.\n")
-  }
-  if(!is.numeric(mzabs) || mzabs < 0){
-    stop("Invalid argument 'mzabs'. Must be numeric and not negative.\n")
-  }
-  
-  #intval <- match.arg(intval)
-  
-  if(!is.null(isotopeMatrix)){
-    if(!is.matrix(isotopeMatrix) || ncol(isotopeMatrix) != 4 || nrow(isotopeMatrix) < 1
-       || !is.numeric(isotopeMatrix)){
-      stop("Invalid argument 'isotopeMatrix'. Must be four column numeric matrix.\n")
-    } else {
-      colnames(isotopeMatrix) <- c("mzmin", "mzmax", "intmin", "intmax")
-    }
-  }else if(maxiso > 8){
-    stop("Invalid argument 'maxiso'. Must be lower 9 or provide your own isotopeMatrix.\n")
-  }else{
-    isotopeMatrix <- calcIsotopeMatrix(maxiso=maxiso)
-  }
-  ####End Test arguments
-  
-  npeaks.global <- 0; #Counter for % bar
-  npspectra <- length(mSet$AnnotateObject$pspectra);
-  
-  # scaling
-  devppm <- ppm / 1000000;
-  filter <- filter;
-  #generate parameter list
-  params <- list(maxiso=maxiso, maxcharge=maxcharge, devppm=devppm, 
-                 mzabs=mzabs, IM=isotopeMatrix, minfrac=minfrac, filter=filter)
-  
-  #Check if object have been preprocessed with groupFWHM
-  if(npspectra < 1) {
-    cat("xsAnnotate contains no pseudospectra. Regroup all peaks into one!\n")
-    npspectra <- 1;
-    mSet$AnnotateObject$pspectra[[1]] <- seq(1:nrow(mSet$AnnotateObject$groupInfo));
-    mSet$AnnotateObject$psSamples  <- 1;
-  }
-  
-  #number of peaks in pseudospectra
-  ncl <- sum(sapply(mSet$AnnotateObject$pspectra, length));
-  
-  # get mz,rt and intensity values from peaktable
-  if(nrow(mSet$xcmsSet@groups) > 0){
-    ##multiple sample or grouped single sample
-    if(is.na(mSet$AnnotateObject$sample[1])){
-      index <- 1:length(mSet$xcmsSet@filepaths);
-    }else{
-      index <- mSet$AnnotateObject$sample;
-    }
-    message("Generating peak matrix...");
-    mint     <- groupval(mSet$xcmsSet,value=intval)[,index,drop=FALSE];
-    imz <- mSet$AnnotateObject$groupInfo[, "mz", drop=FALSE];
-    irt <- mSet$AnnotateObject$groupInfo[, "rt", drop=FALSE];
-  }else{
-    ##one sample case
-    message("Generating peak matrix...");
-    imz  <- mSet$AnnotateObject$groupInfo[, "mz", drop=FALSE];
-    irt  <- mSet$AnnotateObject$groupInfo[, "rt", drop=FALSE];
-    mint <- mSet$AnnotateObject$groupInfo[, intval, drop=FALSE];      
-  }
-  
-  isotope   <- vector("list", length(imz));
-  
-  isomatrix <- matrix(ncol=5, nrow=0);
-  colnames(isomatrix) <- c("mpeak", "isopeak", "iso", "charge", "intrinsic")
-  
-  
-  message("Run isotope peak annotation");
-
-  lp <- -1;along = mSet$AnnotateObject$pspectra;
-  pb <- progress_bar$new(format = "Isotope [:bar] :percent Time left: :eta", total = length(along), clear = T, width= 75)
-  
-  #look for isotopes in every pseudospectra
-  for(i in seq(along)){
-    #get peak indizes for i-th pseudospectrum
-    ipeak <- mSet$AnnotateObject$pspectra[[i]];
-    
-    #Ouput counter
-    pb$tick();
-    
-    #Pseudospectrum has more than one peak
-    if(length(ipeak) > 1){
-      #peak mass and intensity for pseudospectrum
-      mz  <- imz[ipeak];
-      int <- mint[ipeak, , drop=FALSE];
-      isomatrix <-  findIsotopesPspec(isomatrix, mz, ipeak, int, params)              
-    }
-  }
-  
-  #clean isotopes
-  if(is.null(nrow(isomatrix))) {
-    isomatrix = matrix(isomatrix, byrow=F, ncol=length(isomatrix)) 
-  }
-  
-  #check if every isotope has only one annotation
-  if(length(idx.duplicated <- which(duplicated(isomatrix[, 2]))) > 0){
-    peak.idx <- unique(isomatrix[idx.duplicated, 2]);
-    for( i in 1:length(peak.idx)){
-      #peak.idx has two or more annotated charge
-      #select the charge with the higher cardinality
-      peak <- peak.idx[i];
-      peak.mono.idx <- which(isomatrix[,2] == peak)
-      if(length(peak.mono.idx) < 2){
-        #peak has already been deleted
-        next;
-      }
-      peak.mono <- isomatrix[peak.mono.idx,1]
-      #which charges we have
-      charges.list   <- isomatrix[peak.mono.idx, 4];
-      tmp <- cbind(peak.mono,charges.list);
-      charges.length <- apply(tmp,1, function(x,isomatrix) { 
-        length(which(isomatrix[, 1] == x[1] & isomatrix[,4] == x[2])) }, 
-        isomatrix);
-      idx <- which(charges.length == max(charges.length));
-      if(length(idx) == 1){
-        #max is unique
-        isomatrix <- isomatrix[-which(isomatrix[, 1] %in% peak.mono[-idx] & isomatrix[, 4] %in% charges.list[-idx]),, drop=FALSE]
-      }else{
-        #select this one, which lower charge
-        idx <- which.min(charges.list[idx]);
-        isomatrix <- isomatrix[-which(isomatrix[, 1] %in% peak.mono[-idx] & isomatrix[, 4] %in% charges.list[-idx]),, drop=FALSE]
-      }
-    }
-  }
-  
-  
-  #check if every isotope in one isotope grp, have the same charge
-  if(length(idx.duplicated <- which(duplicated(paste(isomatrix[, 1], isomatrix[, 3])))) > 0){
-    #at least one pair of peakindex and number of isotopic peak is identical
-    peak.idx <- unique(isomatrix[idx.duplicated,1]);
-    for( i in 1:length(peak.idx)){
-      #peak.idx has two or more annotated charge
-      #select the charge with the higher cardinality
-      peak <- peak.idx[i];
-      #which charges we have
-      charges.list   <- unique(isomatrix[which(isomatrix[, 1] == peak), 4]);
-      #how many isotopes have been found, which this charges
-      charges.length <- sapply(charges.list, function(x,isomatrix,peak) { length(which(isomatrix[, 1] == peak & isomatrix[, 4] == x)) },isomatrix,peak);
-      #select the charge which the highest cardinality
-      idx <- which(charges.length == max(charges.length));
-      if(length(idx) == 1){
-        #max is unique
-        isomatrix <- isomatrix[-which(isomatrix[, 1] == peak & isomatrix[, 4] %in% charges.list[-idx]),, drop=FALSE]
-      }else{
-        #select this one, which lower charge
-        idx <- which.min(charges.list[idx]);
-        isomatrix <- isomatrix[-which(isomatrix[, 1] == peak & isomatrix[, 4] %in% charges.list[-idx]),, drop=FALSE]
-      }
-    }
-  }
-  
-  #Combine isotope cluster, if they overlap
-  index2remove <- c();
-  
-  if(length(idx.duplicated <- which(isomatrix[, 1] %in% isomatrix[, 2]))>0){
-    for(i in 1:length(idx.duplicated)){
-      index <-  which(isomatrix[, 2] == isomatrix[idx.duplicated[i], 1])
-      index2 <- sapply(index, function(x, isomatrix) which(isomatrix[, 1] == isomatrix[x, 1] & isomatrix[,3] == 1),isomatrix)
-      if(length(index2) == 0){
-        index2remove <- c(index2remove,idx.duplicated[i])
-      }
-      max.index <- which.max(isomatrix[index,4]);
-      isomatrix[idx.duplicated[i], 1] <- isomatrix[index[max.index], 1];
-      isomatrix[idx.duplicated[i], 3] <- isomatrix[index[max.index], 3]+1;
-    }
-  }
-  
-  if(length(index <- which(isomatrix[,"iso"] > maxiso)) > 0){
-    index2remove <- c(index2remove, index)
-  }
-  
-  if(length(index2remove) > 0){
-    isomatrix <- isomatrix[-index2remove,, drop=FALSE];
-  }
-  
-  isomatrix <- isomatrix[order(isomatrix[,1]),,drop=FALSE]
-  #Create isotope matrix within object
-  mSet$AnnotateObject$isoID <- matrix(nrow=0, ncol=4);
-  colnames(mSet$AnnotateObject$isoID)  <-  c("mpeak", "isopeak", "iso", "charge");
-  
-  #Add isomatrix to object
-  mSet$AnnotateObject$isoID <- rbind(mSet$AnnotateObject$isoID, isomatrix[, 1:4]);
-  
-  # counter for isotope groups
-  globalcnt <- 0;
-  oldnum    <- 0;
-  
-  if(nrow(isomatrix) > 0){
-    for( i in 1:nrow(isomatrix)){
-      if(!isomatrix[i, 1] == oldnum){
-        globalcnt <- globalcnt+1; 
-        isotope[[isomatrix[i, 1]]] <- list(y=globalcnt, iso=0, charge=isomatrix[i, 4], val=isomatrix[i, 5]);
-        oldnum <- isomatrix[i, 1];
-      };
-      isotope[[isomatrix[i,2]]] <- list(y=globalcnt,iso=isomatrix[i,3],charge=isomatrix[i,4],val=isomatrix[i,5]);
-    }
-  }
-  cnt<-nrow(mSet$AnnotateObject$isoID);
-  cat("\nFound isotopes:",cnt,"\n");
-  mSet$AnnotateObject$isotopes <- isotope;
-  
-  
-  ## 4. Peak grouping with information -----
-  
-  cor_eic_th <- annotaParam$corr.eic.th;
-  cor_exp_th <- 0.75;  pval=0.05;  graphMethod="hcs"
-  calcIso = FALSE; calcCaS = FALSE; psg_list=NULL; xraw=NULL; intval="into"
-  
-  
-  if (!is.numeric(cor_eic_th) || cor_eic_th < 0 || cor_eic_th > 1){
-    stop ("Parameter cor_eic_th must be numeric and between 0 and 1.\n");
-  }
-  
-  npspectra <- length(mSet$AnnotateObject$pspectra);
-  
-  print("Start grouping after correlation.")
-  #Data is not preprocessed with groupFWHM 
-  if(npspectra < 1){
-    cat("Data was not preprocessed with groupFWHM, creating one pseudospectrum with all peaks.\n")
-    #Group all peaks into one group
-    npspectra <- 1;
-    mSet$AnnotateObject$pspectra[[1]] <- seq(1:nrow(mSet$AnnotateObject$groupInfo));
-    if(is.na(mSet$AnnotateObject$sample[1])){
-      mSet$AnnotateObject$psSamples <- rep(1,nrow(mSet$AnnotateObject$groupInfo)); ##TODO: Change if sample=NA or sample=number
-    }else{
-      mSet$AnnotateObject$psSamples <- rep(mSet$AnnotateObject$sample,nrow(mSet$AnnotateObject$groupInfo));
-    }
-  }
-  
-  #save number of pspectra before groupCorr
-  cnt <- length(mSet$AnnotateObject$pspectra);
-  res <- list();
-  
-  # Check LC information and calcCorr was selected
-  
-  #Autoselect sample path for EIC correlation    
-  index <- rep(0, nrow(mSet$AnnotateObject$groupInfo));
-  
-  for(i in 1:npspectra){
-    index[mSet$AnnotateObject$pspectra[[i]]] <- mSet$AnnotateObject$psSamples[[i]];
-  }
-  
-  #Generate EIC data
-  
-  tmp <- getAllPeakEICs(mSet, index=index);
-  
-  EIC <- tmp$EIC
-  
-  scantimes <- tmp$scantimes
-  rm(tmp);gc()
-  
-  res[[1]] <- calcCiS(mSet, EIC=EIC,
-                      corval=cor_eic_th,
-                      pval=pval, 
-                      psg_list=psg_list);
-  
-  #Check if we have at least 2 result matrixes
-  if(length(res) > 2){
-    #combine the first two to create the result Table
-    resMat <- combineCalc(res[[1]], res[[2]], method="sum");
-    for( i in 3:length(res)){
-      resMat <- combineCalc(resMat, res[[i]], method="sum");
-    }         
-  }else if(length(res) == 2){
-    #combine one time
-    resMat <- combineCalc(res[[1]], res[[2]], method="sum")
+PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 8;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    #Only one matrix
-    resMat <- res[[1]];
+    widthm <- "7in"
   }
-  
-  #Perform graph seperation to seperate co-eluting pseudospectra
-  mSet <- calcPC.hcs(mSet, ajc=resMat, psg_list=psg_list);                                   
-  
-  #Create pc groups based on correlation results
-  message (paste("mSet has now", length(mSet$AnnotateObject$pspectra), "groups, instead of", cnt, "!")); 
-  
-  ## 5. Annotate adducts (and fragments) -----
-  mSet$AnnotateObject$ruleset <- NULL
-  mSet <- findAdducts (mSet, polarity = annotaParam$polarity, mzabs = annotaParam$mz.abs.add,
-                       maxcharge = annotaParam$max.charge)
-  
-  ## 6. Data Organization -----
-  camera_output <- getPeaklist(mSet)
-  
-  sample_names <- mSet$xcmsSet@phenoData[[1]]
-  sample_names_ed <- gsub(".mzML|.CDF|.mzXML", "", sample_names) 
-  
-  # Account for multiple groups
-  length <- ncol(camera_output)
-  end <- length-3
-  camnames <- colnames(camera_output)
-  groupNum <- nlevels(mSet[["xcmsSet"]]@phenoData[["sample_group"]])
-  start <- groupNum+8
-  camnames[start:end] <- sample_names_ed
-  colnames(camera_output) <- camnames
-  
-  endGroup <- 7+groupNum
-  camera_output <- camera_output[,-c(7:endGroup)]
-  
-  saveRDS(camera_output, "annotated_peaklist.rds")
-  write.csv(camera_output, "annotated_peaklist.csv")
-  
-  message("Successfully performed peak annotation!")
-  
-  ## 0. Final Output -----
-  
-  return(mSet)
-  
+  imgName <- paste0("Insensity_Statics_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::PlotSpectraInsensityStistics (mSet = NULL, 
+                                          imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
 }
 
-#' Format Peak List
-#' @description This function formats the CAMERA output to a usable format for MetaboAanlyst.
-#' @param annotPeaks The object created using the PerformPeakAnnotation.
-#' @param annParams The object created using the SetAnnotationParam function, 
-#' containing user's specified or default parameters for downstream 
-#' raw MS data pre-processing.
-#' @param filtIso Logical, filter out all isotopes except for [M]+ for 
-#' positive ion mode and [M]- for negative ion mode. By default it is 
-#' set to true.
-#' @param filtAdducts Logical, filter out all adducts except [M+H]+ for  
-#' positive ion more and [M-H]- for negative ion mode. By default it is set to false.
-#' @param missPercent Numeric, specify the threshold to remove features
-#' missing in X\% of samples. For instance, 0.5 specifies to remove features
-#' that are missing from 50\% of all samples per group. Method is only valid
-#' when there are two groups.
-#' @param includeRT Logical, set to TRUE to include retention time information in
-#' the feature names. Feature names must be formatted
-#' so that the mz and retention time for a single peak is separated by two
-#' underscores. For instance, m/z of 410.2148 and retention time of 42.46914 seconds
-#' must be formatted as 410.2148__42.46914.
-#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
-#' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
-#' McGill University, Canada
-#' License: GNU GPL (>= 2)
-#' @export
-
-FormatPeakList <- function(annotPeaks, annParams, filtIso = TRUE, filtAdducts = FALSE, 
-                           missPercent = 0.5, includeRT = TRUE){
-
-  camera_output <- readRDS("annotated_peaklist.rds")
-  
-  length <- ncol(camera_output)
-  end <- length-3
-  
-  # Format peaklist for MetaboAnalyst
-  camera_ma <- camera_output[, -length]
-  
-  if(filtAdducts==TRUE){
-    if(annParams$polarity=="positive"){
-      
-      if(filtIso==TRUE){
-        camera_isotopes <- camera_ma[grepl("\\[M\\]\\+", camera_ma$isotopes),]
-      }else{
-        camera_isotopes <- camera_ma[(camera_ma$isotopes != ""),]
-      }
-      camera_adducts <- camera_ma[grepl("\\[M\\+H\\]\\+", camera_ma$adduct),]
-      camera_feats <- camera_ma[(camera_ma$isotopes == "" & camera_ma$adduct == ""),]
-      unique_feats <- unique(rbind(camera_isotopes, camera_adducts, camera_feats))
-      
-    }else{ # negative polarity
-      if(filtIso==TRUE){
-        camera_isotopes <- camera_ma[grepl("\\[M\\]-", camera_ma$isotopes),]
-      }else{
-        camera_isotopes <- camera_ma[(camera_ma$isotopes != ""),]
-      }
-      camera_adducts <- camera_ma[grepl("\\[M-H\\]-", camera_ma$adduct),]
-      camera_feats <- camera_ma[(camera_ma$isotopes == "" & camera_ma$adduct == ""),]
-      unique_feats <- unique(rbind(camera_isotopes, camera_adducts, camera_feats))
-    }
-  }else{
-    if(annParams$polarity=="positive"){
-      
-      if(filtIso==TRUE){
-        camera_isotopes <- camera_ma[grepl("\\[M\\]\\+", camera_ma$isotopes),]
-      }else{
-        camera_isotopes <- camera_ma[(camera_ma$isotopes != ""),]
-      }
-      camera_adducts <- camera_ma[(camera_ma$adduct != ""),]
-      camera_feats <- camera_ma[(camera_ma$isotopes == ""),]
-      unique_feats <- unique(rbind(camera_isotopes, camera_adducts, camera_feats))
-      
-    }else{ # negative polarity
-      
-      if(filtIso==TRUE){
-        camera_isotopes <- camera_ma[grepl("\\[M\\]-", camera_ma$isotopes),]
-      }else{
-        camera_isotopes <- camera_ma[(camera_ma$isotopes != ""),]
-      }
-      camera_adducts <- camera_ma[(camera_ma$adduct != ""),]
-      camera_feats <- camera_ma[(camera_ma$isotopes == ""),]
-      unique_feats <- unique(rbind(camera_isotopes, camera_adducts, camera_feats))
-    }
-  }
-  
-  # adjust decimal places, feats_info contains all samples
-  feats_info <- unique_feats[,7:end]  
-  feats_digits <- round(feats_info, 5) 
-  
-  group_info <- annotPeaks$xcmsSet@phenoData[[2]]
-  combo_info <- rbind(as.character(group_info), feats_digits)
-  
-  mzs_rd <- round(unique_feats[,1], 5)
-
-  if(includeRT){
-    r_rd <- round(unique_feats[,4], 5)
-    mz_rt <- paste(mzs_rd, r_rd, sep="__")
-    mzs <- data.frame(c("Label", mz_rt), stringsAsFactors = FALSE)
-  }else{
-    mzs <- data.frame(c("Label", mzs_rd), stringsAsFactors = FALSE)
-    # ensure features are unique
-    mzs_unq <- mzs[duplicated(mzs),]
-    while(length(mzs_unq)>0){
-      mzs[duplicated(mzs),] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)));
-      mzs_unq <- mzs[duplicated(mzs),]
-    }
-  }
-  
-  colnames(mzs) <- "Sample" 
-  ma_feats <- cbind(mzs, combo_info)
-  
-  # remove features missing in over X% of samples per group
-  # only valid for 2 group comparisons!!
-  ma_feats_miss <- ma_feats[which(rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[1])))])) 
-                                  | rowMeans(is.na(ma_feats[,(ma_feats[1,]==as.character(unique(group_info[2])))])) < missPercent), ]
-  
-  write.csv(ma_feats_miss, "metaboanalyst_input.csv", row.names = FALSE)
-  
-  # provide index for CAMERA output
-  Pklist_inx <- row.names(ma_feats_miss)
-  ma_feats_miss_inx <- cbind(ma_feats_miss, Pklist_inx) 
-  
-  write.csv(ma_feats_miss_inx, "filtered_peaklist.csv", row.names = FALSE)
-  
-  return(ma_feats_miss)
-}
-
-#' Centroid MS data
-#' @description This function is used to centorid different MS data (specially designed for .CDF/.cdf, other formats are also supported). 
-#' ProteoWizard (PMID: 27186799) based on docker is optional but strongly suggested to be installed. Current user of the docker also 
-#' need to be added into thte sudo list to make it configured well to this function.
-#' @param in_path Character, the path of your MS data folder, only 
-#' one format should be included in the folder. If you have different kinds of formats, 
-#' please separate them into different folder and do this centroid multiple times.
-#' @param ncore Numeric, how many cores you want to use for data centroid, default is 1.
-#' @param rm logic, to remove the original data (TRUE) or not (FALSE, default).
-#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca},
-#' @export
-CentroidMSData <- function(in_path, ncore=1, rm=F) {
-  
-  files.list <- list.files(in_path,full.names = T,recursive = T);
-  
-  if (MSnbase:::isCdfFile(files.list)) {
-    
-    if (ncore ==1){
-      
-      files.list2 <- NULL;
-      for(i in files.list){
-        
-        profile_data <- read.InMemMSd.data(i, NULL, 1, F, NA, 1);
-        fileNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(i));
-        filepath <-  strsplit(i, basename(i))[[1]][1];
-        files.mzml <- paste0(in_path, fileNM, ".mzML");
-        writeMSData(profile_data, file = files.mzml);
-        files.list2 <- c(files.list2,files.mzml);
-        
-      }
-      
-    } else {
-      files.list2 <- NULL; require(BiocParallel);require(progress)
-      files.list2 <- BiocParallel::bplapply(files.list,FUN = function(i, in_path){
-        
-        profile_data <- read.InMemMSd.data(i, NULL, 1, NA, NA, 1);
-        fileNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(i));
-        filepath <-  strsplit(i, basename(i))[[1]][1];
-        files.mzml <- paste0(in_path, fileNM, ".mzML");
-        writeMSData(profile_data, file = files.mzml);
-        return(files.mzml);
-        
-      },BPPARAM = MulticoreParam(workers = ncore), in_path = in_path)
-      
-    }
-    files.list2 <- unlist(files.list2);
-    
-    ## MS convert with ProteoWizard !
-    MSConvert_CMD <- paste0("docker run --rm -e WINEDEBUG=-all -v ",
-                            in_path,
-                            ":/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert ",
-                            "*.mzML",
-                            " --mzXML --filter 'peakPicking true 1-' --filter 'zeroSamples removeExtra' --filter 'msLevel 1' --64 --zlib")
-    
-    a1<-tryCatch(system(MSConvert_CMD), error = function(e){e})
-    
-    ## Remove the old or cache files
-    if(a1==0 & rm){
-      
-      rm_CMD <- paste0("rm -rf ", c(files.list, files.list2))
-      sapply(rm_CMD, FUN=function(x){system(x)});
-      
-      ## mv the converted files to their corresponding folder
-      files.list.converted <- list.files(in_path,full.names = T,recursive = T);
-      for (j in 1:length(files.list.converted)){
-        
-        if(sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(files.list[j])) == 
-           sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(files.list.converted[j]))){
-          
-          if(basename(strsplit(files.list[j], basename(files.list[j]))[[1]][1]) != 
-             basename(strsplit(files.list.converted[j], basename(files.list.converted[j]))[[1]][1])){
-            
-            file_des_folder <- basename(strsplit(files.list[j], basename(files.list[j]))[[1]][1]);
-            mv_cmd <- paste0("mv ", files.list.converted[j]," ",in_path, "/", file_des_folder);
-            system(mv_cmd);
-          }
-          
-        }
-        
-      }
-      
-      
-    } else if (a1!=0){
-      
-      print("There is some issues for MetaboAnalystR to start \"ProteoWizard\", please check following points:")
-      print("1.Installation of Docker and Proteowizard, if not please refer to: http://proteowizard.sourceforge.net/download.html;");
-      print("2.Set docker to the sudoer group list, please refer to: https://docs.docker.com/engine/install/linux-postinstall/;");
-      print("3.The file format has to be one of the .raw, .RAW, .wiff, .mzXML. .mzML, .d, .D, .mzData or .CDF, zipped files are not supported");
-      print("4.If issues still please use ProteoWizard directly with the files generated by this function;");
-      
-    }
-    
-    
+plotTICs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
   } else {
-    
-    if (length(unique(sapply(files.list, FUN=function(x){tail(strsplit(basename(x), split="\\.")[[1]],1)}))) !=1){
-      stop("Cannot handle multiple formats at the same time !")
-    } else {
-      format <- unique(sapply(files.list, FUN=function(x){tail(strsplit(basename(x), split="\\.")[[1]],1)}));
-    }
-    
-    if (!dir.exists(in_path)){stop("Please Provide the right MS folder path !")}
-    ## MS convert with ProteoWizard !
-    if(format == "mzxml" | format =="mzXML"){
-      
-      MSConvert_CMD <- paste0("docker run --rm -e WINEDEBUG=-all -v ",
-                              in_path,
-                              ":/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert ",
-                              "*.",format,
-                              " --mzML --filter 'peakPicking true 1-' --filter 'zeroSamples removeExtra' --filter 'msLevel 1' --64 --zlib")
-      
-    } else {
-      
-      MSConvert_CMD <- paste0("docker run --rm -e WINEDEBUG=-all -v ",
-                              in_path,
-                              ":/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert ",
-                              "*.",format,
-                              " --mzXML --filter 'peakPicking true 1-' --filter 'zeroSamples removeExtra' --filter 'msLevel 1' --64 --zlib")
-      
-    }
-    
-    a1<-tryCatch(system(MSConvert_CMD), error = function(e){e})
-    
-    ## Remove the old or cache files
-    if(a1==0 & rm){
-      
-      rm_CMD <- paste0("rm -rf ", files.list)
-      sapply(rm_CMD, FUN=function(x){system(x)});
-      
-    } else if(a1!=0){
-      
-      print("There is some issues for MetaboAnalystR to start \"ProteoWizard\", please check following points:")
-      print("1.Installation of Docker and Proteowizard, if not please refer to: http://proteowizard.sourceforge.net/download.html;");
-      print("2.Set docker to the sudoer group list, please refer to: https://docs.docker.com/engine/install/linux-postinstall/;");
-      print("3.The file format has to be one of the .raw, .RAW, .wiff, .mzXML. .mzML, .d, .D, .mzData or .CDF, zipped files are not supported");
-      print("4.If issues still please use ProteoWizard directly with the files generated by this function;");
-      
-    }
-    
-    
+    widthm <- "7in"
   }
-  
+  imgName <- paste0("TICs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::plotTICs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
 }
 
-
-
-## Functions for other plotting
-PlotSpectraInsensityStistics <- function(mSet, imgName, format="png", dpi=72, width=NA){
-  
-  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
-  sample_num <- mSet[["onDiskData"]]@phenoData@data[["sample_name"]];
-  
-  Cairo::Cairo(file = imgName, 
-               unit="in", 
-               dpi=dpi,
-               width=width,
-               height= length(sample_num)*0.65,
-               type=format,
-               bg="white")
-  
-  if(length(unique(sample_idx)) > 9){
-    
-    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-    group_colors <- col.fun(length(unique(sample_idx)))
-    
-  }else{
-    
-    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
+plotBPIs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+  if (is.na(width)) {
+    widthm <- "default"
+    width <- 9;
+  } else if (width < 5) {
+    widthm <- "half"
+  } else if (width > 11) {
+    widthm <- "12in"
+  } else {
+    widthm <- "7in"
   }
-  
-  ints <- split(log2(mSet[["msFeatureData"]][["chromPeaks"]][, "into"]),
-                f = mSet[["msFeatureData"]][["chromPeaks"]][, "sample"])
-  
-  names(ints) <- as.character(sample_num);
-  group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
-    rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
-  })
-  
-  op<-par(mar=c(3.5,10,4,1.5), xaxt="s");
-  boxplot(ints, 
-          varwidth = TRUE, 
-          col = as.character(unlist(group_colors)),
-          ylab = "", 
-          horizontal = TRUE,
-          las = 2,
-          main = expression(log[2]~intensity),
-          cex.lab = 0.8,
-          cex.main = 1.25)
-  
-  #title(ylab=expression(log[2]~intensity), line=7.5, cex.lab=1.2)
-  grid(nx = NA, ny = NULL)
-  
-  dev.off()
-  
+  imgName <- paste0("BPIs_", dpi, "_", widthm, "_",  imageNumber, ".", format);
+  OptiLCMS::plotBPIs (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width);
+
+  return(imgName);  
 }
-
-PlotSpectraPCA <- function(mSet, imgName, format="png", dpi=72, width=NA){
-  
-  Cairo::Cairo(file = imgName,
-               unit="in", 
-               dpi=dpi, 
-               width=width,
-               height=width*0.80,
-               type=format,
-               bg="white")
-  
-  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
-  
-  feature_value <-  .feature_values(pks = mSet[["msFeatureData"]][["chromPeaks"]], 
-                                    fts = mSet[["FeatureGroupTable"]],
-                                    method = "medret", value = "into",
-                                    intensity = "into", 
-                                    colnames = mSet[["onDiskData"]]@phenoData@data[["sample_name"]],
-                                    missing = NA);
-  
-  pca_feats <- log2(feature_value);
-  
-  
-  df0 <- na.omit(pca_feats);
-  df1 <- df0[is.finite(rowSums(df0)),]
-  df <- t(df1);
-  
-  
-  mSet_pca <- prcomp(df, center = TRUE, scale=T)
-  sum.pca <- summary(mSet_pca)
-  var.pca <- sum.pca$importance[2,] # variance explained by each PCA
-  
-  xlabel <- paste("PC1", "(", round(100*var.pca[1],1), "%)");
-  ylabel <- paste("PC2", "(", round(100*var.pca[2],1), "%)");
-  
-  # using ggplot2
-  df <- as.data.frame(mSet_pca$x)
-  df$group <- sample_idx
-  
-  if(.on.public.web){
-    require("ggrepel");
-    
-    if(nrow(df) < 30){
-      
-      if(length(unique(sample_idx))>9){
-        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
-          geom_text_repel(force=1.5) + geom_point(size = 5) + fill=col.fun(length(unique(sample_idx))) + theme(axis.text=element_text(size=12))
-        
-      }else{
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group, label=row.names(df))) + 
-          geom_text_repel(force=1.5) + geom_point(size = 5) + scale_color_brewer(palette="Set1") + theme(axis.text=element_text(size=12))
-      }
-      
-    } else {
-      
-      if(length(unique(sample_idx))>9){
-        col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 5) + fill=col.fun(length(unique(sample_idx)))
-        
-      }else{
-        
-        p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + geom_point(size = 5) + scale_color_brewer(palette="Set1")
-        
-      }
-      
-    }
-    
-  }else{
-    
-    if(length(unique(sample_idx))>9){
-      col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-      
-      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
-        geom_point(size = 3) + scale_color_brewer(palette="Set1") + fill=col.fun(length(unique(sample_idx)))
-      
-    }else{
-      p <- ggplot2::ggplot(df, aes(x = PC1, y = PC2, color=group)) + 
-        geom_point(size = 3) + scale_color_brewer(palette="Set1")
-    }
-    
-  }
-  
-  p <- p + xlab(xlabel) + ylab(ylabel) + theme_bw() + theme(axis.title=element_text(size=12))
-  print(p)
-  
-  dev.off()    
-  
-}
-
-PlotSpectraRTadj <- function(mSet, imgName, format="png", dpi=72, width=NA){
-  
-  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
-  
-  Cairo::Cairo(file = imgName, 
-               unit="in", 
-               dpi=dpi,
-               width=width,
-               height=width*0.618,
-               type=format,
-               bg="white")
-  
-  if(length(unique(sample_idx)) > 9){
-    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-    group_colors <- col.fun(length(unique(sample_idx)))
-  }else{
-    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
-  }
-  
-  
-  names(group_colors) <- unique(sample_idx)
-  
-  ## Extract RT information
-  
-  rt.set <- list(mSet[["xcmsSet"]]@rt$raw, unlist(mSet[["xcmsSet"]]@rt$corrected));
-  diffRt <- rt.set[[2]] - rt.set[[1]];
-  diffRt <- split(diffRt, fromFile(mSet$onDiskData));
-  
-  xRt <- mSet[["msFeatureData"]][["adjustedRT"]];
-  col = group_colors[sample_idx]; 
-  lty = 1; 
-  lwd = 1;
-  col <- rep(col, length(diffRt));
-  lty <- rep(lty, length(diffRt));
-  lwd <- rep(lwd, length(diffRt));
-  
-  ylim <- range(diffRt, na.rm = TRUE);
-  plot(3, 3, pch = NA, xlim = range(xRt, na.rm = TRUE),
-       ylim = ylim, xlab = "RT_adj", ylab = "RT_diff");
-  
-  for (i in 1:length(diffRt)){
-    points(x = xRt[[i]], y = diffRt[[i]], col = col[i], lty = lty[i],
-           type = "l", lwd = lwd[i])
-  }
-  
-  rawRt <- split(mSet[["xcmsSet"]]@rt$raw, fromFile(mSet$onDiskData));
-  adjRt <- xRt;
-  
-  ####
-  peaks_0 <- mSet[["msFeatureData"]][["chromPeaks"]]
-  subs <- seq_along(mSet[["onDiskData"]]@phenoData@data[["sample_name"]])
-  ####
-  pkGroup <- mSet[["msFeatureData"]][["pkGrpMat_Raw"]];
-  ####
-  
-  rawRt <- rawRt[subs]
-  adjRt <- adjRt[subs]
-  ## Have to "adjust" these:
-  pkGroupAdj <- pkGroup
-  
-  for (i in 1:ncol(pkGroup)) {
-    pkGroupAdj[, i] <- MetaboAnalystR:::.applyRtAdjustment(pkGroup[, i], rawRt[[i]], adjRt[[i]])
-  }
-  
-  diffRt <- pkGroupAdj - pkGroup
-  
-  xRt <- pkGroupAdj
-  
-  ## Loop through the rows and plot points - ordered by diffRt!
-  for (i in 1:nrow(xRt)) {
-    idx <- order(diffRt[i, ])
-    points(x = xRt[i, ][idx], diffRt[i, ][idx],
-           col = "#00000080", type = "b",
-           pch = 16, lty = 3)
-  }
-  legend("topright", legend=unique(sample_idx), pch=15, col=group_colors);
-  
-  dev.off()
-  
-}
-
-PlotSpectraBPIadj <- function(mSet, imgName, format="png", dpi=72, width=NA){
-  
-  Cairo::Cairo(file = imgName, 
-               unit="in", 
-               dpi=dpi,
-               width=width,
-               height=width*0.618,
-               type=format,
-               bg="white")
-  
-  sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
-  
-  if(length(unique(sample_idx)) > 9){
-    
-    col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-    group_colors <- col.fun(length(unique(sample_idx)))
-    
-  }else{
-    
-    group_colors <- paste0(RColorBrewer::brewer.pal(9, "Set1")[1:length(unique(sample_idx))], "60")
-  }
-  group_colors2 <- group_colors;
-  names(group_colors2) <- unique(sample_idx);
-  
-  group_colors <- sapply(seq(length(levels(sample_idx))), FUN=function(x){
-    rep(group_colors[x],length(sample_idx[sample_idx==levels(sample_idx)[x]]))
-  })
-  
-  object_od <- mSet$onDiskData
-  adj_rt <- unlist(mSet$msFeatureData$adjustedRT)
-  
-  object_od <- selectFeatureData(
-    object_od, fcol = c("fileIdx", "spIdx", "seqNum",
-                        "acquisitionNum", "msLevel",
-                        "polarity", "retentionTime",
-                        "precursorScanNum"))
-  object_od@featureData$retentionTime <- adj_rt
-  
-  res <- MSnbase::chromatogram(object_od, 
-                               aggregationFun = "sum",
-                               missing = NA_real_, msLevel = 1,
-                               BPPARAM = bpparam())
-  
-  plot(res,col=as.character(unlist(group_colors)))
-  
-  legend("topright", legend=unique(sample_idx), pch=15, col=group_colors2)
-  
-  dev.off()    
-}
-
-
-
-
-

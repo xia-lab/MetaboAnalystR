@@ -2,8 +2,7 @@
 % Please edit documentation in R/meta_pathway.R
 \name{PlotPathwayMetaAnalysis}
 \alias{PlotPathwayMetaAnalysis}
-\title{Function to create summary plot of MS Peaks to Paths
-meta-analysis at the pathway level.}
+\title{PlotPathwayMetaAnalysis}
 \usage{
 PlotPathwayMetaAnalysis(
   mSetObj = NA,
@@ -91,7 +90,7 @@ plot.}
 \item{netPlotSize}{Numeric, input the preferred dimensions (in inches) of the network
 to be saved.}
 
-\item{bubble_colorType}{Character, "brewer" for R Color Brewer scales or
+\item{bubble_colorType}{Character, "brewer" for R Color Brewer scales or 
 "viridis" for viridis color scales. Used for creating the bubble plot
 color scheme.}
 
@@ -99,7 +98,8 @@ color scheme.}
 for pleasing looking plots.}
 }
 \description{
-This function creates a summary plot of the
+Function to create summary plot of MS Peaks to Paths
+meta-analysis at the pathway level. This function creates a summary plot of the
 MS Peaks to Paths meta-analysis at the pathway level. The plot
 can either be a heatmap or a network, both of which can
 be made interactive. 
@@ -107,4 +107,9 @@ NETWORK: The size of the nodes in the network correspond to the number of
 studies in which that pathway was significant. The color of the nodes correspond
 to the meta-p-value for each pathway, with (default coloring) red being the most 
 significant and yellow the least.
+}
+\author{
+Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
+McGill University, Canada
+License: GNU GPL (>= 2)
 }

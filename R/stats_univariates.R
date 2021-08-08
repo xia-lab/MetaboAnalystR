@@ -248,6 +248,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
   }else{
     res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
   }
+  
   t.stat <- res[,1];
   p.value <- res[,2];
   names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
@@ -277,7 +278,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.
     inx.imp <- p.value <= threshp;
   }
   
-  sig.num <- sum(inx.imp);
+  sig.num <- sum(inx.imp, na.rm = TRUE);
   AddMsg(paste("A total of", sig.num, "significant features were found."));
   
   if(sig.num > 0){
@@ -1076,7 +1077,7 @@ GetTtUpMat <- function(mSetObj=NA){
 
 GetTtUpIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  red.inx<-which(mSetObj$analSet$tt$inx.imp);;
+  red.inx<-which(mSetObj$analSet$tt$inx.imp);
   if(sum(red.inx) > 0){
     return(names(mSetObj$analSet$tt$p.log)[red.inx]);
   }else{
@@ -1127,7 +1128,7 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   
-  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj);  
   inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
   inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
   if(length(inx1) ==1 || length(inx2) == 1){

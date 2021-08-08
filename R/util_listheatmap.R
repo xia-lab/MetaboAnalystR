@@ -21,17 +21,18 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   # 2) match number to string (factor level)
   
   grps <- "datalist1"
-  cls <- "datalist1"
+  cls <- "datalist1";
   
-  mSetObj$dataSet$mumRT <- is.rt
-  mSetObj$dataSet$mumRT.type <- mumRT.type
+  is.rt <- mSetObj$paramSet$mumRT;
+  #mSetObj$dataSet$mumRT <- is.rt
+  #mSetObj$dataSet$mumRT.type <- mumRT.type
   
-  if(mSetObj$dataSet$mumRT){
+  if(mSetObj$paramSet$mumRT){
     feat_info <- rownames(data)
     feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
     
-    if(mSetObj$dataSet$mumRT.type == "minutes"){
+    if(mSetObj$paramSet$mumRT.type == "minutes"){
       rtime <- as.numeric(feat_info_split[,2])
       rtime <- rtime * 60
       feat_info_split[,2] <- rtime
@@ -79,8 +80,7 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   orig.smpl.nms <- colnames(dat);
   orig.gene.nms <- rownames(dat);
   
-  
-  mum.version <<- version
+  mSetObj$paramSet$version <- version
   # convert back to numeric 
   
   # for each gene/row, first normalize and then tranform real values to 30 breaks

@@ -48,7 +48,6 @@ load_rgraphwiz <- function(){
   suppressMessages(library(Rgraphviz))
 }
 
-
 # Load data.table
 load_data.table <- function(){
   suppressMessages(library(data.table))
@@ -63,11 +62,6 @@ load_ggplot <- function(){
 load_grid <- function(){
   suppressMessages(library(gridExtra))
   suppressMessages(library(grid))
-}
-
-# Load camera
-load_camera <- function(){
-  suppressMessages(library(CAMERA))
 }
 
 # Load stringr
@@ -103,3 +97,30 @@ load_Rserve <- function(){
     print("Please install Rserve R package!")
   }
 }
+
+# Load MSnbase
+load_msnbase <- function(){
+  suppressMessages(library(MSnbase))
+}
+
+# Load progress
+load_progress <- function(){
+  suppressMessages(library(progress))
+}
+
+# Load graph
+load_graph <- function(){
+  suppressMessages(library(graph))
+}
+
+# Load RBGL
+load_RBGL <- function(){
+  suppressMessages(library(RBGL))
+}
+
+# Load BiocParallel
+load_biocparallel <- function(){
+  suppressMessages(library(BiocParallel))
+}
+
+

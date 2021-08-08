@@ -4,7 +4,7 @@
 \alias{Read.BatchDataTB}
 \title{Data I/O for batch effect checking}
 \usage{
-Read.BatchDataTB(mSetObj = NA, filePath, format)
+Read.BatchDataTB(mSetObj = NA, filePath, format, missingEstimate)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
@@ -12,6 +12,8 @@ Read.BatchDataTB(mSetObj = NA, filePath, format)
 \item{filePath}{Input the path to the batch files}
 
 \item{format}{Input the format of the batch files}
+
+\item{missingEstimate}{Approach to estimate the missing values}
 }
 \description{
 Read peak data tale.

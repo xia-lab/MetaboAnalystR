@@ -9,7 +9,8 @@
 PCA.Anal <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  # RhpcBLASctl::blas_set_num_threads(2);
+  # RhpcBLASctl::omp_set_num_threads(2);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
   
   # obtain variance explained
@@ -570,12 +571,13 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
 PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
-  
   comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
 
   if(comp.num > 8) {
     #need to deal with small number of predictors
     comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
+  } else if(comp.num < 8) {
+    AddMsg(paste("Too few features in your data to do PLS-DA analysis! "));
   }
   
   if(.on.public.web){
@@ -977,16 +979,17 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   return(.set.mSet(mSetObj));
 }
 
-#'PLS-DA classification and feature selection
-#'@description PLS-DA classification and feature selection
-#'@param mSetObj Input name of the created mSet Object
-#'@param methodName Logical, by default set to TRUE
-#'@param compNum GetDefaultPLSCVComp()
-#'@param choice Input the choice, by default it is Q2
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
+#' PLS-DA classification and feature selection
+#' @description PLS-DA classification and feature selection
+#' @param mSetObj Input name of the created mSet Object
+#' @param methodName Logical, by default set to TRUE
+#' @param compNum GetDefaultPLSCVComp()
+#' @param choice Input the choice, by default it is Q2
+#' @importFrom caret train varImp plsda R2
+#' @author Jeff Xia\email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
 PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1707,6 +1710,53 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
   return(.set.mSet(mSetObj));
 }
 
+# OPLS VIP plot
+PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="vip", feat.nm="tscore", feat.num=15, color.BW=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+
+  mSetObj$imgSet$opls.vip <- imgName;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  if(type=="vip"){
+    impNm <- "VIP scores";
+    mSetObj$analSet$oplsda$imp.type <- "vip";
+    if(feat.nm == "tscore"){
+        data <- mSetObj$analSet$oplsda$vipVn;
+    }else{
+        data <- mSetObj$analSet$oplsda$orthoVipVn;
+    }
+    vip.mat <- cbind(mSetObj$analSet$oplsda$vipVn, mSetObj$analSet$oplsda$orthoVipVn);
+  }else{ #not exposed to web
+    impNm <- "Weights";
+    mSetObj$analSet$oplsda$imp.type <- "weight";
+    if(feat.nm == "tscore"){
+        data<-mSetObj$analSet$oplsda$weightMN;
+    }else{
+        data<-mSetObj$analSet$oplsda$orthoWeightMN;
+    }
+    vip.mat <- cbind(mSetObj$analSet$oplsda$weightMN, mSetObj$analSet$oplsda$orthoWeightMN);
+  }
+  ord.inx <- rev(order(data));
+  vip.mat <- vip.mat[ord.inx,];
+  mSetObj$analSet$oplsda$vip.mat <- vip.mat;
+  PlotImpVar(mSetObj, data, impNm, feat.num, color.BW);
+  dev.off();
+  
+  fast.write.csv(vip.mat, file="oplsda_vip.csv");
+  return(.set.mSet(mSetObj));
+}
+
 #'Plot OPLS 
 #'@description Plot OPLS 
 #'@param mSetObj Input name of the created mSet Object
@@ -1910,7 +1960,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'License: GNU GPL (>= 2)
 #'@export
 
-SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
+SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){    
     .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
     .perform.computing();
     .save.splsr.anal(mSetObj);
@@ -2334,7 +2384,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import caret
+
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2498,18 +2548,30 @@ GetOPLSLoadAxesSpec <- function(mSetObj=NA){
   return(mSetObj$analSet$oplsda$opls.axis.lims);
 }
 
-GetOPLSLoadCmpds <- function(mSetObj=NA){
+GetOPLSSigCmpds <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
-  rownames(mSetObj$analSet$oplsda$splot.mat);
+  if(type == "splot"){
+    rownames(mSetObj$analSet$oplsda$splot.mat);
+  }else{
+    rownames(mSetObj$analSet$oplsda$vip.mat);
+  }
 }
 
-GetOPLSLoadColNames <- function(mSetObj=NA){
-  return(c("p[1]","p(corr)[1]"));
+GetOPLSSigColNames <- function(mSetObj=NA, type){
+  if(type == "splot"){
+    return(c("p[1]","p(corr)[1]"));
+  }else{
+    return(c("VIP[t]"," VIP[ortho-t]"));
+  }
 }
 
-GetOPLSLoadMat <- function(mSetObj=NA){
+GetOPLSSigMat <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
-  as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
+  if(type == "splot"){
+    as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
+  }else{
+    as.matrix(mSetObj$analSet$oplsda$vip.mat);
+  }
 }
 
 GetDefaultSPLSCVComp <- function(mSetObj=NA){
