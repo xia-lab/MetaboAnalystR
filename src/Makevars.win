@@ -1,15 +1,20 @@
-MQOBJECTS=massifquant/xcms_massifquant.o massifquant/TrMgr.o massifquant/Tracker.o massifquant/SegProc.o massifquant/DataKeeper.o massifquant/OpOverload.o
+BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o
 
-OBIOBJECTS=obiwarp/mat.o obiwarp/vec.o obiwarp/xcms_dynprog.o obiwarp/xcms_lmat.o xcms_obiwarp.o
+UTILSOBJECTS=c/util.o cpp/melt.o c/fastmatch.o
 
-XCMSOBJECTS=mzROI.o util.o xcms_binners.o
+XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
 
-INITOBJECT=init.o
+INITOBJECT=Exports.o
 
-OBJECTS= $(MQOBJECTS) $(OBIOBJECTS) $(XCMSOBJECTS) $(BATCHOBJECTS) $(INITOBJECT)
+OBJECTS= $(BATCHOBJECTS) $(UTILSOBJECTS) $(XCMSOBJECTS) $(INITOBJECT)
 
-
-all: $(SHLIB)
+all: clean $(SHLIB)
 
 clean:
 	rm -f $(OBJECTS)
+
+
+CXX_STD = CXX11
+
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) 
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
