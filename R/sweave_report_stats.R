@@ -79,7 +79,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$cls)){
+  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc.feat.num) | is.null(mSetObj$dataSet$cls)){
     errorMsg <- c(descr, "Error occured during reading the raw data ....",
                   "Failed to proceed. Please check if the data format you uploaded is correct.",
                   "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");

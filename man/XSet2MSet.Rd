@@ -21,7 +21,7 @@ cmpdmap, smpmap, or pathinteg.}
 \item{format}{Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
 in columns and paired (colp), or in columns and unpaired (colu).}
 
-\item{lbl.type}{Specify the data label type, either discrete (disc) or continuous (cont).}
+\item{lbl.type}{Specify the data label type, either categorical (disc) or continuous (cont).}
 }
 \description{
 This function converts processed raw LC/MS data from XCMS 

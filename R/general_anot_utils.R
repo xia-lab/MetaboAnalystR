@@ -156,7 +156,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
     syns.list <-  syn.db$syns.list;
     todo.inx <- which(is.na(hit.inx));
     
-    if(length(todo.inx) > 0){
+    if(length(todo.inx) > 0) {
       for(i in 1:length(syns.list)){
         syns <-  syns.list[[i]];
         hitInx <- match(tolower(qvec[todo.inx]), tolower(syns));
@@ -176,10 +176,18 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
         if(length(todo.inx) == 0) break;
       }
     }
-  }else{
-    print(paste("Unknown compound ID type:", q.type));
+  } else {
+    print(paste("Unknown compound ID type:", q.type));save(qvec, file = "qvec__checking.rda");save(cmpd.db, file = "cmpd.db__checking.rda")
     # guess a mix of kegg and hmdb ids
+
+    n <- 5 # Number of digits for V3 of HMDB
+    hmdb.digits <- as.vector(sapply(cmpd.db$hmdb, function(x) strsplit(x, "HMDB", fixed=TRUE)[[1]][2]))
+    hmdb.v3.ids <- paste0("HMDB", substr(hmdb.digits, nchar(hmdb.digits)-n+1, nchar(hmdb.digits)))
+    hit.inx.v3 <- match(tolower(qvec), tolower(hmdb.v3.ids));
     hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
+    hit.inx[is.na(hit.inx)] <- hit.inx.v3[is.na(hit.inx)]
+
+#    hit.inx <- match(tolower(qvec), tolower(cmpd.db$hmdb));
     hit.inx2 <- match(tolower(qvec), tolower(cmpd.db$kegg));
     nohmdbInx <- is.na(hit.inx);
     hit.inx[nohmdbInx]<-hit.inx2[nohmdbInx]
@@ -289,6 +297,7 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
 #'@description Returns three columns: original name, HMDB name and KEGG ID,
 #'for enrichment and pathway analysis, respectively
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param lipid Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -321,7 +330,8 @@ GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
   }
   
   for (i in 1:length(qvec)){
-    hit <-cmpd.db[hit.inx[i], ,drop=F];
+
+    hit <-cmpd.db[hit.inx[i], ,drop=FALSE];
     if(match.state[i]==0){
       hmdb.hit <- NA;
       hmdb.hit.id <- NA;

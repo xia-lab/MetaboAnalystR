@@ -4,7 +4,7 @@
 \alias{Read.PeakListData}
 \title{Constructor to read uploaded user files into the mummichog object}
 \usage{
-Read.PeakListData(mSetObj=NA, filename = NA)
+Read.PeakListData(mSetObj=NA, filename = NA, meta.anal = FALSE, method = "pvalue")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}

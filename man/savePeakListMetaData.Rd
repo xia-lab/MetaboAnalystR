@@ -8,6 +8,9 @@ Should be called after SetPeakEnrichMethod/SetMummichogPval}
 \usage{
 savePeakListMetaData(mSetObj = NA)
 }
+\arguments{
+\item{mSetObj}{mSetObj}
+}
 \description{
 Function to save each mSetObj as a RDS file
 to be used later in PerformMetaPSEA.

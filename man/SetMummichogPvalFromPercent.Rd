@@ -8,6 +8,8 @@ SetMummichogPvalFromPercent(mSetObj = NA, fraction)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}
+
+\item{fraction}{fraction value for mummichog running}
 }
 \description{
 Set the p-value cutoff for mummichog analysis.

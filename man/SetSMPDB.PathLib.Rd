@@ -9,7 +9,7 @@ SetSMPDB.PathLib(mSetObj = NA, libNm)
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{smpdb.rda}{Input the name of the SMPDB library (e.g. hsa or mmu)}
+\item{libNm}{Input library name}
 }
 \description{
 note, this process can be long, need to return a value

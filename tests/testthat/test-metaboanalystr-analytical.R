@@ -8,11 +8,12 @@ test_that("Statistical Analysis Module Works", {
   mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
   mSet<-SanityCheckData(mSet);
   mSet<-ReplaceMin(mSet);
+  mSet<-PreparePrenormData(mSet);
   mSet<-Normalization(mSet, "NULL", "LogNorm", "MeanCenter", "S10T0", ratio=FALSE, ratioNum=20)
   
-  mSet<-FC.Anal.unpaired(mSet, 2.0, 0)
+  mSet<-FC.Anal(mSet, 2.0, 0)
   mSet<-Ttests.Anal(mSet, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE)
-  mSet<-Volcano.Anal(mSet, FALSE, 2.0, 0, 0.75,F, 0.1, TRUE, "raw")
+  mSet<-Volcano.Anal(mSet, FALSE, 2.0, 0, F, 0.1, TRUE, "raw")
   
   # check if right module
   expect_match(anal.type, "stat")
@@ -22,10 +23,9 @@ test_that("Statistical Analysis Module Works", {
   expect_equal(ncol(mSet$dataSet$norm), 63)
   
   expect_equal(mSet$analSet$fc$sig.mat[1,1], 5.8685)
-  expect_equal(mSet$analSet$tt$sig.num, 53)
+  expect_equal(mSet$analSet$tt$sig.num, 57)
   expect_equal(mSet$analSet$volcano$sig.mat[1,1], 2.1297)
 })
-
 
 test_that("Biomarker Analysis Module Works", {
   
@@ -35,12 +35,16 @@ test_that("Biomarker Analysis Module Works", {
   mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/plasma_nmr_new.csv", "rowu", "disc")
   mSet<-SanityCheckData(mSet)
   mSet<-ReplaceMin(mSet)
+  mSet<-PreparePrenormData(mSet);
   mSet<-IsSmallSmplSize(mSet)
   mSet<-Normalization(mSet, "NULL", "NULL", "NULL", ref=NULL, ratio=FALSE, ratioNum=20)
   
   mSet<-SetAnalysisMode(mSet, "univ")
   mSet<-PrepareROCData(mSet)
-  mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", imgName = "Isoleucine", "png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
+  mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", 0, 
+                        "png", dpi=300, isAUC=F, isOpt=T, 
+                        optMethod="closest.topleft", isPartial=F, 
+                        measure="sp", cutoff=0.2)
   mSet<-CalculateFeatureRanking(mSet)
   
   # check if right module
@@ -53,40 +57,53 @@ test_that("Biomarker Analysis Module Works", {
   expect_equal(nrow(feat.rank.mat), 63)
   expect_equal(ncol(feat.rank.mat), 4)
   expect_match(rownames(feat.rank.mat)[1], "Betaine")
-  expect_equal(feat.rank.mat[1,4], 2)
+  expect_equal(feat.rank.mat[1,4], 4)
   
 })
 
-
-test_that("Time-series or Two-Factor Module Works", {
+test_that("Multiple factors analysis", {
   
   rm(list =ls())
   
   mSet<-InitDataObjects("pktable", "ts", FALSE)
-  mSet<-SetDesignType(mSet, "time")
-  mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv", "colts", "disc");
+  mSet<-SetDesignType(mSet, "multi")
+  mSet<-Read.TextDataTs(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/Covid_metabolomics_data.csv", "colu");
+  mSet<-ReadMetaData(mSet, "https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/Covid_metadata_multClass.csv");
   mSet<-SanityCheckData(mSet);
   mSet<-ReplaceMin(mSet);
-  mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "S10T0", ratio=FALSE, ratioNum=20)
-  
-  mSet<-iPCA.Anal(mSet, "ipca_3d_0_.json")
-  mSet<-ANOVA2.Anal(mSet, thresh=0.05, p.cor="fdr", type="time")
-  mSet<-Perform.ASCA(mSet, a=1, b=1, x=2, res=2)
-  mSet<-performMB(mSet, topPerc = 10)
-  
-  # check if right module
-  expect_match(anal.type, "ts")
-  
-  # check if data downloaded and parsed successfully
-  expect_equal(nrow(mSet$dataSet$norm), 72)
-  expect_match(levels(mSet$dataSet$cls)[1], "MT")
-  expect_match(levels(mSet$dataSet$cls)[2], "WT")
-  
-  expect_equal(nrow(mSet$analSet$aov2$sig.mat), 124)
-  expect_equal(nrow(mSet$analSet$asca$Xoff), 72)
-  expect_equal(nrow(mSet$analSet$MB$stats), 124)
-})
+  mSet<-SanityCheckMeta(mSet, 1);
+  mSet<-SetDataTypeOfMeta(mSet);
+  mSet<-SanityCheckData(mSet);
+  mSet<-FilterVariable(mSet, "none", "F", 25);
+  mSet<-PreparePrenormData(mSet);
+  mSet<-Normalization(mSet, "NULL", "LogNorm", "NULL", ratio=FALSE, ratioNum=20)
+  ## check pca & iPCA res
+  mSet<-PCA.Anal(mSet);
+  mSet<-iPCA.Anal(mSet, "ipca_3d_0_.json");
+  expect_equal(mSet[["analSet"]][["type"]], "ts")
+  expect_equal(length(mSet[["analSet"]][["pca"]]), 9)
+  expect_equal(nrow(mSet[["analSet"]][["pca"]][["x"]]), 59)
+  expect_true(file.exists("ipca_3d_0_.json"))
+  ## check CovariateScatter.Anal res
+  adj.vec <<- "Gender";
+  mSet<-CovariateScatter.Anal(mSet, 
+                              "covariate_plot_0_dpi72.png", 
+                              "png", 72, "default", 
+                              "Diagnosis", "COVID", 
+                              "NA" , 0.05, FALSE)
+  expect_equal(nrow(mSet[["dataSet"]][["meta.info"]]), 59)
+  expect_equal(round(mSet[["analSet"]][["cov.mat"]][["pval.adj"]][1],5), 8.65735)
+  ## check anova2
+  meta.vec2 <<- c("Diagnosis", "Gender")
+  mSet<-ANOVA2.Anal(mSet, 0.05, "fdr", "multi", 1, 0)
+  expect_equal(length(mSet[["analSet"]][["aov2"]][["inx.imp"]]), 2054)
+  ## check ASCA
+  mSet<-Perform.ASCA(mSet, 1, 1, 2, 2)
+  mSet<-PlotModelScree(mSet, "asca_scree_0_", "png", 72, width=NA)
+  mSet<-CalculateImpVarCutoff(mSet, 0.05, 0.9)
+  expect_true(mSet[["analSet"]][["asca"]])
 
+})
 
 test_that("Power Analysis Module Works", {
   
@@ -96,6 +113,7 @@ test_that("Power Analysis Module Works", {
   mSet<-Read.TextData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/human_cachexia.csv", "rowu", "disc");
   mSet<-SanityCheckData(mSet);
   mSet<-ReplaceMin(mSet);
+  mSet<-PreparePrenormData(mSet);
   mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "PIF_178", ratio=FALSE, ratioNum=20)
   
   mSet<-InitPowerAnal(mSet, "cachexic vs. control")
@@ -108,28 +126,30 @@ test_that("Power Analysis Module Works", {
   expect_equal(mSet$analSet$power$Jpred[1], 3)
 })
 
-
 test_that("MS Peaks to Paths Module Works", {
   
   rm(list =ls())
   
-  mSet <- InitDataObjects("mass_all", "mummichog", FALSE)
-  mSet <- Read.PeakListData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_mzs.txt");
-  mSet <- UpdateMummichogParameters(mSet, "0.1", "positive", 1.0E-4);
-  mSet <- SanityCheckMummichogData(mSet)
-  mSet <- PerformMummichog(mSet, "hsa_mfn", "fisher", "gamma")
-  
+  mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
+  mSet<-SetPeakFormat(mSet, "mpt")
+  mSet<-UpdateInstrumentParameters(mSet, 5.0, "negative", "yes", 0.02);
+  mSet<-Read.PeakListData(mSet, "http://www.metaboanalyst.ca/MetaboAnalyst/resources/data/mummichog_ibd.txt");
+  mSet<-SetRTincluded(mSet, "no")
+  mSet<-SanityCheckMummichogData(mSet)
+  mSet<-SetPeakEnrichMethod(mSet, "mum", "v2")
+  mSet<-SetMummichogPval(mSet, 0.2)
+  mSet<-PerformPSEA(mSet, "hsa_mfn", "current", 3 , 100)
+
   # check if right module
   expect_match(anal.type, "mummichog")
   expect_match(mSet$lib.organism, "hsa_mfn")
   
   # check if data downloaded and parsed successfully
-  expect_equal(nrow(mSet$dataSet$orig), 3934)
-  expect_equal(mSet$dataSet$N, 261)
-  expect_equal(mSet$dataSet$input_mzlist[1], 304.2979)
+  expect_equal(nrow(mSet$dataSet$mummi.orig), 4187)
+  expect_equal(mSet$dataSet$N, 414)
   
-  expect_equal(mSet$mummi.resmat[1,1], 94)
-  expect_equal(mSet$mummi.resmat[1,2], 64)
-  expect_match(rownames(mSet$mummi.resmat)[1], "Tryptophan metabolism")
+  expect_equal(mSet$mummi.resmat[1,1], 54)
+  expect_equal(mSet$mummi.resmat[1,2], 38)
+  expect_match(rownames(mSet$mummi.resmat)[1], "Vitamin E metabolism")
   
 })

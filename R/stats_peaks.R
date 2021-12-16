@@ -581,7 +581,7 @@ findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
   if (!is.double(values)) values <- as.double(values)
-    .C("FindEqualGreaterM",
+  .C("FindEqualGreaterM",
      x,
      length(x),
      values,

@@ -27,17 +27,19 @@ PlotIntegPaths(
 
 \item{width}{Numeric, input the width of the image to create.}
 
+\item{labels}{Character, indicate if the plot should be labeled. By default
+it is set to "default", and the 5 top-ranked pathways per each algorithm will be plotted.
+Users can adjust the number of pathways to be annotated per pathway using the "labels.x" 
+and "labels.y" parameters.
+Users can set this to "none" for no annotations, or "all" to annotate all pathways.}
+
 \item{labels.x}{Numeric, indicate the number of top-ranked pathways using the fGSEA algorithm 
 to annotate on the plot.}
 
 \item{labels.y}{Numeric, indicate the number of top-ranked pathways using the original 
 mummichog algorithm to annotate on the plot.}
 
-\item{Labels}{Character, indicate if the plot should be labeled. By default
-it is set to "default", and the 5 top-ranked pathways per each algorithm will be plotted.
-Users can adjust the number of pathways to be annotated per pathway using the "labels.x" 
-and "labels.y" parameters.
-Users can set this to "none" for no annotations, or "all" to annotate all pathways.}
+\item{scale.axis}{logical, TRUE to scale}
 }
 \description{
 Plots both the original mummichog and the GSEA results by combining p-values

@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{filenm}{Input the name of the file to download}
+
+\item{sub.dir}{sub.dir}
 }
 \description{
 Function downloads the required file and reads it only if not already in working directory.

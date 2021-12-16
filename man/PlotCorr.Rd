@@ -4,12 +4,21 @@
 \alias{PlotCorr}
 \title{Pattern hunter, correlation plot}
 \usage{
-PlotCorr(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotCorr(
+  mSetObj = NA,
+  imgName,
+  searchType = "feature",
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
 \item{imgName}{Input a name for the plot}
+
+\item{searchType}{searchType, default is "feature"}
 
 \item{format}{Select the image format, "png", or "pdf".}
 

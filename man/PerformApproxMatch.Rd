@@ -10,6 +10,8 @@ PerformApproxMatch(mSetObj = NA, q, lipid)
 \item{mSetObj}{Input the name of the created mSetObj.}
 
 \item{q}{Input the q vector.}
+
+\item{lipid}{lipid, logical}
 }
 \description{
 Given a query, perform approximate compound matching

@@ -8,6 +8,10 @@ SetPeakEnrichMethod(mSetObj = NA, algOpt, version = "v2")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}
+
+\item{algOpt}{algorithm option, can be "gsea", "mum" and "integ"}
+
+\item{version}{version of mummichog}
 }
 \description{
 This function sets the peak enrichment method.

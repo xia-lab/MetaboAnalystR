@@ -28,7 +28,8 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCA3DScoreImg(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
+#'@usage PlotPCA3DScoreImg(mSetObj=NA, imgName, 
+#'format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
 #'@param mSetObj Input name of the created mSet Object.
 #'@param imgName Input a name for the plot.
 #'@param format Select the image format, "png", or "pdf". 
@@ -40,11 +41,11 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@param angl Input the angle 
-#'@usage mSet <- PlotPCA3DScore(mSetObj=NA, imgName, format="json", dpi=72, width=NA, inx1, inx2, inx3, angl)
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 
-PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
+PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", 
+                              dpi=72, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -80,23 +81,6 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", dpi=72, width=N
     legend("topleft", legend =legend.nm, pch=uniq.pchs, col=uniq.cols);
     dev.off();
     
-    if(!.on.public.web){
-      # 3D View using plotly
-      if(length(uniq.pchs) > 3){
-        col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-      }else{
-        col <- c("#1972A4", "#FF7070")
-      }
-      
-      p <- plotly::plot_ly(x = mSetObj$analSet$pca$x[, inx1], y = mSetObj$analSet$pca$x[, inx2], z = mSetObj$analSet$pca$x[, inx3],
-                 color = mSetObj$dataSet$cls, colors = col) 
-      p <- plotly::add_markers(p, sizes = 5)
-      p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                          yaxis = list(title = ylabel),
-                          zaxis = list(title = zlabel)))
-      mSetObj$imgSet$pca.3d <- p;
-      print("The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d.")
-    }
     
   }else{
     
@@ -188,23 +172,6 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   dev.off();
   
-  if(!.on.public.web){
-    # 3D View using plotly
-    if(length(uniq.pchs) > 3){
-      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-    }else{
-      col <- c("#1972A4", "#FF7070")
-    }
-    p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
-                         color = mSetObj$dataSet$cls, colors = col)
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                                        yaxis = list(title = ylabel),
-                                        zaxis = list(title = zlabel)))
-    
-    mSetObj$imgSet$splsda.3d <- p;
-    print("The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.")
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -276,23 +243,6 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   dev.off();
   
-  if(!.on.public.web){
-    # 3D View using plotly
-    if(length(uniq.pchs) > 3){
-      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-    }else{
-      col <- c("#1972A4", "#FF7070")
-    }
-    p <- plotly::plot_ly(x = coords[, inx1], y = coords[, inx2], z = coords[, inx3],
-                         color = mSetObj$dataSet$cls, colors = col)
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                                        yaxis = list(title = ylabel),
-                                        zaxis = list(title = zlabel)))
-    
-    mSetObj$imgSet$splsda.3d <- p;
-    print("The Interactive 3D sPLS-DA plot has been created, please find it in mSet$imgSet$splsda.3d.")
-  }
   return(.set.mSet(mSetObj));
 }
 
@@ -350,24 +300,6 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
          zlab=zlabel, angle =angl, color=cols, pch=pchs);
   legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   dev.off();
-  
-  if(!.on.public.web){
-    # 3D View using plotly
-    if(length(uniq.pchs) > 3){
-      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-    }else{
-      col <- c("#1972A4", "#FF7070")
-    }
-    p <- plotly::plot_ly(x = mSetObj$analSet$plsr$score[, inx1], y = mSetObj$analSet$plsr$score[, inx2], z = mSetObj$analSet$plsr$score[, inx3],
-                         color = mSetObj$dataSet$cls, colors = col) 
-    p <- plotly::add_markers(p, sizes = 5)
-    p <- plotly::layout(p, scene = list(xaxis = list(title = xlabel),
-                                        yaxis = list(title = ylabel),
-                                        zaxis = list(title = zlabel)))
-    
-    mSetObj$imgSet$plsda.3d <- p;
-    print("The Interactive 3D PLS-DA plot has been created, please find it in mSet$imgSet$plsda.3d.")
-  }
 
   return(.set.mSet(mSetObj));
 }

@@ -102,22 +102,30 @@ PrepareIntegData <- function(mSetObj=NA){
 #'Perform integrative pathway analysis 
 #'@description used for integrative analysis 
 #'as well as general pathways analysis for meta-analysis results
-#'@usage PerformIntegPathwayAnalysis(mSetObj, topo="dc", enrich="hyper", libOpt="integ")
+#'@usage PerformIntegPathwayAnalysis(mSetObj, topo="dc", enrich="hyper", 
+#'libOpt="integ", integOpt="query")
 #'@param mSetObj Input name of the created mSet Object
-#'@param topo Select the mode for topology analysis: Degree Centrality ("dc") measures the number of links that connect to a node 
-#'(representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures the overall distance from a given node 
-#'to all other nodes in a pathway; Betweenness Centrality ("bc")measures the number of shortest paths from all nodes to all the others that pass through a given node within a pathway.
+#'@param topo Select the mode for topology analysis: Degree Centrality ("dc") measures 
+#'the number of links that connect to a node 
+#'(representing either a gene or metabolite) within a pathway; Closeness Centrality ("cc") measures 
+#'the overall distance from a given node 
+#'to all other nodes in a pathway; Betweenness Centrality ("bc")measures the number of shortest paths from 
+#'all nodes to all the others that pass through a given node within a pathway.
 #'@param enrich Method to perform over-representation analysis (ORA) based on either hypergenometrics analysis ("hyper")
 #' or Fisher's exact method ("fisher").
-#'@param libOpt Select the different modes of pathways, either the gene-metabolite mode ("integ") which allows for joint-analysis
-#' and visualization of both significant genes and metabolites or the gene-centric ("genetic") and metabolite-centric mode ("metab") which allows users
-#' to identify enriched pathways driven by significant genes or metabolites, respectively. 
+#'@param libOpt Select the different modes of pathways, either the gene-metabolite mode ("integ") which 
+#'allows for joint-analysis
+#' and visualization of both significant genes and metabolites or the gene-centric ("genetic") and 
+#' metabolite-centric mode ("metab") which allows users
+#' to identify enriched pathways driven by significant genes or metabolites, respectively.
+#' @param integOpt integOpt,default is "query"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", libOpt="integ", integOpt="query"){
+PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", 
+                                        libOpt="integ", integOpt="query"){
 
   mSetObj <- .get.mSet(mSetObj);  
 
@@ -173,7 +181,27 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
       uniq.len <- current.kegglib$cmpd.counts;
     }
     
-  } else { # integ
+  } else if(libOpt == "mgenetic" && !is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)) {
+    # integ (p vali option)
+    
+    # Step 1 do gene mapping
+    gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+    gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
+    rownames(gene.mat) <- gene.vec;
+    impMat <- gene.mat;
+    
+    # saving only
+    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
+    gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
+    fast.write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
+    
+    if(.on.public.web){
+      uniq.count <- current.kegglib$uniq.gene.count;
+      uniq.len <- current.kegglib$gene.counts;
+    }
+    
+    
+  } else { # integ (other p values)
     
     if(is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat) | is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
       AddErrMsg("The integrative analysis require both gene and metabolite lists");
@@ -257,8 +285,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     rownames(mSetObj$dataSet$path.mat) <- mSetObj$dataSet$jointpa.pathnames
     fast.write.csv(mSetObj$dataSet$path.mat, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
     
-    mSetObj$dataSet$pathinteg.impMat <- impMat; 
-    
+    mSetObj$dataSet$pathinteg.impMat <- impMat;    
     return(.set.mSet(mSetObj));
   }
   
@@ -283,8 +310,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     fast.write.csv(res.gene$res.table, file="MetaboAnalyst_result_pathway_gene.csv", row.names=TRUE);
     
     # now merge p val
-    resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);
-    
+    resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);    
     my.res$res.table <- resI;
   }
   
@@ -301,11 +327,32 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
   # for internal use, switch to pathway IDs (name containing special characters)
   rownames(resTable) <- current.kegglib$path.ids[rownames(resTable)];
   
-  # store results from individual analysis
+  # Specific processing on the global data with genes
+  if(integOpt == "pvali") {
+    my.hits.genes <- lapply(names(my.res[["hits.path"]]), function(x){
+      current.kegglib[["mset.list"]][[x]][my.res[["hits.path"]][[x]]]
+      })
+    names(my.hits.genes) <- names(current.kegglib$path.ids);
+    my.hits.genes <- my.hits.genes[unname(which(sapply(my.hits.genes, length)!=0))]
+    my.cmpds <- RJSONIO::fromJSON("mummichog_query.json");
+    my.hits.cmpds <- my.cmpds$hits.sig;
+    names(my.hits.cmpds) <- my.cmpds$path.nms;
+    mSetObj$dataSet$my.hits <- list(my.hits.genes = my.hits.genes, 
+                                    my.hits.cmpds = my.hits.cmpds)
+      
+  } 
+  
+  # store results from individual analysis (for other analyses, not pvali)
   mSetObj$dataSet$path.mat <- resTable;
   mSetObj$dataSet$path.hits <- hits.path;
-  mSetObj$dataSet$pathinteg.impMat <- impMat; 
-  
+  mSetObj$dataSet$pathinteg.impMat <- impMat;
+
+  # Perform meta integ for global metabolomics and genes
+  if(integOpt == "pvali") {
+    .performIntegGlobalMergeP(mSetObj, libOpt);
+    mSetObj <- .plotIntegGlobalMergeP(mSetObj = NA, imgName = "integ_peakGene")
+  }
+    
   return(.set.mSet(mSetObj));
 }
 
@@ -360,7 +407,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     inxG.uniq <- which(!hitsG);
     gn.uniq <- rownames(resG)[inxG.uniq];
     resI[gn.uniq, "Raw p"] <- resG[gn.uniq,"Raw p"];
-
+    
+    resI[,"Raw p"][resI[,"Raw p"] == 0] <- min(resI[,"Raw p"][resI[,"Raw p"] != 0])/5;
     # now update the res.integ with merge p
     resI[,5] <- -log10(resI[,"Raw p"]);
     resI[,6] <- p.adjust(resI[,"Raw p"], "holm");
@@ -416,6 +464,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
         print(enrich);
     }
 
+    
+    res.mat[,4][res.mat[,4] == 0] <- min(res.mat[,4][res.mat[,4] != 0])/5;
     res.mat[,5] <- -log10(res.mat[,4]);
     res.mat[,6] <- p.adjust(res.mat[,4], "holm");
     res.mat[,7] <- p.adjust(res.mat[,4], "fdr");
@@ -440,6 +490,236 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", l
     res.mat <- res.mat[!is.na(res.mat[,8]), , drop=FALSE];
     resTable <- signif(res.mat,5);
     return(list(hits.path=hits.path, res.table=resTable));
+}
+
+# internal function to integrate untargeted metabolomics and genes
+.performIntegGlobalMergeP <- function(mSetObj = NA, libOpt = "mgenetic"){
+  
+  # get p integ method
+  integMethod <- mSetObj$dataSet$integPmethod;
+  
+  pathResults <- vector("list");
+  pathResults$mummi <- mSetObj$mummi.resmat;
+  pathResults$mgenes <- mSetObj$dataSet$path.mat;
+  rownames(pathResults$mgenes) <- names(rownames(pathResults[["mgenes"]]));
+  
+  path.names.all <- lapply(pathResults, rownames);
+  paths1 <- lapply(pathResults, 
+                   data.table::data.table, 
+                   keep.rownames = TRUE);
+    
+  path2 <- data.table::setDF(merge(paths1$mummi, paths1$mgenes, by = "rn", all.x=TRUE, all.y = TRUE))
+  
+  path2$Hits.sig[is.na(path2$Hits.sig)] <-
+    path2$Hits[is.na(path2$Hits)] <-
+    path2$Total[is.na(path2$Total)] <- 
+    path2$`Pathway total`[is.na(path2$`Pathway total`)] <- 0
+  
+  path2$FET[is.na(path2$FET)] <- 
+    path2$`Raw p`[is.na(path2$`Raw p`)] <- 1;
+  
+  total <- path2$`Pathway total` + path2$Total;
+  hitsm <- path2$Hits.sig;
+  hitsg <- path2$Hits;
+
+  if(is.null(integMethod)){
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
+  } else if(integMethod == "fisher") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
+  } else if(integMethod == "edgington") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sump(c(path2$FET[x], path2$`Raw p`[x]))$p});
+  } else if(integMethod == "stouffer") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {
+      if(path2$FET[x] == 1) {pval1 <- 0.999} else {pval1 <- path2$FET[x]}
+      if(path2$`Raw p`[x] == 1) {pval2 <- 0.999} else {pval2 <- path2$`Raw p`[x]}
+      sumz(c(pval1,pval2))$p
+      });
+  } else if(integMethod == "vote") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {votep(c(path2$FET[x], path2$`Raw p`[x]))$p});
+  } else if(integMethod == "min") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {min(c(path2$FET[x], path2$`Raw p`[x]))});
+  } else if(integMethod == "max") {
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {max(c(path2$FET[x], path2$`Raw p`[x]))});
+  }
+
+  logp <- -log10(mergP);
+  holmp <- p.adjust(mergP, "holm");
+  fdrp <- p.adjust(mergP, "fdr");
+  order.idx <- order(mergP);
+  integResGlobal <- data.frame(pathways = (path2$rn)[order.idx],
+                               Total = total[order.idx],
+                               hits_gene = hitsg[order.idx],
+                               hits_cmpd = hitsm[order.idx],
+                               P_cmpd = path2$FET[order.idx],
+                               P_gene = path2$`Raw p`[order.idx],
+                               P_value = round(mergP[order.idx],6),
+                               LogP = round(logp[order.idx],4),
+                               Holmp = round(holmp[order.idx],4),
+                               FDRp = round(fdrp[order.idx],4));
+                               
+  #integResGlobal
+  fast.write.csv(integResGlobal, file="MetaboAnalyst_result_integ.csv");
+  path.mat <- as.matrix(integResGlobal[,-1])
+  rownames(path.mat) <- unname(current.kegglib[["path.ids"]][integResGlobal[,1]])
+  mSetObj$dataSet$path.mat <- path.mat;
+  mSetObj$dataSet$integResGlobal <- integResGlobal;
+  
+  # correct the database as metab
+  jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
+  if(.on.public.web & jointGlobal){
+    if(libOpt == "mgenetic") {
+      sub.dir <- paste0("kegg/jointpa/integ");
+    } else if(libOpt == "genetic") {
+      sub.dir <- paste0("kegg/jointpa/all");
+    }
+    destfile <- paste0(mSetObj$org, ".qs");
+    current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    load_igraph();
+  }
+  
+  ## correct path.hits here with new current.kegglib
+  my.hits <- mSetObj$dataSet$my.hits;
+  comb.hits <- list();
+  mypaths <- unique(c(names(my.hits$my.hits.genes), names(my.hits$my.hits.cmpds)))
+
+  a1 <- my.hits$my.hits.genes[mypaths]
+  a2 <- my.hits$my.hits.cmpds[mypaths]
+  a2 <- sapply(a2, FUN= function(x) {if(!is.null(x)) paste0("cpd:",x)})
+  paths.ids <- current.kegglib[["path.ids"]][mypaths];
+  comb.hits <- setNames(mapply(c, a1[mypaths], a2[mypaths]), paths.ids)
+  hits.path <- lapply(names(comb.hits), function(x) {
+    current.kegglib$mset.list[[x]] %in% comb.hits[[x]]})
+  names(hits.path) <- names(comb.hits)
+  mSetObj$dataSet$path.hits <- hits.path;
+  
+  ## correct impMat here:
+  mSetObj$dataSet$pathinteg.impMat -> impMat_genes;
+  unique(unname(unlist(a2))) ->impMat_cmpds0;
+  data.frame(Name = impMat_cmpds0, logFC = 100) -> impMat_cmpds
+  rownames(impMat_cmpds) <- impMat_cmpds0;
+  mSetObj$dataSet$pathinteg.impMat <- rbind(impMat_cmpds, impMat_genes); 
+  
+  .set.mSet(mSetObj);
+}
+
+.plotIntegGlobalMergeP <- function(mSetObj = NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
+                                   labels.x = 5, labels.y = 5, scale.axis = TRUE) {
+  
+  mSetObj <- .get.mSet(mSetObj);
+  ### Here is the ploting function below
+  combo.resmat <- mSetObj$dataSet$integResGlobal
+  pathnames <- combo.resmat$pathways
+  # Sort values based on combined pvalues
+  y <- -log10(combo.resmat[,5]); # x is gene
+  x <- -log10(combo.resmat[,6]); # y is cmpd
+  if(min(combo.resmat[,7])==0){combo.resmat[,7][combo.resmat[,7]==0] <- 
+    min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
+  combo.p <- -log10(combo.resmat[,7])
+  
+  if(scale.axis){
+    y <- scales::rescale(y, c(0,4))
+    x <- scales::rescale(x, c(0,4))
+    combo.p <- scales::rescale(combo.p, c(0,4))
+  }
+  
+  inx <- order(combo.p, decreasing= T);
+  
+  combo.p <- combo.p[inx]
+  x <- x[inx]; 
+  y <- y[inx];
+  path.nms <- pathnames[inx];
+  
+  # set circle size based on combined pvalues
+  min.x <- min(combo.p, na.rm = TRUE);
+  max.x <- max(combo.p, na.rm = TRUE);
+  
+  if(min.x == max.x){ # only 1 value
+    max.x = 1.5*max.x;
+    min.x = 0.5*min.x;
+  }
+  
+  maxR <- (max.x - min.x)/40;
+  minR <- (max.x - min.x)/160;
+  radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
+  
+  # set background color according to combo.p
+  bg.vec <- heat.colors(length(combo.p));
+  
+  if(format == "png"){
+    bg = "transparent";
+  }else{
+    bg="white";
+  }
+  
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  df <- data.frame(path.nms, x, y)
+  
+  if(labels == "default"){
+    mummi.inx <- GetTopInx(df$y, labels.y, T)
+    gsea.inx <- GetTopInx(df$x, labels.x, T)
+    all.inx <- mummi.inx | gsea.inx;
+  }
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$integpks.plot <- imgName
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  op <- par(mar=c(6,5,2,3));
+  
+  # color blocks only make sense if scaled...
+  if(scale.axis){
+    plot(x, y, type="n", axes=F, xlab="Enriched Pathways (Genes/Proteins)", ylab="Enriched Pathways from Peaks", bty = "l");
+    axis(1);
+    axis(2);
+    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+    
+    axis.lims <- par("usr")
+    
+    # mummichog sig
+    mum.x <- c(axis.lims[1], axis.lims[1], axis.lims[2], axis.lims[2])
+    mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
+    polygon(mum.x, mum.y, col=rgb(82/255,193/255,188/255,0.3), border = NA)
+    
+    # gsea sig
+    gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
+    gsea.y <- c(axis.lims[1],axis.lims[4],axis.lims[4],axis.lims[1])
+    polygon(gsea.x, gsea.y, col=rgb(216/255,126/255,178/255,0.3), border = NA)
+  }else{
+    plot(x, y, type="n", xlim=c( 0, round(max(x)) ), ylim=c(0, round(max(y))), 
+         xlab="Enriched Pathways (Genes/Proteins)",
+         ylab="Enriched Pathways from Peaks", bty = "l");
+    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+  }
+  
+  if(labels=="default"){
+    text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
+  }else if(labels == "all"){
+    text(x, y, labels = path.nms, pos=3, xpd=T, cex=0.8)
+  }
+  
+  par(op);
+  dev.off();
+  
+  df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
+  sink("scatterinteg.json");
+  cat(rjson::toJSON(df));
+  sink();
+
+  return(mSetObj);
+}
+
+DefineIntegPvalueMethod <- function(mSetObj = NA, method = "fisher"){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$integPmethod <- method;
+  return(.set.mSet(mSetObj))
 }
 
 ##############################################
@@ -553,12 +833,13 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
 
 #'Plot integrated methods pathway analysis
 #'@description Only update the background info for matched node
-#'@usage PlotInmexPath(mSetObj=NA, path.id, width, height)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param path.id Input the ID of the pathway to plot. 
+#'@param pathName Input the Name of the pathway to plot. 
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param height Input the height of the image to create.
+#'@param format format of the image
+#'@param dpi dpi, dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -568,6 +849,7 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
 PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
 
   mSetObj <- .get.mSet(mSetObj);
+
   path.id <- current.kegglib$path.ids[pathName];
   g <- current.kegglib$graph.list[[path.id]];
   if(is_igraph(g)){
@@ -588,6 +870,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
   
   # fill with 'NA'
   stats <- vector(mode='list', length=length(V(g)));
+  adducts <- vector(mode='list', length=length(V(g)));
   
   rnms <- rownames(res);
   for(inx in nd.inx){
@@ -597,13 +880,16 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
     if(length(hit.inx) > 0){
       hit.inx <- hit.inx[1];
       # use logFCs to decide up/down regulated
-      if(res$logFC[hit.inx] > 0){
+      if(res$logFC[hit.inx] == 100) {
+        bg.cols[inx]<- "#1C77ED";
+        line.cols[inx] <- "#1C5BED";
+      } else if (res$logFC[hit.inx] > 0){
         bg.cols[inx]<- "#F75D59";
         line.cols[inx] <- "#C11B17";
-      }else if(res$logFC[hit.inx] == 0){
+      } else if (res$logFC[hit.inx] == 0){
         bg.cols[inx]<- "#FFFF77";
         line.cols[inx] <- "#F7E259";
-      }else{
+      } else {
         bg.cols[inx]<- "#6AFB92";
         line.cols[inx] <- "#347235";
       }
@@ -612,11 +898,17 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
       V(g)$db.lnks[inx] <- paste("<a href='http://www.genome.jp/dbget-bin/www_bget?", rownames(res)[hit.inx],
                                   "' target='_blank'>", res$Name[hit.inx], "</a>", sep="", collapse=" ");
       # 2) save the stats for each node 
-      stats[[inx]] <- signif(res[hit.inx, "logFC", drop=F],5);
+      if(res[hit.inx, "logFC", drop=F] == 100){
+        adducts[[inx]] <- GetMatchingDetails(mSetObj, sub("cpd:", "", res[hit.inx, "Name"]))
+      } else {
+        stats[[inx]] <- signif(as.numeric(res[hit.inx, "logFC", drop=F]),5);
+      }
     }
   }
+  
   V(g)$stats <- stats;
   V(g)$topo <- topo;
+  V(g)$adducts <- adducts;
   
   if(.on.public.web){ 
     return(PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi));  
@@ -631,19 +923,24 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 #'@description Plot an igraph object and return the node information (position and labels)
 #'Used in a higher function
 #'@param mSetObj Input name of the created mSet Object
-#'@param path.id Input the pathway id
+#'@param pathName Input the pathway name
 #'@param g Input the graph
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@param height Input the height of the graph to create
 #'@param bg.color Set the background color, default is set to NULL
 #'@param line.color Set the line color, default is set to NULL
+#'@param format image format
+#'@param dpi dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotInmexGraph <- function(mSetObj, pathName, g, width=NA, height=NA, bg.color=NULL, line.color=NULL, format="png", dpi=NULL){
+PlotInmexGraph <- function(mSetObj, pathName, 
+                           g, width=NA, height=NA, 
+                           bg.color=NULL, line.color=NULL, 
+                           format="png", dpi=NULL){
  
   if(is.null(line.color)){
     line.color <- "dimgray";
@@ -671,7 +968,7 @@ PlotInmexGraph <- function(mSetObj, pathName, g, width=NA, height=NA, bg.color=N
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     nodeInfo <- GetKEGGNodeInfo(pathName, g, width, height);
     dev.off();
-
+#cat("nodeInfo", nodeInfo, "\n")
     mSetObj$dataSet$current.kegg <- list(graph=g, bg.color=bg.color, line.color=line.color);
   
     # remember the current graph
@@ -685,7 +982,7 @@ PlotInmexGraph <- function(mSetObj, pathName, g, width=NA, height=NA, bg.color=N
 }
 
 #'Retrieves KEGG node information
-#'@param path.id Input the path ID
+#'@param pathName Input the path Name
 #'@param g Input data
 #'@param width Input the width
 #'@param height Input the height 
@@ -737,12 +1034,15 @@ GetKEGGNodeInfo <- function(pathName, g, width, height, usr = par("usr")){
     }
   }else{
     stats <- V(g)$stats;
+    adducts <- V(g)$adducts;
+
     topos <- signif(V(g)$topo,5);
     for(i in 1:length(tags)) {
       jscode <- paste(jscode, paste("rectArray.push({x1:", xl[i], ", y1:", yl[i], ", x2:", 
                                     xr[i], ", y2:", yu[i],
                                     ", lb: \"", tags[i], 
                                     "\", lnk: \"", nm.lnks[i], 
+                                    "\", adducts: \"", adducts[[i]], 
                                     "\", topo: ", topos[i], 
                                     ifelse(is.null(stats[[i]]), "", paste(", logFC:", stats[[i]][1], sep="")),
                                     "})", sep=""), sep="\n");
@@ -928,7 +1228,7 @@ GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
 CreateIntegMatchingTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(!.on.public.web){
     
     if(is.null(mSet$analSet$jointPAMatches)){
@@ -940,22 +1240,22 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
     fast.write.csv(res, "jointpa_matched_features.csv", row.names = T)
     return(.set.mSet(mSetObj));
   }
-  
+
   results <- mSetObj$dataSet$path.mat
   match_paths <- rownames(results)
-  
+
   ms.list <- lapply(current.kegglib$mset.list, function(x){strsplit(x, " ", fixed=TRUE)})
   ms.list <- ms.list[match(match_paths, names(ms.list))]
   ms.list.list <- lapply(ms.list, function(x) unique(unlist(x)))
-  
+
   ora.vec <- rownames(mSetObj$dataSet$pathinteg.impMat)
   overlap.results <- lapply(ms.list.list, function(overlap) paste0(intersect(overlap, ora.vec), collapse="; ") )
-  
+
   res <- data.frame(matrix(unlist(overlap.results), nrow=length(overlap.results), byrow=T), stringsAsFactors=FALSE)
   rownames(res) <- names(current.kegglib$path.ids)[match(match_paths, current.kegglib$path.ids)] 
   colnames(res) <- "matched_features"
   fast.write.csv(res, "jointpa_matched_features.csv", row.names = T)
-  
+
   if(!.on.public.web){
     return(1)
   }else{

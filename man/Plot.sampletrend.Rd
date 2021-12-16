@@ -25,6 +25,8 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
+
+\item{method}{method of correction}
 }
 \description{
 Scatter sample trend comparison between all sample of different batches

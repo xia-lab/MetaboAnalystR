@@ -18,6 +18,7 @@
 #'For log2FC from the fold-change analsis, use "fc".
 #'For effect-sizes, use "es".
 #'For, p-values, fold-changes and effect sizes, use "all". 
+#'@param mode ion mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -112,6 +113,7 @@ Convert2MummichogMetaPath <- function(mSetObj=NA,
 #'Function to save each mSetObj as a RDS file
 #'to be used later in PerformMetaPSEA.
 #'Should be called after SetPeakEnrichMethod/SetMummichogPval
+#'@param mSetObj mSetObj
 #'@import qs
 #'@export
 savePeakListMetaData <- function(mSetObj=NA){
@@ -144,10 +146,10 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'or pathway level.
 #'@description This is the main function that performs either the mummichog
 #'algorithm, GSEA, or both for peak set enrichment meta-analysis. 
-#'@usage PerformMetaPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
 #'@param mSetObj Input the name of the created mSetObj object. 
 #'@param lib Input the name of the organism library, default is hsa_mfn. 
 #'@param libVersion Input the version of the KEGG pathway libraries ("current" or "old").
+#'@param minLib numeric, default is 3
 #'@param permNum Numeric, input the number of permutations to perform. Default is 100.
 #'@param metaLevel Character, input whether the meta-analysis is at the empirical compound ("ec"),
 #'compound ("cpd"), or pathway level ("pathway").
@@ -156,6 +158,8 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@param es.method Character, input the method to perform effect-size meta-analysis.
 #'@param rank.metric Character, input how to calculate pre-ranking metric. "mean"
 #'to use the average, "min" to use the lowest score, "max" to use the highest score.
+#'@param mutual.feats mutual.feats, logical
+#'@param pooled_cutoff pooled_cutoff, numeric
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -177,12 +181,6 @@ PerformMetaPSEA <- function(mSetObj=NA,
 
   require(plyr);
   mSetObj <- .get.mSet(mSetObj);
-  # save(mSetObj, file = "mSetObj____PerformMetaPSEA.rda")
-  # if(file.exists("inclusionDS.qs")){
-  #   metaFiles <<- qs::qread("inclusionDS.qs")
-  # } else {
-  #   metaFiles <- unique(metaFiles);
-  # }
 
   metaFiles <- mSetObj[["IncludedDataSets"]]
   #metaFiles <- unique(metaFiles);
@@ -198,13 +196,6 @@ PerformMetaPSEA <- function(mSetObj=NA,
   if(file.exists("ms_peaks_meta_anal_path_res.json")) file.remove("ms_peaks_meta_anal_path_res.json")
   if(file.exists("initial_ecs.qs")) file.remove("initial_ecs.qs")
 
-  #CMDSet <- mSet[["cmdSet"]];
-  
-  # if(length(unique(meta.anal.type)) > 1){
-  #   AddErrMsg("Selected algorithms are not consistent!")
-  #   return(0)
-  # }
-
   pathResults <- list();
   pathResultsWhole <- list();
   anal.type0 <- mSetObj$paramSet$anal.type;
@@ -214,14 +205,14 @@ PerformMetaPSEA <- function(mSetObj=NA,
     # now save compound matching results
     # and which compounds are significant - note if GSEA it's all
     cpdMatchResults <- list()
-    
+
     for(i in 1:length(metaFiles)){
       #mSetObj <- qs::qread(metaFiles[i]);
       mSetObj0 <- FormatmSet(mSetObj, metaFiles[i])
       if(!is.null(mSetObj0$dataSet$adduct.custom)){
         mSetObj0 <- AdductMapping(mSetObj0);
       }
- 
+
       mSetObj0 <- .setup.psea.library(mSetObj0, lib, libVersion, minLib);
       cpdMatchResults[[metaFiles[i]]] <- qs::qread("mum_res.qs")
      
@@ -249,7 +240,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
     }
 
     sink("ms_peaks_meta_anal_cpd_matching.json");
-    cat(RJSONIO::toJSON(cpdMatchResults));
+    cat(rjson::toJSON(cpdMatchResults));
     sink();
     
   } else { 
@@ -377,12 +368,12 @@ PerformMetaPSEA <- function(mSetObj=NA,
     sink("ms_peaks_meta_anal_path_res.json");
     
     if(anal.type0!="gsea_peaks"){
-      cat(RJSONIO::toJSON(pathResultsWhole));
+      cat(rjson::toJSON(pathResultsWhole));
       sink();
     }
     
     mSetObj$dataSet$pathResults <- pathResults; #TODO: to replace the I/O with this option
-    
+
     num_files <- length(metaFiles)
     path.names.all <- lapply(pathResults, rownames)
     path.intersect <- Reduce(intersect, path.names.all)
@@ -409,9 +400,9 @@ PerformMetaPSEA <- function(mSetObj=NA,
         path2_keep <- grep("rn|Gamma", colnames(path2))
       }
       
-    }else if(anal.type0=="gsea_peaks"){ # second if just gsea
+    } else if (anal.type0=="gsea_peaks") { # second if just gsea
       path2_keep <- grep("rn|P_val", colnames(path2))
-    }else{ # third if both
+    } else { # third if both
       path2_keep <- grep("rn|Combined_Pvals", colnames(path2))
     }
     
@@ -433,17 +424,17 @@ PerformMetaPSEA <- function(mSetObj=NA,
     # combine p-values
     if(pval.method=="fisher"){
       meta.pvals <- apply(as.matrix(path2), 1, function(x) sumlog(x))
-    }else if(pval.method=="edgington"){ 
+    } else if(pval.method=="edgington"){ 
       meta.pvals <- apply(as.matrix(path2), 1, function(x) sump(x))
-    }else if(pval.method=="stouffer"){
+    } else if(pval.method=="stouffer"){
       meta.pvals <- apply(as.matrix(path2), 1, function(x) sumz(x))
-    }else if(pval.method=="vote"){
+    } else if(pval.method=="vote"){
       meta.pvals <- apply(as.matrix(path2), 1, function(x) votep(x))
-    }else if(pval.method=="min"){
-      Meta.P <- apply(as.matrix(path2), 1, function(x) min(x) )
-    }else if(pval.method=="max") {
-      Meta.P <- apply(as.matrix(path2), 1, function(x) max(x) )
-    }else{
+    } else if(pval.method=="min"){
+      Meta.P <- apply(as.matrix(path2), 1, function(x) min(x))
+    } else if(pval.method=="max") {
+      Meta.P <- apply(as.matrix(path2), 1, function(x) max(x))
+    } else{
       AddErrMsg("Invalid meta-analysis method!")
       return(0)
     }
@@ -493,6 +484,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
 #' @param plotType Use "heatmap" to create a heatmap summary, "network" to create 
 #' a network summary, or "bubble" to create a bubble plot summary of the meta-analysis
 #' results.
+#' @param imgName name of image.
 #' @param heatmap_colorType Character, "brewer" for R Color Brewer scales or
 #' "viridis" for viridis color scales. Used for creating the heatmap
 #' color scheme.
@@ -535,6 +527,14 @@ PerformMetaPSEA <- function(mSetObj=NA,
 #' color scheme.
 #' @param bubble_palette Character, use two/three colors max if using R ColorBrewer palettes
 #' for pleasing looking plots.
+#' @param bubble_interactive logical
+#' @param bubbleMaxPaths maximum number of pathways
+#' @param bubbleFontSize font size of the bubble plot
+#' @param bubblePlotSize plot size of the bubble plot
+#' @param format format of the image
+#' @param width width of the image
+#' @param height height of the image
+#' @param dpi dpi of the image
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
@@ -549,7 +549,8 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
                                     netTextSize = 2.5, netPlotSize = 7.5, 
                                     bubble_interactive = FALSE, bubbleMaxPaths = 15,
                                     bubble_colorType = "brewer", bubble_palette = "RdBu",
-                                    bubbleFontSize = 9, bubblePlotSize = 7){
+                                    bubbleFontSize = 9, bubblePlotSize = 7,
+                                    format = "png", width = 7, height = 5, dpi = 300){
   
   mSetObj <- .get.mSet(mSetObj);
   metaLevel <- mSetObj$metaLevel;
@@ -562,99 +563,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
   }
   
   path_results <- mSetObj$meta_results
-  
-  if(plotType == "heatmap"){
-    
-    path_results <- data.frame(apply(path_results, 2, rev), stringsAsFactors = FALSE)
-    path_results$pathways <- factor(rownames(path_results), as.character(unique(rownames(path_results))))
-    
-    if(nrow(path_results) > heatmap_npaths & !heatmap_allPaths){
-      path_results <- tail(path_results, heatmap_npaths)
-    }
-    
-    #library(reshape2)
-    
-    path_results <- melt(path_results, id = "pathways")
-    
-    if(heatmap_colorType == "brewer"){
-      library(RColorBrewer)
-      pal <- colorRampPalette(brewer.pal(n = 9, heatmap_palette))
-      size = length(unique(path_results$value))
-      pal.pal <- pal(size)
-    }
-    
-    library(ggplot2)
-    
-    if(heatmap_vertical){
-      path.heatmap <- ggplot(data = path_results, mapping = aes(x = variable, y = pathways, fill = value))
-    }else{
-      path_results <- path_results[nrow(path_results):1,]
-      path.heatmap <- ggplot(data = path_results, mapping = aes(x = pathways, y = variable, fill = value))
-    }
-    
-    path.heatmap <- path.heatmap +
-      geom_tile(color = "white") +
-      #remove x and y axis labels
-      labs(x="", y="", title="MS Peaks to Pathway Meta-Analysis") +
-      #remove extra space
-      scale_y_discrete(expand=c(0,0)) +
-      scale_x_discrete(expand=c(0,0)) +
-      #set a base size for all fonts
-      theme_grey(base_size=heatmap_fontSize) +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-      #theme options
-      theme(
-        #bold font for legend text
-        legend.text=element_text(face="bold"),
-        #set thickness of axis ticks
-        axis.ticks=element_line(size=0.4),
-        #remove plot background
-        plot.background=element_blank(),
-        #remove plot border
-        panel.border=element_blank())
-    
-    if(heatmap_colorType == "brewer"){
-      path.heatmap <- path.heatmap +
-        scale_fill_gradient2(low = pal.pal[1],
-                             mid = pal.pal[size/2],
-                             high = pal.pal[size],
-                             midpoint = 0.5,
-                             name = "P-Value",
-                             na.value="transparent")
-    }else{
-      
-      library(viridis)
-      check.palette <- heatmap_palette %in% c("viridis", "magma", "plasma", "inferno")
-      
-      if(!check.palette){
-        heatmap_palette <- "viridis"
-      }
-      
-      path.heatmap <- path.heatmap +
-        scale_fill_viridis(option=heatmap_palette)+
-        labs(fill="P-Value") 
-    }
-    
-    if(heatmap_square){
-      path.heatmap <- path.heatmap + coord_fixed()
-    }
-    
-    ggsave("mspeaks_pathway_heatmap.png")
-    
-    if(heatmap_interactive){
-      library(plotly)
-      ax <- list(
-        zeroline = FALSE,
-        showline = FALSE,
-        showgrid = FALSE
-      )
-      p <- plotly::ggplotly(path.heatmap)
-      p <- p %>% layout(xaxis = ax, yaxis = ax)
-      htmlwidgets::saveWidget(p, "mspeaks_pathway_heatmap_interactive.html")
-    }
-    
-  }
-  
+
   if(plotType == "network"){
     
     hits_sig <- rowSums(path_results[, -ncol(path_results)] < pvalCutoff) + 1 # account for 0 studies < cutoff
@@ -740,7 +649,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
       # covert to json
       netData <- list(nodes=nodes, edges=edge.mat);
       sink("ms_peaks_network.json");
-      cat(RJSONIO::toJSON(netData));
+      cat(rjson::toJSON(netData));
       sink();
       return(g);  
     }else{
@@ -838,16 +747,20 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     
     ratio_String <- cbind(rownames(path_results), ratio_String);
     
-    ratio2 <- melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "enrichment ratio")
+    ratio2 <- melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "enrichment ratio");
     
-    #path_results <- path_results[, -length(colnames(path_results))]
-    path_results$Pathway <- rownames(path_results)
+    #path_results <- path_results[, -length(colnames(path_results))];
+    path_results$Pathway <- rownames(path_results);
     path_results2 <- melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "p-value");
     
     res_table <- cbind(ratio_String, path_results$Meta.P);
     colnames(res_table)[c(1, length(colnames(res_table)))] <- c("Pathways", "Meta.P")
     
-    res_table <- res_table[order(res_table$Meta.P, -as.numeric(res_table$Mean_Enrich)),]
+    res_table <- res_table[order(res_table$Meta.P, -as.numeric(res_table$Mean_Enrich)),];
+
+    if(all(res_table$Mean_Enrich == "100.00")){
+      res_table <- res_table[,-which(colnames(res_table) == "Mean_Enrich(%)")]
+    }
     
     mSetObj$dataSet$res_table <- res_table;
     
@@ -895,8 +808,31 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
       p <- p + scale_color_viridis_c(option=bubble_palette, direction = -1)
     }
     
-    filename <- paste0(imgName, ".png")
-    ggsave(p, filename=filename, width = bubblePlotSize, height = bubblePlotSize*0.6)
+    if(missing(width)) {
+        width <- bubblePlotSize;
+    }
+
+    if(missing(height)) {
+        height <- bubblePlotSize*0.6;
+    }    
+    
+    if(missing(format)) {
+        format <- "png";
+    }
+
+    if(missing(dpi)) {
+        dpi <- 300;
+    }
+
+    # filename <- paste0(imgName, ".png")
+    filename <- paste0(imgName, width,"_", dpi,".", format)
+
+    ggsave(p, 
+           filename=filename,
+           device= format,
+           width = width, 
+           height = height,
+           dpi = dpi)
     
     if(bubble_interactive){
       library(plotly)
@@ -913,7 +849,15 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     mSetObj$imgSet$mummi.meta.path.plot <- filename;
     
   }
-  return(.set.mSet(mSetObj));
+
+  if(.on.public.web) {
+    .set.mSet(mSetObj);
+    return(filename);
+  } else {
+    print(filename)
+    return(.set.mSet(mSetObj));
+  }
+  
 }
 
 
@@ -1017,34 +961,13 @@ PrepareMetaPath <- function(mSetObj = NA,
                             rt.type = "seconds", 
                             dataName, 
                             dataName2) {
-  
-  # mSetObjtmp <- .get.mSet(mSetObj);
+
   mSetObj <- .get.mSet(mSetObj);
-  
-  # TODO: consider the cmd history later
-  # if(!file.exists("cmdSet.qs")){
-  #   qs::qsave(mSetObjtmp$cmdSet, file = "cmdSet.qs");
-  #   mSet$cmdSet <<- NULL;
-  # } else {
-  #   qs::qsave(c(qs::qread("cmdSet.qs"), mSetObjtmp$cmdSet), 
-  #             file = "cmdSet.qs");
-  # }
-  # rm(mSetObjtmp);
+
   
   if(dataName2 == "null"){dataName2 = NULL}
   fileTitle <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (dataName));
   fileTitle2 <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (dataName2));
-  
-  # mSetObjNM <- paste0(fileTitle, "_" ,fileTitle2, "_mSet.qs");
-  # mSetNormedNM <- paste0(fileTitle, "_" ,fileTitle2, "_normalized_mSet.qs");
-  # 
-  # if(file.exists(mSetNormedNM) & .on.public.web){
-  #   mSet <<- mSetObj <- qs::qread(mSetNormedNM)
-  # } else {
-  #   print("---------- > running here is bug for web <---------");
-  #   mSetObj <- .get.mSet(mSetObj);
-  #   qs::qsave(mSetObj, file = mSetObjNM)
-  # }
   
   if(rt.type == "false" | rt.type == "no" | rt.type == "F"){
     rt = FALSE
@@ -1061,8 +984,6 @@ PrepareMetaPath <- function(mSetObj = NA,
   }
   
   rt.studies <<- c(rt.studies, rt);
-  #CMDSet <- mSetObj$cmdSet
-  #mSetObj$cmdSet <- NULL;
   
   ## if(length(mSetObj$dataSet2) == 0) {
   if(is.null(dataName2)){
@@ -1135,32 +1056,6 @@ PrepareMetaPath <- function(mSetObj = NA,
     mSet <<- mSetObj
     dataset_neg <- FetchDataSet(mSetObj, dataName2);
     
-    
-    # # 1st step -- handle the dataset (pos) data in mSet
-    # file.copy(from = paste0(fileTitle, "_orig.qs"), to = "data_orig.qs", overwrite = TRUE);
-    # mSetObj1 <- mSetObj2 <- vector("list")
-    # mSetObj1$dataSet <- mSetObj$dataSet
-    # mSetObj2$dataSet <- mSetObj$dataSet2
-    # .set.mSet(mSetObj1)
-    # mSetObj1 <- Ttests.Anal(mSetObj1, F, pcutoff, FALSE, TRUE);
-    # mSetObj1 <- Convert2MummichogMetaPath(mSetObj1, rt, rds.file=FALSE, rt.type, "all", "positive");
-    # mSetObj1 <- .get.mSet(mSetObj1);
-    # dataset_pos <- mSetObj1$dataSet;
-    # 
-    # file.rename("data_orig.qs", "data_orig1.qs");
-    # 
-    # # 2nd step -- handle the dataset (neg) data in mSet
-    # .set.mSet(mSetObj2)
-    # file.copy(from = paste0(fileTitle2, "_orig.qs"), to = "data_orig.qs", overwrite = TRUE)
-    # mSetObj2 <- Ttests.Anal(mSetObj2, F, 0.05, FALSE, TRUE);
-    # mSetObj2 <- Convert2MummichogMetaPath(mSetObj2, rt, rds.file=FALSE, rt.type, "all", "negative");
-    # mSetObj2 <- .get.mSet(mSetObj2);
-    # dataset_neg <- mSetObj2$dataSet;
-    # file.rename("data_orig.qs", "data_orig2.qs");
-    # fileNM <- mSetObj$dataSet$name;
-    # fileNM <- gsub("\\.[^.]*$", "", basename(fileNM));
-    # filename <- paste0(fileNM, "_mixed_mummichog_input.txt");
-    
     # Merge and save them
     mtbl_all <- rbind(dataset_pos$mummi_new, dataset_neg$mummi_new[-1,]) 
     write.table(mtbl_all, filename, row.names = FALSE, col.names = TRUE)
@@ -1170,11 +1065,7 @@ PrepareMetaPath <- function(mSetObj = NA,
   }
   mSetObj<-defineVersion(mSetObj,dataName,dataName2,version)
   mSet <<- mSetObj;
-  # mSet <<- NULL;
-  # mSetObj <- NULL;
-  # mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE);
-  # 
-  
+
   mSetObj<-SetPeakFormat(mSetObj, "mpt");
   mSetObj<-UpdateInstrumentParameters(mSetObj, ppm, mode);
   mSetObj<-Read.PeakListData(mSetObj, filename, meta.anal=TRUE, method="both");
@@ -1192,11 +1083,6 @@ PrepareMetaPath <- function(mSetObj = NA,
   
   mSetObj$dataSet <- CleanDataSet;
   mSet <<- mSetObj
-  # mSetObj <- UpdateDataSet(mSetObj, dataSet);
-  # mSetObj <- savePeakListMetaData(mSetObj);
-  # 
-  # mSet$cmdSet <<- NULL;
-  # mSetObj$cmdSet <- NULL;
   
   if(.on.public.web){
     # mSetObj <- InitDataObjects("conc", "metapaths", FALSE)
@@ -1210,7 +1096,6 @@ PrepareMetaPath <- function(mSetObj = NA,
 }
 
 CheckAllRT <- function(){
-  
   if(all(rt.studies)){
     rt = "true"
   }else{
@@ -1432,28 +1317,7 @@ ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dat
       mSetObj$dataSet$url.var.nms <- 
       mSetObj$dataSet$url.smp.nms <- 
       MetaData <- NULL;
-    
-    
-    # Handle mass peaks for mummichog
-    # mSetObj <- Read.TextData(mSetObj, dataNM, dataFormat, "disc");
-    # mSetObj <- .get.mSet(mSetObj);
-    # mSetObj$dataSet$name <- dataNM;
-    # mSetObj$dataSet$format <- dataFormat;
-    # mSet0 <- mSetObj;
-    # file.rename("data_orig.qs", "data_orig1.qs");
-    # fileTitle <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(dataNM));
-    # file.copy(from = "data_orig1.qs", to= paste0(fileTitle, "_orig.qs"));
-    # 
-    # mSet0$dataSet2 <- list();
-    # mSetObj <- Read.TextData(mSetObj, dataNM2, dataFormat, "disc");
-    # mSetObj <- .get.mSet(mSetObj);
-    # mSet0$dataSet2 <- mSetObj$dataSet;
-    # mSet0$dataSet2$name <- dataNM2;
-    # mSet0$dataSet2$format <- dataFormat;
-    # file.rename("data_orig.qs", "data_orig2.qs");
-    # fileTitle2 <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(dataNM2));
-    # file.copy(from = "data_orig2.qs", to= paste0(fileTitle2, "_orig.qs"));
-
+ 
   } else if (dataType == "annoPeaks") {
     # Handle annotated compounds for QEA pathway
     # TODO: add more later
@@ -1489,17 +1353,6 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
   # mSetObjNM <- paste0(fileTitle, "_" ,fileTitle2, "_mSetObj.qs");
   dataSet <- FetchDataSet(mSetObj, dataName)
   dataSet2 <- FetchDataSet(mSetObj, dataName2)
-  # if(mSetObj$dataSet$name != dataName){
-  #   dataSet <- qs::qread(dataName);
-  # } else {
-  #   dataSet <- mSetObj$dataSet
-  # }
-
-  # if(length(mSetObj$dataSet2) > 0){
-  #   data_oriNM <- c("data_orig1.qs", "data_orig2.qs");
-  # } else {
-  #   data_oriNM <- "data_orig.qs";
-  # }
   
   if(is.null(dataSet2)){
     data_oriNM <- dataSet$orig.data
@@ -1547,7 +1400,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
       msg <- c(msg, paste(c("Groups found:", unique(cls.lbl[!empty.inx])), collapse=" "));
       msg <- c(msg, "<font color=\"red\">Meta-analysis is only defined for two-group comparisions!</font>");
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }else{
       lvls <- as.character(unique(unlist(cls.lbl)))
@@ -1558,7 +1411,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
     if(length(unique(smpl.nms))!=length(smpl.nms)){
       dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
       msg <- c(msg, "Duplicate sample names are not allowed!");
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }else{
       msg <- c(msg, "All sample names are unique.");
@@ -1582,7 +1435,6 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       }
       dup.nm <- paste("Duplicated names [max 9]: ", var.nms[dup.inx], collapse=" ");
       AddErrMsg(dup.nm);
-      current.msg <<- msg;
       return(0);
     }else{
       msg <- c(msg, "All feature names are unique");
@@ -1593,7 +1445,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       na.inx <- is.na(iconv(smpl.nms));
       nms <- paste(smpl.nms[na.inx], collapse="; ");
       msg <- c(msg, paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }else{
       msg <- c(msg, "All sample names are OK");
@@ -1603,7 +1455,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       na.inx <- is.na(iconv(var.nms));
       nms <- paste(var.nms[na.inx], collapse="; ");
       msg <- c(msg, paste("No special letters (i.e. Latin, Greek) are allowed in feature names!", nms, collapse=" "));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }else{
       msg <- c(msg, "All feature names are OK");
@@ -1636,7 +1488,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       data <- data[good.inx,];
       if(nrow(data)/smpl.num < 0.5){
         msg <- c(msg, paste(msg, "Low quality data rejected!"));
-        current.msg <<- msg;
+        AddErrMsg(msg);
         return(0);
       }
       
@@ -1646,7 +1498,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
     
     if(ncol(data) < 4){
       msg <- c(msg, paste("The sample # (", nrow(data), ") is too small."));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }else{
       msg <- c(msg, paste("A total of", nrow(data), "samples were found."));
@@ -1661,7 +1513,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       msg <- c(msg, paste(sum(!gd.inx), "low quality features (>75% missing) removed"));
       if(ncol(data)/gene.num < 0.25){
         msg <- c(msg, paste(feat.msg, "Low quality data rejected."));
-        current.msg <<- msg;
+        AddErrMsg(msg);
         return(0);
       }
     }
@@ -1675,14 +1527,14 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       msg <- c(msg, paste(sum(!gd.inx), "low quality features (>90% zeros) removed"));
       if(ncol(data)/gene.num< 0.25){
         msg <- c(msg, paste(feat.msg, "Low quality data rejected."));
-        current.msg <<- msg;
+        AddErrMsg(msg);
         return(0);
       }
     }
     
     if(ncol(data) < 10){
       msg <- c(msg, "The feature# (", ncol(data), ") is too small (<10).");
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     } else {
       msg <- c(msg, paste("A total of", ncol(data), "features were found.", collapse=" "));
@@ -1696,13 +1548,6 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
     dataSet$data.proc <- dataSet$data <- data;
     dataSet$cls.proc <- dataSet$cls <- factor(proc.cls);
     
-    ## set 1 or 2 
-    # if(i == 1){
-    #   mSetObj$dataSet <- dataSet
-    # } else {
-    #   mSetObj$dataSet2 <- dataSet
-    # }    
-
     mSetObj <- UpdateDataSet(mSetObj, dataSet);    
     #RegisterData(mSetObj, dataSet)
     if(i ==1 && length(data_oriNM) > 1){
@@ -1811,7 +1656,7 @@ FormatmSet <- function(mSetObj, dataName){
   for(nm in dataNMs){
     if(mSetObj[[nm]]$name == dataName){
       mSetObj0$dataSet <- mSetObj[[nm]];
-      mSetObj0$paramSet <- mSetObj[[nm]]$paramSet;
+      mSetObj0$paramSet <- mSetObj[["paramSet"]];
       mSetObj0$paramSet$anal.type <- mSetObj$paramSet$anal.type;
       mSetObj0$mum_nm_csv <- mSetObj$mum_nm_csv;
       mSetObj0$mum_nm <- mSetObj$mum_nm;
@@ -1977,16 +1822,6 @@ PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotNam
 #' License: GNU GPL (>= 2)
 MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NULL", name, name2) {
   mSetObj <- .get.mSet(mSetObj);
-  # mSetObjtmp <- .get.mSet(mSetObj);
-  # 
-  # if(!file.exists("cmdSet.qs")){
-  #   qs::qsave(mSetObjtmp$cmdSet, file = "cmdSet.qs");
-  #   mSet$cmdSet <<- NULL;
-  # } else {
-  #   qs::qsave(c(qs::qread("cmdSet.qs"),mSetObjtmp$cmdSet), 
-  #             file = "cmdSet.qs");
-  # }
-  # rm(mSetObjtmp);
   
   if(name2 == "null"){name2 = NULL}
   fileTitle <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (name));
@@ -2156,7 +1991,6 @@ Prepare4Network <- function(mSetObj = NA){
 }
 
 GetSigPathNums <- function(pvalCutoff){
-
   mSetObj <- .get.mSet(NA);
   pathSet <- mSetObj$dataSet$pathResults;
   anal.type0 <- mSetObj[["paramSet"]][["anal.type"]];
@@ -2172,12 +2006,14 @@ GetSigPathNums <- function(pvalCutoff){
   }else{
     sig.paths <- lapply(pathSet, function(x) return(rownames(x)[as.data.frame(x)$P_val <= pvalCutoff]));
   }
+  resTable <- mSetObj$dataSet$res_table
+  sig.paths$meta_dat <- resTable[resTable$Meta.P <= pvalCutoff, "Pathways"]
   
   names(sig.paths) <- gsub("mummichoginput.qs", "", names(sig.paths));
-
+  
   mSetObj$dataSet$pathSumData <- sig.paths;
   .set.mSet(mSetObj);
-
+  
   pathSum <- unlist(lapply(sig.paths, length));
   return(pathSum)
 }
@@ -2197,10 +2033,10 @@ SelectMultiPathData <- function(mSetObj=NA, nmVec = NA){
   return(.set.mSet(mSetObj));
 }
 
-PrepareMetaPathData <- function(mSetObj = NA){
-  
+PrepareMetaPathData <- function(mSetObj = NA, imgNm="NA"){
+  save.image("metapath.RData");
   mSetObj <- .get.mSet(mSetObj);
-  save(mSetObj, file = "mSetObj___PrepareMetaPathData.rda")
+
   dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
   MixNms <- gsub("_2", "", dataNMs[substr(dataNMs, nchar(dataNMs)-1, nchar(dataNMs)) == "_2"])
 
@@ -2219,17 +2055,27 @@ PrepareMetaPathData <- function(mSetObj = NA){
   names(dat) <- gsub(".csv","",names(dat));
   dat <- dat[c(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]])];
 
-  if(datNum == 2){
-    Prepare2Venn(dat);
-  }else if(datNum == 3){
-    Prepare3Venn(dat);
-  }else if(datNum == 4){
-    Prepare4Venn(dat);
-  }else{
-    AddErrMsg("Too big of a number of features for the venn diagram");
-    return(0);
+  require(reshape2)
+  df <- melt(dat, value.name="id")
+  colnames(df) <- c("name", 'set')
+  uniq.nms <- unique(df$name)
+  new.df <- dcast(df, name ~ set, value.var='set', fill=0)
+  rownames(new.df) <- new.df[,1]
+  new.df <- new.df[,-1]
+  json.list <- list()
+  for(i in 1:nrow(new.df)){
+    json.list[[i]] <- list()
+    json.list[[i]][["sets"]] <- new.df[i,][new.df[i,] != 0]
+    json.list[[i]][["name"]] <- rownames(new.df)[i]
   }
-  
+  col.vec <-gg_color_hue(length(dat));
+
+  jsonNm <- paste0(imgNm, ".json")
+  json.mat <- RJSONIO::toJSON(list(json.list, col.vec));
+  sink(jsonNm);
+  cat(json.mat);
+  sink();
+
   return(.set.mSet(mSetObj));
 }
 
@@ -2252,112 +2098,6 @@ GetVennPathsNames <- function(mSetObj=NA, areas){
   } 
 }
 
-plotPrettyVennDiagram <- function(mSetObj = NULL, format = "png", dpi = 72, width = 7) {
-  
-  require("VennDiagram");
-  mSetObj <- .get.mSet(mSetObj);
-  save(mSetObj, file = "mSetObj____plotPrettyVennDiagram.rda")
-  dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
-  MixNms <- gsub("_2", "", dataNMs[substr(dataNMs, nchar(dataNMs)-1, nchar(dataNMs)) == "_2"])
-
-  # do something here later
-  dat <- mSetObj[["dataSet"]][["pathSumData"]];
-  datNum <- length(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]]);
-
-  nms <- gsub(".csv","",names(dat));
-  for(nd in seq(names(dat))){  
-    for(nm in MixNms){
-      if(mSetObj[[nm]]$name == names(dat)[nd]){
-         names(dat)[nd] <- paste0(gsub(".csv","",names(dat)[nd]),"mixed");
-       }
-    }      
-  }
-  names(dat) <- gsub(".csv","",names(dat));
-  dat <- dat[c(mSetObj[["dataSet"]][["pathResults_SelectedFiles"]])];
-
-  dataList <- as.list(dat)
-
-  if(is.null(dataList)){
-    return (0);
-  }
-
-  if(length(dataList) == 3) {
-    venn.plot <- venn.diagram(
-      dataList,
-      filename = NULL,
-      euler.d = FALSE,
-      scaled = FALSE,
-      col = "transparent",
-      fill = c( "green", "yellow", "darkorchid1"),
-      alpha = 0.50,
-      cex = 2.5,
-      cat.cex = 2.5,
-      cat.pos = c(-20, 20, 180)
-    );
-  } else if(length(dataList) == 4){
-    venn.plot <- venn.diagram(
-      dataList,
-      filename = NULL,
-      euler.d = FALSE,
-      scaled = FALSE,
-      col = "transparent",
-      fill = c("cornflowerblue", "green", "yellow", "darkorchid1"),
-      alpha = 0.50,
-      label.col = c("orange", "white", "darkorchid4", "white", 
-                    "white", "white", "white", "white", "darkblue", "white", 
-                    "white", "white", "white", "darkgreen", "white"),
-      cex = 1.5,
-      fontfamily = "serif",
-      fontface = "bold",
-      cat.col = c("darkblue", "darkgreen", "orange", "darkorchid4"),
-      cat.cex = 1.5,
-      cat.pos = 0,
-      cat.dist = 0.07,
-      cat.fontfamily = "serif",
-      rotation.degree = 0,
-      margin = 0.2
-    );
-  } else if(length(dataList) == 5){
-    venn.plot <- venn.diagram(
-      dataList,
-      filename = NULL,
-      euler.d = FALSE,
-      scaled = FALSE,
-      col = "black",
-      fill = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
-      alpha = 0.50,
-      cex = c(1.5, 1.5, 1.5, 1.5, 1.5, 1, 0.8, 1, 0.8, 1, 0.8, 1, 0.8,
-              1, 0.8, 1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 1, 1, 1, 1, 1.5),
-      cat.col = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
-      cat.cex = 1.5,
-      cat.fontface = "bold",
-      margin = 0.05
-    );
-  } else {
-    venn.plot <- venn.diagram(
-      dataList, 
-      filename = NULL,
-      col = "black",
-      fill = c("dodgerblue", "goldenrod1")
-    );
-  }
-  
-  fileName <- paste0("VennPlot_", dpi, "_", width, ".", format);
-  Cairo::Cairo(
-    file = fileName,
-    unit = "in",
-    dpi = dpi,
-    width = width,
-    height = width,
-    type = format,
-    bg = "white"
-  )
-  grid.draw(venn.plot);
-  dev.off();
-  
-  return (fileName);
-}
-
 #' setInclusionDataSets#'
 #' @param datasVec a vector of all files
 #' @param mSetObj mSetObj 
@@ -2370,13 +2110,6 @@ plotPrettyVennDiagram <- function(mSetObj = NULL, format = "png", dpi = 72, widt
 setInclusionDataSets <- function(mSetObj=NA, datasVec){
   mSetObj <- .get.mSet(mSetObj);
   fileNM <- tools::file_path_sans_ext(basename(datasVec));
-  # fileNM <- gsub("_", "", fileNM);
-  
-  # NMs <- c(paste0(fileNM, "mixedmummichoginput.qs"), 
-  #          paste0(fileNM, "mummichoginput.qs"))
-  
-  # qs::qsave(NMs[sapply(NMs, file.exists)], 
-  #           file = "inclusionDS.qs");
   
   dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
   mSetObj$IncludedDataSets <- NULL;

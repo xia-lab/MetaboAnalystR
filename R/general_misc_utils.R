@@ -76,9 +76,9 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 
 # in public web, this is done by microservice
 .perform.computing <- function(){
-  dat.in <- qs::qread("dat.in.qs"); 
+  dat.in <- qs::qread("dat.in.qs");
   dat.in$my.res <- dat.in$my.fun();
-  qs::qsave(dat.in, file="dat.in.qs");    
+  qs::qsave(dat.in, file="dat.in.qs");  
 }
 
 #' Read data table
@@ -307,6 +307,10 @@ CleanNames <- function(query){
 ClearStrings<-function(query){
   # kill multiple white space
   query <- gsub(" +"," ",query);
+
+  # black slash escape sign could kill Rserve immediately
+  query <- gsub("\\\\", "-", query);
+
   # remove leading and trailing space
   query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
   return(query);
@@ -454,6 +458,8 @@ hex2rgb <- function(cols){
   obj.dim[vec, 1] <- napply(names, length)[vec]
   mSetObj <- .get.mSet(mSetObj);
   print(lapply(mSetObj$dataSet, object.size));
+  print(lapply(mSetObj$analSet, object.size));
+
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))
@@ -556,6 +562,8 @@ CalculatePairwiseDiff <- function(mat){
 #'Update graph settings
 #'@description Function to update the graph settings.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param colVec colVec
+#'@param shapeVec shapeVec
 #'@export
 # col.vec should already been created
 UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
@@ -638,6 +646,11 @@ GetSizeGradient <- function(vals){
     names(my.sizes) <- names(sort(vals));
     ord.sizes <- my.sizes[nms.orig];
     return(as.vector(ord.sizes)); # note remove names
+}
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
 GetColorSchema <- function(my.cls, grayscale=F){
@@ -761,7 +774,7 @@ GetBashFullPath<-function(){
 #'@param paired Logical, is data paired (T) or not (F).
 #'@param format Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
 #'in columns and paired (colp), or in columns and unpaired (colu).
-#'@param lbl.type Specify the data label type, either discrete (disc) or continuous (cont).
+#'@param lbl.type Specify the data label type, either categorical (disc) or continuous (cont).
 #'@export
 
 XSet2MSet <- function(xset, dataType, analType, paired=F, format, lbl.type){
@@ -1180,11 +1193,117 @@ overlap_ratio <- function(x, y) {
 
 # a utility function to get pheatmap image size (before saving to PNG)
 # https://stackoverflow.com/questions/61874876/get-size-of-plot-in-pixels-in-r
-get_pheatmap_dims <- function(dat, cellheight = 15, cellwidth = 15){
+get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15, cellwidth = 15){
   png("NUL"); # trick to avoid open device in server 
-  heat_map <- pheatmap::pheatmap(dat, cellheight = cellheight, cellwidth = cellwidth);
-  plot_height <- sum(sapply(heat_map$gtable$heights, grid::convertHeight, "in"));
-  plot_width  <- sum(sapply(heat_map$gtable$widths, grid::convertWidth, "in"));
+  heat_map <- pheatmap::pheatmap(dat, annotation=annotation, cellheight = cellheight, cellwidth = cellwidth);
+  h <- sum(sapply(heat_map$gtable$heights, grid::convertHeight, "in"));
+  w  <- sum(sapply(heat_map$gtable$widths, grid::convertWidth, "in"));
   dev.off();
-  return(list(height = plot_height, width = plot_width));
+
+  # further refine 
+  myW <- ncol(dat)*20 + 200;  
+  if(myW < 650){
+      myW <- 650;
+  }   
+  myW <- round(myW/72,2);
+  if(w < myW){
+    w <- myW;
+  }
+
+  if(view.type == "overview"){
+    if(is.na(width)){
+      if(w > 9){
+        w <- 9;
+      }
+    }else if(width == 0){
+      if(w > 7.2){
+        w <- 7.2;
+      }
+      
+    }else{
+      w <- 7.2;
+    }
+    if(h > w){
+      h <- w;
+    }
+  }
+
+  return(list(height = h, width = w));
+}
+
+##
+## perform unsupervised data filter based on common measures
+##
+PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type = NULL){
+  feat.num <- ncol(int.mat);
+  feat.nms <- colnames(int.mat);
+  nm <- NULL;
+  msg <- "";
+  if(filter == "none" && feat.num < 5000){ # only allow for less than 4000
+    remain <- rep(TRUE, feat.num);
+    msg <- paste(msg, "No filtering was applied");
+  }else{
+    if (filter == "rsd"){
+      sds <- apply(int.mat, 2, sd, na.rm=T);
+      mns <- apply(int.mat, 2, mean, na.rm=T);
+      filter.val <- abs(sds/mns);
+      nm <- "Relative standard deviation";
+    }else if (filter == "nrsd" ){
+      mads <- apply(int.mat, 2, mad, na.rm=T);
+      meds <- apply(int.mat, 2, median, na.rm=T);
+      filter.val <- abs(mads/meds);
+      nm <- "Non-paramatric relative standard deviation";
+    }else if (filter == "mean"){
+      filter.val <- apply(int.mat, 2, mean, na.rm=T);
+      nm <- "mean";
+    }else if (filter == "sd"){
+      filter.val <- apply(int.mat, 2, sd, na.rm=T);
+      nm <- "standard deviation";
+    }else if (filter == "mad"){
+      filter.val <- apply(int.mat, 2, mad, na.rm=T);
+      nm <- "Median absolute deviation";
+    }else if (filter == "median"){
+      filter.val <- apply(int.mat, 2, median, na.rm=T);
+      nm <- "median";
+    }else{ # iqr
+      filter.val <- apply(int.mat, 2, IQR, na.rm=T);
+      nm <- "Interquantile Range";
+    }
+    
+    # get the rank of the filtered variables
+    rk <- rank(-filter.val, ties.method='random');
+    
+    if(is.null(remain.num)){ # apply empirical filtering based on data size
+        if(feat.num < 250){ # reduce 5%
+            remain <- rk < feat.num*0.95;
+            msg <- paste(msg, "Further feature filtering based on", nm);
+        }else if(feat.num < 500){ # reduce 10%
+            remain <- rk < feat.num*0.9;
+            msg <- paste(msg, "Further feature filtering based on", nm);
+        }else if(feat.num < 1000){ # reduce 25%
+            remain <- rk < feat.num*0.75;
+            msg <- paste(msg, "Further feature filtering based on", nm);
+        }else{ # reduce 40%, if still over 5000, then only use top 5000
+            remain <- rk < feat.num*0.6;
+            msg <- paste(msg, "Further feature filtering based on", nm);
+
+            if(anal.type == "mummichog"){
+                max.allow <- 7500;
+            }else if(anal.type == "power" || anal.type == "ts"){
+                max.allow <- 5000;
+            }else{
+                max.allow <- 2500;
+            }
+      
+            if(sum(remain) > max.allow){
+                remain <- rk < max.allow;
+                msg <- paste(msg, paste("Reduced to", max.allow, "features based on", nm));
+            }
+        }
+    }else{
+        remain <- rk < remain.num;
+    }
+  }
+  print(msg);
+  return(list(data=int.mat[, remain], msg=msg));
 }

@@ -41,7 +41,6 @@ CreatePowerIntr <- function(){
              " identified greatly outnumbers the sample size. Thus, modified methods of power analysis are needed to", 
              " address such concerns. One solution is to use the average power of all metabolites, and to correct", 
              " for multiple testing using methods such as the false discovery rate (FDR) instead of raw p-values.", 
-             " MetaboAnalystR uses the SSPA R package to perform power analysis.",
              " For more information, please refer to the original paper by van Iterson et al. (PMID: 19758461)\n."
   );
   cat(descr, file=rnwFile, append=TRUE);

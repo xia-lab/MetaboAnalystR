@@ -17,9 +17,9 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'Set current user selected metset library for search
 #'@description if enrichment analysis, also prepare lib by
 #'creating a list of metabolite sets
-#'@usage SetCurrentMsetLib(mSetObj=NA, lib.type, excludeNum)
+#'@usage SetCurrentMsetLib(mSetObj=NA, libname, excludeNum)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param lib.type Input user selected name of library, "self", "kegg_pathway",
+#'@param libname Input user selected name of library, "self", "kegg_pathway",
 #'"smpdb_pathway", "blood", "urine", "csf", "snp", "predicted", "location", and "drug".
 #'@param excludeNum Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -365,8 +365,8 @@ SearchByName <- function(mSetObj=NA, query){
 #'@description note, this process can be long, need to return a value
 #'to force Java to wait
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param kegg.rda Input the name of the KEGG library
 #'@param lib.version Input the KEGG pathway version. "current" for the latest 
+#'@param libNm lib name option
 #'KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -401,7 +401,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
 #'@description note, this process can be long, need to return a value
 #'to force Java to wait
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param smpdb.rda Input the name of the SMPDB library (e.g. hsa or mmu)
+#'@param libNm Input library name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

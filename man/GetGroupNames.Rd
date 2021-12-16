@@ -8,6 +8,8 @@ GetGroupNames(mSetObj = NA, exp.fac = NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{exp.fac}{exp.fac}
 }
 \description{
 Get all group names

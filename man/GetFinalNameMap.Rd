@@ -8,6 +8,8 @@ GetFinalNameMap(mSetObj = NA, lipid = FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{lipid}{Logical}
 }
 \description{
 Returns three columns: original name, HMDB name and KEGG ID,

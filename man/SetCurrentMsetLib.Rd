@@ -4,15 +4,15 @@
 \alias{SetCurrentMsetLib}
 \title{Set current user selected metset library for search}
 \usage{
-SetCurrentMsetLib(mSetObj=NA, lib.type, excludeNum)
+SetCurrentMsetLib(mSetObj=NA, libname, excludeNum)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{excludeNum}{Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)}
-
-\item{lib.type}{Input user selected name of library, "self", "kegg_pathway",
+\item{libname}{Input user selected name of library, "self", "kegg_pathway",
 "smpdb_pathway", "blood", "urine", "csf", "snp", "predicted", "location", and "drug".}
+
+\item{excludeNum}{Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)}
 }
 \description{
 if enrichment analysis, also prepare lib by

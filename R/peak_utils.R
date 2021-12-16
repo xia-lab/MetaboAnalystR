@@ -6,7 +6,6 @@
 #' @param folder Input the path of the folder containing the metpa rda files.
 #' @param kegg_compounds Input the name of the KEGG dictionary containing the 
 #' KEGG compound IDs, KEGG compopund names, and molecular weight.
-#' @usage CreateMummichogLibs("~/Desktop/MetaboAnalyst/mummichog/2020_mummichog_libs/test", kegg_compounds_2020)
 #' @export
 CreateMummichogLibs <- function(folder, kegg_compounds){
 
@@ -38,15 +37,15 @@ CreateMummichogLibs <- function(folder, kegg_compounds){
   
 }
 
-#' Utility function
-#' Make list of KEGG rda files
+## Utility function
+## Make list of KEGG rda files
 rda2list <- function(file) {
   e <- new.env()
   load(file, envir = e)
   as.list(e)
 }
 
-#' Fill in the pathways 
+## Fill in the pathways 
 fillpathways <- function(f){ 
   
   pathways <- list()
@@ -66,7 +65,7 @@ fillpathways <- function(f){
   return(pathways)
 }
 
-#' Gets names and exact mass of all cpds (cpd.lib)
+## Gets names and exact mass of all cpds (cpd.lib)
 make_cpdlib <- function(org){
   
   all_cpds <- unique(unlist(org$cpds))
@@ -96,7 +95,7 @@ make_cpdlib <- function(org){
   return(cpd.lib)
 }
 
-#' Creates cpd.tree
+## Creates cpd.tree
 CreateLibFromKEGG <- function(cpd.lib, pathways, org){
   
   cpd.lib <- cpd.lib;
@@ -146,7 +145,7 @@ CreateLibFromKEGG <- function(cpd.lib, pathways, org){
   qs::qsave(mummichog.lib, file=file_name);
 }
 
-#' Makes adducts
+# Makes adducts
 Compound_function_mzlist <- function(ms_mode, mw){
   
   load_stringr()

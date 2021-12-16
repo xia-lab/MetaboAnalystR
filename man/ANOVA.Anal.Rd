@@ -4,7 +4,7 @@
 \alias{ANOVA.Anal}
 \title{Perform ANOVA analysis}
 \usage{
-ANOVA.Anal(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher")
+ANOVA.Anal(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

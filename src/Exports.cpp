@@ -32,10 +32,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
 /* .C calls */
-RcppExport void imodwt(void *, void *, void *, void *, void *, void *, void *, void *);
-RcppExport void modwt(void *, void *, void *, void *, void *, void *, void *, void *);
+RcppExport void C_imodwt(void *, void *, void *, void *, void *, void *, void *, void *);
+RcppExport void C_modwt(void *, void *, void *, void *, void *, void *, void *, void *);
 RcppExport void continuousPtsAboveThreshold(void *, void *, void *, void *, void *, void *);
 RcppExport void continuousPtsAboveThresholdIdx(void *, void *, void *, void *, void *, void *);
 RcppExport void DescendMin(void *, void *, void *, void *, void *);
@@ -44,6 +43,7 @@ RcppExport void RectUnique(void *, void *, void *, void *, void *, void *, void 
 RcppExport void WhichColMax(void *, void *, void *, void *);
 RcppExport void DescendZero(void *, void *, void *, void *, void *);
 RcppExport void ColMax(void *, void *, void *, void *);
+RcppExport void nncgc(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 /* .Call calls */
 RcppExport SEXP do_decorana(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -58,35 +58,36 @@ RcppExport SEXP breaks_on_nBins(SEXP, SEXP, SEXP, SEXP);
 RcppExport SEXP fmatch(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
-    {"imodwt",         (DL_FUNC) &imodwt,          8},
-    {"modwt",          (DL_FUNC) &modwt,           8},
-    {"continuousPtsAboveThreshold",          (DL_FUNC) &continuousPtsAboveThreshold,           6},
-    {"continuousPtsAboveThresholdIdx",          (DL_FUNC) &continuousPtsAboveThresholdIdx,           6},
-    {"DescendMin",          (DL_FUNC) &DescendMin,           5},
-    {"FindEqualGreaterM",          (DL_FUNC) &FindEqualGreaterM,           5},
-    {"RectUnique",          (DL_FUNC) &RectUnique,           7},
-    {"WhichColMax",          (DL_FUNC) &WhichColMax,           4},
-    {"DescendZero",          (DL_FUNC) &DescendZero,           5},
-    {"ColMax",          (DL_FUNC) &ColMax,           4},
-    {NULL, NULL, 0}
+  {"C_imodwt",         (DL_FUNC) &C_imodwt,          8},
+  {"C_modwt",          (DL_FUNC) &C_modwt,           8},
+  {"continuousPtsAboveThreshold",          (DL_FUNC) &continuousPtsAboveThreshold,           6},
+  {"continuousPtsAboveThresholdIdx",          (DL_FUNC) &continuousPtsAboveThresholdIdx,           6},
+  {"DescendMin",          (DL_FUNC) &DescendMin,           5},
+  {"FindEqualGreaterM",          (DL_FUNC) &FindEqualGreaterM,           5},
+  {"RectUnique",          (DL_FUNC) &RectUnique,           7},
+  {"WhichColMax",          (DL_FUNC) &WhichColMax,           4},
+  {"DescendZero",          (DL_FUNC) &DescendZero,           5},
+  {"ColMax",          (DL_FUNC) &ColMax,           4},
+  {"nncgc",          (DL_FUNC) &nncgc,           10},
+  {NULL, NULL, 0}
 };
 
 static const R_CallMethodDef CallEntries[] = {
-    {"do_decorana",  (DL_FUNC) &do_decorana,  7},
-    {"findmzROI",  (DL_FUNC) &findmzROI,  10},
-    {"getMZ",  (DL_FUNC) &getMZ,  6},
-    {"getEIC",  (DL_FUNC) &getEIC,  6},
-    {"binYonX",  (DL_FUNC) &binYonX,  14},
-    {"binYonX_multi",  (DL_FUNC) &binYonX_multi,  14},
-    {"impute_with_linear_interpolation",  (DL_FUNC) &impute_with_linear_interpolation,  2},
-    {"impute_with_linear_interpolation_base",  (DL_FUNC) &impute_with_linear_interpolation_base,  3},
-    {"breaks_on_nBins",  (DL_FUNC) &breaks_on_nBins,  4},
-    {"fmatch",  (DL_FUNC) &fmatch,  5},
-    {"_MetaboAnalystR_melt_dataframe", (DL_FUNC) &_MetaboAnalystR_melt_dataframe, 8},
-    {NULL, NULL, 0}
+  {"do_decorana",  (DL_FUNC) &do_decorana,  7},
+  {"findmzROI",  (DL_FUNC) &findmzROI,  10},
+  {"getMZ",  (DL_FUNC) &getMZ,  6},
+  {"getEIC",  (DL_FUNC) &getEIC,  6},
+  {"binYonX",  (DL_FUNC) &binYonX,  14},
+  {"binYonX_multi",  (DL_FUNC) &binYonX_multi,  14},
+  {"impute_with_linear_interpolation",  (DL_FUNC) &impute_with_linear_interpolation,  2},
+  {"impute_with_linear_interpolation_base",  (DL_FUNC) &impute_with_linear_interpolation_base,  3},
+  {"breaks_on_nBins",  (DL_FUNC) &breaks_on_nBins,  4},
+  {"fmatch",  (DL_FUNC) &fmatch,  5},
+  {"_MetaboAnalystR_melt_dataframe", (DL_FUNC) &_MetaboAnalystR_melt_dataframe, 8},
+  {NULL, NULL, 0}
 };
 
 RcppExport void R_init_MetaboAnalystR(DllInfo *dll) {
-    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
+  R_registerRoutines(dll, CEntries, CallEntries, NULL, NULL);
+  R_useDynamicSymbols(dll, FALSE);
 }

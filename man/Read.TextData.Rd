@@ -2,9 +2,16 @@
 % Please edit documentation in R/general_data_utils.R
 \name{Read.TextData}
 \alias{Read.TextData}
-\title{Constructor to read uploaded CSV or TXT files into the dataSet object}
+\title{Read.TextData
+Constructor to read uploaded CSV or TXT files into the dataSet object}
 \usage{
-Read.TextData(mSetObj=NA, filePath, format, lbl.type)
+Read.TextData(
+  mSetObj = NA,
+  filePath,
+  format = "rowu",
+  lbl.type = "disc",
+  nmdr = FALSE
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
@@ -14,7 +21,7 @@ Read.TextData(mSetObj=NA, filePath, format, lbl.type)
 \item{format}{Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
 in columns and paired (colp), or in columns and unpaired (colu).}
 
-\item{lbl.type}{Specify the data label type, either discrete (disc) or continuous (cont).}
+\item{lbl.type}{Specify the data label type, either categorical (disc) or continuous (cont).}
 
 \item{nmdr}{Boolean. Default set to FALSE (data is uploaded by the user and not fetched
 through an API call to the Metabolomics Workbench).}

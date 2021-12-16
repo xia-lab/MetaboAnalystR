@@ -4,7 +4,8 @@
 \alias{Volcano.Anal}
 \title{Perform Volcano Analysis}
 \usage{
-Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
+Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, 
+cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -22,8 +23,6 @@ Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equ
 \item{equal.var}{Logical, indicates if the group variance is equal (T) or unequal (F)}
 
 \item{pval.type}{To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".}
-
-\item{percent.thresh}{Only for paired data, numeric, indicate the significant count threshold}
 }
 \description{
 Perform volcano analysis

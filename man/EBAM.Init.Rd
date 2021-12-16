@@ -21,6 +21,16 @@ EBAM.Init(
 \item{isPaired}{Logical}
 
 \item{isVarEq}{Logical}
+
+\item{nonPar}{nonPar}
+
+\item{A0}{A0}
+
+\item{delta}{delta}
+
+\item{imgA0}{imgA0}
+
+\item{imgSig}{imgSig}
 }
 \description{
 deteriming a0, only applicable for z.ebam (default)

@@ -38,6 +38,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   
   # PreparePrenormData() called already
   data <- qs::qread("prenorm.qs");
+
   cls <- mSetObj$dataSet$prenorm.cls;
 
   # note, setup time factor
@@ -156,10 +157,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }else{
     mSetObj$dataSet$use.ratio <- FALSE;
     # transformation
+    # may not be able to deal with 0 or negative values
     if(transNorm=='LogNorm'){
       min.val <- min(abs(data[data!=0]))/10;
       data<-apply(data, 2, LogNorm, min.val);
       transnm<-"Log10 Normalization";
+    }else if(transNorm=='SrNorm'){
+      min.val <- min(abs(data[data!=0]))/10;
+      data<-apply(data, 2, SquareRootNorm, min.val);
+      transnm<-"Square Root Transformation";
     }else if(transNorm=='CrNorm'){
       norm.data <- abs(data)^(1/3);
       norm.data[data<0] <- - norm.data[data<0];
@@ -197,8 +203,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   if(ratio){
     mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F)
   }
-  
+
   mSetObj$dataSet$norm <- as.data.frame(data);
+  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    if(rownames(mSetObj$dataSet$norm) != rownames(mSetObj$dataSet$meta.info)){
+      print("Metadata and data norm are not synchronized.")
+    }
+    mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[rownames(data),]  
+  }
+
   qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
   mSetObj$dataSet$cls <- cls;
   
@@ -207,20 +220,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$combined.method <- FALSE;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
-
-#  processedObj <- list();#for omicsanalyst
-#  processedObj$name <- "met_t_omicsanalyst.json"
-#  processedObj$type <- "met.t"
-#  processedObj$data.proc <- as.matrix(t(mSetObj$dataSet$norm))
-#  processedObj$feature.nms <- rownames(processedObj$data.proc)
-#  processedObj$sample.nms <- colnames(processedObj$data.proc)
-#  meta = data.frame(Condition = mSetObj$dataSet$cls)
-#  rownames(meta) <-  colnames(processedObj$data.proc)
-#  processedObj$meta <- meta
-#  library(RJSONIO)
-#  sink(processedObj$name);
-#  cat(toJSON(processedObj));
-#  sink();
 
   return(.set.mSet(mSetObj));
 }
@@ -275,6 +274,11 @@ QuantileNormalize <- function(data){
 # generalize log, tolerant to 0 and negative values
 LogNorm<-function(x, min.val){
   log10((x + sqrt(x^2 + min.val^2))/2)
+}
+
+# square root, tolerant to negative values
+SquareRootNorm<-function(x, min.val){
+  ((x + sqrt(x^2 + min.val^2))/2)^(1/2);
 }
 
 # normalize to zero mean and unit variance
@@ -334,14 +338,16 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   
   mSetObj$imgSet$norm <- imgName
   
+  proc.data <- qs::qread("data_proc.qs");
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE))
   
   # since there may be too many compounds, only plot a subsets (50) in box plot
   # but density plot will use all the data
   
-  pre.inx<-GetRandomSubsetIndex(ncol(mSetObj$dataSet$proc), sub.num=50);
-  namesVec <- colnames(mSetObj$dataSet$proc[,pre.inx, drop=FALSE]);
+  pre.inx<-GetRandomSubsetIndex(ncol(proc.data), sub.num=50);
+  namesVec <- colnames(proc.data[,pre.inx, drop=FALSE]);
   
   # only get common ones
   nm.inx <- namesVec %in% colnames(mSetObj$dataSet$norm)
@@ -351,7 +357,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   norm.inx<-match(namesVec, colnames(mSetObj$dataSet$norm));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
   
-  rangex.pre <- range(mSetObj$dataSet$proc[, pre.inx, drop=FALSE], na.rm=T);
+  rangex.pre <- range(proc.data[, pre.inx, drop=FALSE], na.rm=T);
   rangex.norm <- range(mSetObj$dataSet$norm[, norm.inx, drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
@@ -363,14 +369,14 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
     plot.new()
   }else{
     op<-par(mar=c(4,7,4,0), xaxt="s");
-    plot(density(apply(mSetObj$dataSet$proc, 2, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
+    plot(density(apply(proc.data, 2, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
     mtext("Density", 2, 5);
     mtext("Before Normalization",3, 1)
   }
   
   # fig 2
   op<-par(mar=c(7,7,0,0), xaxt="s");
-  boxplot(mSetObj$dataSet$proc[,pre.inx, drop=FALSE], names=namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T, show.names=T);
+  boxplot(proc.data[,pre.inx, drop=FALSE], names=namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(x.label, 1, 5);
   
   # fig 3
@@ -422,16 +428,17 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
     # w <- 7.2; h <- 9;
   }
   
+  proc.data <- qs::qread("data_proc.qs");
   mSetObj$imgSet$summary_norm <-imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  layout(matrix(c(1,1,1,2,3,3,3,4), 4, 2, byrow = FALSE))
-  
+  layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE));
+
   # since there may be too many samples, only plot a subsets (50) in box plot
   # but density plot will use all the data
   
-  pre.inx<-GetRandomSubsetIndex(nrow(mSetObj$dataSet$proc), sub.num=50);
-  namesVec <- rownames(mSetObj$dataSet$proc[pre.inx, , drop=FALSE]);
+  pre.inx<-GetRandomSubsetIndex(nrow(proc.data), sub.num=50);
+  namesVec <- rownames(proc.data[pre.inx, , drop=FALSE]);
   
   # only get common ones
   nm.inx <- namesVec %in% rownames(mSetObj$dataSet$norm)
@@ -441,34 +448,34 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
   norm.inx<-match(namesVec, rownames(mSetObj$dataSet$norm));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
   
-  rangex.pre <- range(mSetObj$dataSet$proc[pre.inx, , drop=FALSE], na.rm=T);
+  rangex.pre <- range(proc.data[pre.inx, , drop=FALSE], na.rm=T);
   rangex.norm <- range(mSetObj$dataSet$norm[norm.inx, , drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-"Samples";
   
   # fig 1
-  op<-par(mar=c(5.75,8,4,0), xaxt="s");
-  boxplot(t(mSetObj$dataSet$proc[pre.inx, , drop=FALSE]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
-  mtext("Before Normalization", 3,1)
-  
-  # fig 2
   op<-par(mar=c(6.5,7,0,0), xaxt="s");
-  plot(density(apply(mSetObj$dataSet$proc, 1, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
+  plot(density(apply(proc.data, 1, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
   mtext(x.label, 1, 4);
   mtext("Density", 2, 5);
+
+  # fig 2
+  op<-par(mar=c(5.75,8,4,0), xaxt="s");
+  boxplot(t(proc.data[pre.inx, , drop=FALSE]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
+  mtext("Before Normalization", 3,1)
   
   # fig 3
-  op<-par(mar=c(5.75,8,4,2), xaxt="s");
-  boxplot(t(mSetObj$dataSet$norm[norm.inx, , drop=FALSE]), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
-  mtext("After Normalization", 3, 1);
-  
-  # fig 4
   op<-par(mar=c(6.5,7,0,2), xaxt="s");
   plot(density(apply(mSetObj$dataSet$norm, 1, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
   mtext(paste("Normalized",x.label),1, 4)
   
+  # fig 4
+  op<-par(mar=c(5.75,8,4,2), xaxt="s");
+  boxplot(t(mSetObj$dataSet$norm[norm.inx, , drop=FALSE]), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
+  mtext("After Normalization", 3, 1);
   dev.off();
+
   return(.set.mSet(mSetObj));
 }
 
@@ -484,7 +491,7 @@ UpdateData <- function(mSetObj=NA){
   mSetObj$dataSet$edit <- NULL; 
 
   if(is.null(mSetObj$dataSet$filt)){
-    data <- mSetObj$dataSet$proc;
+    data <- qs::qread("data_proc.qs");
     cls <- mSetObj$dataSet$proc.cls;
     if(substring(mSetObj$dataSet$format,4,5)=="ts"){
       facA <- mSetObj$dataSet$proc.facA;
@@ -576,7 +583,7 @@ PreparePrenormData <- function(mSetObj=NA){
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
     }
   }else{
-    prenorm <- mSetObj$dataSet$proc;
+    prenorm <- qs::qread("data_proc.qs");
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
     if(substring(mSetObj$dataSet$format,4,5) == "ts"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;

@@ -8,6 +8,8 @@ SetMummichogPval(mSetObj = NA, cutoff)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}
+
+\item{cutoff}{cutoff value for mummichog running}
 }
 \description{
 Set the p-value cutoff for mummichog analysis.

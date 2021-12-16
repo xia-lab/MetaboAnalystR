@@ -9,9 +9,9 @@ ReadMetaPathTableMix(mSetObj = NA, dataNM, dataNM2, dataFormat, dataType)
 \arguments{
 \item{mSetObj}{mSetObj}
 
-\item{dataNM}{file name 1 with absolute path}
+\item{dataNM}{file name 1 with absolute path (should be ESI+)}
 
-\item{dataNM2}{file name 2 with absolute path}
+\item{dataNM2}{file name 2 with absolute path (should be ESI-)}
 
 \item{dataFormat}{data format, can be colu or rowu}
 

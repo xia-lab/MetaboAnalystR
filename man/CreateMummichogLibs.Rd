@@ -4,7 +4,7 @@
 \alias{CreateMummichogLibs}
 \title{Create Mummichog Libraries from KEGG}
 \usage{
-CreateMummichogLibs("~/Desktop/MetaboAnalyst/mummichog/2020_mummichog_libs/test", kegg_compounds_2020)
+CreateMummichogLibs(folder, kegg_compounds)
 }
 \arguments{
 \item{folder}{Input the path of the folder containing the metpa rda files.}

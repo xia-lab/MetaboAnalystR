@@ -8,6 +8,10 @@ UpdateGraphSettings(mSetObj = NA, colVec, shapeVec)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{colVec}{colVec}
+
+\item{shapeVec}{shapeVec}
 }
 \description{
 Function to update the graph settings.

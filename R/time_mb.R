@@ -14,6 +14,16 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 
   mSetObj <- .get.mSet(mSetObj);
   
+  if(!exists('meta.vec5')){
+    sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
+    mSetObj$dataSet$exp.fac <- sel.meta.df[,2]
+    mSetObj$dataSet$time.fac <- sel.meta.df[,1]
+  }else{
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec5]
+    mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
+    mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
+} 
+    
   time.fac <- mSetObj$dataSet$time.fac;
   exp.fac <- mSetObj$dataSet$exp.fac;
   sbj <- vector(mode="character", length=nrow(mSetObj$dataSet$norm));
@@ -75,7 +85,8 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
+#'@param version image mark
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -115,177 +126,15 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
                        beta = NULL, alpha.d = NULL, alpha = NULL, condition.grp,
                        time.grp = NULL, rep.grp = NULL, p = 0.02)
 {
-  M <- as.matrix(object)
-  tr <- function(X) {
-    sum(diag(X))
-  }
-  G <- nrow(M)
-  
-  max.size <- apply(size, 2, max)
-  if (ncol(size) != D)
-    stop("The sample sizes are incorrect!")
-  for (i in 1:D) {
-    if ((max.size[i] * times) != sum(condition.grp ==
-                                     sort(unique(condition.grp))[i]))
-      stop("The sample sizes or the biological condition group assignments are incorrect!")
-  }
-  
-  
-  time.grp <- rep(1:times, ncol(M)/times);
-  
-  if (length(unique(time.grp)) != times)
-    stop("The number of time points or the time group \n    assignments is incorrect!")
-  if (is.null(rep.grp)) {
-    rep.grp <- rep(1:(ncol(M)/times), rep(times, ncol(M)/times))
-    cat("Replicate group assignments are set to default.",
-        "\n")
-  }
-  mydata <- M
-  indx <- order(condition.grp, rep.grp, time.grp)
-  M <- M[, indx]
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
-  mis <- sum((mis/times - floor(mis/times)) != 0)
-  if (mis > 0)
-    stop(mis, " genes may have within replicate missing values.")
-  N <- apply(size, 1, sum)
-  Sp <- apply(M, 1, matrix.cov, times, trans = FALSE, c.grp = condition.grp)
-  diagSp <- apply(Sp, 2, function(x) diag(matrix(x, ncol = times)))
-  Sp.avg <- matrix(apply(Sp, 1, mean, na.rm = TRUE), ncol = times)
-  if (is.null(nu) || is.null(Lambda)) {
-    nu.lim <- times + 6
-    if (!is.null(nu)) {
-      nu0 <- nu
-      nu <- max(nu0, nu.lim)
-      if (is.infinite(nu) & is.null(Lambda)) {
-        Lambda <- Sp.avg
-      }
-      if (is.finite(nu) & is.null(Lambda)) {
-        Lambda <- (nu - times - 1) * Sp.avg/nu
-      }
-      nu <- nu0
+   if(.on.public.web){
+    # make this lazy load
+    if(!exists("my.time.mb.manova")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_manova.Rc");    
     }
-    if (is.null(nu)) {
-      nu0 <- mean(sapply(1:times, function(x) squeezeVar(diagSp[x,
-                                                                ], N - D)$df.prior))
-      nu <- max(nu0, nu.lim)
-      if (is.infinite(nu) & is.null(Lambda)) {
-        Lambda <- Sp.avg
-      }
-      if (is.finite(nu) & is.null(Lambda)) {
-        Lambda <- (nu - times - 1) * Sp.avg/nu
-      }
-      nu <- nu0
-    }
+    return(my.time.mb.manova(object, times, D, size, nu, Lambda, beta.d, beta, alpha.d, alpha, condition.grp, time.grp, rep.grp, p));
+  }else{
+    return(my.time.mb.manova(object, times, D, size, nu, Lambda, beta.d, beta, alpha.d, alpha, condition.grp, time.grp, rep.grp, p));
   }
-  max.size <- apply(size, 2, max)
-  xbar.d <- as.list(NULL)
-  for (i in 1:D) {
-    grp.indx <- condition.grp == sort(unique(condition.grp))[i]
-    xbar.d[[i]] <- apply(M[, grp.indx], 1, function(x) apply(matrix(x,
-                                                                    byrow = TRUE, ncol = times), 2, mean, na.rm = TRUE))
-  }
-  
-  simple.stat <- NULL
-  for(i in 1:(D-1))
-    for(j in (i+1):D)
-      simple.stat <- cbind(simple.stat, apply(abs(xbar.d[[i]]-xbar.d[[j]]),2,sum,na.rm=TRUE))
-  
-  simple.stat <- apply(simple.stat,1,sum,na.rm=TRUE)
-  simple.rank <- G-rank(simple.stat)+1
-  indx1 <- simple.rank<=G*p
-  xbar <- sapply(1:G, function(x) apply(matrix(M[x, ], byrow = TRUE,
-                                               ncol = times), 2, mean, na.rm = TRUE))
-  if (is.null(alpha.d))
-    alpha.d <- sapply(1:D, function(x) apply(xbar.d[[x]][,indx1],
-                                             1, mean, na.rm = TRUE))
-  if (is.null(alpha))
-    alpha <- apply(xbar[,!indx1], 1, mean, na.rm = TRUE)
-  
-  
-  if (is.null(beta.d) || is.null(beta)) {
-    U.d <- lapply(1:D, function(x) apply(xbar.d[[x]][,indx1] - alpha.d[,
-                                                                       x], 2, function(y) y %*% t(y)))
-    U <- apply(xbar[,!indx1] - alpha, 2, function(y) y %*% t(y))
-    Ubar.d <- sapply(1:D, function(x) apply(U.d[[x]], 1,
-                                            mean, na.rm = TRUE))
-    Ubar <- apply(U, 1, mean, na.rm = TRUE)
-    if (is.null(beta.d)){
-      Sp <- apply(M[indx1,], 1, matrix.cov, times, trans = FALSE, c.grp = condition.grp)
-      Sp.avg <- matrix(apply(Sp, 1, mean, na.rm = TRUE), ncol = times)
-      beta.d <- sapply(1:D, function(x) tr(Sp.avg)/tr(matrix(Ubar.d[,
-                                                                    x], ncol = times)))
-    }
-    if (is.null(beta)){
-      Sp <- apply(M[!indx1,], 1, matrix.cov, times, trans = FALSE, c.grp = condition.grp)
-      Sp.avg <- matrix(apply(Sp, 1, mean, na.rm = TRUE), ncol = times)
-      beta <- tr(Sp.avg)/tr(matrix(Ubar, ncol = times))
-    }
-  }
-  Sp <- apply(M, 1, matrix.cov, times, trans = FALSE, c.grp = condition.grp)
-  Sp.avg <- matrix(apply(Sp, 1, mean, na.rm = TRUE), ncol = times)
-  U.d <- lapply(1:D, function(x) apply(xbar.d[[x]] - alpha.d[,
-                                                             x], 2, function(y) y %*% t(y)))
-  U <- apply(xbar- alpha, 2, function(y) y %*% t(y))
-  total <- (N - 1) * apply(M, 1, matrix.cov, times, trans = FALSE,
-                           c.grp = rep(1, ncol(M)))
-  within <- Sp * (N - D)
-  if (sum(N == max(N)) == G)
-    M <- U/(N[1]^(-1) + beta^(-1))
-  if (sum(N == max(N)) < G)
-    M <- sapply(1:G, function(x) U[, x]/(N[x]^(-1) + beta^(-1)))
-  M.d <- as.list(NULL)
-  for (i in 1:D) {
-    if (sum(size[, i] == max.size[i]) == G)
-      M.d[[i]] <- U.d[[i]]/(size[1, i]^(-1) + beta.d[i]^(-1))
-    if (sum(size[, i] == max.size[i]) < G)
-      M.d[[i]] <- sapply(1:G, function(x) U.d[[i]][, x]/(size[x,
-                                                              i]^(-1) + beta.d[i]^(-1)))
-  }
-  M1 <- matrix(0, nrow = times^2, ncol = G)
-  for (i in 1:D) M1 <- M1 + M.d[[i]]
-  tol <- .Machine$double.eps
-  
-  if (nu < 0)
-    stop("The estimation of prior degrees of freedom <0 !")
-  if (is.finite(nu) & nu > tol) {
-    MB1 <- log(p, 10) - log(1 - p, 10)
-    MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
-    MB4 <- sapply(1:G, function(x) 0.5 * (N[x] + nu) * (log(det(matrix(total[,
-                                                                             x], ncol = times) + matrix(M[, x], ncol = times) +
-                                                                  nu * Lambda), 10) - log(det(matrix(within[, x], ncol = times) +
-                                                                                                matrix(M1[, x], ncol = times) + nu * Lambda), 10)))
-    MB <- MB1 + MB2 + MB3 + MB4
-  }
-  if (is.infinite(nu)) {
-    MB1 <- log(p, 10) - log(1 - p, 10)
-    MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
-    MB4 <- sapply(1:G, function(x) tr(matrix(total[, x],
-                                             ncol = times) - matrix(within[, x], ncol = times) +
-                                        matrix(M[, x], ncol = times) - matrix(M1[, x], ncol = times)) -
-                    log(10))
-    MB <- MB1 + MB2 + MB3 + MB4
-  }
-  if (nu < tol & nu >= 0) {
-    MB1 <- log(p, 10) - log(1 - p, 10)
-    MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
-    MB4 <- sapply(1:G, function(x) 0.5 * N[x] * (log(det(matrix(total[,
-                                                                      x], ncol = times) + matrix(M[, x], ncol = times)),
-                                                     10) - log(det(matrix(within[, x], ncol = times) +
-                                                                     matrix(M1[, x], ncol = times)), 10)))
-    MB <- MB1 + MB2 + MB3 + MB4
-  }
-  
-  names(MB) <- rownames(object);
-  MB <- round(sort(MB, decreasing = TRUE),5);
-  MB <- as.matrix(MB, ncol=1);
-  colnames(MB) <- c("MB-statistics");
-  MB;
 }
 
 #'Plot the variable across time points (x)
@@ -528,417 +377,29 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
                   mn.grp=NULL, r=FALSE, vec=FALSE, d=NULL, prop=0.02, T2.only=TRUE)
 {
   
-  M <- as.matrix(object);
-  
-  G <- nrow(M)
-
-  if(!is.null(mn))
-  {
-    max.mn1 <- max(mn[,1])
-    max.mn2 <- max(mn[,2])
-    if(ncol(mn) != length(unique(c.grp))) stop("The sample sizes are incorrect!")
-    if(((max.mn1*k) != sum(c.grp==sort(unique(c.grp))[1])) || ((max.mn2*k) != sum(c.grp==sort(unique(c.grp))[2])))
-      stop("The sample sizes or the biological condition group assignments are incorrect!")
-  }
-  
-  if(is.null(k.grp))
-  {
-    k.grp <- rep(1:k, ncol(M)/k)
-    cat("Time group assignments are set to default.","\n")
-  }
-  if(length(unique(k.grp)) != k) stop("The number of time points or the time group assignments are
-                                      incorrect")
-  if(is.null(mn.grp))
-  {
-    mn.grp <- rep(1:(ncol(M)/k), rep(k, ncol(M)/k))
-    cat("Replicate group assignments are set to default.","\n")
-  }
-  
-  
-  mydata <- M
-  indx <- order(c.grp, mn.grp, k.grp)
-  M <- M[,indx]
-  
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
-  mis <- sum((mis/k-floor(mis/k)) !=0)
-  if(mis>0) stop(mis, " metabolites may have within replicate missing values.")
-  
-  
-  N <- apply(mn,1,sum)
-  
-  ## sample sizes across genes are the same
-  ## only need to input the common sample size
-  Sp <- apply(M, 1, matrix.cov, k, trans=FALSE, c.grp=c.grp)
-  diagSp <- apply(Sp, 2, function(x) diag(matrix(x,ncol=k)))
-  Sp.avg <- matrix(apply(Sp, 1, mean, na.rm=TRUE),ncol=k)
-  
-  if(is.null(nu)||is.null(Lambda))
-  {
-    
-    nu.lim <- k+6
-    
-    if(!is.null(nu))
-    {
-      nu0 <- nu
-      nu <- max(nu0, nu.lim)
-      if(is.infinite(nu)& is.null(Lambda))  {Lambda <- Sp.avg}
-      if(is.finite(nu)& is.null(Lambda))    {Lambda <- (nu-k-1)*Sp.avg/nu}
-      nu<- nu0
+   if(.on.public.web){
+    # make this lazy load
+    if(!exists("my.time.mb.2d")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_2d.Rc");    
     }
-    
-    if(is.null(nu))
-    {
-      nu0 <- mean(sapply(1:k, function(x) squeezeVar(diagSp[x,], N-2)$df.prior))
-      nu <- max(nu0, nu.lim)
-      if(is.infinite(nu)& is.null(Lambda))  {Lambda <- Sp.avg}
-      if(is.finite(nu)& is.null(Lambda))    {Lambda <- (nu-k-1)*Sp.avg/nu}
-      nu<- nu0
-    }
+    return(my.time.mb.2d(object, k, mn, c.grp, nu, Lambda, eta, k.grp, mn.grp, r, vec, d, prop, T2.only));
+  }else{
+    return(my.time.mb.2d(object, k, mn, c.grp, nu, Lambda, eta, k.grp, mn.grp, r, vec, d, prop, T2.only));
   }
-  
-  max.n1 <- max(mn[,1])
-  max.n2 <- max(mn[,2])
-  xbar1 <- apply(M[, 1:(k*max.n1)], 1, function(x)
-    apply(matrix(x,  byrow=FALSE, ncol=max.n1),1,mean,na.rm=TRUE))
-  xbar2 <- apply(M[, -c(1:(k*max.n1))], 1, function(x)
-    apply(matrix(x,  byrow=FALSE, ncol=max.n2),1,mean,na.rm=TRUE))
-  if(r)
-  {
-    e1 <- sapply(1:G, function(x) matrix(M[x, 1:(k*max.n1)], byrow=FALSE, ncol=max.n1)-xbar1[,x])
-    tune1 <- sapply(1:G, function(x) d * median(abs(e1[, x]),na.rm = TRUE)/0.6745)
-    indx1 <- sapply(1:G, function(x) abs(e1[, x]) > tune1[x])
-    na.indx1 <- sapply(1:G, function(x) c(1:(k * max.n1))[!is.na(indx1[,x])])
-    wt1 <- matrix(rep(1, G * max.n1 * k), ncol = max.n1 * k)
-    wt1 <- t(sapply(1:G, function(x) {wt1[x,][-na.indx1[,x]] <- 0
-    wt1[x,]}))
-    wt1 <- t(sapply(1:G, function(x) {wt1[x, ][na.indx1[,x]][indx1[,x][na.indx1[,x]]] <-
-      tune1[x]/abs(e1[,x][na.indx1[,x]][indx1[,x][na.indx1[,x]]])
-    wt1[x,]}))
-    totalw1 <- sapply(1:G, function(x) apply(matrix(wt1[x,], byrow=FALSE, ncol=max.n1), 1, sum,
-                                             na.rm=TRUE))
-    w1 <- sapply(1:G, function(x) matrix(wt1[x,], byrow=FALSE, ncol=max.n1)/totalw1[,x])
-    xbar1 <- sapply(1:G, function(x)
-      apply(matrix(w1[, x] * M[x, 1:(k*max.n1)], byrow = FALSE, ncol = max.n1),1, sum,na.rm=TRUE))
-    
-    
-    e2 <- sapply(1:G, function(x) matrix(M[x, -(1:(k*max.n1))], byrow=FALSE, ncol=max.n2)-xbar2[,x])
-    tune2 <- sapply(1:G, function(x) d * median(abs(e2[, x]),na.rm = TRUE)/0.6745)
-    indx2 <- sapply(1:G, function(x) abs(e2[, x]) > tune2[x])
-    na.indx2 <- sapply(1:G, function(x) c(1:(k * max.n2))[!is.na(indx2[,x])])
-    wt2 <- matrix(rep(1, G * max.n2 * k), ncol = max.n2 * k)
-    wt2 <- t(sapply(1:G, function(x) {wt2[x,][-na.indx2[,x]] <- 0
-    wt2[x,]}))
-    wt2 <- t(sapply(1:G, function(x) {wt2[x, ][na.indx2[,x]][indx2[,x][na.indx2[,x]]] <-
-      tune2[x]/abs(e2[,x][na.indx2[,x]][indx2[,x][na.indx2[,x]]])
-    wt2[x,]}))
-    totalw2 <- sapply(1:G, function(x) apply(matrix(wt2[x,], byrow=FALSE, ncol=max.n2), 1, sum,
-                                             na.rm=TRUE))
-    w2 <- sapply(1:G, function(x) matrix(wt2[x,], byrow=FALSE, ncol=max.n2)/totalw2[,x])
-    xbar2 <- sapply(1:G, function(x)
-      apply(matrix(w2[, x] * M[x, -(1:(k*max.n1))], byrow = FALSE, ncol = max.n2),1, sum,na.rm=TRUE))
-    wt <- cbind(wt1, wt2)
-  }
-  
-  
-  X <- xbar1-xbar2
-  tol <- .Machine$double.eps
-  if(is.finite(nu) & nu > tol)
-  {
-    modSp <- sapply(1:G, function(x) ((N[x]-2)*matrix(Sp[,x],ncol=k)+nu*Lambda)/(N[x]-2+nu))
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modSp <- apply(modSp, 2, function(x)
-        svd(matrix(x,ncol=k))$u%*%diag(sqrt(svd(matrix(x,ncol=k))$d))%*%t(svd(matrix(x,ncol=k))$v))
-      modt <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1/2)*solve(matrix(sqrt.modSp[,x],ncol=k))%*%X[,x])
-      HotellingT2 <- apply(modt, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1)*t(X[,x])%*%solve(matrix(modSp[,x],ncol=k))%*%X[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-  }
-  
-  if(is.infinite(nu))
-  {
-    modSp <- sapply(1:G, function(x) Lambda)
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modSp <- apply(modSp, 2, function(x)
-        svd(matrix(x,ncol=k))$u%*%diag(sqrt(svd(matrix(x,ncol=k))$d))%*%t(svd(matrix(x,ncol=k))$v))
-      modt <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1/2)*solve(matrix(sqrt.modSp[,x],ncol=k))%*%X[,x])
-      HotellingT2 <- apply(modt, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1)*t(X[,x])%*%solve(matrix(modSp[,x],ncol=k))%*%X[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-  }
-  if(nu < tol & nu >=0)
-  {
-    modSp <- Sp
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modSp <- apply(modSp, 2, function(x)
-        svd(matrix(x,ncol=k))$u%*%diag(sqrt(svd(matrix(x,ncol=k))$d))%*%t(svd(matrix(x,ncol=k))$v))
-      modt <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1/2)*ginv(matrix(sqrt.modSp[,x],ncol=k))%*%X[,x])
-      HotellingT2 <- apply(modt, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x)
-        (mn[x,1]^(-1)+mn[x,2]^(-1))^(-1)*t(X[,x])%*%ginv(matrix(modSp[,x],ncol=k))%*%X[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-  }
-  if(is.null(eta)& (T2.only==FALSE)) eta <- mean(sapply(1:k, function(x) tmixture.matrix(modt[x,],
-                                                                                         sqrt(mn[,1]^(-1)+mn[,2]^(-1)), N+nu-2, prop, c(0.1, 4)^2/Lambda[x,x]))^(-1))
-  
-  
-  if(nu < 0) stop("The estimation of prior degrees of freedom <0 !")
-  
-  names(HotellingT2) <- rownames(object);
-  HotellingT2 <- round(sort(HotellingT2, decreasing = TRUE),5);
-  HotellingT2 <- as.matrix(HotellingT2, ncol=1);
-  colnames(HotellingT2) <- c("Hotelling-T2");
-  HotellingT2;
 }
 
 # Used in higher function 
 mb.1D <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=NULL, n.grp=NULL, r=FALSE, vec=FALSE, d=NULL, prop=0.01, T2.only=TRUE) {
-  
-  res <- as.list(NULL)
-  M <- as.matrix(object)
-  
-  G <- nrow(M)
-  max.n <- max(n)
-  
-  if(is.null(k.grp)){
-    k.grp <- rep(1:k, max.n)
-    cat("Time group assignments are set to default.","\n")
-  }
-  
-  if(is.null(n.grp)){
-    n.grp <- rep(c(1:max.n), rep(k, max.n))
-    cat("Replicate group assignments are set to default.", "\n")
-  }
-  
-  mydata <- M
-  indx <- order(n.grp, k.grp)
-  M <- M[,indx]
-  
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
-  mis <- sum((mis/k-floor(mis/k)) !=0)
-  if(mis>0) stop(mis, " genes may have missing values in some of the replicates.")
-  
-  
-  if((max.n*k) !=ncol(M)) stop("The number of time points or sample sizes are incorrect.")
-  if(length(unique(n.grp)) != max.n) stop("Sample sizes or replicate group assignments is incorrect.")   
-  c.grp <- rep(1, k*max.n)
-  
-  S1 <- apply(M, 1, matrix.cov, k, c.grp=c.grp)
-  if(is.null(nu)) diagS1 <- apply(S1, 2, function(x) diag(matrix(x,ncol=k-1)))
-  S1.avg <- matrix(apply(S1, 1, mean, na.rm=TRUE),ncol=k-1)
-  
-  
-  if(is.null(nu)||is.null(Lambda1)){
-    nu.lim <- k-1+6
-    
-    
-    if(!is.null(nu))
-    {
-      nu0 <- nu
-      nu <- max(nu0, nu.lim)
-      if(is.infinite(nu) & is.null(Lambda1))  {Lambda1 <- S1.avg} 
-      if(is.finite(nu)& is.null(Lambda1))    {Lambda1 <- (nu-k)*S1.avg/nu }
-      nu<- nu0
+    if(.on.public.web){
+    # make this lazy load
+    if(!exists("my.time.mb.1d")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_1d.Rc");    
     }
-    
-    if(is.null(nu))
-    {
-      nu0 <- mean(sapply(1:(k-1), function(x) squeezeVar(diagS1[x,], n-1)$df.prior))
-      nu <- max(nu0, nu.lim)
-      if(is.infinite(nu)& is.null(Lambda1))  {Lambda1 <- S1.avg} 
-      if(is.finite(nu)& is.null(Lambda1))    {Lambda1 <- (nu-k)*S1.avg/nu }
-      nu<- nu0
-    }
+    return(my.time.mb.1d(object, k, n, nu, Lambda1, eta, k.grp, n.grp, r, vec, d, prop, T2.only));
+  }else{
+    return(my.time.mb.1d(object, k, n, nu, Lambda1, eta, k.grp, n.grp, r, vec, d, prop, T2.only));
   }
-  
-  max.n <- max(n)
-  T1 <- ot.helmert(k)[2:k,]
-  xbar <- apply(M, 1, function(x) apply(matrix(x,  byrow=FALSE, ncol=max.n),1,mean,na.rm=TRUE))
-  
-  if(r){    
-    e <- sapply(1:G, function(x) matrix(M[x,], byrow=FALSE, ncol=max.n)-xbar[,x])
-    tune <- sapply(1:G, function(x) d * median(abs(e[, x]),na.rm = TRUE)/0.6745)
-    indx <- sapply(1:G, function(x) abs(e[, x]) > tune[x])
-    na.indx <- sapply(1:G, function(x) c(1:(k * max.n))[!is.na(indx[,x])])
-    wt <- matrix(rep(1, G * max.n * k), ncol = max.n * k)
-    wt <- t(sapply(1:G, function(x) {wt[x,][-na.indx[,x]] <- 0 
-    wt[x,]}))        
-    wt <- t(sapply(1:G, function(x) {wt[x, ][na.indx[,x]][indx[,x][na.indx[,x]]] <- 
-      tune[x]/abs(e[,x][na.indx[,x]][indx[,x][na.indx[,x]]])
-    wt[x,]}))
-    totalw <- sapply(1:G, function(x) apply(matrix(wt[x,], byrow=FALSE, ncol=max.n), 1, sum, 
-                                            na.rm=TRUE))
-    w <- sapply(1:G, function(x) matrix(wt[x,], byrow=FALSE, ncol=max.n)/totalw[,x])
-    xbar <- sapply(1:G, function(x) 
-      apply(matrix(w[, x] * M[x, ], byrow = FALSE, ncol = max.n),1, sum,na.rm=TRUE));       
-  }
-  
-  tol <- .Machine$double.eps
-  if(is.finite(nu) & nu > tol) 
-  {
-    modS1 <- sapply(1:G, function(x) ((n[x]-1)*matrix(S1[,x],ncol=k-1)+nu*Lambda1)/(n[x]-1+nu))
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modS1 <- apply(modS1, 2, function(x)
-        svd(matrix(x,ncol=k-1))$u%*%diag(sqrt(svd(matrix(x,ncol=k-1))$d))%*%t(svd(matrix(x,ncol=k-1))$v))
-      modt1 <- sapply(1:G, function(x) n[x]^(1/2)*solve(matrix(sqrt.modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-      HotellingT2 <- apply(modt1, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x) 
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-    
-  }
-  
-  if(is.infinite(nu))
-  {
-    modS1 <- sapply(1:G, function(x) Lambda1)
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modS1 <- apply(modS1, 2, function(x)
-        svd(matrix(x,ncol=k-1))$u%*%diag(sqrt(svd(matrix(x,ncol=k-1))$d))%*%t(svd(matrix(x,ncol=k-1))$v))
-      modt1 <- sapply(1:G, function(x) n[x]^(1/2)*solve(matrix(sqrt.modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-      HotellingT2 <- apply(modt1, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-  }
-  if(nu < tol & nu >=0)
-  {
-    modS1 <- S1
-    if(is.null(eta) & (T2.only==FALSE))
-    {
-      sqrt.modS1 <- apply(modS1, 2, function(x)
-        svd(matrix(x,ncol=k-1))$u%*%diag(sqrt(svd(matrix(x,ncol=k-1))$d))%*%t(svd(matrix(x,ncol=k-1))$v))
-      modt1 <- sapply(1:G, function(x) n[x]^(1/2)*ginv(matrix(sqrt.modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-      HotellingT2 <- apply(modt1, 2, function(x) t(x)%*%x)
-    }
-    if(T2.only)
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%ginv(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-    
-    if(!is.null(eta) & (T2.only==FALSE))
-      HotellingT2 <- sapply(1:G, function(x)
-        n[x]*t(T1%*%xbar[,x])%*%solve(matrix(modS1[,x],ncol=k-1))%*%T1%*%xbar[,x])
-  }
-  
-  
-  # HotellingT2 does not require eta
-  if(is.null(eta) & (T2.only==FALSE)) eta <- mean(sapply(1:(k-1), function(x) tmixture.matrix(modt1[x,], 
-                                                                                              sqrt(1/n), n+nu-1, prop, c(0.1, 4)^2/Lambda1[x,x]))^(-1))
-  
-  res$M <- mydata
-  res$prop <- prop
-  res$nu <- nu
-  res$Lambda1 <- Lambda1 
-  res$eta <- eta
-  
-  
-  if(nu < 0) stop("The degrees of moderation <0 !")
-  
-  tol <- .Machine$double.eps
-  if(is.finite(nu) & nu > tol)
-  {
-    MB <- NULL
-    if(T2.only==FALSE)
-    {
-      MB1 <- log(prop,10)-log(1-prop,10)
-      MB2 <- ((k-1)/2)*log((eta/(n+eta)),10)
-      MB3 <- ((n+nu)/2)*log(((n-1+nu+HotellingT2)/(n-1+nu+(eta/(n+eta))*HotellingT2)), 10)
-      MB <- MB1+MB2+MB3
-    }
-    unique.n <- unique(n)
-    res$percent <- matrix(c(unique.n, round(100*nu/(nu+unique.n-1))), ncol=2)
-    res$size <- n
-    res$con.group <- rep(1, k*max.n)
-    res$rep.group <- n.grp
-    res$time.group <- k.grp
-    if(r) res$weights <- wt
-    if(vec) res$modt1 <- modt1
-    res$HotellingT2 <- HotellingT2 
-    res$MB <- MB
-  }
-  
-  if(is.infinite(nu)){
-    MB <- NULL
-    if(T2.only==FALSE)
-    {
-      MB1 <- log(prop,10)-log(1-prop,10)
-      MB2 <- ((k-1)/2)*log((eta/(n+eta)),10)
-      MB3 <- 0.5*(n/(n+eta))*HotellingT2-log(10)
-      MB <- MB1+MB2+MB3
-    }
-    
-    unique.n <- unique(n)
-    res$percent <- matrix(c(unique.n, 100), ncol=2)
-    res$size <- n
-    res$con.group <- rep(1, k*max.n)
-    res$rep.group <- n.grp
-    res$time.group <- k.grp
-    if(r) res$weights <- wt
-    if(vec) res$modt1 <- modt1
-    res$HotellingT2 <- HotellingT2 
-    res$MB <- MB
-  }
-  
-  if(nu < tol & nu >=0){
-    MB <- NULL
-    if(T2.only==FALSE)
-    {
-      MB1 <- log(prop,10)-log(1-prop,10)
-      MB2 <- ((k-1)/2)*log((eta/(n+eta)),10)
-      MB3 <- (n/2)*log(((n-1+HotellingT2)/(n-1+(eta/(n+eta))*HotellingT2)), 10)
-      MB <- MB1+MB2+MB3
-    }
-    
-    unique.n <- unique(n)
-    res$percent <- matrix(c(unique.n, 0), ncol=2)
-    res$size <- n
-    res$con.group <- rep(1, k*max.n)
-    res$rep.group <- n.grp
-    res$time.group <- k.grp
-    if(r) res$weights <- wt
-    if(vec) res$modt1 <- modt1
-    res$HotellingT2 <- HotellingT2 
-    res$MB <- MB
-  }
-  
-  names(HotellingT2) <- rownames(object);
-  HotellingT2 <- round(sort(HotellingT2, decreasing = TRUE),5);
-  HotellingT2 <- as.matrix(HotellingT2, ncol=1);
-  colnames(HotellingT2) <- c("Hotelling-T2");
-  HotellingT2;
+
 }
 
 ##############################################

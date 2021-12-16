@@ -196,7 +196,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   if(mSetObj$dataSet$use.ratio){
     data <- mSetObj$dataSet$proc.ratio;
   }else{
-    data <- mSetObj$dataSet$proc;
+    data <- qs::qread("data_proc.qs");
   }
   # update in case norm filtered?
   hit.inxX <- rownames(data) %in% rownames(x);
@@ -926,10 +926,11 @@ GetCIs <- function(data, param=F){
 
 #'Perform Classical Univariate ROC
 #'@description Perform Classical Univariate ROC
-#'@usage Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
+#'@usage Perform.UnivROC(mSetObj=NA, feat.nm, version, 
+#'format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param feat.nm Input the name of the feature to perform univariate ROC analysis
-#'@param imgName Input a name for the plot
+#'@param version image version mark, can be any character
 #'@param format Select the image format, png, of pdf. 
 #'@param dpi Input the dpi. If the image format is pdf, users need not define the dpi. For png images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300. 
@@ -938,15 +939,20 @@ GetCIs <- function(data, param=F){
 #'@param optMethod Select the optimal cutoff by using either closest.topleft for closest to top-left corner or 
 #'youden for farthest to the diagonal line (Youden) 
 #'@param isPartial Logical, input T to calculate a partial ROC curve, and F to not
-#'@param measure Select the parameter to limit the calculation of the partial ROC curve, se for the X-axis (maximum false-positive rate)
+#'@param measure Select the parameter to limit the calculation of the partial ROC curve, 
+#'se for the X-axis (maximum false-positive rate)
 #'and sp for the Y-axis, representing the minimum true positive-rate
-#'@param cutoff Input the threshold to limit the calculation of the partial ROC curve, the number must be between 0 and 1.
+#'@param cutoff Input the threshold to limit the calculation of the partial ROC curve, 
+#'the number must be between 0 and 1.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-Perform.UnivROC <- function(mSetObj=NA, feat.nm, version, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff){
+Perform.UnivROC <- function(mSetObj=NA, feat.nm, 
+                            version, format="png", 
+                            dpi=72, isAUC, isOpt, 
+                            optMethod, isPartial, measure, cutoff){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1022,10 +1028,12 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm, version, format="png", dpi=72, 
 #'between the groups.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param feat.nm Input the name of the selected compound.
-#'@param imgName Input a name for the plot
+#'@param version version mark for image name
 #'@param format Select the image format, "png", of "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300. 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
+#'@param isOpt logical
+#'@param isQuery logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1256,18 +1264,23 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'Plot ROC
 #'@description Pred and auroc are lists containing predictions
 #'and labels from different cross-validations 
-#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, 
+#'avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'@param dpi Input the dpi. If the image format is "pdf", 
+#'users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param mdl.inx Model index, 0 means to compare all models, input 1-6 to plot a ROC curve for one of the top six models  
-#'@param avg.method Input the method to compute the average ROC curve, either "threshold", "vertical" or "horizontal"
+#'@param mdl.inx Model index, 0 means to compare all models, 
+#'input 1-6 to plot a ROC curve for one of the top six models  
+#'@param avg.method Input the method to compute the average ROC curve, 
+#'either "threshold", "vertical" or "horizontal"
 #'@param show.conf Logical, if 1, show confidence interval, if 0 do not show
 #'@param show.holdout Logical, if 1, show the ROC curve for hold-out validation, if 0 do not show 
 #'@param focus "fpr" 
-#'@param cutoff Input the threshold to limit the calculation of the ROC curve, the number must be between 0 and 1.
+#'@param cutoff Input the threshold to limit the calculation of the 
+#'ROC curve, the number must be between 0 and 1.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1442,14 +1455,18 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.meth
 #'Plot ROC for the ROC Curve Based Model Creation and Evaluation module
 #'@description Plot the ROC curve of the biomarker model created using a user-selected subset of features.
 #'Pred and auroc are lists containing predictions and labels from different cross-validations. 
-#'@usage PlotROCTest(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+#'@usage PlotROCTest(mSetObj=NA, imgName, format="png", 
+#'dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'@param dpi Input the dpi. If the image format is "pdf", 
+#'users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param mdl.inx Model index, 0 means to compare all models, input 1-6 to plot a ROC curve for one of the top six models  
-#'@param avg.method Input the method to compute the average ROC curve, either "threshold", "vertical" or "horizontal"
+#'@param mdl.inx Model index, 0 means to compare all models, 
+#'input 1-6 to plot a ROC curve for one of the top six models  
+#'@param avg.method Input the method to compute the average ROC curve, 
+#'either "threshold", "vertical" or "horizontal"
 #'@param show.conf Logical, if 1, show confidence interval, if 0 do not show
 #'@param show.holdout Logical, if 1, show the ROC curve for hold-out validation, if 0 do not show 
 #'@param focus "fpr" 
@@ -1721,13 +1738,15 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 
 #'Plot selected compounds by their percentage frequency
 #'@description Plot the important variables of single biomarker model ranked by order of importance
-#'@usage PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15)
+#'@usage PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, 
+#'mdl.inx, measure = "freq", feat.num = 15)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format elect the image format, "png", of "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param mdl.inx Model index, -1 selects the model with the best AUC, input 1-6 to view the important features of one of the top six models
+#'@param mdl.inx Model index, -1 selects the model with the best AUC, input 1-6 to 
+#'view the important features of one of the top six models
 #'@param measure Choose to rank features by the frequency of being selected "freq", or the 
 #'mean importance measure "mean"
 #'@param feat.num Input the number of features to include in the plot, by default it is 15.
@@ -1736,7 +1755,8 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15){
+PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+                        mdl.inx, measure = "freq", feat.num = 15) {
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;

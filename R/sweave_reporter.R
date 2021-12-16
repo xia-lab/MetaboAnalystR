@@ -44,6 +44,8 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
     CreateNetworkExplorerRnwReport(mSetObj, usrName);
   }else if(anal.type == "mummichog"){
     CreateMummichogRnwReport(mSetObj, usrName);
+  }else if(anal.type == "metapaths"){
+    CreateMetaPathRnwReport(mSetObj, usrName);
   }else if(anal.type == "metadata"){
     CreateMetaAnalysisRnwReport(mSetObj, usrName);
   }else if(anal.type == "raw"){
@@ -105,7 +107,7 @@ CreateSummaryTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   sum.dat<-NULL;
-  plenth<-dim(mSetObj$dataSet$proc)[2];
+  plenth <- mSetObj$dataSet$proc.feat.num;
   if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin'){
     orig.data<- qs::qread("data_orig.qs");
     for(i in 1:nrow(orig.data)){
@@ -194,7 +196,8 @@ CreateNORMdoc <- function(mSetObj=NA){
               "\\end{itemize}",
               "\\item{Data transformation : }",
               "\\begin{itemize}",
-              "\\item{Generalized log transformation (glog 2) }",
+              "\\item{Log transformation (base 10)}",
+              "\\item{Square root transformation}",
               "\\item{Cube root transformation}",
               "\\end{itemize}",
               "\\item{Data scaling: }",

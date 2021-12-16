@@ -2,8 +2,6 @@
 
 Read.duplicatesDataTable <- function(mSet = NA, fileName, format){
   
-  err.vec <<- "";
-  
   dat <- .readDataTable(fileName);
   
   mSetObj <- .get.mSet(mSetObj);

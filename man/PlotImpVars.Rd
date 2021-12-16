@@ -4,7 +4,8 @@
 \alias{PlotImpVars}
 \title{Plot selected compounds by their percentage frequency}
 \usage{
-PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq", feat.num = 15)
+PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, 
+mdl.inx, measure = "freq", feat.num = 15)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -16,7 +17,8 @@ PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, measure = "freq"
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
 
-\item{mdl.inx}{Model index, -1 selects the model with the best AUC, input 1-6 to view the important features of one of the top six models}
+\item{mdl.inx}{Model index, -1 selects the model with the best AUC, input 1-6 to 
+view the important features of one of the top six models}
 
 \item{measure}{Choose to rank features by the frequency of being selected "freq", or the 
 mean importance measure "mean"}

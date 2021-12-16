@@ -20,7 +20,8 @@ PlotHeatMap(
   colV = T,
   var.inx = NULL,
   border = T,
-  grp.ave = F
+  grp.ave = F,
+  metadata
 )
 }
 \arguments{
@@ -57,6 +58,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{border}{Indicate whether or not to show cell-borders, default is set to T}
 
 \item{grp.ave}{Logical, default is set to F}
+
+\item{metadata}{metadata}
 }
 \description{
 Plot a heatmap based on results from t-tests/ANOVA, VIP or randomforest

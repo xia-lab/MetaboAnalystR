@@ -2,7 +2,7 @@
 #' @description Function downloads the required file and reads it only if not already in working directory.
 #' Need to specify the file URL and the destfile. 
 #' @param filenm Input the name of the file to download
-
+#' @param sub.dir sub.dir
 # read binary qs files
 # sub.dir is sub folder, leave NULL is under main lib folder
 .get.my.lib <- function(filenm, sub.dir=NULL){

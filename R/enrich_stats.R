@@ -430,6 +430,7 @@ CalculateSSP<-function(mSetObj=NA){
 #'@description This function creates a pie-chart for compound classes
 #'in the enrichment analysis if the library is based on chemical ontologies.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param enrichType enrichType
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 

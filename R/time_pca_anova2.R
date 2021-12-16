@@ -46,21 +46,53 @@ aov.between.type3 <- function(x){
 
 #'Perform Two-way ANOVA 
 #'@description Perform Two-way ANOVA 
-#'@usage ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1)
+#'@usage ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", 
+#'type="time0", aov.type=1, use.interact=1)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param thresh Input the p-value threshold 
 #'@param p.cor Select method for p-value correction, bonferroni, holm or fdr
-#'@param type Select b to perform between-subjects ANOVA, and w for within-subjects ANOVA 
+#'@param type Select b to perform between-subjects ANOVA, 
+#'and w for within-subjects ANOVA 
 #'@param aov.type Specify 1 for ANOVA type 1, or 3 for ANOVA type 3
-#'@param use.interact Numeric, whether to consider interaction in two-way repeated ANOVA (1) or not (0).
+#'@param use.interact Numeric, whether to consider 
+#'interaction in two-way repeated ANOVA (1) or not (0).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1){
+ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
+                       p.cor="fdr", type="time0", 
+                       aov.type=1, use.interact=1){
 
   mSetObj <- .get.mSet(mSetObj);
+  if(!exists('meta.vec2')){
+    sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
+  }else{
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec2]
+    if(length(meta.vec2) == 1){
+      sel.meta.df <- as.data.frame(sel.meta.df)
+    }
+    
+    if(type %in% c("time0", "time")){
+      mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
+      mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
+    }else{
+      mSetObj$dataSet$facA = sel.meta.df[,1]
+      mSetObj$dataSet$facB = sel.meta.df[,2]
+    }
+  }
+  
+      mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[1]
+      mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[2]
+
+  for(i in 1:ncol(sel.meta.df)){
+    meta <- colnames(sel.meta.df)[i]
+    mettype <- mSetObj$dataSet$meta.types[meta]
+    if(mettype == "cont"){
+      return(-1);
+    }
+  }
   
   if(type == "time0"){
     time.fac <- mSetObj$dataSet$time.fac;
@@ -111,26 +143,8 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
       }
       time.fac <- mSetObj$dataSet$time.fac;
       exp.fac <- mSetObj$dataSet$exp.fac;
-      
-      sbj <- vector(mode="character", length=nrow(mSetObj$dataSet$norm));
-      k = 1;
-      len = 0;
-      for(lv1 in levels(exp.fac)){
-        # same subjects must in the same exp. condition
-        inx1 <- exp.fac == lv1;
-        for(lv2 in levels(time.fac)){
-          inx2 <- time.fac == lv2;
-          len <- sum(inx1 & inx2);
-          
-          # same subjects must not in the same time points
-          # so in a balanced design and ordered by the time points
-          # all samples in each time points will sweep all subjects (one go)
-          sbj[inx1 & inx2] <- paste("S", k:(k+len-1), sep="");
-        }
-        k = k + len;
-      }
-      
-      mSetObj$dataSet$sbj <- as.factor(sbj);  
+            
+      mSetObj$dataSet$sbj <- mSetObj$dataSet$meta.info[,3]
       
       if(.on.public.web){
         .set.mSet(mSetObj);
@@ -156,7 +170,18 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
       if(aov.type == 1){
         aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between));
       }else{
-        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between.type3));
+        tryCatch(
+          {
+            aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between.type3));
+          }, warning = function(w){ print() },
+          error = function(e) {
+            if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
+              AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+              return(0);
+            }
+            print(e$message)
+          }
+        )
       }
       rm(aov.facA, aov.facB, pos=".GlobalEnv");
       
@@ -166,11 +191,11 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
     rownames(aov.mat) <- colnames(mSetObj$dataSet$norm);
     
     if(use.interact){
-
+      
       aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
-                          p.adjust(aov.mat[,5], p.cor),
-                          p.adjust(aov.mat[,6], p.cor));
-
+                         p.adjust(aov.mat[,5], p.cor),
+                         p.adjust(aov.mat[,6], p.cor));
+      
       sig.facA <-(aov.mat2[,7] <= thresh);
       sig.facB <-(aov.mat2[,8] <= thresh);
       sig.intr <-(aov.mat2[,9] <= thresh);
@@ -193,8 +218,13 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
       aov.mat2 <- aov.mat2[, c(1,4,7,2,5,8,3,6,9),drop=F] 
       
     }else{
+      #unsure if this is right
+      if(ncol(aov.mat)==6){
+        aov.mat <- aov.mat[,-c(3,6)]
+      }
+      
       aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,3], p.cor), p.adjust(aov.mat[,4], p.cor));
-
+      
       sig.facA <-(aov.mat2[,5] <= thresh);
       sig.facB <-(aov.mat2[,6] <= thresh);
       
@@ -219,6 +249,14 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.t
   }
   
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
+  
+  if(dim(aov.mat)[1] != 0){
+    if(unname(is.na(table(is.na(aov.mat))["FALSE"]))){
+      AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+      return(0)
+    }
+  }
+  
   fast.write.csv(aov.mat, file=fileName);
   names(p.value) <- colnames(mSetObj$dataSet$norm);
   aov2<-list (
@@ -257,7 +295,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 7;
+    w <- 9;
   }else if(width == 0){
     w <- 7;
   }else{
@@ -280,7 +318,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     dev.off();
   }else{
     h <- w;
-    title <- ifelse(mSetObj$analSet$aov2$type == "g2", "Two-way ANOVA (between subjects)", "Two-way ANOVA (within subject)");
+    title <- ifelse(mSetObj$analSet$aov2$type == "multi", "Two-way ANOVA (between subjects)", "Two-way ANOVA (within subject)");
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     plotVennDiagram(mSetObj$analSet$aov2$vennC, circle.col=c("red", "blue", "green"), mar=c(0,0,2,0));
     mtext(title, NORTH<-3, line=0.25, cex=1.5);
@@ -308,6 +346,10 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 iPCA.Anal<-function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
+
+  metadata <- mSetObj$dataSet$meta.info
+  data.types <- mSetObj$dataSet$meta.types
+
   # RhpcBLASctl::blas_set_num_threads(1);
   # RhpcBLASctl::omp_set_num_threads(1);
 
@@ -320,19 +362,28 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   colnames(coords) <- NULL; 
   pca3d$score$xyz <- coords;
   pca3d$score$name <- rownames(mSetObj$dataSet$norm);
-  facA <- as.character(mSetObj$dataSet$facA);
-  
-  if(all.numeric(facA)){
-    facA <- paste("Group", facA);
-  }
-  
+  facA <- mSetObj$dataSet$facA;
+  facA <- as.character(facA);
+
   pca3d$score$facA <- facA;
-  facB <- as.character(mSetObj$dataSet$facB);
-  
-  if(all.numeric(facB)){
-    facB <- paste("Group", facB);
+  metadata.list <- list();
+
+  for(i in 1:ncol(metadata)){
+    if(data.types[colnames(metadata)[i]] == "disc"){
+    metadata.list[[ colnames(metadata)[i] ]] <- levels(metadata[, i])
+    }else{
+    metadata.list[[ colnames(metadata)[i] ]] <- unique(metadata[, i])
+    }
   }
-  
+
+  facB <- mSetObj$dataSet$facB;
+  facB <- as.character(facB);
+
+  pca3d$score$metadata_list <- metadata.list
+  pca3d$score$metadata <- metadata
+  pca3d$score$metadata_type <- mSetObj$dataSet$meta.types
+
+
   pca3d$score$facB <- facB;
   
   pca3d$loadings$axis <- paste("Loadings", 1:3);
@@ -350,63 +401,12 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
   pca3d$score$colors <- my.col2rgb(cols);
   
-  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  json.obj <- rjson::toJSON(pca3d);
   sink(fileNm);
   cat(json.obj);
   sink();
   
-  if(!.on.public.web){
-    
-    uniq.facA <- unique(facA)
-    uniq.facB <- unique(facB)
-    
-    if(length(uniq.facA) > 3){
-      col <- RColorBrewer::brewer.pal(length(uniq.pchs), "Set3")
-    }else{
-      col <- c("#1972A4", "#FF7070")
-    }
-    
-    s.xlabel <- pca3d$score$axis[1]
-    s.ylabel <- pca3d$score$axis[2]
-    s.zlabel <- pca3d$score$axis[3]
-    
-    all.symbols <- c("circle", "cross", "diamond", "x", "square", "circle-open",
-                     "square-open", "diamond-open")
-    
-    b.symbol <- all.symbols[1:length(uniq.facB)]
-    
-    # first, scores plot
-    data.s <- data.frame(cbind(t(pca3d$score$xyz), as.numeric(mSetObj$dataSet$facB)))
-    
-    p.s <- plotly::plot_ly(x = data.s[, 1], y = data.s[, 2], z = data.s[, 3],
-                         color = mSetObj$dataSet$facA, colors = col) 
-    p.s <- plotly::add_markers(p.s, sizes = 5, symbol = data.s[,4], symbols = b.symbol)
-    p.s <- plotly::layout(p.s, scene = list(xaxis = list(title = s.xlabel),
-                                        yaxis = list(title = s.ylabel),
-                                        zaxis = list(title = s.zlabel)))
-    
-    # second, loadings plot
-    l.xlabel <- pca3d$loadings$axis[1]
-    l.ylabel <- pca3d$loadings$axis[2]
-    l.zlabel <- pca3d$loadings$axis[3]
-    
-    data.l <- data.frame(cbind(t(pca3d$loadings$xyz)))
-    
-    p.l <- plotly::plot_ly(x = data.l[, 1], y = data.l[, 2], z = data.l[, 3], colors = col[1]) 
-    p.l <- plotly::add_markers(p.l, sizes = 5)
-    p.l <- plotly::layout(p.l, scene = list(xaxis = list(title = l.xlabel),
-                                        yaxis = list(title = l.ylabel),
-                                        zaxis = list(title = l.zlabel)))
-    
-    mSetObj$imgSet$time$score3d <- p.s
-    mSetObj$imgSet$time$load3d <- p.l
-  }
-  
-  if(!.on.public.web){
-    print("Interactive scores and loading plots have been created, please find
-          them in mSet$imgSet$time$score3d and mSet$imgSet$time$load3d.")
-    return(.set.mSet(mSetObj));
-  }
+  return(.set.mSet(mSetObj));
 }
 
 
@@ -566,3 +566,125 @@ GetAov2DnIDs <- function(mSetObj=NA){
   }
 }
 
+PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num, meta, metaShape){
+  library(ggplot2)
+  library(GGally)
+  library(grid)
+  # get initial objects/variables
+  mSetObj <- .get.mSet(mSetObj);
+  pclabels <- paste0("PC", 1:pc.num, " (", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%)");
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 11;
+  }else if(width == 0){
+    w <- 9;
+  }else{
+    w <- width;
+  }
+  h <- w - 1;
+  
+  # draw plot
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  data <- as.data.frame(mSetObj$analSet$pca$x[,1:pc.num])
+  meta.info <- mSetObj$dataSet$meta.info
+  meta.info <- meta.info[match(rownames(data), rownames(meta.info)),]
+  
+  mSetObj$imgSet$pca.pair <- imgName;
+
+  if(meta %in% colnames(meta.info)){
+    inx <- which(colnames(meta.info) == meta)
+    cls <- meta.info[, inx];
+    cls.type <- mSetObj$dataSet$meta.types[inx]
+    cls2 <- meta.info[, metaShape];
+    cls.type2 <- mSetObj$dataSet$meta.types[metaShape]
+  }else{
+    cls <- mSetObj$dataSet$cls
+    cls.type <- mSetObj$dataSet$cls.type
+    cls2 <- meta.info[,2]
+    cls.type2 <- mSetObj$dataSet$meta.types[2]
+  }
+  
+  if (cls.type == "disc"){ ## code to execute if primary class is discrete
+    
+    uniq.cols <- GetColorSchema(unique(cls))
+    
+    if (cls.type2 == "disc"){
+      pch.vec <- as.numeric(cls2)
+      uniq.pchs <- unique(pch.vec)
+      
+      p <- ggpairs(data, 
+                   lower = list(continuous = wrap("points", shape = pch.vec)), 
+                   upper = list(continuous = wrap("density")),
+                   diag = list(continuous = wrap("densityDiag", alpha = 0.5, color = NA)),
+                   columnLabels = pclabels, mapping = aes(color = cls))
+      
+      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
+                        aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
+        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
+        scale_color_manual(values = uniq.cols) + scale_shape_manual(values = uniq.pchs)
+      
+    } else {
+      pch.vec <- as.numeric(cls)
+      p <- ggpairs(data, 
+                   lower = list(continuous = wrap("points")), 
+                   upper = list(continuous = wrap("density")),
+                   diag = list(continuous = wrap("densityDiag", alpha = 0.5, color = NA)),
+                   columnLabels = pclabels, mapping = aes(color = cls))
+      
+      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
+                        aes(x=cls, y=cls2, color=cls)) + 
+        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
+        scale_color_manual(values = uniq.cols)
+    }
+    
+    # change theme
+    p <- p + theme_bw() + scale_color_manual(values = uniq.cols) + scale_fill_manual(values = uniq.cols) + 
+      theme(plot.margin = unit(c(0.25, 0.25, 0.6, 0.25), "in"))
+    mylegend <- grab_legend(auxplot)
+    
+  } else { ## code to excute if primary class is continuous
+    
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20));
+    num.cls <- as.numeric(as.character(cls));
+    cols <- colors[as.numeric(cut(num.cls,breaks = 20))];
+    
+    if (cls.type2 == "disc"){
+      pch.vec <- as.numeric(cls2)
+      uniq.pchs <- unique(pch.vec)
+      
+      p <- ggpairs(data, lower = list(continuous = wrap("points", shape = pch.vec, color = cols)), 
+                   upper = list(continuous = wrap("density", color = "#505050")),
+                   diag = list(continuous = wrap("densityDiag", fill = "#505050", color = NA)),
+                   columnLabels = pclabels)
+      
+      auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
+                        aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
+        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
+        scale_shape_manual(values = uniq.pchs)
+    } else {
+      p <- ggpairs(data, lower = list(continuous = wrap("points", color = cols)), 
+                   upper = list(continuous = wrap("density", color = "#505050")),
+                   diag = list(continuous = wrap("densityDiag", fill = "#505050", color = NA)),
+                   columnLabels = pclabels)
+      
+      auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
+                        aes(x=cls, y=cls2, color=cls)) + 
+        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank())
+    }
+    
+    p <- p + theme_bw() + theme(plot.margin = unit(c(0.25, 0.25, 0.8, 0.25), "in"))
+    mylegend <- grab_legend(auxplot)
+    
+  }
+  
+  grid.newpage()
+  grid.draw(p)
+  vp = viewport(x=5, y=0.3, width=.35, height=.3, default.units = "in") ## control legend position
+  pushViewport(vp)
+  grid.draw(mylegend)
+  upViewport()
+  dev.off()
+  
+  return(.set.mSet(mSetObj));
+}

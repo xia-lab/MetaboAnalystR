@@ -4,7 +4,8 @@
 \alias{UpdateInstrumentParameters}
 \title{Update the mSetObj with user-selected parameters for MS Peaks to Pathways.}
 \usage{
-UpdateInstrumentParameters(mSetObj=NA, instrumentOpt, msModeOpt, custom=FALSE)
+UpdateInstrumentParameters(mSetObj=NA, instrumentOpt, 
+msModeOpt, force_primary_ion, rt_frac, rt_tol)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
@@ -15,11 +16,15 @@ UpdateInstrumentParameters(mSetObj=NA, instrumentOpt, msModeOpt, custom=FALSE)
 
 \item{force_primary_ion}{Character, if "yes", only mz features that match compounds with a primary ion are kept.}
 
-\item{custom}{Logical, select adducts for mummichog to consider.}
+\item{rt_frac}{rt_frac.}
+
+\item{rt_tol}{rt_tol.}
 }
 \description{
-This functions handles updating the mSet object for mummichog analysis. It is necessary to utilize this function
-to specify to the organism's pathways to use (libOpt), the mass-spec mode (msModeOpt) and mass-spec instrument (instrumentOpt).
+This functions handles updating the mSet object for mummichog analysis. 
+It is necessary to utilize this function
+to specify to the organism's pathways to use (libOpt), the mass-spec mode (msModeOpt) 
+and mass-spec instrument (instrumentOpt).
 }
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}

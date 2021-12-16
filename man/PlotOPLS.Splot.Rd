@@ -18,6 +18,8 @@ PlotOPLS.Splot(
 
 \item{imgName}{Input a name for the plot}
 
+\item{plotType}{plotType for the image, can be "all" or "custom"}
+
 \item{format}{Select the image format, "png", or "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 

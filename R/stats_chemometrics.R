@@ -78,28 +78,11 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 #'@export
 #'
 PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
-  
   mSetObj <- .get.mSet(mSetObj);
   pclabels <- paste("PC", 1:pc.num, "\n", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%");
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 10;
-  }else if(width == 0){
-    w <- 8;
-  }else{
-    w <- width;
-  }
-  
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pca.pair <- imgName;
-  
-  h <- w;
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(mSetObj$dataSet$cls.type == "disc"){
-    pairs(mSetObj$analSet$pca$x[,1:pc.num], col=GetColorSchema(mSetObj$dataSet$cls), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels);
-  }else{
-    pairs(mSetObj$analSet$pca$x[,1:pc.num], labels=pclabels);
-  }
-  dev.off();
+  Plot.PairScatter(mSetObj$analSet$pca$x[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -163,7 +146,8 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 
 #'Create 2D PCA score plot
 #'@description Rotate PCA analysis
-#'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
+#'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", 
+#'dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -173,7 +157,8 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param pcx Specify the principal component on the x-axis
 #'@param pcy Specify the principal component on the y-axis
-#'@param reg Numeric, input a number between 0 and 1, 0.95 will display the 95 percent confidence regions, and 0 will not.
+#'@param reg Numeric, input a number between 0 and 1, 0.95 will 
+#'display the 95 percent confidence regions, and 0 will not.
 #'@param show Display sample names, 1 = show names, 0 = do not show names.
 #'@param grey.scale Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
@@ -181,9 +166,13 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
-  
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+                           width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
+
   mSetObj <- .get.mSet(mSetObj);
+  
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
   
   xlabel = paste("PC",pcx, "(", round(100*mSetObj$analSet$pca$variance[pcx],1), "%)");
   ylabel = paste("PC",pcy, "(", round(100*mSetObj$analSet$pca$variance[pcy],1), "%)");
@@ -206,19 +195,19 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op<-par(mar=c(5,5,3,3));
   
-  if(mSetObj$dataSet$cls.type == "disc"){
+  if(cls.type == "disc"){
     # obtain ellipse points to the scatter plot for each category
     
     if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+      cls <- as.factor(as.numeric(levels(cls))[cls]);
     }else{
-      cls <- mSetObj$dataSet$cls;
+      cls <- cls;
     }
     
     lvs <- levels(cls);
     pts.array <- array(0, dim=c(100,2,length(lvs)));
     for(i in 1:length(lvs)){
-      inx <-mSetObj$dataSet$cls == lvs[i];
+      inx <- cls == lvs[i];
       groupVar<-var(cbind(pc1[inx],pc2[inx]), na.rm=T);
       groupMean<-cbind(mean(pc1[inx], na.rm=T),mean(pc2[inx], na.rm=T));
       pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
@@ -235,7 +224,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     uniq.cols <- unique(cols);
     
     plot(pc1, pc2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot",
-         col=cols, pch=as.numeric(mSetObj$dataSet$cls)+1); ## added
+         col=cols, pch=as.numeric(cls)+1); ## added
     grid(col = "lightgray", lty = "dotted", lwd = 1);
     
     # make sure name and number of the same order DO NOT USE levels, which may be different
@@ -271,8 +260,8 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
       }else{
         if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
-            my.cols <- adjustcolor(cols, alpha.f = 0.4);
-            my.cols[pchs == 21] <- "black";
+          my.cols <- adjustcolor(cols, alpha.f = 0.4);
+          my.cols[pchs == 21] <- "black";
           points(pc1, pc2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
         }else{
           points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
@@ -280,7 +269,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       }
     }
     uniq.pchs <- unique(pchs);
-
+    
     if(length(uniq.cols) != length(levels(cls))){     
       if(mSetObj$dataSet$type.cls.lbl=="integer"){
         names(cols) <- as.numeric(cls)
@@ -290,31 +279,31 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       match.inx <- match(levels(cls), names(cols))
       uniq.cols <- cols[match.inx]
     }
-
+    
     # after the fix above
     if(grey.scale) {
       uniq.cols <- "black";
     }
-
-# JX: This patch breaks plot for multi-group legend; If it occurs, 
-# need to fix source - why col or pch are not unique when requested
     
-#    if(length(uniq.pchs) != length(levels(cls))){     
-#      if(mSetObj$dataSet$type.cls.lbl=="integer"){
-#        names(pchs) <- as.numeric(cls)
-#      }else{
-#        names(pchs) <- as.character(cls)
-#     }      
-#      match.inx <- match(levels(cls), names(pchs))
-#      uniq.pchs <- pchs[match.inx]
-#    }
+    # JX: This patch breaks plot for multi-group legend; If it occurs, 
+    # need to fix source - why col or pch are not unique when requested
+    
+    #    if(length(uniq.pchs) != length(levels(cls))){     
+    #      if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    #        names(pchs) <- as.numeric(cls)
+    #      }else{
+    #        names(pchs) <- as.character(cls)
+    #     }      
+    #      match.inx <- match(levels(cls), names(pchs))
+    #      uniq.pchs <- pchs[match.inx]
+    #    }
     
     if(length(lvs) < 6){
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
     }else if (length(lvs) < 10){
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
     }else{
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
     }
     
   }else{
@@ -344,6 +333,10 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
   pca <-  mSetObj$analSet$pca;
   pca3d <- list();
   pca3d$score$axis <- paste("PC", c(inx1, inx2, inx3), " (", 100*round( mSetObj$analSet$pca$variance[c(inx1, inx2, inx3)], 3), "%)", sep="");
@@ -352,10 +345,10 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   pca3d$score$xyz <- coords;
   pca3d$score$name <- rownames(mSetObj$dataSet$norm);
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  if(cls.class == "integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(cls))[cls])));
   }else{
-    cls <- as.character(mSetObj$dataSet$cls);
+    cls <- as.character(cls);
   }
   
   if(all.numeric(cls)){
@@ -365,10 +358,10 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   pca3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
+  cols <- unique(GetColorSchema(as.factor(cls)));
   pca3d$score$colors <- my.col2rgb(cols);
   imgName = paste(imgName, ".", format, sep="");
-  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  json.obj <- rjson::toJSON(pca3d);
   sink(imgName);
   cat(json.obj);
   sink();
@@ -378,20 +371,33 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   }
 }
 
+#' PlotPCA3DLoading
+#' @param mSetObj mSetObj
+#' @param imgName imgName
+#' @param format format
+#' @param inx1 inx1
+#' @param inx2 inx2
+#' @param inx3 inx3
+#'
 #'@export
 PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
+  
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
   pca <- mSetObj$analSet$pca
   pca3d <- list();
   
   pca3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
   coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
-
+  
   dists <- GetDist3D(coords);
-
+  
   # color based on dist;
   pca3d$loading$cols <- GetRGBColorGradient(dists);
-
+  
   # size based on dist
   # pca3d$loading$sizes <- GetSizeGradient(dists);
   colnames(coords) <- NULL; 
@@ -399,33 +405,32 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   pca3d$loading$name <- rownames(pca$rotation);
   pca3d$loading$entrez <-rownames(pca$rotation); 
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  if(cls.class=="integer"){
+    clss <- as.character(sort(as.factor(as.numeric(levels(cls))[cls])));
   }else{
-    cls <- as.character(mSetObj$dataSet$cls);
+    clss <- as.character(cls);
   }
   
-  if(all.numeric(cls)){
-    cls <- paste("Group", cls);
+  if(all.numeric(clss)){
+    clss <- paste("Group", clss);
   }
   
-  pca3d$cls = cls;
+  pca3d$cls = clss;
   # see if there is secondary
-
-  require(RJSONIO);
+  
   imgName = paste(imgName, ".", format, sep="");
-  json.mat <- toJSON(pca3d, .na='null');
+  json.mat <- rjson::toJSON(pca3d);
   sink(imgName);
   cat(json.mat);
   sink();
-  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 #'Update PCA loadings
@@ -450,7 +455,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
+#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -470,7 +475,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   # sort based on absolute values of 1, 2 
   ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
   loadings <- signif(loadings[ord.inx,],5);
-
+  
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
@@ -572,7 +577,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
-
+  
   if(comp.num > 8) {
     #need to deal with small number of predictors
     comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
@@ -620,27 +625,11 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-    
-  }else{
-    w <- width;
-  }
-  h <- w;
-  
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pls.pair <- imgName;
-  
   vars <- round(100*mSetObj$analSet$plsr$Xvar[1:pc.num]/mSetObj$analSet$plsr$Xtotvar,1);
-  my.data <- mSetObj$analSet$plsr$scores[,1:pc.num];
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
-  pairs(my.data, col=GetColorSchema(mSetObj$dataSet$cls), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
-  dev.off();
+  pclabels <- paste("Component", 1:pc.num, "\n", vars, "%"); 
+  Plot.PairScatter(mSetObj$analSet$plsr$scores[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -665,7 +654,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@export
 #'
 PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, use.sparse=FALSE){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -677,6 +666,10 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     w <- width;
   }
   h <- w;
+  
+  
+  cls1 <- mSetObj$dataSet$cls
+  cls.type <- mSetObj$dataSet$cls.type
   
   mSetObj$imgSet$pls.score2d <- imgName;
   
@@ -691,16 +684,16 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   # obtain ellipse points to the scatter plot for each category
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  if(cls.type=="integer"){
+    cls <- as.factor(as.numeric(levels(cls1))[cls1]);
   }else{
-    cls <- mSetObj$dataSet$cls;
+    cls <- cls1;
   }
   
   lvs <- levels(cls);
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
-    inx <- mSetObj$dataSet$cls == lvs[i];
+    inx <- cls1 == lvs[i];
     groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
     groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
     pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
@@ -770,7 +763,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   if(length(uniq.cols) != length(levels(cls))){
     
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    if(cls.type=="integer"){
       names(cols) <- as.numeric(cls)
     }else{
       names(cols) <- as.character(cls)
@@ -782,11 +775,11 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   if(length(uniq.pchs) != length(levels(cls))){
     
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      names(pchs) <- as.numeric(cls)
-    }else{
-      names(pchs) <- as.character(cls)
-    }
+    #if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    #  names(pchs) <- as.numeric(cls)
+    #}else{
+    names(pchs) <- as.character(cls)
+    #}
     
     match.inx <- match(levels(cls), names(pchs))
     uniq.pchs <- pchs[match.inx]
@@ -814,17 +807,21 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   
+  cls1 <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
   pls3d <- list();
   pls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$plsr$Xvar[c(inx1, inx2, inx3)]/mSetObj$analSet$plsr$Xtotvar, 1), "%)", sep="");
   coords <- data.frame(t(signif(mSetObj$analSet$plsr$score[,c(inx1, inx2, inx3)], 5)));
   colnames(coords) <- NULL;
   pls3d$score$xyz <- coords;
   pls3d$score$name <- rownames(mSetObj$dataSet$norm);
-
+  
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+    cls <- as.character(sort(as.factor(as.numeric(levels(cls1))[cls1])));
   }else{
-    cls <- as.character(mSetObj$dataSet$cls);
+    cls <- as.character(cls1);
   }
   
   if(all.numeric(cls)){
@@ -834,11 +831,11 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   pls3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
+  cols <- unique(GetColorSchema(cls1));
   pls3d$score$colors <- my.col2rgb(cols);
   
   imgName = paste(imgName, ".", format, sep="");
-  json.obj <- RJSONIO::toJSON(pls3d, .na='null');
+  json.obj <- rjson::toJSON(pls3d);
   sink(imgName);
   cat(json.obj);
   sink();
@@ -846,6 +843,14 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   return(.set.mSet(mSetObj));
 }
 
+#' PlotPLS3DLoading
+#' @param mSetObj mSetObj
+#' @param imgName imgName
+#' @param format format
+#' @param inx1 inx1
+#' @param inx2 inx2
+#' @param inx3 inx3
+#'
 #'@export
 PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
@@ -878,20 +883,19 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   pls3d$cls = cls;
   # see if there is secondary
   
-  require(RJSONIO);
   imgName = paste(imgName, ".", format, sep="");
-  json.mat <- RJSONIO::toJSON(pls3d, .na='null');
+  json.mat <- rjson::toJSON(pls3d);
   sink(imgName);
   cat(json.mat);
   sink();
-  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-
+  AddMsg("Annotated data is now ready for PCA 3D visualization!");
+  
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 #'Update PLS loadings
@@ -1061,7 +1065,7 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
   }
   vip.mat <- vip.mat[ord.inx,];
   colnames(vip.mat) <- paste("Comp.", 1:ncol(vip.mat));
-
+  
   fast.write.csv(signif(vip.mat,5),file="plsda_vip.csv");
   
   mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, vip.mat=vip.mat, fit.info=all.info);
@@ -1443,21 +1447,21 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
-    .prepare.oplsr.anal(mSetObj, reg);
-    .perform.computing();
-    .save.oplsr.anal(mSetObj);
+  .prepare.oplsr.anal(mSetObj, reg);
+  .perform.computing();
+  .save.oplsr.anal(mSetObj);
 }
 
 .prepare.oplsr.anal <-function(mSetObj=NA, reg=FALSE){
- 
+  
   mSetObj <- .get.mSet(mSetObj);
-
+  
   mSetObj$analSet$opls.reg <- reg;  
-
+  
   # default options for feature labels on splot
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-
+  
   if(reg==TRUE){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
@@ -1468,30 +1472,30 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   
   my.fun <- function(){
-     if(!exists("perform_opls")){ # public web on same user dir
-         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-     }
-     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
-     return(my.res);
+    if(!exists("perform_opls")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+    }
+    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
+    return(my.res);
   }
-
+  
   dat.in <- list(data=datmat, cls=cls, cv.num=cv.num, my.fun=my.fun);
-
+  
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
 }
 
 .save.oplsr.anal <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- qs::qread("dat.in.qs"); 
-    mSetObj$analSet$oplsda <- dat.in$my.res;
-    score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
-    colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
-    fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
-    load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
-    colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
-    fast.write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
-    return(.set.mSet(mSetObj));
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- qs::qread("dat.in.qs"); 
+  mSetObj$analSet$oplsda <- dat.in$my.res;
+  score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
+  colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
+  fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
+  load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
+  colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
+  fast.write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
+  return(.set.mSet(mSetObj));
 }
 
 #'Create OPLS-DA score plot
@@ -1638,7 +1642,8 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
+#'@param plotType plotType for the image, can be "all" or "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1693,10 +1698,10 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   splot.mat <- cbind(jitter(p1),p1, pcorr1);
   rownames(splot.mat) <- colnames(s); 
   colnames(splot.mat) <- c("jitter", "p[1]","p(corr)[1]");
-
+  
   ord.inx <- order(-splot.mat[,2], -splot.mat[,3]);
   splot.mat <- signif(splot.mat[ord.inx,],5);
-
+  
   fast.write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv"); 
   mSetObj$analSet$oplsda$splot.mat <- splot.mat;
   mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;   
@@ -1724,26 +1729,26 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, ty
     w <- width;
   }
   h <- w;
-
+  
   mSetObj$imgSet$opls.vip <- imgName;
-
+  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   if(type=="vip"){
     impNm <- "VIP scores";
     mSetObj$analSet$oplsda$imp.type <- "vip";
     if(feat.nm == "tscore"){
-        data <- mSetObj$analSet$oplsda$vipVn;
+      data <- mSetObj$analSet$oplsda$vipVn;
     }else{
-        data <- mSetObj$analSet$oplsda$orthoVipVn;
+      data <- mSetObj$analSet$oplsda$orthoVipVn;
     }
     vip.mat <- cbind(mSetObj$analSet$oplsda$vipVn, mSetObj$analSet$oplsda$orthoVipVn);
   }else{ #not exposed to web
     impNm <- "Weights";
     mSetObj$analSet$oplsda$imp.type <- "weight";
     if(feat.nm == "tscore"){
-        data<-mSetObj$analSet$oplsda$weightMN;
+      data<-mSetObj$analSet$oplsda$weightMN;
     }else{
-        data<-mSetObj$analSet$oplsda$orthoWeightMN;
+      data<-mSetObj$analSet$oplsda$orthoWeightMN;
     }
     vip.mat <- cbind(mSetObj$analSet$oplsda$weightMN, mSetObj$analSet$oplsda$orthoWeightMN);
   }
@@ -1817,9 +1822,9 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
-    .prepare.oplsda.permut(mSetObj, num);
-    .perform.computing();
-    .save.oplsda.permut(mSetObj);
+  .prepare.oplsda.permut(mSetObj, num);
+  .perform.computing();
+  .save.oplsda.permut(mSetObj);
 }
 
 .prepare.oplsda.permut <-function(mSetObj=NA, num=100){
@@ -1835,30 +1840,30 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   my.fun <- function(){
-     if(!exists("perform_opls")){ # public web on same user dir
-         compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
-     }
-     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
+    if(!exists("perform_opls")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+    }
+    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
   }
   dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num, my.fun=my.fun);
-
+  
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
 }
 
 .save.oplsda.permut <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- qs::qread("dat.in.qs"); 
-    my.res <- dat.in$my.res;
-
-    r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
-    q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- qs::qread("dat.in.qs"); 
+  my.res <- dat.in$my.res;
   
-    # note, actual permutation number may be adjusted in public server
-    perm.num <- my.res$suppLs[["permI"]];
-
-    mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
-    return(.set.mSet(mSetObj));
+  r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
+  q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  
+  # note, actual permutation number may be adjusted in public server
+  perm.num <- my.res$suppLs[["permI"]];
+  
+  mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+  return(.set.mSet(mSetObj));
 }
 
 #'Plot OPLS-DA permutation
@@ -1882,7 +1887,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
   mSetObj <- .get.mSet(mSetObj);
   
   perm.res <- mSetObj$analSet$oplsda$perm.res;
-
+  
   r.vec <- perm.res$r.vec;
   q.vec <- perm.res$q.vec;
   perm.num <- perm.res$perm.num;
@@ -1955,69 +1960,70 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@param comp.num Input the number of computations to run 
 #'@param var.num Input the number of variables
 #'@param compVarOpt Input the option to perform SPLS-DA
+#'@param validOpt INput the valid option
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){    
-    .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
-    .perform.computing();
-    .save.splsr.anal(mSetObj);
+  .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
+  .perform.computing();
+  .save.splsr.anal(mSetObj);
 }
 
 .prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
-
-    if(compVarOpt == "same"){
-        comp.var.nums <- rep(var.num, comp.num);
-    }else{
-        if(exists("comp.var.nums") && all(comp.var.nums > 0)){
-            comp.var.nums <- ceiling(comp.var.nums);
-        }else{
-            msg <- c("All values need to be positive integers!");
-            return(0);
-        }
-    }
-
-    mSetObj <- .get.mSet(mSetObj);  
   
-    # note, standardize the cls, to minimize the impact of categorical to numerical impact
-    cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
-    datmat <- as.matrix(mSetObj$dataSet$norm);
-
-    my.fun <- function(){
-        if(!exists("splsda")){ # public web on same user dir
-            compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
-        }
-        my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
-
-        # perform validation
-        perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
-        my.res$error.rate <- perf.res$error.rate$overall;
-        return(my.res);
+  if(compVarOpt == "same"){
+    comp.var.nums <- rep(var.num, comp.num);
+  }else{
+    if(exists("comp.var.nums") && all(comp.var.nums > 0)){
+      comp.var.nums <- ceiling(comp.var.nums);
+    }else{
+      msg <- c("All values need to be positive integers!");
+      return(0);
     }
-
+  }
+  
+  mSetObj <- .get.mSet(mSetObj);  
+  
+  # note, standardize the cls, to minimize the impact of categorical to numerical impact
+  cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  
+  my.fun <- function(){
+    if(!exists("splsda")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
+    }
+    my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
+    
+    # perform validation
+    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
+    my.res$error.rate <- perf.res$error.rate$overall;
+    return(my.res);
+  }
+  
   dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums, my.fun=my.fun);
-
+  
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
 }
 
 .save.splsr.anal <- function(mSetObj = NA){
-    mSetObj <- .get.mSet(mSetObj);
-    dat.in <- qs::qread("dat.in.qs"); 
-    mSetObj$analSet$splsr <- dat.in$my.res;
-    score.mat <- mSetObj$analSet$splsr$variates$X;
-    fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
-    load.mat <- mSetObj$analSet$splsr$loadings$X;
-
-    # sort based on absolute values of 1, 2 
-    ord.inx <- order(-abs(load.mat[,1]), -abs(load.mat[,2]));
-    load.mat <- signif(load.mat[ord.inx,],5);
-    fast.write.csv(load.mat, file="splsda_loadings.csv");
-
-    mSetObj$analSet$splsr$loadings$X <- load.mat;
-    return(.set.mSet(mSetObj));
+  mSetObj <- .get.mSet(mSetObj);
+  dat.in <- qs::qread("dat.in.qs"); 
+  mSetObj$analSet$splsr <- dat.in$my.res;
+  score.mat <- mSetObj$analSet$splsr$variates$X;
+  fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
+  load.mat <- mSetObj$analSet$splsr$loadings$X;
+  
+  # sort based on absolute values of 1, 2 
+  ord.inx <- order(-abs(load.mat[,1]), -abs(load.mat[,2]));
+  load.mat <- signif(load.mat[ord.inx,],5);
+  fast.write.csv(load.mat, file="splsda_loadings.csv");
+  
+  mSetObj$analSet$splsr$loadings$X <- load.mat;
+  return(.set.mSet(mSetObj));
 }
 
 #'Plot SPLS-DA
@@ -2038,29 +2044,15 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- width;
-  }
-  h <- w;
-  
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$spls.pair <- imgName;
-  
+
   if(pc.num > mSetObj$analSet$splsr$ncomp){
     pc.num <- mSetObj$analSet$splsr$ncomp;
   }
   vars <- round(100*mSetObj$analSet$splsr$explained_variance$X,1);
-  my.data <- mSetObj$analSet$splsr$variates$X[,1:pc.num];
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
-  ellipse::pairs(my.data, col=GetColorSchema(mSetObj$dataSet$cls), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
-  dev.off();
+  Plot.PairScatter(mSetObj$analSet$splsr$variates$X[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -2181,35 +2173,9 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }
   
   uniq.pchs <- unique(pchs);
-  
   if(grey.scale) {
     uniq.cols <- "black";
   }
-  
-  if(length(uniq.cols) != length(levels(cls))){
-    
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      names(cols) <- as.numeric(cls)
-    }else{
-      names(cols) <- as.character(cls)
-    }
-    
-    match.inx <- match(levels(cls), names(cols))
-    uniq.cols <- cols[match.inx]
-  }
-  
-  if(length(uniq.pchs) != length(levels(cls))){
-    
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      names(pchs) <- as.numeric(cls)
-    }else{
-      names(pchs) <- as.character(cls)
-    }
-    
-    match.inx <- match(levels(cls), names(pchs))
-    uniq.pchs <- pchs[match.inx]
-  }
-  
   legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
   
   dev.off();
@@ -2233,6 +2199,11 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   
   mSetObj <- .get.mSet(mSetObj);
   
+  
+  cls1 <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
   spls3d <- list();
   # need to check if only two components are generated
   if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
@@ -2249,9 +2220,9 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   spls3d$score$name <- rownames(mSetObj$dataSet$norm);
   
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+    cls <- as.character(sort(as.factor(as.numeric(levels(cls1))[cls1])));
   }else{
-    cls <- as.character(mSetObj$dataSet$cls);
+    cls <- as.character(cls1);
   }
   
   if(all.numeric(cls)){
@@ -2260,11 +2231,11 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   spls3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(mSetObj$dataSet$cls));
+  cols <- unique(GetColorSchema(cls1));
   spls3d$score$colors <- my.col2rgb(cols);
   
   imgName = paste(imgName, ".", format, sep="");
-  json.obj <- RJSONIO::toJSON(spls3d, .na='null');
+  json.obj <- rjson::toJSON(spls3d);
   sink(imgName);
   cat(json.obj);
   sink();
@@ -2272,12 +2243,19 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   return(.set.mSet(mSetObj));
 }
 
-#'@export
+#' PlotSPLS3DLoading
+#' @param mSetObj mSetObj
+#' @param imgName imgName
+#' @param format format
+#' @param inx1 inx1
+#' @param inx2 inx2
+#' @param inx3 inx3
+#' @export
 PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
   mSetObj <- .get.mSet(mSetObj);
   spls = mSetObj$analSet$splsr
   spls3d <- list();
-
+  
   if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
     coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
@@ -2287,16 +2265,16 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
     spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
     coords0 <- coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
   }
-    
-    colnames(coords) <- NULL; 
-    spls3d$loading$xyz <- coords;
-    spls3d$loading$name <- rownames(spls$loadings$X);
-    spls3d$loading$entrez <-rownames(spls$loadings$X); 
-    
-    dists <- GetDist3D(coords0);
-    cols <- GetRGBColorGradient(dists);
-    spls3d$loading$cols <- cols;
-    
+  
+  colnames(coords) <- NULL; 
+  spls3d$loading$xyz <- coords;
+  spls3d$loading$name <- rownames(spls$loadings$X);
+  spls3d$loading$entrez <-rownames(spls$loadings$X); 
+  
+  dists <- GetDist3D(coords0);
+  cols <- GetRGBColorGradient(dists);
+  spls3d$loading$cols <- cols;
+  
   if(mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
   }else{
@@ -2306,24 +2284,23 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   if(all.numeric(cls)){
     cls <- paste("Group", cls);
   }
-
+  
   spls3d$cls = cls;
   # see if there is secondary
   
-  require(RJSONIO);
   imgName = paste(imgName, ".", format, sep="");
-  json.mat <- RJSONIO::toJSON(spls3d, .na='null');
+  json.mat <- rjson::toJSON(spls3d);
   sink(imgName);
   cat(json.mat);
   sink();
-  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
-
+  AddMsg("Annotated data is now ready for PCA 3D visualization!");
+  
   if(.on.public.web){
     return(1);
   }else{
     return(.set.mSet(mSetObj));
   }
-
+  
 }
 
 
@@ -2374,7 +2351,6 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'classification performance using different components
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
-#'@param validOpt "Mfold"
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -2388,7 +2364,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   res <- mSetObj$analSet$splsr$error.rate;
   
   edge <- (max(res)-min(res))/100; # expand y uplimit for text
@@ -2625,3 +2601,47 @@ GetSPLSSigColNames <- function(mSetObj=NA, type){
   }
 }
 
+# internal called by all pair plots
+Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, width){
+
+  if(is.na(width)){
+    w <- 11;
+  }else if(width == 0){
+    w <- 9;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  legend.nm <- unique(as.character(sort(cls)));
+  maxlength <- max(nchar(unique(as.character(cls))))
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  if(cls.type == "disc"){
+    uniq.pchs <- as.numeric(sort(cls))+1
+    uniq.cols <- GetColorSchema(unique(cls))
+
+    numOfCol = length(uniq.cols);
+    if(length(uniq.cols)<4){
+        omaVal=oma=c(10,3,3,3)
+    }else{
+        if(numOfCol %% 3 == 0){
+            numOfCol = 3;
+        }else if(numOfCol %% 4 == 0){
+            numOfCol = 4;
+        }
+        omaVal = oma=c(15,3,3,3)
+    }
+
+    pairs(mat, col=GetColorSchema(cls), pch=as.numeric(cls)+1, labels=lbls, oma=omaVal);
+    par(xpd = TRUE)
+    if(numOfCol > 4){
+      legend("bottom", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.9, bty = "n", ncol =numOfCol);
+    }else{
+      legend("bottom", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, bty = "n", ncol =numOfCol);
+    }
+  }else{
+    pairs(mat, labels=lbls);
+  }
+  dev.off();
+}

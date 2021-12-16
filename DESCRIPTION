@@ -1,6 +1,6 @@
 Package: MetaboAnalystR
 Title: An R Package for Comprehensive Analysis of Metabolomics Data
-Version: 3.1.0
+Version: 3.2.0
 Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), 
              person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut")), 
              person("Zhiqiang", "pang", email = "zhiqiang.pang@mail.mcgill.ca", role=c("aut", "cre")))
@@ -11,15 +11,15 @@ Description: This package contains the R functions and libraries underlying the 
 Depends: R (>= 4.0), methods
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Imports: 
     RBGL, RColorBrewer, RSQLite, Cairo, Rcpp (>= 1.0.5), ggplot2, BiocParallel, progress, Rserve, rlang, 
     jsonlite, plyr, purrr, data.table, vctrs, qs, pROC, caret, crmn, dplyr, edgeR, fgsea, glasso, gplots, igraph, impute,
-    pcaMethods, plotly, scales, MSnbase, tibble, siggenes, lattice, MASS, OptiLCMS
+    pcaMethods, plotly, scales, MSnbase, tibble, siggenes, lattice, MASS
 Suggests: 
-    graph, htmltools, pls, ellipse, scatterplot3d, randomForest, caTools, e1071, som, RJSONIO, ROCR,
+    graph, htmltools, pls, ellipse, scatterplot3d, randomForest, caTools, e1071, som, RJSONIO, rjson, ROCR,
     globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, limma, fitdistrplus,
     lars, Hmisc, magrittr, xtable, KEGGgraph, metap, entropy, rsm, httr, knitr, rmarkdown, devtools, testthat, 
-    visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc
+    visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc, OptiLCMS
 VignetteBuilder: knitr
 LinkingTo: Rcpp

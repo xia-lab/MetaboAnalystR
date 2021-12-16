@@ -1,6 +1,6 @@
 BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o
 
-UTILSOBJECTS=c/util.o cpp/melt.o c/fastmatch.o
+UTILSOBJECTS=c/util.o cpp/melt.o c/fastmatch.o c/nncgc.o
 
 XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
 

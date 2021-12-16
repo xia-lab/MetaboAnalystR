@@ -44,18 +44,16 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   descr <- c("\\subsection{Upload your data}\n",
-             "For two-factor and time-series data, MetaboAnalyst accepts data uploaded in comma separated values (.csv) format.",
-             "Samples can be in rows or columns. The two factor labels must follow immediately",
-             "after the sample names. For time-series data, the time points group must be named",
-             "as \\textbf{Time}. In addition, the samples collected from the same subject at different time points",
-             "should be consecutive and ordered by the time points. Users need to specify the data types when uploading their data",
-             "in order for MetaboAnalyst to select the correct algorithm to process them.\n",
+             "For statistical analysis involving complex metadata, MetaboAnalyst accepts data table and \\textbf{metadata table} uploaded as two comma separated values (.csv) files.",
+             "Samples can be in rows or columns for data file. The metadata table must have the same sample names. ",
+             "For time-series data, the time points group must be named as \\textbf{Time} and \\textbf{Subject}.",
+             "Users need to specify the data types when uploading their data in order for MetaboAnalyst to select the correct algorithm to process them.\n",
              paste("Table", table.count<<-table.count+1,"summarizes the result of the data checking steps.\n")
   );
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc) | is.null(mSetObj$dataSet$facA) | is.null(mSetObj$dataSet$facB)){
+  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc.feat.num) | is.null(mSetObj$dataSet$facA) | is.null(mSetObj$dataSet$facB)){
     errorMsg<- c(descr, "Error occured during reading the raw data ....",
                  "Failed to proceed. Please check if the data format you uploaded is correct.",
                  "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");
@@ -284,20 +282,21 @@ CreateASCAdoc <- function(mSetObj=NA){
   if(is.null(mSetObj$analSet$asca)){
     return();
   }
-  
-  if(isEmptyMatrix(mSetObj$analSet$asca$sig.list[["Model.a"]])){
+  asca <- qs::qread("asca.qs");
+
+  if(isEmptyMatrix(asca$sig.list[["Model.a"]])){
     asca.tab1<-NULL;
   }else{
     asca.tab1<-paste("Table", table.count<<-table.count+1,paste("shows features well-modelled by ", mSetObj$dataSet$facA.lbl, ". ", sep=""));
   }
   
-  if(isEmptyMatrix(mSetObj$analSet$asca$sig.list[["Model.b"]])){
+  if(isEmptyMatrix(asca$sig.list[["Model.b"]])){
     asca.tab2<-NULL;
   }else{
     asca.tab2<-paste("Table", table.count<<-table.count+1,paste("shows features well-modelled by ", mSetObj$dataSet$facB.lbl, ". ", sep=""));
   }
   
-  if(isEmptyMatrix(mSetObj$analSet$asca$sig.list[["Model.ab"]])){
+  if(isEmptyMatrix(asca$sig.list[["Model.ab"]])){
     asca.tab3<-NULL;
   }else{
     asca.tab3<-paste("Table", table.count<<-table.count+1, "shows features well-modelled by Interaction model. ");

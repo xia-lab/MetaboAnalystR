@@ -337,7 +337,6 @@ PlotMSEA.Overview <- function(folds, pvals){
 
 #'Plot MSEA Dot Plot
 #'@description Dot plot of enrichment analysis results.
-#'@usage PlotEnrichDotPlot(mSet)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param enrichType Input whether the enrichment analysis was over-respresentation
 #'analysis (ora) or quantitative enrichment analysis (qea).
@@ -823,7 +822,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   # covert to json
   netData <- list(nodes=nodes, edges=edge.mat);
   sink("msea_network.json");
-  cat(RJSONIO::toJSON(netData));
+  cat(rjson::toJSON(netData));
   sink();
   
   return(g);  

@@ -4,7 +4,7 @@
 \alias{make_ecpdlist}
 \title{Utility function to create compound lists for permutation analysis}
 \usage{
-make_cpdlist(mSetObj=NA, input_mzs)
+make_ecpdlist(mSetObj=NA, input_mzs)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj}

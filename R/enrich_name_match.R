@@ -36,6 +36,7 @@ PerformDetailMatch <- function(mSetObj=NA, q){
 #'@description Given a query, performs compound name matching. 
 #'@param mSetObj Input name of the created mSet Object.
 #'@param q Input the query.
+#'@param lipid lipid, logical
 #'@export
 #'
 PerformMultiMatch <- function(mSetObj=NA, q, lipid){
@@ -65,6 +66,7 @@ PerformMultiMatch <- function(mSetObj=NA, q, lipid){
 #'@description Given a query, perform approximate compound matching 
 #'@param mSetObj Input the name of the created mSetObj.
 #'@param q Input the q vector.
+#'@param lipid lipid, logical
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q, lipid){
@@ -206,6 +208,7 @@ CrossReferencingAPI <- function(mSetObj=NA, inputType){
 #'Get all candidate compound names for a given index 
 #'@description Returns 3 coloumns - inx, name, score
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param lipid Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -299,11 +302,10 @@ GetMapTable <- function(mSetObj=NA){
 #'Creates the mapping result table
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
-CreateMappingResultTable <- function(mSetObj=NA){
+CreateMappingResultTable <- function(mSetObj=NA) {
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  lipid <- mSetObj$lipid.feats
+  lipid <- mSetObj$lipid.feats;
   
   if(lipid & anal.type == "msetqea"){
     qvec <- names(mSet$dataSet$url.var.nms);

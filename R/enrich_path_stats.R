@@ -29,9 +29,9 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     valid.inx <- !(is.na(nm.map$hmdbid)| duplicated(nm.map$hmdbid));
     ora.vec <- nm.map$hmdbid[valid.inx];
   }
+
   q.size<-length(ora.vec);
-  
-  if(is.na(ora.vec) || q.size==0) {
+  if(all(is.na(ora.vec)) | q.size==0) {
     if(mSetObj$pathwaylibtype == "KEGG"){
       AddErrMsg("No valid KEGG compounds found!");
     } else if(mSetObj$pathwaylibtype == "SMPDB"){
@@ -39,7 +39,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     }
     return(0);
   }
-  
+
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
     mSetObj$api$nodeImp <- nodeImp;
     mSetObj$api$method <- method;
@@ -422,7 +422,7 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'Only works for human (hsa.rda) data
 #'@description Only works for human (hsa.rda) data
 #'2018 - works for ath, eco, mmu, sce
-#'@param kegg.ids Input the list of KEGG ids to add SMPDB links
+#'@param smpdb.ids Input the list of SMPD ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -534,9 +534,23 @@ GetQEA.smpdbIDs <- function(mSetObj=NA){
   }
 }
 
+ComputePathHeatmap <-function(mSetObj=NA, libOpt, fileNm, type){
+   json.res <- "";
+   if(type == "pathqea"){
+        json.res <- ComputePathHeatmapTable(mSetObj, libOpt, fileNm);
+   }else{
+        json.res <- ComputePathHeatmapList(mSetObj, libOpt, fileNm);
+   }
+
+   json.mat <- rjson::toJSON(json.res);
+   sink(fileNm);
+   cat(json.mat);
+   sink();
+   AddMsg("Data is now ready for heatmap visualization!");
+   return(1);
+}
 
 ComputePathHeatmapTable <- function(mSetObj=NA, libOpt, fileNm){
-
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
   data <- t(dataSet$norm)
@@ -636,7 +650,7 @@ ComputePathHeatmapTable <- function(mSetObj=NA, libOpt, fileNm){
   colnames(nmeta) <- grps;
   
   # for each gene/row, first normalize and then tranform real values to 30 breaks 
-  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+  res <- apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))});
   
   # note, use {} will lose order; use [[],[]] to retain the order
   
@@ -659,21 +673,7 @@ ComputePathHeatmapTable <- function(mSetObj=NA, libOpt, fileNm){
   mSetObj$dataSet$gene.cluster = gene.cluster
   
   .set.mSet(mSetObj)
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
-  sink(fileNm);
-  cat(json.mat);
-  sink();
-  current.msg <<- "Data is now ready for heatmap visualization!";
-  return(1);
-}
-
-ComputePathHeatmap <-function(mSetObj=NA, libOpt, fileNm, type){
-    if(type == "pathqea"){
-        return(ComputePathHeatmapTable(mSetObj, libOpt, fileNm));
-    }else{
-        return(ComputePathHeatmapList(mSetObj, libOpt, fileNm));
-    }
+  return(json.res);
 }
 
 ComputePathHeatmapList <- function(mSetObj=NA, libOpt, fileNm){
@@ -783,13 +783,6 @@ ComputePathHeatmapList <- function(mSetObj=NA, libOpt, fileNm){
     expval = expval,
     org = org
   );
-  
   .set.mSet(mSetObj)
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
-  sink(fileNm);
-  cat(json.mat);
-  sink();
-  current.msg <<- "Data is now ready for heatmap visualization!";
-  return(1);
+  return(json.res);
 }

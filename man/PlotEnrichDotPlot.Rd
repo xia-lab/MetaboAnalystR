@@ -4,7 +4,14 @@
 \alias{PlotEnrichDotPlot}
 \title{Plot MSEA Dot Plot}
 \usage{
-PlotEnrichDotPlot(mSet)
+PlotEnrichDotPlot(
+  mSetObj = NA,
+  enrichType = "ora",
+  imgName,
+  format = "png",
+  dpi = 72,
+  width = NA
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

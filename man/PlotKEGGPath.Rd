@@ -22,6 +22,10 @@ PlotKEGGPath(
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
 \item{height}{Input the height of the created plot.}
+
+\item{format}{format of the image.}
+
+\item{dpi}{dpi of the image.}
 }
 \description{
 Plot KEGG pathway graph

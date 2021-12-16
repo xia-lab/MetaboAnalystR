@@ -2,14 +2,14 @@
 % Please edit documentation in R/peaks_to_function.R
 \name{PerformAdductMapping}
 \alias{PerformAdductMapping}
-\title{Read Adduct List}
+\title{PerformAdductMapping}
 \usage{
-Read.AdductData(mSetObj=NA, adductList)
+PerformAdductMapping(mSetObj = NA, add.mode)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object}
 
-\item{adductList}{Input the name of the adduct list}
+\item{add.mode}{Adduct mode, positive or negative}
 }
 \description{
 This function reads in the user's adduct list and 

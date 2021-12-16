@@ -18,6 +18,8 @@ PlotEnrichPieChart(
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
+\item{enrichType}{enrichType}
+
 \item{imgName}{Input a name for the plot}
 
 \item{format}{Select the image format, "png", or "pdf".}

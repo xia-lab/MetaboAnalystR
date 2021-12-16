@@ -9,6 +9,7 @@ case of too many NAs}
 PlotCmpdSummary(
   mSetObj = NA,
   cmpdNm,
+  meta = "NA",
   version,
   format = "png",
   dpi = 72,
@@ -19,6 +20,10 @@ PlotCmpdSummary(
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{cmpdNm}{Input the name of the compound to plot}
+
+\item{meta}{meta is "NA"}
+
+\item{version}{version}
 
 \item{format}{Input the format of the image to create}
 

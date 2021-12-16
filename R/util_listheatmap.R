@@ -21,18 +21,17 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   # 2) match number to string (factor level)
   
   grps <- "datalist1"
-  cls <- "datalist1";
+  cls <- "datalist1"
   
-  is.rt <- mSetObj$paramSet$mumRT;
-  #mSetObj$dataSet$mumRT <- is.rt
-  #mSetObj$dataSet$mumRT.type <- mumRT.type
+  mSetObj$dataSet$mumRT <- is.rt
+  mSetObj$dataSet$mumRT.type <- mumRT.type
   
-  if(mSetObj$paramSet$mumRT){
+  if(mSetObj$dataSet$mumRT){
     feat_info <- rownames(data)
     feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
     
-    if(mSetObj$paramSet$mumRT.type == "minutes"){
+    if(mSetObj$dataSet$mumRT.type == "minutes"){
       rtime <- as.numeric(feat_info_split[,2])
       rtime <- rtime * 60
       feat_info_split[,2] <- rtime
@@ -80,7 +79,8 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   orig.smpl.nms <- colnames(dat);
   orig.gene.nms <- rownames(dat);
   
-  mSetObj$paramSet$version <- version
+  
+  mum.version <<- version
   # convert back to numeric 
   
   # for each gene/row, first normalize and then tranform real values to 30 breaks
@@ -210,12 +210,10 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     expval = expval
   );
   .set.mSet(mSetObj);
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
+  json.mat <- rjson::toJSON(json.res);
   sink(fileNm);
   cat(json.mat);
   sink();
-  current.msg <<- "Data is now ready for heatmap visualization!";
   return(1);
 }
 

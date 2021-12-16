@@ -4,7 +4,8 @@
 \alias{ANOVA2.Anal}
 \title{Perform Two-way ANOVA}
 \usage{
-ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.interact=1)
+ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", 
+type="time0", aov.type=1, use.interact=1)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -13,11 +14,13 @@ ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", type="time0", aov.type=1, use.
 
 \item{p.cor}{Select method for p-value correction, bonferroni, holm or fdr}
 
-\item{type}{Select b to perform between-subjects ANOVA, and w for within-subjects ANOVA}
+\item{type}{Select b to perform between-subjects ANOVA, 
+and w for within-subjects ANOVA}
 
 \item{aov.type}{Specify 1 for ANOVA type 1, or 3 for ANOVA type 3}
 
-\item{use.interact}{Numeric, whether to consider interaction in two-way repeated ANOVA (1) or not (0).}
+\item{use.interact}{Numeric, whether to consider 
+interaction in two-way repeated ANOVA (1) or not (0).}
 }
 \description{
 Perform Two-way ANOVA

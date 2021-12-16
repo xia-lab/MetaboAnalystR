@@ -5,6 +5,8 @@
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param height Input the height of the created plot.
+#'@param format format of the image.
+#'@param dpi dpi of the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -116,7 +118,8 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
+#'@param height height value for the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -301,22 +304,31 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'y axis is the p value (from ORA or globaltest) 
 #'return the circle information
 #'@param mSetObj Input name of the created mSet Object
+#'@param show.grid logical, show grid or not
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'@param x Input the X
-#'@param y Input the Y
+#'@param xlim limit of x axis
+#'@param ylim limit of y axis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, width=NA, x, y){
+PlotPathSummary<-function(mSetObj=NA, 
+                          show.grid, 
+                          imgName, 
+                          format="png", 
+                          dpi=72, 
+                          width=NA,
+                          xlim = NA,
+                          ylim = NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  jointGlobal <- FALSE;
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
@@ -326,7 +338,7 @@ PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, 
       path.nms <- rownames(mSetObj$analSet$ora.mat);
     }
     
-  }else if(mSetObj$analSet$type == "pathqea"){
+  } else if(mSetObj$analSet$type == "pathqea") {
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
     names(x) <- names(y) <- rownames(mSetObj$analSet$qea.mat);
@@ -335,11 +347,26 @@ PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, 
       path.nms <- rownames(mSetObj$analSet$qea.mat);
     }
     
-  }else if (mSetObj$analSet$type == "pathinteg"){ # this is integrative analysis
-    x <-  mSetObj$dataSet$path.mat[,8];
-    y <-  mSetObj$dataSet$path.mat[,4];
-    names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
-    
+  } else if (mSetObj$analSet$type == "pathinteg") { # this is integrative analysis
+
+    jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
+    if(jointGlobal) {
+        combo.resmat <- mSetObj$dataSet$integResGlobal;
+        # Sort values based on combined pvalues;
+        y <- -log10(combo.resmat[,5]); # x is gene
+        x <- -log10(combo.resmat[,6]); # y is cmpd
+        y <- scales::rescale(y, c(0,4))
+        x <- scales::rescale(x, c(0,4))
+        if(min(combo.resmat[,7]) ==0){combo.resmat[,7][combo.resmat[,7] ==0] <- 
+          min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
+        combo.p <- -log10(combo.resmat[,7])
+        combo.p <- scales::rescale(combo.p, c(0,4))
+    } else {
+        x <-  mSetObj$dataSet$path.mat[,8];
+        y <-  mSetObj$dataSet$path.mat[,4];
+        names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
+    }
+
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$jointPAMatches);
     }
@@ -350,43 +377,60 @@ PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, 
   }
   
   # first sort values based on p
-  y = -log10(y);
-  inx <- order(y, decreasing= T);
-  x <- x[inx]; 
-  y <- y[inx];
-  
-  # set circle size according to impact
-  # take sqrt to increase spread out
-  sqx <- sqrt(x);
-  min.x<- min(sqx, na.rm = TRUE);
-  max.x <- max(sqx, na.rm = TRUE);
-  
-  if(min.x == max.x){ # only 1 value
-    max.x = 1.5*max.x;
-    min.x = 0.5*min.x;
+  if(!jointGlobal){
+    y = -log10(y);
+    inx <- order(y, decreasing= T);
+    x <- x[inx]; 
+    y <- y[inx];
+    # set circle size according to impact
+    # take sqrt to increase spread out
+    sqx <- sqrt(x);
+    min.x<- min(sqx, na.rm = TRUE);
+    max.x <- max(sqx, na.rm = TRUE);
+    
+    if(min.x == max.x){ # only 1 value
+      radi.vec <- rep(0.075, length(x));
+    }else{
+      maxR <- (max.x - min.x)/40;
+      minR <- (max.x - min.x)/160;
+      radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
+    }
+
+    bg.vec <- heat.colors(length(y));
+  } else {
+    inx <- order(combo.p, decreasing= T);
+    pathnames <- combo.resmat$pathways
+    combo.p <- combo.p[inx]
+    x <- x[inx]; 
+    y <- y[inx];
+    path.nms <- pathnames[inx];
+    
+    # set circle size based on combined pvalues
+    min.x <- min(combo.p, na.rm = TRUE);
+    max.x <- max(combo.p, na.rm = TRUE);
+    
+    if(min.x == max.x){ # only 1 value
+      max.x = 1.5*max.x;
+      min.x = 0.5*min.x;
+    }
+    
+    maxR <- (max.x - min.x)/40;
+    minR <- (max.x - min.x)/160;
+    radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
+    bg.vec <- heat.colors(length(combo.p));
   }
-  
-  maxR <- (max.x - min.x)/40;
-  minR <- (max.x - min.x)/160;
-  radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
-  
-  # set background color according to y
-  bg.vec <- heat.colors(length(y));
   
   if(.on.public.web){
     if(mSetObj$analSet$type == "pathinteg"){
-      path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
+      if(jointGlobal) {
+        path.nms <- mSetObj$dataSet$integResGlobal[,1];
+      } else {
+        path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
+      }
     }else{
       path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
     }
   }
-  
-  ## Open plot device
- # if(format == "png"){
- #   bg = "transparent";
- # }else{
-    bg="white";
- # }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -398,17 +442,53 @@ PlotPathSummary<-function(mSetObj=NA, show.grid, imgName, format="png", dpi=72, 
     w <- width;
   }
   h <- w;
-  
   mSetObj$imgSet$path.overview<-imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
+  if(jointGlobal){
+    xlabNM = "Enriched Pathways of Genes/Proteins";
+    ylabNM = "Enriched Pathways from Peaks";
+  } else {
+    xlabNM = "Pathway Impact";
+    ylabNM = "-log10(p)";
+  }
+  
+  if(is.na(xlim)) {
+    max_x <- max(x)
+  } else {
+    if(xlim > max(x)){
+      max_x <- xlim;
+    } else {
+      max_x <- max(x)
+    }
+  }
+  
+  if(is.na(ylim)){
+    max_y <- max(y)
+  } else {
+    if(ylim > max(y)){
+      max_y <- ylim;
+    } else {
+      max_y <- max(y)
+    }
+  }
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="Pathway Impact", ylab="-log10(p)");
+  plot(x, 
+       y, 
+       type="n", 
+       axes=F, 
+       xlab=xlabNM, 
+       ylab=ylabNM,
+       xlim = c(min(x), max_x),
+       ylim = c(min(y), max_y)
+       );
   axis(1);
   axis(2);
   if(show.grid){
     grid(col="blue");
   }
+
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
   # convert to pixel positions, only for web interaction dpi=72
@@ -478,7 +558,7 @@ GeneratePathwayJSON<-function(pathway.nm){
   smpdbpw.nm <- paste("smpdb_pathway_netview", smpdbpw.count, ".json", sep="");
   smpdbpw.count <<- smpdbpw.count + 1;
   sink(smpdbpw.nm);
-  cat(jsonlite::toJSON(smpdb.jsons[[pathway.id]], pretty = TRUE));
+  cat(rjson::toJSON(smpdb.jsons[[pathway.id]]));
   sink();
   
   smpdbpw.nm <- paste0(smpdbpw.nm, ";", metab.matches, ";", title)
@@ -499,6 +579,7 @@ GeneratePathwayJSON<-function(pathway.nm){
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param height Input the height of the created plot.
+#'@param zoom.factor zoom factor, numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

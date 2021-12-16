@@ -45,9 +45,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{no.clst}{Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).}
 
-\item{top}{View top}
-
-\item{topNum}{Numeric, view top 
+\item{corrCutoff}{set corrCutoff
 McGill University, Canada
 License: GNU GPL (>= 2)}
 }

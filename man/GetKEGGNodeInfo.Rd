@@ -7,6 +7,8 @@
 GetKEGGNodeInfo(pathName, g, width, height, usr = par("usr"))
 }
 \arguments{
+\item{pathName}{Input the path Name}
+
 \item{g}{Input data}
 
 \item{width}{Input the width}
@@ -14,8 +16,6 @@ GetKEGGNodeInfo(pathName, g, width, height, usr = par("usr"))
 \item{height}{Input the height}
 
 \item{usr}{Input the user}
-
-\item{path.id}{Input the path ID}
 }
 \description{
 Retrieves KEGG node information

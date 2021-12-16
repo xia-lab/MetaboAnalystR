@@ -33,7 +33,10 @@ MetaboAnalystR is seconds) or minutes (as from MZmine).}
 For p-values and t-scores only from t-test, use "tt".
 For log2FC from the fold-change analsis, use "fc".
 For effect-sizes, use "es".
-For, p-values, fold-changes and effect sizes, use "all".}
+For, p-values, fold-changes and effect sizes, use "all".
+For multiple groups, use 'aov'.}
+
+\item{mode}{ion mode, positive or negative}
 }
 \description{
 Following t-test analysis or effect size calculation, 

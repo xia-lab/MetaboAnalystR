@@ -2,9 +2,9 @@
 % Please edit documentation in R/util_peaks.R
 \name{my.parse.peaklist}
 \alias{my.parse.peaklist}
-\title{Read peak list files}
+\title{my.parse.peaklist}
 \usage{
-Read.PeakList(mSetObj=NA, foldername)
+my.parse.peaklist(mSetObj = NA, foldername = "upload")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects).}
@@ -12,7 +12,7 @@ Read.PeakList(mSetObj=NA, foldername)
 \item{foldername}{Name of the folder containing the NMR or MS peak list files to read.}
 }
 \description{
-This function reads peak list files and fills the data into a dataSet object.  
+Read peak list files. This function reads peak list files and fills the data into a dataSet object.  
 For NMR peak lists, the input should be formatted as two-columns containing numeric values (ppm, int).
 Further, this function will change ppm to mz, and add a dummy 'rt'.
 For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or

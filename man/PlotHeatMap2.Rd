@@ -4,12 +4,34 @@
 \alias{PlotHeatMap2}
 \title{Plot heatmap visualization for time-series data}
 \usage{
-PlotHeatMap2(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, useSigFeature, drawBorder)
+PlotHeatMap2(
+  mSetObj = NA,
+  imgName,
+  dataOpt = "norm",
+  scaleOpt = "row",
+  format = "png",
+  dpi = 72,
+  width = NA,
+  smplDist = "pearson",
+  clstDist = "average",
+  colorGradient = "bwm",
+  viewOpt = "overview",
+  rankingMethod = "mean",
+  topFeature = 2000,
+  sortName = "NA",
+  useTopFeature,
+  drawBorder,
+  includeRowNames = T
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{imgName}{Input a name for the plot}
+
+\item{dataOpt}{dataOpt, default is "norm"}
+
+\item{scaleOpt}{scaleOpt}
 
 \item{format}{Select the image format, "png", or "pdf".}
 
@@ -23,17 +45,21 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{clstDist}{Select clustering algorithm: ward, average, complete, single}
 
-\item{colors}{Select heatmap colors: bwm, gray}
+\item{colorGradient}{Select heatmap colors: bwm, gray}
 
 \item{viewOpt}{Select overview or detailed view: overview or detail}
 
-\item{hiRes}{Select high-resolution or not: logical, default set to F}
+\item{rankingMethod}{rankingMethod}
 
-\item{sortInx}{Sort by index}
+\item{topFeature}{topFeature}
 
-\item{useSigFeature}{Use significant features only: F or T (default false)}
+\item{sortName}{sortName}
+
+\item{useTopFeature}{Use significant features only: F or T (default false)}
 
 \item{drawBorder}{Show cell borders: F or T (default F)}
+
+\item{includeRowNames}{includeRowNames, logical}
 }
 \description{
 Plot heatmap visualization for time-series data

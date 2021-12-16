@@ -12,6 +12,11 @@ template.match <- function(x, template, dist.name) {
   c(k$estimate, k$stat, k$p.value)
 }
 
+template.pmatch <- function(x, template, dist.name, cov.vars) {
+  k <- pcor.test(x, template, cov.vars, method=dist.name);
+  c(k$estimate, k$stat, k$p.value)
+}
+
 #'Match pattern for correlation analysis
 #'@param mSetObj Input the name of the created mSetObj
 #'@param dist.name Input the distance method, default is set to pearson
@@ -72,18 +77,23 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
+#'@param searchType searchType, default is "feature"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   cor.res <- mSetObj$analSet$corr$cor.mat;
   pattern <- mSetObj$analSet$corr$pattern;
+  if(searchType == "feature"){
   title <- paste(GetVariableLabel(mSetObj$dataSet$type), "correlated with the", pattern);
+  }else{
+  title <- paste("Metadata correlated with the", pattern);
+  }
   if(nrow(cor.res) > 25){
     
     # first get most signficant ones (p value)
@@ -97,7 +107,11 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
       ord.inx <- rev(ord.inx);
     }
     cor.res <- cor.res[ord.inx, ];
+    if(searchType == "feature"){
     title <- paste("Top 25", tolower(GetVariableLabel(mSetObj$dataSet$type)), "correlated with the", pattern);
+    }else{
+    title <- paste("Top 25 metadata correlated with the", pattern);
+    }
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -138,8 +152,7 @@ PlotCorr <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param viewOpt Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.
 #'@param fix.col Logical, fix colors (TRUE) or not (FALSE).
 #'@param no.clst Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
-#'@param top View top
-#'@param topNum Numeric, view top 
+#'@param corrCutoff set corrCutoff
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
@@ -364,12 +377,11 @@ GenerateTemplates <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
-  
   mSetObj <- .get.mSet(mSetObj);
   
   # test if varName is valid
   if(!varName %in% colnames(mSetObj$dataSet$norm)){
-    AddErrMsg("Invalid feature name - not found!");
+    AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
     return(0);
   }
   

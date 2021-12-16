@@ -11,12 +11,14 @@ PlotPathSummary(
   format = "png",
   dpi = 72,
   width = NA,
-  x,
-  y
+  xlim = NA,
+  ylim = NA
 )
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
+
+\item{show.grid}{logical, show grid or not}
 
 \item{imgName}{Input a name for the plot}
 
@@ -27,9 +29,9 @@ the default dpi is 72. It is suggested that for high-resolution images, select a
 
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.}
 
-\item{x}{Input the X}
+\item{xlim}{limit of x axis}
 
-\item{y}{Input the Y}
+\item{ylim}{limit of y axis}
 }
 \description{
 x axis is the pathway impact factor

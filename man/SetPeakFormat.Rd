@@ -7,6 +7,8 @@
 SetPeakFormat(mSetObj = NA, type = "mpt")
 }
 \arguments{
+\item{mSetObj}{mSetObj}
+
 \item{type}{Input the name of mummichog analysis type, usually 'mpt'.}
 }
 \description{

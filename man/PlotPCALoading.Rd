@@ -4,7 +4,7 @@
 \alias{PlotPCALoading}
 \title{Plot PCA loadings and also set up the matrix for display}
 \usage{
-PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
+PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

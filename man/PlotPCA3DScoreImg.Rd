@@ -4,9 +4,8 @@
 \alias{PlotPCA3DScoreImg}
 \title{Create 3D PCA score plot}
 \usage{
-PlotPCA3DScoreImg(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
-
-mSet <- PlotPCA3DScore(mSetObj=NA, imgName, format="json", dpi=72, width=NA, inx1, inx2, inx3, angl)
+PlotPCA3DScoreImg(mSetObj=NA, imgName, 
+format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

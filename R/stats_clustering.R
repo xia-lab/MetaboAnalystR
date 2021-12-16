@@ -116,6 +116,7 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param colpal Character, input "default" to use the default ggplot color scheme or "colblind" to use
 #'the color-blind friendly palette.
+#'@param facet logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -145,7 +146,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 8;
   }else{
     w <- width;
   }
@@ -236,6 +237,7 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param colpal Character, input "default" to use the default ggplot color scheme or "colblind" to use
 #'the color-blind friendly palette.
+#'@param facet logical, TRUE to plot in multiple facets
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -258,7 +260,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 8;
   }else{
     w <- width;
   }
@@ -314,14 +316,23 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param colpal palete of color
+#'@param anal analysis type
+#'@param labels labels to show, default is "T"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@import ggplot2
 #'@export
 
-PlotClustPCA <- function(mSetObj, imgName, format="png", dpi=72, width=NA, colpal="default", anal="km", 
+PlotClustPCA <- function(mSetObj, 
+                         imgName, 
+                         format="png", 
+                         dpi=72, 
+                         width=NA, 
+                         colpal="default", 
+                         anal="km", 
                          labels = "T"){
   
   if(.on.public.web){
@@ -476,6 +487,9 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         mSetObj <- .get.mSet(mSetObj);
       }
       var.nms <- GetRFSigRowNames()[1:top.num];
+    }else{ # mean or iqr
+      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, NULL)$data;
+      var.nms <- colnames(filt.res);
     }
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));
@@ -502,19 +516,25 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param var.inx Default is set to NA
 #'@param border Indicate whether or not to show cell-borders, default is set to T
 #'@param grp.ave Logical, default is set to F
+#'@param metadata metadata
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
-PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, smplDist, 
-                        clstDist, palette, viewOpt="detail", rowV=T, colV=T, var.inx=NULL, border=T, grp.ave=F){
+PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+                        width=NA, dataOpt, scaleOpt, smplDist, 
+                        clstDist, palette, viewOpt="detail", rowV=T, 
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, metadata){
   
-  filenm = paste0(imgName, ".json")
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$heatmap <- imgName;
+
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
   
   # record the paramters
   mSetObj$analSet$htmap <- list(dist.par=smplDist, clust.par=clstDist);
@@ -534,10 +554,10 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   
   colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    hc.cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  if(cls.class == "integer"){
+    hc.cls <- as.factor(as.numeric(levels(cls))[cls]);
   }else{
-    hc.cls <- mSetObj$dataSet$cls;
+    hc.cls <- cls;
   }
   
   if(grp.ave){ # only use group average
@@ -566,40 +586,16 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
     colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
 
-  # compute natural height (fully visible)
-  plot_dims <- get_pheatmap_dims(t(hc.dat));
+  if(cls.type == "disc"){
+    annotation <- data.frame(class = hc.cls);
+    rownames(annotation) <- rownames(hc.dat); 
+  }else{
+    annotation <- NA;
+  }
+  # compute size for heatmap
+  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
   h <- plot_dims$height;
   w <- plot_dims$width;
-
-  #myH <- ncol(hc.dat)*20 + 150;
-  #h <- round(myH/72,2);
-  
-  myW <- nrow(hc.dat)*20 + 200;  
-  if(myW < 650){
-      myW <- 650;
-  }   
-  myW <- round(myW/72,2);
-  if(w < myW){
-    w <- myW;
-  }
-
-  if(viewOpt == "overview"){
-    if(is.na(width)){
-      if(w > 9){
-        w <- 9;
-      }
-    }else if(width == 0){
-      if(w > 7.2){
-        w <- 7.2;
-      }
-      
-    }else{
-      w <- 7.2;
-    }
-    if(h > w){
-      h <- w;
-    }
-  }
   
   # make the width smaller fro group average
   if(grp.ave){
@@ -618,18 +614,15 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-  if(mSetObj$dataSet$cls.type == "disc"){
-    annotation <- data.frame(class = hc.cls);
-    rownames(annotation) <- rownames(hc.dat); 
-    
+  if(cls.type == "disc"){    
     # set up color schema for samples
-    cols <- GetColorSchema(mSetObj$dataSet$cls, palette == "gray");
+    cols <- GetColorSchema(cls, palette == "gray");
     uniq.cols <- unique(cols);
 
     if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+      cls <- as.factor(as.numeric(levels(cls))[cls]);
     }else{
-      cls <- mSetObj$dataSet$cls;
+      cls <- cls;
     }
     
     names(uniq.cols) <- unique(as.character(sort(cls)));
@@ -647,30 +640,8 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dat
              cluster_cols = rowV,
              scale = scaleOpt, 
              color = colors);
-    dat = t(hc.dat)
-    if(scaleOpt == "row"){
-        res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
-    }else{
-        res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
-    }
-    colnames(dat) = NULL
-    netData <- list(data=res, annotation=annotation, smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
-    sink(filenm);
-    cat(RJSONIO::toJSON(netData));
-    sink();
   }else{
     heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
-    dat = t(hc.dat)
-    if(scaleOpt == "row"){
-        res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
-    }else{
-        res <- t(apply(dat, 2, function(x){as.numeric(cut(x, breaks=30))}));
-    }
-    colnames(dat) = NULL
-    netData <- list(data=res, annotation="NA", smp.nms = colnames(t(hc.dat)), met.nms = rownames(t(hc.dat)), colors = colors);
-    sink(filenm);
-    cat(RJSONIO::toJSON(netData));
-    sink();
   }
   dev.off();
   return(.set.mSet(mSetObj));

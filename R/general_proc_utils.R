@@ -17,7 +17,6 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
-  
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig.qs")){  
     orig.data <- qs::qread("data_orig.qs");
@@ -27,10 +26,11 @@ SanityCheckData <- function(mSetObj=NA){
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
-  
+
   # check class info
   if(mSetObj$dataSet$cls.type == "disc"){
     if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+      metadata <- mSetObj$dataSet$meta.info
       if(mSetObj$dataSet$design.type =="time"){
         msg<-c(msg, "The data is time-series data.");
       }else if(mSetObj$dataSet$design.type =="time0"){
@@ -38,10 +38,14 @@ SanityCheckData <- function(mSetObj=NA){
       }else{
         msg<-c(msg, "The data is not time-series data.");
       }
-      clsA.num <- length(levels(mSetObj$dataSet$facA));
-      clsB.num <- length(levels(mSetObj$dataSet$facB));
-      msg<-c(msg, paste(clsA.num, "groups were detected in samples for factor", mSetObj$dataSet$facA.lbl));
-      msg<-c(msg, paste(clsB.num, "groups were detected in samples for factor", mSetObj$dataSet$facB.lbl));
+      clsA.num <- length(levels(metadata[,1]));
+      clsB.num <- length(levels(metadata[,2]));
+      if(ncol(metadata) == 2){
+        msg<-c(msg, paste(clsA.num, "groups were detected in samples for factor", colnames(metadata)[1]));
+        msg<-c(msg, paste(clsB.num, "groups were detected in samples for factor", colnames(metadata)[2]));
+      }else{
+        msg <- c(msg, paste0(clsA.num, " groups were detected from primary meta-data factor: ", colnames(mSetObj$dataSet$meta.info)[1], "."));
+      }
     }else{
       if(mSetObj$dataSet$paired){
         msg<-c(msg,"Samples are paired.");
@@ -114,8 +118,9 @@ SanityCheckData <- function(mSetObj=NA){
           qs::qsave(orig.data, file="data_orig.qs");
         }
       } else {
-      
+        
         # check for class labels at least two replicates per class but QC and BLANK
+        
         cls.lbl <- mSetObj$dataSet$orig.cls;
         qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
         if(sum(qb.inx) > 0){
@@ -155,7 +160,31 @@ SanityCheckData <- function(mSetObj=NA){
         msg <- c(msg, "<font color='red'>Only a subset of methods will be available for analysis!</font>");
       }
       
-      msg <- c(msg, paste(cls.num, "groups were detected in samples."));
+     # if(is.null(mSetObj$dataSet$meta.info)){
+      if(mSetObj$analSet$type == "ts"){
+        msg <- c(msg, paste0(cls.num, " groups were detected from primary meta-data factor: ", colnames(mSetObj$dataSet$meta.info)[1], "."));
+        #msg <- c(msg, paste0(length(colnames(mSetObj$dataSet$meta.info)), " meta-data factors were detected: ", paste0(colnames(mSetObj$dataSet$meta.info), collapse=", "), "."));
+        cls.vec <- vector()
+        meta.info  <- mSetObj$dataSet$meta.info
+        meta.types <- mSetObj$dataSet$meta.types
+        for(i in 1:ncol(meta.info)){
+            if(meta.types[i] == "disc"){
+              cls.lbl <- meta.info[,i];
+              qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+              if(sum(qb.inx) > 0){
+                cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+              } else {
+                cls.Clean <- cls.lbl;
+              }
+              meta.name <- colnames(meta.info)[i]
+              if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
+                cls.vec <- c(cls.vec, meta.name)
+              }
+            }
+        }
+     }else{
+        msg <- c(msg, paste(cls.num, "groups were detected in samples."));
+     }
       
       if("NMDR_id" %in% names(mSetObj$dataSet)){
         msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "group labels:", paste0(unique(cls.lbl), collapse = ", ")))
@@ -167,11 +196,12 @@ SanityCheckData <- function(mSetObj=NA){
     
     #samples may not be sorted properly, need to do some sorting at the beginning 
     if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-      nfacA <- mSetObj$dataSet$facA;
-      nfacB <- mSetObj$dataSet$facB;
+      metadata <- mSetObj$dataSet$meta.info
+      nfacA <- metadata[,1];
+      nfacB <- metadata[,2];
       if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
         # determine time factor and should order first by subject then by each time points
-        if(tolower(mSetObj$dataSet$facA.lbl) == "time"){ 
+        if(tolower(colnames(metadata)[1]) == "time"){ 
           time.fac <- nfacA;
           exp.fac <- nfacB;
         }else{
@@ -185,9 +215,10 @@ SanityCheckData <- function(mSetObj=NA){
       }
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
       mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
-      mSetObj$dataSet$facA <- mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA[ord.inx];
-      mSetObj$dataSet$facB <- mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB[ord.inx];
+      mSetObj$dataSet$facA <- mSetObj$dataSet$orig.facA <- metadata[,1][ord.inx];
+      mSetObj$dataSet$facB <- mSetObj$dataSet$orig.facB <- metadata[,2][ord.inx];
       orig.data <- orig.data[ord.inx,];
+      mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[rownames(orig.data), ];
       qs::qsave(orig.data, file="data_orig.qs");
     }else{
       ord.inx <- order(mSetObj$dataSet$orig.cls);
@@ -264,11 +295,15 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>",
-         "Click the <b>Skip</b> button if you accept the default practice;",
-         "Or click the <b>Missing value imputation</b> to use other methods.");
+         "Click the <b>Proceed</b> button if you accept the default practice;",
+         "Or click the <b>Missing Values</b> button to use other methods.");
   
   qs::qsave(as.data.frame(int.mat), "preproc.qs");
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+  if(is.null(mSetObj$dataSet$meta.info)){
+    mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
+    colnames(mSetObj$dataSet$meta.info) = "Class";
+  }
   
   if(substring(mSetObj$dataSet$format,4,5)=="ts"){
     mSetObj$dataSet$proc.facA <- mSetObj$dataSet$orig.facA;
@@ -279,9 +314,10 @@ SanityCheckData <- function(mSetObj=NA){
   if(!.on.public.web){
     print(c("Successfully passed sanity check!", msg))
   }
-
+  
   return(.set.mSet(mSetObj));
 }
+
 
 #'Replace missing or zero values
 #'@description This function will replace zero/missing values by half of the smallest
@@ -302,17 +338,20 @@ ReplaceMin <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   #Reset to default
-  mSetObj$dataSet$proc <- mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- NULL;
+  mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- NULL;
   
   # replace zero and missing values using Detection Limit for each variable 
   preproc <- qs::qread("preproc.qs");
   int.mat <- ReplaceMissingByLoD(preproc);  
   
   # note, this is last step of processing, also save to proc
-  mSetObj$dataSet$proc <- as.data.frame(int.mat);
+  #mSetObj$dataSet$proc <- as.data.frame(int.mat);
+  mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
+  qs::qsave(as.data.frame(int.mat), file="data_proc.qs");
+
   mSetObj$msgSet$replace.msg <- paste("Zero or missing values were replaced by 1/5 of the min positive value for each variable.");
   invisible(gc()); # suppress gc output
-  
+
   return(.set.mSet(mSetObj));
 }
 
@@ -393,15 +432,57 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'@export
 
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.filter.var")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_filter.Rc");    
-    }
-    return(my.filter.var(mSetObj, filter, qcFilter, rsd));
+
+  mSetObj <- .get.mSet(mSetObj);
+  
+  #Reset to default
+  mSetObj$dataSet$filt <- NULL;
+  
+  if(is.null(mSetObj$dataSet$proc)){
+    int.mat <- as.matrix(qs::qread("data_proc.qs"));
   }else{
-    return(my.filter.var(mSetObj, filter, qcFilter, rsd));
+    int.mat <- as.matrix(mSetObj$dataSet$proc);
   }
+  cls <- mSetObj$dataSet$proc.cls;
+  
+  # save a copy
+  mSetObj$dataSet$filt.cls <- cls;
+  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    mSetObj$dataSet$filt.facA <- mSetObj$dataSet$proc.facA; 
+    mSetObj$dataSet$filt.facB <- mSetObj$dataSet$proc.facB; 
+  }
+  
+  msg <- "";
+  if(qcFilter == "T"){
+    rsd <- rsd/100;
+    # need to check if QC exists
+    qc.hits <- tolower(as.character(cls)) %in% "qc";
+    if(sum(qc.hits) > 1){ # require at least 2 QC for RSD
+      qc.mat <- int.mat[qc.hits,];
+      sds <- apply(qc.mat, 2, sd, na.rm=T);
+      mns <- apply(qc.mat, 2, mean, na.rm=T);
+      rsd.vals <- abs(sds/mns);  
+      gd.inx <- rsd.vals < rsd;
+      int.mat <- int.mat[,gd.inx];
+      if(mSetObj$analSet$type == "mummichog"){
+        msg <- paste("Removed ", sum(!gd.inx), " features based on QC RSD values. QC samples are excluded from downstream functional analysis.");
+      }else{
+        msg <- paste("Removed ", sum(!gd.inx), " features based on QC RSD values. QC samples are still kept. You can remove them later.");
+      }
+    }else if(sum(qc.hits) > 0){
+      AddErrMsg("RSD requires at least 2 QC samples, and only non-QC based filtering can be applied.");
+      return(0);
+    }else{
+      AddErrMsg("No QC Samples (with class label: QC) found.  Please use non-QC based filtering.");
+      return(0);
+    }
+  }
+  filt.res <- PerformFeatureFilter(int.mat, filter, NULL, mSetObj$analSet$type);
+  mSetObj$dataSet$filt <- filt.res$data;
+  msg <- paste(msg, filt.res$msg);
+  AddMsg(msg);
+  mSetObj$msgSet$filter.msg <- msg;
+  return(.set.mSet(mSetObj));
 }
 
 ##############################################
@@ -409,6 +490,26 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
+
+GetUniqueMetaNames <-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj);
+  data.type <- mSetObj[["dataSet"]][["meta.types"]][metadata];
+  
+  if(data.type == "cont"){
+    return("--- NA ---");
+  } else {
+    return(levels(mSetObj$dataSet$meta.info[,metadata]));
+  }
+}
+
+UpdateMetaOrder <- function(mSetObj=NA, metaName){
+  mSetObj <- .get.mSet(mSetObj);
+  if(exists('meta.ord.vec')){
+    metadata <- mSetObj$dataSet$meta.info[,metaName];
+    mSetObj$dataSet$meta.info[,metaName] <- factor(as.character(metadata), levels=meta.ord.vec)
+  }
+    return(.set.mSet(mSetObj));
+}
 
 GetOrigSmplNms <-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -458,8 +559,12 @@ UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
     qs::qsave(orig.data, file="data_orig.qs");
   }
   
-  if(!is.null(mSetObj$dataSet[["proc"]])){
-    mSetObj$dataSet$proc <- .update.feature.nm(mSetObj$dataSet$proc, old.nm, new.nm);
+  if(file.exists("data_proc.qs")){
+    proc.data <- qs::qread("data_proc.qs");
+    proc.data <- .update.feature.nm(proc.data, old.nm, new.nm);
+    mSetObj$dataSet$proc.feat.num <- ncol(proc.data);
+    qs::qsave(proc.data, file="data_proc.qs");
+
     if(!is.null(mSetObj$dataSet[["filt"]])){
       mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
     }
@@ -479,10 +584,62 @@ UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
   return(dat);
 }
 
-UpdateSampleGroups<-function(mSetObj=NA){
+UpdateSampleGroups<-function(mSetObj=NA, metadata="NA"){
   mSetObj <- .get.mSet(mSetObj);
   cls.lbl <- ClearStrings(as.vector(grp.vec));
-  mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+  if(is.null(mSetObj$dataSet$meta.info)) {
+    mSetObj$dataSet$meta.info <- matrix(nrow = length(cls.lbl))
+  }
+  meta.info <- mSetObj$dataSet$meta.info;
+  inx <- 1;
+  if(metadata %in% colnames(meta.info)){
+    inx <- which(colnames(meta.info) == metadata);
+    type <- mSetObj$dataSet$meta.types[inx];
+    x <- cls.lbl
+
+    if(type == "cont"){
+        is.num <- T
+        if(type == "cont"){
+           isNum <- grepl("^-?[0-9.]+$", x);
+           if(!all(isNum)){
+                is.num <- F;
+           }
+        }
+
+      if(!is.num){
+          mSetObj$dataSet$meta.status[inx] <- "<font color='red'>Not all numeric</font>"
+      }else{
+          mSetObj$dataSet$meta.status[inx] <- "OK"
+      }
+    }else{
+
+    containsMissing <-  sum(is.na(x))/length(x) + sum(x=="NA")/length(x) + sum(x=="")/length(x) + sum(x=="-")/length(x)  >0
+    qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+    if(sum(qb.inx) > 0){
+      cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+    } else {
+      cls.Clean <- as.factor(cls.lbl);
+    }
+    meta.name <- colnames(meta.info)[inx]
+      min.grp.size <- min(table(cls.Clean));
+      cls.num <- length(levels(cls.Clean));
+    lowReplicate <- min.grp.size < 3 | cls.num < 2
+    tooManyLow <- cls.num/min.grp.size > 4
+    if(containsMissing){
+      mSetObj$dataSet$meta.status[inx] <- "<font color='red'>Missing values</font>"
+    }else if (tooManyLow){
+      mSetObj$dataSet$meta.status[inx] <- "<font color='red'>Too many low replicates</font>"
+    }else if (lowReplicate){
+      mSetObj$dataSet$meta.status[inx] <- "<font color='darkorange'>Low replicates</font>"
+    }else{
+      mSetObj$dataSet$meta.status[inx] <- "OK"
+    }
+
+  }
+  }else{
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+  }
+  mSetObj$dataSet$meta.info[,inx] = as.factor(cls.lbl)
   return(.set.mSet(mSetObj));
 }
 
@@ -509,3 +666,204 @@ ContainMissing <- function(mSetObj=NA){
     return(.set.mSet(mSetObj));
   }
 }
+
+GetMetaNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(colnames(mSetObj$dataSet$meta.info))
+}
+
+SetMetaTypes <- function(mSetObj=NA, metaTypes.vec){
+  mSetObj <- .get.mSet(mSetObj);
+  names(metaTypes.vec) <- colnames(mSetObj$dataSet$meta.info)
+  mSetObj$dataSet$meta.types <- metaTypes.vec;
+  return(.set.mSet(mSetObj));
+}
+
+GetMeta.colorBar<-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj);
+  ht.col <- GetColorSchema(unique(mSetObj$dataSet$meta.info[,metadata]));
+  rbg.cols <- hex2rgb(ht.col);
+  return (rbg.cols);
+}
+
+GetMeta.vec<-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj);
+  return(unname(table(mSetObj$dataSet$meta.info[,metadata])));
+}
+
+
+UpdateMetaType <-function(mSetObj=NA, metadata="NA", type="disc"){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$meta.types[metadata] = type;
+  return(.set.mSet(mSetObj));
+}
+
+GetMetaDataGroups <- function(){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$dataSet$meta.info)
+}
+
+#sanity check performed after clicking on proceed button on sanity check page, for multifac module
+#' SanityCheckMeta#'
+#' @param mSetObj metaboanalyst object
+#' @param init can be 0 or 1
+#' @export
+SanityCheckMeta <- function(mSetObj=NA, init = 1){
+  msg <- NULL;
+  mSetObj <- .get.mSet(mSetObj);
+  
+  meta.info  <- mSetObj$dataSet$meta.info
+  
+  cls.lbl <- meta.info[,1]
+  cls.num <- length(levels(cls.lbl));
+  msg <- c(msg, paste0("A total of ", length(colnames(mSetObj$dataSet$meta.info)), " metadata factors were detected: ", paste0(colnames(mSetObj$dataSet$meta.info), collapse=", "), "."));
+  msg <- c(msg, paste0("The primary metadata factor is: ", colnames(mSetObj$dataSet$meta.info)[1], ", which contains ", cls.num, " groups."));
+
+  check.inx <-apply(meta.info , 2, function(x){ ( sum(is.na(x))/length(x) + sum(x=="NA")/length(x) + sum(x=="")/length(x) ) >0})
+  
+  if(sum(check.inx)>0){
+    if(init == 0){
+      mSetObj$dataSet$meta.info <- meta.info[,!check.inx]
+    }else{
+      mSetObj$dataSet$meta.status[check.inx] = "<font color='red'>Missing values</font>";
+    }
+    msg <- c(msg, paste0( "<b>",paste0(colnames(meta.info)[check.inx], collapse=", "),"</b>", " meta-data factors have missing values."));
+  }
+
+  cls.vec <- vector()
+  lowrep.vec <- vector()
+  toolow.vec <- vector();
+  for(i in 1:ncol(meta.info)){
+      cls.lbl <- meta.info[,i];
+      qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+      if(sum(qb.inx) > 0){
+        cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+      } else {
+        cls.Clean <- cls.lbl;
+      }
+      meta.name <- colnames(meta.info)[i]
+      min.grp.size <- min(table(cls.Clean));
+      cls.num <- length(levels(cls.Clean));
+
+
+    # checking if too many groups but a few samples in each group
+      if(cls.num/min.grp.size > 3 && !tolower(meta.name) %in% c("subject", "time")){
+        mSetObj$dataSet$small.smpl.size <- 1;
+        if(init == 1){
+           isNum <- grepl("^-?[0-9.]+$", cls.Clean);
+           if(all(isNum)){
+             mSetObj$dataSet$meta.types[i] = "cont";
+             cls.vec <- c(cls.vec, meta.name)
+           }else{
+             if(!check.inx[i]){
+             toolow.vec <- c(toolow.vec, meta.name)
+             }
+           }
+        }
+    # checking if some groups have low replicates
+      } else if(min.grp.size < 3 | cls.num < 2){
+        if(init == 1){
+           isNum <- grepl("^-?[0-9.]+$", cls.Clean);
+           if(all(isNum)){
+             mSetObj$dataSet$meta.types[i] = "cont";
+             cls.vec <- c(cls.vec, meta.name)
+           }else{
+             if(!check.inx[i] && !meta.name %in% toolow.vec){
+             lowrep.vec <- c(lowrep.vec, meta.name)
+             }
+           }
+        }
+      }
+    
+  }
+  
+  if(length(cls.vec) > 0){
+    if(init == 0){
+        mSetObj$dataSet$meta.info <- meta.info[,which(!colnames(meta.info) %in% cls.vec)]
+    }else if(init == 1){
+        msg <- c(msg, paste0( "<b>",paste0(cls.vec, collapse=", "),"</b>", " meta-data factors are assigned to be continuous and remaining are categorical."));
+        msg <- c(msg, "For categorical metadata, at least <b>two</b> groups with <b>three replicates</b> per group are required.");
+        msg <- c(msg, "Please double check if these auto-assigned metadata types are correct.");
+        msg <- c(msg, "You can manually update the metadata using the table below.");
+    }
+  }
+
+
+  if(length(toolow.vec)>0 && init == 1){
+    msg <- c(msg, paste0( "<b>",paste0(toolow.vec, collapse=", "),"</b>", " meta-data factors have too many groups with low replicates (less than 3) per group."));
+  }
+
+  if(length(lowrep.vec)>0 && init == 1){
+    msg <- c(msg, paste0( "<b>",paste0(lowrep.vec, collapse=", "),"</b>", " meta-data factors have some groups with low replicates (less than 3) per group."));
+  }
+
+  if(init == 1){
+    mSetObj$msgSet$metacheck.msg <- msg;
+  }
+  return(.set.mSet(mSetObj));
+}
+
+#' SetDataTypeOfMeta
+#' @param mSetObj metaboanalyst object
+#' @export
+SetDataTypeOfMeta <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  meta.info  <- mSetObj$dataSet$meta.info
+  for(i in 1:ncol(meta.info)){
+    metaNm <- colnames(meta.info)[i];
+    if(mSetObj$dataSet$meta.types[metaNm] == "cont"){
+        meta.info[,i] = as.numeric(as.character(meta.info[,i] ));
+    }
+  }
+  mSetObj$dataSet$meta.info <- meta.info
+  return(.set.mSet(mSetObj));
+}
+
+UpdateMetaColName <- function(mSetObj=NA, oldName, newName){
+  mSetObj <- .get.mSet(mSetObj);
+  meta.info  <- mSetObj$dataSet$meta.info
+  inx <- which(colnames(meta.info) == oldName);
+  mSetObj$dataSet$meta.types <- mSetObj$dataSet$meta.types[colnames(meta.info)]
+  mSetObj$dataSet$meta.status <- mSetObj$dataSet$meta.status[colnames(meta.info)]
+  mSetObj$dataSet$types.cls.lbl <- mSetObj$dataSet$types.cls.lbl[colnames(meta.info)]
+  colnames(meta.info)[inx] <- newName
+  names(mSetObj$dataSet$meta.types)[inx] <- newName
+  names(mSetObj$dataSet$meta.status)[inx] <- newName
+  names(mSetObj$dataSet$types.cls.lbl)[inx] <- newName
+  mSetObj$dataSet$meta.info <- meta.info
+  return(.set.mSet(mSetObj));
+
+}
+
+UpdateMetaLevels <- function(mSetObj=NA,metaNm){
+  mSetObj <- .get.mSet(mSetObj);
+  if(exists("meta.lvls")){ 
+      meta.info  <- mSetObj$dataSet$meta.info
+      sel.meta <- meta.info[, metaNm]
+      levels(sel.meta) <- meta.lvls
+      meta.info <- cbind(meta.info, sel.meta);
+      nms.vec <- colnames(meta.info)
+      nms.vec[length(nms.vec)] <- metaNm
+      nms.vec <- make.unique(nms.vec)
+      colnames(meta.info) <- nms.vec
+      new.nm <- colnames(meta.info)[length(nms.vec)]
+
+     inx1 <- which(names(mSetObj$dataSet$meta.types) == metaNm);
+     mSetObj$dataSet$meta.types <- c(mSetObj$dataSet$meta.types, mSetObj$dataSet$meta.types[inx1])
+     names(mSetObj$dataSet$meta.types)[length(nms.vec)] <- new.nm
+
+     
+     inx2 <- which(names(mSetObj$dataSet$meta.status) == metaNm);
+     mSetObj$dataSet$meta.status <- c(mSetObj$dataSet$meta.status, mSetObj$dataSet$meta.status[inx2])
+     names(mSetObj$dataSet$meta.status)[length(nms.vec)] <- new.nm
+
+
+     inx3 <- which(names(mSetObj$dataSet$types.cls.lbl) == metaNm);
+     mSetObj$dataSet$types.cls.lbl <- c(mSetObj$dataSet$types.cls.lbl, mSetObj$dataSet$types.cls.lbl[inx3]);
+     names(mSetObj$dataSet$types.cls.lbl)[length(nms.vec)] <- new.nm
+
+      mSetObj$dataSet$meta.info <- meta.info;
+  }
+  return(.set.mSet(mSetObj));
+}
+

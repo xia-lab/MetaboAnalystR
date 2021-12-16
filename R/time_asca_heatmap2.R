@@ -1,8 +1,9 @@
 #'Plot heatmap visualization for time-series data
 #'@description Plot heatmap visualization for time-series data
-#'@usage PlotHeatMap2(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, useSigFeature, drawBorder)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
+#'@param dataOpt dataOpt, default is "norm"
+#'@param scaleOpt scaleOpt
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
@@ -10,68 +11,90 @@
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param smplDist Select distance measure: euclidean, pearson, or minkowski
 #'@param clstDist Select clustering algorithm: ward, average, complete, single 
-#'@param colors Select heatmap colors: bwm, gray
+#'@param colorGradient Select heatmap colors: bwm, gray
 #'@param viewOpt Select overview or detailed view: overview or detail
-#'@param hiRes Select high-resolution or not: logical, default set to F
-#'@param sortInx Sort by index
-#'@param useSigFeature Use significant features only: F or T (default false)
+#'@param rankingMethod rankingMethod
+#'@param useTopFeature Use significant features only: F or T (default false)
 #'@param drawBorder Show cell borders: F or T (default F)
+#'@param topFeature topFeature
+#'@param includeRowNames includeRowNames, logical
+#'@param sortName sortName
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist="pearson", 
-                       clstDist="average", colors="bwm", viewOpt="overview", hiRes=FALSE, sortInx = 1, 
-                       useSigFeature, drawBorder){
-  
+PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
+                       scaleOpt="row", format="png", dpi=72, 
+                       width=NA, smplDist="pearson", 
+                       clstDist="average", colorGradient="bwm", 
+                       viewOpt="overview",rankingMethod="mean",
+                       topFeature=2000, sortName = "NA", 
+                       useTopFeature, drawBorder, includeRowNames=T){
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(mSet$dataSet$facA.type==TRUE){
-    facA <- as.factor(as.numeric(levels(mSet$dataSet$facA))[mSet$dataSet$facA]);
+  meta.info <- mSetObj$dataSet$meta.info
+  if(!exists('meta.vec')){
+    sel.meta.df <- meta.info[, c(1,2)]
+    meta.inxs = c(1,2)
   }else{
-    facA <- mSetObj$dataSet$facA;
+    meta.vec <- meta.vec[complete.cases(meta.vec)]
+    sel.meta.df <- meta.info[, meta.vec, drop=FALSE]
+    meta.inxs <- which(colnames(meta.info) %in% meta.vec)
   }
   
-  if(mSet$dataSet$facB.type==TRUE){
-    facB <- as.factor(as.numeric(levels(mSet$dataSet$facB))[mSet$dataSet$facB]);
+  for(i in 1:length(meta.inxs)){
+    inx <- meta.inxs[i]
+    inx2 <- which(colnames(sel.meta.df) == meta.vec[i]);
+    if(mSetObj$dataSet$meta.types[inx] == "cont"){
+      sel.meta.df[,inx2] <- as.numeric(as.character(sel.meta.df[,inx2]))
+    }else{
+      if(mSetObj$dataSet$types.cls.lbl[inx] == "numeric"){
+        sel.meta.df[,inx2] <- as.factor( as.numeric( levels(sel.meta.df[,inx2]))[sel.meta.df[,inx2]]);
+      }
+    }
+  }
+  
+  if(!exists('sort.vec')){
+    ord.vec <- c(1:ncol(sel.meta.df));
   }else{
-    facB <- mSetObj$dataSet$facB;
+    ord.vec <- match(sort.vec, colnames(sel.meta.df))
   }
-  
-  if(sortInx == 1){
-    ordInx <- order(facA, facB);
+
+  if(length(sort.vec) == 1){
+    ordInx <- order(sel.meta.df[, ord.vec])
+  }else if(length(sort.vec) == 2){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2]])
+  }else if(length(sort.vec) == 3){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]])
   }else{
-    ordInx <- order(facB, facA);
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]])
   }
   
-  new.facA <- facA[ordInx];
-  new.facB <- facB[ordInx];
-  
-  # set up data set. note, need to transpose the data for two way plotting
-  data <- mSetObj$dataSet$norm[ordInx, ];
-  
-  # use features from ANOVA2
-  if(useSigFeature){
-    hits <- colnames(data) %in% rownames(mSetObj$analSet$aov2$sig.mat);
-    data <- mSetObj$dataSet$norm[ordInx, hits];
+  annotation <- as.data.frame(sel.meta.df[ordInx, ]);
+
+  # set up data set
+  if(dataOpt=="norm"){
+    my.data <- mSetObj$dataSet$norm;
+  }else{
+    my.data <- qs::qread("prenorm.qs");
   }
   
-  hc.dat <- as.matrix(data);
-  colnames(hc.dat) <- substr(colnames(data), 1, 18) # some names are too long
+  data <- my.data[ordInx, ];
+  var.nms = colnames(data);
   
   # set up parameter for heatmap
-  if(colors=="gbr"){
+  if(colorGradient=="gbr"){
     colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-  }else if(colors == "heat"){
+  }else if(colorGradient == "heat"){
     colors <- heat.colors(256);
-  }else if(colors == "topo"){
+  }else if(colorGradient == "topo"){
     colors <- topo.colors(256);
-  }else if(colors == "gray"){
+  }else if(colorGradient == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
   }else{
     colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
+  
   if(drawBorder){
     border.col<-"grey60";
   }else{
@@ -79,62 +102,71 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(viewOpt == "overview"){
-    if(is.na(width)){
-      w <- 9;
-    }else if(width == 0){
-      w <- 7.2;
-    }else{
-      w <- 7.2;
-    }
-    mSetObj$imgSet$htmaptwo <- imgName;
-    h <- w;
-  }else{
-    if(is.na(width)){
-      minW <- 650;
-      myW <- nrow(hc.dat)*11 + 150;
-      if(myW < minW){
-        myW <- minW;
-      }   
-      w <- round(myW/72,2);
-    }else if(width == 0){
-      w <- 7.2;
-    }else{
-      w <- 7.2;
-    }
-    if(ncol(hc.dat) >100){
-      myH <- ncol(hc.dat)*12 + 120;
-    }else if(ncol(hc.dat) > 50){
-      myH <- ncol(hc.dat)*12 + 60;
-    }else{
-      myH <- ncol(hc.dat)*12 + 20;
-    }
-    mSetObj$imgSet$htmaptwo <- imgName;
-    h <- round(myH/72,2);
+  mSetObj$imgSet$htmaptwo <- imgName;
+
+  if(useTopFeature){
+      if(rankingMethod == "aov2"){
+        if(is.null(mSetObj$analSet$aov2$sig.mat)){
+          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+          return(0)
+        }
+        mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
+      }else if(rankingMethod == "lm"){
+        if(is.null(mSetObj$analSet$cov$sig.mat)){
+          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+          return(0)
+        }
+        mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
+      }else if(rankingMethod == "rf"){
+        if(is.null(mSetObj$analSet$cov$rf.sigmat)){
+          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+          return(0)
+        }
+        mat <- as.matrix(mSetObj$analSet$rf.sigmat)  
+ 
+      }else{ # "mean" or "iqr"
+        mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, NULL)$data;
+        mat <- t(mat)
+      }
+      
+      var.nms <- rownames(mat);
+      if(length(var.nms) > topFeature){
+        var.nms <- var.nms[c(1:topFeature)]
+      }
+      data <- data[, var.nms];
   }
+
+  hc.dat <- as.matrix(data);
+  colnames(hc.dat) <- substr(colnames(data), 1, 18) # some names are too long
+
+  # compute size for heatmap
+  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
-
-  annotation <- data.frame(new.facB, new.facA);
-  colnames(annotation) <- c(mSetObj$dataSet$facB.lbl, mSetObj$dataSet$facA.lbl);
-  rownames(annotation) <-rownames(hc.dat); 
   
+  annotation <- annotation[,c(length(annotation):1)];
+  hc.dat <- hc.dat[rownames(annotation),] #order data matrix per annotation
+
   pheatmap::pheatmap(t(hc.dat), 
-           annotation=annotation, 
-           fontsize=8, fontsize_row=8, 
-           clustering_distance_rows = smplDist,
-           clustering_distance_cols = smplDist,
-           clustering_method = clstDist, 
-           border_color = border.col,
-           cluster_rows = T, 
-           cluster_cols = F,
-           scale = 'row', 
-           color = colors);
+                     annotation=annotation, 
+                     fontsize=8, fontsize_row=8, 
+                     clustering_distance_rows = smplDist,
+                     #clustering_distance_cols = smplDist,
+                     clustering_method = clstDist, 
+                     border_color = border.col,
+                     cluster_rows = T, 
+                     cluster_cols = F,
+                     scale = scaleOpt,
+                     show_rownames=includeRowNames,
+                     color = colors);
   dev.off();
+  
   mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
   return(.set.mSet(mSetObj));
 }
@@ -158,8 +190,27 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'@export
 #'
 Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+  
+  if(!exists('meta.vec3')){
+    sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
+  }else{
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec3]
+  }
+  
+  for(i in 1:ncol(sel.meta.df)){
+    meta <- colnames(sel.meta.df)[i]
+    type <- mSetObj$dataSet$meta.types[meta]
+    if(type == "cont"){
+      return(-1);
+    }
+  }
+  
+  mSetObj$dataSet$facA <- sel.meta.df[,1]
+  mSetObj$dataSet$facB <- sel.meta.df[,2]
+  mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[1]
+  mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[2]
   
   X <-  mSetObj$dataSet$norm;
   Fac = c(a, b, x, res);
@@ -187,9 +238,36 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   Xoff <- X-(cbind(matrix(1,nrow=p,ncol=1))%*%rbind(offset));
   
   Model.a<-ASCAfun1(Xoff,Designa,Faca);
+  if(is.null(Model.a)){
+    AddErrMsg("Incorrect component number for Model.a!");
+    return(0);
+  }
   Model.b<-ASCAfun1(Xoff,Designb,Facb);
+  if(is.null(Model.b)){
+    AddErrMsg("Incorrect component number for Model.b!");
+    return(0);
+  }
   if (Facab != 0 ) {
-    Model.ab<-ASCAfun2(Xoff,Designa,Designb,Facab);
+    tryCatch(
+      {
+        Model.ab<-ASCAfun2(Xoff,Designa,Designb,Facab);
+      }, warning = function(w){ print() },
+      error = function(e) {
+        print(e$message)
+        if(grepl("infinite or missing values in 'x'", e$message, fixed=T)){
+          AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+        }
+      }
+    )
+    
+    if(!exists('Model.ab')){
+      return(0)
+    }
+    
+    if(is.null(Model.ab)){
+      AddErrMsg("Incorrect component number for Model.ab!");
+      return(0);
+    }
   }
   
   # Collecting models
@@ -207,15 +285,21 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   
   # Model.res
   Model.res <- ASCAfun.res(Xres,Facres);
-  
+  if(is.null(Model.res)){
+    AddErrMsg("Incorrect component number for Model.res!");
+    return(0);
+  }  
   LIST<-list(Model.res);
   names(LIST)<-c("Model.res");
   
-  mSetObj$analSet$asca <- list(
+  mSetObj$analSet$asca <- TRUE;
+  asca <- list(
     facNum = Fac, 
     Xoff = Xoff,
     models = c(output,LIST)
   );
+  qs::qsave(asca, file="asca.qs");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -239,7 +323,9 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.95){
   
   mSetObj <- .get.mSet(mSetObj);
-  asca.models <- mSetObj$analSet$asca$models;
+
+  asca <- qs::qread("asca.qs");
+  asca.models <- asca$models;
   spe.lims  <-  lev.lims <- numeric(3);
   
   md.nms <- names(asca.models)[1:3]; # note, last model is Model.res, ignore
@@ -254,10 +340,12 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     lim <- g*qchisq(1-spe.thresh, df=h);
     spe.lims[nm] <- lim;
   }
-  mSetObj$analSet$asca$SPE.cutoff <- spe.lims;
+  asca$SPE.cutoff <- spe.lims;
   
-  if(is.null(mSetObj$analSet$asca$leverage.perm)){
-    
+  if(is.null(asca$leverage.perm)){
+
+    # just tem
+    mSetObj$analSet$asca <- asca;
     mSetLev <<- mSetObj
     
     # lev.perm is a list with each 3 col matrix (lvA, lvV, lvAB)
@@ -266,7 +354,9 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     # perm.num may be adjusted on public server  
     perm.num <- res.perm$perm.num;
     lev.perm <- res.perm$perm.res;
-    
+   
+    # reset to clean mem
+    mSetObj$analSet$asca <- TRUE;
     rm(mSetLev, pos = ".GlobalEnv")
     
     # convert to a list with 3 members each is a permutation of all variable
@@ -283,13 +373,13 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     perm.lv <- list("Model.a"=lvA.mat,
                     "Model.b"=lvB.mat,
                     "Model.ab"=lvAB.mat);
-    mSetObj$analSet$asca$leverage.perm <- perm.lv;
+    asca$leverage.perm <- perm.lv;
     rm(lev.perm);
     gc();
   }
   
   for (nm in md.nms){
-    lv.mat <- mSetObj$analSet$asca$leverage.perm[[nm]];
+    lv.mat <- asca$leverage.perm[[nm]];
     # get the quantile for each var
     quant1 <- apply(lv.mat, 2, quantile, probs = lev.thresh);
     # get the quantile for each model
@@ -297,7 +387,7 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     lev.lims[nm] <- lim;
   }
   
-  mSetObj$analSet$asca$leverage.cutoff <- lev.lims;
+  asca$leverage.cutoff <- lev.lims;
   
   # now get all significant and outlier for each factor based on the threshold
   sig.list <- out.list <- list();
@@ -306,8 +396,8 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     lv <- model$leverage;
     spe <- model$SPE;
     
-    lv.cutoff <- mSetObj$analSet$asca$leverage.cutoff[nm];
-    spe.cutoff <-  mSetObj$analSet$asca$SPE.cutoff[nm];
+    lv.cutoff <- asca$leverage.cutoff[nm];
+    spe.cutoff <-  asca$SPE.cutoff[nm];
     
     lvInx <- lv >= lv.cutoff;
     speInx <- spe <= spe.cutoff;
@@ -336,8 +426,10 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     fast.write.csv(sig.mat, file=paste("Sig_features_", nm, ".csv", sep=""));
     fast.write.csv(out.mat, file=paste("Outliers_", nm, ".csv", sep=""));
   }
-  mSetObj$analSet$asca$sig.list <- sig.list;
-  mSetObj$analSet$asca$out.list <- out.list;
+  asca$sig.list <- sig.list;
+  asca$out.list <- out.list;
+  qs::qsave(asca, file="asca.qs");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -367,7 +459,10 @@ ASCAfun1<-function (X, Design, Fac) {
   # Weigh the data of the Submodel with the corresponding number of measurement occasions
   XKw<- NK*XK
   
-  PCA<-PCA.GENES(XKw)
+  PCA<-PCA.GENES(XKw);
+  if(ncol(PCA$scores) < Fac){
+    return(NULL);
+  }
   scw<-PCA$scores[,1:Fac]
   ld<-PCA$loadings[,1:Fac]
   ssq<-PCA$var.exp
@@ -448,7 +543,10 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
   XKw<-XK*(as.numeric(NK))
   rownames(XKw) <- row.nm;
   
-  PCA<-PCA.GENES(XKw)
+  PCA<-PCA.GENES(XKw);
+  if(ncol(PCA$scores) < Fac){
+    return(NULL);
+  }
   scw<-PCA$scores[,1:Fac]
   ld<-PCA$loadings[,1:Fac]
   ssq<-PCA$var.exp
@@ -490,6 +588,9 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
 
 ASCAfun.res <- function(X, Fac){
   PCA<-PCA.GENES(X);
+  if(ncol(PCA$scores) < Fac){
+    return(NULL);
+  }
   sc<-PCA$scores[,1:Fac];
   ld<-PCA$loadings[,1:Fac];
   ssq<-PCA$var.exp;
@@ -549,7 +650,8 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   facAB.size <- getFactorSize(facAB);
   
   # record these information
-  mSetObj$analSet$asca$perm.info <- list(
+  asca <- qs::qread("asca.qs");
+  asca$perm.info <- list(
     facA.size = facA.size,
     facB.size = facB.size,
     facAB = facAB,
@@ -557,10 +659,16 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
     lvAB.mat = lvAB.mat
   );
   
-  mSetPerm <<- mSetObj
+  # just tem
+  mSetObj$analSet$asca <- asca;
+  mSetPerm <<- mSetObj;
+
   perm.orig <- Get.asca.tss(dummy, perm=F);
   res.perm <- Perform.permutation(perm.num, Get.asca.tss);
+
+  # clean MEM
   rm(mSetPerm, pos = ".GlobalEnv");
+  mSetObj$analSet$asca <- TRUE;
   gc(); # garbage collection
 
   # perm.num may be adjusted on public server  
@@ -587,8 +695,10 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   ## added for test
   fast.write.csv(perm.res, file="perm.res.csv");
   
-  mSetObj$analSet$asca$perm.p <- p.res;
-  mSetObj$analSet$asca$perm.mat <- perm.res;
+  asca$perm.p <- p.res;
+  asca$perm.mat <- perm.res;
+  qs::qsave(asca, file="asca.qs");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -820,8 +930,8 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$asca.scree <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, type=format, width=w, height=h,  bg="white");
-  
-  models <- mSetObj$analSet$asca$models;
+  asca <- qs::qread("asca.qs");
+  models <- asca$models;
   # note four plots, model a, b, ab and res
   par(mfrow=c(2,2),oma=c(0,0,3,0), cex=1.0)
   
@@ -861,13 +971,13 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'
 PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE){
   mSetObj <- .get.mSet(mSetObj);
-  
+  asca <- qs::qread("asca.qs");
   if(type == "a"){
-    md <- mSetObj$analSet$asca$models$Model.a;
+    md <- asca$models$Model.a;
     lbls <- as.character(levels(mSetObj$dataSet$facA));
     fac.lbl <- mSetObj$dataSet$facA.lbl;
   }else{
-    md <- mSetObj$analSet$asca$models$Model.b;
+    md <- asca$models$Model.b;
     lbls <- as.character(levels(mSetObj$dataSet$facB));
     fac.lbl <- mSetObj$dataSet$facB.lbl;
   }
@@ -900,14 +1010,14 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
     ## add 'xlab=fac.lbl' & replace ylab as "Scores Component #1 (XX% of variation explained)"
     ## by B. Han (17 Sep 2013)
     # plot(md$scores[,j], type="b", ylab="Concentration / Intensity", col=cols[j], pch=19,
-    #     main=paste(fac.lbl, ", component", j, sep=""), axes=F);
+    #     main=paste(fac.lbl, ", comp.", j, sep=""), axes=F);
     
     # BHan: modified for Black/White color
     # cols[j] --> color
     colortype <- ifelse(colorBW, "black", (j + 1));
     plot(md$scores[,j], type="b", ylab=paste("Scores (",round(md$var.exp[j,1]*100,2),"% of variation explained)"),
          col=colortype, pch=19,
-         main=paste(fac.lbl, ", component", j, sep=""), axes=F,
+         main=paste(fac.lbl, ", comp.", j, sep=""), axes=F,
          xlab=fac.lbl);
     
     axis(2);
@@ -938,8 +1048,8 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  md <- mSetObj$analSet$asca$models$Model.ab;
+  asca <- qs::qread("asca.qs");
+  md <- asca$models$Model.ab;
   ab.lbls <- as.character(levels(mSetObj$dataSet$facA));
   ba.lbls <- as.character(levels(mSetObj$dataSet$facB));
   pcNum <- md$facNum;
@@ -989,11 +1099,11 @@ PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=F
     
     ## replace ylab as "Scores (XX% of variation explained)" by B. Han (17 Sep 2013)
     # matplot(t(md.scores), type="b", pch=19, lty=1, axes=F, col = cols,
-    #        ylab="Concentration / Intensity", main=paste("Interaction, component", j, sep=""));
+    #        ylab="Concentration / Intensity", main=paste("Interaction, comp.", j, sep=""));
     
     matplot(t(md.scores), type="b", pch=pchstyle, lty=linestyle, axes=F, col = cols,
             ylab=paste("Scores (",round(md$var.exp[j,1]*100,2),"% of variation explained)"),
-            main=paste("Interaction, component", j, sep=""));
+            main=paste("Interaction, comp.", j, sep=""));
     axis(1, label=ab.lbls, at=1:length(ab.lbls));
     axis(2);
     box();
@@ -1011,10 +1121,10 @@ PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=F
     
     ## replace ylab as "Scores (XX% of variation explained)" by B. Han (17 Sep 2013)
     # matplot(md.scores, type="b", pch=19, lty=1, col= cols, axes=F,
-    #         ylab="Concentration / Intensity", main=paste("Interaction, component", j, sep=""));
+    #         ylab="Concentration / Intensity", main=paste("Interaction, comp.", j, sep=""));
     matplot(md.scores, type="b", pch=pchstyle, lty=linestyle, col= cols, axes=F,
             ylab=paste("Scores (",round(md$var.exp[j,1]*100,2),"% of variation explained)"),
-            main=paste("Interaction, component", j, sep=""));
+            main=paste("Interaction, comp.", j, sep=""));
     axis(1, label=ba.lbls, at=1:length(ba.lbls));
     axis(2);
     box();
@@ -1048,24 +1158,24 @@ PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=F
 PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  asca <- qs::qread("asca.qs");
   if(type == "a"){
-    lvg <- mSetObj$analSet$asca$models$Model.a$leverage;
-    spe <- mSetObj$analSet$asca$models$Model.a$SPE;
-    lv.cutoff <- mSetObj$analSet$asca$leverage.cutoff["Model.a"];
-    spe.cutoff <-  mSetObj$analSet$asca$SPE.cutoff["Model.a"];
+    lvg <- asca$models$Model.a$leverage;
+    spe <- asca$models$Model.a$SPE;
+    lv.cutoff <- asca$leverage.cutoff["Model.a"];
+    spe.cutoff <-  asca$SPE.cutoff["Model.a"];
     lbl <- mSetObj$dataSet$facA.lbl;
   }else if(type == "b"){
-    lvg <- mSetObj$analSet$asca$models$Model.b$leverage;
-    spe <- mSetObj$analSet$asca$models$Model.b$SPE;
-    lv.cutoff <- mSetObj$analSet$asca$leverage.cutoff["Model.b"];
-    spe.cutoff <- mSetObj$analSet$asca$SPE.cutoff["Model.b"];
+    lvg <- asca$models$Model.b$leverage;
+    spe <- asca$models$Model.b$SPE;
+    lv.cutoff <- asca$leverage.cutoff["Model.b"];
+    spe.cutoff <- asca$SPE.cutoff["Model.b"];
     lbl <- mSetObj$dataSet$facB.lbl;
   }else{
-    lvg <- mSetObj$analSet$asca$models$Model.ab$leverage;
-    spe <- mSetObj$analSet$asca$models$Model.ab$SPE;
-    lv.cutoff<- mSetObj$analSet$asca$leverage.cutoff["Model.ab"];
-    spe.cutoff <- mSetObj$analSet$asca$SPE.cutoff["Model.ab"];
+    lvg <- asca$models$Model.ab$leverage;
+    spe <- asca$models$Model.ab$SPE;
+    lv.cutoff<- asca$leverage.cutoff["Model.ab"];
+    spe.cutoff <- asca$SPE.cutoff["Model.ab"];
     lbl <- "Interaction";
   }
   
@@ -1151,9 +1261,10 @@ PlotSigVar <- function(x, y, xline, yline, title){
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  perm.mat<-mSetObj$analSet$asca$perm.mat;
-  perm.p<-mSetObj$analSet$asca$perm.p;
+  asca <- qs::qread("asca.qs");
+
+  perm.mat <- asca$perm.mat;
+  perm.p <- asca$perm.p;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -1205,7 +1316,6 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 #'@export
 GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
-  
   if(nm == "Model.a"){
     nmLbl <- paste("main effect", mSetObj$dataSet$facA.lbl);
   }else if(nm == "Model.b"){
@@ -1213,24 +1323,26 @@ GetSigTable.ASCA <- function(mSetObj=NA, nm){
   }else{
     nmLbl <- paste("interaction effect between", mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
   }
-  GetSigTable(mSetObj$analSet$asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj$dataSet$type);
+  asca <- qs::qread("asca.qs");
+  GetSigTable(asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj$dataSet$type);
   #return(.set.mSet(mSetObj));
 }
 
 GetAscaSigMat <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
+  asca <- qs::qread("asca.qs");
   if(type == "sigA"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.a"]])
+    sig.mat <- CleanNumber(asca$sig.list[["Model.a"]])
   }else if(type == "outA"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.a"]])
+    sig.mat <- CleanNumber(asca$out.list[["Model.a"]])
   }else  if(type == "sigB"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.b"]]);
+    sig.mat <- CleanNumber(asca$sig.list[["Model.b"]]);
   }else if(type == "outB"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.b"]]);
+    sig.mat <- CleanNumber(asca$out.list[["Model.b"]]);
   }else if(type == "sigAB"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$sig.list[["Model.ab"]]);
+    sig.mat <- CleanNumber(asca$sig.list[["Model.ab"]]);
   }else if(type == "outAB"){
-    sig.mat <- CleanNumber(mSetObj$analSet$asca$out.list[["Model.ab"]])
+    sig.mat <- CleanNumber(asca$out.list[["Model.ab"]])
   }else{
     print(paste("Unknown data type: ", type));
     return(0);
@@ -1238,7 +1350,7 @@ GetAscaSigMat <- function(mSetObj=NA, type){
   
   fileNm <- paste("asca_",type, ".csv", sep="");
   fast.write.csv(signif(sig.mat,5), file=fileNm);
-  mSetObj$analSet$asca$sig.nm <- fileNm;
+  mSetObj$analSet$asca.sig.nm <- fileNm;
   
   if(.on.public.web){
     .set.mSet(mSetObj);
@@ -1250,23 +1362,24 @@ GetAscaSigMat <- function(mSetObj=NA, type){
 
 GetAscaSigRowNames <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
+  asca <- qs::qread("asca.qs");
   if(type == "sigA"){
-    return(rownames(mSetObj$analSet$asca$sig.list[["Model.a"]]))
+    return(rownames(asca$sig.list[["Model.a"]]))
   }
   if(type == "outA"){
-    return(rownames(mSetObj$analSet$asca$out.list[["Model.a"]]))
+    return(rownames(asca$out.list[["Model.a"]]))
   }
   if(type == "sigB"){
-    return(rownames(mSetObj$analSet$asca$sig.list[["Model.b"]]))
+    return(rownames(asca$sig.list[["Model.b"]]))
   }
   if(type == "outB"){
-    return(rownames(mSetObj$analSet$asca$out.list[["Model.b"]]))
+    return(rownames(asca$out.list[["Model.b"]]))
   }
   if(type == "sigAB"){
-    return(rownames(mSetObj$analSet$asca$sig.list[["Model.ab"]]))
+    return(rownames(asca$sig.list[["Model.ab"]]))
   }
   if(type == "outAB"){
-    return(rownames(mSetObj$analSet$asca$out.list[["Model.ab"]]))
+    return(rownames(asca$out.list[["Model.ab"]]))
   }
   return(0);
 }
@@ -1277,7 +1390,7 @@ GetAscaSigColNames <- function(type){
 
 GetAscaSigFileName <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analSet$asca$sig.nm
+  mSetObj$analSet$asca.sig.nm
 }
 
 #'Heckbert algorithm
@@ -1317,4 +1430,139 @@ heckbert <- function(dmin, dmax, m){
     else nf <- 10
   }
   nf * (10^e)
+}
+
+PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",drawBorder=F,includeRowNames=T, imgName, format="png", dpi=96, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj <- .get.mSet(mSetObj);
+  metaData <- mSetObj$dataSet$meta.info;
+  smp.nms <- rownames(metaData);
+  meta.num <- ncol(metaData)
+
+  var.nms <- rownames(metaData);
+  mSetObj$imgSet$metahtmaptwo <- imgName;
+
+  met <- sapply(metaData, function(x) as.integer(x))
+  rownames(met) <- smp.nms;
+
+  plot_dims <- get_pheatmap_dims(met, NA, viewOpt, width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+
+  # set up parameter for heatmap
+  if(colorGradient=="gbr"){
+    colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+  }else if(colorGradient == "heat"){
+    colors <- heat.colors(256);
+  }else if(colorGradient == "topo"){
+    colors <- topo.colors(256);
+  }else if(colorGradient == "gray"){
+    colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+  }else{
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+  }
+  
+  if(drawBorder){
+    border.col<-"grey60";
+  }else{
+    border.col <- NA;
+  }
+  
+  if(clustSelOpt == "both"){
+    rowBool = T;
+    colBool = T;
+  }else if(clustSelOpt == "row"){
+    rowBool = T;
+    colBool = F;
+  }else if(clustSelOpt == "col"){
+    rowBool = F;
+    colBool = T;
+  }else{
+    rowBool = F;
+    colBool = F;
+  }
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+       displayText = metaData;
+    if(viewOpt == "overview"){
+       displayText = F;
+    }
+    pheatmap::pheatmap(met, 
+                       fontsize=8, fontsize_row=8, 
+                       clustering_distance_rows = smplDist,
+                       clustering_distance_cols = smplDist,
+                       clustering_method = clstDist, 
+                       border_color = border.col,
+                       cluster_rows = rowBool, 
+                       cluster_cols = colBool,
+                       scale = "column",
+                       show_rownames= includeRowNames,
+                       color = colors,
+                       display_numbers=displayText);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="png", dpi=96, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj <- .get.mSet(mSetObj);
+  metaData <- mSetObj$dataSet$meta.info;
+  meta.num <- ncol(metaData)
+
+  if(is.na(width)){
+    w <- 10
+    h <- 7.5
+  }else if(width == 0){
+    w <- 8;
+    h <- 6;
+  }else{
+    w <- width;
+    h <- width * 0.75;
+  }
+
+  textSize = 4;
+  if(meta.num > 25){
+    w <- 24
+    h <- 18
+    textSize = 3.5;
+  }else if(meta.num > 10){
+    w <- 16
+    h <- 12
+  }
+
+  library(reshape2)
+  library(ggplot2)
+  library(scales);
+
+  met <- sapply(metaData, function(x) as.integer(x));
+  cormat <- round(cor(met, method=cor.opt),3);
+  upper_tri <- get_upper_tri(cormat);
+  melted_cormat <- melt(upper_tri, na.rm = TRUE);
+
+  ggheatmap <- ggplot2::ggplot(data = melted_cormat, aes(Var2, Var1, fill = value)) +
+    geom_tile(color = "white")+ scale_y_discrete("Var1", position="right") +
+    scale_fill_gradient2(low = muted("blue"), mid="white", high = muted("red"), midpoint = 0,
+                        limit = c(-1,1), space = "Lab", name="Correlation") + theme_minimal()+ 
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+          axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank(), axis.text.y.right = element_text(),
+          legend.direction = "vertical", legend.position="left")+ coord_fixed();
+  
+  ggheatmap <- ggheatmap + geom_text(aes(Var2, Var1, label = value), color = "black", size = textSize);
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(ggheatmap);
+  dev.off();
+  return(1);
+}
+
+# Get lower triangle of the correlation matrix
+get_lower_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
 }

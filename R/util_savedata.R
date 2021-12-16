@@ -8,7 +8,18 @@ my.save.data <- function(mSetObj=NA){
   if(anal.type=="mummichog"){
     fast.write.csv(mSetObj$dataSet$mummi.orig, file="data_original.csv", row.names = FALSE);
     fast.write.csv(mSetObj$dataSet$mummi.proc, file="data_processed.csv", row.names = FALSE);
-  }else{
+  } else if(anal.type=="metapaths") {
+    dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
+    res <- sapply(dataNMs, FUN= function(x) {
+        dataNM <- mSetObj[[x]][["name"]];
+        fileDataNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", dataNM);
+        dt <- mSetObj[[x]]$norm;
+        fast.write.csv(dt, file=paste0(fileDataNM, "_norm.csv"));
+        dtmp <- mSetObj[[x]]$mummi.proc;
+        fast.write.csv(dtmp, file=paste0(fileDataNM, "_processed.csv"));
+        return(1)})
+    if(all(res == 1)) print("Data saving successfully!")
+  } else {
     if(file.exists("data_orig.qs")){
       lbls <- NULL;
       tsFormat <- substring(mSetObj$dataSet$format,4,5)=="ts";
@@ -27,9 +38,8 @@ my.save.data <- function(mSetObj=NA){
       }
         
       fast.write.csv(orig.data, file="data_original.csv");
-      
-      if(!is.null(mSetObj$dataSet[["proc"]])){
-        
+
+      if(file.exists("data_proc.qs")){
         if(!is.null(mSetObj$dataSet[["filt"]])){
           if(tsFormat){
             lbls <- cbind(as.character(mSetObj$dataSet$filt.facA),as.character(mSetObj$dataSet$filt.facB));
@@ -45,13 +55,9 @@ my.save.data <- function(mSetObj=NA){
           }else{
             lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
           }
-          proc.data<-mSetObj$dataSet$proc;
+          proc.data <- qs::qread("data_proc.qs");
         }
         
-        # convert back to original names
-#        if(!data.type %in% c("nmrpeak", "mspeak", "msspec")){
-#          colnames(proc.data) <- orig.var.nms[colnames(proc.data)];
-#        }
         proc.data<-cbind(lbls, proc.data);
         
         if(dim(proc.data)[2]>200){

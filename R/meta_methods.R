@@ -389,84 +389,6 @@ PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
   }
 }
 
-#'Meta-Analysis: Plot Venn Diagram
-#'@description This function plots a venn diagram of the individual studies.
-#'@param mSetObj Input name of the created mSet Object.
-#'@param imgNM Input the name of the created Venn Diagram
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-PlotMetaVenn<-function(mSetObj=NA, imgNM=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  imgName <- paste(imgNM, ".png", sep="");
-  mSetObj$imgSet$venn <- imgName;
-  
-  Cairo::Cairo(file = imgName, width=420, height=300,  type="png", bg="transparent");
-    plotVennDiagram(meta.stat$venn, circle.col=c("blue", "forestgreen"), mar=c(0,0,2,0));
-  dev.off();
-  
-  sums <- unlist(lapply(metastat.de, length))
-  names <- unlist(lapply(metastat.de, paste, collapse = ", "))
-  metasum <- length(meta.stat$idd)
-  metaname <- paste(meta.stat$idd, collapse = ", ")
-  allsums <- c(sums, metasum)
-  allnames <- c(names, metaname)
-  sigmat <- cbind(allsums, allnames)
-  colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
-  rownames(sigmat) <- c(names(metastat.de), "Meta-Analysis")
-  mSetObj$analSet$sigfeat.matrix <- sigmat
-  
-  return(.set.mSet(mSetObj));
-}
-
-# Utility function: Plot Venn diagram
-# Gordon Smyth, James Wettenhall.
-# Capabilities for multiple counts and colors by Francois Pepin.
-# 4 July 2003.  Last modified 12 March 2010.
-plotVennDiagram <- function(object, include="both", names, mar=rep(0,4), cex=1.2, lwd=1, 
-                            circle.col, counts.col, show.include,...){
-  
-  nsets <- ncol(object)-1
-  if(missing(names)) names <- colnames(object)[1:nsets]
-  counts <- object[,"Counts"]
-  if(length(include)==2) counts.2 <- object.2[, "Counts"]
-  if(missing(circle.col)) circle.col <- par('col')
-  if(length(circle.col)<nsets) circle.col <- rep(circle.col,length.out=nsets)
-  if(missing(counts.col)) counts.col <- par('col')
-  if(length(counts.col)<length(include)) counts.col <- rep(counts.col,length.out=length(include))
-  if(missing(show.include)) show.include <- as.logical(length(include)-1)
-  theta <- 2*pi*(0:360)/360
-  xcentres <- c(-1.2, 1.2);
-  ycentres <- c(0,0);
-  r <- 2.8;
-  xtext <- c(-1.5,1.5)
-  ytext <- c(3.5,3.5)
-  
-  par(oma=c(0,0,0,0),mar=c(0,0,0,0));
-  
-  plot(x=0,y=0,type="n",xlim=c(-4,4),ylim=c(-4,4),xlab="",ylab="",axes=FALSE,...);
-  
-  circle.col <- col2rgb(circle.col) / 255
-  circle.col <- rgb(circle.col[1,], circle.col[2,], circle.col[3,], 0.3)
-  for(i in 1:nsets) {
-    lines(xcentres[i]+r*cos(theta),ycentres[i]+r*sin(theta),lwd=lwd,col=circle.col[i])
-    polygon(xcentres[i] + r*cos(theta), ycentres[i] + r*sin(theta), col = circle.col[i], border = NULL)
-    text(xtext[i],ytext[i],names[i],cex=cex)
-  }
-  
-  printing <- function(counts, cex, adj,col,leg){
-    text(2.5,0.1,counts[2],cex=cex,col=col,adj=adj)
-    text(-2.5,0.1,counts[3],cex=cex,col=col,adj=adj)
-    text(0,0.1,counts[4],cex=cex,col=col,adj=adj)
-  }
-  
-  printing(counts,cex,c(0.5,0.5),counts.col[1],include[1])
-  invisible()
-}
-
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########
@@ -670,8 +592,9 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
 
 #'Prepare data for Venn diagram
 #'@param mSetObj Input name of the created mSet Object
+#'@param fileNm json file name to save
 #'@export
-PrepareVennData <- function(mSetObj=NA){
+PrepareUpsetData <- function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
 
@@ -701,171 +624,38 @@ PrepareVennData <- function(mSetObj=NA){
     return(0);
   }
 
-  if(length(sel.dats) == 2){
-    Prepare2Venn(sel.dats);
-  }else if(length(sel.dats) == 3){
-    Prepare3Venn(sel.dats);
-  }else if(length(sel.dats) == 4){
-    Prepare4Venn(sel.dats);
-  }else{
-    AddErrMsg("Too big of a number of features for the venn diagram");
-    return(0);
+  sums <- unlist(lapply(metastat.de, length))
+  names <- unlist(lapply(metastat.de, paste, collapse = ", "))
+  metasum <- length(meta.stat$idd)
+  metaname <- paste(meta.stat$idd, collapse = ", ")
+  allsums <- c(sums, metasum)
+  allnames <- c(names, metaname)
+  sigmat <- cbind(allsums, allnames)
+  colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
+  rownames(sigmat) <- c(names(metastat.de), "Meta-Analysis")
+  mSetObj$analSet$sigfeat.matrix <- sigmat
+
+  require(reshape2)
+  df <- melt(sel.dats, value.name="id")
+  colnames(df) <- c("name", 'set')
+  uniq.nms <- unique(df$name)
+  new.df <- dcast(df, name ~ set, value.var='set', fill=0)
+  rownames(new.df) <- new.df[,1]
+  new.df <- new.df[,-1]
+  json.list <- list()
+  for(i in 1:nrow(new.df)){
+    json.list[[i]] <- list()
+    json.list[[i]][["sets"]] <- new.df[i,][new.df[i,] != 0]
+    json.list[[i]][["name"]] <- rownames(new.df)[i]
   }
-  venn.list <<- sel.dats;
+  col.vec <-gg_color_hue(length(sel.dats));
 
-  PlotMetaVenn(mSetObj, "venn_diagram");
-  return(.set.mSet(mSetObj));  
-}
-
-#3
-Prepare2Venn <- function(dat){
-  nms <- names(dat);  
-  a <- nms[1];
-  b <- nms[2];
-  ab <- paste(a, b, sep="");
+  jsonNm <- paste0(fileNm, ".json")
+  json.mat <- RJSONIO::toJSON(list(json.list, col.vec));
+  sink(jsonNm);
+  cat(json.mat);
+  sink();
   
-  a.l <- dat[[a]];
-  b.l <- dat[[b]];
-  
-  vennData <- list();
-  vennData[[a]] <- setdiff(a.l, b.l);
-  vennData[[b]] <- setdiff(b.l, a.l);    
-  vennData[[ab]] <- intersect(b.l, a.l);
-  vennData <<- vennData;
-}
-
-#7
-Prepare3Venn <- function(dat){
-  nms <- names(dat);  
-  a <- nms[1];
-  b <- nms[2];
-  c <- nms[3];
-  ab <- paste(a, b, sep="");
-  ac <- paste(a, c, sep="");
-  bc <- paste(b, c, sep="");
-  abc <- paste(a, b, c, sep="");
-  
-  a.l <- dat[[a]];
-  b.l <- dat[[b]];
-  c.l <- dat[[c]];
-  
-  vennData <- list();
-  vennData[[a]] <- setdiff(a.l, union(b.l, c.l));
-  vennData[[b]] <- setdiff(b.l, union(a.l, c.l));    
-  vennData[[c]] <- setdiff(c.l, union(a.l, b.l));    
-  vennData[[ab]] <- setdiff(intersect(a.l, b.l), c.l);
-  vennData[[ac]] <- setdiff(intersect(a.l, c.l), b.l);
-  vennData[[bc]] <- setdiff(intersect(b.l, c.l), a.l);
-  vennData[[abc]] <- intersect(intersect(a.l, b.l), c.l);
-  vennData <<- vennData;
-}
-
-# 15
-Prepare4Venn <- function(dat){
-
-  nms <- names(dat);  
-  a <- nms[1];
-  b <- nms[2];
-  c <- nms[3];
-  d <- nms[4];
-  ab <- paste(a, b, sep="");
-  ac <- paste(a, c, sep="");
-  ad <- paste(a, d, sep="");
-  bc <- paste(b, c, sep="");
-  bd <- paste(b, d, sep="");
-  cd <- paste(c, d, sep="");
-  abc <- paste(a, b, c, sep="");
-  abd <- paste(a, b, d, sep="");
-  acd <- paste(a, c, d, sep="");
-  bcd <- paste(b, c, d, sep="");
-  abcd <- paste(a, b, c, d, sep="");
-  
-  a.l <- dat[[a]];
-  b.l <- dat[[b]];
-  c.l <- dat[[c]];
-  d.l <- dat[[d]];
-  
-  vennData <- list();
-  vennData[[a]] <- setdiff(a.l, unique(c(b.l, c.l, d.l)));
-  vennData[[b]] <- setdiff(b.l, unique(c(a.l, c.l, d.l)));    
-  vennData[[c]] <- setdiff(c.l, unique(c(a.l, b.l, d.l)));    
-  vennData[[d]] <- setdiff(d.l, unique(c(a.l, b.l, c.l))); 
-  vennData[[ab]] <- setdiff(intersect(a.l, b.l), union(c.l, d.l));
-  vennData[[ac]] <- setdiff(intersect(a.l, c.l), union(b.l, d.l));
-  vennData[[ad]] <- setdiff(intersect(a.l, d.l), union(b.l, c.l));
-  vennData[[bc]] <- setdiff(intersect(b.l, c.l), union(a.l, d.l));
-  vennData[[bd]] <- setdiff(intersect(b.l, d.l), union(a.l, c.l));
-  vennData[[cd]] <- setdiff(intersect(c.l, d.l), union(a.l, b.l));
-  vennData[[abc]] <- setdiff(intersect(intersect(a.l, b.l), c.l), d.l);
-  vennData[[abd]] <- setdiff(intersect(intersect(a.l, b.l), d.l), c.l);
-  vennData[[acd]] <- setdiff(intersect(intersect(a.l, c.l), d.l), b.l);
-  vennData[[bcd]] <- setdiff(intersect(intersect(b.l, c.l), d.l), a.l);
-  vennData[[abcd]] <- intersect(intersect(a.l, b.l), intersect(c.l, d.l));
-  vennData <<- vennData;
-
-}
-
-#'Retrieve selected data numbers
-#'@param mSetObj Input name of the created mSet Object
-#'@export
-GetSelectedDataNumber <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(.on.public.web){
-    return(length(venn.list));
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-}
-
-#'Retrieve data names
-#'@param mSetObj Input name of the created mSet Object
-#'@export
-GetSelectedDataNames <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(.on.public.web){
-    return(paste(names(venn.list), collapse=";"));
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-}
-
-# Areas is allname concated
-#'Get Venn names
-#'@param mSetObj Input name of the created mSet Object
-#'@param areas Input areas to retrieve names
-#'@export
-GetVennGeneNames <- function(mSetObj=NA, areas){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  nms <- strsplit(areas, "\\|\\|")[[1]];
-  gene.vec <- NULL;
-  for(nm in nms){
-    gene.vec <- c(gene.vec, vennData[[nm]]);
-  }
-  gene.vec <- unique(gene.vec);
-  names(gene.vec) <- gene.vec;
-  
-  if(.on.public.web){
-    venn.genes <<- gene.vec;
-    return(paste(unique(gene.vec), collapse="||"));
-  }else{
-    mSetObj$dataSet$venn_overlap <- gene.vec
-    return(.set.mSet(mSetObj));
-  }
-}
-
-#'Export the significant hits from meta-analysis
-#'@param mSetObj Input name of the created mSet Object
-#'@export
-#areas is allname concated
-GetMetaSigHitsTable <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$analSet$sigfeat.matrix);
+  return(.set.mSet(mSetObj)); 
 }
 

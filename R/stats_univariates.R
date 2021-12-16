@@ -1,10 +1,11 @@
 #'Fold change analysis, unpaired
 #'@description Perform fold change analysis, method can be mean or median
-#'@usage FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0)
+#'@usage FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0, paired=FALSE)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fc.thresh Fold-change threshold, numeric input
 #'@param cmp.type Comparison type, 0 for group 1 minus group 2, and 1 for group 
 #'1 minus group 2
+#'@param paired Logical, TRUE or FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -231,7 +232,8 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@param nonpar Logical, use a non-parametric test, T or F. False is default. 
 #'@param threshp Numeric, enter the adjusted p-value (FDR) cutoff
 #'@param paired Logical, is data paired (T) or not (F).
-#'@param equal.var Logical, evaluates if the group variance is equal (T) or not (F). 
+#'@param equal.var Logical, evaluates if the group variance is equal (T) or not (F).
+#'@param pvalType pvalType, can be "fdr" etc.
 #'@param all_results Logical, if TRUE, returns T-Test analysis results
 #'for all compounds. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
@@ -239,13 +241,14 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, equal.var=TRUE, pvalType="fdr", all_results=FALSE){
+Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, 
+                        equal.var=TRUE, pvalType="fdr", all_results=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
     res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
-  }else{
+  } else {
     res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
   }
   
@@ -383,12 +386,12 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Perform Volcano Analysis
 #'@description Perform volcano analysis
-#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
+#'@usage Volcano.Anal(mSetObj=NA, paired=FALSE, fcthresh, 
+#'cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param paired Logical, T if data is paired, F if data is not.
 #'@param fcthresh Numeric, input the fold change threshold
 #'@param cmpType Comparison type, 0 indicates group 1 vs group 2, and 1 indicates group 2 vs group 1
-#'@param percent.thresh Only for paired data, numeric, indicate the significant count threshold 
 #'@param nonpar Logical, indicate if a non-parametric test should be used (T or F)
 #'@param threshp Numeric, indicate the p-value threshold
 #'@param equal.var Logical, indicates if the group variance is equal (T) or unequal (F)
@@ -398,7 +401,8 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
+Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, 
+                         cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -476,10 +480,11 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, 
 #'Create volcano plot
 #'@description For labelling interesting points, it is defined by the following rules:
 #'need to be signficant (sig.inx) and or 2. top 5 p, or 2. top 5 left, or 3. top 5 right. 
-#'@usage PlotVolcano(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA)
+#'@usage PlotVolcano(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
-#'@param plotLbl Logical, plot labels, 1 for yes and 0 for no. 
+#'@param plotLbl Logical, plot labels, 1 for yes and 0 for no.
+#'@param plotTheme plotTheme, numeric, canbe 0, 1 or 2
 #'@param format Select the image format, "png", or "pdf". 
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
@@ -490,7 +495,71 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, cmpType, nonpar=F, 
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA){
+
+# using ggplot
+PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 10;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width;
+  }
+  h <- w*6/10;
+  
+   mSetObj$imgSet$volcano <- imgName;
+   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+   vcn <- mSetObj$analSet$volcano;
+   imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
+
+   de <- data.frame(cbind(vcn$fc.log, vcn$p.log));
+   de$Status <- "Non-SIG";
+   de$Status[vcn$inx.p & vcn$inx.up] <- "UP";
+   de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
+   de$Status <- as.factor(de$Status);
+
+   mycols <- levels(de$Status);
+   mycols[mycols=="UP"] <- "firebrick";
+   mycols[mycols=="DOWN"] <- "cornflowerblue";
+   mycols[mycols=="Non-SIG"] <- "grey";
+
+   de$delabel <- NA
+   de$delabel[imp.inx] <- rownames(de)[imp.inx];
+   require(ggplot2);
+
+   p <- ggplot(data=de, aes(x=de[,1], y=de[,2], col=Status, label=delabel)) +
+        scale_color_manual(values=mycols) +
+        geom_vline(xintercept=c(-vcn$thresh.y, vcn$thresh.y), linetype="dashed", color="black") +
+        geom_hline(yintercept=-log10(vcn$raw.threshy), linetype="dashed", color="black") +
+        geom_point() + 
+        labs(x ="log2(FC)", y = "-log10(p)");
+
+   if(plotLbl){
+    p <- p +  ggrepel::geom_text_repel();
+   }
+
+   if(plotTheme == 0){
+      p <- p + theme_bw();
+   }else if(plotTheme == 1){
+      p <- p + theme_grey();
+   }else if(plotTheme == 2){
+      p <- p + theme_minimal();
+   }else{
+      p <- p + theme_classic();
+   }
+   print(p);
+   dev.off();
+
+   return(.set.mSet(mSetObj));
+}
+
+PlotVolcano_base <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -601,24 +670,25 @@ parseFisher <- function(fisher, cut.off){
   paste(rownames(fisher)[inx], collapse="; ");
 }
 
-#'Perform ANOVA analysis
-#'@description ANOVA analysis
-#'@usage ANOVA.Anal(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher")
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param nonpar Logical, use a non-parametric test (T) or not (F)
-#'@param thresh Numeric, from 0 to 1, indicate the p-value threshold
-#'@param post.hoc Input the name of the post-hoc test, "fisher" or "tukey"
-#'@param all_results Logical, if TRUE, it will output the ANOVA results for all compounds 
-#'with no post-hoc tests performed.
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
+#' Perform ANOVA analysis
+#' @description ANOVA analysis
+#' @usage ANOVA.Anal(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE)
+#' @param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#' @param nonpar Logical, use a non-parametric test (T) or not (F)
+#' @param thresh Numeric, from 0 to 1, indicate the p-value threshold
+#' @param post.hoc Input the name of the post-hoc test, "fisher" or "tukey"
+#' @param all_results Logical, if TRUE, it will output the ANOVA results for all compounds 
+#' with no post-hoc tests performed.
+#' @author Jeff Xia\email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @export
 #'
-ANOVA.Anal<-function(mSetObj=NA, nonpar=F, thresh=0.05, post.hoc="fisher", all_results=FALSE){
+ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, 
+                     thresh=0.05, post.hoc="fisher", 
+                     all_results=FALSE) {
   
   mSetObj <- .get.mSet(mSetObj);
-  
   sig.num <- 0;
   if(nonpar){
     aov.nm <- "Kruskal Wallis Test";

@@ -5,7 +5,7 @@
 #include <limits.h>
 #include "Internal_utils_batch.h"
 
-void imodwt(double *Win, double *Vin, int *N, int *j, int *L, 
+void C_imodwt(double *Win, double *Vin, int *N, int *j, int *L, 
             double *ht, double *gt, double *Vout) {
   
   int k, n, t;
@@ -21,7 +21,7 @@ void imodwt(double *Win, double *Vin, int *N, int *j, int *L,
   }
 }
 
-void modwt(double *Vin, int *N, int *j, int *L, double *ht, double *gt, 
+void C_modwt(double *Vin, int *N, int *j, int *L, double *ht, double *gt, 
            double *Wout, double *Vout){
   
   int k, n, t;

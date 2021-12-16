@@ -10,6 +10,8 @@ PerformMultiMatch(mSetObj = NA, q, lipid)
 \item{mSetObj}{Input name of the created mSet Object.}
 
 \item{q}{Input the query.}
+
+\item{lipid}{lipid, logical}
 }
 \description{
 Given a query, performs compound name matching.

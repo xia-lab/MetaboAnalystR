@@ -21,6 +21,8 @@ PlotMetpaPath(
 \item{width}{Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
+\item{height}{height value for the image.}
+
 \item{format}{Select the image format, "png", or "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 

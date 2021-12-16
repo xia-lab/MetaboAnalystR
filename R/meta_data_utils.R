@@ -129,7 +129,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   if(length(unique(cls.lbl[!empty.inx])) > 2){
     msg <- c(msg, paste(c("Groups found:", unique(cls.lbl[!empty.inx])), collapse=" "));
     msg <- c(msg, "<font color=\"red\">Meta-analysis is only defined for two-group comparisions!</font>");
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     lvls <- as.character(unique(unlist(cls.lbl)))
@@ -140,7 +140,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
     msg <- c(msg, "Duplicate sample names are not allowed!");
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     msg <- c(msg, "All sample names are unique.");
@@ -164,7 +164,6 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     }
     dup.nm <- paste("Duplicated names [max 9]: ", var.nms[dup.inx], collapse=" ");
     AddErrMsg(dup.nm);
-    current.msg <<- msg;
     return(0);
   }else{
     msg <- c(msg, "All feature names are unique");
@@ -175,7 +174,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     na.inx <- is.na(iconv(smpl.nms));
     nms <- paste(smpl.nms[na.inx], collapse="; ");
     msg <- c(msg, paste("No special letters (i.e. Latin, Greek) are allowed in sample names!", nms, collapse=" "));
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     msg <- c(msg, "All sample names are OK");
@@ -185,7 +184,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     na.inx <- is.na(iconv(var.nms));
     nms <- paste(var.nms[na.inx], collapse="; ");
     msg <- c(msg, paste("No special letters (i.e. Latin, Greek) are allowed in feature names!", nms, collapse=" "));
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     msg <- c(msg, "All feature names are OK");
@@ -218,7 +217,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     data <- data[good.inx,];
     if(nrow(data)/smpl.num < 0.5){
       msg <- c(msg, paste(msg, "Low quality data rejected!"));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }
     
@@ -228,7 +227,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   
   if(ncol(data) < 4){
     msg <- c(msg, paste("The sample # (", nrow(data), ") is too small."));
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     msg <- c(msg, paste("A total of", nrow(data), "samples were found."));
@@ -243,7 +242,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     msg <- c(msg, paste(sum(!gd.inx), "low quality features (>75% missing) removed"));
     if(ncol(data)/gene.num < 0.25){
       msg <- c(msg, paste(feat.msg, "Low quality data rejected."));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }
   }
@@ -257,14 +256,14 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
     msg <- c(msg, paste(sum(!gd.inx), "low quality features (>90% zeros) removed"));
     if(ncol(data)/gene.num< 0.25){
       msg <- c(msg, paste(feat.msg, "Low quality data rejected."));
-      current.msg <<- msg;
+      AddErrMsg(msg);
       return(0);
     }
   }
   
   if(ncol(data) < 10){ 
     msg <- c(msg, "The feature# (", ncol(data), ") is too small (<10).");
-    current.msg <<- msg;
+    AddErrMsg(msg);
     return(0);
   }else{
     msg <- c(msg, paste("A total of", ncol(data), "features were found.", collapse=" "));

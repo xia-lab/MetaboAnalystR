@@ -25,10 +25,12 @@ PlotPeaks2Paths(
 
 \item{width}{Numeric, input the width of the image to create.}
 
-\item{Labels}{Character, indicate if the plot should be labeled. By default
+\item{labels}{Character, indicate if the plot should be labeled. By default
 it is set to "default", and the 5 top-ranked pathways per each algorithm will be plotted.
 Users can adjust the number of pathways to be annotated per pathway using the "num_annot" 
 parameter.}
+
+\item{num_annot}{number of annotations for top plotting}
 }
 \description{
 Plots either the original mummichog or GSEA results.

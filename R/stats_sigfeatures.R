@@ -4,6 +4,8 @@
 #'@param method Method for SAM analysis, default is set to "d.stat", alternative is "wilc.stat"
 #'@param paired Logical, indicates if samples are paired or not. Default is set to FALSE
 #'@param varequal Logical, indicates if variance is equal. Default is set to TRUE
+#'@param delta numeric
+#'@param imgName image name, character
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -103,7 +105,6 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 #'Plot SAM Delta Plot 
 #'@description Plot SAM Delta Plot (FDR)
 #'@param mSetObj Input name of the created mSet Object
-#'@param delta Input the delta
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
@@ -197,6 +198,11 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param mSetObj Input name of the created mSet Object
 #'@param isPaired Logical
 #'@param isVarEq Logical
+#'@param nonPar nonPar
+#'@param A0 A0
+#'@param delta delta
+#'@param imgA0 imgA0
+#'@param imgSig imgSig
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

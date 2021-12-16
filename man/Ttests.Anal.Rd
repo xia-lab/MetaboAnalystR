@@ -25,6 +25,8 @@ Ttests.Anal(
 
 \item{equal.var}{Logical, evaluates if the group variance is equal (T) or not (F).}
 
+\item{pvalType}{pvalType, can be "fdr" etc.}
+
 \item{all_results}{Logical, if TRUE, returns T-Test analysis results
 for all compounds.}
 }

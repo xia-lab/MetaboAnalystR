@@ -160,7 +160,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   colnames(nmeta) <- grps;
   
   # for each gene/row, first normalize and then tranform real values to 30 breaks 
-  res <- t(apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}));
+  res <- apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}); #previously t() when using RJSONIO
   
   # note, use {} will lose order; use [[],[]] to retain the order
   
@@ -183,12 +183,10 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   mSetObj$dataSet$gene.cluster = gene.cluster
   
   .set.mSet(mSetObj)
-  require(RJSONIO);
-  json.mat <- toJSON(json.res, .na='null');
+  json.mat <- rjson::toJSON(json.res);
   sink(fileNm);
   cat(json.mat);
   sink();
-  current.msg <<- "Data is now ready for heatmap visualization!";
   return(1);
 }
 
@@ -204,7 +202,7 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
     mSetObj<-Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE)
     mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode);
     mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE)
-    SetPeakFormat("mpt")
+    mSetObj<-SetPeakFormat(mSetObj, "mpt")
     #mSetObj<-UpdateInstrumentParameters(mSetObj, 10, mSetObj$dataSet$mode);
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
     mSetObj<-Read.PeakListData(mSetObj, filename);

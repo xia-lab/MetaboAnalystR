@@ -56,8 +56,7 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
       current.set[[names(current.cmpd.set[cidx[i]])]] <- current.cmpd.set[cidx[i]][[1]]
     }
   } else{
-    current.set <- current.geneset;
-    
+    current.set <- current.geneset;    
   }
   current.universe <- unique(unlist(current.set));
   
@@ -115,7 +114,8 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
     res.mat <- signif(res.mat[ord.inx,],3);
     hits.query <- hits.query[ord.inx];
     
-    imp.inx <- res.mat[,4] <= 0.01;
+    #imp.inx <- res.mat[,4] <= 0.01; # This is previous design [FILTER NON-SIGNIFICANT PATHWAY]
+    imp.inx <- res.mat[,4] <= 1;
     if(sum(imp.inx) < 10){ # too little left, give the top ones
       topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
       res.mat <- res.mat[1:topn,];
@@ -135,14 +135,174 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
   return(1);
 }
 
+## Utility function for OrganizeJsonforNextwork
+OrganizeJsonforNextwork <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  enrichPath <- RJSONIO::fromJSON("network_enrichment_pathway_0.json");
+
+  my.hits <- mSetObj[["dataSet"]][["my.hits"]];
+  hit.kos.res <- lapply(seq(my.hits$my.hits.genes), function(x){
+    enIDs0 <- my.hits$my.hits.genes[[x]];
+    enIDs <- gsub("[^0-9.-]","" ,unlist(strsplit(enIDs0, " ")));
+    hit.kos <- unique(doGene2KONameMapping(enIDs));
+    if(any(is.na(hit.kos))){hit.kos <- hit.kos[!is.na(hit.kos)]};
+    return(hit.kos)
+  })
+  names(hit.kos.res) <- names(my.hits$my.hits.genes)
+  hit.cmpd.res <- my.hits$my.hits.cmpds
+  NMs <- names(hit.kos.res);
+  if(any(NMs == "Glycolysis / Gluconeogenesis")){
+    NMs[which(NMs == "Glycolysis / Gluconeogenesis")] <- "Glycolysis or Gluconeogenesis"
+  }
+  names(hit.kos.res) <- NMs;
+  NMs2 <- names(hit.cmpd.res);
+  if(any(NMs2 == "Glycolysis / Gluconeogenesis")){
+    NMs2[which(NMs2 == "Glycolysis / Gluconeogenesis")] <- "Glycolysis or Gluconeogenesis"
+  }
+  names(hit.cmpd.res) <- NMs2;
+  integPaths <- mSetObj[["dataSet"]][["integResGlobal"]];
+  hit.res <- lapply(integPaths$pathways, function(x){
+    c(hit.cmpd.res[[x]], hit.kos.res[[x]])    
+  })
+  names(hit.res) <- integPaths$pathways;
+  
+  enrichPath$hits.edge <- hit.kos.res;
+  enrichPath$hits.node <- hit.cmpd.res;
+  enrichPath$hits.query <- hits.all <- hit.res;
+  
+  hits.node.all <-hits.edge.all <- list();
+  ko.map1 <- ko.edge.map;
+  ko.map2 <- ko.node.map.global;
+  colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
+  ko.map2 <- ko.node.map.global;
+  colnames(ko.map2) <- c("queryid", "edge", "net"); rownames(ko.map2)<-NULL;
+
+  hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map1);
+  hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map2);
+  
+  enrichPath$hits.edge <- MatchQueryOnKEGGMap(enrichPath$hits.edge, ko.map1);
+  enrichPath$hits.node <- MatchQueryOnKEGGMap(enrichPath$hits.node, ko.map2);
+  
+  enrichPath$hits.all <- hits.all;
+  enrichPath$hits.edge.all <- hits.edge.all;
+  enrichPath$hits.node.all <- hits.node.all;
+  # correct hit num
+  enrichPath$hit.num <- integPaths$hits_gene + integPaths$hits_cmpd;
+  # correct hit p value
+  enrichPath$fun.pval <- integPaths$P_value;
+  # correct pathway name and order
+  fun.ids <- as.vector(current.setids[names(hit.res)]); 
+  if(length(fun.ids) ==1) {fun.ids <- matrix(fun.ids)};
+  enrichPath$path.id <- fun.ids;
+  
+  ko <- qs::qread("../../libs/ko.qs");
+  cmpd.map <- .get.my.lib("compound_db.qs");
+
+  #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
+  #conv.cmp = cmpd.map[match(tolower(unlist(hits.all)),tolower(cmpd.map$kegg_id)), c("kegg_id", "name")]
+
+  conv.ko <- ko
+  conv.cmp <- cmpd.map[, c("kegg_id", "name")]
+  colnames(conv.ko) <- c("id", "name");
+  colnames(conv.cmp) <- c("id", "name");
+  conv <- rbind(conv.ko, conv.cmp);
+  conv <- conv[which(conv$id %in% unname(unlist(hits.all))),]
+  enrichPath$conv <- conv
+
+  json.mat <- rjson::toJSON(enrichPath);
+  sink("network_enrichment_pathway_0.json")
+  cat(json.mat);
+  sink();
+  
+  return(1);
+}
+
+OrganizeTarJsonforNextwork <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  enrichPath <- RJSONIO::fromJSON("network_enrichment_pathway_0.json");
+
+  # Prepare my.hits list
+  my.hits <- list()
+  hits.path <- mSetObj[["dataSet"]][["path.hits"]];
+  my.hits0 <- lapply(names(hits.path), function(x){
+    current.kegglib[["mset.list"]][[x]][hits.path[[x]]]
+  })
+  names(my.hits0) <- names(current.kegglib$path.ids);
+  my.hits0 <- my.hits0[unname(which(sapply(my.hits0, length)!=0))]
+  my.hits.cmpd <- lapply(my.hits0, FUN = function(x) {
+    x0 <- x[grepl("cpd:",x)]
+    if(length(x0) > 0){gsub("cpd:","",x0)}
+  })
+  my.hits$my.hits.cmpd <- my.hits.cmpd[sapply(my.hits.cmpd, function(x){length(x) != 0})]
+  my.hits.genes <- lapply(my.hits0, FUN = function(x) {
+    x[!grepl("cpd:",x)]
+  })
+  my.hits$my.hits.genes <- my.hits.genes[sapply(my.hits.genes, function(x){length(x) != 0})]
+  
+  # Start mapping and correction
+  hit.kos.res <- lapply(seq(my.hits$my.hits.genes), function(x){
+    enIDs0 <- my.hits$my.hits.genes[[x]];
+    enIDs <- gsub("[^0-9.-]","" ,unlist(strsplit(enIDs0, " ")));
+    hit.kos <- unique(doGene2KONameMapping(enIDs));
+    if(any(is.na(hit.kos))){hit.kos <- hit.kos[!is.na(hit.kos)]};
+    return(hit.kos)
+  })
+  names(hit.kos.res) <- names(my.hits$my.hits.genes)
+  hit.cmpd.res <- my.hits$my.hits.cmpds
+  
+  pathNMs <- names(rownames(mSetObj[["dataSet"]][["path.mat"]]))
+  
+  hit.res <- lapply(pathNMs, function(x){
+    c(hit.cmpd.res[[x]], hit.kos.res[[x]])    
+  })
+  names(hit.res) <- pathNMs;
+  
+  enrichPath$hits.edge <- hit.kos.res;
+  enrichPath$hits.node <- hit.cmpd.res;
+  enrichPath$hits.query <- hits.all <- hit.res;
+  
+  hits.node.all <-hits.edge.all <- list();
+  ko.map1 <- ko.edge.map;
+  ko.map2 <- ko.node.map.global;
+  colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
+  ko.map2 <- ko.node.map.global;
+  colnames(ko.map2) <- c("queryid", "edge", "net"); rownames(ko.map2)<-NULL;
+  
+  hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map1);
+  hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map2);
+  
+  enrichPath$hits.edge <- MatchQueryOnKEGGMap(enrichPath$hits.edge, ko.map1);
+  enrichPath$hits.node <- MatchQueryOnKEGGMap(enrichPath$hits.node, ko.map2);
+  
+  enrichPath$hits.all <- hits.all;
+  enrichPath$hits.edge.all <- hits.edge.all;
+  enrichPath$hits.node.all <- hits.node.all;
+  # correct hit num
+  enrichPath$hit.num <- unname(mSetObj$dataSet$path.mat[,3]);
+  # correct hit p value
+  enrichPath$fun.pval <- unname(mSetObj$dataSet$path.mat[,4]);
+  # correct pathway name and order
+  fun.ids <- as.vector(current.setids[names(hit.res)]); 
+  if(length(fun.ids) ==1) {fun.ids <- matrix(fun.ids)};
+  enrichPath$path.id <- fun.ids;
+  
+  json.mat <- rjson::toJSON(enrichPath);
+  sink("network_enrichment_pathway_0.json")
+  cat(json.mat);
+  sink();
+  
+  return(1);
+  
+}
+
 # Utility function for PerformKOEnrichAnalysis_List
 # for KO01100
 Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
+
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   AddMsg("Functional enrichment analysis was completed");
   
-  if(!exists("ko.edge.map")){
-    
+  if(!exists("ko.edge.map")){    
     if(.on.public.web){
       ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
       ko.edge.map <- .readDataTable(ko.edge.path);
@@ -160,7 +320,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
   hits.edge.all <- list();
   hits.node.all <- list();
   
-  if(idtype == "gene"){
+  if(idtype == "gene") {
     ko.map <- ko.edge.map;
     colnames(ko.map) <- c("queryid", "edge", "net")
     hits.edge <- MatchQueryOnKEGGMap(hits.query, ko.map)
@@ -170,7 +330,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
     hits.edge.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
     hits.inx.all <- unlist(lapply(hits.edge.all, length))>0;
 
-  }else if(idtype == "cmpd"){
+  } else if (idtype == "cmpd") {
     ko.map <- ko.node.map.global;
     colnames(ko.map) <- c("queryid", "edge", "net")
     hits.node <- MatchQueryOnKEGGMap(hits.query, ko.map)
@@ -179,7 +339,7 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
     #find matches for all queries without applying pathway filtering
     hits.node.all <- MatchQueryOnKEGGMap(hits.all, ko.map)
     hits.inx.all <- unlist(lapply(hits.node.all, length))>0;
-  }else{
+  } else {
     # gene&cmpd
     ko.map1 <- ko.edge.map;
     colnames(ko.map1) <- c("queryid", "edge", "net"); rownames(ko.map1)<-NULL;
@@ -220,7 +380,21 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
     hit.num <- hit.num[-rm.ids]
     hits.query <- hits.query[-rm.ids]
   }
-  
+
+  ko <- qs::qread("../../libs/ko.qs");
+  cmpd.map <- .get.my.lib("compound_db.qs");
+
+  #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
+  #conv.cmp = cmpd.map[match(tolower(unlist(hits.all)),tolower(cmpd.map$kegg_id)), c("kegg_id", "name")]
+
+  conv.ko <- ko
+  conv.cmp <- cmpd.map[, c("kegg_id", "name")]
+  colnames(conv.ko) <- c("id", "name");
+  colnames(conv.cmp) <- c("id", "name");
+  conv <- rbind(conv.ko, conv.cmp);
+  conv <- conv[which(conv$id %in% unname(unlist(hits.all))),]
+
+
   expr = as.list(dataSet$data)
   names(expr) <- rownames(dataSet$data)
   json.res <- list(
@@ -233,9 +407,10 @@ Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
     hits.node.all = hits.node.all,
     path.id = fun.ids,
     fun.pval = fun.pval,
-    hit.num = hit.num
+    hit.num = hit.num,
+    conv = conv
   );
-  json.mat <- RJSONIO::toJSON(json.res, .na='null');
+  json.mat <- rjson::toJSON(json.res);
   json.nm <- paste(file.nm, ".json", sep="");
   sink(json.nm)
   cat(json.mat);
@@ -486,7 +661,7 @@ PrepareKeggQueryJson <- function(mSetObj=NA){
         }
         cmpd.mat <- MapCmpd2KEGGNodes(exp.vec);
     }
-    
+
     # TO-DO: Refactor the following part of code for better readability
     if(length(cmpd.mat) != 0 && length(gene.mat) != 0){
       edge.mat <- as.data.frame(rbind(as.matrix(cmpd.mat), as.matrix(gene.mat)));
@@ -508,7 +683,7 @@ PrepareKeggQueryJson <- function(mSetObj=NA){
     query.res <- edge.mat[,3];# abundance
     names(query.res) <- eids; # named by edge
 
-    json.mat <- RJSONIO::toJSON(query.res, .na='null');
+    json.mat <- rjson::toJSON(query.res);
     sink("network_query.json");
     cat(json.mat);
     sink();

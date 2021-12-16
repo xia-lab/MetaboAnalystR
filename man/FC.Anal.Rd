@@ -4,7 +4,7 @@
 \alias{FC.Anal}
 \title{Fold change analysis, unpaired}
 \usage{
-FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0)
+FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0, paired=FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
@@ -13,6 +13,8 @@ FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0)
 
 \item{cmp.type}{Comparison type, 0 for group 1 minus group 2, and 1 for group 
 1 minus group 2}
+
+\item{paired}{Logical, TRUE or FALSE}
 }
 \description{
 Perform fold change analysis, method can be mean or median

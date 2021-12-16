@@ -14,6 +14,8 @@ SPLSR.Anal(mSetObj = NA, comp.num, var.num, compVarOpt, validOpt = "Mfold")
 \item{var.num}{Input the number of variables}
 
 \item{compVarOpt}{Input the option to perform SPLS-DA}
+
+\item{validOpt}{INput the valid option}
 }
 \description{
 Sparse PLS-DA (from mixOmics)

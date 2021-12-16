@@ -7,7 +7,20 @@ Function to perform peak set enrichment meta-analysis
 at either the empirical compound, compound level
 or pathway level.}
 \usage{
-PerformMetaPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
+PerformMetaPSEA(
+  mSetObj = NA,
+  lib,
+  libVersion,
+  minLib = 3,
+  permNum = 100,
+  metaLevel = "pathway",
+  combine.level = "pvalue",
+  pval.method = "fisher",
+  es.method = "fixed",
+  rank.metric = "mean",
+  mutual.feats = TRUE,
+  pooled_cutoff = 0.05
+)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object.}
@@ -15,6 +28,8 @@ PerformMetaPSEA(mSetObj=NA, lib, libVersion, permNum = 100)
 \item{lib}{Input the name of the organism library, default is hsa_mfn.}
 
 \item{libVersion}{Input the version of the KEGG pathway libraries ("current" or "old").}
+
+\item{minLib}{numeric, default is 3}
 
 \item{permNum}{Numeric, input the number of permutations to perform. Default is 100.}
 
@@ -29,6 +44,10 @@ compound ("cpd"), or pathway level ("pathway").}
 
 \item{rank.metric}{Character, input how to calculate pre-ranking metric. "mean"
 to use the average, "min" to use the lowest score, "max" to use the highest score.}
+
+\item{mutual.feats}{mutual.feats, logical}
+
+\item{pooled_cutoff}{pooled_cutoff, numeric}
 }
 \description{
 This is the main function that performs either the mummichog

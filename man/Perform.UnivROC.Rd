@@ -4,12 +4,15 @@
 \alias{Perform.UnivROC}
 \title{Perform Classical Univariate ROC}
 \usage{
-Perform.UnivROC(mSetObj=NA, feat.nm, imgName, format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
+Perform.UnivROC(mSetObj=NA, feat.nm, version, 
+format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{feat.nm}{Input the name of the feature to perform univariate ROC analysis}
+
+\item{version}{image version mark, can be any character}
 
 \item{format}{Select the image format, png, of pdf.}
 
@@ -25,12 +28,12 @@ youden for farthest to the diagonal line (Youden)}
 
 \item{isPartial}{Logical, input T to calculate a partial ROC curve, and F to not}
 
-\item{measure}{Select the parameter to limit the calculation of the partial ROC curve, se for the X-axis (maximum false-positive rate)
+\item{measure}{Select the parameter to limit the calculation of the partial ROC curve, 
+se for the X-axis (maximum false-positive rate)
 and sp for the Y-axis, representing the minimum true positive-rate}
 
-\item{cutoff}{Input the threshold to limit the calculation of the partial ROC curve, the number must be between 0 and 1.}
-
-\item{imgName}{Input a name for the plot}
+\item{cutoff}{Input the threshold to limit the calculation of the partial ROC curve, 
+the number must be between 0 and 1.}
 }
 \description{
 Perform Classical Univariate ROC

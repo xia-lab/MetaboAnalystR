@@ -12,7 +12,7 @@
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # set up random numbers
   if(is.null(mSetObj$dataSet$random.seeds)){
     mSetObj$dataSet$random.seeds <- GetRandomNumbers();

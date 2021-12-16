@@ -119,7 +119,7 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
                     fun.pval = fun.pval,
                     hit.num = hit.num
         );
-     json.mat <- RJSONIO::toJSON(json.res, .na='null');
+     json.mat <- rjson::toJSON(json.res);
      json.nm <- paste(file.nm, ".json", sep="");
      
      sink(json.nm)

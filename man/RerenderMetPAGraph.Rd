@@ -15,6 +15,8 @@ RerenderMetPAGraph(mSetObj = NA, imgName, width, height, zoom.factor = NA)
 The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.}
 
 \item{height}{Input the height of the created plot.}
+
+\item{zoom.factor}{zoom factor, numeric}
 }
 \description{
 Redraw current graph for zooming or clipping then return a value

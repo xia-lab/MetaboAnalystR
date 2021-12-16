@@ -1,18 +1,16 @@
-#'Read peak list files
-#'@description This function reads peak list files and fills the data into a dataSet object.  
-#'For NMR peak lists, the input should be formatted as two-columns containing numeric values (ppm, int).
-#'Further, this function will change ppm to mz, and add a dummy 'rt'.
-#'For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or
-#'the lists can be formatted as three-columns (mz, rt, int).
-#'@usage Read.PeakList(mSetObj=NA, foldername)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@param foldername Name of the folder containing the NMR or MS peak list files to read.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@import qs
-#'@export
-
+#' @title my.parse.peaklist 
+#' @name my.parse.peaklist 
+#' @description Read peak list files. This function reads peak list files and fills the data into a dataSet object.  
+#' For NMR peak lists, the input should be formatted as two-columns containing numeric values (ppm, int).
+#' Further, this function will change ppm to mz, and add a dummy 'rt'.
+#' For MS peak data, the lists can be formatted as two-columns (mz, int), in which case the function will add a dummy 'rt', or
+#' the lists can be formatted as three-columns (mz, rt, int).
+#' @param mSetObj Input the name of the created mSetObj (see InitDataObjects).
+#' @param foldername Name of the folder containing the NMR or MS peak list files to read.
+#' @author Jeff Xia \email{jeff.xia@mcgill.ca}
+#' McGill University, Canada
+#' License: GNU GPL (>= 2)
+#' @import qs
 my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
 
@@ -24,7 +22,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   
   # the "upload" folder should contain several subfolders (groups)
   # each of the subfolder contains samples (.csv files)
-  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.names=TRUE)
+  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.names = TRUE)
   if (length(files) == 0) {
     AddErrMsg("No peak list files (.csv) were found.");
     return(0);
@@ -140,7 +138,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
 }
 
 
-#'Group peak list
+#' @title Group peak list
 #'@description Group peaks from the peak list based on position
 #'using the XCMS grouping algorithm (align peaks wrt, rt, and mz).
 #'For NMR peaks, need to change ppm -> mz and add dummy rt.
@@ -332,7 +330,7 @@ findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
   if (!is.double(values)) values <- as.double(values)
-    .C("FindEqualGreaterM",
+  .C("FindEqualGreaterM",
      x,
      length(x),
      values,

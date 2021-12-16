@@ -8,6 +8,8 @@ GetCandidateList(mSetObj = NA, lipid)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{lipid}{Logical}
 }
 \description{
 Returns 3 coloumns - inx, name, score

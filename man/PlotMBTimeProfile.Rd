@@ -18,6 +18,8 @@ PlotMBTimeProfile(
 
 \item{cmpdNm}{Input the name of the compound}
 
+\item{version}{image mark}
+
 \item{format}{Select the image format, "png", or "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 

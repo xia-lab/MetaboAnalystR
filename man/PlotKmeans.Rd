@@ -29,6 +29,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{colpal}{Character, input "default" to use the default ggplot color scheme or "colblind" to use
 the color-blind friendly palette.}
+
+\item{facet}{logical, TRUE to plot in multiple facets}
 }
 \description{
 Plot K-means analysis

@@ -19,12 +19,16 @@ PlotRocUnivBoxPlot(
 
 \item{feat.nm}{Input the name of the selected compound.}
 
+\item{version}{version mark for image name}
+
 \item{format}{Select the image format, "png", of "pdf".}
 
 \item{dpi}{Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.}
 
-\item{imgName}{Input a name for the plot}
+\item{isOpt}{logical}
+
+\item{isQuery}{logical}
 }
 \description{
 Plots a boxplot of the selected compound's concentration

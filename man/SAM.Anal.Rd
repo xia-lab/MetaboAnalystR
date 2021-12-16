@@ -21,6 +21,10 @@ SAM.Anal(
 \item{paired}{Logical, indicates if samples are paired or not. Default is set to FALSE}
 
 \item{varequal}{Logical, indicates if variance is equal. Default is set to TRUE}
+
+\item{delta}{numeric}
+
+\item{imgName}{image name, character}
 }
 \description{
 Perform SAM

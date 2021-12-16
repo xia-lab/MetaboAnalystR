@@ -10,8 +10,6 @@ Normalization(mSetObj, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, rat
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{rowNorm}{Select the option for row-wise normalization, "QuantileNorm" for Quantile Normalization, 
-"ProbNormT" for Probabilistic Quotient Normalization without using a reference sample,
-"ProbNormF" for Probabilistic Quotient Normalization based on a reference sample, 
 "CompNorm" for Normalization by a reference feature,
 "SumNorm" for Normalization to constant sum, 
 "MedianNorm" for Normalization to sample median, and 

@@ -127,7 +127,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
   }else{
     descr <- c("You selected Quantitative Enrichment Analysis (QEA) which requires a concentration table.",
                "This is the most common data format generated from quantitative metabolomics studies.",
-               "The phenotype label can be can be discrete (binary or multi-class) or continuous. \n\n"
+               "The phenotype label can be can be categorical (binary or multi-class) or continuous. \n\n"
     );
   }
   

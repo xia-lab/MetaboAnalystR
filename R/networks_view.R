@@ -1,7 +1,8 @@
 #'Update integrative pathway analysis for new input list
 #'@description used for integrative analysis
 #'as well as general pathways analysis for meta-analysis results
-#'@usage UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ")
+#'@usage UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, 
+#'topo="dc", enrich="hyper", libOpt="integ")
 #'@param mSetObj Input name of the created mSet Object
 #'@param qids Input the query IDs
 #'@param file.nm Input the name of the file
@@ -171,7 +172,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
               fun.pval = fun.pval,
               hit.num = hit.num
   );
-  json.mat <- RJSONIO::toJSON(json.res, .na='null');
+  json.mat <- rjson::toJSON(json.res);
   json.nm <- paste(file.nm, ".json", sep="");
 
   sink(json.nm)
@@ -339,7 +340,8 @@ DecomposeGraph <- function(gObj, minNodeNum=3, maxNetNum=10){
   # now decompose to individual connected subnetworks
   comps <- igraph::decompose.graph(gObj, min.vertices=minNodeNum);
   if(length(comps) == 0){
-    current.msg <<- paste("No subnetwork was identified with at least", minNodeNum, "nodes!");
+    msg <- paste("No subnetwork was identified with at least", minNodeNum, "nodes!");
+    AddErrMsg(msg);
     return(NULL);
   }
 
@@ -472,7 +474,7 @@ ExcludeNodes <- function(nodeids, filenm){
   # now only save the node pos to json
   netData <- list(deletes=nds2rm, nodes=nodes);
   sink(filenm);
-  cat(RJSONIO::toJSON(netData));
+  cat(rjson::toJSON(netData));
   sink();
 
   pheno.comps[[current.net.nm]] <<- current.net;
@@ -760,8 +762,9 @@ convertIgraph2JSON <- function(net.nm, filenm){
 
   # covert to json
   netData <- list(nodes=nodes, edges=edge.mat);
+  netData[["edges"]] <- lapply(seq(nrow(netData[["edges"]])), FUN = function(x) {netData[["edges"]][x,]})
   sink(filenm);
-  cat(RJSONIO::toJSON(netData));
+  cat(rjson::toJSON(netData));
   sink();
 }
 
@@ -886,7 +889,7 @@ UpdateNetworkLayout <- function(algo, filenm){
   # now only save the node pos to json
   netData <- list(nodes=nodes);
   sink(filenm);
-  cat(RJSONIO::toJSON(netData));
+  cat(rjson::toJSON(netData));
   sink();
   return(filenm);
 }
@@ -932,53 +935,6 @@ sync2vecs <- function(src.vec, tgt.vec){
   src.vec[ord.inx];
 }
 
-# given a data with duplicates, dups is the one with duplicates
-RemoveDuplicatesNetwork <- function(data, lvlOpt, quiet=T){
-
-  all.nms <- rownames(data);
-  colnms <- colnames(data);
-  dup.inx <- duplicated(all.nms);
-  dim.orig  <- dim(data);
-  data <- apply(data, 2, as.numeric); # force to be all numeric
-  dim(data) <- dim.orig; # keep dimension (will lost when only one item)
-  rownames(data) <- all.nms;
-  colnames(data) <- colnms;
-  if(sum(dup.inx) > 0){
-    uniq.nms <- all.nms[!dup.inx];
-    uniq.data <- data[!dup.inx,,drop=F];
-
-    dup.nms <- all.nms[dup.inx];
-    uniq.dupnms <- unique(dup.nms);
-    uniq.duplen <- length(uniq.dupnms);
-
-    for(i in 1:uniq.duplen){
-      nm <- uniq.dupnms[i];
-      hit.inx.all <- which(all.nms == nm);
-      hit.inx.uniq <- which(uniq.nms == nm);
-
-      # average the whole sub matrix
-      if(lvlOpt == "mean"){
-        uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, mean, na.rm=T);
-      }else if(lvlOpt == "median"){
-        uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, median, na.rm=T);
-      }else if(lvlOpt == "max"){
-        uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, max, na.rm=T);
-      }else{ # sum
-        uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, sum, na.rm=T);
-      }
-    }
-    if(!quiet){
-      current.msg <<- paste(current.msg, paste("A total of ", sum(dup.inx), " of duplicates were replaced by their ", lvlOpt, ".", sep=""), collapse="\n");
-    }
-    return(uniq.data);
-  }else{
-    if(!quiet){
-      current.msg <<- paste(current.msg, "All IDs are unique.", collapse="\n");
-    }
-    return(data);
-  }
-}
-
 generate_breaks = function(x, n, center = F){
   if(center){
     m = max(abs(c(min(x, na.rm = T), max(x, na.rm = T))))
@@ -991,11 +947,6 @@ generate_breaks = function(x, n, center = F){
 }
 
 ComputeColorGradient <- function(nd.vec, background="black", centered){
-  #if(sum(nd.vec<0, na.rm=TRUE) > 0){
-  #centered <- T;
-  #}else{
-  #centered <- F;
-  #}
   color <- GetColorGradient(background, centered);
   breaks <- generate_breaks(nd.vec, length(color), center = centered);
   return(scale_vec_colours(nd.vec, col = color, breaks = breaks));
@@ -1060,10 +1011,12 @@ GetMinConnectedGraphs <- function(mSetObj=NA, max.len = 200){
       sd.len <-  max.len;
     }
     my.seeds <- seed.proteins[1:sd.len];
-    current.msg <<- paste("The minimum connected network was computed using the top", sd.len, "seed proteins in the network based on their degrees.");
+    msg <- paste("The minimum connected network was computed using the top", sd.len, "seed proteins in the network based on their degrees.");
   }else{
-    current.msg <<- paste("The minimum connected network was computed using all seed proteins in the network.");
+    msg <- paste("The minimum connected network was computed using all seed proteins in the network.");
   }
+  AddMsg(msg);
+
   # now calculate the shortest paths for
   # each seed vs. all other seeds (note, to remove pairs already calculated previously)
   for(pos in 1:sd.len){
@@ -1120,7 +1073,9 @@ FilterNetByCor <- function(min.pval, min.qval, neg.coeff1, neg.coeff2, pos.coeff
     edge.list.filter <- rbind(edge.list.filter.neg, edge.list.filter.pos);
   }
   overall.graph <-simplify(graph_from_data_frame(edge.list.filter, directed=FALSE, vertices=NULL), edge.attr.comb="first");
-  current.msg <<- paste("A total of", nrow(edge.list)-nrow(edge.list.filter) , "edges was reduced.");
+  msg <- paste("A total of", nrow(edge.list)-nrow(edge.list.filter) , "edges was reduced.");
+  AddMsg(msg);
+
   substats <- DecomposeGraph(overall.graph);
   if(.on.public.web){
     mSetObj <- .get.mSet(mSetObj);

@@ -28,11 +28,17 @@ PlotPathwayMetaAnalysis(
   bubble_colorType = "brewer",
   bubble_palette = "RdBu",
   bubbleFontSize = 9,
-  bubblePlotSize = 7
+  bubblePlotSize = 7,
+  format = "png",
+  width = 7,
+  height = 5,
+  dpi = 300
 )
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj object.}
+
+\item{imgName}{name of image.}
 
 \item{plotType}{Use "heatmap" to create a heatmap summary, "network" to create 
 a network summary, or "bubble" to create a bubble plot summary of the meta-analysis
@@ -90,12 +96,28 @@ plot.}
 \item{netPlotSize}{Numeric, input the preferred dimensions (in inches) of the network
 to be saved.}
 
+\item{bubble_interactive}{logical}
+
+\item{bubbleMaxPaths}{maximum number of pathways}
+
 \item{bubble_colorType}{Character, "brewer" for R Color Brewer scales or 
 "viridis" for viridis color scales. Used for creating the bubble plot
 color scheme.}
 
 \item{bubble_palette}{Character, use two/three colors max if using R ColorBrewer palettes
 for pleasing looking plots.}
+
+\item{bubbleFontSize}{font size of the bubble plot}
+
+\item{bubblePlotSize}{plot size of the bubble plot}
+
+\item{format}{format of the image}
+
+\item{width}{width of the image}
+
+\item{height}{height of the image}
+
+\item{dpi}{dpi of the image}
 }
 \description{
 Function to create summary plot of MS Peaks to Paths

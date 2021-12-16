@@ -56,7 +56,9 @@ my.impute.missing <- function(mSetObj=NA, method="min"){
     msg <- c(msg, paste("Missing variables were imputated using", toupper(method)));
   }
   
-  mSetObj$dataSet$proc <- as.data.frame(new.mat);
+  #mSetObj$dataSet$proc <- as.data.frame(new.mat);
+  mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
+  qs::qsave(as.data.frame(new.mat), file="data_proc.qs");
   mSetObj$msgSet$replace.msg <- msg;
   return(.set.mSet(mSetObj))
 }

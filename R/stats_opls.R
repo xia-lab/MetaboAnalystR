@@ -20,10 +20,10 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   
   opl <- .coreOPLS(xMN = xMN, yMCN = yMCN, orthoI = orthoI, predI = predI, 
                    scaleC = scaleC, crossvalI = crossvalI);
-  
+
   opl$suppLs[["y"]] <- y
   opl$typeC <- "OPLS-DA";
-  
+
   ## Permutation testing (Szymanska et al, 2012)
   
   if(permI > 0) {
@@ -42,6 +42,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     # do initial evaluation time for 10 permutations
     start.time <- Sys.time();
     for(k in 1:10) {
+
       yVcn <- drop(opl$suppLs[["yMCN"]])
       yPerVcn <- sample(yVcn)
       yPerMCN <- matrix(yPerVcn, ncol = 1)
@@ -70,6 +71,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
     }
     # continue
     for(k in 11:permI) {
+
       yVcn <- drop(opl$suppLs[["yMCN"]])
       yPerVcn <- sample(yVcn)
       yPerMCN <- matrix(yPerVcn, ncol = 1)
@@ -168,7 +170,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   nayVi <- integer()
   nayL <- FALSE;
   yMN <- yMCN;
-  
+
   obsNamVc <- rownames(xMN)
   
   autNcoL <- autNcpL <- FALSE
@@ -258,7 +260,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
                                     1, ncol = 7, dimnames = list(c("p1", orthoNamVc, 
                                                                    "sum"), c("R2X", "R2X(cum)", "R2Y", "R2Y(cum)", 
                                                                              "Q2", "Q2(cum)", "Signif."))));
-  for (j in 1:ncol(modelDF)){ 
+  for (j in 1:ncol(modelDF)){
     mode(modelDF[, j]) <- ifelse(colnames(modelDF)[j] == "Signif.", "character", "numeric")
   }
   xcvTraLs <- lapply(cvfOutLs, function(obsVi) xMN[-obsVi, , drop = FALSE])
@@ -268,13 +270,13 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   xcvTraLs <- c(xcvTraLs, list(xMN))
   ycvTraLs <- c(ycvTraLs, list(yMN))
   breL <- FALSE
-  
+
   for (noN in 1:(orthoI + 1)) {
     if (breL){
       break
     }
     for (cvN in 1:length(xcvTraLs)) {
-      
+
       xcvTraMN <- xcvTraLs[[cvN]]
       ycvTraMN <- ycvTraLs[[cvN]]
       if (ncol(ycvTraMN) > 1) {
@@ -284,6 +286,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
         twMN <- wwSvdLs[["u"]][, wwNcpVin, drop = FALSE] %*% diag(wwSvdLs[["d"]][wwNcpVin], nrow = length(wwNcpVin))
       }
       uOldVn <- ycvTraMN[, 1, drop = FALSE]
+
       repeat {
         wVn <- crossprod(xcvTraMN, uOldVn)/drop(crossprod(uOldVn))
         wVn <- wVn/sqrt(drop(crossprod(wVn)))
@@ -447,7 +450,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
   orthoVipVn <- sqrt(koN * (rowSums(sweep(poNorMN^2, 
                                           2, sxoVn, "*"))/ssxCumN + rowSums(sweep(poNorMN^2, 
                                                                                   2, syoVn, "*"))/ssyCumN))
-  
+
   summaryDF[, "pre"] <- predI
   summaryDF[, "ort"] <- orthoI
   rownames(summaryDF) <- "Total"
@@ -470,6 +473,7 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
                                            yMCN = yMCN, xSubIncVarMN = NULL, xCorMN = NULL, 
                                            xModelMN = xMN, yModelMN = yMN, yPreMN = yPreMN, 
                                            yTesMN = yTesMN))
+
 }
 
 .errorF <- function(x, y){

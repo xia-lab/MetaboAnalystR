@@ -4,7 +4,8 @@
 \alias{UpdateIntegPathwayAnalysis}
 \title{Update integrative pathway analysis for new input list}
 \usage{
-UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ")
+UpdateIntegPathwayAnalysis(mSetObj=NA, qids, file.nm, 
+topo="dc", enrich="hyper", libOpt="integ")
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

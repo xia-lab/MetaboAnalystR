@@ -1,40 +1,23 @@
 #' melt
-#' #' Convert an object into a molten data frame. This function is from reshape2 package.
+#' Convert an object into a molten data frame. This function is from reshape2 package.
 #' 
 #' This the generic melt function. See the following functions
 #' for the details about different data structures:
-#'
-#' \itemize{
-#'   \item \code{\link{melt.data.frame}} for data.frames
-#'   \item \code{\link{melt.array}} for arrays, matrices and tables
-#'   \item \code{\link{melt.list}} for lists
-#' }
-#'
-#' @keywords manip
 #' @param data Data set to melt
 #' @param na.rm Should NA values be removed from the data set? This will
 #'   convert explicit missings to implicit missings.
 #' @param ... further arguments passed to or from other methods.
 #' @param value.name name of variable used to store values
-#' @export
-#' @noRd
 melt <- function(data, ..., na.rm = FALSE, value.name = "value") {
   UseMethod("melt", data)
 }
 
-#' melt.list
-#' @family melt methods
-#' @export
-#' @noRd
+
 melt.default <- function(data, ..., na.rm = FALSE, value.name = "value") {
   if (na.rm) data <- data[!is.na(data)]
   setNames(data.frame(data), value.name)
 }
 
-#' melt.list
-#' @family melt methods
-#' @export
-#' @noRd
 melt.list <- function(data, ..., level = 1) {
   require(plyr);
   parts <- lapply(data, melt, level = level + 1, ...)
@@ -54,10 +37,7 @@ melt.list <- function(data, ..., level = 1) {
   result
 }
 
-#' melt.data.frame
-#' @family melt methods
-#' @export
-#' @noRd
+
 melt.data.frame <- function(data, 
                             id.vars, 
                             measure.vars, 
@@ -101,10 +81,8 @@ melt.data.frame <- function(data,
     return(df)
   }
 }
-#' melt.array
-#' @family melt methods
-#' @noRd
-#' @export
+
+
 melt.array <- function(data, varnames = names(dimnames(data)), ...,
                        na.rm = FALSE, as.is = FALSE, value.name = "value") {
   var.convert <- function(x) {
@@ -135,14 +113,8 @@ melt.array <- function(data, varnames = names(dimnames(data)), ...,
   cbind(labels, value_df)
 }
 
-#' @rdname melt.array
-#' @noRd
-#' @export
 melt.table <- melt.array
 
-#' @rdname melt.array
-#' @noRd
-#' @export
 melt.matrix <- melt.array
 
 melt_check <- function(data, id.vars, measure.vars, variable.name, value.name) {
@@ -199,11 +171,12 @@ melt_check <- function(data, id.vars, measure.vars, variable.name, value.name) {
 }
 melt_dataframe <- function(data, id_ind, measure_ind, variable_name, value_name, measure_attributes, factorsAsStrings, valueAsFactor) {
     if(.on.public.web){
-    .Call('_XiaLabCppLib_melt_dataframe', PACKAGE = 'XiaLabCppLib', 
+    require("XiaLabCppLib")
+    res <- .Call('_XiaLabCppLib_melt_dataframe', PACKAGE = 'XiaLabCppLib', 
         data, id_ind, measure_ind, variable_name, value_name, 
         measure_attributes, factorsAsStrings, valueAsFactor)
     } else {
-    .Call('_MetaboAnalystR_melt_dataframe', PACKAGE = 'MetaboAnalystR', 
+    res <- .Call('_MetaboAnalystR_melt_dataframe', PACKAGE = 'MetaboAnalystR', 
         data, id_ind, measure_ind, variable_name, value_name, 
         measure_attributes, factorsAsStrings, valueAsFactor)
     }

@@ -13,8 +13,6 @@
 #' 
 Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate){
   
-  err.vec <<- "";
-
   dat <- .readDataTable(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -201,8 +199,6 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
 #'
 Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
   
-  err.vec <<- "";
-
   dat <- .readDataTable(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -637,7 +633,8 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 600.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
+#'@param method method of correction
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -747,6 +744,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 600.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
+#'@param method method of correction
 #'@author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -792,7 +790,13 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
 
 #'Batch Distance Plotting
 #'@description Scatter sample trend comparison between all sample of different batches
-plot.dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72){
+#'@param mSetObj mSetObj
+#'@param imgName imgName
+#'@param format format
+#'@param width width
+#'@param dpi dpi
+#'@export
+plot_dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72){
   library(ggplot2)
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -891,7 +895,6 @@ WaveICA<-function(data,batch,group){
   group<-as.character(group)
   wf="haar";
   K=20;t=0.05;t2=0.05;alpha=0;
-  #library(waveslim)
   level<-floor(log10(nrow(data),2))
   if (is.null(colnames(data))){
     stop("data must have colnames")
@@ -1534,10 +1537,7 @@ normFact <- function(fact,X,ref,refType,k=20,t=0.5,ref2=NULL,refType2=NULL,t2=0.
 }
 
 unbiased_stICA <- function(X,k=10,alpha) {
-  
-  #library(JADE)
-  #library(corpcor)
-  
+    
   jadeCummulantMatrices <- function(X) {
     
     n <- nrow(X)
