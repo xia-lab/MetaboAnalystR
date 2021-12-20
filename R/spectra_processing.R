@@ -1,5 +1,24 @@
 ### This is a online script to do some pre-define before job scheduler
 
+#' InitMSObjects
+#'
+#' @param data.type should be "raw"
+#' @param anal.type should be "spec"
+#' @param paired should be "FALSE"
+#' @export
+InitMSObjects <- function (data.type = NULL, anal.type = NULL, paired=FALSE) {
+  if(anal.type == "raw" & data.type == "spec") {
+    return(OptiLCMS::InitDataObjects(anal.type = "raw", 
+                                     data.type = "spec", 
+                                     paired = FALSE))
+  } else {
+    return(OptiLCMS::InitDataObjects(anal.type = "raw", 
+                                     data.type = "spec", 
+                                     paired = FALSE))
+  }
+}
+
+
 #' CreateRawRscript
 #' @description used to create a running for raw spectra processing
 #' this file will be run by spring daemon by using OptiLCMS rather than relay on the local 
@@ -1257,13 +1276,19 @@ PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
 
 #' PerformDataInspect
 #' @description PerformDataInspect is used to plot 2D/3D structure of the MS data
+#' @param datapath data file path
+#' @param rt.range retention time range, unit is seconds
+#' @param mz.range m/z range
+#' @param dimension view dimension, canbe "2D" or "3D"
+#' @param res resolution number, higher of the number means higher resolution
 #' @author Zhiqiang Pang
-#' @noRd
+#' @export
 PerformDataInspect <- function(datapath = NULL,
                                rt.range = c(0,0),
                                mz.range = c(0,0),
                                dimension = "3D",
                                res = 100){
+  require(OptiLCMS)
   OptiLCMS::PerformDataInspect(datapath, rt.range,
                                mz.range, dimension,
                                res)
@@ -1309,6 +1334,137 @@ centroidMSData <- function(fileName, outFolder, ncore = 1){
   
   return(1)
 }
+
+
+#' @title Perform ROI Extraction from raw MS data (PerformDataTrimming)
+#' @description This function performs the raw data trimming. This function will output 
+#' an trimmed MSnExp file to memory or hardisk according to the choice of users must 
+#' provide the data path for 'datapath', and optionally provide other corresponding parameters.
+#' @param datapath Character, the path of the raw MS data files' or folder's path (.mzXML, .CDF and .mzML) 
+#' for parameters training.
+#' @param mode Character, mode for data trimming to select the chraracteristic peaks. 
+#' Default is 'ssm'. Users could select random trimed according to mz value (mz_random) or 
+#' RT value (rt_random). Besides, specific peaks at certain mz (mz_specific) or 
+#' RT (rt_specific) could also be extracted. 'none' will not trim the data.
+#' @param mz Numeric, mz value(s) for specific selection. Positive values means including (the values 
+#' indicted) and negative value means excluding/removing.
+#' @param mzdiff Numeric, the deviation (ppm) of mz value(s).
+#' @param rt Numeric, rt value for specific selection. Positive values means including 
+#' and negative value means excluding.
+#' @param rtdiff Numeric, the deviation (seconds) of rt value(s).
+#' @param rt.idx Numeric, the relative rt (retention time) range, from 0 to 1. 1 means all retention time
+#' will be retained, while 0 means none. Default is 1/15. If default rt.idx produce too few peaks, 
+#' please consider increasing this value.
+#' @param write Logical, if true, will write the trimmed data to the directory 'trimmed' folder 
+#' in the datapath. The data in memory will be kept.
+#' @param plot Logical, if TRUE, will plot the chromatogram of the trimmed data.
+#' @param rmConts LOgical, whether to exclude/remove the potential contamination for parameters optimization. Default is TRUE.
+#' @param running.controller The resuming pipeline running controller. Optional. Don't need to define by hand.
+#' @export
+#' @return will return an mSet objects with extracted ROI
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mcgill University
+#' License: GNU GPL (>= 2)
+
+PerformDataTrimming<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
+                               rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
+  require(OptiLCMS)
+  OptiLCMS::PerformROIExtraction(datapath, mode=mode, write, mz, mzdiff, rt, rtdiff, 
+                       rt.idx, rmConts = rmConts, plot,running.controller);
+  
+}
+
+#' @title Perform ROI Extraction from raw MS data (PerformDataTrimming)
+#' @description This function performs the raw data trimming. This function will output 
+#' an trimmed MSnExp file to memory or hardisk according to the choice of users must 
+#' provide the data path for 'datapath', and optionally provide other corresponding parameters.
+#' @param datapath Character, the path of the raw MS data files' or folder's path (.mzXML, .CDF and .mzML) 
+#' for parameters training.
+#' @param mode Character, mode for data trimming to select the chraracteristic peaks. 
+#' Default is 'ssm'. Users could select random trimed according to mz value (mz_random) or 
+#' RT value (rt_random). Besides, specific peaks at certain mz (mz_specific) or 
+#' RT (rt_specific) could also be extracted. 'none' will not trim the data.
+#' @param mz Numeric, mz value(s) for specific selection. Positive values means including (the values 
+#' indicted) and negative value means excluding/removing.
+#' @param mzdiff Numeric, the deviation (ppm) of mz value(s).
+#' @param rt Numeric, rt value for specific selection. Positive values means including 
+#' and negative value means excluding.
+#' @param rtdiff Numeric, the deviation (seconds) of rt value(s).
+#' @param rt.idx Numeric, the relative rt (retention time) range, from 0 to 1. 1 means all retention time
+#' will be retained, while 0 means none. Default is 1/15. If default rt.idx produce too few peaks, 
+#' please consider increasing this value.
+#' @param write Logical, if true, will write the trimmed data to the directory 'trimmed' folder 
+#' in the datapath. The data in memory will be kept.
+#' @param plot Logical, if TRUE, will plot the chromatogram of the trimmed data.
+#' @param rmConts LOgical, whether to exclude/remove the potential contamination for parameters optimization. Default is TRUE.
+#' @param running.controller The resuming pipeline running controller. Optional. Don't need to define by hand.
+#' @export
+#' @return will return an mSet objects with extracted ROI
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mcgill University
+#' License: GNU GPL (>= 2)
+PerformROIExtraction<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
+                               rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
+  require(OptiLCMS)
+  OptiLCMS::PerformROIExtraction(datapath, mode=mode, write, mz, mzdiff, rt, rtdiff, 
+                                 rt.idx, rmConts = rmConts, plot,running.controller);
+  
+}
+
+#' PerformParamsOptimization
+#' @title Perform Parameters Optimization
+#' @description This function is used to optimize the critical 
+#' parameters of peak picking and alignment for 
+#' the following data processing. It utilizes the trimed data and 
+#' the internal instrument-specific parameters.
+#' Parallel computing will be performed. The number of cores user 
+#' want to use could be specified.
+#' @param mSet mSet object, usually generated by 'PerformROIExtraction' 
+#' or 'PerformDataTrimming' here.
+#' @param param List, Parameters defined by 'SetPeakParam' function.
+#' @param method Character, method of parameters optimization, including 
+#' "DoE' only. Default is "DoE". Other method 
+#' is under development.
+#' @param ncore Numeric, CPU threads number used to perform the parallel 
+#' based optimization. If thers is memory issue,
+#' please reduce the 'ncore' used here. For default, 2/3 CPU threads of 
+#' total will be used.
+#' @param running.controller The resuming pipeline running controller. Optional. 
+#' Don't need to define by hand.
+#' @export
+#' @return will a parameter object can be used for following processing
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} 
+#' Jeff Xia \email{jeff.xia@mcgill.ca}
+#' Mcgill University
+#' License: GNU GPL (>= 2)
+
+PerformParamsOptimization <- function(mSet, 
+                                      param= NULL, 
+                                      method="DoE", 
+                                      ncore=4, 
+                                      running.controller=NULL){
+  require(OptiLCMS)
+  return(OptiLCMS::PerformParamsOptimization(mSet = mSet,
+                                             param = param,
+                                             method = method,
+                                             ncore = ncore,
+                                             running.controller = running.controller))
+  
+}
+
+
+#' PerformPeakProfiling
+#' @param mSet mSet
+#' @param params params
+#' @param plotSettings plotSettings
+#' @export
+PerformPeakProfiling <- function(mSet, params, plotSettings) {
+  require(OptiLCMS)
+  return(OptiLCMS::PerformPeakProfiling(mSet, 
+                                        params, 
+                                        plotSettings))
+}
+
 
 PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
   if (is.na(width)) {

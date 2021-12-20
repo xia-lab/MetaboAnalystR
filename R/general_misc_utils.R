@@ -95,7 +95,8 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 
   dat <- tryCatch(
             {
-                data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE);
+                data.table::fread(fileName, header=TRUE, check.names=FALSE, 
+                                  blank.lines.skip=TRUE, data.table=FALSE, integer64 = "numeric");
             }, error=function(e){
                 print(e);
                 return(.my.slowreaders(fileName));    
