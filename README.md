@@ -168,7 +168,7 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 
 ## Bugs or feature requests
 
-To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to #jasmine.chong@mail.mcgill.ca or zhiqiang.pang@mail.mcgill.ca.
+To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
 
