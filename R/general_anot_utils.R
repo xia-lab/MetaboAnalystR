@@ -474,7 +474,9 @@ doGeneIDMapping <- function(q.vec, org, type){
   
   sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
   if(!file.exists(sqlite.path)){
-    download.file(paste0("https://www.xialab.ca/resources/sqlite/", basename(sqlite.path)), destfile = basename(sqlite.path));
+    download.file(paste0("https://www.xialab.ca/resources/sqlite/", basename(sqlite.path)), 
+                  destfile = basename(sqlite.path),
+                  "curl");
     sqlite.path <- basename(sqlite.path);
   }
   con <- .get.sqlite.con(sqlite.path); 
