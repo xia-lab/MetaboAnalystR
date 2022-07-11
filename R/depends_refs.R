@@ -239,8 +239,8 @@ all_identical <- function(xs) {
 #' @importFrom vctrs vec_as_subscript2 vec_as_location2
 vars_pull <- function(vars, var = -1) {
   n <- length(vars)
-  
-  instrument_base_errors(
+  require(rlang)
+  tidyselect:::with_entraced_errors(
     loc <- eval_tidy(enquo(var), set_names(seq_along(vars), vars))
   )
   loc <- pull_as_location2(loc, n, vars)
@@ -253,7 +253,7 @@ vars_pull <- function(vars, var = -1) {
 }
 
 pull_as_location2 <- function(i, n, names) {
-  with_subscript_errors(type = "pull", {
+  tidyselect:::with_subscript_errors(type = "pull", {
     i <- vctrs::vec_as_subscript2(i, arg = "var", logical = "error")
     
     if (is.numeric(i)) {
