@@ -1716,6 +1716,18 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
 }
 
 # OPLS VIP plot
+#' PlotOPLS.Imp
+#' OPLS VIP plot
+#' @param mSetObj mSetObj
+#' @param imgName image name
+#' @param format format
+#' @param dpi dpi
+#' @param width width
+#' @param type type
+#' @param feat.nm feat.nm
+#' @param feat.num feat.num
+#' @param color.BW color of background
+#' @export
 PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="vip", feat.nm="tscore", feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);

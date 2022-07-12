@@ -23,8 +23,4 @@ Function to create a summary table of mummichog analysis
 Jasmine Chong
 McGill University, Canada
 License: GNU GPL (>= 2)
-
-Jasmine Chong
-McGill University, Canada
-License: GNU GPL (>= 2)
 }

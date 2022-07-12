@@ -23,8 +23,4 @@ Mummichog analysis report, data input documentation.
 Jasmine Chong
 McGill University, Canada
 License: GNU GPL (>= 2)
-
-Jasmine Chong
-McGill University, Canada
-License: GNU GPL (>= 2)
 }

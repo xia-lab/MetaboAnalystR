@@ -30,8 +30,4 @@ the lists can be formatted as three-columns (mz, rt, int).
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
-
-Jeff Xia \email{jeff.xia@mcgill.ca}
-McGill University, Canada
-License: GNU GPL (>= 2)
 }
