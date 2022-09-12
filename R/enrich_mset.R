@@ -34,11 +34,11 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 
   if(libname=="self"){
     ms.list <- mSetObj$dataSet$user.mset;
-    ms.list <- lapply(ms.list, function(x) unlist(strsplit(x, "; ", fixed=TRUE)))
+    ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
     current.msetlib <- vector("list", 3)
     names(current.msetlib) <- c("name", "member", "reference")
     mSetObj$analSet$msetlibname <- libname;
-  }else{    
+  } else {
     if(!.on.public.web & grepl("kegg", libname)){ # api only for KEGG msets
       mSetObj$api$libname <- libname
       mSetObj$api$excludeNum = excludeNum
@@ -51,17 +51,19 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
         if(.on.public.web){
             my.qs  <- paste("../../libs/msets/", destfile, sep="");
             current.msetlib <- qs::qread(my.qs);
-        }else{
+        } else {
             my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
             if(!file.exists(destfile)){
-                download.file(my.qs, destfile);
+                download.file(my.qs, destfile, method = "curl");
             }
             current.msetlib <- qs::qread(destfile);
         }
         mSetObj$analSet$msetlibname <- libname;
     }
     # create a named list, use the ids for list names
-    ms.list <- strsplit(current.msetlib[,3],"; ", fixed=TRUE);
+    # ms.list <- strsplit(current.msetlib[,3],"; ", fixed=TRUE);
+    ms.list <- current.msetlib[,3];
+    ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
     names(ms.list) <- current.msetlib[,2];
   }
 
@@ -451,19 +453,27 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
     cmpd.db <- .get.my.lib("compound_db.qs");
   }
   
-  # now need to check all metabolites match HMDB names
+  # now need to check all metabolites match KEGG IDs
   # and get the statistics
   hits <- tolower(ref.vec)%in%tolower(cmpd.db$kegg_id);
-  mSetObj$dataSet$metabo.filter.kegg <- ref.vec[hits];
   unmatched.num <- sum(!hits);
+  unmatched.perc <- unmatched.num/length(hits);
+  # test percentage
+  if(unmatched.perc > 0.5){
+    libCheck.msg <-c(libCheck.msg, "Over half of your uploaded IDs cannot be matched to our database! Please make sure they are KEGG IDs!");
+    print(libCheck.msg);
+    AddErrMsg(libCheck.msg);
+    return(0);
+  }
   
+  mSetObj$dataSet$metabo.filter.kegg <- ref.vec[hits];
   if(unmatched.num > 0) {
     unmatched.nms <- ref.vec[!hits];
     mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were not matched to KEGG compound IDs.",
                                              "They are:", paste(unmatched.nms, collapse="; "), ". Please correct these names. Otherwise,",
                                              "they will be ignored during the enrichment analysis.");
   }else{
-    mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were sucessfully added to the library.");
+    mSetObj$dataSet$metabo.ref.info <- paste("A total of", length(ref.vec), "were successfully added to the library.");
   }
   return(.set.mSet(mSetObj));
 }
@@ -500,9 +510,18 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   # now need to check all metabolites match HMDB names
   # and get the statistics
   hits <- tolower(ref.vec)%in%tolower(cmpd.db$name);
-  mSetObj$dataSet$metabo.filter.hmdb <- ref.vec[hits];
   unmatched.num <- sum(!hits);
-  
+
+  unmatched.perc <- unmatched.num/length(hits);
+  # test percentage
+  if(unmatched.perc > 0.5){
+    libCheck.msg <-c(libCheck.msg, "Over half of your uploaded IDs cannot be matched to our database! Please make sure they are valid HMDB names!");
+    print(libCheck.msg);
+    AddErrMsg(libCheck.msg);
+    return(0);
+  }
+
+  mSetObj$dataSet$metabo.filter.hmdb <- ref.vec[hits]; 
   if(unmatched.num > 0) {
     unmatched.nms <- ref.vec[!hits];
     mSetObj$dataSet$metabo.ref.info <- paste("A total of", unmatched.num, "compounds were not matched to HMDB compound names.",
