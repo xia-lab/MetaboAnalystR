@@ -895,7 +895,7 @@ WaveICA<-function(data,batch,group){
   group<-as.character(group)
   wf="haar";
   K=20;t=0.05;t2=0.05;alpha=0;
-  level<-floor(log10(nrow(data),2))
+  level<-floor(log(nrow(data),2))
   if (is.null(colnames(data))){
     stop("data must have colnames")
   };
