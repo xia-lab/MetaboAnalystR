@@ -1,0 +1,12 @@
+BATCHOBJECTS=decorana.o Internal_utils_batch.o 
+
+INITOBJECT=init.o
+
+STATISOBJECT=rowttests.o util.o
+
+OBJECTS= $(BATCHOBJECTS) $(INITOBJECT) $(STATISOBJECT)
+
+all: clean $(SHLIB)
+
+clean:
+	rm -f $(OBJECTS)

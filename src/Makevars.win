@@ -1,0 +1,18 @@
+INITOBJECT=init.o
+
+STATISOBJECT=rowttests.o
+
+OBJECTS= $(INITOBJECT) $(STATISOBJECT)
+
+
+all: $(SHLIB)
+
+# Hack found at
+# http://r.789695.n4.nabble.com/suppressing-quot-global-quot-cppflags-in-an-individual-package-td910894.html
+MINGWBUILDBROKENWITHOPTIMIZATION2FLAGS=-fno-inline
+
+%.o: %.c
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(MINGWBUILDBROKENWITHOPTIMIZATION2FLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJECTS)
