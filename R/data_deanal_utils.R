@@ -34,7 +34,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 .prepare.deseq<-function(dataSet, anal.type, par1, par2, nested.opt){
   .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
   my.fun <- function(){
-    library(DESeq2);
+    require(DESeq2);
     dataSet <- dat.in$data;
     contrast.matrix <- dataSet$contrast.matrix;
     design <- dataSet$design
@@ -139,7 +139,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }
   
   dataSet$filename <- filename;
-  library(limma);
+  require(limma);
   design <- dataSet$design;
   myargs[["levels"]] <- design;
   dataSet$contrast.type <- anal.type;
@@ -180,7 +180,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     
   } else {
     set.seed(1) 
-    library(edgeR)
+    require(edgeR)
     y <- DGEList(counts = dataSet$data.anot, group = dataSet$cls)
     y <- calcNormFactors(y)
     y <- estimateGLMCommonDisp(y, design, verbose = FALSE)

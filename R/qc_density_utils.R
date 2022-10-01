@@ -13,7 +13,7 @@ PlotDataDensity <- function(fileName, imgNm, dpi,format, factor){
 }
 
 qc.density<- function(dataSet, imgNm="abc", dpi=72, format, factor){
-  library("ggplot2")
+  require("ggplot2")
   dat <- dataSet$data.norm
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
@@ -57,27 +57,11 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, factor){
     height <- 6
   }
   
-  if(format == "svg"){
-    require(gridSVG)
-    png("NULL", unit="in", width=width, height=height, res=dpi); 
-    print(g)
-    rootAttrs = c("svgdensity")
-    names(rootAttrs) = c("id");
-    pcafig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE, rootAttrs = rootAttrs)
-    str <- paste(capture.output(pcafig.svg$svg, file=NULL), collapse="\n");
-    dev.off();
-    jsonNm <- paste0(fileNm, "json");
-    plotData <- ggplot_build(g)
-    json.obj <- rjson::toJSON(plotData$data[[1]]);
-    sink(jsonNm);
-    cat(json.obj);
-    sink()
-  }else{
+
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
     print(g)
     dev.off();
     str <- "NA"
-  }
   
   return(str);
 }

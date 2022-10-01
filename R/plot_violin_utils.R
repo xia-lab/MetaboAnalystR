@@ -24,7 +24,7 @@ PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
 
   anal.type <- paramSet$anal.type;
 
-  library(ggplot2)
+  require(ggplot2)
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
   if(anal.type == "onedata"){

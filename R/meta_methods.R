@@ -267,7 +267,7 @@ PerformMetaDeAnal <- function(paramSet){
       inmex.ind[[dataName]] <- res.mat;
       
       #register sig one
-      sig.inx <- res.mat[,2]<=GlobalCutOff$BHth;
+      sig.inx <- res.mat[,2]<=paramSet$BHth;
       #sig.inx <- res.mat[,2]<=dataSet$pval;
       #dataSet$sig.mat <- res.mat[sig.inx,];
       RegisterData(dataSet);
@@ -304,7 +304,7 @@ PerformMetaDeAnal <- function(paramSet){
       rownames(res.mat) <- rownames(res.all);
       inmex.ind[[dataName]] <- res.mat;
       
-      #sig.inx <- res.mat[,2]<=GlobalCutOff$BHth;
+      #sig.inx <- res.mat[,2]<=paramSet$BHth;
       sig.inx <- res.mat[,2]<=dataSet$pval;
      # dataSet$sig.mat <- res.mat[sig.inx,];
       print(nrow(dataSet$sig.mat))
@@ -814,7 +814,7 @@ f.Q <- function(dadj, varadj){
 }
 
 qc.metaDensity<- function(imgNm, dpi=72, format, factor){
-  library("ggplot2")
+  require("ggplot2")
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat <- inmex.meta$data
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");

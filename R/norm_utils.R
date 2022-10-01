@@ -95,7 +95,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm, scaleNorm){
     for(i in 1:length(sel.nms)){
       dataSet = qs::qread(sel.nms[i])
       data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
-      if(data == 0){
+      if(length(data) == 1){
         return(0);
       }
       dataSet$data.norm <- data;
@@ -107,7 +107,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm, scaleNorm){
   }else{
     dataSet <- qs::qread(nm);
     data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
-    if(data == 0){
+    if(length(data) == 1){
       return(0);
     }
     dataSet$data.norm <- data;
@@ -171,12 +171,12 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     data <- y$E; # copy per million
     msg <- paste(msg, "Limma based on log2-counts per million transformation.", collapse=" ");
   } else if(norm.opt=="rle"){
-      suppressMessages(library(edgeR))
+      suppressMessages(require(edgeR))
       otuRLE <- edgeRnorm(data,method="RLE");
       data <- as.matrix(otuRLE$counts);
       msg <- c(msg, paste("Performed RLE Normalization"));
     }else if(norm.opt=="TMM"){
-      suppressMessages(library(edgeR))
+      suppressMessages(require(edgeR))
       otuTMM <- edgeRnorm(data,method="TMM");
       data <- as.matrix(otuTMM$counts);
       msg <- c(msg, paste("Performed TMM Normalization"));
@@ -209,20 +209,20 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   }else if(scaleNorm=="colsum"){
       data <- sweep(data, 2, colSums(data), FUN="/")
       data <- data*10000000;
-      #msg <- c(msg, paste("Performed total sum normalization."));
+      msg <- c(msg, paste("Performed total sum normalization."));
     }else if(scaleNorm=="upperquartile"){
-      suppressMessages(library(edgeR))
+      suppressMessages(require(edgeR))
       otuUQ <- edgeRnorm(data,method="upperquartile");
       data <- as.matrix(otuUQ$counts);
-      #msg <- c(msg, paste("Performed upper quartile normalization"));
+      msg <- c(msg, paste("Performed upper quartile normalization"));
     }else if(scaleNorm=="CSS"){
-      suppressMessages(library(metagenomeSeq))
+      suppressMessages(require(metagenomeSeq))
       #biom and mothur data also has to be in class(matrix only not in phyloseq:otu_table)
       data1 <- as(data,"matrix");
       dataMR <- newMRexperiment(data1);
       data <- cumNorm(dataMR,p=cumNormStat(dataMR));
       data <- MRcounts(data,norm = T);
-      #msg <- c(msg, paste("Performed cumulative sum scaling normalization"));
+      msg <- c(msg, paste("Performed cumulative sum scaling normalization"));
     }else{
     scalenm<-"N/A";
   }

@@ -67,7 +67,7 @@ SaveListHeatmapJSON <- function(dataName="", fileName){
   json.res$analType <- anal.type
   json.res$naviString <- "Heatmap List"
   json.mat <- rjson::toJSON(json.res);
-  dataSet$jsonNms$heatmap <- fileName
+  paramSet$jsonNms$heatmap <- fileName
 
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   sink(fileName);

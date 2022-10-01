@@ -202,9 +202,9 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
                   naviString = "Enrichment Network");
   netName <- paste0(netNm, ".json");
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(netName));
+  paramSet$jsonNms$network <- netName;
   saveSet(paramSet, "paramSet");
   saveSet(analSet, "analSet");
-  dataSet$jsonNms$network <- netName;
   sink(netName);
   cat(RJSONIO::toJSON(netData));
   sink();

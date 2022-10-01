@@ -198,7 +198,7 @@ SetupMetaStats <- function(BHth){
     paramSet <- readSet(paramSet, "paramSet");
     analSet <- readSet(analSet, "analSet");
     meta.mat <- analSet$meta.mat;
-    GlobalCutOff$BHth <<- BHth;
+    paramSet$BHth <- BHth;
     #all common genes
     inmex.meta <- qs::qread("inmex_meta.qs");
     gene.ids <- rownames(inmex.meta$data);
@@ -270,6 +270,7 @@ SetupMetaStats <- function(BHth){
         res <- cbind(ID=metade.genes, dat.mat);
     }
     fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
+    saveSet(paramSet, "paramSet");
 }
 
 #compute Cochran’s Q to help FEM/REM
@@ -344,8 +345,8 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   x <- inmex.meta[["data"]]
   dpi <- as.numeric(dpi);
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-  library('lattice');
-  library('ggplot2');
+  require('lattice');
+  require('ggplot2');
   pca <- prcomp(t(na.omit(x)));
   imp.pca<-summary(pca)$importance;
   xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")
@@ -383,7 +384,7 @@ PerformBatchCorrection <- function(){
 
 .prepare.batch<-function(){
     my.fun <- function(){
-        library('sva');
+        require('sva');
         inmex.meta <- qs::qread("inmex_meta.qs");
         data.lbl <- inmex.meta$data.lbl
         pheno <- data.frame(cbind(inmex.meta$cls.lbl, data.lbl));

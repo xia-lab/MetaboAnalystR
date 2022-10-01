@@ -160,7 +160,7 @@ cleanMem <- function(n=8) { for (i in 1:n) gc() }
 
 # shorthand
 ShowMemoryUse <- function(..., n=30) {
-  library(pryr);
+  require(pryr);
   sink(); # make sure print to screen
   print(mem_used());
   print(sessionInfo());
@@ -596,7 +596,7 @@ if(grp.num <= 18){ # update color and respect default
   if(is.null(filenm)){
     return(colArr);
   }else{
-    library(RJSONIO)
+    require(RJSONIO)
     sink(filenm);
     cat(toJSON(colArr));
     sink();
@@ -634,7 +634,7 @@ PerformORA <- function(dataName="", file.nm, fun.type, IDs){
         all_str = dataSet$orig;
       }
     }else if(type == "onedata"){
-      library(readr);
+      require(readr);
       dataSet <- readDataset(dataName);
       sig.ids <- rownames(dataSet$sig.mat);
       if("logFC" %in% colnames(dataSet$sig.mat)){
@@ -646,7 +646,7 @@ PerformORA <- function(dataName="", file.nm, fun.type, IDs){
       all_str <- readr:::format_tsv(df);
       all_str <- paste0("#", all_str);
     }else{
-      library(readr);
+      require(readr);
       my.vec <- names(mdata.all);
       for(i in 1:length(my.vec)){
         dataSet <- qs::qread(my.vec[i]);

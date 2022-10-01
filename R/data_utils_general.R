@@ -6,7 +6,14 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-# init resources for analysis
+.onAttach <- function (libname, pkgname){
+  .on.public.web <<- FALSE;
+  k1 <- paste("ExpressAnalystR",
+              utils::packageVersion( "ExpressAnalystR"),
+              "initialized Successfully !")
+  k0 <- "\n";
+  packageStartupMessage(c(k1,k0));
+}
 
 #'Initialize resources for analysis
 #'@description call this function before performing any analysis
@@ -18,11 +25,7 @@
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
   path = "../../";
-<<<<<<< HEAD
 
-=======
-  print(dataPath);
->>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
   paramSet <- list(annotated=FALSE);
   paramSet$on.public.web <- onWeb;
 
@@ -58,7 +61,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
     dataSets <<- list();
   #}
 
-  dataSet$jsonNms <- list()
+  paramSet$jsonNms <- list()
 
   if(file.exists("/home/glassfish/sqlite/")){
     sqlite.path <- "/home/glassfish/sqlite/";  #public server
@@ -382,8 +385,8 @@ SetListNms <- function(){
 }
 
 GetCurrentJson <-function(type){
-  dataSet <- .get.mSet(NA);
-  return(dataSet$jsonNms[[type]]);
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$jsonNms[[type]]);
 }
 
 PrepareJsonFromR <- function(fileNm, type, jsonString, dataSetString){
@@ -400,7 +403,7 @@ PrepareJsonFromR <- function(fileNm, type, jsonString, dataSetString){
 # note, last two param only for STRING database
 
 .prepareSigProteinJSON <- function(){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     anal.type <- paramSet$anal.type;
     if(anal.type == "genelist"){
         result.list <- .prepareListSeeds();

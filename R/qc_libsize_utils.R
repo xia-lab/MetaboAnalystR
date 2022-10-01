@@ -1,6 +1,6 @@
 ##################################################
 ## R script for ExpressAnalyst
-## Description: functions for quality check library size plot
+## Description: functions for quality check require size plot
 ## Authors: 
 ## Jeff Xia, jeff.xia@mcgill.ca
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
@@ -15,7 +15,7 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png",factor){
   
   smpl.sums <- colSums(data_bef);
   
-  library("ggplot2")
+  require("ggplot2")
   data_bef<-data.matrix(dataSet$data.anot);
   smpl.sums <- colSums(data_bef);
   names(smpl.sums) <- colnames(data_bef);
@@ -89,39 +89,11 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png",factor){
     
   }
   
-  if(format == "svg"){
-    require(gridSVG)
-    png("NULL", width=width, height=height, res=dpi, unit="in"); 
-    print(g)
-    #pcafig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE,exportCoords="file", exportMappings="file",exportJS="file")
-    rootAttrs = c("svglibsize")
-    names(rootAttrs) = c("id");
-    fig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE, rootAttrs = rootAttrs,exportCoords="file", exportMappings="file",exportJS="file")
-    str <- paste(capture.output(fig.svg$svg, file=NULL), collapse="\n");
-    dev.off()
-    
-    #REORDER label, used for identifying svg elements for tooltip
-    dat <- plotData$data[[2]]
-    dat <- dat[ order(match(dat$x, plotData$data[[1]]$x)), ]
-    dat$col <- dat$x
-    for(i in 1:length(unique(dat$x))){
-      num = unique(dat$x)[i]
-      subdat = dat[dat$x == num,];
-      subdat = subdat[order(subdat$y),]
-      dat[dat$x == num,] = subdat
-      dat[dat$x == num, "col"] = i
-    }
-    
-    jsonNm <- paste0(fileNm, "json");
-    json.obj <- rjson::toJSON(dat);
-    sink(jsonNm);
-    cat(json.obj);
-    sink();
-  }else{
-    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
-    print(g);
-    dev.off();
-    str <- "NA"
-  }
+ 
+  Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
+  print(g);
+  dev.off();
+  str <- "NA"
+  
   return(str);
 }

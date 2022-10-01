@@ -249,7 +249,7 @@
     sink();
     
     #for link sharing
-    dataSet$jsonNms$ridge <- jsonNm
+    paramSet$jsonNms$ridge <- jsonNm
     paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(jsonNm));
     saveSet(paramSet, "paramSet");
     

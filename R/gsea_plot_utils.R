@@ -112,8 +112,8 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
 
 
 PlotGSView <-function(cmpdNm,  format="png", dpi=72, width=NA){
-  library("ggplot2");
-  library("fgsea");
+  require("ggplot2");
+  require("fgsea");
   current.geneset <- qs::qread("current_geneset.qs");
   analSet <- readSet(analSet, "analSet");
   imgName <- gsub("\\/", "_",  cmpdNm);

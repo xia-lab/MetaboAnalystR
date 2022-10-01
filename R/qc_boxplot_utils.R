@@ -14,8 +14,8 @@ PlotDataBox <- function(fileName, boxplotName, dpi, format){
 
 qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
   dpi <- as.numeric(dpi)
-  library('ggplot2')
-  library('lattice');
+  require('ggplot2')
+  require('lattice');
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");  subgene <- 10000;
   if (nrow(dat)>subgene) {
@@ -56,29 +56,12 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
     geom_boxplot(outlier.size=0.5, outlier.alpha=0.4) +
     theme_bw()
   bp <- bp + coord_flip();
-  
-  if(format == "svg"){
-    require(gridSVG)
-    png("NULL", width=600*dpi/72, height=height*dpi/72, unit="px", res=dpi); 
-    print(bp)
-    rootAttrs = c("svgboxplot")
-    names(rootAttrs) = c("id");
-    fig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE, uniqueNames=TRUE, annotate=T, rootAttrs=rootAttrs)
-    str <- paste(capture.output(fig.svg$svg, file=NULL), collapse="\n");
-    dev.off();
-    jsonNm <- paste0(fileNm, "json");
-    plotData <- ggplot_build(bp)
-    plotData$data[[1]] <- plotData$data[[1]][, -6]; #remove outlier column
-    json.obj <- rjson::toJSON(plotData$data[[1]]);
-    sink(jsonNm);
-    cat(json.obj);
-    sink();
-  }else{
+
     Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
     print(bp);
     dev.off();
     str <- "NA"
-  }
+
   
   return(str)
 }

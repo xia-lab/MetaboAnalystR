@@ -55,7 +55,7 @@ PerformLayOut <- function(net.nm, algo, focus=""){
     l <- layout_with_sugiyama(g, layers = V(g)$layers*(vc/4));
     pos.xy <- -l$layout[,2:1];
   }else if(algo == "concentric"){
-    library(graphlayouts);
+    require(graphlayouts);
     # the fist element in the list for concentric is the central node.
     if(focus==""){
       inx <- 1;
@@ -65,7 +65,7 @@ PerformLayOut <- function(net.nm, algo, focus=""){
     coords <- layout_with_focus(g,inx);
     pos.xy <- coords$xy;
   }else if(algo == "backbone"){
-    library(graphlayouts);
+    require(graphlayouts);
     if(length(V(g)$name)<2000){
       coords <- layout_with_stress(g);
       pos.xy <- coords;

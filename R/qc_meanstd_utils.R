@@ -17,28 +17,11 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   print(format)
-  if(format == "svg"){
-    require(gridSVG)
-    png("NULL", width=8, height=6, unit="in", res=dpi); 
-    plot <- meanSdPlot(dat, ranks=FALSE)
-    print(plot)
-    rootAttrs = c("svgmeansd")
-    names(rootAttrs) = c("id");
-    pcafig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE, rootAttrs = rootAttrs)
-    str <- paste(capture.output(pcafig.svg$svg, file=NULL), collapse="\n");
-    dev.off()
-    jsonNm <- paste0(fileNm, "json");
-    plotData <- ggplot_build(plot$gg)
-    json.obj <- rjson::toJSON(plotData$data[[1]]);
-    sink(jsonNm);
-    cat(json.obj);
-    sink()
-  }else{
-    Cairo(file=imgNm, width=8, height=6, type=format, bg="white", dpi=dpi, unit="in");
-    plot <- meanSdPlot(dat, ranks=FALSE) 
-    dev.off();
-    str <- "NA"
-  }
+  Cairo(file=imgNm, width=8, height=6, type=format, bg="white", dpi=dpi, unit="in");
+  plot <- meanSdPlot(dat, ranks=FALSE) 
+  dev.off();
+  str <- "NA"
+  
   return(str);
 }
 

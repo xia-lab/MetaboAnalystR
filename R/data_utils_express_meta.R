@@ -816,7 +816,7 @@ RangeNorm<-function(x){
 
 
 performLimmaMeta <-function(trimmed.data, cls, sel.meta="newcolumn"){
-  library(edgeR);
+  require(edgeR);
   inx = 0;
   myargs <- list();
   grp.nms <- levels(cls);
@@ -848,7 +848,7 @@ performLimmaMeta <-function(trimmed.data, cls, sel.meta="newcolumn"){
 
 
 performEdgeRMeta <-function(trimmed.data, trimmed.meta){
-  library(edgeR);
+  require(edgeR);
 
   y <- DGEList(counts = trimmed.data, group = trimmed.meta);
   y <- calcNormFactors(y);
@@ -866,7 +866,7 @@ performDeseq2Meta <-function(trimmed.data, trimmed.meta){
   rownames(cls) = c();
   
   my.fun <- function(){
-    suppressMessages(library(DESeq2));
+    suppressMessages(require(DESeq2));
     dds <- DESeqDataSetFromMatrix(countData=round(trimmed.data), colData = trimmed.meta, design = ~newcolumn)
     geoMeans = apply(counts(dds), 1, gm_mean);
     dds <- DESeq2::estimateSizeFactors(dds, geoMeans = geoMeans);

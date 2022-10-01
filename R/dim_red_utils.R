@@ -397,22 +397,22 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   coords = as.matrix(pos.xyz[inx,c(1:3)])
   mesh = list()
   if(type == "alpha"){
-    library(alphashape3d)
-    library(rgl)
+    require(alphashape3d)
+    require(rgl)
     sh=ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09);
     mesh[[1]] = as.mesh3d(sh, triangles=T);
   }else if(type == "ellipse"){
-    library(rgl);
+    require(rgl);
     pos=cov(coords, y = NULL, use = "everything");
     mesh[[1]] = ellipse3d(x=as.matrix(pos), level=level);
   }else{
-    library(ks);
+    require(ks);
     res=kde(coords);
     r = plot(res, cont=level*100);
     sc = scene3d();
     mesh = sc$objects;
   }
-  library(RJSONIO);
+  require(RJSONIO);
   sink(filenm);
   cat(toJSON(mesh));
   sink();

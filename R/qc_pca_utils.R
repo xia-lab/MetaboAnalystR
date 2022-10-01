@@ -101,26 +101,11 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", factor){
     width <- 10
     height <- 6
   }
-  if(format == "svg"){
-    require(gridSVG)
-    png("NULL", width=width, height=height, unit="in", res=dpi); 
-    print(pcafig)
-    
-    rootAttrs = c("svgpca")
-    names(rootAttrs) = c("id");
-    pcafig.svg <- gridSVG::grid.export(imgNm,addClasses=TRUE, uniqueNames=TRUE, annotate=T, rootAttrs=rootAttrs)
-    str <- paste(capture.output(pcafig.svg$svg, file=NULL), collapse="\n");   
-    dev.off()  
-    jsonNm <- paste0(fileNm, "json");
-    json.obj <- rjson::toJSON(pca.rest);
-    sink(jsonNm);
-    cat(json.obj);
-    sink();
-  }else{
-    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
-    print(pcafig);
-    dev.off();
-    str <- "NA"
-  }
+
+  Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
+  print(pcafig);
+  dev.off();
+  str <- "NA"
+  
   return(str)
 }

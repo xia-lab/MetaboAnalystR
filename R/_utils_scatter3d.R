@@ -39,8 +39,8 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   
   reductionSet <- dataSet;
   Sys.setenv(RGL_USE_NULL = TRUE);
-  library(rgl);
-  library(igraph);
+  require(rgl);
+  require(igraph);
   pos.xyz <-qs::qread("score_pos_xyz.qs");
   nodes <- vector(mode="list");
   names <- c(rownames(pos.xyz));
@@ -96,7 +96,7 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   modules = "NA";
   # save node table
   ellipse ="NA";  
-  library(RJSONIO);
+  require(RJSONIO);
   
   
   metadf < meta;
