@@ -1,0 +1,23 @@
+Package: ExpressAnalystR
+Title: ExpressAnalystR
+Version: 1.0.0
+Authors@R: c(
+           person(given = "Guangyan",
+           family = "Zhou",
+           role = c("aut", "cre"),
+           email = "guangyan.zhou@mail.mcgill.ca"
+           )
+           )
+Description: Underlying R functions for OmicsNet web server.
+License: GPL (>= 2)
+Depends: R (>= 4.0.3), igraph, RColorBrewer, qs, rjson, RSQLite, ggplot2, Cairo
+Imports: Rcpp, BiocManager, data.table, metap, RJSONIO, ks, fgsea,
+    dplyr, ggforce, graphlayouts, httr, graphlayouts, knitr, rgl, edgeR, limma, sva,
+    pryr, readr, metagenomeSeq
+VignetteBuilder: knitr
+LinkingTo: Rcpp
+BugReports: https://github.com/xia-lab/ExpressAnalystR/issues/new
+URL: https://github.com/xia-lab/ExpressAnalystR
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
