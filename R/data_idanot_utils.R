@@ -33,6 +33,10 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
   current.msg <- msgSet$current.msg;
   
   if(org == "custom"){

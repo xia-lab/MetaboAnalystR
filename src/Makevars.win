@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o 
 
 INITOBJECT=init.o
@@ -15,3 +16,23 @@ CXX_STD = CXX11s
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) 
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+=======
+INITOBJECT=init.o
+
+STATISOBJECT=rowttests.o
+
+OBJECTS= $(INITOBJECT) $(STATISOBJECT)
+
+
+all: $(SHLIB)
+
+# Hack found at
+# http://r.789695.n4.nabble.com/suppressing-quot-global-quot-cppflags-in-an-individual-package-td910894.html
+MINGWBUILDBROKENWITHOPTIMIZATION2FLAGS=-fno-inline
+
+%.o: %.c
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(MINGWBUILDBROKENWITHOPTIMIZATION2FLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJECTS)
+>>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b

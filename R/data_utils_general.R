@@ -18,7 +18,11 @@
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
   path = "../../";
+<<<<<<< HEAD
 
+=======
+  print(dataPath);
+>>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
   paramSet <- list(annotated=FALSE);
   paramSet$on.public.web <- onWeb;
 

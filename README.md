@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # Description
 
@@ -133,3 +134,9 @@ View(analSet$meta.mat)
 
 ```
 
+=======
+# ExpressAnalystR
+R functions underlying ExpressAnalyst
+
+Test #2.
+>>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
