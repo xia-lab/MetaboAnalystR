@@ -6,6 +6,13 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
+#'Sanity check individual dataset for meta-analysis 
+#'@param fileName The filename of dataset in qs format
+#'@author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 SanityCheckData <- function(fileName){
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- qs::qread(fileName);

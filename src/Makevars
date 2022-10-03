@@ -1,16 +1,8 @@
-<<<<<<< HEAD
 BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o 
 
 INITOBJECT=init.o
 
 STATISOBJECT=c/rowttests.o c/util.o
-=======
-BATCHOBJECTS=decorana.o Internal_utils_batch.o 
-
-INITOBJECT=init.o
-
-STATISOBJECT=rowttests.o util.o
->>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
 
 OBJECTS= $(BATCHOBJECTS) $(INITOBJECT) $(STATISOBJECT)
 
@@ -18,11 +10,9 @@ all: clean $(SHLIB)
 
 clean:
 	rm -f $(OBJECTS)
-<<<<<<< HEAD
 
 CXX_STD = CXX11
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) 
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
-=======
->>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
+

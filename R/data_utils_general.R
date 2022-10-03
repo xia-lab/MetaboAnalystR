@@ -17,7 +17,7 @@
 
 #'Initialize resources for analysis
 #'@description call this function before performing any analysis
-#'@param path path pointing to different built-in resources
+#'@param onWeb whether the script is running in local or on web
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
