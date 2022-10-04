@@ -69,6 +69,7 @@ ReadTabExpressData("estrogen.txt");
 PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean");
 
 # Step 4. Perform data filtering and normalization
+PerformExpressNormalization("estrogen.txt", "none", 15, 4, 5,"true");
 
 # Step 5. Prepare differential expression (DE) analysis
 SetSelectedMetaInfo("estrogen.txt","ER", "NA", F)
