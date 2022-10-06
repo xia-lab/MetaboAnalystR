@@ -221,8 +221,7 @@ SetRankingMetric <- function(opt){
 
 }
 
-
-SetListNms <- function(){
+SetListNms <- function(dataSet){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
@@ -237,7 +236,7 @@ SetListNms <- function(){
     en.ids <- rownames(inmex.meta$data);
     nm <- "meta_data"
   }else{
-    en.ids <- rownames(dataSet$comp.res)
+    en.ids <- rownames(dataSet$comp.res);
     nm <- "dataSet"
   }
   names(en.ids) <- doEntrez2SymbolMapping(en.ids, paramSet$data.org, paramSet$data.idType)
@@ -549,7 +548,7 @@ ReadDataForMetaInfo<-function(dataName){
 doScatterJson <- function(dataName, filenm){
     dataSet <- readDataset(dataName);
     if(!exists("my.json.scatter")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/expressanalystr/_utils_scatter3d.Rc");    
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_scatter3d.Rc");    
     }
     return(my.json.scatter(dataSet, filenm));
 }

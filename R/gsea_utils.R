@@ -74,7 +74,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   fgseaRes <- fgseaRes[,c("size","ES", "pval", "pathway", "padj")]
   
   if(nrow(fgseaRes)<1){
-    analSet <- SetListNms()
+    analSet <- SetListNms(dataSet);
     initsbls <- doEntrez2SymbolMapping(analSet$list.genes, paramSet$data.org, paramSet$data.idType);
     names(initsbls) <- analSet$list.genes
     netData <- list(sizes=analSet$listSizes, genelist=initsbls);
@@ -116,7 +116,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   fgseaRes <- fgseaRes[which(fgseaRes$hits<500),];
   fgseaRes <- fgseaRes[which(fgseaRes$total<2000),];
   if(nrow(fgseaRes)<1){
-    analSet <- SetListNms();
+    analSet <- SetListNms(dataSet);
     initsbls <- doEntrez2SymbolMapping(analSet$list.genes, paramSet$data.org, paramSet$data.idType)
     names(initsbls) <- analSet$list.genes
     netData <- list(sizes=analSet$listSizes, genelist=initsbls);
@@ -176,7 +176,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     rownames(res.mat) <- fgseaRes[,"pathway"];
     qs:::qsave(res.mat, "enr.mat.qs");
     analSet$list.genes <- doEntrez2SymbolMapping(rownames(dataSet$sig.mat), paramSet$data.org, paramSet$data.idType);
-    analSet <- SetListNms();
+    analSet <- SetListNms(dataSet);
     .prepareEnrichNet(dataSet, netNm, "meta", "mixed", analSet);
     file.nm <- gsub("gsea", "enrichment", file.nm)
     json.res$naviString <- "Enrichment Network"

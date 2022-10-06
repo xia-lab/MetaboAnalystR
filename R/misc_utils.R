@@ -197,7 +197,7 @@ PerformHeatmapEnrichment <- function(dataName="", file.nm, fun.type, IDs){
 
 .prepareEnrichNet<-function(dataSet, netNm, type, overlapType, analSet){
     if(!exists("my.enrich.net")){ 
-        compiler::loadcmp("../../rscripts/expressanalystr/_utils_enrichnet.Rc");    
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_enrichnet.Rc");    
     }
     return(my.enrich.net(dataSet, netNm, type, overlapType, analSet));
 }
@@ -834,8 +834,8 @@ checkfac = function(fac) {
 
 .getDynLoadPath <- function() {
 
-    path = "../../rscripts/expressanalystr/src/ExpressAnalyst.so";
-    path=normalizePath(path)
+    path <- "../../rscripts/ExpressAnalystR/R/src/ExpressAnalyst.so";
+    path <- normalizePath(path)
     
     return(path)
 }
