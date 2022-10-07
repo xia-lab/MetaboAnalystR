@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 # Description
 
 **_ExpressAnalystR_** is the underlying R package synchronized with ExpressAnalyst web server. It is designed for statistical analysis, enrichment analysis and visual analytics of single and multiple gene expression data, both matrix and gene list. The R package is composed of R functions necessary for the web-server to perform network creation, trimming and analysis. 
@@ -71,6 +69,7 @@ ReadTabExpressData("estrogen.txt");
 PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean");
 
 # Step 4. Perform data filtering and normalization
+PerformExpressNormalization("estrogen.txt", "none", 15, 4, 5,"true");
 
 # Step 5. Prepare differential expression (DE) analysis
 SetSelectedMetaInfo("estrogen.txt","ER", "NA", F)
@@ -133,10 +132,3 @@ analSet <- readSet(analSet, "analSet");
 View(analSet$meta.mat)
 
 ```
-
-=======
-# ExpressAnalystR
-R functions underlying ExpressAnalyst
-
-Test #2.
->>>>>>> 8b55fee1c60bfcb1a28c5625efc373c0d55f401b
