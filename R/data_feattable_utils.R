@@ -9,6 +9,7 @@
 
 # update result based on new cutoff
 GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
+  save.image("sig.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
@@ -132,8 +133,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   dataSet$meta.stat <- meta.info;
   
   # now do protein mapping for network only applicable for annotated
-  
-  #dataSet$name <- res.nm;
   
   gene <- rownames(resTable);
   

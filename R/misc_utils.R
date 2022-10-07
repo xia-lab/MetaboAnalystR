@@ -893,13 +893,13 @@ saveSet <- function(obj=NA, set=""){
 }
 
 readSet <- function(obj=NA, set=""){
-    if(!exists("paramSet")){
+    #if(!exists("paramSet")){
       path <- "";
       if(exists('user.path')){
         path <- user.path;
       }
       obj <- qs:::qread(paste0(path, set, ".qs"));
-    }
+    #}
     return(obj);
 }
 

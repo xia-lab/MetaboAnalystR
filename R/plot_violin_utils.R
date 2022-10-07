@@ -17,13 +17,14 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 }
 
 # given a gene id, plot its expression profile as violin plot
-PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
+PlotSelectedGene <-function(dataName="", gene.id, type, singleCol = F){
+  save.image("selected.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
-
+  
   anal.type <- paramSet$anal.type;
-
+  
   require(ggplot2)
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
@@ -48,7 +49,7 @@ PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
       }
       
       col <- unique(GetColorSchema(cls));   
-      df.norm <- data.frame(value=dat[gene.id,], name = cls)
+      df.norm <- data.frame(value=dat[gene.id,], name = cls);
       p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
         geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
         geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
@@ -60,7 +61,6 @@ PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
         theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
         theme_bw()
       myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
-
     }else{
       
       out.fac <- dataSet$sec.cls
@@ -98,7 +98,7 @@ PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
         geom_jitter(height = 0, width = 0.05, show.legend = FALSE) + 
         facet_wrap(~facA, nrow = row.num) + 
         theme(axis.title.x = element_blank(), legend.position = "none", axis.text.x = element_text(angle=90, hjust=1),
-            plot.title = element_text(size = 11, hjust=0.5, face = "bold"), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) + 
+              plot.title = element_text(size = 11, hjust=0.5, face = "bold"), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) + 
         scale_fill_manual(values = col) + 
         scale_color_manual(values = col) + 
         ggtitle(cmpdNm) + 
@@ -202,12 +202,13 @@ PlotSelectedGene<-function(dataName="", gene.id, type, singleCol = F){
       p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + geom_jitter(height = 0, width = 0.05, show.legend = FALSE) + theme_bw()
       p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
       p.time <- p.time + scale_fill_manual(values=col) + 
-                    scale_color_manual(values=col) +
-                    theme(axis.text.x = element_text(angle=90, hjust=1))
+        scale_color_manual(values=col) +
+        theme(axis.text.x = element_text(angle=90, hjust=1))
       p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Expression")
       p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
       myplot <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
     }
   }
+  print(myplot);
   dev.off();
 }
