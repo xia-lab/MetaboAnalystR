@@ -4,6 +4,10 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
+SetLibPath <- function(path){
+  paramSet$lib.path <- path;
+}
+
 #Set path of user folder in tool
 SetUserFolderPath <- function(path){
   user.path <<- path;
