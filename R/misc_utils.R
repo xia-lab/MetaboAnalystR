@@ -875,21 +875,21 @@ gm_mean <- function(x, na.rm=TRUE){
 
 saveSet <- function(obj=NA, set=""){
 
-    if(exists("paramSet")){ #check if global object exists
-      if(set == "dataSet"){
-        dataSet <<- obj;
-      }else if(set == "analSet"){
-        analSet <<- obj;
-      }else if(set == "imgSet"){
-        imgSet <<- obj;
-      }else if(set == "paramSet"){
-        paramSet <<- obj;
-      }else if(set == "msgSet"){
-        msgSet <<- obj;
-      }
-    }else{
+    #if(exists("paramSet")){ #check if global object exists
+    #  if(set == "dataSet"){
+    #    dataSet <<- obj;
+    #  }else if(set == "analSet"){
+    #    analSet <<- obj;
+    #  }else if(set == "imgSet"){
+    #    imgSet <<- obj;
+    #  }else if(set == "paramSet"){
+    #    paramSet <<- obj;
+    #  }else if(set == "msgSet"){
+    #    msgSet <<- obj;
+    #  }
+    #}else{
       qs:::qsave(obj, paste0(set, ".qs"));
-    }
+    #}
 }
 
 readSet <- function(obj=NA, set=""){
@@ -898,10 +898,17 @@ readSet <- function(obj=NA, set=""){
       if(exists('user.path')){
         path <- user.path;
       }
-      obj <- qs:::qread(paste0(path, set, ".qs"));
+
+      if(path != ""){
+      obj <- load_qs(paste0(path, set, ".qs"));
+      }else{
+      obj <- qs:::qread(paste0(set, ".qs"));
+      }
     #}
     return(obj);
 }
+
+load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
 
 readDataset <- function(fileName=""){
       path <- "";

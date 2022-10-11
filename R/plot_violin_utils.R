@@ -21,9 +21,8 @@ PlotSelectedGene <-function(dataName="", gene.id, type, singleCol = F){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
-  
   anal.type <- paramSet$anal.type;
-  
+
   require(ggplot2)
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
