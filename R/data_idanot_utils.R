@@ -326,7 +326,13 @@ AnnotateGeneData <- function(dataName, org, idtype){
 # from probe ID to entrez ID 
 .doProbeMapping <- function(probe.vec, platform, org){
   paramSet <- readSet(paramSet, "paramSet");
-  platform.path <- paste(paramSet$lib.path, org, "/", platform, ".rds", sep="");
+
+  if(exists(api.lib.path)){
+    lib.path <- api.lib.path;
+  }else{
+    lib.path <- paramSet$lib.path;
+  }
+  platform.path <- paste(lib.path, org, "/", platform, ".rds", sep="");
   probe.map <- readRDS(platform.path);
   if(is.null(probe.vec)){
     entrez <- probe.map[, "entrez"];

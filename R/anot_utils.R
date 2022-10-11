@@ -12,7 +12,13 @@
     folderNm <- paramSet$data.org;
   }
 
-  my.path <- paste(paramSet$lib.path, folderNm, "/", fun.type, ".rds", sep="");
+  if(exists(api.lib.path)){
+    lib.path <- api.lib.path;
+  }else{
+    lib.path <- paramSet$lib.path;
+  }
+
+  my.path <- paste(lib.path, folderNm, "/", fun.type, ".rds", sep="");
   
   my.lib <- readRDS(my.path);
   

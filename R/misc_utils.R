@@ -5,7 +5,7 @@
 ###################################################
 
 SetLibPath <- function(path){
-  paramSet$lib.path <- path;
+  api.lib.path <<- path;
 }
 
 #Set path of user folder in tool
