@@ -4,53 +4,6 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-.loadEnrichLib <- function(fun.type, paramSet, analSet){
-  
-  if(paramSet$data.org == "generic"){
-    folderNm <- paramSet$data.idType;
-  }else{
-    folderNm <- paramSet$data.org;
-  }
-
-  if(exists(api.lib.path)){
-    lib.path <- api.lib.path;
-  }else{
-    lib.path <- paramSet$lib.path;
-  }
-
-  my.path <- paste(lib.path, folderNm, "/", fun.type, ".rds", sep="");
-  
-  my.lib <- readRDS(my.path);
-  
-  if(substr(fun.type, 0, 2)=="go"){
-    if(is.null(names(my.lib))){ # some go lib does not give names
-      names(my.lib) <- c("link", "term", "sets");
-    }
-  }
-  
-  current.geneset <- my.lib$sets;
-
-  #remove empty pathways
-  keep.inx <- lapply(current.geneset,length)>0
-  current.geneset <- current.geneset[keep.inx]
-  my.lib$term <- my.lib$term[keep.inx]
-  set.ids<- names(current.geneset); 
-  names(set.ids) <- names(current.geneset) <- my.lib$term;
-  
-  if(substr(fun.type, 0, 2)=="go"){
-    names(current.geneset) = firstup(names(current.geneset))
-    names(current.geneset) = gsub("-", "_", names(current.geneset))
-    names(set.ids) = firstup(names(set.ids));
-    names(set.ids) = gsub("-", "_", names(set.ids));
-  }
-  qs::qsave(current.geneset, "current_geneset.qs");
-  res <- list();
-  res$current.setlink <- my.lib$link;
-  res$current.setids <- set.ids;
-  res$current.geneset <- current.geneset;
-  return(res);
-}
-
 queryGeneDB <- function(table.nm, data.org){
   paramSet <- readSet(paramSet, "paramSet");    
   if(table.nm == "custom" || data.org == "custom"){

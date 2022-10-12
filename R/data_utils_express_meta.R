@@ -428,23 +428,23 @@ FilteringData <- function(nm, countOpt="pct",count, var){
 
 FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
   msgSet <- readSet(msgSet, "msgSet");          
-  data = dataSet$data.missed
-  msg <- ""
+  data = dataSet$data.missed;
+  msg <- "";
   
   count.thresh = as.numeric(count);
   var.thresh = as.numeric(var);
   if((count.thresh + var.thresh) >0){
   sum.counts <- apply(data, 1, sum, na.rm=TRUE);
   if(countOpt == "pct"){
-  inx <- order(sum.counts)
-  data <- data[inx,]
+  inx <- order(sum.counts);
+  data <- data[inx,];
   rm.inx <- round(count.thresh/100 * nrow(data))
   data <- data[-c(1:rm.inx),];
-  rmSum <- rm.inx
+  rmSum <- rm.inx;
 }else{
   rm.inx <- sum.counts < count.thresh;
   data <- data[!rm.inx,];
-  rmSum <- sum(rm.inx)
+  rmSum <- sum(rm.inx);
 }
   msg <- paste(msg, "Filtered ",rmSum, " genes with low counts.", collapse=" ");
   filter.val <- apply(data, 1, IQR, na.rm=T);

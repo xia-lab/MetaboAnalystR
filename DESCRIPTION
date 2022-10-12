@@ -8,7 +8,7 @@ Authors@R: c(
            email = "guangyan.zhou@mail.mcgill.ca"
            )
            )
-Description: Underlying R functions for OmicsNet web server.
+Description: Underlying R functions for ExpressAnalyst web server.
 License: GPL (>= 2)
 Depends: R (>= 4.0.3), igraph, RColorBrewer, qs, rjson, RSQLite, ggplot2, Cairo
 Imports: Rcpp, BiocManager, data.table, metap, RJSONIO, ks, fgsea,
