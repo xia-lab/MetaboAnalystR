@@ -147,7 +147,7 @@
     folderNm <- paramSet$data.org;
   }
 
-  if(exists(api.lib.path)){
+  if(exists("api.lib.path")){
     lib.path <- api.lib.path;
   }else{
     lib.path <- paramSet$lib.path;
