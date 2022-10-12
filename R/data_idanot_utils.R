@@ -327,7 +327,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
 .doProbeMapping <- function(probe.vec, platform, org){
   paramSet <- readSet(paramSet, "paramSet");
 
-  if(exists(api.lib.path)){
+  if(exists("api.lib.path")){
     lib.path <- api.lib.path;
   }else{
     lib.path <- paramSet$lib.path;
