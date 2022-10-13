@@ -28,7 +28,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
 
   paramSet <- list(annotated=FALSE);
   paramSet$on.public.web <- onWeb;
-
+  .on.public.web <<- onWeb;
   if(paramSet$on.public.web){
   dataSet <<- list(annotated=FALSE);
   analSet <<- list(annotated=FALSE);
@@ -81,6 +81,12 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
 
   paramSet$sqlite.path <- sqlite.path;
   paramSet$lib.path <- paste0(path, dataPath);
+
+  if(!.on.public.web) {
+    paramSet$sqlite.path <- paste0(getwd(), "/");
+    paramSet$lib.path <- "https://www.expressanalyst.ca/ExpressAnalyst/resources/data/";
+  } 
+
   paramSet$data.org <- "hsa";
   paramSet$module.count <- 0;
   msgSet$current.msg <- vector(mode="character");

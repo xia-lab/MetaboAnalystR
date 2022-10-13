@@ -154,6 +154,12 @@
   }
 
   my.path <- paste(lib.path, folderNm, "/", fun.type, ".rds", sep="");
+
+  if(!.on.public.web){
+    nmdb <- basename(my.path);
+    download.file(my.path, destfile = nmdb, method="libcurl", mode = "wb");
+    my.path <- nmdb;
+  }
   
   my.lib <- readRDS(my.path);
   

@@ -333,6 +333,14 @@ AnnotateGeneData <- function(dataName, org, idtype){
     lib.path <- paramSet$lib.path;
   }
   platform.path <- paste(lib.path, org, "/", platform, ".rds", sep="");
+
+  if(!.on.public.web){
+    nmdb <- basename(platform.path);
+    download.file(platform.path, destfile = nmdb, method="libcurl", mode = "wb");
+    platform.path <- nmdb;
+  }
+  
+
   probe.map <- readRDS(platform.path);
   if(is.null(probe.vec)){
     entrez <- probe.map[, "entrez"];
