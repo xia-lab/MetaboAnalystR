@@ -9,7 +9,7 @@ Note - ExpressAnalystR is still under development - we cannot guarantee full fun
 
 **Step 1. Install package dependencies**
 
-To use OmcisNetR, make sure your R version is >4.0.3 and install all package dependencies. Ensure that you are able to download packages from Bioconductor. To install package dependencies, use the pacman R package. Note that some of these packages may require additional library dependencies that need to be installed prior to their own successful installation.
+To use ExpressAnalystR, make sure your R version is >4.0.3 and install all package dependencies. Ensure that you are able to download packages from Bioconductor. To install package dependencies, use the pacman R package. Note that some of these packages may require additional library dependencies that need to be installed prior to their own successful installation.
 
 ```
 install.packages("pacman")
