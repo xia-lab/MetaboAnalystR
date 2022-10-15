@@ -271,7 +271,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }else if(type == "cds"){
     col.nm = "accession";
     db.nm = "entrez";
-    db.map <-  queryGeneDB(paste0("entrez_",type), org);
+    db.map <- queryGeneDB(paste0("entrez_",type), org);
   }else{
     # note, some ID can have version number which is not in the database
     # need to strip it off NM_001402.5 => NM_001402
