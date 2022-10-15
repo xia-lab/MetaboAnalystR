@@ -929,8 +929,6 @@ getCurrentMsg <- function(){
 }
 
 PrepareSqliteDB <- function(sqlite_Path, onweb = TRUE) {
-  print(sqlite_Path);
-  print(onweb);
   if(onweb) {return(TRUE)};
   if(file.exists(sqlite_Path)) {return(TRUE)};
 

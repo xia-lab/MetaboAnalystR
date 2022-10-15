@@ -62,7 +62,6 @@ GetMetaColLength<- function(dataName=""){
   } else if (dataSet$de.method=="deseq2"){
     inx <- match("baseMean", colnames(dataSet$comp.res))
     if(dataSet$contrast.type == "default"){
-        print(dataSet$contrast.matrix);
         return(dim(dataSet$contrast.matrix)[2]);
     }
   } else {
