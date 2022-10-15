@@ -10,7 +10,7 @@ queryGeneDB <- function(table.nm, data.org){
     db.map <- qs::qread("anot_table.qs");
   }else{
     require('RSQLite');
-    if(!PrepareSqliteDB(paramSet$sqlite.path, .on.public.web)){
+    if(!PrepareSqliteDB(paramSet$sqlite.path, paramSet$on.public.web)){
       stop("Sqlite database is missing, please check your internet connection!");
     }
     conv.db <- dbConnect(SQLite(), paste(paramSet$sqlite.path, data.org, "_genes.sqlite", sep="")); 

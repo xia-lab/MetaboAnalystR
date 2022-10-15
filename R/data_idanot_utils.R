@@ -212,20 +212,18 @@ AnnotateGeneData <- function(dataName, org, idtype){
     dataSet$id.type <- "none";
   }
 
-    #print(head(dataSet$data.annotated));
-    if(idtype != "NA"){
-      #print(length(unique(enIDs))/length(gene.vec))
-      if(length(unique(enIDs))/length(gene.vec) < 0.3){
-        msg <- paste("Less than ", round( length(unique(enIDs))/length(gene.vec) * 100, 2), "% features were mapped");
-        msgSet$current.msg <- msg
-        saveSet(msgSet, "msgSet");
-        return(0)
-      }else{
-        msg <- paste("A total of ", length(unique(enIDs)), "unique features were mapped");
-      }
+  if(idtype != "NA"){
+    if(length(unique(enIDs))/length(gene.vec) < 0.3){
+      msg <- paste("Less than ", round( length(unique(enIDs))/length(gene.vec) * 100, 2), "% features were mapped");
+      msgSet$current.msg <- msg;
+      saveSet(msgSet, "msgSet");
+      return(0)
     }else{
-        msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
+      msg <- paste("A total of ", length(unique(enIDs)), "unique features were mapped");
     }
+  }else{
+      msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
+  }
 
   dataSet$data.missed <- dataSet$data.filtered <- dataSet$data.annotated;
   msgSet$current.msg <- msg;
@@ -290,13 +288,13 @@ AnnotateGeneData <- function(dataName, org, idtype){
     }
   }
 
-    db.map <-  queryGeneDB(db.nm, org);
-    if(org == "smm" && type == "symbol"){
-      q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
-      q.vec <- q.mat[,1];
-      q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
-      db.map[, col.nm] <- q.mat[,1];
-    }
+  db.map <-  queryGeneDB(db.nm, org);
+  if(org == "smm" && type == "symbol"){
+    q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
+    q.vec <- q.mat[,1];
+    q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
+    db.map[, col.nm] <- q.mat[,1];
+  }
 
     hit.inx <- match(q.vec, db.map[, col.nm]);
 
