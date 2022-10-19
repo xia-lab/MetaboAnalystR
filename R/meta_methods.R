@@ -334,7 +334,14 @@ PerformMetaDeAnal <- function(paramSet){
   return(analSet);
 }
 
-# Meta-analysis combining effect size
+#'Perform combine effect size meta-analysis method
+#'@param method Method used, either "rem" or "fem"
+#'@param BHth P-value threshold
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -418,7 +425,14 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   return(length(sig.inx));
 }
 
-# combining p values based on Fisher's or Stouffer
+#'Perform combine p-value meta-analysis
+#'@param method Method used, either "stouffer" or "fisher"
+#'@param BHth P-value threshold
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
@@ -497,7 +511,14 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   return(length(sig.inx));
 }
 
-# diff used for direction, not selection
+#'Perform vote counting meta-analysis method
+#'@param method Method used, either "rem" or "fem"
+#'@param BHth P-value threshold for the significance level
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PerformVoteCounting <- function(BHth = 0.05, minVote){
   paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
@@ -560,10 +581,18 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 }
 
 
-# This approach directly merge all data sets
-# and analyze it as a single data
+#'Perform direct merging meta-analysis
+#'@description Directly merge all datasets and analyze as single data
+#'@param method Method used, either "rem" or "fem"
+#'@param BHth P-value threshold for the significance level
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
 PerformMetaMerge<-function(BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
+  analSet <- readSet(analSet, "analSet");
 
   paramSet$inmex.method <- "merge";
   meta.mat <<- meta.stat <<- NULL;
@@ -668,9 +697,9 @@ GetMetaResultMatrix<-function(single.type="fc"){
   analSet <- readSet(analSet, "analSet");
 
   if(single.type == "fc"){
-    dat.mat <- fc.mat;
+    dat.mat <- analSet$fc.mat;
   }else{
-    dat.mat <- pval.mat;
+    dat.mat <- analSet$pval.mat;
   }
 
   # note, max 9 data columns can be displayed
@@ -690,11 +719,13 @@ GetMetaResultMatrix<-function(single.type="fc"){
 }
 
 GetMetaStat<-function(){
-  return (meta.stat$stat);
+  analSet <- readSet(analSet, "analSet");
+  return (analSet$meta.stat$stat);
 }
 
 GetMetaStatNames<-function(){
-  return (names(meta.stat$stat));
+  analSet <- readSet(analSet, "analSet");
+  return (names(analSet$meta.stat$stat));
 }
 
 combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
@@ -816,28 +847,24 @@ f.Q <- function(dadj, varadj){
 qc.metaDensity<- function(imgNm, dpi=72, format, factor){
   require("ggplot2")
   inmex.meta <- qs::qread("inmex_meta.qs");
-  dat <- inmex.meta$data
+  dat <- inmex.meta$data;
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-  dpi <- as.numeric(dpi)
+  dpi <- as.numeric(dpi);
   
-  df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE)
-  df <- stack(df)
-  if(factor != "NA"){
-    #Factor = as.vector(dataSet$meta[,factor])
-  }else{
-    #Factor = dataSet$meta[,1];
-  }
-  Factor=inmex.meta$data.lbl
+  df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE);
+  df <- stack(df);
+
+  Factor <- inmex.meta$data.lbl;
   
-  conv <- data.frame(ind=colnames(inmex.meta$data), class=Factor)
-  conv$ind <- gsub("-", ".", conv$ind)
-  df1 <- merge(df, conv, by="ind")
+  conv <- data.frame(ind=colnames(inmex.meta$data), class=Factor);
+  conv$ind <- gsub("-", ".", conv$ind);
+  df1 <- merge(df, conv, by="ind");
   Cairo(file=imgNm, width=10, height=6, type=format, bg="white", dpi=dpi, unit="in");
   g =ggplot(df1, aes(x=values)) + 
         geom_line(aes(color=class, group=ind), stat="density", alpha=0.3) + 
         geom_line(aes(color=class), stat="density", alpha=0.6, size=1.5) +
         theme_bw()
-  print(g)
+  print(g);
   dev.off();
 }
 

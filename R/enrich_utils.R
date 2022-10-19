@@ -155,7 +155,7 @@
 
   my.path <- paste(lib.path, folderNm, "/", fun.type, ".rds", sep="");
 
-  if(!.on.public.web){
+  if(!paramSet$on.public.web && !file.exists(platform.path)){
     nmdb <- basename(my.path);
     download.file(my.path, destfile = nmdb, method="libcurl", mode = "wb");
     my.path <- nmdb;
@@ -190,4 +190,12 @@
   res$current.setids <- set.ids;
   res$current.geneset <- current.geneset;
   return(res);
+}
+
+GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "orange", gseaRankOpt="", sigLevel = 0.05, pwNum=20, inx = 1){
+    dataSet <- readDataset(dataName);
+    if(!exists(".compute.ridgeline")){ # public web on same user dir
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_ridgeline.Rc");    
+    }
+    return(.compute.ridgeline(dataSet, imgNm, dpi, format, fun.type, ridgeType, ridgeColor, sigLevel, pwNum, inx));
 }

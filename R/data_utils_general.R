@@ -449,3 +449,35 @@ doScatterJson <- function(dataName, filenm){
     return(dataSetObj);
   }
 }
+
+
+#'Record R Commands
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cmd Commands 
+#'@export
+RecordRCommand <- function(cmd){
+  cmdSet <- readSet(cmdSet, "cmdSet"); 
+  cmdSet$cmdVec <- c(cmdSet$cmdVec, cmd);
+  saveSet(cmdSet, "cmdSet");
+  return(1);
+}
+
+SaveRCommands <- function(){
+  cmdSet <- readSet(cmdSet, "cmdSet"); 
+  cmds <- paste(cmdSet$cmdVec, collapse="\n");
+  pid.info <- paste0("# PID of current job: ", Sys.getpid());
+  cmds <- c(pid.info, cmds);
+  write(cmds, file = "Rhistory.R", append = FALSE);
+}
+
+#'Export R Command History
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetRCommandHistory <- function(){
+  cmdSet <- readSet(cmdSet, "cmdSet"); 
+  if(length(cmdSet$cmdVec) == 0){
+    return("No commands found");
+  }
+  return(cmdSet$cmdVec);
+}
+

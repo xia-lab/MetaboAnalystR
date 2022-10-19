@@ -7,13 +7,13 @@
 ###################################################
 
 
-PlotDataPCA <- function(fileName, pcaName, dpi, format,factor){
+PlotDataPCA <- function(fileName, pcaName, dpi, format){
   dataSet <- readDataset(fileName);
-  res <- qc.pcaplot(dataSet, dataSet$data.norm, pcaName, dpi, format, factor);
+  res <- qc.pcaplot(dataSet, dataSet$data.norm, pcaName, dpi, format);
   return(res);
 }
 
-qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", factor){
+qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   dpi <- as.numeric(dpi);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");

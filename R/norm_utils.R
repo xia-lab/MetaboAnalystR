@@ -11,7 +11,7 @@
 #'@description Normalize gene expression data
 #'@param norm.opt Normalization method to be used
 #'@param var.thresh Variance threshold
-#'@param var.thresh Relative abundance threshold
+#'@param abundance Relative abundance threshold
 #'@param count.thresh Count threshold
 #'@param filterUnmapped, boolean, whether to filter unmapped genes or not
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}

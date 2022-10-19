@@ -12,6 +12,8 @@
 #'@export
 PrepareUpsetData <- function(fileNm){
   paramSet <- readSet(paramSet, "paramSet");
+  analSet <- readSet(analSet, "analSet");
+
   mdata.all <- paramSet$mdata.all;
   anal.type <- paramSet$anal.type;
   
@@ -29,8 +31,8 @@ PrepareUpsetData <- function(fileNm){
   sel.dats <- list();
   
 
-    if(!exists("inmex.de")){
-      inmex.de <- list();
+    if(!exists("analSet$inmex.de")){
+      analSet$inmex.de <- list();
     }
 
   # populate gene lists for upset plot based on selected names
@@ -49,14 +51,14 @@ PrepareUpsetData <- function(fileNm){
       en.ids <- rownames(gene.mat);
       
       names(expr.val) <- en.ids;
-      inmex.de[[nm]] <- en.ids;
+      analSet$inmex.de[[nm]] <- en.ids;
       sel.dats[[nm]] <- en.ids;
     }
 
   }
 
   if(anal.type == "metadata" & paramSet$meta.selected){
-    sel.dats[["meta_dat"]] <- as.character(meta.stat$de);
+    sel.dats[["meta_dat"]] <- as.character(analSet$meta.stat$de);
   }
   
   if(length(sel.dats) == 0){
@@ -64,25 +66,18 @@ PrepareUpsetData <- function(fileNm){
     return(0);
   }
   
-  sums <- unlist(lapply(sel.dats, length))
-  print(sums)
-  names <- unlist(lapply(sel.dats, paste, collapse = ", "))
+  sums <- unlist(lapply(sel.dats, length));
+  names <- unlist(lapply(sel.dats, paste, collapse = ", "));
   if(anal.type == "metadata"){
-  metasum <- length(meta.stat$idd)
-  metaname <- paste(meta.stat$idd, collapse = ", ")
-  allsums <- c(sums, metasum)
-  allnames <- c(names, metaname)
-  #sigmat <- cbind(allsums, allnames)
-  #rownames(sigmat) <- c(names(sel.dats), "Meta-Analysis")
+    metasum <- length(analSet$meta.stat$idd);
+    metaname <- paste(analSet$meta.stat$idd, collapse = ", ");
+    allsums <- c(sums, metasum);
+    allnames <- c(names, metaname);
   }else{
-  allsums <- c(sums)
-  allnames <- c(names)
-  #sigmat <- cbind(allsums, allnames)
-  #rownames(sigmat) <- names(inmex.de)
+    allsums <- c(sums);
+    allnames <- c(names);
   }
 
-  #colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
-  #dataSet$sigfeat.matrix <- sigmat
 
   require(reshape2)
   df <- reshape::melt(sel.dats, value.name="id")

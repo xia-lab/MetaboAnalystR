@@ -255,10 +255,10 @@ SetupMetaStats <- function(BHth){
             loss = losses
         );
 
-    fc.mat <<- fc.mat;
-    pval.mat <<- pval.mat;
-    inmex.de <<- inmex.de;
-    meta.stat <<- meta.stat;
+    analSet$fc.mat <- fc.mat;
+    analSet$pval.mat <- pval.mat;
+    analSet$inmex.de <- inmex.de;
+    analSet$meta.stat <- meta.stat;
 
     dat.mat <- cbind(fc.mat, pval.mat, meta.mat);
     dat.mat <- signif(dat.mat, 5);
@@ -271,6 +271,7 @@ SetupMetaStats <- function(BHth){
     }
     fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
     saveSet(paramSet, "paramSet");
+    saveSet(analSet, "analSet");
 }
 
 #compute Cochran’s Q to help FEM/REM
@@ -342,7 +343,7 @@ PlotCochranQ <- function(imgNm){
 
 PlotMetaPCA <- function(imgNm, dpi, format,factor){
   inmex.meta <- qs::qread("inmex_meta.qs");
-  x <- inmex.meta[["data"]]
+  x <- inmex.meta[["data"]];
   dpi <- as.numeric(dpi);
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require('lattice');
@@ -376,7 +377,7 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
 }
 
 
-PerformBatchCorrection <- function(){
+    PerformBatchCorrection <- function(){
     .prepare.batch();
     .perform.computing();
     # no need to , already done

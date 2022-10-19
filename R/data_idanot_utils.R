@@ -33,7 +33,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-  current.msg <- msgSet$current.msg;
+  current.msg <- "";
   
   if(org == "custom"){
     idType <- "custom";
@@ -110,6 +110,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     lvls <- paste("Two factors found -", conc1, conc2)
   }
   msgSet$current.msg <- current.msg;
+  print(current.msg);
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
@@ -332,7 +333,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }
   platform.path <- paste(lib.path, org, "/", platform, ".rds", sep="");
 
-  if(!.on.public.web){
+  if(!paramSet$on.public.web && !file.exists(platform.path)){
     nmdb <- basename(platform.path);
     download.file(platform.path, destfile = nmdb, method="libcurl", mode = "wb");
     platform.path <- nmdb;
