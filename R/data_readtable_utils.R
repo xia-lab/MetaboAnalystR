@@ -64,6 +64,9 @@ ReadTabExpressData <- function(fileName, path="") {
 
   paramSet$anal.type <- "onedata";
 
+  paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, fileName);
+  paramSet$jsonNms$dataName <- fileName;
+
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   RegisterData(dataSet);

@@ -152,7 +152,9 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   netData <- list( nodes=nodes, edges=edge.mat, modules=modules, objects=a$objects, ellipse=meshes, meta=metadf, loading=nodes2, reductionOpt="pca" , objectsLoading=aLoading$objects, sigMat=sig.mats, omicstype=c("rna.b"));
     
   netData[["misc"]] <- "";
-  paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(filenm));
+  paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(filenm));
+  paramSet$jsonNms["scatter3d"] <- filenm;
+
   saveSet(paramSet, "paramSet");
   
   sink(filenm);

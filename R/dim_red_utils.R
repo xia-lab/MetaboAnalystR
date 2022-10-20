@@ -117,7 +117,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
 
     pca3d$org <- paramSet$data.org
     pca3d$analType <- paramSet$anal.type
-    pca3d$naviString <- "PCA 3D"
+    pca3d$naviString <- "Scatter 3D"
     paramSet$jsonNms$pcascore <- fileName
     json.mat <- rjson::toJSON(pca3d);
     paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
@@ -346,7 +346,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   pca3d$cls <- dataSet$meta;
   pca3d$org <- paramSet$data.org
   pca3d$analType <- paramSet$anal.type
-  pca3d$naviString <- "PCA 3D"
+  pca3d$naviString <- "Scatter 3D"
   paramSet$jsonNms$pcascore <- fileName
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   rownames(mypos) <- colnames(dataSet$data.norm);
@@ -358,7 +358,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   sink();
   msgSet$current.msg <- "Annotated data is now ready for PCA 3D visualization!";
   saveSet(msgSet, "msgSet");
-  saveSet(paramSet, "paramSet");;
+  saveSet(paramSet, "paramSet");
   return(1);
 }
 
