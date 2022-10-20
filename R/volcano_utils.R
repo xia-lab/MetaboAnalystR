@@ -97,7 +97,9 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   
   if(paramSet$init.lib != "NA"){
     saveSet(paramSet, "paramSet");
-    PerformVolcanoEnrichment(dataName, "abc", paramSet$init.lib, "null", "all", inx)
+    PerformVolcanoEnrichment(dataName, "enrich_volcano", paramSet$init.lib, "null", "all", inx)
+    paramSet <- readSet(paramSet, "paramSet");
+    msgSet <- readSet(msgSet, "msgSet");
   }
   
   fileName <- "volcano.csv";
@@ -154,7 +156,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   sink("enrichment_result.json");
   cat(json.obj);
   sink();
-  paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c("volcano2.json", "enrichment_result.csv"))
+  paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileNm, "enrichment_result.csv"))
   
   saveSet(paramSet, "paramSet");
   saveSet(analSet, "analSet");

@@ -133,6 +133,8 @@
   hit.num <<- resTable[,4];
   csv.nm <- paste(file.nm, ".csv", sep="");    
   fast.write(resTable, file=csv.nm, row.names=F);
+  paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
+  saveSet(paramSet, "paramSet");
 
   saveSet(msgSet, "msgSet");
   return(1);
