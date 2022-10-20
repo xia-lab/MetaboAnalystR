@@ -90,7 +90,7 @@ ReadAnnotationTable <- function(fileName) {
 
 ReadMetaData <- function(metafilename){
     paramSet <- readSet(paramSet, "paramSet");
-  metadata <- .readDataTable(metafilename);
+    metadata <- .readDataTable(metafilename);
     metadata[is.na(metadata)] = "NA"
     if(class(metadata) == "try-error"){
       AddErrMsg("Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA.");
