@@ -12,7 +12,7 @@
 #'@param norm.opt Normalization method to be used
 #'@param var.thresh Variance threshold
 #'@param abundance Relative abundance threshold
-#'@param count.thresh Count threshold
+#'@param count.thresh Count threshold for RNA-seq data and abundance threshold for microarray data
 #'@param filterUnmapped, boolean, whether to filter unmapped genes or not
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
@@ -20,11 +20,11 @@
 #'@export
 #'
 
-PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, abundance, count.thresh, filterUnmapped){
+PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
-  print(paste("normalizing ....", norm.opt, var.thresh, abundance, count.thresh, filterUnmapped));
+  print(paste("normalizing ....", norm.opt, var.thresh, count.thresh, filterUnmapped));
   msg <- "Only features with annotations are kept for further analysis.";
   
   if(filterUnmapped == "false"){
@@ -48,7 +48,8 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, abundanc
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low counts.", collapse=" ");
   }else{
     avg.signal <- apply(data, 1, mean, na.rm=TRUE)
-    p05 <- quantile(avg.signal, 0.05)
+    abundance.pct <- count.thresh/100;
+    p05 <- quantile(avg.signal, abundance.pct)
     all.rows <- nrow(data)
     rm.inx <- avg.signal < p05
     data <- data[!rm.inx,]
@@ -86,7 +87,7 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, abundanc
 }
 
 
-NormalizingDataMeta <-function (nm, opt, colNorm, scaleNorm){
+NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   if(nm == "NA"){
     paramSet <- readSet(paramSet, "paramSet");;
     mdata.all <- paramSet$mdata.all;

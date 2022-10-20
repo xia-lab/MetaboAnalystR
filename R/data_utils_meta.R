@@ -377,7 +377,7 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
 }
 
 
-    PerformBatchCorrection <- function(){
+PerformBatchCorrection <- function(){
     .prepare.batch();
     .perform.computing();
     # no need to , already done
@@ -395,6 +395,6 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
         qs::qsave(inmex.meta, "inmex_meta.qs");
     }
     dat.in <- list(my.fun=my.fun);
-    qs::qsave(dat.in, file="dat.in.qs");
+    qs:::qsave(dat.in, file="dat.in.qs");
     return(1);
 }
