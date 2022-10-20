@@ -239,3 +239,8 @@ GetMetaSigGeneCount <- function(){
   analSet <- readSet(analSet, "analSet");
   return(nrow(analSet$meta.mat));
 }
+
+GetCurrentJson <-function(type){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$jsonNms[[type]]);
+}

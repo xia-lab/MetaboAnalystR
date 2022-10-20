@@ -41,7 +41,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   msgSet <- list(annotated=FALSE);
   cmdSet <- list(annotated=FALSE);
   }
-  paramSet$partialToBeSaved <- c("Rload.RData", "Rhistory.R");
+  paramSet$partialToBeSaved <- c("Rload.RData", "Rhistory.R", "paramSet.qs", "msgSet.qs", "analSet.qs", "cmdSet.qs");
 
   Sys.setenv("OMP_NUM_THREADS" = 2); # need to control parallel computing for some packages
   paramSet$init.lib <- "kegg";
@@ -256,12 +256,6 @@ SetListNms <- function(dataSet){
   analSet$list.genes <- en.ids;
   analSet$listSizes <- listSizes;
   return(analSet);
-}
-
-
-GetCurrentJson <-function(type){
-  paramSet <- readSet(paramSet, "paramSet");
-  return(paramSet$jsonNms[[type]]);
 }
 
 PrepareJsonFromR <- function(fileNm, type, jsonString, dataSetString){
