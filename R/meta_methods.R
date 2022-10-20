@@ -844,7 +844,7 @@ f.Q <- function(dadj, varadj){
   Q<-rowSums(w*(dadj - mu)^2)
 }
 
-qc.metaDensity<- function(imgNm, dpi=72, format, factor){
+PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
   require("ggplot2")
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat <- inmex.meta$data;

@@ -198,8 +198,8 @@ RemoveMissingPercent("E-GEOD-25713.txt", 0.5);
 ImputeMissingVar("E-GEOD-25713.txt", "min");
 
 #Replace missing value with minimum values across dataset
-NormalizingDataMeta("E-GEOD-25713.txt", "NA", "NA", "NA");
-DoStatComparison("E-GEOD-25713.txt", "limma", "CLASS","NA","NA","NA", 0.05, 0.0);
+NormalizingDataMeta("E-GEOD-25713.txt", "NA");
+DoStatComparison("E-GEOD-25713.txt", "limma", "CLASS", 0.05, 0.0);
 
 #read and process the other two datasets
 ReadOmicsData("E-GEOD-59276.txt");
@@ -207,16 +207,16 @@ SanityCheckData("E-GEOD-59276.txt");
 AnnotateGeneData("E-GEOD-59276.txt", "mmu", "entrez");
 RemoveMissingPercent("E-GEOD-59276.txt", 0.5)
 ImputeMissingVar("E-GEOD-59276.txt", "min")
-NormalizingDataMeta("E-GEOD-59276.txt", "NA", "NA", "NA");
-DoStatComparison("E-GEOD-59276.txt", "limma", "CLASS","NA","NA","NA", 0.05, 0.0);
+NormalizingDataMeta("E-GEOD-59276.txt", "NA");
+DoStatComparison("E-GEOD-59276.txt", "limma", "CLASS, 0.05, 0.0);
 
 ReadOmicsData("GSE69588.txt");
 SanityCheckData("GSE69588.txt");
 AnnotateGeneData("GSE69588.txt", "mmu", "entrez");
 RemoveMissingPercent("GSE69588.txt", 0.5)
 ImputeMissingVar("GSE69588.txt", "min")
-NormalizingDataMeta("GSE69588.txt", "NA", "NA", "NA");
-DoStatComparison("GSE69588.txt", "limma", "CLASS","NA","NA","NA", 0.05, 0.0);
+NormalizingDataMeta("GSE69588.txt", "NA");
+DoStatComparison("GSE69588.txt", "limma", "CLASS", 0.05, 0.0);
 ```
 #### 2.3 Perform data integrity check (compatibility)
 ```
