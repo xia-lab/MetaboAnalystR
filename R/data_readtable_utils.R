@@ -107,8 +107,6 @@ ReadMetaData <- function(metafilename){
 
 for(i in 1:length(sel.nms)){
   dataSet <- qs::qread(sel.nms[i]);
-  
-  
   data.smpl.nms <- colnames(dataSet$data.norm)
   nm.hits <- data.smpl.nms %in% smpl.nms;
   if(!all(nm.hits)){

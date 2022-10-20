@@ -88,6 +88,7 @@ GetMetaDatasets<- function(){
 SetSelMetaData<- function(selNm){
     paramSet <- readSet(paramSet, "paramSet");;
     paramSet$selDataNm <- selNm;
+    paramSet$jsonNms$dataName <- selNm;
     saveSet(paramSet, "paramSet");
 }
 

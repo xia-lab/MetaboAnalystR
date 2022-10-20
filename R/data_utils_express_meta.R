@@ -665,7 +665,7 @@ ReadOmicsData <- function(fileName) {
   saveSet(paramSet,"paramSet");
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   saveSet(paramSet, "paramSet");
-  return(1)
+  return(1);
 }
 
 
