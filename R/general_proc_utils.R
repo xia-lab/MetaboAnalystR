@@ -7,7 +7,7 @@
 #'be performed immediately after reading in data. 
 #'The sanity check function evaluates the accuracy of sample and class labels, data structure, 
 #'deals with non-numeric values, removes columns that are constant across all samples (variance = 0), 
-#'and by default replaces missing values with half of the original minimal positive value in your dataset.
+#'and by default replaces missing values with 1/5 of the original minimal positive value in your dataset.
 #'@usage SanityCheckData(mSetObj=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
