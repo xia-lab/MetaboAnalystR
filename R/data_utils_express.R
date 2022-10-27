@@ -25,7 +25,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     }
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
-    RegisterData(dataSet, 1);
+    RegisterData(dataSet, levels(cls));
   }
 }
 
