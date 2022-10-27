@@ -205,7 +205,7 @@ dataSets <- AnnotateGeneData("E-GEOD-59276.txt", "mmu", "entrez");
 dataSets <- RemoveMissingPercent("E-GEOD-59276.txt", 0.5)
 dataSets <- ImputeMissingVar("E-GEOD-59276.txt", "min")
 dataSets <- NormalizingDataMeta("E-GEOD-59276.txt", "NA");
-dataSets <- PerformDEAnalMeta("E-GEOD-59276.txt", "limma", "CLASS, 0.05, 0.0);
+dataSets <- PerformDEAnalMeta("E-GEOD-59276.txt", "limma", "CLASS", 0.05, 0.0);
 
 dataSets <- ReadOmicsData("GSE69588.txt");
 dataSets <- SanityCheckData("GSE69588.txt");
@@ -236,12 +236,12 @@ Here is the result after batch correction.
 ![PCA Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_meta_pca_afterBatch.png)
 #### 2.5 Perform statistical meta-analysis using combine p-values method
 ```
-PerformPvalCombination("fisher", 0.05)
+analSet <- PerformPvalCombination("fisher", 0.05)
 ```
 #### 2.6 View result tables
 ```
 analSet <- readSet(analSet, "analSet");
-print(head(analSet$meta.mat));
+print(head(analSet$meta.mat))
        CombinedTstat CombinedPval
 16854         89.093   2.7728e-14
 246256        99.964   2.7728e-14

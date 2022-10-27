@@ -15,10 +15,9 @@
   packageStartupMessage(c(k1,k0));
 }
 
-Set.Config <-function(anal.mode=T, api.bool=F){
+Set.Config <-function(anal.mode="web"){
 
   globalConfig <- list();
-  globalConfig$api.bool <- F;
   globalConfig$anal.mode <- anal.mode
   globalConfig <<- globalConfig;
 }
@@ -32,7 +31,7 @@ Set.Config <-function(anal.mode=T, api.bool=F){
 #'@export
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
-  Set.Config("web",F);
+
   path = "../../";
   
   paramSet <- list(annotated=FALSE);
@@ -45,12 +44,16 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet <<- list(annotated=FALSE);
   msgSet <<- list(annotated=FALSE);
   cmdSet <<- list(annotated=FALSE);
+  anal.mode <- "web";
   }else{
   dataSet <- list(annotated=FALSE);
   analSet <- list(annotated=FALSE);
   msgSet <- list(annotated=FALSE);
   cmdSet <- list(annotated=FALSE);
+  anal.mode <- "local";
   }
+
+  Set.Config(anal.mode);
   paramSet$partialToBeSaved <- c("Rload.RData", "Rhistory.R", "paramSet.qs", "msgSet.qs", "analSet.qs", "cmdSet.qs");
 
   Sys.setenv("OMP_NUM_THREADS" = 2); # need to control parallel computing for some packages
@@ -130,6 +133,7 @@ SetAnalType <- function(analType){
     paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, "inmex_meta.qs")
   }
   saveSet(paramSet, "paramSet");
+  return(paste0("Set to ",analType));
 }
 
 
