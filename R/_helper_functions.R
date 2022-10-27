@@ -171,7 +171,7 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
     if(paramSet$data.idType == "ko"){
     annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
     }else if(paramSet$data.idType == "s2f"){
-    annots <- paste("<a href='https://www.ecoomicsdb.ca/EcoOmicsDB/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
+    annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
     }else{
     annots <- ids;
     }
