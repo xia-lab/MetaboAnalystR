@@ -7,7 +7,7 @@
 ###################################################
 
 PlotDataBox <- function(fileName, boxplotName, dpi, format){
-  dataSet <- qs:::qread(fileName);
+  dataSet <- readDataset(fileName);
   res <- qc.boxplot(dataSet$data.norm, boxplotName, dpi, format);
   return(res);
 }

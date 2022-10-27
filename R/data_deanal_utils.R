@@ -22,13 +22,11 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     .prepare.deseq(dataSet, anal.type, par1, par2 , nested.opt);
     .perform.computing();
     dataSet <- .save.deseq.res(dataSet);
-    RegisterData(dataSet);
   }else{
     dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet);
-    RegisterData(dataSet);
   }
-  return(1);
+  return(RegisterData(dataSet));
 }
 
 .prepare.deseq<-function(dataSet, anal.type, par1, par2, nested.opt){
@@ -63,8 +61,6 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     # order the result based on raw p
     ord.inx <- order(topFeatures$P.Value);
     topFeatures <- topFeatures[ord.inx, ];
-    dataSet$comp.res <- topFeatures;
-    RegisterData(dataSet);
     return(topFeatures);
   }
   dat.in <- list(data=dataSet, contrast.matrix = dataSet$contrast.matrix, my.fun=my.fun);
@@ -229,9 +225,9 @@ SetupDesignMatrix<-function(dataName="", deMethod){
 #'@export
 #'
 
-PerformLimmaDE<-function(dataName, grps, p.lvl, fc.lvl=NULL){
+PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   dataSet$pval <- p.lvl
   if(length(levels(dataSet$cls))>2){ 
     grp.nms <- strsplit(grps, " vs. ")[[1]];
@@ -270,9 +266,10 @@ PerformLimmaDE<-function(dataName, grps, p.lvl, fc.lvl=NULL){
   rm(res.all);
   
   gc();
-  RegisterData(dataSet);
+  
   # record the sig gene vec
-  return (c(1, sig.count, non.sig.count));
+  output <- c(1, sig.count, non.sig.count);
+  return(RegisterData(dataSet, output));
 }
 
 # perfor differential analysis for array/RNA seq data

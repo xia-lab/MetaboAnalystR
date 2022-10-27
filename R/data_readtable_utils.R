@@ -16,7 +16,6 @@
 #'@export
 #'
 ReadTabExpressData <- function(fileName, path="") {
-
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
@@ -69,8 +68,7 @@ ReadTabExpressData <- function(fileName, path="") {
 
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
-  RegisterData(dataSet);
-  return(1);
+  return(RegisterData(dataSet));
 }
 
 #read annotation table file when user selects custom annotation option
@@ -106,7 +104,7 @@ ReadMetaData <- function(metafilename){
     sel.nms <- names(mdata.all);
 
 for(i in 1:length(sel.nms)){
-  dataSet <- qs::qread(sel.nms[i]);
+  dataSet <- readDataset(sel.nms[i]);
   data.smpl.nms <- colnames(dataSet$data.norm)
   nm.hits <- data.smpl.nms %in% smpl.nms;
   if(!all(nm.hits)){

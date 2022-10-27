@@ -47,7 +47,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
     pca.rest$names <- c(rownames(pca.res), rownames(pca.res))
     if(length(pca.rest$names)>20){
 
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=pca.rest$names)) +
+      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=names)) +
         geom_point(size=3, alpha=0.5) + 
         xlim(xlim) + 
         ylim(ylim) + 
@@ -59,7 +59,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
     }else{
 
       require('ggrepel');
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=pca.rest$names)) +
+      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=names)) +
         geom_point(size=4) + 
         xlim(xlim) + 
         ylim(ylim) + 

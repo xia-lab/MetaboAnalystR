@@ -7,7 +7,7 @@
 ###################################################
 
 PlotDataMeanStd <- function(fileName, densityName, dpi,format){
-  dataSet <- qs:::qread(fileName);
+  dataSet <- readDataset(fileName);
   res <- qc.meanstd(dataSet$data.norm, densityName, dpi, format);
   return(res);
 }

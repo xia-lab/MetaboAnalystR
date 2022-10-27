@@ -15,7 +15,7 @@
 #'
 SanityCheckData <- function(fileName){
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- qs::qread(fileName);
+  dataSet <- readDataset(fileName);
   
   
   # general sanity check then omics specific
@@ -107,16 +107,9 @@ SanityCheckData <- function(fileName){
   dataSet$cls <- cls.lbl
 
   saveSet(msgSet, "msgSet");
-  RegisterData(dataSet);
-  return(1);
+  return(RegisterData(dataSet, 1));
 }
 
-
-# only for switching single expression data results
-SetCurrentData <- function(nm){
-  dataSet <- qs::qread(nm);
-  return(1);
-}
 
 # remove data object, the current dataSet will be the last one by default 
 RemoveData <- function(dataName){
@@ -181,7 +174,7 @@ UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
 }
 
 PlotDataProfile<-function(dataName,type, boxplotName, pcaName){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   if(type=="normalize"){
     qc.boxplot(as.matrix(dataSet$data.norm), boxplotName);
     qc.pcaplot(dataSet, as.matrix(dataSet$data.norm), pcaName);
@@ -192,7 +185,7 @@ PlotDataProfile<-function(dataName,type, boxplotName, pcaName){
 }
 
 ScalingData <-function (nm,opt){
-  dataSet <- qs::qread(nm);
+  dataSet <- readDataset(nm);
   return(ScalingDataOmics(dataSet, opt))
 }
 
@@ -205,7 +198,7 @@ ScalingDataOmics <-function (dataSet, norm.opt){
 ###
 
 GetFeatureNum <-function(dataName){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   
   return(nrow(dataSet$data.norm));
 }
@@ -246,7 +239,7 @@ GetCurrentDatasets <-function(type){
 }
 
 SetGroupContrast <- function(dataName, grps, meta="NA"){
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
   
 
     if(meta == "NA"){
@@ -264,8 +257,8 @@ SetGroupContrast <- function(dataName, grps, meta="NA"){
     data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
     dataSet$data <- data;
-    RegisterData(dataSet);  
   }
+    RegisterData(dataSet);  
 
 }
 
@@ -273,7 +266,7 @@ SetGroupContrast <- function(dataName, grps, meta="NA"){
 # here should first try to load the original data
 # the data in the memory could be changed
 GetGroupNames <- function(dataName, meta="NA"){
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     
     if(meta == "NA"){
         return(levels(factor(dataSet$meta[,1])));
@@ -284,7 +277,7 @@ GetGroupNames <- function(dataName, meta="NA"){
 }
 
 CheckDataType <- function(dataName, type){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   
   msgSet <- readSet(msgSet, "msgSet");
   isOk <- T;
@@ -329,19 +322,19 @@ CheckDataType <- function(dataName, type){
   }
 
   dataSet$isValueNormalized <- type
-  RegisterData(dataSet);
   saveSet(msgSet, "msgSet");      
 
   if(!isOk){
-    return(0)
+    res <- 0;
   }else{
-
-    return(1)
+    res <- 1;
   }
+  return(RegisterData(dataSet, res));
+
 }
 
 RemoveMissingPercent <- function(dataName="", percent=perct){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
     
   msgSet <- readSet(msgSet, "msgSet");
   int.mat <- dataSet$data.annotated;
@@ -350,13 +343,12 @@ RemoveMissingPercent <- function(dataName="", percent=perct){
   if(sum(!good.inx)>0){
     msgSet$current.msg <- paste(sum(!good.inx), " variables were removed for threshold", round(100*percent, 2), "percent.");
   }
-  RegisterData(dataSet);
-  return(1);
+  return(RegisterData(dataSet));
 }
 
 
 ImputeMissingVar <- function(dataName="", method="min"){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
  
   msgSet <- readSet(msgSet, "msgSet"); 
   current.msg <- msgSet$curren.msg;
@@ -415,13 +407,13 @@ ImputeMissingVar <- function(dataName="", method="min"){
   saveSet(msgSet, "msgSet");      
 
   dataSet$data.missed <- as.data.frame(new.mat);
-  RegisterData(dataSet);
-  return(1)
+  
+  return(RegisterData(dataSet));
 }
 
 
 FilteringData <- function(nm, countOpt="pct",count, var){
-  dataSet <- qs::qread(nm);
+  dataSet <- readDataset(nm);
   
   return(FilteringDataOmics(dataSet,countOpt, count,  var))
 }
@@ -467,9 +459,9 @@ FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
   dataSet$data.norm = data
   dataSet$data <- data;
 
-  RegisterData(dataSet);
+ 
   saveSet(msgSet, "msgSet");      
-  return(1)
+  return(RegisterData(dataSet))
 }
 
 
@@ -502,7 +494,7 @@ CheckMetaIntegrity <- function(){
   cnms <- list()
   metas <- list();
   for(i in 1:length(sel.nms)){
-    dat = qs::qread(sel.nms[i])
+    dat = readDataset(sel.nms[i])
     cnms[[i]] <- colnames(dat$data.norm);
     metas[[i]] <- as.vector(dat$meta[,1]);
   }
@@ -660,12 +652,11 @@ ReadOmicsData <- function(fileName) {
   paramSet$anal.type <- "metadata";
 
   # update current dataset
-  RegisterData(dataSet);
   saveSet(msgSet,"msgSet");
   saveSet(paramSet,"paramSet");
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   saveSet(paramSet, "paramSet");
-  return(1);
+  return(RegisterData(dataSet));
 }
 
 
@@ -679,7 +670,7 @@ DoStatComparison <- function(filenm, alg="ttest", meta=1, selected, meta.vec, no
     meta = 1;
   }
   
-  dataSet <- qs::qread(filenm);
+  dataSet <- readDataset(filenm);
   
   if(normOpt != "none" && alg == "limma"){
     dataSet$data.comparison <- NormalizingDataOmics(dataSet$data.filtered, normOpt, "NA", "NA");
@@ -756,7 +747,7 @@ DoStatComparison <- function(filenm, alg="ttest", meta=1, selected, meta.vec, no
 }
 
 UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   
   dataSet$pval <- p.lvl;
   
@@ -787,9 +778,8 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   
   dataSet$sig.mat <- res.sig;
 
-  RegisterData(dataSet);
   
-  return(c(1, sig.count, non.sig.count))
+  return(RegisterData(dataSet, c(1, sig.count, non.sig.count)))
 }
 
 SumNorm<-function(x){

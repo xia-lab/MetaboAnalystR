@@ -38,12 +38,12 @@ PrepareUpsetData <- function(fileNm){
   # populate gene lists for upset plot based on selected names
   for(nm in sel.nms){
     if(anal.type == "metadata"){
-      dataSet <- qs::qread(nm);
+      dataSet <- readDataset(nm);
       sel.dats[[nm]] <- rownames(dataSet$sig.mat);
     }else if(anal.type == "onedata"){
 
     }else{
-      dataSet <- qs::qread(nm);
+      dataSet <- readDataset(nm);
       gene.mat <- dataSet$prot.mat;
       
       # convert to entrez

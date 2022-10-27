@@ -94,11 +94,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   #RegisterData(dataSet);
-  if(paramSet$on.public.web){
-    return(1);
-  }else{
-    return(totalseed.proteins)
-  }
+  return(RegisterData(dataSet));
 }
 
 
@@ -115,7 +111,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
   paramSet$numOfLists <-length(multiFileNamesU);
   notOk = 0
   for(i in 1:length(listNms)){
-    dataSet = qs::qread(listNms[i])
+    dataSet = readDataset(listNms[i])
     dataSet$name <- listNms[i];
     gene.mat <- prot.mat <- dataSet$prot.mat;
     GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet$data.org, "table");
@@ -167,11 +163,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
   paramSet$anal.type <- "genelist";
   saveSet(paramSet, "paramSet");
 
-  if(paramSet$on.public.web){
-    return(1);
-  }else{
-    return(totalseed.proteins)
-  }
+  return(RegisterData(dataSet));
 }
 
 

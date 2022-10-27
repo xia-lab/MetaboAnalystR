@@ -9,7 +9,7 @@
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   dataSet <- readDataset(dataName);
   if(meta0 == "NA"){
-    return(0);
+    RegisterData(dataSet, 0);
   }else{
     cls <- dataSet$meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
@@ -25,13 +25,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     }
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
-    RegisterData(dataSet);
-    print(levels(cls));
-    #if(paramSet$on.public.web){
-      return(levels(cls));
-    #}else{
-    #  return(1);    
-    #}
+    RegisterData(dataSet, 1);
   }
 }
 

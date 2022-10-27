@@ -94,13 +94,13 @@ SetSelMetaData<- function(selNm){
 
 # only for switching single expression data results
 SetCurrentData <- function(nm){
-  dataSet <- qs::qread(nm);
+  dataSet <- readDataset(nm);
   
   return(1);
 }
 
 GetOmicsDataDims <- function(dataName){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   dm <- dim(dataSet$data.norm);
   naNum <- sum(is.na(dataSet$data.norm));
   return(c(dm, naNum));
@@ -118,7 +118,7 @@ GetOmicsDataDims <- function(dataName){
 
 # obtain sample names and their class labels
 GetSampleInfo <- function(dataName, clsLbl){
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     grpInfo <- dataSet$meta[[clsLbl]];
     grpLbls <- paste(levels(grpInfo), collapse="\n");
     smplInfo <- paste(Sample = colnames(dataSet$data.orig), "\t", Class=grpInfo, collapse="\n");
@@ -153,6 +153,8 @@ GetFilesToBeSaved <-function(naviString){
 
 GetMetaInfo <- function(dataName=""){
   dataSet <- readDataset(dataName);
+    print("meta=====");
+    print(names(dataSet));
   return(colnames(dataSet$meta));
 }
 

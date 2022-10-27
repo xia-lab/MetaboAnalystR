@@ -7,7 +7,7 @@
 ###################################################
 
 PlotDataDensity <- function(fileName, imgNm, dpi,format, factor){
-  dataSet <- qs:::qread(fileName);
+  dataSet <- readDataset(fileName);
   res <- qc.density(dataSet, imgNm, dpi, format, factor);
   return(res);
 }

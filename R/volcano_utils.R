@@ -27,7 +27,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
       fcthresh <- 0;
       inx <- 1;
     }else{
-      dataSet <- qs::qread(paramSet$selDataNm);
+      dataSet <- readDataset(paramSet$selDataNm);
       
       data <- as.matrix(analSet$inmex.ind[paramSet$selDataNm][[1]])
       p.value <- data[, "Pval"]

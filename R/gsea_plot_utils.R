@@ -29,7 +29,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
       inmex <- qs:::qread("inmex_meta.qs");
       dat <- inmex$plot.data
     }else{
-      dataSet <- qs::qread(paramSet$selDataNm);
+      dataSet <- readDataset(paramSet$selDataNm);
       
       dat <- dataSet$data;
     }

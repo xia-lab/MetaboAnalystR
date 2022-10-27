@@ -107,7 +107,7 @@
   expval<-0;
   for(i in 1:length(sel.nms)){
     dataNm <- sel.nms[i];
-    dataSet <- qs::qread(dataNm);
+    dataSet <- readDataset(dataNm);
     len <- nrow(dataSet$prot.mat)
     if(i == 1){
       expval <- sum(dataSet$prot.mat)
@@ -124,7 +124,7 @@
   
   for(i in 1:length(sel.nms)){
     dataName <- sel.nms[i];
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     cols <- colnames(allmat)[colnames(allmat) %in% dataName]
     if(expval ==0){
       rows <- which(rownames(allmat) %in% rownames(dataSet$prot.mat))

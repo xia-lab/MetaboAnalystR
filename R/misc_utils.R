@@ -221,7 +221,7 @@ GetListEnrGeneNumber <- function(){
       all.nms <- paramSet$listNms;
       for(i in 1:length(all.nms)){
         dataNm <- all.nms[i];
-        dataSet <- qs::qread(dataNm);
+        dataSet <- readDataset(dataNm);
         gene.mat <- dataSet$prot.mat;
         
         # convert to entrez
@@ -267,7 +267,7 @@ GetListEnrGeneNumber <- function(){
     all.nms <- names(mdata.all);
     for(i in 1:length(all.nms)){
       dataNm <- all.nms[i];
-      dataSet <- qs::qread(dataNm);
+      dataSet <- readDataset(dataNm);
       gene.mat <- dataSet$sig.mat;
       
       # convert to entrez
@@ -297,7 +297,7 @@ GetListEnrGeneNumber <- function(){
   listSizes <- list();
   if(anal.type == "genelist"){
     if(paramSet$numOfLists > 1){
-        dataSet <- qs::qread(paramSet$selDataNm);
+        dataSet <- readDataset(paramSet$selDataNm);
         gene.mat <- dataSet$prot.mat;
         
         # convert to entrez
@@ -346,7 +346,7 @@ GetListEnrGeneNumber <- function(){
     }else{
     tot.count <- 0;
     listSizes <- list();
-      dataSet <- qs::qread(paramSet$selDataNm);
+      dataSet <- readDataset(paramSet$selDataNm);
       gene.mat <- dataSet$sig.mat;
       
       # convert to entrezs
@@ -463,7 +463,7 @@ PerformSetOperation_ListEnr <- function(nms, operation, refNm){
   ids.list <- list()
   for(i in 1:length(my.vec)){
     if(anal.type != "onedata"){
-      dataSet <- qs::qread(my.vec[i]);
+      dataSet <- readDataset(my.vec[i]);
     }
     if(operation == "diff"){
       ids.list[[i]]=dataSet$GeneAnotDB[,"gene_id"]
@@ -479,7 +479,7 @@ PerformSetOperation_ListEnr <- function(nms, operation, refNm){
     }
   }
   if(operation == "diff"){
-    dataSet <- qs::qread(refNm);
+    dataSet <- readDataset(refNm);
     ids <- unique(unlist(ids.list));
     com.ids <-setdiff(dataSet$GeneAnotDB[,"gene_id"], ids);
   }
@@ -508,7 +508,7 @@ PerformSetOperation_DataEnr <- function(nms, operation, refNm){
   }
   for(nm in my.vec){
     if(anal.type != "onedata"){
-      dataSet <- qs::qread(nm);
+      dataSet <- readDataset(nm);
     }
     if(operation == "diff"){
       ids.list[[nm]]=rownames(dataSet$sig.mat);
@@ -524,7 +524,7 @@ PerformSetOperation_DataEnr <- function(nms, operation, refNm){
     }
   }
   if(operation == "diff"){
-    dataSet <- qs::qread(refNm);
+    dataSet <- readDataset(refNm);
     ids <- unique(unlist(ids.list));
     com.ids <-setdiff(rownames(dataSet$sig.mat), ids);
   } 
@@ -627,7 +627,7 @@ PerformORA <- function(dataName="", file.nm, fun.type, IDs){
         dataSet <- list();
         my.vec <- names(mdata.all);
         for(i in 1:length(my.vec)){
-          datSet <- qs::qread(my.vec[i]);
+          datSet <- readDataset(my.vec[i]);
           if(i == 1){
             all_str = datSet$orig
           }else{
@@ -653,7 +653,7 @@ PerformORA <- function(dataName="", file.nm, fun.type, IDs){
       require(readr);
       my.vec <- names(mdata.all);
       for(i in 1:length(my.vec)){
-        dataSet <- qs::qread(my.vec[i]);
+        dataSet <- readDataset(my.vec[i]);
         sig.ids <- rownames(dataSet$sig.mat);
         stat.fc <- dataSet$sig.mat[,1];
         df <- data.frame(ids=sig.ids, fc=stat.fc);
@@ -877,49 +877,66 @@ gm_mean <- function(x, na.rm=TRUE){
   return(make.unique(query));
 }
 
-saveSet <- function(obj=NA, set=""){
+saveSet <- function(obj=NA, set="", output=1){
 
-    #if(exists("paramSet")){ #check if global object exists
-    #  if(set == "dataSet"){
-    #    dataSet <<- obj;
-    #  }else if(set == "analSet"){
-    #    analSet <<- obj;
-    #  }else if(set == "imgSet"){
-    #    imgSet <<- obj;
-    #  }else if(set == "paramSet"){
-    #    paramSet <<- obj;
-    #  }else if(set == "msgSet"){
-    #    msgSet <<- obj;
-    #  }
-    #}else{
+    if(globalConfig$anal.mode == "api"){ 
       qs:::qsave(obj, paste0(set, ".qs"));
-    #}
+      return(output)
+    }else{
+      if(set == "dataSet"){
+        dataSet <<- obj;
+      }else if(set == "analSet"){
+        analSet <<- obj;
+      }else if(set == "imgSet"){
+        imgSet <<- obj;
+      }else if(set == "paramSet"){
+        paramSet <<- obj;
+      }else if(set == "msgSet"){
+        msgSet <<- obj;
+      }else if(set == "cmdSet"){
+        cmdSet <<- obj;
+      }
+
+        if(globalConfig$anal.mode == "web"){
+            return(output);
+        }else{
+            return(obj);
+        }
+    }
+
 }
 
 readSet <- function(obj=NA, set=""){
-    #if(!exists("paramSet")){
+    if(globalConfig$anal.mode == "api"){
       path <- "";
       if(exists('user.path')){
         path <- user.path;
       }
 
       if(path != ""){
-      obj <- load_qs(paste0(path, set, ".qs"));
+        obj <- load_qs(paste0(path, set, ".qs"));
       }else{
-      obj <- qs:::qread(paste0(set, ".qs"));
+        obj <- qs:::qread(paste0(set, ".qs"));
       }
-    #}
+    }
     return(obj);
 }
 
 load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
 
 readDataset <- function(fileName=""){
-      path <- "";
+
+    if(globalConfig$anal.mode == "api"){
       if(exists('user.path')){
         path <- user.path;
+        obj <- load_qs(paste0(path, fileName));
+      }else{
+        obj <- qs:::qread(fileName);
       }
-    obj <- qs:::qread(fileName);
+    }else{
+       obj <- dataSets[[fileName]];
+    }
+
     return(obj);
 }
 

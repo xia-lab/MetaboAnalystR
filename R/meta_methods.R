@@ -7,7 +7,7 @@
 # for multiple class, only select two
 # also record all grp lbls
 SetGroupContrast <- function(dataName, grps){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   
   if(length(levels(dataSet$cls))>2){ 
     print("Updating group contrasts .....");
@@ -41,7 +41,7 @@ CheckMetaDataIntegrity <- function(){
   }
   
   sel.nms <- names(mdata.all);
-  print(sel.nms);
+
   clss <- list();
   if(paramSet$meta.upload){
     # update meta data only for select/deselect datasets
@@ -55,14 +55,14 @@ CheckMetaDataIntegrity <- function(){
 
   }else{   
     # first check that all class labels are consistent
-    dataSet <- qs::qread(sel.nms[1]);
+    dataSet <- readDataset(sel.nms[1]);
     lvls <- levels(dataSet$cls);
     id.type <- dataSet$id.type;
     clss[[1]] <- dataSet$cls;
     nms <- rownames(dataSet$data);
     shared.nms <- nms;
     for(i in 2:length(sel.nms)){
-      dataSet <- qs::qread(sel.nms[i]);
+      dataSet <- readDataset(sel.nms[i]);
       clss[[i]] <- dataSet$cls;
       # check if class label is consistent
       if(!all(levels(dataSet$cls) == lvls)){
@@ -95,7 +95,7 @@ CheckMetaDataIntegrity <- function(){
     
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     common.matrix <- dataSet$data[shared.nms, ];
     nms.vec <- rownames(dataSet$data);
     smps.vec <- colnames(dataSet$data);
@@ -104,7 +104,7 @@ CheckMetaDataIntegrity <- function(){
     
     for(i in 2:length(sel.nms)){
       dataName <- sel.nms[i];
-      dataSet <- qs::qread(dataName);
+      dataSet <- readDataset(dataName);
       ndat <- dataSet$data[shared.nms, ];
       nms.vec <- c(nms.vec, rownames(dataSet$data));
       smps.vec <- c(smps.vec, colnames(dataSet$data));
@@ -126,12 +126,12 @@ CheckMetaDataIntegrity <- function(){
       levels(data.lbl) <- data.vec;
       colnames(common.matrix) <- make.unique(paste(data.vec, smps.nms, sep="_"));
       
-      dataSet <- qs::qread(sel.nms[1]);
+      dataSet <- readDataset(sel.nms[1]);
       colnames(dataSet$data) <- paste("d1", colnames(dataSet$data), sep="_");
       RegisterData(dataSet);
       
       for(i in 2:length(sel.nms)){
-        dataSet <- qs::qread(sel.nms[i]);
+        dataSet <- readDataset(sel.nms[i]);
         colnames(dataSet$data) <- paste0("d",i,"_",colnames(dataSet$data));
         # check if class label is consistent
         RegisterData(dataSet);
@@ -283,7 +283,7 @@ PerformMetaDeAnal <- function(paramSet){
       group <- factor(inmex.meta$cls.lbl[sel.inx]); # note regenerate factor to drop levels 
       data <- inmex.meta$data[, sel.inx];
       
-      dataSet <- qs::qread(dataName);
+      dataSet <- readDataset(dataName);
       grp.lvl <- levels(dataSet$cls);
       
       # update data set
@@ -307,7 +307,6 @@ PerformMetaDeAnal <- function(paramSet){
       #sig.inx <- res.mat[,2]<=paramSet$BHth;
       sig.inx <- res.mat[,2]<=dataSet$pval;
      # dataSet$sig.mat <- res.mat[sig.inx,];
-      print(nrow(dataSet$sig.mat))
 
       RegisterData(dataSet);
       # clean up
@@ -365,7 +364,7 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   
   for (i in 1:nbstudies){
     data.nm <- sel.nms[i];
-    dataSet <- qs::qread(data.nm);
+    dataSet <- readDataset(data.nm);
     
     fit.obj.nm <- paste(data.nm, "fit.obj", sep=".");
     fit2i <- qs::qread(fit.obj.nm);
@@ -418,11 +417,11 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   sig.inx <- which(es.mat[,"Pval"]<=BHth);
   analSet$meta.mat <- es.mat[sig.inx, ];
   analSet$meta.mat.all <- es.mat;
-  saveSet(analSet, "analSet");
-  saveSet(paramSet, "paramSet");
 
-  SetupMetaStats(BHth);
-  return(length(sig.inx));
+  res <- SetupMetaStats(BHth, paramSet, analSet);
+  saveSet(res[[1]], "paramSet");
+
+  return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
 #'Perform combine p-value meta-analysis
@@ -454,7 +453,7 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   
   for (i in 1:nbstudies){
     data.nm <- sel.nms[i];
-    dataSet <- qs::qread(data.nm);
+    dataSet <- readDataset(data.nm);
     classes[[i]] <- dataSet$cls; 
     
     fit.obj.nm <- paste(data.nm, "fit.obj", sep=".");
@@ -504,11 +503,11 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   sig.inx <- which(pc.mat[, "CombinedPval"]<=BHth);
   analSet$meta.mat <- pc.mat[sig.inx, ];
   analSet$meta.mat.all <- pc.mat;
-  saveSet(analSet, "analSet");
-  saveSet(paramSet, "paramSet");
 
-  SetupMetaStats(BHth);
-  return(length(sig.inx));
+  res <- SetupMetaStats(BHth, paramSet, analSet);
+  saveSet(res[[1]], "paramSet");
+
+  return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
 #'Perform vote counting meta-analysis method
@@ -573,11 +572,13 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   sig.inx <- abs(vc.mat[,"VoteCounts"]) >= minVote;
   analSet$meta.mat <- vc.mat;
   analSet$meta.mat.all <- vc.mat;
-  saveSet(analSet, "analSet");
+  #saveSet(analSet, "analSet");
   saveSet(paramSet, "paramSet");
 
-  SetupMetaStats(BHth);
-  return(length(sig.inx));
+  res <- SetupMetaStats(BHth, paramSet, analSet);
+  saveSet(res[[1]], "paramSet");
+
+  return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
 
@@ -611,11 +612,13 @@ PerformMetaMerge<-function(BHth=0.05){
   sig.inx <- which(dm.mat[,"Pval"] <= BHth);
   analSet$meta.mat <- dm.mat[sig.inx,];
   analSet$meta.mat.all <- dm.mat;
-  saveSet(analSet, "analSet");
+  #saveSet(analSet, "analSet");
   saveSet(paramSet, "paramSet");
 
-  SetupMetaStats(BHth);
-  return(length(sig.inx));
+  res <- SetupMetaStats(BHth, paramSet, analSet);
+  saveSet(res[[1]], "paramSet");
+
+  return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
 GetMetaGeneIDType<-function(){
@@ -694,6 +697,7 @@ GetMetaResultColNames<-function(){
 
 # single.type return logFC or p value for individual data analysis
 GetMetaResultMatrix<-function(single.type="fc"){
+
   analSet <- readSet(analSet, "analSet");
 
   if(single.type == "fc"){
@@ -701,7 +705,7 @@ GetMetaResultMatrix<-function(single.type="fc"){
   }else{
     dat.mat <- analSet$pval.mat;
   }
-
+    print(head(dat.mat));
   # note, max 9 data columns can be displayed
   if(ncol(dat.mat) + ncol(analSet$meta.mat) > 9){
     max.col <- 9 - ncol(analSet$meta.mat);

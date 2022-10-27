@@ -377,7 +377,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
         omics.inx = 1;
         sel.nms <- names(mdata.all)[mdata.all==1];
         for(i in 1:length(sel.nms)){
-        dataSet <- qs::qread(sel.nms[i]);
+        dataSet <- readDataset(sel.nms[i]);
             if(omics == dataSet$type){
                 omics.inx = i;
             }

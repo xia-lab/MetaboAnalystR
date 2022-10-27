@@ -7,7 +7,7 @@
 ###################################################
 
 PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png",factor){
-  dataSet <- qs:::qread(fileName);
+  dataSet <- readDataset(fileName);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   dpi <- as.numeric(dpi)

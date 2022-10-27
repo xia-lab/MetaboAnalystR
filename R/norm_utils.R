@@ -24,7 +24,6 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
-  print(paste("normalizing ....", norm.opt, var.thresh, count.thresh, filterUnmapped));
   msg <- "Only features with annotations are kept for further analysis.";
   
   if(filterUnmapped == "false"){
@@ -94,7 +93,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
 
     sel.nms <- names(mdata.all)
     for(i in 1:length(sel.nms)){
-      dataSet = qs::qread(sel.nms[i])
+      dataSet = readDataset(sel.nms[i])
       data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
       if(length(data) == 1){
         return(0);
@@ -102,11 +101,9 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
       dataSet$data.norm <- data;
       dataSet$data <- data;
       qs::qsave(data, file="data.stat.qs");
-      RegisterData(dataSet)
     }
-    return(1)
   }else{
-    dataSet <- qs::qread(nm);
+    dataSet <- readDataset(nm);
     data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
     if(length(data) == 1){
       return(0);
@@ -114,9 +111,8 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
     dataSet$data.norm <- data;
     dataSet$data <- data;
     qs::qsave(data, file="data.stat.qs");
-    RegisterData(dataSet)
-    return(1)
   }
+  return(RegisterData(dataSet));
 }
 
 NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){

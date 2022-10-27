@@ -15,6 +15,14 @@
   packageStartupMessage(c(k1,k0));
 }
 
+Set.Config <-function(anal.mode=T, api.bool=F){
+
+  globalConfig <- list();
+  globalConfig$api.bool <- F;
+  globalConfig$anal.mode <- anal.mode
+  globalConfig <<- globalConfig;
+}
+
 #'Initialize resources for analysis
 #'@description call this function before performing any analysis
 #'@param onWeb whether the script is running in local or on web
@@ -24,13 +32,15 @@
 #'@export
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
+  Set.Config("web",F);
   path = "../../";
-
+  
   paramSet <- list(annotated=FALSE);
   paramSet$on.public.web <- onWeb;
   .on.public.web <<- onWeb;
   if(paramSet$on.public.web){
-  dataSet <<- list(annotated=FALSE);
+  dataSet <- list(annotated=FALSE);
+  dataSet <<- dataSet;
   analSet <<- list(annotated=FALSE);
   paramSet <<- list(annotated=FALSE);
   msgSet <<- list(annotated=FALSE);
@@ -56,10 +66,10 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$selDataNm <- "meta_default";
   paramSet$mdata.all <- list();
   paramSet$anal.type <- "onedata";
+  paramSet$api.bool <- F;
 
-  #if(!paramSet$on.public.web){
-    dataSets <<- list();
-  #}
+  dataSets <<- list();
+  
 
   paramSet$jsonNms <- list()
 
@@ -85,6 +95,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   if(!.on.public.web) {
     paramSet$sqlite.path <- paste0(getwd(), "/");
     paramSet$lib.path <- "https://www.expressanalyst.ca/ExpressAnalyst/resources/data/";
+    paramSet <<- paramSet;
   } 
 
   paramSet$data.org <- "hsa";
@@ -131,28 +142,30 @@ SetAnalType <- function(analType){
 # All datasets are selected by default (1 for selected, 0 for unselected)
 
 # note, dataSet need to have "name" property
-RegisterData <- function(dataSet){
+RegisterData <- function(dataSet, output=1){
   dataName <- dataSet$name;
   paramSet <- readSet(paramSet, "paramSet");
-  anal.type <- paramSet$anal.type;
+
   mdata.all <- paramSet$mdata.all;
-
-  if(anal.type == "metadata"){
-    mdata.all[[dataName]] <- 1;
-  }else{
-    mdata.all[[dataName]] <- 1;
-  }
-
-  qs::qsave(dataSet, file=dataName);
+  mdata.all[[dataName]] <- 1;
   paramSet$mdata.all <- mdata.all;
+
   saveSet(paramSet, "paramSet");
-  if(!paramSet$on.public.web){
-  #dataSets[dataSet$name] <- dataSet
-  #return(dataSets)
+
+  if(paramSet$on.public.web){
+    dataSets[[dataName]] <- dataSet;
+    dataSets <<- dataSets;
+    return(output);
   }else{
-  #return(.set.mSet(dataSet));
+    if(paramSet$api.bool){
+        qs::qsave(dataSet, file=dataName);
+        return(output);
+    }else{
+        dataSets[[dataName]] <- dataSet;
+        dataSets <<- dataSets;
+        return(dataSets);
+    }
   }
-  return(1);
 } 
 
 # remove data object, the current dataSet will be the last one by default
@@ -299,7 +312,7 @@ PrepareJsonFromR <- function(fileNm, type, jsonString, dataSetString){
             com.ids <- NULL;
             list.vec <- list()
             for(i in 1:length(my.vec)){
-                datSet <- qs::qread(my.vec[i]);
+                datSet <- readDataset(my.vec[i]);
                 if(is.null(com.ids)){
                   com.ids <- datSet$GeneAnotDB[,"gene_id"];
                   prot.mat <- datSet$prot.mat
@@ -334,10 +347,10 @@ PrepareJsonFromR <- function(fileNm, type, jsonString, dataSetString){
            com.ids <- NULL;
            ids.list <- list()
            for(i in 1:length(my.vec)){
-                dataSet <- qs::qread(my.vec[i]);
+                dataSet <- readDataset(my.vec[i]);
                 ids.list[[i]]=dataSet$GeneAnotDB[,"gene_id"]
            }
-            dataSet <- qs::qread(selectedNetDataset);
+            dataSet <- readDataset(selectedNetDataset);
             ids <- unique(unlist(ids.list));
             com.ids <-setdiff(dataSet$GeneAnotDB[,"gene_id"], ids);
             prot.mat <- as.matrix(dataSet$prot.mat[which(rownames(dataSet$prot.mat) %in% com.ids),])
@@ -410,7 +423,7 @@ UpdateSubnetStats <- function(){
 # read the uploaded data into memory
 # return the meta-data information (multiple groups)
 ReadDataForMetaInfo<-function(dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     
     return(colnames(dataSet$meta));
 }

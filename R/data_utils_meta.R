@@ -40,7 +40,7 @@ UpdateSampleInfo<-function(dataName, clsLbl){
         return(0);
     }
 
-    dataSet <- qs::qread(dataName);
+    dataSet <- readDataset(dataName);
     
     org.lvl.len <- length(levels(dataSet$meta[[clsLbl]]));
     if(org.lvl.len < length(class.vec)){
@@ -194,9 +194,7 @@ ReadMergedExpressTable <- function(dataName){
 # as well as to prepare for GO analysis
 # no return, as set global 
 
-SetupMetaStats <- function(BHth){
-    paramSet <- readSet(paramSet, "paramSet");
-    analSet <- readSet(analSet, "analSet");
+SetupMetaStats <- function(BHth, paramSet,analSet){
     meta.mat <- analSet$meta.mat;
     paramSet$BHth <- BHth;
     #all common genes
@@ -270,8 +268,8 @@ SetupMetaStats <- function(BHth){
         res <- cbind(ID=metade.genes, dat.mat);
     }
     fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
-    saveSet(paramSet, "paramSet");
-    saveSet(analSet, "analSet");
+
+    return(list(paramSet, analSet))
 }
 
 #compute Cochran’s Q to help FEM/REM
@@ -303,7 +301,7 @@ PlotCochranQ <- function(imgNm){
 
     for (i in 1:nbstudies){
         data.nm <- sel.nms[i];
-        dataSet <- qs::qread(data.nm);
+        dataSet <- readDataset(data.nm);
 
         fit.obj.nm <- paste(data.nm, "fit.obj", sep=".");
         fit2i <- qs::qread(fit.obj.nm);
@@ -380,6 +378,7 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
 PerformBatchCorrection <- function(){
     .prepare.batch();
     .perform.computing();
+    return(dataSets);
     # no need to , already done
 }
 

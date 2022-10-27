@@ -114,10 +114,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
-  RegisterData(dataSet);
-
-    return(matched.len);   
-  
+  return(RegisterData(dataSet, matched.len));   
 }
 
 
@@ -125,8 +122,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 AnnotateGeneData <- function(dataName, org, idtype){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- qs::qread(dataName);
-  
+  dataSet <- readDataset(dataName);
   
   if(org == "NA"){
     msgSet$current.msg <- "Invalid organism!"
@@ -230,8 +226,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
   msgSet$current.msg <- msg;
   saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
-  RegisterData(dataSet);
-  return(1)
+  return(RegisterData(dataSet));
 }
 
 

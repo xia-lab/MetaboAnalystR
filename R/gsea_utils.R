@@ -40,7 +40,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
       rankedVec <- analSet$meta.mat.all[,1];
       names(rankedVec) <- rownames(analSet$meta.mat.all);
     }else{
-      dataSet <- qs::qread(paramSet$selDataNm);
+      dataSet <- readDataset(paramSet$selDataNm);
       inx  <- rep(T, ncol(dataSet$data))
       datnorm <- dataSet$data
       sampleNms <- colnames(dataSet$data);

@@ -89,13 +89,13 @@ SetAnalType("onedata");
 ```
 #### 1.2 Load ExpressAnalystR library and initialize R objects
 ```
-ReadTabExpressData("estrogen.txt");
+dataSets <- ReadTabExpressData("estrogen.txt");
 ```
 #### 1.3 Annotate gene IDs to Entrez
 For this step it is imortant to please select correct organism, data type (array or RNA-seq), id type and gene-level summary (mean, median, sum).
 For gene-level summary, microarray can use mean or median while RNA-seq needs to be sum.
 ```
-PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean");
+dataSets <- PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean");
 ```
 Take a look at the mapped dataset by reading the dataset's qs file using ```readDataset(fileName)``` function.
 ```
@@ -122,24 +122,21 @@ PCA plot shows sample separation both between absent and present, and also, low 
 
 #### 1.4 Perform data filtering and normalization
 No normalization need to be performed, PCA plot from previous step shows that the dataset is already normalized.
-Filter by variance (lower 15% removed)
-Filter by relative abundance (lower 4 percentile of average expression signal)
-Filter by count not applied (only for RNASeq data)
-Filter unannotated genes TRUE
+
 ```
-PerformExpressNormalization("estrogen.txt", "none", 15, 4, 0,"true");
+dataSets <- PerformExpressNormalization("estrogen.txt", "none", 15, 5, "true");
 ```
 #### 1.5 Prepare differential expression (DE) analysis
 Selected metadata of interest, in this case we are interested in investigating the effect of presence of Estrogen Receptor (ER) vs absence. We are not setting secondary factor and blocking factor. After selecting metadata, compute design matrix and select DE analysis algorithm by running ``SetupDesignMatrix`` function. For microarray data, only ``limma`` can be used.
 ```
-SetSelectedMetaInfo("estrogen.txt","ER", "NA", F)
-SetupDesignMatrix("estrogen.txt", "limma");
+dataSets <- SetSelectedMetaInfo("estrogen.txt","ER", "NA", F)
+dataSets <- SetupDesignMatrix("estrogen.txt", "limma");
 ```
 #### 1.6 Perform DE analysis and check DE results
 Fold change is log2 transformed.
 Adjusted P-value using False Discovery Rate (FDR) method.
 ```
-PerformDEAnal("estrogen.txt", "custom", "absent vs. present", "NA", "intonly");
+dataSets <- PerformDEAnal("estrogen.txt", "custom", "absent vs. present", "NA", "intonly");
 dataSet <- readDataset("estrogen.txt");
 print(head(dataSet$comp.res));
          logFC   AveExpr         t      P.Value    adj.P.Val        B
@@ -176,11 +173,11 @@ SetAnalType("metadata");
 #### 2.2 Process each individual dataset
 ```
 #Read dataset text file
-ReadOmicsData("E-GEOD-25713.txt");
-SanityCheckData("E-GEOD-25713.txt");
+dataSets <- ReadOmicsData("E-GEOD-25713.txt");
+dataSets <- SanityCheckData("E-GEOD-25713.txt");
 
 #Map gene id to entrez id
-AnnotateGeneData("E-GEOD-25713.txt", "mmu", "entrez");
+dataSets <- AnnotateGeneData("E-GEOD-25713.txt", "mmu", "entrez");
 ```
 
 Visually inspect dataset using box plot (``qc_boxplot_0_dpi72.png``) and pca plot (``qc_pca_0_dpi72.png``).
@@ -192,31 +189,31 @@ PlotDataProfile("E-GEOD-25713.txt", "raw", "qc_boxplot_0_", "qc_pca_0_");
 
 ```
 #Remove variables with more than 50% missing data
-RemoveMissingPercent("E-GEOD-25713.txt", 0.5);
+dataSets <- RemoveMissingPercent("E-GEOD-25713.txt", 0.5);
 
 #Replace missing value with minimum values across dataset
-ImputeMissingVar("E-GEOD-25713.txt", "min");
+dataSets <- ImputeMissingVar("E-GEOD-25713.txt", "min");
 
 #Replace missing value with minimum values across dataset
-NormalizingDataMeta("E-GEOD-25713.txt", "NA");
-DoStatComparison("E-GEOD-25713.txt", "limma", "CLASS", 0.05, 0.0);
+dataSets <- NormalizingDataMeta("E-GEOD-25713.txt", "NA");
+dataSets <- PerformDEAnalMeta("E-GEOD-25713.txt", "limma", "CLASS", 0.05, 0.0);
 
 #read and process the other two datasets
-ReadOmicsData("E-GEOD-59276.txt");
-SanityCheckData("E-GEOD-59276.txt");
-AnnotateGeneData("E-GEOD-59276.txt", "mmu", "entrez");
-RemoveMissingPercent("E-GEOD-59276.txt", 0.5)
-ImputeMissingVar("E-GEOD-59276.txt", "min")
-NormalizingDataMeta("E-GEOD-59276.txt", "NA");
-DoStatComparison("E-GEOD-59276.txt", "limma", "CLASS, 0.05, 0.0);
+dataSets <- ReadOmicsData("E-GEOD-59276.txt");
+dataSets <- SanityCheckData("E-GEOD-59276.txt");
+dataSets <- AnnotateGeneData("E-GEOD-59276.txt", "mmu", "entrez");
+dataSets <- RemoveMissingPercent("E-GEOD-59276.txt", 0.5)
+dataSets <- ImputeMissingVar("E-GEOD-59276.txt", "min")
+dataSets <- NormalizingDataMeta("E-GEOD-59276.txt", "NA");
+dataSets <- PerformDEAnalMeta("E-GEOD-59276.txt", "limma", "CLASS, 0.05, 0.0);
 
-ReadOmicsData("GSE69588.txt");
-SanityCheckData("GSE69588.txt");
-AnnotateGeneData("GSE69588.txt", "mmu", "entrez");
-RemoveMissingPercent("GSE69588.txt", 0.5)
-ImputeMissingVar("GSE69588.txt", "min")
-NormalizingDataMeta("GSE69588.txt", "NA");
-DoStatComparison("GSE69588.txt", "limma", "CLASS", 0.05, 0.0);
+dataSets <- ReadOmicsData("GSE69588.txt");
+dataSets <- SanityCheckData("GSE69588.txt");
+dataSets <- AnnotateGeneData("GSE69588.txt", "mmu", "entrez");
+dataSets <- RemoveMissingPercent("GSE69588.txt", 0.5)
+dataSets <- ImputeMissingVar("GSE69588.txt", "min")
+dataSets <- NormalizingDataMeta("GSE69588.txt", "NA");
+dataSets <- PerformDEAnalMeta("GSE69588.txt", "limma", "CLASS", 0.05, 0.0);
 ```
 #### 2.3 Perform data integrity check (compatibility)
 ```
@@ -230,7 +227,7 @@ PlotMetaPCA("qc_meta_pca_","72", "png", "");
 There is clear signs of batch effect. The samples from same dataset are largely clustered together. To remove the batch effect, we need to run comBat batch correction algorithm
 ```
 #Apply batch effect correction
-PerformBatchCorrection();
+dataSets <- PerformBatchCorrection();
 
 #Check the result 
 PlotMetaPCA("qc_meta_pca_afterBatch_","72", "png", "");

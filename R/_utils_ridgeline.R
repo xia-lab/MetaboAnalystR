@@ -34,7 +34,7 @@
     # get DEGs
     if(anal.type == "genelist"){
       if(paramSet$numOfLists > 1){
-        dataSet <- qs::qread(paramSet$selDataNm);    
+        dataSet <- readDataset(paramSet$selDataNm);    
       }
       sigmat <- as.data.frame(dataSet$prot.mat)
       sigmat$entrez <- rownames(sigmat);
@@ -73,7 +73,7 @@
         allmat$logFC <- unname(meta.avgFC[rownames(allmat)]);
         universe <- rownames(allmat);
       }else{
-        dataSet <- qs::qread(paramSet$selDataNm);
+        dataSet <- readDataset(paramSet$selDataNm);
         if(ridgeType == "ora"){
           sigmat <- dataSet$sig.mat;
         }else{

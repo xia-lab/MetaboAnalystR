@@ -131,7 +131,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
       V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
       V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
     }else{
-      dataSet <- qs::qread(paramSet$selDataNm);
+      dataSet <- readDataset(paramSet$selDataNm);
       tbl <- dataSet$comp.res;
       tbl <- tbl[which(doEntrez2SymbolMapping(rownames(tbl), paramSet$data.org, paramSet$data.idType) %in% V(bg)$name),]
       expvals <- tbl[,"stat"];
