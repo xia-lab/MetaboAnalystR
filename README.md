@@ -1,7 +1,7 @@
 # MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
 
 <p align="center">
-  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
+  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/inst/docs/MetaboAnalystRlogo.png">
 </p>
 
 ## Description 
