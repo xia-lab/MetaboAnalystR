@@ -692,7 +692,7 @@ GetMetaResultColNames<-function(){
     sel.nms <- sel.nms[1:max.col];
   }
 
-  c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(meta.mat));
+  c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(analSet$meta.mat));
 }
 
 # single.type return logFC or p value for individual data analysis
@@ -705,13 +705,13 @@ GetMetaResultMatrix<-function(single.type="fc"){
   }else{
     dat.mat <- analSet$pval.mat;
   }
-    print(head(dat.mat));
+
   # note, max 9 data columns can be displayed
   if(ncol(dat.mat) + ncol(analSet$meta.mat) > 9){
     max.col <- 9 - ncol(analSet$meta.mat);
     dat.mat <- dat.mat[,1:max.col];
   }
-  meta.mat2 <- cbind(dat.mat, meta.mat);
+  meta.mat2 <- cbind(dat.mat, analSet$meta.mat);
 
   # display at most 1000 genes
   if(nrow(meta.mat2) > 1000){
