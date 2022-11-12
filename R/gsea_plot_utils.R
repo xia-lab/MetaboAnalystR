@@ -11,13 +11,19 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   analSet <- readSet(analSet, "analSet");
 
   anal.type <- paramSet$anal.type;
+  data.org <- paramSet$data.org;
+
   ids <- unlist(strsplit(IDs, "; "));
   idsu <<- ids;
   cmpdNm <- gsub(" ", "_",  cmpdNm);
   cmpdNm <- gsub("/", "_",  cmpdNm);
+
+  tblNm <- getEntrezTableName(data.org, "entrez");
+  gene.map <-  queryGeneDB(tblNm, data.org);
+
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
-    subset <- dataSet$data.norm[which(doEntrez2SymbolMapping(rownames(dataSet$data.norm), paramSet$data.org, paramSet$data.idType) %in% ids),]
+    subset <- dataSet$data.norm[which(doIdMappingGeneric(rownames(dataSet$data.norm), gene.map, "gene_id", "symbol") %in% ids),]
     if(length(subset)<1){
       subset <- dataSet$data.norm[which(rownames(dataSet$data.norm) %in% ids),]
     }
@@ -33,7 +39,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
       
       dat <- dataSet$data;
     }
-    subset <- dat[which(doEntrez2SymbolMapping(rownames(dat), paramSet$data.org, paramSet$data.idType) %in% ids),]
+    subset <- dat[which(doIdMappingGeneric(rownames(dat), gene.map, "gene_id", "symbol") %in% ids),]
     if(length(subset)<1){
       subset <- dat[which(rownames(dat) %in% ids),]
     }
@@ -46,7 +52,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   
   # now pearson and euclidean will be the same after scaling
   dat.dist <- dist(dat); 
-  orig.gene.nms <- doEntrez2SymbolMapping(rownames(subset), paramSet$data.org, paramSet$data.idType);
+  orig.gene.nms <- doIdMappingGeneric(rownames(subset), gene.map, "gene_id", "symbol");
   gene.ward.ord <- hclust(dat.dist, "ward.D")$order;
   gene.ward.rk <- match(orig.gene.nms, orig.gene.nms[gene.ward.ord]);
   gene.ave.ord <- hclust(dat.dist, "ave")$order;
@@ -66,7 +72,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   if(anal.type == "onedata"){
     res.tbl <- dataSet$comp.res ;
     res.tbl <- res.tbl[which(rownames(res.tbl) %in% rownames(subset)),];
-    rownames(res.tbl) <- doEntrez2SymbolMapping(rownames(res.tbl), paramSet$data.org, paramSet$data.idType);
+    rownames(res.tbl) <- doIdMappingGeneric(rownames(res.tbl), gene.map, "gene_id", "symbol");
     if("P.Value" %in% colnames(res.tbl)){
       res.tbl <- res.tbl[order(res.tbl$P.Value),];
     }else{
@@ -86,7 +92,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   }else{
     res.tbl <- analSet$meta.mat.all;
     res.tbl <- res.tbl[which(rownames(res.tbl) %in% rownames(subset)),];
-    rownames(res.tbl) <- doEntrez2SymbolMapping(rownames(res.tbl), paramSet$data.org, paramSet$data.idType);  
+    rownames(res.tbl) <- doIdMappingGeneric(rownames(res.tbl), gene.map, "gene_id", "symbol");  
     res.tbl <- res.tbl[order(res.tbl[,2]),];
     stat.pvals <- rownames(res.tbl);
     
@@ -95,7 +101,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   
   json.res <- list(
     data=subset,
-    ids=doEntrez2SymbolMapping(rownames(subset), paramSet$data.org, paramSet$data.idType),
+    ids=doIdMappingGeneric(rownames(subset), gene.map, "gene_id", "symbol"),
     entrez = rownames(subset),
     gene.cluster = gene.cluster
   )

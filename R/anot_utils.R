@@ -64,6 +64,17 @@ doEntrezIDAnot <- function(entrez.vec,data.org="hsa", data.idType){
   return(anot.mat);
 }
 
+doIdMappingGeneric <- function(orig.vec, gene.map, colNm1, colNm2){
+  
+  hit.inx <- match(orig.vec, gene.map[, colNm1]);
+  result.vec <- gene.map[hit.inx, colNm2];
+  
+  # if not gene symbol, use id by itself
+  na.inx <- is.na(result.vec);
+  result.vec[na.inx] <- orig.vec[na.inx];
+  return(result.vec);
+}
+
 ##########################################
 ############# private utility methods #### 
 ##########################################
