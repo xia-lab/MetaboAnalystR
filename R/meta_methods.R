@@ -420,7 +420,6 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
-
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
@@ -503,7 +502,6 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   sig.inx <- which(pc.mat[, "CombinedPval"]<=BHth);
   analSet$meta.mat <- pc.mat[sig.inx, ];
   analSet$meta.mat.all <- pc.mat;
-
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
 
@@ -569,10 +567,9 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   ord.inx <- order(abs(vc.mat[, "VoteCounts"]), decreasing = T);
   vc.mat <- vc.mat[ord.inx, "VoteCounts", drop=F];
   
-  sig.inx <- abs(vc.mat[,"VoteCounts"]) >= minVote;
-  analSet$meta.mat <- vc.mat;
+  sig.inx <- unname(abs(vc.mat[,"VoteCounts"]) >= minVote);
+  analSet$meta.mat <- data.frame(vc.mat[sig.inx, ]);
   analSet$meta.mat.all <- vc.mat;
-  #saveSet(analSet, "analSet");
   saveSet(paramSet, "paramSet");
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
@@ -629,9 +626,9 @@ GetMetaGeneIDType<-function(){
 GetMetaResultGeneIDs<-function(){
   analSet <- readSet(analSet, "analSet");
 
-  rnms <- rownames(as.matrix(analSet$meta.mat));# already sorted based on meta-p values
-  if(length(rnms) > 500){
-    rnms <- rnms[1:500];
+  rnms <- rownames(as.matrix(analSet$meta.mat.all));# already sorted based on meta-p values
+  if(length(rnms) > 1000){
+    rnms <- rnms[1:1000];
   }
   return(rnms);
 }
@@ -641,9 +638,9 @@ GetMetaResultGeneIDs<-function(){
 GetMetaResultGeneSymbols<-function(){
   analSet <- readSet(analSet, "analSet");
 
-  ids <- rownames(as.matrix(analSet$meta.mat));
-  if(length(ids) > 500){
-    ids <- ids[1:500];
+  ids <- rownames(as.matrix(analSet$meta.mat.all));
+  if(length(ids) > 1000){
+    ids <- ids[1:1000];
   }
   inmex.meta <- qs::qread("inmex_meta.qs");
   if(inmex.meta$id.type == "entrez"){ # row name gene symbols
@@ -662,9 +659,9 @@ GetMetaResultGeneIDLinks <- function(){
   paramSet <- readSet(paramSet, "paramSet");;
   analSet <- readSet(analSet, "analSet");
 
-  ids <- rownames(as.matrix(analSet$meta.mat));
-  if(length(ids) > 500){
-    ids <- ids[1:500];
+  ids <- rownames(as.matrix(analSet$meta.mat.all));
+  if(length(ids) > 1000){
+    ids <- ids[1:1000];
   }
   #inmex.meta <- qs::qread("inmex_meta.qs");
   #symbs <- inmex.meta$gene.symbls[ids];
@@ -687,8 +684,8 @@ GetMetaResultColNames<-function(){
   sel.nms <- names(mdata.all)[mdata.all==1];
 
   # note, max 9 data columns can be displayed
-  if(length(sel.nms) + ncol(analSet$meta.mat) > 9){
-    max.col <- 9 - ncol(analSet$meta.mat);
+  if(length(sel.nms) + ncol(analSet$meta.mat.all) > 9){
+    max.col <- 9 - ncol(analSet$meta.mat.all);
     sel.nms <- sel.nms[1:max.col];
   }
 
@@ -707,11 +704,11 @@ GetMetaResultMatrix<-function(single.type="fc"){
   }
 
   # note, max 9 data columns can be displayed
-  if(ncol(dat.mat) + ncol(analSet$meta.mat) > 9){
-    max.col <- 9 - ncol(analSet$meta.mat);
+  if(ncol(dat.mat) + ncol(analSet$meta.mat.all) > 9){
+    max.col <- 9 - ncol(analSet$meta.mat.all);
     dat.mat <- dat.mat[,1:max.col];
   }
-  meta.mat2 <- cbind(dat.mat, analSet$meta.mat);
+  meta.mat2 <- cbind(dat.mat, analSet$meta.mat.all);
 
   # display at most 1000 genes
   if(nrow(meta.mat2) > 1000){
@@ -893,4 +890,21 @@ setIncludeMeta <- function(metaBool){
     paramSet <- readSet(paramSet, "paramSet");
     paramSet$meta.selected <- metaBool;
     saveSet(paramSet, "paramSet");
+}
+
+DoMetaSigUpdate <- function(BHth=0.05, voteCount=2){
+    paramSet <- readSet(paramSet, "paramSet");
+    analSet <- readSet(analSet, "analSet");
+    meta.mat.all <- analSet$meta.mat.all;
+    if("VoteCounts" %in% colnames(meta.mat.all)){
+    sig.inx <- which(meta.mat.all[,ncol(meta.mat.all)] >= BHth);
+    }else{
+    sig.inx <- which(meta.mat.all[,ncol(meta.mat.all)] <= BHth);
+    }
+    analSet$meta.mat <- meta.mat.all[sig.inx,];
+    res <- SetupMetaStats(BHth, paramSet, analSet);
+    saveSet(res[[1]], "paramSet");
+    saveSet(analSet, "analSet");
+
+    return(nrow(analSet$meta.mat));
 }

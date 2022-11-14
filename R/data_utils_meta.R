@@ -195,7 +195,7 @@ ReadMergedExpressTable <- function(dataName){
 # no return, as set global 
 
 SetupMetaStats <- function(BHth, paramSet,analSet){
-    meta.mat <- analSet$meta.mat;
+    meta.mat <- analSet$meta.mat.all;
     paramSet$BHth <- BHth;
     #all common genes
     inmex.meta <- qs::qread("inmex_meta.qs");
