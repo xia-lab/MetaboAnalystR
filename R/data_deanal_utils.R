@@ -186,7 +186,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     lrt <- glmLRT(fit, contrast = contrast.matrix)
     topFeatures <- topTags(lrt, n = Inf)$table
   }
-  saveRDS(dataSet, "dataAnot.rds");
+
   nms <- colnames(topFeatures)
   nms[which(nms == "FDR")] <- "adj.P.Val";
   nms[which(nms == "PValue")] <- "P.Value";

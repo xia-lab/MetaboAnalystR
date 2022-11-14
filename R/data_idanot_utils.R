@@ -53,6 +53,12 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     feature.vec <- rownames(data.proc);
     
     anot.id <- .doAnnotation(feature.vec, idType, org);
+
+    tblNm <- getEntrezTableName(org, "entrez");
+    symbol.map <- queryGeneDB(tblNm, org);
+    symbol.map <- symbol.map[which(symbol.map$gene_id %in% unname(anot.id)),];
+    dataSet$symbol.map <- symbol.map;
+
     qs::qsave(anot.id, "annotation.qs");
     
     hit.inx <- !is.na(anot.id);
@@ -144,6 +150,12 @@ AnnotateGeneData <- function(dataName, org, idtype){
     enIDs <- .doProbeMapping(gene.vec, idtype, org);
     names(enIDs) <- gene.vec;
   }
+
+  tblNm <- getEntrezTableName(org, "entrez");
+  symbol.map <- queryGeneDB(tblNm, org);
+  symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
+  dataSet$symbol.map <- symbol.map;
+
 
   dataSet$rawToEntrez <- enIDs
   names(dataSet$rawToEntrez) <- gene.vec;

@@ -26,7 +26,7 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat.inx <- inmex.meta$data.lbl %in% datanm.vec;
   
- gene.vec <- rownames(all.meta.mat);
+  gene.vec <- rownames(all.meta.mat);
   
   #all genes
   dat <- inmex.meta$plot.data[gene.vec, dat.inx, drop=F]; 

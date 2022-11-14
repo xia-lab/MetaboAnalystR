@@ -566,9 +566,12 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   #sort
   ord.inx <- order(abs(vc.mat[, "VoteCounts"]), decreasing = T);
   vc.mat <- vc.mat[ord.inx, "VoteCounts", drop=F];
-  
-  sig.inx <- unname(abs(vc.mat[,"VoteCounts"]) >= minVote);
-  analSet$meta.mat <- data.frame(vc.mat[sig.inx, ]);
+  qs::qsave(vc.mat, "allMeta.mat.qs");
+
+  sig.inx <- unname(abs(vc.mat[,"VoteCounts"]) >= minVote); 
+  df <- data.frame(vc.mat[sig.inx, ]);
+  colnames(df) <- c("VoteCounts");
+  analSet$meta.mat <- df;
   analSet$meta.mat.all <- vc.mat;
   saveSet(paramSet, "paramSet");
 
@@ -604,6 +607,7 @@ PerformMetaMerge<-function(BHth=0.05){
   
   ord.inx <- order(res.all$adj.P.Val, decreasing=F);
   dm.mat <- as.matrix(res.all[ord.inx,c("logFC", "adj.P.Val")]);
+  qs::qsave(dm.mat, "allMeta.mat.qs");
   colnames(dm.mat) <- c("CombinedLogFC", "Pval");
   
   sig.inx <- which(dm.mat[,"Pval"] <= BHth);

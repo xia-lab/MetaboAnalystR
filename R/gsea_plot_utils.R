@@ -14,12 +14,11 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   data.org <- paramSet$data.org;
 
   ids <- unlist(strsplit(IDs, "; "));
-  idsu <<- ids;
   cmpdNm <- gsub(" ", "_",  cmpdNm);
   cmpdNm <- gsub("/", "_",  cmpdNm);
 
   tblNm <- getEntrezTableName(data.org, "entrez");
-  gene.map <-  queryGeneDB(tblNm, data.org);
+  gene.map <- queryGeneDB(tblNm, data.org);
 
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
@@ -30,13 +29,15 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     
     inx <- order(dataSet$meta[,1]);
     subset <- subset[,inx];
+    gene.map <- dataSet$symbol.map;
   }else{
     if(paramSet$selDataNm == "meta_default"){
       inmex <- qs:::qread("inmex_meta.qs");
       dat <- inmex$plot.data
+      gene.map <- data.frame(gene_id=names(inmex$gene.symbls), symbol=unname(inmex$gene.symbls));
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
-      
+      gene.map <- dataSet$symbol.map;
       dat <- dataSet$data;
     }
     subset <- dat[which(doIdMappingGeneric(rownames(dat), gene.map, "gene_id", "symbol") %in% ids),]
@@ -46,8 +47,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     inx <- order(inmex$cls.lbl);
     subset <- subset[,inx];
   }
-  
-  
+
   dat <- t(scale(t(subset)));
   
   # now pearson and euclidean will be the same after scaling
@@ -116,8 +116,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   return(json.nm)
 }
 
-
-PlotGSView <-function(cmpdNm,  format="png", dpi=72, width=NA){
+PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
   require("ggplot2");
   require("fgsea");
   current.geneset <- qs::qread("current_geneset.qs");
@@ -125,7 +124,7 @@ PlotGSView <-function(cmpdNm,  format="png", dpi=72, width=NA){
   imgName <- gsub("\\/", "_",  cmpdNm);
   imgName <- gsub(" ", "_",  imgName);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
-
+  
   Cairo(file = imgName, dpi=72, width=340, height=300, type="png", bg="transparent");
   g <- plotEnrichment(current.geneset[[cmpdNm]], analSet$rankedVec)
   print(g)
