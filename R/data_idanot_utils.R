@@ -54,9 +54,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     
     anot.id <- .doAnnotation(feature.vec, idType, org);
 
-    tblNm <- getEntrezTableName(org, "entrez");
-    symbol.map <- queryGeneDB(tblNm, org);
-    symbol.map <- symbol.map[which(symbol.map$gene_id %in% unname(anot.id)),];
+    symbol.map <- .doGeneIDMapping(anot.id, idType, org, "matrix");
     dataSet$symbol.map <- symbol.map;
 
     qs::qsave(anot.id, "annotation.qs");
@@ -297,6 +295,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }
 
   db.map <-  queryGeneDB(db.nm, org);
+
   if(org == "smm" && type == "symbol"){
     q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
     q.vec <- q.mat[,1];
