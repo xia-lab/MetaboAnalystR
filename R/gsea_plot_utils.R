@@ -17,9 +17,6 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   cmpdNm <- gsub(" ", "_",  cmpdNm);
   cmpdNm <- gsub("/", "_",  cmpdNm);
 
-  tblNm <- getEntrezTableName(data.org, "entrez");
-  gene.map <- queryGeneDB(tblNm, data.org);
-
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
     subset <- dataSet$data.norm[which(doIdMappingGeneric(rownames(dataSet$data.norm), gene.map, "gene_id", "symbol") %in% ids),]
@@ -47,7 +44,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     inx <- order(inmex$cls.lbl);
     subset <- subset[,inx];
   }
-
+  print(head(gene.map));
   dat <- t(scale(t(subset)));
   
   # now pearson and euclidean will be the same after scaling

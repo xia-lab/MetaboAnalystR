@@ -16,7 +16,10 @@
 PrepareExpressHeatmapJSON <- function(dataSet){
   data.stat <- qs::qread("data.stat.qs");
   paramSet <- readSet(paramSet, "paramSet");
-  res.tbl <- dataSet$comp.res #dataSet$sig.mat for sig only
+  res.tbl <- dataSet$comp.res; #dataSet$sig.mat for sig only
+  if(nrow(res.tbl) > 5000){
+    res.tbl <- res.tbl[c(1:5000),];
+  }
   res.tbl <- res.tbl[which(rownames(res.tbl) %in% rownames(data.stat)),]
   sig.ids <- rownames(dataSet$sig.mat);
   if("P.Value" %in% colnames(res.tbl)){
@@ -24,7 +27,8 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   }else{
     stat.pvals <- res.tbl$PValue; 
   }
-  
+  gene.map <- dataSet$symbol.map;
+
   all.ids <- rownames(res.tbl);
   
   if("logFC" %in% colnames(res.tbl)){
@@ -133,7 +137,7 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   
   if(dataSet$annotated){
     anot.id <- rownames(res);
-    anot.res <- doEntrezIDAnot(anot.id, paramSet$data.org, paramSet$data.idType);
+    anot.res <- doIdMappingGeneric(anot.id, gene.map, "gene_id", "symbol", "matrix")
     # single element vector will be converted to scalar, not array, need to prevent that
     gene.id <- anot.res$symbol; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
     gene.entrez <- anot.res$gene_id; if(length(gene.entrez) ==1) { gene.entrez <- matrix(gene.entrez) };        

@@ -10,7 +10,6 @@ queryGeneDB <- function(table.nm, data.org){
     db.map <- qs::qread("anot_table.qs");
   }else{
     require('RSQLite');
-    cat(table.nm, "=====", data.org, "/n");
     db.path <- paste(paramSet$sqlite.path, data.org, "_genes.sqlite", sep="")
 
     if(!PrepareSqliteDB(db.path, paramSet$on.public.web)){
@@ -65,15 +64,28 @@ doEntrezIDAnot <- function(entrez.vec,data.org="hsa", data.idType){
   return(anot.mat);
 }
 
-doIdMappingGeneric <- function(orig.vec, gene.map, colNm1, colNm2){
+doIdMappingGeneric <- function(orig.vec, gene.map, colNm1, colNm2, type="vec"){
   
   hit.inx <- match(orig.vec, gene.map[, colNm1]);
+  if(colNm2 =="symbol"){
+    if(!colNm2 %in% colnames(gene.map)){
+        colnames(gene.map)[which(colnames(gene.map) == "accession")] <- "symbol";
+    }
+  }
+  if(type == "vec"){
   result.vec <- gene.map[hit.inx, colNm2];
   
   # if not gene symbol, use id by itself
   na.inx <- is.na(result.vec);
   result.vec[na.inx] <- orig.vec[na.inx];
   return(result.vec);
+  }else{
+  na.inx <- is.na(hit.inx);
+  anot.mat <- gene.map[hit.inx,];
+  anot.mat[na.inx, "symbol"] <- orig.vec[na.inx];
+  anot.mat[na.inx, "name"] <- orig.vec[na.inx];
+  return(anot.mat);
+  }
 }
 
 ##########################################

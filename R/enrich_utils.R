@@ -156,7 +156,6 @@
   }
 
   my.path <- paste(lib.path, folderNm, "/", fun.type, ".rds", sep="");
-
   if(!paramSet$on.public.web && !file.exists(platform.path)){
     nmdb <- basename(my.path);
     download.file(my.path, destfile = nmdb, method="libcurl", mode = "wb");
@@ -172,7 +171,6 @@
   }
   
   current.geneset <- my.lib$sets;
-
   #remove empty pathways
   keep.inx <- lapply(current.geneset,length)>0
   current.geneset <- current.geneset[keep.inx]

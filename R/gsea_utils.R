@@ -139,7 +139,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   fgseaRes <- data.frame(fgseaRes, stringsAsFactors=FALSE)
   
   #get gene symbols
-  msgSet$current.msg <- "Functional enrichment analysis was completed";
+  msgSet$current.msg <- "Functional analysis was completed";
   
   # write json
   fun.anot <- hits.query; 
