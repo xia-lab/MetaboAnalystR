@@ -4,7 +4,7 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 
-GetSigGeneCount <- function(dataName){
+GetSigGeneCount <- function(){
   analSet <- readSet(analSet, "analSet");
   return(analSet$sig.gene.count);
 }
@@ -95,7 +95,6 @@ SetSelMetaData<- function(selNm){
 # only for switching single expression data results
 SetCurrentData <- function(nm){
   dataSet <- readDataset(nm);
-  
   return(1);
 }
 
@@ -105,7 +104,6 @@ GetOmicsDataDims <- function(dataName){
   naNum <- sum(is.na(dataSet$data.norm));
   return(c(dm, naNum));
 } 
-
 
 # given dataSet Name, sample name, and class name, do update
 # note, for multiple #class, this set which one to use in the subsequent steps
@@ -153,8 +151,6 @@ GetFilesToBeSaved <-function(naviString){
 
 GetMetaInfo <- function(dataName=""){
   dataSet <- readDataset(dataName);
-    print("meta=====");
-    print(names(dataSet));
   return(colnames(dataSet$meta));
 }
 
@@ -169,11 +165,11 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
   ids <- rownames(dataSet$comp.res);
   if(paramSet$data.org == "generic"){
     if(paramSet$data.idType == "ko"){
-    annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
+        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
     }else if(paramSet$data.idType == "s2f"){
-    annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
+        annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
     }else{
-    annots <- ids;
+        annots <- ids;
     }
   } else if (paramSet$data.org == "custom"){
     annots <- ids;
@@ -185,7 +181,7 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
 
 
 GetExpressResultColNames<-function(){
-  resT <- qs::qread("express.res.t.qs");
+  resT <- qs::qread("express.de.res.qs");
   colnames(resT);
 }
 
@@ -223,7 +219,7 @@ GetExpressResultMatrix <-function(dataName="", inxt){
     dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ];
     RegisterData(dataSet);
 
-    qs::qsave(res, "express.res.t.qs");
+    qs::qsave(res, "express.de.res.qs");
   
   # max 1000 sig for display
   if(nrow(res) > 1000){

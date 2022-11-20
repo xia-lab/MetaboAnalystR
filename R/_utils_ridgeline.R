@@ -172,7 +172,8 @@
     Cairo::Cairo(file=paste0(imgNm, "dpi" , dpi, ".", format), width=18, height=12, type=format, bg="white", dpi=dpi, unit="in");
     print(rp);
     dev.off();
-    saveRDS(rp, "rp.rds");
+    #saveRDS(rp, "rp.rds");
+
     ##interative ridge json data
     ridge_bw <- rp$layers[[1]]$computed_stat_params$bandwidth;
     jsonNm <- paste0(imgNm, ".json");
