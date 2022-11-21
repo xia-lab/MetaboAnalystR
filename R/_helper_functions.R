@@ -4,9 +4,9 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 
-GetSigGeneCount <- function(){
-  analSet <- readSet(analSet, "analSet");
-  return(analSet$sig.gene.count);
+GetSigGeneCount <- function(dataName){
+  dataSet <- readDataset(dataName);
+  return(nrow(dataSet$sig.mat));
 }
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
@@ -21,7 +21,7 @@ CheckRawDataAlreadyNormalized <- function(dataName=""){
 
 GetMetaCol<- function(dataName=""){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   if(anal.type == "onedata"){
     colNms <- colnames(dataSet$comp.res);

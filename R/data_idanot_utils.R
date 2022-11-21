@@ -28,8 +28,8 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){
+  save.image("anot.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -40,23 +40,24 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   }
   paramSet$data.org <- org;
   paramSet$data.idType <- idType;
-
+  
   dataSet$type <- dataType;
   dataSet$id.orig <- dataSet$id.current <- idType;
   dataSet$annotated <- F;
   # should not contain duplicates, however sanity check
   data.proc <- qs::qread("data.proc.qs");
   dataSet$data.anot <- data.proc;
-
-
+  
+  
   if (org != 'NA' & idType != 'NA'){
     feature.vec <- rownames(data.proc);
     
     anot.id <- .doAnnotation(feature.vec, idType, org);
-
-    symbol.map <- .doGeneIDMapping(anot.id, idType, org, "matrix");
+    anot.id <- unname(anot.id);
+    
+    symbol.map <- .doGeneIDMapping(anot.id, "entrez", org, "matrix");
     dataSet$symbol.map <- symbol.map;
-
+    
     qs::qsave(anot.id, "annotation.qs");
     
     hit.inx <- !is.na(anot.id);
@@ -68,7 +69,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
       current.msg <- paste('Only ', perct, '% ID were matched. You may want to choose another ID type or use default.', sep=""); 
     } else {
       current.msg <- paste("ID annotation: ", "Total [", length(anot.id), 
-                            "] Matched [", matched.len, "] Unmatched [", sum(!hit.inx),"]", collapse="\n");    
+                           "] Matched [", matched.len, "] Unmatched [", sum(!hit.inx),"]", collapse="\n");    
       
       if (lvlOpt != 'NA' | idType == "entrez"){
         # do actual summarization to gene level
@@ -120,7 +121,6 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
 }
-
 
 # Annotating genes to internal database
 AnnotateGeneData <- function(dataName, org, idtype){
@@ -314,7 +314,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }else{
     entrezs <- db.map[hit.inx, ]; 
     if(type == "entrez"){
-      entrezs <- entrezs[,c(1,1)];
+      entrezs <- entrezs[,c(2,1)];
     }else{
       entrezs <- entrezs[,c(2,1)];
     }

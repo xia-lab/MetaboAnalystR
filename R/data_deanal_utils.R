@@ -71,7 +71,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     }   
     
     dds <- DESeq(dds, betaPrior=FALSE) 
-    saveRDS(dds, "dds.rds");
+    qs::qsave(dds, "deseq.res.obj.rds");
     vec <- as.numeric(c(contrast.matrix[,1]));
     res <- results(dds, contrast = vec, independentFiltering = FALSE, cooksCutoff = Inf);
     topFeatures <- data.frame(res@listData);

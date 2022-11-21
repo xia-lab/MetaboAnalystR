@@ -1,19 +1,10 @@
-##################################################
-## R script for ExpressAnalyst
-## Description: functions for getting DE result table
-##
-## Authors: 
-## Jeff Xia, jeff.xia@mcgill.ca
-## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
-###################################################
 
-# update result based on new cutoff
 GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
-
+  
   total <- nrow(dataSet$comp.res);
   resTable <- dataSet$comp.res;
   filename <- dataSet$filename;
@@ -29,7 +20,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   # for > comparisons - in this case, use the largest logFC among all comparisons
   #if (fc.lvl > 0){ # further filter by logFC
   if (dataSet$de.method=="deseq2"){
-    dds <- readRDS("dds.rds");
+    dds <- qs::qread("deseq.res.obj.rds");
     vec <- as.numeric(c(dataSet$contrast.matrix[,inx]));
     inx <- 1;
     res <- results(dds, contrast = vec, independentFiltering = FALSE, cooksCutoff = Inf);
@@ -44,7 +35,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
     # order the result based on raw p
     ord.inx <- order(topFeatures$P.Value);
     resTable <- topFeatures[ord.inx, ];
-    hit.inx <- which(colnames(resTable) == "baseMean");  
+    hit.inx <- which(colnames(resTable) == "baseMean"); 
     dataSet$comp.res <- resTable;
   } else if (dataSet$de.method=="limma"){
     hit.inx <- which(colnames(resTable) == "AveExpr");
@@ -52,6 +43,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
     hit.inx <- which(colnames(resTable) == "logCPM");
   }
   
+  resTable <- resTable[!is.na(resTable[,1]),]
   orig.resTable <- resTable;
   # select based on p-value
   if(dataSet$type == "array"){
@@ -61,7 +53,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   }
   
   resTable<-resTable[hit.inx.p,];
-
+  
   maxFC.inx <- hit.inx - 1; # not sure if this is also true for edgeR
   logfc.mat <- resTable[,1:maxFC.inx, drop=F];
   pos.mat <- abs(logfc.mat[,inx]);
@@ -69,7 +61,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   fc.vec <- pos.mat;
   hit.inx.fc <- fc.vec >= fc.lvl;
   resTable <- resTable[hit.inx.fc,];
-
+  
   if (nrow(resTable) == 0){
     msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff.");
   }
@@ -104,8 +96,8 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
   dataSet$comp.res <- dataSet$comp.res[which(!rownames(dataSet$comp.res) %in% rownames(resTable)),]
   dataSet$comp.res <- rbind(resTable, dataSet$comp.res);
-
-
+  
+  
   dataSet$sig.mat <- resTable;
   
   if (dataSet$annotated){ # annotated to entrez
@@ -153,6 +145,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   saveSet(analSet, "analSet");
   res <- RegisterData(dataSet);
   if(res == 1){
-      return(c(filename, de.Num, geneList, total, up, down));
+    return(c(filename, de.Num, geneList, total, up, down));
   }
 }
