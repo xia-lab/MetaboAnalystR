@@ -4,10 +4,11 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 
-GetSigGeneCount <- function(dataName){
-  dataSet <- readDataset(dataName);
-  return(nrow(dataSet$sig.mat));
+GetSigGeneCount <- function(){
+  analSet <- readSet(analSet, "analSet");
+  return(analSet$sig.gene.count);
 }
+
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);
