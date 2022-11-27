@@ -57,7 +57,7 @@ performDuplicateEstimation <- function(mSet = NA, format, method, smoothed){
     datRes <- cbind(colnames(dat)[-1], dt);
     colnames(datRes)[1] <- colnames(dat)[1]
   }
-  write.csv(datRes, file = "MetaboAnalyst_duplicates_estimated_data.csv", row.names = F)
+  fast.write.csv(datRes, file = "MetaboAnalyst_duplicates_estimated_data.csv", row.names = F)
   return(1);
 }
 

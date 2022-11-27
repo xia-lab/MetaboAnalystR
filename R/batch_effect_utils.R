@@ -8,7 +8,7 @@
 #' @param missingEstimate Approach to estimate the missing values
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @export
 #' 
 Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate){
@@ -194,7 +194,7 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
 #'@param missingEstimate Approach to estimate the missing values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
@@ -388,12 +388,11 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
 #'@param format Input the format of the batch files
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
   
-  #dat <- .readDataTable(filePath);
   dat <- .readDataTable2(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -555,7 +554,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
@@ -584,7 +583,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
@@ -637,13 +636,12 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'@param method method of correction
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
   
   #mSetObj <- .get.mSet(mSetObj);
-  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w  <- 11;
@@ -747,7 +745,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
 #'@param method method of correction
 #'@author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
@@ -856,7 +854,7 @@ ResetBatchData <- function(mSetObj=NA){
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 CreateSemiTransColors <- function(cls){
   
@@ -1437,6 +1435,10 @@ CCMN2<-function(data,class){
     if (model=="PCA"){
       pc.original<-prcomp(table,scale.=TRUE);
       nnms<-rownames(pc.original$x);
+      if(all(!grepl("QC",nnms))){
+        AddErrMsg("No QC samples found, please mark rename sample names by inclduing \"QC\" character !")
+      }
+
       pc.original_select<-pc.original$x[grepl("QC",nnms),1:3];
       
     } else {
@@ -4297,25 +4299,6 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
   return(dat);
 }
 
-## Tem Functions
-.readDataTable <- function(fileName){
-  
-  dat <- tryCatch(
-    data.table::fread(fileName, header=TRUE, check.names=FALSE, blank.lines.skip=TRUE, data.table=FALSE),
-    error=function(e){
-      print(e);
-      return(.my.slowreaders(fileName));    
-    }, 
-    warning=function(w){
-      print(w);
-      return(.my.slowreaders(fileName));
-    });
-  
-  if(any(dim(dat) == 0)){
-    dat <- .my.slowreaders(fileName);
-  }
-  return(dat);
-}
 .get.mSet <- function(mSetObj=NA){
   if(.on.public.web){
     return(mSet)
@@ -4359,7 +4342,7 @@ ResetBatchData <- function(mSetObj=NA){
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 
 CreateSemiTransColors <- function(cls){

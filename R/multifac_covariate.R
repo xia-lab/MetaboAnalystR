@@ -51,7 +51,7 @@ GetCovDnIDs <- function(mSetObj=NA){
 #'@param selectedMeta selected Meta elements
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedMeta){
@@ -63,30 +63,18 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
   }
 
   meta.info <- mSetObj$dataSet$meta.info
-  if(!exists('meta.vec4')){
+  if(length(meta.vec.rf) == 0){
     sel.meta.vecs <- "NA"
   }else{
-    if(length(meta.vec4)>0){
-        sel.meta.vecs <- meta.info[, meta.vec4]
-    }
+    sel.meta.vecs <- meta.info[, meta.vec.rf]
   }
 
-  #for(i in 1:length(meta.vec4)){
-  #  metaNm <- meta.vec4[i]
-  #  if(mSetObj$dataSet$meta.types[metaNm] == "cont"){
-  #      sel.meta.vecs[,i] <- as.numeric(as.character(sel.meta.vecs[,i]))
-  #  }
-  #}
-
-  if(length(meta.vec4) >0) {
-    norm <- cbind(sel.meta.vecs, mSetObj$dataSet$norm);
-    colnames(norm)[1:length(meta.vec4)] <- meta.vec4
-  }else{
-    norm <- mSetObj$dataSet$norm;
+  norm <- mSetObj$dataSet$norm;
+  norm <- norm[match(rownames(meta.info), rownames(norm)), ] # make sure the meta data and metabolites have the same row order
+  if(length(meta.vec.rf) >0) {
+    norm <- cbind(sel.meta.vecs, norm);
+    colnames(norm)[1:length(meta.vec.rf)] <- meta.vec.rf;
   }
-
-  # make sure the meta data and metabolites have the same row order
-  norm <- norm[match(rownames(meta.info), rownames(norm)), ]
 
   # set up random numbers
   if(is.null(mSetObj$dataSet$random.seeds)){
@@ -139,7 +127,7 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
 #'@param type plotting type, default is "meta".
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
@@ -148,7 +136,7 @@ PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 8;
+    w <- 9;
   }else if(width == 0){
     w <- 8;
   }else{
@@ -181,8 +169,6 @@ PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width
   cols <- rainbow(length(levels(cls.init))+1);
   plot(mSetObj$analSet$rf, main="Random Forest classification", col=cols);
   
-
-  
   legend("topright", legend = c("Overall", levels(cls)), lty=2, lwd=1, col=cols);
   
   #PlotConfusion(analSet$rf$confusion);
@@ -206,7 +192,7 @@ PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@param type type of image
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
@@ -243,7 +229,7 @@ PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param type type, default is "type"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotImpVarMeta <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta"){
@@ -344,9 +330,13 @@ PlotImpVarMeta <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
     # shift x, note, this is good for current size
     x <- x + shift/1.25;
   }
-  
+    
   # now add color key, padding with more intermediate colors for contiuous band
-  col <- colorRampPalette(RColorBrewer::brewer.pal(25, colorpalette))(50)
+  ncolor <- 9;
+  if(colorpalette == "RdYlBu"){
+    ncolor <- 11;
+  }
+  col <- colorRampPalette(RColorBrewer::brewer.pal(ncolor, colorpalette))(50)
   if(color.BW) col <- rev(col);
   
   nc <- length(col);
@@ -466,11 +456,11 @@ CovariateScatter.Anal <- function(mSetObj,
      }
   }
 
-  feature_table <- t(mSetObj$dataSet$norm)
-  feature_table <- feature_table[,order(colnames(feature_table))]
-  covariates <- covariates[order(rownames(covariates)), ]
-  inx <- which(colnames(covariates) == analysis.var)
-  analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var])
+  feature_table <- t(mSetObj$dataSet$norm);
+  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
+
+  inx <- which(colnames(covariates) == analysis.var);
+  analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   if(adj.bool){
     vars <- c(analysis.var, adj.vars)
   }else{
@@ -668,6 +658,8 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
                   aes(x=pval.no,y=pval.adj,label=Row.names))
   }
   
+  mSetObj$imgSet$covAdj <- imgName;
+
   width <- 8;
   height <- 8.18;
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format, bg="white");
@@ -699,18 +691,21 @@ FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, var
         }
    }
 
+  input.data <- mSetObj$dataSet$norm;
+
   if(tgtType == "featNm"){
     # test if varName is valid
     if(!varName %in% colnames(mSetObj$dataSet$norm)){
         AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
         return(0);
     }
-    tgt.var <- mSetObj$dataSet$norm[,varName];
+    # need to exclude the target itself
+    inx <- which(colnames(input.data) == varName);
+    tgt.var <- input.data[,inx];
+    input.data <- input.data[,-inx];
   }else{
     tgt.var <- covariates[,varName];
   }
-
-  input.data <- mSetObj$dataSet$norm;
 
   if(adj.bool){
     adj.vars <- covariates[, cov.vec];

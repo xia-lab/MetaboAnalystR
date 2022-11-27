@@ -33,7 +33,7 @@
       tryCatch(
         {
           download.file(lib.url, destfile=filenm, method="curl")
-        }, warning = function(w){ print() },
+        }, warning = function(w){ print('warning in curl download') },
         error = function(e) {
           print("Download unsucceful. Ensure that curl is downloaded on your computer.")
           print("Attempting to re-try download using libcurl...")
@@ -49,7 +49,7 @@
         my.lib <- qs::qread(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
         print("Loaded files from MetaboAnalyst web-server.")
         },
-        warning = function(w) { print() },
+        warning = function(w) { print('warning in load') },
         error = function(err) {
         print("Reading data unsuccessful, attempting to re-download file...")
         tryCatch({
@@ -57,7 +57,7 @@
             my.lib <- qs::qread(lib.path);
             print("Loaded necessary files.")
         },
-        warning = function(w) { print() },
+        warning = function(w) { print('warning in curl download') },
         error = function(err) {
             print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
         }

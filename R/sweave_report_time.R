@@ -6,7 +6,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
@@ -16,11 +16,18 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
   InitTimeSeriesAnal();
   if(exists("analSet", where=mSetObj)){
+    CreateMetaOverview(mSetObj);
     CreateiPCAdoc(mSetObj);
-    CreateHeatmap2doc(mSetObj);
+    CreateCorHeatmap(mSetObj);
+
+    CreateCovAdj(mSetObj);
+    CreateCorAnalysis(mSetObj);
     CreateAOV2doc(mSetObj);
+
     CreateASCAdoc(mSetObj);
     CreateMBdoc(mSetObj);
+
+    CreateRandomForest(mSetObj);
   }else{
     CreateTimeSeriesAnalNullMsg();
   }
@@ -36,7 +43,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -53,10 +60,13 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   cat(descr, file=rnwFile, append=TRUE);
   
   # error checking
-  if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc.feat.num) | is.null(mSetObj$dataSet$facA) | is.null(mSetObj$dataSet$facB)){
+  if(is.null(mSetObj$dataSet$url.var.nms) | 
+     is.null(mSetObj$dataSet$proc.feat.num) | 
+     is.null(mSetObj$dataSet$facA) | 
+     is.null(mSetObj$dataSet$facB)){
     errorMsg<- c(descr, "Error occured during reading the raw data ....",
                  "Failed to proceed. Please check if the data format you uploaded is correct.",
-                 "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");
+                 "Please use the OmicsForum (omicsforum.ca) for community based support!\n");
     cat(errorMsg, file=rnwFile, append=TRUE);
     return();
   }
@@ -93,32 +103,40 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
 #'Metabolomic pathway analysis, time-series analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 InitTimeSeriesAnal <- function(){
-  descr <- c("\\section{Statistical and Machine Learning Data Analysis}",
-             "For two-factor and time-series data, MetaboAnalyst offers several carefully selected methods for general two-factor and time-series",
-             "data analysis. They include:\n");
+  descr <- c("\\section{Statistical Analysis [metadata table]}",
+             "For metabolomics data accompanied by complex metadata, MetaboAnalyst offers several carefully selected methods for",
+             " data analysis. They include:\n");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
   
   descr2 <- c(
     "\\begin{itemize}",
     
-    "\\item{Data overview: }",
+    "\\item{Data and metadata overview: }",
     "\\begin{itemize}",
+    "\\item{Metadata Visualization }",
     "\\item{Interactive Principal Component Analysis (iPCA) }",
-    "\\item{Two-way Heatmap clustering and visualization}",
+    "\\item{Hierarchical Clustering and Heatmap Visualization }",
     "\\end{itemize}",
     
-    "\\item{Univariate method: }",
+    "\\item{Univariate analysis: }",
     "\\begin{itemize}",
-    "\\item{Two-way between/within-subjects ANOVA}",
+    "\\item{Linear Models with Covariate Adjustment }",
+    "\\item{Correlation and Partial Correlation Analysis }",
+    "\\item{Two-way ANOVA (ANOVA2) }",
     "\\end{itemize}",
     
-    "\\item{Multivariate approaches}",
+    "\\item{Multivariate analysis: }",
     "\\begin{itemize}",
-    "\\item{ANOVA-Simultaneous Component Analysis (ASCA)}",
-    "\\item{Multivariate Empirical Bayes Analysis (MEBA)}",
+    "\\item{ANOVA-Simultaneous Component Analysis (ASCA) }",
+    "\\item{Multivariate Empirical Bayes Analysis (MEBA) }",
+    "\\end{itemize}",
+
+    "\\item{Supervised classification: }",
+    "\\begin{itemize}",
+    "\\item{Random Forest }",
     "\\end{itemize}",
     
     "\\end{itemize}",
@@ -137,13 +155,67 @@ CreateTimeSeriesAnalNullMsg<-function(){
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
 }
 
+##### DATA AND METADATA OVERVIEW SECTIONS #####
+
+#'Create report of analyses 
+#'@description Report generation using Sweave
+#'For Metadata Overview
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
+CreateMetaOverview <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # need to check if this process is executed
+  if(is.null(mSetObj$imgSet$metahtmaptwo)){
+    return();
+  }
+  
+  descr <- c("\\subsection{Data and Metadata Overview}\n",
+             "Understanding the correlation structure of the metadata is important for model",
+             "definition and interpretation. The metadata heatmap and correlation heatmap allow",
+             "for visual identification of relationships between metadata.",
+             "By default, all metadata are included in the visualizations.",
+             "This section supports multiple methods for calculating distance, correlation, and clustering,",
+             "and the heatmap can be viewed in either overview or detail mode.",
+             "\n\n");
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$meta.corhm,"}", sep=""),
+    "\\caption{Correlation heatmap displaying relationship between metadata.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$meta.corhm,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$metahtmaptwo,"}", sep=""),
+    "\\caption{Metadata heatmap displaying relationship between metadata.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$metahtmaptwo,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+}
+
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'For Interactive PCA
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateiPCAdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -165,19 +237,32 @@ CreateiPCAdoc <- function(mSetObj=NA){
              "\n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
+
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pca.pair,"}", sep=""),
+    "\\caption{Pairwise PCA with density outlines showing group membership.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$pca.pair,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
 #'Create report of analyses 
 #'@description Report generation using Sweave
-#'2-way heatmap
+#'For Correlation Heatmap
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
-CreateHeatmap2doc <- function(mSetObj=NA){
+CreateCorHeatmap <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+  
   # need to check if this process is executed
   if(is.null(mSetObj$analSet$htmap2)){
     return();
@@ -189,25 +274,108 @@ CreateHeatmap2doc <- function(mSetObj=NA){
              "Users can choose different clustering algorithms or distance measures to cluster the",
              "variables. The samples are ordered by the two factors with default the first factor",
              "used for primary ordering. Users can choose to switch the order.",
-             "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the clustering result in the form of a heatmap.\n"));
+             "\n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
+
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$htmaptwo,"}", sep=""),
+    "\\caption{Metadata heatmap displaying relationship between metabolites and metadata.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$htmaptwo,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+}
+
+##### UNIVARIATE ANALYSIS SECTIONS #####
+
+#'Create report of analyses 
+#'@description Report generation using Sweave
+#'Covariate Adjustment 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
+
+CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
   
-  if(!is.null(mSetObj$analSet$htmap2)){
-    cmdhist<-c(
-      "\\begin{figure}[htp]",
-      "\\begin{center}",
-      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$htmaptwo,"}", sep=""),
-      paste("\\caption{Clustering result shown as heatmap (",
-            "distance measure using ", "\\texttt{", mSetObj$analSet$htmap2$dist.par, "}, and clustering algorithm using ", "\\texttt{", mSetObj$analSet$htmap2$clust.par, "}).}", sep=""),
-      "\\end{center}",
-      paste("\\label{",mSetObj$imgSet$htmaptwo,"}", sep=""),
-      "\\end{figure}"
-    );
-    cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # need to check if this process is executed
+  if(is.null(mSetObj$analSet$cov)){
+    return();
   }
-  cat("\\clearpage", file=rnwFile, append=TRUE);
+  
+  descr <- c("\\subsection{Linear models with covariate adjustments}\n",
+             "Including metadata in the linear model adjusts for variability associated with them while ",
+             "performing statistical tests for the variable of interest. Users have the option of which metadata to include ",
+             "and whether to include them as fixed (normal) or random (blocking factor) effects. It is important to investigate ",
+             "correlation between metadata prior to defining the model as including variables that are highly correlated ",
+             "can lead to model parameter instability. ",
+             "\n\n");
+  
+  cat(descr, file=rnwFile, append=TRUE);
+
+
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$covAdj,"}", sep=""),
+    "\\caption{P-values for metabolites with and without covariate adjustment.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$covAdj,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+}
+
+
+#'Create report of analyses 
+#'@description Report generation using Sweave
+#'Correlation and Partial Correlation Analysis 
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
+CreateCorAnalysis <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # need to check if this process is executed
+  if(is.null(mSetObj$analSet$corr$cor.mat)){
+    return();
+  }
+  
+  descr <- c("\\subsection{Correlation and Partial Correlation Analysis}\n",
+             "Correlation analysis can be performed for a given feature and metadata of metadata of interest.",
+             "When the covariate is 'none' (default), regular correlation analysis will be performed;",
+             "otherwise, partial correlation will be performed.",
+             "For binary metadata, the point biserial correlation will be used;",
+             "for continuous metadata, users can choose Pearson/Spearman/Kendall correlation.",
+             "\n\n");  
+  cat(descr, file=rnwFile, append=TRUE);
+
+  cmdhist<-c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$corr,"}", sep=""),
+    "\\caption{Correlation coefficients for metadata of interest.}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$corr,"}", sep=""),
+    "\\end{figure}"
+  );
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
 #'Create report of analyses 
@@ -216,7 +384,7 @@ CreateHeatmap2doc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateAOV2doc <- function(mSetObj=NA){
   
@@ -266,13 +434,15 @@ CreateAOV2doc <- function(mSetObj=NA){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
+##### MULTIVARIATE ANALYSIS SECTIONS #####
+
 #'Create report of analyses 
 #'@description Report generation using Sweave
 #'Random Forest ASCA
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateASCAdoc <- function(mSetObj=NA){
   
@@ -466,7 +636,7 @@ CreateASCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMBdoc <- function(mSetObj=NA){
   
@@ -492,5 +662,70 @@ CreateMBdoc <- function(mSetObj=NA){
                 "GetSigTable.MB(mSet)",
                 "@");
   cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE);
+}
+
+
+##### SUPERVISED CLASSIFICATION SECTIONS #####
+
+#'Create report of analyses 
+#'@description Report generation using Sweave
+#'Random Forest
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
+CreateRandomForest <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # need to check if this process is executed
+  if(is.null(mSetObj$dataSet$cls.rf)){
+    return();
+  }
+  
+  descr <- c("\\subsection{Random Forest}\n",
+             "This implementation of random forest can only be used for classification, thus the primary metadata must be categorical.",
+             "Predictors in the model, including both metabolites and other metadata, can include both categorical and numeric variables.",
+             "Since random forest uses some random processes, turning randomness off means that",
+             "the results will be the same each time that you run the tool. This can be better for reproducibility, but is not necessary.",
+             "\n");
+  
+  cat(descr, file=rnwFile, append=TRUE);
+
+  cmdhist <- c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$rf.cls,"}", sep=""),
+    "\\caption{Classification error vs. number of trees}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$rf.cls,"}", sep=""),
+    "\\end{figure}"
+  ); 
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cmdhist <- c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$rf.imp,"}", sep=""),
+    "\\caption{Features ranked by their contributions to classification accuracy}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$rf.imp,"}", sep=""),
+    "\\end{figure}"
+  ); 
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+
+  cmdhist <- c(
+    "\\begin{figure}[htp]",
+    "\\begin{center}",
+    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$rf.outlier,"}", sep=""),
+    "\\caption{Up to five potential outliers flagged by random forest algorithm}",
+    "\\end{center}",
+    paste("\\label{",mSetObj$imgSet$rf.outlier,"}", sep=""),
+    "\\end{figure}"
+  ); 
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  
   cat("\\clearpage", file=rnwFile, append=TRUE);
 }

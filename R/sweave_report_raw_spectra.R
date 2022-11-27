@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreateRawAnalysisRnwReport <- function(mSetObj, usrName){
@@ -18,6 +18,7 @@ CreateRawAnalysisRnwReport <- function(mSetObj, usrName){
   CreateSpectraIOdoc(); # done
 
   CreateRawAnalMethod(); # done
+  CreateRawAnalyworkflow(); # done
   CreateRawAnalDetails(); # done
 
   CreateSampleSum(); # done
@@ -38,12 +39,12 @@ CreateRawIntr <- function(){
               spectrometry (LC-HRMS) has become the main workhorse for global metabolomics. The typical LC-HRMS metabolomics 
               workflow involves spectra collection, raw data processing, statistical and functional analysis.\n\n")
   
-  descr1 <- c("MetaboAnalyst aims to provide an efficient pipeline to support end-to-end analysis of LC-HRMS metabolomics 
+  descr1 <- c("MetaboAnalyst aims to provide an efficient pipeline to support end-to-end analysis of LC-HRMS global metabolomics 
               data in a high-throughput manner. \n\n")
   
   descr <- c(descr0, descr1,
-             "This module is designed to provide an automated workflow to process the raw spectra. 5 steps including parameters ",
-             "optimization/custimization, peak picking, peak alignment, peak gap filing and peak annotation.");
+             "This module is designed to provide an automated workflow to process the raw spectra in six steps, including ",
+             "reading and processing raw spectra, parameter optimization/customization, peak picking, peak alignment, peak gap filing and peak annotation.");
   
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -51,12 +52,11 @@ CreateRawIntr <- function(){
 ### Section 2 - Method Description
 CreateSpectraIOdoc <- function(){
   
-  descr <- c("\\subsection{Reading and Processing the Raw Data}\n",
-             "MetaboAnalyst MS Spectral Processing Module accepts several common MS formats",
-             "including mzXML, mzML, mzData, CDF formats. Other vendor format will be supported soon.
-             But all of them have to be centroided before processing.",
+  descr <- c("\\subsection{Raw Spectra Data Reading and Centroiding}\n",
+             "MetaboAnalyst MS Spectral Processing Module accepts several common open MS formats",
+             "including mzXML, mzML, mzData, CDF formats. All of them have to be centroided before processing.",
              "The Data Integrity Check is performed before the data processing starts. The basic information",
-             "of all spetra is summaried in Table", table.count<<-table.count+1,"shows the details of all spectra."
+             "of all spectra is summarized in Table", table.count<<-table.count+1,"shows the details of all spectra."
   );
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
@@ -71,10 +71,10 @@ CreateSpectraIOdoc <- function(){
 CreateSpectraInfoTable <- function(){
   
   if(file.exists("mSet.rda")){
-    load("mSet.rda"); require("OptiLCMS"); require(MSnbase)
+    load("mSet.rda");
     
-    filesize <- file.size(fileNames(mSet@rawOnDisk))/(1024*1024);
-    filename <- basename(fileNames(mSet@rawOnDisk));
+    filesize <- file.size(mSet@rawOnDisk@processingData@files)/(1024*1024);
+    filename <- basename(mSet@rawOnDisk@processingData@files);
     Centroid <- rep("True",length(filename));
     GroupInfo <- as.character(mSet@rawOnDisk@phenoData@data[["sample_group"]]);
     
@@ -136,9 +136,9 @@ CreateSpectraInfoTable <- function(){
   
 };
 CreateRawAnalMethod <- function(){
-  descr <- c("\\subsection{Raw Spectral Processing and Analyzing}",
+  descr <- c("\\subsection{Raw Spectral Processing Parameters}",
              "MetaboAnalyst offers several algorithms to process the spectral raw file, 
-             including MatchedFilter, centWave and Massifquant (launch soon) for peak pciking, and obiwarp and loess for Retention time alignment.", 
+             including MatchedFilter, centWave and Massifquant for peak pciking, and obiwarp and loess for Retention time alignment.", 
              "Here the detailed algorithms and parameters' used in this study.");
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
   
@@ -226,6 +226,28 @@ CreateRawAnalMethod <- function(){
   cat(descr3, file=rnwFile, append=TRUE, sep="\n");
   
 };
+CreateRawAnalyworkflow <- function(){
+  # this function is used to generate a section to describe the whole workflow
+  descr <- c("\\subsection{Peak Alignment and Annotation}",
+             "After peak picking, MetaboAnalyst groups peaks based on the density distribution of all identified MS peaks. 
+              This algorithm is developed from xcms R package (Colin A. et al. Anal. Chem. 2006, 78:779-787). 
+              In this step, all peaks (from the same or from different samples) being close on the retention time axis are grouped into a feature (peak group).\n\n", 
+             "The elution time of peaks (retention time) has been observed to vary in the chromatography between samples. 
+             The retention times of all grouped MS features (peaks) were aligned with the alorithm LOESS (by default) or Obiwarp. 
+             The retention time correction aligned all peaks as a table (matrix).\n\n",
+             "Feature matrix may contain some NAs for samples in which no features was picked/detected. 
+             While in many cases there might indeed be no peak signal in the m/z-rt region, it might also be that there is a corresponding MS feature, 
+             but the feature is too weak to be detected. Therefore, many gaps need to re-filled to recover the weak peaks. To acheive this aim,
+             all MS scans from the the raw spectra data were re-extracted to find all potential features regardless of the feature chromatographic shape.\n\n",
+             "Besides the peak alignment, annotation on the peaks are quite important to reduce the redundancy (isotopes and adducts). 
+             MetaboAnalyst use the algorithms from a R package, CAMERA (PMID: 22111785) to complete this task. 
+             All annotated features are presented as a table in the later section. All annotated features were further putatively annotated into compounds based on the adducts and isotopes annotation results. 
+             In details, all formulas are firstly predicted based on the ppm and annotation results (adducts and/or isotopes). 
+             Then, HMDB database will be used to searching the potential compounds. 
+             All matched compounds were returned as the putative chemical ID of the feature. Complete chemical annotation results are summarized in the later section.\n ");
+  cat(descr, file=rnwFile, append=TRUE, sep="\n");
+  
+}
 CreateRawAnalDetails <- function(){
   
   descr <- c("\\subsection{Raw Spectral Processing Platform}",
@@ -271,6 +293,7 @@ CreateSampleSum <- function(){
   CreateBPI(); # Done
   CreateIntensityStats(); # Done
   CreatePCA(); # Done
+  CreatePCA3D(); # Done
   createSpectraSumDoc(); # Done
   createSpectraTIC(); # Done
   
@@ -344,10 +367,66 @@ CreatePCA<- function(){
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
 };
+CreatePCA3D<- function(){
+  
+  descr <- c("\\subsection{Principal component analysis (PCA)}\n",
+             "PCA could also be shown in 3-dimensional style", 
+             "Here a primary 3D-PCA was performed with the log-transformed data.",
+             "The 3D-PCA score plot is shown in ", fig.count<<-fig.count+1,", as below."
+  );
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  if(file.exists("scores3D.png")){
+    cmdhist <- c( "\\begin{figure}[htp]",
+                  "\\begin{center}",
+                  paste("\\includegraphics[width=0.75\\textwidth]{scores3D.png}", sep=""),
+                  "\\caption{3D-PCA score. Samples from different groups are marked with different colors.}",
+                  "\\end{center}",
+                  "\\end{figure}",
+                  "\\clearpage"
+    );
+  } else {
+    descr3 <- c("\n\nNo 3D-PCA Score is presented. Please try to explore from result page.");
+    cat(descr3, file=rnwFile, append=TRUE);
+    cat("\n", file=rnwFile, append=TRUE);
+  }
+
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+  ## Loading plot
+  descr <- c("\\subsection{Principal component analysis (PCA)}\n",
+             "3D-PCA loading plot is showing the features as contributional loading factors for the difference among samples", 
+             "Here a primary 3D-PCA loading was performed with the log-transformed data.",
+             "The 3D-PCA loading plot is shown in ", fig.count<<-fig.count+1,", as below."
+  );
+  
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n", file=rnwFile, append=TRUE);
+  if(file.exists("loadings3D.png")){
+    cmdhist <- c( "\\begin{figure}[htp]",
+                  "\\begin{center}",
+                  paste("\\includegraphics[width=0.75\\textwidth]{loadings3D.png}", sep=""),
+                  "\\caption{3D-PCA loading plot. Samples from different groups are marked with different colors.}",
+                  "\\end{center}",
+                  "\\end{figure}",
+                  "\\clearpage"
+    );
+  } else {
+    descr3 <- c("\n\nNo 3D-PCA Loading is presented. Please try to explore from result page.");
+    cat(descr3, file=rnwFile, append=TRUE);
+    cat("\n", file=rnwFile, append=TRUE);
+  }
+  
+  cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
 createSpectraSumDoc<- function(){
   
   descr <- c("\\subsection{Spectra Summary}\n",
-             "The peaks information from different spectra after processing is summarized in", 
+             "The peaks information from different spectra after processing is summarized in Table ", 
              table.count<<-table.count+1,", as below."
   );
   cat(descr, file=rnwFile, append=TRUE);
@@ -435,7 +514,7 @@ CreateFeatureSum <- function(){
   descr <- c("\\section{Raw Spectra Processing - Feature summary}\n",
              "All spectra files included for processing in this module have been processed.",
              "All features processing result across the different spectra are shown as below, including peak feature summary,
-              and the corresponding Extracted Ion Chromatogram (EIC/XIC) of the features you are interested in.");
+              and the corresponding Extracted Ion Chromatogram (EIC/XIC) of the features you are interested in. ");
   cat(descr, file=rnwFile, append=TRUE);
   
   descr1 <- c(
@@ -451,8 +530,8 @@ CreateFeatureSum <- function(){
 
   createFeatureEIC(); # Done
   createFeatureEICStats(); # Done
-  #createFeatureSumDoc(); # Cancelled
-  
+  createFeatureSumDoc(); # Done
+  createFeatureAnnoSum(); # Done
   # Adding more and do some optimization in future
   
 };
@@ -465,7 +544,8 @@ createFeatureEIC <- function(){
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n", file=rnwFile, append=TRUE);
 
-  files <- list.files(pattern = "^EIC.*mz@")
+  #files <- list.files(pattern = "^EIC.*mz@")
+  files <- list.files(pattern = "^EIC_.*group")
   
   if(length(files) == 0){
     
@@ -478,7 +558,7 @@ createFeatureEIC <- function(){
   for (i in files){
     if(file.exists(i)){
       
-      if(grepl("s_sample_", i)){
+      #if(grepl("s_sample_", i)){
         fig.count<<-fig.count+1;
         cmdhist <- c( "\\begin{figure}[htp]",
                       "\\begin{center}",
@@ -489,20 +569,20 @@ createFeatureEIC <- function(){
                       "\\clearpage"
         )
         cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-      }
+      #}
       
-      if(grepl("s_group_", i)){
-        fig.count<<-fig.count+1;
-        cmdhist <- c( "\\begin{figure}[htp]",
-                      "\\begin{center}",
-                      paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
-                      paste0("\\caption{EIC of feature of groups: ", gsub("_","-",sub(".png","",i)),"}"),
-                      "\\end{center}",
-                      "\\end{figure}",
-                      "\\clearpage"
-        )
-        cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
-      }
+      # if(grepl("s_group_", i)){
+      #   fig.count<<-fig.count+1;
+      #   cmdhist <- c( "\\begin{figure}[htp]",
+      #                 "\\begin{center}",
+      #                 paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
+      #                 paste0("\\caption{EIC of feature of groups: ", gsub("_","-",sub(".png","",i)),"}"),
+      #                 "\\end{center}",
+      #                 "\\end{figure}",
+      #                 "\\clearpage"
+      #   )
+      #   cat(cmdhist, file=rnwFile, append=TRUE, sep="\n");
+      # }
       
       cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
     }
@@ -518,7 +598,7 @@ createFeatureEICStats <- function(){
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n", file=rnwFile, append=TRUE);
   
-  files <- list.files(pattern = "^[^(EIC)].*mz@.*s.png")
+  files <- list.files(pattern = "^[^(EIC)].*mz@.*s*.png")
   
   if(length(files) == 0){
     
@@ -535,7 +615,8 @@ createFeatureEICStats <- function(){
         cmdhist <- c( "\\begin{figure}[htp]",
                       "\\begin{center}",
                       paste("\\includegraphics[width=0.75\\textwidth]{", i, "}", sep=""),
-                      paste0("\\caption{Feature intensity statis box plot of different groups: ", gsub("_","-",sub(".png","",i)),"}"),
+                      paste0("\\caption{Feature intensity statis box plot of different groups: ", 
+                             gsub("_","-",sub(".png","",i)),"}"),
                       "\\end{center}",
                       "\\end{figure}",
                       "\\clearpage"
@@ -549,31 +630,82 @@ createFeatureEICStats <- function(){
 };
 createFeatureSumDoc <- function(){
   
-  descr <- c("\\subsection{Spectra Summary}\n",
-             "The features basic information and its annotation results after processing is summarized in", 
-             table.count<<-table.count+1,", as below."
+  descr <- c("\\subsection{Feature Annotation Summary}\n",
+             "The features basic information and its annotation results after processing is summarized in as below."
+  );
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
+  
+  descr2 <- createResSumText();
+  cat(descr2, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  
+};
+createResSumText <- function(){
+  txts <- PerformResultSummary();
+  txts[5] <- gsub("\\%", "\\\\%", txts[5])
+  txts[6] <- gsub("\\%", "\\\\%", txts[6])
+  return(paste0(txts, sep = "\n"))
+}
+createFeatureAnnoSum <- function() {
+  descr <- c("\\subsection{Feature Annotation Results}\n",
+             "The features annotation (adducts and isotopes) is summarized in as below in Table ", 
+             table.count<<-table.count+1, "."
   );
   cat(descr, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
   
   cmdhist2 <- c("<<echo=false, results=tex>>=",
-                "createFeatureSumTable()",
+                "createFeatureAnnotationSumTable()",
                 "@");
   cat(cmdhist2, file=rnwFile, append=TRUE, sep="\n");
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
-};
-createFeatureSumTable <- function(){
+  descr2 <- c("\\subsection{Compound Putative Annotation Results}\n",
+             "The features putative annotation (compound) is summarized in as below in Table ",
+             table.count<<-table.count+1, "."
+  );
+  cat(descr2, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
   
-  # if(file.exists("peak_feature_summary.csv")){
-  #   dt <- read.csv("peak_feature_summary.csv");
-  #   print(xtable::xtable(dt, 
-  #                        caption="Summary of features information after processing"), 
-  #         caption.placement="top", 
-  #         size="\\scriptsize",tabular.environment = "longtable");
-  # }
+  cmdhist3 <- c("<<echo=false, results=tex>>=",
+                "createFeatureCompoundSumTable()",
+                "@");
+  cat(cmdhist3, file=rnwFile, append=TRUE, sep="\n");
+  cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+}
+createFeatureAnnotationSumTable <- function(){
+  
+  if(file.exists("peak_feature_summary.csv")){
+    dt <- read.csv("peak_feature_summary.csv");
+    dt <- dt[(dt$adduct !="" | dt$isotopes != ""), c(1:4)]
+    rownames(dt) <- NULL
+    print(xtable::xtable(dt,
+                         caption="Summary of features annotation (adduct and isotope level)"),
+          caption.placement="top",
+          size="\\scriptsize",tabular.environment = "longtable", floating = FALSE, right = TRUE);
+  }
   
 }
 
-
+createFeatureCompoundSumTable <- function(){
+  
+  if(file.exists("peak_feature_summary.csv")){
+    dt <- read.csv("peak_feature_summary.csv");
+    dt <- dt[(dt$Formula!= "" & dt$Compound!=""), c(1:2, 5:6)]
+    dt$Compound <- gsub(";", "\n\n", dt$Compound)
+    #dt <- dt[1:5,]
+    rownames(dt) <- NULL
+    
+    print(xtable::xtable(dt,
+                         caption="Summary of features annotation (putative compound level)",
+                         align= c("p{0.02\\textwidth}",
+                                  "p{0.1\\textwidth}", "p{0.1\\textwidth}", 
+                                  "p{0.25\\textwidth}|", "p{0.35\\textwidth}")),
+          caption.placement="top",tabular.environment = "longtable",
+          floating = FALSE, 
+          );
+  }
+  
+}
 

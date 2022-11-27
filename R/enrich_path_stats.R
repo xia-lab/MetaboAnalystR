@@ -12,7 +12,7 @@
 #'@param method is "fisher" or "hyperg"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
@@ -20,7 +20,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj <- .get.mSet(mSetObj);
   # make a clean dataSet$cmpd data based on name mapping
   # only valid kegg id will be used
-  
+
   nm.map <- GetFinalNameMap(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){
     valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
@@ -41,10 +41,15 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   }
 
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
-    mSetObj$api$nodeImp <- nodeImp;
-    mSetObj$api$method <- method;
+    # make this lazy load
+    if(!exists("my.ora.kegg")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }
+
     mSetObj$api$oraVec <- ora.vec; 
-    
+    mSetObj$api$method <- method;
+    mSetObj$api$nodeImp <- nodeImp;
+
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
       
@@ -54,52 +59,46 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, oraVec = mSetObj$api$oraVec)
     }
-
-    # rds file to be sent to server
-    load_httr()
-    base <- api.base
-    endpoint <- "/pathwayora"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
     saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-    
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
-    }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    # check if result is there
-    if(nrow(mSetObj$analSet$ora.mat) == 0){
-      AddErrMsg("Failed to perform pathway analysis!")
-      return(0)
-    }
-    
-    fast.write.csv(mSetObj$analSet$ora.mat, file="pathway_results.csv");
-    return(.set.mSet(mSetObj))
+    return(my.ora.kegg());
   }
-  
+
   current.mset <- current.kegglib$mset.list;
   uniq.count <- current.kegglib$uniq.count;
   
   # check if need to be filtered against reference metabolome
   # TODO: address the following filtering for SMPDB if needed
+  gd.sets <- names(current.mset);
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.kegg)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
-    mSetObj$analSet$ora.filtered.mset <- current.mset;
-    uniq.count <- length(unique(unlist(current.mset, use.names=FALSE)));
+    
+    # remove those with length 0 (i.e. no members after filtering)
+    gd.sets <- names(current.mset)[lapply(current.mset, length) > 0];
+    current.mset <- current.mset[gd.sets];
+    mSetObj$analSet$ora.filtered.mset <- current.mset; 
   }
-  
+ 
+  set.size<-length(current.mset);
+  if(set.size < 2){
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
+    return(0);
+  }
+ 
+  # now perform enrichment analysis
+
+  # update data & parameters for ORA stats, based on suggestion
+  # https://github.com/xia-lab/MetaboAnalystR/issues/168
+  my.univ <- unique(unlist(current.mset, use.names=FALSE));
+  uniq.count <- length(my.univ);
+  ora.vec <- ora.vec[ora.vec %in% my.univ];
+  q.size <- length(ora.vec);   
+  if(q.size < 3){
+    AddErrMsg("Less than 3 metabolites left - too few to perform meaningful enrichment analysis!");
+    return(0);
+  }
+
   hits <- lapply(current.mset, function(x){x[x %in% ora.vec]});
   hit.num <-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
-  set.size <-length(current.mset);
   set.num <- unlist(lapply(current.mset, length), use.names=FALSE);
   
   # deal with no hits
@@ -120,7 +119,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     imp.list <- current.kegglib$dgr;
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
   }
-  
+  imp.list <- imp.list[gd.sets];
+
   res.mat[,1]<-set.num;
   res.mat[,2]<-q.size*(set.num/uniq.count);
   res.mat[,3]<-hit.num;
@@ -180,7 +180,7 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@param method Indicate the pathway enrichment analysis, global test is "gt" and global ancova is "ga".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -262,36 +262,13 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     }
     
     # send RDS to xialab api
+    saveRDS(toSend, "tosend.rds");
 
-    load_httr()
-    base <- api.base
-    endpoint <- "/pathwayqea"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
-    saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-    
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
+   # make this lazy load
+    if(!exists("my.pathway.qea")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
     }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    if(is.null(mSetObj$analSet$qea.mat)){
-      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
-      return(0)
-    }
-
-    print("Pathway QEA via api.metaboanalyst.ca successful!")
-    
-    fast.write.csv(mSetObj$analSet$qea.mat, file="pathway_results.csv");
-    return(.set.mSet(mSetObj));
+    return(my.pathway.qea());
   }
   
   # now, perform topology & enrichment analysis
@@ -301,6 +278,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   # check if a reference metabolome is applied
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
     current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
+
     mSetObj$analSet$qea.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
   }
@@ -323,6 +301,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
     imp.list <- current.kegglib$dgr[hit.inx];
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is \\textbf{out degree centrality}.";
   }
+
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
   
@@ -403,12 +382,16 @@ GetQEA.pathNames <- function(mSetObj=NA){
 #'@param kegg.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SetupSMPDBLinks <- function(kegg.ids){
-  smpdb.vec <- names(current.kegglib$path.smps)[match(kegg.ids,current.kegglib$path.smps)]
+  smpdb.vec <- names(current.kegglib$path.smps)[match(kegg.ids,current.kegglib$path.smps)];
+
   lk.len <- length(smpdb.vec);
+
+  if(lk.len==0){return("");};
+
   all.lks <- vector(mode="character", length=lk.len);
   for(i in 1:lk.len){
     lks <- strsplit(as.character(smpdb.vec[i]), "; ", fixed=TRUE)[[1]];
@@ -425,7 +408,7 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'@param smpdb.ids Input the list of SMPD ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SetupKEGGLinks <- function(smpdb.ids){
@@ -454,7 +437,7 @@ SetupKEGGLinks <- function(smpdb.ids){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
@@ -494,7 +477,7 @@ GetORA.keggIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetORA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){
@@ -511,7 +494,7 @@ GetORA.smpdbIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetQEA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){

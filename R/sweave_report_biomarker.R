@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateBiomarkerRnwReport<-function(mSetObj, usrName){
   
@@ -31,18 +31,18 @@ CreateBiomarkerRnwReport<-function(mSetObj, usrName){
 #'Biomarker analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateBiomarkerIntr<-function(){
   descr <- c("\\section{Background}\n",
-             "The metabolome is well-known to be a sensitive measure of health and disease, reflecting alterations",
-             " to the genome, proteome, and transcriptome, as well as changes in life-style and environment. As such,",
+             "The metabolome is well known to be a sensitive measure of health and disease, reflecting alterations",
+             " to the genome, proteome, and transcriptome, as well as changes in life style and environment. As such,",
              " one common goal of metabolomic studies is biomarker discovery, which aims to identify a metabolite or a set",
              " of metabolites capable of classifying conditions or disease with high sensitivity (true-positive rate) and",
              " specificity (true negative rate). Biomarker discovery is achieved through building predictive models of one or multiple metabolites",
-             " and evaluating the performance, or robustness of the model, to classify new patients into diseased or healthy categories.",
-             " The Biomarker analysis module supports all common ROC-curve based biomarker analyses. It includes several options for single (classical)",
-             " or multiple biomarker analysis, as well as for predictive biomarker model creation and evaluation.",
+             " and evaluating the performance and robustness of the model to classify new patients into diseased or healthy categories.",
+             " The Biomarker analysis module supports all common ROC-curve based biomarker analyses. It includes several options for single biomarker",
+             " or biomarker panel analysis, as well as for manual biomarker model creation and evaluation.",
              " For a comprehensive introductory tutorial and further details concerning biomarker analysis, please refer to",
              " \\textbf{Translational biomarker discovery in clinical metabolomics: an introductory tutorial} by Xia et al. 2013 (PMID: 23543913).\n"
   );
@@ -55,13 +55,13 @@ CreateBiomarkerIntr<-function(){
 #'Power analysis report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateBiomarkerOverview <- function(){
   descr <- c("\\section{Biomarker Analysis Overview}\n",
              "The module consists of five steps - uploading the data, data processing,",
              " biomarker selection, performance evaluation, and model creation. There are several options within",
-             " MetaboAnalystR to perform each of these steps, supporting all common ROC-curve based biomarker analyses. \n"
+             " MetaboAnalyst to perform each of these steps, supporting all common ROC-curve based biomarker analyses. \n"
   );
   cat(descr, file=rnwFile, append=TRUE);
 }
@@ -72,19 +72,28 @@ CreateBiomarkerOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateBiomarkerInputDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
   descr <- c("\\section{Data Input}\n",
-             "The biomarker analysis module accepts either a compound concentration table, spectral binned data, or a peak intensity",
-             " table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether",
-             " or not the data is paired. The data may either be .csv or .txt files.",
+             "The biomarker analysis module accepts either a compound concentration table, spectral binned data, or a peak intensity table.",
+             " The class label must contain only two groups. Multi-group biomarker analysis is supported. The format of the data must be specified, identifying whether the samples are in rows or columns.",
+             " The data may either be .csv or .txt files.",
              " \n\n");
   
   cat(descr, file=rnwFile, append=TRUE);
+  
+  descr<-c("\\subsubsection{Data Integrity Check}\n",
+           " Before data analysis, a data integrity check is performed to make sure that all of the necessary",
+           " information has been collected. The class labels must be present and must contain only two groups.",
+           " Compound concentration or peak intensity values must all be non-negative numbers.",
+           " By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
+           " found within the data (see next section).");
+  cat(descr, file=rnwFile, append=TRUE);
+  cat("\n\n", file=rnwFile, append=TRUE);
   
   # the data filtering
   descr<-c("\\subsubsection{Data Filtering}\n",
@@ -110,18 +119,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
   
   cat(filt.msg, file=rnwFile, append=TRUE);
   cat("\n\n", file=rnwFile, append=TRUE);
-  
-  descr<-c("\\subsubsection{Data Integrity Check}\n",
-           " Before data analysis, a data integrity check is performed to make sure that all of the necessary",
-           " information has been collected. The class labels must be present and must contain only two classes.",
-           " If the samples are paired, the class label must be from -n/2 to -1 for one group, and 1 to n/2 for the second group",
-           " (n is the sample number and must be an even number). Class labels with the same absolute value are assumed to be pairs.",
-           " Compound concentration or peak intensity values must all be non-negative numbers.",
-           " By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
-           " found within the data (see next section).");
-  cat(descr, file=rnwFile, append=TRUE);
-  cat("\n\n", file=rnwFile, append=TRUE);
-  
+
   descr<-c("\\subsubsection{Missing value imputations}\n",
            "Too many zeroes or missing values will cause difficulties in the downstream analysis.",
            " MetaboAnalystR offers several different methods for this purpose. The default method replaces ",
@@ -138,13 +136,11 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
   cat("\n\n", file=rnwFile, append=TRUE);
   
   if(is.null(mSetObj$msgSet$replace.msg)){
-    mSetObj$msgSet$replace.msg <- "No data filtering was performed.";
+    mSetObj$msgSet$replace.msg <- "No missing value imputation was performed.";
   }
   
-  cat(mSetObj$msgSet$replace.msg, file=rnwFile, append=TRUE);
-  
+  cat(mSetObj$msgSet$replace.msg, file=rnwFile, append=TRUE); 
   cat("\n\n", file=rnwFile, append=TRUE);
-  
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
 }
 
@@ -154,7 +150,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   
@@ -195,7 +191,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateRatioTable <- function(mSetObj=NA){
   
@@ -215,7 +211,7 @@ CreateRatioTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong 
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
@@ -292,7 +288,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
 #'Function to create a summary table for univariate biomarker analysis
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateUnivROCTable<-function(){
   
@@ -310,7 +306,7 @@ CreateUnivROCTable<-function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
@@ -322,15 +318,15 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
   descr <- c("\\section{Multivariate ROC curve exploration}\n",
              "The aim of the multivariate exploratory ROC curve analysis is to evaluate the performance of biomarker models created",
-             " through automated important feature identification. There are three multivariate algorithms used for ROC curve analysis", 
-             " partial least squares discriminant analysis (PLS-DA), random forest, and support vector machines (SVM). To begin,",  
+             " through automated feature selection. MetaboAnalyst currently supports three multivariate algorithms:", 
+             " partial least squares discriminant analysis (PLS-DA), random forests (RF), and support vector machines (SVM). To begin,",  
              " ROC curves are generated by Monte-Carlo cross validation (MCCV) using balanced subsampling. In each MCCV, 2/3 of the samples", 
-             " are used to evaluate feature importance, and the remaining 1/3 are used to validate the models created with the first step.", 
-             " The top ranking features (max top 100) in terms of importance are used to build the biomarker classification models. This is repeated",
+             " are used to evaluate feature importance, and the remaining 1/3 are used to validate the models created in the first step.", 
+             " The top ranking features (max top 100) in terms of importance are used to build the classification models. The process is repeated",
              " several times to calculate the performance and confidence intervals of each model. Users",
              " must specify the classification method and the feature ranking method for ROC curve analysis. For large datasets,", 
              " with more than 1000 features, the univariate feature ranking method is recommended to avoid long computation times. For",
-             " the PLS-DA method, users have the option to specify the number of latent variables (LV) to use. By default it is 2.", 
+             " the PLS-DA method, users have the option to specify the number of latent variables (LV) to use (default top 2 LVs).", 
              " In the plots below, users have selected to create plots for all biomarker models, or a single biomarker model. The plot description",
              " will indicate the model selected. If it is 0, it means the plot is for all biomarker models. A -1 means it used the best model, and an",
              " input 1-6 to plot a ROC curve for one of the top six models.",
@@ -417,7 +413,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
@@ -429,10 +425,10 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
   descr <- c("\\section{ROC Curve Based Model Creation and Evaluation}\n",
              "The aim of ROC curve based model creation and evaluation is to allow users to manually select any combination of features to create biomarker", 
-             " models using any of the three algorithms mentioned previously (PLS-DA, SVM, RF). The user also has the option to withhold a subset of samples", 
+             " models using any of the three algorithms mentioned previously (PLS-DA, SVM, or RF). The user also has the option to withhold a subset of samples", 
              " for extra validation purposes. Additionally, it allows a user to predict the class labels of new samples (unlabeled samples within the imported dataset).", 
-             " Features should be selected based on the user's own judgement or prior knowledge. Note, selection of features based on overall ranks", 
-             " (AUC, t-statistic, or fold-change) increases the risk of model-overfitting. These features may be the best biomarkers for a user's own data,", 
+             " Features should be selected based on the user's own judgement or prior knowledge (not from the current data). Note, selection of features based on overall ranks", 
+             " (AUC, t-statistic, or fold-change) from current data increases the risk of overfitting. These features may be the best biomarkers for a user's own data,", 
              " but not for new samples. Additionally, in order to get a decent ROC curve for validation, it is recommended that the hold-out data contains a balanced number", 
              " of samples from both groups and that it contain at least 8 hold-out samples (i.e. 4 from each group).", 
              "\n\n",
@@ -524,7 +520,6 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
     cat(ROCLabelstable, file=rnwFile, append=TRUE, sep="\n");
     
   }
-  
   cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
   
 }
@@ -556,12 +551,12 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateROCLabelsTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   predlabeltable <- mSetObj$analSet$ROCtest$pred.samples.table;
-  print(xtable::xtable(predlabeltable, caption="Predicted class labels with probability for new samples"), caption.placement="top", size="\\scriptsize");
+  print(xtable::xtable(predlabeltable, caption="Predicted class labels with probabilities for new samples"), caption.placement="top", size="\\scriptsize");
   
 }

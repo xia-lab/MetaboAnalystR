@@ -33,7 +33,7 @@ my.time.mb.2d <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, 
   indx <- order(c.grp, mn.grp, k.grp)
   M <- M[,indx]
   
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
+  mis <- colSums(!apply(M, 1, is.na));
   mis <- sum((mis/k-floor(mis/k)) !=0)
   if(mis>0) stop(mis, " metabolites may have within replicate missing values.")
   

@@ -20,7 +20,7 @@ my.time.mb.1d <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=N
   indx <- order(n.grp, k.grp)
   M <- M[,indx]
   
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
+  mis <- colSums(!apply(M, 1, is.na));
   mis <- sum((mis/k-floor(mis/k)) !=0)
   if(mis>0) stop(mis, " genes may have missing values in some of the replicates.")
   

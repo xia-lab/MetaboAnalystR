@@ -5,7 +5,7 @@
 #'FALSE = no batch effect adjustment.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -81,8 +81,8 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   
   AddMsg("Constructed the commom matrix!");
   
-  if(nrow(common.matrix) > 1000){  # max sample number allow 1000
-    AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 1000!)"));
+  if(nrow(common.matrix) > 5000){  # max sample number allow 5000
+    AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 5000!)"));
     return(0);
   }
   
@@ -152,7 +152,7 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -201,7 +201,7 @@ PerformEachDEAnal <- function(mSetObj=NA){
 #'@param BHth Numeric input to set the significance level. By default it is 0.05. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -279,7 +279,7 @@ PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
 #'@param minVote Numeric input to set the minimum vote-count. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
@@ -353,7 +353,7 @@ PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
 #'@param BHth Numeric input to set the significance level. By default it is 0.05. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
@@ -590,19 +590,13 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
   dev.off();
 }
 
-#'Prepare data for Venn diagram
+#'Prepare data for Upset diagram
 #'@param mSetObj Input name of the created mSet Object
 #'@param fileNm json file name to save
 #'@export
 PrepareUpsetData <- function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
-
-  # create a list store all possible combination (for a max of 4)
-  # note, the whole region is divided into small areas (16 for 4; 7 for 3, 3 for 2)
-  # for instance:
-  # a: a unique (no b, no c)
-  # ab: a and b, no c  
   
   newDat <- list();
   hit.inx <- mdata.all==1;

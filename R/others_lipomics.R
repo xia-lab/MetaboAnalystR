@@ -4,7 +4,7 @@
 #'@param iso Default is set to "y"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 analyze.lipids <- function(inFile, iso='y'){
   data <- .readDataTable(inFile);
@@ -20,7 +20,7 @@ analyze.lipids <- function(inFile, iso='y'){
 #'@param iso Default is set to "y"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 computeConc<-function(X, iso="y"){
   
@@ -71,7 +71,7 @@ computeConc<-function(X, iso="y"){
 #'@param prob.file Input the prob file
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 calculateConcISO<-function(dat, cls.name, cls.num, min.file, prob.file){
   lip.nms<-names(dat[,-1]);

@@ -8,14 +8,14 @@
 ### 4) companion web interface on MetaboAnalyst - the "MS Peaks to Pathways" module
 ### @authors J. Chong \email{jasmine.chong@mail.mcgill.ca}, J. Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT License
 
 #'Save adduct names for mapping
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param qvec Input the vector to query
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Setup.AdductData <- function(mSetObj=NA, qvec){
@@ -32,7 +32,7 @@ Setup.AdductData <- function(mSetObj=NA, qvec){
 #'@param version version of mummichog
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
   
@@ -67,7 +67,7 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
 #'"both" for both p-values and effect-sizes.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 Read.PeakListData <- function(mSetObj=NA, filename = NA, 
@@ -236,7 +236,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
     feats <- make.unique(feats, sep="")
     colnames(mzmine_table) <- feats
   }
-  write.csv(mzmine_table, newnames, row.names = TRUE)
+  fast.write.csv(mzmine_table, newnames, row.names = TRUE)
   return(.set.mSet(mSetObj))
 }
 
@@ -246,7 +246,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
 #'@param type Input the name of mummichog analysis type, usually 'mpt'.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 SetPeakFormat <-function(mSetObj=NA, type = "mpt"){
   mSetObj <- .get.mSet(mSetObj);
@@ -283,7 +283,7 @@ GetPeakFormat <- function(mSetObj=NA){
 #'@param mode ion mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 Convert2Mummichog <- function(mSetObj=NA, 
@@ -442,7 +442,7 @@ Convert2Mummichog <- function(mSetObj=NA,
 #'@param force_primary_ion Character, if "yes", only mz features that match compounds with a primary ion are kept.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 UpdateInstrumentParameters <- function(mSetObj=NA, 
@@ -476,7 +476,7 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -642,7 +642,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'@param fraction fraction value for mummichog running
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
@@ -675,7 +675,7 @@ SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
 #'@param cutoff cutoff value for mummichog running
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 SetMummichogPval <- function(mSetObj=NA, cutoff){
@@ -759,12 +759,12 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'@param permNum Numeric, input the number of permutations to perform. Default is 100.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import qs
 
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
-  require("plyr");
+
   mSetObj <- .get.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
@@ -811,13 +811,12 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     
     # remove paths not found by all three - complete.cases
     path.intersected <- lapply(pathResults, function(x) x[row.names(x) %in% path.intersect,])
-    #li_2 <- lapply(seq_along(path.intersected), function(i) {colnames(path.intersected[[i]]) <- paste0(colnames(path.intersected[[i]]), names(path.intersected)[[i]]) ; path.intersected[[i]] } )
-    path2 <- data.table::setDF(Reduce(merge, 
+    mum.df <- data.table::setDF(Reduce(merge, 
                                       lapply(path.intersected, 
                                              data.table::data.table, 
                                              keep.rownames = TRUE)))
     
-    mum.df <- path2[, c("rn", "Pathway total", "Hits.total", "Hits.sig", "FET", "P_val")]
+    mum.df <- mum.df[, c("rn", "Pathway total", "Hits.total", "Hits.sig", "FET", "P_val")]
     rownames(mum.df) <- mum.df$rn;
     # combine p-values
     # replace 1 with 0.999 and 0 with low number
@@ -834,7 +833,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     ord.inx <- order(dfcombo[,6]);
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     
-    write.csv(dfcombo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(dfcombo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
     mSetObj$integ.resmat <- dfcombo;
     matched_cpds <- names(mSetObj$cpd_exp)
     colnames(mum.df)[1] = "pathways";
@@ -894,14 +893,13 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     pathResults$gsea.all <- mSetObj$mummi.gsea.resmat
     
     path.names.all <- lapply(pathResults, rownames)
-    path.intersect <- Reduce(intersect, path.names.all)
+    path.shared <- Reduce(intersect, path.names.all)
     
     # remove paths not found by all three - complete.cases
-    path.intersected <- lapply(pathResults, function(x) x[row.names(x) %in% path.intersect,])
-    #li_2 <- lapply(seq_along(path.intersected), function(i) {colnames(path.intersected[[i]]) <- paste0(colnames(path.intersected[[i]]), names(path.intersected)[[i]]) ; path.intersected[[i]] } )
-    path2 <- data.table::setDF(Reduce(merge, lapply(path.intersected, data.table::data.table, keep.rownames = TRUE)))
+    path.intersected <- lapply(pathResults, function(x) x[row.names(x) %in% path.shared,])
+    mum.df <- data.table::setDF(Reduce(merge, lapply(path.intersected, data.table::data.table, keep.rownames = TRUE)))
     
-    mum.df <- path2[, c(1:4, 6, 12)]
+    mum.df <- mum.df[, c(1:4, 6, 14)]
     rownames(mum.df) <- mum.df$rn
     mum.df <- mum.df[,-1]
     colnames(mum.df) <- c("Total_Size", "Hits", "Sig_Hits", "Mummichog_Pvals", "GSEA_Pvals")
@@ -916,7 +914,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     colnames(df.combo) <- c("Total_Size", "Hits", "Sig_Hits", "Mummichog_Pvals", "GSEA_Pvals", "Combined_Pvals")
     ord.inx <- order(df.combo[,6]);
     df.combo <- signif(as.matrix(df.combo[ord.inx, ]), 4);
-    write.csv(df.combo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(df.combo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
     mSetObj$integ.resmat <- df.combo
     
     ## transform ecpd to cpd for json files
@@ -1022,7 +1020,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   if(!is.null(mSetObj$dataSet$adduct.custom)){
     mw <- mummichog.lib$cpd.lib$mw;
     new_adducts <- new_adduct_mzlist(mSetObj, mw);
-    ms0 <- new_adducts$pos;
     
     cpd.lib <- list(
       mz.matp = new_adducts$pos,
@@ -1033,7 +1030,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     );
     
   }else{
-    ms <- mummichog.lib$cpd.lib$adducts[["positive"]];
+
     cpd.lib <- list(
       mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
       mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
@@ -1301,7 +1298,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     
     initial_ecs <- unlist(empirical.cpds2cpds, recursive=FALSE)
     names(initial_ecs) <- paste0("EC", 1:length(initial_ecs))
-    print(paste0(length(initial_ecs), " inital ECs created!"))
+    print(paste0(length(initial_ecs), " initial ECs created!"))
     
     # second, merge ECs if same m/z and form - append compounds
     try <- melt(initial_ecs)
@@ -1416,10 +1413,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
       ec <- replace(ec, grep(paste0("\\b", ec.unique[i], "\\b"), ec, perl=TRUE), paste0("EC000", i))
     }
     
-    #for(i in seq_along(ec.unique)){
-    #  ec <- gsub(paste0("\\b", ec.unique[i], "\\b"), paste0("EC000", i), ec)
-    #}
-    
     matched_res$Empirical.Compound <- gsub("\\|.*", "", ec)
     end <- Sys.time()
     totaltime <- end-start
@@ -1469,6 +1462,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     ec1 <- unique(unlist(mz2ec_dict[hits.index]));
     mSetObj$input_ecpdlist <- ec1;
     mSetObj$total_matched_ecpds <- unique(as.vector(matched_res$Empirical.Compound));
+
   } else {
     # get the expression profile for each 
     exp.mat <- data.frame(key=matched_res[,2], value=as.numeric(matched_ts));
@@ -2204,24 +2198,23 @@ CalculateEffectSize <- function(mSetObj=NA, paired=FALSE, method="cohen"){
 }
 
 # Internal function for permutation, no RT
-.perform.mummichogPermutations <- function(mSetObj, permNum){
-  
-  num_perm <- permNum;
-  print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
-  permutation_hits <- permutation_record <- vector("list", num_perm);
+.perform.mummichogPermutations <- function(mSetObj, permNum=100){
+
+  print(paste('Resampling, ', permNum, 'permutations to estimate background ...'));
+  permutation_hits <- permutation_record <- vector("list", permNum);
   matched_res <- qs::qread("mum_res.qs");
   set.seed(123)
-  for(i in 1:num_perm){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
+  for(i in 1:permNum){ # for each permutation, create list of input compounds and calculate pvalues for each pathway
     input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_cpdlist(mSetObj, input_mzlist);
     perm <- ComputeMummichogPermPvals(t, mSetObj$total_matched_cpds, mSetObj$pathways, matched_res, input_mzlist, mSetObj$cpd2mz_dict);
     permutation_record[[i]] <- perm[1]
     permutation_hits[[i]] <- perm[2]
   }
-  
+
+  # append new info
   mSetObj$perm_record <- permutation_record;
   mSetObj$perm_hits <- permutation_hits;
-  
   return(mSetObj);
 }
 
@@ -2259,12 +2252,12 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
 
 # Internal function for permutation
 .perform.mummichogRTPermutations <- function(mSetObj, permNum){
-  num_perm <- permNum;
-  print(paste('Resampling, ', num_perm, 'permutations to estimate background ...'));
-  permutation_hits <- permutation_record <- vector("list", num_perm);
+
+  print(paste('Resampling, ', permNum, 'permutations to estimate background ...'));
+  permutation_hits <- permutation_record <- vector("list", permNum);
   matched_res <- qs::qread("mum_res.qs");
   set.seed(123)
-  for(i in 1:num_perm){ # for each permutation, create list of input emp compounds and calculate pvalues for each pathway
+  for(i in 1:permNum){ # for each permutation, create list of input emp compounds and calculate pvalues for each pathway
     input_mzlist <- sample(mSetObj$dataSet$ref_mzlist, mSetObj$dataSet$N)
     t <- make_ecpdlist(mSetObj, input_mzlist);
     perm <- ComputeMummichogRTPermPvals(t, mSetObj$total_matched_ecpds, mSetObj$pathways, matched_res, input_mzlist);
@@ -2272,9 +2265,9 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
     permutation_hits[[i]] <- perm[2]
   }
   
+  # append new info
   mSetObj$perm_record <- permutation_record;
-  mSetObj$perm_hits <- permutation_hits
-  
+  mSetObj$perm_hits <- permutation_hits;
   return(mSetObj);
 }
 
@@ -2344,7 +2337,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   uniq.count <- length(unique(unlist(current.mset, use.names = FALSE)));
   
   # prepare for the result table
-  res.mat <- matrix(0, nrow=length(current.mset), ncol=6);
+  res.mat <- matrix(0, nrow=length(current.mset), ncol=8);
   
   #fishermatrix for phyper
   fishermatrix <- cbind(unsize-1, set.num, (query_set_size + unlist(negneg) - unsize), query_set_size); 
@@ -2357,7 +2350,9 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   res.mat[,4] <- query_set_size*(path.num/uniq.count); #expected
   res.mat[,6] <- apply(easematrix, 1, function(x) fisher.test(matrix(x, nrow=2), alternative = "greater")$p.value);
   res.mat[,5] <- apply(fishermatrix, 1, function(x) phyper(x[1], x[2], x[3], x[4], lower.tail=FALSE));
-  colnames(res.mat) <- c("Pathway total", "Hits.total", "Hits.sig", "Expected", "FET", "EASE");
+  res.mat[,7] <- set.num
+  res.mat[,8] <- unsize
+  colnames(res.mat) <- c("Pathway total", "Hits.total", "Hits.sig", "Expected", "FET", "EASE","Total","Sig");
   rownames(res.mat) <- mSetObj$pathways$name
   
   mSetObj$pvals <- res.mat;
@@ -2409,7 +2404,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   emp.p <- sapply(seq_along(record_matrix[,1]), function(i) (sum(record_matrix[i,] <= fisher.p[i])/num_perm) )
   
   res.mat <- cbind(res.mat, Emp.Hits=better.hits, Empirical=emp.p, Cpd.Hits = feat_vec)
-  
+ 
   # remove those no hits
   hit.inx <- as.numeric(as.character(res.mat[,3])) > 0;
   res.mat <- res.mat[hit.inx, , drop=FALSE];
@@ -2425,16 +2420,16 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   path.nms <- mSetObj$pathways$name[hit.inx];
   
   # order by p-values
-  ord.inx <- order(res.mat[,7]);
+  ord.inx <- order(res.mat[,9]);
   
-  Cpd.Hits <- res.mat[ord.inx, 10]
-  res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:9, drop=FALSE]), 2, as.numeric), 5);
+  Cpd.Hits <- res.mat[ord.inx, 12]
+  res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:11, drop=FALSE]), 2, as.numeric), 5);
   rownames(res.mat) <- path.nms[ord.inx]
-  mSetObj$mummi.resmat <- res.mat[,-9];
-  
+  mSetObj$mummi.resmat <- res.mat[,-11];
+ 
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
-  mSetObj$path.pval <- as.numeric(res.mat[,5])
+  mSetObj$path.pval <- as.numeric(res.mat[,9])
   matched_res <- qs::qread("mum_res.qs");
   
   json.res <- list(
@@ -2444,13 +2439,14 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
     hits.all.size = as.numeric(res.mat[,2]),
     hits.sig = convert2JsonList(hits.sig[ord.inx]),
     hits.sig.size = as.numeric(res.mat[,3]),
-    fisher.p = as.numeric(res.mat[,7]),
+    fisher.p = as.numeric(res.mat[,5]),
+    gamma.p = as.numeric(res.mat[,9]),
     peakToMet = mSetObj$cpd_form_dict,
     peakTable = matched_res
   );
   
-  matri = res.mat[,-8]
-  matri = cbind(res.mat, paste0("P", seq.int(1, nrow(res.mat))))
+
+  matri = cbind(res.mat[,-c(7:8)], paste0("P", seq.int(1, nrow(res.mat))))
   colnames(matri)[ncol(matri)] = "Pathway Number"
   matri <- cbind(matri, Cpd.Hits)
   fast.write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
@@ -2463,23 +2459,26 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
 
 # Internal function for significant p value with RT
 .compute.mummichogRTSigPvals <- function(mSetObj){
-  
   qset <- unique(unlist(mSetObj$input_ecpdlist)); #Lsig ora.vec
   query_set_size <- length(qset); #q.size
-  
+  input_cpd <- unique(unlist(mSetObj$ecpd_cpd_dict[qset]));
+
   total_ecpds <- unique(mSetObj$total_matched_ecpds) #all matched compounds
   total_feature_num <- length(total_ecpds)
+  total_cpds <- unique(unlist(mSetObj$ecpd_cpd_dict));
   
   current.mset <- mSetObj$pathways$emp_cpds; #all compounds per pathway
   path.num <- unlist(lapply(current.mset, length));
   
   ecpds <- lapply(current.mset, function(x) intersect(x, total_ecpds)); #pathways & all ref ecpds
   set.num <- unlist(lapply(ecpds, length)); # total ecpd num in pathway
-  
+  cpd.num<- unlist(lapply(lapply(mSetObj$pathways$cpds, function(x) intersect(x, total_cpds)), length)); 
+
   feats <- lapply(current.mset, function(x) intersect(x, qset)); #pathways & lsig
   feat_len <- unlist(lapply(feats, length)); # length of overlap features
   feat_vec <- sapply(feats, function(x) paste(x, collapse=";"))
-  
+  cpd_len<- lapply(mSetObj$pathways$cpds, function(x) intersect(x, input_cpd))
+
   negneg <- sizes <- vector(mode="list", length=length(current.mset)); #empty lists
   
   for(i in seq_along(current.mset)){ # for each pathway
@@ -2495,26 +2494,29 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   uniq.count <- length(unique(unlist(current.mset, use.names = FALSE)));
   
   # prepare for the result table
-  res.mat <- matrix(0, nrow=length(current.mset), ncol=6);
+  res.mat <- matrix(0, nrow=length(current.mset), ncol=8);
   
   #fishermatrix for phyper
-  fishermatrix <- cbind(unsize-1, set.num, (query_set_size + unlist(negneg) - unsize), query_set_size); 
+  fishermatrix <- cbind(unsize-1, set.num, (query_set_size + unlist(negneg) - unsize), query_set_size);
   first <- unlist(lapply(sizes, function(x) max(0, x-1)));
   easematrix <- cbind(first, (set.num - unsize + 1), (query_set_size - unsize), unlist(negneg)); 
-  
-  res.mat[,1] <- path.num;  
-  res.mat[,2] <- set.num;
-  res.mat[,3] <- unsize;
+ 
+
+  res.mat[,1] <- unlist(lapply(mSetObj$pathways$cpds, length));  
+  res.mat[,2] <- cpd.num;
+  res.mat[,3] <- as.integer(unlist(lapply(cpd_len, length)));
   res.mat[,4] <- query_set_size*(path.num/uniq.count); #expected
   res.mat[,5] <- apply(fishermatrix, 1, function(x) phyper(x[1], x[2], x[3], x[4], lower.tail=FALSE));
   res.mat[,6] <- apply(easematrix, 1, function(x) fisher.test(matrix(x, nrow=2), alternative = "greater")$p.value);
-  
-  colnames(res.mat) <- c("Pathway total", "Hits.total", "Hits.sig", "Expected", "FET", "EASE");
+  res.mat[,7] <- set.num
+  res.mat[,8] <- unsize
+
+  colnames(res.mat) <- c("Pathway total", "Hits.total", "Hits.sig", "Expected", "FET", "EASE","Total.EC","Sig.EC");
   rownames(res.mat) <- mSetObj$pathways$name
   
   mSetObj$pvals <- res.mat;
   permutations_hits <- matrix(unlist(mSetObj$perm_hits), nrow=length(mSetObj$perm_hits), byrow=TRUE);
-  sig_hits <- res.mat[,3]; # sighits
+  sig_hits <- unsize; # sighits
   sigpvalue <- res.mat[,5]; # EASE scores
   
   perm_record <- unlist(mSetObj$perm_record);
@@ -2548,76 +2550,78 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   
   #calculate empirical p-values
   record <- mSetObj$perm_record
+
+
   fisher.p <- as.numeric(res.mat[,5])
   
   #pathway in rows, perms in columns
   record_matrix <- do.call(cbind, do.call(cbind, record))
-  num_perm <- ncol(record_matrix)
-  
-  #number of better hits for web
-  better.hits <- sapply(seq_along(record_matrix[,1]), function(i) sum(record_matrix[i,] <= fisher.p[i])  )
-  
-  #account for a bias due to finite sampling - Davison and Hinkley (1997)
-  emp.p <- sapply(seq_along(record_matrix[,1]), function(i) (sum(record_matrix[i,] <= fisher.p[i])/num_perm) )
-  
-  res.mat <- cbind(res.mat, Emp.Hits = better.hits, Empirical = emp.p, EC.Hits = feat_vec)
-  
-  # remove pathways with no hits
-  hit.inx <- as.numeric(as.character(res.mat[,3])) > 0;
-  res.mat <- res.mat[hit.inx, , drop=FALSE];
-  
-  if(nrow(res.mat) <= 1){
-    AddErrMsg("Not enough m/z to compound hits for pathway analysis! Try Version 1 (no RT considerations)!")
-    return(0)
-  }
-  
-  # prepare json element for network
-  # need to convert ecpds to cpds
-  # and get average expression based on ec
-  cpds <- lapply(ecpds, function(x) unique(unlist(mSetObj$ecpd_cpd_dict[match(x, names(mSetObj$ecpd_cpd_dict))])) )  
-  cpd.exp.vec <- sapply(ecpds, function(x) mean(mSetObj$ec_exp[match(x, names(mSetObj$ec_exp))]) )
-  cpds_feats <- lapply(feats, function(x) unique(unlist(mSetObj$ecpd_cpd_dict[match(x, names(mSetObj$ecpd_cpd_dict))])) )  
-  
-  # now make exp vec for all compounds
-  cpds2ec <- mSetObj$cpd_ecpd_dict
-  cpds.all <- unique(unlist(mSetObj$ecpd_cpd_dict[match(total_ecpds, names(mSetObj$ecpd_cpd_dict))]))
-  cpd.exp.vec <- sapply(cpds.all, function(x) sapply(seq_along(x), function(i) mean(mSetObj$ec_exp[match(unique(unlist(cpds2ec[match(x[[i]], names(cpds2ec))])), names(mSetObj$ec_exp))]) ) )
-  
-  hits.all <- cpds[hit.inx];
-  hits.sig <- cpds_feats[hit.inx];  
-  path.nms <- mSetObj$pathways$name[hit.inx];
-  
-  # order by p-values
-  if(length(na.omit(res.mat[,7])) == 0){
-    ord.inx <- order(res.mat[,5]); # order by FET if gamma not able to be calc
-  }else{
-    ord.inx <- order(res.mat[,7]); # order by gamma
-  }
-  
-  EC.Hits = res.mat[ord.inx, 10]
-  res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:9]), 2, as.numeric), 5); # loop through columns and keep rownames
-  rownames(res.mat) <- path.nms[ord.inx]
-  
-  mSetObj$mummi.resmat <- res.mat[,-9];
-  mSetObj$path.nms <- path.nms[ord.inx]
-  mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
-  mSetObj$path.pval <- as.numeric(res.mat[,5])
-  matched_res <- qs::qread("mum_res.qs");
-  
-  json.res <- list(
-    cmpd.exp = cpd.exp.vec,
-    path.nms = path.nms[ord.inx],
-    hits.all = convert2JsonList(hits.all[ord.inx]),
-    hits.all.size = as.numeric(res.mat[,2]),
-    hits.sig = convert2JsonList(hits.sig[ord.inx]),
-    hits.sig.size = as.numeric(res.mat[,3]),
-    fisher.p = as.numeric(res.mat[,7]),
-    peakToMet = mSetObj$cpd_form_dict,
-    peakTable = matched_res
-  );
-  
-  matri = res.mat[,-8]
-  matri = cbind(res.mat, paste0("P", seq.int(1, nrow(res.mat))))
+num_perm <- ncol(record_matrix)
+
+#number of better hits for web
+better.hits <- sapply(seq_along(record_matrix[,1]), function(i) sum(record_matrix[i,] <= fisher.p[i])  )
+
+#account for a bias due to finite sampling - Davison and Hinkley (1997)
+emp.p <- sapply(seq_along(record_matrix[,1]), function(i) (sum(record_matrix[i,] <= fisher.p[i])/num_perm) )
+
+res.mat <- cbind(res.mat, Emp.Hits = better.hits, Empirical = emp.p, EC.Hits = feat_vec)
+
+# remove pathways with no hits
+hit.inx <- as.numeric(as.character(res.mat[,8])) > 0;
+res.mat <- res.mat[hit.inx, , drop=FALSE];
+
+if(nrow(res.mat) <= 1){
+  AddErrMsg("Not enough m/z to compound hits for pathway analysis! Try Version 1 (no RT considerations)!")
+  return(0)
+}
+
+# prepare json element for network
+# need to convert ecpds to cpds
+# and get average expression based on ec
+cpds <- lapply(ecpds, function(x) unique(unlist(mSetObj$ecpd_cpd_dict[match(x, names(mSetObj$ecpd_cpd_dict))])) )  
+cpd.exp.vec <- sapply(ecpds, function(x) mean(mSetObj$ec_exp[match(x, names(mSetObj$ec_exp))]) )
+cpds_feats <- lapply(feats, function(x) unique(unlist(mSetObj$ecpd_cpd_dict[match(x, names(mSetObj$ecpd_cpd_dict))])) )  
+
+# now make exp vec for all compounds
+cpds2ec <- mSetObj$cpd_ecpd_dict
+cpds.all <- unique(unlist(mSetObj$ecpd_cpd_dict[match(total_ecpds, names(mSetObj$ecpd_cpd_dict))]))
+cpd.exp.vec <- sapply(cpds.all, function(x) sapply(seq_along(x), function(i) mean(mSetObj$ec_exp[match(unique(unlist(cpds2ec[match(x[[i]], names(cpds2ec))])), names(mSetObj$ec_exp))]) ) )
+
+hits.all <- cpds[hit.inx];
+hits.sig <- cpds_feats[hit.inx];  
+path.nms <- mSetObj$pathways$name[hit.inx];
+
+# order by p-values
+if(length(na.omit(res.mat[,9])) == 0){
+  ord.inx <- order(res.mat[,5]); # order by FET if gamma not able to be calc
+}else{
+  ord.inx <- order(res.mat[,9]); # order by gamma
+}
+
+EC.Hits = res.mat[ord.inx, 12]
+res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:11]), 2, as.numeric), 5); # loop through columns and keep rownames
+rownames(res.mat) <- path.nms[ord.inx]
+
+mSetObj$mummi.resmat <- res.mat[,-11];
+mSetObj$path.nms <- path.nms[ord.inx]
+mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
+mSetObj$path.pval <- as.numeric(res.mat[,5])
+matched_res <- qs::qread("mum_res.qs");
+
+json.res <- list(
+  cmpd.exp = cpd.exp.vec,
+  path.nms = path.nms[ord.inx],
+  hits.all = convert2JsonList(hits.all[ord.inx]),
+  hits.all.size = as.numeric(res.mat[,7]),
+  hits.sig = convert2JsonList(hits.sig[ord.inx]),
+  hits.sig.size = as.numeric(res.mat[,8]),
+  fisher.p = as.numeric(res.mat[,5]),
+  gamma.p = as.numeric(res.mat[,9]),
+  peakToMet = mSetObj$cpd_form_dict,
+  peakTable = matched_res
+);
+
+  matri = cbind(res.mat[,-c(7:8)], paste0("P", seq.int(1, nrow(res.mat))))
   colnames(matri)[ncol(matri)] = "Pathway Number"
   matri <- cbind(matri, EC.Hits)
   fast.write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
@@ -2630,6 +2634,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
 
 ## Internal function for calculating GSEA, no RT
 .compute.mummichog.fgsea <- function(mSetObj, permNum){
+
   num_perm <- permNum;
   total_cpds <- mSetObj$cpd_exp #scores from all matched compounds
   
@@ -2648,8 +2653,8 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
                                     id = unlist(strsplit(id, "; ", fixed = TRUE))), 
                              by=1:nrow(dt.scores)]
   
-  rank.vec <- as.numeric(dt.scores.out$nrow)
-  names(rank.vec) <- as.character(dt.scores.out$id)
+  rank.vec <- as.numeric(dt.scores.out$nrow);
+  names(rank.vec) <- as.character(dt.scores.out$id);
    
   scores.vec <- as.numeric(ag.sorted$scores)
   names(scores.vec) <- as.character(ag.sorted$id)
@@ -2692,7 +2697,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
   
   matched_cpds <- names(mSetObj$cpd_exp)
-  inx2<-data.table::na.omit(match(rownames(res.mat), mSetObj$pathways$name))
+  inx2<- stats::na.omit(match(rownames(res.mat), mSetObj$pathways$name))
   filt_cpds <- lapply(inx2, function(f) {mSetObj$pathways$cpds[f]})
   
   cpds <- lapply(filt_cpds, function(x) intersect(unlist(x), matched_cpds))
@@ -2754,15 +2759,19 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   }
   
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
-  
+
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
   
-  path.size <- unlist(lapply(current.mset, length))
-  matched.size <- path.size[match(fgseaRes$pathway, names(path.size))]
-
+ total_cpds <- names(mSetObj$cpd_exp_dict)
+ total.match <- lapply(mSetObj$pathways$cpds, function(x) intersect(x,total_cpds))
+ matched.size <- unlist(lapply(total.match, length))
+ matched.size <- matched.size[match(fgseaRes$pathway, names(current.mset))]
+ 
+ path.size <- unlist(lapply(mSetObj$pathways$cpds, length))
+ path.size <- path.size[match(fgseaRes$pathway, names(current.mset))]
   # create result table
-  res.mat[,1] <- matched.size
-  res.mat[,2] <- fgseaRes$size
+  res.mat[,1] <- path.size
+  res.mat[,2] <- matched.size
   res.mat[,3] <- fgseaRes$pval
   res.mat[,4] <- fgseaRes$padj
   res.mat[,5] <- fgseaRes$NES
@@ -2819,7 +2828,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
 #'@param mSetObj Input the name of the created mSetObj object 
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PerformCurrencyMapping <- function(mSetObj = NA){
@@ -2858,7 +2867,7 @@ PerformCurrencyMapping <- function(mSetObj = NA){
 #'@param add.mode Adduct mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PerformAdductMapping <- function(mSetObj=NA, add.mode){
@@ -2969,7 +2978,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 #'@param rt_tol Numeric. Input the retention time tolerance used for determining ECs (in seconds).
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
   
@@ -2996,57 +3005,6 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 ##### Plotting Functions #####
 ##############################
 
-#'Plot MS Peaks to Paths mummichog permutation p-values
-#'@description Plots the mummichog permutation p-values
-#'@param mSetObj Input name of the created mSet Object
-#'@param pathway Input the name of the pathway
-#'@param imgName Input a name for the plot
-#'@param format Select the image format, "png", or "pdf".
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-
-PlotMSPeaksPerm <- function(mSetObj=NA, pathway, imgName, format="png", dpi=72, width=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  bw.vec <- unlist(mSetObj$perm_record);
-  
-  len <- length(bw.vec);
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 8;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w*6/8;
-  
-  mSetObj$imgSet$mspeaks.permut <- imgName;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,2,4));
-  hst <- hist(bw.vec, breaks = "FD", freq=T,
-              ylab="Frequency", xlab= 'Permutation test statistics', col="lightblue", main="");
-  
-  # add the indicator using original label
-  h <- max(hst$counts)
-  inx <- which(rownames(mSetObj$mummi.resmat) == pathway)
-  raw.p <- mSetObj$mummi.resmat[inx,5]
-  arrows(raw.p, h/5, raw.p, 0, col="red", lwd=2);
-  text(raw.p, h/3.5, paste('Raw \n statistic \n', raw.p), xpd=T);
-  dev.off();
-  return(.set.mSet(mSetObj));
-}
-
 #' PlotPeaks2Paths
 #' @description Plots either the original mummichog or GSEA results.
 #' @param mSetObj Input the name of the created mSetObj object
@@ -3061,18 +3019,17 @@ PlotMSPeaksPerm <- function(mSetObj=NA, pathway, imgName, format="png", dpi=72, 
 #' @param num_annot number of annotations for top plotting
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @export
 
 PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
                             num_annot = 5){
   mSetObj <- .get.mSet(mSetObj);
-
   anal.type0 <- mSetObj$paramSet$anal.type
   if(anal.type0 == "mummichog"){
     mummi.mat <- mSetObj$mummi.resmat
     y <- -log10(mummi.mat[,5]);
-    x <- mummi.mat[,3]/mummi.mat[,4]
+    x <- mummi.mat[,8]/mummi.mat[,4]
     pathnames <- rownames(mummi.mat)
   }else{
     gsea.mat <- mSetObj$mummi.gsea.resmat
@@ -3159,7 +3116,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   
 }
 
-#' PlotIntegPaths
+#' PlotPSEAIntegPaths
 #' @description Plots both the original mummichog and the GSEA results by combining p-values
 #' using the Fisher's method (sumlog). 
 #' @param mSetObj Input the name of the created mSetObj object
@@ -3179,11 +3136,11 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
 #' @param scale.axis logical, TRUE to scale
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @export
 #' @import scales
 
-PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
+PlotPSEAIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
                            labels.x = 5, labels.y = 5, scale.axis = TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -3295,192 +3252,6 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
   sink("scatterinteg.json");
   cat(RJSONIO::toJSON(df));
   sink();
-  
-  return(.set.mSet(mSetObj));
-}
-
-
-###############################
-######## For R Package ########
-###############################
-
-#' Function to get compound details from a specified pathway
-#' @description Function to get compound details from a specified pathway.
-#' The results will be both printed in the console as well as saved
-#' as a csv file. Note that performing this function multiple times will
-#' overwrite previous queries. Significant compounds will be indicated with an asterisk.
-#' @param mSetObj Input the name of the created mSetObj object.
-#' @param msetNm Input the name of the pathway
-#' @export
-GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(!is.null(mSetObj$api$lib)){
-    
-    # get file from api.metaboanalyst.ca
-    toSend = list(pathName = msetNm)
-    
-    load_httr()
-    base <- api.base
-    endpoint <- paste0("/pathsetdetails/", mSetObj$api$guestName)
-    call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    
-    if(query_results$status_code == 200){
-      filename <- httr::content(query_results, "text")
-    }
-    
-    endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
-    callfile <- paste(base, endpointfile, sep="")
-    download.file(callfile, destfile = basename(filename))
-    print(paste0(filename, " saved to current working directory!"))
-    return(.set.mSet(mSetObj));
-  }
-  
-  version <- mum.version <- mSetObj$paramSet$version;
-  inx <- which(mSetObj$pathways$name == msetNm)
-  
-  if(is.na(inx)){
-    AddErrMsg("Invalid pathway name!")
-    return(0)
-  }
-  
-  if(version=="v2" & mSetObj$paramSet$mumRT){
-    mset <- mSetObj$pathways$emp_cpds[[inx]];
-    mset_cpds <- mSetObj$pathways$cpds[[inx]];
-    
-    hits.all <- unique(mSetObj$total_matched_ecpds)
-    hits.sig <- mSetObj$input_ecpdlist;
-    
-    refs <- mset %in% hits.all;
-    sigs <- mset %in% hits.sig;
-    
-    ref.ecpds <- mset[which(refs & !sigs)]
-    sig.ecpds <- mset[sigs]
-    
-    ref.mzs <- lapply(ref.ecpds, function(x) paste(as.numeric(unique(unlist(mSetObj$ec2mz_dict[x]))), collapse = "; ")) 
-    sig.mzs <- lapply(sig.ecpds, function(x) paste(as.numeric(unique(unlist(mSetObj$ec2mz_dict[x]))), collapse = "; "))  
-    
-    ref.cpds <- lapply(ref.ecpds, function(x) paste(unique(unlist(mSetObj$ecpd_cpd_dict[x])), collapse = "; "))
-    sig.cpds <- lapply(sig.ecpds, function(x) paste(unique(unlist(mSetObj$ecpd_cpd_dict[x])), collapse = "; "))
-    
-    path.results <- matrix(c(unlist(sig.mzs), unlist(ref.mzs), unlist(sig.cpds), unlist(ref.cpds)), ncol=2) 
-    colnames(path.results) <- c("mzs", "cpds")
-    rownames(path.results) <- c(paste0(sig.ecpds, "*"), ref.ecpds)
-    
-    name <- paste0(gsub(" ", "_", msetNm), "_ecpd_mz_info.csv")
-    fast.write.csv(path.results, name)
-  }else{
-    mset <- mSetObj$pathways$cpds[[inx]];
-    
-    hits.all <- unique(mSetObj$total_matched_cpds)
-    hits.sig <- mSetObj$input_cpdlist;
-    
-    refs <- mset %in% hits.all;
-    sigs <- mset %in% hits.sig;
-    
-    ref.cpds <- mset[which(refs & !sigs)]
-    sig.cpds <- mset[sigs]
-    
-    ref.mzs <- lapply(ref.cpds, function(x) paste(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[x]))), collapse = "; ")) 
-    sig.mzs <- lapply(sig.cpds, function(x) paste(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[x]))), collapse = "; "))  
-    
-    path.results <- matrix(c(unlist(sig.mzs), unlist(ref.mzs)), ncol=1) 
-    colnames(path.results) <- "mzs"
-    rownames(path.results) <- c(paste0(sig.cpds, "*"), ref.cpds)
-    
-    name <- paste0(gsub(" ", "_", msetNm), "_cpd_mz_info.csv")
-    fast.write.csv(path.results, name)
-  }
-  
-  return(.set.mSet(mSetObj));
-}
-
-#' Function to get adduct details from a specified compound
-#' @description Function to get adduct details from a specified compound.
-#' The results will be both printed in the console as well as saved
-#' as a csv file. Note that performing this function multiple times will
-#' overwrite previous queries.
-#' @param mSetObj Input the name of the created mSetObj object.
-#' @param cmpd.id Input the name of the selected compound.
-#'@import qs
-#' @export
-GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(!is.null(mSetObj$api$lib)){
-    
-    # get file from api.metaboanalyst.ca
-    toSend = list(cmpdId = cmpd.id)
-    
-    load_httr()
-    base <- api.base
-    endpoint <- paste0("/compounddetails/", mSetObj$api$guestName)
-    call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    
-    if(query_results$status_code == 200){
-      filename <- httr::content(query_results, "text")
-    }
-    
-    endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
-    callfile <- paste(base, endpointfile, sep="")
-    download.file(callfile, destfile = basename(filename))
-    print(paste0(filename, " saved to current working directory!"))
-    return(.set.mSet(mSetObj));
-  }
-  
-  forms <- mSetObj$cpd_form_dict[[cmpd.id]];
-  
-  if(is.null(forms)){
-    print("This compound is not valid!")
-    return(0)
-  }
-  
-  matched_res <- qs::qread("mum_res.qs");
-  mz <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 1] 
-  mass.diff <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 4]
-  tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
-  
-  res <- cbind(rep(cmpd.id, length(mz)), mz, forms, mass.diff, tscores) 
-  colnames(res) <- c("Matched.Compound", "m.z", "Matched.Form", "Mass.Diff", "T.Scores")
-  fast.write.csv(res, "mummichog_compound_details.csv")
-  return(.set.mSet(mSetObj));
-}
-
-# Function to return the unique m/zs from the selected pathways 
-# based on the compounds
-
-GetMummichogMZHits <- function(mSetObj=NA, msetNm){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(!is.null(mSetObj$api$lib)){
-    
-    # get file from api.metaboanalyst.ca
-    toSend = list(pathName = msetNm)
-    
-    load_httr()
-    base <- api.base
-    endpoint <- paste0("/mzhits/", mSetObj$api$guestName)
-    call <- paste(base, endpoint, sep="")
-    query_results <- httr::POST(call, body = toSend, encode= "json")
-    
-    if(query_results$status_code == 200){
-      result <- httr::content(query_results, "text")
-    }
-    mSetObj$mz.hits <- result
-    print(paste0("Unique m/z features in ", msetNm, ": ", result))
-    return(.set.mSet(mSetObj));
-  }
-  
-  inx <- which(mSetObj$pathways$name == msetNm)
-  mset <- mSetObj$pathways$cpds[[inx]];
-  mzs <- as.numeric(unique(unlist(mSetObj$cpd2mz_dict[mset]))) 
-  result <- intersect(mzs, mSetObj$dataSet$input_mzlist)
-  mSetObj$mz.hits <- result
   
   return(.set.mSet(mSetObj));
 }
@@ -3699,7 +3470,7 @@ mz_tolerance <- function(mz, ms.type){
 #'@param input_mzs The vector of randomly drawn m/z features.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 make_cpdlist <- function(mSetObj=NA, input_mzs){
   cpd <- unique(unlist(mSetObj$mz2cpd_dict[input_mzs]));
@@ -3714,7 +3485,7 @@ make_cpdlist <- function(mSetObj=NA, input_mzs){
 #'@param input_mzs The vector of randomly drawn m/z features.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 make_ecpdlist <- function(mSetObj=NA, input_mzs){
   ecpd <- unique(unlist(mSetObj$mz2ec_dict[input_mzs]));
@@ -3794,7 +3565,7 @@ Convert2Dictionary <- function(data, quiet=T){
 # expanding array, in which list appends are (amortized) constant time.
 # https://stackoverflow.com/questions/2436688/append-an-object-to-a-list-in-r-in-amortized-constant-time-o1
 
-myFastList <- function(capacity = 100) {
+myFastList <- function(capacity = 50) {
   buffer <- vector('list', capacity)
   names <- character(capacity)
   length <- 0
@@ -3893,19 +3664,19 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib,
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.heatmap.json")){ # public web on same user dir
+    if(!exists("psea.heatmap.json")){ # public web on same user dir
       compiler::loadcmp("../../rscripts/metaboanalystr/_util_heatmap.Rc");    
     }
-    return(my.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }else{
-    return(my.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
+    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }
 }
 
-DoPeakConversion <- function(mSetObj=NA){
+PreparePeakTable4PSEA <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-    
+
   if(length(levels(mSetObj$dataSet$cls)) < 3){
     res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
     testmeth <- "tt";
@@ -3999,10 +3770,8 @@ Prepare4IntegNetwork <- function(mSetObj = NA, netLib = "global"){
 }
 
 Prepare4TarIntegNetwork <- function(mSetObj = NA, netLib = "global"){
-  mSetObj <- .get.mSet(mSetObj);
-  # mSet <<- mSetObj <- NULL;
-  # mSetObj <- InitDataObjects("conc", "network", FALSE)
 
+  mSetObj <- .get.mSet(mSetObj);
   mSet <- GetNetworkGeneMappingResultTable(mSet);
   mSetObj <- PrepareNetworkData(mSetObj);
   idtype <<- "gene&cmpd";

@@ -8,19 +8,27 @@
 #'@param imgName image name, character
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import siggenes
 #'@import qs
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
-    .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName);
-    .perform.computing();
+
+  mSetObj <- .get.mSet(mSetObj);
+  .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName);
+  .perform.computing();
+
+  if(.on.public.web){ 
     .save.sam.anal(mSetObj);
+  }else{
+     mSetObj <- .save.sam.anal(mSetObj);
+  }
+  return(.set.mSet(mSetObj));
 }
 
 .prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
-  mSetObj <- .get.mSet(mSetObj);
-  
+
+  if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
   imgName = paste(imgName, "dpi72.png", sep="");
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
   cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
@@ -39,7 +47,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     }else{
       sam_out <- siggenes::sam(dat.in$data, dat.in$cls, rand=123);
     }
-    
+ 
     # check if need to compute a suitable delta value
     delta <- dat.in$delta;
     if(delta == 0){
@@ -70,7 +78,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
         }
       }
     }
-    
+
     # get the signficant features
     summary.mat <- summary(sam_out, delta)@mat.sig;
     sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5));
@@ -88,7 +96,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
                   paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName, my.fun=my.fun);
 
   qs::qsave(dat.in, file="dat.in.qs");
-  mSetObj$imgSet$sam.cmpd <- imgName;  
+  mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
 
@@ -113,7 +121,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -159,19 +167,20 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import qs
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+    mSetObj <- .get.mSet(mSetObj);
     .prepare.sam.cmpd(mSetObj, imgName, format, dpi, width);
     .perform.computing();
-    # no need to collect as it is an image
+    # no need to collect results, as only plotting image here
+    return(.set.mSet(mSetObj))
 }
 
+ # note, this is now a microservice call and only used for other formats by users
 .prepare.sam.cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  # note, this is now a remote call and only used for other formats by users
-  mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -205,7 +214,7 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param imgSig imgSig
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import qs
 EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig){
@@ -292,7 +301,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'@usage PlotEBAM.Cmpd(mSetObj=NA, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 #'
@@ -348,7 +357,7 @@ GetSAMDeltaRange <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 GetSuggestedSAMDelta <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

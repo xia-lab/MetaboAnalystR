@@ -1,7 +1,7 @@
 ### Various enrichment analysis algorithms
 ### Jeff Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT License
 
 #'Over-representation analysis using hypergeometric tests
 #'@description Over-representation analysis using hypergeometric tests
@@ -11,7 +11,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CalculateHyperScore <- function(mSetObj=NA){
@@ -34,6 +34,11 @@ CalculateHyperScore <- function(mSetObj=NA){
   # move to api only if R package + KEGG msets
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     
+    # make this lazy load
+    if(!exists("my.hyperscore.kegg")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }
+
     mSetObj$api$oraVec <- ora.vec; 
     
     if(mSetObj$api$filter){
@@ -45,64 +50,43 @@ CalculateHyperScore <- function(mSetObj=NA){
       toSend <- list(mSet = mSetObj,libNm = mSetObj$api$libname, 
                      filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, excludeNum = mSetObj$api$excludeNum)
     }
-    
-    load_httr()
-    base <- api.base
-    endpoint <- "/msetora"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
     saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
-    }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    # parse json response from server to results
-    if(is.null(mSetObj$analSet$ora.mat)){
-      AddErrMsg("Error! Mset ORA via api.metaboanalyst.ca unsuccessful!")
-      return(0)
-    }
-
-    print("Mset ORA via api.metaboanalyst.ca successful!")
-    
-    fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
-    return(.set.mSet(mSetObj));
+    return(my.hyperscore.kegg());
   }
   
-  current.mset <- current.msetlib$member
+  current.mset <- current.msetlib$member;
   
   # make a clean metabilite set based on reference metabolome filtering
   # also need to update ora.vec to the updated mset
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
-    ora.vec <- ora.vec[ora.vec %in% unique(unlist(current.mset, use.names = FALSE))]
-    q.size <- length(ora.vec);
   }
-  
-  # total uniq cmpds in the current mset lib
-  uniq.count <- length(unique(unlist(current.mset, use.names = FALSE)));
-  
+
   set.size<-length(current.mset);
-  
   if(set.size ==1){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
     return(0);
   }
   
-  hits<-lapply(current.mset, function(x){x[x %in% ora.vec]});
-  # lapply(current.mset, function(x) grepl("Ammonia", x))
-  #hits<-lapply(current.mset, function(x) grepl(paste(ora.vec, collapse = "|"), x))
+  # now perform enrichment analysis
+
+  # update data & parameters for ORA stats, based on suggestion
+  # https://github.com/xia-lab/MetaboAnalystR/issues/168
+  # https://github.com/xia-lab/MetaboAnalystR/issues/96
+  # https://github.com/xia-lab/MetaboAnalystR/issues/34
+
+  # the universe based on reference metabolome (should not matter, because it is already filtered based on the reference previously)
+
+  my.univ <- unique(unlist(current.mset, use.names=FALSE));
+  if(!is.null(mSetObj$dataSet$metabo.filter.hmdb)){
+    my.univ <- unique(mSetObj$dataSet$metabo.filter.hmdb);
+  }
+  uniq.count <- length(my.univ);
+  ora.vec <- ora.vec[ora.vec %in% my.univ];
+  q.size <- length(ora.vec); 
   
+  hits<-lapply(current.mset, function(x){x[x %in% ora.vec]});  
   hit.num<-unlist(lapply(hits, function(x) length(x)), use.names = FALSE);
   
   if(sum(hit.num>0)==0){
@@ -145,7 +129,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
@@ -156,7 +140,6 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     .prepare.globaltest.score(mSetObj);
     .perform.computing();   
     .save.globaltest.score(mSetObj);  
-    return(.set.mSet(mSetObj));
   }else{
     mSetObj <- .prepare.globaltest.score(mSetObj);
     
@@ -165,7 +148,6 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
       mSetObj <- .save.globaltest.score(mSetObj);  
     }
   } 
-
   return(.set.mSet(mSetObj));
 }
 
@@ -185,6 +167,10 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
 
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
+    # make this lazy load
+    if(!exists("my.qea.kegg")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }
 
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
@@ -201,56 +187,25 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
       toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
                      cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
     }
-    
-    load_httr()
-    base <- api.base
-    endpoint <- "/msetqea"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
     saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-    
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
-    }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    if(is.null(mSetObj$analSet$qea.mat)){
-      AddErrMsg("Error! Mset QEA via api.metaboanalyst.ca unsuccessful!")
-      return(0)
-    }
-
-    print("Enrichment QEA via api.metaboanalyst.ca successful!")
-    
-    fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
-    return(.set.mSet(mSetObj));
+    return(my.qea.kegg());
   }
   
-  # now, perform the enrichment analysis
+  current.mset <- current.msetlib$member;
+  # make a clean metabolite set based on reference metabolome filtering
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
+    current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
+    mSetObj$dataSet$filtered.mset <- current.mset;
+  }
+
   set.size <- length(current.msetlib);
-  
   if(set.size == 1){
     AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
     return(0);
   }
-  
-  current.mset <- current.msetlib$member; 
-  
-  # make a clean metabolite set based on reference metabolome filtering
-  if(mSetObj$dataSet$use.metabo.filter && !is.null('mSetObj$dataSet$metabo.filter.hmdb')){
-    current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
-    mSetObj$dataSet$filtered.mset <- current.mset;
-  }
-  
-  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
-  
+
+  # now, perform the enrichment analysis  
+
   # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   phenotype <- mSetObj$dataSet$cls;
@@ -279,7 +234,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   qs::qsave(dat.in, file="dat.in.qs");
   
   # store necessary data 
-  mSetObj$analSet$set.num <- set.num;
+  mSetObj$analSet$set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
   mSetObj$analSet$qea.hits <- hits;
   mSetObj$analSet$msea.data <- msea.data;
   return(.set.mSet(mSetObj));
@@ -324,7 +279,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CalculateSSP<-function(mSetObj=NA){
@@ -605,7 +560,7 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -625,7 +580,7 @@ GetSSPTable<-function(mSetObj=NA){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetHTMLMetSet<-function(mSetObj=NA, msetNm){
@@ -665,7 +620,7 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
 #'@param msetInx Input the index of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetMetSetName<-function(mSetObj=NA, msetInx){

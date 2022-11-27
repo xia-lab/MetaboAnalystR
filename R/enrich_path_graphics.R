@@ -9,13 +9,13 @@
 #'@param dpi dpi of the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
-
+  
   mSetObj <- .get.mSet(mSetObj);
-
+  
   if(.on.public.web){
     load_kegggraph()
     load_rgraphwiz()
@@ -25,10 +25,15 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
     }else{
       return(PlotMetpaPath(mSetObj, pathName, width, height, format, dpi));
     }
+      
+  }else{     
     
-    # plotting via microservice   
-  }else{
-    
+   # plotting via microservice  
+   # make this lazy load
+    if(!exists("my.kegg.plot")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }
+
     mSetObj$api$analType <- mSetObj$analSet$type
     
     # first need to post to create image on server
@@ -42,72 +47,8 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
                      libNm = mSetObj$api$libNm, pathName = pathName,
                      dpi = dpi, format = format)
     }
-
-    load_httr()
-    base <- api.base
-    endpoint <- "/pathway_kegg_plot"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
-    saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-    
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
-    }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    # second create image from g object from server
-    
-    if(mSetObj$api$analType == "pathinteg"){
-      
-      # joint pathway
-      g <- mSetObj$api$inmex.plot
-      
-      pathName <- gsub("\\s","_", mSetObj$api$inmex.pathname);
-      pathName <- gsub(",","", pathName);
-      
-      dpi <- 72
-      width <- 8;
-      w <- h <- width;
-      
-      imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
-      
-      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-      par(mai=rep(0,4));
-      plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=mSetObj$api$inmex.plot.bg.cols,
-                vertex.frame.color=mSetObj$api$inmex.plot.line.cols);
-      dev.off();
-      
-    }else{
-      
-      imgName <- mSetObj$api$imgName
-      
-      # pathway
-      if(is.null(dpi)){
-        Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
-      }else{
-        if(is.na(width)){
-          width <- 8;
-          w <- h <- width;
-        }
-        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-      }
-      
-      par(mai=rep(0,4));
-      plot(mSetObj$api$metpa.plot)
-      dev.off();
-    }
-    
-    print(paste0(mSetObj$api$imgName, " saved to current working directory!"))
-    
-    return(.set.mSet(mSetObj));
+    saveRDS(toSend, "tosend.rds");
+    return(my.kegg.plot());
   }
 }
 
@@ -122,7 +63,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'@param height height value for the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
@@ -272,7 +213,7 @@ GetMetPANodeInfo<-function(pathName, object, tags, histvec, pvec, impvec, width,
 # adapted from PathRender, used in higher functions. 
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 
 setRendAttrs = function(g, AllBorder="transparent",
                         AllFixedsize=FALSE, AllFontsize=16, AllShape="rectangle",
@@ -314,7 +255,7 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@param ylim limit of y axis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotPathSummary<-function(mSetObj=NA, 
@@ -327,7 +268,7 @@ PlotPathSummary<-function(mSetObj=NA,
                           ylim = NA){
   
   mSetObj <- .get.mSet(mSetObj);
-
+  
   jointGlobal <- FALSE;
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
@@ -348,25 +289,25 @@ PlotPathSummary<-function(mSetObj=NA,
     }
     
   } else if (mSetObj$analSet$type == "pathinteg") { # this is integrative analysis
-
+    
     jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
     if(jointGlobal) {
-        combo.resmat <- mSetObj$dataSet$integResGlobal;
-        # Sort values based on combined pvalues;
-        y <- -log10(combo.resmat[,5]); # x is gene
-        x <- -log10(combo.resmat[,6]); # y is cmpd
-        y <- scales::rescale(y, c(0,4))
-        x <- scales::rescale(x, c(0,4))
-        if(min(combo.resmat[,7]) ==0){combo.resmat[,7][combo.resmat[,7] ==0] <- 
-          min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
-        combo.p <- -log10(combo.resmat[,7])
-        combo.p <- scales::rescale(combo.p, c(0,4))
+      combo.resmat <- mSetObj$dataSet$integResGlobal;
+      # Sort values based on combined pvalues;
+      y <- -log10(combo.resmat[,5]); # x is gene
+      x <- -log10(combo.resmat[,6]); # y is cmpd
+      y <- scales::rescale(y, c(0,4))
+      x <- scales::rescale(x, c(0,4))
+      if(min(combo.resmat[,7]) ==0){combo.resmat[,7][combo.resmat[,7] ==0] <- 
+        min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
+      combo.p <- -log10(combo.resmat[,7])
+      combo.p <- scales::rescale(combo.p, c(0,4))
     } else {
-        x <-  mSetObj$dataSet$path.mat[,8];
-        y <-  mSetObj$dataSet$path.mat[,4];
-        names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
+      x <-  mSetObj$dataSet$path.mat[,8];
+      y <-  mSetObj$dataSet$path.mat[,4];
+      names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
     }
-
+    
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$jointPAMatches);
     }
@@ -395,7 +336,7 @@ PlotPathSummary<-function(mSetObj=NA,
       minR <- (max.x - min.x)/160;
       radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
     }
-
+    
     bg.vec <- heat.colors(length(y));
   } else {
     inx <- order(combo.p, decreasing= T);
@@ -482,13 +423,13 @@ PlotPathSummary<-function(mSetObj=NA,
        ylab=ylabNM,
        xlim = c(min(x), max_x),
        ylim = c(min(y), max_y)
-       );
+  );
   axis(1);
   axis(2);
   if(show.grid){
     grid(col="blue");
   }
-
+  
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
   # convert to pixel positions, only for web interaction dpi=72
@@ -522,7 +463,7 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 # Generate json file of selected pathway to visualize using sigma.js
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 
 GeneratePathwayJSON<-function(pathway.nm){
 
@@ -530,7 +471,7 @@ GeneratePathwayJSON<-function(pathway.nm){
   
   smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".qs", sep="");
   current.kegglib <- qs::qread(smpdb.path);
-
+  
   jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".qs", sep="");
   smpdb.jsons <- qs::qread(jsons.path) # no need to be global!
   
@@ -557,8 +498,19 @@ GeneratePathwayJSON<-function(pathway.nm){
   # store json file  
   smpdbpw.nm <- paste("smpdb_pathway_netview", smpdbpw.count, ".json", sep="");
   smpdbpw.count <<- smpdbpw.count + 1;
+  dat <- smpdb.jsons[[pathway.id]];
+  dat$nodes <- unname(apply(dat$nodes,1, function(x){as.vector(x)}))
+  edges <- list()
+  for(i in 1:nrow(dat$edges)){
+    edges[[i]] <- list(
+      source=dat$edges$source[i],
+      target=dat$edges$target[i],
+      type=dat$edges$type[i]
+    )
+  }
+  dat$edges <- edges
   sink(smpdbpw.nm);
-  cat(rjson::toJSON(smpdb.jsons[[pathway.id]]));
+  cat(RJSONIO::toJSON(dat));
   sink();
   
   smpdbpw.nm <- paste0(smpdbpw.nm, ";", metab.matches, ";", title)
@@ -582,7 +534,7 @@ GeneratePathwayJSON<-function(pathway.nm){
 #'@param zoom.factor zoom factor, numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=NA){
@@ -628,7 +580,7 @@ GetCircleInfo<-function(mSetObj=NA){
 #'@param im Input coordinates
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 usr2png <- function(xy, im){
   xy <- usr2dev(xy,dev.cur())
   cbind(

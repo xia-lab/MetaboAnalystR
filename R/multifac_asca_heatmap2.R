@@ -21,32 +21,34 @@
 #'@param sortName sortName
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
+
 PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
                        scaleOpt="row", format="png", dpi=72, 
                        width=NA, smplDist="pearson", 
-                       clstDist="average", colorGradient="bwm", 
+                       clstDist="average", colorGradient="bwm", font.size = 8,
                        viewOpt="overview",rankingMethod="mean",
                        topFeature=2000, sortName = "NA", 
-                       useTopFeature, drawBorder, includeRowNames=T){
+                       useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
-  if(!exists('meta.vec')){
-    sel.meta.df <- meta.info[, c(1,2)]
-    meta.inxs = c(1,2)
-  }else{
-    meta.vec <- meta.vec[complete.cases(meta.vec)]
-    sel.meta.df <- meta.info[, meta.vec, drop=FALSE]
-    meta.inxs <- which(colnames(meta.info) %in% meta.vec)
-  }
   
+  if(length(meta.vec.hm2) == 0){
+    AddErrMsg("Please select at least one meta-data for annotation!");
+    return(0);
+  }else{
+    meta.vec.hm2 <- meta.vec.hm2[complete.cases(meta.vec.hm2)];
+    sel.meta.df <- as.data.frame(meta.info[, meta.vec.hm2, drop=FALSE]);
+    meta.inxs <- which(colnames(meta.info) %in% meta.vec.hm2);
+  }
+
   for(i in 1:length(meta.inxs)){
-    inx <- meta.inxs[i]
-    inx2 <- which(colnames(sel.meta.df) == meta.vec[i]);
+    inx <- meta.inxs[i];
+    inx2 <- which(colnames(sel.meta.df) == meta.vec.hm2[i]);
     if(mSetObj$dataSet$meta.types[inx] == "cont"){
-      sel.meta.df[,inx2] <- as.numeric(as.character(sel.meta.df[,inx2]))
+      sel.meta.df[,inx2] <- as.numeric(as.character(sel.meta.df[,inx2]));
     }else{
       if(mSetObj$dataSet$types.cls.lbl[inx] == "numeric"){
         sel.meta.df[,inx2] <- as.factor( as.numeric( levels(sel.meta.df[,inx2]))[sel.meta.df[,inx2]]);
@@ -54,24 +56,25 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     }
   }
   
-  if(!exists('sort.vec')){
-    ord.vec <- c(1:ncol(sel.meta.df));
+  if(length(sort.vec.hm2) == 0){
+    ord.vec <- 1;
   }else{
-    ord.vec <- match(sort.vec, colnames(sel.meta.df))
-  }
-
-  if(length(sort.vec) == 1){
-    ordInx <- order(sel.meta.df[, ord.vec])
-  }else if(length(sort.vec) == 2){
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2]])
-  }else if(length(sort.vec) == 3){
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]])
-  }else{
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]])
+    ord.vec <- match(sort.vec.hm2, colnames(sel.meta.df));
   }
   
-  annotation <- as.data.frame(sel.meta.df[ordInx, ]);
+  if(length(ord.vec) == 1){
+    ordInx <- order(sel.meta.df[, ord.vec]);
+  }else if(length(ord.vec) == 2){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2]]);
+  }else if(length(ord.vec) == 3){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]]);
+  }else{
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]]);
+  }
+  
 
+  annotation <- as.data.frame(sel.meta.df[ordInx, ]);
+  rownames(annotation) <- rownames(meta.info)
   # set up data set
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
@@ -101,61 +104,66 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     border.col <- NA;
   }
   
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$htmaptwo <- imgName;
-
+  
   if(useTopFeature){
-      if(rankingMethod == "aov2"){
-        if(is.null(mSetObj$analSet$aov2$sig.mat)){
-          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-          return(0)
-        }
-        mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
-      }else if(rankingMethod == "lm"){
-        if(is.null(mSetObj$analSet$cov$sig.mat)){
-          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-          return(0)
-        }
-        mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
-      }else if(rankingMethod == "rf"){
-        if(is.null(mSetObj$analSet$cov$rf.sigmat)){
-          AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-          return(0)
-        }
-        mat <- as.matrix(mSetObj$analSet$rf.sigmat)  
- 
-      }else{ # "mean" or "iqr"
-        mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, NULL)$data;
-        mat <- t(mat)
+    if(rankingMethod == "aov2"){
+      if(is.null(mSetObj$analSet$aov2$sig.mat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
       }
+      mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
+    }else if(rankingMethod == "lm"){
+      if(is.null(mSetObj$analSet$cov$sig.mat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
+      }
+      mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
+    }else if(rankingMethod == "rf"){
+      if(is.null(mSetObj$analSet$cov$rf.sigmat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
+      }
+      mat <- as.matrix(mSetObj$analSet$rf.sigmat);
       
-      var.nms <- rownames(mat);
-      if(length(var.nms) > topFeature){
-        var.nms <- var.nms[c(1:topFeature)]
-      }
-      data <- data[, var.nms];
+    }else{ # "mean" or "iqr"
+      mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, NULL)$data;
+      mat <- t(mat);
+    }
+    
+    var.nms <- rownames(mat);
+    if(length(var.nms) > topFeature){
+      var.nms <- var.nms[c(1:topFeature)];
+    }
+    data <- data[, var.nms];
   }
-
+  
   hc.dat <- as.matrix(data);
-  colnames(hc.dat) <- substr(colnames(data), 1, 18) # some names are too long
-
+  colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
+  
   # compute size for heatmap
   plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
   h <- plot_dims$height;
   w <- plot_dims$width;
-
+  
   if(format=="pdf"){
     pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
   
-  annotation <- annotation[,c(length(annotation):1)];
-  hc.dat <- hc.dat[rownames(annotation),] #order data matrix per annotation
+  if(ncol(annotation)>1){
+      annotation <- annotation[,c(length(annotation):1)];
+  }else{
+      colnames(annotation) <- meta.vec.hm2[1];
+  }
 
+  hc.dat <- hc.dat[rownames(annotation),]; #order data matrix per annotation
+  
   pheatmap::pheatmap(t(hc.dat), 
                      annotation=annotation, 
-                     fontsize=8, fontsize_row=8, 
+                     fontsize=font.size, 
                      clustering_distance_rows = smplDist,
                      #clustering_distance_cols = smplDist,
                      clustering_method = clstDist, 
@@ -163,12 +171,52 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                      cluster_rows = T, 
                      cluster_cols = F,
                      scale = scaleOpt,
+                     legend = show.legend,
+                     annotation_legend = show.annot.legend, 
                      show_rownames=includeRowNames,
                      color = colors);
   dev.off();
   
   mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
   return(.set.mSet(mSetObj));
+}
+
+get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15, cellwidth = 15){
+  png("NUL"); # trick to avoid open device in server 
+  heat_map <- pheatmap::pheatmap(dat, annotation=annotation, cellheight = cellheight, cellwidth = cellwidth);
+  h <- sum(sapply(heat_map$gtable$heights, grid::convertHeight, "in"));
+  w  <- sum(sapply(heat_map$gtable$widths, grid::convertWidth, "in"));
+  dev.off();
+  
+  # further refine 
+  myW <- ncol(dat)*20 + 200;  
+  if(myW < 650){
+    myW <- 650;
+  }   
+  myW <- round(myW/72,2);
+  if(w < myW){
+    w <- myW;
+  }
+  
+  if(view.type == "overview"){
+    if(is.na(width)){
+      if(w > 9){
+        w <- 9;
+      }
+    }else if(width == 0){
+      if(w > 7.2){
+        w <- 7.2;
+      }
+      
+    }else{
+      w <- 7.2;
+    }
+    if(h > w){
+      h <- w;
+    }
+  }
+  
+  return(list(height = h, width = w));
 }
 
 #'Perform ASCA
@@ -186,17 +234,17 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
 #' "bab" facB joins with AB
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!exists('meta.vec3')){
+  if(!exists('meta.vec.asca')){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
   }else{
-    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec3]
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.asca]
   }
   
   for(i in 1:ncol(sel.meta.df)){
@@ -232,7 +280,7 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   Facres=Fac[4]; # number components Residues
   
   # Calculate Overall Mean
-  offset<-apply(X,2,mean);
+  offset<-colMeans(X);
   
   # remove the overall mean from the matrix
   Xoff <- X-(cbind(matrix(1,nrow=p,ncol=1))%*%rbind(offset));
@@ -251,7 +299,7 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
     tryCatch(
       {
         Model.ab<-ASCAfun2(Xoff,Designa,Designb,Facab);
-      }, warning = function(w){ print() },
+      }, warning = function(w){ print('warning in ASCAFun2') },
       error = function(e) {
         print(e$message)
         if(grepl("infinite or missing values in 'x'", e$message, fixed=T)){
@@ -317,7 +365,7 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 #'@param lev.thresh leverage threshold, the higher better, default more than 95 percentile of permuted leverage
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.95){
@@ -434,13 +482,14 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
 }
 
 #'Function to perform ASCA 
+#'Adapted from online R script with performance tuning
 #'@description Perform ASCA
 #'@param X Numeric, number of compounds
 #'@param Design Number of levels in the factor
 #'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 ASCAfun1<-function (X, Design, Fac) {
   n <- ncol(X) # number of genes
@@ -502,7 +551,7 @@ ASCAfun1<-function (X, Design, Fac) {
 #'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 ASCAfun2<-function (X, Desa, Desb, Fac) {
   
@@ -512,14 +561,12 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
   
   XK1<-matrix(NA,nrow=I,ncol=n);
   for (i in 1:I) {
-    sub<-X[Desa[,i]==1,]
-    XK1[i,]<-apply(sub,2,mean)
+    XK1[i,]<-colMeans(X[Desa[,i]==1,]);
   }
   
   XK2<-matrix(NA,nrow=J,ncol=n);
   for (j in 1:J) {
-    sub<-X[Desb[,j]==1,]
-    XK2[j,]<-apply(sub,2,mean)
+    XK2[j,]<-colMeans(X[Desb[,j]==1,]);
   }
   
   NK<-matrix(NA,nrow=I,ncol=J)
@@ -534,7 +581,7 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
     for (i in 1:I){
       sub<-X[(Desa[,i]+Desb[,j])==2,]
       NK[i,j]<-sqrt(nrow(sub))
-      XK[k,]<-apply(sub,2,mean)-XK1[i,]-XK2[j,];
+      XK[k,]<-colMeans(sub)-XK1[i,]-XK2[j,];
       row.nm[k] <- paste(nms.I[i], nms.J[j], sep=".");
       k=k+1
     }
@@ -584,7 +631,7 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
 #'@param X Input list of compounds
 #'@param Fac Numeric 
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 ASCAfun.res <- function(X, Fac){
   PCA<-PCA.GENES(X);
@@ -625,7 +672,7 @@ ASCAfun.res <- function(X, Fac){
 #'@param perm.num Select the number of permutations, default is 20
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
@@ -720,7 +767,7 @@ getFactorSize <- function(fac){
 #'@param perm Logical, TRUE by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Get.asca.tss <- function(dummy, perm=T){
@@ -800,7 +847,7 @@ Get.asca.leverage <- function(dummy){
   for (i in 1:I) {
     sub<-X[Desa[,i]==1,]
     NK1[i]<-nrow(sub)
-    XK1[i,]<-apply(sub,2,mean)
+    XK1[i,]<-colMeans(sub)
   }
   
   NK1<-sqrt(NK1);
@@ -814,7 +861,7 @@ Get.asca.leverage <- function(dummy){
   for (i in 1:J) {
     sub<-X[Desb[,i]==1,]
     NK2[i]<-nrow(sub)
-    XK2[i,]<-apply(sub,2,mean)
+    XK2[i,]<-colMeans(sub);
   }
   
   NK2<-sqrt(NK2);
@@ -850,7 +897,7 @@ Get.asca.leverage <- function(dummy){
 #'@param Fac Factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 Get.Leverage <- function(XKw, Fac){
   PCA <- PCA.GENES(XKw);
@@ -871,12 +918,12 @@ Get.Leverage <- function(XKw, Fac){
 #'@param X Input matrix that has as columns the compounds that were considered as variables in the PCA analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 PCA.GENES<-function(X){
   n<-ncol(X)
   p<-nrow(X)
-  offset<-apply(X,2,mean)
+  offset<-colMeans(X);
   Xoff<-X-(cbind(matrix(1,p,1))%*%rbind(offset));
   Xoff <- data.matrix(Xoff);
   
@@ -909,7 +956,7 @@ PCA.GENES<-function(X){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -940,7 +987,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     if(length(pc.var) > 8){
       pc.var <- pc.var[1:8];
     }
-    ## Correct Typo: Expalined --> ExPlained by B. Han (17 Sep 2013)
+
     plot(pc.var, type="b", main=paste(names(models)[[i]]),
          xlab="Component", ylab="Explained variability", axes=F);  
     axis(2);
@@ -966,7 +1013,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param colorBW Logical, use black/white coloring (T) or not (F)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE){
@@ -1042,7 +1089,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
@@ -1152,7 +1199,7 @@ PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=F
 #'@param type select model a, b, or ab
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
@@ -1214,7 +1261,7 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
 #'@param title Input the title
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 PlotSigVar <- function(x, y, xline, yline, title){
   
   par(mar=c(5,4,3,8), xpd=F);
@@ -1255,7 +1302,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1312,7 +1359,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 #'@param nm Input the name of the well modelled features
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
@@ -1393,6 +1440,7 @@ GetAscaSigFileName <- function(mSetObj=NA){
   mSetObj$analSet$asca.sig.nm
 }
 
+
 #'Heckbert algorithm
 #'@description function to calculate tick mark based on Heckbert algorithm
 #'available in the "labeling" package implemented by Justin Talbot
@@ -1431,6 +1479,15 @@ heckbert <- function(dmin, dmax, m){
   }
   nf * (10^e)
 }
+
+#'Generate heatmaps for metadata table
+#'@description Plot a heatmap showing clustering patterns among the metadata
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param viewOpt high-level summary or plotting the names inside cell
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
 
 PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",drawBorder=F,includeRowNames=T, imgName, format="png", dpi=96, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -1488,7 +1545,7 @@ PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", 
        displayText = F;
     }
     pheatmap::pheatmap(met, 
-                       fontsize=8, fontsize_row=8, 
+                       fontsize=12, fontsize_row=8, 
                        clustering_distance_rows = smplDist,
                        clustering_distance_cols = smplDist,
                        clustering_method = clstDist, 
@@ -1502,6 +1559,15 @@ PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", 
   dev.off();
   return(.set.mSet(mSetObj));
 }
+
+#'Generate correlation heatmap for metadata
+#'@description Plot correlation coefficients between metadata
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cor.opt Meethod for computing correlation coefficient
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@export
 
 PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="png", dpi=96, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -1549,6 +1615,8 @@ PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="
   
   ggheatmap <- ggheatmap + geom_text(aes(Var2, Var1, label = value), color = "black", size = textSize);
   
+  mSetObj$imgSet$meta.corhm <- imgName;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(ggheatmap);
   dev.off();

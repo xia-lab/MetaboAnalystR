@@ -42,7 +42,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   cls <- mSetObj$dataSet$prenorm.cls;
 
   # note, setup time factor
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     if(is.null(mSetObj$dataSet$prenorm.facA)){
         nfacA <- mSetObj$dataSet$facA;
         nfacB <- mSetObj$dataSet$facB;
@@ -205,9 +205,10 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
 
   mSetObj$dataSet$norm <- as.data.frame(data);
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-    if(rownames(mSetObj$dataSet$norm) != rownames(mSetObj$dataSet$meta.info)){
-      print("Metadata and data norm are not synchronized.")
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+    if(!identical(rownames(mSetObj$dataSet$norm), rownames(mSetObj$dataSet$meta.info))){
+      mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[match(rownames(mSetObj$dataSet$norm), rownames(mSetObj$dataSet$meta.info)), ]
+      print("Metadata and data norm order synchronized.")
     }
     mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[rownames(data),]  
   }
@@ -218,7 +219,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$rownorm.method <- rownm;
   mSetObj$dataSet$trans.method <- transnm;
   mSetObj$dataSet$scale.method <- scalenm;
-  mSetObj$dataSet$combined.method <- FALSE;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
 
   return(.set.mSet(mSetObj));
@@ -493,14 +493,14 @@ UpdateData <- function(mSetObj=NA){
   if(is.null(mSetObj$dataSet$filt)){
     data <- qs::qread("data_proc.qs");
     cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
       facA <- mSetObj$dataSet$proc.facA;
       facB <- mSetObj$dataSet$proc.facB;
     }
   }else{
     data <- mSetObj$dataSet$filt;
     cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
       facA <- mSetObj$dataSet$filt.facA;
       facB <- mSetObj$dataSet$filt.facB;
     }
@@ -515,26 +515,30 @@ UpdateData <- function(mSetObj=NA){
   smpl.hit.inx <- rownames(data) %in% smpl.nm.vec;
   data <- CleanDataMatrix(data[!smpl.hit.inx,,drop=FALSE]);
   cls <- as.factor(as.character(cls[!smpl.hit.inx]));
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     facA <- as.factor(as.character(facA[!smpl.hit.inx]));
     facB <- as.factor(as.character(facB[!smpl.hit.inx]));
   }
   #AddMsg("Successfully updated the sample items!");
   
-  # update groups
+  # update groups (note these are to retain, not exclude)
   grp.hit.inx <- cls %in% grp.nm.vec;
-  data <- CleanDataMatrix(data[!grp.hit.inx,,drop=FALSE]);
-  cls <- droplevels(factor(cls[!grp.hit.inx])); 
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
-    facA <- droplevels(factor(facA[!grp.hit.inx]));
-    facB <- droplevels(factor(facB[!grp.hit.inx]));
+  data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
+  cls <- droplevels(factor(cls[grp.hit.inx])); 
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+    facA <- droplevels(factor(facA[grp.hit.inx]));
+    facB <- droplevels(factor(facB[grp.hit.inx]));
   }
+  
+  # we need to add order information
+  cls <- ordered(cls, levels = grp.nm.vec);
+
   AddMsg("Successfully updated the data!");
 
   # now set to 
   mSetObj$dataSet$edit <- data;
   mSetObj$dataSet$edit.cls <- cls; 
-  if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     mSetObj$dataSet$edit.facA <- facA;
     mSetObj$dataSet$edit.facB <- facB;
   }
@@ -571,21 +575,21 @@ PreparePrenormData <- function(mSetObj=NA){
     }
     prenorm <- mydata;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-    if(substring(mSetObj$dataSet$format,4,5) == "ts"){
+    if(substring(mSetObj$dataSet$format,4,5) == "mf"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$edit.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$edit.facB;
     }
   }else if(!is.null(mSetObj$dataSet$filt)){
     prenorm <- mSetObj$dataSet$filt;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="ts"){
+    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
     }
   }else{
     prenorm <- qs::qread("data_proc.qs");
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5) == "ts"){
+    if(substring(mSetObj$dataSet$format,4,5) == "mf"){
       mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
       mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
     }

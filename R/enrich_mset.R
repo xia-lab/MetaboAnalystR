@@ -24,7 +24,7 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@param excludeNum Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 
@@ -61,8 +61,8 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
         mSetObj$analSet$msetlibname <- libname;
     }
     # create a named list, use the ids for list names
-    # ms.list <- strsplit(current.msetlib[,3],"; ", fixed=TRUE);
-    ms.list <- current.msetlib[,3];
+    # https://github.com/xia-lab/MetaboAnalystR/issues/172
+    ms.list <- iconv(current.msetlib[, 3], from = 'utf8', to = 'utf8');
     ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
     names(ms.list) <- current.msetlib[,2];
   }
@@ -99,7 +99,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 #'@param filePath Input the path to the user's uploaded metabolite set library
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
@@ -196,7 +196,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
 #'@param type Input the data type (name or compound)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SearchMsetLibraries<-function(mSetObj=NA, query, type){
@@ -226,7 +226,7 @@ SearchMsetLibraries<-function(mSetObj=NA, query, type){
 #'@param query Input the query to search
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SearchByCompound <- function(mSetObj=NA, query){
@@ -321,7 +321,7 @@ SearchByCompound <- function(mSetObj=NA, query){
 #'@param query Input the query to search 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SearchByName <- function(mSetObj=NA, query){
@@ -372,7 +372,7 @@ SearchByName <- function(mSetObj=NA, query){
 #'KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
@@ -406,7 +406,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
 #'@param libNm Input library name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
@@ -428,7 +428,7 @@ SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
 #'@param filePath Input the path to the user's list of KEGG pathway ids
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
@@ -484,7 +484,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'@param filePath Input the path to the user's list of HMDB compound names 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
@@ -544,7 +544,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetMsetNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(current.msetlib$name);

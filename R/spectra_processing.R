@@ -37,7 +37,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }
 
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=480:00\n#SBATCH --mem-per-cpu=6000\n#SBATCH --cpus-per-task=4\n"
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=600:00\n#SBATCH --mem-per-cpu=5000\n#SBATCH --cpus-per-task=4\n"
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -101,7 +101,7 @@ SetRawFileNames <- function(filenms){
 #' @author Guangyan Zhou, Zhiqiang Pang
 ReadRawMeta<-function(fileName){
   if(grepl(".txt", fileName, fixed=T)){
-    tbl=read.table(fileName,header=TRUE, stringsAsFactors = F);
+    tbl=read.table(fileName,header=TRUE, stringsAsFactors = F, sep = "\t");
   }else if(grepl(".csv", fileName, fixed=T)){
     tbl = read.csv(fileName,header=TRUE, stringsAsFactors = F);
   }else{
@@ -393,6 +393,15 @@ mzrt2ID2 <- function(mzrt){
   return(as.integer(FTID));
 }
 
+#' featureNO2Num
+#' @description convert mzATrt as Feature ID
+#' @noRd
+#' @author Zhiqiang Pang
+FTno2Num <- function(FTno){
+  FeatureOrder <- qs::qread("FeatureOrder.qs");  
+  return(as.integer(FeatureOrder[FTno]));
+}
+
 #' readAdductsList
 #' @description readAdductsList for user customization
 #' @noRd
@@ -462,6 +471,14 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   require(ggrepel);
   raw_data <- mSet@rawOnDisk;
   samples_names <- raw_data@phenoData@data[["sample_name"]];
+  rawFiles <- raw_data@processingData@files;
+  
+  if(mSet@params[["BlankSub"]]){
+    samples_names <- 
+      samples_names[raw_data@phenoData@data[["sample_group"]] != "BLANK"];
+    rawFiles <- 
+      rawFiles[raw_data@phenoData@data[["sample_group"]] != "BLANK"];
+  }
 
   if(is.null(sample)) {
     sampleOrder <- 1;
@@ -481,7 +498,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   
   if(is.na(resDT[featureNum, sample])) is0Feature = TRUE;
   
-  RawData <- readMSData(files = raw_data@processingData@files[sampleOrder],
+  RawData <- readMSData(files = rawFiles[sampleOrder],
                         mode = "onDisk");
   
   ## Here is to choose correct chrompeak for this specific sample
@@ -539,7 +556,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   }
   
   js <- rjson::fromJSON(file = paste0(featureNum,".json"))
-  colv <- unique(js[["fill"]][mSet@rawOnDisk@phenoData@data[["sample_name"]] == sample])
+  colv <- unique(js[["fill"]][samples_names == sample])
   
   if(is0Feature & errorProne) {
     minRT <- chromPeaks$rtmin[orderN];
@@ -767,7 +784,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     dev.off()
   }
   
-  cat("PLoting EIC successfully!\n")
+  cat("Ploting EIC successfully!\n")
   return(fileName)
 }
 
@@ -882,6 +899,43 @@ CentroidCheck <- function(filename){
   return(OptiLCMS::CentroidCheck(filename));
 }
 
+GenerateParamFile <- function(){
+  
+  if(!file.exists("param_optimized.txt")){
+    file.copy("param_default.txt", "param_file.txt", overwrite = TRUE)
+    return(1)
+  } else {
+    opparam <- read.table("param_optimized.txt");
+    if(nrow(opparam) > 5){
+      dfparam <- read.table("param_default.txt");
+      res <- vapply(1:nrow(dfparam), FUN = function(x){
+        opparam[x,2] == dfparam[x,2]
+      }, FUN.VALUE = vector(mode = "logical", length = 1))
+      if(all(res)){
+        file.copy("param_default.txt", "param_file.txt", overwrite = TRUE)
+        return(1)
+      } else {
+        mgparam <- merge(dfparam, opparam, by = "V1");
+        colnames(mgparam) <- c("Parameters", "Default", "Optimized");
+        write.table(mgparam, file = "param_file.txt", quote = F, row.names = F)
+      }
+      return(1)
+    } else {
+      checksh <- read.csv("ExecuteRawSpec.sh", sep = "\n")[8,];
+      if(grepl("PerformParamsOptimization", checksh)){
+        write.table("Optimization is in progress.. Please download later... ", 
+                    file = "param_file.txt", quote = F, col.names = F, row.names = F)
+        return(1)
+      } else {
+        file.copy("param_default.txt", "param_file.txt", overwrite = TRUE)
+        return(1)
+      }
+    }
+  }
+  return(0)
+}
+
+
 #' SetPeakParam
 #' @description SetPeakParam, used to set the peak param 
 #' @param platform platform
@@ -937,7 +991,8 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
                          minFraction, minSamples, maxFeatures, mzCenterFun, integrate,# used for grouping
                          extra, span, smooth, family, fitgauss, # used for RT correction with peakgroup "loess"
                          polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
-                         rmConts #used to control remove contamination or not
+                         rmConts, #used to control remove contamination or not
+                         BlankSub
                          ){
     OptiLCMS::SetPeakParam(platform = platform, Peak_method = Peak_method, RT_method = RT_method,
                            mzdiff, snthresh, bw, 
@@ -948,7 +1003,7 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
                            minFraction, minSamples, maxFeatures, mzCenterFun, integrate,
                            extra, span, smooth, family, fitgauss, 
                            polarity, perc_fwhm, mz_abs_iso, max_charge, max_iso, corr_eic_th, mz_abs_add, adducts, #used for annotation
-                           rmConts 
+                           rmConts, BlankSub
   )
   #return nothing
 }
@@ -958,11 +1013,7 @@ SetPeakParam <- function(platform = "general", Peak_method = "centWave", RT_meth
 #' @author Zhiqiang Pang
 #' @export
 #' @param userPath userPath
-
 GeneratePeakList <- function(userPath) {
-  
-  #oldwd <- getwd();
-  #on.exit(setwd(oldwd));
 
   setwd(userPath)
   
@@ -1047,23 +1098,30 @@ GeneratePeakList <- function(userPath) {
     pfdr <- round(signif(pfdr, 8), 8)
     FeatureOrder <- order(pvals)
     intenVale <- round(apply(sample_data_mean, 1, mean),1)
-    #intenVale <- rep(-10, nrow(sample_data_log));
   } else {
     pfdr <- pvals <- rep(-10, nrow(sample_data_log));
     #featureIntSum <- apply(sample_data_log, 1, sum);
-    intenVale <- round(sample_data_mean,1);
-    FeatureOrder <- order(intenVale, decreasing = TRUE);
+    intenVale <- round(sample_data_mean,1);    
+    if(is.null(dim(intenVale))){
+      FeatureOrder <- order(intenVale, decreasing = TRUE);
+    } else {
+      FeatureOrder <- order(intenVale[,1], decreasing = TRUE);
+    }
   }
   qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
             file = "formula2cmpd.qs")
 
   my.dat <- cbind(ann_data, intenVale, pvals, pfdr, cvs);
   my.dat <- my.dat[FeatureOrder,];
+  qs::qsave(FeatureOrder, file = "FeatureOrder.qs")
   write.table(my.dat, sep = "\t",
-    file = "peak_feature_summary.tsv",
-    row.names = FALSE,
-    quote = FALSE
-  );
+              file = "peak_feature_summary.tsv",
+              row.names = FALSE,
+              quote = FALSE);
+  write.csv(my.dat, 
+            file = "peak_feature_summary.csv", 
+            quote = TRUE, 
+            row.names = FALSE);
   feat.num <- nrow(ann_data);
   cat("Total number of features is ", feat.num, "\n")
   return(feat.num);
@@ -1226,6 +1284,7 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
     imgName <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = dpi, format = format, width = width)
     str <- imgName
   }else if(format == "svg2"){
+    imgName0 <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = 72, format = "png", width = 6)
     format <- "svg";
     width <- 6;
     imgName <- paste0(title, ".", format);
@@ -1246,10 +1305,10 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
     plotData <- ggplot_build(p)
     for(i in 1:length(plotData$data)){
         df <- plotData$data[[i]]    
-        if("outliers" %in% colnames(df)){
+      if("outliers" %in% colnames(df)){
         df <- df[ , -which(colnames(df) == "outliers")]
         plotData$data[[i]] <- df
-    }
+      }
     }
     json.obj <- rjson::toJSON(plotData$data[[3]]);
     sink(jsonNm);
@@ -1364,7 +1423,7 @@ centroidMSData <- function(fileName, outFolder, ncore = 1){
 #' @return will return an mSet objects with extracted ROI
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 
 PerformDataTrimming<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
                                rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
@@ -1402,7 +1461,7 @@ PerformDataTrimming<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt
 #' @return will return an mSet objects with extracted ROI
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 PerformROIExtraction<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
                                rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
   require(OptiLCMS)
@@ -1436,7 +1495,7 @@ PerformROIExtraction<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, r
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} 
 #' Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 
 PerformParamsOptimization <- function(mSet, 
                                       param= NULL, 
@@ -1459,10 +1518,7 @@ PerformParamsOptimization <- function(mSet,
 #' @param plotSettings plotSettings
 #' @export
 PerformPeakProfiling <- function(mSet, params, plotSettings) {
-  require(OptiLCMS)
-  return(OptiLCMS::PerformPeakProfiling(mSet, 
-                                        params, 
-                                        plotSettings))
+  return(OptiLCMS::PerformPeakProfiling(mSet, params, plotSettings));
 }
 
 
@@ -1478,8 +1534,7 @@ PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) 
     widthm <- "7in"
   }
   imgName <- paste0("Adjusted_RT_", dpi, "_", widthm, "_",  imageNumber, ".", format);
-  OptiLCMS::PlotSpectraRTadj (mSet = NULL,
-                              imgName = imgName, format = format, dpi = dpi, width = width)
+  OptiLCMS::PlotSpectraRTadj (mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width)
 
   return(imgName); 
 }
@@ -1496,8 +1551,7 @@ PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA)
     widthm <- "7in"
   }
   imgName <- paste0("Adjusted_BPI_", dpi, "_", widthm, "_",  imageNumber, ".", format);
-  OptiLCMS::PlotSpectraBPIadj (mSet = NULL,
-                               imgName = imgName, format = format, dpi = dpi, width = width)
+  OptiLCMS::PlotSpectraBPIadj(mSet = NULL, imgName = imgName, format = format, dpi = dpi, width = width)
 
   return(imgName); 
 }

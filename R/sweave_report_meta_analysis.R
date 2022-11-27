@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisRnwReport<-function(mSetObj, usrName){
   
@@ -28,7 +28,7 @@ CreateMetaAnalysisRnwReport<-function(mSetObj, usrName){
 #'MetaAnalysis analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisIntr<-function(){
   descr <- c("\\section{Background}\n",
@@ -51,7 +51,7 @@ CreateMetaAnalysisIntr<-function(){
 #'Power analysis report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisOverview <- function(){
   descr <- c("\\section{Meta-Analysis Overview}\n",
@@ -69,7 +69,7 @@ CreateMetaAnalysisOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisInputDoc <- function(mSetObj=NA){
   
@@ -105,7 +105,7 @@ CreateMetaAnalysisInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisNORMdoc <- function(mSetObj=NA){
   
@@ -138,7 +138,7 @@ CreateMetaAnalysisNORMdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
   
@@ -174,7 +174,7 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalysisOutput <- function(mSetObj=NA){
   
@@ -292,7 +292,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaTable <- function(mSetObj=NA){
   
@@ -310,7 +310,7 @@ CreateMetaTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateVennMetaTable <- function(mSetObj=NA){
   

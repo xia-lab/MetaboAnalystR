@@ -2,17 +2,19 @@
 #'@description Perform Two-way ANOVA 
 #'Perform within-subjects anova
 #'@param x Input the data
-#'@param time.fac Input the time factor
+#'@paxram time.fac Input the time factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
-aov.within <- function(x, time.fac){
-  unlist(summary(aov(x ~ (aov.facA*aov.facB) + Error(aov.sbj/time.fac))), use.names=F)[c(7,20,21,9,23,24)];
+aov.mixed <- function(x){
+  unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/time.fac),
+             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
 }
 
-aov.within.wo <- function(x, time.fac){
-  unlist(summary(aov(x ~ (aov.facA+aov.facB))), use.names=F)[c(10,11,13,14)];
+aov.2wayrep <- function(x){
+  unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/(exp.fac*time.fac)),
+             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -22,55 +24,57 @@ aov.within.wo <- function(x, time.fac){
 #'@param time.fac Input the time factor 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
-aov.repeated <- function(x, time.fac){
-  unlist(summary(aov(x ~ time.fac + Error(aov.sbj/time.fac))), use.names=F)[c(12,14)];
+aov.1wayrep <- function(x){
+  unlist(anova_test(x ~ time.fac + Error(aov.sbj/time.fac),
+                    data = data.frame(x=x,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
 #'@description Perform Two-way ANOVA 
-#'Perform between-subjects anova
+#'Perform two-way anova
 #'@param x Input data to perform 2-way ANOVA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-aov.between <- function(x){
-  unlist(summary(aov(x ~ aov.facA*aov.facB)), use.names=F)[c(13,14,15,17,18,19)];
-}
-
-aov.between.type3 <- function(x){
-  unlist(car::Anova(lm(x ~ aov.facA*aov.facB), type="3"))[c(12,13,14,17,18,19)];
+#'License: MIT License
+aov.2way <- function(x){
+  unlist(suppressMessages(anova_test(x ~ aov.facA*aov.facB,
+                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
 #'@description Perform Two-way ANOVA 
 #'@usage ANOVA2.Anal(mSetObj=NA, thresh=0.05, p.cor="fdr", 
-#'type="time0", aov.type=1, use.interact=1)
+#'type="time0")
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param thresh Input the p-value threshold 
 #'@param p.cor Select method for p-value correction, bonferroni, holm or fdr
 #'@param type Select b to perform between-subjects ANOVA, 
 #'and w for within-subjects ANOVA 
-#'@param aov.type Specify 1 for ANOVA type 1, or 3 for ANOVA type 3
-#'@param use.interact Numeric, whether to consider 
-#'interaction in two-way repeated ANOVA (1) or not (0).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
-                       p.cor="fdr", type="time0", 
-                       aov.type=1, use.interact=1){
+                       p.cor="fdr", type="time0", phenOpt="between"){
+require(rstatix)
 
   mSetObj <- .get.mSet(mSetObj);
-  if(!exists('meta.vec2')){
+  if(length(meta.vec.aov) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
+    if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
+      AddErrMsg("Metadata and data tables not synchronized!"); #should have been re-ordered in Normalization()
+      return(0);
+    }
   }else{
-    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec2]
-    if(length(meta.vec2) == 1){
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.aov]
+    if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
+      AddErrMsg("Metadata and data tables not synchronized!"); # should have been re-ordered in Normalization()
+      return(0);
+    }
+    if(length(meta.vec.aov) == 1){
       sel.meta.df <- as.data.frame(sel.meta.df)
     }
     
@@ -81,11 +85,11 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       mSetObj$dataSet$facA = sel.meta.df[,1]
       mSetObj$dataSet$facB = sel.meta.df[,2]
     }
-  }
-  
+  }  
       mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[1]
       mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[2]
 
+  # make sure all metadata are factor variable types
   for(i in 1:ncol(sel.meta.df)){
     meta <- colnames(sel.meta.df)[i]
     mettype <- mSetObj$dataSet$meta.types[meta]
@@ -93,33 +97,53 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       return(-1);
     }
   }
+
+  # only do for top 200
+  if(dim(mSetObj$dataSet$norm)[2] > 200){
+    metab.var <- apply(as.matrix(mSetObj$dataSet$filt), 2, function(x){
+      mean.lev <- mean(x)
+      var(x/mean.lev)
+    })
+    high.var <- names(sort(metab.var, decreasing = TRUE))[1:200]
+    dat <- mSetObj$dataSet$norm[,colnames(mSetObj$dataSet$norm) %in% high.var]
+  } else {
+    dat <- mSetObj$dataSet$norm
+  }
   
+  # now perform ANOVA depending on experimental design
   if(type == "time0"){
-    time.fac <- mSetObj$dataSet$time.fac;
+
+    time.fac <<- mSetObj$dataSet$time.fac;
     mSetObj$dataSet$sbj <- as.factor(mSetObj$dataSet$exp.fac);
+    aov.sbj <<- mSetObj$dataSet$sbj
     
     if(.on.public.web){
       .set.mSet(mSetObj);
     }
     
-    # first create the subjects that being measured under different time
-    # points (under same phenotype/ exp. condition). The design must be balanced
-    
     # first check if balanced
     res <- table (time.fac, mSetObj$dataSet$sbj);
-    res.mean <- apply(res, 2, mean);
+    res.mean <- colMeans(res);
     all.res <- res/res.mean;
     if(sum(all.res != 1) > 0){
       AddErrMsg("Experiment design is not balanced!");
       return(0);
     }
-    aov.sbj <<- mSetObj$dataSet$sbj
-    aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.repeated, time.fac));
+
+    aov.mat <- apply(as.matrix(dat), 2, aov.1wayrep);
     
-    rm(aov.sbj, pos=".GlobalEnv")
+    if(is.null(dim(aov.mat))){ #sometimes ANOVA fails for one metabolite but throws no warnings; need to reformat
+      library(data.table)
+      aov.mat <- suppressWarnings(t(rbindlist(list(aov.mat))))
+      colnames(aov.mat) <- c("F","p")
+    } else {
+      aov.mat <- t(aov.mat)
+    }
+    
+    rm(aov.sbj, time.fac, pos=".GlobalEnv")
     
     fileName <- "oneway_anova_repeated.csv";
-    rownames(aov.mat)<-colnames(mSetObj$dataSet$norm);
+    rownames(aov.mat)<-colnames(dat);
     aov.mat <- cbind(aov.mat, p.adjust(aov.mat[,2], p.cor));
     colnames(aov.mat) <- c("F-value", "Raw P-val", "Adjusted P-val");
     p.value <- aov.mat[,3];
@@ -128,121 +152,84 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     vennC <- NULL;
     # default sort first by main effect: treatment, then by ...
     ord.inx <- order(aov.mat[,2], decreasing = FALSE);
-  }else{
-    if(type=="time"){
-      # first create the subjects that being measured under different time
-      # points (under same phenotype/ exp. condition). The design must be balanced
-      
+
+  } else {
+    if(type == "time"){
       # first check if balanced
-      res <- table(mSetObj$dataSet$facA, mSetObj$dataSet$facB);
-      res.mean <- apply(res, 2, mean);
+      res <- table(mSetObj$dataSet$exp.fac, mSetObj$dataSet$time.fac);
+      res.mean <- colMeans(res);
       all.res <- res/res.mean;
       if(sum(all.res != 1) > 0){
         AddErrMsg("Experiment design is not balanced!");
         return(0);
       }
-      time.fac <- mSetObj$dataSet$time.fac;
-      exp.fac <- mSetObj$dataSet$exp.fac;
             
       mSetObj$dataSet$sbj <- mSetObj$dataSet$meta.info[,3]
+      time.fac <<- mSetObj$dataSet$time.fac;
+      exp.fac <<- mSetObj$dataSet$exp.fac;
+      aov.sbj <<- mSetObj$dataSet$sbj;
       
       if(.on.public.web){
         .set.mSet(mSetObj);
       }
       
-      aov.facA <<- mSetObj$dataSet$facA;
-      aov.facB <<- mSetObj$dataSet$facB;
-      aov.sbj <<- mSetObj$dataSet$sbj;
-      
-      if(use.interact){
-        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.within, time.fac));
-      }else{
-        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.within.wo, time.fac));
+      if(phenOpt == "between"){
+        aov.mat <- t(apply(as.matrix(dat), 2, aov.mixed));      
+      } else {
+        aov.mat <- t(apply(as.matrix(dat), 2, aov.2wayrep));
       }
       
-      rm(aov.facA, aov.facB, aov.sbj, pos=".GlobalEnv");
+      rm(time.fac, exp.fac, aov.sbj, pos=".GlobalEnv");
       fileName <- "anova_within_sbj.csv";
       
-    }else{ # g2 (two-factor analysis)
+    } else { # g2 (two-factor analysis)
       aov.facA <<- mSetObj$dataSet$facA;
       aov.facB <<- mSetObj$dataSet$facB;
       
-      if(aov.type == 1){
-        aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between));
-      }else{
-        tryCatch(
-          {
-            aov.mat<-t(apply(as.matrix(mSetObj$dataSet$norm), 2, aov.between.type3));
-          }, warning = function(w){ print() },
-          error = function(e) {
-            if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
-              AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
-              return(0);
-            }
-            print(e$message)
-          }
-        )
+    tryCatch(
+      {
+        aov.mat <- t(apply(as.matrix(dat), 2, aov.2way));
+      }, warning = function(w){ print('warning in aov.2way') },
+      error = function(e) {
+        if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
+          AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+          return(0);
+        }
+        print(e$message)
       }
+    )
+
       rm(aov.facA, aov.facB, pos=".GlobalEnv");
       
       fileName <- "anova_between_sbj.csv";
     }
     
-    rownames(aov.mat) <- colnames(mSetObj$dataSet$norm);
-    
-    if(use.interact){
+    # make table for display/download  
+    aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
+                       p.adjust(aov.mat[,5], p.cor),
+                       p.adjust(aov.mat[,6], p.cor));
+
+    sig.facA <-(aov.mat2[,7] <= thresh);
+    sig.facB <-(aov.mat2[,8] <= thresh);
+    sig.intr <-(aov.mat2[,9] <= thresh);
+
+    all.match <- cbind(sig.facA, sig.facB, sig.intr);
+    colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
+    colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(F.val)", sep = ""), 
+                            paste(mSetObj$dataSet$facB.lbl, "(F.val)", sep = ""),
+                            paste("Interaction", "(F.val)", sep = ""),
+                            paste(mSetObj$dataSet$facA.lbl, "(raw.p)", sep = ""), 
+                            paste(mSetObj$dataSet$facB.lbl, "(raw.p)", sep = ""),
+                            paste("Interaction", "(raw.p)", sep = ""), 
+                            paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), 
+                            paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""), 
+                            paste("Interaction", "(adj.p)", sep = ""))
+
+    vennC <- getVennCounts(all.match);
+    p.value <- aov.mat2[,7]; 
+    inx.imp <- sig.facA | sig.facB | sig.intr;
+    aov.mat2 <- aov.mat2[, c(1,4,7,2,5,8,3,6,9),drop=F] 
       
-      aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
-                         p.adjust(aov.mat[,5], p.cor),
-                         p.adjust(aov.mat[,6], p.cor));
-      
-      sig.facA <-(aov.mat2[,7] <= thresh);
-      sig.facB <-(aov.mat2[,8] <= thresh);
-      sig.intr <-(aov.mat2[,9] <= thresh);
-      
-      all.match <- cbind(sig.facA, sig.facB, sig.intr);
-      colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
-      colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(F.val)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(F.val)", sep = ""),
-                              paste("Interaction", "(F.val)", sep = ""),
-                              paste(mSetObj$dataSet$facA.lbl, "(raw.p)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(raw.p)", sep = ""),
-                              paste("Interaction", "(raw.p)", sep = ""), 
-                              paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""), 
-                              paste("Interaction", "(adj.p)", sep = ""))
-      
-      vennC <- getVennCounts(all.match);
-      p.value <- aov.mat2[,7]; 
-      inx.imp <- sig.facA | sig.facB | sig.intr;
-      aov.mat2 <- aov.mat2[, c(1,4,7,2,5,8,3,6,9),drop=F] 
-      
-    }else{
-      #unsure if this is right
-      if(ncol(aov.mat)==6){
-        aov.mat <- aov.mat[,-c(3,6)]
-      }
-      
-      aov.mat2 <- cbind(aov.mat, p.adjust(aov.mat[,3], p.cor), p.adjust(aov.mat[,4], p.cor));
-      
-      sig.facA <-(aov.mat2[,5] <= thresh);
-      sig.facB <-(aov.mat2[,6] <= thresh);
-      
-      all.match <- cbind(sig.facA, sig.facB);
-      colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl);
-      colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(F.val)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(F.val)", sep = ""),
-                              paste(mSetObj$dataSet$facA.lbl, "(raw.p)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(raw.p)", sep = ""),
-                              paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), 
-                              paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""))
-      
-      vennC <- getVennCounts(all.match);
-      p.value <- aov.mat2[,5]; 
-      inx.imp <- sig.facA | sig.facB;
-      aov.mat2 <- aov.mat2[, c(1,3,5,2,4,6),drop=F];
-      
-    }
     # default sort first by main effect: treatment, then by ...
     aov.mat <- aov.mat2[inx.imp, ,drop=F];
     ord.inx <- order(aov.mat[,2], aov.mat[,3], decreasing = FALSE);
@@ -258,7 +245,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
   }
   
   fast.write.csv(aov.mat, file=fileName);
-  names(p.value) <- colnames(mSetObj$dataSet$norm);
+  names(p.value) <- colnames(dat);
   aov2<-list (
     type = type,
     sig.nm = fileName,
@@ -286,7 +273,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -339,7 +326,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param fileNm select a file name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'
@@ -621,8 +608,8 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
       
       auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
                         aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
-        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
-        scale_color_manual(values = uniq.cols) + scale_shape_manual(values = uniq.pchs)
+        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
+        scale_color_manual(values = uniq.cols) + scale_shape_manual(values = uniq.pchs) + guides(col = guide_legend(nrow = 2))
       
     } else {
       pch.vec <- as.numeric(cls)
@@ -634,8 +621,8 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
       
       auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
                         aes(x=cls, y=cls2, color=cls)) + 
-        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
-        scale_color_manual(values = uniq.cols)
+        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
+        scale_color_manual(values = uniq.cols) + guides(col = guide_legend(nrow = 2))
     }
     
     # change theme
@@ -660,8 +647,8 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
       
       auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
                         aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
-        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank()) + 
-        scale_shape_manual(values = uniq.pchs)
+        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
+        scale_shape_manual(values = uniq.pchs) + guides(col = guide_legend(nrow = 2))
     } else {
       p <- ggpairs(data, lower = list(continuous = wrap("points", color = cols)), 
                    upper = list(continuous = wrap("density", color = "#505050")),
@@ -670,14 +657,14 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
       
       auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
                         aes(x=cls, y=cls2, color=cls)) + 
-        theme_bw() + geom_point() + theme(legend.position = "bottom", legend.title = element_blank())
+        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + guides(col = guide_legend(nrow = 2))
     }
     
     p <- p + theme_bw() + theme(plot.margin = unit(c(0.25, 0.25, 0.8, 0.25), "in"))
     mylegend <- grab_legend(auxplot)
     
   }
-  
+
   grid.newpage()
   grid.draw(p)
   vp = viewport(x=5, y=0.3, width=.35, height=.3, default.units = "in") ## control legend position

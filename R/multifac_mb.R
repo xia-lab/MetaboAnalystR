@@ -7,19 +7,19 @@
 #'@param topPerc select the cut-off, default is 10
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 performMB <- function(mSetObj=NA, topPerc = 10){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!exists('meta.vec5')){
+  if(length(meta.vec.mb) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
     mSetObj$dataSet$exp.fac <- sel.meta.df[,2]
     mSetObj$dataSet$time.fac <- sel.meta.df[,1]
   }else{
-    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec5]
+    sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.mb]
     mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
     mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
 } 
@@ -89,7 +89,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'@param version image mark
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
@@ -129,7 +129,7 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
    if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.manova")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_manova.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_manova.Rc");    
     }
     return(my.time.mb.manova(object, times, D, size, nu, Lambda, beta.d, beta, alpha.d, alpha, condition.grp, time.grp, rep.grp, p));
   }else{
@@ -143,7 +143,7 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
 #'@param varName Input the name of the variable
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 plotProfile <-function (mSetObj=NA, varName) {
@@ -227,8 +227,8 @@ matrix.cov <- function(x, k, trans=TRUE, c.grp=NULL, use="complete.obs")
     for(i in 1:D)
     {
       grp.indx <- c.grp==sort(unique(c.grp))[i]
-      if(k==1) size[i] <- sum(apply(t(as.matrix(!apply(matrix(x[grp.indx], byrow=TRUE,ncol=k),1, is.na))),2,sum)==k)
-      if(k>1) size[i] <- sum(apply((!apply(matrix(x[grp.indx], byrow=TRUE,ncol=k),1, is.na)),2,sum)==k)
+      if(k==1) size[i] <- sum(colSums(t(as.matrix(!apply(matrix(x[grp.indx], byrow=TRUE,ncol=k),1, is.na))))==k)
+      if(k>1) size[i] <- sum(colSums((!apply(matrix(x[grp.indx], byrow=TRUE,ncol=k),1, is.na)))==k)
       max.size[i] <- sum(grp.indx)/k
     }
     cumsize <- cumsum(max.size)
@@ -380,7 +380,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
    if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.2d")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_2d.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_2d.Rc");    
     }
     return(my.time.mb.2d(object, k, mn, c.grp, nu, Lambda, eta, k.grp, mn.grp, r, vec, d, prop, T2.only));
   }else{
@@ -393,7 +393,7 @@ mb.1D <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=NULL, n.g
     if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.1d")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_time_mb_1d.Rc");    
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_1d.Rc");    
     }
     return(my.time.mb.1d(object, k, n, nu, Lambda1, eta, k.grp, n.grp, r, vec, d, prop, T2.only));
   }else{

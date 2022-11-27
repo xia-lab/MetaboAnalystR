@@ -88,7 +88,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
 #'@param can_nm Input the candidate name.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
@@ -161,42 +161,15 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 
 CrossReferencingAPI <- function(mSetObj=NA, inputType){
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  toSend <- list(mSet = mSetObj, 
-                 inputType = inputType,
-                 analType = anal.type)
-  
-  load_httr()
-  base <- api.base
-  endpoint <- "/internal_mapcompounds"
-  call <- paste(base, endpoint, sep="")
-  print(call)
-  
-  saveRDS(toSend, "tosend.rds")
-  request <- httr::POST(url = call, 
-                        body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-  
-  # check if successful
-  if(request$status_code != 200){
-    AddErrMsg("Failed to connect to Xia Lab API Server!")
-    return(0)
-  }
-  
-  # now process return
-  request <- httr::content(request, "raw")
-  request <- unserialize(request)
-  
-  if(is.null(request$name.map)){
-    AddErrMsg("Error! Compound name mapping via api.metaboanalyst.ca unsuccessful!")
-    return(0)
-  }else{
-    mSetObj <- request
-  }
-  
-  print("Compound name mapping via api.metaboanalyst.ca successful!")
-  
-  return(.set.mSet(mSetObj));
+   # make this lazy load
+    if(!exists("my.namemap.api")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }
+
+    mSetObj <- .get.mSet(mSetObj);
+    toSend <- list(mSet = mSetObj, inputType = inputType, analType = anal.type)
+    saveRDS(toSend, "tosend.rds");
+    return(my.namemap.api());
 }
 
 ##############################################
@@ -211,7 +184,7 @@ CrossReferencingAPI <- function(mSetObj=NA, inputType){
 #'@param lipid Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 GetCandidateList <- function(mSetObj=NA, lipid){

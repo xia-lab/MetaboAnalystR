@@ -30,7 +30,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
   mydata <- M
   indx <- order(condition.grp, rep.grp, time.grp)
   M <- M[, indx]
-  mis <- apply(!apply(M, 1, is.na), 2, sum)
+  mis <- colSums(!apply(M, 1, is.na));
   mis <- sum((mis/times - floor(mis/times)) != 0)
   if (mis > 0)
     stop(mis, " genes may have within replicate missing values.")
@@ -137,8 +137,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
   if (is.finite(nu) & nu > tol) {
     MB1 <- log(p, 10) - log(1 - p, 10)
     MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
+    MB3 <- 0.5 * times * rowSums(log(beta.d, 10) - log(size + beta.d, 10));
     MB4 <- sapply(1:G, function(x) 0.5 * (N[x] + nu) * (log(det(matrix(total[,
                                                                              x], ncol = times) + matrix(M[, x], ncol = times) +
                                                                   nu * Lambda), 10) - log(det(matrix(within[, x], ncol = times) +
@@ -148,8 +147,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
   if (is.infinite(nu)) {
     MB1 <- log(p, 10) - log(1 - p, 10)
     MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
+    MB3 <- 0.5 * times * rowSums(log(beta.d, 10) - log(size + beta.d, 10));
     MB4 <- sapply(1:G, function(x) tr(matrix(total[, x],
                                              ncol = times) - matrix(within[, x], ncol = times) +
                                         matrix(M[, x], ncol = times) - matrix(M1[, x], ncol = times)) -
@@ -159,8 +157,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
   if (nu < tol & nu >= 0) {
     MB1 <- log(p, 10) - log(1 - p, 10)
     MB2 <- 0.5 * times * (log(N + beta, 10) - log(beta, 10))
-    MB3 <- 0.5 * times * apply((log(beta.d, 10) - log(size +
-                                                        beta.d, 10)), 1, sum)
+    MB3 <- 0.5 * times * rowSums(log(beta.d, 10) - log(size + beta.d, 10));
     MB4 <- sapply(1:G, function(x) 0.5 * N[x] * (log(det(matrix(total[,
                                                                       x], ncol = times) + matrix(M[, x], ncol = times)),
                                                      10) - log(det(matrix(within[, x], ncol = times) +

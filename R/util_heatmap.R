@@ -1,4 +1,7 @@
-my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, 
+# Function to generate interactive heatmaps to display peak intensity table from
+# mummichog/PSEA analysis
+
+psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filtOpt, 
                               version="v1"){
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
@@ -14,8 +17,6 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   }
   
   is.rt <- mSetObj$paramSet$mumRT;
-  #mSetObj$dataSet$mumRT <- is.rt
-  #mSetObj$dataSet$mumRT.type <- mumRT.type
   
   if(mSetObj$paramSet$mumRT){
     feat_info <- rownames(data)
@@ -71,26 +72,25 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   
   stat.pvals <- unname(as.vector(res[,2]));
   t.stat <- unname(as.vector(res[,1]));
-  org = unname(strsplit(libOpt,"_")[[1]][1])
-  # scale each gene 
-  dat <- t(scale(t(data)));
+  org <- unname(strsplit(libOpt,"_")[[1]][1])
   
-  rankPval = order(as.vector(stat.pvals))
-  stat.pvals = stat.pvals[rankPval]
-  dat = dat[rankPval,]
+  # scale each gene, note direct overwrite data to save memory
+  data <- t(scale(t(data)));
   
-  t.stat = t.stat[rankPval]
+  rankPval = order(as.vector(stat.pvals));
+  stat.pvals = stat.pvals[rankPval];
+  data = data[rankPval,];
+  t.stat = t.stat[rankPval];
   
   # now pearson and euclidean will be the same after scaleing
-  dat.dist <- dist(dat); 
+  dat.dist <- dist(data); 
   
-  orig.smpl.nms <- colnames(dat);
-  orig.gene.nms <- rownames(dat);
+  orig.smpl.nms <- colnames(data);
+  orig.gene.nms <- rownames(data);
   
   # do clustering and save cluster info
   # convert order to rank (score that can used to sort) 
-  if(nrow(dat)> 1){
-    dat.dist <- dist(dat);
+  if(nrow(data)> 1){
     gene.ward.ord <- hclust(dat.dist, "ward.D")$order;
     gene.ward.rk <- match(orig.gene.nms, orig.gene.nms[gene.ward.ord]);
     gene.ave.ord <- hclust(dat.dist, "ave")$order;
@@ -100,7 +100,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     gene.complete.ord <- hclust(dat.dist, "complete")$order;
     gene.complete.rk <- match(orig.gene.nms, orig.gene.nms[gene.complete.ord]);
     
-    dat.dist <- dist(t(dat));
+    dat.dist <- dist(t(data));
     smpl.ward.ord <- hclust(dat.dist, "ward.D")$order;
     smpl.ward.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ward.ord])
     smpl.ave.ord <- hclust(dat.dist, "ave")$order;
@@ -113,7 +113,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     # force not to be single element vector which will be scaler
     #stat.pvals <- matrix(stat.pvals);
     gene.ward.rk <- gene.ave.rk <- gene.single.rk <- gene.complete.rk <- matrix(1);
-    smpl.ward.rk <- smpl.ave.rk <- smpl.single.rk <- smpl.complete.rk <- 1:ncol(dat);
+    smpl.ward.rk <- smpl.ave.rk <- smpl.single.rk <- smpl.complete.rk <- 1:ncol(data);
   }
   
   gene.cluster <- list(
@@ -160,7 +160,7 @@ my.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
   colnames(nmeta) <- grps;
   
   # for each gene/row, first normalize and then tranform real values to 30 breaks 
-  res <- apply(dat, 1, function(x){as.numeric(cut(x, breaks=30))}); #previously t() when using RJSONIO
+  res <- apply(data, 1, function(x){as.numeric(cut(x, breaks=30))}); #previously t() when using RJSONIO
   
   # note, use {} will lose order; use [[],[]] to retain the order
   

@@ -8,7 +8,7 @@
 #'@param paired Logical, TRUE or FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
@@ -67,7 +67,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -122,13 +122,13 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
       dat1 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 1, ];
       dat2 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 2, ];
       
-      mns1 <- apply(dat1, 2, mean);
+      mns1 <- colMeans(dat1);
       mn1 <- mean(mns1);
       sd1 <- sd(mns1);
       msd1.top <- mn1 + 2*sd1;
       msd1.low <- mn1 - 2*sd1;
       
-      mns2 <- apply(dat2, 2, mean);
+      mns2 <- colMeans(dat2);
       mn2 <- mean(mns2);
       sd2 <- sd(mns2);
       msd2.top <- mn2 + 2*sd2;
@@ -163,7 +163,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param cmpType Numeric, 0 or 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
@@ -172,12 +172,8 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   
   if(paired){ 
     # compute the average of paired FC (unit is pair)
-    if(mSetObj$dataSet$combined.method){
-      data <- mSetObj$dataSet$norm;
-    }else{
-      row.norm <- qs::qread("row_norm.qs");
-      data <- log2(row.norm);
-    }
+    row.norm <- qs::qread("row_norm.qs");
+    data <- log2(row.norm);
     
     G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
     G2 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]
@@ -187,24 +183,11 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     }else{
       fc.mat <- G2-G1;
     }
-    fc.log <- apply(fc.mat, 2, mean);
+    fc.log <- colMeans(fc.mat);
     fc.all <- signif(2^fc.log, 5);
   }else{
     # compute the FC of two group means (unit is group)
-    data <- NULL;
-    if(mSetObj$dataSet$combined.method){
-      data <- mSetObj$dataSet$norm;
-      m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-      m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
-      
-      # create a named matrix of sig vars for display
-      if(cmpType == 0){
-        fc.log <- signif (m1-m2, 5);
-      }else{
-        fc.log <- signif (m2-m1, 5);
-      }
-      fc.all <- signif(2^fc.log, 5);
-    }else{
+
       data <- qs::qread("row_norm.qs");
       m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
       m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
@@ -220,7 +203,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
       fc.log <- signif(log2(ratio), 5);
       fc.log[is.infinite(fc.log) & fc.log < 0] <- -99;
       fc.log[is.infinite(fc.log) & fc.log > 0] <- 99;
-    }
+    
   }
   names(fc.all) <- names(fc.log) <- colnames(data);  
   return(list(fc.all = fc.all, fc.log = fc.log));
@@ -238,7 +221,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'for all compounds. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, 
@@ -317,7 +300,6 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       t.score = t.stat,
       p.value = p.value,
       p.log = p.log,
-      thresh = -log10(threshp), # only used for plot threshold line
       inx.imp = inx.imp,
       sig.mat = sig.mat
     );
@@ -330,7 +312,6 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       t.score = t.stat,
       p.value = p.value,
       p.log = p.log,
-      thresh = -log10(threshp), # only used for plot threshold line
       inx.imp = inx.imp
     );
   }
@@ -356,7 +337,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -376,9 +357,8 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$tt <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(mSetObj$analSet$tt$p.log, ylab="-log10(p)", xlab=GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$tt$tt.nm, pch=19,
+  plot(mSetObj$analSet$tt$p.log, ylab="-log10(raw.p)", xlab=GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$tt$tt.nm, pch=19,
        col= ifelse(mSetObj$analSet$tt$inx.imp, "magenta", "darkgrey"));
-  abline(h=mSetObj$analSet$tt$thresh, lty=3);
   axis(4); 
   dev.off();
   return(.set.mSet(mSetObj));
@@ -398,7 +378,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param pval.type To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, 
@@ -492,7 +472,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 
@@ -559,66 +539,13 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
    return(.set.mSet(mSetObj));
 }
 
-PlotVolcano_base <- function(mSetObj=NA, imgName, plotLbl, format="png", dpi=72, width=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 10;
-  }else if(width == 0){
-    w <- 8;
-  }else{
-    w <- width;
-  }
-  h <- w*6/10;
-  
-  mSetObj$imgSet$volcano <- imgName;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,4));
-  vcn <- mSetObj$analSet$volcano;
-  MyGray <- rgb(t(col2rgb("black")), alpha=40, maxColorValue=255);
-  MyHighlight <- rgb(t(col2rgb("magenta")), alpha=80, maxColorValue=255);
-  
-  
-  imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
-  plot(vcn$fc.log, vcn$p.log, pch=20, cex=ifelse(imp.inx, 1.2, 0.7),
-       col = ifelse(imp.inx, MyHighlight, MyGray),
-       xlab="log2 (FC)", ylab="-log10(p)");
-  
-  sig.inx <- imp.inx;
-  p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.down);
-  fc.leftInx <- GetTopInx(vcn$fc.log, 5, F);
-  lblInx <-  sig.inx & (p.topInx | fc.leftInx);
-  if(plotLbl &  sum(lblInx, na.rm=T) > 0){
-    text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-    text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=2, col="blue", srt=-30, xpd=T, cex=0.8);
-  }
-  
-  p.topInx <- GetTopInx(vcn$p.log, 5, T) & (vcn$inx.up);
-  fc.rtInx <- GetTopInx(vcn$fc.log, 5, T);
-  lblInx <- sig.inx & (p.topInx | fc.rtInx);
-  if(plotLbl & sum(lblInx, na.rm=T) > 0){
-    text.lbls<-substr(colnames(mSetObj$dataSet$norm)[lblInx],1,14) # some names may be too long
-    text(vcn$fc.log[lblInx], vcn$p.log[lblInx],labels=text.lbls, pos=4, col="blue", srt=30, xpd=T, cex=0.8);
-  }
-  abline (v = vcn$max.xthresh, lty=3);
-  abline (v = vcn$min.xthresh, lty=3);
-  abline (h = vcn$thresh.y, lty=3);
-  axis(4); # added by Beomsoo
-  dev.off();
-  return(.set.mSet(mSetObj));
-}
-
 #'ANOVA
 #'@description Perform anova and only return p values and MSres (for Fisher's LSD)
 #'@param x Input the data to perform ANOVA
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 aof <- function(x, cls) {
   aov(x ~ cls);
 }
@@ -630,7 +557,7 @@ aof <- function(x, cls) {
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 kwtest <- function(x, cls) {
   kruskal.test(x ~ cls);
 }
@@ -641,9 +568,12 @@ kwtest <- function(x, cls) {
 #'@param thresh Numeric, input the alpha threshold 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 FisherLSD <- function(aov.obj, thresh){
-  LSD.test(aov.obj,"cls", alpha=thresh)
+    if(!exists("my.lsd.test")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_lsd.Rc");    
+    }
+    return(my.lsd.test(aov.obj,"cls", alpha=thresh));
 }
 
 #'Return only the signicant comparison names
@@ -652,7 +582,7 @@ FisherLSD <- function(aov.obj, thresh){
 #'@param cut.off Input numeric cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 parseTukey <- function(tukey, cut.off){
   inx <- tukey$cls[,"p adj"] <= cut.off;
   paste(rownames(tukey$cls)[inx], collapse="; ");
@@ -664,7 +594,7 @@ parseTukey <- function(tukey, cut.off){
 #'@param cut.off Numeric, set cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 parseFisher <- function(fisher, cut.off){
   inx <- fisher[,"pvalue"] <= cut.off;
   paste(rownames(fisher)[inx], collapse="; ");
@@ -681,152 +611,126 @@ parseFisher <- function(fisher, cut.off){
 #' with no post-hoc tests performed.
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @export
 #'
-ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, 
-                     thresh=0.05, post.hoc="fisher", 
-                     all_results=FALSE) {
+ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE) {
   
-  mSetObj <- .get.mSet(mSetObj);
-  sig.num <- 0;
-  if(nonpar){
-    aov.nm <- "Kruskal Wallis Test";
-    anova.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, kwtest, cls=mSetObj$dataSet$cls);
-    
-    #extract all p values
-    res <- unlist(lapply(anova.res, function(x) {c(x$statistic, x$p.value)}));
-    res <- data.frame(matrix(res, nrow=length(anova.res), byrow=T), stringsAsFactors=FALSE);
-    
-    fstat <- res[,1];
-    p.value <- res[,2];
-    
-    names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
-    fdr.p <- p.adjust(p.value, "fdr");
-    
-    #inx.imp <- p.value <= thresh;
-    inx.imp <- fdr.p <= thresh;
-    sig.num <- sum(inx.imp);
-    
-    if(sig.num > 0){ 
-      sig.f <- fstat[inx.imp];
-      sig.p <- p.value[inx.imp];
-      fdr.p <- fdr.p[inx.imp];
-      
-      sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), 'NA');
-      rownames(sig.mat) <- names(sig.p);
-      colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
-      
-      # order the result simultaneously
-      ord.inx <- order(sig.p, decreasing = FALSE);
-      sig.mat <- sig.mat[ord.inx,,drop=F];
-      
-      fileName <- "kw_posthoc.csv";
-      my.mat <- sig.mat[,1:4];
-      colnames(my.mat) <- c("chi_squared", "pval_KW", "-log10(p)", "FDR");
-    }
-  }else{
-    aov.nm <- "One-way ANOVA";
-    if(.on.public.web & RequireFastUnivTests(mSetObj)){
-      res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+   mSetObj <- .get.mSet(mSetObj);
+   if(!nonpar){
+      aov.nm <- "One-way ANOVA";
+      fileName <- "anova_posthoc.csv";
     }else{
-      aov.res <- apply(as.matrix(mSetObj$dataSet$norm), 2, aof, cls=mSetObj$dataSet$cls);
-      anova.res <- lapply(aov.res, anova);
-      
-      #extract all p values
-      res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));
-      res <- data.frame(matrix(res, nrow=length(aov.res), byrow=T), stringsAsFactors=FALSE);
+      aov.nm <- "Kruskal Wallis Test";
+      fileName <- "kw_posthoc.csv";
     }
+
+    sig.num <- 0;
+    aov.res <- sig.mat <- NULL;
+
+    data <- as.matrix(mSetObj$dataSet$norm);
+    cls <- mSetObj$dataSet$cls;
+    if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+        res <- PerformFastUnivTests(data, cls);
+    } else {
+        my.res <- GetFtestRes(mSetObj, nonpar);
+        aov.res <- my.res$aov.res;
+        res <- my.res$f.res;
+    }
+
     fstat <- res[,1];
     p.value <- res[,2];
-    names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
-    
+    names(fstat) <- names(p.value) <- colnames(data);
     fdr.p <- p.adjust(p.value, "fdr");
     
     if(all_results==TRUE){
-      all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
-      rownames(all.mat) <- names(p.value);
-      colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
-      fast.write.csv(all.mat, "anova_all_results.csv")
+        all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
+        rownames(all.mat) <- names(p.value);
+        colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
+        fast.write.csv(all.mat, "anova_all_results.csv")
     }
     
-    # do post-hoc only for signficant entries
-    # inx.imp <- p.value <= thresh;
     inx.imp <- fdr.p <= thresh;
-    sig.num <- sum(inx.imp);
+    sig.num <- sum(inx.imp, na.rm = TRUE);
+    AddMsg(paste(c("A total of", sig.num, "significant features were found."), collapse=" "));
+
     if(sig.num > 0){
-      # note aov obj is not avaible using fast version
-      # need to recompute using slower version for the sig ones
-      if(.on.public.web & RequireFastUnivTests(mSetObj)){
-        aov.imp <- apply(as.matrix(mSetObj$dataSet$norm[,inx.imp,drop=FALSE]), 2, aof, cls=mSetObj$dataSet$cls);
-      }else{
-        aov.imp <- aov.res[inx.imp];
-      }
-      sig.f <- fstat[inx.imp];
-      sig.p <- p.value[inx.imp];
-      fdr.p <- fdr.p[inx.imp];
-      cmp.res <- NULL;
-      post.nm <- NULL;
-      if(post.hoc=="tukey"){
-        tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
-        cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
-        post.nm = "Tukey's HSD";
-      }else{
-        fisher.res<-lapply(aov.imp, FisherLSD, thresh);
-        cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
-        post.nm = "Fisher's LSD";
-      }
-      
-      # create the result dataframe,
-      # note, the last column is string, not double
-      
-      sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), cmp.res);
-      rownames(sig.mat) <- names(sig.p);
-      colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
-      
-      # order the result simultaneously
-      ord.inx <- order(sig.p, decreasing = FALSE);
-      sig.mat <- sig.mat[ord.inx,,drop=F];
-      fileName <- "anova_posthoc.csv";
+        res <- 1;
+
+        sig.f <- fstat[inx.imp];
+        sig.p <- p.value[inx.imp];
+        fdr.p <- fdr.p[inx.imp];
+        cmp.res <- NULL;
+        post.nm <- NULL;
+
+        if(nonpar){
+            sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), 'NA');
+            colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
+        }else{          
+            # do post-hoc only for signficant entries
+            # note aov obj is not avaible using fast version
+            # need to recompute using slower version for the sig ones
+            if(.on.public.web & RequireFastUnivTests(mSetObj)){
+                aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
+            }else{
+                aov.imp <- aov.res[inx.imp];
+            }
+
+            if(post.hoc=="tukey"){
+                tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
+                cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
+                post.nm = "Tukey's HSD";
+            }else{
+                fisher.res<-lapply(aov.imp, FisherLSD, thresh);
+                cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
+                post.nm = "Fisher's LSD";
+            }
+
+            # create the result dataframe,
+            # note, the last column is string, not double
+            sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), cmp.res);
+            colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
+        }
+
+        rownames(sig.mat) <- names(sig.p);
+        # order the result simultaneously
+        ord.inx <- order(sig.p, decreasing = FALSE);
+        sig.mat <- sig.mat[ord.inx,,drop=F];
+
+        fast.write.csv(sig.mat,file=fileName);
+        aov<-list (
+            aov.nm = aov.nm,
+            sig.num = sig.num,
+            sig.nm = fileName,
+            raw.thresh = thresh,
+            thresh = -log10(thresh), # only used for plot threshold line
+            p.value = p.value,
+            p.log = -log10(p.value),
+            inx.imp = inx.imp,
+            post.hoc = post.hoc,
+            sig.mat = sig.mat
+        );
+    }else{
+        res <- 0;
+        aov<-list (
+            aov.nm = aov.nm,
+            sig.num = sig.num,
+            raw.thresh = thresh,
+            thresh = -log10(thresh), # only used for plot threshold line
+            p.value = p.value,
+            p.log = -log10(p.value),
+            inx.imp = inx.imp
+        );
     }
-  }
+
+    mSetObj$analSet$aov <- aov;
   
-  AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
-  if(sig.num> 0){
-    res <- 1;
-    fast.write.csv(sig.mat,file=fileName);
-    aov<-list (
-      aov.nm = aov.nm,
-      sig.num = sig.num,
-      sig.nm = fileName,
-      raw.thresh = thresh,
-      thresh = -log10(thresh), # only used for plot threshold line
-      p.value = p.value,
-      p.log = -log10(p.value),
-      inx.imp = inx.imp,
-      post.hoc = post.hoc,
-      sig.mat = sig.mat
-    );
-  }else{
-    res <- 0;
-    aov<-list (
-      aov.nm = aov.nm,
-      sig.num = sig.num,
-      raw.thresh = thresh,
-      thresh = -log10(thresh), # only used for plot threshold line
-      p.value = p.value,
-      p.log = -log10(p.value),
-      inx.imp = inx.imp
-    );
-  }
-  mSetObj$analSet$aov <- aov;
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(res);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
+    if(.on.public.web){
+        .set.mSet(mSetObj);
+        return(res);
+    }else{
+        return(.set.mSet(mSetObj));
+    }
 }
 
 #'Plot ANOVA 
@@ -841,7 +745,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -863,12 +767,11 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj$imgSet$anova <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(lod, ylab="-log10(p)", xlab = GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$aov$aov.nm, type="n");
+  plot(lod, ylab="-log10(raw.p)", xlab = GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$aov$aov.nm, type="n");
   red.inx <- which(mSetObj$analSet$aov$inx.imp);
   blue.inx <- which(!mSetObj$analSet$aov$inx.imp);
   points(red.inx, lod[red.inx], bg="red", cex=1.2, pch=21);
   points(blue.inx, lod[blue.inx], bg="green", pch=21);
-  abline (h=mSetObj$analSet$aov$thresh, lty=3);
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -885,7 +788,7 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
@@ -1117,7 +1020,7 @@ GetSigTable.TT <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 GetTTSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1195,7 +1098,7 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'@param nonpar Use non-parametric tests, default is set to FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   
   mSetObj <- .get.mSet(mSetObj);  
@@ -1231,13 +1134,46 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
    return(t(res));
 }
 
+GetFtestRes <- function(mSetObj=NA, nonpar=F){
+  
+    mSetObj <- .get.mSet(mSetObj);  
+    data <- as.matrix(mSetObj$dataSet$norm);
+    cls <- mSetObj$dataSet$cls;
+    if(!exists("mem.aov")){
+        require("memoise");
+        mem.aov <<- memoise(.get.ftest.res);
+    }
+    print("using cache .......");
+    return(mem.aov(data, cls, nonpar));
+}
+
+.get.ftest.res <- function(data, cls, nonpar){
+
+    print("Performing regular ANOVA F-tests ....");
+
+    aov.res <- my.res <- NULL;
+    if(!nonpar){
+        aov.res <- apply(data, 2, aof, cls);
+        anova.res <- lapply(aov.res, anova);
+        my.res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));        
+    }else{
+        anova.res <- apply(data, 2, kwtest, cls);
+        my.res <- unlist(lapply(anova.res, function(x) {c(x$statistic, x$p.value)}));
+    }
+    my.res <- list(
+                    aov.res = aov.res,
+                    f.res = data.frame(matrix(my.res, nrow=ncol(data), byrow=T), stringsAsFactors=FALSE)
+                );
+    return(my.res);
+}
+
 #'Utility method to perform the univariate analysis automatically
 #'@description The approach is computationally expensive,and fails more often 
 #'get around: make it lazy unless users request, otherwise the default t-test will also be affected
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 GetUnivReport <- function(mSetObj=NA){
   if(.on.public.web){
@@ -1350,7 +1286,7 @@ GetVolcanoCmpds <- function(mSetObj=NA){
 #'@param dec Logical, default set to TRUE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetTopInx <- function(vec, n, dec=T){
   inx <- order(vec, decreasing = dec)[1:n];
   # convert to T/F vec
@@ -1393,118 +1329,4 @@ ContainInfiniteVolcano <- function(mSetObj=NA){
 GetAovSigNum <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$analSet$aov$sig.num);
-}
-
-
-#'Calculate Fisher's Least Significant Difference (LSD)
-#'@description Adapted from the 'agricolae' package
-#'@param y Input Y
-#'@param trt Input trt
-#'@param alpha Numeric, default is 0.05
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-
-LSD.test <- function(y, trt, alpha = 0.05){
-  clase<-c("aov","lm")
-  name.y <- paste(deparse(substitute(y)))
-  name.t <- paste(deparse(substitute(trt)))
-  if("aov"%in%class(y) | "lm"%in%class(y)){
-    A<-y$model
-    DFerror<-df.residual(y)
-    MSerror<-deviance(y)/DFerror
-    y<-A[,1]
-    ipch<-pmatch(trt,names(A))
-    name.t <-names(A)[ipch]
-    trt<-A[,ipch]
-    name.y <- names(A)[1]
-  }
-  junto <- subset(data.frame(y, trt), is.na(y) == FALSE)
-  means <- tapply.stat(junto[, 1], junto[, 2], stat="mean") #change
-  sds <- tapply.stat(junto[, 1], junto[, 2], stat="sd")     #change
-  nn <- tapply.stat(junto[, 1], junto[, 2], stat="length")  #change
-  std.err <- sds[, 2]/sqrt(nn[, 2])
-  Tprob <- qt(1 - alpha/2, DFerror)
-  LCL <- means[,2]-Tprob*std.err
-  UCL <- means[,2]+Tprob*std.err
-  means <- data.frame(means, std.err, replication = nn[, 2], LCL, UCL)
-  names(means)[1:2] <- c(name.t, name.y)
-  #row.names(means) <- means[, 1]
-  ntr <- nrow(means)
-  nk <- choose(ntr, 2)
-  nr <- unique(nn[, 2])
-  
-  comb <- combn(ntr, 2)
-  nn <- ncol(comb)
-  dif <- rep(0, nn)
-  LCL1<-dif
-  UCL1<-dif
-  sig<-NULL
-  pvalue <- rep(0, nn)
-  for (k in 1:nn) {
-    i <- comb[1, k]
-    j <- comb[2, k]
-    if (means[i, 2] < means[j, 2]){
-      comb[1, k]<-j
-      comb[2, k]<-i
-    }
-    dif[k] <- abs(means[i, 2] - means[j, 2])
-    sdtdif <- sqrt(MSerror * (1/means[i, 4] + 1/means[j,4]))
-    pvalue[k] <- 2 * (1 - pt(dif[k]/sdtdif, DFerror));
-    pvalue[k] <- round(pvalue[k],6);
-    LCL1[k] <- dif[k] - Tprob*sdtdif
-    UCL1[k] <- dif[k] + Tprob*sdtdif
-    sig[k]<-" "
-    if (pvalue[k] <= 0.001) sig[k]<-"***"
-    else  if (pvalue[k] <= 0.01) sig[k]<-"**"
-    else  if (pvalue[k] <= 0.05) sig[k]<-"*"
-    else  if (pvalue[k] <= 0.1) sig[k]<-"."
-  }
-  tr.i <- means[comb[1, ],1]
-  tr.j <- means[comb[2, ],1]
-  output<-data.frame("Difference" = dif, pvalue = pvalue,sig,LCL=LCL1,UCL=UCL1)
-  rownames(output)<-paste(tr.i,tr.j,sep=" - ");
-  output;
-}
-
-
-tapply.stat <-function (y, x, stat = "mean"){
-  cx<-deparse(substitute(x))
-  cy<-deparse(substitute(y))
-  x<-data.frame(c1=1,x)
-  y<-data.frame(v1=1,y)
-  nx<-ncol(x)
-  ny<-ncol(y)
-  namex <- names(x)
-  namey <- names(y)
-  if (nx==2) namex <- c("c1",cx)
-  if (ny==2) namey <- c("v1",cy)
-  namexy <- c(namex,namey)
-  for(i in 1:nx) {
-    x[,i]<-as.character(x[,i])
-  }
-  z<-NULL
-  for(i in 1:nx) {
-    z<-paste(z,x[,i],sep="&")
-  }
-  w<-NULL
-  for(i in 1:ny) {
-    m <-tapply(y[,i],z,stat)
-    m<-as.matrix(m)
-    w<-cbind(w,m)
-  }
-  nw<-nrow(w)
-  c<-rownames(w)
-  v<-rep("",nw*nx)
-  dim(v)<-c(nw,nx)
-  for(i in 1:nw) {
-    for(j in 1:nx) {
-      v[i,j]<-strsplit(c[i],"&")[[1]][j+1]
-    }
-  }
-  rownames(w)<-NULL
-  junto<-data.frame(v[,-1],w)
-  junto<-junto[,-nx]
-  names(junto)<-namexy[c(-1,-(nx+1))]
-  return(junto)
 }

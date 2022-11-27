@@ -15,7 +15,7 @@
 #'compound matching.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, 
@@ -80,7 +80,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
 #'compound matching.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
@@ -214,7 +214,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
 #'@param idType Input the ID type
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PerformCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
@@ -300,7 +300,7 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
 #'@param lipid Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
@@ -351,7 +351,7 @@ GetFinalNameMap <- function(mSetObj=NA, lipid = FALSE){
 #'@param conc Input the concentration data
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Setup.ConcData<-function(mSetObj=NA, conc){
@@ -365,7 +365,7 @@ Setup.ConcData<-function(mSetObj=NA, conc){
 #'@param type Input the biofluid type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 Setup.BiofluidType<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
@@ -393,7 +393,7 @@ GetKEGG.PathNames<-function(mSetObj=NA){
 #'@param ids Vector of KEGG ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 KEGGID2Name<-function(ids){
   cmpd.db <- .get.my.lib("compound_db.qs");
@@ -407,7 +407,7 @@ KEGGID2Name<-function(ids){
 #'@param ids Vector of KEGG pathway IDs
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 KEGGPATHID2SMPDBIDs<-function(ids){
   hit.inx<-match(ids, path.map[,1]);
@@ -420,7 +420,7 @@ KEGGPATHID2SMPDBIDs<-function(ids){
 #'@param ids Input the vector of HMDB Ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 HMDBID2Name<-function(ids){
   cmpd.db <- .get.my.lib("compound_db.qs");
@@ -434,7 +434,7 @@ HMDBID2Name<-function(ids){
 #'@param ids Vector of KEGG ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 KEGGID2HMDBID<-function(ids){
   
@@ -450,7 +450,7 @@ KEGGID2HMDBID<-function(ids){
 #'@param ids Input the vector of HMDB Ids
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 HMDBID2KEGGID<-function(ids){
   cmpd.db <- .get.my.lib("compound_db.qs");
@@ -467,18 +467,12 @@ HMDBID2KEGGID<-function(ids){
 #'@param type Input the type of data to annotate 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
   
   sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
-  if(!file.exists(sqlite.path)){
-    download.file(paste0("https://www.xialab.ca/resources/sqlite/", basename(sqlite.path)), 
-                  destfile = basename(sqlite.path),
-                  "curl");
-    sqlite.path <- basename(sqlite.path);
-  }
   con <- .get.sqlite.con(sqlite.path); 
   
   if(type == "symbol"){

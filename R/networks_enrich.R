@@ -156,7 +156,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
 #'@param min.score Input the minimal score, only used for the STRING database 
 #'@author Othman Soufan, Jeff Xia \email{jeff.xia@mcgill.ca}, {othman.soufan@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import RSQLite
 SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){

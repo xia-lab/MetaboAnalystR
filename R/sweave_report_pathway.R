@@ -6,7 +6,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreatePathRnwReport <- function(mSetObj, usrName){
@@ -30,7 +30,7 @@ CreatePathRnwReport <- function(mSetObj, usrName){
 #'Introduction
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreatePathIntr<-function(){
@@ -56,7 +56,7 @@ CreatePathIntr<-function(){
 #'Create data input doc
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePathInputDoc<-function(){
   
@@ -76,7 +76,7 @@ CreatePathInputDoc<-function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePathProcessDoc <- function(mSetObj=NA){
   
@@ -110,7 +110,7 @@ CreatePathProcessDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePathAnalDoc <- function(mSetObj=NA){
   
@@ -227,7 +227,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePathResultDoc <- function(mSetObj=NA){
   

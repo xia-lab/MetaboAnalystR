@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkExplorerRnwReport<-function(mSetObj, usrName){
   
@@ -25,7 +25,7 @@ CreateNetworkExplorerRnwReport<-function(mSetObj, usrName){
 #'Network explorer report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkExplorerIntr <- function(){
   descr <- c("\\section{Background}\n",
@@ -45,7 +45,7 @@ CreateNetworkExplorerIntr <- function(){
 #'for the network explorer report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkExplorerOverview <- function(){
   descr <- c("\\section{Network Explorer Overview}\n",
@@ -61,7 +61,7 @@ CreateNetworkExplorerOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
   
@@ -105,7 +105,7 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkNameMapTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -119,7 +119,7 @@ CreateNetworkNameMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkGeneMapTable <- function(mSetObj=NA){
   
@@ -139,7 +139,7 @@ CreateNetworkGeneMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateNetworkExplorerDoc <- function(mSetObj=NA){
   

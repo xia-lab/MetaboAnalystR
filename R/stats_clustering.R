@@ -11,7 +11,7 @@
 #'@param clstDist Method to calculate clustering distance 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist, clstDist){
@@ -96,7 +96,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'@param neigb Default is set to 'gaussian'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
@@ -119,7 +119,7 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'@param facet logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import ggplot2
 #'@export
 #'
@@ -217,7 +217,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
 #'@param clust.num Numeric, input the number of clusters for K-means analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 Kmeans.Anal <- function(mSetObj=NA, clust.num){
@@ -240,7 +240,7 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'@param facet logical, TRUE to plot in multiple facets
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal="default", facet=FALSE){
@@ -322,7 +322,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
 #'@param labels labels to show, default is "T"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import ggplot2
 #'@export
 
@@ -434,11 +434,11 @@ PlotClustPCA <- function(mSetObj,
 #'@param grp.ave Logical, default is set to F
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
-                           smplDist, clstDist, palette, method.nm, top.num, viewOpt, rowV=T, colV=T, border=T, grp.ave=F){
+                           smplDist, clstDist, palette, font.size, method.nm, top.num, viewOpt, rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
   
   mSetObj <- .get.mSet(mSetObj);
   var.nms = colnames(mSetObj$dataSet$norm);
@@ -457,22 +457,6 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         }
         var.nms <- names(sort(mSetObj$analSet$aov$p.value))[1:top.num];
       }
-    }else if(method.nm == 'cor'){
-      if(is.null(mSetObj$analSet$cor.res)){
-        Match.Pattern(mSetObj);
-        mSetObj <- .get.mSet(mSetObj);
-      }
-      
-      # re-order for pretty view
-      cor.res <- mSetObj$analSet$cor.res;
-      
-      ord.inx<-order(cor.res[,3]);
-      cor.res <- cor.res[ord.inx, ];
-      
-      ord.inx<-order(cor.res[,1]);
-      cor.res <- cor.res[ord.inx, ];
-      
-      var.nms <- rownames(cor.res)[1:top.num];
     }else if(method.nm == 'vip'){
       if(is.null(mSetObj$analSet$plsda)){
         PLSR.Anal(mSetObj);
@@ -493,7 +477,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     }
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));
-  PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, viewOpt, rowV, colV, var.inx, border, grp.ave);
+  PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, font.size, viewOpt, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, includeRowNames);
 }
 
 #'Create Heat Map Plot
@@ -519,15 +503,17 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param metadata metadata
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
-                        clstDist, palette, viewOpt="detail", rowV=T, 
-                        colV=T, var.inx=NULL, border=T, grp.ave=F, metadata){
-  
+                        clstDist, palette, font.size, viewOpt="detail", rowV=T, 
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
+
+#save.image("Test.RData");
+
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$heatmap <- imgName;
@@ -536,6 +522,8 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   cls.type <- mSetObj$dataSet$cls.type;
   cls.class <- mSetObj$dataSet$type.cls.lbl;
   
+  ordered.cls <- is.ordered(cls);
+
   # record the paramters
   mSetObj$analSet$htmap <- list(dist.par=smplDist, clust.par=clstDist);
   
@@ -554,23 +542,10 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   
   colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
   
-  if(cls.class == "integer"){
+  if(!ordered.cls && cls.class == "integer"){
     hc.cls <- as.factor(as.numeric(levels(cls))[cls]);
   }else{
     hc.cls <- cls;
-  }
-  
-  if(grp.ave){ # only use group average
-    lvs <- levels(hc.cls);
-    my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
-    for(i in 1:length(lvs)){
-      inx <-hc.cls == lvs[i];
-      my.mns[i,]<- apply(hc.dat[inx, ], 2, mean);
-    }
-    rownames(my.mns) <- lvs;
-    colnames(my.mns) <- colnames(hc.dat);
-    hc.dat <- my.mns;
-    hc.cls <- as.factor(lvs);
   }
   
   # set up colors for heatmap
@@ -597,12 +572,12 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   h <- plot_dims$height;
   w <- plot_dims$width;
   
-  # make the width smaller fro group average
+  # make the width smaller for group average
   if(grp.ave){
-    w <- nrow(hc.dat)*25 + 300;
+    w <- length(levels(cls))*25 + 300;
     w <- round(w/72,2);
   }
-  
+
   if(border){
     border.col<-"grey60";
   }else{
@@ -615,23 +590,40 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   }
   if(cls.type == "disc"){    
-    # set up color schema for samples
-    cols <- GetColorSchema(cls, palette == "gray");
-    uniq.cols <- unique(cols);
 
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      cls <- as.factor(as.numeric(levels(cls))[cls]);
-    }else{
-      cls <- cls;
+    if(ordered.cls){
+        ord.inx <- order(hc.cls);
+        hc.cls <- hc.cls[ord.inx];
+        hc.dat <- hc.dat[ord.inx,];
+    }else if(cls.class =="integer"){
+        hc.cls <- as.factor(as.numeric(levels(hc.cls))[hc.cls]);
     }
-    
-    names(uniq.cols) <- unique(as.character(sort(cls)));
+
+    # set up color schema for samples
+    cols <- GetColorSchema(hc.cls, palette == "gray");
+    uniq.cols <- unique(cols);    
+    names(uniq.cols) <- unique(as.character(hc.cls));
     ann_colors <- list(class= uniq.cols);
   
+    if(grp.ave){ # only use group average
+        lvs <- levels(cls);
+        my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
+        for(i in 1:length(lvs)){
+            my.mns[i,]<- colMeans(hc.dat[hc.cls==lvs[i], ]);
+        }
+        rownames(my.mns) <- lvs;
+        colnames(my.mns) <- colnames(hc.dat);
+        hc.dat <- my.mns;
+        hc.cls <- as.factor(lvs);
+        annotation <- data.frame(class = hc.cls);
+        rownames(annotation) <- rownames(hc.dat); 
+    }
+
     pheatmap::pheatmap(t(hc.dat), 
              annotation=annotation, 
              annotation_colors = ann_colors,
-             fontsize=8, fontsize_row=8, 
+             annotation_legend = show.annot.legend, 
+             fontsize=font.size, 
              clustering_distance_rows = smplDist,
              clustering_distance_cols = smplDist,
              clustering_method = clstDist, 
@@ -639,6 +631,8 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
              cluster_rows = colV, 
              cluster_cols = rowV,
              scale = scaleOpt, 
+             legend = show.legend,
+             show_rownames=includeRowNames,
              color = colors);
   }else{
     heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
@@ -660,7 +654,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
 #'@param j Index of Y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   mSetObj <- .get.mSet(mSetObj);
   clust <- mSetObj$analSet$som$visual;
@@ -677,7 +671,7 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 GetAllSOMClusterMembers <- function(mSetObj=NA){
   
@@ -725,7 +719,7 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'@param i Input the cluster index
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetKMClusterMembers <- function(mSetObj=NA, i){
   mSetObj <- .get.mSet(mSetObj);
   all.cols <- GetColorSchema(mSetObj$dataSet$cls);
@@ -765,7 +759,7 @@ GetAllKMClusterMembers <- function(mSetObj=NA){
 #'@param total Input the total
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 GetXYCluster<-function(total){
   if(total>16){

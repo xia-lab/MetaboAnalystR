@@ -20,7 +20,7 @@ melt.default <- function(data, ..., na.rm = FALSE, value.name = "value") {
 
 melt.list <- function(data, ..., level = 1) {
   require(plyr);
-  parts <- lapply(data, melt, level = level + 1, ...)
+  parts <- lapply(data, melt.default, level = level + 1, ...)
   result <- rbind.fill(parts)
   
   # Add labels
@@ -240,7 +240,7 @@ all_identical <- function(xs) {
 vars_pull <- function(vars, var = -1) {
   n <- length(vars)
   require(rlang)
-  tidyselect:::with_entraced_errors(
+  tidyselect:::instrument_base_errors(
     loc <- eval_tidy(enquo(var), set_names(seq_along(vars), vars))
   )
   loc <- pull_as_location2(loc, n, vars)

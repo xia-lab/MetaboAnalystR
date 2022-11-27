@@ -18,7 +18,7 @@
 #'@param multilevel Designate multilevel design, "NULL" by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 splsda <- function(X,
@@ -460,7 +460,7 @@ internal_mint.block = function (A, indY = NULL,  design = 1 - diag(length(A)), t
 # Performance prediction for PLS-DA and sPLS-DA
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 perf.splsda <- function(object,
                         dist = c("all", "max.dist", "centroids.dist", "mahalanobis.dist"),
                         constraint = FALSE,
@@ -1063,7 +1063,7 @@ MCVfold.splsda = function(
       {
         temp = cbind(temp, auc.all[[nrep]][, 1, i])
       }
-      auc.mean.sd[, 1, i] = apply(temp,1,mean)
+      auc.mean.sd[, 1, i] = rowMeans(temp);
       auc.mean.sd[, 2, i] = apply(temp,1,sd)
     }
   } else {
@@ -1145,7 +1145,7 @@ MCVfold.splsda = function(
       colnames(error) = paste0("nrep.",1:nrepeat)
       
       # average BER over the nrepeat
-      error.mean[[ijk]] = apply(error,1,mean)
+      error.mean[[ijk]] = rowMeans(error);
       if (!nrepeat ==  1)
         error.sd[[ijk]] = apply(error,1,sd)
       
@@ -1208,7 +1208,7 @@ MCVfold.splsda = function(
 #'@param penalty Default set to NULL
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 sparse.mint.block_iteration = function(A, design, study = NULL, keepA.constraint = NULL, keepA = NULL,
                                       scheme = "horst", init = "svd", max.iter = 100, tol = 1e-06, verbose = TRUE, bias = FALSE,
@@ -2200,7 +2200,7 @@ internal_predict.DA = function(object, out, q, dist, weights)
       x = matrix(x, nrow = q, ncol = h, byrow = TRUE)
       
       if (h > 1) {
-        d = apply((x - G[[i]][, 1:h])^2, 1, sum)
+        d = rowSums((x - G[[i]][, 1:h])^2);
       }
       else {
         d = (x - G[[i]][, 1])^2
@@ -2596,7 +2596,7 @@ Check.entry.pls = function(X, Y, ncomp, keepX, keepY, keepX.constraint, keepY.co
 #'@param Y Input data
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 map = function (Y)
 {

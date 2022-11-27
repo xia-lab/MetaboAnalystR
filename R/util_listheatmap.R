@@ -11,7 +11,7 @@ my.list.heatmap <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, filt
     t.stat <- 0;
   }
   data <- mSetObj$dataSet$mummi.proc
-  res <- data
+  res <- data;
   rownames(data) <- sig.ids
   
   data <- data[,-which(colnames(data) %in% c("m.z","pos_inx","r.t"))]

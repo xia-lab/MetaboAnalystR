@@ -3,7 +3,7 @@
 # Turn off the .on.public.web for local usage
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, log10L = FALSE, permI = 20, .on.public.web = TRUE,
                           scaleC = c("none", "center", "pareto", "standard")[4], ...) {
   xMN <- x;

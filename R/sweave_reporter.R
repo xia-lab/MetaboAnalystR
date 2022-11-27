@@ -8,7 +8,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PreparePDFReport<-function(mSetObj=NA, usrName){
@@ -28,7 +28,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
   
   if(anal.type == "stat" ){
     CreateStatRnwReport(mSetObj, usrName);
-  }else if(anal.type == "ts"){
+  }else if(anal.type == "mf"){
     CreateTimeSeriesRnwReport(mSetObj, usrName);
   }else if(substr(anal.type, 0, 4) == "mset"){
     CreateEnrichRnwReport(mSetObj, usrName);
@@ -99,7 +99,7 @@ CreateHeader <- function(usrName){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import qs
 CreateSummaryTable <- function(mSetObj=NA){
@@ -152,7 +152,7 @@ CreateSummaryTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateNORMdoc <- function(mSetObj=NA){
@@ -163,7 +163,7 @@ CreateNORMdoc <- function(mSetObj=NA){
   if(is.null(mSetObj$dataSet$norm)){
     errorMsg <- c("Error occured during normalization of your data ....",
                   "Fail to proceed. Please check if the data format you uploaded is correct.",
-                  "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!");
+                  "Please use the OmicsForum (omicsforum.ca) for community based support!");
     cat(errorMsg, file=rnwFile, append=TRUE);
     return();
   }
@@ -215,9 +215,6 @@ CreateNORMdoc <- function(mSetObj=NA){
   
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
   
-  if(mSetObj$dataSet$combined.method){
-    norm.desc <- "Combined approach using quantile normalization within replicates after log transformation.";
-  }else{
     if(!is.null(mSetObj$dataSet[["rownorm.method"]])){
       norm.desc <- paste("Row-wise normalization: ", mSetObj$dataSet$rownorm.method, "; ",
                          "Data transformation: ",mSetObj$dataSet$trans.method, "; ",
@@ -225,7 +222,7 @@ CreateNORMdoc <- function(mSetObj=NA){
     }else{
       norm.desc <- "No normalization methods were applied."
     }
-  }
+  
   
   if(exists("norm", where=mSetObj$imgSet)){
     cmdhist <- c( "\\begin{figure}[htp]",
@@ -249,7 +246,7 @@ CreateNORMdoc <- function(mSetObj=NA){
 #'Create footer
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateRHistAppendix <- function(){
   
@@ -271,12 +268,13 @@ CreateRHistAppendix <- function(){
 #'Metabolite enrichment analysis report footer
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateFooter <- function(){
   end <- c("\\vspace{5 mm}\n--------------------------------\n\n",
-           "The report was generated on \\Sexpr{date()} with \\Sexpr{print(version$version.string)}.\n",
+           "The report was generated on \\Sexpr{date()} with \\Sexpr{print(version$version.string)}, OS system:",
+           "\\Sexpr{Sys.info()['sysname']}, version: \\Sexpr{gsub('#[0-9]+', '', Sys.info()['version'])} .\n",
            "\\end{document}\n\n"
   );
   cat(end, file=rnwFile, append=TRUE);

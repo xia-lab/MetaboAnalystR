@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateMetaPathRnwReport<-function(mSetObj, usrName){
@@ -23,7 +23,7 @@ CreateMetaPathRnwReport<-function(mSetObj, usrName){
 #'@param mSetObj mSetObj
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogMetaAnalReport<-function(mSetObj){
   CreateMetaMummichogIntro();
@@ -36,7 +36,7 @@ CreateMummichogMetaAnalReport<-function(mSetObj){
 #'Mummichog analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaMummichogIntro <- function(){
   
@@ -89,7 +89,7 @@ CreateMetaMummichogIntro <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaMummichogInputDoc <- function(mSetObj=NA){
   
@@ -173,7 +173,7 @@ CreateMetaMummichogInputDoc <- function(mSetObj=NA){
 #'@param mSetObj mSetObj
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaMummichogResults <- function(mSetObj){
   
@@ -241,7 +241,7 @@ CreateMetaMummichogResults <- function(mSetObj){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogMetaAnalPathTable <- function(mSetObj){
   mummitable <- mSetObj$meta_results;
@@ -259,7 +259,7 @@ CreateMummichogMetaAnalPathTable <- function(mSetObj){
 #'Mummichog analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogIntro <- function(){
   descr <- c("\\section{Background}\n",
@@ -284,7 +284,7 @@ CreateMummichogIntro <- function(){
 #'Mummichog analysis report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogOverview <- function(){
   descr <- c("\\section{Overview}\n",
@@ -300,7 +300,7 @@ CreateMummichogOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogInputDoc <- function(mSetObj=NA){
   
@@ -396,7 +396,7 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogAnalTable <- function(mSetObj=NA){
   
@@ -412,7 +412,7 @@ CreateMummichogAnalTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateGSEAAnalTable <- function(mSetObj=NA){
   
@@ -428,7 +428,7 @@ CreateGSEAAnalTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMetaAnalTable <- function(mSetObj=NA){
   
@@ -444,7 +444,7 @@ CreateMetaAnalTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong 
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateMummichogAnalysisDoc<-function(mSetObj=NA){
   

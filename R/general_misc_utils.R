@@ -2,7 +2,7 @@
 ### Perform misc tasks
 ### Jeff Xia\email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-###License: GNU GPL (>= 2)
+###License: MIT License
 
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
@@ -29,7 +29,7 @@ ReplaceMissingByLoD <- function(int.mat){
 #'@param quiet Set to quiet, logical, default is T
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
@@ -87,7 +87,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #' @param fileName Input filename
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @importFrom data.table fread
 #' @export
 
@@ -108,6 +108,10 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   if(any(dim(dat) == 0)){
         dat <- .my.slowreaders(fileName);
   }
+
+  # need to remove potential empty columns !! NOTE the single |, not || which is for atomic operation
+  dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
+
   return(dat);
 }
 
@@ -133,7 +137,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #'@param sep.type Indicate the seperator type for input text. Default set to "space"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 getDataFromTextArea <- function(txtInput, sep.type="space"){
@@ -169,7 +173,7 @@ getDataFromTextArea <- function(txtInput, sep.type="space"){
 #'@param fun Dummy function
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@usage Perform.permutation(perm.num, fun)
 #'@export
 #'
@@ -209,7 +213,7 @@ Perform.permutation <- function(perm.num, fun){
 #'@param rmFile Logical, input whether or not to remove files. Default set to T
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
@@ -233,7 +237,7 @@ UnzipUploadedFile<-function(inPath, outPath, rmFile=T){
 #'@param removeConst Logical, T to remove samples/features with 0s, F to not. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 
 CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
@@ -276,7 +280,7 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
 #'@param bdata Input matrix to clean numbers
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 CleanNumber <-function(bdata){
   if(sum(bdata==Inf)>0){
@@ -303,7 +307,7 @@ CleanNames <- function(query){
 #'@param query Input the query to clear
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 ClearStrings<-function(query){
   # kill multiple white space
@@ -329,7 +333,7 @@ PrepareLatex <- function(stringVec){
 #'@param data.type Input concentration or intensity data
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetAbundanceLabel<-function(data.type){
@@ -345,7 +349,7 @@ GetAbundanceLabel<-function(data.type){
 #'@param data.type Input the data type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 GetVariableLabel<-function(data.type){
@@ -369,7 +373,7 @@ GetVariableLabel<-function(data.type){
 #'@param data.type Input the data type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 GetSigTable<-function(mat, method, data.type){
@@ -399,7 +403,7 @@ GetSigTable<-function(mat, method, data.type){
 #'@param mat Matrix to test if empty
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 isEmptyMatrix <- function(mat){
   if(is.null(mat) | length(mat)==0){
@@ -440,7 +444,7 @@ hex2rgb <- function(cols){
 # Improved list of objects
 # Jeff Xia\email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 
 .ls.objects <- function (pos = 1, pattern, order.by,
                          decreasing=FALSE, head=FALSE, n=5) {
@@ -478,7 +482,7 @@ hex2rgb <- function(cols){
 #'@param unit Numeric
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetExtendRange<-function(vec, unit=10){
   var.max <- max(vec, na.rm=T);
   var.min <- min(vec, na.rm=T);
@@ -513,7 +517,7 @@ getVennCounts <- function(x, include="both") {
 # borrowed from Hmisc
 # Jeff Xia\email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT License
 all.numeric <- function (x, what = c("test", "vector"), extras = c(".", "NA")){
   what <- match.arg(what)
   old <- options(warn = -1)
@@ -542,7 +546,7 @@ ClearNumerics <-function(dat.mat){
 #'@param mat Input matrix of data to calculate pair-wise differences.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 CalculatePairwiseDiff <- function(mat){
   f <- function(i, mat) {
@@ -682,7 +686,7 @@ GetColorSchema <- function(my.cls, grayscale=F){
 #'@param folderName Input name of folder to remove
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 RemoveFolder<-function(folderName){
   a<-system(paste("rm",  "-r", folderName), intern=T);
@@ -698,7 +702,7 @@ RemoveFolder<-function(folderName){
 #'@param fileName Input name of file to remove
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 RemoveFile<-function(fileName){
   if(file.exists(fileName)){
     file.remove(fileName);
@@ -713,7 +717,7 @@ cleanMem <- function(n=10) { for (i in 1:n) gc() }
 #'@param regexp Retrieve last command from Rhistory file
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetCMD<-function(regexp){
   # store all lines into a list object
   all.lines<-readLines("Rhistory.R");
@@ -742,7 +746,7 @@ ShowMemoryUse <- function(..., n=40) {
 #'for cropping images
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 GetConvertFullPath<-function(){
   path <- system("which convert", intern=TRUE);
   if((length(path) == 0) && (typeof(path) == "character")){
@@ -770,7 +774,7 @@ GetBashFullPath<-function(){
 #'@param dataType The type of data, either list (Compound lists), conc (Compound concentration data), 
 #'specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 #'or msspec (MS spectra data).
-#'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+#'@param analType Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, mf, 
 #'cmpdmap, smpmap, or pathinteg.
 #'@param paired Logical, is data paired (T) or not (F).
 #'@param format Specify if samples are paired and in rows (rowp), unpaired and in rows (rowu),
@@ -915,7 +919,7 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
 #'@param cl Columns
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 
 Get.bwss<-function(x, cl){
   K <- max(cl) - min(cl) + 1
@@ -1240,10 +1244,13 @@ PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type =
   feat.nms <- colnames(int.mat);
   nm <- NULL;
   msg <- "";
-  if(filter == "none" && feat.num < 5000){ # only allow for less than 4000
+  if(filter == "none" && feat.num < 5000) { # only allow for less than 4000
     remain <- rep(TRUE, feat.num);
     msg <- paste(msg, "No filtering was applied");
-  }else{
+  } else if(filter == "all") {
+    remain <- rep(TRUE, feat.num);
+    msg <- paste(msg, "No filtering was applied, all features were kept!");
+  } else {
     if (filter == "rsd"){
       sds <- apply(int.mat, 2, sd, na.rm=T);
       mns <- apply(int.mat, 2, mean, na.rm=T);
@@ -1290,7 +1297,7 @@ PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type =
 
             if(anal.type == "mummichog"){
                 max.allow <- 7500;
-            }else if(anal.type == "power" || anal.type == "ts"){
+            }else if(anal.type == "power" || anal.type == "mf"){
                 max.allow <- 5000;
             }else{
                 max.allow <- 2500;
@@ -1304,7 +1311,11 @@ PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type =
     }else{
         remain <- rk < remain.num;
     }
+
+    # save a copy for user 
+    fast.write.csv(cbind(filter=filter.val, t(int.mat)), file=paste0("data_prefilter_", filter, ".csv"));
   }
-  print(msg);
+
+  #print(msg);
   return(list(data=int.mat[, remain], msg=msg));
 }

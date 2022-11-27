@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreateStatRnwReport <- function(mSetObj, usrName){
@@ -47,7 +47,7 @@ CreateStatRnwReport <- function(mSetObj, usrName){
 #'Create header
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreateStatIntr <- function(){
@@ -61,7 +61,7 @@ CreateStatIntr <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateStatIOdoc <- function(mSetObj=NA){
@@ -82,7 +82,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
   if(is.null(mSetObj$dataSet$url.var.nms) | is.null(mSetObj$dataSet$proc.feat.num) | is.null(mSetObj$dataSet$cls)){
     errorMsg <- c(descr, "Error occured during reading the raw data ....",
                   "Failed to proceed. Please check if the data format you uploaded is correct.",
-                  "Please visit our FAQs, Data Formats, and TroubleShooting pages for more information!\n");
+                  "Please use the OmicsForum (omicsforum.ca) for community based support!\n");
     cat(errorMsg, file=rnwFile, append=TRUE);
     return();
   }
@@ -329,7 +329,7 @@ CreateAnalNullMsg <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateUNIVdoc <- function(mSetObj=NA){
   
@@ -465,7 +465,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateANOVAdoc <- function(mSetObj=NA){
   
@@ -528,7 +528,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateCorrDoc <- function(mSetObj=NA){
   
@@ -620,7 +620,7 @@ CreateCorrDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePCAdoc <- function(mSetObj=NA){
   
@@ -704,7 +704,7 @@ CreatePCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreatePLSdoc <- function(mSetObj=NA){
   
@@ -840,7 +840,7 @@ CreatePLSdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateSPLSDAdoc <- function(mSetObj=NA){
   
@@ -916,7 +916,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateOPLSDAdoc <- function(mSetObj=NA){
@@ -985,7 +985,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateSAMdoc <- function(mSetObj=NA){
@@ -1050,7 +1050,7 @@ CreateSAMdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreateEBAMdoc <- function(mSetObj=NA){
@@ -1110,7 +1110,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateHCdoc <- function(mSetObj=NA){
@@ -1174,7 +1174,7 @@ CreateHCdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateSOMdoc <- function(mSetObj=NA){
   
@@ -1225,7 +1225,7 @@ CreateSOMdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 
 CreateKMdoc <- function(mSetObj=NA){
@@ -1278,7 +1278,7 @@ CreateKMdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 CreateRFdoc <- function(mSetObj=NA){
@@ -1363,7 +1363,7 @@ CreateRFdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 CreateSVMdoc <- function(mSetObj=NA){
   

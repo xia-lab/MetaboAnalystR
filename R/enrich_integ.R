@@ -121,7 +121,7 @@ PrepareIntegData <- function(mSetObj=NA){
 #' @param integOpt integOpt,default is "query"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", 
@@ -242,7 +242,10 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   rownames(impMat) <- ora.vec;
 
   if(!.on.public.web){
-    
+     # make this lazy load
+    if(!exists("my.integ.kegg")){ # public web on same user dir
+      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+    }    
     if(libOpt == "integ"){
       toSend = list(mSet = mSetObj, oraVec = ora.vec,
                     libOpt = libOpt, integOpt = integOpt, 
@@ -254,39 +257,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
                     libOpt = libOpt, integOpt = integOpt, 
                     topoMethod = topo, enrichAnal = enrich, org = mSetObj$org)
     }
-
-    load_httr()
-    base <- api.base
-    endpoint <- "/jointpath"
-    call <- paste(base, endpoint, sep="")
-    print(call)
-    
     saveRDS(toSend, "tosend.rds")
-    request <- httr::POST(url = call, 
-                          body = list(rds = upload_file("tosend.rds", "application/octet-stream")))
-    
-    # check if successful
-    if(request$status_code != 200){
-      AddErrMsg("Failed to connect to Xia Lab API Server!")
-      return(0)
-    }
-    
-    # now process return
-    mSetObj <- httr::content(request, "raw")
-    mSetObj <- unserialize(mSetObj)
-    
-    if(is.null(mSetObj$dataSet$path.mat)){
-      AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
-      return(0)
-    }
-    
-    print("Joint Pathway Analysis via api.metaboanalyst.ca successful!")
-    
-    rownames(mSetObj$dataSet$path.mat) <- mSetObj$dataSet$jointpa.pathnames
-    fast.write.csv(mSetObj$dataSet$path.mat, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
-    
-    mSetObj$dataSet$pathinteg.impMat <- impMat;    
-    return(.set.mSet(mSetObj));
+    return(my.integ.kegg());
   }
   
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
@@ -346,7 +318,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   mSetObj$dataSet$path.mat <- resTable;
   mSetObj$dataSet$path.hits <- hits.path;
   mSetObj$dataSet$pathinteg.impMat <- impMat;
-
   # Perform meta integ for global metabolomics and genes
   if(integOpt == "pvali") {
     .performIntegGlobalMergeP(mSetObj, libOpt);
@@ -494,7 +465,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
 
 # internal function to integrate untargeted metabolomics and genes
 .performIntegGlobalMergeP <- function(mSetObj = NA, libOpt = "mgenetic"){
-  
+
   # get p integ method
   integMethod <- mSetObj$dataSet$integPmethod;
   
@@ -507,18 +478,28 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   paths1 <- lapply(pathResults, 
                    data.table::data.table, 
                    keep.rownames = TRUE);
-    
+   
   path2 <- data.table::setDF(merge(paths1$mummi, paths1$mgenes, by = "rn", all.x=TRUE, all.y = TRUE))
+  
   
   path2$Hits.sig[is.na(path2$Hits.sig)] <-
     path2$Hits[is.na(path2$Hits)] <-
-    path2$Total[is.na(path2$Total)] <- 
     path2$`Pathway total`[is.na(path2$`Pathway total`)] <- 0
-  
+  if("Total.x" %in% colnames(path2)){
+    path2$Total.x[is.na(path2$Total.x)] <- 0
+  }
+  if("Total.y" %in% colnames(path2)){
+    path2$Total.y[is.na(path2$Total.y)] <- 0
+    total <- path2$`Pathway total` + path2$Total.y;
+  }
+  if("Total" %in% colnames(path2)){
+    path2$Total[is.na(path2$Total)] <- 0
+    total <- path2$`Pathway total` + path2$Total;
+  }
+ 
   path2$FET[is.na(path2$FET)] <- 
     path2$`Raw p`[is.na(path2$`Raw p`)] <- 1;
-  
-  total <- path2$`Pathway total` + path2$Total;
+    
   hitsm <- path2$Hits.sig;
   hitsg <- path2$Hits;
 
@@ -556,7 +537,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
                                LogP = round(logp[order.idx],4),
                                Holmp = round(holmp[order.idx],4),
                                FDRp = round(fdrp[order.idx],4));
-                               
+                             
   #integResGlobal
   fast.write.csv(integResGlobal, file="MetaboAnalyst_result_integ.csv");
   path.mat <- as.matrix(integResGlobal[,-1])
@@ -842,7 +823,7 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
 #'@param dpi dpi, dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'@import igraph  
 #'@import qs
@@ -934,7 +915,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 #'@param dpi dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@export
 #'
 PlotInmexGraph <- function(mSetObj, pathName, 

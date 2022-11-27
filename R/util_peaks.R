@@ -9,7 +9,7 @@
 #' @param foldername Name of the folder containing the NMR or MS peak list files to read.
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT License
 #' @import qs
 my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
@@ -22,7 +22,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   
   # the "upload" folder should contain several subfolders (groups)
   # each of the subfolder contains samples (.csv files)
-  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.names = TRUE)
+  files<-dir(foldername, pattern=".[Cc][Ss][Vv]$", recursive=T, full.name=TRUE)
   if (length(files) == 0) {
     AddErrMsg("No peak list files (.csv) were found.");
     return(0);
@@ -96,7 +96,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   all.peaks<-NULL;
   
   for(i in 1:length(files)){
-    print(files[i]);
+    #print(files[i]);
     pks<- as.matrix(.readDataTable(files[i]));
     if(ncol(pks)!=n.col){
       AddErrMsg("The number of columns in each file are not the same!");
@@ -159,7 +159,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
 #'@param max, define the maximum number of groups to identify in a single m/z slice
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'@import qs
 #'@export
 #'
@@ -307,7 +307,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
 #'@param istart Performs which.max on y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 descendMin <- function(y, istart = which.max(y)) {
    
   if (!is.double(y)) y <- as.double(y)
@@ -325,7 +325,7 @@ descendMin <- function(y, istart = which.max(y)) {
 #'@param values Input the values 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
@@ -346,7 +346,7 @@ findEqualGreaterM <- function(x, values) {
 #'@param ydiff Default set to 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT License
 #'
 rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
   
