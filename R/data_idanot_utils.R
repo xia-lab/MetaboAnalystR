@@ -331,7 +331,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 # from probe ID to entrez ID 
 .doProbeMapping <- function(probe.vec, platform, paramSet){
-  data.org <- paramSet$data.org;
+  org <- paramSet$data.org;
 
   if(exists("api.lib.path")){
     lib.path <- api.lib.path;
