@@ -11,6 +11,7 @@
 #'@param fileNm file name of the json file output 
 #'@export
 PrepareUpsetData <- function(fileNm){
+  anal.type <- "meta";
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
@@ -20,7 +21,7 @@ PrepareUpsetData <- function(fileNm){
   newDat <- list();
 
   # selected dataset or comparisons for onedata (single gene expression matrix)
-  if(anal.type == "metadata"){
+  if(anal.type == "meta"){
   hit.inx <- mdata.all==1;
   sel.nms <- names(mdata.all)[hit.inx];
   }else if(anal.type == "onedata"){
@@ -37,7 +38,7 @@ PrepareUpsetData <- function(fileNm){
 
   # populate gene lists for upset plot based on selected names
   for(nm in sel.nms){
-    if(anal.type == "metadata"){
+    if(anal.type == "meta"){
       dataSet <- readDataset(nm);
       sel.dats[[nm]] <- rownames(dataSet$sig.mat);
     }else if(anal.type == "onedata"){

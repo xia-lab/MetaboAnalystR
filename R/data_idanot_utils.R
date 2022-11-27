@@ -51,10 +51,10 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   if (org != 'NA' & idType != 'NA'){
     feature.vec <- rownames(data.proc);
     
-    anot.id <- .doAnnotation(feature.vec, idType, org);
+    anot.id <- .doAnnotation(feature.vec, idType, paramSet);
     anot.id <- unname(anot.id);
     
-    symbol.map <- .doGeneIDMapping(anot.id, "entrez", org, "matrix");
+    symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
     dataSet$symbol.map <- symbol.map;
     
     qs::qsave(anot.id, "annotation.qs");
@@ -142,9 +142,9 @@ AnnotateGeneData <- function(dataName, org, idtype){
   dataSet$gene.org <- org;
   dataSet$gene <- gene.vec;
   if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
-    enIDs <- .doGeneIDMapping(gene.vec, idtype, org);
+    enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
   }else{
-    enIDs <- .doProbeMapping(gene.vec, idtype, org);
+    enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
     names(enIDs) <- gene.vec;
   }
 
@@ -240,11 +240,11 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 
 #Convert a vector of ids to vector of entrez ids
-.doAnnotation <- function(id.vec, idType, org){
+.doAnnotation <- function(id.vec, idType, paramSet){
   if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
-    anot.id <- .doGeneIDMapping(id.vec, idType, org);
+    anot.id <- .doGeneIDMapping(id.vec, idType, paramSet, "vec");
   }else{
-    anot.id <- .doProbeMapping(id.vec, idType, org);
+    anot.id <- .doProbeMapping(id.vec, idType, paramSet);
     names(anot.id) <- id.vec;
   }
   return(anot.id);        
@@ -253,7 +253,9 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 
 # mapping between genebank, refseq and entrez
-.doGeneIDMapping <- function(q.vec, type, org, outputType="vec"){
+.doGeneIDMapping <- function(q.vec, type, paramSet, outputType="vec"){
+
+    org <- paramSet$data.org;
   if(is.null(q.vec)){
     db.map <-  queryGeneDB("entrez", org);
     q.vec <- db.map[, "gene_id"];
@@ -261,15 +263,16 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }
     col.nm = "";
     db.nm = "";
-  if(type == "symbol"){
+
+  if(paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
+    col.nm = "gene_id";
+    db.nm = paste0("entrez_", paramSet$data.idType);
+  }else if(type == "symbol"){
     col.nm = "symbol";
     db.nm = "entrez";
   }else if(type == "entrez"){
     col.nm = "gene_id";
     db.nm = "entrez";
-  }else if(type == "ko" || type == "s2f"){ # only for ko
-    col.nm = "gene_id";
-    db.nm = paste0("entrez_", type);
   }else if(type == "custom"){ # only for ko
     db.nm = "custom";
     col.nm = "gene_id";
@@ -294,7 +297,6 @@ AnnotateGeneData <- function(dataName, org, idtype){
   }
 
   db.map <-  queryGeneDB(db.nm, org);
-
   if(org == "smm" && type == "symbol"){
     q.mat <- do.call(rbind, strsplit(q.vec, "\\."));
     q.vec <- q.mat[,1];
@@ -328,8 +330,8 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 
 # from probe ID to entrez ID 
-.doProbeMapping <- function(probe.vec, platform, org){
-  paramSet <- readSet(paramSet, "paramSet");
+.doProbeMapping <- function(probe.vec, platform, paramSet){
+  data.org <- paramSet$data.org;
 
   if(exists("api.lib.path")){
     lib.path <- api.lib.path;

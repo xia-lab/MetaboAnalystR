@@ -43,7 +43,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
     dataSet$name = paste0("datalist", i);
     listNms[i] = dataSet$name;
     gene.mat <- prot.mat <- dataList[[i]];
-    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet$data.org, "table");
+    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet, "table");
     
     na.inx <- is.na(GeneAnotDB[,1]) | is.na(GeneAnotDB[,2]);
     if(sum(!na.inx) < 2){
@@ -114,7 +114,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     dataSet = readDataset(listNms[i])
     dataSet$name <- listNms[i];
     gene.mat <- prot.mat <- dataSet$prot.mat;
-    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet$data.org, "table");
+    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet,"table");
     
     na.inx <- is.na(GeneAnotDB[,1]) | is.na(GeneAnotDB[,2]);
     if(sum(!na.inx) < 2){
