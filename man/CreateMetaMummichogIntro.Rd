@@ -13,5 +13,5 @@ Mummichog analysis report introduction
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

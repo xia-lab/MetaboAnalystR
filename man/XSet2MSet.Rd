@@ -13,7 +13,7 @@ XSet2MSet(xset, dataType, analType, paired = F, format, lbl.type)
 specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 or msspec (MS spectra data).}
 
-\item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+\item{analType}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, mf, 
 cmpdmap, smpmap, or pathinteg.}
 
 \item{paired}{Logical, is data paired (T) or not (F).}

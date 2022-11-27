@@ -8,7 +8,8 @@ PLSDA.CV(
   mSetObj = NA,
   methodName = "T",
   compNum = GetDefaultPLSCVComp(mSetObj),
-  choice = "Q2"
+  choice = "Q2",
+  segments = 10
 )
 }
 \arguments{
@@ -26,5 +27,5 @@ PLS-DA classification and feature selection
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

@@ -21,5 +21,5 @@ based on the Study ID into the current working directory.
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

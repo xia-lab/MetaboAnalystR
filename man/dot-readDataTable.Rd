@@ -16,5 +16,5 @@ some windows 10 files. In such case, use the slower read.table method.
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

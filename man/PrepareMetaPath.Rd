@@ -39,5 +39,5 @@ PrepareMetaPath
 Jeff Xia\email{jeff.xia@mcgill.ca} 
 Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

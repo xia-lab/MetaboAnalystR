@@ -15,5 +15,5 @@ Determine data type, binned spectra, nmr peak, or ms peak
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

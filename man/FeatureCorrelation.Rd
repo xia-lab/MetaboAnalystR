@@ -19,5 +19,5 @@ Calculate correlation of all other feature to a given feature name
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

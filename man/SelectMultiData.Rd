@@ -16,5 +16,5 @@ a dataset is selected and by default, all datasets will be selected for meta-ana
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

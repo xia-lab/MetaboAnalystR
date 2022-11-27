@@ -17,5 +17,5 @@ Transform two column input text to data matrix (single column data frame)
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

@@ -17,5 +17,5 @@ Perform  Kruskal-Wallis Test
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

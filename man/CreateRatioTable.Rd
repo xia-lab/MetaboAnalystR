@@ -16,5 +16,5 @@ Function to create a summary table for biomarker analysis: included metabolite r
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

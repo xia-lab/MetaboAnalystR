@@ -16,5 +16,5 @@ is stored in a file where each line is a pair and names are separated by ":".
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

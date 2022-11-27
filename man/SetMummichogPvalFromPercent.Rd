@@ -17,5 +17,5 @@ Set the p-value cutoff for mummichog analysis.
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

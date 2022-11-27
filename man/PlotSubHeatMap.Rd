@@ -15,13 +15,17 @@ PlotSubHeatMap(
   smplDist,
   clstDist,
   palette,
+  font.size,
   method.nm,
   top.num,
   viewOpt,
   rowV = T,
   colV = T,
   border = T,
-  grp.ave = F
+  grp.ave = F,
+  show.legend = T,
+  show.annot.legend = T,
+  includeRowNames = T
 )
 }
 \arguments{
@@ -67,5 +71,5 @@ Plot a sub heatmap based on results from t-tests/ANOVA, VIP or randomforest
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

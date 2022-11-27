@@ -15,5 +15,5 @@ Only for human pathways + ath, eco, mmu & sce
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

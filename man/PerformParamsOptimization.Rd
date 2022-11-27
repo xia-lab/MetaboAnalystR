@@ -48,5 +48,5 @@ PerformParamsOptimization
 Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} 
 Jeff Xia \email{jeff.xia@mcgill.ca}
 Mcgill University
-License: GNU GPL (>= 2)
+License: MIT License
 }

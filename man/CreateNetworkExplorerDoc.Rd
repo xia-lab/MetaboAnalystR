@@ -16,5 +16,5 @@ Biomarker analysis report, ROC Curve Based Model Creation and Evaluation
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

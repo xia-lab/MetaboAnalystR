@@ -22,5 +22,5 @@ Function to create a summary table of mummichog analysis
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

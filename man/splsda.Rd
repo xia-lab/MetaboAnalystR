@@ -53,5 +53,5 @@ the formatting of the input is checked in internal_wrapper.mint
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

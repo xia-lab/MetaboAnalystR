@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta_methods.R
 \name{PrepareUpsetData}
 \alias{PrepareUpsetData}
-\title{Prepare data for Venn diagram}
+\title{Prepare data for Upset diagram}
 \usage{
 PrepareUpsetData(mSetObj = NA, fileNm)
 }
@@ -12,5 +12,5 @@ PrepareUpsetData(mSetObj = NA, fileNm)
 \item{fileNm}{json file name to save}
 }
 \description{
-Prepare data for Venn diagram
+Prepare data for Upset diagram
 }

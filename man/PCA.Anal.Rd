@@ -9,7 +9,7 @@ PCA.Anal(mSetObj = NA)
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object
 McGill University, Canada
-License: GNU GPL (>= 2)}
+License: MIT License}
 }
 \description{
 Perform PCA analysis, obtain variance explained, store item to PCA object

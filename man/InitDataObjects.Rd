@@ -11,7 +11,7 @@ InitDataObjects(data.type, anal.type, paired=FALSE)
 specbin (Binned spectra data), pktable (Peak intensity table), nmrpeak (NMR peak lists), mspeak (MS peak lists), 
 or msspec (MS spectra data)}
 
-\item{anal.type}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, ts, 
+\item{anal.type}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, mf, 
 cmpdmap, smpmap, or pathinteg}
 
 \item{paired}{Indicate if the data is paired or not. Logical, default set to FALSE}
@@ -23,5 +23,5 @@ It is necessary to utilize this function to specify to MetaboAnalystR the type o
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

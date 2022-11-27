@@ -16,5 +16,5 @@ Functional Meta-Analysis Report
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

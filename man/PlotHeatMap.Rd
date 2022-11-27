@@ -15,13 +15,16 @@ PlotHeatMap(
   smplDist,
   clstDist,
   palette,
+  font.size,
   viewOpt = "detail",
   rowV = T,
   colV = T,
   var.inx = NULL,
   border = T,
   grp.ave = F,
-  metadata
+  show.legend = T,
+  show.annot.legend = T,
+  includeRowNames = T
 )
 }
 \arguments{
@@ -67,5 +70,5 @@ Plot a heatmap based on results from t-tests/ANOVA, VIP or randomforest
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

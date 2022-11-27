@@ -16,5 +16,5 @@ Mummichog analysis report, data input documentation.
 \author{
 Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

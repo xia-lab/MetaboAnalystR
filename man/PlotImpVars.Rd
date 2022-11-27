@@ -31,5 +31,5 @@ Plot the important variables of single biomarker model ranked by order of import
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

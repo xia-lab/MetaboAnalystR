@@ -21,5 +21,5 @@ This function performs DE analysis of individually-uploaded data prior to meta-a
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

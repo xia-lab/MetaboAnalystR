@@ -16,5 +16,5 @@ Several files may be generated, the original data, processed data, peak normaliz
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }

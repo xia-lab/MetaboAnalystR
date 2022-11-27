@@ -17,5 +17,5 @@ Search for compound from all member compounds of metabolite set
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT License
 }
