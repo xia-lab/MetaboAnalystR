@@ -761,6 +761,13 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
   sqlite.path <- paste0(url.pre, mSetObj$org, "_genes.sqlite");
+  if(!file.exists(sqlite.path)){
+    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
+                         org.code, "_genes.sqlite");
+    sqlite.path <- paste0(getwd(), "/",org.code, "_genes.sqlite")
+    download.file(sqlite_url,destfile = sqlite.path, method = "curl")
+  }
   conv.db <- .get.sqlite.con(sqlite.path); 
   gene.db <- dbReadTable(conv.db, "entrez")
   

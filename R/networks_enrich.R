@@ -49,7 +49,14 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
   
   org.code <- mSetObj$org;
   sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
-  con <- .get.sqlite.con(sqlite.path); ; 
+  if(!file.exists(sqlite.path)){
+    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
+                          org.code, "_genes.sqlite");
+    sqlite.path <- paste0(getwd(), "/",org.code, "_genes.sqlite")
+    download.file(sqlite_url,destfile = sqlite.path, method = "curl")
+  }
+  con <- .get.sqlite.con(sqlite.path);
   gene.db <- dbReadTable(con, "entrez")
 
   hit.inx <- match(enIDs, gene.db[, "gene_id"]);
