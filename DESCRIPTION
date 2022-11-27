@@ -19,7 +19,7 @@ Imports:
     pcaMethods, plotly, scales, MSnbase, tibble, siggenes, lattice, MASS
 Suggests: 
     graph, htmltools, pls, ellipse, scatterplot3d, randomForest, caTools, e1071, som, RJSONIO, rjson, ROCR,
-    globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, limma, fitdistrplus,
+    globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, sva, limma, fitdistrplus,
     lars, Hmisc, magrittr, xtable, KEGGgraph, metap, entropy, rsm, httr, knitr, rmarkdown, devtools, testthat, 
     visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc, OptiLCMS
 VignetteBuilder: knitr
