@@ -19,6 +19,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
 
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
+    gene.map <- dataSet$symbol.map;
     subset <- dataSet$data.norm[which(doIdMappingGeneric(rownames(dataSet$data.norm), gene.map, "gene_id", "symbol") %in% ids),]
     if(length(subset)<1){
       subset <- dataSet$data.norm[which(rownames(dataSet$data.norm) %in% ids),]
@@ -26,7 +27,8 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     
     inx <- order(dataSet$meta[,1]);
     subset <- subset[,inx];
-    gene.map <- dataSet$symbol.map;
+
+
   }else{
     if(paramSet$selDataNm == "meta_default"){
       inmex <- qs:::qread("inmex_meta.qs");
