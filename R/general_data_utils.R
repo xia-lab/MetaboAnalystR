@@ -1,6 +1,6 @@
 # internal variables and functions not to be modified by users
 # This is only for web version 
-.on.public.web <- TRUE; # only TRUE when on metaboanalyst web server
+.on.public.web <- FALSE; # only TRUE when on metaboanalyst web server
 
 # note, this is usually used at the end of a function
 # for local, return itself; for web, push to global environment
