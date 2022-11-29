@@ -141,7 +141,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   cat(json.obj);
   sink();
   
-  analSet$sig.gene.count <- nrow(dataSet$sig.mat);
+  analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
   res <- RegisterData(dataSet);
   if(res == 1){
