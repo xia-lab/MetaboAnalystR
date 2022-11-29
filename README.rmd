@@ -103,12 +103,12 @@ dataSets <- PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean")
 Take a look at the mapped dataset by reading the dataset's qs file using ```readDataset(fileName)``` function.
 ```{r eval=FALSE}
 dataSet <- readDataset("estrogen.txt")
-print(head(dataSet$data.anot[c(1:5),])
+print(head(dataSet$data.anot[c(1:5),]))
 ```
 Check diagnostics plots to look at overall data distribution, sample separation.
 ```{r eval=FALSE}
 PlotDataBox("estrogen.txt", "qc_boxplot_", 72, "png");
-PlotDataPca("estrogen.txt", "qc_pca_", 72, "png");
+PlotDataPCA("estrogen.txt", "qc_pca_", 72, "png");
 ```
 Check your working directory for png images named ``qc_boxplot_dpi72.png`` and ``qc_pca_dpi72.png``, open them. <br />
 ![Box Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_boxplot.png) <br />
@@ -123,7 +123,7 @@ Filter by relative abundance (lower 4 percentile of average expression signal)
 Filter by count not applied (only for RNASeq data)
 Filter unannotated genes TRUE
 ```{r eval=FALSE}
-dataSets <- PerformExpressNormalization("estrogen.txt", "none", 15, 4, 0,"true");
+dataSets <- PerformExpressNormalization("estrogen.txt", "none", 15, 4, 0);
 ```
 #### 1.5 Prepare differential expression (DE) analysis
 Selected metadata of interest, in this case we are interested in investigating the effect of presence of Estrogen Receptor (ER) vs absence. We are not setting secondary factor and blocking factor. After selecting metadata, compute design matrix and select DE analysis algorithm by running ``SetupDesignMatrix`` function. For microarray data, only ``limma`` can be used.
