@@ -89,7 +89,9 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   }else if(file.exists("/home/zgy/sqlite/")){
     sqlite.path <-"/home/zgy/sqlite/"; #zgy local
   }else if(file.exists("/Users/jessicaewald/sqlite/")){ # ewald local
-    sqlite.path <- "/Users/jessicaewald/sqlite/"
+    sqlite.path <- "/Users/jessicaewald/sqlite/";
+  }else{
+    sqlite.path <- "";
   }
 
   paramSet$sqlite.path <- sqlite.path;
