@@ -561,7 +561,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.batch.correct")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_batch.Rc");    
+      .load.scripts.on.demand("_util_batch.Rc");    
     }
     return(my.batch.correct(mSetObj, imgName, Method, center)); 
   }else{

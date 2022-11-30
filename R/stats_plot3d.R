@@ -10,7 +10,7 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.plot.scatter3d")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_plot3d.Rc");    
+      .load.scripts.on.demand("_util_plot3d.Rc");    
     }
     return(my.plot.scatter3d(x, y, z, xlab=xlab, ylab=ylab, 
                              zlab=zlab, angle =angle, color=color, pch=pch));

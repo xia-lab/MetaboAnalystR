@@ -67,12 +67,12 @@
 }
 
 .getDynLoadPath <- function() {
-    if(file.exists("/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/rscripts/metaboanalystr/src/MetaboAnalyst.so")){
-        path = "/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/rscripts/metaboanalystr/src/MetaboAnalyst.so";
+    if(file.exists("/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/src/MetaboAnalyst.so")){
+        path = "/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/src/MetaboAnalyst.so";
     }else if(dir.exists("/media/zzggyy/disk")){
-        path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/rscripts/metaboanalystr/src/MetaboAnalyst.so"
+        path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/rscripts/MetaboAnalystR/src/MetaboAnalyst.so"
     }else if(.on.public.web){
-        path = "../../rscripts/metaboanalystr/src/MetaboAnalyst.so";
+        path = "../../rscripts/MetaboAnalystR/src/MetaboAnalyst.so";
     }
     return(path)
 }

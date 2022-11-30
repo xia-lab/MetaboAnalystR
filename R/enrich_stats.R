@@ -36,7 +36,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     
     # make this lazy load
     if(!exists("my.hyperscore.kegg")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+      .load.scripts.on.demand("_util_api.Rc");    
     }
 
     mSetObj$api$oraVec <- ora.vec; 
@@ -169,7 +169,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     # make this lazy load
     if(!exists("my.qea.kegg")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+      .load.scripts.on.demand("_util_api.Rc");    
     }
 
     mSetObj$api$mseaDataColNms <- colnames(msea.data)

@@ -571,7 +571,7 @@ kwtest <- function(x, cls) {
 #'License: MIT License
 FisherLSD <- function(aov.obj, thresh){
     if(!exists("my.lsd.test")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_lsd.Rc");    
+      .load.scripts.on.demand("_util_lsd.Rc");    
     }
     return(my.lsd.test(aov.obj,"cls", alpha=thresh));
 }
@@ -1179,7 +1179,7 @@ GetUnivReport <- function(mSetObj=NA){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.univ.report")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_univreport.Rc");    
+      .load.scripts.on.demand("_util_univreport.Rc");    
     }
     return(my.univ.report(mSetObj));
   }else{

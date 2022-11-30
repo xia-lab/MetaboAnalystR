@@ -43,7 +43,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
     # make this lazy load
     if(!exists("my.ora.kegg")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+      .load.scripts.on.demand("_util_api.Rc");    
     }
 
     mSetObj$api$oraVec <- ora.vec; 
@@ -266,7 +266,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
 
    # make this lazy load
     if(!exists("my.pathway.qea")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_api.Rc");    
+      .load.scripts.on.demand("_util_api.Rc");    
     }
     return(my.pathway.qea());
   }

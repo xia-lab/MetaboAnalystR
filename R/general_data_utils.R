@@ -1,6 +1,8 @@
-# internal variables and functions not to be modified by users
-# This is only for web version 
-.on.public.web <- FALSE; # only TRUE when on metaboanalyst web server
+
+.load.scripts.on.demand <- function(fileName=""){
+    complete.path <- paste0("../../rscripts/MetaboAnalystR/R/", fileName);
+    compiler::loadcmp(complete.path);
+}
 
 # note, this is usually used at the end of a function
 # for local, return itself; for web, push to global environment
@@ -575,7 +577,7 @@ SaveTransformedData <- function(mSetObj=NA){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.save.data")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_savedata.Rc");    
+      .load.scripts.on.demand("_util_savedata.Rc");    
     }
     return(my.save.data(mSetObj));
   }else{
@@ -596,7 +598,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.mztab")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_mztab.Rc");    
+      .load.scripts.on.demand("_util_mztab.Rc");    
     }
     return(my.parse.mztab(mSetObj, filename, identifier));
   }else{
@@ -623,7 +625,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.peaklist")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_peaks.Rc");    
+      .load.scripts.on.demand("_util_peaks.Rc");    
     }
     return(my.parse.peaklist(mSetObj, foldername));
   }else{
@@ -1031,7 +1033,7 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
   
     # make this lazy load
     if(!exists("my.get.nmdr.data")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_nmdr.Rc");    
+      .load.scripts.on.demand("_util_nmdr.Rc");    
     }
     res <- my.get.nmdr.data(StudyID);
     if(res){

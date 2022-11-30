@@ -129,7 +129,7 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
    if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.manova")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_manova.Rc");    
+      .load.scripts.on.demand("_util_multifac_mb_manova.Rc");    
     }
     return(my.time.mb.manova(object, times, D, size, nu, Lambda, beta.d, beta, alpha.d, alpha, condition.grp, time.grp, rep.grp, p));
   }else{
@@ -380,7 +380,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
    if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.2d")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_2d.Rc");    
+      .load.scripts.on.demand("_util_multifac_mb_2d.Rc");    
     }
     return(my.time.mb.2d(object, k, mn, c.grp, nu, Lambda, eta, k.grp, mn.grp, r, vec, d, prop, T2.only));
   }else{
@@ -393,7 +393,7 @@ mb.1D <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=NULL, n.g
     if(.on.public.web){
     # make this lazy load
     if(!exists("my.time.mb.1d")){ # public web on same user dir
-      compiler::loadcmp("../../rscripts/metaboanalystr/_util_multifac_mb_1d.Rc");    
+      .load.scripts.on.demand("_util_multifac_mb_1d.Rc");    
     }
     return(my.time.mb.1d(object, k, n, nu, Lambda1, eta, k.grp, n.grp, r, vec, d, prop, T2.only));
   }else{
