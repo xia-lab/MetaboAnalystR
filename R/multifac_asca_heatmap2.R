@@ -18,7 +18,6 @@
 #'@param drawBorder Show cell borders: F or T (default F)
 #'@param topFeature topFeature
 #'@param includeRowNames includeRowNames, logical
-#'@param sortName sortName
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: MIT License
@@ -30,8 +29,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                        width=NA, smplDist="pearson", 
                        clstDist="average", colorGradient="bwm", font.size = 8,
                        viewOpt="overview",rankingMethod="mean",
-                       topFeature=2000, sortName = "NA", 
-                       useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
+                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
   
@@ -61,7 +59,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   }else{
     ord.vec <- match(sort.vec.hm2, colnames(sel.meta.df));
   }
-  
+
   if(length(ord.vec) == 1){
     ordInx <- order(sel.meta.df[, ord.vec]);
   }else if(length(ord.vec) == 2){
@@ -70,11 +68,9 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]]);
   }else{
     ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]]);
-  }
-  
+  } 
 
   annotation <- as.data.frame(sel.meta.df[ordInx, ]);
-  rownames(annotation) <- rownames(meta.info)
   # set up data set
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
@@ -83,7 +79,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   }
   
   data <- my.data[ordInx, ];
-  var.nms = colnames(data);
+  var.nms <- colnames(data);
   
   # set up parameter for heatmap
   if(colorGradient=="gbr"){
@@ -140,7 +136,6 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   }
   
   hc.dat <- as.matrix(data);
-  colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
   
   # compute size for heatmap
   plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
@@ -160,7 +155,8 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   }
 
   hc.dat <- hc.dat[rownames(annotation),]; #order data matrix per annotation
-  
+  colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
+
   pheatmap::pheatmap(t(hc.dat), 
                      annotation=annotation, 
                      fontsize=font.size, 
