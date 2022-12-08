@@ -39,37 +39,32 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   }else{
     raw.data.anot <- qs::qread("orig.data.anot.qs");
   }
-    data <- raw.data.anot;
+  
+  data <- raw.data.anot;
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
-    data <- data[!rm.inx,];
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low counts.", collapse=" ");
   }else{
     avg.signal <- apply(data, 1, mean, na.rm=TRUE)
     abundance.pct <- count.thresh/100;
     p05 <- quantile(avg.signal, abundance.pct)
     all.rows <- nrow(data)
-    rm.inx <- avg.signal < p05
-    data <- data[!rm.inx,]
+    rm.inx <- avg.signal < p05;
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low relative abundance (average expression signal).", collapse=" ");
   }
 
-  if(length(data)==1 && data == 0){
-    return(0);
-  }
+  data <- data[!rm.inx,];
   
   filter.val <- apply(data, 1, IQR, na.rm=T);
   nm <- "Interquantile Range";
   rk <- rank(-filter.val, ties.method='random');
   kp.pct <- (100 - var.thresh)/100;
-  
   remain <- rk < nrow(data)*kp.pct;
   data <- data[remain,];
   msg <- paste(msg, paste("Filtered ", sum(!remain), " low variance genes based on IQR"), collapse=" ");
   
-  raw.data.anot <- raw.data.anot[!rm.inx,];
-  dataSet$data.anot <- raw.data.anot[remain,];
+  dataSet$data.anot <- data;
 
   data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
   msg <- paste(norm.msg, msg);
@@ -79,7 +74,6 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   # save normalized data for download user option
   fast.write(dataSet$data.norm, file="data_normalized.csv");
   qs::qsave(data, file="data.stat.qs");
-
 
   msgSet$current.msg <- msg; 
   saveSet(msgSet, "msgSet");
