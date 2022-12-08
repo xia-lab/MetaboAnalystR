@@ -35,11 +35,11 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
     res <- RemoveDuplicates(data1, "mean", quiet=T, paramSet, msgSet);
     data1 <- res[[1]];
     msgSet <- res[[2]];
-    raw.data.anot <- data <- dataSet$data.anot <- data1;
+    raw.data.anot <- data1;
   }else{
-    raw.data.anot <- data <- qs::qread("orig.data.anot.qs");
+    raw.data.anot <- qs::qread("orig.data.anot.qs");
   }
-  
+    data <- raw.data.anot;
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
@@ -54,13 +54,10 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
     data <- data[!rm.inx,]
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low relative abundance (average expression signal).", collapse=" ");
   }
-  
-  data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
 
   if(length(data)==1 && data == 0){
     return(0);
   }
-  msg <- paste(norm.msg, msg);
   
   filter.val <- apply(data, 1, IQR, na.rm=T);
   nm <- "Interquantile Range";
@@ -71,12 +68,16 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   data <- data[remain,];
   msg <- paste(msg, paste("Filtered ", sum(!remain), " low variance genes based on IQR"), collapse=" ");
   
-  dataSet$data.anot <- raw.data.anot[remain,]
+  raw.data.anot <- raw.data.anot[!rm.inx,];
+  dataSet$data.anot <- raw.data.anot[remain,];
+
+  data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
+  msg <- paste(norm.msg, msg);
+
   dataSet$data.norm <- data;
   
   # save normalized data for download user option
   fast.write(dataSet$data.norm, file="data_normalized.csv");
-  
   qs::qsave(data, file="data.stat.qs");
 
 
@@ -119,7 +120,6 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   msg <- ""
   row.nms <- rownames(data);
   col.nms <- colnames(data);
-
   msgSet <- readSet(msgSet, "msgSet");
  # column(sample)-wise normalization
   if(colNorm=="SumNorm"){
@@ -132,14 +132,12 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     # nothing to do
     rownm<-"N/A";
   }
-
   if(norm.opt=="log"){
     min.val <- min(data[data>0], na.rm=T)/10;
     numberOfNeg = sum(data<=0, na.rm = TRUE) + 1; 
     totalNumber = length(data)
     if((numberOfNeg/totalNumber)>0.2){
       msg <- paste(msg, "Can't perform log2 normalization, over 20% of data are negative. Try a different method or maybe the data already normalized?", collapse=" ");
-      print(msg);
       msgSet$norm.msg <- msgSet$current.msg <- msg;
       saveSet(msgSet, "msgSet");
       return(0);
@@ -167,15 +165,17 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     y <- voom(data,plot=F,lib.size=colSums(data)*nf);
     data <- y$E; # copy per million
     msg <- paste(msg, "Limma based on log2-counts per million transformation.", collapse=" ");
-  } else if(norm.opt=="rle"){
+  } else if(norm.opt=="RLE"){
       suppressMessages(require(edgeR))
-      otuRLE <- edgeRnorm(data,method="RLE");
-      data <- as.matrix(otuRLE$counts);
+      nf <- calcNormFactors(data,method="RLE");
+      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+      data <- y$E; # copy per million
       msg <- c(msg, paste("Performed RLE Normalization"));
     }else if(norm.opt=="TMM"){
       suppressMessages(require(edgeR))
-      otuTMM <- edgeRnorm(data,method="TMM");
-      data <- as.matrix(otuTMM$counts);
+      nf <- calcNormFactors(data,method="TMM");
+      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+      data <- y$E; # copy per million
       msg <- c(msg, paste("Performed TMM Normalization"));
     }else if(norm.opt=="clr"){
       data <- apply(data, 2, clr_transform);
@@ -207,10 +207,11 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
       data <- sweep(data, 2, colSums(data), FUN="/")
       data <- data*10000000;
       msg <- c(msg, paste("Performed total sum normalization."));
-    }else if(scaleNorm=="upperquartile"){
+    }else if(scaleNorm=="upperquartile" || norm.opt == "upperquartile"){
       suppressMessages(require(edgeR))
-      otuUQ <- edgeRnorm(data,method="upperquartile");
-      data <- as.matrix(otuUQ$counts);
+      nf <- calcNormFactors(data,method="upperquartile");
+      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+      data <- y$E; # copy per million
       msg <- c(msg, paste("Performed upper quartile normalization"));
     }else if(scaleNorm=="CSS"){
       suppressMessages(require(metagenomeSeq))
@@ -227,12 +228,68 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   if(scaleNorm %in% c('MeanCenter', 'AutoNorm', 'ParetoNorm', 'RangeNorm')){
     data <- t(data)
   }
+
   norm.msg <<- msg;
   #data <- as.data.frame(data)
   rownames(data) <- row.nms;
   colnames(data) <- col.nms;
   msgSet$current.msg <- msg;
   saveSet(msgSet, "msgSet");
+  print(msg);
   return(data)
 }
 
+
+########
+#
+#Normalization internal methods
+#
+########
+
+# based on phyloseq post: https://github.com/joey711/shiny-phyloseq/blob/master/panels/paneldoc/Transform.md
+clr_transform <- function(x, base=2){
+  x <- log((x / gm_mean(x)), base)
+  x[!is.finite(x) | is.na(x)] <- 0.0
+  return(x)
+}
+
+
+# generalize log, tolerant to 0 and negative values
+LogNorm<-function(x, min.val){
+  log10((x + sqrt(x^2 + min.val^2))/2)
+}
+
+
+SumNorm<-function(x){
+  1000*x/sum(x, na.rm=T);
+}
+
+# normalize by median
+MedianNorm<-function(x){
+  x/median(x, na.rm=T);
+}
+
+
+# normalize to zero mean and unit variance
+AutoNorm<-function(x){
+  (x - mean(x))/sd(x, na.rm=T);
+}
+
+# normalize to zero mean but variance/SE
+ParetoNorm<-function(x){
+  (x - mean(x))/sqrt(sd(x, na.rm=T));
+}
+
+# normalize to zero mean but variance/SE
+MeanCenter<-function(x){
+  x - mean(x);
+}
+
+# normalize to zero mean but variance/SE
+RangeNorm<-function(x){
+  if(max(x) == min(x)){
+    x;
+  }else{
+    (x - mean(x))/(max(x)-min(x));
+  }
+}

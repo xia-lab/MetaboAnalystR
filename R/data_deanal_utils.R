@@ -202,6 +202,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     set.seed(1) 
     require(edgeR)
     y <- DGEList(counts = dataSet$data.anot, group = dataSet$cls)
+    qs:::qsave(dataSet$data.anot, "dataanot.qs");
     y <- calcNormFactors(y)
     y <- estimateGLMCommonDisp(y, design, verbose = FALSE)
     y <- estimateGLMTrendedDisp(y, design)
