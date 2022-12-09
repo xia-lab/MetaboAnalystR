@@ -8,7 +8,7 @@
 
 
 #'Perform data normalization
-#'@description Normalize gene expression data
+#'@description Filtering and Normalizing gene expression data
 #'@param norm.opt Normalization method to be used
 #'@param var.thresh Variance threshold
 #'@param abundance Relative abundance threshold
@@ -24,8 +24,31 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
-  msg <- "Only features with annotations are kept for further analysis.";
+  msg <- ""; 
   
+  #Filter data
+  data <- PerformDataFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
+
+  dataSet$data.anot <- data;
+  msg <- paste(filt.msg, msg);
+
+  #Normalize data
+  data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
+
+  msg <- paste(norm.msg, msg);
+  dataSet$data.norm <- data;
+  
+  # save normalized data for download user option
+  fast.write(dataSet$data.norm, file="data_normalized.csv");
+  qs::qsave(data, file="data.stat.qs");
+
+  msgSet$current.msg <- msg; 
+  saveSet(msgSet, "msgSet");
+  return(RegisterData(dataSet));
+}
+
+PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
+    msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations
     data1 <- qs::qread("data.proc.qs");
@@ -36,11 +59,13 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
     data1 <- res[[1]];
     msgSet <- res[[2]];
     raw.data.anot <- data1;
+    msg <- "Only features with annotations are kept for further analysis.";
   }else{
     raw.data.anot <- qs::qread("orig.data.anot.qs");
   }
   
   data <- raw.data.anot;
+
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
@@ -61,32 +86,16 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   rk <- rank(-filter.val, ties.method='random');
   kp.pct <- (100 - var.thresh)/100;
   remain <- rk < nrow(data)*kp.pct;
+  filt.msg <<- paste(msg, paste("Filtered ", sum(!remain), " low variance genes based on IQR"), collapse=" ");
   data <- data[remain,];
-  msg <- paste(msg, paste("Filtered ", sum(!remain), " low variance genes based on IQR"), collapse=" ");
-  
-  dataSet$data.anot <- data;
-
-  data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
-  msg <- paste(norm.msg, msg);
-
-  dataSet$data.norm <- data;
-  
-  # save normalized data for download user option
-  fast.write(dataSet$data.norm, file="data_normalized.csv");
-  qs::qsave(data, file="data.stat.qs");
-
-  msgSet$current.msg <- msg; 
-  saveSet(msgSet, "msgSet");
-  return(RegisterData(dataSet));
+  return(data);
 }
-
 
 NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   if(nm == "NA"){
     paramSet <- readSet(paramSet, "paramSet");;
     mdata.all <- paramSet$mdata.all;
-
-    sel.nms <- names(mdata.all)
+    sel.nms <- names(mdata.all);
     for(i in 1:length(sel.nms)){
       dataSet = readDataset(sel.nms[i])
       data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
