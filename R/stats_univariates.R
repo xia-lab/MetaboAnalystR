@@ -515,8 +515,8 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
 
    p <- ggplot(data=de, aes(x=de[,1], y=de[,2], col=Status, label=delabel)) +
         scale_color_manual(values=mycols) +
-        geom_vline(xintercept=c(-vcn$thresh.y, vcn$thresh.y), linetype="dashed", color="black") +
-        geom_hline(yintercept=-log10(vcn$raw.threshy), linetype="dashed", color="black") +
+        geom_vline(xintercept=c(vcn$min.xthresh, vcn$max.xthresh), linetype="dashed", color="black") +
+        geom_hline(yintercept=vcn$thresh.y, linetype="dashed", color="black") +
         geom_point() + 
         labs(x ="log2(FC)", y = "-log10(p)");
 
