@@ -275,7 +275,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
 
-      
       RUV_random_edata<-RUV_random(commonMat2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
       
