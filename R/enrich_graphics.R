@@ -62,15 +62,27 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   len <- length(mSetObj$dataSet$cls);
   conc.vec <- lbl.vec <- cls.vec <- NULL;
   
-  for(i in 1:num){
+  if(mSetObj$dataSet$cls.type == "disc"){
+    for(i in 1:num){
         cmpd <- hit.cmpds[i];
         conc.vec <- c(conc.vec, mSetObj$analSet$msea.data[,cmpd]);
         cls.vec <- c(cls.vec, as.character(mSetObj$dataSet$cls));
         cmpd.p <- paste(cmpd, " (p=", hit.pvals[i], ")", sep="");
         lbl.vec <- c(lbl.vec, rep(cmpd.p, len));      
+    }
+    cls.vec <- as.factor(cls.vec);
+
+  }else{ # continuous value
+    for(i in 1:num){
+        cmpd <- hit.cmpds[i];
+        conc.vec <- c(conc.vec, mSetObj$analSet$msea.data[,cmpd]);
+        cls.vec <- c(cls.vec, mSetObj$dataSet$cls);
+        cmpd.p <- paste(cmpd, " (p=", hit.pvals[i], ")", sep="");
+        lbl.vec <- c(lbl.vec, rep(cmpd.p, len));      
+    }
+    cls.vec <- as.numeric(cls.vec);
   }
-  
-  cls.vec <- as.factor(cls.vec);
+
   lbl.vec <- factor(lbl.vec, levels = unique(lbl.vec));
 
   num <- length(hit.cmpds);
@@ -78,18 +90,23 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
   
   # calculate width based on the dataset number
   if(num == 1){
-    
-    p <- ggplot(data = boxdata, aes(x=Class, y=Abundance)) + geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA)
-    p <- p + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
-    p <- p + xlab("") + ylab("Relative Abundance") + theme_bw()
+    if(mSetObj$dataSet$cls.type == "disc"){
+        p <- ggplot(data = boxdata, aes(x=Class, y=Abundance)) + geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA)
+        p <- p + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Group"))
+        p <- p + xlab(lbl.vec) + ylab("Relative Abundance") + theme_bw()
+    }else{
+        p <- ggplot(data = boxdata, aes(x=Abundance, y=Class)) + geom_point(shape=1) + geom_smooth(method=lm, se=FALSE) 
+        p <- p + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Association"))
+        p <- p + ylab(lbl.vec) + xlab("Relative Abundance") + theme_bw()
+    }
     
     ggsave(p, filename = imgName, dpi=dpi, width=7, height=6, limitsize = FALSE)
 
   }else{
 
     if(num<10){
-      w = 10
-      h <- 10 * num/10
+      w = 12
+      h <- 6
       cols = 3
     }else if(num<5){
       w = 7
@@ -100,13 +117,14 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
       h <- num * 0.55
       cols = 4
     }
-
-    bp <- ggplot(boxdata, aes(x=Class, y=Abundance, group=Class)) + 
-      geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA) + theme_bw()
-    
-    bp <- bp + facet_wrap(. ~ Feature) + theme(strip.text.x = element_text(size=7), strip.background = element_rect(size=1)) + 
-      xlab("") + ylab("Relative Abundance")
-    
+    if(mSetObj$dataSet$cls.type == "disc"){
+        bp <- ggplot(boxdata, aes(x=Class, y=Abundance, group=Class)) + 
+        geom_boxplot(aes(fill=Class), outlier.shape = NA, outlier.colour=NA) + theme_bw()
+        bp <- bp + facet_wrap(. ~ Feature) + xlab("") + ylab("Relative Abundance")
+    }else{
+        bp <- ggplot(data = boxdata, aes(x=Abundance, y=Class)) + geom_point(shape=1) + geom_smooth(method=lm, se=FALSE) + theme_bw()
+        bp <- bp + facet_wrap(. ~ Feature) + ylab("Response") + xlab("Relative Abundance")
+    }
     ggsave(bp, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   }
 

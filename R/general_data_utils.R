@@ -521,7 +521,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
         return(0);
       })
       
-      if(mSetObj$dataSet$cls == 0){
+      if(!is.numeric(mSetObj$dataSet$cls) || any(is.na(mSetObj$dataSet$cls))){
         AddErrMsg("Class labels must be numeric and continuous!");
         return(0)
       }
