@@ -3819,6 +3819,357 @@ SetOrganism <- function(mSetObj=NA, org){
 }
 
 
+#' Create Mummichog Libraries from KEGG
+#' @description Function to create mummichog libraries from
+#' MetaboAnalyst pathway libraries (metpa).
+#' Outputs the RDS files in the current working directory. RDS files
+#' are saved using the KEGG organism code.
+#' @param folder Input the path of the folder containing the metpa rda files.
+#' @param kegg_compounds Input the name of the KEGG dictionary containing the 
+#' KEGG compound IDs, KEGG compopund names, and molecular weight.
+#' @export
+CreateMummichogLibs <- function(folder, kegg_compounds){
+  
+  # Step 1: Get list of pathways to make mummichog libraries from 
+  folder <- folder
+  files <- list.files(folder, pattern = ".rda$")
+  
+  if(length(files) == 0){
+    AddErrMsg("No .rda files found in folder!")
+    return(0)
+  }
+  
+  # Step2: Create the models list 
+  models <- Map(rda2list, file.path(folder, files))
+  names(models) <- tools::file_path_sans_ext(files)
+  org <- names(models)
+  
+  kegg_compounds <<- kegg_compounds
+  
+  # Step 3: Create the pathways
+  pathway <- lapply(models, function(f) {fillpathways(f)} )
+  
+  # Step 4: Create cpd.lib
+  cpd.lib <- lapply(pathway, function(l) {make_cpdlib(l)})
+  
+  # Step 5: Create mummichog libraries
+  # Will output the .RDS files in the current working directory
+  output <- mapply(CreateLibFromKEGG, cpd.lib, pathway, org)
+  
+}
+
+#' Function to get adduct details from a specified compound
+#' @description Function to get adduct details from a specified compound.
+#' The results will be both printed in the console as well as saved
+#' as a csv file. Note that performing this function multiple times will
+#' overwrite previous queries.
+#' @param mSetObj Input the name of the created mSetObj object.
+#' @param cmpd.id Input the name of the selected compound.
+#'@import qs
+#' @export
+GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(!is.null(mSetObj$api$lib)){
+    
+    # get file from api.metaboanalyst.ca
+    toSend = list(cmpdId = cmpd.id)
+    
+    load_httr()
+    base <- api.base
+    endpoint <- paste0("/compounddetails/", mSetObj$api$guestName)
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    
+    if(query_results$status_code == 200){
+      filename <- httr::content(query_results, "text")
+    }
+    
+    endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
+    callfile <- paste(base, endpointfile, sep="")
+    download.file(callfile, destfile = basename(filename))
+    print(paste0(filename, " saved to current working directory!"))
+    return(.set.mSet(mSetObj));
+  }
+  
+  forms <- mSetObj$cpd_form_dict[[cmpd.id]];
+  
+  if(is.null(forms)){
+    print("This compound is not valid!")
+    return(0)
+  }
+  
+  matched_res <- qs::qread("mum_res.qs");
+  mz <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 1] 
+  mass.diff <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 4]
+  tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
+  
+  res <- cbind(rep(cmpd.id, length(mz)), mz, forms, mass.diff, tscores) 
+  colnames(res) <- c("Matched.Compound", "m.z", "Matched.Form", "Mass.Diff", "T.Scores")
+  fast.write.csv(res, "mummichog_compound_details.csv")
+  return(.set.mSet(mSetObj));
+}
+
+
+#' Function to get compound details from a specified pathway
+#' @description Function to get compound details from a specified pathway.
+#' The results will be both printed in the console as well as saved
+#' as a csv file. Note that performing this function multiple times will
+#' overwrite previous queries. Significant compounds will be indicated with an asterisk.
+#' @param mSetObj Input the name of the created mSetObj object.
+#' @param msetNm Input the name of the pathway
+#' @export
+GetMummichogPathSetDetails <- function(mSetObj=NA, msetNm){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(!is.null(mSetObj$api$lib)){
+    
+    # get file from api.metaboanalyst.ca
+    toSend = list(pathName = msetNm)
+    
+    load_httr()
+    base <- api.base
+    endpoint <- paste0("/pathsetdetails/", mSetObj$api$guestName)
+    call <- paste(base, endpoint, sep="")
+    query_results <- httr::POST(call, body = toSend, encode= "json")
+    
+    if(query_results$status_code == 200){
+      filename <- httr::content(query_results, "text")
+    }
+    
+    endpointfile <- paste0("/getFile", "/", mSetObj$api$guestName, "/", filename)
+    callfile <- paste(base, endpointfile, sep="")
+    download.file(callfile, destfile = basename(filename))
+    print(paste0(filename, " saved to current working directory!"))
+    return(.set.mSet(mSetObj));
+  }
+  
+  version <- mum.version <- mSetObj$paramSet$version;
+  inx <- which(mSetObj$pathways$name == msetNm)
+  
+  if(is.na(inx)){
+    AddErrMsg("Invalid pathway name!")
+    return(0)
+  }
+  
+  if(version=="v2" & mSetObj$paramSet$mumRT){
+    mset <- mSetObj$pathways$emp_cpds[[inx]];
+    mset_cpds <- mSetObj$pathways$cpds[[inx]];
+    
+    hits.all <- unique(mSetObj$total_matched_ecpds)
+    hits.sig <- mSetObj$input_ecpdlist;
+    
+    refs <- mset %in% hits.all;
+    sigs <- mset %in% hits.sig;
+    
+    ref.ecpds <- mset[which(refs & !sigs)]
+    sig.ecpds <- mset[sigs]
+    
+    ref.mzs <- lapply(ref.ecpds, function(x) paste(as.numeric(unique(unlist(mSetObj$ec2mz_dict[x]))), collapse = "; ")) 
+    sig.mzs <- lapply(sig.ecpds, function(x) paste(as.numeric(unique(unlist(mSetObj$ec2mz_dict[x]))), collapse = "; "))  
+    
+    ref.cpds <- lapply(ref.ecpds, function(x) paste(unique(unlist(mSetObj$ecpd_cpd_dict[x])), collapse = "; "))
+    sig.cpds <- lapply(sig.ecpds, function(x) paste(unique(unlist(mSetObj$ecpd_cpd_dict[x])), collapse = "; "))
+    
+    path.results <- matrix(c(unlist(sig.mzs), unlist(ref.mzs), unlist(sig.cpds), unlist(ref.cpds)), ncol=2) 
+    colnames(path.results) <- c("mzs", "cpds")
+    rownames(path.results) <- c(paste0(sig.ecpds, "*"), ref.ecpds)
+    
+    name <- paste0(gsub(" ", "_", msetNm), "_ecpd_mz_info.csv")
+    fast.write.csv(path.results, name)
+  }else{
+    mset <- mSetObj$pathways$cpds[[inx]];
+    
+    hits.all <- unique(mSetObj$total_matched_cpds)
+    hits.sig <- mSetObj$input_cpdlist;
+    
+    refs <- mset %in% hits.all;
+    sigs <- mset %in% hits.sig;
+    
+    ref.cpds <- mset[which(refs & !sigs)]
+    sig.cpds <- mset[sigs]
+    
+    ref.mzs <- lapply(ref.cpds, function(x) paste(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[x]))), collapse = "; ")) 
+    sig.mzs <- lapply(sig.cpds, function(x) paste(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[x]))), collapse = "; "))  
+    
+    path.results <- matrix(c(unlist(sig.mzs), unlist(ref.mzs)), ncol=1) 
+    colnames(path.results) <- "mzs"
+    rownames(path.results) <- c(paste0(sig.cpds, "*"), ref.cpds)
+    
+    name <- paste0(gsub(" ", "_", msetNm), "_cpd_mz_info.csv")
+    fast.write.csv(path.results, name)
+  }
+  
+  return(.set.mSet(mSetObj));
+}
+
+
+#' @title Group peak list
+#'@description Group peaks from the peak list based on position
+#'using the XCMS grouping algorithm (align peaks wrt, rt, and mz).
+#'For NMR peaks, need to change ppm -> mz and add dummy rt.
+#'If the data is 2-column MS, first need to add dummy rt.
+#'If the data is 3-column MS, the data can be used directly.
+#'The default mzwid for MS is 0.25 m/z, and for NMR is 0.03 ppm.
+#'The default bw is 30 for LCMS, and 5 for GCMS.
+#'@usage GroupPeakList(mSetObj=NA, mzwid, bw, minfrac, minsamp, max)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param mzwid, define the width of overlapping m/z slices to use for creating peak density chromatograms
+#'and grouping peaks across samples
+#'@param bw, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
+#'kernel to apply to the peak density chromatogram
+#'@param minfrac, define the minimum fraction of samples necessary in at least one of the sample groups for
+#'it to be a valid group
+#'@param minsamp, define the minimum number of samples necessary in at least one of the sample groups for 
+#'it to be a valid group 
+#'@param max, define the maximum number of groups to identify in a single m/z slice
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: MIT License
+#'@import qs
+#'@export
+#'
+GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
+  mSetObj <- .get.mSet(mSetObj);
+  peakSet <- qs::qread("peakSet.qs");
+  samples <- peakSet$sampnames;
+  classlabel <- peakSet$sampclass;
+  classnames <- levels(classlabel)
+  
+  classlabel <- as.vector(unclass(classlabel))
+  classnum <- integer(max(classlabel))
+  for (i in seq(along = classnum)){
+    classnum[i] <- sum(classlabel == i)
+  }
+  
+  peakmat <- peakSet$peaks;
+  porder <- order(peakmat[,"mz"]);
+  peakmat <- peakmat[porder,,drop=F]
+  rownames(peakmat) <- NULL
+  retrange <- range(peakmat[,"rt"])
+  
+  minpeakmat <- min(classnum)/2
+  
+  mass <- seq(peakmat[1,"mz"], peakmat[nrow(peakmat),"mz"] + mzwid, by = mzwid/2)
+  masspos <- findEqualGreaterM(peakmat[,"mz"], mass)
+  
+  groupmat <- matrix(nrow = 512, ncol = 7 + length(classnum))
+  groupindex <- vector("list", 512)
+  
+  endidx <- 0
+  num <- 0
+  gcount <- integer(length(classnum))
+  for (i in seq(length = length(mass)-2)) {
+    startidx <- masspos[i]
+    endidx <- masspos[i+2]-1
+    if (endidx - startidx + 1 < minpeakmat)
+      next
+    speakmat <- peakmat[startidx:endidx,,drop=FALSE]
+    den <- density(speakmat[,"rt"], bw, from = retrange[1]-3*bw, to = retrange[2]+3*bw)
+    maxden <- max(den$y)
+    deny <- den$y
+    gmat <- matrix(nrow = 5, ncol = 2+length(classnum))
+    snum <- 0
+    while (deny[maxy <- which.max(deny)] > maxden/20 && snum < max) {
+      grange <- descendMin(deny, maxy)
+      deny[grange[1]:grange[2]] <- 0
+      gidx <- which(speakmat[,"rt"] >= den$x[grange[1]] & speakmat[,"rt"] <= den$x[grange[2]])
+      gnum <- classlabel[unique(speakmat[gidx,"sample"])]
+      for (j in seq(along = gcount))
+        gcount[j] <- sum(gnum == j)
+      if (! any(gcount >= classnum*minfrac & gcount >= minsamp))
+        next
+      snum <- snum + 1
+      num <- num + 1
+      ### Double the size of the output containers if they're full
+      if (num > nrow(groupmat)) {
+        groupmat <- rbind(groupmat, matrix(nrow = nrow(groupmat), ncol = ncol(groupmat)))
+        groupindex <- c(groupindex, vector("list", length(groupindex)))
+      }
+      groupmat[num, 1] <- median(speakmat[gidx, "mz"])
+      groupmat[num, 2:3] <- range(speakmat[gidx, "mz"])
+      groupmat[num, 4] <- median(speakmat[gidx, "rt"])
+      groupmat[num, 5:6] <- range(speakmat[gidx, "rt"])
+      groupmat[num, 7] <- length(gidx)
+      groupmat[num, 7+seq(along = gcount)] <- gcount
+      groupindex[[num]] <- sort(porder[(startidx:endidx)[gidx]])
+    }
+  }
+  colnames(groupmat) <- c("mzmed", "mzmin", "mzmax", "rtmed", "rtmin", "rtmax",
+                          "npeaks", classnames)
+  
+  groupmat <- groupmat[seq(length = num),]
+  groupindex <- groupindex[seq(length = num)]
+  
+  # Remove groups that overlap with more "well-behaved" groups
+  numsamp <- rowSums(groupmat[,(match("npeaks", colnames(groupmat))+1):ncol(groupmat),drop=FALSE])
+  uorder <- order(-numsamp, groupmat[,"npeaks"])
+  uindex <- rectUnique(groupmat[,c("mzmin","mzmax","rtmin","rtmax"),drop=FALSE],uorder)
+  
+  peakSet$groups <- groupmat[uindex,];
+  peakSet$groupidx<- groupindex[uindex];
+  qs::qsave(peakSet, "peakSet.qs");
+  return(.set.mSet(mSetObj));
+}
+
+#'Set peak list group values
+#'@param mSetObj Input name of mSetObj, the data used is the nmr.xcmsSet object
+#'@import qs
+#'@export
+#'
+SetPeakList.GroupValues <- function(mSetObj=NA) {
+  mSetObj <- .get.mSet(mSetObj);
+  peakSet <- qs::qread("peakSet.qs");
+  msg <- mSetObj$msgSet$peakMsg;
+  
+  peakmat <- peakSet$peaks;
+  groupmat <- peakSet$groups;
+  groupindex <- peakSet$groupidx;
+  
+  sampnum <- seq(length = length(peakSet$sampnames))
+  intcol <- match("int", colnames(peakmat))
+  sampcol <- match("sample", colnames(peakmat))
+  
+  # row is peak, col is sample
+  values <- matrix(nrow = length(groupindex), ncol = length(sampnum))
+  
+  for (i in seq(along = groupindex)) {
+    # for each group, replace multiple peaks from the same sample by their sum
+    for(m in sampnum){
+      samp.inx<-which(peakmat[groupindex[[i]], sampcol]==m)
+      if(length(samp.inx)>0){
+        values[i, m] <- sum(peakmat[groupindex[[i]][samp.inx], intcol]);
+      }else{
+        values[i, m] <- NA;
+      }
+    }
+  }
+  
+  msg<-c(msg, paste("A total of", length(groupindex), "peak groups were formed. "));
+  msg<-c(msg, paste("Peaks of the same group were summed if they are from one sample. "));
+  msg<-c(msg, paste("Peaks must appear in at least half of the samples in at least one group to be included."));
+  
+  colnames(values) <- peakSet$sampnames;
+  
+  if(peakSet$ncol==2){
+    rownames(values) <- paste(round(groupmat[,paste("mz", "med", sep="")],5));
+  }else{
+    rownames(values) <- paste(round(groupmat[,paste("mz", "med", sep="")],5), "/", round(groupmat[,paste("rt", "med", sep="")],2), sep="");
+    mSetObj$dataSet$three.col <- TRUE;
+  }
+  
+  #mSetObj$dataSet$orig <- t(values);
+  qs::qsave(t(values), file="data_orig.qs");
+  mSetObj$msgSet$proc.msg <- msg
+  mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
+  mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);
+  return(.set.mSet(mSetObj));
+}
+
+
+
 ###### Functions got from metap package ######
 sumlog <-
   function(p) {

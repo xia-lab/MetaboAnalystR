@@ -19,7 +19,6 @@ PlotHeatMap2(
   viewOpt = "overview",
   rankingMethod = "mean",
   topFeature = 2000,
-  sortName = "NA",
   useTopFeature = F,
   drawBorder = T,
   show.legend = T,
@@ -55,8 +54,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{rankingMethod}{rankingMethod}
 
 \item{topFeature}{topFeature}
-
-\item{sortName}{sortName}
 
 \item{useTopFeature}{Use significant features only: F or T (default false)}
 
