@@ -989,7 +989,7 @@ TableFormatCoerce <- function(oriFile = NULL, oriFormat = "Unknown", targetModul
     }
   }
   
-  fast.write.csv(df, file = oriFile, quote = FALSE, row.names = FALSE)
+  fast.write.csv(df, file = oriFile, row.names = FALSE)
   
 }
 
