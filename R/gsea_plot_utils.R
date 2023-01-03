@@ -5,18 +5,19 @@
 ## G. Zhou, guangyan.zhou@mail.mcgill.ca
 ## J. Xia, jeff.xia@mcgill.ca
 ###################################################
-
 PlotGShm <-function(dataName="", cmpdNm="", IDs){
+  ids <<- IDs;
+  save.image("gs.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  
   anal.type <- paramSet$anal.type;
   data.org <- paramSet$data.org;
-
+  
   ids <- unlist(strsplit(IDs, "; "));
   cmpdNm <- gsub(" ", "_",  cmpdNm);
   cmpdNm <- gsub("/", "_",  cmpdNm);
-
+  
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
     gene.map <- dataSet$symbol.map;
@@ -27,8 +28,8 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     
     inx <- order(dataSet$meta[,1]);
     subset <- subset[,inx];
-
-
+    
+    
   }else{
     if(paramSet$selDataNm == "meta_default"){
       inmex <- qs:::qread("inmex_meta.qs");
@@ -71,20 +72,20 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   if(anal.type == "onedata"){
     res.tbl <- dataSet$comp.res ;
     res.tbl <- res.tbl[which(rownames(res.tbl) %in% rownames(subset)),];
-    rownames(res.tbl) <- doIdMappingGeneric(rownames(res.tbl), gene.map, "gene_id", "symbol");
+    res.tbl$id <- doIdMappingGeneric(rownames(res.tbl), gene.map, "gene_id", "symbol");
     if("P.Value" %in% colnames(res.tbl)){
       res.tbl <- res.tbl[order(res.tbl$P.Value),];
     }else{
       res.tbl <- res.tbl[order(res.tbl$PValue),];
     }
-    stat.pvals <- rownames(res.tbl);
+    stat.pvals <- res.tbl$id;
     
     if("logFC" %in% colnames(res.tbl)){
       stat.fc <- res.tbl[order(-abs(res.tbl$logFC)),]; 
     }else{
       stat.fc <- res.tbl[order(-abs(res.tbl[,paramSet$selectedFactorInx])),]; 
     }
-    stat.fc <- rownames(res.tbl);
+    stat.fc <- res.tbl$id;
     
     gene.cluster[["pval"]] <- stat.pvals;
     gene.cluster[["fc"]] <- stat.fc;

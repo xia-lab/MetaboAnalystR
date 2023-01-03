@@ -31,7 +31,6 @@ Set.Config <-function(anal.mode="web"){
 #'@export
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
-
   path = "../../";
   
   paramSet <- list(annotated=FALSE);
@@ -89,17 +88,20 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   }else if(file.exists("/home/zgy/sqlite/")){
     sqlite.path <-"/home/zgy/sqlite/"; #zgy local
   }else if(file.exists("/Users/jessicaewald/sqlite/")){ # ewald local
-    sqlite.path <- "/Users/jessicaewald/sqlite/"
+    sqlite.path <- "/Users/jessicaewald/sqlite/";
+  }else{
+    sqlite.path <- "";
   }
 
-  paramSet$sqlite.path <- sqlite.path;
-  paramSet$lib.path <- paste0(path, dataPath);
 
   if(!.on.public.web) {
     paramSet$sqlite.path <- paste0(getwd(), "/");
     paramSet$lib.path <- "https://www.expressanalyst.ca/ExpressAnalyst/resources/data/";
     paramSet <<- paramSet;
-  } 
+  }else{
+    paramSet$sqlite.path <- sqlite.path;
+    paramSet$lib.path <- paste0(path, dataPath);
+  }
 
   paramSet$data.org <- "hsa";
   paramSet$module.count <- 0;
