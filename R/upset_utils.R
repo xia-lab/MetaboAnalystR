@@ -1,6 +1,6 @@
 ##################################################
 ## R script for ExpressAnalyst
-## Description: Compute ORA heatmap
+## Description: Compute Upset Diagram
 ## Authors: 
 ## G. Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
@@ -21,23 +21,23 @@ PrepareUpsetData <- function(fileNm){
 
   # selected dataset or comparisons for onedata (single gene expression matrix)
   if(anal.type == "metadata"){
-  hit.inx <- mdata.all==1;
-  sel.nms <- names(mdata.all)[hit.inx];
+    hit.inx <- mdata.all==1;
+    sel.nms <- names(mdata.all)[hit.inx];
   }else if(anal.type == "onedata"){
-  
+
   }else{
   sel.nms <- names(mdata.all)
   }
   sel.dats <- list();
   
 
-    if(!exists("analSet$inmex.de")){
-      analSet$inmex.de <- list();
-    }
+  if(!exists("analSet$inmex.de")){
+     analSet$inmex.de <- list();
+  }
 
   # populate gene lists for upset plot based on selected names
   for(nm in sel.nms){
-    if(anal.type == "meta"){
+    if(anal.type == "metadata"){
       dataSet <- readDataset(nm);
       sel.dats[[nm]] <- rownames(dataSet$sig.mat);
     }else if(anal.type == "onedata"){
