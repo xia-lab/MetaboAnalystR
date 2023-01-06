@@ -14,7 +14,7 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   if(anal.type == "metadata"){
     sel.nms <- names(mdata.all)[mdata.all==1];
     for(i in 1:length(sel.nms)){
-      dataSet <- qs::qread(sel.nms[i]);
+      dataSet <- readDataset(sel.nms[i]);
       if(i == 1){
         seeds <- rownames(dataSet$sig.mat);
         meta <- dataSet$meta;

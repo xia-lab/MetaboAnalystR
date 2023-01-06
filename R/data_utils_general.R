@@ -494,3 +494,7 @@ GetRCommandHistory <- function(){
   return(cmdSet$cmdVec);
 }
 
+ClearRCommandHistory <- function(){
+  cmdSet <- readSet(cmdSet, "cmdSet"); 
+  cmdSet$cmdVec <- c();
+}

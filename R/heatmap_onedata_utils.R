@@ -27,7 +27,7 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   }else{
     stat.pvals <- res.tbl$PValue; 
   }
-  gene.map <- dataSet$symbol.map;
+  gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, dataSet$name);
 
   all.ids <- rownames(res.tbl);
   

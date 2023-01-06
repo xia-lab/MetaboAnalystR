@@ -70,7 +70,6 @@ CheckMetaDataIntegrity <- function(){
                               paste(levels(dataSet$cls), collapse=":"), 
                               "from", sel.nms[1], paste(lvls, collapse=":"));
         saveSet(msgSet, "msgSet");    
-        print(msgSet$current.msg);                  
         return(0);
       }
       
@@ -79,14 +78,12 @@ CheckMetaDataIntegrity <- function(){
       if(length(shared.nms) < 10){
         msgSet$current.msg <- paste(sel.nms[i], "has less than 10 common genes/probes from previous data sets");
         saveSet(msgSet, "msgSet");                      
-        print(msgSet$current.msg);
         return(0);
       }
       
       # check gene id type
       if(dataSet$id.type != id.type){
         msgSet$current.msg <- paste(sel.nms[i], "has different gene/probe ID from", sel.nms[1]);
-        print(msgSet$current.msg);
         return(0);
       }
     }
@@ -96,7 +93,7 @@ CheckMetaDataIntegrity <- function(){
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
     dataSet <- readDataset(dataName);
-    common.matrix <- dataSet$data[shared.nms, ];
+    common.matrix <- dataSet$data[as.character(shared.nms), ];
     nms.vec <- rownames(dataSet$data);
     smps.vec <- colnames(dataSet$data);
     data.lbl <- rep(dataName, ncol(common.matrix));
@@ -105,7 +102,7 @@ CheckMetaDataIntegrity <- function(){
     for(i in 2:length(sel.nms)){
       dataName <- sel.nms[i];
       dataSet <- readDataset(dataName);
-      ndat <- dataSet$data[shared.nms, ];
+      ndat <- dataSet$data[as.character(shared.nms), ];
       nms.vec <- c(nms.vec, rownames(dataSet$data));
       smps.vec <- c(smps.vec, colnames(dataSet$data));
       plot.ndat <- t(scale(t(ndat)));
@@ -681,6 +678,7 @@ GetMetaResultGeneIDLinks <- function(){
 }
 
 GetMetaResultColNames<-function(){
+  save.image("metaRes.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 

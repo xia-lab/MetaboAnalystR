@@ -355,11 +355,6 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   # increase xlim ylim for text label
   xlim <- GetExtendRange(pca.res$PC1);
   ylim <- GetExtendRange(pca.res$PC2);
-  if(factor != "NA"){
-    #Factor <- as.vector(dataSet$meta[,factor])
-  }else{
-    #Factor <- dataSet$meta[,1];
-  }
   Conditions <- factor(inmex.meta$cls.lbl)
   Datasets <- factor(inmex.meta$data.lbl)
   pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +

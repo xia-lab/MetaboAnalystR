@@ -83,10 +83,6 @@ SanityCheckData <- function(fileName){
     meta.info <- dataSet$meta;
     meta.info <- meta.info[good.inx, , drop=F];
     dataSet$meta <- meta.info;
-    #if(ncol(int.mat)/smpl.num < 0.5){
-    #  AddErrMsg("Too many missing values - low quality data rejected!");
-    #  return(0);
-    #}
   }
   
   # remove ffeatures/variables with over half missing value    
@@ -155,7 +151,7 @@ UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
   if(omicstype != "NA"){
   sel.nms <- names(mdata.all)[mdata.all==1];
     for(i in 1:length(sel.nms)){
-      dat = qs::qread(sel.nms[i])
+      dat <- readDataset(sel.nms[i]);
       if(dat$type == omicstype){
         dataSet = dat;
       }
@@ -175,12 +171,14 @@ UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
 
 PlotDataProfile<-function(dataName,type, boxplotName, pcaName){
   dataSet <- readDataset(dataName);
+  paramSet <- readSet(paramSet, "paramSet");
   if(type=="normalize"){
     qc.boxplot(as.matrix(dataSet$data.norm), boxplotName);
     qc.pcaplot(dataSet, as.matrix(dataSet$data.norm), pcaName);
   }else{
-    qc.boxplot(as.matrix(dataSet$data.raw), boxplotName);
-    qc.pcaplot(dataSet, as.matrix(dataSet$data.raw), pcaName);
+    data.raw <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
+    qc.boxplot(as.matrix(data.raw), boxplotName);
+    qc.pcaplot(dataSet, as.matrix(data.raw), pcaName);
   }
 }
 
@@ -278,10 +276,10 @@ GetGroupNames <- function(dataName, meta="NA"){
 
 CheckDataType <- function(dataName, type){
   dataSet <- readDataset(dataName);
-  
+  paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   isOk <- T;
-  data <- dataSet$data.raw;
+  data <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
   containsNeg <- "TRUE" %in% names(table(data < 0)) ;
   current.msg <- "";
   negativeBool <- F;
@@ -335,24 +333,29 @@ CheckDataType <- function(dataName, type){
 
 RemoveMissingPercent <- function(dataName="", percent=perct){
   dataSet <- readDataset(dataName);
-    
+  paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-  int.mat <- dataSet$data.annotated;
+  data.annotated <- readDataQs("data.annotated.qs", paramSet$anal.type, dataName);
+  int.mat <- data.annotated;
   good.inx <- apply(is.na(int.mat), 1, sum)/ncol(int.mat)<percent;
-  dataSet$data.annotated <- as.data.frame(int.mat[good.inx, , drop=FALSE]);
+  data.annotated <- as.data.frame(int.mat[good.inx, , drop=FALSE]);
   if(sum(!good.inx)>0){
     msgSet$current.msg <- paste(sum(!good.inx), " variables were removed for threshold", round(100*percent, 2), "percent.");
   }
+  saveDataQs(data.annotated, "data.annotated.qs", paramSet$anal.type, dataName);
   return(RegisterData(dataSet));
 }
 
 
 ImputeMissingVar <- function(dataName="", method="min"){
   dataSet <- readDataset(dataName);
- 
   msgSet <- readSet(msgSet, "msgSet"); 
+  paramSet <- readSet(paramSet, "paramSet"); 
+
+  data.annotated <- readDataQs("data.annotated.qs", paramSet$anal.type, dataName);
+  row.nms <- rownames(data.annotated);
   current.msg <- msgSet$curren.msg;
-  int.mat <- dataSet$data.annotated;
+  int.mat <- data.annotated;
   new.mat <- NULL;
 
   if(method=="exclude"){
@@ -406,8 +409,9 @@ ImputeMissingVar <- function(dataName="", method="min"){
   msgSet$current.msg <- current.msg;  
   saveSet(msgSet, "msgSet");      
 
-  dataSet$data.missed <- as.data.frame(new.mat);
-  
+  data.missed <- as.data.frame(new.mat);
+  rownames(data.missed) <- row.nms;
+  saveDataQs(data.missed, "data.missed.qs", paramSet$anal.type, dataName);
   return(RegisterData(dataSet));
 }
 
@@ -419,8 +423,11 @@ FilteringData <- function(nm, countOpt="pct",count, var){
 }
 
 FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
-  msgSet <- readSet(msgSet, "msgSet");          
-  data = dataSet$data.missed;
+  msgSet <- readSet(msgSet, "msgSet");  
+  paramSet <- readSet(paramSet, "paramSet");
+  dataName <- dataSet$name;
+  
+  data <- readDataQs("data.missed.qs", paramSet$anal.type, dataName);
   msg <- "";
   
   count.thresh = as.numeric(count);
@@ -454,11 +461,11 @@ FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
     return(0);
   }
 }
-  
-  dataSet$data.filtered = data
-  dataSet$data.norm = data
-  dataSet$data <- data;
 
+  saveDataQs(data, "data.filtered.qs", paramSet$anal.type, dataName);
+
+  dataSet$data.norm <- data
+  dataSet$data <- data;
  
   saveSet(msgSet, "msgSet");      
   return(RegisterData(dataSet))
@@ -538,6 +545,7 @@ ReadOmicsData <- function(fileName) {
   # need to handle reading .csv files too!
   msgSet <- readSet(msgSet,"msgSet");
   paramSet <- readSet(paramSet,"paramSet");
+  paramSet$anal.type <- "metadata";
   data <- .readDataTable(fileName);
   dataSet <- list();
   
@@ -637,9 +645,13 @@ ReadOmicsData <- function(fileName) {
   # now reassgin the dimension names
   colnames(data) <- smpl.nms;
   rownames(data) <- var.nms;
+  
+  #dir.create() does not crash if the directory already exists, it just prints out a warning.
+  dir.create(paste0(fileName, "_data"), showWarnings = FALSE);
+
   dataSet$data <- data;
   dataSet$data.norm <- data;
-  dataSet$data.raw <- data;
+  saveDataQs(data, "data.raw.qs", paramSet$anal.type, fileName);
   dataSet$data.annotated <- ""
   dataSet$data.missed <- ""
   dataSet$data.filtered <- ""
@@ -649,7 +661,6 @@ ReadOmicsData <- function(fileName) {
   dataSet$readableType <- "Transcriptomics data";
   dataSet$enrich_ids <- rownames(dataSet$data.norm)
   names(dataSet$enrich_ids) <- rownames(dataSet$data.norm)
-  paramSet$anal.type <- "metadata";
 
   # update current dataset
   saveSet(msgSet,"msgSet");
@@ -665,28 +676,30 @@ PerformDEAnalMeta <- function(filenm, alg="ttest", meta=1, p.lvl=0.05, fc.lvl=0,
     return(res);
 }
 
-DoStatComparison <- function(filenm, alg="ttest", meta=1, selected, meta.vec, normOpt, p.lvl=0.05, fc.lvl=0, nonpar=FALSE){
+DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, normOpt, p.lvl=0.05, fc.lvl=0, nonpar=FALSE){
   if(meta == "null"){
     meta = 1;
   }
   
-  dataSet <- readDataset(filenm);
+  dataSet <- readDataset(dataName);
+  paramSet <- readSet(paramSet, "paramSet");
   
+  data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, dataName);
   if(normOpt != "none" && alg == "limma"){
-    dataSet$data.comparison <- NormalizingDataOmics(dataSet$data.filtered, normOpt, "NA", "NA");
+    data.comparison <- NormalizingDataOmics(data.filtered, normOpt, "NA", "NA");
   }else{
-    dataSet$data.comparison <- dataSet$data.filtered;
+    data.comparison <- data.filtered;
   }
 
   if(alg == "deseq2" || alg == "edger"){
     if(dataSet$isValueNormalized == "false"){
-      dataSet$data.comparison <- round(dataSet$data.comparison);
+      data.comparison <- round(data.comparison);
     }
   }
   
   
   if(dataSet$de.method == alg && dataSet$de.norm == normOpt){
-    return(UpdateDE(filenm, p.lvl, fc.lvl));
+    return(UpdateDE(dataName, p.lvl, fc.lvl));
   }
   
   if(selected == "NA"){ # process page
@@ -711,7 +724,7 @@ DoStatComparison <- function(filenm, alg="ttest", meta=1, selected, meta.vec, no
   nms <- rownames(sel_meta_more_than_2);
 
   sel.meta <- "newcolumn";
-  trimmed.data <-  as.matrix(dataSet$data.comparison[,which(colnames(dataSet$data.comparison) %in% nms)]);
+  trimmed.data <-  as.matrix(data.comparison[,which(colnames(data.comparison) %in% nms)]);
   trimmed.meta <- dataSet$meta[,sel.meta][which(rownames(dataSet$meta) %in% nms)];
   trimmed.meta <- make.names(trimmed.meta);
   #if(min(trimmed.data) < 0){
@@ -743,7 +756,7 @@ DoStatComparison <- function(filenm, alg="ttest", meta=1, selected, meta.vec, no
   
   RegisterData(dataSet);
   
-  return(UpdateDE(filenm, p.lvl, fc.lvl));
+  return(UpdateDE(dataName, p.lvl, fc.lvl));
 }
 
 UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){

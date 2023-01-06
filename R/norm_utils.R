@@ -28,27 +28,27 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   
   #Filter data
   data <- PerformDataFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
-
+  
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
-
+  
   #Normalize data
   data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
-
+  
   msg <- paste(norm.msg, msg);
   dataSet$data.norm <- data;
   
   # save normalized data for download user option
   fast.write(dataSet$data.norm, file="data_normalized.csv");
   qs::qsave(data, file="data.stat.qs");
-
+  
   msgSet$current.msg <- msg; 
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet));
 }
 
 PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
-    msg <- "";
+  msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations
     data1 <- qs::qread("data.proc.qs");
@@ -65,7 +65,7 @@ PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapp
   }
   
   data <- raw.data.anot;
-
+  
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
@@ -78,7 +78,7 @@ PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapp
     rm.inx <- avg.signal < p05;
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low relative abundance (average expression signal).", collapse=" ");
   }
-
+  
   data <- data[!rm.inx,];
   
   filter.val <- apply(data, 1, IQR, na.rm=T);
@@ -97,26 +97,31 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
     mdata.all <- paramSet$mdata.all;
     sel.nms <- names(mdata.all);
     for(i in 1:length(sel.nms)){
-      dataSet = readDataset(sel.nms[i])
-      data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
+      dataName <- sel.nms[i];
+      dataSet = readDataset(dataName);
+      data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, dataName);
+      data <- NormalizingDataOmics(data.filtered,opt, colNorm, scaleNorm);
       if(length(data) == 1){
         return(0);
       }
       dataSet$data.norm <- data;
       dataSet$data <- data;
-      qs::qsave(data, file="data.stat.qs");
+      RegisterData(dataSet);
     }
   }else{
     dataSet <- readDataset(nm);
-    data <- NormalizingDataOmics(dataSet$data.filtered,opt, colNorm, scaleNorm)
+    data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, nm);
+    data <- NormalizingDataOmics(data.filtered,opt, colNorm, scaleNorm);
     if(length(data) == 1){
       return(0);
     }
     dataSet$data.norm <- data;
     dataSet$data <- data;
     qs::qsave(data, file="data.stat.qs");
+    RegisterData(dataSet);
+    
   }
-  return(RegisterData(dataSet));
+  return(1);
 }
 
 NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
@@ -124,7 +129,8 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   row.nms <- rownames(data);
   col.nms <- colnames(data);
   msgSet <- readSet(msgSet, "msgSet");
- # column(sample)-wise normalization
+  
+  # column(sample)-wise normalization
   if(colNorm=="SumNorm"){
     data<-t(apply(data, 2, SumNorm));
     rownm<-"Normalization to constant sum";
@@ -135,6 +141,8 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     # nothing to do
     rownm<-"N/A";
   }
+  
+  # norm.opt
   if(norm.opt=="log"){
     min.val <- min(data[data>0], na.rm=T)/10;
     numberOfNeg = sum(data<=0, na.rm = TRUE) + 1; 
@@ -169,30 +177,30 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     data <- y$E; # copy per million
     msg <- paste(msg, "Limma based on log2-counts per million transformation.", collapse=" ");
   } else if(norm.opt=="RLE"){
-      suppressMessages(require(edgeR))
-      nf <- calcNormFactors(data,method="RLE");
-      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
-      data <- y$E; # copy per million
-      msg <- c(msg, paste("Performed RLE Normalization"));
-    }else if(norm.opt=="TMM"){
-      suppressMessages(require(edgeR))
-      nf <- calcNormFactors(data,method="TMM");
-      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
-      data <- y$E; # copy per million
-      msg <- c(msg, paste("Performed TMM Normalization"));
-    }else if(norm.opt=="clr"){
-      data <- apply(data, 2, clr_transform);
-      msg <- "Performed centered-log-ratio normalization.";
-    }else if(norm.opt=='LogNorm'){
-      min.val <- min(abs(data[data!=0]))/10;
-      data<-apply(data, 2, LogNorm, min.val);
-    }else if(norm.opt=='CrNorm'){
-      norm.data <- abs(data)^(1/3);
-      norm.data[data<0] <- - norm.data[data<0];
-      data <- norm.data;
-    }
+    suppressMessages(require(edgeR))
+    nf <- calcNormFactors(data,method="RLE");
+    y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+    data <- y$E; # copy per million
+    msg <- c(msg, paste("Performed RLE Normalization"));
+  }else if(norm.opt=="TMM"){
+    suppressMessages(require(edgeR))
+    nf <- calcNormFactors(data,method="TMM");
+    y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+    data <- y$E; # copy per million
+    msg <- c(msg, paste("Performed TMM Normalization"));
+  }else if(norm.opt=="clr"){
+    data <- apply(data, 2, clr_transform);
+    msg <- "Performed centered-log-ratio normalization.";
+  }else if(norm.opt=='LogNorm'){
+    min.val <- min(abs(data[data!=0]))/10;
+    data<-apply(data, 2, LogNorm, min.val);
+  }else if(norm.opt=='CrNorm'){
+    norm.data <- abs(data)^(1/3);
+    norm.data[data<0] <- - norm.data[data<0];
+    data <- norm.data;
+  }
   
-
+  
   # scaling
   if(scaleNorm=='MeanCenter'){
     data<-apply(data, 1, MeanCenter);
@@ -207,38 +215,38 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     data<-apply(data, 1, RangeNorm);
     scalenm<-"Range Scaling";
   }else if(scaleNorm=="colsum"){
-      data <- sweep(data, 2, colSums(data), FUN="/")
-      data <- data*10000000;
-      msg <- c(msg, paste("Performed total sum normalization."));
-    }else if(scaleNorm=="upperquartile" || norm.opt == "upperquartile"){
-      suppressMessages(require(edgeR))
-      nf <- calcNormFactors(data,method="upperquartile");
-      y <- voom(data,plot=F,lib.size=colSums(data)*nf);
-      data <- y$E; # copy per million
-      msg <- c(msg, paste("Performed upper quartile normalization"));
-    }else if(scaleNorm=="CSS"){
-      suppressMessages(require(metagenomeSeq))
-      #biom and mothur data also has to be in class(matrix only not in phyloseq:otu_table)
-      data1 <- as(data,"matrix");
-      dataMR <- newMRexperiment(data1);
-      data <- cumNorm(dataMR,p=cumNormStat(dataMR));
-      data <- MRcounts(data,norm = T);
-      msg <- c(msg, paste("Performed cumulative sum scaling normalization"));
-    }else{
+    data <- sweep(data, 2, colSums(data), FUN="/")
+    data <- data*10000000;
+    msg <- c(msg, paste("Performed total sum normalization."));
+  }else if(scaleNorm=="upperquartile" || norm.opt == "upperquartile"){
+    suppressMessages(require(edgeR))
+    nf <- calcNormFactors(data,method="upperquartile");
+    y <- voom(data,plot=F,lib.size=colSums(data)*nf);
+    data <- y$E; # copy per million
+    msg <- c(msg, paste("Performed upper quartile normalization"));
+  }else if(scaleNorm=="CSS"){
+    suppressMessages(require(metagenomeSeq))
+    #biom and mothur data also has to be in class(matrix only not in phyloseq:otu_table)
+    data1 <- as(data,"matrix");
+    dataMR <- newMRexperiment(data1);
+    data <- cumNorm(dataMR,p=cumNormStat(dataMR));
+    data <- MRcounts(data,norm = T);
+    msg <- c(msg, paste("Performed cumulative sum scaling normalization"));
+  }else{
     scalenm<-"N/A";
   }
-
+  
   if(scaleNorm %in% c('MeanCenter', 'AutoNorm', 'ParetoNorm', 'RangeNorm')){
     data <- t(data)
   }
-
+  
   norm.msg <<- msg;
-  #data <- as.data.frame(data)
+  data <- as.data.frame(data)
   rownames(data) <- row.nms;
   colnames(data) <- col.nms;
+
   msgSet$current.msg <- msg;
   saveSet(msgSet, "msgSet");
-  print(msg);
   return(data)
 }
 

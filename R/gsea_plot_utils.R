@@ -6,8 +6,6 @@
 ## J. Xia, jeff.xia@mcgill.ca
 ###################################################
 PlotGShm <-function(dataName="", cmpdNm="", IDs){
-  ids <<- IDs;
-  save.image("gs.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   
@@ -20,7 +18,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   
   if(anal.type == "onedata"){
     dataSet <- readDataset(dataName);
-    gene.map <- dataSet$symbol.map;
+    gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, dataName);
     subset <- dataSet$data.norm[which(doIdMappingGeneric(rownames(dataSet$data.norm), gene.map, "gene_id", "symbol") %in% ids),]
     if(length(subset)<1){
       subset <- dataSet$data.norm[which(rownames(dataSet$data.norm) %in% ids),]
@@ -37,7 +35,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
       gene.map <- data.frame(gene_id=names(inmex$gene.symbls), symbol=unname(inmex$gene.symbls));
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
-      gene.map <- dataSet$symbol.map;
+      gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, paramSet$selDataNm);
       dat <- dataSet$data;
     }
     subset <- dat[which(doIdMappingGeneric(rownames(dat), gene.map, "gene_id", "symbol") %in% ids),]
@@ -47,7 +45,6 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     inx <- order(inmex$cls.lbl);
     subset <- subset[,inx];
   }
-  print(head(gene.map));
   dat <- t(scale(t(subset)));
   
   # now pearson and euclidean will be the same after scaling

@@ -154,6 +154,7 @@ cleanMem <- function(n=8) { for (i in 1:n) gc() }
   obj.dim[vec, 1] <- napply(names, length)[vec]
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
   print(lapply(dataSet, object.size));
+  save.image("memcheck.RData");
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))
     out <- out[order(out[[order.by]], decreasing=decreasing), ]
@@ -926,7 +927,6 @@ readSet <- function(obj=NA, set=""){
 load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
 
 readDataset <- function(fileName=""){
-
     if(globalConfig$anal.mode == "api"){
       if(exists('user.path')){
         path <- user.path;
@@ -954,4 +954,21 @@ PrepareSqliteDB <- function(sqlite_Path, onweb = TRUE) {
   DonwloadLink <- paste0("https://www.xialab.ca/resources/sqlite/", dbNM);
   download.file(DonwloadLink, sqlite_Path);
   return(TRUE)
+}
+
+saveDataQs <-function(data, name, module.nm, dataName){
+  if(module.nm == "metadata"){
+    qs::qsave(data, file=paste0(dataName, "_data/", name));
+  }else{
+    qs::qsave(data, file=name);
+  }
+}
+
+readDataQs <-function(name, module.nm, dataName){
+  if(module.nm == "metadata"){
+    dat <- qs::qread(file=paste0(dataName, "_data/", name));
+  }else{
+    dat <- qs::qread(file=name);
+  }
+  return(dat);
 }
