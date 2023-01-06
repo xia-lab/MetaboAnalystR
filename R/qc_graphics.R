@@ -8,7 +8,7 @@
 
 PlotDataBox <- function(fileName, boxplotName, dpi, format){
   dataSet <- readDataset(fileName);
-  res <- qc.boxplot(dataSet$data.norm, boxplotName, dpi, format);
+  res <- qc.boxplot(as.matrix(dataSet$data.norm), boxplotName, dpi, format);
   return(res);
 }
 
@@ -18,6 +18,11 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
   require('lattice');
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");  subgene <- 10000;
+
+  if(class(dat) == "data.frame"){
+    dat <- as.matrix(dat);
+  }
+
   if (nrow(dat)>subgene) {
     set.seed(28051968);
     sg  <- sample(nrow(dat), subgene);
