@@ -97,7 +97,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
     }else{
         p <- ggplot(data = boxdata, aes(x=Abundance, y=Class)) + geom_point(shape=1) + geom_smooth(method=lm, se=FALSE) 
         p <- p + theme(plot.title = element_text(hjust = 0.5)) + guides(fill=guide_legend(title="Association"))
-        p <- p + ylab(lbl.vec) + xlab("Relative Abundance") + theme_bw()
+        p <- p + xlab(lbl.vec) + xlab("") + theme_bw()
     }
     
     ggsave(p, filename = imgName, dpi=dpi, width=7, height=6, limitsize = FALSE)
