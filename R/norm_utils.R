@@ -241,7 +241,7 @@ NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   }
   
   norm.msg <<- msg;
-  data <- as.data.frame(data)
+
   rownames(data) <- row.nms;
   colnames(data) <- col.nms;
 
