@@ -19,7 +19,7 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");  subgene <- 10000;
 
-  if(class(dat) == "data.frame"){
+  if(class(dat)[1] == "data.frame"){
     dat <- as.matrix(dat);
   }
 
