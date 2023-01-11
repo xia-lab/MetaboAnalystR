@@ -140,7 +140,7 @@ GetDatasetNamesString <- function(){
 
 ##Single matrix
 GetSampleNumber <-function(){
-  data.proc <- qs::qread("data.proc.qs");
+  data.proc <- qs::qread("data.raw.qs");
   return(ncol(data.proc));
 }
 
@@ -197,11 +197,12 @@ GetExpressGeneIDType<-function(dataName=""){
 }
 
 GetExpressResultMatrix <-function(dataName="", inxt){
+  save.image("expr.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");;
 
   inxt <- as.numeric(inxt)
-    if (dataSet$de.method=="limma"){
+  if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
   } else if (dataSet$de.method=="deseq2"){
     inx <- match("baseMean", colnames(dataSet$comp.res))

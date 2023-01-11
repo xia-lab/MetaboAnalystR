@@ -19,7 +19,7 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");  subgene <- 10000;
 
-  if("data.frame" %in% class(dat)){
+  if(class(dat)[1] == "data.frame"){
     dat <- as.matrix(dat);
   }
 
@@ -72,13 +72,13 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
 }
 
 
-PlotDataDensity <- function(fileName, imgNm, dpi,format, factor){
+PlotDataDensity <- function(fileName, imgNm, dpi,format){
   dataSet <- readDataset(fileName);
-  res <- qc.density(dataSet, imgNm, dpi, format, factor);
+  res <- qc.density(dataSet, imgNm, dpi, format);
   return(res);
 }
 
-qc.density<- function(dataSet, imgNm="abc", dpi=72, format, factor){
+qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
   require("ggplot2")
   dat <- dataSet$data.norm
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
@@ -133,7 +133,7 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, factor){
 }
 
 
-PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png",factor){
+PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
   dataSet <- readDataset(fileName);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");

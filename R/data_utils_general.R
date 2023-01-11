@@ -114,7 +114,6 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   require('igraph');
   print("called expressanalyst init!");
 
-  #saveSet(dataSet, "dataSet");
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   saveSet(analSet, "analSet");

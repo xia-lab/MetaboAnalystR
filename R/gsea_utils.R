@@ -48,13 +48,15 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
       rankedVec <- ComputeRankedVec(dataSet, rankOpt, 1);
     }
   }
-  
-  if(rankedVec == 0){
-    msgSet$current.msg <- "Selected ranking method is not suitable. Please select another one!";
-    saveSet(msgSet, "msgSet");
-    return(0);
+
+  if(length(rankedVec) == 1){
+    if(rankedVec == 0){
+        msgSet$current.msg <- "Selected ranking method is not suitable. Please select another one!";
+        saveSet(msgSet, "msgSet");
+        return(0);
+    }
   }
-  
+
   if(mode == "simple"){
     fgseaRes <- fgsea(pathways = current.geneset, 
                       stats = rankedVec,

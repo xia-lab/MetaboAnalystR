@@ -44,7 +44,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$id.orig <- dataSet$id.current <- idType;
   dataSet$annotated <- F;
   # should not contain duplicates, however sanity check
-  data.proc <- qs::qread("data.proc.qs");
+  data.proc <- qs::qread("data.raw.qs");
   dataSet$data.anot <- data.proc;
   
   

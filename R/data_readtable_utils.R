@@ -59,8 +59,8 @@ ReadTabExpressData <- function(fileName, path="") {
 
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
-  qs::qsave(data.proc, "data.proc.qs");
-
+  qs::qsave(data.proc, "data.raw.qs");
+  dataSet$data.norm <- data.proc;
   paramSet$anal.type <- "onedata";
 
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, fileName);

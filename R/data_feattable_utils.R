@@ -69,7 +69,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   ### Note, rowname of resTable must be entrez ID
   
   de.Num <- nrow(resTable);
-  
+  non.de.Num <- nrow(dataSet$data.norm) - de.Num;
   # display at most 5000 genes for the server (two main reasons)
   # 1) should not have more 22% (human: 23000) DE of all genes (biological)
   # 2) IE canvas can display no more than 6800 pixels (computational)
@@ -145,6 +145,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   saveSet(analSet, "analSet");
   res <- RegisterData(dataSet);
   if(res == 1){
-    return(c(filename, de.Num, geneList, total, up, down));
+    return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
   }
 }

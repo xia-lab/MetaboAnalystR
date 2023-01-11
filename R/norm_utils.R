@@ -51,7 +51,7 @@ PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapp
   msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations
-    data1 <- qs::qread("data.proc.qs");
+    data1 <- qs::qread("data.raw.qs");
     anot.id <- qs::qread("annotation.qs");
     hit.inx <- !is.na(anot.id);
     rownames(data1)[hit.inx] <- anot.id[hit.inx];
