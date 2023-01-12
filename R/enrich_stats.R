@@ -26,7 +26,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   q.size<-length(ora.vec);
   
-  if(is.na(ora.vec) || q.size==0) {
+  if(all(is.na(ora.vec)) || q.size==0) {
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }
@@ -36,7 +36,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     
     # make this lazy load
     if(!exists("my.hyperscore.kegg")){ # public web on same user dir
-      .load.scripts.on.demand("_util_api.Rc");    
+      .load.scripts.on.demand("util_api.Rc");    
     }
 
     mSetObj$api$oraVec <- ora.vec; 
@@ -169,7 +169,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     # make this lazy load
     if(!exists("my.qea.kegg")){ # public web on same user dir
-      .load.scripts.on.demand("_util_api.Rc");    
+      .load.scripts.on.demand("util_api.Rc");    
     }
 
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
@@ -414,7 +414,7 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
   
   q.size <- length(ora.vec);
   
-  if(is.na(ora.vec) || q.size==0) {
+  if(all(is.na(ora.vec)) || q.size==0) {
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }

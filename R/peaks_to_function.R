@@ -3614,7 +3614,7 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.fgsea")){ # public web on same user dir
-      .load.scripts.on.demand("_util_fgsea.Rc");    
+      .load.scripts.on.demand("util_fgsea.Rc");    
     }
     return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
                     minSize, maxSize, nproc, gseaParam, BPPARAM));
@@ -3665,7 +3665,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib,
   if(.on.public.web){
     # make this lazy load
     if(!exists("psea.heatmap.json")){ # public web on same user dir
-      .load.scripts.on.demand("_util_heatmap.Rc");    
+      .load.scripts.on.demand("util_heatmap.Rc");    
     }
     return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }else{
@@ -3729,7 +3729,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.list.heatmap")){ # public web on same user dir
-      .load.scripts.on.demand("_util_listheatmap.Rc");    
+      .load.scripts.on.demand("util_listheatmap.Rc");    
     }
     return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }else{

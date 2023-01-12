@@ -409,7 +409,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.impute.missing")){ # public web on same user dir
-      .load.scripts.on.demand("_util_missing.Rc");    
+      .load.scripts.on.demand("util_missing.Rc");    
     }
     return(my.impute.missing(mSetObj, method));
   }else{

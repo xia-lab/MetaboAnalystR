@@ -577,7 +577,7 @@ SaveTransformedData <- function(mSetObj=NA){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.save.data")){ # public web on same user dir
-      .load.scripts.on.demand("_util_savedata.Rc");    
+      .load.scripts.on.demand("util_savedata.Rc");    
     }
     return(my.save.data(mSetObj));
   }else{
@@ -598,7 +598,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.mztab")){ # public web on same user dir
-      .load.scripts.on.demand("_util_mztab.Rc");    
+      .load.scripts.on.demand("util_mztab.Rc");    
     }
     return(my.parse.mztab(mSetObj, filename, identifier));
   }else{
@@ -625,7 +625,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.parse.peaklist")){ # public web on same user dir
-      .load.scripts.on.demand("_util_peaks.Rc");    
+      .load.scripts.on.demand("util_peaks.Rc");    
     }
     return(my.parse.peaklist(mSetObj, foldername));
   }else{
@@ -1089,7 +1089,7 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
   
     # make this lazy load
     if(!exists("my.get.nmdr.data")){ # public web on same user dir
-      .load.scripts.on.demand("_util_nmdr.Rc");    
+      .load.scripts.on.demand("util_nmdr.Rc");    
     }
     res <- my.get.nmdr.data(StudyID);
     if(res){

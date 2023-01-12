@@ -31,7 +31,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
    # plotting via microservice  
    # make this lazy load
     if(!exists("my.kegg.plot")){ # public web on same user dir
-      .load.scripts.on.demand("_util_api.Rc");    
+      .load.scripts.on.demand("util_api.Rc");    
     }
 
     mSetObj$api$analType <- mSetObj$analSet$type

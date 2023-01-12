@@ -244,7 +244,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   if(!.on.public.web){
      # make this lazy load
     if(!exists("my.integ.kegg")){ # public web on same user dir
-      .load.scripts.on.demand("_util_api.Rc");    
+      .load.scripts.on.demand("util_api.Rc");    
     }    
     if(libOpt == "integ"){
       toSend = list(mSet = mSetObj, oraVec = ora.vec,
