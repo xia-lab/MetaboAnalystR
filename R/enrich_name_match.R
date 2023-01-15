@@ -4,7 +4,7 @@ CleanLipidNames <- function(qvec){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.clean.lipid")){ # public web on same user dir
-      .load.scripts.on.demand("_util_lipid.Rc");    
+      .load.scripts.on.demand("util_lipid.Rc");    
     }
     return(my.clean.lipid(qvec));
   }else{
@@ -73,7 +73,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.approx.match")){ # public web on same user dir
-      .load.scripts.on.demand("_util_approx.Rc");    
+      .load.scripts.on.demand("util_approx.Rc");    
     }
     return(my.approx.match(mSetObj, q, lipid));
   }else{
@@ -163,7 +163,7 @@ CrossReferencingAPI <- function(mSetObj=NA, inputType){
   
    # make this lazy load
     if(!exists("my.namemap.api")){ # public web on same user dir
-      .load.scripts.on.demand("_util_api.Rc");    
+      .load.scripts.on.demand("util_api.Rc");    
     }
 
     mSetObj <- .get.mSet(mSetObj);
