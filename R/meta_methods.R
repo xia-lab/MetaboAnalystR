@@ -27,7 +27,7 @@ SetGroupContrast <- function(dataName, grps){
 #'@description This function determines if all annotated data are ready for meta-analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 CheckMetaDataIntegrity <- function(){
@@ -335,7 +335,7 @@ PerformMetaDeAnal <- function(paramSet){
 #'@param BHth P-value threshold
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformMetaEffectSize<- function(method="rem", BHth=0.05){
@@ -425,7 +425,7 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
 #'@param BHth P-value threshold
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformPvalCombination <- function(method="stouffer", BHth=0.05){
@@ -510,7 +510,7 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
 #'@param BHth P-value threshold for the significance level
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformVoteCounting <- function(BHth = 0.05, minVote){
@@ -585,7 +585,7 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 #'@param BHth P-value threshold for the significance level
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformMetaMerge<-function(BHth=0.05){

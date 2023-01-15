@@ -24,5 +24,5 @@ Perform Gene Set Enrichment Analysis test on single or multiple gene expression 
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

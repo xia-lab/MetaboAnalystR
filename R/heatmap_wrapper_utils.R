@@ -10,7 +10,7 @@
 #'Prepare data for heatmap visualization
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SaveHeatmapJSON <- function(dataName="", fileName){
@@ -49,7 +49,7 @@ SaveHeatmapJSON <- function(dataName="", fileName){
 #'@param {string}   fileName file name of the output JSON file
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SaveListHeatmapJSON <- function(dataName="", fileName){
