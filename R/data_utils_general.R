@@ -437,7 +437,7 @@ ReadDataForMetaInfo<-function(dataName){
 doScatterJson <- function(dataName, filenm){
     dataSet <- readDataset(dataName);
     if(!exists("my.json.scatter")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_scatter3d.Rc");    
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_scatter3d.Rc");    
     }
     return(my.json.scatter(dataSet, filenm));
 }

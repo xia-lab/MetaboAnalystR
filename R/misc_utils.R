@@ -202,7 +202,7 @@ PerformHeatmapEnrichment <- function(dataName="", file.nm, fun.type, IDs){
 
 .prepareEnrichNet<-function(dataSet, netNm, type, overlapType, analSet){
     if(!exists("my.enrich.net")){ 
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_enrichnet.Rc");    
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_enrichnet.Rc");    
     }
     return(my.enrich.net(dataSet, netNm, type, overlapType, analSet));
 }
