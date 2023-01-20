@@ -140,7 +140,7 @@ GetDatasetNamesString <- function(){
 
 ##Single matrix
 GetSampleNumber <-function(){
-  data.proc <- qs::qread("data.raw.qs");
+  data.proc <- qs::qread("data.proc.qs");
   return(ncol(data.proc));
 }
 
@@ -168,7 +168,7 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
     if(paramSet$data.idType == "ko"){
         annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
     }else if(paramSet$data.idType == "s2f"){
-        annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
+        annots <- paste("<a href='https://www.ecoomicsdb.ca/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
     }else{
         annots <- ids;
     }
@@ -197,12 +197,11 @@ GetExpressGeneIDType<-function(dataName=""){
 }
 
 GetExpressResultMatrix <-function(dataName="", inxt){
-  save.image("expr.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");;
 
   inxt <- as.numeric(inxt)
-  if (dataSet$de.method=="limma"){
+    if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
   } else if (dataSet$de.method=="deseq2"){
     inx <- match("baseMean", colnames(dataSet$comp.res))

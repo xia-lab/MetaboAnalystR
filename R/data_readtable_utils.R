@@ -12,7 +12,7 @@
 #'@param fileName file name of the data, .txt format
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ReadTabExpressData <- function(fileName, path="") {

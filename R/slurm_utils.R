@@ -657,8 +657,6 @@ if(readEnds == "pe"){
   cat(str, "\n\n");
   cat(str_R, "\n\n");
 
-  # cat(str_runRemove, "\n\n");
-  # cat(str_zipDir, "\n\n");
   cat(str_checMysql1, "\n\n");
   cat(str_runMysql1, "\n\n");
   sink();

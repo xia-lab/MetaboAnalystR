@@ -25,7 +25,7 @@
 #'@param lvlOpt merging original ID to entrez gene IDs. "NA" to keep original IDs without merging
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){

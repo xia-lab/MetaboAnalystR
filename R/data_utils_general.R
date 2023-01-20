@@ -27,7 +27,7 @@ Set.Config <-function(anal.mode="web"){
 #'@param onWeb whether the script is running in local or on web
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
@@ -436,7 +436,7 @@ ReadDataForMetaInfo<-function(dataName){
 doScatterJson <- function(dataName, filenm){
     dataSet <- readDataset(dataName);
     if(!exists("my.json.scatter")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/_utils_scatter3d.Rc");    
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_scatter3d.Rc");    
     }
     return(my.json.scatter(dataSet, filenm));
 }

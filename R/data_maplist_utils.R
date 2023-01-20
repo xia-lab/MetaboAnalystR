@@ -17,7 +17,7 @@
 #'@param idType The orginal ID type
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
@@ -216,7 +216,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
 #'@param fileName file name of the data, .txt format
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ReadListFile <- function(fileName) {

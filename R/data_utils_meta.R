@@ -10,7 +10,7 @@
 #'@param clsLbl vector of class labels to be assigned to samples
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 UpdateSampleInfo<-function(dataName, clsLbl){
@@ -114,7 +114,7 @@ GlobalCutOff <- list(
 #'@param auto.opt integer (0,1), Perform auto scaling
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ReadMergedExpressTable <- function(dataName){
@@ -280,7 +280,7 @@ SetupMetaStats <- function(BHth, paramSet,analSet){
 #'@param imgNm Image name to output
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -335,7 +335,7 @@ PlotCochranQ <- function(imgNm){
 #'@param imgNm name of the image to output
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 

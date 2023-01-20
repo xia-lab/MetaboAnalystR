@@ -10,7 +10,7 @@
 #'@param fileName The filename of dataset in qs format
 #'@author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SanityCheckData <- function(fileName){
@@ -538,7 +538,7 @@ CheckMetaIntegrity <- function(){
 #'@param fileName File name of data table.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ReadOmicsData <- function(fileName) {
