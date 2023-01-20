@@ -36,7 +36,6 @@ RemoveDuplicates <- function(data, lvlOpt, quiet=T, paramSet, msgSet){
   if(sum(dup.inx) > 0){
     uniq.nms <- all.nms[!dup.inx];
     uniq.data <- data[!dup.inx,,drop=F];
-    
     dup.nms <- all.nms[dup.inx];
     uniq.dupnms <- unique(dup.nms);
     uniq.duplen <- length(uniq.dupnms);
@@ -974,4 +973,30 @@ readDataQs <-function(name, module.nm, dataName){
     dat <- qs::qread(file=name);
   }
   return(dat);
+}
+
+
+PrepareReport <- function(objective, abstract, animalDetails, exposureDetails, chipDetails){
+  dataSet$reportSummary$obj <<- objective;
+  dataSet$reportSummary$abstract <<- abstract;
+  dataSet$reportSummary$animal <<- animalDetails;
+  dataSet$reportSummary$exposure <<- exposureDetails;
+  dataSet$reportSummary$chip <<- ecotoxchipDetails;
+  data.orig <- qs::qread("data.orig.qs"); 
+  dataSet$reportSummary$read.msg <<- paste("In this analysis, the uploaded data files were combined into a ", nrow(data.orig),
+                                          " (wells) by ", ncol(data.orig), " (samples) data matrix.", sep="");
+  
+}
+
+convertPNG2PDF <- function(filenm){
+  library(png)
+  
+  nm <- strsplit(filenm, "[.]")[[1]][1]
+  img <- readPNG(filenm)
+
+  pdf(paste0(nm, ".pdf"))
+  grid::grid.raster(img)
+  dev.off()  
+  
+  return(1)
 }
