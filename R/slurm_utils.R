@@ -80,7 +80,7 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     isSlurm = FALSE;
   } else if(grepl("xia", userDir)) { # jeff local
     seq2funPath = "/Users/xia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
-    databasePath = "/Users/xia/Dropbox/resources/eoa/software/Seq2Fun/testdata";
+    databasePath = "/Users/xia/Dropbox/resources/eoa/seq2fun_database/";
     isSlurm = FALSE;
   } else if(grepl("zgy", userDir)) { # jeff local
     seq2funPath = "/home/zgy/eoa/software/Seq2Fun/bin/seq2fun";
@@ -464,7 +464,12 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
     kallistoPath = "/home/zgy/eoa/software/kallisto_source/kallisto";
     databasePath = "/home/zgy/eoa/kallisto_database/";
     isSlurm = F;
-  } else {
+  }else if(grepl("xia", userDir)) { # jeff local
+    fastpPath = "/Users/xia/Dropbox/resources/eoa/software/fastp_source/fastp";
+    kallistoPath = "/Users/xia/Dropbox/resources/eoa/software/kallisto_source/kallisto";
+    databasePath = "/Users/xia/Dropbox/resources/eoa/kallisto_database/";
+    isSlurm = F;
+  }  else {
     fastpPath = "/home/peng/software/fastp/fastp";
     kallistoPath = "/home/peng/software/kallisto/kallisto";
     databasePath = "/home/peng/ecoomicsanalyst_test/database/kallisto";
