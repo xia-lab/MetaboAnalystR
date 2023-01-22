@@ -79,8 +79,8 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     databasePath = "/home/peng/ecoomicsanalyst_test/seq2fun_database";
     isSlurm = FALSE;
   } else if(grepl("xia", userDir)) { # jeff local
-    seq2funPath = "/Users/xia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
-    databasePath = "/Users/xia/Dropbox/resources/eoa/seq2fun_database/";
+    seq2funPath = "/Users/jeffxia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
+    databasePath = "/Users/jeffxia/Dropbox/resources/eoa/seq2fun_database";
     isSlurm = FALSE;
   } else if(grepl("zgy", userDir)) { # jeff local
     seq2funPath = "/home/zgy/eoa/software/Seq2Fun/bin/seq2fun";
