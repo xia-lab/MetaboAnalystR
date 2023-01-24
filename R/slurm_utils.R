@@ -114,8 +114,7 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
                      "\nminimum matching length: ", minlength,
                      "\nminimum matching blosum62 score: ", minscore,
                      "\nproject_description: ", des);
-    
-    str <- paste(str, ";", sep = " ");
+   
     
     str_R <- paste("Rscript --vanilla",
                    file.path(shellscriptDir, "run_process.R"),
