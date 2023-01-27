@@ -86,6 +86,10 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     seq2funPath = "/home/zgy/eoa/software/Seq2Fun/bin/seq2fun";
     databasePath = "/home/zgy/eoa/seq2fun_database/";
     isSlurm = F;
+  } else if(grepl("ewald", userDir)) { # jess local
+    seq2funPath = "/Users/jessicaewald/NetbeansProjects/Seq2Fun/bin/seq2fun";
+    databasePath = "/Users/jessicaewald/eoa/seq2fun_database/";
+    isSlurm = F;
   } else {
     
   }
