@@ -73,10 +73,10 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   # display at most 5000 genes for the server (two main reasons)
   # 1) should not have more 22% (human: 23000) DE of all genes (biological)
   # 2) IE canvas can display no more than 6800 pixels (computational)
-  if (nrow(resTable) > 5000){
-    resTable <- resTable[1:5000,];
-    msgSet$current.msg <- paste(msgSet$current.msg, " Due to computational constraints, only top 5000 genes will be used. ", collapse="\n");
-  }
+  #if (nrow(resTable) > 5000){
+  #  resTable <- resTable[1:5000,];
+  #  msgSet$current.msg <- paste(msgSet$current.msg, " Due to computational constraints, only top 5000 genes will be used. ", collapse="\n");
+  #}
   
   # may need to update data, class and meta.info
   data <- dataSet$data.norm;

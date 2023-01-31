@@ -77,8 +77,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
 
   if(file.exists("/home/glassfish/sqlite/")){
     sqlite.path <- "/home/glassfish/sqlite/";  #public server
-  }else if(file.exists("/Users/xia/Dropbox/sqlite/")){
-    sqlite.path <- "/Users/xia/Dropbox/sqlite/"; #xia local
+  }else if(file.exists("/Users/jeffxia/Dropbox/sqlite/")){
+    sqlite.path <- "/Users/jeffxia/Dropbox/sqlite/"; #xia local
   }else if(file.exists("/Users/jeffxia/Dropbox/sqlite/")){
     sqlite.path <- "/Users/jeffxia/Dropbox/sqlite/"; #xia local2
   }else if(file.exists("/media/zzggyy/disk/sqlite/")){  

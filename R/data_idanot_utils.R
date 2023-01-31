@@ -362,6 +362,10 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 
 queryGeneDB <- function(table.nm, data.org){
+  if(data.org == "na"){
+      print("Not available when organism is not specified");
+      return(0);
+  }
   paramSet <- readSet(paramSet, "paramSet");    
   if(table.nm == "custom" || data.org == "custom"){
     db.map <- qs::qread("anot_table.qs");
@@ -395,6 +399,10 @@ getEntrezTableName <- function(data.org, data.idType){
 
 
 doEntrez2SymbolMapping <- function(entrez.vec,data.org="hsa", data.idType="entrez"){
+
+  if(data.org == "na"){
+    return(entrez.vec); # nothing to do
+  }
   tblNm <- getEntrezTableName(data.org, data.idType);
   gene.map <-  queryGeneDB(tblNm, data.org);
   gene.map[] <- lapply(gene.map, as.character)

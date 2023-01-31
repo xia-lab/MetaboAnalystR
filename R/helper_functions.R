@@ -140,8 +140,8 @@ GetDatasetNamesString <- function(){
 
 ##Single matrix
 GetSampleNumber <-function(){
-  data.proc <- qs::qread("data.proc.qs");
-  return(ncol(data.proc));
+  data.orig <- qs::qread("data.raw.qs");
+  return(ncol(data.orig));
 }
 
 
