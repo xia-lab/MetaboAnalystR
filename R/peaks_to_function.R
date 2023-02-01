@@ -538,7 +538,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   # trim to fit within 50 - 2000
   my.inx <- mznew > 50 & mznew < 2001;
   trim.num <- sum(!my.inx);
-  range = paste0(min(ndat[,1], "-", max(ndat[,1])))
+  range = paste0(min(ndat[,1]), "-", max(ndat[,1]))
   if(length(unique(mSetObj[["dataSet"]][["pos_inx"]])) > 1){
     colNMadd <- "and mode";
     colnumadd <- 1;
@@ -717,7 +717,7 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
   }
   
   if(sig.size > 2000){
-    msg.vec <- c(msg.vec, "There are too many significant features based on the current cutoff, possibly too slow.");
+    msg.vec <- c(msg.vec, "There are too many significant features based on the current cutoff, analysis will possibly be slow.");
 
   }else if(sig.part > 25){
     msg.vec <- c(msg.vec, paste("<font color=\"orange\">Warning: over", sig.part, "percent were significant based on your cutoff</font>."));
