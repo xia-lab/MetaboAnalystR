@@ -405,6 +405,7 @@ CovariateScatter.Anal <- function(mSetObj,
                                   block = "NA", 
                                   thresh=0.05, 
                                   all_results=FALSE){
+
   if(!exists('adj.vec')){
     adj.bool = F;
   }else{
@@ -437,23 +438,12 @@ CovariateScatter.Anal <- function(mSetObj,
   if (block != "NA"){
      block.vec <- covariates[,block];
      primary.vec <- covariates[,analysis.var]
-     block.primary.vec <- paste0(block.vec, primary.vec);
 
      if(mSetObj$dataSet$meta.types[block] == "cont"){
          AddErrMsg("Blocking factor can not be continuous data type.")
          return(c(-1,-1));
      }
-
-     for(i in 1:length(unique(primary.vec))){
-        inx <- primary.vec == unique(primary.vec)[i]
-        new.vec <- table(block.primary.vec[inx])
-        min.rep <- min(new.vec)
-        max.rep <- max(new.vec)
-        if(min.rep/max.rep <0.7){
-            AddErrMsg("Blocking factor is heavily unbalanced! Each block should have similar number of samples from different experimental factors.")
-            return(c(-1,-1));
-        }
-     }
+     # recent update: remove check for unbalanced design. Limma can handle.
   }
 
   feature_table <- t(mSetObj$dataSet$norm);
@@ -507,13 +497,29 @@ CovariateScatter.Anal <- function(mSetObj,
       
     } else { 
       covariates[, analysis.var] <- covariates[, analysis.var] %>% as.numeric();
-      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
-      fit <- eBayes(lmFit(feature_table, design));
+      types <- unname(mSetObj$dataSet$meta.types[vars])
+      if(sum(types == "cont") == length(vars)){ #in case of single, continuous variable, must use different intercept or limma will give unreasonable results
+        design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
+      } else {
+        design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+      }
+
+      # recent update: enable blocking factor for continuous primary metadata
+      if (block == "NA") {
+        fit <- lmFit(feature_table, design)
+      } else {
+        block.vec <- covariates[,block];
+        corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
+        fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+      }
+
+      fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf, coef = analysis.var);
       colnames(rest)[1] <- analysis.var;
 
       ### get results with no adjustment
-      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", analysis.var, collapse = ""))), data = covariates);
+      design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
+
       fit <- eBayes(lmFit(feature_table, design));
       res.noadj <- topTable(fit, number = Inf);
     }
