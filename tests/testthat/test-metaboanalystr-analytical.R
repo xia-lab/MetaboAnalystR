@@ -88,9 +88,8 @@ test_that("Multiple factors analysis", {
   adj.vec <<- "Gender";
   mSet<-CovariateScatter.Anal(mSet, 
                               "covariate_plot_0_dpi72.png", 
-                              "png", 72, "default", 
-                              "Diagnosis", "COVID", 
-                              "NA" , 0.05, FALSE)
+                              "png", "Diagnosis", "COVID", 
+                              "NA" , 0.05)
   expect_equal(nrow(mSet[["dataSet"]][["meta.info"]]), 59)
   expect_equal(round(mSet[["analSet"]][["cov.mat"]][["pval.adj"]][1],5), 8.65735)
   ## check anova2

@@ -382,30 +382,37 @@ GetCovSigColNames<-function(mSetObj=NA){
   colnames(mSetObj$analSet$cov$sig.mat);
 }
 
+GetPrimaryType <- function(analysis.var){
+    mSetObj <- .get.mSet(mSetObj);
+    primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
+    return(primary.type);
+}
+
 
 #' CovariateScatter.Anal
 #' @param mSetObj mSetObj object
 #' @param imgName image name
 #' @param format image format
-#' @param dpi image dpi
-#' @param theme image theme
 #' @param analysis.var variable of analysis
 #' @param ref reference group
 #' @param block block name
 #' @param thresh threshold
-#' @param all_results all results
+#' @param contrast.cls contrast group
 #' @export
 CovariateScatter.Anal <- function(mSetObj, 
                                   imgName="NA", 
                                   format="png", 
-                                  dpi=72, 
-                                  theme="default", 
                                   analysis.var, 
                                   ref = NULL, 
                                   block = "NA", 
-                                  thresh=0.05, 
-                                  all_results=FALSE){
+                                  thresh=0.05,
+                                  contrast.cls = "anova"){
 
+  # load libraries
+  library(limma)
+  library(dplyr)
+  
+  # get inputs
   if(!exists('adj.vec')){
     adj.bool = F;
   }else{
@@ -415,18 +422,19 @@ CovariateScatter.Anal <- function(mSetObj,
       adj.bool = F;
     }
   }
-
-  mSetObj <- .get.mSet(mSetObj);
   
+  mSetObj <- .get.mSet(mSetObj);
+  covariates <- mSetObj$dataSet$meta.info
+  var.types <- mSetObj[["dataSet"]][["meta.types"]]
+  feature_table <- t(mSetObj$dataSet$norm);
+  
+  # process inputs
   thresh <- as.numeric(thresh)
   ref <- make.names(ref)
   adj.vars <- adj.vec;
-  library(limma);
-  library(dplyr)
+  analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   
-  covariates <- mSetObj$dataSet$meta.info
-  var.types <- mSetObj[["dataSet"]][["meta.types"]]
-  
+  # process metadata table (covariates)
   for(i in c(1:length(var.types))){ # ensure all columns are the right type
     if(var.types[i] == "disc"){
       covariates[,i] <- covariates[,i] %>% make.names() %>% factor()
@@ -434,23 +442,21 @@ CovariateScatter.Anal <- function(mSetObj,
       covariates[,i] <- covariates[,i] %>% as.character() %>% as.numeric()
     }
   }
-
+  
   if (block != "NA"){
-     block.vec <- covariates[,block];
-     primary.vec <- covariates[,analysis.var]
-
-     if(mSetObj$dataSet$meta.types[block] == "cont"){
-         AddErrMsg("Blocking factor can not be continuous data type.")
-         return(c(-1,-1));
-     }
-     # recent update: remove check for unbalanced design. Limma can handle.
+    block.vec <- covariates[,block];
+    primary.vec <- covariates[,analysis.var]
+    
+    if(mSetObj$dataSet$meta.types[block] == "cont"){
+      AddErrMsg("Blocking factor can not be continuous data type.")
+      return(c(-1,-1));
+    }
+    # recent update: remove check for unbalanced design. Limma can handle.
   }
-
-  feature_table <- t(mSetObj$dataSet$norm);
   covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
-
+  
+  # combine all fixed effects variables
   inx <- which(colnames(covariates) == analysis.var);
-  analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   if(adj.bool){
     vars <- c(analysis.var, adj.vars)
   }else{
@@ -458,71 +464,76 @@ CovariateScatter.Anal <- function(mSetObj,
   }
   
   sig.num <- 0;
-
+  
   if(analysis.type == "disc"){
-      covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
-      grp.nms <- levels(covariates[, analysis.var]);
-      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
-      colnames(design)[1:length(grp.nms)] <- grp.nms;
-      myargs <- list();
+    # build design and contrast matrix
+    covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    grp.nms <- levels(covariates[, analysis.var]);
+    design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+    colnames(design)[1:length(grp.nms)] <- grp.nms;
+    myargs <- list();
+    
+    # perform specified contrast
+    if(contrast.cls == "anova"){
       cntr.cls <- grp.nms[grp.nms != ref];
       myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
-      myargs[["levels"]] <- design;
-      contrast.matrix <- do.call(makeContrasts, myargs);
-      
-      if (block == "NA") {
-        fit <- lmFit(feature_table, design)
-      } else {
-        block.vec <- covariates[,block];
-        corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
-        fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
-      }
-      
-      fit <- contrasts.fit(fit, contrast.matrix);
-      fit <- eBayes(fit);
-      rest <- topTable(fit, number = Inf);
-
-      ### get results with no adjustment
-      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", analysis.var, collapse = ""))), data = covariates);
-      colnames(design)[1:length(grp.nms)] <- grp.nms;
-      myargs <- list();
-      cntr.cls <- grp.nms[grp.nms != ref];
-      myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
-      myargs[["levels"]] <- design;
-      contrast.matrix <- do.call(makeContrasts, myargs);
-      fit <- lmFit(feature_table, design)
-      fit <- contrasts.fit(fit, contrast.matrix);
-      fit <- eBayes(fit);
-      res.noadj <- topTable(fit, number = Inf);
-      
-    } else { 
-      covariates[, analysis.var] <- covariates[, analysis.var] %>% as.numeric();
-      types <- unname(mSetObj$dataSet$meta.types[vars])
-      if(sum(types == "cont") == length(vars)){ #in case of single, continuous variable, must use different intercept or limma will give unreasonable results
-        design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
-      } else {
-        design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
-      }
-
-      # recent update: enable blocking factor for continuous primary metadata
-      if (block == "NA") {
-        fit <- lmFit(feature_table, design)
-      } else {
-        block.vec <- covariates[,block];
-        corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
-        fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
-      }
-
-      fit <- eBayes(fit);
-      rest <- topTable(fit, number = Inf, coef = analysis.var);
-      colnames(rest)[1] <- analysis.var;
-
-      ### get results with no adjustment
-      design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
-
-      fit <- eBayes(lmFit(feature_table, design));
-      res.noadj <- topTable(fit, number = Inf);
+    } else {
+      myargs <- as.list(paste(contrast.cls, "-", ref, sep = ""));
     }
+    myargs[["levels"]] <- design;
+    contrast.matrix <- do.call(makeContrasts, myargs);
+    
+    # handle blocking factor
+    if (block == "NA") {
+      fit <- lmFit(feature_table, design)
+    } else {
+      block.vec <- covariates[,block];
+      corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
+      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+    }
+    
+    fit <- contrasts.fit(fit, contrast.matrix);
+    fit <- eBayes(fit);
+    rest <- topTable(fit, number = Inf);
+    
+    ### get results with no adjustment
+    design <- model.matrix(formula(paste0("~ 0", paste0(" + ", analysis.var, collapse = ""))), data = covariates);
+    colnames(design)[1:length(grp.nms)] <- grp.nms;
+    myargs[["levels"]] <- design;
+    contrast.matrix <- do.call(makeContrasts, myargs);
+    fit <- lmFit(feature_table, design)
+    fit <- contrasts.fit(fit, contrast.matrix);
+    fit <- eBayes(fit);
+    res.noadj <- topTable(fit, number = Inf);
+    
+  } else { 
+    covariates[, analysis.var] <- covariates[, analysis.var] %>% as.numeric();
+    types <- unname(mSetObj$dataSet$meta.types[vars])
+    if(sum(types == "cont") == length(vars)){ #in case of single, continuous variable, must use different intercept or limma will give unreasonable results
+      design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
+    } else {
+      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+    }
+    
+    # recent update: enable blocking factor for continuous primary metadata
+    if (block == "NA") {
+      fit <- lmFit(feature_table, design)
+    } else {
+      block.vec <- covariates[,block];
+      corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
+      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+    }
+    
+    fit <- eBayes(fit);
+    rest <- topTable(fit, number = Inf, coef = analysis.var);
+    colnames(rest)[1] <- analysis.var;
+    
+    ### get results with no adjustment
+    design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
+    
+    fit <- eBayes(lmFit(feature_table, design));
+    res.noadj <- topTable(fit, number = Inf);
+  }
   
   
   # make visualization
@@ -537,7 +548,7 @@ CovariateScatter.Anal <- function(mSetObj,
   both.mat$fdr.adj <- -log10(both.mat$fdr.adj)
   both.mat$pval.no <- -log10(both.mat$pval.no)
   both.mat$fdr.no <- -log10(both.mat$fdr.no)
-
+  
   # make plot
   if( "F" %in% colnames(rest)){
     fstat <- rest[, "F"];
@@ -550,7 +561,6 @@ CovariateScatter.Anal <- function(mSetObj,
   names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   fdr.p <- rest[,"adj.P.Val"];
   inx.imp <- p.value <= thresh;
-  #inx.imp <- fdr.p <= thresh;
   sig.num <- sum(inx.imp);
   
   if(sig.num > 0){ 
@@ -562,7 +572,7 @@ CovariateScatter.Anal <- function(mSetObj,
     ord.inx <- order(sig.p, decreasing = FALSE);
     sig.mat <- sig.mat[ord.inx,,drop=F];
   }
-
+  
   AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
   rownames(both.mat) = both.mat[,1]
   both.mat <- both.mat[rownames(rest),]
@@ -593,18 +603,18 @@ CovariateScatter.Anal <- function(mSetObj,
       inx.imp = inx.imp
     );
   }
-
+  
   # for detail table
   mSetObj$analSet$cov <- cov; 
   # for plotting adjp vs p
   mSetObj$analSet$cov.mat <- both.mat; 
-
+  
   jsonNm <- gsub(paste0(".", format), ".json", imgName);
   jsonObj <- RJSONIO::toJSON(both.mat);
   sink(jsonNm);
   cat(jsonObj);
   sink();
-
+  
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(res);
