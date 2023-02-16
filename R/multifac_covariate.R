@@ -443,6 +443,7 @@ CovariateScatter.Anal <- function(mSetObj,
     }
   }
   
+  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
   if (block != "NA"){
     block.vec <- covariates[,block];
     primary.vec <- covariates[,analysis.var]
@@ -453,7 +454,6 @@ CovariateScatter.Anal <- function(mSetObj,
     }
     # recent update: remove check for unbalanced design. Limma can handle.
   }
-  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
   
   # combine all fixed effects variables
   inx <- which(colnames(covariates) == analysis.var);
