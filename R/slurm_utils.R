@@ -1,6 +1,5 @@
 
 WriteSampleTable <- function(ftpDir, userDir, sampleTable){
-  save.image("sample.RData");
   str = gsub("\\[|\\]", "", sampleTable);
   str = gsub("FastqModel\\{|\\}", "", str);
   
@@ -78,7 +77,7 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     seq2funPath = "/home/peng/ecoomicsanalyst_test/software/Seq2Fun/bin/seq2fun";
     databasePath = "/home/peng/ecoomicsanalyst_test/seq2fun_database";
     isSlurm = FALSE;
-  } else if(grepl("xia", userDir)) { # jeff local
+  } else if(grepl("jeffxia/Dropbox", userDir)) { # jeff local
     seq2funPath = "/Users/jeffxia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
     databasePath = "/Users/jeffxia/Dropbox/resources/eoa/seq2fun_database";
     isSlurm = FALSE;
@@ -463,7 +462,7 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
     kallistoPath = "/home/zgy/eoa/software/kallisto_source/kallisto";
     databasePath = "/home/zgy/eoa/kallisto_database/";
     isSlurm = F;
-  }else if(grepl("xia", userDir)) { # jeff local
+  }else if(grepl("jeffxia/Dropbox", userDir)) { # jeff local
     fastpPath = "/Users/xia/Dropbox/resources/eoa/software/fastp_source/fastp";
     kallistoPath = "/Users/xia/Dropbox/resources/eoa/software/kallisto_source/kallisto";
     databasePath = "/Users/xia/Dropbox/resources/eoa/kallisto_database/";

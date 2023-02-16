@@ -173,46 +173,6 @@ RegisterData <- function(dataSet, output=1){
   }
 } 
 
-# remove data object, the current dataSet will be the last one by default
-RemoveData <- function(dataName){
-  paramSet <- readSet(paramSet, "paramSet");
-  mdata.all <- paramSet$mdata.all;
-
-  if(!is.null(mdata.all[[dataName]])){
-    mdata.all[[dataName]] <- NULL;
-  }
-  paramSet$mdata.all <- mdata.all;
-  saveSet(paramSet, "paramSet");
-}
-
-# users can select one or more data for analysis
-# note, we use 1 to indicate this is selected
-# and by default is all selected.
-SelectDataSet <- function(){
-  if(!exists('nm.vec')){
-    msgSet <- readSet(msgSet, "msgSet");
-    msgSet$current.msg <-"No dataset is selected for analysis!";
-    saveSet(msgSet, "msgSet");
-    return(0);
-  }
-
-  paramSet <- readSet(paramSet, "paramSet");
-  mdata.all <- paramSet$mdata.all;
-
-  all.nms <- names(mdata.all);
-  for(nm in all.nms){
-    if(nm %in% nm.vec){
-      mdata.all[[nm]] <- 1;
-    }else{
-      mdata.all[[nm]] <- 0;
-    }
-  }
-  paramSet$mdata.all <- mdata.all;
-  
-  rm('nm.vec', envir = .GlobalEnv);
-  return(1);
-}
-
 GetAllDataNames <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   names(paramSet$mdata.all);
