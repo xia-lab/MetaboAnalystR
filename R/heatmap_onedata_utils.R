@@ -27,7 +27,6 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   }else{
     stat.pvals <- res.tbl$PValue; 
   }
-  gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, dataSet$name);
 
   all.ids <- rownames(res.tbl);
   
@@ -137,6 +136,7 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   
   if(dataSet$annotated){
     anot.id <- rownames(res);
+    gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, dataSet$name);
     anot.res <- doIdMappingGeneric(anot.id, gene.map, "gene_id", "symbol", "matrix")
     # single element vector will be converted to scalar, not array, need to prevent that
     gene.id <- anot.res$symbol; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
