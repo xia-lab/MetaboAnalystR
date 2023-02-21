@@ -244,3 +244,35 @@ GetCurrentJson <-function(type){
   paramSet <- readSet(paramSet, "paramSet");
   return(paramSet$jsonNms[[type]]);
 }
+
+
+SelectDataSet <- function(){
+  
+  paramSet <- readSet(paramSet, "paramSet");
+  
+  if(!exists('nm.vec')){
+    AddErrMsg("No dataset is selected for analysis!");
+    return(0);
+  }
+  mdata.all <- paramSet$mdata.all
+  all.nms <- names(mdata.all);
+  for(nm in all.nms){
+    if(nm %in% nm.vec){
+      mdata.all[[nm]] <<- 1;
+    }else{
+      mdata.all[[nm]] <<- 0;
+    }
+  }
+  
+  if("meta_dat" %in% nm.vec){
+    meta.selected <<- TRUE;
+  }else{
+    meta.selected <<- FALSE;
+  }
+  
+  rm('nm.vec', envir = .GlobalEnv);
+
+  paramSet$mdata.all <- mdata.all
+  return(1);
+  
+}
