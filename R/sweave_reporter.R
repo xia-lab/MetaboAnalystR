@@ -69,7 +69,7 @@ CreateHeader <- function(usrName){
               "options(width=60);",
               "@",
               "\\SweaveOpts{eps=FALSE,pdf=TRUE}",
-              "\\title{EcoOmicsAnalyst Analysis Report}",
+              "\\title{ExpressAnalyst Analysis Report}",
               "\\begin{document}",
               "\\parskip=.3cm",
               "\\maketitle");
