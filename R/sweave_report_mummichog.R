@@ -113,9 +113,8 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
                "Users must select one of 21 KEGG pathway libraries, or one of five metabolic models.\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
-    
-    mum.descr <- paste("The user's selected library is: ", mSetObj$lib.organism, ".");
-    
+
+    mum.descr <- paste("The user's selected library is: ", gsub("_", ".", mSetObj$lib.organism), ".");
     cat(mum.descr, file=rnwFile, append=TRUE, sep="\n");
     
   }
