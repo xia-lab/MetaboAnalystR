@@ -53,7 +53,7 @@ my.impute.missing <- function(mSetObj=NA, method="min"){
         new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="svdImpute", center=T)@completeObs;
       }
     }
-    msg <- c(msg, paste("Missing variables were imputated using", toupper(method)));
+    msg <- c(msg, paste("Missing variables were imputated using", toupper(gsub("_", "-", method))));
   }
   
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
