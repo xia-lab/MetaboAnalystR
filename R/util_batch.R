@@ -396,8 +396,8 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
   }
   
   mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method);
-  Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method=Method);
-  plot_dist(mSetObj,paste(imgName,"dist"))
+  Plot.sampletrend(mSetObj,paste0(imgName,"Trend"),method=Method);
+  plot_dist(mSetObj,paste0(imgName,"dist"))
   
   best.table <- mSetObj$dataSet$adjusted.mat
   

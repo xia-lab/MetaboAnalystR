@@ -415,11 +415,14 @@ CovariateScatter.Anal <- function(mSetObj,
   # get inputs
   if(!exists('adj.vec')){
     adj.bool = F;
+    vars <- analysis.var;
   }else{
     if(length(adj.vec) > 0){
       adj.bool = T;
+      vars <- c(analysis.var, adj.vec)
     }else{
       adj.bool = F;
+      vars <- analysis.var;
     }
   }
   
@@ -431,7 +434,6 @@ CovariateScatter.Anal <- function(mSetObj,
   # process inputs
   thresh <- as.numeric(thresh)
   ref <- make.names(ref)
-  adj.vars <- adj.vec;
   analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   
   # process metadata table (covariates)
@@ -443,24 +445,13 @@ CovariateScatter.Anal <- function(mSetObj,
     }
   }
   
-  if (block != "NA"){
-    block.vec <- covariates[,block];
-    primary.vec <- covariates[,analysis.var]
-    
+  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
+  if (block != "NA"){    
     if(mSetObj$dataSet$meta.types[block] == "cont"){
       AddErrMsg("Blocking factor can not be continuous data type.")
       return(c(-1,-1));
     }
     # recent update: remove check for unbalanced design. Limma can handle.
-  }
-  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
-  
-  # combine all fixed effects variables
-  inx <- which(colnames(covariates) == analysis.var);
-  if(adj.bool){
-    vars <- c(analysis.var, adj.vars)
-  }else{
-    vars <- analysis.var
   }
   
   sig.num <- 0;
