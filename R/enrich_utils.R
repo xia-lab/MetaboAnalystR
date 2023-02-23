@@ -10,6 +10,7 @@
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec){
+  
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
 
