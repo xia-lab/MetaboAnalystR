@@ -190,17 +190,18 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     }
     gene.lists <- strsplit(lines, "\\s+");
     gene.mat <- do.call(rbind, gene.lists);
+
     if(dim(gene.mat)[2] == 1){ # add 0
       gene.mat <- cbind(gene.mat, rep(0, nrow(gene.mat)));
       msgSet$current.msg <- "Only one column found in the list. Abundance will be all zeros. ";
-    }else if(!any(is.numeric(gene.mat[,2]))){
-      gene.mat <- cbind(gene.mat[,1], rep(0, nrow(gene.mat)));
-      msgSet$current.msg <- "Second column doesn't contain numeric values, it will be ignored";      
     }else if(dim(gene.mat)[2] > 2){
       gene.mat <- gene.mat[,1:2];
       msgSet$current.msg <- "More than two columns found in the list. Only first two columns will be used. ";
     }
-    
+
+    inx <- .is_valid_numeric(gene.mat[,2]);
+    gene.mat[!inx ,2] <- 0;
+
     rownames(gene.mat) <- gene.mat[,1];
     gene.mat <- gene.mat[,-1, drop=F];
     res <- RemoveDuplicates(gene.mat, "mean", quiet=F, paramSet, msgSet); 
@@ -240,4 +241,9 @@ ReadListFile <- function(fileName) {
 
   saveDataset(dataSet);# keep original copy, not in mem
   return(1)
+}
+
+.is_valid_numeric <- function(x) {
+  as_numeric <- suppressWarnings(as.numeric(x))
+  !is.na(as_numeric)
 }

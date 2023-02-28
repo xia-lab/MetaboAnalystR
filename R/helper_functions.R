@@ -101,8 +101,15 @@ SetCurrentData <- function(nm){
 
 GetOmicsDataDims <- function(dataName){
   dataSet <- readDataset(dataName);
+  paramSet <- readSet(paramSet, "paramSet");
+  if(paramSet$anal.type == "genelist"){
+  dm <- c(nrow(dataSet$prot.mat), 0);
+  naNum <- 0;
+  }else{
   dm <- dim(dataSet$data.norm);
   naNum <- sum(is.na(dataSet$data.norm));
+  }
+
   return(c(dm, naNum));
 } 
 
