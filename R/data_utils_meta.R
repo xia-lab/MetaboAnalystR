@@ -346,6 +346,8 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require('lattice');
   require('ggplot2');
+  #remove infinity
+  x[!is.finite(x)] <- NA;
   pca <- prcomp(t(na.omit(x)));
   imp.pca<-summary(pca)$importance;
   xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")

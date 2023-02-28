@@ -768,7 +768,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   
   hit.inx <- as.numeric(res[, "adj.P.Val"]) <= p.lvl; #pval
   
-  if(sum(hit.inx) == 0){
+  if(length(which(hit.inx == T)) == 0){
     return (c(1, 0, nrow(res)));
   }
   # note, hit.inx can contain NA, not T/F
@@ -777,7 +777,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   res.sig<-res[hit.inx, , drop=F];
   hit.inx <- abs(as.numeric(res.sig[, "stat"])) > fc.lvl #foldchange
   
-  if(sum(hit.inx) == 0){
+  if(length(which(hit.inx == T)) == 0){
     return (c(1, 0, nrow(res)));
   }
   # note, hit.inx can contain NA, not T/F
@@ -790,7 +790,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   non.sig.count <- nrow(res)-sig.count;
   
   dataSet$sig.mat <- res.sig;
-
+  
   
   return(RegisterData(dataSet, c(1, sig.count, non.sig.count)))
 }

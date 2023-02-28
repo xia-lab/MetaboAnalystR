@@ -250,7 +250,6 @@ SetupDesignMatrix<-function(dataName="", deMethod){
 #'
 
 PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
-  
   dataSet <- readDataset(dataName);
   dataSet$pval <- p.lvl
   if(length(levels(dataSet$cls))>2){ 
