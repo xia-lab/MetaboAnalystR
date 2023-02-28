@@ -117,33 +117,6 @@ RemoveData <- function(dataName){
   saveSet(paramSet, "paramSet");
 }
 
-# users can select one or more data for analysis
-# note, we use 1 to indicate this is selected
-# and by default is all selected. 
-SelectData <- function(){
-  if(!exists('nm.vec')){
-    msgSet <- readSet(msgSet, "msgSet");
-    msgSet$current.msg <-"No dataset is selected for analysis!";
-    saveSet(msgSet, "msgSet");
-    return(0);
-  }
-  paramSet <- readSet(paramSet, "paramSet");
-  mdata.all <- paramSet$mdata.all;
-  all.nms <- names(mdata.all);
-  for(nm in all.nms){
-    if(nm %in% nm.vec){
-      mdata.all[[nm]] <- 1;
-    }else{
-      mdata.all[[nm]] <- 0;
-    }
-  }
-  
-
-  paramSet$mdata.all <- mdata.all;
-  saveSet(paramSet, "paramSet");
-  rm('nm.vec', envir = .GlobalEnv);
-  return(1);
-}
 
 UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
   paramSet <- readSet(paramSet, "paramSet");

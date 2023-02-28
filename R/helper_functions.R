@@ -258,9 +258,9 @@ SelectDataSet <- function(){
   all.nms <- names(mdata.all);
   for(nm in all.nms){
     if(nm %in% nm.vec){
-      mdata.all[[nm]] <<- 1;
+      mdata.all[[nm]] <- 1;
     }else{
-      mdata.all[[nm]] <<- 0;
+      mdata.all[[nm]] <- 0;
     }
   }
   
