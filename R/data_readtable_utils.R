@@ -52,6 +52,7 @@ ReadTabExpressData <- function(fileName, path="") {
     # msg <- c(msg, "the remaining", sum(na.inx), "missing variables were replaced with data min");
   }
   msgSet$current.msg <- paste(msg, collapse="; ");
+  saveSet(msgSet, "msgSet");
   res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
   data.proc <- res[[1]];
   msgSet <- res[[2]];

@@ -63,12 +63,12 @@ CreateRNAseqSummaryReport <- function(usrName, page){
 
 #### Introduction sections
 CreateReportIntr <- function(){
-  descr <- c("\\section{EcoOmicsAnalyst Overview}\n",
-             "EcoOmicsAnalyst is a computationally efficient implementation of the National Toxicology Program Approach to Genomic Dose-Response Modeling. ", 
+  descr <- c("\\section{ExpressAnalyst Overview}\n",
+             "ExpressAnalyst is a computationally efficient implementation of the National Toxicology Program Approach to Genomic Dose-Response Modeling. ", 
              "Key features include a simplified workflow, ability to download results at each step, and interactive exploration ",
-             "of pathway-level BMDs. In addition to model organisms, EcoOmicsAnalyst is designed to support non-model organisms by ",
+             "of pathway-level BMDs. In addition to model organisms, ExpressAnalyst is designed to support non-model organisms by ",
              "enabling an annotation-free pipeline that can do gene-level and transcriptome-level BMD analysis. ",
-             "The EcoOmicsAnalyst analysis pipeline consists of several steps: uploading the data, quality control,",
+             "The ExpressAnalyst analysis pipeline consists of several steps: uploading the data, quality control,",
              " normalization, differential expression analysis, curve fitting and gene-level BMD calculation, ",
              "and then interactive exploration of pathway-level BMDs. This report displays the parameters used ",
              "for each of the sections in the analysis pipeline. \n"
@@ -80,7 +80,7 @@ CreateReportIntr <- function(){
 CreateUploadSection <- function(params){
   
   descr <- c("\\section{Data Upload}\n",
-            "EcoOmicsAnalyst accepts tab-delimited text files (.txt) that contain a matrix of gene expression values as input. ",
+            "ExpressAnalyst accepts tab-delimited text files (.txt) that contain a matrix of gene expression values as input. ",
             "The parameters that you chose are listed in the bullets below: ",
              "\\begin{itemize}",
              "\\item{Organism: ", params[["org"]], "}",
