@@ -1739,7 +1739,7 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 
 #'Plot selected compounds by their percentage frequency
 #'@description Plot the important variables of single biomarker model ranked by order of importance
-#'@usage PlotImpVars(mSetObj=NA, imgName, format="png", dpi=72, 
+#'@usage PlotImpBiomarkers(mSetObj=NA, imgName, format="png", dpi=72, 
 #'mdl.inx, measure = "freq", feat.num = 15)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
@@ -1756,7 +1756,7 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 #'License: MIT License
 #'@export
 
-PlotImpVars <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=72, 
                         mdl.inx, measure = "freq", feat.num = 15) {
   
   mSetObj <- .get.mSet(mSetObj);
