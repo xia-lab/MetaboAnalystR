@@ -188,12 +188,12 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin big
   
   mSetObj$imgSet$pca.score2d <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  op<-par(mar=c(5,5,3,3));
+  op<-par(mar=c(5,5,3,8));
   
   if(cls.type == "disc"){
     # obtain ellipse points to the scatter plot for each category
@@ -298,13 +298,20 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
     #      uniq.pchs <- pchs[match.inx]
     #    }
     
-    if(length(lvs) < 6){
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
-    }else if (length(lvs) < 10){
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
-    }else{
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
-    }
+    #if(length(lvs) < 6){
+    #  legend("topright",inset = c(-0.2, 0), legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+    #}else if (length(lvs) < 10){
+    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+    #}else{
+    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+    #}
+
+    axis.lims <- par("usr"); # x1, x2, y1 ,y2
+    shift <- par("cxy")[1];
+    lgd.x <- axis.lims[2] + shift;
+    lgd.y <- axis.lims[4] - shift;
+    par(xpd=T);
+    legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
     
   }else{
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
@@ -665,7 +672,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin big
   
   
   cls1 <- mSetObj$dataSet$cls
@@ -679,7 +686,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,3));
+  par(mar=c(5,5,3,8));
   text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
@@ -785,8 +792,15 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     uniq.pchs <- pchs[match.inx]
   }
   
-  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  op <- par(xpd=T);
+  # move legend to outside 
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  shift <- par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  lgd.y <- axis.lims[4] - shift;
+  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
   
+  par(op);
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -1192,19 +1206,27 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
   if(is.na(width)){
-    w <- 8;
+    w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 8;
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin is big
   
   mSetObj$imgSet$pls.imp<-imgName;
-  
+
+  # re-adjust width based on group size
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
+
   if(type=="vip"){
     mSetObj$analSet$plsda$imp.type <- "vip";
     vips <- mSetObj$analSet$plsda$vip.mat[,feat.nm];
@@ -1214,6 +1236,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
     data<-mSetObj$analSet$plsda$coef.mat[,feat.nm];
     PlotImpVar(mSetObj, data, "Coefficients", feat.num, color.BW);
   }
+  par(op);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -1235,21 +1258,6 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  cls.len <- length(levels(mSetObj$dataSet$cls));
-  if(cls.len == 2){
-    rt.mrg <- 5;
-  }else if(cls.len == 3){
-    rt.mrg <- 6;
-  }else if(cls.len == 4){
-    rt.mrg <- 7;
-  }else if(cls.len == 5){
-    rt.mrg <- 8;
-  }else if(cls.len == 6){
-    rt.mrg <- 9;
-  }else{
-    rt.mrg <- 11;
-  }
-  op <- par(mar=c(5,7,3,rt.mrg)); # set right side margin with the number of class
   
   if(feat.num <= 0){
     feat.num = 15;
@@ -1341,7 +1349,6 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   text(x[1], endy+shifty/8, "High");
   text(x[1], starty-shifty/8, "Low");
   
-  par(op);
 }
 
 #'Plot PLS-DA classification performance using different components
@@ -1729,17 +1736,23 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, ty
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 8;
+    w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 7.2;
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1;
   
   mSetObj$imgSet$opls.vip <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
+
   if(type=="vip"){
     impNm <- "VIP scores";
     mSetObj$analSet$oplsda$imp.type <- "vip";
@@ -1763,6 +1776,8 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, ty
   vip.mat <- vip.mat[ord.inx,];
   mSetObj$analSet$oplsda$vip.mat <- vip.mat;
   PlotImpVar(mSetObj, data, impNm, feat.num, color.BW);
+
+  par(op);
   dev.off();
   
   fast.write.csv(vip.mat, file="oplsda_vip.csv");
@@ -2090,7 +2105,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # big margin
   
   mSetObj$imgSet$spls.score2d <- imgName;
   
@@ -2100,7 +2115,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,3));
+  par(mar=c(5,5,3,8));
   text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
@@ -2179,8 +2194,16 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   if(grey.scale) {
     uniq.cols <- "black";
   }
-  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
-  
+
+  op <- par(xpd=T);
+  # move legend to outside 
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  shift <- par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  lgd.y <- axis.lims[4] - shift;
+  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);  
+  par(op);
+
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -2338,12 +2361,20 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1;
   
   mSetObj$imgSet$spls.imp <- imgName;
   
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
   PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
+
+  par(op);
   dev.off();
   
   return(.set.mSet(mSetObj));
