@@ -881,7 +881,6 @@ saveSet <- function(obj=NA, set="", output=1){
 
     if(globalConfig$anal.mode == "api"){ 
       qs:::qsave(obj, paste0(set, ".qs"));
-      return(output)
     }else{
       if(set == "dataSet"){
         dataSet <<- obj;
@@ -898,13 +897,8 @@ saveSet <- function(obj=NA, set="", output=1){
         cmdSet <<- obj;
       }
 
-        if(globalConfig$anal.mode == "web"){
-            qs:::qsave(obj, paste0(set, ".qs"));
-            return(output);
-        }else{
-            return(obj);
-        }
     }
+      return(output);
 
 }
 
@@ -920,8 +914,6 @@ readSet <- function(obj=NA, set=""){
       }else{
         obj <- qs:::qread(paste0(set, ".qs"));
       }
-    }else{
-        obj <- qs:::qread(paste0(set, ".qs"));
     }
     return(obj);
 }
