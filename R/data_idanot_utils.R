@@ -29,6 +29,7 @@
 #'@export
 #'
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){
+
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -255,12 +256,12 @@ AnnotateGeneData <- function(dataName, org, idtype){
 
 
 # mapping between genebank, refseq and entrez
-.doGeneIDMapping <- function(feature.vec, type, paramSet, outputType="vec"){
+.doGeneIDMapping <- function(feature.vec, idType, paramSet, outputType="vec"){
     org <- paramSet$data.org;
   if(is.null(feature.vec)){
     db.map <-  queryGeneDB("entrez", org);
     feature.vec <- db.map[, "gene_id"];
-    type <-"entrez";
+    idType <-"entrez";
     print(".doGeneIDMapping, empty feature.vec, get whole table");
   }
     col.nm = "";
@@ -269,37 +270,37 @@ AnnotateGeneData <- function(dataName, org, idtype){
   if(paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
     col.nm = "gene_id";
     db.nm = paste0("entrez_", paramSet$data.idType);
-  }else if(type == "symbol"){
+  }else if(idType == "symbol"){
     col.nm = "symbol";
     db.nm = "entrez";
-  }else if(type == "entrez"){
+  }else if(idType == "entrez"){
     col.nm = "gene_id";
     db.nm = "entrez";
-  }else if(type == "custom"){ # only for ko
+  }else if(idType == "custom"){ # only for ko
     db.nm = "custom";
     col.nm = "gene_id";
-  }else if(type == "cds"){
+  }else if(idType == "cds"){
     col.nm = "accession";
     db.nm = "entrez";
-    db.map <- queryGeneDB(paste0("entrez_",type), org);
+    db.map <- queryGeneDB(paste0("entrez_",idType), org);
   }else{
     # note, some ID can have version number which is not in the database
     # need to strip it off NM_001402.5 => NM_001402
-    if(!(type == "refseq" && org == "fcd")){ # do not strip, database contains version number.
+    if(!(idType == "refseq" && org == "fcd")){ # do not strip, database contains version number.
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
     feature.vec <- q.mat[,1];
     }
     col.nm = "accession";
-    if(type == "tair"){ # only for ath
+    if(idType == "tair"){ # only for ath
       db.nm = "tair";
     }else { 
-      # if(type %in% c("gb", "refseq", "embl_gene", "embl_transcript", "embl_protein", "orf", "wormbase")){
-      db.nm <- paste0("entrez_", type);
+      # if(idType %in% c("gb", "refseq", "embl_gene", "embl_transcript", "embl_protein", "orf", "wormbase")){
+      db.nm <- paste0("entrez_", idType);
     }
   }
 
   db.map <-  queryGeneDB(db.nm, org);
-  if(org == "smm" && type == "symbol"){
+  if(org == "smm" && idType == "symbol"){
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
     feature.vec <- q.mat[,1];
     q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
@@ -316,7 +317,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
     return(entrezs);
   }else{
     entrezs <- db.map[hit.inx, ]; 
-    if(type == "entrez"){
+    if(idType == "entrez"){
       entrezs <- entrezs[,c(2,1)];
     }else{
       entrezs <- entrezs[,c(2,1)];
@@ -360,27 +361,27 @@ AnnotateGeneData <- function(dataName, org, idtype){
 }
 
 
-queryGeneDB <- function(table.nm, data.org){
-  if(data.org == "na"){
+queryGeneDB <- function(db.nm, org){
+  if(org == "na"){
       print("Not available when organism is not specified");
       return(0);
   }
   paramSet <- readSet(paramSet, "paramSet");    
-  if(table.nm == "custom" || data.org == "custom"){
+  if(db.nm == "custom" || org == "custom"){
     db.map <- qs::qread("anot_table.qs");
   }else{
     require('RSQLite');
-    db.path <- paste(paramSet$sqlite.path, data.org, "_genes.sqlite", sep="")
+    db.path <- paste(paramSet$sqlite.path, org, "_genes.sqlite", sep="")
 
     if(!PrepareSqliteDB(db.path, paramSet$on.public.web)){
       stop("Sqlite database is missing, please check your internet connection!");
     }
     conv.db <- dbConnect(SQLite(), db.path); 
     tbls <- dbListTables(conv.db)
-    if(!table.nm %in% tbls){
+    if(!db.nm %in% tbls){
         return(0);
     }
-    db.map <- dbReadTable(conv.db, table.nm);
+    db.map <- dbReadTable(conv.db, db.nm);
     dbDisconnect(conv.db); cleanMem();
   }
   
