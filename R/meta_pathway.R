@@ -21,7 +21,7 @@
 #'@param mode ion mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 Convert2MummichogMetaPath <- function(mSetObj=NA, 
@@ -162,7 +162,7 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@param pooled_cutoff pooled_cutoff, numeric
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 
@@ -537,7 +537,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
 #' @param dpi dpi of the image
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 #' @export
 
 PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap", 
@@ -952,7 +952,7 @@ AdductMapping <- function(mSetObj){
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 PrepareMetaPath <- function(mSetObj = NA, 
                             mode = "negative", 
                             ppm = 30, 
@@ -1127,7 +1127,7 @@ CacheQSClean <- function(){
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 ReadMetaPathTable <- function(mSetObj = NA,  dataNM, dataFormat, dataType) {
   
   if(file.exists("data_orig.qs")) file.remove("data_orig.qs");
@@ -1226,7 +1226,7 @@ ReadMetaPathTable <- function(mSetObj = NA,  dataNM, dataFormat, dataType) {
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dataType) {
  
   if(file.exists("data_orig.qs")) file.remove("data_orig.qs");
@@ -1342,7 +1342,7 @@ ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dat
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1819,7 +1819,7 @@ PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotNam
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NULL", name, name2) {
   mSetObj <- .get.mSet(mSetObj);
   
@@ -2106,7 +2106,7 @@ GetVennPathsNames <- function(mSetObj=NA, areas){
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca} 
 #' Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 setInclusionDataSets <- function(mSetObj=NA, datasVec){
   mSetObj <- .get.mSet(mSetObj);
   fileNM <- tools::file_path_sans_ext(basename(datasVec));

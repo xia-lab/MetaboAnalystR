@@ -51,7 +51,7 @@ GetCovDnIDs <- function(mSetObj=NA){
 #'@param selectedMeta selected Meta elements
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedMeta){
@@ -127,7 +127,7 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
 #'@param type plotting type, default is "meta".
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
@@ -192,7 +192,7 @@ PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@param type type of image
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
@@ -229,7 +229,7 @@ PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param type type, default is "type"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotImpVarMeta <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta"){

@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerRnwReport <- function(mSetObj, usrName){
   
@@ -28,7 +28,7 @@ CreatePowerRnwReport <- function(mSetObj, usrName){
 #'Power analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerIntr <- function(){
   descr <- c("\\section{Background}\n",
@@ -51,7 +51,7 @@ CreatePowerIntr <- function(){
 #'Power analysis report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerOverview <- function(){
   descr <- c("\\section{Power Analysis Overview}\n",
@@ -68,7 +68,7 @@ CreatePowerOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerInputDoc <- function(mSetObj=NA){
   
@@ -151,7 +151,7 @@ CreatePowerInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerParametersDoc <- function(mSetObj=NA){
   
@@ -192,7 +192,7 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreatePowerAnalDoc <- function(mSetObj){
   descr <- c("\\section{Power Analysis}\n",

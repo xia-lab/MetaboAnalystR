@@ -12,7 +12,7 @@
 #'@param method is "fisher" or "hyperg"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
@@ -180,7 +180,7 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@param method Indicate the pathway enrichment analysis, global test is "gt" and global ancova is "ga".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 
@@ -382,7 +382,7 @@ GetQEA.pathNames <- function(mSetObj=NA){
 #'@param kegg.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 SetupSMPDBLinks <- function(kegg.ids){
@@ -408,7 +408,7 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'@param smpdb.ids Input the list of SMPD ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 SetupKEGGLinks <- function(smpdb.ids){
@@ -437,7 +437,7 @@ SetupKEGGLinks <- function(smpdb.ids){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
@@ -477,7 +477,7 @@ GetORA.keggIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetORA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){
@@ -494,7 +494,7 @@ GetORA.smpdbIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetQEA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){

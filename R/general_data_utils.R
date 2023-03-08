@@ -34,7 +34,7 @@
 #'@param paired Indicate if the data is paired or not. Logical, default set to FALSE
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'@import methods
 
@@ -241,7 +241,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
 #'@param design Input the design type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 SetDesignType <-function(mSetObj=NA, design){
   mSetObj <- .get.mSet(mSetObj);
@@ -291,7 +291,7 @@ GetRCommandHistory <- function(mSetObj=NA){
 #'through an API call to the Metabolomics Workbench).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", 
@@ -551,7 +551,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
 #'@param filePath Set file path
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 ReadPairFile <- function(filePath="pairs.txt"){
@@ -571,7 +571,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
   if(.on.public.web){
@@ -617,7 +617,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 #'@param foldername Name of the folder containing the NMR or MS peak list files to read.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 
@@ -684,7 +684,7 @@ GetCurrentMsg <- function(){
 #'@param version version
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 
@@ -939,7 +939,7 @@ PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta, version, format="p
 #'@param qvec Input the vector to query
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Setup.MapData <- function(mSetObj=NA, qvec){
@@ -962,7 +962,7 @@ GetMetaInfo <- function(mSetObj=NA){
 #'@param exp.fac exp.fac
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 # 
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
@@ -1087,7 +1087,7 @@ GetSampleNames <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 ListNMDRStudies <- function(mSetObj=NA){
   
@@ -1147,7 +1147,7 @@ ListNMDRStudies <- function(mSetObj=NA){
 #'from the Metabolomics Workbench.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 GetNMDRStudy <- function(mSetObj=NA, StudyID){
   

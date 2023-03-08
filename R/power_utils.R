@@ -6,7 +6,7 @@
 #'otherwise for data with 2 groups, "NA" will automatically select the 2 groups.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 InitPowerAnal <- function(mSetObj=NA, clsOpts){
@@ -51,7 +51,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 #'@param width Specify the width of the image. NA or 0 specifies a width of 10, otherwise input a chosen width. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'@import lattice
 
@@ -85,7 +85,7 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param maxNum Numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 GetSampleSizeLadder <- function(maxNum){
@@ -102,7 +102,7 @@ GetSampleSizeLadder <- function(maxNum){
 #'@param smplSize Specify the maximum sample size, the number must be between 60-1000. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
@@ -146,7 +146,7 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
 #'of 7, otherwise input a chosen width. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png", dpi=72, width=NA){

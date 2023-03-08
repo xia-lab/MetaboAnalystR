@@ -11,7 +11,7 @@
 #'@param clstDist Method to calculate clustering distance 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist, clstDist){
@@ -96,7 +96,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
 #'@param neigb Default is set to 'gaussian'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
@@ -119,7 +119,7 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'@param facet logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import ggplot2
 #'@export
 #'
@@ -217,7 +217,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
 #'@param clust.num Numeric, input the number of clusters for K-means analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Kmeans.Anal <- function(mSetObj=NA, clust.num){
@@ -240,7 +240,7 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'@param facet logical, TRUE to plot in multiple facets
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal="default", facet=FALSE){
@@ -322,7 +322,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
 #'@param labels labels to show, default is "T"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import ggplot2
 #'@export
 
@@ -434,7 +434,7 @@ PlotClustPCA <- function(mSetObj,
 #'@param grp.ave Logical, default is set to F
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
@@ -503,7 +503,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param metadata metadata
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
@@ -654,7 +654,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
 #'@param j Index of Y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   mSetObj <- .get.mSet(mSetObj);
   clust <- mSetObj$analSet$som$visual;
@@ -671,7 +671,7 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 GetAllSOMClusterMembers <- function(mSetObj=NA){
   
@@ -719,7 +719,7 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'@param i Input the cluster index
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetKMClusterMembers <- function(mSetObj=NA, i){
   mSetObj <- .get.mSet(mSetObj);
   all.cols <- GetColorSchema(mSetObj$dataSet$cls);
@@ -759,7 +759,7 @@ GetAllKMClusterMembers <- function(mSetObj=NA){
 #'@param total Input the total
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'
 GetXYCluster<-function(total){
   if(total>16){

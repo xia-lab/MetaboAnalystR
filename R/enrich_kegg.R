@@ -16,7 +16,7 @@ doKEGG2NameMapping <- function(kegg.vec){
 #'@param file.nm Input name of file to save
 #'@author Othman Soufan, Jeff Xia \email{jeff.xia@mcgill.ca}, {othman.soufan@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
   
@@ -611,7 +611,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Othman Soufan, Jeff Xia \email{jeff.xia@mcgill.ca}, {othman.soufan@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 PrepareKeggQueryJson <- function(mSetObj=NA){
 

@@ -9,7 +9,7 @@
 #'@param dpi dpi of the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
@@ -63,7 +63,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'@param height height value for the image.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
@@ -213,7 +213,7 @@ GetMetPANodeInfo<-function(pathName, object, tags, histvec, pvec, impvec, width,
 # adapted from PathRender, used in higher functions. 
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: MIT License
+# License: GNU GPL (>= 2)
 
 setRendAttrs = function(g, AllBorder="transparent",
                         AllFixedsize=FALSE, AllFontsize=16, AllShape="rectangle",
@@ -255,7 +255,7 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'@param ylim limit of y axis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPathSummary<-function(mSetObj=NA, 
@@ -463,7 +463,7 @@ CalculateCircleInfo <- function(x, y, r, width, height, lbls){
 # Generate json file of selected pathway to visualize using sigma.js
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: MIT License
+# License: GNU GPL (>= 2)
 
 GeneratePathwayJSON<-function(pathway.nm){
 
@@ -534,7 +534,7 @@ GeneratePathwayJSON<-function(pathway.nm){
 #'@param zoom.factor zoom factor, numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=NA){
@@ -580,7 +580,7 @@ GetCircleInfo<-function(mSetObj=NA){
 #'@param im Input coordinates
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 usr2png <- function(xy, im){
   xy <- usr2dev(xy,dev.cur())
   cbind(

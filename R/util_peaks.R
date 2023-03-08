@@ -9,7 +9,7 @@
 #' @param foldername Name of the folder containing the NMR or MS peak list files to read.
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 #' @import qs
 my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
@@ -145,7 +145,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
 #'@param istart Performs which.max on y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 descendMin <- function(y, istart = which.max(y)) {
    
   if (!is.double(y)) y <- as.double(y)
@@ -163,7 +163,7 @@ descendMin <- function(y, istart = which.max(y)) {
 #'@param values Input the values 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 findEqualGreaterM <- function(x, values) {
   
   if (!is.double(x)) x <- as.double(x)
@@ -184,7 +184,7 @@ findEqualGreaterM <- function(x, values) {
 #'@param ydiff Default set to 0
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'
 rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
   

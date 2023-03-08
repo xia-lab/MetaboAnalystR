@@ -5,7 +5,7 @@
 #'@param alpha Numeric, default is 0.05
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 my.lsd.test <- function(y, trt, alpha = 0.05){
   clase<-c("aov","lm")
