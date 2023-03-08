@@ -648,7 +648,7 @@ AddErrMsg <- function(msg){
 
 GetErrMsg<-function(){
   if(!exists("err.vec")){
-    err.vec <<- "Unknown Error Occured";
+    err.vec <<- "Unknown Error Occurred";
   }
   return(err.vec);
 }
