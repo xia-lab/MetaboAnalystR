@@ -5,7 +5,7 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ## Jessica Ewald, jessica.ewald@mail.mcgill.ca
 ##################################################
-.compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "orange", sigLevel = 0.05, pwNum=20, inx = 1){
+compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "orange", sigLevel = 0.05, pwNum=20, inx = 1){
     paramSet <- readSet(paramSet, "paramSet");
     msgSet <- readSet(msgSet, "msgSet");
     analSet <- readSet(analSet, "analSet");
