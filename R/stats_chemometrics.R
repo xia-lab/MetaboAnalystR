@@ -372,7 +372,10 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink(imgName);
   cat(json.obj);
   sink();
-  
+
+  #for util_scatter3d
+  qs::qsave(pca3d, "score3d.qs");
+
   if(!.on.public.web){
     return(.set.mSet(mSetObj));
   }
@@ -432,6 +435,14 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(pca3d, "pca3d_loadings.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
   if(.on.public.web){
     return(1);
   }else{
