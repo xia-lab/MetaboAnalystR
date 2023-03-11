@@ -435,7 +435,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
-  qs::qsave(pca3d, "pca3d_loadings.qs");
+  qs::qsave(pca3d, "loading3d.qs");
 
   if(!exists("my.json.scatter")){
     .load.scripts.on.demand("util_scatter3d.Rc");    
@@ -865,6 +865,10 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   cat(json.obj);
   sink();
   mSet$imgSet$pls.score3d <- imgName;
+
+  qs::qsave(pls3d, "score3d.qs");
+
+
   return(.set.mSet(mSetObj));
 }
 
@@ -915,6 +919,14 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(pls3d, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
   if(.on.public.web){
     return(1);
   }else{
@@ -2277,6 +2289,9 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   cat(json.obj);
   sink();
   mSetObj$imgSet$spls.score3d <- imgName;
+
+  qs::qsave(spls3d, "score3d.qs");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -2332,6 +2347,15 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(spls3d, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
+
   if(.on.public.web){
     return(1);
   }else{
