@@ -582,7 +582,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mzs_unq <- mzs[duplicated(mzs)]
   set.seed(123);
   while(length(mzs_unq)>0){
-    mzs[duplicated(mzs)] <- sapply(mzs_unq, function(x) paste0(x, sample(1:9, 1, replace = TRUE)));
+    mzs[duplicated(mzs)] <- vapply(mzs_unq, function(x) {paste0(x, sample(1:9, 1, replace = TRUE))}, FUN.VALUE = character(1L));
     mzs_unq <- mzs[duplicated(mzs)]
   }
   
@@ -613,7 +613,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   ref.size <- length(ref_mzlist);
   
-  msg.vec <- c(msg.vec, paste("A total of ", ref.size, "input mz features were retained for further analysis."));
+  msg.vec <- c(msg.vec, paste("A total of", ref.size, "input mz features were retained for further analysis."));
   
   if(ref.size > 20000){
     msg.vec <- c(msg.vec, "There are too many input features, the performance may be too slow.");
