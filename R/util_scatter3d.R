@@ -7,7 +7,6 @@
 ###################################################
 
 my.json.scatter <- function(filenm, containsLoading=F){
-
   library(igraph);
   ## 
   res <- qs::qread("score3d.qs")
@@ -61,15 +60,13 @@ my.json.scatter <- function(filenm, containsLoading=F){
       label=names[i],
       size=nodeSize,
       meta=meta.vec[i],
-      cluster=meta.vec.num[i],
       fx = unname(pos.xyz[i,1])*1000,
       fy = unname(pos.xyz[i,2])*1000,
       fz = unname(pos.xyz[i,3])*1000,
       origX = unname(orig.pos.xyz[i,1]),
       origY = unname(orig.pos.xyz[i,2]),
       origZ = unname(orig.pos.xyz[i,3]),
-      colorb=col[i],
-      colorw=col[i]
+      colorb=col[i]
     );
     
     if("facB" %in% names(res)){
@@ -86,14 +83,11 @@ my.json.scatter <- function(filenm, containsLoading=F){
   edges=edge.mat,
   meta=metadf, 
   loading="NA",
-  reductionOpt=reductionOptGlobal, 
-  misc="",
-  omicstype="met",
   axis=res$axis, 
   ticks=ticks,
   metaCol = list(label=unique(meta.vec),color=col.s));
   }else{
-    res2 <- qs::qread("pca3d_loadings.qs");
+    res2 <- qs::qread("loading3d.qs");
     res2 <- res2$loading;
     orig.load.xyz <- t(res2$xyz)
     
@@ -130,9 +124,7 @@ my.json.scatter <- function(filenm, containsLoading=F){
         id=ids[i],
         label=names[i],
         size=24,
-        cluster=1,
         opacity=opacity_array[i],
-        omicstype="met",
         fx = unname(load.xyz[i,1])*1000,
         fy = unname(load.xyz[i,2])*1000,
         fz = unname(load.xyz[i,3])*1000,
@@ -151,7 +143,6 @@ my.json.scatter <- function(filenm, containsLoading=F){
                     nodes=nodes,
                     meta=metadf, 
                     loading=nodes2, 
-                    reductionOpt=reductionOptGlobal, 
                     misc="", ticks=ticks,
                     ticksLoading=ticksLoading,
                     axis=res$axis,
@@ -163,6 +154,8 @@ my.json.scatter <- function(filenm, containsLoading=F){
   rownames(pos.xyz) <- res$name;
   res$pos.xyz <- pos.xyz;
   .set.rdt.set(res);
+
+  print(head(pos.xyz));
 
   sink(filenm);
   cat(toJSON(netData));
