@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   
@@ -25,7 +25,7 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
 #'Integrated pathwayr analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayAnalIntr <- function(){
   descr <- c("\\section{Background}\n",
@@ -53,7 +53,7 @@ CreateIntegratedPathwayAnalIntr <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
   
@@ -95,7 +95,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
   
@@ -115,7 +115,7 @@ CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
   
@@ -135,7 +135,7 @@ CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   
@@ -220,7 +220,7 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   

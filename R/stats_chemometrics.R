@@ -3,7 +3,7 @@
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'@param mSetObj Input name of the created mSet Object
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PCA.Anal <- function(mSetObj=NA){
@@ -35,7 +35,7 @@ PCA.Anal <- function(mSetObj=NA){
 #'@param axisOpt Input the axis option 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PCA.Flip <- function(mSetObj=NA, axisOpt){
@@ -66,7 +66,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 #'@usage PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -90,7 +90,7 @@ PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -163,7 +163,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'@param grey.scale Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, 
@@ -188,12 +188,12 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin big
   
   mSetObj$imgSet$pca.score2d <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  op<-par(mar=c(5,5,3,3));
+  op<-par(mar=c(5,5,3,8));
   
   if(cls.type == "disc"){
     # obtain ellipse points to the scatter plot for each category
@@ -298,13 +298,20 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
     #      uniq.pchs <- pchs[match.inx]
     #    }
     
-    if(length(lvs) < 6){
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
-    }else if (length(lvs) < 10){
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
-    }else{
-      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
-    }
+    #if(length(lvs) < 6){
+    #  legend("topright",inset = c(-0.2, 0), legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+    #}else if (length(lvs) < 10){
+    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+    #}else{
+    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+    #}
+
+    axis.lims <- par("usr"); # x1, x2, y1 ,y2
+    shift <- par("cxy")[1];
+    lgd.x <- axis.lims[2] + shift;
+    lgd.y <- axis.lims[4] - shift;
+    par(xpd=T);
+    legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
     
   }else{
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
@@ -320,7 +327,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@usage PlotPCA3DScore(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -365,7 +372,10 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink(imgName);
   cat(json.obj);
   sink();
-  
+
+  #for util_scatter3d
+  qs::qsave(pca3d, "score3d.qs");
+
   if(!.on.public.web){
     return(.set.mSet(mSetObj));
   }
@@ -425,6 +435,14 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(pca3d, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
   if(.on.public.web){
     return(1);
   }else{
@@ -440,7 +458,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 UpdatePCA.Loading<- function(mSetObj=NA, plotType){
@@ -454,7 +472,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -522,7 +540,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@usage PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -570,7 +588,7 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
 #'@param reg Logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
@@ -611,7 +629,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 #'@description Plot PLS pairwise summary
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -637,7 +655,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@description Plot PLS score plot
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -665,7 +683,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin big
   
   
   cls1 <- mSetObj$dataSet$cls
@@ -679,7 +697,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,3));
+  par(mar=c(5,5,3,8));
   text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
@@ -785,8 +803,15 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     uniq.pchs <- pchs[match.inx]
   }
   
-  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  op <- par(xpd=T);
+  # move legend to outside 
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  shift <- par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  lgd.y <- axis.lims[4] - shift;
+  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
   
+  par(op);
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -801,7 +826,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
@@ -840,6 +865,10 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   cat(json.obj);
   sink();
   mSet$imgSet$pls.score3d <- imgName;
+
+  qs::qsave(pls3d, "score3d.qs");
+
+
   return(.set.mSet(mSetObj));
 }
 
@@ -890,6 +919,14 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(pls3d, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
   if(.on.public.web){
     return(1);
   }else{
@@ -905,7 +942,7 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 UpdatePLS.Loading<- function(mSetObj=NA, plotType){
@@ -927,7 +964,7 @@ UpdatePLS.Loading<- function(mSetObj=NA, plotType){
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
@@ -992,7 +1029,7 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #' @importFrom caret train varImp plsda R2
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 #' @export
 PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
   
@@ -1088,7 +1125,7 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
 #'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
@@ -1184,7 +1221,7 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
 #'@param color.BW Logical, true to use black and white, or false to not
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
@@ -1192,19 +1229,27 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
   if(is.na(width)){
-    w <- 8;
+    w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 8;
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # margin is big
   
   mSetObj$imgSet$pls.imp<-imgName;
-  
+
+  # re-adjust width based on group size
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
+
   if(type=="vip"){
     mSetObj$analSet$plsda$imp.type <- "vip";
     vips <- mSetObj$analSet$plsda$vip.mat[,feat.nm];
@@ -1214,6 +1259,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
     data<-mSetObj$analSet$plsda$coef.mat[,feat.nm];
     PlotImpVar(mSetObj, data, "Coefficients", feat.num, color.BW);
   }
+  par(op);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -1228,28 +1274,13 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'@param color.BW Use black-white for plot (T) or colors (F)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  cls.len <- length(levels(mSetObj$dataSet$cls));
-  if(cls.len == 2){
-    rt.mrg <- 5;
-  }else if(cls.len == 3){
-    rt.mrg <- 6;
-  }else if(cls.len == 4){
-    rt.mrg <- 7;
-  }else if(cls.len == 5){
-    rt.mrg <- 8;
-  }else if(cls.len == 6){
-    rt.mrg <- 9;
-  }else{
-    rt.mrg <- 11;
-  }
-  op <- par(mar=c(5,7,3,rt.mrg)); # set right side margin with the number of class
   
   if(feat.num <= 0){
     feat.num = 15;
@@ -1341,7 +1372,6 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   text(x[1], endy+shifty/8, "High");
   text(x[1], starty-shifty/8, "Low");
   
-  par(op);
 }
 
 #'Plot PLS-DA classification performance using different components
@@ -1355,7 +1385,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1410,7 +1440,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1452,7 +1482,7 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@param reg Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
@@ -1521,7 +1551,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@param grey.scale Numeric, indicate grey-scale, 0 for no, and 1 for yes 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
@@ -1630,7 +1660,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
@@ -1653,7 +1683,7 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'@param plotType plotType for the image, can be "all" or "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=72, width=NA){
@@ -1729,17 +1759,23 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, ty
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 8;
+    w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 7.2;
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1;
   
   mSetObj$imgSet$opls.vip <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
+
   if(type=="vip"){
     impNm <- "VIP scores";
     mSetObj$analSet$oplsda$imp.type <- "vip";
@@ -1763,6 +1799,8 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, ty
   vip.mat <- vip.mat[ord.inx,];
   mSetObj$analSet$oplsda$vip.mat <- vip.mat;
   PlotImpVar(mSetObj, data, impNm, feat.num, color.BW);
+
+  par(op);
   dev.off();
   
   fast.write.csv(vip.mat, file="oplsda_vip.csv");
@@ -1825,7 +1863,7 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param num Input the number of permutations, default is set to 100.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
@@ -1884,7 +1922,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1968,7 +2006,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@param validOpt INput the valid option
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){    
@@ -2041,7 +2079,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 #'@param pc.num Numeric, indicate the number of principle components
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
@@ -2075,7 +2113,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'@param grey.scale Numeric, use grey-scale, 0 for no, and 1 for yes. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
@@ -2090,7 +2128,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1; # big margin
   
   mSetObj$imgSet$spls.score2d <- imgName;
   
@@ -2100,7 +2138,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,3));
+  par(mar=c(5,5,3,8));
   text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
@@ -2179,8 +2217,16 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   if(grey.scale) {
     uniq.cols <- "black";
   }
-  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
-  
+
+  op <- par(xpd=T);
+  # move legend to outside 
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  shift <- par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  lgd.y <- axis.lims[4] - shift;
+  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);  
+  par(op);
+
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -2195,7 +2241,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
@@ -2243,6 +2289,9 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   cat(json.obj);
   sink();
   mSetObj$imgSet$spls.score3d <- imgName;
+
+  qs::qsave(spls3d, "score3d.qs");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -2298,6 +2347,15 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   sink();
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
+  qs::qsave(spls3d, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(imgName, T);
+
+
   if(.on.public.web){
     return(1);
   }else{
@@ -2320,7 +2378,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
 #'@param viewOpt Detailed view "detail" 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx, viewOpt="detail"){
@@ -2338,12 +2396,20 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1;
   
   mSetObj$imgSet$spls.imp <- imgName;
   
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
   PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
+
+  par(op);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -2361,7 +2427,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -2519,7 +2585,7 @@ GetPCALoadMat <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'
 GetMaxPCAComp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

@@ -121,7 +121,7 @@ PrepareIntegData <- function(mSetObj=NA){
 #' @param integOpt integOpt,default is "query"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", 
@@ -830,7 +830,7 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
 #'@param dpi dpi, dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'@import igraph  
 #'@import qs
@@ -922,7 +922,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 #'@param dpi dpi of the image
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotInmexGraph <- function(mSetObj, pathName, 

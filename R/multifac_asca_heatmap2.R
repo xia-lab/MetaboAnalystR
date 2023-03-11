@@ -20,7 +20,7 @@
 #'@param includeRowNames includeRowNames, logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 
@@ -178,7 +178,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
 }
 
 get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15, cellwidth = 15){
-  png("NUL"); # trick to avoid open device in server 
+  png("NUL", type = "cairo"); # trick to avoid open device in server 
   heat_map <- pheatmap::pheatmap(dat, annotation=annotation, cellheight = cellheight, cellwidth = cellwidth);
   h <- sum(sapply(heat_map$gtable$heights, grid::convertHeight, "in"));
   w  <- sum(sapply(heat_map$gtable$widths, grid::convertWidth, "in"));
@@ -230,7 +230,7 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 #' "bab" facB joins with AB
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
@@ -361,7 +361,7 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 #'@param lev.thresh leverage threshold, the higher better, default more than 95 percentile of permuted leverage
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.95){
@@ -485,7 +485,7 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
 #'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 ASCAfun1<-function (X, Design, Fac) {
   n <- ncol(X) # number of genes
@@ -547,7 +547,7 @@ ASCAfun1<-function (X, Design, Fac) {
 #'@param Fac Numeric, the factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 ASCAfun2<-function (X, Desa, Desb, Fac) {
   
@@ -627,7 +627,7 @@ ASCAfun2<-function (X, Desa, Desb, Fac) {
 #'@param X Input list of compounds
 #'@param Fac Numeric 
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 ASCAfun.res <- function(X, Fac){
   PCA<-PCA.GENES(X);
@@ -668,7 +668,7 @@ ASCAfun.res <- function(X, Fac){
 #'@param perm.num Select the number of permutations, default is 20
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
@@ -763,7 +763,7 @@ getFactorSize <- function(fac){
 #'@param perm Logical, TRUE by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Get.asca.tss <- function(dummy, perm=T){
@@ -893,7 +893,7 @@ Get.asca.leverage <- function(dummy){
 #'@param Fac Factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 Get.Leverage <- function(XKw, Fac){
   PCA <- PCA.GENES(XKw);
@@ -914,7 +914,7 @@ Get.Leverage <- function(XKw, Fac){
 #'@param X Input matrix that has as columns the compounds that were considered as variables in the PCA analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 PCA.GENES<-function(X){
   n<-ncol(X)
@@ -952,7 +952,7 @@ PCA.GENES<-function(X){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1009,7 +1009,7 @@ PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param colorBW Logical, use black/white coloring (T) or not (F)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE){
@@ -1085,7 +1085,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
@@ -1195,7 +1195,7 @@ PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=F
 #'@param type select model a, b, or ab
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
@@ -1257,7 +1257,7 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
 #'@param title Input the title
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 PlotSigVar <- function(x, y, xline, yline, title){
   
   par(mar=c(5,4,3,8), xpd=F);
@@ -1298,7 +1298,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -1355,7 +1355,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
 #'@param nm Input the name of the well modelled features
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 GetSigTable.ASCA <- function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
@@ -1482,7 +1482,7 @@ heckbert <- function(dmin, dmax, m){
 #'@param viewOpt high-level summary or plotting the names inside cell
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",drawBorder=F,includeRowNames=T, imgName, format="png", dpi=96, width=NA){
@@ -1562,7 +1562,7 @@ PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", 
 #'@param cor.opt Meethod for computing correlation coefficient
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="png", dpi=96, width=NA){

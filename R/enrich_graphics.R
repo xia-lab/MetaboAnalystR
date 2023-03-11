@@ -11,7 +11,7 @@
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
@@ -149,7 +149,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
@@ -227,7 +227,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
@@ -279,7 +279,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
@@ -322,7 +322,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
 #'@param pvals Input the p-values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotMSEA.Overview <- function(folds, pvals){
@@ -366,7 +366,7 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=72, width=NA){
@@ -474,7 +474,7 @@ concplot <- function(mn, lower, upper, labels=NULL,
 # so that the small p value is bigger, located on top of the color key
 # Jeff Xia, jeff.xia@mcgill.ca
 # McGill University, Canada
-# License: MIT License
+# License: GNU GPL (>= 2)
 
 image.plot <- function(..., add = FALSE, nlevel = 64,
                        horizontal = FALSE, legend.shrink = 0.9, legend.width = 1.2,
@@ -767,7 +767,7 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 #' @param layoutOpt Input the layout option, default is set to layout.fruchterman.reingold
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 #' @export
 #' @import igraph
 

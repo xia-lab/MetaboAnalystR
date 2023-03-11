@@ -5,7 +5,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateBiomarkerRnwReport<-function(mSetObj, usrName){
   
@@ -31,7 +31,7 @@ CreateBiomarkerRnwReport<-function(mSetObj, usrName){
 #'Biomarker analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateBiomarkerIntr<-function(){
   descr <- c("\\section{Background}\n",
@@ -55,7 +55,7 @@ CreateBiomarkerIntr<-function(){
 #'Power analysis report overview
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateBiomarkerOverview <- function(){
   descr <- c("\\section{Biomarker Analysis Overview}\n",
@@ -72,7 +72,7 @@ CreateBiomarkerOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateBiomarkerInputDoc <- function(mSetObj=NA){
   
@@ -150,7 +150,7 @@ CreateBiomarkerInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateBiomarkerRatioOverview <- function(mSetObj=NA){
   
@@ -191,7 +191,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateRatioTable <- function(mSetObj=NA){
   
@@ -211,7 +211,7 @@ CreateRatioTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong 
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
   
@@ -288,7 +288,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
 #'Function to create a summary table for univariate biomarker analysis
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateUnivROCTable<-function(){
   
@@ -306,7 +306,7 @@ CreateUnivROCTable<-function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateMultiBiomarkersDoc<-function(mSetObj=NA){
   
@@ -413,7 +413,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateModelBiomarkersDoc<-function(mSetObj=NA){
   
@@ -551,7 +551,7 @@ ROCPredSamplesTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateROCLabelsTable<-function(mSetObj=NA){
   

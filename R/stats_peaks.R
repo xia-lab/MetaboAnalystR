@@ -19,7 +19,7 @@
 #'@param max, define the maximum number of groups to identify in a single m/z slice
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'

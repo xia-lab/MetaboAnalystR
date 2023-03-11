@@ -8,7 +8,7 @@
 #'@param paired Logical, TRUE or FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
@@ -67,7 +67,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -163,7 +163,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param cmpType Numeric, 0 or 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
@@ -221,7 +221,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'for all compounds. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, 
@@ -337,7 +337,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -378,7 +378,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param pval.type To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, 
@@ -472,7 +472,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 
@@ -545,7 +545,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 aof <- function(x, cls) {
   aov(x ~ cls);
 }
@@ -557,7 +557,7 @@ aof <- function(x, cls) {
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 kwtest <- function(x, cls) {
   kruskal.test(x ~ cls);
 }
@@ -568,7 +568,7 @@ kwtest <- function(x, cls) {
 #'@param thresh Numeric, input the alpha threshold 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 FisherLSD <- function(aov.obj, thresh){
     if(!exists("my.lsd.test")){ # public web on same user dir
       .load.scripts.on.demand("util_lsd.Rc");    
@@ -582,7 +582,7 @@ FisherLSD <- function(aov.obj, thresh){
 #'@param cut.off Input numeric cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 parseTukey <- function(tukey, cut.off){
   inx <- tukey$cls[,"p adj"] <= cut.off;
   paste(rownames(tukey$cls)[inx], collapse="; ");
@@ -594,7 +594,7 @@ parseTukey <- function(tukey, cut.off){
 #'@param cut.off Numeric, set cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 parseFisher <- function(fisher, cut.off){
   inx <- fisher[,"pvalue"] <= cut.off;
   paste(rownames(fisher)[inx], collapse="; ");
@@ -611,7 +611,7 @@ parseFisher <- function(fisher, cut.off){
 #' with no post-hoc tests performed.
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 #' @export
 #'
 ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE) {
@@ -745,7 +745,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", a
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -788,7 +788,7 @@ PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
@@ -1020,7 +1020,7 @@ GetSigTable.TT <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 GetTTSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1098,7 +1098,7 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'@param nonpar Use non-parametric tests, default is set to FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   
   mSetObj <- .get.mSet(mSetObj);  
@@ -1173,7 +1173,7 @@ GetFtestRes <- function(mSetObj=NA, nonpar=F){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 GetUnivReport <- function(mSetObj=NA){
   if(.on.public.web){
@@ -1286,7 +1286,7 @@ GetVolcanoCmpds <- function(mSetObj=NA){
 #'@param dec Logical, default set to TRUE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetTopInx <- function(vec, n, dec=T){
   inx <- order(vec, decreasing = dec)[1:n];
   # convert to T/F vec

@@ -1,7 +1,7 @@
 ### Various enrichment analysis algorithms
 ### Jeff Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: MIT License
+### License: GNU GPL (>= 2)
 
 #'Over-representation analysis using hypergeometric tests
 #'@description Over-representation analysis using hypergeometric tests
@@ -11,7 +11,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 CalculateHyperScore <- function(mSetObj=NA){
@@ -129,7 +129,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA){
@@ -279,7 +279,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 CalculateSSP<-function(mSetObj=NA){
@@ -560,7 +560,7 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -580,7 +580,7 @@ GetSSPTable<-function(mSetObj=NA){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 GetHTMLMetSet<-function(mSetObj=NA, msetNm){
@@ -620,7 +620,7 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
 #'@param msetInx Input the index of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 GetMetSetName<-function(mSetObj=NA, msetInx){

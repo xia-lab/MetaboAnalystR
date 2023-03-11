@@ -12,7 +12,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
@@ -335,7 +335,7 @@ SanityCheckData <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
@@ -370,7 +370,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@param percent Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
@@ -401,7 +401,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 #'Bayesian PCA ("BPCA") method, or Singular Value Decomposition ("svdImpute") 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 #'
@@ -434,7 +434,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'Otherwise, it will not be used in the function. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
@@ -639,7 +639,7 @@ UpdateSampleGroups<-function(mSetObj=NA, metadata="NA"){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 ContainMissing <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

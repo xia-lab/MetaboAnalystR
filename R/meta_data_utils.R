@@ -6,7 +6,7 @@
 #'in columns and paired (colp), or in columns and unpaired (colu).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
@@ -47,7 +47,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
 #'@param dataSet Input dataset to be registered in R. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 
@@ -69,7 +69,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
 #'@param dataName Input name of the dataset to perform the sanity check.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 # 
@@ -306,7 +306,7 @@ RemoveData <- function(dataName){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 SelectMultiData <- function(mSetObj=NA){
@@ -353,7 +353,7 @@ GetAllDataNames <- function(){
 #'@param auto.opt Performs auto-scaling of data (1), or no (0). 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 
@@ -427,7 +427,7 @@ PerformDataNormalization <- function(data, norm.opt){
 #'@param fc.lvl Numeric, input the fold-change (FC) cutoff. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
 PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
@@ -510,7 +510,7 @@ GetLimmaResTable<-function(fit.obj){
 #'@param gene.id Input the name of the selected feature.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   

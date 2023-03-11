@@ -5,7 +5,7 @@
 #'@param dist.name Input distance method 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'
 template.match <- function(x, template, dist.name) {
   k <- cor.test(x,template, method=dist.name);
@@ -81,7 +81,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
 #'@param searchType searchType, default is "feature"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dpi=72, width=NA){
@@ -154,7 +154,7 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@param no.clst Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
 #'@param corrCutoff set corrCutoff
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'@import gplots
 #'
@@ -374,7 +374,7 @@ GenerateTemplates <- function(mSetObj=NA){
 #'@param varName Input the variable name
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
   mSetObj <- .get.mSet(mSetObj);

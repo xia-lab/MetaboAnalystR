@@ -6,7 +6,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
@@ -43,7 +43,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -103,7 +103,7 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
 #'Metabolomic pathway analysis, time-series analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 InitTimeSeriesAnal <- function(){
   descr <- c("\\section{Statistical Analysis [metadata table]}",
@@ -163,7 +163,7 @@ CreateTimeSeriesAnalNullMsg<-function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateMetaOverview <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -215,7 +215,7 @@ CreateMetaOverview <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateiPCAdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -258,7 +258,7 @@ CreateiPCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateCorHeatmap <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -300,7 +300,7 @@ CreateCorHeatmap <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 
 CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
@@ -344,7 +344,7 @@ CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateCorAnalysis <- function(mSetObj=NA){
   
@@ -384,7 +384,7 @@ CreateCorAnalysis <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateAOV2doc <- function(mSetObj=NA){
   
@@ -442,7 +442,7 @@ CreateAOV2doc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateASCAdoc <- function(mSetObj=NA){
   
@@ -636,7 +636,7 @@ CreateASCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateMBdoc <- function(mSetObj=NA){
   
@@ -674,7 +674,7 @@ CreateMBdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 CreateRandomForest <- function(mSetObj=NA){
   

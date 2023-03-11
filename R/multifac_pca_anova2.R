@@ -5,7 +5,7 @@
 #'@paxram time.fac Input the time factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 aov.mixed <- function(x){
   unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/time.fac),
@@ -14,7 +14,7 @@ aov.mixed <- function(x){
 
 aov.2wayrep <- function(x){
   unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/(exp.fac*time.fac)),
-             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
+             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -24,7 +24,7 @@ aov.2wayrep <- function(x){
 #'@param time.fac Input the time factor 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'
 aov.1wayrep <- function(x){
   unlist(anova_test(x ~ time.fac + Error(aov.sbj/time.fac),
@@ -37,7 +37,7 @@ aov.1wayrep <- function(x){
 #'@param x Input data to perform 2-way ANOVA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 aov.2way <- function(x){
   unlist(suppressMessages(anova_test(x ~ aov.facA*aov.facB,
                     data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))[,c("F","p")])
@@ -54,11 +54,12 @@ aov.2way <- function(x){
 #'and w for within-subjects ANOVA 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
                        p.cor="fdr", type="time0", phenOpt="between"){
+
 require(rstatix)
 
   mSetObj <- .get.mSet(mSetObj);
@@ -81,13 +82,15 @@ require(rstatix)
     if(type %in% c("time0", "time")){
       mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
       mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
+      mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[which(tolower(colnames(sel.meta.df)) != "time")]
+      mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[which(tolower(colnames(sel.meta.df)) == "time")]
     }else{
       mSetObj$dataSet$facA = sel.meta.df[,1]
       mSetObj$dataSet$facB = sel.meta.df[,2]
-    }
-  }  
       mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[1]
       mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[2]
+    }
+  }  
 
   # make sure all metadata are factor variable types
   for(i in 1:ncol(sel.meta.df)){
@@ -273,7 +276,7 @@ require(rstatix)
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -326,7 +329,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param fileNm select a file name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'

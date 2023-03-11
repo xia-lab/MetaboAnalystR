@@ -6,7 +6,7 @@
 #'@param randomOn Set random, default is 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
@@ -65,7 +65,7 @@ GetRandomNumbers <- function(){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -117,7 +117,7 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -134,11 +134,18 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <- width;    
   }
-  h <- w*7/8;
+  h <- w-1;
   mSetObj$imgSet$rf.imp <- imgName;
   
+  # re-adjust width based on group size
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
   PlotImpVar(mSetObj, vip.score, "MeanDecreaseAccuracy");
+  par(op);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -156,7 +163,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -215,7 +222,7 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param cvType Cross-validation type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 RSVM.Anal <- function(mSetObj=NA, cvType){
@@ -258,7 +265,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
 #'@usage PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -306,7 +313,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -323,12 +330,19 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <- width;
   }
-  h <- w;
+  h <- w-1;
   
   mSetObj$imgSet$svm <- imgName;
-  
+
+  # re-adjust width based on group size
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
   PlotImpVar(mSetObj, data, "Frequency");
+  par(op);
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -389,7 +403,7 @@ CreateLadder <- function(Ntotal, Nmin=5){
 #'The top important gene in each level are those high-freqent ones
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 RSVM <- function(x, y, ladder, CVtype, CVnum=0){
   ## check if y is binary response
@@ -533,7 +547,7 @@ PlotConfusion <- function(clsConf){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetRFOOB <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   errors = mSetObj$analSet$rf$err.rate;
@@ -554,7 +568,7 @@ GetSigTable.RF <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetRFSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(CleanNumber(mSetObj$analSet$rf.sigmat))
@@ -584,7 +598,7 @@ GetRFConf.Table <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 GetRFConfMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   signif(mSetObj$analSet$rf$confusion,3);
@@ -605,7 +619,7 @@ GetRFConfColNames <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 
 GetSVMSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

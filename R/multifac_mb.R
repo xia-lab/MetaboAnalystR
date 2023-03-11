@@ -7,7 +7,7 @@
 #'@param topPerc select the cut-off, default is 10
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 performMB <- function(mSetObj=NA, topPerc = 10){
@@ -89,7 +89,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'@param version image mark
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
@@ -143,7 +143,7 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
 #'@param varName Input the name of the variable
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: MIT License
+#'License: GNU GPL (>= 2)
 #'@export
 #'
 plotProfile <-function (mSetObj=NA, varName) {

@@ -1423,7 +1423,7 @@ centroidMSData <- function(fileName, outFolder, ncore = 1){
 #' @return will return an mSet objects with extracted ROI
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 
 PerformDataTrimming<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
                                rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
@@ -1461,7 +1461,7 @@ PerformDataTrimming<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt
 #' @return will return an mSet objects with extracted ROI
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 PerformROIExtraction<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, rt, rtdiff, 
                                rt.idx=1/15, rmConts = TRUE, plot=TRUE, running.controller=NULL){
   require(OptiLCMS)
@@ -1495,7 +1495,7 @@ PerformROIExtraction<- function(datapath, mode="ssm", write=FALSE, mz, mzdiff, r
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} 
 #' Jeff Xia \email{jeff.xia@mcgill.ca}
 #' Mcgill University
-#' License: MIT License
+#' License: GNU GPL (>= 2)
 
 PerformParamsOptimization <- function(mSet, 
                                       param= NULL, 
