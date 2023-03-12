@@ -324,7 +324,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'PCA score and loading plots using the plotly R package. These plots are saved in the created mSetObj; to view these, 
 #'type "mSetObj$imgSet$time$score3d" to view the interactive score plot, and "mSetObj$imgSet$time$load3d" to view
 #'the interactive loading plot.  
-#'@usage iPCA.Anal(mSetObj, fileNm)
+#'@usage iPCA.Anal(mSetObj, fileNm, metaCol, metaShape)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fileNm select a file name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -333,7 +333,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'
-iPCA.Anal<-function(mSetObj=NA, fileNm){
+iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   
   mSetObj <- .get.mSet(mSetObj);
 
@@ -355,7 +355,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   facA <- mSetObj$dataSet$facA;
   facA <- as.character(facA);
 
-  pca3d$score$facA <- facA;
+  pca3d$score$facA <- metadata[, metaCol];
   metadata.list <- list();
 
   for(i in 1:ncol(metadata)){
@@ -366,7 +366,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
     }
   }
 
-  facB <- mSetObj$dataSet$facB;
+  facB <- metadata[, metaShape];
   facB <- as.character(facB);
 
   pca3d$score$metadata_list <- metadata.list
@@ -398,6 +398,8 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
 
   qs::qsave(pca3d$score, "score3d.qs");
   qs::qsave(pca3d$loading, "loading3d.qs");
+
+  #mbSetObj$pca3d
 
   if(!exists("my.json.scatter")){
     .load.scripts.on.demand("util_scatter3d.Rc");    
