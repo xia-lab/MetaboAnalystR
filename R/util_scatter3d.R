@@ -10,11 +10,14 @@ my.json.scatter <- function(filenm, containsLoading=F){
   library(igraph);
   ## 
   res <- qs::qread("score3d.qs")
-  res <- res$score;
   
   nodes <- vector(mode="list");
   names <- res$name;
+  if(ncol(res$xyz) > nrow(res$xyz)){
   orig.pos.xyz <- t(res$xyz);
+  }else{
+  orig.pos.xyz <- res$xyz;
+  }
   
   ticksX <- pretty(range(orig.pos.xyz[,1]),10, bound=F);
   ticksY <- pretty(range(orig.pos.xyz[,2]),10, bound=F);
@@ -47,9 +50,22 @@ my.json.scatter <- function(filenm, containsLoading=F){
   for(i in 1:length(meta.vec.num)){
     col[i] = col.s[meta.vec.num[i]];
   }
-  
+
+  legendData <- list(label=unique(meta.vec),color=col.s)
+  #for IPCA in multifactor
+
   if("facB" %in% names(res)){
-    meta.vec2 <- as.vector()
+    meta.vec2 <- res$facB
+    metadf <- res$metadata_list;
+    shape <- vector();
+    meta.vec.num <- as.integer(as.factor(meta.vec2))
+    shape.s <- c("circle", "triangle", "square", "diamond")[1:length(unique(meta.vec2))];
+
+    for(i in 1:length(meta.vec.num)){
+      shape[i] = shape.s[meta.vec.num[i]];
+    }
+
+    legendData2 <- list(label=unique(meta.vec2),shape=shape.s);
   }
   
   nodeSize = 18;
@@ -85,11 +101,15 @@ my.json.scatter <- function(filenm, containsLoading=F){
   loading="NA",
   axis=res$axis, 
   ticks=ticks,
-  metaCol = list(label=unique(meta.vec),color=col.s));
+  metaCol = legendData);
   }else{
     res2 <- qs::qread("loading3d.qs");
-    res2 <- res2$loading;
-    orig.load.xyz <- t(res2$xyz)
+
+    if(ncol(res2$xyz) > nrow(res2$xyz)){
+    orig.load.xyz <- t(res2$xyz);
+    }else{
+    orig.load.xyz <- res2$xyz;
+    }
     
     ticksX <- pretty(range(orig.load.xyz[,1]),10);
     ticksY <- pretty(range(orig.load.xyz[,2]),10);
@@ -147,15 +167,20 @@ my.json.scatter <- function(filenm, containsLoading=F){
                     ticksLoading=ticksLoading,
                     axis=res$axis,
                     axisLoading=res2$axis, 
-                    metaCol = list(label=unique(meta.vec),color=col.s));
+                    metaCol = legendData);
   #res2$pos.xyz <- load.xyz;
   #qs::qsave(res2, "pca3d_loadings.qs");
   }
+
+  if("facB" %in% names(res)){
+    netData$metaShape <- legendData2;
+}
+
   rownames(pos.xyz) <- res$name;
   res$pos.xyz <- pos.xyz;
   .set.rdt.set(res);
 
-  print(head(pos.xyz));
+
 
   sink(filenm);
   cat(toJSON(netData));

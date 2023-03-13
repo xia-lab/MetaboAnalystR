@@ -61,5 +61,5 @@ provide the data path for 'datapath', and optionally provide other corresponding
 \author{
 Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
 Mcgill University
-License: MIT License
+License: GNU GPL (>= 2)
 }

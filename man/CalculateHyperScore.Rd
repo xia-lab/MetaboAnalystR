@@ -18,5 +18,5 @@ to get P(X>=hit.num) => P(X>(hit.num-1))
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

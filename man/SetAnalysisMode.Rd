@@ -12,7 +12,7 @@ SetAnalysisMode(mSetObj, mode)
 \item{mode}{Input the selected mode for biomarker analysis, "univ" for univariate ROC curve analysis,
 "explore" for multivariate ROC curve analysis, and "test" for ROC curve based model creation and evaluation.
 McGill University, Canada
-License: MIT License}
+License: GNU GPL (>= 2)}
 }
 \description{
 ROC utilities

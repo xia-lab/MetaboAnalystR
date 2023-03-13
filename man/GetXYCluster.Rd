@@ -16,5 +16,5 @@ number of plots (used by Kmeans and SOM plots)
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

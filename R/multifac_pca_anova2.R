@@ -395,7 +395,16 @@ iPCA.Anal<-function(mSetObj=NA, fileNm){
   sink(fileNm);
   cat(json.obj);
   sink();
-  
+
+  qs::qsave(pca3d$score, "score3d.qs");
+  qs::qsave(pca3d$loading, "loading3d.qs");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(fileNm, T);
+
   return(.set.mSet(mSetObj));
 }
 

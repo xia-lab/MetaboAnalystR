@@ -15,5 +15,5 @@ Return a double matrix with 2 columns - p values and lod
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

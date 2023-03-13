@@ -19,5 +19,5 @@ Unzips uploaded .zip files, removes the uploaded file, checks for success
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

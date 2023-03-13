@@ -22,5 +22,5 @@ Perform permutation tests for the ROC Curve Based Model Creation and Evaluation 
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

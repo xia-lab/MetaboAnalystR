@@ -39,5 +39,5 @@ Pred and auroc are lists containing predictions and labels from different cross-
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

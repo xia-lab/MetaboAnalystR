@@ -29,5 +29,5 @@ Plot score plots of each ASCA model for component 1 against time
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

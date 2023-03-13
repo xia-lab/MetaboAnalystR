@@ -23,5 +23,5 @@ It is necessary to utilize this function to specify to MetaboAnalystR the type o
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

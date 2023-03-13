@@ -19,5 +19,5 @@ unit is the width to extend, 10 will increase by 1/10 of the range
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

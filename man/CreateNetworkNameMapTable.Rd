@@ -16,5 +16,5 @@ Function to create a table for compound name mapping
 \author{
 Jasmine Chong
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

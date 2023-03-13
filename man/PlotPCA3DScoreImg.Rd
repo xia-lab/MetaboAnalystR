@@ -36,5 +36,5 @@ the plot, if your mSetObj is named mSet, type "mSet$imgSet$pca.3d" inro your R c
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

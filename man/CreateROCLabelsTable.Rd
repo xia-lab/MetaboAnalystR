@@ -16,5 +16,5 @@ Function to create a table for newly classified samples
 \author{
 Jasmine Chong
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

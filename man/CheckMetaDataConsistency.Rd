@@ -18,5 +18,5 @@ This function determines if all annotated data are ready for meta-analysis
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

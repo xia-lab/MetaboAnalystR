@@ -16,5 +16,5 @@ Correlation and Partial Correlation Analysis
 \author{
 Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }
