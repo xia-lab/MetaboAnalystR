@@ -4,7 +4,7 @@
 \alias{iPCA.Anal}
 \title{Perform PCA analysis, prepare file for interactive liveGraphics3D}
 \usage{
-iPCA.Anal(mSetObj, fileNm)
+iPCA.Anal(mSetObj, fileNm, metaCol, metaShape)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -64,7 +64,6 @@ my.json.scatter <- function(filenm, containsLoading=F){
     for(i in 1:length(meta.vec.num)){
       shape[i] = shape.s[meta.vec.num[i]];
     }
-
     legendData2 <- list(label=unique(meta.vec2),shape=shape.s);
   }
   
@@ -87,6 +86,8 @@ my.json.scatter <- function(filenm, containsLoading=F){
     
     if("facB" %in% names(res)){
       nodes[[i]][["meta2"]] <- meta.vec2[i]
+      nodes[[i]][["shape"]] <- shape[i]
+
     }
   }
   
@@ -133,7 +134,11 @@ my.json.scatter <- function(filenm, containsLoading=F){
     load.xyz <- load.xyz[1:(nrow(load.xyz) - 2), ];
     
     names <- res2$name;
+    if("entrez" %in% names(res2)){
     ids <- res2$entrez;
+    }else{
+    ids <- res2$name;
+    }
     colres <- rgba_to_hex_opacity(res2$cols);
     colorb <- colres[[1]];
     opacity_array <- colres[[2]];
