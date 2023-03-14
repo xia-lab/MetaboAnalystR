@@ -340,7 +340,7 @@ updateSpectra3DPCA <- function(featureNM = 100){
   sink();
   
   ## For loading plot
-  pca3d <- list();
+  #pca3d <- list();
   
   pca3d$loading$axis <- paste("Loading ", c(1:3), sep="");
   coords0 <- coords <- data.frame(t(signif(mSet_pca$rotation[,1:3], 5)));
@@ -360,7 +360,18 @@ updateSpectra3DPCA <- function(featureNM = 100){
   
   cat(json.obj);
   sink();
+
+  qs::qsave(pca3d$score, "score3d.qs");
+  qs::qsave(pca3d$loading, "loading3d.qs");
+  fileNm <- paste0("spectra_3d_loading", featureNM,".json");
+
+  if(!exists("my.json.scatter")){
+    .load.scripts.on.demand("util_scatter3d.Rc");    
+  }
+
+  my.json.scatter(fileNm, T);
   return(1);
+
 }
 
 #' mzrt2ID
@@ -1138,6 +1149,7 @@ GeneratePeakList <- function(userPath) {
 #' @author Zhiqiang Pang
 #' @export
 plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width = NA){
+
   if (is.na(width)) {
     widthm <- "default"
     width <- 7;
@@ -1163,7 +1175,7 @@ plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width
   load("mSet.rda");
   bpVec <- mSet@rawOnDisk@featureData@data[["basePeakMZ"]];
   raw_data_filt <-
-    filterFile(mSet@rawOnDisk, file = 
+    MSnbase::filterFile(mSet@rawOnDisk, file = 
                  basename(mSet@rawOnDisk@processingData@files[
                    which(sub(pattern = "(.*)\\..*$", replacement = "\\1", 
                              basename(mSet@rawOnDisk@processingData@files)) == filename)
