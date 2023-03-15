@@ -21,8 +21,14 @@
 
   # prepare query
   ora.nms <- names(ora.vec);
+
+  if(is.null(ora.nms)){
+    ora.nms <- ora.vec;
+    names(ora.vec) <- ora.vec;
+  }
   
-  # need to cut to the universe covered by the pathways, not all genes
+  # OLD need to cut to the universe covered by the pathways, not all genes
+  # cut to the universe to uploaded genes
   current.universe <- unique(unlist(current.geneset)); 
   hits.inx <- ora.vec %in% current.universe;
   ora.vec <- ora.vec[hits.inx];
