@@ -19,9 +19,9 @@ my.json.scatter <- function(filenm, containsLoading=F){
   orig.pos.xyz <- res$xyz;
   }
   
-  ticksX <- pretty(range(orig.pos.xyz[,1]),10, bound=F);
-  ticksY <- pretty(range(orig.pos.xyz[,2]),10, bound=F);
-  ticksZ <- pretty(range(orig.pos.xyz[,3]),10, bound=F);
+  ticksX <- pretty(range(orig.pos.xyz[,1]*1.2),10, bound=F);
+  ticksY <- pretty(range(orig.pos.xyz[,2]*1.2),10, bound=F);
+  ticksZ <- pretty(range(orig.pos.xyz[,3]*1.2),10, bound=F);
   
   #add two nodes, 1 with all min values and another with all max values. For scaling purposes
   minNode <-  c(min(ticksX), min(ticksY), min(ticksZ));
@@ -97,7 +97,7 @@ my.json.scatter <- function(filenm, containsLoading=F){
   
   if(!containsLoading){
     netData <- list(nodes=nodes,
-  edges=edge.mat,
+  edges="NA",
   meta=metadf, 
   loading="NA",
   axis=res$axis, 
