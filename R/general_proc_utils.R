@@ -437,7 +437,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'License: GNU GPL (>= 2)
 #'@export
 
-FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
+FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd, privileged=F){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -487,9 +487,20 @@ FilterVariable <- function(mSetObj=NA, filter, qcFilter, rsd){
       return(0);
     }
   }
-  filt.res <- PerformFeatureFilter(int.mat, filter, NULL, mSetObj$analSet$type);
-  mSetObj$dataSet$filt <- filt.res$data;
-  msg <- paste(msg, filt.res$msg);
+
+  if(is.null(filter.cutoff)){ # no user choice, will apply empirical filtering
+    filter.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type, privileged);
+  }
+
+  if(filter.cutoff == 0){ # R package or privilidged user choose 0
+     mSetObj$dataSet$filt <- int.mat;
+     msg <- paste(msg, "No statistical filter was applied.");
+  }else{
+     filt.res <- PerformFeatureFilter(int.mat, filter, filter.cutoff, mSetObj$analSet$type, privileged);
+     mSetObj$dataSet$filt <- filt.res$data;
+     msg <- paste(msg, filt.res$msg);
+  }
+
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
   return(.set.mSet(mSetObj));

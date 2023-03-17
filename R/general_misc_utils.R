@@ -1239,18 +1239,12 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 ##
 ## perform unsupervised data filter based on common measures
 ##
-PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type = NULL){
-  feat.num <- ncol(int.mat);
-  feat.nms <- colnames(int.mat);
-  nm <- NULL;
-  msg <- "";
-  if(filter == "none" && feat.num < 5000) { # only allow for less than 4000
-    remain <- rep(TRUE, feat.num);
-    msg <- paste(msg, "No filtering was applied");
-  } else if(filter == "all") {
-    remain <- rep(TRUE, feat.num);
-    msg <- paste(msg, "No filtering was applied, all features were kept!");
-  } else {
+PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, privilidged){
+
+    nm <- NULL;
+    msg <- "";
+
+    # first compute rank based on filter selected
     if (filter == "rsd"){
       sds <- apply(int.mat, 2, sd, na.rm=T);
       mns <- apply(int.mat, 2, mean, na.rm=T);
@@ -1280,42 +1274,57 @@ PerformFeatureFilter <- function(int.mat, filter, remain.num = NULL, anal.type =
     
     # get the rank of the filtered variables
     rk <- rank(-filter.val, ties.method='random');
-    
-    if(is.null(remain.num)){ # apply empirical filtering based on data size
-        if(feat.num < 250){ # reduce 5%
-            remain <- rk < feat.num*0.95;
-            msg <- paste(msg, "Further feature filtering based on", nm);
-        }else if(feat.num < 500){ # reduce 10%
-            remain <- rk < feat.num*0.9;
-            msg <- paste(msg, "Further feature filtering based on", nm);
-        }else if(feat.num < 1000){ # reduce 25%
-            remain <- rk < feat.num*0.75;
-            msg <- paste(msg, "Further feature filtering based on", nm);
-        }else{ # reduce 40%, if still over 5000, then only use top 5000
-            remain <- rk < feat.num*0.6;
-            msg <- paste(msg, "Further feature filtering based on", nm);
 
-            if(anal.type == "mummichog"){
-                max.allow <- 7500;
-            }else if(anal.type == "power" || anal.type == "mf"){
-                max.allow <- 5000;
-            }else{
-                max.allow <- 2500;
-            }
-      
-            if(sum(remain) > max.allow){
-                remain <- rk < max.allow;
-                msg <- paste(msg, paste("Reduced to", max.allow, "features based on", nm));
-            }
+    remain.num <- ncol(int.mat)*(1-(filter.cutoff/100));
+    remain <- rk < remain.num;
+    msg <- paste(msg, "Feature filtering based on", nm);
+
+    if(!privilidged){
+        max.allow <- .get.max.allow(anal.type);  
+        if(sum(remain) > max.allow){
+            remain <- rk < max.allow;
+            msg <- paste(msg, paste("Further reduced to", max.allow, "features based on", nm));   
         }
-    }else{
-        remain <- rk < remain.num;
     }
-
     # save a copy for user 
     fast.write.csv(cbind(filter=filter.val, t(int.mat)), file=paste0("data_prefilter_", filter, ".csv"));
-  }
 
-  #print(msg);
-  return(list(data=int.mat[, remain], msg=msg));
+    #print(msg);
+    return(list(data=int.mat[, remain], msg=msg));
+}
+
+
+# do default filtering based on data size
+.computeEmpiricalFilterCutoff <- function(feat.num, anal.type){
+
+    filter.cutoff <- 0;
+    if(feat.num < 250){ 
+        filter.cutoff <- 5;
+    }else if(feat.num < 500){ # reduce 10%
+        filter.cutoff <- 10;
+    }else if(feat.num < 1000){ # reduce 25%
+        filter.cutoff <- 25;
+    }else{ # reduce 40%, 
+        filter.cutoff <- 40;
+
+        max.allow <- .get.max.allow (anal.type);      
+        if(feat.num*0.6 > max.allow){
+            filter.cutoff <- round(100*(feat.num - max.allow) / feat.num);
+        }
+    }
+
+    return(filter.cutoff);
+}
+
+# general default control for datasize 
+.get.max.allow <- function(anal.type){
+
+    if(anal.type == "mummichog"){
+        max.allow <- 7500;
+    }else if(anal.type == "power" || anal.type == "mf"){
+        max.allow <- 2500;
+    }else{
+        max.allow <- 5000;
+    }
+    return(max.allow);
 }

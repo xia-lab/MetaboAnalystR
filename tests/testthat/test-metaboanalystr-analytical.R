@@ -74,7 +74,7 @@ test_that("Multiple factors analysis", {
   mSet<-SanityCheckMeta(mSet, 1);
   mSet<-SetDataTypeOfMeta(mSet);
   mSet<-SanityCheckData(mSet);
-  mSet<-FilterVariable(mSet, "none", "F", 25);
+  mSet<-FilterVariable(mSet, "none", NULL, "F", 25);
   mSet<-PreparePrenormData(mSet);
   mSet<-Normalization(mSet, "NULL", "LogNorm", "NULL", ratio=FALSE, ratioNum=20)
   ## check pca & iPCA res

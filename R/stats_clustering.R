@@ -472,7 +472,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       }
       var.nms <- GetRFSigRowNames()[1:top.num];
     }else{ # mean or iqr
-      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, NULL)$data;
+      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, mSetObj$analSet$type, FALSE)$data;
       var.nms <- colnames(filt.res);
     }
   }
