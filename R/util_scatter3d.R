@@ -8,7 +8,6 @@
 
 my.json.scatter <- function(filenm, containsLoading=F){
   library(igraph);
-  ## 
   res <- qs::qread("score3d.qs")
   
   nodes <- vector(mode="list");
@@ -46,7 +45,7 @@ my.json.scatter <- function(filenm, containsLoading=F){
   
   meta.vec = as.vector(metadf)
   meta.vec.num = as.integer(as.factor(metadf))
-  col.s <- gg_color_hue(length(unique(meta.vec)))
+  col.s <- rgb_array_to_hex_array(res$colors)
   for(i in 1:length(meta.vec.num)){
     col[i] = col.s[meta.vec.num[i]];
   }
@@ -173,8 +172,6 @@ my.json.scatter <- function(filenm, containsLoading=F){
                     axis=res$axis,
                     axisLoading=res2$axis, 
                     metaCol = legendData);
-  #res2$pos.xyz <- load.xyz;
-  #qs::qsave(res2, "pca3d_loadings.qs");
   }
 
   if("facB" %in% names(res)){
@@ -192,6 +189,30 @@ my.json.scatter <- function(filenm, containsLoading=F){
   return(1);
 }
 
+rgb_array_to_hex_array <- function(rgb_array) {
+  # Split the input array into individual RGB strings
+    rgb_strings <- gsub("rgba\\(", "",rgb_array);
+    rgb_strings <- gsub("\\)", "",rgb_strings);
+  
+  # Convert each RGB string to a hex code
+  hex_array <- sapply(rgb_strings, function(rgb_string) {
+    rgb_to_hex(rgb_string)
+  })
+  return(unname(hex_array));
+}
+
+rgb_to_hex <- function(rgb_string) {
+  # Extract the RGB values from the input string
+  rgb_values <- unlist(strsplit(gsub("[rgb()]", "", rgb_string), ","))
+  r <- as.numeric(rgb_values[1])
+  g <- as.numeric(rgb_values[2])
+  b <- as.numeric(rgb_values[3])
+  
+  # Convert the RGB values to hex format
+  hex_code <- paste0("#", sprintf("%02X%02X%02X", r, g, b))
+  
+  return(hex_code)
+}
 
 
 # Define a function to convert RGBA to Hex and opacity values
@@ -236,7 +257,6 @@ scale_range <- function(x, new_min = 0, new_max = 1) {
 
 
 ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
-
 
   level <- as.numeric(level)
   names = strsplit(names.vec, "; ")[[1]]

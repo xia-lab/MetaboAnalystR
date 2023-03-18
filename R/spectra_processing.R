@@ -319,7 +319,6 @@ updateSpectra3DPCA <- function(featureNM = 100){
   xyz0 <- df[,c(1:3)];
   colnames(xyz0) <- rownames(xyz0) <- NULL;
   pca3d$score$xyz <- data.frame(t(xyz0));
-  colnames(pca3d$score$xyz) <- NULL;
   pca3d$score$name <- rownames(df);
   pca3d$score$facA <- df$group;
   
