@@ -13,5 +13,5 @@ Function to create a summary table for univariate biomarker analysis
 \author{
 Jasmine Chong
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

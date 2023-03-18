@@ -45,5 +45,5 @@ To view the score plot, if the name of your mSetObj is mSet, enter "mSet$imgSet$
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

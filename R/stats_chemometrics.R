@@ -616,9 +616,11 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   }
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  mSetObj$analSet$plsr <- pls::plsr(cls~datmat, method='oscorespls', ncomp=comp.num);
+  pls.res <- pls::plsr(cls~datmat, method='oscorespls', ncomp=comp.num);
+  mSetObj$analSet$plsr <- pls.res;
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
+  mSetObj$analSet$plsr$vip.mat <- .calculate.pls.vip(pls.res, comp.num);
   mSetObj$custom.cmpds <- c();
   
   fast.write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
@@ -1032,7 +1034,7 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
+PLSDA.CV <- function(mSetObj=NA, foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1041,7 +1043,7 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
   }
   
   # get classification accuracy using caret
-  plsda.cls <- caret::train(mSetObj$dataSet$norm, mSetObj$dataSet$cls, "pls", trControl=caret::trainControl(method=ifelse(methodName == 'L', "LOOCV", 'CV')), tuneLength=compNum);
+  plsda.cls <- caret::train(mSetObj$dataSet$norm, mSetObj$dataSet$cls, "pls", trControl=caret::trainControl(method='cv', number=foldNum), tuneLength=compNum);
   
   # note, for regression, use model matrix
   if(mSetObj$analSet$plsr$reg){
@@ -1058,7 +1060,7 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
 
   smpl.size <- length(mSetObj$dataSet$cls);
   if(smpl.size >10){
-    plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= ifelse(methodName == 'L', "LOO", 'CV'));
+    plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= 'CV');
   }else{
     plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= "LOO");
   }
@@ -1093,8 +1095,17 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
     coef.mat <- data.matrix(coef.mat[inx.ord, ,drop=FALSE]);
     fast.write.csv(signif(coef.mat,5), file="plsda_coef.csv"); # added 27 Jan 2014
   }
-  # calculate VIP http://mevik.net/work/software/VIP.R
-  pls <- mSetObj$analSet$plsr;
+  
+  mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, fit.info=all.info);
+  return(.set.mSet(mSetObj));
+}
+
+########################################
+# calculate VIP http://mevik.net/work/software/VIP.R
+#####################
+.calculate.pls.vip <- function(plsr.res, compNum){
+
+  pls <- plsr.res;
   b <- c(pls$Yloadings)[1:compNum];
   T <- pls$scores[,1:compNum, drop = FALSE]
   SS <- b^2 * colSums(T^2)
@@ -1113,9 +1124,7 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
   colnames(vip.mat) <- paste("Comp.", 1:ncol(vip.mat));
   
   fast.write.csv(signif(vip.mat,5),file="plsda_vip.csv");
-  
-  mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, vip.mat=vip.mat, fit.info=all.info);
-  return(.set.mSet(mSetObj));
+  return(vip.mat);
 }
 
 #'Perform PLS-DA permutation
@@ -1253,7 +1262,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
   if(type=="vip"){
     mSetObj$analSet$plsda$imp.type <- "vip";
-    vips <- mSetObj$analSet$plsda$vip.mat[,feat.nm];
+    vips <- mSetObj$analSet$plsr$vip.mat[,feat.nm];
     PlotImpVar(mSetObj, vips, "VIP scores", feat.num, color.BW);
   }else{
     mSetObj$analSet$plsda$imp.type <- "coef";
@@ -2482,7 +2491,7 @@ GetPLSBestTune<-function(mSetObj=NA){
 GetPLSSigMat<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "vip"){
-    sig.mat <- mSetObj$analSet$plsda$vip.mat;
+    sig.mat <- mSetObj$analSet$plsr$vip.mat;
   }else if(type == "coef"){
     sig.mat <- mSetObj$analSet$plsda$coef.mat;
   }else{
@@ -2494,7 +2503,7 @@ GetPLSSigMat<-function(mSetObj=NA, type){
 GetPLSSigRowNames<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "vip"){
-    return(rownames(mSetObj$analSet$plsda$vip.mat));
+    return(rownames(mSetObj$analSet$plsr$vip.mat));
   }else if(type == "coef"){
     return(rownames(mSetObj$analSet$plsda$coef.mat));
   }else{
@@ -2505,7 +2514,7 @@ GetPLSSigRowNames<-function(mSetObj=NA, type){
 GetPLSSigColNames<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "vip"){
-    return(colnames(mSetObj$analSet$plsda$vip.mat));
+    return(colnames(mSetObj$analSet$plsr$vip.mat));
   }else if(type == "coef"){
     return(colnames(mSetObj$analSet$plsda$coef.mat));
   }else{

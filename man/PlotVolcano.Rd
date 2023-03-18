@@ -30,5 +30,5 @@ need to be signficant (sig.inx) and or 2. top 5 p, or 2. top 5 left, or 3. top 5
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

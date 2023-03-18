@@ -18,5 +18,5 @@ Batch effect and signal drift correction will be performed with QC-RLSC method i
 \author{
 Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

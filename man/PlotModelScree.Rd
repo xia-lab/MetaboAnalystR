@@ -25,5 +25,5 @@ Plot scree plots for each model in ASCA
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

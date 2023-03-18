@@ -183,6 +183,7 @@ my.json.scatter <- function(filenm, containsLoading=F){
   .set.rdt.set(res);
 
 
+
   sink(filenm);
   cat(toJSON(netData));
   sink();

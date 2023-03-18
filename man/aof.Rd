@@ -17,5 +17,5 @@ Perform anova and only return p values and MSres (for Fisher's LSD)
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

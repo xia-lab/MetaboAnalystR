@@ -458,12 +458,12 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
         var.nms <- names(sort(mSetObj$analSet$aov$p.value))[1:top.num];
       }
     }else if(method.nm == 'vip'){
-      if(is.null(mSetObj$analSet$plsda)){
+      if(is.null(mSetObj$analSet$plsr)){
         PLSR.Anal(mSetObj);
-        PLSDA.CV(mSetObj);
+        #PLSDA.CV(mSetObj);
         mSetObj <- .get.mSet(mSetObj);
       }
-      vip.vars <- mSetObj$analSet$plsda$vip.mat[,1];# use the first component
+      vip.vars <- mSetObj$analSet$plsr$vip.mat[,1];# use the first component
       var.nms <- names(rev(sort(vip.vars)))[1:top.num];
     }else if(method.nm == 'rf'){
       if(is.null(analSet$rf)){
@@ -472,7 +472,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
       }
       var.nms <- GetRFSigRowNames()[1:top.num];
     }else{ # mean or iqr
-      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, NULL)$data;
+      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, mSetObj$analSet$type, FALSE)$data;
       var.nms <- colnames(filt.res);
     }
   }

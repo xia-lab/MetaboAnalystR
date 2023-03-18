@@ -15,5 +15,5 @@ Replace the last column of the ssp.mat with the final selection from users
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

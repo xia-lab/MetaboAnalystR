@@ -39,6 +39,8 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # PreparePrenormData() called already
   data <- qs::qread("prenorm.qs");
 
+print(dim(data));
+
   cls <- mSetObj$dataSet$prenorm.cls;
 
   # note, setup time factor

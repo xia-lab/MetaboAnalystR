@@ -38,5 +38,5 @@ deteriming a0, only applicable for z.ebam (default)
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

@@ -16,5 +16,5 @@ network explorer report, data input documentation.
 \author{
 Jasmine Chong
 McGill University, viewingCanada
-License: MIT License
+License: GNU GPL (>= 2)
 }

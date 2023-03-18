@@ -13,5 +13,5 @@ for the network explorer report overview
 \author{
 Jasmine Chong
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

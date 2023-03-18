@@ -124,7 +124,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
       mat <- as.matrix(mSetObj$analSet$rf.sigmat);
       
     }else{ # "mean" or "iqr"
-      mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, NULL)$data;
+      mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, mSetObj$analSet$type, FALSE)$data;
       mat <- t(mat);
     }
     

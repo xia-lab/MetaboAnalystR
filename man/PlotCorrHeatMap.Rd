@@ -47,7 +47,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{corrCutoff}{set corrCutoff
 McGill University, Canada
-License: MIT License}
+License: GNU GPL (>= 2)}
 }
 \description{
 Plot correlation heatmap

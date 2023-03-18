@@ -34,5 +34,5 @@ Scatter sample trend comparison between all sample of different batches
 \author{
 Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

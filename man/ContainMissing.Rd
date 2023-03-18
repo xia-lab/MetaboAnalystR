@@ -15,5 +15,5 @@ ContainMissing is used to check if any missing data exists in the uploaded file.
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

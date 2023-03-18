@@ -24,5 +24,5 @@ for mummichog analysis. It makes sure that all necessary columns are present.
 \author{
 Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

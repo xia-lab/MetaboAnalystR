@@ -21,5 +21,5 @@ setInclusionDataSets#'
 Jeff Xia\email{jeff.xia@mcgill.ca} 
 Zhiqiang Pang\email{zhiqiang.pang@mail.mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

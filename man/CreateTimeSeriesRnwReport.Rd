@@ -19,5 +19,5 @@ Create timeseries .Rnw file template
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }

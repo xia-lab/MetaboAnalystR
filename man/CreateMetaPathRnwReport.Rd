@@ -18,5 +18,5 @@ Puts together the analysis report
 \author{
 Jasmine Chong
 McGill University, Canada
-License: MIT License
+License: GNU GPL (>= 2)
 }
