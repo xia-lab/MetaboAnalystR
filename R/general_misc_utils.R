@@ -1276,13 +1276,13 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, priv
     rk <- rank(-filter.val, ties.method='random');
 
     remain.num <- ncol(int.mat)*(1-(filter.cutoff/100));
-    remain <- rk < remain.num;
+    remain <- rk <= remain.num;
     msg <- paste(msg, "Feature filtering based on", nm);
 
     if(!privilidged){
         max.allow <- .get.max.allow(anal.type);  
         if(sum(remain) > max.allow){
-            remain <- rk < max.allow;
+            remain <- rk <= max.allow;
             msg <- paste(msg, paste("Further reduced to", max.allow, "features based on", nm));   
         }
     }

@@ -1034,7 +1034,7 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
-PLSDA.CV <- function(mSetObj=NA, foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
+PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1043,7 +1043,7 @@ PLSDA.CV <- function(mSetObj=NA, foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj)
   }
   
   # get classification accuracy using caret
-  plsda.cls <- caret::train(mSetObj$dataSet$norm, mSetObj$dataSet$cls, "pls", trControl=caret::trainControl(method='cv', number=foldNum), tuneLength=compNum);
+  plsda.cls <- caret::train(mSetObj$dataSet$norm, mSetObj$dataSet$cls, "pls", trControl=caret::trainControl(method=ifelse(cvOpt == 'loo', "LOOCV", 'CV'), number=foldNum), tuneLength=compNum);
   
   # note, for regression, use model matrix
   if(mSetObj$analSet$plsr$reg){
@@ -1055,12 +1055,11 @@ PLSDA.CV <- function(mSetObj=NA, foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj)
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
   # use the classical regression to get R2 and Q2 measure
-
   # https://github.com/xia-lab/MetaboAnalystR/issues/66
 
   smpl.size <- length(mSetObj$dataSet$cls);
   if(smpl.size >10){
-    plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= 'CV');
+    plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= ifelse(cvOpt == 'loo', "LOO", 'CV'));
   }else{
     plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= "LOO");
   }
@@ -2019,13 +2018,13 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'License: GNU GPL (>= 2)
 #'@export
 
-SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){    
-  .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt);
+SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum=5, doCV=FALSE){    
+  .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt, foldNum, doCV);
   .perform.computing();
   .save.splsr.anal(mSetObj);
 }
 
-.prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
+.prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum, doCV){
   
   if(compVarOpt == "same"){
     comp.var.nums <- rep(var.num, comp.num);
@@ -2048,9 +2047,10 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
     compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_spls.Rc");
     my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
     
-    # perform validation
-    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
-    my.res$error.rate <- perf.res$error.rate$overall;
+    if(doCV){# perform validation
+        perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = foldNum);
+        my.res$error.rate <- perf.res$error.rate$overall;
+    }
     return(my.res);
   }
   

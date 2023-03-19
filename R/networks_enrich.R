@@ -350,41 +350,6 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     return(pheno.dic);
 }
 
-.filter.data <- function(int.mat, max.allow=1000, filter="iqr"){
-    if (filter == "rsd" ){
-      sds <- apply(int.mat, 2, sd, na.rm=T);
-      mns <- apply(int.mat, 2, mean, na.rm=T);
-      filter.val <- abs(sds/mns);
-      nm <- "Relative standard deviation";
-    }else if (filter == "nrsd" ){
-      mads <- apply(int.mat, 2, mad, na.rm=T);
-      meds <- apply(int.mat, 2, median, na.rm=T);
-      filter.val <- abs(mads/meds);
-      nm <- "Non-paramatric relative standard deviation";
-    }else if (filter == "mean"){
-      filter.val <- apply(int.mat, 2, mean, na.rm=T);
-      nm <- "mean";
-    }else if (filter == "sd"){
-      filter.val <- apply(int.mat, 2, sd, na.rm=T);
-      nm <- "standard deviation";
-    }else if (filter == "mad"){
-      filter.val <- apply(int.mat, 2, mad, na.rm=T);
-      nm <- "Median absolute deviation";
-    }else if (filter == "median"){
-      filter.val <- apply(int.mat, 2, median, na.rm=T);
-      nm <- "median";
-    }else{ # iqr
-      filter.val <- apply(int.mat, 2, IQR, na.rm=T);
-      nm <- "Interquantile Range";
-    }
-    
-    # get the rank of the filtered variables
-    rk <- rank(-filter.val, ties.method='random');
-    remain <- rk < max.allow;
-    #print("performed filtering!");
-    return(int.mat[, remain]);
-}
-
 # Perform DSPC network analysis
 PerformDSPC <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj); 
@@ -405,14 +370,31 @@ PerformDSPC <- function(mSetObj=NA){
   }else{
     node.ids <- node.nms;
   }
-
-  # at most 1000, filter by IQR to top 1000
-  if(ncol(dat) > 1000){
-    dat <- .filter.data(dat);
-  }
-
   colnames(dat) <- node.ids;
-  dspc.res <- DGlasso(dat, alpha=.01, FDR.type='BH');
+
+  # this is computationally intensive, put a limit if not local
+  if(.on.public.web){
+    if(ncol(dat) > 1000){
+        filter.val <- apply(dat, 2, IQR, na.rm=T);
+        rk <- rank(-filter.val, ties.method='random');
+        my.inx <- rk <= 1000;
+        dat <- dat[,my.inx];
+        node.ids <- node.ids[my.inx];
+        node.nms <- node.nms[my.inx];
+        print("Data is reduced to 1000 vars based on IQR ..");
+    }
+  }
+  dspc.res <- tryCatch({
+        DGlasso(dat, alpha=.01, FDR.type='BH');
+      }, error = function(e) {
+        AddErrMsg("DSPC failed - possible reason: some variables are highly collinear!");
+        return(NULL); # this is the return value 
+  });
+
+  if(is.null(dspc.res)) {
+        AddErrMsg("DSPC failed - possible reason: some variables are highly collinear!");
+        return(0); # return the block
+  }
   node.res <- data.frame(Id=node.ids, Label=node.nms);
   node.res <- node.res[!duplicated(node.res$Id),];
   fast.write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
@@ -456,6 +438,8 @@ DGlasso <- function(X, alpha = 0.05, lambda = NULL, FDRctrl = FALSE, FDR.type='b
   }
   
   Sigma.hat_X = var(X);
+  #Theta.hat_glasso = glasso(s=Sigma.hat_X, rho=lambda, approx=TRUE, penalize.diagonal=FALSE)$wi; # approx always give error?!
+
   Theta.hat_glasso = glasso(s=Sigma.hat_X, rho=lambda, penalize.diagonal=FALSE)$wi;
 
   # T.hat = as.vector(Theta.hat_glasso)-kronecker(Theta.hat_glasso,Theta.hat_glasso,"*") %*% as.vector(Sigma.hat_X - chol2inv(chol(Theta.hat_glasso)))

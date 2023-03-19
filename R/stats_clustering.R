@@ -512,7 +512,6 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
                         clstDist, palette, font.size, viewOpt="detail", rowV=T, 
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
 
-#save.image("Test.RData");
 
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -540,6 +539,19 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     hc.dat<-as.matrix(my.data[,var.inx]);
   }
   
+  # need to control for very large data plotting
+  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+     includeRowNames <- FALSE;
+  }
+  if(.on.public.web){
+    if(ncol(hc.dat) > 5000){
+        filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+        rk <- rank(-filter.val, ties.method='random');
+        hc.dat <- hc.dat[,rk <=5000];
+        print("Data is reduced to 5000 vars based on IQR ..");
+    }
+  }
+
   colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
   
   if(!ordered.cls && cls.class == "integer"){

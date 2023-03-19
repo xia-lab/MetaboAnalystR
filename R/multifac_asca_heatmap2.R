@@ -136,7 +136,21 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   }
   
   hc.dat <- as.matrix(data);
-  
+
+  # need to control for very large data plotting
+  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+     includeRowNames <- FALSE;
+  }
+  if(.on.public.web){
+    if(ncol(hc.dat) > 5000){
+        filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+        rk <- rank(-filter.val, ties.method='random');
+        hc.dat <- hc.dat[,rk <=5000];
+        data <- data[,rk <=5000];
+        print("Data is reduced to 5000 vars based on IQR ..");
+    }
+  }
+
   # compute size for heatmap
   plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
   h <- plot_dims$height;

@@ -999,9 +999,9 @@ GetNormGroupNames <- function(mSetObj=NA){
   levels(mSetObj$dataSet$cls);
 }
 
-GetOrigSmplGroupNames <- function(mSetObj=NA){
+GetOrigSmplSize <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  as.character(mSetObj$dataSet$orig.cls);
+  length(mSetObj$dataSet$orig.cls);
 }
 
 GetOrigSmplGroupNamesPerMeta <- function(mSetObj=NA, metaname="NA"){

@@ -170,14 +170,14 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     data <- t(data);
   }
   
-  if(ncol(data) > 1000){
-    filter.val <- apply(data.matrix(data), 2, IQR, na.rm=T);
-    rk <- rank(-filter.val, ties.method='random');
-    data <- as.data.frame(data[,rk <=1000]);
-    
-    print("Data is reduced to 1000 vars ..");
+  if(.on.public.web){
+    if(ncol(data) > 1000){
+        filter.val <- apply(data.matrix(data), 2, IQR, na.rm=T);
+        rk <- rank(-filter.val, ties.method='random');
+        data <- as.data.frame(data[,rk <=1000]);
+        print("Data is reduced to 1000 vars ..");
+    }
   }
-
   # compare p-values w. hmisc + cor.test
   colnames(data) <- substr(colnames(data), 1, 18);
   corr.mat <- cor(data, method=cor.method);
