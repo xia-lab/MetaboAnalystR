@@ -606,23 +606,19 @@ parseFisher <- function(fisher, cut.off){
 #' @param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #' @param nonpar Logical, use a non-parametric test (T) or not (F)
 #' @param thresh Numeric, from 0 to 1, indicate the p-value threshold
-#' @param post.hoc Input the name of the post-hoc test, "fisher" or "tukey"
 #' @param all_results Logical, if TRUE, it will output the ANOVA results for all compounds 
-#' with no post-hoc tests performed.
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
 #'
-ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE) {
+ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
   
    mSetObj <- .get.mSet(mSetObj);
    if(!nonpar){
       aov.nm <- "One-way ANOVA";
-      fileName <- "anova_posthoc.csv";
     }else{
       aov.nm <- "Kruskal Wallis Test";
-      fileName <- "kw_posthoc.csv";
     }
 
     sig.num <- 0;
@@ -654,74 +650,33 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", a
     sig.num <- sum(inx.imp, na.rm = TRUE);
     AddMsg(paste(c("A total of", sig.num, "significant features were found."), collapse=" "));
 
+    res <- 0;
+    sig.f <- sig.p <- sig.fdr <- 1;
+
     if(sig.num > 0){
         res <- 1;
-
         sig.f <- fstat[inx.imp];
         sig.p <- p.value[inx.imp];
-        fdr.p <- fdr.p[inx.imp];
-        cmp.res <- NULL;
-        post.nm <- NULL;
-
-        if(nonpar){
-            sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), 'NA');
-            colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
-        }else{          
-            # do post-hoc only for signficant entries
-            # note aov obj is not avaible using fast version
-            # need to recompute using slower version for the sig ones
-            if(.on.public.web & RequireFastUnivTests(mSetObj)){
-                aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
-            }else{
-                aov.imp <- aov.res[inx.imp];
-            }
-
-            if(post.hoc=="tukey"){
-                tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
-                cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
-                post.nm = "Tukey's HSD";
-            }else{
-                fisher.res<-lapply(aov.imp, FisherLSD, thresh);
-                cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
-                post.nm = "Fisher's LSD";
-            }
-
-            # create the result dataframe,
-            # note, the last column is string, not double
-            sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(fdr.p,5), cmp.res);
-            colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
+        sig.fdr <- fdr.p[inx.imp];
+        if(exists("aov.res")){
+            qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
         }
-
-        rownames(sig.mat) <- names(sig.p);
-        # order the result simultaneously
-        ord.inx <- order(sig.p, decreasing = FALSE);
-        sig.mat <- sig.mat[ord.inx,,drop=F];
-
-        fast.write.csv(sig.mat,file=fileName);
-        aov<-list (
-            aov.nm = aov.nm,
-            sig.num = sig.num,
-            sig.nm = fileName,
-            raw.thresh = thresh,
-            thresh = -log10(thresh), # only used for plot threshold line
-            p.value = p.value,
-            p.log = -log10(p.value),
-            inx.imp = inx.imp,
-            post.hoc = post.hoc,
-            sig.mat = sig.mat
-        );
-    }else{
-        res <- 0;
-        aov<-list (
-            aov.nm = aov.nm,
-            sig.num = sig.num,
-            raw.thresh = thresh,
-            thresh = -log10(thresh), # only used for plot threshold line
-            p.value = p.value,
-            p.log = -log10(p.value),
-            inx.imp = inx.imp
-        );
     }
+
+    aov<-list (
+            aov.nm = aov.nm,
+            nonpar = nonpar,
+            sig.num = sig.num,
+            raw.thresh = thresh,
+            thresh = -log10(thresh), # only used for plot threshold line
+            p.value = p.value,
+            p.log = -log10(p.value),
+            fdr.p = fdr.p,
+            inx.imp = inx.imp,
+            sig.f = sig.f,
+            sig.p = sig.p,
+            sig.fdr = sig.fdr
+        );
 
     mSetObj$analSet$aov <- aov;
   
@@ -731,6 +686,90 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", a
     }else{
         return(.set.mSet(mSetObj));
     }
+}
+
+# Do posthoc tests on significant features from ANOVA tests
+Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
+    
+    mSetObj <- .get.mSet(mSetObj);
+    sig.num <- mSetObj$analSet$aov$sig.num;
+    inx.imp <- mSetObj$analSet$aov$inx.imp;
+    sig.f <- mSetObj$analSet$aov$sig.f;
+    sig.p <- mSetObj$analSet$aov$sig.p;
+    sig.fdr <- mSetObj$analSet$aov$sig.fdr;
+    nonpar <- mSetObj$analSet$aov$nonpar;
+    cmp.res <- NULL;
+    post.nm <- NULL;
+
+    if(nonpar){
+        sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), 'NA');
+        colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
+        fileName <- "kw_posthoc.csv";
+    }else{     
+        fileName <- "anova_posthoc.csv";    
+ 
+        # do post-hoc only for signficant entries
+        # note aov obj is not avaible using fast version
+        # need to recompute using slower version for the sig ones
+        if(.on.public.web & RequireFastUnivTests(mSetObj)){
+            data <- as.matrix(mSetObj$dataSet$norm);
+            cls <- mSetObj$dataSet$cls;
+            aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
+        }else{
+            aov.imp <- qs::qread("aov_res_imp.qs");
+        }
+
+        # note this is only for post-hoc analysis. max 1000 in case too large
+        if(sig.num > 1000){
+            # update inx.imp   
+            my.ranks <- rank(sig.p);
+            inx.imp <- my.ranks <= 1000;
+            aov.imp <- aov.imp[inx.imp];
+        }
+
+        if(post.hoc=="tukey"){
+            tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
+            my.cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
+            post.nm = "Tukey's HSD";
+        }else{
+            fisher.res<-lapply(aov.imp, FisherLSD, thresh);
+            my.cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
+            post.nm = "Fisher's LSD";
+        }
+        
+        cmp.res <- my.cmp.res;
+        # post hoc only top 1000;
+
+        if(sig.num > 1000){
+            cmp.res <- rep(NA, sig.num); 
+            cmp.res[inx.imp] <- my.cmp.res;
+            post.nm <- paste(post.nm, "(top 1000)");
+        }
+        # create the result dataframe,
+        # note, the last column is string, not double
+        sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), cmp.res);
+        colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
+    }
+
+    rownames(sig.mat) <- names(sig.p);
+    # order the result simultaneously
+    ord.inx <- order(sig.p, decreasing = FALSE);
+    sig.mat <- sig.mat[ord.inx,,drop=F];
+
+    # note only display top 1000 max for web (save all to the file)
+    fast.write.csv(sig.mat,file=fileName);
+    if(sig.num > 1000){
+        sig.mat <- sig.mat[1:1000,];
+    }
+
+    aov <- mSetObj$analSet$aov; 
+    # add to the list, don't use append, as it does not overwrite
+    aov$sig.nm <- fileName;
+    aov$post.hoc <- post.hoc;
+    aov$sig.mat <- sig.mat;
+
+    mSetObj$analSet$aov <- aov;
+    return(.set.mSet(mSetObj));  
 }
 
 #'Plot ANOVA 
@@ -1136,13 +1175,14 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
 
 GetFtestRes <- function(mSetObj=NA, nonpar=F){
   
-    mSetObj <- .get.mSet(mSetObj);  
-    data <- as.matrix(mSetObj$dataSet$norm);
-    cls <- mSetObj$dataSet$cls;
     if(!exists("mem.aov")){
         require("memoise");
         mem.aov <<- memoise(.get.ftest.res);
     }
+
+    mSetObj <- .get.mSet(mSetObj);  
+    data <- as.matrix(mSetObj$dataSet$norm);
+    cls <- mSetObj$dataSet$cls;
     print("using cache .......");
     return(mem.aov(data, cls, nonpar));
 }
