@@ -2514,12 +2514,17 @@ GetPLSSigRowNames<-function(mSetObj=NA, type){
 GetPLSSigColNames<-function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "vip"){
-    return(colnames(mSetObj$analSet$plsr$vip.mat));
+    my.mat <- mSetObj$analSet$plsr$vip.mat;
   }else if(type == "coef"){
-    return(colnames(mSetObj$analSet$plsda$coef.mat));
+    my.mat <- mSetObj$analSet$plsda$coef.mat;
   }else{
-    return(colnames(mSetObj$analSet$plsr$imp.loads));
+    my.mat <- mSetObj$analSet$plsr$imp.loads;
   }
+  if(is.null(my.mat)){
+    AddErrMsg("The object does not exist. Please perform CV first.");
+    return("NA");
+  }
+  return(colnames(my.mat));
 }
 
 GetPLS_CVRowNames <- function(mSetObj=NA){
