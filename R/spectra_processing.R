@@ -676,8 +676,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     
     res2save <- rbind(res1, res)
     qs::qsave(res2save, file = paste0("EIC_layer_", featureOder,".qs"))
-    
-    res1 <- cbind(res1, alpha1 = 0.03, alpha2 = 0.1);
+    if(nrow(res1)>0)  res1 <- cbind(res1, alpha1 = 0.03, alpha2 = 0.1);
     resf <- rbind(res1, cbind(res, alpha1 = 0.03, alpha2 = 0.1));
   } else {
     qs::qsave(res, file = paste0("EIC_layer_", featureOder,".qs"));
