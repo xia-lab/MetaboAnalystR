@@ -20,20 +20,20 @@
 #'@export
 #'
 
-PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped){
+PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
   msg <- ""; 
   
   #Filter data
-  data <- PerformDataFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
+  data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
   
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
   
   #Normalize data
-  data <- NormalizingDataOmics(data, norm.opt, "NA", "NA");
+  data <- NormalizeData(data, norm.opt, "NA", "NA");
   
   msg <- paste(norm.msg, msg);
   dataSet$data.norm <- data;
@@ -47,7 +47,7 @@ PerformExpressNormalization <- function(dataName, norm.opt, var.thresh, count.th
   return(RegisterData(dataSet));
 }
 
-PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
+PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations
@@ -91,7 +91,7 @@ PerformDataFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapp
   return(data);
 }
 
-NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
+NormalizeDataMetaMode <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   if(nm == "NA"){
     paramSet <- readSet(paramSet, "paramSet");;
     mdata.all <- paramSet$mdata.all;
@@ -100,7 +100,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
       dataName <- sel.nms[i];
       dataSet = readDataset(dataName);
       data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, dataName);
-      data <- NormalizingDataOmics(data.filtered,opt, colNorm, scaleNorm);
+      data <- NormalizeData(data.filtered,opt, colNorm, scaleNorm);
       if(length(data) == 1){
         return(0);
       }
@@ -111,7 +111,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   }else{
     dataSet <- readDataset(nm);
     data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, nm);
-    data <- NormalizingDataOmics(data.filtered,opt, colNorm, scaleNorm);
+    data <- NormalizeData(data.filtered,opt, colNorm, scaleNorm);
     if(length(data) == 1){
       return(0);
     }
@@ -124,7 +124,7 @@ NormalizingDataMeta <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   return(1);
 }
 
-NormalizingDataOmics <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
+NormalizeData <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
   msg <- ""
   row.nms <- rownames(data);
   col.nms <- colnames(data);

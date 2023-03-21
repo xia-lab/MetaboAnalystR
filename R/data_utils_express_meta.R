@@ -659,7 +659,7 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
   
   data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, dataName);
   if(normOpt != "none" && alg == "limma"){
-    data.comparison <- NormalizingDataOmics(data.filtered, normOpt, "NA", "NA");
+    data.comparison <- NormalizeData(data.filtered, normOpt, "NA", "NA");
   }else{
     data.comparison <- data.filtered;
   }
