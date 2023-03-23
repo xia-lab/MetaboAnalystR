@@ -106,6 +106,45 @@ SanityCheckData <- function(fileName){
   return(RegisterData(dataSet, 1));
 }
 
+#####'Sanity check metadata after metadata edited 
+SanityCheckMeta <- function(fileName,init){
+  msgSet <- readSet(msgSet, "msgSet");
+  dataSet <- readDataset(fileName);
+  meta <- dataSet$meta
+  if(init==1){
+    rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
+    meta = meta[,!rmidx,drop=F]
+
+  }else{
+    if(any(is.na(meta))|any(meta=="")){
+      return(2)
+    }
+  }
+  # use first column by default
+  cls <- meta[,1]
+  
+  # check class info
+  cls.lbl <- as.factor(as.character(cls));
+  min.grp.size <- min(table(cls.lbl));
+  cls.num <- length(levels(cls.lbl));
+  if(min.grp.size<2){
+    msg <- paste0( "No replicates were detected for group  ",as.character(cls.lbl[which( table(cls.lbl)<2)])," in  ",colnames(meta)[1])
+     msgSet$current.msg <- msg;
+    saveSet(msgSet, "msgSet");
+    return(0)
+  }
+  for(i in 1:ncol(meta)){
+    
+    meta[,i]=as.factor( meta[,i])
+  }
+  
+  dataSet$cls <- cls.lbl
+  dataSet$meta <- meta
+  saveSet(msgSet, "msgSet");
+   RegisterData(dataSet);
+  return(1);
+}
+
 
 # remove data object, the current dataSet will be the last one by default 
 RemoveData <- function(dataName){
@@ -174,7 +213,7 @@ GetFeatureNum <-function(dataName){
   return(nrow(dataSet$data.norm));
 }
 
-ClearFactorStrings<-function(cls.nm, query){
+ClearFactorStrings<-function(query,cls.nm){
   # remove leading and trailing space
   query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
   
@@ -182,19 +221,32 @@ ClearFactorStrings<-function(cls.nm, query){
   query <- gsub(" +","_",query);
   # remove non alphabets and non numbers 
   query <- gsub("[^[:alnum:] ]", "_", query);
-  
-  # test all numbers (i.e. Time points)
   chars <- substr(query, 0, 1);
   num.inx<- chars >= '0' & chars <= '9';
   if(all(num.inx)){
     query = as.numeric(query);
-    nquery <- paste(cls.nm, query, sep="_");
-    query <- factor(nquery, levels=paste(cls.nm, sort(unique(query)), sep="_"));
+    query <- factor(query, levels=sort(unique(query)));
   }else{
-    query[num.inx] <- paste(cls.nm, query[num.inx], sep="_");
-    query <- factor(query);
+   query<-factor(query, levels= unique(query))
   }
   return (query);
+}
+
+# get qualified inx with at least number of replicates
+GetDiscreteInx <- function(my.dat, min.rep=2){
+  good.inx <- apply(my.dat, 2, function(x){
+    good1.inx <- length(x) > length(unique(x));
+    good2.inx <- min(table(x)) >= min.rep;
+    return (good1.inx & good2.inx);
+  });
+  return(good.inx);
+}
+
+GetNumbericalInx <- function(my.dat){
+  good.inx <- apply(my.dat, 2, function(x){
+                return(all(!is.na(as.numeric(as.character(x))))); 
+            });
+   return(good.inx);
 }
 
 .set.dataSet <- function(dataSetObj=NA){
@@ -478,7 +530,6 @@ CheckMetaIntegrity <- function(){
     cnms[[i]] <- colnames(dat$data.norm);
     metas[[i]] <- as.vector(dat$meta[,1]);
   }
-
   if(length(metas) == 0){
     msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
     saveSet(msgSet, "msgSet");
@@ -524,7 +575,6 @@ ReadOmicsData <- function(fileName) {
   
   meta.info <- list();
   cls.inx <- grep("^#CLASS", data[,1]);
-
     if(length(cls.inx) > 0){ 
       for(i in 1:length(cls.inx)){
         inx <- cls.inx[i];
@@ -532,23 +582,46 @@ ReadOmicsData <- function(fileName) {
         if(nchar(cls.nm) > 6){
           cls.nm <- substring(cls.nm, 7); # remove class
         }
+      if(grepl("[[:blank:]]", cls.nm)){
+        cls.nm<- gsub("\\s+","_", cls.nm);
+        msg <- c(msg, " Blank spaces in group names are replaced with underscore '_'! ");
+      }
         cls.lbls <- data[inx, -1];
         # test NA
         na.inx <- is.na(cls.lbls);
         cls.lbls[na.inx] <- "NA";
-        cls.lbls <- ClearFactorStrings(cls.nm, cls.lbls);
+      cls.lbls <- ClearFactorStrings(cls.lbls,cls.nm);
         
         meta.info[[cls.nm]] <- cls.lbls;
       }
       meta.info <- data.frame(meta.info);
-      dataSet$meta <- meta.info
+    smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
+    rownames(meta.info) <- smpl.nms;
+    
+    disc.inx <- GetDiscreteInx(meta.info);
+    if(sum(disc.inx) == length(disc.inx)){
+      na.msg <- "All metadata columns are OK!"
+    }else{
+      bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
+      na.msg <- paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !");
+    }
+    
+    cont.inx <- GetNumbericalInx(meta.info);
+    cont.inx <- !disc.inx & cont.inx; # discrete is first
+    
+    if(sum(cont.inx)>0){
+      # make sure the discrete data is on the left side
+      meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
+    }
+    dataSet$meta <- dataSet$metaOrig <- meta.info
       data <- data[-cls.inx,];
-      smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
-      rownames(dataSet$meta) <- smpl.nms;
       dataSet$fst.cls <- dataSet$meta[,1]
       if(ncol(meta.info)>1){
       dataSet$sec.cls <- dataSet$meta[,2]
       }
+    
+    dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
+    dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
     }
 
   if(class(data) == "try-error" || ncol(data) == 1){
@@ -637,7 +710,7 @@ ReadOmicsData <- function(fileName) {
 
   # update current dataset
   saveSet(msgSet,"msgSet");
-  saveSet(paramSet,"paramSet");
+  paramSet$mdata.all[[fileName]]<-1
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   saveSet(paramSet, "paramSet");
   return(RegisterData(dataSet));

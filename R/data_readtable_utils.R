@@ -15,19 +15,24 @@
 #'License: MIT
 #'@export
 #'
-ReadTabExpressData <- function(fileName, path="") {
+ReadTabExpressData <- function(fileName, metafileName,metaContain=false,path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
   }  
+
+  meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
+
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
-
+  paramSet$isMetaContain = metaContain
   # rename data to data.orig
   int.mat <- dataSet$data;
   dataSet$data <- NULL;
   dataSet$name <- fileName;
-  
+  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info
+  dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
+  dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
   msg <- paste("a total of ", ncol(int.mat), " samples and ", nrow(int.mat), " features were found");
   
   # remove NA, null
@@ -63,10 +68,8 @@ ReadTabExpressData <- function(fileName, path="") {
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm <- data.proc;
   paramSet$anal.type <- "onedata";
-
-  paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, fileName);
+  paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, fileName);
   paramSet$jsonNms$dataName <- fileName;
-
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet));
@@ -87,50 +90,85 @@ ReadAnnotationTable <- function(fileName) {
 }
 
 
+###read in metadata file for meta-analysis mode
 ReadMetaData <- function(metafilename){
     paramSet <- readSet(paramSet, "paramSet");
-    metadata <- .readDataTable(metafilename);
+  msgSet <- readSet(msgSet,"msgSet");
+  metadata <- try(data.table::fread(metafilename, header=TRUE, check.names=FALSE, data.table=FALSE));
     metadata[is.na(metadata)] = "NA"
     if(class(metadata) == "try-error"){
-      AddErrMsg("Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA.");
-      return(0);
+    msgSet$current.msg = "Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA."
+    saveSet(msgSet, "msgSet");
+    return(NULL);
     }
+  # look for #NAME, store in a list
+  sam.inx <- grep("^#NAME", colnames(metadata)[1]);
+  if(length(sam.inx) > 0){
+    smpl_nms<-metadata[,1];
+    smpl_var<-colnames(metadata[-1]);
+  }else{
+    msgSet$current.msg = "Please make sure you have the label #NAME in your sample data file!"
+    saveSet(msgSet, "msgSet");
+    return(NULL);
+  }
+  # converting to character matrix as duplicate row names not allowed in data frame.
+  metadata <-data.frame(lapply(1:ncol(metadata),function(x){
+    metadata[,x]=unlist(ClearFactorStrings(metadata[,x]))
+  }))
+  metadata <- metadata[,-1,drop=F];
+  if(nrow(metadata)==1){
+    msgSet$current.msg = "Only one sample in the dataset or the metadata file must be transposed!"
+    saveSet(msgSet, "msgSet");
+    return(NULL);
+  }
+  rownames(metadata) <- smpl_nm;
+  colnames(metadata) <- smpl_var;
+  
+  na.msg <- ""
+  disc.inx <- GetDiscreteInx(metadata);
+  if(sum(disc.inx) == length(disc.inx)){
+    msgSet$na.msg <- "All metadata columns are OK!"
+  }else{
+    bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
+    msgSet$na.msg <- paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !");
+  }
+  
+
+  cont.inx <- GetNumbericalInx(metadata);
+  cont.inx <- !disc.inx & cont.inx; # discrete is first
+  
+  if(sum(cont.inx)>0){
+    # make sure the discrete data is on the left side
+    metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
+  }
+
     mdata.all <- paramSet$mdata.all;
-    paramSet <- readSet(paramSet, "paramSet");
     # need to add metadata sanity check
     # are sample names identical to data$orig
     # order samples in same way as in abundance table
-    smpl.nms <- metadata[,1];
-    smpl.var <- colnames(metadata)[-1];  
     sel.nms <- names(mdata.all);
 
 for(i in 1:length(sel.nms)){
   dataSet <- readDataset(sel.nms[i]);
   data.smpl.nms <- colnames(dataSet$data.norm)
-  nm.hits <- data.smpl.nms %in% smpl.nms;
+    nm.hits <- data.smpl.nms %in% smpl_nms;
   if(!all(nm.hits)){
-    AddErrMsg("Some sample names in your data are not in the metadata file!");
-    mis.nms <- data.smpl.nms[!nm.hits];
-    AddErrMsg(paste(mis.nms, collapse="; "));
-    return(0);
+      msgSet$current.msg = paste0("Some sample names including ",paste(mis.nms, collapse="; ") ," in your data are not in the metadata file!")
+      saveSet(msgSet, "msgSet");
+    return(NULL);
   }
   
   # now remove extra meta if present, and order them
-  nm.hits2 <- which(smpl.nms %in% data.smpl.nms);
-  metadata1 <- metadata[nm.hits2,];
-  metadata1 <- metadata1[,-1];
-
-  if(!is.data.frame(metadata1)){
-    metadata1 <- data.frame(metadata1, stringsAsFactors=T);
-    colnames(metadata1) <- colnames(metadata)[2]
-  }else{
+    nm.hits2 <- which(smpl_nms %in% data.smpl.nms);
+    metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
-  }
-  rownames(metadata1) <- data.smpl.nms;
-  dataSet$meta <- metadata1;
+
+    dataSet$meta <- dataSet$metaOrig <- metadata1
+    dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
+    dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
   RegisterData(dataSet);
 }
-  
+  saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
   return(1);
 }
@@ -140,6 +178,7 @@ for(i in 1:length(sel.nms)){
 # can have many classes, stored in meta.info (starts with #) 
 # return a list (data.name, data.frame, meta.data)
 .readTabData <- function(dataName) {
+
   msgSet <- readSet(msgSet, "msgSet");
   if(length(grep('\\.zip$',dataName,perl=TRUE))>0){
     dataName <- unzip(dataName);
@@ -164,41 +203,18 @@ for(i in 1:length(sel.nms)){
   
   msg <- NULL;
   # using the powerful fread function, 10 times faster, note: default return data.table, turn off
-  dat1 <- .readDataTable(dataName);
-  if(is.null(dat1)){
+  datOrig <- .readDataTable(dataName);
+  if(is.null(datOrig)){
     return(NULL);
   }
-  # look for #CLASS, could have more than 1 class labels, store in a list
-  meta.info <- list();
-  cls.inx <- grep("^#CLASS", dat1[,1]);
-  if(length(cls.inx) > 0){ 
-    for(i in 1:length(cls.inx)){
-      inx <- cls.inx[i];
-      cls.nm <- substring(dat1[inx, 1],2); # discard the first char #
-      if(nchar(cls.nm) > 6){
-        cls.nm <- substring(cls.nm, 7); # remove class
-      }
-      cls.lbls <- dat1[inx, -1];
-      # test NA
-      na.inx <- is.na(cls.lbls);
-      cls.lbls[na.inx] <- "NA";
-      cls.lbls <- ClearFactorStrings(cls.nm, cls.lbls);
-      meta.info[[cls.nm]] <- cls.lbls;
-    }
-  }else{
-    msgSet$current.msg <- "No metadata labels #CLASS found in your data!";
-    saveSet(msgSet, "msgSet");
-    return(NULL);
-  }
-  
-  meta.info <- data.frame(meta.info);
-  dat1 <- .to.numeric.mat(dat1);
+  print(str(datOrig))
+  dat1 <- .to.numeric.mat(datOrig);
   
   list(
     name= basename(dataName),
+    data_orig = datOrig,
     data=dat1,
-    type="count", # to be updated later
-    meta=meta.info
+    type="count" # to be updated later
   );
 }
 
@@ -208,7 +224,6 @@ for(i in 1:length(sel.nms)){
 # in such as, use the slower read.table method
 .readDataTable <- function(fileName){
   msgSet <- readSet(msgSet, "msgSet");
-
   if(length(grep('\\.zip$',fileName,perl=TRUE))>0){
     fileName <- unzip(fileName);
     if(length(fileName) > 1){
@@ -255,3 +270,114 @@ for(i in 1:length(sel.nms)){
   dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
   return(dat);
 }
+
+
+####read meta file
+#### return a list
+.readMetaData <- function(metafileName,datOrig,metaContain) {
+  msgSet <- readSet(msgSet, "msgSet");
+  na.msg = ""
+  if(is.null(msgSet$current.msg)){
+    msg <-""
+  }else{
+    msg <- msgSet$current.msg
+  }
+
+  if(metaContain=="true"){
+    meta.info <- list();
+    # look for #CLASS, could have more than 1 class labels, store in a list
+     cls.inx <- grep("^#CLASS", datOrig[,1]);
+    if(length(cls.inx) > 0){ 
+      for(i in 1:length(cls.inx)){
+        inx <- cls.inx[i];
+        cls.nm <- substring(datOrig[inx, 1],2); # discard the first char #
+        if(nchar(cls.nm) > 6){
+          cls.nm <- substring(cls.nm, 7); # remove class
+        }
+        if(grepl("[[:blank:]]", cls.nm)){
+          cls.nm<- gsub("\\s+","_", cls.nm);
+          msg <- c(msg, " Blank spaces in group names are replaced with underscore '_'! ");
+        }
+        cls.lbls <- datOrig[inx, -1];
+        # test NA
+        na.inx <- is.na(cls.lbls);
+        cls.lbls[na.inx] <- "NA";
+        cls.lbls <- ClearFactorStrings(cls.lbls,cls.nm);
+        meta.info[[cls.nm]] <- cls.lbls;
+      }
+    }else{
+      msgSet$current.msg <- "No metadata labels #CLASS found in your data!";
+      saveSet(msgSet, "msgSet");
+      return(NULL);
+    }
+    
+    meta.info <- data.frame(meta.info);
+ rownames(meta.info) = colnames(datOrig)[-1]
+  }else{ # metadata input as an individual table
+    mydata <- try(data.table::fread(metafileName, header=TRUE, check.names=FALSE, data.table=FALSE));
+   if(class(mydata) == "try-error"){
+    msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
+    saveSet(msgSet, "msgSet");
+    return(NULL);
+  }
+    mydata[is.na(mydata)] <- "NA";
+    
+    # look for #NAME, store in a list
+    sam.inx <- grep("^#NAME", colnames(mydata)[1]);
+    if(length(sam.inx) > 0){
+      smpl_nm<-mydata[,1];
+      smpl_var<-colnames(mydata[-1]);
+    }else{
+      msgSet$current.msg <- "Please make sure you have the label #NAME in your sample data file!";
+      saveSet(msgSet, "msgSet");
+      return(NULL);
+    }
+   
+   # covert to factor
+     mydata <-data.frame(lapply(1:ncol(mydata),function(x){
+      mydata[,x]=unlist(ClearFactorStrings(mydata[,x]))
+    }))
+    mydata <- mydata[,-1,drop=F]; # converting to character matrix as duplicate row names not allowed in data frame.
+      
+    if(nrow(mydata)==1){
+      msgSet$current.msg <- "Only one sample in the dataset or the metadata file must be transposed!";
+      saveSet(msgSet, "msgSet");
+      return(NULL);
+    }
+    rownames(mydata) <- smpl_nm;
+    colnames(mydata) <- smpl_var;
+   
+    # empty cell or NA cannot be tolerated in metadata
+    na.inx  <- is.na(mydata);
+    na.msg <- na.msg1 <- NULL;
+    if(sum(na.inx) > 0){
+      na.msg1 <- paste("A total of", sum(na.inx), "empty or NA values were detected. Please update in using metadata editor");
+    }
+    
+    #Check group label names for spaces and replace with underscore
+    meta.info <- data.frame(mydata,check.names=FALSE);
+    if(any(grepl("[[:blank:]]", names(meta.info)))){
+      names(meta.info) <- gsub("\\s+","_", names(meta.info));
+      na.msg1 <- c(na.msg1, "Blank spaces in group names are replaced with underscore '_'");
+    }
+  }
+
+  disc.inx <- GetDiscreteInx(meta.info);
+    if(sum(disc.inx) == length(disc.inx)){
+      na.msg <- c(na.msg,"All metadata columns are OK!")
+    }else{
+      bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
+      na.msg <- c(na.msg, paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !"));
+    }
+    
+    cont.inx <- GetNumbericalInx(meta.info);
+    cont.inx <- !disc.inx & cont.inx; # discrete is first
+    if(sum(cont.inx)>0){
+      # make sure the discrete data is on the left side
+      meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
+    }
+    msgSet$na.msg <- na.msg
+    saveSet(msgSet, "msgSet");  
+    return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))
+}
+

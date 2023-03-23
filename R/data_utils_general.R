@@ -89,6 +89,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
     sqlite.path <-"/home/zgy/sqlite/"; #zgy local
   }else if(file.exists("/Users/jessicaewald/sqlite/sqlite/")){ # ewald local
     sqlite.path <- "/Users/jessicaewald/sqlite/sqlite/";
+  }else if(file.exists("/Users/lzy/sqlite/")){ # luyao local
+    sqlite.path <- "/Users/lzy/sqlite/";
   }else{
     sqlite.path <- "";
   }

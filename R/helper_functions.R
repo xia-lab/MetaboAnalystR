@@ -256,7 +256,6 @@ GetCurrentJson <-function(type){
 SelectDataSet <- function(){
   
   paramSet <- readSet(paramSet, "paramSet");
-  
   if(!exists('nm.vec')){
     AddErrMsg("No dataset is selected for analysis!");
     return(0);
@@ -282,4 +281,131 @@ SelectDataSet <- function(){
   paramSet$mdata.all <- mdata.all
   return(1);
   
+}
+
+
+GetResRowNames <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  return(rownames(dataSet$meta));
+}
+
+GetResColNames <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  colnms<- colnames(dataSet$meta)[colnames(dataSet$meta)!="newcolumn"]
+  return(colnms);
+}
+
+GetMetaDataCol <- function(dataName="",idx=1){
+  dataSet <- readDataset(dataName);
+  return(dataSet$meta[,idx]);
+}
+
+GetMetaCell <- function(dataName="",ridx=1,cidx=1){
+  dataSet <- readDataset(dataName);
+  return(dataSet$meta[ridx,cidx]);
+}
+
+GetMetaClass <- function(dataName="",metaType){
+  dataSet <- readDataset(dataName);
+  if(metaType=="disc"){
+    return(which(dataSet$disc.inx)-1);
+  }else if(metaType=="cont"){
+    return(which(dataSet$cont.inx)-1);
+  }
+}
+
+ResetMetaTab <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  dataSet$meta <- dataSet$metaOrig;
+  dataSet$data.norm <- qs::qread("data.raw.qs");
+  dataSet$disc.inx <- dataSet$disc.inx.orig;
+  dataSet$cont.inx <- dataSet$cont.inx.orig;
+  RegisterData(dataSet);
+}
+
+
+GetResColType <- function(dataName="",colNm="NA"){
+ dataSet <- readDataset(dataName);
+  if(colNm=="NA"){
+  meta.status <- ifelse(dataSet$disc.inx,"disc","cont")
+  meta.status <- c(meta.status,rep("na",10-length(meta.status)))
+  }else{
+  meta.status <- ifelse(dataSet$disc.inx[colNm],"disc","cont")
+  }
+  return(meta.status);
+}
+
+UpdateMetaStatus <- function(dataName="",cidx=1){
+  dataSet <- readDataset(dataName);
+  msgSet <- readSet(msgSet, "msgSet");
+  old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continous")
+  if(dataSet$disc.inx[cidx]){
+    if(all(is.na( as.numeric(as.character(dataSet$meta[,cidx]))))){
+      msgSet$current.msg <- "Category metadata cannot be continous data!"
+     saveSet(msgSet, "msgSet"); 
+       return(0)
+    }
+    dataSet$disc.inx[cidx]=FALSE;
+    dataSet$cont.inx[cidx]=TRUE;
+  }else{
+    if(all(!duplicated(as.character(dataSet$meta[,cidx])))){
+      msgSet$current.msg <- "No duplicates were detected! The metadata cannot be discrete!"
+     saveSet(msgSet, "msgSet"); 
+      return(0)
+    }
+    dataSet$disc.inx[cidx]=TRUE;
+    dataSet$cont.inx[cidx]=FALSE;
+  }
+ new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continous")
+  msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
+     saveSet(msgSet, "msgSet"); 
+  RegisterData(dataSet);
+  return(1);
+}
+
+
+DeleteSample <- function(dataName="",ridx=1){
+  dataSet <- readDataset(dataName);
+  dataSet$meta <- dataSet$meta[-ridx,]
+  dataSet$data.norm <- dataSet$data.norm[,-ridx]
+  RegisterData(dataSet);
+  return(1);
+}
+
+DeleteMetaCol <- function(dataName="",metaCol){
+  dataSet <- readDataset(dataName);
+  idx = which(colnames(dataSet$meta)==metaCol)
+  dataSet$meta <- dataSet$meta[,-idx,drop=F]
+  dataSet$disc.inx <- dataSet$disc.inx[-idx]
+  dataSet$cont.inx <- dataSet$cont.inx[-idx]
+  RegisterData(dataSet);
+  return(1);
+}
+
+GetSampleNm <- function(dataName="",ridx=1){
+  dataSet <- readDataset(dataName);
+  return( rownames(dataSet$meta)[ridx]);
+}
+
+UpdateSampleInfo <-  function(dataName="",ridx=1,cidx=1,cell){
+  dataSet <- readDataset(dataName);
+  meta <- dataSet$meta
+  rnames <- rownames(dataSet$meta)
+  meta <- data.frame(apply(meta, 2, as.character))
+  rownames(meta) <- rnames
+  if(cidx==0){
+    rownames(meta)[ridx]=cell
+  }else{  
+    meta[ridx,cidx] = cell
+  }
+
+  dataSet$meta = meta
+  RegisterData(dataSet);
+  return(1);
+}
+
+
+GetSelectedMetaInfo <- function(dataName="",colNm){
+  dataSet <- readDataset(dataName);
+  return(levels(dataSet$meta[,colNm]));
 }

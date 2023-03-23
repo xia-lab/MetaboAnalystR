@@ -25,6 +25,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
       }
       dataSet$sec.cls <- dataSet$meta[, meta1]; # for pca coloring
     }
+    dataSet$analysisVar <- meta0
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
     RegisterData(dataSet, levels(cls));
@@ -39,7 +40,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 # nested: (A-B)+(C-D) 
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
 
   if (dataSet$de.method == "deseq2") {
     dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
@@ -106,12 +107,23 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   msgSet <- readSet(msgSet, "msgSet");
   cat(anal.type, par1, par2, nested.opt, "\n")
   set.seed(1337);
-  dataSet$par1 <- par1;
 
   myargs <- list();
   cls <- dataSet$cls
   dataSet$comp.type <- anal.type
   grp.nms <- levels(cls)
+  analysisVar <- dataSet$analysisVar
+  
+  if(dataSet$cont.inx[analysisVar] |  any(grepl("(^[0-9]+).*", grp.nms))){
+    par1 <- strsplit(par1, " vs. ")[[1]]
+    par1 <- paste0(analysisVar,"_",par1[1]," vs. ",analysisVar,"_",par1[2])
+    if(par2 != "NA"){
+      par2 <- strsplit(par2, " vs. ")[[1]]
+      par2 <- paste0(analysisVar,"_",par2[1]," vs. ",analysisVar,"_",par2[2])
+    }
+ colnames(dataSet$design) = as.character(sapply( colnames(dataSet$design),function(x) paste0(analysisVar,"_",x)))
+  }
+  dataSet$par1 <- par1;
   
   if (anal.type == "default") {
     inx <- 0
@@ -170,8 +182,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 
 .perform_limma_edger <- function(dataSet){
   design <- dataSet$design;
-  paramSet <- readSet(paramSet, "paramSet");;
-
+  paramSet <- readSet(paramSet, "paramSet");
   contrast.matrix <- dataSet$contrast.matrix;
   msgSet <- readSet(msgSet, "msgSet");
   if (dataSet$de.method == "limma") {
@@ -322,3 +333,127 @@ GetLimmaResTable<-function(fit.obj){
   return (resTable);
 }
 
+## perform comparison analysis based on  multi-variate linear regression 
+MultiCovariateRegression <- function(fileName,
+                               analysis.var, # metadata variable name
+                               ref = NULL, # reference class from analysis.var metadata (only if categorical)
+                               contrast = "anova",  # comparison class from analysis.var (only if categorical)
+                              # fixed.effects = NULL,  # metadata variables to adjust for
+                               random.effects = NULL){ # metadata variables to adjust for
+  
+  # load libraries
+  library(limma)
+  library(dplyr)
+  
+  # need a line for read dataSet
+  msgSet <- readSet(msgSet, "msgSet");
+  dataSet <- readDataset(fileName);
+ 
+  # for embedded inside tools (ExpressAnalyst etc)
+  feature_table <- dataSet$data.norm 
+  covariates <- dataSet$meta
+  fixed.effects <- adj.vec
+  # process covariates
+  var.types <- lapply(covariates, class) %>% unlist();
+  covariates[,c(var.types == "character")] <- lapply(covariates[,c(var.types == "character")], factor);
+  
+  # aggregate vars
+  all.vars <- c(analysis.var);
+  vars <- c(analysis.var);
+  if(!is.null(fixed.effects)){
+    all.vars = c(all.vars, fixed.effects);
+    vars <- c(vars, fixed.effects);
+  }
+  if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
+    all.vars = c(all.vars, random.effects);
+  }
+  
+
+  covariates <- covariates[,all.vars,drop=F];
+  covariates <- na.omit(covariates);
+  feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
+  
+  if(!identical(colnames(feature_table), rownames(covariates))){
+    msgSet$current.msg <- "Error - order of samples got mixed up between tables";
+    saveSet(msgSet, "msgSet");
+    return(0)
+  }
+  
+  # get analysis type
+  analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
+  print(analysis.type )
+   if(is.na(analysis.type)){
+     msgSet$current.msg <- "Analysis var not found in our database!";
+     saveSet(msgSet, "msgSet");
+     return(0)
+   }
+
+  if(analysis.type == "disc"){
+    # build design and contrast matrix
+    covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    grp.nms <- levels(covariates[, analysis.var]);
+    design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+    colnames(design)[1:length(grp.nms)] <- grp.nms;
+    myargs <- list();
+    if(contrast == "anova"){
+      contrasts <- grp.nms[grp.nms != ref];
+      myargs <- as.list(paste(contrasts, "-", ref, sep = ""));
+    } else {
+      myargs <- as.list(paste(contrast, "-", ref, sep = ""));
+    }
+    myargs[["levels"]] <- design;
+    contrast.matrix <- do.call(makeContrasts, myargs);
+    
+    # handle blocking factor
+    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+      fit <- lmFit(feature_table, design);
+    } else {
+      block.vec <- covariates[,random.effects];
+      corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
+      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
+    }
+    
+    # get results
+    fit <- contrasts.fit(fit, contrast.matrix);
+    fit <- eBayes(fit);
+    rest <- topTable(fit, number = Inf);
+    
+    if(contrast != "anova"){
+      colnames(rest)[1] <- myargs[[1]];
+    }
+      dataSet$contrast.matrix <- contrast.matrix;
+      dataSet$par1 <-  myargs[[1]];
+  } else { 
+    
+    # build design matrix
+    types <- dataSet$cont.inx[vars];
+    contIdx <- as.numeric(which(types))
+    covariates[,contIdx] <- unlist(lapply(covariates[,contIdx], function(x) as.numeric(as.character((x)))));
+    
+    if (all(types)) {
+      design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
+    } else {
+      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+    }
+    
+    # handle blocking factor
+    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+      fit <- lmFit(feature_table, design);
+    } else {
+      block.vec <- covariates[, random.effects];
+      corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
+      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
+    }
+    
+    # get results
+    fit <- eBayes(fit);
+    rest <- topTable(fit, number = Inf, coef = analysis.var);
+    colnames(rest)[1] <- dataSet$par1 <- analysis.var;
+  }
+  dataSet$design <- design;
+  dataSet$contrast.type <- analysis.type;
+  dataSet$comp.res <- rest;
+  dataSet$de.method <- "limma"
+  RegisterData(dataSet);
+  return(1)
+}
