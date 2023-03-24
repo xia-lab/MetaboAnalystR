@@ -381,7 +381,6 @@ MultiCovariateRegression <- function(fileName,
   
   # get analysis type
   analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
-  print(analysis.type )
    if(is.na(analysis.type)){
      msgSet$current.msg <- "Analysis var not found in our database!";
      saveSet(msgSet, "msgSet");
@@ -397,7 +396,7 @@ MultiCovariateRegression <- function(fileName,
     myargs <- list();
     if(contrast == "anova"){
       contrasts <- grp.nms[grp.nms != ref];
-      myargs <- as.list(paste(contrasts, "-", ref, sep = ""));
+      myargs <- as.list(paste(contrasts, "-", ref, sep = ""));    
     } else {
       myargs <- as.list(paste(contrast, "-", ref, sep = ""));
     }
@@ -417,12 +416,15 @@ MultiCovariateRegression <- function(fileName,
     fit <- contrasts.fit(fit, contrast.matrix);
     fit <- eBayes(fit);
     rest <- topTable(fit, number = Inf);
-    
-    if(contrast != "anova"){
-      colnames(rest)[1] <- myargs[[1]];
+  
+    if(contrast != "anova"){    
+      colnames(rest)[1] <- ifelse(any(grepl("(^[0-9]+).*", grp.nms)),paste0(analysis.var,"_",contrast, "-",analysis.var,"_", ref),myargs[[1]]);
+      grp.nms<-ifelse(any(grepl("(^[0-9]+).*", grp.nms)),c(paste0(analysis.var,"_",contrast), paste0(analysis.var,"_", ref)),c(ref,contrast))
+
     }
       dataSet$contrast.matrix <- contrast.matrix;
       dataSet$par1 <-  myargs[[1]];
+      dataSet$grp.nms <- ifelse(any(grepl("(^[0-9]+).*", grp.nms)), paste0(analysis.var,"_",grp.nms),grp.nms);
   } else { 
     
     # build design matrix
@@ -454,6 +456,7 @@ MultiCovariateRegression <- function(fileName,
   dataSet$contrast.type <- analysis.type;
   dataSet$comp.res <- rest;
   dataSet$de.method <- "limma"
+  dataSet$comp.type <- "default"
   RegisterData(dataSet);
   return(1)
 }

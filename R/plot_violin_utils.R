@@ -22,7 +22,6 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-
   require(ggplot2)
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
@@ -37,6 +36,9 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       if(dataSet$comp.type == "custom"){
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
         grp.nms <- dataSet$grp.nms;
+         if(dataSet$cont.inx[analysisVar] |  any(grepl("(^[0-9]+).*", grp.nms))){
+         grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
+        }     
         inx <- dataSet$cls %in% grp.nms;
         cls <- dataSet$cls[inx]
         dat <- dataSet$data.norm[,inx];
