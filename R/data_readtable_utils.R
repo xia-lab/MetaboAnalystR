@@ -15,7 +15,7 @@
 #'License: MIT
 #'@export
 #'
-ReadTabExpressData <- function(fileName, metafileName,metaContain=false,path="") {
+ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
@@ -24,6 +24,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain=false,path="")
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
 
   msgSet <- readSet(msgSet, "msgSet");
+   
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$isMetaContain = metaContain
   # rename data to data.orig
@@ -34,7 +35,6 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain=false,path="")
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
   msg <- paste("a total of ", ncol(int.mat), " samples and ", nrow(int.mat), " features were found");
-  
   # remove NA, null
   row.nas <- apply(is.na(int.mat)|is.null(int.mat), 1, sum);
   good.inx<- row.nas/ncol(int.mat) < 0.5;
@@ -62,7 +62,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain=false,path="")
   data.proc <- res[[1]];
   msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
-
+  
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");

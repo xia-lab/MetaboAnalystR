@@ -1,0 +1,9 @@
+#NAME	ER	TIME
+low10-1.cel	absent	10
+low10-2.cel	absent	10
+high10-1.cel	present	10
+high10-2.cel	present	10
+low48-1.cel	absent	48
+low48-2.cel	absent	48
+high48-1.cel	present	48
+high48-2.cel	present	48

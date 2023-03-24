@@ -853,15 +853,23 @@ gm_mean <- function(x, na.rm=TRUE){
 .to.numeric.mat <- function(dat1){
   # now remove all comments in dat1
   # assign rownames after covert to matrix as data.frame does not allow duplicate names
-  comments.inx <- grep("^#", dat1[,1]);
-  row.nms <- dat1[-comments.inx,1];
-  dat1<-dat1[-comments.inx,-1];
-  dimensions <- dim(dat1)
-  col.nms <- colnames(dat1)
-  dat1 <- sapply(dat1, as.numeric);
-  dat1 <- matrix(data=dat1, ncol=dimensions[2], nrow=dimensions[1])
-  rownames(dat1) <- row.nms;
-  colnames(dat1) <- col.nms;
+comments.inx <- grep("^#", dat1[,1]);
+  if(length(comments.inx)==0){
+    row.nms <- dat1[,1];
+    col.nms <- colnames(dat1)[-1]
+    dat1 = apply(dat1[,-1], 2, as.numeric)
+    rownames(dat1) <- row.nms;
+    colnames(dat1) <- col.nms; 
+  }else{
+    row.nms <- dat1[-comments.inx,1];
+    dat1<-dat1[-comments.inx,-1];
+    dimensions <- dim(dat1)
+    col.nms <- colnames(dat1)
+    dat1 <- sapply(dat1, as.numeric);
+    dat1 <- matrix(data=dat1, ncol=dimensions[2], nrow=dimensions[1])
+    rownames(dat1) <- row.nms;
+    colnames(dat1) <- col.nms; 
+  }
   return(dat1);
 }
 
