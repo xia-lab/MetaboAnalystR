@@ -115,7 +115,7 @@ SanityCheckMeta <- function(fileName,init){
   if(init==1){
     rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
     meta = meta[,!rmidx,drop=F]
-
+    
   }else{
     if(any(is.na(meta))|any(meta=="")|any(meta=="NA")){
       return(2)

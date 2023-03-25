@@ -948,6 +948,13 @@ getCurrentMsg <- function(){
     return(msgSet$current.msg);
 }
 
+getPrefilterMsg <- function(){
+    msgSet <- readSet(msgSet, "msgSet");
+    return(msgSet$match.msg);
+}
+
+
+
 PrepareSqliteDB <- function(sqlite_Path, onweb = TRUE) {
   if(onweb) {return(TRUE)};
   if(file.exists(sqlite_Path)) {return(TRUE)};

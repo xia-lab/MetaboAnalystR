@@ -339,10 +339,10 @@ GetResColType <- function(dataName="",colNm="NA"){
 UpdateMetaStatus <- function(dataName="",cidx=1){
   dataSet <- readDataset(dataName);
   msgSet <- readSet(msgSet, "msgSet");
-  old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continous")
+  old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   if(dataSet$disc.inx[cidx]){
     if(all(is.na( as.numeric(as.character(dataSet$meta[,cidx]))))){
-      msgSet$current.msg <- "Category metadata cannot be continous data!"
+      msgSet$current.msg <- "Category metadata cannot be continuous data!"
      saveSet(msgSet, "msgSet"); 
        return(0)
     }
@@ -357,7 +357,7 @@ UpdateMetaStatus <- function(dataName="",cidx=1){
     dataSet$disc.inx[cidx]=TRUE;
     dataSet$cont.inx[cidx]=FALSE;
   }
- new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continous")
+ new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
      saveSet(msgSet, "msgSet"); 
   RegisterData(dataSet);
@@ -423,3 +423,4 @@ GetSelectedMetaInfo <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
   return(levels(dataSet$meta[,colNm]));
 }
+

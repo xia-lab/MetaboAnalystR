@@ -23,11 +23,12 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
 
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
   msgSet <- readSet(msgSet, "msgSet");
-   
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$isMetaContain = metaContain
   # rename data to data.orig
   int.mat <- dataSet$data;
+  int.mat <- int.mat[,which(colnames(int.mat) %in% rownames(meta.info$meta.info))]
+   int.mat <- int.mat[,match(colnames(int.mat),rownames(meta.info$meta.info))]
   dataSet$data <- NULL;
   dataSet$name <- fileName;
   dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info
@@ -206,7 +207,6 @@ for(i in 1:length(sel.nms)){
   if(is.null(datOrig)){
     return(NULL);
   }
-  print(str(datOrig))
   dat1 <- .to.numeric.mat(datOrig);
   
   list(
@@ -313,12 +313,38 @@ for(i in 1:length(sel.nms)){
  rownames(meta.info) = colnames(datOrig)[-1]
   }else{ # metadata input as an individual table
     mydata <- try(data.table::fread(metafileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-   
+    
    if(class(mydata) == "try-error"){
     msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
     saveSet(msgSet, "msgSet");
     return(NULL);
   }
+  match.msg <- vector()
+ idx = which(!colnames(datOrig) %in% mydata$`#NAME`)
+ if(length(idx)>1){
+  if(length(idx)==2){
+    match.msg <- c(match.msg,paste0("One sample ", colnames(datOrig)[idx[2]], " was not detected in metadata file and was removed from data table!"))
+   }else if(length(idx)>5){
+    match.msg <- c(match.msg,paste0(length(idx[-1])," samples ", paste(colnames(datOrig)[idx[2:4]],collapse = ", "), ", etc. were not detected in metadata file and were removed  from data table!"))
+   }else{
+    match.msg <- c(match.msg,paste0(length(idx[-1])," samples ", paste(colnames(datOrig)[idx[-1]],collapse = ", "), " were not detected in metadata file and were removed  from data table!"))
+   }
+   datOrig <- datOrig[,-idx[-1]]
+ }
+
+ idx = which( !mydata$`#NAME` %in%colnames(datOrig) )
+ if(length(idx)>1){
+   if(length(idx)==1){
+     match.msg <- c(match.msg,paste0("One sample ", mydata$`#NAME`[idx], " was not detected in data file and was removed from metadata table!"))
+   }else if(length(idx)>3){
+    match.msg <- c(match.msg,paste0(length(idx)," samples ", paste(mydata$`#NAME`[1:3],collapse = ", "), ", etc. were not detected in data file and were removed from metadata table!"))
+   }else{
+    match.msg <- c(match.msg,paste0(length(idx)," samples ", paste(mydata$`#NAME`[idx],collapse = ", "), " were not detected in data file and were removed from metadata table!"))
+   }
+   mydata <- mydata[-idx,]
+ }
+  msgSet$match.msg <-match.msg
+   mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
     mydata[is.na(mydata)] <- "NA";
     
     # look for #NAME, store in a list
@@ -358,7 +384,7 @@ for(i in 1:length(sel.nms)){
       names(meta.info) <- gsub("\\s+","_", names(meta.info));
       na.msg1 <- c(na.msg1, "Blank spaces in group names are replaced with underscore '_'");
     }
-meta.info=meta.info[match(rownames(meta.info),colnames(datOrig)[-1]),]
+
   }
   
 

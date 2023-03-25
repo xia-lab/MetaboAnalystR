@@ -108,18 +108,19 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   avgCount <- sum(colSums(dataSet$data.anot))/ ncol(dataSet$data.anot);
   minCount <- min(colSums(dataSet$data.anot))
   maxCount <- max(colSums(dataSet$data.anot))
-  
-  if(length(dataSet$meta)==1){
-    lvls <- paste(levels(dataSet$meta[,1]),collapse="; ")
-  }else{
-    conc1 <- paste0("<b>", colnames(dataSet$meta)[1], "</b>", ": ", paste(levels(dataSet$meta[,1]), collapse="; "))
-    conc2 <- paste0("<b>", colnames(dataSet$meta)[2], "</b>", ": ", paste(levels(dataSet$meta[,2]), collapse="; "))
-    lvls <- paste("Two factors found -", conc1, conc2)
-  }
+ lvls = ""
+ if(any(dataSet$disc.inx.orig)){
+  disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
+  lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
+ }
+ if(any(dataSet$cont.inx.orig)){
+  cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
+  lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
+ }
+
   msgSet$current.msg <- current.msg;
-  print(current.msg);
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
-  saveSet(paramSet, "paramSet");
+ saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
 }
