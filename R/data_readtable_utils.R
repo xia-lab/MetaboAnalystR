@@ -22,7 +22,6 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   }  
 
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
-
   msgSet <- readSet(msgSet, "msgSet");
    
   paramSet <- readSet(paramSet, "paramSet");
@@ -282,7 +281,6 @@ for(i in 1:length(sel.nms)){
   }else{
     msg <- msgSet$current.msg
   }
-
   if(metaContain=="true"){
     meta.info <- list();
     # look for #CLASS, could have more than 1 class labels, store in a list
@@ -315,6 +313,7 @@ for(i in 1:length(sel.nms)){
  rownames(meta.info) = colnames(datOrig)[-1]
   }else{ # metadata input as an individual table
     mydata <- try(data.table::fread(metafileName, header=TRUE, check.names=FALSE, data.table=FALSE));
+   
    if(class(mydata) == "try-error"){
     msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
     saveSet(msgSet, "msgSet");
@@ -338,7 +337,6 @@ for(i in 1:length(sel.nms)){
       mydata[,x]=unlist(ClearFactorStrings(mydata[,x]))
     }))
     mydata <- mydata[,-1,drop=F]; # converting to character matrix as duplicate row names not allowed in data frame.
-      
     if(nrow(mydata)==1){
       msgSet$current.msg <- "Only one sample in the dataset or the metadata file must be transposed!";
       saveSet(msgSet, "msgSet");
@@ -360,8 +358,11 @@ for(i in 1:length(sel.nms)){
       names(meta.info) <- gsub("\\s+","_", names(meta.info));
       na.msg1 <- c(na.msg1, "Blank spaces in group names are replaced with underscore '_'");
     }
+meta.info=meta.info[match(rownames(meta.info),colnames(datOrig)[-1]),]
   }
+  
 
+  
   disc.inx <- GetDiscreteInx(meta.info);
     if(sum(disc.inx) == length(disc.inx)){
       na.msg <- c(na.msg,"All metadata columns are OK!")
