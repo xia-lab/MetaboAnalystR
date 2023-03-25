@@ -692,7 +692,7 @@ if(readEnds == "pe"){
   return(1);
 }
 
-pcaPlotSlmKls <- function(minReads = 20, projectDirStr,
+UpdatePcaKls <- function(minReads = 20, projectDirStr,
                        ...){
   library(data.table);
   library(lattice);
@@ -762,7 +762,7 @@ library(tidyverse);
       theme_bw() +
       scale_color_manual(values=fill.cols) + 
       labs(title = "PCA plot",
-           subtitle = paste0("minimum N. of reads: ", minReads));
+           subtitle = paste0("Min. reads/gene: ", minReads));
   } else {
     p <- ggplot(pca.res, 
                 aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
@@ -773,7 +773,7 @@ library(tidyverse);
       theme(legend.position = "none") +
       scale_color_manual(values=fill.cols) + 
       labs(title = "PCA plot",
-           subtitle = paste0("minimum N. of reads: ", minReads));
+           subtitle = paste0("Min. reads/gene:", minReads));
   }
   
   if(nchar(mappingReadsDF$Sample[1]) < 20){
@@ -789,7 +789,7 @@ library(tidyverse);
 }
 
 
-ggRareSlmKls <- function(step=10, minReads = 20, projectDirStr,
+UpdateRareKls <- function(step=10, minReads = 20, projectDirStr,
                       facet = NULL, label = NULL, color = NULL, plot = TRUE, 
                       linetype = NULL, se = FALSE, threads = 4,
                       ...){
@@ -974,7 +974,7 @@ pcaPlotS2f <- function(allSamKOAbunDF2,
       #theme(legend.position = "none") +
       scale_color_manual(values=fill.cols) + 
       labs(title = "PCA plot",
-           subtitle = paste0("minimum N. of reads: ", minReads))
+           subtitle = paste0("Min reads per gene/ortholog: ", minReads))
   } else {
     p <- ggplot(pca.res, 
                 aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
@@ -991,7 +991,7 @@ pcaPlotS2f <- function(allSamKOAbunDF2,
   invisible(p);
 }
 
-UpdatePCAFigs <- function(minReads = 20,
+UpdatePcaS2f <- function(minReads = 20,
                           projectDirStr,
                           ...){
   library(data.table);
@@ -1135,7 +1135,7 @@ ggRareS2f <- function(s2fObj, data.src,
   invisible(p)
 }
 
-UpdateRareFigs <- function(step = 10,
+UpdateRareS2f <- function(step = 30,
                            minReads = 20,
                            percentageCutoffOri = 75,
                            projectDirStr,
@@ -1184,20 +1184,4 @@ library(tidyverse);
   print(p)
   dev.off();
   
-  #for rarefaction curve for pathways
-  # Cairo(file=file.path(projectDirStr, "RarefactionPathway.png"), 
-  #       width=8, height=6, type="png", bg="white", unit="in", dpi=300);
-  # p <- ggRarePathway(rareTable = rareTableMinReads,
-  #                    metaTable = metaTableMinReads,
-  #                    color = "Group",
-  #                    label = "Sample",
-  #                    facet = NULL,
-  #                    linetype = NULL,
-  #                    minReads = minReads,
-  #                    percentageCutoff = percentageCutoffOri,
-  #                    projectDirStr = projectDirStr,
-  #                    se = FALSE,  # this is not to meaningful
-  #                    step = step, threads = 4);
-  # print(p)
-  # dev.off();
 }
