@@ -320,10 +320,9 @@ Convert2Mummichog <- function(mSetObj=NA,
     
     mz <- rownames(effect.size)
     esize <- cbind(mz, effect.size)
-    colnames(esize) <- c("m.z", "effect.size", "st.dev", "lower.ci", "upper.ci")
-  }
-  
-  if(test=="fc"|test=="all"){
+    colnames(esize) <- c("m.z", "effect.size", "st.dev", "lower.ci", "upper.ci");
+
+  }else if(test=="fc"|test=="all"){
     log2fc <- mSetObj$analSet$fc$fc.log    
     if(is.null(log2fc)){
       AddErrMsg("Fold-change was not calculated!")
@@ -332,20 +331,26 @@ Convert2Mummichog <- function(mSetObj=NA,
     
     mz.fc <- names(log2fc)
     fcs <- cbind(mz.fc, as.numeric(log2fc))
-    colnames(fcs) <- c("m.z", "log2.fc")
-  }
+    colnames(fcs) <- c("m.z", "log2.fc");
 
-  if(test == "aov"){
+  }else if(test == "aov"){
     if(is.null(mSetObj$analSet$aov)){
       AddErrMsg("ANOVA was not performed!")
       return(0)
     }
+    aov.pvals <- mSetObj$analSet$aov$sig.p;
     
-    aov.pval <- sort(mSetObj$analSet$aov$p.value);
-    fdr <- mSetObj[["analSet"]][["aov"]][["sig.mat"]][["FDR"]]
-    mz.pval <- names(aov.pval)
-    pvals <- cbind(mz.pval, as.numeric(fdr))
-    colnames(pvals) <- c("m.z", "p.value")
+    # Note pre-order will have effect on results
+    # Let's be consistent
+    ord.inx <- order(aov.pvals);
+    fdr <- mSetObj$analSet$aov$sig.fdr[ord.inx];
+    mz.pval <- names(fdr);
+    pvals <- cbind(mz.pval, as.numeric(fdr));
+    colnames(pvals) <- c("m.z", "p.value");
+
+  }else{
+      AddErrMsg("Unknown method!")
+      return(0);
   }
   
   if(rt & rds.file){
@@ -3681,7 +3686,7 @@ PreparePeakTable4PSEA <- function(mSetObj=NA){
     res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
     testmeth <- "tt";
   } else {
-    res <- ANOVA.Anal(mSetObj, F, 1, "fisher", FALSE)
+    res <- ANOVA.Anal(mSetObj, F, 1, FALSE)
     testmeth <- "aov";
   }
 

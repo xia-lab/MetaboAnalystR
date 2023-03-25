@@ -602,7 +602,7 @@ parseFisher <- function(fisher, cut.off){
 
 #' Perform ANOVA analysis
 #' @description ANOVA analysis
-#' @usage ANOVA.Anal(mSetObj=NA, nonpar=FALSE, thresh=0.05, post.hoc="fisher", all_results=FALSE)
+#' @usage ANOVA.Anal(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE)
 #' @param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #' @param nonpar Logical, use a non-parametric test (T) or not (F)
 #' @param thresh Numeric, from 0 to 1, indicate the p-value threshold
