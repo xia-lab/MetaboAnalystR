@@ -36,9 +36,9 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       if(dataSet$comp.type == "custom"){
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
         grp.nms <- dataSet$grp.nms;
-         if(dataSet$cont.inx[analysisVar] |  any(grepl("(^[0-9]+).*", grp.nms))){
+      if(dataSet$cont.inx[dataSet$analysisVar] |  any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))){
          grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
-        }     
+        } 
         inx <- dataSet$cls %in% grp.nms;
         cls <- dataSet$cls[inx]
         dat <- dataSet$data.norm[,inx];

@@ -110,6 +110,7 @@ SanityCheckData <- function(fileName){
 SanityCheckMeta <- function(fileName,init){
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
+
   meta <- dataSet$meta
   if(init==1){
     rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))

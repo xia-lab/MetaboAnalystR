@@ -9,6 +9,7 @@
 
 #in DE analysis page, select metadata primary factor, secondary factor and blocking factor 
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
+    print(meta0)
   dataSet <- readDataset(dataName);
   if(meta0 == "NA"){
     RegisterData(dataSet, 0);

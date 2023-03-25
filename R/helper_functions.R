@@ -159,7 +159,8 @@ GetFilesToBeSaved <-function(naviString){
 
 GetMetaInfo <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  return(colnames(dataSet$meta));
+  metaNms<-setdiff(colnames(dataSet$meta),dataSet$rmMetaCol)
+  return(metaNms);
 }
 
 GetExpressResultGeneSymbols<-function(){
@@ -378,6 +379,19 @@ DeleteMetaCol <- function(dataName="",metaCol){
   dataSet$meta <- dataSet$meta[,-idx,drop=F]
   dataSet$disc.inx <- dataSet$disc.inx[-idx]
   dataSet$cont.inx <- dataSet$cont.inx[-idx]
+   if(!exists("rmMetaCol",dataSet)){
+    dataSet$rmMetaCol <- vector()
+  }
+  dataSet$rmMetaCol <- unique(c(dataSet$rmMetaCol,metaCol))
+  RegisterData(dataSet);
+  return(1);
+}
+
+CleanRmCol <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+   if(exists("rmMetaCol",dataSet)){
+    dataSet$rmMetaCol <- vector()
+  }
   RegisterData(dataSet);
   return(1);
 }
