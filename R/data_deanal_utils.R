@@ -39,11 +39,9 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
       dataSet$sec.cls <- meta[, meta1]; # for pca coloring
     }
     dataSet$analysisVar <- meta0 
-    dataSet$secondVar <- meta1 
-
+    dataSet$secondVar <- meta1
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
-
     RegisterData(dataSet, levels(cls)[levels(cls)!="NA"]);
   }
 }
@@ -71,7 +69,6 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 }
 
 .prepare.deseq<-function(dataSet, anal.type, par1, par2, nested.opt){
-  .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
   my.fun <- function(){
     require(DESeq2);
     dataSet <- dat.in$data;
@@ -82,17 +79,17 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     }else{
        data.anot <- dataSet$data.anot
     }
-  #  saveRDS(dataSet,"/Users/lzy/Documents/ExpressAnalyst/dataSetSeq.rds")
-    if (is.null(dataSet$sec.cls) | dataSet$sec.cls=="NA"){
-      if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
+   if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
         fst.cls <- paste0(dataSet$analysisVar,"_",dataSet$fst.cls)
-      }
-      colData <- data.frame(fst.cls)
-      colnames(colData) <- "condition"
-      
+      }else{
+        fst.cls <- dataSet$fst.cls
+     }
+    if (is.null(dataSet$sec.cls) | all(dataSet$sec.cls=="NA")){
+     colData <- data.frame(fst.cls)
+      colnames(colData) <- "condition"    
       dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     } else {
-      colData <- data.frame(dataSet$fst.cls, dataSet$sec.cls, dataSet$cls);
+      colData <- data.frame(fst.cls, dataSet$sec.cls, dataSet$cls);
       colnames(colData) <- c("condition", "type", "condition_type");
       dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     }   
@@ -116,7 +113,6 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }
   dat.in <- list(data=dataSet, contrast.matrix = dataSet$contrast.matrix, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
-
   return(1);
 }
 
@@ -133,7 +129,6 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   msgSet <- readSet(msgSet, "msgSet");
   cat(anal.type, par1, par2, nested.opt, "\n")
   set.seed(1337);
-
   myargs <- list();
   cls <- dataSet$cls
   dataSet$comp.type <- anal.type
@@ -147,7 +142,9 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
       par2 <- strsplit(par2, " vs. ")[[1]]
       par2 <- paste0(analysisVar,"_",par2[1]," vs. ",analysisVar,"_",par2[2])
     }
- colnames(dataSet$design) = as.character(sapply( colnames(dataSet$design),function(x) paste0(analysisVar,"_",x)))
+ if(any(grepl("(^[0-9]+).*",  colnames(dataSet$design)))){
+    colnames(dataSet$design) = as.character(sapply( colnames(dataSet$design),function(x) paste0(analysisVar,"_",x)))
+  }
   }
   dataSet$par1 <- par1;
   
@@ -195,7 +192,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   } else {
     print(paste("Not supported: ", anal.type))
   }
-  
+
   dataSet$filename <- filename;
   require(limma);
   design <- dataSet$design;
@@ -230,17 +227,17 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
       saveSet(msgSet, "msgSet");  
       return(0)
     }
-    
+ 
+  
     df.residual <- fit$df.residual
     if (all(df.residual == 0)) {
-      msgSet$current.msg <- "There is not enough replicates in each group (no residual degrees of freedom)!";
+      msgSet$current.msg <- "All residuals equal 0. There is not enough replicates in each group (no residual degrees of freedom)!";
       saveSet(msgSet, "msgSet");  
       return(0);
     }
     fit2 <- contrasts.fit(fit, contrast.matrix)
     fit2 <- eBayes(fit2)
     topFeatures <- topTable(fit2, number = Inf, adjust.method = "fdr");
-    
   } else {
     set.seed(1) 
     require(edgeR)
@@ -249,11 +246,18 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     }else{
        data.anot <- dataSet$data.anot
     }
-   
     y <- DGEList(counts = data.anot, group = dataSet$cls)
     y <- calcNormFactors(y)
     y <- estimateGLMCommonDisp(y, design, verbose = FALSE)
-    y <- estimateGLMTrendedDisp(y, design)
+    y = tryCatch(
+         {estimateGLMTrendedDisp(y, design)
+       }, error=function(e){
+         msgSet$current.msg <- e
+         }, warning=function(w){
+          msgSet$current.msg <- c(msgSet$current.msg,w)
+          saveSet(msgSet, "msgSet");  
+         return(0)
+          })
     y <- estimateGLMTagwiseDisp(y, design)
     fit <- glmFit(y, design)
     lrt <- glmLRT(fit, contrast = contrast.matrix)
@@ -274,7 +278,6 @@ SetupDesignMatrix<-function(dataName="", deMethod){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   cls <- dataSet$cls; 
-  print(cls)
   design <- model.matrix(~ 0 + cls) # no intercept
   colnames(design) <- levels(cls);
   dataSet$design <- design;
