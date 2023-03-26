@@ -281,6 +281,7 @@ for(i in 1:length(sel.nms)){
   }else{
     msg <- msgSet$current.msg
   }
+print(metaContain)
   if(metaContain=="true"){
     meta.info <- list();
     # look for #CLASS, could have more than 1 class labels, store in a list
@@ -313,7 +314,6 @@ for(i in 1:length(sel.nms)){
  rownames(meta.info) = colnames(datOrig)[-1]
   }else{ # metadata input as an individual table
     mydata <- try(data.table::fread(metafileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-    
    if(class(mydata) == "try-error"){
     msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
     saveSet(msgSet, "msgSet");
@@ -388,7 +388,6 @@ for(i in 1:length(sel.nms)){
   }
   
 
-  
   disc.inx <- GetDiscreteInx(meta.info);
     if(sum(disc.inx) == length(disc.inx)){
       na.msg <- c(na.msg,"All metadata columns are OK!")
@@ -399,10 +398,22 @@ for(i in 1:length(sel.nms)){
     
     cont.inx <- GetNumbericalInx(meta.info);
     cont.inx <- !disc.inx & cont.inx; # discrete is first
+    
+    rmcol <- intersect(which(!disc.inx),which(!cont.inx ))
+  
+    if(length(rmcol)==1){
+     match.msg <- c(match.msg,paste0("Column ",names(meta.info)[rmcol]," is removed due to lack of replicates!" )  ) 
+    }else if(length(rmcol)>1){
+     match.msg <- c(match.msg,paste0("Columns ",paste(names(meta.info)[rmcol],collapse = ", ")," are removed due to lack of replicates!" )  ) 
+    }
+    
     if(sum(cont.inx)>0){
       # make sure the discrete data is on the left side
       meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
     }
+    disc.inx <- disc.inx[colnames(meta.info)]
+    cont.inx <- cont.inx[colnames(meta.info)]
+
     msgSet$na.msg <- na.msg
     saveSet(msgSet, "msgSet");  
     return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))

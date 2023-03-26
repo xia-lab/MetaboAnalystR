@@ -9,27 +9,41 @@
 
 #in DE analysis page, select metadata primary factor, secondary factor and blocking factor 
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
-    print(meta0)
   dataSet <- readDataset(dataName);
   if(meta0 == "NA"){
     RegisterData(dataSet, 0);
   }else{
-    cls <- dataSet$meta[, meta0];
+    rmidx <- which(dataSet$meta[, meta0]=="NA")
+    if(meta1 != "NA"){
+    rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
+    }
+    if(length(rmidx)){
+     meta<- dataSet$meta[-rmidx,]
+     meta<- apply(meta,2,function(x) droplevels(x))
+
+       dataSet$rmidx <- rmidx
+    }else{
+    meta<- dataSet$meta
+    }
+    cls <- meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
     block <- NULL;
     dataSet$sec.cls <- "NA";
     if(meta1 != "NA"){
       if(block1){
-        block <- dataSet$meta[, meta1];
+        block <- meta[, meta1];
       }else{ # two factor
-        cls <- interaction(dataSet$meta[, c(meta0, meta1)], sep = "_", lex.order = TRUE);
+        cls <- interaction(meta[, c(meta0, meta1)], sep = "_", lex.order = TRUE);
       }
-      dataSet$sec.cls <- dataSet$meta[, meta1]; # for pca coloring
+      dataSet$sec.cls <- meta[, meta1]; # for pca coloring
     }
-    dataSet$analysisVar <- meta0
+    dataSet$analysisVar <- meta0 
+    dataSet$secondVar <- meta1 
+
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
-    RegisterData(dataSet, levels(cls));
+
+    RegisterData(dataSet, levels(cls)[levels(cls)!="NA"]);
   }
 }
 
@@ -62,16 +76,26 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     dataSet <- dat.in$data;
     contrast.matrix <- dataSet$contrast.matrix;
     design <- dataSet$design
-    if (is.null(dataSet$sec.cls)){
-      colData <- data.frame(dataSet$fst.cls)
+    if(length(dataSet$rmidx)>0){
+       data.anot <- dataSet$data.anot[,-dataSet$rmidx]
+    }else{
+       data.anot <- dataSet$data.anot
+    }
+  #  saveRDS(dataSet,"/Users/lzy/Documents/ExpressAnalyst/dataSetSeq.rds")
+    if (is.null(dataSet$sec.cls) | dataSet$sec.cls=="NA"){
+      if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
+        fst.cls <- paste0(dataSet$analysisVar,"_",dataSet$fst.cls)
+      }
+      colData <- data.frame(fst.cls)
       colnames(colData) <- "condition"
-      dds <- DESeqDataSetFromMatrix(countData=round(dataSet$data.anot), colData = colData, design=dataSet$design);
+      
+      dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     } else {
       colData <- data.frame(dataSet$fst.cls, dataSet$sec.cls, dataSet$cls);
       colnames(colData) <- c("condition", "type", "condition_type");
-      dds <- DESeqDataSetFromMatrix(countData=round(dataSet$data.anot), colData = colData, design=dataSet$design);
+      dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     }   
-    
+   
     dds <- DESeq(dds, betaPrior=FALSE) 
     qs::qsave(dds, "deseq.res.obj.rds");
     vec <- as.numeric(c(contrast.matrix[,1]));
@@ -182,16 +206,22 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 }
 
 .perform_limma_edger <- function(dataSet){
-  design <- dataSet$design;
+   design <- dataSet$design;
   paramSet <- readSet(paramSet, "paramSet");
   contrast.matrix <- dataSet$contrast.matrix;
   msgSet <- readSet(msgSet, "msgSet");
+  if(length(dataSet$rmidx)>0){
+       data.norm <- dataSet$data.norm[,-dataSet$rmidx]
+    }else{
+       data.norm <- dataSet$data.norm
+    }
+
   if (dataSet$de.method == "limma") {
     if (is.null(dataSet$block)) {
-      fit <- lmFit(dataSet$data.norm, design)
+      fit <- lmFit(data.norm, design)
     } else {
-      corfit <- duplicateCorrelation(dataSet$data.norm, design, block = dataSet$block)
-      fit <- lmFit(dataSet$data.norm, design, block = dataSet$block, correlation = corfit$consensus)
+      corfit <- duplicateCorrelation(data.norm, design, block = dataSet$block)
+      fit <- lmFit(data.norm, design, block = dataSet$block, correlation = corfit$consensus)
     }
     
     if (!is.fullrank(design)) {
@@ -213,7 +243,13 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   } else {
     set.seed(1) 
     require(edgeR)
-    y <- DGEList(counts = dataSet$data.anot, group = dataSet$cls)
+     if(length(dataSet$rmidx)>0){
+       data.anot <- dataSet$data.anot[,-dataSet$rmidx]
+    }else{
+       data.anot <- dataSet$data.anot
+    }
+   
+    y <- DGEList(counts = data.anot, group = dataSet$cls)
     y <- calcNormFactors(y)
     y <- estimateGLMCommonDisp(y, design, verbose = FALSE)
     y <- estimateGLMTrendedDisp(y, design)
@@ -237,6 +273,7 @@ SetupDesignMatrix<-function(dataName="", deMethod){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   cls <- dataSet$cls; 
+  print(cls)
   design <- model.matrix(~ 0 + cls) # no intercept
   colnames(design) <- levels(cls);
   dataSet$design <- design;
@@ -349,7 +386,7 @@ MultiCovariateRegression <- function(fileName,
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
- 
+
   # for embedded inside tools (ExpressAnalyst etc)
   feature_table <- dataSet$data.norm 
   covariates <- dataSet$meta
@@ -371,9 +408,13 @@ MultiCovariateRegression <- function(fileName,
   
 
   covariates <- covariates[,all.vars,drop=F];
-  covariates <- na.omit(covariates);
+  rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
+
+   if(length(rmidx)>0){
+   covariates <- covariates[-rmidx,];
+   dataSet$rmidx <- rmidx;
+  }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
-  
   if(!identical(colnames(feature_table), rownames(covariates))){
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
@@ -453,6 +494,7 @@ MultiCovariateRegression <- function(fileName,
     rest <- topTable(fit, number = Inf, coef = analysis.var);
     colnames(rest)[1] <- dataSet$par1 <- analysis.var;
   }
+
   dataSet$design <- design;
   dataSet$contrast.type <- analysis.type;
   dataSet$comp.res <- rest;

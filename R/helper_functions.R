@@ -401,7 +401,7 @@ GetSampleNm <- function(dataName="",ridx=1){
   return( rownames(dataSet$meta)[ridx]);
 }
 
-UpdateSampleInfo <-  function(dataName="",ridx=1,cidx=1,cell){
+UpdateSampInfo <-  function(dataName="",ridx=1,cidx=1,cell){
   dataSet <- readDataset(dataName);
   meta <- dataSet$meta
   rnames <- rownames(dataSet$meta)
@@ -421,6 +421,9 @@ UpdateSampleInfo <-  function(dataName="",ridx=1,cidx=1,cell){
 
 GetSelectedMetaInfo <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
-  return(levels(dataSet$meta[,colNm]));
+  lvls <- levels(dataSet$meta[,colNm])
+lvls <- droplevels(lvls[lvls!="NA"])
+print(c("lvls",lvls))
+  return(lvls);
 }
 

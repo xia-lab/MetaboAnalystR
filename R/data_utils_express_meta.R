@@ -110,11 +110,10 @@ SanityCheckData <- function(fileName){
 SanityCheckMeta <- function(fileName,init){
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
-
   meta <- dataSet$meta
   if(init==1){
-    rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
-    meta = meta[,!rmidx,drop=F]
+    #rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
+   # meta = meta[,!rmidx,drop=F]
     
   }else{
     if(any(is.na(meta))|any(meta=="")|any(meta=="NA")){
@@ -122,7 +121,7 @@ SanityCheckMeta <- function(fileName,init){
     }
   }
   # use first column by default
-  cls <- meta[,1]
+  cls <- meta[meta[,1]!="NA",1]
   
   # check class info
   cls.lbl <- as.factor(as.character(cls));
@@ -138,8 +137,8 @@ SanityCheckMeta <- function(fileName,init){
     
     meta[,i]=as.factor( meta[,i])
   }
-  
   dataSet$cls <- cls.lbl
+  dataSet$rmidx <- which(meta[,1]=="NA")
   dataSet$meta <- meta
   saveSet(msgSet, "msgSet");
    RegisterData(dataSet);
@@ -295,11 +294,13 @@ GetGroupNames <- function(dataName, meta="NA"){
     dataSet <- readDataset(dataName);
     
     if(meta == "NA"){
-        return(levels(factor(dataSet$meta[,1])));
+      grpnms = levels(factor(dataSet$meta[,1]));
     }else{
-        return(levels(factor(dataSet$meta[,meta])));
+      grpnms =levels(factor(dataSet$meta[,meta]));
     }
-
+print("grpnms")
+print(grpnms[grpnms!="NA"])
+   return(grpnms[grpnms!="NA"])
 }
 
 CheckDataType <- function(dataName, type){
@@ -618,9 +619,9 @@ ReadOmicsData <- function(fileName) {
     }
     dataSet$meta <- dataSet$metaOrig <- meta.info
       data <- data[-cls.inx,];
-      dataSet$fst.cls <- dataSet$meta[,1]
+      dataSet$fst.cls <- dataSet$meta[which(dataSet$meta[,1]!="NA"),1]
       if(ncol(meta.info)>1){
-      dataSet$sec.cls <- dataSet$meta[,2]
+      dataSet$sec.cls <- dataSet$meta[which(dataSet$meta[,2]!="NA"),2]
       }
     
     dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
