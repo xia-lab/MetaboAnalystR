@@ -424,7 +424,7 @@ MultiCovariateRegression <- function(fileName,
     saveSet(msgSet, "msgSet");
     return(0)
   }
-  
+
   # get analysis type
   analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
    if(is.na(analysis.type)){
@@ -437,6 +437,12 @@ MultiCovariateRegression <- function(fileName,
     # build design and contrast matrix
     covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
     grp.nms <- levels(covariates[, analysis.var]);
+    for(col in 1:ncol(covariates)){
+       if(dataSet$cont.inx[colnames(covariates)[col]]){
+    covariates[,col] <- as.numeric( covariates[,col])
+  }
+}
+
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs <- list();
