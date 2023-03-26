@@ -17,10 +17,11 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     if(meta1 != "NA"){
     rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
     }
-    if(length(rmidx)){
+    if(length(rmidx)>0){
      meta<- dataSet$meta[-rmidx,]
-     meta<- apply(meta,2,function(x) droplevels(x))
-
+     for(col in 1:ncol(meta)){
+       meta[,col]<- droplevels(  meta[,col])
+      }
        dataSet$rmidx <- rmidx
     }else{
     meta<- dataSet$meta

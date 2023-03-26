@@ -422,7 +422,7 @@ UpdateSampInfo <-  function(dataName="",ridx=1,cidx=1,cell){
 GetSelectedMetaInfo <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
   lvls <- levels(dataSet$meta[,colNm])
-lvls <- droplevels(lvls[lvls!="NA"])
+lvls <-  lvls[lvls!="NA"]
 print(c("lvls",lvls))
   return(lvls);
 }
