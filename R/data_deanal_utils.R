@@ -20,7 +20,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     if(length(rmidx)>0){
      meta<- dataSet$meta[-rmidx,]
      for(col in 1:ncol(meta)){
-       meta[,col]<- droplevels(  meta[,col])
+       meta[,col]<- droplevels(meta[,col])
       }
        dataSet$rmidx <- rmidx
     }else{
@@ -390,7 +390,7 @@ MultiCovariateRegression <- function(fileName,
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
-
+  
   # for embedded inside tools (ExpressAnalyst etc)
   feature_table <- dataSet$data.norm 
   covariates <- dataSet$meta

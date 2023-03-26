@@ -28,7 +28,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   # rename data to data.orig
   int.mat <- dataSet$data;
   int.mat <- int.mat[,which(colnames(int.mat) %in% rownames(meta.info$meta.info))]
-   int.mat <- int.mat[,match(colnames(int.mat),rownames(meta.info$meta.info))]
+  int.mat <- int.mat[,match(rownames(meta.info$meta.info),colnames(int.mat))]
   dataSet$data <- NULL;
   dataSet$name <- fileName;
   dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info

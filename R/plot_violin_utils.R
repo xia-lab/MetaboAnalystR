@@ -25,6 +25,11 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   require(ggplot2)
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
+  if(length(dataSet$rmidx)>0){
+       data.norm <- dataSet$data.norm[,-dataSet$rmidx]
+    }else{
+       data.norm <- dataSet$data.norm
+    }
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
@@ -41,11 +46,11 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
         } 
         inx <- dataSet$cls %in% grp.nms;
         cls <- dataSet$cls[inx]
-        dat <- dataSet$data.norm[,inx];
+        dat <- data.norm[,inx];
       }else{
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
         cls <- dataSet$cls
-        dat <- dataSet$data.norm
+        dat <- data.norm
       }
       
       col <- unique(GetColorSchema(cls));   
@@ -86,7 +91,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       
       for(lv in levels(out.fac)){
         inx <- out.fac == lv;
-        df.orig <- data.frame(facA = lv, value = dataSet$data.norm[gene.id, inx], name = in.fac[inx])
+        df.orig <- data.frame(facA = lv, value = data.norm[gene.id, inx], name = in.fac[inx])
         p_all[[lv]] <- df.orig
       }
       Cairo(file <- imgName, dpi=72, width=320, height=320, type="png", bg="white");

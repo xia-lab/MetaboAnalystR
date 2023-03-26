@@ -330,6 +330,10 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   if("newcolumn" %in% colnames(dataSet$meta)){
     dataSet$meta <- data.frame(dataSet$meta[,-which(colnames(dataSet$meta) == "newcolumn")]);
   }
+  
+ if(!(all(rownames(pca.res)==rownames(dataSet$meta)))){
+  pca.res = pca.res[match(rownames(dataSet$meta),rownames(pca.res)),]
+  }
 
   if(length(dataSet$meta) == 2){
     Factor1 <- as.vector(dataSet$meta[,1])
