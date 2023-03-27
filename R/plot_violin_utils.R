@@ -26,7 +26,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   imgName <- paste("Gene_", gene.id, ".png", sep="");
   require(lattice);
   if(length(dataSet$rmidx)>0){
-       data.norm <- dataSet$data.norm[,-dataSet$rmidx]
+       data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
     }else{
        data.norm <- dataSet$data.norm
     }
@@ -49,23 +49,36 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
         dat <- data.norm[,inx];
       }else{
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
-        cls <- dataSet$cls
         dat <- data.norm
+        meta <- dataSet$meta[rownames(dataSet$meta) %in% colnames(dat),]
+        cls <- droplevels(meta[match(rownames(meta),colnames(dat)),dataSet$analysisVar])
+       print(rownames(meta)==colnames(dat))
       }
       
       col <- unique(GetColorSchema(cls));   
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
-      p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
-        geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
-        geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
-        theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none") +
-        stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-        scale_fill_manual(values = col) + 
-        scale_color_manual(values = col) +
-        ggtitle(cmpdNm) + 
-        theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-        theme_bw()
-      myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
+
+   if(dataSet$disc.inx[dataSet$analysisVar]){
+     p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
+     geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
+     geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+     theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
+     stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
+     scale_fill_manual(values = col) + 
+     scale_color_manual(values = col) +
+     ggtitle(cmpdNm) + 
+     theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+     theme_bw()
+   }else{
+    df.norm$name <- as.numeric(df.norm$name )
+    p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
+    geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
+    xlab(dataSet$analysisVar) +
+    theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
+    ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
+     theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
+    }
+    myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }else{
       
       out.fac <- dataSet$sec.cls
@@ -217,3 +230,86 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   print(myplot);
   dev.off();
 }
+
+UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
+  paramSet <- readSet(paramSet, "paramSet");
+  analSet <- readSet(analSet, "analSet");
+  dataSet <- readDataset(dataName);
+  anal.type <- paramSet$anal.type;
+  require(ggplot2)
+  imgName <- paste("Gene_", gene.id,"_",boxmeta ,".png", sep="");
+  require(lattice);
+  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F]
+  cls <- droplevels(meta[,boxmeta])
+  data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)]
+
+  if(anal.type == "onedata"){
+    ids <- rownames(dataSet$comp.res);
+    inx <- which(ids == gene.id);
+    cmpdNm <- analSet$sig.genes.symbols[inx]; 
+
+        Cairo(file = imgName,  width=320, height=380, type="png", bg="white");
+        dat <- data.norm
+        print(rownames(meta)==colnames(dat))
+      
+      col <- unique(GetColorSchema(cls));   
+      df.norm <- data.frame(value=dat[gene.id,], name = cls);
+      if(dataSet$disc.inx[boxmeta]){
+        p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
+          geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
+          geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+          theme(legend.position = "none") +  xlab(boxmeta) +
+          stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
+          scale_fill_manual(values = col) + 
+          scale_color_manual(values = col) +
+          ggtitle(cmpdNm) + 
+          theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+          theme_bw()
+      }else{
+        df.norm$name <- as.numeric(df.norm$name )
+        p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
+          geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
+          xlab(boxmeta) +
+          theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
+          ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
+          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
+      }
+      myplot <- p.norm + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+    
+    
+  }else{ # metadata
+    mdata.all <- paramSet$mdata.all;
+    inmex.meta <- qs::qread("inmex_meta.qs");
+    if(inmex.meta$id.type == "entrez"){
+      cmpdNm <- inmex.meta$gene.symbls[gene.id];
+    }else{
+      cmpdNm <- gene.id;
+    }
+    num <- sum(mdata.all == 1);
+    # calculate width based on the dateset number
+    if(num == 1){
+      Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+      
+      col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
+      df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
+      p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
+      p.norm <- p.norm + + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + geom_jitter(height = 0, width = 0.05, show.legend = FALSE)  + theme_bw()
+      p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
+      p.norm <- p.norm + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
+      p.norm <- p.norm + scale_fill_manual(values=col) + 
+        scale_color_manual(values=col) +
+        ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
+      p.norm <- p.norm + theme(plot.title = element_text(size = 11, hjust=0.5)) 
+      p.norm <- p.norm + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+      myplot <- p.norm + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+    }
+  }
+  print(myplot);
+  dev.off();
+}
+
+
+
+
+
+
