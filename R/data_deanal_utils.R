@@ -390,7 +390,7 @@ MultiCovariateRegression <- function(fileName,
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
-  
+  dataSet$rmidx <- NULL
   # for embedded inside tools (ExpressAnalyst etc)
   feature_table <- dataSet$data.norm 
   covariates <- dataSet$meta
@@ -415,7 +415,7 @@ MultiCovariateRegression <- function(fileName,
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
 
    if(length(rmidx)>0){
-   covariates <- covariates[-rmidx,];
+   covariates <- covariates[-rmidx,,drop=F];
    dataSet$rmidx <- rmidx;
   }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
@@ -427,6 +427,7 @@ MultiCovariateRegression <- function(fileName,
 
   # get analysis type
   analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
+  print(analysis.type)
    if(is.na(analysis.type)){
      msgSet$current.msg <- "Analysis var not found in our database!";
      saveSet(msgSet, "msgSet");
