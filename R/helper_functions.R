@@ -296,9 +296,22 @@ GetResColNames <- function(dataName=""){
   return(colnms);
 }
 
-GetMetaDataCol <- function(dataName="",idx=1){
+GetDiscMetas <- function(dataName=""){
+  keepVec<-keepVec
   dataSet <- readDataset(dataName);
-  return(dataSet$meta[,idx]);
+  if(length(keepVec)>0){
+  keepidx <- which(keepVec %in% colnames(colnames(dataSet$meta)))  
+  keepidx <- intersect(keepidx,which(dataSet$disc.inx))
+  }else{
+  keepidx <-  which(dataSet$disc.inx)
+  }
+  colnms<- colnames(dataSet$meta)[keepidx]
+  return(colnms);
+}
+
+GetMetaDataCol <- function(dataName="",colnm){
+  dataSet <- readDataset(dataName);
+  return(unique(dataSet$meta[,colnm]));
 }
 
 GetMetaCell <- function(dataName="",ridx=1,cidx=1){
@@ -423,7 +436,34 @@ GetSelectedMetaInfo <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
   lvls <- levels(dataSet$meta[,colNm])
 lvls <-  lvls[lvls!="NA"]
-print(c("lvls",lvls))
   return(lvls);
+}
+
+UpdateMetaOrder <- function(dataName="",metacol){
+  dataSet <- readDataset(dataName);
+  if(length(metaVec)>0 & metacol %in% colnames(dataSet$meta)){
+    dataSet$meta[,metacol] <- factor(as.character(dataSet$meta[,metacol]),levels = metaVec)
+    
+  }else{
+    msgSet <- readSet(msgSet, "msgSet");
+    msgSet$current.msg <- "The metadata column is empty! Please check your selection!"
+    saveSet(msgSet, "msgSet"); 
+    return(0)
+  }
+  RegisterData(dataSet);
+  return(1)
+}
+
+UpdateMetaName <-  function(dataName="",oldvec,newvec){
+  dataSet <- readDataset(dataName);
+  idx <- which(colnames(dataSet$meta)==oldvec)
+  if(length(idx)==1){
+    colnames(dataSet$meta)[idx] <- names(dataSet$disc.inx)[idx] <- 
+      names(dataSet$cont.inx)[idx] <- newvec
+  }else{
+   return(0)
+  }
+  RegisterData(dataSet);
+  return(1);
 }
 
