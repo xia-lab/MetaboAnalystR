@@ -281,6 +281,7 @@ for(i in 1:length(sel.nms)){
   }else{
     msg <- msgSet$current.msg
   }
+  match.msg <- "";
 print(metaContain)
   if(metaContain=="true"){
     meta.info <- list();
@@ -319,7 +320,6 @@ print(metaContain)
     saveSet(msgSet, "msgSet");
     return(NULL);
   }
-  match.msg <- vector()
  idx = which(!colnames(datOrig) %in% mydata$`#NAME`)
  if(length(idx)>1){
   if(length(idx)==2){
@@ -343,7 +343,7 @@ print(metaContain)
    }
    mydata <- mydata[-idx,]
  }
-  msgSet$match.msg <-match.msg
+
    mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
     mydata[is.na(mydata)] <- "NA";
     
@@ -413,7 +413,7 @@ print(metaContain)
     }
     disc.inx <- disc.inx[colnames(meta.info)]
     cont.inx <- cont.inx[colnames(meta.info)]
-
+     msgSet$match.msg <-match.msg
     msgSet$na.msg <- na.msg
     saveSet(msgSet, "msgSet");  
     return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))
