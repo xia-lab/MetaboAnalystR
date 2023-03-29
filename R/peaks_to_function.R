@@ -309,9 +309,7 @@ Convert2Mummichog <- function(mSetObj=NA,
     mz.tsc <- names(tt.tsc)
     tscores <- cbind(mz.tsc, as.numeric(tt.tsc))
     colnames(tscores) <- c("m.z", "t.score")
-  }
-  
-  if(test=="es"|test=="all"){
+  } else if(test=="es"|test=="all"){
     effect.size <- mSetObj$analSet$effect.size;    
     if(is.null(effect.size)){
       AddErrMsg("Effect size was not calculated!")
@@ -322,7 +320,7 @@ Convert2Mummichog <- function(mSetObj=NA,
     esize <- cbind(mz, effect.size)
     colnames(esize) <- c("m.z", "effect.size", "st.dev", "lower.ci", "upper.ci");
 
-  }else if(test=="fc"|test=="all"){
+  } else if(test=="fc"|test=="all"){
     log2fc <- mSetObj$analSet$fc$fc.log    
     if(is.null(log2fc)){
       AddErrMsg("Fold-change was not calculated!")
@@ -333,7 +331,7 @@ Convert2Mummichog <- function(mSetObj=NA,
     fcs <- cbind(mz.fc, as.numeric(log2fc))
     colnames(fcs) <- c("m.z", "log2.fc");
 
-  }else if(test == "aov"){
+  } else if(test == "aov"){
     if(is.null(mSetObj$analSet$aov)){
       AddErrMsg("ANOVA was not performed!")
       return(0)
@@ -348,7 +346,7 @@ Convert2Mummichog <- function(mSetObj=NA,
     pvals <- cbind(mz.pval, as.numeric(fdr));
     colnames(pvals) <- c("m.z", "p.value");
 
-  }else{
+  } else {
       AddErrMsg("Unknown method!")
       return(0);
   }
