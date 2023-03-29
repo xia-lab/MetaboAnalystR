@@ -297,7 +297,7 @@ print(metaContain)
           cls.nm<- gsub("\\s+","_", cls.nm);
           msg <- c(msg, " Blank spaces in group names are replaced with underscore '_'! ");
         }
-        cls.lbls <- datOrig[inx, -1];
+        cls.lbls <- setNames(as.character(datOrig[inx, -1]),colnames(datOrig)[-1]);
         # test NA
         na.inx <- is.na(cls.lbls);
         cls.lbls[na.inx] <- "NA";
