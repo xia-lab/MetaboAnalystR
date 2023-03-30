@@ -42,7 +42,6 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     dataSet$secondVar <- meta1
     dataSet$cls <- cls; # record main cls;
     dataSet$block <- block;
-    print(levels(cls))
     RegisterData(dataSet, levels(cls)[levels(cls)!="NA"]);
   }
 }

@@ -302,7 +302,7 @@ print(metaContain)
         # test NA
         na.inx <- is.na(cls.lbls);
         cls.lbls[na.inx] <- "NA";
-        cls.lbls <- ClearFactorStrings(cls.lbls,cls.nm);
+        cls.lbls <- ClearFactorStrings(cls.lbls);
         meta.info[[cls.nm]] <- cls.lbls;
       }
     }else{

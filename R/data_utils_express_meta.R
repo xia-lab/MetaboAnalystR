@@ -213,7 +213,7 @@ GetFeatureNum <-function(dataName){
   return(nrow(dataSet$data.norm));
 }
 
-ClearFactorStrings<-function(query,cls.nm){
+ClearFactorStrings<-function(query){
   # remove leading and trailing space
  # query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
   
@@ -235,6 +235,7 @@ ClearFactorStrings<-function(query,cls.nm){
 # get qualified inx with at least number of replicates
 GetDiscreteInx <- function(my.dat, min.rep=2){
   good.inx <- apply(my.dat, 2, function(x){
+    x <- x[x!="NA"]
     good1.inx <- length(x) > length(unique(x));
     good2.inx <- min(table(x)) >= min.rep;
     return (good1.inx & good2.inx);
@@ -579,26 +580,26 @@ ReadOmicsData <- function(fileName) {
   
   meta.info <- list();
   cls.inx <- grep("^#CLASS", data[,1]);
-    if(length(cls.inx) > 0){ 
-      for(i in 1:length(cls.inx)){
-        inx <- cls.inx[i];
-        cls.nm <- substring(data[inx, 1],2); # discard the first char #
-        if(nchar(cls.nm) > 6){
-          cls.nm <- substring(cls.nm, 7); # remove class
-        }
+  if(length(cls.inx) > 0){ 
+    for(i in 1:length(cls.inx)){
+      inx <- cls.inx[i];
+      cls.nm <- substring(data[inx, 1],2); # discard the first char #
+      if(nchar(cls.nm) > 6){
+        cls.nm <- substring(cls.nm, 7); # remove class
+      }
       if(grepl("[[:blank:]]", cls.nm)){
         cls.nm<- gsub("\\s+","_", cls.nm);
         msg <- c(msg, " Blank spaces in group names are replaced with underscore '_'! ");
       }
-        cls.lbls <- data[inx, -1];
-        # test NA
-        na.inx <- is.na(cls.lbls);
-        cls.lbls[na.inx] <- "NA";
-      cls.lbls <- ClearFactorStrings(cls.lbls,cls.nm);
-        
-        meta.info[[cls.nm]] <- cls.lbls;
-      }
-      meta.info <- data.frame(meta.info);
+      cls.lbls <- setNames(as.character(data[inx, -1]),colnames(data)[-1]);
+      # test NA
+      na.inx <- is.na(cls.lbls);
+      cls.lbls[na.inx] <- "NA";
+      cls.lbls <- ClearFactorStrings(cls.lbls);
+      
+      meta.info[[cls.nm]] <- cls.lbls;
+    }
+    meta.info <- data.frame(meta.info);
     smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
     rownames(meta.info) <- smpl.nms;
     
@@ -618,16 +619,16 @@ ReadOmicsData <- function(fileName) {
       meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
     }
     dataSet$meta <- dataSet$metaOrig <- meta.info
-      data <- data[-cls.inx,];
-      dataSet$fst.cls <- dataSet$meta[which(dataSet$meta[,1]!="NA"),1]
-      if(ncol(meta.info)>1){
+    data <- data[-cls.inx,];
+    dataSet$fst.cls <- dataSet$meta[which(dataSet$meta[,1]!="NA"),1]
+    if(ncol(meta.info)>1){
       dataSet$sec.cls <- dataSet$meta[which(dataSet$meta[,2]!="NA"),2]
-      }
+    }
     
     dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
-    }
-
+  }
+  
   if(class(data) == "try-error" || ncol(data) == 1){
     AddErrMsg("Data format error. Failed to read in the data!");
     AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
@@ -649,7 +650,7 @@ ReadOmicsData <- function(fileName) {
   res <- RemoveDuplicates(data, "mean", quiet=T, paramSet, msgSet); # remove duplicates
   data <- res[[1]];
   msgSet <- res[[2]];
-
+  
   data <- as.data.frame(data)
   var.nms <- rownames(data)
   
@@ -698,7 +699,7 @@ ReadOmicsData <- function(fileName) {
   
   #dir.create() does not crash if the directory already exists, it just prints out a warning.
   dir.create(paste0(fileName, "_data"), showWarnings = FALSE);
-
+  
   dataSet$data <- data;
   dataSet$data.norm <- data;
   saveDataQs(data, "data.raw.qs", paramSet$anal.type, fileName);
@@ -711,7 +712,7 @@ ReadOmicsData <- function(fileName) {
   dataSet$readableType <- "Transcriptomics data";
   dataSet$enrich_ids <- rownames(dataSet$data.norm)
   names(dataSet$enrich_ids) <- rownames(dataSet$data.norm)
-
+  
   # update current dataset
   saveSet(msgSet,"msgSet");
   paramSet$mdata.all[[fileName]]<-1
@@ -719,6 +720,7 @@ ReadOmicsData <- function(fileName) {
   saveSet(paramSet, "paramSet");
   return(RegisterData(dataSet));
 }
+
 
 
 PerformDEAnalMeta <- function(filenm, alg="ttest", meta=1, p.lvl=0.05, fc.lvl=0, nonpar=FALSE){

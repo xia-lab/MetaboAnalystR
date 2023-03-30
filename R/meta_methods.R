@@ -35,7 +35,6 @@ CheckMetaDataIntegrity <- function(){
   mdata.all <- paramSet$mdata.all;
   paramSet$performedDE <- FALSE;
   msgSet <- readSet(msgSet, "msgSet");
-
   for(i in 1:length(mdata.all)){
     mdata.all[i] <- 1;
   }
