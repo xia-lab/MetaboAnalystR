@@ -300,7 +300,7 @@ GetDiscMetas <- function(dataName=""){
   keepVec<-keepVec
   dataSet <- readDataset(dataName);
   if(length(keepVec)>0){
-  keepidx <- which(keepVec %in% colnames(colnames(dataSet$meta)))  
+  keepidx <- which(keepVec %in% colnames(dataSet$meta))
   keepidx <- intersect(keepidx,which(dataSet$disc.inx))
   }else{
   keepidx <-  which(dataSet$disc.inx)

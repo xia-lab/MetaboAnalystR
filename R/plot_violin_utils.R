@@ -250,7 +250,6 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
 
         Cairo(file = imgName,  width=320, height=380, type="png", bg="white");
         dat <- data.norm
-        print(rownames(meta)==colnames(dat))
       
       col <- unique(GetColorSchema(cls));   
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
@@ -266,7 +265,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
           theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
           theme_bw()
       }else{
-        df.norm$name <- as.numeric(df.norm$name )
+        df.norm$name <- as.numeric(as.character(df.norm$name ))
         p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
           geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
           xlab(boxmeta) +
