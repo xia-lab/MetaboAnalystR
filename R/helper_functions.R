@@ -466,4 +466,24 @@ UpdateMetaName <-  function(dataName="",oldvec,newvec){
   RegisterData(dataSet);
   return(1);
 }
+GetMetaSummary <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  meta <- dataSet$meta
+  disc.vec <- paste(names(dataSet$disc.inx)[which(dataSet$disc.inx)],collapse=", ")  
+  cont.vec <- paste(names(dataSet$cont.inx)[which(dataSet$cont.inx)],collapse=", ")  
+  na.vec <- na.check(meta)
+  return(c(ncol(meta),length(which(dataSet$disc.inx)),disc.vec,
+           length(which(dataSet$cont.inx)),cont.vec,names(meta)[1],length(unique(meta[,1])),paste(unique(meta[,1]),collapse=", "),na.vec ));
+}
 
+na.check <- function(mydata){
+  na.idx <- apply(mydata,2,function(x) "NA" %in% x)
+  if(all(!na.idx)){
+    return("None")
+  }
+  na.num <- apply(mydata,2,function(x) length(which(x=="NA")))
+  naInfo <- data.frame(names(mydata)[na.idx],num = na.num[na.num>0])
+  naInfo <- apply(naInfo, 1, function(x) paste0(x[1]," (",x[2],")"))
+  naInfo <- paste(naInfo,collapse = ", ")
+  return(naInfo)
+}
