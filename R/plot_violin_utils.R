@@ -18,6 +18,7 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol = F){
+library(see)
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
@@ -117,8 +118,8 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
         facet_wrap(~facA, nrow = row.num) + 
         theme(axis.title.x = element_blank(), legend.position = "none", axis.text.x = element_text(angle=90, hjust=1),
               plot.title = element_text(size = 11, hjust=0.5, face = "bold"), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) + 
-        scale_fill_manual(values = col) + 
-        scale_color_manual(values = col) + 
+        scale_fill_okabeito() + 
+        scale_color_okabeito() + 
         ggtitle(cmpdNm) + 
         ylab("Expression") +
         theme_bw()
