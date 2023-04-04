@@ -92,7 +92,7 @@ ReadAnnotationTable <- function(fileName) {
 
 ###read in metadata file for meta-analysis mode
 ReadMetaData <- function(metafilename){
-    paramSet <- readSet(paramSet, "paramSet");
+  paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet,"msgSet");
   metadata <- try(data.table::fread(metafilename, header=TRUE, check.names=FALSE, data.table=FALSE));
     metadata[is.na(metadata)] = "NA"
@@ -275,7 +275,7 @@ for(i in 1:length(sel.nms)){
 #### return a list
 .readMetaData <- function(metafileName,datOrig,metaContain) {
   msgSet <- readSet(msgSet, "msgSet");
-  na.msg = ""
+   na.msg <- ""
   if(is.null(msgSet$current.msg)){
     msg <-""
   }else{
@@ -323,11 +323,11 @@ print(metaContain)
  idx = which(!colnames(datOrig) %in% mydata$`#NAME`)
  if(length(idx)>1){
   if(length(idx)==2){
-    match.msg <- c(match.msg,paste0("One sample ", colnames(datOrig)[idx[2]], " was not detected in metadata file and was removed from data table!"))
+    match.msg <- paste0(match.msg,"One sample ", colnames(datOrig)[idx[2]], " was not detected in metadata file and was removed from data table!   ")
    }else if(length(idx)>5){
-    match.msg <- c(match.msg,paste0(length(idx[-1])," samples ", paste(colnames(datOrig)[idx[2:4]],collapse = ", "), ", etc. were not detected in metadata file and were removed  from data table!"))
+    match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[2:4]],collapse = ", "), ", etc. were not detected in metadata file and were removed  from data table!   ")
    }else{
-    match.msg <- c(match.msg,paste0(length(idx[-1])," samples ", paste(colnames(datOrig)[idx[-1]],collapse = ", "), " were not detected in metadata file and were removed  from data table!"))
+    match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[-1]],collapse = ", "), " were not detected in metadata file and were removed  from data table!   ")
    }
    datOrig <- datOrig[,-idx[-1]]
  }
@@ -335,18 +335,20 @@ print(metaContain)
  idx = which( !mydata$`#NAME` %in%colnames(datOrig) )
  if(length(idx)>1){
    if(length(idx)==1){
-     match.msg <- c(match.msg,paste0("One sample ", mydata$`#NAME`[idx], " was not detected in data file and was removed from metadata table!"))
+     match.msg <- paste0(match.msg,"One sample ", mydata$`#NAME`[idx], " was not detected in data file and was removed from metadata table!   ")
    }else if(length(idx)>3){
-    match.msg <- c(match.msg,paste0(length(idx)," samples ", paste(mydata$`#NAME`[1:3],collapse = ", "), ", etc. were not detected in data file and were removed from metadata table!"))
+    match.msg <- paste0(match.msg,length(idx)," samples ", paste(mydata$`#NAME`[1:3],collapse = ", "), ", etc. were not detected in data file and were removed from metadata table!  ")
    }else{
-    match.msg <- c(match.msg,paste0(length(idx)," samples ", paste(mydata$`#NAME`[idx],collapse = ", "), " were not detected in data file and were removed from metadata table!"))
+    match.msg <- paste0(match.msg, length(idx)," samples ", paste(mydata$`#NAME`[idx],collapse = ", "), " were not detected in data file and were removed from metadata table!  ")
    }
    mydata <- mydata[-idx,]
  }
-
-   mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
-    mydata[is.na(mydata)] <- "NA";
-    
+  mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
+     mydata[is.na(mydata)] <- "NA";
+  if(ncol(mydata)>11){
+      mydata <- mydata[,1:11]
+      match.msg <- paste0(match.msg, " More than 10 columns are detected in your metadata. Only the first ten columns will be used in the downstream analysis! Please double check the metadata of interested!   ")
+  }
     # look for #NAME, store in a list
     sam.inx <- grep("^#NAME", colnames(mydata)[1]);
     if(length(sam.inx) > 0){
@@ -357,7 +359,7 @@ print(metaContain)
       saveSet(msgSet, "msgSet");
       return(NULL);
     }
-   
+ 
    # covert to factor
      mydata <-data.frame(lapply(1:ncol(mydata),function(x){
       mydata[,x]=unlist(ClearFactorStrings(mydata[,x]))
@@ -402,9 +404,9 @@ print(metaContain)
     rmcol <- intersect(which(!disc.inx),which(!cont.inx ))
   
     if(length(rmcol)==1){
-     match.msg <- c(match.msg,paste0("Column ",names(meta.info)[rmcol]," is removed due to lack of replicates!" )  ) 
+     match.msg <- paste0(match.msg, "Column ",names(meta.info)[rmcol]," is removed due to lack of replicates!   " )
     }else if(length(rmcol)>1){
-     match.msg <- c(match.msg,paste0("Columns ",paste(names(meta.info)[rmcol],collapse = ", ")," are removed due to lack of replicates!" )  ) 
+     match.msg <- paste0(match.msg, "Columns ",paste(names(meta.info)[rmcol],collapse = ", ")," are removed due to lack of replicates!   " )
     }
     
     if(sum(cont.inx)>0){
@@ -413,7 +415,7 @@ print(metaContain)
     }
     disc.inx <- disc.inx[colnames(meta.info)]
     cont.inx <- cont.inx[colnames(meta.info)]
-     msgSet$match.msg <-match.msg
+    msgSet$match.msg <-match.msg
     msgSet$na.msg <- na.msg
     saveSet(msgSet, "msgSet");  
     return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))

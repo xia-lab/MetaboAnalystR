@@ -311,7 +311,8 @@ GetDiscMetas <- function(dataName=""){
 
 GetMetaDataCol <- function(dataName="",colnm){
   dataSet <- readDataset(dataName);
-  return(unique(dataSet$meta[,colnm]));
+  cls = levels(dataSet$meta[,colnm]);
+  return(cls[cls!="NA"]);
 }
 
 GetMetaCell <- function(dataName="",ridx=1,cidx=1){

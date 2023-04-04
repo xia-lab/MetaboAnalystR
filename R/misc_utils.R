@@ -152,7 +152,6 @@ cleanMem <- function(n=8) { for (i in 1:n) gc() }
   vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
   obj.dim[vec, 1] <- napply(names, length)[vec]
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
-  print(lapply(dataSet, object.size));
   save.image("memcheck.RData");
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))
@@ -697,7 +696,6 @@ GetDatNms <- function(){
 AddErrMsg <- function(msg){
   msgSet <- readSet(msgSet, "msgSet");
   msgSet$current.msg <- c(msgSet$current.msg, msg);
-  print(msg);
   saveSet(msgSet, "msgSet");
 }
 
@@ -953,7 +951,10 @@ getPrefilterMsg <- function(){
     return(msgSet$match.msg);
 }
 
-
+getColnumMsg <- function(){
+    msgSet <- readSet(msgSet, "msgSet");
+    return(msgSet$.msg);
+}
 
 PrepareSqliteDB <- function(sqlite_Path, onweb = TRUE) {
   if(onweb) {return(TRUE)};

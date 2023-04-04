@@ -176,12 +176,10 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
           axis.title = element_text(size=12, face = "bold"),
           axis.text.x = element_text(color = "black"),
           axis.text.y = element_text(size=12,color = "black"))
-  
-  
+   
   Cairo::Cairo(file=paste0(imgNm, "dpi" , dpi, ".", format), width=18, height=12, type=format, bg="white", dpi=dpi, unit="in");
   print(rp);
   dev.off();
-  #saveRDS(rp, "rp.rds");
   
   ##interative ridge json data
   ridge_bw <- rp$layers[[1]]$computed_stat_params$bandwidth;
