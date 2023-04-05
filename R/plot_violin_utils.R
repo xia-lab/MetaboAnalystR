@@ -18,6 +18,7 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol = F){
+
 library(see)
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");

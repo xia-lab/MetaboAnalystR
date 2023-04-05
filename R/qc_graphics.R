@@ -310,12 +310,14 @@ PlotDataPCA <- function(fileName, pcaName, dpi, format){
 }
 
 qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
+
   dpi <- as.numeric(dpi);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   require('lattice');
   require('ggplot2');
   require('reshape');
+  require('see');
   pca <- prcomp(t(na.omit(x)));
   imp.pca<-summary(pca)$importance;
   xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")
@@ -354,7 +356,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         xlab(xlabel) + 
         ylab(ylabel) + 
         facet_grid(. ~ variable) +
-        theme_bw()
+        theme_bw() +
+        scale_color_okabeito() +
+        scale_fill_okabeito()
 
     }else{
 
@@ -366,7 +370,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         xlab(xlabel) + 
         ylab(ylabel) + 
         geom_text_repel(force=1.5) + 
-        facet_grid(. ~ variable) + theme_bw()
+        facet_grid(. ~ variable) + theme_bw() +
+        scale_color_okabeito() +
+        scale_fill_okabeito()
     }
     width <- 12
     height <- 6
@@ -383,7 +389,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
-        theme_bw()
+        theme_bw() +
+        scale_color_okabeito() +
+        scale_fill_okabeito()
 
     }else{
 
@@ -394,9 +402,10 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
-        geom_text_repel(force=1.5)+
-        scale_color_manual(breaks=unique(pca.rest$Conditions), values=c("#00BFC4" ,"#F8766D", "#006600", "#669999","#CC0000", "#00CCCC", "#660099", "#CC0066", "#FF9999", "#FF9900")) +
-        theme_bw()
+        geom_text_repel(force=1.5) +
+        theme_bw() +
+        scale_color_okabeito() +
+        scale_fill_okabeito()
     }
     width <- 10
     height <- 6
