@@ -34,7 +34,8 @@ my.save.data <- function(mSetObj=NA){
       }else{
         meta.orig <- mSetObj$dataSet$orig.meta.info;
         orig.data <- orig.data[match(rownames(meta.orig), rownames(orig.data)), ]
-        orig.data<-cbind(meta.orig, orig.data);
+        #orig.data<-cbind(meta.orig, orig.data);
+        fast.write.csv(meta.orig, file="metadata_original.csv");
       }
 
       if(dim(orig.data)[2]>max.col){ 
@@ -60,7 +61,8 @@ my.save.data <- function(mSetObj=NA){
         }else{
             meta.proc <- mSetObj$dataSet$meta.info;
             proc.data <- proc.data[match(rownames(meta.proc), rownames(proc.data)), ]
-            proc.data<-cbind(meta.proc, proc.data);
+            #proc.data<-cbind(meta.proc, proc.data);
+            fast.write.csv(meta.proc, file="metadata_processed.csv");
         }
         if(dim(proc.data)[2]>max.col){
           proc.data<-t(proc.data);
@@ -88,7 +90,8 @@ my.save.data <- function(mSetObj=NA){
             }else{
                 meta.norm <- mSetObj$dataSet$meta.info;
                 norm.data <- norm.data[match(rownames(meta.norm), rownames(norm.data)), ]
-                norm.data<-cbind(meta.norm, norm.data);
+                #norm.data<-cbind(meta.norm, norm.data);
+                fast.write.csv(meta.norm, file="metadata_normalized.csv");
             }
             if(dim(norm.data)[2]>max.col){
               norm.data<-t(norm.data);
