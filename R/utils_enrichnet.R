@@ -107,8 +107,8 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
     expvals <- expr.val;
     names(expvals) <- doEntrez2SymbolMapping(rownames(tbl), paramSet$data.org, paramSet$data.idType)
     expvals <- expvals[node.nms]
-    V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
-    V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
+    V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T,T);
+    V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, T);
   }else if(anal.type == "genelist" && sum(as.numeric(paramSet$all.prot.mat[,1])) != 0){
     tbl <- paramSet$all.prot.mat
     gene.nms <- V(bg)$name[which(!V(bg)$name %in% rownames(enr.mat))]
@@ -118,8 +118,8 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
     expvals <- expr.val
     expvals <- expvals[node.nms]
     expvals <- expvals[!is.na(expvals)]
-    V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
-    V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
+    V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, T);
+    V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, T);
     
   }else if(anal.type =="metadata"){
     if(paramSet$selDataNm == "meta_default"){
@@ -128,8 +128,8 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
       expvals <- analSet$meta.avgFC[rownames(tbl)]
       names(expvals) <- doEntrez2SymbolMapping(rownames(tbl), paramSet$data.org, paramSet$data.idType)
       expvals <- expvals[node.nms]
-      V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
-      V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, F);
+      V(bg)$color[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, T);
+      V(bg)$colorw[!V(bg)$name %in% rownames(enr.mat)] <- ComputeColorGradient(unname(expvals), "black", T, T);
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
       tbl <- dataSet$comp.res;
@@ -139,8 +139,8 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
       expvals <- expvals[node.nms]
       expvals <- expvals[!is.na(expvals)]
       inx <- !V(bg)$name %in% rownames(enr.mat);
-      V(bg)$color[inx] <- ComputeColorGradient(unname(expvals), "black", T, F);
-      V(bg)$colorw[inx] <- ComputeColorGradient(unname(expvals), "black", T, F);
+      V(bg)$color[inx] <- ComputeColorGradient(unname(expvals), "black", T, T);
+      V(bg)$colorw[inx] <- ComputeColorGradient(unname(expvals), "black", T, T);
     }
   }else{
     expvals <- rep(0,length(V(bg)$color)); 
