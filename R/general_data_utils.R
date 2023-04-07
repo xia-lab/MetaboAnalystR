@@ -1079,6 +1079,14 @@ GetSampleNames <- function(mSetObj=NA){
   return(rownames(metaData));
 }
 
+GetNameCheckMsgs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSet$msgSet$nmcheck.msg)){ # not applicable
+    return(c("1", "Not applicable"));
+  }
+  return(mSet$msgSet$nmcheck.msg);
+}
+
 #'Function to retrieve all available datasets from the Metabolomics Workbench.
 #'@description This function uses the httr R package to make an API
 #'call to the Metabolomics Workbench to retrieve a table of
