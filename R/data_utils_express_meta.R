@@ -184,14 +184,8 @@ UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
 PlotDataProfile<-function(dataName,type, boxplotName, pcaName){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
-  #if(type=="normalize"){
-    qc.boxplot(as.matrix(dataSet$data.norm), boxplotName);
-    qc.pcaplot(dataSet, as.matrix(dataSet$data.norm), pcaName);
-  #}else{
-  #  data.raw <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
-  #  qc.boxplot(as.matrix(data.raw), boxplotName);
-  #  qc.pcaplot(dataSet, as.matrix(data.raw), pcaName);
-  #}
+  qc.boxplot(as.matrix(dataSet$data.norm), boxplotName);
+  qc.pcaplot(dataSet, as.matrix(dataSet$data.norm), pcaName);
 }
 
 ScalingData <-function (nm,opt){
