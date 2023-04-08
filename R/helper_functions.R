@@ -343,16 +343,16 @@ GetResColType <- function(dataName="",colNm="NA"){
  dataSet <- readDataset(dataName);
   if(colNm=="NA"){
   meta.status <- ifelse(dataSet$disc.inx,"disc","cont")
-  meta.status <- c(meta.status,rep("na",10-length(meta.status)))
   }else{
   meta.status <- ifelse(dataSet$disc.inx[colNm],"disc","cont")
   }
   return(meta.status);
 }
 
-UpdateMetaStatus <- function(dataName="",cidx=1){
+UpdateMetaStatus <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
   msgSet <- readSet(msgSet, "msgSet");
+   cidx <- which(colnames(dataSet$meta)==colNm)
   old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   if(dataSet$disc.inx[cidx]){
     if(all(is.na( as.numeric(as.character(dataSet$meta[,cidx]))))){
@@ -379,10 +379,10 @@ UpdateMetaStatus <- function(dataName="",cidx=1){
 }
 
 
-DeleteSample <- function(dataName="",ridx=1){
+DeleteSample <- function(dataName="",samplNm){
   dataSet <- readDataset(dataName);
-  dataSet$meta <- dataSet$meta[-ridx,]
-  dataSet$data.norm <- dataSet$data.norm[,-ridx]
+  dataSet$meta <- dataSet$meta[rownames(dataSet$meta)!=samplNm,]
+  dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm!=samplNm)]
   RegisterData(dataSet);
   return(1);
 }
@@ -415,18 +415,27 @@ GetSampleNm <- function(dataName="",ridx=1){
   return( rownames(dataSet$meta)[ridx]);
 }
 
-UpdateSampInfo <-  function(dataName="",ridx=1,cidx=1,cell){
+
+UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
   dataSet <- readDataset(dataName);
   meta <- dataSet$meta
-  rnames <- rownames(dataSet$meta)
-  meta <- data.frame(apply(meta, 2, as.character))
-  rownames(meta) <- rnames
-  if(cidx==0){
-    rownames(meta)[ridx]=cell
+  ridx <- which(rownames(meta)==rowNm)
+  if(colNm==""){
+    if(rowNm !=cell){
+      rownames(meta)[ridx]=cell
+    }
   }else{  
-    meta[ridx,cidx] = cell
+    cidx<- which(colnames(meta)==colNm)
+    if(cell!= as.character(meta[ridx,cidx])){
+      if(cell %in% levels(meta[,cidx])){
+        meta[ridx,cidx] = cell
+      }else{
+        levels(meta[,cidx]) <- c(levels(meta[,cidx]), cell)
+        meta[ridx,cidx] = cell
+      }
+      meta[,cidx] <- droplevels(meta[,cidx])
+    }
   }
-
   dataSet$meta = meta
   RegisterData(dataSet);
   return(1);
@@ -487,4 +496,23 @@ na.check <- function(mydata){
   naInfo <- apply(naInfo, 1, function(x) paste0(x[1]," (",x[2],")"))
   naInfo <- paste(naInfo,collapse = ", ")
   return(naInfo)
+}
+
+
+UpdatePrimaryMeta <- function(fileName,primaryMeta){
+  dataSet <- readDataset(fileName);
+  msgSet <- readSet(msgSet,"msgSet");
+  meta <- dataSet$meta
+  if(primaryMeta %in% colnames(meta)){
+    cidx <- which(colnames(meta)==primaryMeta)
+    dataSet$meta<-cbind(meta[,cidx,drop=F],meta[,-cidx,drop=F])
+    dataSet$disc.inx=c(dataSet$disc.inx[cidx],dataSet$disc.inx[-cidx])
+    dataSet$cont.inx=c(dataSet$cont.inx[cidx],dataSet$cont.inx[-cidx])
+  }else{
+    msgSet$current.msg <- "The metadata column is empty! Please check your selection!"
+    saveSet(msgSet, "msgSet"); 
+    return(0)
+  }
+  RegisterData(dataSet);
+  return(1)
 }

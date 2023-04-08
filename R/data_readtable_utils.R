@@ -345,10 +345,6 @@ print(metaContain)
  }
   mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
      mydata[is.na(mydata)] <- "NA";
-  if(ncol(mydata)>11){
-      mydata <- mydata[,1:11]
-      match.msg <- paste0(match.msg, " More than 10 columns are detected in your metadata. Only the first ten columns will be used in the downstream analysis! Please double check the metadata of interested!   ")
-  }
     # look for #NAME, store in a list
     sam.inx <- grep("^#NAME", colnames(mydata)[1]);
     if(length(sam.inx) > 0){

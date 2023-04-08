@@ -427,7 +427,6 @@ MultiCovariateRegression <- function(fileName,
 
   # get analysis type
   analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
-  print(analysis.type)
    if(is.na(analysis.type)){
      msgSet$current.msg <- "Analysis var not found in our database!";
      saveSet(msgSet, "msgSet");
