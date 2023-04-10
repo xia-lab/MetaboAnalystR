@@ -12,6 +12,7 @@
 #'@export
 #'
 PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx=1, mode = "multi",rankOpt=""){
+  cat("performGSEA===",dataName, file.nm, fun.type, netNm, mType, selectedFactorInx, mode, rankOpt);
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -179,7 +180,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     qs:::qsave(res.mat, "enr.mat.qs");
     analSet$list.genes <- doEntrez2SymbolMapping(rownames(dataSet$sig.mat), paramSet$data.org, paramSet$data.idType);
     analSet <- SetListNms(dataSet);
-    .prepareEnrichNet(dataSet, netNm, "meta", "mixed", analSet);
+    analSet <- .prepareEnrichNet(dataSet, netNm, "meta", "mixed", analSet);
     file.nm <- gsub("gsea", "enrichment", file.nm)
     json.res$naviString <- "Enrichment Network"
   }else{

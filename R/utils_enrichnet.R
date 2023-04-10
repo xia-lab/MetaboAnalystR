@@ -4,6 +4,7 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", analSet){
+  cat("my.enrich.net===",netNm, type, overlapType);
   enr.mat <- qs:::qread("enr.mat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
@@ -180,10 +181,10 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   }
   
   ppi.comps <- vector(mode="list");
-  paramSet$current.net.nm <- "enrNet"
-  ppi.comps[["enrNet"]] <- bg;
+  paramSet$current.net.nm <- netNm
+  ppi.comps[[netNm]] <- bg;
   analSet$ppi.comps <- ppi.comps
-  
+
   bedge.mat <- get.edgelist(bg);
   bedge.mat <- cbind(id=1:nrow(bedge.mat), source=bedge.mat[,1], target=bedge.mat[,2]);
   initsbls <- doEntrez2SymbolMapping(analSet$list.genes, paramSet$data.org, paramSet$data.idType)
@@ -208,5 +209,5 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   sink(netName);
   cat(RJSONIO::toJSON(netData));
   sink();
-  return(1);
+  return(analSet);
 }
