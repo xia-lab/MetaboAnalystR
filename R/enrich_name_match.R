@@ -279,8 +279,8 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   
   mSetObj <- .get.mSet(mSetObj);
   lipid <- mSetObj$lipid.feats;
-  
-  if(lipid & anal.type == "msetqea"){
+ 
+  if(!is.null(lipid) & anal.type == "msetqea"){
     qvec <- names(mSet$dataSet$url.var.nms);
   }else{
     qvec <- mSetObj$dataSet$cmpd;
