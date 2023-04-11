@@ -43,7 +43,8 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
   
-  # Set working dir & files included
+  # Set working dir & init env & files included
+  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
   str <- paste0(str, ";\n", "mSet <- InitDataObjects(\'spec\', \'raw\', FALSE)");
   str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");

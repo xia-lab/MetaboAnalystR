@@ -7,3 +7,4 @@ src/*.so
 src/*.dll
 vignettes/*.png
 vignettes/*.Rmd
+*.o

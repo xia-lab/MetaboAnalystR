@@ -70,6 +70,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj$msgSet <- list(); # store various message during data processing
   mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
   mSetObj$cmdSet <- vector(mode="character"); # store R command
+  metaboanalyst_env <<- new.env(); # init a marker env for raw data processing
   
   if (anal.type == "mummichog") {
     # Define this parameter set to avoid global variable
