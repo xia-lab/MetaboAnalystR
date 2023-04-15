@@ -234,16 +234,18 @@ library(see)
 }
 
 UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
+  require(ggplot2);
+  require(see);
+  require(lattice);
+
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-  require(ggplot2)
   imgName <- paste("Gene_", gene.id,"_",boxmeta ,".png", sep="");
-  require(lattice);
-  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F]
-  cls <- droplevels(meta[,boxmeta])
-  data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)]
+  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F];
+  cls <- droplevels(meta[,boxmeta]);
+  data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
 
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
