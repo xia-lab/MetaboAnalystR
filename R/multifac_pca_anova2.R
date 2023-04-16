@@ -14,7 +14,7 @@ aov.mixed <- function(x){
 
 aov.2wayrep <- function(x){
   unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/(exp.fac*time.fac)),
-             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))[,c("F","p")])
+             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -40,7 +40,7 @@ aov.1wayrep <- function(x){
 #'License: GNU GPL (>= 2)
 aov.2way <- function(x){
   unlist(suppressMessages(anova_test(x ~ aov.facA*aov.facB,
-                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))[,c("F","p")])
+                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -58,7 +58,7 @@ aov.2way <- function(x){
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
-                       p.cor="fdr", type="time0", phenOpt="between"){
+                       p.cor="fdr", designType="time0", phenOpt="between"){
 
 require(rstatix)
 
@@ -79,7 +79,7 @@ require(rstatix)
       sel.meta.df <- as.data.frame(sel.meta.df)
     }
     
-    if(type %in% c("time0", "time")){
+    if(designType %in% c("time0", "time")){
       mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
       mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
       mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[which(tolower(colnames(sel.meta.df)) != "time")]
@@ -114,7 +114,7 @@ require(rstatix)
   }
   
   # now perform ANOVA depending on experimental design
-  if(type == "time0"){
+  if(designType == "time0"){
 
     time.fac <<- mSetObj$dataSet$time.fac;
     mSetObj$dataSet$sbj <- as.factor(mSetObj$dataSet$exp.fac);
@@ -157,7 +157,7 @@ require(rstatix)
     ord.inx <- order(aov.mat[,2], decreasing = FALSE);
 
   } else {
-    if(type == "time"){
+    if(designType == "time"){
       # first check if balanced
       res <- table(mSetObj$dataSet$exp.fac, mSetObj$dataSet$time.fac);
       res.mean <- colMeans(res);
@@ -250,7 +250,7 @@ require(rstatix)
   fast.write.csv(aov.mat, file=fileName);
   names(p.value) <- colnames(dat);
   aov2<-list (
-    type = type,
+    type = designType,
     sig.nm = fileName,
     thresh = -log10(thresh),
     multi.c = p.cor,
