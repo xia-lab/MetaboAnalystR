@@ -209,12 +209,12 @@ GetFeatureNum <-function(dataName){
 
 ClearFactorStrings<-function(query){
   # remove leading and trailing space
- # query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
-  
+   query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE); 
   # kill multiple white space
- # query <- gsub(" +","_",query);
+   query <- gsub(" +","_",query);
   # remove non alphabets and non numbers 
   #query <- gsub("[^[:alnum:] ]", "_", query);
+  query <- gsub("\\+", "_", query)
   chars <- substr(query, 0, 1);
   num.inx<- chars >= '0' & chars <= '9';
   if(all(num.inx[!(is.na(num.inx))])){
