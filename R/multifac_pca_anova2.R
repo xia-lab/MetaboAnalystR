@@ -175,6 +175,24 @@ require(rstatix)
       if(.on.public.web){
         .set.mSet(mSetObj);
       }
+
+      # check if correct phenOpt selected
+      phens <- unique(exp.fac)
+      sbj.df <- data.frame(subject = aov.sbj, phenotype = exp.fac)
+      sbjs <- list()
+      for(i in c(1:length(phens))){
+        sbjs[[i]] <- unique(as.character(sbj.df$subject[sbj.df$phenotype == phens[i]]))
+      }
+      overlap.across.phens <- Reduce(intersect, sbjs)
+      if(length(overlap.across.phens) == 0 & phenOpt == "within"){
+        AddErrMsg("No repeated subjects across phenotypes! Choose 'Between subjects' for the phenotype factor.")
+        return(0)
+      }
+      
+      if(length(overlap.across.phens) != 0 & phenOpt == "between"){
+        AddErrMsg("There are repeated subjects across phenotypes! Choose 'Within subjects' for the phenotype factor.")
+        return(0)
+      }
       
       if(phenOpt == "between"){
         aov.mat <- t(apply(as.matrix(dat), 2, aov.mixed));      
