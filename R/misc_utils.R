@@ -376,7 +376,7 @@ InitListEnrichment <- function(dataName, type){
   analSet <- .getEnrNetList(dataSet, analSet);
   res <- .performEnrichAnalysis(dataSet, paste0("enrichment_", type), type, analSet$list.genes);
   if(res){
-    res <- .prepareEnrichNet(dataSet, paste0('enrichNet_', type), 'list', "mixed", analSet);
+    .prepareEnrichNet(dataSet, paste0('enrichNet_', type), 'list', "mixed", analSet);
   }
   return(res)
 }
@@ -398,7 +398,7 @@ PerformListEnrichmentView <- function(dataName="", file.nm, fun.type, netNm, IDs
   }
   res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, analSet$list.genes);
   if(res){
-    res <- .prepareEnrichNet(dataSet, netNm, 'list', "mixed", analSet);
+    .prepareEnrichNet(dataSet, netNm, 'list', "mixed", analSet);
   }
    
   return(res);

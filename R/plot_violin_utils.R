@@ -66,8 +66,8 @@ library(see)
      geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
      theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
      stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-     scale_fill_manual(values = col) + 
-     scale_color_manual(values = col) +
+     scale_fill_okabeito() + 
+     scale_color_okabeito() + 
      ggtitle(cmpdNm) + 
      theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
      theme_bw()
@@ -234,16 +234,18 @@ library(see)
 }
 
 UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
+  require(ggplot2);
+  require(see);
+  require(lattice);
+
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-  require(ggplot2)
   imgName <- paste("Gene_", gene.id,"_",boxmeta ,".png", sep="");
-  require(lattice);
-  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F]
-  cls <- droplevels(meta[,boxmeta])
-  data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)]
+  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F];
+  cls <- droplevels(meta[,boxmeta]);
+  data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
 
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
@@ -252,8 +254,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
 
         Cairo(file = imgName,  width=320, height=380, type="png", bg="white");
         dat <- data.norm
-      
-      col <- unique(GetColorSchema(cls));   
+       
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
       if(dataSet$disc.inx[boxmeta]){
         p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
@@ -261,8 +262,8 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
           geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
           theme(legend.position = "none") +  xlab(boxmeta) +
           stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-          scale_fill_manual(values = col) + 
-          scale_color_manual(values = col) +
+          scale_fill_okabeito() + 
+          scale_color_okabeito() + 
           ggtitle(cmpdNm) + 
           theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
           theme_bw()
