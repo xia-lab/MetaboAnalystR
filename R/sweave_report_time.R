@@ -219,9 +219,8 @@ CreateMetaOverview <- function(mSetObj=NA){
 #'@export
 CreateiPCAdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  
   # need to check if this process is executed
-  if(is.null(mSetObj$analSet$ipca)){
+  if(is.null(mSetObj$imgSet$pca.pair)){
     return();
   }
   
@@ -325,6 +324,7 @@ CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
 
   cmdhist<-c(
     "\\begin{figure}[htp]",
+    "\\noindent",
     "\\begin{center}",
     paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$covAdj,"}", sep=""),
     "\\caption{P-values for metabolites with and without covariate adjustment.}",

@@ -603,8 +603,11 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
   h <- w - 1;
   
   # draw plot
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
+  if(format=="pdf"){
+  pdf(imgName,width = w,height = h,onefile =F)
+   }else{
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
+ }
   data <- as.data.frame(mSetObj$analSet$pca$x[,1:pc.num])
   meta.info <- mSetObj$dataSet$meta.info
   meta.info <- meta.info[match(rownames(data), rownames(meta.info)),]
