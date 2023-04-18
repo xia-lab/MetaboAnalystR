@@ -135,7 +135,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
       dataSet <- readDataset(paramSet$selDataNm);
       tbl <- dataSet$comp.res;
       tbl <- tbl[which(doEntrez2SymbolMapping(rownames(tbl), paramSet$data.org, paramSet$data.idType) %in% V(bg)$name),]
-      expvals <- tbl[,"stat"];
+      expvals <- tbl[,"logFC"];
       names(expvals) <- doEntrez2SymbolMapping(rownames(tbl), paramSet$data.org, paramSet$data.idType);
       expvals <- expvals[node.nms]
       expvals <- expvals[!is.na(expvals)]

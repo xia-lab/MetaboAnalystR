@@ -289,12 +289,14 @@ PerformMetaDeAnal <- function(paramSet){
       group <- factor(inmex.meta$cls.lbl[sel.inx], levels=grp.lvl, ordered=T); # note regenerate factor to drop levels 
       dataSet$cls <- group;
       
-      res.limma <- PerformLimma(data, group);
-      
-      # save dataSet object for meta-analysis
-      qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep="."));
-      
-      res.all <- GetLimmaResTable(res.limma$fit.obj);
+      #if(exists('dataSet$comp.res')){
+      #  res.all <- dataSet$comp.res
+      #}else{
+        res.limma <- PerformLimma(data, group);
+        # save dataSet object for meta-analysis
+        qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
+        res.all <- GetLimmaResTable(res.limma$fit.obj);
+      #}
       qs::qsave(res.all, "meta.resTable.qs");
       
       res.mat <- cbind(logFC=res.all$logFC, Pval = res.all$adj.P.Val);

@@ -779,13 +779,17 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
     res <- performLimmaMeta(trimmed.data, cls, "newcolumn");
   }else if(alg=="edger"){
     res <- performEdgeRMeta(trimmed.data, cls);
+    inx <- colnames(res) == "logCPM";
+    res <- res[,-inx];
   }else if(alg =="deseq2"){
-    performDeseq2Meta(trimmed.data)
+    trimmed.meta <- dataSet$meta[which(rownames(dataSet$meta) %in% nms),sel.meta, drop=F];
+    performDeseq2Meta(trimmed.data, trimmed.meta)
     .perform.computing();
-    dataSet <- .save.deseq.res();
+    dataSet <- .save.deseq.res(dataSet);
     res <- dataSet$comp.res;
   }
-  colnames(res) <-  c("stat", "P.Value", "adj.P.Val");
+
+  colnames(res) <-  c("logFC", "P.Value", "adj.P.Val");
   
   res <- res[order(res[,2], decreasing=FALSE),];
 
@@ -795,7 +799,6 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
   dataSet$de.norm <- normOpt;
   dataSet$de.method <- alg;
   dataSet$comp.res <- de;
-  
   RegisterData(dataSet);
   
   return(UpdateDE(dataName, p.lvl, fc.lvl));
@@ -817,7 +820,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   hit.inx <- which(hit.inx);
   
   res.sig<-res[hit.inx, , drop=F];
-  hit.inx <- abs(as.numeric(res.sig[, "stat"])) > fc.lvl #foldchange
+  hit.inx <- abs(as.numeric(res.sig[, "logFC"])) > fc.lvl #foldchange
   
   if(length(which(hit.inx == T)) == 0){
     return (c(1, 0, nrow(res)));
@@ -920,8 +923,9 @@ performEdgeRMeta <-function(trimmed.data, trimmed.meta){
 }
 
 performDeseq2Meta <-function(trimmed.data, trimmed.meta){
-  rownames(cls) = c();
-  
+  trimmed.data <<- trimmed.data;
+  trimmed.meta <<- trimmed.meta;
+  save.image("de.RData");
   my.fun <- function(){
     suppressMessages(require(DESeq2));
     dds <- DESeqDataSetFromMatrix(countData=round(trimmed.data), colData = trimmed.meta, design = ~newcolumn)
@@ -930,11 +934,11 @@ performDeseq2Meta <-function(trimmed.data, trimmed.meta){
     dds <- DESeq2::DESeq(dds, test="Wald", fitType="parametric");
     res <- DESeq2::results(dds, independentFiltering = FALSE, cooksCutoff =  Inf);
     res <- as.matrix(res);
-    res <- res[,c(2,5,1,3,4,6)];
+    res <- res[,c(2,5,6)];
     return(res);
   }
   
-  dat.in <- list(data=trimmed.data, meta=met, my.fun=my.fun);
+  dat.in <- list(data=trimmed.data, meta=trimmed.meta, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
   return(1);
 }
