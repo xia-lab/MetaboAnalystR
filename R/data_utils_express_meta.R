@@ -212,15 +212,11 @@ ClearFactorStrings<-function(query){
    query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE); 
   # kill multiple white space
    query <- gsub(" +","_",query);
-  # remove non alphabets and non numbers 
-  #query <- gsub("[^[:alnum:] ]", "_", query);
-  query <- gsub("\\+", "_", query)
-  chars <- substr(query, 0, 1);
-  num.inx<- chars >= '0' & chars <= '9';
-  if(all(num.inx[!(is.na(num.inx))])){
-    query = as.numeric(query);
-    query <- factor(query, levels=sort(unique(query)));
+ num.inx<- as.numeric(query[query!="NA" & !is.na(query) & query!=""])
+  if(all(!is.na(num.inx))){
+  query<-factor(query, levels= unique(query))
   }else{
+    query <- gsub("[^[:alnum:] ]", "_", query);
    query<-factor(query, levels= unique(query))
   }
   return (query);
