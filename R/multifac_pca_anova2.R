@@ -326,7 +326,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     dev.off();
   }else{
     h <- w;
-    title <- ifelse(mSetObj$analSet$aov2$type == "multi", "Two-way ANOVA (between subjects)", "Two-way ANOVA (within subject)");
+    title <- "Two-way ANOVA"; # note within/between subject is left to user 
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     plotVennDiagram(mSetObj$analSet$aov2$vennC, circle.col=c("red", "blue", "green"), mar=c(0,0,2,0));
     mtext(title, NORTH<-3, line=0.25, cex=1.5);
