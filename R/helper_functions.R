@@ -131,7 +131,7 @@ GetSampleInfo <- function(dataName, clsLbl){
     return(c(grpLbls, smplInfo));
 }
 
-GetMetaSummary<- function(){
+GetMetaSummaryData<- function(){
    inmex.meta <- qs::qread("inmex_meta.qs");
     sel.nms <- unique(inmex.meta$data.lbl)
     sel.nms <- paste(sel.nms, collapse="; ")
