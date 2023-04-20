@@ -488,8 +488,8 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
     }
   }
 
-  if(is.null(filter.cutoff)){ # no user choice, will apply empirical filtering
-    filter.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type, privileged);
+  if(is.null(filter.cutoff)){ # no explicit user choice, will apply default empirical filtering
+    filter.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
   if(filter.cutoff == 0){ # R package or privilidged user choose 0
