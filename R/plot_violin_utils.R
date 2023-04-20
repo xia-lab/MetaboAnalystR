@@ -19,7 +19,7 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol = F){
 
-library(see)
+  library(see)
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
@@ -31,7 +31,7 @@ library(see)
        data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
     }else{
        data.norm <- dataSet$data.norm
-    }
+   }
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
@@ -52,9 +52,8 @@ library(see)
       }else{
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
         dat <- data.norm
-        meta <- dataSet$meta[rownames(dataSet$meta) %in% colnames(dat),]
+        meta <- dataSet$meta[rownames(dataSet$meta) %in% colnames(dat),,drop=F]
         cls <- droplevels(meta[match(rownames(meta),colnames(dat)),dataSet$analysisVar])
-       print(rownames(meta)==colnames(dat))
       }
       
       col <- unique(GetColorSchema(cls));   

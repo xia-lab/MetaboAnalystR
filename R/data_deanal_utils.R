@@ -53,9 +53,9 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 # reference: all others against common reference (A-C) + (B-C)
 # nested: (A-B)+(C-D) 
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+  
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
-
   if (dataSet$de.method == "deseq2") {
     dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     .prepare.deseq(dataSet, anal.type, par1, par2 , nested.opt);
@@ -125,7 +125,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 }
 
 
-.prepareContrast <-function(dataSet, anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+.prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   msgSet <- readSet(msgSet, "msgSet");
   cat(anal.type, par1, par2, nested.opt, "\n")
   set.seed(1337);
@@ -134,18 +134,29 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   dataSet$comp.type <- anal.type
   grp.nms <- levels(cls)
   analysisVar <- dataSet$analysisVar
-  
   if(dataSet$cont.inx[analysisVar] |  any(grepl("(^[0-9]+).*", grp.nms))){
-    par1 <- strsplit(par1, " vs. ")[[1]]
-    par1 <- paste0(analysisVar,"_",par1[1]," vs. ",analysisVar,"_",par1[2])
-    if(par2 != "NA"){
-      par2 <- strsplit(par2, " vs. ")[[1]]
-      par2 <- paste0(analysisVar,"_",par2[1]," vs. ",analysisVar,"_",par2[2])
+    if(grepl( "vs",par1)){
+      par1 <- strsplit(par1, " vs. ")[[1]]
+      par1 <- paste0(analysisVar,"_",par1[1]," vs. ",analysisVar,"_",par1[2])
+    }else{
+      par1<- paste0(analysisVar,"_",par1)
     }
- if(any(grepl("(^[0-9]+).*",  colnames(dataSet$design)))){
-    colnames(dataSet$design) = as.character(sapply( colnames(dataSet$design),function(x) paste0(analysisVar,"_",x)))
+    if(par2 != "NA"){
+      if(grepl( "vs",par2)){
+        par2 <- strsplit(par2, " vs. ")[[1]]
+        par2 <- paste0(analysisVar,"_",par2[1]," vs. ",analysisVar,"_",par2[2])
+      }else{
+        par2<- paste0(analysisVar,"_",par2)
+      }
+    }
+
+    if(any(grepl("(^[0-9]+).*",  colnames(dataSet$design)))){
+      colnames(dataSet$design) = as.character(sapply( colnames(dataSet$design),function(x) paste0(analysisVar,"_",x)))
+    }
+    grp.nms <- paste0(analysisVar,"_",grp.nms)
+    
   }
-  }
+
   dataSet$par1 <- par1;
   
   if (anal.type == "default") {
@@ -192,7 +203,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   } else {
     print(paste("Not supported: ", anal.type))
   }
-
+  
   dataSet$filename <- filename;
   require(limma);
   design <- dataSet$design;
@@ -203,8 +214,9 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   return(dataSet);
 }
 
+
 .perform_limma_edger <- function(dataSet){
-   design <- dataSet$design;
+  design <- dataSet$design;
   paramSet <- readSet(paramSet, "paramSet");
   contrast.matrix <- dataSet$contrast.matrix;
   msgSet <- readSet(msgSet, "msgSet");
@@ -227,8 +239,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
       saveSet(msgSet, "msgSet");  
       return(0)
     }
- 
-  
+   
     df.residual <- fit$df.residual
     if (all(df.residual == 0)) {
       msgSet$current.msg <- "All residuals equal 0. There is not enough replicates in each group (no residual degrees of freedom)!";
@@ -267,7 +278,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   nms <- colnames(topFeatures)
   nms[which(nms == "FDR")] <- "adj.P.Val";
   nms[which(nms == "PValue")] <- "P.Value";
-  
+ 
   colnames(topFeatures) <- nms  
   dataSet$comp.res <- topFeatures;
   return(dataSet);
@@ -435,8 +446,20 @@ MultiCovariateRegression <- function(fileName,
 
   if(analysis.type == "disc"){
     # build design and contrast matrix
-    covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+  #  covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    str(covariates)
     grp.nms <- levels(covariates[, analysis.var]);
+
+     if(any(grepl("(^[0-9]+).*", grp.nms))){
+      grp.nms <- paste0(analysis.var,"_",grp.nms);
+      if(!(is.null(ref))& ref!="NA"){
+         ref <- paste0(analysis.var,"_", ref)
+      }
+      if(contrast!="anova"){
+         contrast <- paste0(analysis.var,"_", contrast)
+      }     
+     }
+
     for(col in 1:ncol(covariates)){
        if(dataSet$cont.inx[colnames(covariates)[col]]){
     covariates[,col] <- as.numeric( covariates[,col])
@@ -446,9 +469,9 @@ MultiCovariateRegression <- function(fileName,
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs <- list();
-    if(contrast == "anova"){
+    if(contrast == "anova"){ 
       contrasts <- grp.nms[grp.nms != ref];
-      myargs <- as.list(paste(contrasts, "-", ref, sep = ""));    
+      myargs <- as.list(paste(contrasts, "-", ref, sep = "")); 
     } else {
       myargs <- as.list(paste(contrast, "-", ref, sep = ""));
     }
@@ -470,8 +493,8 @@ MultiCovariateRegression <- function(fileName,
     rest <- topTable(fit, number = Inf);
   
     if(contrast != "anova"){    
-      colnames(rest)[1] <- ifelse(any(grepl("(^[0-9]+).*", grp.nms)),paste0(analysis.var,"_",contrast, "-",analysis.var,"_", ref),myargs[[1]]);
-      grp.nms<-ifelse(any(grepl("(^[0-9]+).*", grp.nms)),c(paste0(analysis.var,"_",contrast), paste0(analysis.var,"_", ref)),c(ref,contrast))
+      colnames(rest)[1] <- myargs[[1]];
+      grp.nms<-c(ref,contrast)
 
     }
       dataSet$contrast.matrix <- contrast.matrix;

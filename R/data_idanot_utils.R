@@ -307,7 +307,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
     db.map[, col.nm] <- q.mat[,1];
   }
 
-    hit.inx <- match(feature.vec, db.map[, col.nm]);
+   hit.inx <- match(feature.vec, db.map[, col.nm]);
 
   if(outputType == "vec"){
     entrezs <- db.map[hit.inx, "gene_id"];
@@ -371,8 +371,8 @@ queryGeneDB <- function(db.nm, org){
     db.map <- qs::qread("anot_table.qs");
   }else{
     require('RSQLite');
+    
     db.path <- paste(paramSet$sqlite.path, org, "_genes.sqlite", sep="")
-
     if(!PrepareSqliteDB(db.path, paramSet$on.public.web)){
       stop("Sqlite database is missing, please check your internet connection!");
     }
