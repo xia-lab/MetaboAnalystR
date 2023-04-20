@@ -47,7 +47,6 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   data.proc <- qs::qread("data.raw.qs");
   dataSet$data.anot <- data.proc;
   
-  
   if (org != 'NA' & idType != 'NA'){
     feature.vec <- rownames(data.proc);
     
@@ -119,7 +118,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 
   msgSet$current.msg <- current.msg;
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
- saveSet(paramSet, "paramSet");
+  saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
 }

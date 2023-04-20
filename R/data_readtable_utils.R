@@ -31,9 +31,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   int.mat <- int.mat[,match(rownames(meta.info$meta.info),colnames(int.mat))]
   dataSet$data <- NULL;
   dataSet$name <- fileName;
-  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info
-  dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
-  dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
+  
   msg <- paste("a total of ", ncol(int.mat), " samples and ", nrow(int.mat), " features were found");
   # remove NA, null
   row.nas <- apply(is.na(int.mat)|is.null(int.mat), 1, sum);
@@ -57,7 +55,6 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
     # msg <- c(msg, "the remaining", sum(na.inx), "missing variables were replaced with data min");
   }
   msgSet$current.msg <- paste(msg, collapse="; ");
-  saveSet(msgSet, "msgSet");
   res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
   data.proc <- res[[1]];
   msgSet <- res[[2]];
@@ -66,7 +63,11 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");
-  dataSet$data.norm <- data.proc;
+  dataSet$data.norm  <- data.proc;
+  metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
+  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,]
+  dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
+  dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
   paramSet$anal.type <- "onedata";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, fileName);
   paramSet$jsonNms$dataName <- fileName;

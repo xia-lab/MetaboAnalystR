@@ -25,7 +25,7 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
   msg <- ""; 
-  
+
   #Filter data
   data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
   
@@ -52,6 +52,7 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   if(filterUnmapped == "false"){
     # need to update those with annotations
     data1 <- qs::qread("data.raw.qs");
+    colnames(data1) <- colnames(dataSet$data.norm)
     anot.id <- qs::qread("annotation.qs");
     hit.inx <- !is.na(anot.id);
     rownames(data1)[hit.inx] <- anot.id[hit.inx];
@@ -62,6 +63,7 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
     msg <- "Only features with annotations are kept for further analysis.";
   }else{
     raw.data.anot <- qs::qread("orig.data.anot.qs");
+    colnames(raw.data.anot) <- colnames(dataSet$data.norm)
   }
   
   data <- raw.data.anot;

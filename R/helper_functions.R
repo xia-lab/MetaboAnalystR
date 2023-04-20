@@ -346,7 +346,7 @@ GetMetaClass <- function(dataName="",metaType){
 ResetMetaTab <- function(dataName=""){
   dataSet <- readDataset(dataName);
   dataSet$meta <- dataSet$metaOrig;
-  dataSet$data.norm <- qs::qread("data.raw.qs");
+  dataSet$data.norm <- dataSet$data.anot <- qs::qread("orig.data.anot.qs");
   dataSet$disc.inx <- dataSet$disc.inx.orig;
   dataSet$cont.inx <- dataSet$cont.inx.orig;
   RegisterData(dataSet);
@@ -387,7 +387,7 @@ UpdateMetaStatus <- function(dataName="",colNm){
   }
  new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
-     saveSet(msgSet, "msgSet"); 
+  saveSet(msgSet, "msgSet"); 
   RegisterData(dataSet);
   return(1);
 }
@@ -417,6 +417,7 @@ DeleteMetaCol <- function(dataName="",metaCol){
 
 CleanRmCol <- function(dataName=""){
   dataSet <- readDataset(dataName);
+
    if(exists("rmMetaCol",dataSet)){
     dataSet$rmMetaCol <- vector()
   }
@@ -437,6 +438,8 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
   if(colNm==""){
     if(rowNm !=cell){
       rownames(meta)[ridx]=cell
+     colnames(dataSet$data.norm)[which(colnames(dataSet$data.norm)==rowNm)]=cell
+     colnames(dataSet$data.anot)[which(colnames(dataSet$data.anot)==rowNm)]=cell
     }
   }else{  
     cidx<- which(colnames(meta)==colNm)
