@@ -237,19 +237,21 @@ all_identical <- function(xs) {
 #' @noRd
 #' @importFrom rlang eval_tidy
 #' @importFrom vctrs vec_as_subscript2 vec_as_location2
-vars_pull <- function(vars, var = -1) {
-  n <- length(vars)
-  require(rlang)
-  tidyselect:::instrument_base_errors(
-    loc <- eval_tidy(enquo(var), set_names(seq_along(vars), vars))
-  )
-  loc <- pull_as_location2(loc, n, vars)
-  
-  if (loc < 0L) {
-    loc <- n + 1L + loc
-  }
-  
-  vars[[loc]]
+vars_pull <- function (vars, var = -1, error_call = rlang::caller_env(), error_arg = rlang::caller_arg(var)) {
+    expr <- tidyselect::enquo(var)
+    if (rlang::quo_is_missing(expr)) {
+        cli::cli_abort("{.arg var} is absent but must be supplied.", 
+            call = error_call)
+    }
+    tidyselect:::local_vars(vars)
+    n <- length(vars)
+    tidyselect:::with_chained_errors(loc <- rlang::eval_tidy(expr,  rlang::set_names(seq_along(vars), 
+        vars)), call = error_call, eval_expr = expr)
+    loc <- pull_as_location2(loc, n, vars)
+    if (loc < 0L) {
+        loc <- n + 1L + loc
+    }
+    vars[[loc]]
 }
 
 pull_as_location2 <- function(i, n, names) {
