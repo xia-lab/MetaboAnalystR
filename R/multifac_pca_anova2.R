@@ -14,7 +14,7 @@ aov.mixed <- function(x){
 
 aov.2wayrep <- function(x){
   unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/(exp.fac*time.fac)),
-             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))[,c("F","p")])
+             data = data.frame(x=x,exp.fac=exp.fac,time.fac=time.fac,aov.sbj=aov.sbj))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -40,7 +40,7 @@ aov.1wayrep <- function(x){
 #'License: GNU GPL (>= 2)
 aov.2way <- function(x){
   unlist(suppressMessages(anova_test(x ~ aov.facA*aov.facB,
-                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))[,c("F","p")])
+                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))$ANOVA[,c("F","p")])
 }
 
 #'Perform Two-way ANOVA 
@@ -58,7 +58,7 @@ aov.2way <- function(x){
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
-                       p.cor="fdr", type="time0", phenOpt="between"){
+                       p.cor="fdr", designType="time0", phenOpt="between"){
 
 require(rstatix)
 
@@ -79,7 +79,7 @@ require(rstatix)
       sel.meta.df <- as.data.frame(sel.meta.df)
     }
     
-    if(type %in% c("time0", "time")){
+    if(designType %in% c("time0", "time")){
       mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
       mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
       mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[which(tolower(colnames(sel.meta.df)) != "time")]
@@ -114,7 +114,7 @@ require(rstatix)
   }
   
   # now perform ANOVA depending on experimental design
-  if(type == "time0"){
+  if(designType == "time0"){
 
     time.fac <<- mSetObj$dataSet$time.fac;
     mSetObj$dataSet$sbj <- as.factor(mSetObj$dataSet$exp.fac);
@@ -157,7 +157,7 @@ require(rstatix)
     ord.inx <- order(aov.mat[,2], decreasing = FALSE);
 
   } else {
-    if(type == "time"){
+    if(designType == "time"){
       # first check if balanced
       res <- table(mSetObj$dataSet$exp.fac, mSetObj$dataSet$time.fac);
       res.mean <- colMeans(res);
@@ -174,6 +174,24 @@ require(rstatix)
       
       if(.on.public.web){
         .set.mSet(mSetObj);
+      }
+
+      # check if correct phenOpt selected
+      phens <- unique(exp.fac)
+      sbj.df <- data.frame(subject = aov.sbj, phenotype = exp.fac)
+      sbjs <- list()
+      for(i in c(1:length(phens))){
+        sbjs[[i]] <- unique(as.character(sbj.df$subject[sbj.df$phenotype == phens[i]]))
+      }
+      overlap.across.phens <- Reduce(intersect, sbjs)
+      if(length(overlap.across.phens) == 0 & phenOpt == "within"){
+        AddErrMsg("No repeated subjects across phenotypes! Choose 'Between subjects' for the phenotype factor.")
+        return(0)
+      }
+      
+      if(length(overlap.across.phens) != 0 & phenOpt == "between"){
+        AddErrMsg("There are repeated subjects across phenotypes! Choose 'Within subjects' for the phenotype factor.")
+        return(0)
       }
       
       if(phenOpt == "between"){
@@ -250,7 +268,7 @@ require(rstatix)
   fast.write.csv(aov.mat, file=fileName);
   names(p.value) <- colnames(dat);
   aov2<-list (
-    type = type,
+    type = designType,
     sig.nm = fileName,
     thresh = -log10(thresh),
     multi.c = p.cor,
@@ -308,7 +326,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     dev.off();
   }else{
     h <- w;
-    title <- ifelse(mSetObj$analSet$aov2$type == "multi", "Two-way ANOVA (between subjects)", "Two-way ANOVA (within subject)");
+    title <- "Two-way ANOVA"; # note within/between subject is left to user 
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     plotVennDiagram(mSetObj$analSet$aov2$vennC, circle.col=c("red", "blue", "green"), mar=c(0,0,2,0));
     mtext(title, NORTH<-3, line=0.25, cex=1.5);
@@ -585,8 +603,11 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
   h <- w - 1;
   
   # draw plot
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
+  if(format=="pdf"){
+  pdf(imgName,width = w,height = h,onefile =F)
+   }else{
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
+ }
   data <- as.data.frame(mSetObj$analSet$pca$x[,1:pc.num])
   meta.info <- mSetObj$dataSet$meta.info
   meta.info <- meta.info[match(rownames(data), rownames(meta.info)),]
