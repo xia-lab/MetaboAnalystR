@@ -295,7 +295,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
       p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
-      p.norm <- p.norm + + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + geom_jitter(height = 0, width = 0.05, show.legend = FALSE)  + theme_bw()
+      p.norm <- p.norm + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + geom_jitter(height = 0, width = 0.05, show.legend = FALSE)  + theme_bw()
       p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
       p.norm <- p.norm + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
       p.norm <- p.norm + scale_fill_manual(values=col) + 
