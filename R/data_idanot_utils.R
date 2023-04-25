@@ -47,7 +47,6 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   data.proc <- qs::qread("data.raw.qs");
   dataSet$data.anot <- data.proc;
   
-  
   if (org != 'NA' & idType != 'NA'){
     feature.vec <- rownames(data.proc);
     
@@ -119,7 +118,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 
   msgSet$current.msg <- current.msg;
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
- saveSet(paramSet, "paramSet");
+  saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
 }
@@ -307,7 +306,7 @@ AnnotateGeneData <- function(dataName, org, idtype){
     db.map[, col.nm] <- q.mat[,1];
   }
 
-    hit.inx <- match(feature.vec, db.map[, col.nm]);
+   hit.inx <- match(feature.vec, db.map[, col.nm]);
 
   if(outputType == "vec"){
     entrezs <- db.map[hit.inx, "gene_id"];
@@ -371,8 +370,8 @@ queryGeneDB <- function(db.nm, org){
     db.map <- qs::qread("anot_table.qs");
   }else{
     require('RSQLite');
+    
     db.path <- paste(paramSet$sqlite.path, org, "_genes.sqlite", sep="")
-
     if(!PrepareSqliteDB(db.path, paramSet$on.public.web)){
       stop("Sqlite database is missing, please check your internet connection!");
     }

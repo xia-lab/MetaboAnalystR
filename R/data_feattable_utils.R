@@ -4,7 +4,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
-  
   total <- nrow(dataSet$comp.res);
   resTable <- dataSet$comp.res;
   filename <- dataSet$filename;

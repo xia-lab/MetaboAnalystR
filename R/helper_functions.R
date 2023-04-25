@@ -39,6 +39,20 @@ GetMetaCol<- function(dataName=""){
       resT <- resT[,1:inx-1];
       nms <- gsub("logFC.", "logFC_", colnames(resT));
       nms <- gsub("\\.", " vs ", nms);
+ 
+      nmidx <- sapply(nms, function(x) length(unlist(gregexpr(" vs ",x))))
+      if(any(nmidx>1)){
+      nmv <- names(nmidx)[which(nmidx>1)]
+      nmv <- sapply(nmv, function(x) unlist(gregexpr(" vs [0-9]",x)))
+      for(i in 1:length(nmv)){
+        for(j in 1:length(nmv[[i]])){
+          substr(names(nmv)[i], nmv[[i]][j],nmv[[i]][j]+3) <- "...."
+        }
+        names(nmv)[i] <- gsub("\\....",".", names(nmv)[i])
+       }
+       nms[which(nmidx>1)] <- names(nmv)
+      }
+      
       return(as.vector(nms));
     }else{
       return(dataSet$par1);
@@ -176,7 +190,7 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
     if(paramSet$data.idType == "ko"){
         annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
     }else if(paramSet$data.idType == "s2f"){
-        annots <- paste("<a href='https://www.ecoomicsdb.ca/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
+        annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
     }else{
         annots <- ids;
     }
@@ -332,7 +346,7 @@ GetMetaClass <- function(dataName="",metaType){
 ResetMetaTab <- function(dataName=""){
   dataSet <- readDataset(dataName);
   dataSet$meta <- dataSet$metaOrig;
-  dataSet$data.norm <- qs::qread("data.raw.qs");
+  dataSet$data.norm <- dataSet$data.anot <- qs::qread("orig.data.anot.qs");
   dataSet$disc.inx <- dataSet$disc.inx.orig;
   dataSet$cont.inx <- dataSet$cont.inx.orig;
   RegisterData(dataSet);
@@ -373,7 +387,7 @@ UpdateMetaStatus <- function(dataName="",colNm){
   }
  new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
-     saveSet(msgSet, "msgSet"); 
+  saveSet(msgSet, "msgSet"); 
   RegisterData(dataSet);
   return(1);
 }
@@ -403,6 +417,7 @@ DeleteMetaCol <- function(dataName="",metaCol){
 
 CleanRmCol <- function(dataName=""){
   dataSet <- readDataset(dataName);
+
    if(exists("rmMetaCol",dataSet)){
     dataSet$rmMetaCol <- vector()
   }
@@ -423,6 +438,8 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
   if(colNm==""){
     if(rowNm !=cell){
       rownames(meta)[ridx]=cell
+     colnames(dataSet$data.norm)[which(colnames(dataSet$data.norm)==rowNm)]=cell
+     colnames(dataSet$data.anot)[which(colnames(dataSet$data.anot)==rowNm)]=cell
     }
   }else{  
     cidx<- which(colnames(meta)==colNm)
