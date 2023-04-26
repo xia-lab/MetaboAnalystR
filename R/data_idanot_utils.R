@@ -124,8 +124,8 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 }
 
 # Annotating genes to internal database
-AnnotateGeneData <- function(dataName, org, idtype){
-  save.image("annotate.RData");
+AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
+  save.image("ann.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -135,14 +135,14 @@ AnnotateGeneData <- function(dataName, org, idtype){
     saveSet(msgSet, "msgSet");
     return(1)
   }
-
+  
   data.raw <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
   gene.vec <- rownames(data.raw);
   
   #record the info
   paramSet$data.org <- org
   dataSet$q.type.gene <- idtype;
- 
+  
   dataSet$gene.org <- org;
   dataSet$gene <- gene.vec;
   if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
@@ -151,12 +151,12 @@ AnnotateGeneData <- function(dataName, org, idtype){
     enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
     names(enIDs) <- gene.vec;
   }
-
+  
   tblNm <- getEntrezTableName(org, "entrez");
   symbol.map <- queryGeneDB(tblNm, org);
   symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
   saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
-
+  
   
   if(idtype == "kos"){
     kos <- enIDs$kos;
@@ -186,22 +186,11 @@ AnnotateGeneData <- function(dataName, org, idtype){
     # now, deal with duplicated entrez id
     # first, average duplicate rows
     
-    myave <- function (x, ...) {
-      n <- length(list(...))
-      if (n) {
-        g <- interaction(...)
-        split(x, g) <- lapply(split(x, g), mean, na.rm=T)
-      }
-      else x[] <- FUN(x, na.rm=T)
-      return(x);
-    }
-    ave.data <- apply(data.norm, 2, myave, matched.entrez); 
-    # then removed duplicated entries
-    dup.inx <- duplicated(matched.entrez);
-    matched.entrez <- matched.entrez[!dup.inx]
-    int.mat <- ave.data[!dup.inx,];
+    res <- RemoveDuplicates(data.norm, lvlOpt, quiet=F, paramSet, msgSet);
+    int.mat <- res[[1]];
+    msgSet <- res[[2]];
     # update
-
+    
     data.annotated <-int.mat;
     rownames(int.mat) <- matched.entrez
     if(idtype %in% c("mir_id", "mir_acc", "mirnet")){
@@ -211,15 +200,15 @@ AnnotateGeneData <- function(dataName, org, idtype){
     }
     dataSet$enrich_ids = rownames(int.mat);
     names(dataSet$enrich_ids) = doEntrez2SymbolMapping(rownames(int.mat), paramSet$data.org, paramSet$data.idType)
-
+    
     dataSet$id.type <- "entrez";
-
+    
   }else{
     data.annotated <- data.raw;
     dataSet$enrich_ids = rownames(data.annotated)
     dataSet$id.type <- "none";
   }
-
+  
   if(idtype != "NA"){
     if(length(unique(enIDs))/length(gene.vec) < 0.3){
       msg <- paste("Less than ", round( length(unique(enIDs))/length(gene.vec) * 100, 2), "% features were mapped");
@@ -230,9 +219,9 @@ AnnotateGeneData <- function(dataName, org, idtype){
       msg <- paste("A total of ", length(unique(enIDs)), "unique features were mapped");
     }
   }else{
-      msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
+    msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
   }
-
+  
   saveDataQs(data.annotated, "data.annotated.qs", paramSet$anal.type, dataName);
   msgSet$current.msg <- msg;
   saveSet(msgSet, "msgSet");
