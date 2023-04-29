@@ -369,7 +369,7 @@ GetListEnrGeneNumber <- function(){
 }
 
 
-InitListEnrichment <- function(dataName, type){
+InitEnrichmentNetwork <- function(dataName, type){
   dataSet <- readDataset(dataName);
   analSet <- readSet(analSet, "analSet");
 
