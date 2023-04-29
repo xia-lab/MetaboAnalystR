@@ -17,7 +17,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   # are returned in resTable before the AveExpr columns 
   # for two-class, only one column, multiple columns can be involved
   # for > comparisons - in this case, use the largest logFC among all comparisons
-  #if (fc.lvl > 0){ # further filter by logFC
+  # further filter by logFC
   if (dataSet$de.method=="deseq2"){
     dds <- qs::qread("deseq.res.obj.rds");
     vec <- as.numeric(c(dataSet$contrast.matrix[,inx]));
@@ -139,7 +139,8 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   sink("ExpressAnalyst_matrix.json");
   cat(json.obj);
   sink();
-  
+  print(de.Num);
+  print("DENUM======");
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
   res <- RegisterData(dataSet);

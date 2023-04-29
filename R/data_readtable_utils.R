@@ -65,7 +65,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
-  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,]
+  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
   paramSet$anal.type <- "onedata";
