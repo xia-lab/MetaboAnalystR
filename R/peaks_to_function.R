@@ -2351,10 +2351,10 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   res.mat[,2] <- set.num;
   res.mat[,3] <- unsize;
   res.mat[,4] <- query_set_size*(path.num/uniq.count); #expected
-  res.mat[,6] <- apply(easematrix, 1, function(x) fisher.test(matrix(x, nrow=2), alternative = "greater")$p.value);
   res.mat[,5] <- apply(fishermatrix, 1, function(x) phyper(x[1], x[2], x[3], x[4], lower.tail=FALSE));
-  res.mat[,7] <- set.num
-  res.mat[,8] <- unsize
+  res.mat[,6] <- apply(easematrix, 1, function(x) fisher.test(matrix(x, nrow=2), alternative = "greater")$p.value);
+  res.mat[,7] <- set.num;
+  res.mat[,8] <- unsize;
   colnames(res.mat) <- c("Pathway total", "Hits.total", "Hits.sig", "Expected", "FET", "EASE","Total","Sig");
   rownames(res.mat) <- mSetObj$pathways$name
   
@@ -2424,12 +2424,13 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   
   # order by p-values
   ord.inx <- order(res.mat[,9]);
-  
   Cpd.Hits <- res.mat[ord.inx, 12]
   res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:11, drop=FALSE]), 2, as.numeric), 5);
-  rownames(res.mat) <- path.nms[ord.inx]
-  mSetObj$mummi.resmat <- res.mat[,-11];
- 
+  rownames(res.mat) <- path.nms[ord.inx];
+  
+  .save.mummichog.restable(res.mat, Cpd.Hits, mSetObj$mum_nm_csv);
+
+  mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
   mSetObj$path.pval <- as.numeric(res.mat[,9])
@@ -2448,11 +2449,6 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
     peakTable = matched_res
   );
   
-
-  matri = cbind(res.mat[,-c(7:8)], paste0("P", seq.int(1, nrow(res.mat))))
-  colnames(matri)[ncol(matri)] = "Pathway Number"
-  matri <- cbind(matri, Cpd.Hits)
-  fast.write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
   json.mat <- RJSONIO::toJSON(json.res);
   sink(mSetObj$mum_nm);
   cat(json.mat);
@@ -2605,6 +2601,8 @@ EC.Hits = res.mat[ord.inx, 12]
 res.mat <- signif(apply(as.matrix(res.mat[ord.inx, 1:11]), 2, as.numeric), 5); # loop through columns and keep rownames
 rownames(res.mat) <- path.nms[ord.inx]
 
+.save.mummichog.restable(res.mat, EC.Hits, mSetObj$mum_nm_csv);
+
 mSetObj$mummi.resmat <- res.mat[,-11];
 mSetObj$path.nms <- path.nms[ord.inx]
 mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
@@ -2624,15 +2622,31 @@ json.res <- list(
   peakTable = matched_res
 );
 
-  matri = cbind(res.mat[,-c(7:8)], paste0("P", seq.int(1, nrow(res.mat))))
-  colnames(matri)[ncol(matri)] = "Pathway Number"
-  matri <- cbind(matri, EC.Hits)
-  fast.write.csv(matri, file=mSetObj$mum_nm_csv, row.names=TRUE);
   json.mat <- RJSONIO::toJSON(json.res);
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
   return(mSetObj);
+}
+
+  # add adj p values for FET, EASE, and Gamma, and save the complete result table
+
+.save.mummichog.restable <- function(my.res.mat, cpd.hits, file.name){
+ 
+  adj.p.fet <- p.adjust(my.res.mat[,"FET"]);
+  adj.p.ease <- p.adjust(my.res.mat[,"EASE"]);
+  adj.p.gamma <-  p.adjust(my.res.mat[,"Gamma"]); 
+  my.res.mat <- cbind(my.res.mat, AdjP.Fisher=adj.p.fet, AdjP.EASE=adj.p.ease, AdjP.Gamma=adj.p.gamma);
+  my.res.mat <- my.res.mat[,-c(7,8)]; 
+  my.res.mat <- cbind(my.res.mat, paste0("P", seq.int(1, nrow(my.res.mat))));
+  colnames(my.res.mat)[ncol(my.res.mat)] = "Pathway Number";
+  colnames(my.res.mat)[which(colnames(my.res.mat) == "FET")] <- "P(Fisher)";
+  colnames(my.res.mat)[which(colnames(my.res.mat) == "EASE")] <- "P(EASE)";
+  colnames(my.res.mat)[which(colnames(my.res.mat) == "Gamma")] <- "P(Gamma)";
+  my.res.mat <- cbind(my.res.mat, cpd.hits);
+
+  fast.write.csv(my.res.mat, file=file.name, row.names=TRUE);
+
 }
 
 ## Internal function for calculating GSEA, no RT
