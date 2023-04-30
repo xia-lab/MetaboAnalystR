@@ -554,6 +554,11 @@ CovariateScatter.Anal <- function(mSetObj,
   inx.imp <- p.value <= thresh;
   sig.num <- sum(inx.imp);
   
+  # save a copy 
+  fileName <- "covariate_result.csv";
+  my.ord.inx <- order(p.value, decreasing = FALSE);
+  fast.write.csv(signif(rest[my.ord.inx,],5),file=fileName);
+
   if(sig.num > 0){ 
     sig.p <- p.value[inx.imp];
     sig.mat <- rest[inx.imp,];
@@ -569,8 +574,8 @@ CovariateScatter.Anal <- function(mSetObj,
   both.mat <- both.mat[rownames(rest),]
   if(sig.num> 0){
     res <- 1;
-    fileName <- "covariate_result.csv"
-    fast.write.csv(sig.mat,file=fileName);
+    #fileName <- "covariate_result.csv"
+    #fast.write.csv(sig.mat,file=fileName);
     cov<-list (
       sig.num = sig.num,
       sig.nm = fileName,
