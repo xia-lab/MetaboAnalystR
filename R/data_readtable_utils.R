@@ -96,12 +96,12 @@ ReadMetaData <- function(metafilename){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet,"msgSet");
   metadata <- try(data.table::fread(metafilename, header=TRUE, check.names=FALSE, data.table=FALSE));
-    metadata[is.na(metadata)] = "NA"
-    if(class(metadata) == "try-error"){
+  metadata[is.na(metadata)] = "NA"
+  if(class(metadata) == "try-error"){
     msgSet$current.msg = "Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA."
     saveSet(msgSet, "msgSet");
     return(NULL);
-    }
+  }
   # look for #NAME, store in a list
   sam.inx <- grep("^#NAME", colnames(metadata)[1]);
   if(length(sam.inx) > 0){
@@ -122,7 +122,7 @@ ReadMetaData <- function(metafilename){
     saveSet(msgSet, "msgSet");
     return(NULL);
   }
-  rownames(metadata) <- smpl_nm;
+  rownames(metadata) <- smpl_nms;
   colnames(metadata) <- smpl_var;
   
   na.msg <- ""
@@ -134,7 +134,7 @@ ReadMetaData <- function(metafilename){
     msgSet$na.msg <- paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !");
   }
   
-
+  
   cont.inx <- GetNumbericalInx(metadata);
   cont.inx <- !disc.inx & cont.inx; # discrete is first
   
@@ -142,38 +142,50 @@ ReadMetaData <- function(metafilename){
     # make sure the discrete data is on the left side
     metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
   }
-
-    mdata.all <- paramSet$mdata.all;
-    # need to add metadata sanity check
-    # are sample names identical to data$orig
-    # order samples in same way as in abundance table
-    sel.nms <- names(mdata.all);
-
-for(i in 1:length(sel.nms)){
-  dataSet <- readDataset(sel.nms[i]);
-  data.smpl.nms <- colnames(dataSet$data.norm)
+  
+  mdata.all <- paramSet$mdata.all;
+  # need to add metadata sanity check
+  # are sample names identical to data$orig
+  # order samples in same way as in abundance table
+  sel.nms <- names(mdata.all);
+  
+  for(i in 1:length(sel.nms)){
+    dataSet <- readDataset(sel.nms[i]);
+    data.smpl.nms <- colnames(dataSet$data.norm)
     nm.hits <- data.smpl.nms %in% smpl_nms;
-  if(!all(nm.hits)){
+    if(!all(nm.hits)){
       msgSet$current.msg = paste0("Some sample names including ",paste(mis.nms, collapse="; ") ," in your data are not in the metadata file!")
       saveSet(msgSet, "msgSet");
-    return(NULL);
-  }
-  
-  # now remove extra meta if present, and order them
+      return(NULL);
+    }
+    
+    # now remove extra meta if present, and order them
     nm.hits2 <- which(smpl_nms %in% data.smpl.nms);
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
-
+    
     dataSet$meta <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
-  RegisterData(dataSet);
-}
+    RegisterData(dataSet);
+  }
+  
+  paramSet$dataSet <- list();
+  meta.types <- rep("disc", ncol(metadata));
+  meta.types[cont.inx] <- "cont";
+  names(meta.types) <- colnames(metadata);
+  
+  paramSet$dataSet$meta.types <- meta.types;
+  paramSet$dataSet$meta.status <- rep("OK", ncol(metadata));
+  paramSet$dataSet$cont.inx <- cont.inx;
+  paramSet$dataSet$disc.inx <- disc.inx;
+  paramSet$dataSet$meta.info <- metadata;
+  paramSet$dataSet$metaOrig <- metadata;
+  
   saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
   return(1);
 }
-
 
 # read tab delimited file
 # can have many classes, stored in meta.info (starts with #) 
@@ -283,7 +295,7 @@ for(i in 1:length(sel.nms)){
     msg <- msgSet$current.msg
   }
   match.msg <- "";
-print(metaContain)
+
   if(metaContain=="true"){
     meta.info <- list();
     # look for #CLASS, could have more than 1 class labels, store in a list

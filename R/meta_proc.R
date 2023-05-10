@@ -1,6 +1,6 @@
 ##################################################
 ## R script for ExpressAnalyst
-## Description: functions only for single gene expression data
+## Description: functions only for multiple gene expression data
 ## Authors: 
 ## Jeff Xia, jeff.xia@mcgill.ca
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
@@ -106,57 +106,6 @@ SanityCheckData <- function(fileName){
   return(RegisterData(dataSet, 1));
 }
 
-#####'Sanity check metadata after metadata edited 
-SanityCheckMeta <- function(fileName,init){
-  msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- readDataset(fileName);
-  meta <- dataSet$meta
-  if(init==1){
-    #rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
-   # meta = meta[,!rmidx,drop=F]
-    
-  }else{
-    if(any(is.na(meta))|any(meta=="")|any(meta=="NA")){
-      return(2)
-    }
-  }
-  # use first column by default
-  cls <- meta[meta[,1]!="NA",1]
-  
-  # check class info
-  cls.lbl <- as.factor(as.character(cls));
-  min.grp.size <- min(table(cls.lbl));
-  cls.num <- length(levels(cls.lbl));
-  if(min.grp.size<2){
-    msg <- paste0( "No replicates were detected for group  ",as.character(cls.lbl[which( table(cls.lbl)<2)])," in  ",colnames(meta)[1])
-     msgSet$current.msg <- msg;
-    saveSet(msgSet, "msgSet");
-    return(0)
-  }
-  for(i in 1:ncol(meta)){
-    
-    meta[,i]=as.factor( meta[,i])
-  }
-  dataSet$cls <- cls.lbl
-  dataSet$rmidx <- which(meta[,1]=="NA")
-  dataSet$meta <- meta
-  saveSet(msgSet, "msgSet");
-   RegisterData(dataSet);
-  return(1);
-}
-
-
-# remove data object, the current dataSet will be the last one by default 
-RemoveData <- function(dataName){
-  paramSet <- readSet(paramSet, "paramSet");
-  mdata.all <- paramSet$mdata.all;
-  if(!is.null(paramSet$mdata.all[[dataName]])){
-    paramSet$mdata.all[[dataName]] <- NULL;
-  }
-  saveSet(paramSet, "paramSet");
-}
-
-
 UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
   paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
@@ -201,52 +150,6 @@ ScalingDataOmics <-function (dataSet, norm.opt){
 ### Data utilities
 ###
 
-GetFeatureNum <-function(dataName){
-  dataSet <- readDataset(dataName);
-  
-  return(nrow(dataSet$data.norm));
-}
-
-ClearFactorStrings<-function(query){
-  # remove leading and trailing space
-   query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE); 
-  # kill multiple white space
-   query <- gsub(" +","_",query);
- num.inx<- as.numeric(query[query!="NA" & !is.na(query) & query!=""])
-  if(all(!is.na(num.inx))){
-  query<-factor(query, levels= unique(query))
-  }else{
-    query <- gsub("[^[:alnum:] ]", "_", query);
-   query<-factor(query, levels= unique(query))
-  }
-  return (query);
-}
-
-# get qualified inx with at least number of replicates
-GetDiscreteInx <- function(my.dat, min.rep=2){
-  good.inx <- apply(my.dat, 2, function(x){
-    x <- x[x!="NA"]
-    good1.inx <- length(x) > length(unique(x));
-    good2.inx <- min(table(x)) >= min.rep;
-    return (good1.inx & good2.inx);
-  });
-  return(good.inx);
-}
-
-GetNumbericalInx <- function(my.dat){
-  good.inx <- apply(my.dat, 2, function(x){
-    isNum = as.numeric(as.character(x[x!="NA"]))
-    return(all(!is.na(as.numeric(as.character(isNum)))));
-  });
-  return(good.inx);
-}
-
-
-.set.dataSet <- function(dataSetObj=NA){
-  RegisterData(dataSetObj);
-  return (1);
-}
-
 GetCurrentDatasets <-function(type){
   paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
@@ -276,22 +179,6 @@ SetGroupContrast <- function(dataName, grps, meta="NA"){
   }
     RegisterData(dataSet);  
 
-}
-
-
-# here should first try to load the original data
-# the data in the memory could be changed
-GetGroupNames <- function(dataName, meta="NA"){
-    dataSet <- readDataset(dataName);
-    save.image("grp.RData");
-    if(meta == "NA"){
-      grpnms = levels(factor(dataSet$meta[,1]));
-    }else{
-      grpnms =levels(factor(dataSet$meta[,meta]));
-    }
-print("grpnms")
-print(grpnms[grpnms!="NA"])
-   return(grpnms[grpnms!="NA"])
 }
 
 CheckDataType <- function(dataName, type){
@@ -508,48 +395,6 @@ ReplaceMissingByLoD <- function(int.mat){
     rownames(int.mat) <- rowNms;
     colnames(int.mat) <- colNms;
     return (int.mat);
-}
-
-CheckMetaIntegrity <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  mdata.all <- paramSet$mdata.all;
-
-  sel.nms <- names(mdata.all)
-
-  msgSet <- readSet(msgSet, "msgSet");
-  data.list <- list()
-  cnms <- list()
-  metas <- list();
-  for(i in 1:length(sel.nms)){
-    dat = readDataset(sel.nms[i])
-    cnms[[i]] <- colnames(dat$data.norm);
-    metas[[i]] <- as.vector(dat$meta[,1]);
-  }
-  if(length(metas) == 0){
-    msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
-    saveSet(msgSet, "msgSet");
-    return(0)
-  }
-
-  for(i in 1:length(sel.nms)){
-    if(length(unique(metas[[i]]))>2){
-        msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
-        saveSet(msgSet, "msgSet");
-        return(0)
-    }
-    for(j in 1:length(sel.nms)){
-
-        boolMeta <- identical(sort(unique(metas[[i]])),sort(unique(metas[[j]])))
-        
-        if(!boolMeta){
-            msgSet$current.msg <- "Please make sure the meta data is consistent across all uploaded data sets.";
-            saveSet(msgSet, "msgSet");
-            return(0)
-        }
-    }
-  }
-    return(1)
-
 }
 
 #'Read individual dataset for meta-analysis.
@@ -840,40 +685,6 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   return(RegisterData(dataSet, c(1, sig.count, non.sig.count)))
 }
 
-SumNorm<-function(x){
-  1000*x/sum(x, na.rm=T);
-}
-
-# normalize by median
-MedianNorm<-function(x){
-  x/median(x, na.rm=T);
-}
-
-
-# normalize to zero mean and unit variance
-AutoNorm<-function(x){
-  (x - mean(x))/sd(x, na.rm=T);
-}
-
-# normalize to zero mean but variance/SE
-ParetoNorm<-function(x){
-  (x - mean(x))/sqrt(sd(x, na.rm=T));
-}
-
-# normalize to zero mean but variance/SE
-MeanCenter<-function(x){
-  x - mean(x);
-}
-
-# normalize to zero mean but variance/SE
-RangeNorm<-function(x){
-  if(max(x) == min(x)){
-    x;
-  }else{
-    (x - mean(x))/(max(x)-min(x));
-  }
-}
-
 
 performLimmaMeta <-function(trimmed.data, cls, sel.meta="newcolumn"){
   require(edgeR);
@@ -925,7 +736,6 @@ performEdgeRMeta <-function(trimmed.data, trimmed.meta){
 performDeseq2Meta <-function(trimmed.data, trimmed.meta){
   trimmed.data <<- trimmed.data;
   trimmed.meta <<- trimmed.meta;
-  save.image("de.RData");
   my.fun <- function(){
     suppressMessages(require(DESeq2));
     dds <- DESeqDataSetFromMatrix(countData=round(trimmed.data), colData = trimmed.meta, design = ~newcolumn)
@@ -941,4 +751,32 @@ performDeseq2Meta <-function(trimmed.data, trimmed.meta){
   dat.in <- list(data=trimmed.data, meta=trimmed.meta, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
   return(1);
+}
+
+SanityCheckMetaData <- function(){
+   paramSet <- readSet(paramSet, "paramSet");
+   meta <- paramSet$dataSet$meta.info;
+   sel.nms <- names(mdata.all)[mdata.all==1];
+   sampleNms.all <- vector();
+   for(i in 1:length(sel.nms)){
+     dataSet <- readDataset(sel.nms[i]);
+     sampleNms <- rownames(dataSet$data);
+     #check if sample names match
+     if(!all(sampleNms %in% rownames(meta))){
+        msgSet$current.msg <- paste(msgSet$current.msg, "Some samples are not annotated in metadata file!");
+        saveSet(msgSet, "msgSet");
+        return(0);
+     }
+     meta.ind <- meta[sampleNms, , drop = FALSE]
+     meta.ind <- meta.ind[match(sampleNms, rownames(meta.ind)), ]
+     dataSet$meta <- meta.ind;
+     sampleNms.all <- c(sampleNms.all, sampleNms);
+     RegisterData(dataSet);
+   }
+
+   #trim metadata table based on samples contained in dataset
+   meta_trimmed <- meta[sampleNms.all, , drop = FALSE]
+   meta_trimmed <- meta_trimmed[match(sampleNms.all, rownames(meta_trimmed)), ]
+   paramSet$dataSet$meta.info <- meta_trimmed;
+   return(1)
 }
