@@ -227,16 +227,12 @@ PerformMetaDeAnal <- function(paramSet){
   return(analSet);
 }
 
-
-# perform DE analysis on individual data (w.r.t common matrix)
-# to be used/compared in the later analysis, with p-val Inf so that
-# de can be adjusted based on user specified in meta later
 .performEachDEAnal <- function(is.meta=F){
   inmex.ind <- list();
   inmex.meta <- qs::qread("inmex_meta.qs");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  
   mdata.all <- paramSet$mdata.all;
   sel.nms <- names(mdata.all)[mdata.all==1];
   if(is.meta){
@@ -252,16 +248,18 @@ PerformMetaDeAnal <- function(paramSet){
       dataSet$name <- dataName;
       group <- factor(inmex.meta$cls.lbl[sel.inx]); # note regenerate factor to drop levels 
       dataSet$cls <- group;
-      res.limma <- PerformLimma(data, group);
+      #res.limma <- PerformLimma(data, group);
       
       # save the limma fit object for meta-analysis (such as "dataSet1.fit.obj")
-      qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep="."));
+      qs::qsave(dataSet$fit.obj, file=paste(dataName, "fit.obj", sep="."));
       
-      res.all <- GetLimmaResTable(res.limma$fit.obj);
+      res.all <- GetLimmaResTable(dataSet$fit.obj);
       qs::qsave(res.all, "meta.resTable.qs");
       res.mat <- cbind(logFC=res.all$logFC, Pval = res.all$adj.P.Val);
       
       rownames(res.mat) <- rownames(res.all);
+      res.mat <- res.mat[match(rownames(data),rownames(res.mat)),]
+
       inmex.ind[[dataName]] <- res.mat;
       
       #register sig one
@@ -269,7 +267,7 @@ PerformMetaDeAnal <- function(paramSet){
       #sig.inx <- res.mat[,2]<=dataSet$pval;
       #dataSet$sig.mat <- res.mat[sig.inx,];
       RegisterData(dataSet);
-
+      
       # clean up
       rm(dataSet, res.all);
       gc();
@@ -282,6 +280,7 @@ PerformMetaDeAnal <- function(paramSet){
       data <- inmex.meta$data[, sel.inx];
       
       dataSet <- readDataset(dataName);
+
       grp.lvl <- levels(dataSet$cls);
       
       # update data set
@@ -292,22 +291,24 @@ PerformMetaDeAnal <- function(paramSet){
       #if(exists('dataSet$comp.res')){
       #  res.all <- dataSet$comp.res
       #}else{
-        res.limma <- PerformLimma(data, group);
-        # save dataSet object for meta-analysis
-        qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
-        res.all <- GetLimmaResTable(res.limma$fit.obj);
+      # save dataSet object for meta-analysis
+      qs::qsave(dataSet$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
+      res.all <- GetLimmaResTable(dataSet$fit.obj);
       #}
       qs::qsave(res.all, "meta.resTable.qs");
       
       res.mat <- cbind(logFC=res.all$logFC, Pval = res.all$adj.P.Val);
       
       rownames(res.mat) <- rownames(res.all);
+      #get the features that are shared across datasets
+      res.mat <- res.mat[match(rownames(data),rownames(res.mat)),]
+
       inmex.ind[[dataName]] <- res.mat;
       
       #sig.inx <- res.mat[,2]<=paramSet$BHth;
       sig.inx <- res.mat[,2]<=dataSet$pval;
-     # dataSet$sig.mat <- res.mat[sig.inx,];
-
+      # dataSet$sig.mat <- res.mat[sig.inx,];
+      
       RegisterData(dataSet);
       # clean up
       rm(dataSet, res.all);
@@ -316,22 +317,25 @@ PerformMetaDeAnal <- function(paramSet){
   }
   analSet$inmex.ind <- inmex.ind;
   #calculate average log fc
-
+  
   aggr <- data.frame()
   inmex.ind.ordered <- lapply(inmex.ind, function(x){
+    print(dim(x))
     x<-x[order(rownames(x)),]
   })
+  
   for (i in 1:length(inmex.ind.ordered)){
     if(i == 1){
       aggr <- inmex.ind.ordered[[i]]
     }else{
-      aggr <- aggr + inmex.ind.ordered[[i]]
+      aggr <- aggr + inmex.ind.ordered[[i]];
     }
   }
   aggr <- aggr/length(inmex.ind.ordered);
   analSet$meta.avgFC <- aggr[,1];
   return(analSet);
 }
+
 
 #'Perform combine effect size meta-analysis method
 #'@param method Method used, either "rem" or "fem"

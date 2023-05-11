@@ -363,13 +363,13 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
 # for two groups only (used for meta-analysis)
 PerformLimma<-function(data, group){
   require(limma);
-  data <- data;
   design <- model.matrix(~-1 + group);
   fit <- lmFit(data, design)
   
   grps.cmp <- paste("group", levels(group)[2], " - ", "group", levels(group)[1], sep="");
   myargs <- list(grps.cmp, levels = design);
   contrast.matrix <- do.call(makeContrasts, myargs);
+  print(contrast.matrix);
   fit <- contrasts.fit(fit, contrast.matrix)
   fit <- eBayes(fit);
   gc();
@@ -393,6 +393,17 @@ MultiCovariateRegression <- function(fileName,
                                      # fixed.effects = NULL,  # metadata variables to adjust for
                                      random.effects = NULL, # metadata variables to adjust for
                                      internal=F){ # whether returns 0/1 or dataset object
+  dataSet <- readDataset(fileName);
+  return(.multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, F));
+}
+
+.multiCovariateRegression <- function(dataSet,
+                                     analysis.var, # metadata variable name
+                                     ref = NULL, # reference class from analysis.var metadata (only if categorical)
+                                     contrast = "anova",  # comparison class from analysis.var (only if categorical)
+                                     # fixed.effects = NULL,  # metadata variables to adjust for
+                                     random.effects = NULL, # metadata variables to adjust for
+                                     internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
   
   # load libraries
   library(limma)
@@ -400,11 +411,19 @@ MultiCovariateRegression <- function(fileName,
   
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- readDataset(fileName);
   dataSet$rmidx <- NULL
+
   # for embedded inside tools (ExpressAnalyst etc)
+  if(internal){
+  inmex.meta<-qs::qread("inmex_meta.qs");
+  #only get shared features
+  data.mat <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
+  feature_table <- data.mat;
+  }else{
   feature_table <- dataSet$data.norm 
+  }
   covariates <- dataSet$meta
+
   fixed.effects <- adj.vec
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
@@ -486,7 +505,7 @@ MultiCovariateRegression <- function(fileName,
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
     }
-    
+
     # get results
     fit <- contrasts.fit(fit, contrast.matrix);
     fit <- eBayes(fit);
@@ -553,6 +572,7 @@ MultiCovariateRegression <- function(fileName,
   dataSet$comp.res <- rest;
   dataSet$de.method <- "limma"
   dataSet$comp.type <- "default"
+  dataSet$fit.obj <- fit;
   if(internal){
     return(dataSet);
   }else{

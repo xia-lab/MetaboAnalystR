@@ -20,7 +20,9 @@ CovariateScatter.Anal <- function(dataName,
                                   ref = NULL, 
                                   block = "NA", 
                                   thresh=0.05,
-                                  contrast.cls = "anova"){
+                                  pval.selection="fdr",
+                                  contrast.cls = "anova"
+                                  ){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msg.lm <- ""
@@ -41,7 +43,7 @@ CovariateScatter.Anal <- function(dataName,
     }
   }
 
-  dataSet <- MultiCovariateRegression(dataName,analysis.var, ref,contrast.cls, random.effects=adj.vec, T);
+  dataSet <- .multiCovariateRegression(dataSet,analysis.var, ref,contrast.cls, random.effects=adj.vec, T);
 
   rest <- dataSet$comp.res;
   res.noadj <- dataSet$res.noadj;
@@ -66,15 +68,18 @@ CovariateScatter.Anal <- function(dataName,
   }else{
     fstat <- rest[, "t"];
   }  
-
-  p.value <- rest[,"P.Value"];
-  ord.inx <- order(rest[,"P.Value"], decreasing = FALSE);
+  if(pval.selection == "fdr"){
+    p.value <- rest[,"adj.P.Val"];
+  }else{
+    p.value <- rest[,"P.Value"];
+  }
+  ord.inx <- order(p.value, decreasing = FALSE);
   rest <- rest[ord.inx,,drop=F];
   colnames(rest)[1] <- "coefficient"; 
   rest$ids <- rownames(rest);
 
-  names(fstat) <- names(p.value) <- rownames(dataSet$data.norm);
-  fdr.p <- rest[,"adj.P.Val"];
+  names(fstat) <- names(p.value) <- rownames(rest);
+
   inx.imp <- p.value <= thresh;
   inx.imp <- ifelse(is.na(inx.imp), FALSE, inx.imp);
   sig.num <- length(which(inx.imp == TRUE))
