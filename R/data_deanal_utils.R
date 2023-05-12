@@ -252,10 +252,10 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   } else {
     set.seed(1) 
     require(edgeR)
-     if(length(dataSet$rmidx)>0){
-       data.anot <- dataSet$data.anot[,-dataSet$rmidx]
+    if(length(dataSet$rmidx)>0){
+      data.anot <- dataSet$data.anot[,-dataSet$rmidx];
     }else{
-       data.anot <- dataSet$data.anot
+      data.anot <- dataSet$data.anot;
     }
     y <- DGEList(counts = data.anot, group = dataSet$cls)
     y <- calcNormFactors(y)
@@ -347,8 +347,6 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   
   sig.count <- nrow(res);
   de.genes <- rownames(res);
-  res.mat <- cbind(res.all$logFC, res.all$adj.P.Val);
-  rownames(res.mat) <- rownames(res.all);
   non.sig.count <- nrow(data)-sig.count;
   rm(res.all);
   
@@ -362,15 +360,19 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
 # perfor differential analysis for array/RNA seq data
 # for two groups only (used for meta-analysis)
 PerformLimma<-function(data, group){
+  print(identical(colnames(data), group))
+  print(colnames(data))
+  print(group)
+
+  print("limma");
   require(limma);
   design <- model.matrix(~-1 + group);
-  fit <- lmFit(data, design)
+  fit <- lmFit(data, design);
   
   grps.cmp <- paste("group", levels(group)[2], " - ", "group", levels(group)[1], sep="");
   myargs <- list(grps.cmp, levels = design);
   contrast.matrix <- do.call(makeContrasts, myargs);
-  print(contrast.matrix);
-  fit <- contrasts.fit(fit, contrast.matrix)
+  fit <- contrasts.fit(fit, contrast.matrix);
   fit <- eBayes(fit);
   gc();
   return (list(fit.obj=fit));
@@ -417,8 +419,8 @@ MultiCovariateRegression <- function(fileName,
   if(internal){
   inmex.meta<-qs::qread("inmex_meta.qs");
   #only get shared features
-  data.mat <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
-  feature_table <- data.mat;
+  #feature_table <- dataSet$data[rownames(dataSet$data) %in% rownames(inmex.meta$data), ];
+  feature_table <- inmex.meta$data[,colnames(inmex.meta$data) %in% colnames(dataSet$data.norm)];
   }else{
   feature_table <- dataSet$data.norm 
   }
@@ -439,7 +441,6 @@ MultiCovariateRegression <- function(fileName,
   if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
     all.vars = c(all.vars, random.effects);
   }
-  
   
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
@@ -560,10 +561,11 @@ MultiCovariateRegression <- function(fileName,
     colnames(rest)[1] <- dataSet$par1 <- analysis.var;
     
     ### get results with no adjustment
+    if(internal){
     design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
-    
     fit <- eBayes(lmFit(feature_table, design));
     res.noadj <- topTable(fit, number = Inf);
+    }
   }
   
   dataSet$res.noadj <- res.noadj

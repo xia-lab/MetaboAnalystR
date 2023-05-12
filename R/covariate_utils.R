@@ -75,7 +75,7 @@ CovariateScatter.Anal <- function(dataName,
   }
   ord.inx <- order(p.value, decreasing = FALSE);
   rest <- rest[ord.inx,,drop=F];
-  colnames(rest)[1] <- "coefficient"; 
+  colnames(rest)[1] <- "logFC"; 
   rest$ids <- rownames(rest);
 
   names(fstat) <- names(p.value) <- rownames(rest);

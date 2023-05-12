@@ -292,6 +292,7 @@ PerformMetaDeAnal <- function(paramSet){
       #  res.all <- dataSet$comp.res
       #}else{
       # save dataSet object for meta-analysis
+      #res.limma <- PerformLimma(data, group);
       qs::qsave(dataSet$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
       res.all <- GetLimmaResTable(dataSet$fit.obj);
       #}

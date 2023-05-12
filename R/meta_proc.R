@@ -665,8 +665,12 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   hit.inx <- which(hit.inx);
   
   res.sig<-res[hit.inx, , drop=F];
+  print(colnames(res.sig));
+  if("logFC" %in% colnames(res.sig)){
   hit.inx <- abs(as.numeric(res.sig[, "logFC"])) > fc.lvl #foldchange
-  
+  }else{
+  hit.inx <- abs(as.numeric(res.sig[, "coefficient"])) > fc.lvl #foldchange
+  }
   if(length(which(hit.inx == T)) == 0){
     return (c(1, 0, nrow(res)));
   }
