@@ -225,7 +225,7 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
         if(table.nm == "metabo_metabolites" || table.nm == "gene_metabolites" || table.nm == "global"){
           node.evidence <- c(res[,src.evidence], res[,target.evidence]);
         } else{
-          node.evidence <- ""
+          node.evidence <- c();
         }
     }
 
@@ -233,10 +233,10 @@ SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.sco
     genes.names.idx <- match(node.ids, mSetObj$dataSet$gene.map.table[,"Entrez"])
     genes.names <- mSetObj$dataSet$gene.map.table[genes.names.idx,"Name"]
 
-    if(length(node.evidence) >0 "" && !is.null(genes.names)){
+    if(length(node.evidence)>0 && !is.null(genes.names)){
       # Evidence is related to the STITCH database accessions for chemicals/proteins
       node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names, Evidence=node.evidence);
-    } else if (length(node.evidence) >0) {
+    } else if (length(node.evidence)>0) {
       node.res <- data.frame(Id=node.ids, Label=node.nms, Evidence=node.evidence);
     } else if (!is.null(genes.names) ){
       node.res <- data.frame(Id=node.ids, Label=node.nms, GeneNames=genes.names);
