@@ -90,12 +90,11 @@ my.json.scatter <- function(filenm, containsLoading=F){
     }
   }
   
-  
   ticks <- list(x=ticksX, y=ticksY, z=ticksZ);
   library(RJSONIO)
   
   if(!containsLoading){
-    netData <- list(nodes=nodes,
+  netData <- list(nodes=nodes,
   edges="NA",
   meta=metadf, 
   loading="NA",
