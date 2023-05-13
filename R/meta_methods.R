@@ -16,9 +16,9 @@ SetGroupContrast <- function(dataName, grps){
     
     # regenerate factor to drop levels, force the levels order
     group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
-    data <- dataSet$data[, sel.inx];
+    data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
-    dataSet$data <- data;
+    dataSet$data.norm <- data;
     RegisterData(dataSet);  
   }
 }
@@ -57,7 +57,7 @@ CheckMetaDataIntegrity <- function(){
     lvls <- levels(dataSet$cls);
     id.type <- dataSet$id.type;
     clss[[1]] <- dataSet$cls;
-    nms <- rownames(dataSet$data);
+    nms <- rownames(dataSet$data.norm);
     shared.nms <- nms;
     for(i in 2:length(sel.nms)){
       dataSet <- readDataset(sel.nms[i]);
@@ -72,7 +72,7 @@ CheckMetaDataIntegrity <- function(){
       }
       
       # check and record if there is common genes            
-      shared.nms <- intersect(shared.nms, rownames(dataSet$data));
+      shared.nms <- intersect(shared.nms, rownames(dataSet$data.norm));
       if(length(shared.nms) < 10){
         msgSet$current.msg <- paste(sel.nms[i], "has less than 10 common genes/probes from previous data sets");
         saveSet(msgSet, "msgSet");                      
@@ -91,21 +91,21 @@ CheckMetaDataIntegrity <- function(){
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
     dataSet <- readDataset(dataName);
-    common.matrix <- dataSet$data[as.character(shared.nms), ];
-    nms.vec <- rownames(dataSet$data);
-    smps.vec <- colnames(dataSet$data);
+    common.matrix <- dataSet$data.norm[as.character(shared.nms), ];
+    nms.vec <- rownames(dataSet$data.norm);
+    smps.vec <- colnames(dataSet$data.norm);
     data.lbl <- rep(dataName, ncol(common.matrix));
     cls.lbl <- dataSet$cls;
     
     for(i in 2:length(sel.nms)){
       dataName <- sel.nms[i];
       dataSet <- readDataset(dataName);
-      ndat <- dataSet$data[as.character(shared.nms), ];
-      nms.vec <- c(nms.vec, rownames(dataSet$data));
-      smps.vec <- c(smps.vec, colnames(dataSet$data));
+      ndat <- dataSet$data.norm[as.character(shared.nms), ];
+      nms.vec <- c(nms.vec, rownames(dataSet$data.norm));
+      smps.vec <- c(smps.vec, colnames(dataSet$data.norm));
       plot.ndat <- t(scale(t(ndat)));
       common.matrix <- cbind(common.matrix, ndat);
-      data.lbl <- c(data.lbl, rep(dataName, ncol(dataSet$data[,])));
+      data.lbl <- c(data.lbl, rep(dataName, ncol(dataSet$data.norm[,])));
       cls.lbl <- c(cls.lbl, dataSet$cls);
     }
     cls.lbl <- factor(cls.lbl);
@@ -122,12 +122,12 @@ CheckMetaDataIntegrity <- function(){
       colnames(common.matrix) <- make.unique(paste(data.vec, smps.nms, sep="_"));
       
       dataSet <- readDataset(sel.nms[1]);
-      colnames(dataSet$data) <- paste("d1", colnames(dataSet$data), sep="_");
+      colnames(dataSet$data.norm) <- paste("d1", colnames(dataSet$data.norm), sep="_");
       RegisterData(dataSet);
       
       for(i in 2:length(sel.nms)){
         dataSet <- readDataset(sel.nms[i]);
-        colnames(dataSet$data) <- paste0("d",i,"_",colnames(dataSet$data));
+        colnames(dataSet$data.norm) <- paste0("d",i,"_",colnames(dataSet$data.norm));
         # check if class label is consistent
         RegisterData(dataSet);
       }

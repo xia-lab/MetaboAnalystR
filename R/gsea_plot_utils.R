@@ -36,7 +36,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
       gene.map <- readDataQs("symbol.map.qs", paramSet$anal.type, paramSet$selDataNm);
-      dat <- dataSet$data;
+      dat <- dataSet$data.norm;
     }
     subset <- dat[which(doIdMappingGeneric(rownames(dat), gene.map, "gene_id", "symbol") %in% ids),]
     if(length(subset)<1){

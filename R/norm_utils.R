@@ -107,7 +107,6 @@ NormalizeDataMetaMode <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
         return(0);
       }
       dataSet$data.norm <- data;
-      dataSet$data <- data;
       RegisterData(dataSet);
     }
   }else{
@@ -118,7 +117,6 @@ NormalizeDataMetaMode <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
       return(0);
     }
     dataSet$data.norm <- data;
-    dataSet$data <- data;
     qs::qsave(data, file="data.stat.qs");
     RegisterData(dataSet);
     

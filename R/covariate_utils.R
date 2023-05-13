@@ -82,7 +82,7 @@ CovariateScatter.Anal <- function(dataName,
 
   inx.imp <- p.value <= thresh;
   inx.imp <- ifelse(is.na(inx.imp), FALSE, inx.imp);
-  sig.num <- length(which(inx.imp == TRUE))
+  sig.num <- length(which(inx.imp == TRUE));
   
   if(sig.num > 0){ 
     sig.p <- p.value[inx.imp];

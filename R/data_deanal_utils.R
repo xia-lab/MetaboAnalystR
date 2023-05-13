@@ -320,11 +320,11 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
     grp.nms <- strsplit(grps, " vs. ")[[1]];
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
   }else{
-    sel.inx <- rep(T, ncol(dataSet$data));
+    sel.inx <- rep(T, ncol(dataSet$data.norm));
   }
   
   group <- factor(dataSet$cls[sel.inx]); # note regenerate factor to drop levels 
-  data <- dataSet$data[, sel.inx];
+  data <- dataSet$data.norm[, sel.inx];
   
   res.limma <- PerformLimma(data, group);
   res.all <- GetLimmaResTable(res.limma$fit.obj);
@@ -419,7 +419,7 @@ MultiCovariateRegression <- function(fileName,
   if(internal){
   inmex.meta<-qs::qread("inmex_meta.qs");
   #only get shared features
-  #feature_table <- dataSet$data[rownames(dataSet$data) %in% rownames(inmex.meta$data), ];
+  #feature_table <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
   feature_table <- inmex.meta$data[,colnames(inmex.meta$data) %in% colnames(dataSet$data.norm)];
   }else{
   feature_table <- dataSet$data.norm 
@@ -450,6 +450,7 @@ MultiCovariateRegression <- function(fileName,
     dataSet$rmidx <- rmidx;
   }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
+
   if(!identical(colnames(feature_table), rownames(covariates))){
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");

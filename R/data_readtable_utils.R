@@ -142,6 +142,8 @@ ReadMetaData <- function(metafilename){
     # make sure the discrete data is on the left side
     metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
   }
+
+  metadata$Dataset <- rep("NA", nrow(metadata));
   
   mdata.all <- paramSet$mdata.all;
   # need to add metadata sanity check
@@ -161,6 +163,7 @@ ReadMetaData <- function(metafilename){
     
     # now remove extra meta if present, and order them
     nm.hits2 <- which(smpl_nms %in% data.smpl.nms);
+    metadata$Dataset[nm.hits2] <- sel.nms[i];
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
     

@@ -175,7 +175,7 @@ SetGroupContrast <- function(dataName, grps, meta="NA"){
     group <- factor(cls[sel.inx], levels=grp.nms);  
     data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
-    dataSet$data <- data;
+    dataSet$data.norm <- data;
   }
     RegisterData(dataSet);  
 
@@ -372,7 +372,6 @@ FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
   saveDataQs(data, "data.filtered.qs", paramSet$anal.type, dataName);
 
   dataSet$data.norm <- data
-  dataSet$data <- data;
  
   saveSet(msgSet, "msgSet");      
   return(RegisterData(dataSet))
@@ -535,7 +534,6 @@ ReadOmicsData <- function(fileName) {
   #dir.create() does not crash if the directory already exists, it just prints out a warning.
   dir.create(paste0(fileName, "_data"), showWarnings = FALSE);
   
-  dataSet$data <- data;
   dataSet$data.norm <- data;
   saveDataQs(data, "data.raw.qs", paramSet$anal.type, fileName);
   dataSet$data.annotated <- ""
