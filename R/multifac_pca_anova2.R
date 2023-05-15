@@ -39,8 +39,11 @@ aov.1wayrep <- function(x){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 aov.2way <- function(x){
-  unlist(suppressMessages(anova_test(x ~ aov.facA*aov.facB,
-                    data = data.frame(x=x,aov.facA=aov.facA,aov.facB=aov.facB)))$ANOVA[,c("F","p")])
+  res <- suppressMessages(anova_test(x ~ aov.facA * aov.facB, 
+                                    data = data.frame(x = x, aov.facA = aov.facA, aov.facB = aov.facB)));
+  res <- c(res$F, res$p);
+  res <- unlist(res);
+  return(res)
 }
 
 #'Perform Two-way ANOVA 
