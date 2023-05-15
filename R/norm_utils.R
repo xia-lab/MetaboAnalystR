@@ -62,12 +62,15 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
     raw.data.anot <- data1;
     msg <- "Only features with annotations are kept for further analysis.";
   }else{
-    raw.data.anot <- qs::qread("orig.data.anot.qs");
-    colnames(raw.data.anot) <- colnames(dataSet$data.norm)
+    if(dataSet$type=="prot"){
+     raw.data.anot <- qs::qread("data.missed.qs");
+    }else{
+     raw.data.anot <- qs::qread("orig.data.anot.qs");
+    }
+   colnames(raw.data.anot) <- colnames(dataSet$data.norm)
   }
   
   data <- raw.data.anot;
-  
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
@@ -82,14 +85,17 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   }
   
   data <- data[!rm.inx,];
-  
   filter.val <- apply(data, 1, IQR, na.rm=T);
   nm <- "Interquantile Range";
-  rk <- rank(-filter.val, ties.method='random');
+  filter.val <- -filter.val
+  rk <- rank(filter.val, ties.method='random');
+  # remove constant values
+  good.inx <- -filter.val > 0;
   kp.pct <- (100 - var.thresh)/100;
   remain <- rk < nrow(data)*kp.pct;
-  filt.msg <<- paste(msg, paste("Filtered ", sum(!remain), " low variance genes based on IQR"), collapse=" ");
-  data <- data[remain,];
+  data <- data[remain&good.inx,];
+  filt.msg <<- paste(msg, paste("Filtered ", nrow(data), " low variance genes based on IQR"), collapse=" ");
+
   return(data);
 }
 

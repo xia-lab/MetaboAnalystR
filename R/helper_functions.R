@@ -12,7 +12,7 @@ GetSigGeneCount <- function(){
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  data <- dataSet$data.anot
+  data <- dataSet$data.anot;
   if(sum(data > 100) > 100){ # now we think it is raw counts
     return(0);
   }else{

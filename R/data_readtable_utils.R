@@ -31,7 +31,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   int.mat <- int.mat[,match(rownames(meta.info$meta.info),colnames(int.mat))]
   dataSet$data <- NULL;
   dataSet$name <- fileName;
-  
+  qs::qsave(int.mat, "int.mat.qs");
   msg <- paste("a total of ", ncol(int.mat), " samples and ", nrow(int.mat), " features were found");
   # remove NA, null
   row.nas <- apply(is.na(int.mat)|is.null(int.mat), 1, sum);
@@ -40,14 +40,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
     int.mat <- int.mat[good.inx,];
     msg <- c(msg, paste("removed ", sum(!good.inx), " features with over 50% missing values"));
   }
-  # remove constant values
-  filter.val <- apply(int.mat, 1, IQR, na.rm=T);
-  good.inx2 <- filter.val > 0;
-  if(sum(!good.inx2) > 0){
-    int.mat <- int.mat[good.inx2,];
-    msg <- c(msg, paste("removed ", sum(!good.inx2), " features with constant values"));
-  }
-  
+ 
   minVal <- min(int.mat, na.rm=T);
   na.inx <- is.na(int.mat);
   if(sum(na.inx) > 0){
@@ -224,7 +217,6 @@ ReadMetaData <- function(metafilename){
     return(NULL);
   }
   dat1 <- .to.numeric.mat(datOrig);
-  
   list(
     name= basename(dataName),
     data_orig = datOrig,
@@ -281,8 +273,10 @@ ReadMetaData <- function(metafilename){
     return(NULL);
   }
   
+  
   # need to remove potential empty columns
   dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
+  
   return(dat);
 }
 

@@ -17,7 +17,6 @@ SanityCheckData <- function(fileName){
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(fileName);
   
-  
   # general sanity check then omics specific
   
   # use first column by default
@@ -242,15 +241,21 @@ RemoveMissingPercent <- function(dataName="", percent=perct){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
+  if(paramSet$anal.type=="onedata"){
+  data.annotated <- qs::qread("orig.data.anot.qs")
+  }else{
   data.annotated <- readDataQs("data.annotated.qs", paramSet$anal.type, dataName);
+  }
+  
   int.mat <- data.annotated;
   good.inx <- apply(is.na(int.mat), 1, sum)/ncol(int.mat)<percent;
   data.annotated <- as.data.frame(int.mat[good.inx, , drop=FALSE]);
   if(sum(!good.inx)>0){
     msgSet$current.msg <- paste(sum(!good.inx), " variables were removed for threshold", round(100*percent, 2), "percent.");
   }
+
   saveDataQs(data.annotated, "data.annotated.qs", paramSet$anal.type, dataName);
-  return(RegisterData(dataSet));
+  RegisterData(dataSet);
 }
 
 
@@ -258,7 +263,6 @@ ImputeMissingVar <- function(dataName="", method="min"){
   dataSet <- readDataset(dataName);
   msgSet <- readSet(msgSet, "msgSet"); 
   paramSet <- readSet(paramSet, "paramSet"); 
-
   data.annotated <- readDataQs("data.annotated.qs", paramSet$anal.type, dataName);
   row.nms <- rownames(data.annotated);
   current.msg <- msgSet$curren.msg;
@@ -267,9 +271,9 @@ ImputeMissingVar <- function(dataName="", method="min"){
 
   if(method=="exclude"){
     good.inx<-apply(is.na(int.mat), 1, sum)==0
-    new.mat<-int.mat[,good.inx, drop=FALSE];
+    new.mat<-int.mat[good.inx,, drop=FALSE];
     current.msg <- c(current.msg ,"Variables with missing values were excluded.");
-    
+    row.nms<-row.nms[good.inx]
   }else if(method=="min"){
     new.mat<- ReplaceMissingByLoD(int.mat);
     current.msg <- c(current.msg, "Missing variables were replaced by LoDs (1/5 of the min positive value for each variable)");
@@ -280,6 +284,7 @@ ImputeMissingVar <- function(dataName="", method="min"){
       }
       x;
     });
+    new.mat = t(new.mat)
     current.msg <- c(current.msg,"Missing variables were replaced by 1/2 of min values for each feature column.");
   }else if (method=="mean"){
     new.mat<-apply(int.mat, 1, function(x){
@@ -288,6 +293,7 @@ ImputeMissingVar <- function(dataName="", method="min"){
       }
       x;
     });
+    new.mat = t(new.mat)
     current.msg <- c(current.msg,"Missing variables were replaced with the mean value for each feature column.");
   }else if (method == "median"){
     new.mat<-apply(int.mat, 1, function(x){
@@ -296,21 +302,23 @@ ImputeMissingVar <- function(dataName="", method="min"){
       }
       x;
     });
+   new.mat = t(new.mat)
     current.msg <- c(current.msg,"Missing variables were replaced with the median for each feature column.");
   }else{
     if(method == "knn_var"){
-      new.mat<-t(impute::impute.knn(int.mat)$data);
+      new.mat<-t(impute::impute.knn(as.matrix(int.mat))$data);
     }else if(method == "knn_smp"){
       new.mat<-impute::impute.knn(data.matrix(t(int.mat)))$data;
     }else{
       if(method == "bpca"){
-        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="bpca", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(t(int.mat), nPcs =5, method="bpca", center=T)@completeObs;
       }else if(method == "ppca"){
-        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="ppca", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(t(int.mat), nPcs =5, method="ppca", center=T)@completeObs;
       }else if(method == "svdImpute"){
-        new.mat<-pcaMethods::pca(int.mat, nPcs =5, method="svdImpute", center=T)@completeObs;
+        new.mat<-pcaMethods::pca(t(int.mat), nPcs =5, method="svdImpute", center=T)@completeObs;
       }
     }
+    new.mat = t(new.mat)
     current.msg <- c(current.msg, paste("Missing variables were imputated using", toupper(method)));
   }
   msgSet$current.msg <- current.msg;  
@@ -319,7 +327,10 @@ ImputeMissingVar <- function(dataName="", method="min"){
   data.missed <- as.data.frame(new.mat);
   rownames(data.missed) <- row.nms;
   saveDataQs(data.missed, "data.missed.qs", paramSet$anal.type, dataName);
-  return(RegisterData(dataSet));
+  if(paramSet$anal.type=="onedata"){
+  dataSet$data.norm <- dataSet$data.anot <- data.missed
+  }
+  RegisterData(dataSet);
 }
 
 
