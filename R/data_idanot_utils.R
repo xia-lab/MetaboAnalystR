@@ -125,6 +125,8 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   if(length(missNum)>0){
    RemoveMissingPercent(dataSet$name, 0.5)
    ImputeMissingVar(dataSet$name, method="min")
+  }else{
+   qs::qsave(dataSet$data.anot, file="data.missed.qs");
   }
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");

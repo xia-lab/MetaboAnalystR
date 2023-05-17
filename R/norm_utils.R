@@ -20,7 +20,7 @@
 #'@export
 #'
 
-PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped){
+PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false"){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -32,6 +32,13 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
   
+  if(dataSet$type=="prot"){
+    if(islog=="true"|norm.opt=="Rlr" | norm.opt=="Loess"){
+      data <- NormalizeData(data, "log", "NA", "NA");
+      msg <- paste(norm.msg, msg);
+   }
+  }
+
   #Normalize data
   data <- NormalizeData(data, norm.opt, "NA", "NA");
   
@@ -147,7 +154,6 @@ NormalizeData <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     # nothing to do
     rownm<-"N/A";
   }
-  
   # norm.opt
   if(norm.opt=="log"){
     min.val <- min(data[data>0], na.rm=T)/10;
@@ -204,6 +210,17 @@ NormalizeData <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     norm.data <- abs(data)^(1/3);
     norm.data[data<0] <- - norm.data[data<0];
     data <- norm.data;
+  }else if(norm.opt=='Rlr'){
+    norm.data <- RLRNorm(data)
+    msg <- paste(msg, "Performed Linear Regression Normalization.", collapse=" ");
+  }else if(norm.opt=='Loess'){
+    norm.data <- LoessNorm(data)
+    msg <- paste(msg, "Performed Local Regression Normalization.", collapse=" ");
+  }else if(norm.opt=='EigenMS'){
+     msg <- paste(msg, "Performed EigenMS Normalization.", collapse=" ");
+  }else if(norm.opt=='median'){
+    data<- apply(data, 2, MedianNorm);
+    msg <- paste(msg, "Normalization to sample median.", collapse=" ");
   }
   
   
@@ -309,4 +326,47 @@ RangeNorm<-function(x){
   }else{
     (x - mean(x))/(max(x)-min(x));
   }
+}
+########### adapted from NormalyzerDE (https://github.com/ComputationalProteomics/NormalyzerDE)
+
+RLRNorm <- function(data) {
+  
+  sampleLog2Median <- apply(data, 1, median,na.rm=T)
+  
+  calculateRLMForCol <- function(colIndex, sampleLog2Median, data) {
+    
+    lrFit <- MASS::rlm(as.matrix(data[, colIndex])~sampleLog2Median, na.action=stats::na.exclude)
+    coeffs <- lrFit$coefficients
+    coefIntercept <- coeffs[1]
+    coefSlope <- coeffs[2]
+    globalFittedRLRCol <- (data[, colIndex] - coefIntercept) / coefSlope
+    globalFittedRLRCol
+  }
+  
+  globalFittedRLR <- vapply(
+    seq_len(ncol(data)),
+    calculateRLMForCol,
+    rep(0, nrow(data)),
+    sampleLog2Median=sampleLog2Median,
+    data=data
+  )
+  
+  colnames(globalFittedRLR) <- colnames(data)
+  
+  return(globalFittedRLR)
+}
+
+LoessNorm <- function(x, weights = NULL, span=0.7, iterations = 3){
+  x <- as.matrix(x)
+  n <- ncol(x)
+    for (k in 1:iterations) {
+      a <- rowMeans(x,na.rm=TRUE)
+      for (i in 1:n){
+        m <- x[,i] - a
+        f <- limma::loessFit(m, a, weights=weights, span=span)$fitted
+        x[,i] <- x[,i] - f
+      }
+    }
+  
+  return(x)
 }
