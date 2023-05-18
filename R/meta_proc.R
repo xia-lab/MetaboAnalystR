@@ -837,10 +837,9 @@ CheckMetaIntegrity <- function(){
       }
     }
   }
-  print(meta.dfs);
+
   # Merge the data frames in the list while preserving the original order
   metadata <- do.call(rbind, meta.dfs)  
-  print(metadata)
   na.msg <- ""
   disc.inx <- GetDiscreteInx(metadata);
   if(sum(disc.inx) == length(disc.inx)){
