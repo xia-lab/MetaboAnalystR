@@ -135,7 +135,12 @@ GetMetaCell <- function(dataName="",ridx=1,cidx=1){
 ResetMetaTab <- function(dataName=""){
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
-    dataSet$data.norm <- dataSet$data.anot <- qs::qread("orig.data.anot.qs");
+     if(dataSet$type=="prot"){
+       data.anot <- qs::qread("data.missed.qs");
+    }else{
+       data.anot <- qs::qread("orig.data.anot.qs");
+    }
+    dataSet$data.norm <- dataSet$data.anot <- data.anot;
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     sel.nms <- names(paramSet$mdata.all);
@@ -282,6 +287,7 @@ DeleteMetaCol <- function(dataName="",metaCol){
 CleanRmCol <- function(dataName=""){
   if(dataName != "NA"){
     paramSet <- readSet(paramSet, "paramSet")
+    mdata.all <- paramSet$mdata.all
     sel.nms <- names(mdata.all);
   }else{
     sel.nms <- c(dataName);

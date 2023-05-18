@@ -566,10 +566,11 @@ MultiCovariateRegression <- function(fileName,
     design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
     fit <- eBayes(lmFit(feature_table, design));
     res.noadj <- topTable(fit, number = Inf);
+    dataSet$res.noadj <- res.noadj;
     }
   }
   
-  dataSet$res.noadj <- res.noadj
+  
   dataSet$design <- design;
   dataSet$contrast.type <- analysis.type;
   dataSet$comp.res <- rest;

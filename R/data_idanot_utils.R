@@ -44,7 +44,11 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$id.orig <- dataSet$id.current <- idType;
   dataSet$annotated <- F;
   # should not contain duplicates, however sanity check
+  if(dataType=="prot"){
+   data.proc <- qs::qread("int.mat.qs");
+  }else{
   data.proc <- qs::qread("data.raw.qs");
+  }
   dataSet$data.anot <- data.proc;
   
   if (org != 'NA' & idType != 'NA'){
@@ -101,7 +105,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$data.norm <- dataSet$data.anot;
   
   qs::qsave(dataSet$data.anot, file="orig.data.anot.qs"); # keep original copy, not in mem
-  
+
   totalCount <-  sum(colSums(dataSet$data.anot));
   avgCount <- sum(colSums(dataSet$data.anot))/ ncol(dataSet$data.anot);
   minCount <- min(colSums(dataSet$data.anot))
@@ -115,9 +119,15 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
   lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
  }
-
+  missNum = which(is.na(dataSet$data.anot)|dataSet$data.anot=="NA"|dataSet$data.anot=="")
   msgSet$current.msg <- current.msg;
-  msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls)  
+  msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls,length(missNum))  
+  if(length(missNum)>0){
+   RemoveMissingPercent(dataSet$name, 0.5)
+   ImputeMissingVar(dataSet$name, method="min")
+  }else{
+   qs::qsave(dataSet$data.anot, file="data.missed.qs");
+  }
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
