@@ -396,7 +396,13 @@ MultiCovariateRegression <- function(fileName,
                                      random.effects = NULL, # metadata variables to adjust for
                                      internal=F){ # whether returns 0/1 or dataset object
   dataSet <- readDataset(fileName);
-  return(.multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, F));
+  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, F)
+  if(is.list(interim)){
+    res <- 1;
+  }else{
+    res <- interim;
+  }
+  return(res);
 }
 
 .multiCovariateRegression <- function(dataSet,
@@ -441,6 +447,7 @@ MultiCovariateRegression <- function(fileName,
   if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
     all.vars = c(all.vars, random.effects);
   }
+  print(all.vars);
   
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
@@ -529,6 +536,7 @@ MultiCovariateRegression <- function(fileName,
         fit <- contrasts.fit(fit, contrast.matrix);
         fit <- eBayes(fit);
         res.noadj <- topTable(fit, number = Inf);
+        dataSet$res.noadj <- res.noadj;
     }
 
     dataSet$contrast.matrix <- contrast.matrix;
@@ -570,17 +578,12 @@ MultiCovariateRegression <- function(fileName,
     }
   }
   
-  
   dataSet$design <- design;
   dataSet$contrast.type <- analysis.type;
   dataSet$comp.res <- rest;
   dataSet$de.method <- "limma"
   dataSet$comp.type <- "default"
   dataSet$fit.obj <- fit;
-  if(internal){
-    return(dataSet);
-  }else{
-    RegisterData(dataSet);
-    return(1)
- }
+  RegisterData(dataSet);
+  return(dataSet);
 }

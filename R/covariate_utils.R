@@ -23,6 +23,7 @@ CovariateScatter.Anal <- function(dataName,
                                   pval.selection="fdr",
                                   contrast.cls = "anova"
                                   ){
+  save.image("cov.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msg.lm <- ""
@@ -47,7 +48,8 @@ CovariateScatter.Anal <- function(dataName,
 
   rest <- dataSet$comp.res;
   res.noadj <- dataSet$res.noadj;
-  dataSet$res.noadj <- "";
+  print(names(dataSet));
+  #dataSet$res.noadj <- "";
   # make visualization
   adj.mat <- rest[, c("P.Value", "adj.P.Val")]
   noadj.mat <- res.noadj[, c("P.Value", "adj.P.Val")]
