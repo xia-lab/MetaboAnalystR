@@ -782,3 +782,47 @@ SanityCheckMetaData <- function(){
    paramSet$dataSet$meta.info <- meta_trimmed;
    return(1)
 }
+
+
+
+CheckMetaIntegrity <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  mdata.all <- paramSet$mdata.all;
+
+  sel.nms <- names(mdata.all)
+
+  msgSet <- readSet(msgSet, "msgSet");
+  data.list <- list()
+  cnms <- list()
+  metas <- list();
+  for(i in 1:length(sel.nms)){
+    dat = readDataset(sel.nms[i])
+    cnms[[i]] <- colnames(dat$data.norm);
+    metas[[i]] <- as.vector(dat$meta[,1]);
+  }
+  if(length(metas) == 0){
+    msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
+    saveSet(msgSet, "msgSet");
+    return(0)
+  }
+
+  for(i in 1:length(sel.nms)){
+    if(length(unique(metas[[i]]))>2){
+        msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+        saveSet(msgSet, "msgSet");
+        return(0)
+    }
+    for(j in 1:length(sel.nms)){
+
+        boolMeta <- identical(sort(unique(metas[[i]])),sort(unique(metas[[j]])))
+        
+        if(!boolMeta){
+            msgSet$current.msg <- "Please make sure the meta data is consistent across all uploaded data sets.";
+            saveSet(msgSet, "msgSet");
+            return(0)
+        }
+    }
+  }
+    return(1)
+
+}
