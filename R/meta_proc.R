@@ -795,45 +795,110 @@ SanityCheckMetaData <- function(){
 }
 
 
-
 CheckMetaIntegrity <- function(){
   paramSet <- readSet(paramSet, "paramSet");
+  msgSet <- readSet(msgSet, "msgSet");
   mdata.all <- paramSet$mdata.all;
-
+  
   sel.nms <- names(mdata.all)
-
+  
   msgSet <- readSet(msgSet, "msgSet");
   data.list <- list()
   cnms <- list()
   metas <- list();
+  meta.dfs <- list();
   for(i in 1:length(sel.nms)){
     dat = readDataset(sel.nms[i])
     cnms[[i]] <- colnames(dat$data.norm);
     metas[[i]] <- as.vector(dat$meta[,1]);
+    meta.dfs[[i]] <- dat$meta;
   }
   if(length(metas) == 0){
     msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
     saveSet(msgSet, "msgSet");
     return(0)
   }
-
+  
   for(i in 1:length(sel.nms)){
     if(length(unique(metas[[i]]))>2){
-        msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+      msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+      saveSet(msgSet, "msgSet");
+      return(0)
+    }
+    
+    for(j in 1:length(sel.nms)){
+      
+      boolMeta <- identical(sort(unique(metas[[i]])),sort(unique(metas[[j]])))
+      
+      if(!boolMeta){
+        msgSet$current.msg <- "Please make sure the meta data is consistent across all uploaded data sets.";
         saveSet(msgSet, "msgSet");
         return(0)
-    }
-    for(j in 1:length(sel.nms)){
-
-        boolMeta <- identical(sort(unique(metas[[i]])),sort(unique(metas[[j]])))
-        
-        if(!boolMeta){
-            msgSet$current.msg <- "Please make sure the meta data is consistent across all uploaded data sets.";
-            saveSet(msgSet, "msgSet");
-            return(0)
-        }
+      }
     }
   }
-    return(1)
-
+  print(meta.dfs);
+  # Merge the data frames in the list while preserving the original order
+  metadata <- do.call(rbind, meta.dfs)  
+  print(metadata)
+  na.msg <- ""
+  disc.inx <- GetDiscreteInx(metadata);
+  if(sum(disc.inx) == length(disc.inx)){
+    msgSet$na.msg <- "All metadata columns are OK!"
+  }else{
+    bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
+    msgSet$na.msg <- paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !");
+  }
+  
+  
+  cont.inx <- GetNumbericalInx(metadata);
+  cont.inx <- !disc.inx & cont.inx; # discrete is first
+  
+  if(sum(cont.inx)>0){
+    # make sure the discrete data is on the left side
+    metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
+  }
+  
+  metadata$Dataset <- rep("NA", nrow(metadata));
+  
+  mdata.all <- paramSet$mdata.all;
+  # need to add metadata sanity check
+  # are sample names identical to data$orig
+  # order samples in same way as in abundance table
+  sel.nms <- names(mdata.all);
+  smpl_nms <- rownames(metadata);
+    
+  for(i in 1:length(sel.nms)){
+    dataSet <- readDataset(sel.nms[i]);
+    data.smpl.nms <- colnames(dataSet$data.norm)
+    
+    # now remove extra meta if present, and order them
+    nm.hits2 <- which(smpl_nms %in% data.smpl.nms);
+    metadata$Dataset[nm.hits2] <- sel.nms[i];
+    metadata1 <- metadata[nm.hits2,,drop=F];
+    metadata1[] <- lapply( metadata1, factor)
+    
+    
+    dataSet$meta <- dataSet$metaOrig <- metadata1
+    dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
+    dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
+    RegisterData(dataSet);
+  }
+  
+  paramSet$dataSet <- list();
+  meta.types <- rep("disc", ncol(metadata));
+  meta.types[cont.inx] <- "cont";
+  names(meta.types) <- colnames(metadata);
+  
+  paramSet$dataSet$meta.types <- meta.types;
+  paramSet$dataSet$meta.status <- rep("OK", ncol(metadata));
+  paramSet$dataSet$cont.inx <- cont.inx;
+  paramSet$dataSet$disc.inx <- disc.inx;
+  paramSet$dataSet$meta.info <- metadata;
+  paramSet$dataSet$metaOrig <- metadata;
+  
+  saveSet(msgSet, "msgSet");
+  saveSet(paramSet, "paramSet");
+  return(1)
+  
 }
