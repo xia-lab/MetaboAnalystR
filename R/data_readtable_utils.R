@@ -61,6 +61,10 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
+  meta.types <- rep("disc", ncol(dataSet$meta));
+  meta.types[meta.info$cont.inx] <- "cont";
+  names(meta.types) <- colnames(dataSet$meta);
+  dataSet$meta.types <-meta.types;
   paramSet$anal.type <- "onedata";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, fileName);
   paramSet$jsonNms$dataName <- fileName;
@@ -163,6 +167,12 @@ ReadMetaData <- function(metafilename){
     dataSet$meta <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
+
+    meta.types <- rep("disc", ncol(dataSet$meta));
+    meta.types[cont.inx[colnames(metadata1)]] <- "cont";
+    names(meta.types) <- colnames(dataSet$meta);
+    dataSet$meta.types <-meta.types;
+
     RegisterData(dataSet);
   }
   
