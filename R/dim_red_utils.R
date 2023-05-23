@@ -364,7 +364,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
 
 
 ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
   level <- as.numeric(level)
   names = strsplit(names.vec, "; ")[[1]]

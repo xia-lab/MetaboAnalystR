@@ -423,7 +423,7 @@ color_scale <- function(c1="grey", c2="red") {
 
 
 CalculateDEgeneSetEnr <- function(nms, operation, refNm, filenm){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   nms <- strsplit(nms, ";")[[1]];
   if(anal.type == "metadata" || anal.type == "onedata"){
@@ -669,7 +669,7 @@ ReadList <- function(dataSetObj=NA, fullPath, fileNm){
 }
 
 GetDatNms <- function(){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     if(exists("paramSet$mdata.all")){
        mdata.all <- paramSet$mdata.all;
        if(length(names(mdata.all))>1){

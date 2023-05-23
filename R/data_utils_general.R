@@ -182,7 +182,7 @@ GetAllDataNames <- function(){
 }
 
 SetOrganism <- function(org){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   paramSet$data.org <- org;
   saveSet(paramSet, "paramSet");
 }

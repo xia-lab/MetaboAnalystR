@@ -22,7 +22,7 @@
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
   #geneIDs is text one string, need to make to vector
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- list();
   dataSet$name <- listNm;

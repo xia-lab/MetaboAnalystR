@@ -70,7 +70,7 @@ GetSummaryData <- function(){
 
 GetMetaColLength<- function(dataName=""){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
 
   if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
@@ -101,7 +101,7 @@ GetMetaDatasets<- function(){
 }
 
 SetSelMetaData<- function(selNm){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     paramSet$selDataNm <- selNm;
     paramSet$jsonNms$dataName <- selNm;
     saveSet(paramSet, "paramSet");
@@ -189,7 +189,7 @@ GetExpressResultGeneSymbols<-function(){
 
 GetExpressResultGeneIDLinks <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   ids <- rownames(dataSet$comp.res);
   if(paramSet$data.org == "generic"){
     if(paramSet$data.idType == "ko"){
@@ -225,7 +225,7 @@ GetExpressGeneIDType<-function(dataName=""){
 
 GetExpressResultMatrix <-function(dataName="", inxt){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
 
   inxt <- as.numeric(inxt)
     if (dataSet$de.method=="limma"){

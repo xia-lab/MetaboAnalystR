@@ -7,7 +7,7 @@
 ###################################################
 
 PlotSelectedGeneLoading<-function(dataName="", gene.id){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   if(anal.type == "metadata"){
     PlotSelectedGene(dataName, gene.id,"notVolcano", T);

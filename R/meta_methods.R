@@ -665,7 +665,7 @@ GetMetaResultPathSymbols<-function(){
 }
 
 GetMetaResultGeneIDLinks <- function(){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
   ids <- rownames(as.matrix(analSet$meta.mat.all));

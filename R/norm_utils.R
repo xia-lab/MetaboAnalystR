@@ -113,7 +113,7 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
 
 NormalizeDataMetaMode <-function (nm, opt, colNorm="NA", scaleNorm="NA"){
   if(nm == "NA"){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     mdata.all <- paramSet$mdata.all;
     sel.nms <- names(mdata.all);
     for(i in 1:length(sel.nms)){
