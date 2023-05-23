@@ -139,7 +139,7 @@ GetOmicsDataDims <- function(dataName){
 # obtain sample names and their class labels
 GetSampleInfo <- function(dataName, clsLbl){
     dataSet <- readDataset(dataName);
-    grpInfo <- dataSet$meta[[clsLbl]];
+    grpInfo <- dataSet$meta.info[[clsLbl]];
     grpLbls <- paste(levels(grpInfo), collapse="\n");
     smplInfo <- paste(Sample = colnames(dataSet$data.orig), "\t", Class=grpInfo, collapse="\n");
     return(c(grpLbls, smplInfo));
@@ -177,7 +177,7 @@ GetMetaInfo <- function(dataName=""){
 
   }else{
   dataSet <- readDataset(dataName);
-  metaNms<-setdiff(colnames(dataSet$meta),dataSet$rmMetaCol)
+  metaNms<-setdiff(colnames(dataSet$meta.info),dataSet$rmMetaCol)
   }
   return(metaNms);
 }

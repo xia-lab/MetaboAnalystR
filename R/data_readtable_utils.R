@@ -15,7 +15,7 @@
 #'License: MIT
 #'@export
 #'
-ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="") {
+ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDataAnalType, path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
@@ -52,22 +52,47 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   data.proc <- res[[1]];
   msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
+ 
+
+  if(oneDataAnalType == "dose"){
   
+  # re-order everything numerically by dose
+  dose <- as.numeric(gsub(".*_", "", as.character(dataSet$meta.info[,1])))
+  dataSet$data <- dataSet$data[ ,order(dose)]
+  meta.reorder <- as.data.frame(dataSet$meta.info[order(dose),])
+  colnames(meta.reorder) <- colnames(dataSet$meta.info)
+  dataSet$meta.info <- meta.reorder
+
+  # re-level the factor to be numeric instead of alphabetic
+  dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
+  
+  # rename data to data.orig
+  int.mat <- dataSet$data;
+  dataSet$cls <- dataSet$meta.info[,1];
+  dataSet$data <- NULL;
+  dataSet$listData <- FALSE;
+  
+  dataSet$imgSet <- list();
+  dataSet$reportSummary <- list();
+
+  }
+
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
-  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
+  dataSet$meta.info <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
-  meta.types <- rep("disc", ncol(dataSet$meta));
+  meta.types <- rep("disc", ncol(dataSet$meta.info));
   meta.types[meta.info$cont.inx] <- "cont";
-  names(meta.types) <- colnames(dataSet$meta);
+  names(meta.types) <- colnames(dataSet$meta.info);
   dataSet$meta.types <-meta.types;
   paramSet$anal.type <- "onedata";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, fileName);
   paramSet$jsonNms$dataName <- fileName;
+  paramSet$dataName <- fileName;
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet));
@@ -164,13 +189,13 @@ ReadMetaData <- function(metafilename){
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
     
-    dataSet$meta <- dataSet$metaOrig <- metadata1
+    dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
 
-    meta.types <- rep("disc", ncol(dataSet$meta));
+    meta.types <- rep("disc", ncol(dataSet$meta.info));
     meta.types[cont.inx[colnames(metadata1)]] <- "cont";
-    names(meta.types) <- colnames(dataSet$meta);
+    names(meta.types) <- colnames(dataSet$meta.info);
     dataSet$meta.types <-meta.types;
 
     RegisterData(dataSet);

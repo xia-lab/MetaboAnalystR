@@ -80,7 +80,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   # may need to update data, class and meta.info
   data <- dataSet$data.norm;
   cls <- dataSet$cls; 
-  meta.info <- dataSet$meta;
+  meta.info <- dataSet$meta.info;
   grp.nms <- levels(cls);
   
   hit.inx <- cls %in% grp.nms;
@@ -89,7 +89,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
     cls <- factor(cls[hit.inx]);
     cls.lvls <- levels(cls);
     data <- data[,hit.inx];
-    meta.info <- dataSet$meta[hit.inx,];
+    meta.info <- dataSet$meta.info[hit.inx,];
   }
   qs::qsave(data, file="data.stat.qs");
   dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
@@ -134,7 +134,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   
   data.norm <- dataSet$data.norm
   colnames(data.norm) <- NULL
-  lst <- list(colnames(dataSet$data.norm),data.norm, dataSet$meta, dataSet$comp.res, rownames(data.norm), org=paramSet$data.org)
+  lst <- list(colnames(dataSet$data.norm),data.norm, dataSet$meta.info, dataSet$comp.res, rownames(data.norm), org=paramSet$data.org)
   json.obj <- rjson::toJSON(lst);
   sink("ExpressAnalyst_matrix.json");
   cat(json.obj);

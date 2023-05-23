@@ -13,18 +13,19 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   if(meta0 == "NA"){
     RegisterData(dataSet, 0);
   }else{
-    rmidx <- which(dataSet$meta[, meta0]=="NA")
+    rmidx <- which(dataSet$meta.info.[, meta0]=="NA")
     if(meta1 != "NA"){
-    rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
+    rmidx <- c(rmidx,which(dataSet$meta.info[, meta1]=="NA"))
     }
     if(length(rmidx)>0){
-     meta<- dataSet$meta[-rmidx,]
+     meta<- dataSet$meta.info[-rmidx,]
+     print(meta);
      for(col in 1:ncol(meta)){
        meta[,col]<- droplevels(meta[,col])
       }
        dataSet$rmidx <- rmidx
     }else{
-    meta<- dataSet$meta
+    meta<- dataSet$meta.info
     }
     cls <- meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
@@ -430,7 +431,7 @@ MultiCovariateRegression <- function(fileName,
   }else{
   feature_table <- dataSet$data.norm 
   }
-  covariates <- dataSet$meta
+  covariates <- dataSet$meta.info
 
   fixed.effects <- adj.vec
   # process covariates

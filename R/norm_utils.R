@@ -38,13 +38,18 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
       msg <- paste(norm.msg, msg);
    }
   }
+  
+  # save parameters for report
+  dataSet$norm.opt <- norm.opt;
+  dataSet$var.perc <- var.thresh;
+  dataSet$abun.perc <- count.thresh;
 
   #Normalize data
   data <- NormalizeData(data, norm.opt, "NA", "NA");
   
   msg <- paste(norm.msg, msg);
-  dataSet$data.norm <- data;
-  
+  dataSet$data.norm <- data
+
   # save normalized data for download user option
   fast.write(dataSet$data.norm, file="data_normalized.csv");
   qs::qsave(data, file="data.stat.qs");

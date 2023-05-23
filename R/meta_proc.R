@@ -20,7 +20,7 @@ SanityCheckData <- function(fileName){
   # general sanity check then omics specific
   
   # use first column by default
-  cls <- dataSet$meta[,1]
+  cls <- dataSet$meta.info[,1]
   
   # check class info
   cls.lbl <- as.factor(as.character(cls));
@@ -79,9 +79,9 @@ SanityCheckData <- function(fileName){
   if(sum(!good.inx)>0){
     msg <- c(msg, paste(sum(!good.inx), "Low quality samples (>60% missing) removed."));
     int.mat <- int.mat[,good.inx, drop=FALSE];
-    meta.info <- dataSet$meta;
+    meta.info <- dataSet$meta.info;
     meta.info <- meta.info[good.inx, , drop=F];
-    dataSet$meta <- meta.info;
+    dataSet$meta.info <- meta.info;
   }
   
   # remove ffeatures/variables with over half missing value    
@@ -164,8 +164,8 @@ SetGroupContrast <- function(dataName, grps, meta="NA"){
         meta <- 1;
     }
 
-  if(length(levels(dataSet$meta[,meta]))>2){ 
-    cls <- dataSet$meta[,meta]
+  if(length(levels(dataSet$meta.info[,meta]))>2){ 
+    cls <- dataSet$meta.info[,meta]
     print("Updating group contrasts .....");
     grp.nms <- strsplit(grps, " vs. ")[[1]];
     sel.inx <- as.character(cls) %in% grp.nms;
@@ -463,11 +463,11 @@ ReadOmicsData <- function(fileName) {
       # make sure the discrete data is on the left side
       meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
     }
-    dataSet$meta <- dataSet$metaOrig <- meta.info
+    dataSet$meta.info <- dataSet$metaOrig <- meta.info
     data <- data[-cls.inx,];
-    dataSet$fst.cls <- dataSet$meta[which(dataSet$meta[,1]!="NA"),1]
+    dataSet$fst.cls <- dataSet$meta.info[which(dataSet$meta.info[,1]!="NA"),1]
     if(ncol(meta.info)>1){
-      dataSet$sec.cls <- dataSet$meta[which(dataSet$meta[,2]!="NA"),2]
+      dataSet$sec.cls <- dataSet$meta.info[which(dataSet$meta.info[,2]!="NA"),2]
     }
     
     dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
@@ -602,15 +602,15 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
     if(meta == ""){
       meta <- 1;
     }
-    metavec <- dataSet$meta[,meta];
+    metavec <- dataSet$meta.info[,meta];
     sel <- unique(metavec);
   }else{
-    metavec <- dataSet$meta[,meta];
+    metavec <- dataSet$meta.info[,meta];
     sel <- strsplit(selected, "; ")[[1]];
   }
   
-  dataSet$meta$newcolumn <- metavec;
-  metadf <- dataSet$meta;
+  dataSet$meta.info$newcolumn <- metavec;
+  metadf <- dataSet$meta.info;
 
   sel_meta1 = metadf[which(metadf[,"newcolumn"] %in% sel[1]),];
   sel_meta2 = metadf[which(metadf[,"newcolumn"] %in% sel[2]),];
@@ -621,7 +621,7 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
 
   sel.meta <- "newcolumn";
   trimmed.data <-  as.matrix(data.comparison[,which(colnames(data.comparison) %in% nms)]);
-  trimmed.meta <- dataSet$meta[,sel.meta][which(rownames(dataSet$meta) %in% nms)];
+  trimmed.meta <- dataSet$meta.info[,sel.meta][which(rownames(dataSet$meta.info) %in% nms)];
   trimmed.meta <- make.names(trimmed.meta);
   #if(min(trimmed.data) < 0){
   #  trimmed.data = trimmed.data + abs(min(trimmed.data));
@@ -636,7 +636,7 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
     inx <- colnames(res) == "logCPM";
     res <- res[,-inx];
   }else if(alg =="deseq2"){
-    trimmed.meta <- dataSet$meta[which(rownames(dataSet$meta) %in% nms),sel.meta, drop=F];
+    trimmed.meta <- dataSet$meta.info[which(rownames(dataSet$meta.info) %in% nms),sel.meta, drop=F];
     performDeseq2Meta(trimmed.data, trimmed.meta)
     .perform.computing();
     dataSet <- .save.deseq.res(dataSet);
@@ -782,7 +782,7 @@ SanityCheckMetaData <- function(){
      }
      meta.ind <- meta[sampleNms, , drop = FALSE]
      meta.ind <- meta.ind[match(sampleNms, rownames(meta.ind)), ]
-     dataSet$meta <- meta.ind;
+     dataSet$meta.info <- meta.ind;
      sampleNms.all <- c(sampleNms.all, sampleNms);
      RegisterData(dataSet);
    }
@@ -878,7 +878,7 @@ CheckMetaIntegrity <- function(){
     metadata1[] <- lapply( metadata1, factor)
     
     
-    dataSet$meta <- dataSet$metaOrig <- metadata1
+    dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
     RegisterData(dataSet);

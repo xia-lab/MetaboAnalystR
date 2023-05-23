@@ -3,7 +3,7 @@ CreateRNAseqSummaryReport <- function(usrName, page){
   CreateReportIntr();
 
   home.dir <- getwd();
-  data.orig <- qs::qread("data.orig.qs");  
+  data.orig <- qs::qread("data.raw.qs");  
   if(page == "Upload Data"){
     upload <- list(org = data.org, type = dataSet$type, id = dataSet$id.orig, glsum = dataSet$gl.summary);
     CreateUploadSection(upload);

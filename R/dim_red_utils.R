@@ -230,7 +230,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
     }
   }
   
-  pca3d$cls <- dataSet$meta;
+  pca3d$cls <- dataSet$meta.info;
   colnames(mypos) <- paste("Dim", 1:3, sep="");
   # see if there is secondary
   analSet$loadEntrez <- pca3d$score$entrez
@@ -343,7 +343,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
     mypos <- data.frame(factorA=facA, mypos);
   }
   
-  pca3d$cls <- dataSet$meta;
+  pca3d$cls <- dataSet$meta.info;
   pca3d$org <- paramSet$data.org
   pca3d$analType <- paramSet$anal.type
   pca3d$naviString <- "Scatter 3D"

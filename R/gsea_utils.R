@@ -164,7 +164,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     es.num = es.num,
     hits = fgseaRes[,"hits"],
     total = fgseaRes[,"total"],
-    cls = dataSet$meta[inx,],
+    cls = dataSet$meta.info[inx,],
     sample.nms = sampleNms
   );
   

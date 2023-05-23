@@ -17,11 +17,11 @@ my.json.scatter <- function(dataSet, filenm="abc"){
       dataSet <- readDataset(sel.nms[i]);
       if(i == 1){
         seeds <- rownames(dataSet$sig.mat);
-        meta <- dataSet$meta;
+        meta <- dataSet$meta.info;
         meta$dataSet <- rep(sel.nms[i],nrow(meta));
       }else{
         seeds <- c(seeds, rownames(dataSet$sig.mat));
-        currMeta <- dataSet$meta;
+        currMeta <- dataSet$meta.info;
         currMeta$dataSet <- rep(sel.nms[i],nrow(currMeta));
         meta <- rbind(meta, currMeta);
       }
@@ -34,7 +34,7 @@ my.json.scatter <- function(dataSet, filenm="abc"){
     sigmat$id <- rownames(dataSet$sig.mat);
     sig.mats[[1]] <- sigmat;
     seeds <- rownames(dataSet$sig.mat); 
-    meta <- dataSet$meta;
+    meta <- dataSet$meta.info;
   }
   
   reductionSet <- dataSet;

@@ -18,7 +18,7 @@ SanityCheckMeta <- function(fileName,init){
   }
   for(i in 1:length(sel.nms)){
     dataSet <- readDataset(sel.nms[i]);
-    meta <- dataSet$meta
+    meta <- dataSet$meta.info
     if(init==1){
       #rmidx=apply(meta, 2, function(x) any(is.na(x))|any(x=="NA")|any(x==""))
       #meta = meta[,!rmidx,drop=F]
@@ -47,7 +47,7 @@ SanityCheckMeta <- function(fileName,init){
     }
     dataSet$cls <- cls.lbl
     dataSet$rmidx <- which(meta[,1]=="NA")
-    dataSet$meta <- meta
+    dataSet$meta.info <- meta
     saveSet(msgSet, "msgSet");
     RegisterData(dataSet);
   }
@@ -61,9 +61,9 @@ GetGroupNames <- function(dataName, meta="NA"){
   dataSet <- readDataset(dataName);
   save.image("grp.RData");
   if(meta == "NA"){
-    grpnms = levels(factor(dataSet$meta[,1]));
+    grpnms = levels(factor(dataSet$meta.info[,1]));
   }else{
-    grpnms =levels(factor(dataSet$meta[,meta]));
+    grpnms =levels(factor(dataSet$meta.info[,meta]));
   }
   return(grpnms[grpnms!="NA"])
 }
@@ -71,7 +71,7 @@ GetGroupNames <- function(dataName, meta="NA"){
 GetResRowNames <- function(dataName=""){
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
-    return(rownames(dataSet$meta));
+    return(rownames(dataSet$meta.info));
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     dataSet <- paramSet$dataSet;
@@ -82,7 +82,7 @@ GetResRowNames <- function(dataName=""){
 GetResColNames <- function(dataName=""){
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
-    colnms<- colnames(dataSet$meta)[colnames(dataSet$meta)!="newcolumn"]
+    colnms<- colnames(dataSet$meta.info)[colnames(dataSet$meta.info)!="newcolumn"]
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     colnms<- colnames(paramSet$dataSet$meta.info)[colnames(paramSet$dataSet$meta.info)!="newcolumn"]
@@ -96,15 +96,14 @@ GetDiscMetas <- function(dataName=""){
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     dataSet <- paramSet$dataSet;
-    dataSet$meta <- dataSet$meta.info
   }
   if(length(keepVec)>0){
-    keepidx <- which(keepVec %in% colnames(dataSet$meta))
+    keepidx <- which(keepVec %in% colnames(dataSet$meta.info))
     keepidx <- intersect(keepidx,which(dataSet$disc.inx))
   }else{
     keepidx <-  which(dataSet$disc.inx)
   }
-  colnms<- colnames(dataSet$meta)[keepidx]
+  colnms<- colnames(dataSet$meta.info)[keepidx]
   print(colnms)
   return(colnms);
 }
@@ -115,9 +114,8 @@ GetMetaDataCol <- function(dataName="",colnm){
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     dataSet <- paramSet$dataSet;
-    dataSet$meta <- dataSet$meta.info
   }
-  cls = levels(dataSet$meta[,colnm]);
+  cls = levels(dataSet$meta.info[,colnm]);
   return(cls[cls!="NA"]);
 }
 
@@ -127,9 +125,8 @@ GetMetaCell <- function(dataName="",ridx=1,cidx=1){
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     dataSet <- paramSet$dataSet;
-    dataSet$meta <- dataSet$meta.info
   }
-  return(dataSet$meta[ridx,cidx]);
+  return(dataSet$meta.info[ridx,cidx]);
 }
 
 ResetMetaTab <- function(dataName=""){
@@ -150,9 +147,8 @@ ResetMetaTab <- function(dataName=""){
       RegisterData(dataSet);
     }
     dataSet <- paramSet$dataSet;
-    dataSet$meta <- dataSet$meta.info
   }
-  dataSet$meta <- dataSet$metaOrig;
+  dataSet$meta.info <- dataSet$metaOrig;
   dataSet$disc.inx <- dataSet$disc.inx.orig;
   dataSet$cont.inx <- dataSet$cont.inx.orig;
   RegisterData(dataSet);
@@ -199,10 +195,10 @@ GetUniqueMetaNames <-function(dataName="",metadata){
 UpdateMetaStatus <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
   msgSet <- readSet(msgSet, "msgSet");
-  cidx <- which(colnames(dataSet$meta)==colNm)
+  cidx <- which(colnames(dataSet$meta.info)==colNm)
   old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
   if(dataSet$disc.inx[cidx]){
-    if(all(is.na( as.numeric(as.character(dataSet$meta[,cidx]))))){
+    if(all(is.na( as.numeric(as.character(dataSet$meta.info[,cidx]))))){
       msgSet$current.msg <- "Category metadata cannot be continuous data!"
       saveSet(msgSet, "msgSet"); 
       return(0)
@@ -210,7 +206,7 @@ UpdateMetaStatus <- function(dataName="",colNm){
     dataSet$disc.inx[cidx]=FALSE;
     dataSet$cont.inx[cidx]=TRUE;
   }else{
-    if(all(!duplicated(as.character(dataSet$meta[,cidx])))){
+    if(all(!duplicated(as.character(dataSet$meta.info[,cidx])))){
       msgSet$current.msg <- "No duplicates were detected! The metadata cannot be discrete!"
       saveSet(msgSet, "msgSet"); 
       return(0)
@@ -219,7 +215,7 @@ UpdateMetaStatus <- function(dataName="",colNm){
     dataSet$cont.inx[cidx]=FALSE;
   }
   new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
-  msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
+  msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta.info)[cidx]," has been changed to ", new, " !")
   saveSet(msgSet, "msgSet"); 
   RegisterData(dataSet);
   return(1);
@@ -229,7 +225,7 @@ UpdateMetaStatus <- function(dataName="",colNm){
 DeleteSample <- function(dataName="",samplNm){
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
-    dataSet$meta <- dataSet$meta[rownames(dataSet$meta)!=samplNm,]
+    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,]
     dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm!=samplNm)]
     RegisterData(dataSet);
   }else{
@@ -239,7 +235,7 @@ DeleteSample <- function(dataName="",samplNm){
     
     dataSet <- readDataset(dataName);
     dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm)!=samplNm];
-    dataSet$meta <- dataSet$meta[rownames(dataSet$meta)!=samplNm,];
+    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,];
     
     inmex.meta<-qs::qread("inmex_meta.qs");
     inmex.meta$data <- inmex.meta$data[,colnames(inmex.meta$data) !=samplNm]
@@ -261,8 +257,8 @@ DeleteMetaCol <- function(dataName="",metaCol){
   
   for(i in 1:length(sel.nms)){
     dataSet <- readDataset(sel.nms[i]);
-    idx = which(colnames(dataSet$meta)==metaCol)
-    dataSet$meta <- dataSet$meta[,-idx,drop=F]
+    idx = which(colnames(dataSet$meta.info)==metaCol)
+    dataSet$meta.info <- dataSet$meta.info[,-idx,drop=F]
     dataSet$disc.inx <- dataSet$disc.inx[-idx]
     dataSet$cont.inx <- dataSet$cont.inx[-idx]
     if(!exists("rmMetaCol",dataSet)){
@@ -308,9 +304,8 @@ GetSampleNm <- function(dataName="",ridx=1){
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     dataSet <- paramSet$dataSet;
-    dataSet$meta <- dataSet$meta.info;
   }
-  return( rownames(dataSet$meta)[ridx]);
+  return( rownames(dataSet$meta.info)[ridx]);
 }
 
 
@@ -325,7 +320,7 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
   }
   
   dataSet <- readDataset(dataName);
-  meta <- dataSet$meta
+  meta <- dataSet$meta.info
   ridx <- which(rownames(meta)==rowNm)
   if(colNm==""){
     if(rowNm != cell){
@@ -347,7 +342,7 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
       meta[,cidx] <- droplevels(meta[,cidx])
     }
   }
-  dataSet$meta = meta
+  dataSet$meta.info = meta
   RegisterData(dataSet);
   return(1);
 }
@@ -355,15 +350,15 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
 
 GetSelectedMetaInfo <- function(dataName="",colNm){
   dataSet <- readDataset(dataName);
-  lvls <- levels(dataSet$meta[,colNm])
+  lvls <- levels(dataSet$meta.info[,colNm])
   lvls <-  lvls[lvls!="NA"]
   return(lvls);
 }
 
 UpdateMetaOrder <- function(dataName="",metacol){
   dataSet <- readDataset(dataName);
-  if(length(metaVec)>0 & metacol %in% colnames(dataSet$meta)){
-    dataSet$meta[,metacol] <- factor(as.character(dataSet$meta[,metacol]),levels = metaVec)
+  if(length(metaVec)>0 & metacol %in% colnames(dataSet$meta.info)){
+    dataSet$meta.info[,metacol] <- factor(as.character(dataSet$meta.info[,metacol]),levels = metaVec)
     
   }else{
     msgSet <- readSet(msgSet, "msgSet");
@@ -392,9 +387,9 @@ UpdateMetaName <-  function(dataName="",oldvec,newvec){
   }
   for(i in 1:length(sel.nms)){
     dataSet <- readDataset(sel.nms[i]);
-    idx <- which(colnames(dataSet$meta)==oldvec)
+    idx <- which(colnames(dataSet$meta.info)==oldvec)
     if(length(idx)==1){
-      colnames(dataSet$meta)[idx] <- names(dataSet$disc.inx)[idx] <- 
+      colnames(dataSet$meta.info)[idx] <- names(dataSet$disc.inx)[idx] <- 
         names(dataSet$cont.inx)[idx] <- newvec
     }else{
       return(0)
@@ -406,7 +401,7 @@ UpdateMetaName <-  function(dataName="",oldvec,newvec){
 
 GetMetaSummary <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  meta <- dataSet$meta
+  meta <- dataSet$meta.info
   disc.vec <- paste(names(dataSet$disc.inx)[which(dataSet$disc.inx)],collapse=", ")  
   cont.vec <- paste(names(dataSet$cont.inx)[which(dataSet$cont.inx)],collapse=", ")  
   na.vec <- na.check(meta)
@@ -430,10 +425,10 @@ na.check <- function(mydata){
 UpdatePrimaryMeta <- function(fileName,primaryMeta){
   dataSet <- readDataset(fileName);
   msgSet <- readSet(msgSet,"msgSet");
-  meta <- dataSet$meta
+  meta <- dataSet$meta.info
   if(primaryMeta %in% colnames(meta)){
     cidx <- which(colnames(meta)==primaryMeta)
-    dataSet$meta<-cbind(meta[,cidx,drop=F],meta[,-cidx,drop=F])
+    dataSet$meta.info<-cbind(meta[,cidx,drop=F],meta[,-cidx,drop=F])
     dataSet$disc.inx=c(dataSet$disc.inx[cidx],dataSet$disc.inx[-cidx])
     dataSet$cont.inx=c(dataSet$cont.inx[cidx],dataSet$cont.inx[-cidx])
   }else{
