@@ -995,7 +995,7 @@ GetDRRes <- function(){
   
   #update sig genes
   dataSet$sig.mat <- dataSet$comp.res[which(rownames(dataSet$comp.res) %in% bmdcalc.res$id),];
-  RegisterData(dataSet);``
+  RegisterData(dataSet);
   return(res)  
   
 }

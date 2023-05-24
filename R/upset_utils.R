@@ -1,6 +1,6 @@
 ##################################################
 ## R script for ExpressAnalyst
-## Description: Compute ORA heatmap
+## Description: Compute upset diagram
 ## Authors: 
 ## G. Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################

@@ -19,7 +19,7 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol = F){
 
-  library(see)
+  library(see);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
@@ -30,7 +30,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   if(length(dataSet$rmidx)>0){
        data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
     }else{
-       data.norm <- dataSet$data.norm
+       data.norm <- dataSet$data.norm;
    }
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
@@ -81,7 +81,6 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
     }
     myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }else{
-      
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls
       xlab <- colnames(dataSet$meta.info[,1]);
