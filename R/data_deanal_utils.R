@@ -15,16 +15,16 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   }else{
     rmidx <- which(dataSet$meta[, meta0]=="NA")
     if(meta1 != "NA"){
-    rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
+        rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
     }
     if(length(rmidx)>0){
-     meta<- dataSet$meta[-rmidx,]
-     for(col in 1:ncol(meta)){
-       meta[,col]<- droplevels(meta[,col])
-      }
-       dataSet$rmidx <- rmidx
+        meta<- dataSet$meta[-rmidx,]
+        for(col in 1:ncol(meta)){
+            meta[,col]<- droplevels(meta[,col])
+        }
+        dataSet$rmidx <- rmidx
     }else{
-    meta<- dataSet$meta
+        meta<- dataSet$meta
     }
     cls <- meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
@@ -446,8 +446,8 @@ MultiCovariateRegression <- function(fileName,
 
   if(analysis.type == "disc"){
     # build design and contrast matrix
-  #  covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
-    str(covariates)
+    # covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    # str(covariates)
     grp.nms <- levels(covariates[, analysis.var]);
 
      if(any(grepl("(^[0-9]+).*", grp.nms))){
