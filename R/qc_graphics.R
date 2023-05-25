@@ -88,15 +88,15 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
   df <- data.frame(dataSet$data.norm, stringsAsFactors = FALSE)
   df <- stack(df)
   sampleNms <- gsub("-", ".", colnames(dataSet$data.norm))
-  if(length(dataSet$meta) == 2){
+  if(length(dataSet$meta.info) == 2){
 
-    Factor1 <- as.vector(dataSet$meta[,1])
-    factorNm1 <- colnames(dataSet$meta)[1]
+    Factor1 <- as.vector(dataSet$meta.info[,1])
+    factorNm1 <- colnames(dataSet$meta.info)[1]
     conv <- data.frame(ind=sampleNms, Factor1=Factor1)
     colnames(conv) <- c("ind", factorNm1);
     df1 <- merge(df, conv, by="ind")
-    Factor2 <- as.vector(dataSet$meta[,2])
-    factorNm2 <- colnames(dataSet$meta)[2]
+    Factor2 <- as.vector(dataSet$meta.info[,2])
+    factorNm2 <- colnames(dataSet$meta.info)[2]
     conv <- data.frame(ind=sampleNms, Factor2=Factor2)
     colnames(conv) <- c("ind", factorNm2);
     df1 <- merge(df1, conv, by="ind")
@@ -111,7 +111,7 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
     width <- 12
     height <- 6
   }else{
-    Conditions= as.character(dataSet$meta[,1]);
+    Conditions= as.character(dataSet$meta.info[,1]);
     conv <- data.frame(ind=sampleNms, Conditions=Conditions)
     df1 <- merge(df, conv, by="ind")
 
@@ -149,14 +149,14 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
   sampleNms <- names(smpl.sums)
   df <- data.frame(count=smpl.sums,ind=colnames(data_bef))
   
-  if(length(dataSet$meta) == 2){
-    Factor1 <- as.vector(dataSet$meta[,1])
-    factor1Nm <- colnames(dataSet$meta)[1]
+  if(length(dataSet$meta.info) == 2){
+    Factor1 <- as.vector(dataSet$meta.info[,1])
+    factor1Nm <- colnames(dataSet$meta.info)[1]
     conv <- data.frame(ind=sampleNms, Factor1=Factor1)
     colnames(conv) <- c("ind", factor1Nm)
     df1 <- merge(df, conv, by="ind")
-    Factor2 <- as.vector(dataSet$meta[,2])
-    factor2Nm <- colnames(dataSet$meta)[2]
+    Factor2 <- as.vector(dataSet$meta.info[,2])
+    factor2Nm <- colnames(dataSet$meta.info)[2]
     conv <- data.frame(ind=sampleNms, Factor2=Factor2)
     colnames(conv) <- c("ind", factor2Nm)
     df1 <- merge(df1, conv, by="ind")
@@ -188,7 +188,7 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
     height <- 6
     
   }else{
-    Conditions= as.character(dataSet$meta[,1]);
+    Conditions= as.character(dataSet$meta.info[,1]);
     conv <- data.frame(ind=sampleNms, Conditions=Conditions)
     df1 <- merge(df, conv, by="ind")
     if(length(df1$ind)>20){
@@ -329,20 +329,20 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   xlim <- GetExtendRange(pca.res$PC1);
   ylim <- GetExtendRange(pca.res$PC2);
 
-  if("newcolumn" %in% colnames(dataSet$meta)){
-    dataSet$meta <- data.frame(dataSet$meta[,-which(colnames(dataSet$meta) == "newcolumn")]);
+  if("newcolumn" %in% colnames(dataSet$meta.info)){
+    dataSet$meta.info <- data.frame(dataSet$meta.info[,-which(colnames(dataSet$meta.info) == "newcolumn")]);
   }
   
- if(!(all(rownames(pca.res)==rownames(dataSet$meta)))){
-  pca.res = pca.res[match(rownames(dataSet$meta),rownames(pca.res)),]
+ if(!(all(rownames(pca.res)==rownames(dataSet$meta.info)))){
+  pca.res = pca.res[match(rownames(dataSet$meta.info),rownames(pca.res)),]
   }
 
-  if(length(dataSet$meta) == 2){
-    Factor1 <- as.vector(dataSet$meta[,1])
-    factorNm1 <- colnames(dataSet$meta)[1]
+  if(length(dataSet$meta.info) == 2){
+    Factor1 <- as.vector(dataSet$meta.info[,1])
+    factorNm1 <- colnames(dataSet$meta.info)[1]
     pca.res[,factorNm1] <- Factor1
-    Factor2 <- as.vector(dataSet$meta[,2])
-    factorNm2 <- colnames(dataSet$meta)[2]
+    Factor2 <- as.vector(dataSet$meta.info[,2])
+    factorNm2 <- colnames(dataSet$meta.info)[2]
     pca.res[,factorNm2] <- Factor2
     pca.rest <- reshape::melt(pca.res, measure.vars=c(factorNm1,factorNm2))
     colnames(pca.rest)[4] <- "Conditions"
@@ -377,7 +377,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
     width <- 12
     height <- 6
   }else{
-    Factor <- dataSet$meta[,1];
+    Factor <- dataSet$meta.info[,1];
     pca.rest <- pca.res
     pca.rest$Conditions <- Factor
     pca.rest$names <- rownames(pca.res)

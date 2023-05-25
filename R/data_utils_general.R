@@ -69,6 +69,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$mdata.all <- list();
   paramSet$anal.type <- "onedata";
   paramSet$api.bool <- F;
+  paramSet$api.base <<- "http://api.xialab.ca" #dose response
 
   dataSets <<- list();
   
@@ -181,7 +182,7 @@ GetAllDataNames <- function(){
 }
 
 SetOrganism <- function(org){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   paramSet$data.org <- org;
   saveSet(paramSet, "paramSet");
 }
@@ -392,7 +393,7 @@ UpdateSubnetStats <- function(){
 ReadDataForMetaInfo<-function(dataName){
     dataSet <- readDataset(dataName);
     
-    return(colnames(dataSet$meta));
+    return(colnames(dataSet$meta.info));
 }
 
 doScatterJson <- function(dataName, filenm){

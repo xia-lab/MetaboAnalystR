@@ -81,28 +81,21 @@ RemoveDuplicates <- function(data, lvlOpt, quiet=T, paramSet, msgSet){
 # utils to remove from
 # within, leading and trailing spaces
 # remove /
-ClearFactorStrings<-function(cls.nm, query){
+ClearFactorStrings<-function(query){
   # remove leading and trailing space
-  query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE);
-  
+   query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE); 
   # kill multiple white space
-  query <- gsub(" +","_",query);
-  # remove non alphabets and non numbers 
-  query <- gsub("[^[:alnum:] ]", "_", query);
-  
-  # test all numbers (i.e. Time points)
-  chars <- substr(query, 0, 1);
-  num.inx<- chars >= '0' & chars <= '9';
-  if(all(num.inx)){
-    query <- as.numeric(query);
-    nquery <- paste(cls.nm, query, sep="_");
-    query <- factor(nquery, levels=paste(cls.nm, sort(unique(query)), sep="_"));
+   query <- gsub(" +","_",query);
+ num.inx<- as.numeric(query[query!="NA" & !is.na(query) & query!=""])
+  if(all(!is.na(num.inx))){
+  query<-factor(query, levels= unique(query))
   }else{
-    query[num.inx] <- paste(cls.nm, query[num.inx], sep="_");
-    query <- factor(query);
+    query <- gsub("[^[:alnum:] ]", "_", query);
+   query<-factor(query, levels= unique(query))
   }
   return (query);
 }
+
 
 # borrowed from Hmisc
 all.numeric <- function (x, what = c("test", "vector"), extras = c(".", "NA")){
@@ -369,7 +362,7 @@ GetListEnrGeneNumber <- function(){
 }
 
 
-InitListEnrichment <- function(dataName, type){
+InitEnrichmentNetwork <- function(dataName, type){
   dataSet <- readDataset(dataName);
   analSet <- readSet(analSet, "analSet");
 
@@ -430,7 +423,7 @@ color_scale <- function(c1="grey", c2="red") {
 
 
 CalculateDEgeneSetEnr <- function(nms, operation, refNm, filenm){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   nms <- strsplit(nms, ";")[[1]];
   if(anal.type == "metadata" || anal.type == "onedata"){
@@ -676,7 +669,7 @@ ReadList <- function(dataSetObj=NA, fullPath, fileNm){
 }
 
 GetDatNms <- function(){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     if(exists("paramSet$mdata.all")){
        mdata.all <- paramSet$mdata.all;
        if(length(names(mdata.all))>1){
@@ -990,7 +983,7 @@ PrepareReport <- function(objective, abstract, animalDetails, exposureDetails, c
   dataSet$reportSummary$animal <<- animalDetails;
   dataSet$reportSummary$exposure <<- exposureDetails;
   dataSet$reportSummary$chip <<- ecotoxchipDetails;
-  data.orig <- qs::qread("data.orig.qs"); 
+  data.orig <- qs::qread("data.raw.qs"); 
   dataSet$reportSummary$read.msg <<- paste("In this analysis, the uploaded data files were combined into a ", nrow(data.orig),
                                           " (wells) by ", ncol(data.orig), " (samples) data matrix.", sep="");
   
@@ -1007,4 +1000,39 @@ convertPNG2PDF <- function(filenm){
   dev.off()  
   
   return(1)
+}
+
+
+SumNorm<-function(x){
+  1000*x/sum(x, na.rm=T);
+}
+
+# normalize by median
+MedianNorm<-function(x){
+  x/median(x, na.rm=T);
+}
+
+
+# normalize to zero mean and unit variance
+AutoNorm<-function(x){
+  (x - mean(x))/sd(x, na.rm=T);
+}
+
+# normalize to zero mean but variance/SE
+ParetoNorm<-function(x){
+  (x - mean(x))/sqrt(sd(x, na.rm=T));
+}
+
+# normalize to zero mean but variance/SE
+MeanCenter<-function(x){
+  x - mean(x);
+}
+
+# normalize to zero mean but variance/SE
+RangeNorm<-function(x){
+  if(max(x) == min(x)){
+    x;
+  }else{
+    (x - mean(x))/(max(x)-min(x));
+  }
 }

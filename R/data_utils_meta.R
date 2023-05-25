@@ -42,7 +42,7 @@ UpdateSampleInfo<-function(dataName, clsLbl){
 
     dataSet <- readDataset(dataName);
     
-    org.lvl.len <- length(levels(dataSet$meta[[clsLbl]]));
+    org.lvl.len <- length(levels(dataSet$meta.info[[clsLbl]]));
     if(org.lvl.len < length(class.vec)){
         msgSet$current.msg <- "You can not add new groups";
         saveSet(msgSet, "msgSet");
@@ -54,11 +54,11 @@ UpdateSampleInfo<-function(dataName, clsLbl){
     }
 
     # first update the meta info
-    cls <- dataSet$meta[[clsLbl]];
+    cls <- dataSet$meta.info[[clsLbl]];
     levels(cls) <- class.vec;
 
     data <- dataSet$data.orig;
-    meta.info <- dataSet$meta;
+    meta.info <- dataSet$meta.info;
  
     if(any(levels(cls) == 'NA')){
         rt.inx <- cls != 'NA';
@@ -82,8 +82,8 @@ UpdateSampleInfo<-function(dataName, clsLbl){
         meta.info[[i]] <- factor(meta.info[[i]][hit.inx]);
     }
 
-    dataSet$meta <- meta.info;
-    dataSet$cls <-  dataSet$meta[[clsLbl]];
+    dataSet$meta.info <- meta.info;
+    dataSet$cls <-  dataSet$meta.info[[clsLbl]];
     RegisterData(dataSet);
     gc();
     return(RegisterData(dataSet));
@@ -127,7 +127,7 @@ ReadMergedExpressTable <- function(dataName){
         return(0);
     }
     common.matrix <- dataSet$data;
-    meta.nms <- tolower(names(dataSet$meta));
+    meta.nms <- tolower(names(dataSet$meta.info));
 
     cls.inx <- grep("condition", meta.nms);
     if(length(cls.inx) == 0){
@@ -136,7 +136,7 @@ ReadMergedExpressTable <- function(dataName){
         return(0);
     }else{
         cls.inx <- cls.inx[1];
-        cls.lbl <- dataSet$meta[[cls.inx]];
+        cls.lbl <- dataSet$meta.info[[cls.inx]];
     }
 
     data.inx <- grep("dataset", meta.nms);
@@ -146,7 +146,7 @@ ReadMergedExpressTable <- function(dataName){
         return(0);
     }else{
         data.inx <- data.inx[1];
-        data.lbl <- dataSet$meta[[data.inx]];
+        data.lbl <- dataSet$meta.info[[data.inx]];
         data.nms <- unique(as.character(data.lbl));
         
         # now create the mdata.all object

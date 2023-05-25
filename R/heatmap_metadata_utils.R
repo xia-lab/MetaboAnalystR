@@ -58,11 +58,12 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   datasets <- substr(as.character(data.nms), 0, nchar(data.nms)-4);
   
   sel.nms <- names(mdata.all)[mdata.all==1];
-  if(length(sel.nms) > 1){
-    annotation <- data.frame(class= cls.lbls, dataset = as.factor(datasets));
-  }else{ # single data
-    annotation <- data.frame(class= cls.lbls);
-  }
+  #if(length(sel.nms) > 1){
+  #  annotation <- data.frame(class= cls.lbls, dataset = as.factor(datasets));
+  #}else{ # single data
+  #  annotation <- data.frame(class= cls.lbls);
+  #}
+  annotation <- paramSet$dataSet$meta.info;
   rownames(annotation) <- colnames(dat);
   
   ####
@@ -129,12 +130,28 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   grps <- colnames(meta);
   nmeta <- meta.vec <- NULL;
   uniq.num <- 0;
+  meta.grps <- vector();
+  meta.types <- paramSet$dataSet$meta.types;
+  disc.inx <- rep(F, ncol(meta)*nrow(meta));  
+  
   for (i in 1:ncol(meta)){
     cls <- meta[,i];
     grp.nm <- grps[i];
     meta.vec <- c(meta.vec, as.character(cls))
     # make sure each label are unqiue across multiple meta data
-    ncls <- paste(grp.nm, as.numeric(cls)); # note, here to retain ordered factor
+
+    if( meta.types[grp.nm] == "disc"){
+      ncls <- paste(grp.nm, as.numeric(cls)+99); # note, here to retain ordered factor
+      disc.inx[c((nrow(meta)*(i-1)+1): (nrow(meta)*i))] <- T;
+      sample.cluster[[grps[i]]] <- order(cls);
+      
+    }else{
+      ncls <- as.numeric(cut(rank(as.numeric(as.character(cls))), breaks=30)); # note, here to retain ordered factor
+      ord <- match(orig.smpl.nms, orig.smpl.nms[order(cls)]);
+      sample.cluster[[grps[i]]] <- ord;
+      
+    }
+    meta.grps <- c(meta.grps, paste(grp.nm, rownames(meta))); 
     nmeta <- c(nmeta, ncls);
   }
   

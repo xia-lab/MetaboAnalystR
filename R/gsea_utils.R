@@ -42,9 +42,9 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
       names(rankedVec) <- rownames(analSet$meta.mat.all);
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
-      inx  <- rep(T, ncol(dataSet$data))
-      datnorm <- dataSet$data
-      sampleNms <- colnames(dataSet$data);
+      inx  <- rep(T, ncol(dataSet$data.norm))
+      datnorm <- dataSet$data.norm
+      sampleNms <- colnames(dataSet$data.norm);
       ds <- analSet$inmex.ind[paramSet$selDataNm][[1]]
       rankedVec <- ComputeRankedVec(dataSet, rankOpt, 1);
     }
@@ -164,7 +164,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     es.num = es.num,
     hits = fgseaRes[,"hits"],
     total = fgseaRes[,"total"],
-    cls = dataSet$meta[inx,],
+    cls = dataSet$meta.info[inx,],
     sample.nms = sampleNms
   );
   

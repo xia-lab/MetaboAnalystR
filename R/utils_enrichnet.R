@@ -189,12 +189,18 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   bedge.mat <- cbind(id=1:nrow(bedge.mat), source=bedge.mat[,1], target=bedge.mat[,2]);
   initsbls <- doEntrez2SymbolMapping(analSet$list.genes, paramSet$data.org, paramSet$data.idType)
   names(initsbls) <- analSet$list.genes
+
+  #for rjson generation
+  edge.mat <- apply(edge.mat, 1, as.list)
+  bedge.mat <- apply(bedge.mat, 1, as.list)
+  enr.mat <- apply(enr.mat, 1, as.list)
+
   netData <- list(nodes=nodes, 
                   edges=edge.mat, 
                   bnodes=bnodes, 
                   bedges=bedge.mat, 
-                  enr=enr.mat, 
-                  id=rownames(enr.mat), 
+                  enr=unname(enr.mat), 
+                  id=names(enr.mat), 
                   sizes=analSet$listSizes, 
                   hits=hits.query, 
                   genelist=initsbls, 
@@ -207,7 +213,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   saveSet(paramSet, "paramSet");
   saveSet(analSet, "analSet");
   sink(netName);
-  cat(RJSONIO::toJSON(netData));
+  cat(rjson::toJSON(netData));
   sink();
   return(analSet);
 }

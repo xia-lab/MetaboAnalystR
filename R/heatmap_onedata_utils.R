@@ -107,23 +107,41 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   grps <- colnames(meta);
   nmeta <- meta.vec <- NULL;
   uniq.num <- 0;
+  meta.grps <- vector();
+  disc.inx <- rep(F, ncol(meta)*nrow(meta));  
+  
   for (i in 1:ncol(meta)){
     cls <- meta[,i];
     grp.nm <- grps[i];
     meta.vec <- c(meta.vec, as.character(cls))
     # make sure each label are unqiue across multiple meta data
-    ncls <- paste(grp.nm, as.numeric(cls)); # note, here to retain ordered factor
+
+    if(dataSet$disc.inx[grp.nm]){
+      ncls <- paste(grp.nm, as.numeric(cls)+99); # note, here to retain ordered factor
+      disc.inx[c((nrow(meta)*(i-1)+1): (nrow(meta)*i))] <- T;
+      sample.cluster[[grps[i]]] <- order(cls);
+      
+    }else{
+      ncls <- rep("NA", length(cls));  
+      ncls[!is.na(cls) & cls != "NA"] <- as.numeric(cut(rank(as.numeric(as.character(cls[!is.na(cls) & cls != "NA"]))), breaks=30)); # note, here to retain ordered factor
+      ord <- match(orig.smpl.nms, orig.smpl.nms[order(cls)]);
+      sample.cluster[[grps[i]]] <- ord;
+    }
+    meta.grps <- c(meta.grps, paste(grp.nm, rownames(meta))); 
     nmeta <- c(nmeta, ncls);
   }
-  
-  # convert back to numeric 
-  nmeta <- as.numeric(as.factor(nmeta))+99;
-  unik.inx <- !duplicated(nmeta)   
+
+  # convert back to numeric
+  nmeta[disc.inx] <- as.numeric(as.factor(nmeta[disc.inx]))+99;
+  unik.inx <- !duplicated(nmeta)     
   
   # get corresponding names
-  meta_anot <- meta.vec[unik.inx]; 
-  names(meta_anot) <- nmeta[unik.inx]; # name annotatation by their numbers
-  
+  #meta_anot <- meta.vec[unik.inx]; 
+  #names(meta_anot) <- nmeta[unik.inx]; # name annotatation by their numbers
+    
+  meta_anot <- meta.vec; 
+  names(meta_anot) <- meta.grps;
+
   nmeta <- matrix(nmeta, ncol=ncol(meta), byrow=F);
   colnames(nmeta) <- grps;
   

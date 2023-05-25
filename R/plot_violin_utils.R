@@ -7,7 +7,7 @@
 ###################################################
 
 PlotSelectedGeneLoading<-function(dataName="", gene.id){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   if(anal.type == "metadata"){
     PlotSelectedGene(dataName, gene.id,"notVolcano", T);
@@ -52,7 +52,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       }else{
         Cairo(file = imgName, width=280, height=320, type="png", bg="white");
         dat <- data.norm
-        meta <- dataSet$meta[rownames(dataSet$meta) %in% colnames(dat),,drop=F]
+        meta <- dataSet$meta.info[rownames(dataSet$meta.info) %in% colnames(dat),,drop=F]
         cls <- droplevels(meta[match(rownames(meta),colnames(dat)),dataSet$analysisVar])
       }
       
@@ -84,7 +84,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls
-      xlab <- colnames(dataSet$meta[,1]);
+      xlab <- colnames(dataSet$meta.info[,1]);
       col <- unique(GetColorSchema(in.fac));
       
       img.num <- length(levels(out.fac));
@@ -205,7 +205,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       
       out.fac <- data.lbl;
       in.fac <- inmex.meta$cls.lbl;
-      xlab <- colnames(dataSet$meta[,1]);
+      xlab <- colnames(dataSet$meta.info[,1]);
       
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       
@@ -242,7 +242,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
   imgName <- paste("Gene_", gene.id,"_",boxmeta ,".png", sep="");
-  meta <- dataSet$meta[dataSet$meta[,boxmeta]!="NA",boxmeta,drop=F];
+  meta <- dataSet$meta.info[dataSet$meta.info[,boxmeta]!="NA",boxmeta,drop=F];
   cls <- droplevels(meta[,boxmeta]);
   data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
 

@@ -16,9 +16,9 @@ SetGroupContrast <- function(dataName, grps){
     
     # regenerate factor to drop levels, force the levels order
     group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
-    data <- dataSet$data[, sel.inx];
+    data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
-    dataSet$data <- data;
+    dataSet$data.norm <- data;
     RegisterData(dataSet);  
   }
 }
@@ -57,7 +57,7 @@ CheckMetaDataIntegrity <- function(){
     lvls <- levels(dataSet$cls);
     id.type <- dataSet$id.type;
     clss[[1]] <- dataSet$cls;
-    nms <- rownames(dataSet$data);
+    nms <- rownames(dataSet$data.norm);
     shared.nms <- nms;
     for(i in 2:length(sel.nms)){
       dataSet <- readDataset(sel.nms[i]);
@@ -72,7 +72,7 @@ CheckMetaDataIntegrity <- function(){
       }
       
       # check and record if there is common genes            
-      shared.nms <- intersect(shared.nms, rownames(dataSet$data));
+      shared.nms <- intersect(shared.nms, rownames(dataSet$data.norm));
       if(length(shared.nms) < 10){
         msgSet$current.msg <- paste(sel.nms[i], "has less than 10 common genes/probes from previous data sets");
         saveSet(msgSet, "msgSet");                      
@@ -91,21 +91,21 @@ CheckMetaDataIntegrity <- function(){
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
     dataSet <- readDataset(dataName);
-    common.matrix <- dataSet$data[as.character(shared.nms), ];
-    nms.vec <- rownames(dataSet$data);
-    smps.vec <- colnames(dataSet$data);
+    common.matrix <- dataSet$data.norm[as.character(shared.nms), ];
+    nms.vec <- rownames(dataSet$data.norm);
+    smps.vec <- colnames(dataSet$data.norm);
     data.lbl <- rep(dataName, ncol(common.matrix));
     cls.lbl <- dataSet$cls;
     
     for(i in 2:length(sel.nms)){
       dataName <- sel.nms[i];
       dataSet <- readDataset(dataName);
-      ndat <- dataSet$data[as.character(shared.nms), ];
-      nms.vec <- c(nms.vec, rownames(dataSet$data));
-      smps.vec <- c(smps.vec, colnames(dataSet$data));
+      ndat <- dataSet$data.norm[as.character(shared.nms), ];
+      nms.vec <- c(nms.vec, rownames(dataSet$data.norm));
+      smps.vec <- c(smps.vec, colnames(dataSet$data.norm));
       plot.ndat <- t(scale(t(ndat)));
       common.matrix <- cbind(common.matrix, ndat);
-      data.lbl <- c(data.lbl, rep(dataName, ncol(dataSet$data[,])));
+      data.lbl <- c(data.lbl, rep(dataName, ncol(dataSet$data.norm[,])));
       cls.lbl <- c(cls.lbl, dataSet$cls);
     }
     cls.lbl <- factor(cls.lbl);
@@ -122,12 +122,12 @@ CheckMetaDataIntegrity <- function(){
       colnames(common.matrix) <- make.unique(paste(data.vec, smps.nms, sep="_"));
       
       dataSet <- readDataset(sel.nms[1]);
-      colnames(dataSet$data) <- paste("d1", colnames(dataSet$data), sep="_");
+      colnames(dataSet$data.norm) <- paste("d1", colnames(dataSet$data.norm), sep="_");
       RegisterData(dataSet);
       
       for(i in 2:length(sel.nms)){
         dataSet <- readDataset(sel.nms[i]);
-        colnames(dataSet$data) <- paste0("d",i,"_",colnames(dataSet$data));
+        colnames(dataSet$data.norm) <- paste0("d",i,"_",colnames(dataSet$data.norm));
         # check if class label is consistent
         RegisterData(dataSet);
       }
@@ -227,16 +227,12 @@ PerformMetaDeAnal <- function(paramSet){
   return(analSet);
 }
 
-
-# perform DE analysis on individual data (w.r.t common matrix)
-# to be used/compared in the later analysis, with p-val Inf so that
-# de can be adjusted based on user specified in meta later
 .performEachDEAnal <- function(is.meta=F){
   inmex.ind <- list();
   inmex.meta <- qs::qread("inmex_meta.qs");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  
   mdata.all <- paramSet$mdata.all;
   sel.nms <- names(mdata.all)[mdata.all==1];
   if(is.meta){
@@ -252,16 +248,18 @@ PerformMetaDeAnal <- function(paramSet){
       dataSet$name <- dataName;
       group <- factor(inmex.meta$cls.lbl[sel.inx]); # note regenerate factor to drop levels 
       dataSet$cls <- group;
-      res.limma <- PerformLimma(data, group);
+      #res.limma <- PerformLimma(data, group);
       
       # save the limma fit object for meta-analysis (such as "dataSet1.fit.obj")
-      qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep="."));
+      qs::qsave(dataSet$fit.obj, file=paste(dataName, "fit.obj", sep="."));
       
-      res.all <- GetLimmaResTable(res.limma$fit.obj);
+      res.all <- GetLimmaResTable(dataSet$fit.obj);
       qs::qsave(res.all, "meta.resTable.qs");
       res.mat <- cbind(logFC=res.all$logFC, Pval = res.all$adj.P.Val);
       
       rownames(res.mat) <- rownames(res.all);
+      res.mat <- res.mat[match(rownames(data),rownames(res.mat)),]
+
       inmex.ind[[dataName]] <- res.mat;
       
       #register sig one
@@ -269,7 +267,7 @@ PerformMetaDeAnal <- function(paramSet){
       #sig.inx <- res.mat[,2]<=dataSet$pval;
       #dataSet$sig.mat <- res.mat[sig.inx,];
       RegisterData(dataSet);
-
+      
       # clean up
       rm(dataSet, res.all);
       gc();
@@ -282,6 +280,7 @@ PerformMetaDeAnal <- function(paramSet){
       data <- inmex.meta$data[, sel.inx];
       
       dataSet <- readDataset(dataName);
+
       grp.lvl <- levels(dataSet$cls);
       
       # update data set
@@ -292,22 +291,25 @@ PerformMetaDeAnal <- function(paramSet){
       #if(exists('dataSet$comp.res')){
       #  res.all <- dataSet$comp.res
       #}else{
-        res.limma <- PerformLimma(data, group);
-        # save dataSet object for meta-analysis
-        qs::qsave(res.limma$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
-        res.all <- GetLimmaResTable(res.limma$fit.obj);
+      # save dataSet object for meta-analysis
+      #res.limma <- PerformLimma(data, group);
+      qs::qsave(dataSet$fit.obj, file=paste(dataName, "fit.obj", sep=".")); 
+      res.all <- GetLimmaResTable(dataSet$fit.obj);
       #}
       qs::qsave(res.all, "meta.resTable.qs");
       
       res.mat <- cbind(logFC=res.all$logFC, Pval = res.all$adj.P.Val);
       
       rownames(res.mat) <- rownames(res.all);
+      #get the features that are shared across datasets
+      res.mat <- res.mat[match(rownames(data),rownames(res.mat)),]
+
       inmex.ind[[dataName]] <- res.mat;
       
       #sig.inx <- res.mat[,2]<=paramSet$BHth;
       sig.inx <- res.mat[,2]<=dataSet$pval;
-     # dataSet$sig.mat <- res.mat[sig.inx,];
-
+      # dataSet$sig.mat <- res.mat[sig.inx,];
+      
       RegisterData(dataSet);
       # clean up
       rm(dataSet, res.all);
@@ -316,22 +318,25 @@ PerformMetaDeAnal <- function(paramSet){
   }
   analSet$inmex.ind <- inmex.ind;
   #calculate average log fc
-
+  
   aggr <- data.frame()
   inmex.ind.ordered <- lapply(inmex.ind, function(x){
+    print(dim(x))
     x<-x[order(rownames(x)),]
   })
+  
   for (i in 1:length(inmex.ind.ordered)){
     if(i == 1){
       aggr <- inmex.ind.ordered[[i]]
     }else{
-      aggr <- aggr + inmex.ind.ordered[[i]]
+      aggr <- aggr + inmex.ind.ordered[[i]];
     }
   }
   aggr <- aggr/length(inmex.ind.ordered);
   analSet$meta.avgFC <- aggr[,1];
   return(analSet);
 }
+
 
 #'Perform combine effect size meta-analysis method
 #'@param method Method used, either "rem" or "fem"
@@ -660,7 +665,7 @@ GetMetaResultPathSymbols<-function(){
 }
 
 GetMetaResultGeneIDLinks <- function(){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
   ids <- rownames(as.matrix(analSet$meta.mat.all));

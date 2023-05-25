@@ -101,7 +101,7 @@
 }
 
 .prepareMultiListHeatmapJSON <- function(dataSet){
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
   sel.nms <- names(mdata.all)
   expval<-0;

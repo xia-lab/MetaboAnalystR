@@ -12,7 +12,7 @@ GetSigGeneCount <- function(){
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  data <- dataSet$data.anot
+  data <- dataSet$data.anot;
   if(sum(data > 100) > 100){ # now we think it is raw counts
     return(0);
   }else{
@@ -70,7 +70,7 @@ GetSummaryData <- function(){
 
 GetMetaColLength<- function(dataName=""){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
 
   if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
@@ -101,7 +101,7 @@ GetMetaDatasets<- function(){
 }
 
 SetSelMetaData<- function(selNm){
-    paramSet <- readSet(paramSet, "paramSet");;
+    paramSet <- readSet(paramSet, "paramSet");
     paramSet$selDataNm <- selNm;
     paramSet$jsonNms$dataName <- selNm;
     saveSet(paramSet, "paramSet");
@@ -139,7 +139,7 @@ GetOmicsDataDims <- function(dataName){
 # obtain sample names and their class labels
 GetSampleInfo <- function(dataName, clsLbl){
     dataSet <- readDataset(dataName);
-    grpInfo <- dataSet$meta[[clsLbl]];
+    grpInfo <- dataSet$meta.info[[clsLbl]];
     grpLbls <- paste(levels(grpInfo), collapse="\n");
     smplInfo <- paste(Sample = colnames(dataSet$data.orig), "\t", Class=grpInfo, collapse="\n");
     return(c(grpLbls, smplInfo));
@@ -172,8 +172,13 @@ GetFilesToBeSaved <-function(naviString){
 }
 
 GetMetaInfo <- function(dataName=""){
+  paramSet <- readSet(paramSet, "paramSet");
+  if(paramSet$anal.type == "metadata"){
+
+  }else{
   dataSet <- readDataset(dataName);
-  metaNms<-setdiff(colnames(dataSet$meta),dataSet$rmMetaCol)
+  metaNms<-setdiff(colnames(dataSet$meta.info),dataSet$rmMetaCol)
+  }
   return(metaNms);
 }
 
@@ -184,7 +189,7 @@ GetExpressResultGeneSymbols<-function(){
 
 GetExpressResultGeneIDLinks <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
   ids <- rownames(dataSet$comp.res);
   if(paramSet$data.org == "generic"){
     if(paramSet$data.idType == "ko"){
@@ -220,7 +225,7 @@ GetExpressGeneIDType<-function(dataName=""){
 
 GetExpressResultMatrix <-function(dataName="", inxt){
   dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");;
+  paramSet <- readSet(paramSet, "paramSet");
 
   inxt <- as.numeric(inxt)
     if (dataSet$de.method=="limma"){
@@ -299,238 +304,98 @@ SelectDataSet <- function(){
 }
 
 
-GetResRowNames <- function(dataName=""){
+GetFeatureNum <-function(dataName){
   dataSet <- readDataset(dataName);
-  return(rownames(dataSet$meta));
+  
+  return(nrow(dataSet$data.norm));
 }
 
-GetResColNames <- function(dataName=""){
-  dataSet <- readDataset(dataName);
-  colnms<- colnames(dataSet$meta)[colnames(dataSet$meta)!="newcolumn"]
-  return(colnms);
+# get qualified inx with at least number of replicates
+GetDiscreteInx <- function(my.dat, min.rep=2){
+  good.inx <- apply(my.dat, 2, function(x){
+    x <- x[x!="NA"]
+    good1.inx <- length(x) > length(unique(x));
+    good2.inx <- min(table(x)) >= min.rep;
+    return (good1.inx & good2.inx);
+  });
+  return(good.inx);
 }
 
-GetDiscMetas <- function(dataName=""){
-  keepVec<-keepVec
-  dataSet <- readDataset(dataName);
-  if(length(keepVec)>0){
-  keepidx <- which(keepVec %in% colnames(dataSet$meta))
-  keepidx <- intersect(keepidx,which(dataSet$disc.inx))
-  }else{
-  keepidx <-  which(dataSet$disc.inx)
+GetNumbericalInx <- function(my.dat){
+  good.inx <- apply(my.dat, 2, function(x){
+    isNum = as.numeric(as.character(x[x!="NA"]))
+    return(all(!is.na(as.numeric(as.character(isNum)))));
+  });
+  return(good.inx);
+}
+
+.set.dataSet <- function(dataSetObj=NA){
+  RegisterData(dataSetObj);
+  return (1);
+}
+
+# remove data object, the current dataSet will be the last one by default 
+RemoveData <- function(dataName){
+  paramSet <- readSet(paramSet, "paramSet");
+  mdata.all <- paramSet$mdata.all;
+  if(!is.null(paramSet$mdata.all[[dataName]])){
+    paramSet$mdata.all[[dataName]] <- NULL;
   }
-  colnms<- colnames(dataSet$meta)[keepidx]
-  return(colnms);
+  saveSet(paramSet, "paramSet");
 }
 
-GetMetaDataCol <- function(dataName="",colnm){
+
+GetCovSigFileName <-function(dataName){
   dataSet <- readDataset(dataName);
-  cls = levels(dataSet$meta[,colnm]);
-  return(cls[cls!="NA"]);
+  dataSet$analSet$cov$sig.nm;
 }
 
-GetMetaCell <- function(dataName="",ridx=1,cidx=1){
+GetCovSigMat<-function(dataName){
   dataSet <- readDataset(dataName);
-  return(dataSet$meta[ridx,cidx]);
+  drops <- c("ids","label")
+  return(CleanNumber(as.matrix(dataSet$analSet$cov$sig.mat[, !(names(dataSet$analSet$cov$sig.mat) %in% drops)])));
 }
 
-GetMetaClass <- function(dataName="",metaType){
+GetCovSigRowNames<-function(dataName){
   dataSet <- readDataset(dataName);
-  if(metaType=="disc"){
-    return(which(dataSet$disc.inx)-1);
-  }else if(metaType=="cont"){
-    return(which(dataSet$cont.inx)-1);
+  rownames(dataSet$analSet$cov$sig.mat);
+}
+
+GetCovSigSymbols<-function(dataName){
+  dataSet <- readDataset(dataName);
+  dataSet$analSet$cov$sig.mat$label
+}
+
+GetCovSigColNames<-function(dataName){
+  dataSet <- readDataset(dataName);
+  drops <- c("ids","label");
+  colnames(dataSet$analSet$cov$sig.mat[,!(names(dataSet$analSet$cov$sig.mat) %in% drops)]);
+}
+
+GetCovDENums <- function(dataName){
+    deNum <- nrow(dataSet$analSet$cov$sig.mat);
+    nonDeNum <- nrow(dataSet$comp.res) - deNum;
+    return(c(deNum, nonDeNum));
+}
+
+
+#'Replace infinite numbers
+#'@description Replace -Inf, Inf to 99999 and -99999
+#'@param bdata Input matrix to clean numbers
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+CleanNumber <-function(bdata){
+  if(sum(bdata==Inf)>0){
+    inx <- bdata == Inf;
+    bdata[inx] <- NA;
+    bdata[inx] <- 999999;
   }
-}
-
-ResetMetaTab <- function(dataName=""){
-  dataSet <- readDataset(dataName);
-  dataSet$meta <- dataSet$metaOrig;
-  dataSet$data.norm <- dataSet$data.anot <- qs::qread("orig.data.anot.qs");
-  dataSet$disc.inx <- dataSet$disc.inx.orig;
-  dataSet$cont.inx <- dataSet$cont.inx.orig;
-  RegisterData(dataSet);
-}
-
-
-GetResColType <- function(dataName="",colNm="NA"){
- dataSet <- readDataset(dataName);
-  if(colNm=="NA"){
-  meta.status <- ifelse(dataSet$disc.inx,"disc","cont")
-  }else{
-  meta.status <- ifelse(dataSet$disc.inx[colNm],"disc","cont")
+  if(sum(bdata==-Inf)>0){
+    inx <- bdata == -Inf;
+    bdata[inx] <- NA;
+    bdata[inx] <- -999999;
   }
-  return(meta.status);
-}
-
-UpdateMetaStatus <- function(dataName="",colNm){
-  dataSet <- readDataset(dataName);
-  msgSet <- readSet(msgSet, "msgSet");
-   cidx <- which(colnames(dataSet$meta)==colNm)
-  old = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
-  if(dataSet$disc.inx[cidx]){
-    if(all(is.na( as.numeric(as.character(dataSet$meta[,cidx]))))){
-      msgSet$current.msg <- "Category metadata cannot be continuous data!"
-     saveSet(msgSet, "msgSet"); 
-       return(0)
-    }
-    dataSet$disc.inx[cidx]=FALSE;
-    dataSet$cont.inx[cidx]=TRUE;
-  }else{
-    if(all(!duplicated(as.character(dataSet$meta[,cidx])))){
-      msgSet$current.msg <- "No duplicates were detected! The metadata cannot be discrete!"
-     saveSet(msgSet, "msgSet"); 
-      return(0)
-    }
-    dataSet$disc.inx[cidx]=TRUE;
-    dataSet$cont.inx[cidx]=FALSE;
-  }
- new = ifelse(dataSet$disc.inx[cidx],"Discrete","Continuous")
-  msgSet$current.msg <- paste0("Metadata type of ",colnames(dataSet$meta)[cidx]," has been changed to ", new, " !")
-  saveSet(msgSet, "msgSet"); 
-  RegisterData(dataSet);
-  return(1);
-}
-
-
-DeleteSample <- function(dataName="",samplNm){
-  dataSet <- readDataset(dataName);
-  dataSet$meta <- dataSet$meta[rownames(dataSet$meta)!=samplNm,]
-  dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm!=samplNm)]
-  RegisterData(dataSet);
-  return(1);
-}
-
-DeleteMetaCol <- function(dataName="",metaCol){
-  dataSet <- readDataset(dataName);
-  idx = which(colnames(dataSet$meta)==metaCol)
-  dataSet$meta <- dataSet$meta[,-idx,drop=F]
-  dataSet$disc.inx <- dataSet$disc.inx[-idx]
-  dataSet$cont.inx <- dataSet$cont.inx[-idx]
-   if(!exists("rmMetaCol",dataSet)){
-    dataSet$rmMetaCol <- vector()
-  }
-  dataSet$rmMetaCol <- unique(c(dataSet$rmMetaCol,metaCol))
-  RegisterData(dataSet);
-  return(1);
-}
-
-CleanRmCol <- function(dataName=""){
-  dataSet <- readDataset(dataName);
-
-   if(exists("rmMetaCol",dataSet)){
-    dataSet$rmMetaCol <- vector()
-  }
-  RegisterData(dataSet);
-  return(1);
-}
-
-GetSampleNm <- function(dataName="",ridx=1){
-  dataSet <- readDataset(dataName);
-  return( rownames(dataSet$meta)[ridx]);
-}
-
-
-UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
-  dataSet <- readDataset(dataName);
-  meta <- dataSet$meta
-  ridx <- which(rownames(meta)==rowNm)
-  if(colNm==""){
-    if(rowNm !=cell){
-      rownames(meta)[ridx]=cell
-     colnames(dataSet$data.norm)[which(colnames(dataSet$data.norm)==rowNm)]=cell
-     colnames(dataSet$data.anot)[which(colnames(dataSet$data.anot)==rowNm)]=cell
-    }
-  }else{  
-    cidx<- which(colnames(meta)==colNm)
-    if(cell!= as.character(meta[ridx,cidx])){
-      if(cell %in% levels(meta[,cidx])){
-        meta[ridx,cidx] = cell
-      }else{
-        levels(meta[,cidx]) <- c(levels(meta[,cidx]), cell)
-        meta[ridx,cidx] = cell
-      }
-      meta[,cidx] <- droplevels(meta[,cidx])
-    }
-  }
-  dataSet$meta = meta
-  RegisterData(dataSet);
-  return(1);
-}
-
-
-GetSelectedMetaInfo <- function(dataName="",colNm){
-  dataSet <- readDataset(dataName);
-  lvls <- levels(dataSet$meta[,colNm])
-lvls <-  lvls[lvls!="NA"]
-  return(lvls);
-}
-
-UpdateMetaOrder <- function(dataName="",metacol){
-  dataSet <- readDataset(dataName);
-  if(length(metaVec)>0 & metacol %in% colnames(dataSet$meta)){
-    dataSet$meta[,metacol] <- factor(as.character(dataSet$meta[,metacol]),levels = metaVec)
-    
-  }else{
-    msgSet <- readSet(msgSet, "msgSet");
-    msgSet$current.msg <- "The metadata column is empty! Please check your selection!"
-    saveSet(msgSet, "msgSet"); 
-    return(0)
-  }
-  RegisterData(dataSet);
-  return(1)
-}
-
-UpdateMetaName <-  function(dataName="",oldvec,newvec){
-  dataSet <- readDataset(dataName);
-  idx <- which(colnames(dataSet$meta)==oldvec)
-  if(length(idx)==1){
-    colnames(dataSet$meta)[idx] <- names(dataSet$disc.inx)[idx] <- 
-      names(dataSet$cont.inx)[idx] <- newvec
-  }else{
-   return(0)
-  }
-  RegisterData(dataSet);
-  return(1);
-}
-
-GetMetaSummary <- function(dataName=""){
-  dataSet <- readDataset(dataName);
-  meta <- dataSet$meta
-  disc.vec <- paste(names(dataSet$disc.inx)[which(dataSet$disc.inx)],collapse=", ")  
-  cont.vec <- paste(names(dataSet$cont.inx)[which(dataSet$cont.inx)],collapse=", ")  
-  na.vec <- na.check(meta)
-  return(c(ncol(meta),length(which(dataSet$disc.inx)),disc.vec,
-           length(which(dataSet$cont.inx)),cont.vec,names(meta)[1],length(unique(meta[,1])),paste(unique(meta[,1]),collapse=", "),na.vec ));
-}
-
-na.check <- function(mydata){
-  na.idx <- apply(mydata,2,function(x) "NA" %in% x)
-  if(all(!na.idx)){
-    return("None")
-  }
-  na.num <- apply(mydata,2,function(x) length(which(x=="NA")))
-  naInfo <- data.frame(names(mydata)[na.idx],num = na.num[na.num>0])
-  naInfo <- apply(naInfo, 1, function(x) paste0(x[1]," (",x[2],")"))
-  naInfo <- paste(naInfo,collapse = ", ")
-  return(naInfo)
-}
-
-
-UpdatePrimaryMeta <- function(fileName,primaryMeta){
-  dataSet <- readDataset(fileName);
-  msgSet <- readSet(msgSet,"msgSet");
-  meta <- dataSet$meta
-  if(primaryMeta %in% colnames(meta)){
-    cidx <- which(colnames(meta)==primaryMeta)
-    dataSet$meta<-cbind(meta[,cidx,drop=F],meta[,-cidx,drop=F])
-    dataSet$disc.inx=c(dataSet$disc.inx[cidx],dataSet$disc.inx[-cidx])
-    dataSet$cont.inx=c(dataSet$cont.inx[cidx],dataSet$cont.inx[-cidx])
-  }else{
-    msgSet$current.msg <- "The metadata column is empty! Please check your selection!"
-    saveSet(msgSet, "msgSet"); 
-    return(0)
-  }
-  RegisterData(dataSet);
-  return(1)
+  bdata;
 }

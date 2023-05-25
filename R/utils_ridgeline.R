@@ -263,7 +263,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   
   fast.write(resTable, file=csv.nm);
   
-  json.obj <- RJSONIO::toJSON(res.list);
+  json.obj <- rjson::toJSON(res.list);
   sink(jsonNm);
   cat(json.obj);
   sink();

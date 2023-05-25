@@ -15,7 +15,7 @@
 #'License: MIT
 #'@export
 #'
-ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="") {
+ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDataAnalType, path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
@@ -31,7 +31,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   int.mat <- int.mat[,match(rownames(meta.info$meta.info),colnames(int.mat))]
   dataSet$data <- NULL;
   dataSet$name <- fileName;
-  
+  qs::qsave(int.mat, "int.mat.qs");
   msg <- paste("a total of ", ncol(int.mat), " samples and ", nrow(int.mat), " features were found");
   # remove NA, null
   row.nas <- apply(is.na(int.mat)|is.null(int.mat), 1, sum);
@@ -40,14 +40,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
     int.mat <- int.mat[good.inx,];
     msg <- c(msg, paste("removed ", sum(!good.inx), " features with over 50% missing values"));
   }
-  # remove constant values
-  filter.val <- apply(int.mat, 1, IQR, na.rm=T);
-  good.inx2 <- filter.val > 0;
-  if(sum(!good.inx2) > 0){
-    int.mat <- int.mat[good.inx2,];
-    msg <- c(msg, paste("removed ", sum(!good.inx2), " features with constant values"));
-  }
-  
+ 
   minVal <- min(int.mat, na.rm=T);
   na.inx <- is.na(int.mat);
   if(sum(na.inx) > 0){
@@ -59,18 +52,47 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",path="
   data.proc <- res[[1]];
   msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
+ 
+
+  if(oneDataAnalType == "dose"){
   
+  # re-order everything numerically by dose
+  dose <- as.numeric(gsub(".*_", "", as.character(dataSet$meta.info[,1])))
+  dataSet$data <- dataSet$data[ ,order(dose)]
+  meta.reorder <- as.data.frame(dataSet$meta.info[order(dose),])
+  colnames(meta.reorder) <- colnames(dataSet$meta.info)
+  dataSet$meta.info <- meta.reorder
+
+  # re-level the factor to be numeric instead of alphabetic
+  dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
+  
+  # rename data to data.orig
+  int.mat <- dataSet$data;
+  dataSet$cls <- dataSet$meta.info[,1];
+  dataSet$data <- NULL;
+  dataSet$listData <- FALSE;
+  
+  dataSet$imgSet <- list();
+  dataSet$reportSummary <- list();
+
+  }
+
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
-  dataSet$meta <- dataSet$metaOrig <- meta.info$meta.info[metaInx,]
+  dataSet$meta.info <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
+  meta.types <- rep("disc", ncol(dataSet$meta.info));
+  meta.types[meta.info$cont.inx] <- "cont";
+  names(meta.types) <- colnames(dataSet$meta.info);
+  dataSet$meta.types <-meta.types;
   paramSet$anal.type <- "onedata";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, fileName);
   paramSet$jsonNms$dataName <- fileName;
+  paramSet$dataName <- fileName;
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet));
@@ -96,12 +118,12 @@ ReadMetaData <- function(metafilename){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet,"msgSet");
   metadata <- try(data.table::fread(metafilename, header=TRUE, check.names=FALSE, data.table=FALSE));
-    metadata[is.na(metadata)] = "NA"
-    if(class(metadata) == "try-error"){
+  metadata[is.na(metadata)] = "NA"
+  if(class(metadata) == "try-error"){
     msgSet$current.msg = "Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA."
     saveSet(msgSet, "msgSet");
     return(NULL);
-    }
+  }
   # look for #NAME, store in a list
   sam.inx <- grep("^#NAME", colnames(metadata)[1]);
   if(length(sam.inx) > 0){
@@ -122,7 +144,7 @@ ReadMetaData <- function(metafilename){
     saveSet(msgSet, "msgSet");
     return(NULL);
   }
-  rownames(metadata) <- smpl_nm;
+  rownames(metadata) <- smpl_nms;
   colnames(metadata) <- smpl_var;
   
   na.msg <- ""
@@ -134,7 +156,7 @@ ReadMetaData <- function(metafilename){
     msgSet$na.msg <- paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !");
   }
   
-
+  
   cont.inx <- GetNumbericalInx(metadata);
   cont.inx <- !disc.inx & cont.inx; # discrete is first
   
@@ -143,37 +165,58 @@ ReadMetaData <- function(metafilename){
     metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
   }
 
-    mdata.all <- paramSet$mdata.all;
-    # need to add metadata sanity check
-    # are sample names identical to data$orig
-    # order samples in same way as in abundance table
-    sel.nms <- names(mdata.all);
-
-for(i in 1:length(sel.nms)){
-  dataSet <- readDataset(sel.nms[i]);
-  data.smpl.nms <- colnames(dataSet$data.norm)
+  metadata$Dataset <- rep("NA", nrow(metadata));
+  
+  mdata.all <- paramSet$mdata.all;
+  # need to add metadata sanity check
+  # are sample names identical to data$orig
+  # order samples in same way as in abundance table
+  sel.nms <- names(mdata.all);
+  
+  for(i in 1:length(sel.nms)){
+    dataSet <- readDataset(sel.nms[i]);
+    data.smpl.nms <- colnames(dataSet$data.norm)
     nm.hits <- data.smpl.nms %in% smpl_nms;
-  if(!all(nm.hits)){
+    if(!all(nm.hits)){
       msgSet$current.msg = paste0("Some sample names including ",paste(mis.nms, collapse="; ") ," in your data are not in the metadata file!")
       saveSet(msgSet, "msgSet");
-    return(NULL);
-  }
-  
-  # now remove extra meta if present, and order them
+      return(NULL);
+    }
+    
+    # now remove extra meta if present, and order them
     nm.hits2 <- which(smpl_nms %in% data.smpl.nms);
+    metadata$Dataset[nm.hits2] <- sel.nms[i];
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
-
-    dataSet$meta <- dataSet$metaOrig <- metadata1
+    
+    dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
-  RegisterData(dataSet);
-}
+
+    meta.types <- rep("disc", ncol(dataSet$meta.info));
+    meta.types[cont.inx[colnames(metadata1)]] <- "cont";
+    names(meta.types) <- colnames(dataSet$meta.info);
+    dataSet$meta.types <-meta.types;
+
+    RegisterData(dataSet);
+  }
+  
+  paramSet$dataSet <- list();
+  meta.types <- rep("disc", ncol(metadata));
+  meta.types[cont.inx] <- "cont";
+  names(meta.types) <- colnames(metadata);
+  
+  paramSet$dataSet$meta.types <- meta.types;
+  paramSet$dataSet$meta.status <- rep("OK", ncol(metadata));
+  paramSet$dataSet$cont.inx <- cont.inx;
+  paramSet$dataSet$disc.inx <- disc.inx;
+  paramSet$dataSet$meta.info <- metadata;
+  paramSet$dataSet$metaOrig <- metadata;
+  
   saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
   return(1);
 }
-
 
 # read tab delimited file
 # can have many classes, stored in meta.info (starts with #) 
@@ -209,7 +252,6 @@ for(i in 1:length(sel.nms)){
     return(NULL);
   }
   dat1 <- .to.numeric.mat(datOrig);
-  
   list(
     name= basename(dataName),
     data_orig = datOrig,
@@ -266,8 +308,10 @@ for(i in 1:length(sel.nms)){
     return(NULL);
   }
   
+  
   # need to remove potential empty columns
   dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
+  
   return(dat);
 }
 
@@ -283,7 +327,7 @@ for(i in 1:length(sel.nms)){
     msg <- msgSet$current.msg
   }
   match.msg <- "";
-print(metaContain)
+
   if(metaContain=="true"){
     meta.info <- list();
     # look for #CLASS, could have more than 1 class labels, store in a list

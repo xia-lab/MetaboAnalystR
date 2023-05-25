@@ -13,18 +13,19 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   if(meta0 == "NA"){
     RegisterData(dataSet, 0);
   }else{
-    rmidx <- which(dataSet$meta[, meta0]=="NA")
+    rmidx <- which(dataSet$meta.info.[, meta0]=="NA")
     if(meta1 != "NA"){
-        rmidx <- c(rmidx,which(dataSet$meta[, meta1]=="NA"))
+        rmidx <- c(rmidx,which(dataSet$meta.info[, meta1]=="NA"))
     }
     if(length(rmidx)>0){
-        meta<- dataSet$meta[-rmidx,]
-        for(col in 1:ncol(meta)){
-            meta[,col]<- droplevels(meta[,col])
-        }
-        dataSet$rmidx <- rmidx
+       meta<- dataSet$meta.info[-rmidx,]
+     #print(meta);
+       for(col in 1:ncol(meta)){
+        meta[,col]<- droplevels(meta[,col])
+       }
+       dataSet$rmidx <- rmidx
     }else{
-        meta<- dataSet$meta
+        meta<- dataSet$meta.info
     }
     cls <- meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
@@ -252,10 +253,10 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   } else {
     set.seed(1) 
     require(edgeR)
-     if(length(dataSet$rmidx)>0){
-       data.anot <- dataSet$data.anot[,-dataSet$rmidx]
+    if(length(dataSet$rmidx)>0){
+      data.anot <- dataSet$data.anot[,-dataSet$rmidx];
     }else{
-       data.anot <- dataSet$data.anot
+      data.anot <- dataSet$data.anot;
     }
     y <- DGEList(counts = data.anot, group = dataSet$cls)
     y <- calcNormFactors(y)
@@ -320,11 +321,11 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
     grp.nms <- strsplit(grps, " vs. ")[[1]];
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
   }else{
-    sel.inx <- rep(T, ncol(dataSet$data));
+    sel.inx <- rep(T, ncol(dataSet$data.norm));
   }
   
   group <- factor(dataSet$cls[sel.inx]); # note regenerate factor to drop levels 
-  data <- dataSet$data[, sel.inx];
+  data <- dataSet$data.norm[, sel.inx];
   
   res.limma <- PerformLimma(data, group);
   res.all <- GetLimmaResTable(res.limma$fit.obj);
@@ -347,8 +348,6 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   
   sig.count <- nrow(res);
   de.genes <- rownames(res);
-  res.mat <- cbind(res.all$logFC, res.all$adj.P.Val);
-  rownames(res.mat) <- rownames(res.all);
   non.sig.count <- nrow(data)-sig.count;
   rm(res.all);
   
@@ -362,15 +361,19 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
 # perfor differential analysis for array/RNA seq data
 # for two groups only (used for meta-analysis)
 PerformLimma<-function(data, group){
+  #print(identical(colnames(data), group))
+  #print(colnames(data))
+  #print(group)
+
+  #print("limma");
   require(limma);
-  data <- data;
   design <- model.matrix(~-1 + group);
-  fit <- lmFit(data, design)
+  fit <- lmFit(data, design);
   
   grps.cmp <- paste("group", levels(group)[2], " - ", "group", levels(group)[1], sep="");
   myargs <- list(grps.cmp, levels = design);
   contrast.matrix <- do.call(makeContrasts, myargs);
-  fit <- contrasts.fit(fit, contrast.matrix)
+  fit <- contrasts.fit(fit, contrast.matrix);
   fit <- eBayes(fit);
   gc();
   return (list(fit.obj=fit));
@@ -386,13 +389,30 @@ GetLimmaResTable<-function(fit.obj){
   return (resTable);
 }
 
-## perform comparison analysis based on  multi-variate linear regression 
 MultiCovariateRegression <- function(fileName,
-                               analysis.var, # metadata variable name
-                               ref = NULL, # reference class from analysis.var metadata (only if categorical)
-                               contrast = "anova",  # comparison class from analysis.var (only if categorical)
-                              # fixed.effects = NULL,  # metadata variables to adjust for
-                               random.effects = NULL){ # metadata variables to adjust for
+                                     analysis.var, # metadata variable name
+                                     ref = NULL, # reference class from analysis.var metadata (only if categorical)
+                                     contrast = "anova",  # comparison class from analysis.var (only if categorical)
+                                     # fixed.effects = NULL,  # metadata variables to adjust for
+                                     random.effects = NULL, # metadata variables to adjust for
+                                     internal=F){ # whether returns 0/1 or dataset object
+  dataSet <- readDataset(fileName);
+  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, F)
+  if(is.list(interim)){
+    res <- 1;
+  }else{
+    res <- interim;
+  }
+  return(res);
+}
+
+.multiCovariateRegression <- function(dataSet,
+                                     analysis.var, # metadata variable name
+                                     ref = NULL, # reference class from analysis.var metadata (only if categorical)
+                                     contrast = "anova",  # comparison class from analysis.var (only if categorical)
+                                     # fixed.effects = NULL,  # metadata variables to adjust for
+                                     random.effects = NULL, # metadata variables to adjust for
+                                     internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
   
   # load libraries
   library(limma)
@@ -400,11 +420,19 @@ MultiCovariateRegression <- function(fileName,
   
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- readDataset(fileName);
   dataSet$rmidx <- NULL
+
   # for embedded inside tools (ExpressAnalyst etc)
+  if(internal){
+  inmex.meta<-qs::qread("inmex_meta.qs");
+  #only get shared features
+  #feature_table <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
+  feature_table <- inmex.meta$data[,colnames(inmex.meta$data) %in% colnames(dataSet$data.norm)];
+  }else{
   feature_table <- dataSet$data.norm 
-  covariates <- dataSet$meta
+  }
+  covariates <- dataSet$meta.info
+
   fixed.effects <- adj.vec
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
@@ -420,52 +448,53 @@ MultiCovariateRegression <- function(fileName,
   if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
     all.vars = c(all.vars, random.effects);
   }
+  #print(all.vars);
   
-
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
-
-   if(length(rmidx)>0){
-   covariates <- covariates[-rmidx,,drop=F];
-   dataSet$rmidx <- rmidx;
+  
+  if(length(rmidx)>0){
+    covariates <- covariates[-rmidx,,drop=F];
+    dataSet$rmidx <- rmidx;
   }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
+
   if(!identical(colnames(feature_table), rownames(covariates))){
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
     return(0)
   }
-
+  
   # get analysis type
   analysis.type = ifelse(dataSet$disc.inx[analysis.var],"disc","cont")
-   if(is.na(analysis.type)){
-     msgSet$current.msg <- "Analysis var not found in our database!";
-     saveSet(msgSet, "msgSet");
-     return(0)
-   }
-
+  if(is.na(analysis.type)){
+    msgSet$current.msg <- "Analysis var not found in our database!";
+    saveSet(msgSet, "msgSet");
+    return(0)
+  }
+  
   if(analysis.type == "disc"){
     # build design and contrast matrix
-    # covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
-    # str(covariates)
+    #  covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    #str(covariates)
     grp.nms <- levels(covariates[, analysis.var]);
-
-     if(any(grepl("(^[0-9]+).*", grp.nms))){
+    
+    if(any(grepl("(^[0-9]+).*", grp.nms))){
       grp.nms <- paste0(analysis.var,"_",grp.nms);
       if(!(is.null(ref))& ref!="NA"){
-         ref <- paste0(analysis.var,"_", ref)
+        ref <- paste0(analysis.var,"_", ref)
       }
       if(contrast!="anova"){
-         contrast <- paste0(analysis.var,"_", contrast)
+        contrast <- paste0(analysis.var,"_", contrast)
       }     
-     }
-
+    }
+    
     for(col in 1:ncol(covariates)){
-       if(dataSet$cont.inx[colnames(covariates)[col]]){
-    covariates[,col] <- as.numeric( covariates[,col])
-  }
-}
-
+      if(dataSet$cont.inx[colnames(covariates)[col]]){
+        covariates[,col] <- as.numeric( covariates[,col])
+      }
+    }
+    
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs <- list();
@@ -486,20 +515,34 @@ MultiCovariateRegression <- function(fileName,
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
     }
-    
+
     # get results
     fit <- contrasts.fit(fit, contrast.matrix);
     fit <- eBayes(fit);
     rest <- topTable(fit, number = Inf);
-  
+    
     if(contrast != "anova"){    
       colnames(rest)[1] <- myargs[[1]];
       grp.nms<-c(ref,contrast)
-
+      
     }
-      dataSet$contrast.matrix <- contrast.matrix;
-      dataSet$par1 <-  myargs[[1]];
-      dataSet$grp.nms <- ifelse(any(grepl("(^[0-9]+).*", grp.nms)), paste0(analysis.var,"_",grp.nms),grp.nms);
+    #for meta-anal
+    if(internal){
+        ### get results with no adjustment
+        design <- model.matrix(formula(paste0("~ 0", paste0(" + ", analysis.var, collapse = ""))), data = covariates);
+        colnames(design)[1:length(grp.nms)] <- grp.nms;
+        myargs[["levels"]] <- design;
+        contrast.matrix <- do.call(makeContrasts, myargs);
+        fit <- lmFit(feature_table, design)
+        fit <- contrasts.fit(fit, contrast.matrix);
+        fit <- eBayes(fit);
+        res.noadj <- topTable(fit, number = Inf);
+        dataSet$res.noadj <- res.noadj;
+    }
+
+    dataSet$contrast.matrix <- contrast.matrix;
+    dataSet$par1 <-  myargs[[1]];
+    dataSet$grp.nms <- ifelse(any(grepl("(^[0-9]+).*", grp.nms)), paste0(analysis.var,"_",grp.nms),grp.nms);
   } else { 
     
     # build design matrix
@@ -526,13 +569,22 @@ MultiCovariateRegression <- function(fileName,
     fit <- eBayes(fit);
     rest <- topTable(fit, number = Inf, coef = analysis.var);
     colnames(rest)[1] <- dataSet$par1 <- analysis.var;
+    
+    ### get results with no adjustment
+    if(internal){
+    design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
+    fit <- eBayes(lmFit(feature_table, design));
+    res.noadj <- topTable(fit, number = Inf);
+    dataSet$res.noadj <- res.noadj;
+    }
   }
-
+  
   dataSet$design <- design;
   dataSet$contrast.type <- analysis.type;
   dataSet$comp.res <- rest;
   dataSet$de.method <- "limma"
   dataSet$comp.type <- "default"
+  dataSet$fit.obj <- fit;
   RegisterData(dataSet);
-  return(1)
+  return(dataSet);
 }
