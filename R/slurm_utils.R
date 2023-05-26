@@ -896,9 +896,7 @@ library(tidyverse);
                                            color = color,
                                            linetype = linetype))
   
-  p <- p + ggplot2::labs(x = "N. of reads", y = "N. of genes", 
-                         title = "Rarefaction curve of N. of reads against N. of genes",
-                         subtitle = paste0("minimum N. of reads: ", minReads, "; N. of steps: ", step))
+  p <- p + ggplot2::labs(x = "N. of reads", y = "N. of genes");
   
   if (!is.null(label)) {
     p <- p + ggplot2::geom_text(data = labels,
@@ -984,9 +982,7 @@ pcaPlotS2f <- function(allSamKOAbunDF2,
       geom_text_repel(force=1.5) + 
       #theme_bw() +
       theme(legend.position = "none") +
-      scale_color_manual(values=fill.cols) + 
-      labs(title = "PCA plot",
-           subtitle = paste0("minimum N. of reads: ", minReads))
+      scale_color_manual(values=fill.cols)
   }
   invisible(p);
 }
@@ -1104,9 +1100,7 @@ ggRareS2f <- function(s2fObj, data.src,
                                            color = color,
                                            linetype = linetype))
   
-  p <- p + ggplot2::labs(x = "N. of reads", y = "N. of Orthologs", 
-                         title = "Rarefaction curve of N. of reads against N. of Orthologs",
-                         subtitle = paste0("minimum N. of reads: ", minReads, "; N. of steps: ", step))
+  p <- p + ggplot2::labs(x = "N. of reads", y = "N. of Orthologs");
   
   if (!is.null(label)) {
     p <- p + ggplot2::geom_text(data = labels,

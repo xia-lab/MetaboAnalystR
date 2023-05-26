@@ -15,17 +15,17 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   }else{
     rmidx <- which(dataSet$meta.info.[, meta0]=="NA")
     if(meta1 != "NA"){
-    rmidx <- c(rmidx,which(dataSet$meta.info[, meta1]=="NA"))
+        rmidx <- c(rmidx,which(dataSet$meta.info[, meta1]=="NA"))
     }
     if(length(rmidx)>0){
-     meta<- dataSet$meta.info[-rmidx,]
-     print(meta);
-     for(col in 1:ncol(meta)){
-       meta[,col]<- droplevels(meta[,col])
-      }
+       meta<- dataSet$meta.info[-rmidx,]
+     #print(meta);
+       for(col in 1:ncol(meta)){
+        meta[,col]<- droplevels(meta[,col])
+       }
        dataSet$rmidx <- rmidx
     }else{
-    meta<- dataSet$meta.info
+        meta<- dataSet$meta.info
     }
     cls <- meta[, meta0];
     dataSet$fst.cls <- cls; # for PCA plotting
@@ -361,11 +361,11 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
 # perfor differential analysis for array/RNA seq data
 # for two groups only (used for meta-analysis)
 PerformLimma<-function(data, group){
-  print(identical(colnames(data), group))
-  print(colnames(data))
-  print(group)
+  #print(identical(colnames(data), group))
+  #print(colnames(data))
+  #print(group)
 
-  print("limma");
+  #print("limma");
   require(limma);
   design <- model.matrix(~-1 + group);
   fit <- lmFit(data, design);
@@ -448,7 +448,7 @@ MultiCovariateRegression <- function(fileName,
   if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
     all.vars = c(all.vars, random.effects);
   }
-  print(all.vars);
+  #print(all.vars);
   
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
@@ -476,7 +476,7 @@ MultiCovariateRegression <- function(fileName,
   if(analysis.type == "disc"){
     # build design and contrast matrix
     #  covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
-    str(covariates)
+    #str(covariates)
     grp.nms <- levels(covariates[, analysis.var]);
     
     if(any(grepl("(^[0-9]+).*", grp.nms))){
