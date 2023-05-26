@@ -15,7 +15,7 @@ PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 
-  bmdcalc.res <- FilterBMDResults()
+  bmdcalc.res <- FilterBMDResults(dataSet)
   
   if(scale == "log10"){
     bmdcalc.res[,3:6] <- log10(bmdcalc.res[,3:6])
@@ -46,9 +46,9 @@ PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
     gs.POD <- gsPOD(dataSet$omicdata, bmdcalc.res, gene.vec, geneDB)
 
 
-
+    print(head(gs.POD$geneset.stats));
     #prepare pathways summary
-    data.sorted = gs.POD$geneset.stats[order(gs.POD$geneset.stats$bmd.med),]
+    data.sorted = gs.POD$geneset.stats[order(gs.POD$geneset.stats$Adjusted.Pvalue),]
     details <- GetFunctionalDetails(data.sorted, gs.POD$geneset.matches)
 
     # make out file
@@ -74,6 +74,7 @@ PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
 
     res <- density(bmdcalc.res$bmd)
 
+
     pod <- list(
       geneIds = bmdcalc.res$id[order(bmdcalc.res$bmd)],
       geneNms = geneNms,
@@ -90,7 +91,7 @@ PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
   cat(json.obj);
   sink();
 
-  dataSet <<- dataSet
+  RegisterData(dataSet)
   return(1);
 }
 

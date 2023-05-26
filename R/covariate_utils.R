@@ -48,7 +48,6 @@ CovariateScatter.Anal <- function(dataName,
 
   rest <- dataSet$comp.res;
   res.noadj <- dataSet$res.noadj;
-  print(names(dataSet));
   #dataSet$res.noadj <- "";
   # make visualization
   adj.mat <- rest[, c("P.Value", "adj.P.Val")]

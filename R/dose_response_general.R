@@ -936,7 +936,7 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
   require(boot)
   
   # get bmd data
-  bmd.res <- FilterBMDResults()
+  bmd.res <- FilterBMDResults(dataSet)
 
   if(scale == "log10"){
     bmds <- log10(bmd.res$bmd);
@@ -1055,6 +1055,7 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
 ### Calculation of transcriptomic POD from BMDs
 gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
 { 
+  paramSet <- readSet(paramSet, "paramSet");
   gs <- geneDB;
   if (!inherits(obj.data, "omicdata"))
     stop("Use only with 'omicdata' objects, created with the function omicdata")
@@ -1095,7 +1096,7 @@ gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
   }
 
   # do gsoa
-  results.summary <- gsoa.fun(paste0(lib.path, data.org, "/", gs.lib), 
+  results.summary <- gsoa.fun(paste0(paramSet$lib.path, paramSet$data.org, "/", gs.lib), 
                                 universe, hits, bmd.res, 1.0, FDR)
   # append to list of results
   results <- results.summary$results

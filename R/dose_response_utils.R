@@ -937,10 +937,7 @@ InitDrcFitObj <- function(){
 }
 
 
-FilterBMDResults <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-
+FilterBMDResults <- function(dataSet){
   obj.bmd <- dataSet$bmdcalc.obj
   if (!inherits(obj.bmd, "bmdcalc"))
     stop("Use only with 'bmdcalc' objects, created with the function bmdcalc")
@@ -961,7 +958,9 @@ FilterBMDResults <- function(){
 }
 
 PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
-    bmdcalc.res <- FilterBMDResults()
+    paramSet <- readSet(paramSet, "paramSet");
+    dataSet <- readDataset(paramSet$dataName);
+    bmdcalc.res <- FilterBMDResults(dataSet);
     gene.vec <- as.matrix(bmdcalc.res[which(bmdcalc.res$bmd > xMin & bmdcalc.res$bmd < xMax),1])
     sym.vec <- doEntrez2SymbolMapping(gene.vec);
     names(gene.vec) <- sym.vec;
@@ -972,7 +971,6 @@ PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
 GetDRRes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
-  save.image("DRRes.RData");
   obj.bmd <- dataSet$bmdcalc.obj
   
   bmdcalc.obj <- obj.bmd
