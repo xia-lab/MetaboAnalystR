@@ -686,7 +686,6 @@ GetMetaResultGeneIDLinks <- function(){
 }
 
 GetMetaResultColNames<-function(){
-  save.image("metaRes.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 

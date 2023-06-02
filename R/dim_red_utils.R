@@ -368,30 +368,30 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   mdata.all <- paramSet$mdata.all;
   level <- as.numeric(level)
   names = strsplit(names.vec, "; ")[[1]]
-  reductionSet <- .get.rdt.set();
-  if(reductionOptGlobal %in% c("diablo", "spls") || omics != "NA"){
-    if(grepl("pca_", omics, fixed=TRUE)){
-        pca.scatter <- qs::qread("pca.scatter.qs");
-        pos.xyz<-pca.scatter[[ omics ]]$score/1000
-    }else{
-        omics.inx = 1;
-        sel.nms <- names(mdata.all)[mdata.all==1];
-        for(i in 1:length(sel.nms)){
-        dataSet <- readDataset(sel.nms[i]);
-            if(omics == dataSet$type){
-                omics.inx = i;
-            }
-        }
-        if(omics.inx == 1){
-            pos.xyz = reductionSet$pos.xyz
-        }else{
-            pos.xyz = reductionSet$pos.xyz2
-        }
-    }
+  pos.xyz <-qs::qread("score_pos_xyz.qs");
+  #if(reductionOptGlobal %in% c("diablo", "spls") || omics != "NA"){
+  #  if(grepl("pca_", omics, fixed=TRUE)){
+  #      pca.scatter <- qs::qread("pca.scatter.qs");
+  #      pos.xyz<-pca.scatter[[ omics ]]$score/1000
+  #  }else{
+  #      omics.inx = 1;
+  #      sel.nms <- names(mdata.all)[mdata.all==1];
+  #      for(i in 1:length(sel.nms)){
+  #      dataSet <- readDataset(sel.nms[i]);
+  #          if(omics == dataSet$type){
+  #              omics.inx = i;
+  #          }
+  #      }
+        #if(omics.inx == 1){
+        #    pos.xyz = reductionSet$pos.xyz
+        #}else{
+        #    pos.xyz = reductionSet$pos.xyz2
+        #}
+  #  }
 
-  }else{
-  pos.xyz = reductionSet$pos.xyz
-  }
+  #}else{
+  #pos.xyz = reductionSet$pos.xyz
+  #}
 
   inx = rownames(pos.xyz) %in% names;
   coords = as.matrix(pos.xyz[inx,c(1:3)])

@@ -145,7 +145,6 @@ cleanMem <- function(n=8) { for (i in 1:n) gc() }
   vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
   obj.dim[vec, 1] <- napply(names, length)[vec]
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
-  save.image("memcheck.RData");
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))
     out <- out[order(out[[order.by]], decreasing=decreasing), ]

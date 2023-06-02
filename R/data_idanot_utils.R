@@ -135,7 +135,6 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 
 # Annotating genes to internal database
 AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
-  save.image("ann.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -242,7 +241,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
 
 #Convert a vector of ids to vector of entrez ids
 .doAnnotation <- function(feature.vec, idType, paramSet){
-  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
+  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein","uniprot", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
     anot.id <- .doGeneIDMapping(feature.vec, idType, paramSet, "vec");
   }else{
     anot.id <- .doProbeMapping(feature.vec, idType, paramSet);

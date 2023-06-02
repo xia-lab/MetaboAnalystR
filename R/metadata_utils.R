@@ -59,7 +59,6 @@ SanityCheckMeta <- function(fileName,init){
 # the data in the memory could be changed
 GetGroupNames <- function(dataName, meta="NA"){
   dataSet <- readDataset(dataName);
-  save.image("grp.RData");
   if(meta == "NA"){
     grpnms = levels(factor(dataSet$meta.info[,1]));
   }else{

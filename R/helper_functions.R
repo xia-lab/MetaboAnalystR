@@ -65,6 +65,7 @@ GetMetaCol<- function(dataName=""){
 
 GetSummaryData <- function(){
   msgSet <- readSet(msgSet, "msgSet");
+print(msgSet$summaryVec);
   return(msgSet$summaryVec);
 }
 
