@@ -821,7 +821,7 @@ CheckMetaIntegrity <- function(){
   
   for(i in 1:length(sel.nms)){
     if(length(unique(metas[[i]]))>2){
-      msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+      msgSet$current.msg <- "For meta-analysis, make sure the meta-data is composed of exactly two different groups";
       saveSet(msgSet, "msgSet");
       return(0)
     }
