@@ -447,7 +447,7 @@ ReadOmicsData <- function(fileName) {
     meta.info <- data.frame(meta.info);
     smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
     rownames(meta.info) <- smpl.nms;
-    
+    print(meta.info);
     disc.inx <- GetDiscreteInx(meta.info);
     if(sum(disc.inx) == length(disc.inx)){
       na.msg <- "All metadata columns are OK!"
@@ -810,9 +810,10 @@ CheckMetaIntegrity <- function(){
   for(i in 1:length(sel.nms)){
     dat = readDataset(sel.nms[i])
     cnms[[i]] <- colnames(dat$data.norm);
-    metas[[i]] <- as.vector(dat$meta[,1]);
-    meta.dfs[[i]] <- dat$meta;
+    metas[[i]] <- as.vector(dat$meta.info[,1]);
+    meta.dfs[[i]] <- dat$meta.info;
   }
+
   if(length(metas) == 0){
     msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
     saveSet(msgSet, "msgSet");
@@ -841,6 +842,9 @@ CheckMetaIntegrity <- function(){
   # Merge the data frames in the list while preserving the original order
   metadata <- do.call(rbind, meta.dfs)  
   na.msg <- ""
+  print(metadata);
+  print("metadata");
+
   disc.inx <- GetDiscreteInx(metadata);
   if(sum(disc.inx) == length(disc.inx)){
     msgSet$na.msg <- "All metadata columns are OK!"
