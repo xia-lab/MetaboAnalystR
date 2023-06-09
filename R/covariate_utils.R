@@ -251,7 +251,7 @@ AddMsg <- function(msg){
 PlotMultiFacCmpdSummary <- function(dataName,name, id, meta, version, format="png", dpi=72, width=NA){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
-  print(name);
+
   if(.on.public.web){
     load_ggplot()
   }

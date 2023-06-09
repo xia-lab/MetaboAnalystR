@@ -139,8 +139,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   sink("ExpressAnalyst_matrix.json");
   cat(json.obj);
   sink();
-  print(de.Num);
-  print("DENUM======");
+
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
   res <- RegisterData(dataSet);
