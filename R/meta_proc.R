@@ -674,7 +674,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   hit.inx <- which(hit.inx);
   
   res.sig<-res[hit.inx, , drop=F];
-  print(colnames(res.sig));
+  #print(colnames(res.sig));
   if("logFC" %in% colnames(res.sig)){
   hit.inx <- abs(as.numeric(res.sig[, "logFC"])) > fc.lvl #foldchange
   }else{
@@ -822,7 +822,7 @@ CheckMetaIntegrity <- function(){
   
   for(i in 1:length(sel.nms)){
     if(length(unique(metas[[i]]))>2){
-      msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+      msgSet$current.msg <- "For meta-analysis, make sure the meta-data is composed of exactly two different groups";
       saveSet(msgSet, "msgSet");
       return(0)
     }

@@ -321,7 +321,7 @@ PerformMetaDeAnal <- function(paramSet){
   
   aggr <- data.frame()
   inmex.ind.ordered <- lapply(inmex.ind, function(x){
-    print(dim(x))
+    #print(dim(x))
     x<-x[order(rownames(x)),]
   })
   

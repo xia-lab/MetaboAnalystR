@@ -103,7 +103,7 @@ GetDiscMetas <- function(dataName=""){
     keepidx <-  which(dataSet$disc.inx)
   }
   colnms<- colnames(dataSet$meta.info)[keepidx]
-  print(colnms)
+  #print(colnms)
   return(colnms);
 }
 

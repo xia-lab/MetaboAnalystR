@@ -46,7 +46,7 @@ PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
     gs.POD <- gsPOD(dataSet$omicdata, bmdcalc.res, gene.vec, geneDB)
 
 
-    print(head(gs.POD$geneset.stats));
+    #print(head(gs.POD$geneset.stats));
     #prepare pathways summary
     data.sorted = gs.POD$geneset.stats[order(gs.POD$geneset.stats$Adjusted.Pvalue),]
     details <- GetFunctionalDetails(data.sorted, gs.POD$geneset.matches)
