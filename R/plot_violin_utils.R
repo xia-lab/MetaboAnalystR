@@ -58,7 +58,6 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
       
       col <- unique(GetColorSchema(cls));   
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
-
    if(dataSet$disc.inx[dataSet$analysisVar]){
      p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
      geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
@@ -68,7 +67,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
      scale_fill_okabeito() + 
      scale_color_okabeito() + 
      ggtitle(cmpdNm) + 
-     theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+     theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
      theme_bw()
    }else{
     df.norm$name <- as.numeric(df.norm$name )
@@ -79,7 +78,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
     ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
      theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
     }
-    myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+    myplot <- p.norm + theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }else{
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls
