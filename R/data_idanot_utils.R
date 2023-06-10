@@ -135,6 +135,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 
 # Annotating genes to internal database
 AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
+
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -152,7 +153,6 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   paramSet$data.org <- org
   dataSet$q.type.gene <- idtype;
   
-  dataSet$gene.org <- org;
   dataSet$gene <- gene.vec;
   if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
     enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
@@ -160,8 +160,8 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
     names(enIDs) <- gene.vec;
   }
-  
-  tblNm <- getEntrezTableName(org, "entrez");
+  tblNm <- getEntrezTableName(org, idtype);
+
   symbol.map <- queryGeneDB(tblNm, org);
   symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
   saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
@@ -208,9 +208,13 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
       rownames(data.annotated) <- matched.entrez
     }
     dataSet$enrich_ids = rownames(int.mat);
-    names(dataSet$enrich_ids) = doEntrez2SymbolMapping(rownames(int.mat), paramSet$data.org, paramSet$data.idType)
-    
+    names(dataSet$enrich_ids) = doEntrez2SymbolMapping(rownames(int.mat), paramSet$data.org, idtype)
+    if(idtype == "s2f" || idtype == "ko"){
+    dataSet$id.type <- idtype;
+    }else{
     dataSet$id.type <- "entrez";
+
+    }
     
   }else{
     data.annotated <- data.raw;
@@ -252,6 +256,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
 
 
 
+
 # mapping between genebank, refseq and entrez
 .doGeneIDMapping <- function(feature.vec, idType, paramSet, outputType="vec"){
     org <- paramSet$data.org;
@@ -261,12 +266,12 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     idType <-"entrez";
     print(".doGeneIDMapping, empty feature.vec, get whole table");
   }
-    col.nm = "";
-    db.nm = "";
-
-  if(paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
+  col.nm = "";
+  db.nm = "";
+  
+  if(idType %in% c("s2f", "ko")){ # only for ko
     col.nm = "gene_id";
-    db.nm = paste0("entrez_", paramSet$data.idType);
+    db.nm = paste0("entrez_", idType);
   }else if(idType == "symbol"){
     col.nm = "symbol";
     db.nm = "entrez";
@@ -284,8 +289,8 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     # note, some ID can have version number which is not in the database
     # need to strip it off NM_001402.5 => NM_001402
     if(!(idType == "refseq" && org == "fcd")){ # do not strip, database contains version number.
-    q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
-    feature.vec <- q.mat[,1];
+      q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
+      feature.vec <- q.mat[,1];
     }
     col.nm = "accession";
     if(idType == "tair"){ # only for ath
@@ -295,7 +300,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
       db.nm <- paste0("entrez_", idType);
     }
   }
-
+  
   db.map <-  queryGeneDB(db.nm, org);
   if(org == "smm" && idType == "symbol"){
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
@@ -303,12 +308,12 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
     db.map[, col.nm] <- q.mat[,1];
   }
-
-   hit.inx <- match(feature.vec, db.map[, col.nm]);
-
+  
+  hit.inx <- match(feature.vec, db.map[, col.nm]);
+  
   if(outputType == "vec"){
     entrezs <- db.map[hit.inx, "gene_id"];
-
+    
     mode(entrezs) <- "character";
     rm(db.map, feature.vec); gc();
     return(entrezs);

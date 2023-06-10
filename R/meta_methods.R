@@ -87,7 +87,6 @@ CheckMetaDataIntegrity <- function(){
     }
         
     print("Passed exp condition check!");
-    
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
     dataSet <- readDataset(dataName);
@@ -174,10 +173,11 @@ CheckMetaDataIntegrity <- function(){
   # if entrez, get symbols for display
   shared.nms <- rownames(common.matrix);
   if(id.type == "entrez"){ 
-    symbols <- doEntrez2SymbolMapping(shared.nms, paramSet$data.org, paramSet$data.idType);
+    symbols <- doEntrez2SymbolMapping(shared.nms, paramSet$data.org, id.type);
   }else{ # display itself
     symbols <- shared.nms;
   }
+    paramSet$data.idType <- id.type;
   names(symbols) <- shared.nms;
   
   common.matrix[!is.finite(common.matrix)] <- NA;
