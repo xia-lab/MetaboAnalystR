@@ -400,3 +400,8 @@ CleanNumber <-function(bdata){
   }
   bdata;
 }
+
+GetMetaMethodPVal <-function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$BHth);
+}
