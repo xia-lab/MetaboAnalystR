@@ -154,6 +154,8 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
   
+  fgseaRes <- .signif_df(fgseaRes, 4);
+
   json.res <- list(
     fun.link = setres$current.setlink[1],
     fun.anot = fun.anot,
@@ -462,3 +464,4 @@ est.hyper <- function (z, D, d12)
                   log(d0.est/D))
   return(list(d0 = d0.est, s2 = s2.est))
 }
+

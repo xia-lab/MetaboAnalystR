@@ -45,9 +45,9 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$annotated <- F;
   # should not contain duplicates, however sanity check
   if(dataType=="prot"){
-   data.proc <- qs::qread("int.mat.qs");
+    data.proc <- qs::qread("int.mat.qs");
   }else{
-  data.proc <- qs::qread("data.raw.qs");
+    data.proc <- qs::qread("data.raw.qs");
   }
   dataSet$data.anot <- data.proc;
   
@@ -56,10 +56,13 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     
     anot.id <- .doAnnotation(feature.vec, idType, paramSet);
     anot.id <- unname(anot.id);
-    
-    symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+    if(idType %in% c("s2f", "generic")){
+      symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
+    }else{
+      symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+    }
     symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
-
+    
     saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
     
     qs::qsave(anot.id, "annotation.qs");
@@ -105,141 +108,32 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$data.norm <- dataSet$data.anot;
   
   qs::qsave(dataSet$data.anot, file="orig.data.anot.qs"); # keep original copy, not in mem
-
+  
   totalCount <-  sum(colSums(dataSet$data.anot));
   avgCount <- sum(colSums(dataSet$data.anot))/ ncol(dataSet$data.anot);
   minCount <- min(colSums(dataSet$data.anot))
   maxCount <- max(colSums(dataSet$data.anot))
- lvls = ""
- if(any(dataSet$disc.inx.orig)){
-  disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
-  lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
- }
- if(any(dataSet$cont.inx.orig)){
-  cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
-  lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
- }
+  lvls = ""
+  if(any(dataSet$disc.inx.orig)){
+    disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
+    lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
+  }
+  if(any(dataSet$cont.inx.orig)){
+    cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
+    lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
+  }
   missNum = which(is.na(dataSet$data.anot)|dataSet$data.anot=="NA"|dataSet$data.anot=="")
   msgSet$current.msg <- current.msg;
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta.info), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls,length(missNum))  
   if(length(missNum)>0){
-   RemoveMissingPercent(dataSet$name, 0.5)
-   ImputeMissingVar(dataSet$name, method="min")
+    RemoveMissingPercent(dataSet$name, 0.5)
+    ImputeMissingVar(dataSet$name, method="min")
   }else{
-   qs::qsave(dataSet$data.anot, file="data.missed.qs");
+    qs::qsave(dataSet$data.anot, file="data.missed.qs");
   }
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
-}
-
-# Annotating genes to internal database
-AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
-
-  paramSet <- readSet(paramSet, "paramSet");
-  msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- readDataset(dataName);
-  
-  if(org == "NA"){
-    msgSet$current.msg <- "Invalid organism!"
-    saveSet(msgSet, "msgSet");
-    return(1)
-  }
-  
-  data.raw <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
-  gene.vec <- rownames(data.raw);
-  
-  #record the info
-  paramSet$data.org <- org
-  dataSet$q.type.gene <- idtype;
-  
-  dataSet$gene <- gene.vec;
-  if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
-    enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
-  }else{
-    enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
-    names(enIDs) <- gene.vec;
-  }
-  tblNm <- getEntrezTableName(org, idtype);
-
-  symbol.map <- queryGeneDB(tblNm, org);
-  symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
-  saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
-  
-  
-  if(idtype == "kos"){
-    kos <- enIDs$kos;
-    enIDs <- enIDs$entrezs;
-    dataSet$kos.name.map <- kos
-  }
-  
-  # Handle case when only KOs are mapped with no corresponding entrez id
-  na.inx <- is.na(enIDs);
-  
-  if(sum(!na.inx) == 0 && idtype == "kos"){
-    na.inx <- is.na(kos);
-  }
-  
-  dataSet$gene.name.map <- list(
-    hit.values=enIDs,
-    match.state = ifelse(is.na(enIDs), 0, 1)
-  );
-  
-  hit.inx <- which(!is.na(enIDs));
-  matched.len <- length(hit.inx);
-  if(matched.len > 1){
-    data.norm <- data.raw[hit.inx,];
-    matched.entrez <- enIDs[hit.inx];
-    
-    
-    # now, deal with duplicated entrez id
-    # first, average duplicate rows
-    
-    res <- RemoveDuplicates(data.norm, lvlOpt, quiet=F, paramSet, msgSet);
-    int.mat <- res[[1]];
-    msgSet <- res[[2]];
-    # update
-    
-    data.annotated <-int.mat;
-    rownames(int.mat) <- matched.entrez
-    if(idtype %in% c("mir_id", "mir_acc", "mirnet")){
-      rownames(data.annotated) <- rownames(int.mat);
-    }else{
-      rownames(data.annotated) <- matched.entrez
-    }
-    dataSet$enrich_ids = rownames(int.mat);
-    names(dataSet$enrich_ids) = doEntrez2SymbolMapping(rownames(int.mat), paramSet$data.org, idtype)
-    if(idtype == "s2f" || idtype == "ko"){
-    dataSet$id.type <- idtype;
-    }else{
-    dataSet$id.type <- "entrez";
-
-    }
-    
-  }else{
-    data.annotated <- data.raw;
-    dataSet$enrich_ids = rownames(data.annotated)
-    dataSet$id.type <- "none";
-  }
-  
-  if(idtype != "NA"){
-    if(length(unique(enIDs))/length(gene.vec) < 0.3){
-      msg <- paste("Less than ", round( length(unique(enIDs))/length(gene.vec) * 100, 2), "% features were mapped");
-      msgSet$current.msg <- msg;
-      saveSet(msgSet, "msgSet");
-      return(0)
-    }else{
-      msg <- paste("A total of ", length(unique(enIDs)), "unique features were mapped");
-    }
-  }else{
-    msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
-  }
-  
-  saveDataQs(data.annotated, "data.annotated.qs", paramSet$anal.type, dataName);
-  msgSet$current.msg <- msg;
-  saveSet(msgSet, "msgSet");
-  saveSet(paramSet, "paramSet");
-  return(RegisterData(dataSet));
 }
 
 
@@ -269,7 +163,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   col.nm = "";
   db.nm = "";
   
-  if(idType %in% c("s2f", "ko")){ # only for ko
+  if(idType %in% c("s2f", "ko") || paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
     col.nm = "gene_id";
     db.nm = paste0("entrez_", idType);
   }else if(idType == "symbol"){

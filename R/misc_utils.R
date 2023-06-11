@@ -1035,3 +1035,10 @@ RangeNorm<-function(x){
     (x - mean(x))/(max(x)-min(x));
   }
 }
+
+.signif_df <-function(df, num_digits=4){
+  library(dplyr)
+df_updated <- df %>%
+  mutate_if(is.numeric, ~ signif(., digits = num_digits))
+  return(df_updated);
+}
