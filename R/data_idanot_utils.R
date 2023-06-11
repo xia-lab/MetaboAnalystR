@@ -137,6 +137,111 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
 }
 
 
+# Annotating genes to internal database
+AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
+  paramSet <- readSet(paramSet, "paramSet");
+  msgSet <- readSet(msgSet, "msgSet");
+  dataSet <- readDataset(dataName);
+  
+  if(org == "NA"){
+    msgSet$current.msg <- "Invalid organism!"
+    saveSet(msgSet, "msgSet");
+    return(1)
+  }
+  
+  data.raw <- readDataQs("data.raw.qs", paramSet$anal.type, dataName);
+  gene.vec <- rownames(data.raw);
+  
+  #record the info
+  paramSet$data.org <- org
+  dataSet$q.type.gene <- idtype;
+  
+  dataSet$gene.org <- org;
+  dataSet$gene <- gene.vec;
+  if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
+    enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
+  }else{
+    enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
+    names(enIDs) <- gene.vec;
+  }
+  
+  tblNm <- getEntrezTableName(org, "entrez");
+  symbol.map <- queryGeneDB(tblNm, org);
+  symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
+  saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+  
+  
+  if(idtype == "kos"){
+    kos <- enIDs$kos;
+    enIDs <- enIDs$entrezs;
+    dataSet$kos.name.map <- kos
+  }
+  
+  # Handle case when only KOs are mapped with no corresponding entrez id
+  na.inx <- is.na(enIDs);
+  
+  if(sum(!na.inx) == 0 && idtype == "kos"){
+    na.inx <- is.na(kos);
+  }
+  
+  dataSet$gene.name.map <- list(
+    hit.values=enIDs,
+    match.state = ifelse(is.na(enIDs), 0, 1)
+  );
+  
+  hit.inx <- which(!is.na(enIDs));
+  matched.len <- length(hit.inx);
+  if(matched.len > 1){
+    data.norm <- data.raw[hit.inx,];
+    matched.entrez <- enIDs[hit.inx];
+    
+    
+    # now, deal with duplicated entrez id
+    # first, average duplicate rows
+    
+    res <- RemoveDuplicates(data.norm, lvlOpt, quiet=F, paramSet, msgSet);
+    int.mat <- res[[1]];
+    msgSet <- res[[2]];
+    # update
+    
+    data.annotated <-int.mat;
+    rownames(int.mat) <- matched.entrez
+    if(idtype %in% c("mir_id", "mir_acc", "mirnet")){
+      rownames(data.annotated) <- rownames(int.mat);
+    }else{
+      rownames(data.annotated) <- matched.entrez
+    }
+    dataSet$enrich_ids = rownames(int.mat);
+    names(dataSet$enrich_ids) = doEntrez2SymbolMapping(rownames(int.mat), paramSet$data.org, paramSet$data.idType)
+    
+    dataSet$id.type <- "entrez";
+    
+  }else{
+    data.annotated <- data.raw;
+    dataSet$enrich_ids = rownames(data.annotated)
+    dataSet$id.type <- "none";
+  }
+  
+  if(idtype != "NA"){
+    if(length(unique(enIDs))/length(gene.vec) < 0.3){
+      msg <- paste("Less than ", round( length(unique(enIDs))/length(gene.vec) * 100, 2), "% features were mapped");
+      msgSet$current.msg <- msg;
+      saveSet(msgSet, "msgSet");
+      return(0)
+    }else{
+      msg <- paste("A total of ", length(unique(enIDs)), "unique features were mapped");
+    }
+  }else{
+    msg <- paste("There is a total of ", length(unique(gene.vec)), "unique features.");
+  }
+  
+  saveDataQs(data.annotated, "data.annotated.qs", paramSet$anal.type, dataName);
+  msgSet$current.msg <- msg;
+  saveSet(msgSet, "msgSet");
+  saveSet(paramSet, "paramSet");
+  return(RegisterData(dataSet));
+}
+
 #Convert a vector of ids to vector of entrez ids
 .doAnnotation <- function(feature.vec, idType, paramSet){
   if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein","uniprot", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
