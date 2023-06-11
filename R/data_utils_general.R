@@ -62,7 +62,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   msgSet$summaryVec <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "NA"); 
   analSet$enr.mat <- NULL;
   paramSet$numOfLists <- 1;
-  paramSet$gseaRankOpt <- "pval";
+  paramSet$gseaRankOpt <- "fc";
   paramSet$data.idType <- "";
   paramSet$pvalu <- 0.05;
   paramSet$selDataNm <- "meta_default";
