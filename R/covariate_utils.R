@@ -43,7 +43,7 @@ CovariateScatter.Anal <- function(dataName,
     }
   }
 
-  dataSet <- .multiCovariateRegression(dataSet,analysis.var, ref,contrast.cls, random.effects=adj.vec, T);
+  dataSet <- .multiCovariateRegression(dataSet,analysis.var, ref,contrast.cls, random.effects=adj.vec, T, F);
 
   rest <- dataSet$comp.res;
   res.noadj <- dataSet$res.noadj;
