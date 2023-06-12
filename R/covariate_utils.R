@@ -60,6 +60,7 @@ CovariateScatter.Anal <- function(dataName,
   both.mat$fdr.adj <- -log10(both.mat$fdr.adj)
   both.mat$pval.no <- -log10(both.mat$pval.no)
   both.mat$fdr.no <- -log10(both.mat$fdr.no)
+  rownames(both.mat) = both.mat[,"Row.names"]
   both.mat$label <- invert_named_vector(dataSet$enrich_ids)[as.character(rownames(both.mat))];  
 
   # make plot
@@ -92,7 +93,7 @@ CovariateScatter.Anal <- function(dataName,
     # order the result simultaneously
   }
   AddMsg(paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" "));
-  rownames(both.mat) = both.mat[,1]
+
   both.mat <- both.mat[rownames(rest),]
 
   rest$label <- invert_named_vector(dataSet$enrich_ids)[as.character(rest$ids)];
@@ -279,11 +280,13 @@ PlotMultiFacCmpdSummary <- function(dataName,name, id, meta, version, format="pn
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   if(cls.type == "disc"){
-    p <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1) 
+    p <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name)) + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + theme_bw() + geom_jitter(size=1) 
     p <- p + scale_fill_manual(values=col) + theme(axis.text.x = element_text(angle=90, hjust=1))
     p <- p + ggtitle(name) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance") + xlab(meta)
     p <- p + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-    p <- p + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+    p <- p + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+    p <- p + theme(legend.position = "none");
+
   }else{
     p <- ggplot2::ggplot(df.norm, aes(x=name, y=value)) 
     p <- p + geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)     

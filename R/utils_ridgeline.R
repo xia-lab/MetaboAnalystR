@@ -104,13 +104,13 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     res$pval <- as.numeric(res$pval)
   } else {
     rankedVec = "";
-    if(paramSet$selDataNm == "meta_default" && anal.type == "metadata"){
+    #if(paramSet$selDataNm == "meta_default" && anal.type == "metadata"){
       fcs <- allmat[,inx];
       names(fcs) <- rownames(allmat);
       rankedVec <- analSet$rankedVec;
-    }else{
-      rankedVec<- ComputeRankedVec(dataSet, paramSet$gseaRankOpt, paramSet$selectedFactorInx);
-    }
+    #}else{
+    #  rankedVec<- ComputeRankedVec(dataSet, paramSet$gseaRankOpt, paramSet$selectedFactorInx);
+    #}
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
       res <- fgsea::fgsea(pathways = current.geneset, 
                           stats    = rankedVec,
