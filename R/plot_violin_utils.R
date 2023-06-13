@@ -15,10 +15,10 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
     PlotSelectedGene(dataName, gene.id, "notVolcano");
   }
 }
-
+dataName="E-GEOD-25713.txt"; imgName="Gene_246256_0_";gene.id="246256";type="notVolcano";format="png";dpi=72
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
-
+  
   library(see);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -28,10 +28,10 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
   imgName <- paste(imgName,"dpi",dpi,".",format,sep="");
   require(lattice);
   if(length(dataSet$rmidx)>0){
-       data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
-    }else{
-       data.norm <- dataSet$data.norm;
-   }
+    data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
+  }else{
+    data.norm <- dataSet$data.norm;
+  }
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
@@ -43,8 +43,8 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
       if(dataSet$comp.type == "custom"){
         Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
         grp.nms <- dataSet$grp.nms;
-      if(dataSet$cont.inx[dataSet$analysisVar] |  any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))){
-         grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
+        if(dataSet$cont.inx[dataSet$analysisVar] |  any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))){
+          grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
         } 
         inx <- dataSet$cls %in% grp.nms;
         cls <- dataSet$cls[inx]
@@ -58,27 +58,27 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
       
       col <- unique(GetColorSchema(cls));   
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
-   if(dataSet$disc.inx[dataSet$analysisVar]){
-     p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
-     geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
-     geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
-     theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
-     stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-     scale_fill_okabeito() + 
-     scale_color_okabeito() + 
-     ggtitle(cmpdNm) + 
-     theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-     theme_bw()
-   }else{
-    df.norm$name <- as.numeric(df.norm$name )
-    p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
-    geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
-    xlab(dataSet$analysisVar) +
-    theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
-    ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
-     theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
-    }
-    myplot <- p.norm + theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+      if(dataSet$disc.inx[dataSet$analysisVar]){
+        p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
+          geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
+          geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+          theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
+          stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
+          scale_fill_okabeito() + 
+          scale_color_okabeito() + 
+          ggtitle(cmpdNm) + 
+          theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+          theme_bw()
+      }else{
+        df.norm$name <- as.numeric(df.norm$name )
+        p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
+          geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
+          xlab(dataSet$analysisVar) +
+          theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
+          ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
+          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
+      }
+      myplot <- p.norm + theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }else{
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls
@@ -125,6 +125,7 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
     }
     
   }else{ # metadata
+    save.image("metaviolin.RData");
     mdata.all <- paramSet$mdata.all;
     inmex.meta <- qs::qread("inmex_meta.qs");
     if(inmex.meta$id.type == "entrez"){
@@ -157,34 +158,17 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
         width <- 280;
         row.num <- num;
       }else{
-        if(num < 6){
-          layout <- c(num, 1);
-          height=320;
-          width=160*num;
-        }else{
-          rn <- round(num/2);
-          layout <- c(rn, 2);
-          height=500;
-          width=160*rn;
-        }
-        
-        
-        row.num <- ceiling(num/2)
-        
-        if(row.num == 6){
-          layout <- c(row.num, 1);
-          h=320;
-          w=160*row.num;
-        }else{
-          rn <- round(row.num/2);
-          layout <- c(rn, 2);
-          h=500;
-          w=160*rn;
-        }
-      } 
-      width = width*dpi/72
-      height = height*dpi/72
 
+          h=500;
+          if(num>5){
+            w=140*num;
+          }else{
+            w=100*num;
+          }
+      } 
+      width = h*dpi/72
+      height = w*dpi/72
+      
       Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi=dpi);
       data.lbl <- as.character(inmex.meta$data.lbl);
       data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
@@ -216,12 +200,11 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
       }
       
       alldata <- do.call(rbind, p_all)
-      alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
+      alldata$Dataset <- factor(as.character(alldata$facA), levels=levels(out.fac))
+      colnames(alldata) <- c("Dataset", "value", "Factor")
       
-      p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + geom_jitter(height = 0, width = 0.05, show.legend = FALSE) + theme_bw()
-      p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
+      p.time <- ggplot2::ggplot(alldata, aes(x=Dataset, y=value, fill=Factor)) + geom_boxplot()  + theme_bw()
       p.time <- p.time + scale_fill_manual(values=col) + 
-        scale_color_manual(values=col) +
         theme(axis.text.x = element_text(angle=90, hjust=1))
       p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Expression")
       p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
