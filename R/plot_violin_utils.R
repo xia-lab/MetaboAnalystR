@@ -17,7 +17,7 @@ PlotSelectedGeneLoading<-function(dataName="", gene.id){
 }
 
 # given a gene id, plot its expression profile as violin plot
-PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol = F){
+PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
 
   library(see);
   paramSet <- readSet(paramSet, "paramSet");
@@ -25,7 +25,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
   require(ggplot2)
-  imgName <- paste("Gene_", gene.id, ".png", sep="");
+  imgName <- paste(imgName,"dpi",dpi,".",format,sep="");
   require(lattice);
   if(length(dataSet$rmidx)>0){
        data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
@@ -41,7 +41,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
     }    
     if(length(dataSet$sec.cls)==1){
       if(dataSet$comp.type == "custom"){
-        Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+        Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
         grp.nms <- dataSet$grp.nms;
       if(dataSet$cont.inx[dataSet$analysisVar] |  any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))){
          grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
@@ -50,7 +50,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
         cls <- dataSet$cls[inx]
         dat <- data.norm[,inx];
       }else{
-        Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+        Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
         dat <- data.norm
         meta <- dataSet$meta.info[rownames(dataSet$meta.info) %in% colnames(dat),,drop=F]
         cls <- droplevels(meta[match(rownames(meta),colnames(dat)),dataSet$analysisVar])
@@ -106,7 +106,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
         df.orig <- data.frame(facA = lv, value = data.norm[gene.id, inx], name = in.fac[inx])
         p_all[[lv]] <- df.orig
       }
-      Cairo(file <- imgName, dpi=72, width=320, height=320, type="png", bg="white");
+      Cairo(file <- imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
       
       alldata <- do.call(rbind, p_all)
       alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
@@ -135,7 +135,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
     num <- sum(mdata.all == 1);
     # calculate width based on the dateset number
     if(num == 1){
-      Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+      Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi);
       
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
@@ -182,8 +182,10 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
           w=160*rn;
         }
       } 
-      
-      Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+      width = width*dpi/72
+      height = height*dpi/72
+
+      Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi=dpi);
       data.lbl <- as.character(inmex.meta$data.lbl);
       data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
       
@@ -230,7 +232,7 @@ PlotSelectedGene <-function(dataName="", gene.id, type="notvolcano", singleCol =
   dev.off();
 }
 
-UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
+UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png", dpi=72){
   require(ggplot2);
   require(see);
   require(lattice);
@@ -239,7 +241,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-  imgName <- paste("Gene_", gene.id,"_",boxmeta ,".png", sep="");
+  imgName <- paste(imgName,boxmeta ,".png", sep="");
   meta <- dataSet$meta.info[dataSet$meta.info[,boxmeta]!="NA",boxmeta,drop=F];
   cls <- droplevels(meta[,boxmeta]);
   data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
@@ -249,7 +251,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
     inx <- which(ids == gene.id);
     cmpdNm <- analSet$sig.genes.symbols[inx]; 
 
-        Cairo(file = imgName,  width=320, height=380, type="png", bg="white");
+        Cairo(file = imgName,  width=320, height=380, type=format, dpi=dpi, bg="white");
         dat <- data.norm
        
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
@@ -287,7 +289,7 @@ UpdateMultifacPlot <-function(dataName="", gene.id, boxmeta){
     num <- sum(mdata.all == 1);
     # calculate width based on the dateset number
     if(num == 1){
-      Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+      Cairo(file = imgName, width=280, height=320, type=format, dpi=dpi, bg="white");
       
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
