@@ -80,9 +80,9 @@ GetColorGradient <- function(background, center, colorblind=F) {
   if (background == "black") {
     if (center) {
       if (colorblind) {
-        return(c(colorRampPalette(c("#3182bd", "#6baed6", "#bdd7e7", "#eff3ff"))(50), colorRampPalette(c("#FF9DA6", "#FF7783", "#E32636", "#BD0313"))(50)))
+        return(c(colorRampPalette(c("#3182bd", "#6baed6", "#bdd7e7"))(50), colorRampPalette(c("#FF7783", "#E32636", "#BD0313"))(50)))
       } else {
-        return(c(colorRampPalette(c("#31A231", "#5BC85B", "#90EE90", "#C1FFC1"))(50), colorRampPalette(c("#FF9DA6", "#FF7783", "#E32636", "#BD0313"))(50)))
+        return(c(colorRampPalette(c("#31A231", "#5BC85B", "#90EE90"))(50), colorRampPalette(c("#FF7783", "#E32636", "#BD0313"))(50)))
       }
     } else {
       if (colorblind) {
