@@ -161,13 +161,13 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
 
           h=500;
           if(num>5){
-            w=140*num;
-          }else{
             w=100*num;
+          }else{
+            w=140*num;
           }
       } 
-      width = h*dpi/72
-      height = w*dpi/72
+      width = w*dpi/72
+      height = h*dpi/72
       
       Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi=dpi);
       data.lbl <- as.character(inmex.meta$data.lbl);
