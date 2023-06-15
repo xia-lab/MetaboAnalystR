@@ -665,7 +665,11 @@ multiHyperGeoTest <- function(collectionOfGeneSets, universe, hits,
 gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
   
   # create gene set library object
-  gs.rds <- readRDS(file)
+  gs.rds <- readRDS(file);
+  if(is.null(names(gs.rds))){ # some go lib does not give names
+    names(gs.rds) <- c("link", "term", "sets");
+  }
+
   gs.names <- data.frame(name = gs.rds$term, id = names(gs.rds$sets))
   gs.lib <- gs.rds[["sets"]]
   

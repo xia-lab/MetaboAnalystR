@@ -185,7 +185,7 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
       # update labels
       data.lbl <- factor(data.lbl, labels=nlbls);
       # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-      p_all <- list()
+      p_all <- list();
       
       out.fac <- data.lbl;
       in.fac <- inmex.meta$cls.lbl;
