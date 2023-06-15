@@ -216,6 +216,8 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
 }
 
 UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png", dpi=72){
+  save.image('multi.RData');
+
   require(ggplot2);
   require(see);
   require(lattice);
@@ -224,7 +226,7 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-  imgName <- paste(imgName,boxmeta ,".png", sep="");
+  imgName <- paste(imgName,"dpi",dpi,".",format,sep="");
   meta <- dataSet$meta.info[dataSet$meta.info[,boxmeta]!="NA",boxmeta,drop=F];
   cls <- droplevels(meta[,boxmeta]);
   data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
@@ -242,13 +244,13 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
         p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
           geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
           geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+          theme_bw()+
           theme(legend.position = "none") +  xlab(boxmeta) +
           stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
           scale_fill_okabeito() + 
           scale_color_okabeito() + 
           ggtitle(cmpdNm) + 
-          theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-          theme_bw()
+          theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank())
       }else{
         df.norm$name <- as.numeric(as.character(df.norm$name ))
         p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
@@ -256,7 +258,7 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
           xlab(boxmeta) +
           theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
           ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
-          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
+          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
       }
       myplot <- p.norm + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     
