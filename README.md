@@ -130,11 +130,12 @@ The R scripts to perform all of the analysis from our previous manuscript "Metab
 
 The detailed tutorial of the outdated version to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis still works. The tutorial is available as a PDF is also available inside the R package as a vignette.
 
-### MetaboAnalystR 1.0: To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
+### MetaboAnalystR 1.0:  flexible and reproducible analysis of metabolomics data
+To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
 
 ## Tutorials
 
-For detailed tutorials on how to use MetaboAnalystR 3.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 3.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 3.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
+For detailed tutorials on how to use MetaboAnalystR 4.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 4.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 4.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
 
 Within R:
 ```R
@@ -175,6 +176,22 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+05-30-2023 - Version Update: 4.0.0: pre-release of version 4.0
+
+11-27-2022 - Version Update: 3.3.0: pre-version of 4.0 by fixing bugs and stablize the functions
+
+10-30-2022 - Bug fixes and update
+
+02-01-2022 - Raw data processing pipeline update
+
+07-18-2021 - Bug fixed and API services fixes
+
+06-18-2020 - Version Update: 3.2.0
+
+01-20-2021 - Sync R code, updates bug fixes
+
+12-30-2020 - Version Update: 3.1.0
 
 09-22-2020 - Sync R code w. web, change .rds files to .qs (requires .qs R package). 
 
