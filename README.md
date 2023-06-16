@@ -1,4 +1,4 @@
-# MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
+# MetaboAnalystR 4.0: a unified LC-MS workflow for global metabolomics
 
 <p align="center">
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/inst/docs/MetaboAnalystRlogo.png">
@@ -9,9 +9,9 @@
 **MetaboAnalystR 4.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
 
 The version 4.0 aims to address three key challenges facing global metabolomics. By leveraging the best practices established by the community, MetaboAnalyst R 4.0 offers three key features: 
-* 1) an auto-optimized feature detection and quantification module for LC-MS1 spectra processing;
-* 2) a streamlined MS/MS spectra deconvolution and compound annotation module for both data-dependent acquisition (DDA) or data-independent acquisition (DIA); 
-* 3) a sensitive and debiased functional interpretation module for functional analysis directly from LC-MS and MS/MS results. 
+1) an auto-optimized feature detection and quantification module for LC-MS1 spectra processing;
+2) a streamlined MS/MS spectra deconvolution and compound annotation module for both data-dependent acquisition (DDA) or data-independent acquisition (DIA); 
+3) a sensitive and debiased functional interpretation module for functional analysis directly from LC-MS and MS/MS results. 
 
 MetaboAnalystR 4.0 comes with a large collection of knowledgebases (~500,000 entries of metabolite sets) and spectra databases (~1.5 million MS2 spectra) to support local large-scale processing or using our API service. 
  
