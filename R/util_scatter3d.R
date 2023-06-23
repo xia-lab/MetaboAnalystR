@@ -40,17 +40,20 @@ my.json.scatter <- function(filenm, containsLoading=F){
   pos.xyz <- pos.xyz[1:(nrow(pos.xyz) - 2), ]
   
   metadf <- res$facA
-  
+  if(!is.factor(metadf)){
+    metadf <- as.factor(metadf);
+  }
+
   col = vector();
   
-  meta.vec <- levels(metadf)
-  meta.vec.num <- as.integer(metadf)
+  meta.vec <- as.vector(metadf)
+  meta.vec.num <- as.integer(as.factor(metadf))
   col.s <- rgb_array_to_hex_array(res$colors)
   for(i in 1:length(meta.vec.num)){
     col[i] = col.s[meta.vec.num[i]];
   }
 
-  legendData <- list(label=unique(meta.vec),color=col.s)
+  legendData <- list(label=levels(metadf),color=col.s)
   #for IPCA in multifactor
 
   if("facB" %in% names(res)){
