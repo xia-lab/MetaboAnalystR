@@ -137,8 +137,13 @@ SanityCheckData <- function(mSetObj=NA){
           if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
             AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
             AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
-            AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
-            return(-1);
+            if(length(levels(cls.Clean)) > 10){
+                AddErrMsg("<font color='red'>It seems the number of groups is big. Make sure to specify the correct format (i.e. samples in <b>columns</b> or <b>rows</b>) in the Data Upload page</font>");
+                return(-2);
+            }else{
+                AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
+                return(-1);
+            }
           }
         }
         

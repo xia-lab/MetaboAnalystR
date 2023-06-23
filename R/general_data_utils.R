@@ -1005,6 +1005,11 @@ GetOrigSmplSize <- function(mSetObj=NA){
   length(mSetObj$dataSet$orig.cls);
 }
 
+GetOrigSmplGroupNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.character(mSetObj$dataSet$orig.cls);
+}
+
 GetOrigSmplGroupNamesPerMeta <- function(mSetObj=NA, metaname="NA"){
   mSetObj <- .get.mSet(mSetObj);
   if(metaname %in% colnames(mSetObj$dataSet$meta.info)){
