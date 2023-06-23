@@ -1,4 +1,4 @@
-# MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
+# MetaboAnalystR 4.0: a unified LC-MS workflow for global metabolomics
 
 <p align="center">
   <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/inst/docs/MetaboAnalystRlogo.png">
@@ -6,16 +6,22 @@
 
 ## Description 
 
-**MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
+**MetaboAnalystR 4.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
 
-The version 3.0 aims to improve the current global metabolomics workflow by implementing a fast parameter optimization algorithm for peak picking, and automated identification of the most suitable method for batch effect correction from 12 well-established approaches. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multi'omics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards an Optimized Workflow for Global Metabolomics" vignette, available [here](https://drive.google.com/file/d/13PRxRicyKhLSyA9PD7UmV4RsjecaQOkq/view?usp=sharing) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
+The version 4.0 aims to address three key challenges facing global metabolomics. By leveraging the best practices established by the community, MetaboAnalyst R 4.0 offers three key features: 
+1) an auto-optimized feature detection and quantification module for LC-MS1 spectra processing;
+2) a streamlined MS/MS spectra deconvolution and compound annotation module for both data-dependent acquisition (DDA) or data-independent acquisition (DIA); 
+3) a sensitive and debiased functional interpretation module for functional analysis directly from LC-MS and MS/MS results. 
+
+MetaboAnalystR 4.0 comes with a large collection of knowledgebases (~500,000 entries of metabolite sets) and spectra databases (~1.5 million MS2 spectra) to support local large-scale processing or using our API service. 
  
+Our comprehensive benchmark studies show that MetaboAnalystR 4.0 can significantly improve the quantification accuracy and identification coverage of the metabolome. Serial dilutions demonstrate that MetaboAnalystR 4.0 can accurately detect and identify > 10% more high-quality MS and MS/MS features. For both DDA and DIA datasets, MetaboAnalystR 4.0 can increase the true positive rate of chemical identification by > 40% without increasing false identifications. The increased coverage and accuracy enable more accurate biological insights. In conclusion, MetaboAnalystR 4.0 provides an efficient pipeline that bridges LC-MS/MS data processing to biological insights in the open-source R environment.
 
 ## Getting Started
 
 ### Step 1. Install package dependencies 
 
-To use MetaboAnalystR 3.0, first install all package dependencies. Ensure that you have necessary system environment configured. 
+To use MetaboAnalystR 4.0, first install all package dependencies. Ensure that you have necessary system environment configured. 
 
 For Linux (e.g. Ubuntu 18.04/20.04): libcairo2-dev, libnetcdf-dev, libxml2, libxt-dev and libssl-dev should be installed at frist;
 
@@ -71,11 +77,11 @@ pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphvi
 ```
 ### Step 2. Install the package
 
-MetaboAnalystR 3.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. You can install the MetaboAnalylstR 3.0 via any of the three options: A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
+MetaboAnalystR 4.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. You can install the MetaboAnalylstR 3.0 via any of the three options: A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
 
 #### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
 
-Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 3.0 without any documentation (i.e. vignettes). 
+Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 4.0 without any documentation (i.e. vignettes). 
 
 ```R
 # Step 1: Install devtools
@@ -113,24 +119,23 @@ R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
 
 ## Case Studies
 
-### MetaboAnalystR 3.0 Workflow: Towards an Optimized Workflow for Global Metabolomics
+### MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
 
 The case studies have been preformed in our article of this version [here](https://www.mdpi.com/2218-1989/10/5/186) (available online now). The example running R code of this article have been provided as a vignette inside the R package.
 
 
-### MetaboAnalystR 2.0 Workflow: From Raw Spectra to Biological Insights
+### MetaboAnalystR 2.0: From Raw Spectra to Biological Insights
 
 The R scripts to perform all of the analysis from our previous manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
 
 The detailed tutorial of the outdated version to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis still works. The tutorial is available as a PDF is also available inside the R package as a vignette.
 
-### MetaboAnalystR 1.0
-
+### MetaboAnalystR 1.0:  flexible and reproducible analysis of metabolomics data
 To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
 
 ## Tutorials
 
-For detailed tutorials on how to use MetaboAnalystR 3.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 3.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 3.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
+For detailed tutorials on how to use MetaboAnalystR 4.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 4.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 4.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
 
 Within R:
 ```R
@@ -171,6 +176,22 @@ MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp
 To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to zhiqiang.pang@mail.mcgill.ca.
 
 ## MetaboAnalystR History & Updates
+
+05-30-2023 - Version Update: 4.0.0: pre-release of version 4.0
+
+11-27-2022 - Version Update: 3.3.0: pre-version of 4.0 by fixing bugs and stablize the functions
+
+10-30-2022 - Bug fixes and update
+
+02-01-2022 - Raw data processing pipeline update
+
+07-18-2021 - Bug fixed and API services fixes
+
+06-18-2020 - Version Update: 3.2.0
+
+01-20-2021 - Sync R code, updates bug fixes
+
+12-30-2020 - Version Update: 3.1.0
 
 09-22-2020 - Sync R code w. web, change .rds files to .qs (requires .qs R package). 
 

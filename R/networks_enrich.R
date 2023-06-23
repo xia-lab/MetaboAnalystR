@@ -167,7 +167,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
 #'@export
 #'@import RSQLite
 SearchNetDB <- function(mSetObj=NA, db.type, table.nm, require.exp=TRUE, min.score = 900){
-    save.image("search.RData");
+
     mSetObj <- .get.mSet(mSetObj);
   
     if(.on.public.web){

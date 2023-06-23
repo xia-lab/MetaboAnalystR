@@ -835,7 +835,7 @@ plot_dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72)
 
 GetAllBatchNames <- function(mSetObj=NA){
   
-  #mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj);
   
   if(is.null(mSetObj$dataSet$batch)){
     return(0);
@@ -844,7 +844,7 @@ GetAllBatchNames <- function(mSetObj=NA){
 }
 
 ResetBatchData <- function(mSetObj=NA){
-  #mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;
   return(.set.mSet(mSetObj));
 }
@@ -4315,56 +4315,4 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
 }
 
 
-##############################################
-##############################################
-########## Utilities for web-server ##########
-##############################################
-##############################################
-
-GetAllBatchNames <- function(mSetObj=NA){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(is.null(mSetObj$dataSet$batch)){
-    return(0);
-  }
-  names(mSetObj$dataSet$batch);
-}
-
-ResetBatchData <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$batch <- mSetObj$dataSet$batch.cls <- NULL;
-  return(.set.mSet(mSetObj));
-}
-
-#'Create semitransparant colors
-#'@description Create semitransparant colors for a given class label
-#'@param cls Input class labels
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'
-
-CreateSemiTransColors <- function(cls){
-  
-  # note, the first color (red) is for QC
-  col.nms <- rainbow(length(levels(cls)));
-  
-  # convert to semi-transparent
-  semi.nms <- ToSemiTransParent(col.nms);
-  
-  # now expand to the one-to-one match to cls element
-  col.vec <- vector(mode="character", length=length(cls));
-  for (i in 1:length(levels(cls))){
-    lv <- levels(cls)[i];
-    col.vec[cls==lv] <- semi.nms[i];
-  }
-  return(col.vec);
-}
-
-# convert rgb color i.e. "#00FF00FF" to semi transparent
-ToSemiTransParent <- function (col.nms, alpha=0.5){
-  rgb.mat <- t(col2rgb(col.nms));
-  rgb(rgb.mat/255, alpha=alpha);
-}
 
