@@ -43,8 +43,8 @@ my.json.scatter <- function(filenm, containsLoading=F){
   
   col = vector();
   
-  meta.vec = as.vector(metadf)
-  meta.vec.num = as.integer(as.factor(metadf))
+  meta.vec <- levels(metadf)
+  meta.vec.num <- as.integer(metadf)
   col.s <- rgb_array_to_hex_array(res$colors)
   for(i in 1:length(meta.vec.num)){
     col[i] = col.s[meta.vec.num[i]];
