@@ -571,7 +571,8 @@ CovariateScatter.Anal <- function(mSetObj,
   
   AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
   rownames(both.mat) = both.mat[,1]
-  both.mat <- both.mat[rownames(rest),]
+  both.mat <- both.mat[rownames(rest),];
+  fast.write.csv(signif(both.mat[,-1],5),file="covariate_adj_vs_none.csv");
   if(sig.num> 0){
     res <- 1;
     #fileName <- "covariate_result.csv"

@@ -1028,7 +1028,7 @@ GeneratePeakList <- function(userPath) {
   setwd(userPath)
   
   while(!file.exists("mSet.rda")){
-    cat("waiting data writing done...")
+    #cat("waiting data writing done...")
     Sys.sleep(3)
   }
   load("mSet.rda")
