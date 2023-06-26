@@ -8,13 +8,11 @@ CovariateScatter.Anal(
   mSetObj,
   imgName = "NA",
   format = "png",
-  dpi = 72,
-  theme = "default",
   analysis.var,
   ref = NULL,
   block = "NA",
   thresh = 0.05,
-  all_results = FALSE
+  contrast.cls = "anova"
 )
 }
 \arguments{
@@ -24,10 +22,6 @@ CovariateScatter.Anal(
 
 \item{format}{image format}
 
-\item{dpi}{image dpi}
-
-\item{theme}{image theme}
-
 \item{analysis.var}{variable of analysis}
 
 \item{ref}{reference group}
@@ -36,7 +30,7 @@ CovariateScatter.Anal(
 
 \item{thresh}{threshold}
 
-\item{all_results}{all results}
+\item{contrast.cls}{contrast group}
 }
 \description{
 CovariateScatter.Anal

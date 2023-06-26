@@ -1520,7 +1520,9 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
 
   my.fun <- function(){
-    compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    if(.on.public.web){
+      compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    }
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
     return(my.res);
   }
@@ -1761,8 +1763,24 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
   return(.set.mSet(mSetObj));
 }
 
-# OPLS VIP plot
-PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="vip", feat.nm="tscore", feat.num=15, color.BW=FALSE){
+# 
+#' PlotOPLS.Imp
+#' OPLS VIP plotting function
+#' @param mSetObj mSetObj objects generated from last step
+#' @param imgName image name
+#' @param format image format, can be "png", "jpg", "tiff", "pdf" and "svg"
+#' @param dpi numeric, dpi number
+#' @param width numeric, width number
+#' @param type analysis type, can be "vip" only
+#' @param feat.nm feature name, should be "tscore" for now
+#' @param feat.num feature number
+#' @param color.BW color information
+#' @export
+#'
+PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", 
+                         dpi=72, width=NA, type="vip", 
+                         feat.nm="tscore", 
+                         feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   

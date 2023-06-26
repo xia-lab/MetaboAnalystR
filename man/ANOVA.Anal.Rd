@@ -13,10 +13,7 @@ ANOVA.Anal(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE)
 
 \item{thresh}{Numeric, from 0 to 1, indicate the p-value threshold}
 
-\item{post.hoc}{Input the name of the post-hoc test, "fisher" or "tukey"}
-
-\item{all_results}{Logical, if TRUE, it will output the ANOVA results for all compounds 
-with no post-hoc tests performed.}
+\item{all_results}{Logical, if TRUE, it will output the ANOVA results for all compounds}
 }
 \description{
 ANOVA analysis

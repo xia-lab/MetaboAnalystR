@@ -4,7 +4,15 @@
 \alias{SPLSR.Anal}
 \title{Perform SPLS-DA}
 \usage{
-SPLSR.Anal(mSetObj = NA, comp.num, var.num, compVarOpt, validOpt = "Mfold")
+SPLSR.Anal(
+  mSetObj = NA,
+  comp.num,
+  var.num,
+  compVarOpt,
+  validOpt = "Mfold",
+  foldNum = 5,
+  doCV = FALSE
+)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

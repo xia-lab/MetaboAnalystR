@@ -6,7 +6,8 @@
 \usage{
 PLSDA.CV(
   mSetObj = NA,
-  methodName = "T",
+  cvOpt = "loo",
+  foldNum = 5,
   compNum = GetDefaultPLSCVComp(mSetObj),
   choice = "Q2",
   segments = 10
@@ -15,11 +16,11 @@ PLSDA.CV(
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}
 
-\item{methodName}{Logical, by default set to TRUE}
-
 \item{compNum}{GetDefaultPLSCVComp()}
 
 \item{choice}{Input the choice, by default it is Q2}
+
+\item{methodName}{Logical, by default set to TRUE}
 }
 \description{
 PLS-DA classification and feature selection

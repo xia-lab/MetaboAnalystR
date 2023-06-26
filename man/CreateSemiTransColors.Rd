@@ -5,15 +5,11 @@
 \title{Create semitransparant colors}
 \usage{
 CreateSemiTransColors(cls)
-
-CreateSemiTransColors(cls)
 }
 \arguments{
 \item{cls}{Input class labels}
 }
 \description{
-Create semitransparant colors for a given class label
-
 Create semitransparant colors for a given class label
 }
 \author{
