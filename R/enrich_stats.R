@@ -327,7 +327,8 @@ CalculateSSP<-function(mSetObj=NA){
       ssp.notes[[i]] <- NA;
     }else{
       hits <- Get.ConcRef(mSetObj, ssp.nm[i]);
-      if(is.na(hits)){ # no conc info
+
+      if(length(hits)==1 && is.na(hits)){ # no conc info
         res.mat[i, ]<-c(ssp.nm[i], ssp.vec[i], cmpd.db$hmdb[inx], "--", "--", "");
         ssp.lows[[i]]<-NA;
         ssp.highs[[i]]<-NA;
@@ -353,7 +354,7 @@ CalculateSSP<-function(mSetObj=NA){
         ssp.highs[[i]]<-high.conc;
         ssp.refs[[i]]<-hits$refs;
         ssp.pmids[[i]]<-hits$pmid;
-        if(is.na(hits$note)){
+        if(length(hits$note)==1 && is.na(hits$note)){
           ssp.notes[[i]] <- NA;
         }else{
           ssp.notes[[i]] <- hits$note;
@@ -534,7 +535,7 @@ GetSSP.Details<-function(mSetObj=NA){
 
 GetSSP.RefConc<-function(mSetObj=NA, nm){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.na(mSetObj$analSet$ssp.means[[nm]])){
+  if(length(mSetObj$analSet$ssp.means[[nm]]) ==1 && is.na(mSetObj$analSet$ssp.means[[nm]])){
     return ("NA");
   }
   return(paste(mSetObj$analSet$ssp.means[[nm]], " (", mSetObj$analSet$ssp.lows[[nm]], " - ", mSetObj$analSet$ssp.highs[[nm]], ")", sep=""));
