@@ -1520,9 +1520,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
 
   my.fun <- function(){
-    if(.on.public.web){
-      compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
-    }
+    compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
     return(my.res);
   }
