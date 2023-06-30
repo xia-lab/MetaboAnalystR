@@ -415,7 +415,7 @@ MultiCovariateRegression <- function(fileName,
                                      random.effects = NULL, # metadata variables to adjust for
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
-  
+
   # load libraries
   library(limma)
   library(dplyr)
@@ -435,6 +435,9 @@ MultiCovariateRegression <- function(fileName,
   }
   covariates <- dataSet$meta.info
 
+  matched_indices <- match(colnames(feature_table), rownames(covariates))
+  covariates <- covariates[matched_indices, ];
+  dataSet$meta.info <- covariates;
   fixed.effects <- adj.vec
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
@@ -460,8 +463,10 @@ MultiCovariateRegression <- function(fileName,
     dataSet$rmidx <- rmidx;
   }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
-
+  
   if(!identical(colnames(feature_table), rownames(covariates))){
+    print(colnames(feature_table));
+    print(rownames(covariates));
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
     return(0)

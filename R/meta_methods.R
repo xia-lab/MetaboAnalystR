@@ -347,7 +347,6 @@ PerformMetaDeAnal <- function(paramSet){
 #'@export
 #'
 PerformMetaEffectSize<- function(method="rem", BHth=0.05){
-save.image("effectsize.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 

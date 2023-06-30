@@ -796,7 +796,6 @@ SanityCheckMetaData <- function(){
 
 
 CheckMetaIntegrity <- function(){
-  save.image("integ.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   mdata.all <- paramSet$mdata.all;

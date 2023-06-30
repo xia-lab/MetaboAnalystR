@@ -91,6 +91,9 @@ CovariateScatter.Anal <- function(dataName,
     sig.mat[,-ncol(sig.mat)] <- sapply(sig.mat[,-ncol(sig.mat)], function(x) signif(x, 5));
     rownames(sig.mat) <- make.names(rownames(rest)[inx.imp])
     # order the result simultaneously
+  }else{
+    AddMsg(paste(c("No significant genes are detected, please adjust your parameters", collapse=" ")));
+    return(0);
   }
   AddMsg(paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" "));
 
@@ -98,9 +101,7 @@ CovariateScatter.Anal <- function(dataName,
 
   rest$label <- invert_named_vector(dataSet$enrich_ids)[as.character(rest$ids)];
   dataSet$comp.res <- rest;
-  sig.mat$label <-  invert_named_vector(dataSet$enrich_ids)[as.character(sig.mat$ids)];
-  rownames(sig.mat) <- sig.mat$ids;
-  dataSet$sig.mat <- sig.mat
+
 
   if(sig.num> 0){
     res <- 1;

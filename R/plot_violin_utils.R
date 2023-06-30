@@ -6,18 +6,8 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-PlotSelectedGeneLoading<-function(dataName="", gene.id){
-  paramSet <- readSet(paramSet, "paramSet");
-  anal.type <- paramSet$anal.type;
-  if(anal.type == "metadata"){
-    PlotSelectedGene(dataName, gene.id,"notVolcano", T);
-  }else{
-    PlotSelectedGene(dataName, gene.id, "notVolcano");
-  }
-}
-dataName="E-GEOD-25713.txt"; imgName="Gene_246256_0_";gene.id="246256";type="notVolcano";format="png";dpi=72
 # given a gene id, plot its expression profile as violin plot
-PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
+PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
   
   library(see);
   paramSet <- readSet(paramSet, "paramSet");
@@ -25,7 +15,7 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
   require(ggplot2)
-  imgName <- paste(imgName,"dpi",dpi,".",format,sep="");
+  imgName <- paste(imageName,"dpi",dpi,".",format,sep="");
   require(lattice);
   if(length(dataSet$rmidx)>0){
     data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
@@ -125,7 +115,6 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
     }
     
   }else{ # metadata
-    save.image("metaviolin.RData");
     mdata.all <- paramSet$mdata.all;
     inmex.meta <- qs::qread("inmex_meta.qs");
     if(inmex.meta$id.type == "entrez"){
@@ -216,7 +205,6 @@ PlotSelectedGene <-function(dataName="",imgName, gene.id, type="notvolcano", for
 }
 
 UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png", dpi=72){
-  save.image('multi.RData');
 
   require(ggplot2);
   require(see);
