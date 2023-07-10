@@ -1369,6 +1369,7 @@ PerformDataInspect <- function(datapath = NULL,
 #' @author Zhiqiang Pang
 #' @noRd
 FastRunningShow_customized <- function(fullUserPath){
+  metaboanalyst_env <<- new.env();
   OptiLCMS:::FastRunningShow_customized(fullUserPath)
 }
 
@@ -1377,6 +1378,7 @@ FastRunningShow_customized <- function(fullUserPath){
 #' @author Zhiqiang Pang
 #' @noRd
 FastRunningShow_auto <- function(fullUserPath){
+  metaboanalyst_env <<- new.env();
   OptiLCMS:::FastRunningShow_auto(fullUserPath)
 }
 
