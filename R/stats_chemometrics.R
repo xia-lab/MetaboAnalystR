@@ -2060,7 +2060,9 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
   my.fun <- function(){
-    compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_spls.Rc");
+    if(file.exists("../../rscripts/MetaboAnalystR/R/stats_spls.Rc")){
+        compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_spls.Rc");
+    }    
     my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
     
     if(doCV){# perform validation
@@ -2380,10 +2382,9 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
     .load.scripts.on.demand("util_scatter3d.Rc");    
   }
 
-  my.json.scatter(imgName, T);
-
-
+  
   if(.on.public.web){
+    my.json.scatter(imgName, T);
     return(1);
   }else{
     return(.set.mSet(mSetObj));
