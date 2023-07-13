@@ -224,7 +224,7 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
     inx <- which(ids == gene.id);
     cmpdNm <- analSet$sig.genes.symbols[inx]; 
 
-        Cairo(file = imgName,  width=320, height=380, type=format, dpi=dpi, bg="white");
+        Cairo(file = imgName,  width=320*dpi/72, height=380*dpi/72, type=format, dpi=dpi, bg="white");
         dat <- data.norm
        
       df.norm <- data.frame(value=dat[gene.id,], name = cls);
@@ -262,7 +262,7 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
     num <- sum(mdata.all == 1);
     # calculate width based on the dateset number
     if(num == 1){
-      Cairo(file = imgName, width=280, height=320, type=format, dpi=dpi, bg="white");
+      Cairo(file = imgName, width=280*dpi/72, height=320*dpi/72, type=format, dpi=dpi, bg="white");
       
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
