@@ -397,6 +397,7 @@ MultiCovariateRegression <- function(fileName,
                                      random.effects = NULL, # metadata variables to adjust for
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object
+
   dataSet <- readDataset(fileName);
   interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, robustTrend, F)
   if(is.list(interim)){
@@ -498,7 +499,7 @@ MultiCovariateRegression <- function(fileName,
     
     for(col in 1:ncol(covariates)){
       if(dataSet$cont.inx[colnames(covariates)[col]]){
-        covariates[,col] <- as.numeric( covariates[,col])
+        covariates[,col] <- as.numeric(as.character(covariates[,col]))
       }
     }
     
