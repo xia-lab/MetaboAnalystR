@@ -58,6 +58,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     }
   }
 
+  set.seed(123)
   if(mode == "simple"){
     fgseaRes <- fgsea(pathways = current.geneset, 
                       stats = rankedVec,
