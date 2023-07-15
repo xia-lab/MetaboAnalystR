@@ -148,8 +148,16 @@ my.json.scatter <- function(dataSet, filenm="abc"){
         between=1
       )
     );
+
+  
+}
+
+  if(paramSet$anal.type == "metadata"){
+    metatypes = paramSet$dataSet$meta.types
+  }else{
+    metatypes = dataSet$meta.types
   }
-  netData <- list( nodes=nodes, edges=edge.mat, modules=modules, objects=a$objects, ellipse=meshes, meta=metadf, loading=nodes2, reductionOpt="pca" , objectsLoading=aLoading$objects, sigMat=sig.mats, omicstype=c("rna.b"));
+  netData <- list( nodes=nodes, edges=edge.mat, modules=modules, objects=a$objects, ellipse=meshes, meta=metadf,metatypes=metatypes, loading=nodes2, reductionOpt="pca" , objectsLoading=aLoading$objects, sigMat=sig.mats, omicstype=c("rna.b"));
     
   netData[["misc"]] <- "";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(filenm));

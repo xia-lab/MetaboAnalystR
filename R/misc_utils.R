@@ -1042,3 +1042,16 @@ df_updated <- df %>%
   mutate_if(is.numeric, ~ signif(., digits = num_digits))
   return(df_updated);
 }
+
+generate_continuous_colors <- function(n, primary_color="red", filenm=NULL) {
+  colors <- colorRampPalette(c("white", primary_color))(n)
+  if(is.null(filenm)){
+    return(colors);
+  }else{
+    library(RJSONIO)
+    sink(filenm);
+    cat(toJSON(colors));
+    sink();
+    return(filenm);
+  }
+}
