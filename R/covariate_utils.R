@@ -23,6 +23,7 @@ CovariateScatter.Anal <- function(dataName,
                                   pval.selection="fdr",
                                   contrast.cls = "anova"
                                   ){
+
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msg.lm <- ""

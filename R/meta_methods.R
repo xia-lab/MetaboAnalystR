@@ -15,7 +15,7 @@ SetGroupContrast <- function(dataName, grps){
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
     
     # regenerate factor to drop levels, force the levels order
-    group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
+                                                                                                                                                                                        group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
     data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
     dataSet$data.norm <- data;

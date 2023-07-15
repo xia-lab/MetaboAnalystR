@@ -42,7 +42,6 @@ SanityCheckMeta <- function(fileName,init){
       return(0)
     }
     for(i in 1:ncol(meta)){
-      
       meta[,i]=as.factor( meta[,i])
     }
     dataSet$cls <- cls.lbl

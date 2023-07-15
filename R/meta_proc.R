@@ -628,7 +628,6 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
   #}
   cls <- as.factor(trimmed.meta); 
 
-
   if(alg =="limma"){
     res <- performLimmaMeta(trimmed.data, cls, "newcolumn");
   }else if(alg=="edger"){

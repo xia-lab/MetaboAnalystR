@@ -442,7 +442,7 @@ MultiCovariateRegression <- function(fileName,
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
   covariates[,c(var.types == "character")] <- lapply(covariates[,c(var.types == "character")], factor);
-  
+
   # aggregate vars
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
@@ -498,7 +498,7 @@ MultiCovariateRegression <- function(fileName,
     
     for(col in 1:ncol(covariates)){
       if(dataSet$cont.inx[colnames(covariates)[col]]){
-        covariates[,col] <- as.numeric( covariates[,col])
+        covariates[,col] <- as.numeric(as.character(covariates[,col]))
       }
     }
     

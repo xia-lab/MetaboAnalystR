@@ -56,7 +56,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     
     anot.id <- .doAnnotation(feature.vec, idType, paramSet);
     anot.id <- unname(anot.id);
-    if(idType %in% c("s2f", "generic")){
+    if(idType %in% c("s2f", "generic", "ko")){
       symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
     }else{
       symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
