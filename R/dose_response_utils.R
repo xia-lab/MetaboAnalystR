@@ -574,12 +574,12 @@ paraCheck <- function(name, para) {
 ##and the pvalue from a hypergeometric test.
 hyperGeoTest <- function(geneSet, universe, hits) {
   ##number of genes in universe
-  N <- length(universe) 			
+  N <- length(universe)
   ##remove genes from gene set that are not in universe			
   geneSet <- intersect(geneSet[[1]], universe) 
   ##size of gene set	
   m <- length(geneSet) 							
-  Nm <- N-m	
+  Nm <- N-m
   ##hits in gene set
   overlap <- intersect(geneSet, hits) 	
   ##number of hits in gene set		
