@@ -59,18 +59,21 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   }
 
   set.seed(123)
-  if(mode == "simple"){
-    fgseaRes <- fgsea(pathways = current.geneset, 
-                      stats = rankedVec,
-                      minSize=15,
-                      maxSize=500,
-                      nperm=10000);
-  } else {
-    fgseaRes <- fgsea(pathways = current.geneset, 
-                      stats = rankedVec,
-                      minSize=15,
-                      maxSize=500);
-  }
+  if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
+      fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
+                          stats    = rankedVec,
+                          minSize  = 5,
+                          maxSize = 500,
+                          scoreType = "pos",
+                          nperm=10000)    
+    }else{
+      fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
+                          stats    = rankedVec,
+                          minSize  = 5,
+                          maxSize = 500,
+                          scoreType = "pos")   
+     
+    }
   
   fgseaRes <- fgseaRes[!duplicated(fgseaRes$pathway),]
   

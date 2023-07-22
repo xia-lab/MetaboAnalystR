@@ -164,7 +164,6 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   hit.inx <- node.nms %in% b.mat[,"source"];
   shapes[hit.inx] <- "gene";
   node.lbls <- doEntrez2SymbolMapping(node.nms, paramSet$data.org, paramSet$data.idType)
-  
   for(i in 1:length(node.sizes)){
     bnodes[[i]] <- list(
       id = node.nms[i],

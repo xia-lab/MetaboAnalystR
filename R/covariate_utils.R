@@ -102,6 +102,7 @@ CovariateScatter.Anal <- function(dataName,
 
   rest$label <- invert_named_vector(dataSet$enrich_ids)[as.character(rest$ids)];
   dataSet$comp.res <- rest;
+  sig.mat$label <-  invert_named_vector(dataSet$enrich_ids)[as.character(sig.mat$ids)];
 
 
   if(sig.num> 0){
@@ -251,7 +252,7 @@ AddMsg <- function(msg){
 #'License: GPL-3 License
 #'@export
 #'
-PlotMultiFacCmpdSummary <- function(dataName,name, id, meta, version, format="png", dpi=72, width=NA){
+PlotMultiFacCmpdSummary <- function(dataName,imgName,name, id, meta, version, format="png", dpi=72, width=NA){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
 
@@ -269,7 +270,7 @@ PlotMultiFacCmpdSummary <- function(dataName,name, id, meta, version, format="pn
   cls.type <- unname(paramSet$dataSet$meta.types[meta])
   xlab = meta;
   h <- 6;
-  imgName <- paste(name, "_", meta, "_", version, "_summary_dpi", dpi, ".", format, sep="");
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   
   inx <- which(rownames(dataSet$data.norm) == id)
 

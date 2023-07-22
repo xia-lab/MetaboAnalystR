@@ -357,9 +357,9 @@ GetCovSigMat<-function(dataName){
   return(CleanNumber(as.matrix(dataSet$analSet$cov$sig.mat[, !(names(dataSet$analSet$cov$sig.mat) %in% drops)])));
 }
 
-GetCovSigRowNames<-function(dataName){
+GetCovSigIds<-function(dataName){
   dataSet <- readDataset(dataName);
-  rownames(dataSet$analSet$cov$sig.mat);
+  dataSet$analSet$cov$sig.mat$ids;
 }
 
 GetCovSigSymbols<-function(dataName){
