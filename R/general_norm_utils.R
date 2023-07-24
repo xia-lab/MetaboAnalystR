@@ -486,7 +486,7 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
-UpdateData <- function(mSetObj=NA){
+UpdateData <- function(mSetObj=NA, order.group = FALSE){
   mSetObj <- .get.mSet(mSetObj);
 
   #Reset to default
@@ -532,8 +532,12 @@ UpdateData <- function(mSetObj=NA){
     facB <- droplevels(factor(facB[grp.hit.inx]));
   }
   
-  # we need to add order information
-  cls <- ordered(cls, levels = grp.nm.vec);
+  # we need to allow users to add order information
+  # if not order, use alphabetic order. See this post
+  # https://omicsforum.ca/t/pca-miscolored-and-groups-mislabed/2217
+  if(order.group){  
+    cls <- ordered(cls, levels = grp.nm.vec);
+  }
 
   AddMsg("Successfully updated the data!");
 
