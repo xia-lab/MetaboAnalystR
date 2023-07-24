@@ -616,7 +616,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   ref.size <- length(ref_mzlist);
   
-  msg.vec <- c(msg.vec, paste("A total of", ref.size, "input mz features were retained for further analysis."));
+  msg.vec <- c(msg.vec, paste("A total of ", ref.size, "input mz features were retained for further analysis."));
   
   if(ref.size > 20000){
     msg.vec <- c(msg.vec, "There are too many input features, the performance may be too slow.");
@@ -629,6 +629,72 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   if(min(ndat[,"p.value"])<0 || max(ndat[,"p.value"])>1){
     msg.vec <- c(msg.vec, "Please make sure the p-values are between 0 and 1.");
+  }
+  
+  ref_cmpdlist <- mSetObj$dataSet$cmpd.orig;
+  if(!is.null(mSetObj[["paramSet"]][["ms2id.type"]])){
+    
+    if(mSetObj$paramSet$ms2id.type == "hmdb_ids"){
+      if(any(grepl("HMDB[0-9]+",as.character(ref_cmpdlist)))){
+        msg.vec <- c(msg.vec, paste0("A total of ",
+                                     length(which(grepl("HMDB[0-9]+",as.character(ref_cmpdlist)))),
+                                     " HMDB Compounds included."));
+        mSetObj$paramSet$ContainsMS2 <- TRUE;
+      } else {
+        mSetObj$paramSet$ContainsMS2 <- FALSE;
+        AddErrMsg("No HMDB compounds included. Please check your data!");
+        return(0)
+      }
+    } else if(mSetObj$paramSet$ms2id.type == "pubchem_cids"){
+      if(any(grepl("^[0-9]+",as.character(ref_cmpdlist)))){
+        msg.vec <- c(msg.vec, paste0("A total of ",
+                                     length(which(grepl("^[0-9]+", as.character(ref_cmpdlist)))),
+                                     " PubChem_CID Compounds included."));
+        mSetObj$paramSet$ContainsMS2 <- TRUE;
+      } else {
+        mSetObj$paramSet$ContainsMS2 <- FALSE;
+        AddErrMsg("No PubChem_CID compounds included. Please check your data!");
+        return(0)
+      }
+    } else if(mSetObj$paramSet$ms2id.type == "pubchem_sids"){
+      if(any(grepl("^[0-9]+", as.character(ref_cmpdlist)))){
+        msg.vec <- c(msg.vec, paste0("A total of ",
+                                     length(which(grepl("^[0-9]+", as.character(ref_cmpdlist)))),
+                                     " PubChem_SID Compounds included."))
+        mSetObj$paramSet$ContainsMS2 <- TRUE;
+      } else {
+        mSetObj$paramSet$ContainsMS2 <- FALSE;
+        AddErrMsg("No PubChem_SID compounds included. Please check your data!");
+        return(0)
+      }
+    } else if(mSetObj$paramSet$ms2id.type == "inchikeys"){
+      if(any(grepl("^[A-Z]+-[A-Z]+-[A-Z]$", as.character(as.matrix(ref_cmpdlist))))){
+        msg.vec <- c(msg.vec, paste0("A total of ",
+                                     length(which(grepl("^[A-Z]+-[A-Z]+-[A-Z]$", as.character(as.matrix(ref_cmpdlist))))),
+                                     " InchiKeys Compounds included."))
+        mSetObj$paramSet$ContainsMS2 <- TRUE;
+      } else {
+        mSetObj$paramSet$ContainsMS2 <- FALSE;
+        AddErrMsg("No InchiKeys compounds included. Please check your data!");
+        return(0)
+      }
+    } else if(mSetObj$paramSet$ms2id.type == "smiles"){
+      if(any(grepl("^[A-Z]+", as.character(as.matrix(ref_cmpdlist))))){
+        msg.vec <- c(msg.vec, paste0("A total of ",
+                                     length(which(grepl("^[A-Z]+", as.character(as.matrix(ref_cmpdlist))))),
+                                     " SMILES Compounds included."))
+        mSetObj$paramSet$ContainsMS2 <- TRUE;
+      } else {
+        mSetObj$paramSet$ContainsMS2 <- FALSE;
+        AddErrMsg("No SMILES compounds included. Please check your data!");
+        return(0)
+      }
+    } else {
+      stop("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.") 
+    }
+  }
+  if(!is.null(ref_cmpdlist)){
+    mSetObj$dataSet$ref_cmpdlist <- as.matrix(ref_cmpdlist);
   }
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$check.msg, read.msg, msg.vec);
@@ -991,10 +1057,20 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     }else{
       user.curr <- mSetObj$curr.map$KEGG;
     }
+
+    if(.on.public.web){
+        currency <<- user.curr;
+    } else {
+        currency_r <<- user.curr;
+    }
     
-    currency <<- user.curr;
-    
-    if(length(currency)>0){
+    if(.on.public.web){
+        currency_tmp <- currency;
+    } else {
+        currency_tmp <- currency_r;
+    }
+
+    if(length(currency_tmp)>0){
       mSetObj$mummi$anal.msg <- c("Currency metabolites were successfully uploaded!")
     }else{
       mSetObj$mummi$anal.msg <- c("Errors in currency metabolites uploading!")
@@ -1020,32 +1096,73 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     }
   }
   
-  if(!is.null(mSetObj$dataSet$adduct.custom)){
-    mw <- mummichog.lib$cpd.lib$mw;
-    new_adducts <- new_adduct_mzlist(mSetObj, mw);
-    
-    cpd.lib <- list(
-      mz.matp = new_adducts$pos,
-      mz.matn = new_adducts$neg,
-      mw = mummichog.lib$cpd.lib$mw,
-      id = mummichog.lib$cpd.lib$id,
-      name = mummichog.lib$cpd.lib$name
-    );
-    
-  }else{
-
-    cpd.lib <- list(
-      mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
-      mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
-      mw = mummichog.lib$cpd.lib$mw,
-      id = mummichog.lib$cpd.lib$id,
-      name = mummichog.lib$cpd.lib$name
-    );
+  
+  ## confirming ms2 id type
+  if(mSetObj$paramSet$ContainsMS2){
+    ms2id <- mSetObj$paramSet$ms2id.type;
+    if(!(ms2id %in% c("hmdb_ids", "inchikeys", "pubchem_CIDs", "pubchem_SIDs", "SMILES"))){
+      if(.on.public.web){
+        AddErrMsg("The MS2 ID  you have selected is not correct!")
+        return(0)
+      }
+      warning("MS2 ID type must be one of 'hmdb_ids', 'inchikeys', 'pubchem_CIDs', 'pubchem_SIDs', 'SMILES'.")
+      stop("Please redefine MS2 ID with function 'SetMS2IDType'.")
+    }
+    ## checking adducts info - with MS2 INFO
+    if(!is.null(mSetObj$dataSet$adduct.custom)){
+      mw <- mummichog.lib$cpd.lib$mw;
+      new_adducts <- new_adduct_mzlist(mSetObj, mw);
+      
+      cpd.lib <- list(
+        mz.matp = new_adducts$pos,
+        mz.matn = new_adducts$neg,
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name,
+        ms2IDs = mummichog.lib$cpd.lib[[ms2id]]
+      );
+      
+    } else {
+      
+      cpd.lib <- list(
+        mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
+        mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name,
+        ms2IDs = mummichog.lib$cpd.lib[[ms2id]]
+      );
+    }
+  } else {
+    ## checking adducts info - nonMS2
+    if(!is.null(mSetObj$dataSet$adduct.custom)){
+      mw <- mummichog.lib$cpd.lib$mw;
+      new_adducts <- new_adduct_mzlist(mSetObj, mw);
+      
+      cpd.lib <- list(
+        mz.matp = new_adducts$pos,
+        mz.matn = new_adducts$neg,
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name
+      );
+      
+    }else{
+      
+      cpd.lib <- list(
+        mz.matp = mummichog.lib$cpd.lib$adducts[["positive"]],
+        mz.matn = mummichog.lib$cpd.lib$adducts[["negative"]],
+        mw = mummichog.lib$cpd.lib$mw,
+        id = mummichog.lib$cpd.lib$id,
+        name = mummichog.lib$cpd.lib$name
+      );
+    }
   }
   
   cpd.treep <- mummichog.lib$cpd.tree[["positive"]];
   cpd.treen <- mummichog.lib$cpd.tree[["negative"]];
   
+  # filter pathways based on the length of pathway library
   # build empirical compound library after
   path.length <- sapply(mummichog.lib$pathways$cpds, length)
   
@@ -1061,7 +1178,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   if(metaAnalysis & metaLevel %in% c("cpd", "ec")){
     mSetObj <- .search.compoundLibMeta(mSetObj, cpd.lib, cpd.treep, cpd.treen, metaLevel, combine.level,
                                        pval.method, es.method, rank.metric, mutual.feats);
-  }else{
+  } else if (mSetObj$paramSet$ContainsMS2) {
+    mSetObj <- .search_MS2compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
+  } else {
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   }
 
@@ -1481,7 +1600,15 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     refmz <- names(mz2cpd_dict)
     hits.index <- which(refmz %in% as.character(mSetObj$dataSet$input_mzlist));
     cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
-    cpd1 <- cpd1[!(cpd1 %in% currency)];
+    
+    if(.on.public.web){
+        currency_tmp <- currency;
+    } else {
+        if(!exists("currency_r")){currency_r <- currency}
+        currency_tmp <- currency_r;
+    }
+    
+    cpd1 <- cpd1[!(cpd1 %in% currency_tmp)];
 
     mSetObj$mz2cpd_dict <- mz2cpd_dict;
     mSetObj$cpd_exp_dict <- cpd_exp_dict;
@@ -2145,7 +2272,15 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     refmz <- names(mz2cpd_dict)
     hits.index <- which(refmz %in% as.character(input_mzlist));
     cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
-    cpd1 <- cpd1[!(cpd1 %in% currency)];
+        
+    if(.on.public.web){
+        currency_tmp <- currency;
+    } else {
+        if(!exists("currency_r")){currency_r <- currency}
+        currency_tmp <- currency_r;
+    }
+    
+    cpd1 <- cpd1[!(cpd1 %in% currency_tmp)];
     form.mat <- cbind(matched_res$Query.Mass, matched_res$Matched.Form);
     
     mSetObj$mz2cpd_dict <- mz2cpd_dict;
@@ -3689,6 +3824,11 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib,
     return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }
 }
+
+#' PreparePeakTable4PSEA
+#' @param mSetObj mSet Objective from previous step
+#' @export
+#' @author Zhiqiang Pang, Jeff Xia
 
 PreparePeakTable4PSEA <- function(mSetObj=NA){
   
