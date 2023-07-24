@@ -1,11 +1,11 @@
 BATCHOBJECTS=fortran/decorana.o c/Internal_utils_batch.o
 
 #UTILSOBJECTS=c/util.o cpp/melt.o c/fastmatch.o c/nncgc.o
-UTILSOBJECTS=c/util.o c/fastmatch.o c/nncgc.o
+UTILSOBJECTS=c/util.o c/fastmatch.o c/nncgc.o cpp/melt.o
 
 XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
 
-#INITOBJECT=Exports.o
+INITOBJECT=Exports.o
 
 OBJECTS= $(BATCHOBJECTS) $(UTILSOBJECTS) $(XCMSOBJECTS) $(INITOBJECT)
 
