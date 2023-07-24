@@ -1527,11 +1527,12 @@ PerformParamsOptimization <- function(mSet,
 
 #' PerformPeakProfiling
 #' @param mSet mSet
-#' @param params params
+#' @param Params Params
 #' @param plotSettings plotSettings
+#' @param ncore number of cores
 #' @export
-PerformPeakProfiling <- function(mSet, params, plotSettings) {
-  return(OptiLCMS::PerformPeakProfiling(mSet, params, plotSettings));
+PerformPeakProfiling <- function(mSet, Params, plotSettings, ncore) {
+  return(OptiLCMS::PerformPeakProfiling(mSet, Params, plotSettings, ncore));
 }
 
 

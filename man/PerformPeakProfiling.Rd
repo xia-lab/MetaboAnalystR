@@ -4,14 +4,16 @@
 \alias{PerformPeakProfiling}
 \title{PerformPeakProfiling}
 \usage{
-PerformPeakProfiling(mSet, params, plotSettings)
+PerformPeakProfiling(mSet, Params, plotSettings, ncore)
 }
 \arguments{
 \item{mSet}{mSet}
 
-\item{params}{params}
+\item{Params}{Params}
 
 \item{plotSettings}{plotSettings}
+
+\item{ncore}{number of cores}
 }
 \description{
 PerformPeakProfiling

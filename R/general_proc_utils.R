@@ -433,10 +433,12 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'@param filter Select the filter option, "rsd" which is the relative standard deviation, "nrsd" which
 #'is the non-parametric relative standard deviation, "mean" which is the mean, "sd" which is the standard
 #'deviation, "mad" which is the median absolute deviation, or "iqr" which is the interquantile range.
+#'@param filter.cutoff percent to be filtered, for example, 5 (5\%)
 #'@param qcFilter Filter the variables based on QC samples - True (T), or use non-QC based filtering - False (F).  
 #'@param rsd Define the relative standard deviation cut-off. Variables with a RSD greater than this number
 #'will be removed from the dataset. It is only necessary to specify this argument if qcFilter is True (T). 
-#'Otherwise, it will not be used in the function. 
+#'Otherwise, it will not be used in the function.
+#'@param privileged use could keep this option as True (T) for local MetaboAnalystR
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

@@ -130,6 +130,9 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
   if(.on.public.web){
     load_ggplot()
     load_data.table()
+  } else {
+    require(ggplot2);
+    require(data.table);
   }
   
   xdim <- mSetObj$analSet$som$xdim;
@@ -248,6 +251,9 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
   if(.on.public.web){
     load_ggplot()
     load_data.table()
+  } else {
+    require(ggplot2);
+    require(data.table);
   }
   
   mSetObj <- .get.mSet(mSetObj);

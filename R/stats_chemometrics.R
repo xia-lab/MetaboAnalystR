@@ -1064,6 +1064,7 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
     plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= "LOO");
   }
 
+  require(pls);
   fit.info <- pls::R2(plsda.reg, estimate = "all")$val[,1,];
   
   # combine accuracy, R2 and Q2
@@ -1495,7 +1496,7 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
-  .prepare.oplsr.anal(mSetObj, reg);
+  mSetObj <- .prepare.oplsr.anal(mSetObj, reg);
   .perform.computing();
   .save.oplsr.anal(mSetObj);
 }
@@ -1520,7 +1521,9 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
 
   my.fun <- function(){
-    compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    if(file.exists("../../rscripts/MetaboAnalystR/R/stats_opls.Rc")){
+        compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    }
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
     return(my.res);
   }
@@ -1910,7 +1913,9 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   my.fun <- function(){
-    compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    if(file.exists("../../rscripts/MetaboAnalystR/R/stats_opls.Rc")){
+        compiler::loadcmp("../../rscripts/MetaboAnalystR/R/stats_opls.Rc");
+    }
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
   }
   dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num, my.fun=my.fun);

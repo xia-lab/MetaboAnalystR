@@ -82,6 +82,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     mSetObj$paramSet$mode <- NA;
     mSetObj$paramSet$adducts <- NA;
     mSetObj$paramSet$peakFormat <- "mpt";
+    mSetObj$paramSet$ContainsMS2 <- FALSE;
   } else if (anal.type == "metapaths") {
     # Define this parameter set to avoid global variable
     # Author: Zhiqiang
@@ -94,6 +95,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     paramSet$adducts <- NA;
     paramSet$peakFormat <- "mpt";
     paramSet$metaNum <- 0;
+    paramSet$ContainsMS2 <- FALSE;
     mSetObj$paramSet <- paramSet;
     # This is an empty paramSet, and will be copied for multiple datasets
     dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
