@@ -54,9 +54,10 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 # reference: all others against common reference (A-C) + (B-C)
 # nested: (A-B)+(C-D) 
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly", robustTrend=F){
-  
+
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
+
   if (dataSet$de.method == "deseq2") {
     dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     .prepare.deseq(dataSet, anal.type, par1, par2 , nested.opt);
@@ -437,7 +438,7 @@ MultiCovariateRegression <- function(fileName,
   covariates <- dataSet$meta.info
 
   matched_indices <- match(colnames(feature_table), rownames(covariates))
-  covariates <- covariates[matched_indices, ];
+  covariates <- covariates[matched_indices, ,drop=F ];
   dataSet$meta.info <- covariates;
   fixed.effects <- adj.vec
   # process covariates
@@ -466,8 +467,7 @@ MultiCovariateRegression <- function(fileName,
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
   
   if(!identical(colnames(feature_table), rownames(covariates))){
-    print(colnames(feature_table));
-    print(rownames(covariates));
+ 
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
     return(0)

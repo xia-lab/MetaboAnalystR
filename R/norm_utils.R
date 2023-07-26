@@ -81,6 +81,7 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   }
   
   data <- raw.data.anot;
+  data<- data[,which(colnames(data)%in% rownames(dataSet$meta.info))]
   if (dataSet$type == "count"){
     sum.counts <- apply(data, 1, sum, na.rm=TRUE);
     rm.inx <- sum.counts < count.thresh;
