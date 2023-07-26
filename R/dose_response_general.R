@@ -143,11 +143,12 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
   }
-  
+
   # select only data that passes all filters
   data.select <- data[res$all.pass, ]
   data.mean <- data.mean[res$all.pass, ]
   item <- item[res$all.pass]
+
   
   reslist <- list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res)  

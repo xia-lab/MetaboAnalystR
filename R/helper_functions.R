@@ -65,6 +65,7 @@ GetMetaCol<- function(dataName=""){
 
 GetSummaryData <- function(){
   msgSet <- readSet(msgSet, "msgSet");
+#print(msgSet$summaryVec);
   return(msgSet$summaryVec);
 }
 
@@ -356,9 +357,9 @@ GetCovSigMat<-function(dataName){
   return(CleanNumber(as.matrix(dataSet$analSet$cov$sig.mat[, !(names(dataSet$analSet$cov$sig.mat) %in% drops)])));
 }
 
-GetCovSigRowNames<-function(dataName){
+GetCovSigIds<-function(dataName){
   dataSet <- readDataset(dataName);
-  rownames(dataSet$analSet$cov$sig.mat);
+  dataSet$analSet$cov$sig.mat$ids;
 }
 
 GetCovSigSymbols<-function(dataName){
@@ -398,4 +399,9 @@ CleanNumber <-function(bdata){
     bdata[inx] <- -999999;
   }
   bdata;
+}
+
+GetMetaMethodPVal <-function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$BHth);
 }

@@ -27,17 +27,12 @@
     names(ora.vec) <- ora.vec;
   }
   
-  # OLD need to cut to the universe covered by the pathways, not all genes
   # cut to the universe to uploaded genes
-  current.universe <- unique(unlist(current.geneset)); 
-  hits.inx <- ora.vec %in% current.universe;
-  ora.vec <- ora.vec[hits.inx];
-  ora.nms <- ora.nms[hits.inx];
+  current.universe <- rownames(dataSet$data.anot); 
   
-  # also make sure universe and pathways only contain genes measured in experiment
+  # also make sure pathways only contain genes measured in experiment
   if(!is.null(dataSet$data.anot)){
-    current.universe <- current.universe[current.universe %in% rownames(dataSet$data.anot)]
-    current.geneset <- lapply(current.geneset, function(x){x[x %in% rownames(dataSet$data.anot)]})
+    current.geneset <- lapply(current.geneset, function(x){x[x %in% current.universe]})
     inds <- lapply(current.geneset, length) > 0
     current.geneset <- current.geneset[inds]
   }

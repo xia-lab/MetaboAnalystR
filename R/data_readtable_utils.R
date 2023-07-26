@@ -213,7 +213,6 @@ ReadMetaData <- function(metafilename){
   paramSet$dataSet$disc.inx <- disc.inx;
   paramSet$dataSet$meta.info <- metadata;
   paramSet$dataSet$metaOrig <- metadata;
-  
   saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
   return(1);

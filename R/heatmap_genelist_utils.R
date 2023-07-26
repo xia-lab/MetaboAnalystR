@@ -59,7 +59,7 @@
       dat[pos_inx,] <- res_pos;
       dat[neg_inx,] <- res_neg;
       res <- dat;
-      print(res);
+      #print(res);
     }
   }else{
     zero.inx <- dataSet$prot.mat == 0;

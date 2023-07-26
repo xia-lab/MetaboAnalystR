@@ -145,7 +145,6 @@ cleanMem <- function(n=8) { for (i in 1:n) gc() }
   vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
   obj.dim[vec, 1] <- napply(names, length)[vec]
   out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
-  save.image("memcheck.RData");
   names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
   if (!missing(order.by))
     out <- out[order(out[[order.by]], decreasing=decreasing), ]
@@ -1034,5 +1033,25 @@ RangeNorm<-function(x){
     x;
   }else{
     (x - mean(x))/(max(x)-min(x));
+  }
+}
+
+.signif_df <-function(df, num_digits=4){
+  library(dplyr)
+df_updated <- df %>%
+  mutate_if(is.numeric, ~ signif(., digits = num_digits))
+  return(df_updated);
+}
+
+generate_continuous_colors <- function(n, primary_color="red", filenm=NULL) {
+  colors <- colorRampPalette(c("white", primary_color))(n)
+  if(is.null(filenm)){
+    return(colors);
+  }else{
+    library(RJSONIO)
+    sink(filenm);
+    cat(toJSON(colors));
+    sink();
+    return(filenm);
   }
 }

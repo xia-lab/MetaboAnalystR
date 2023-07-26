@@ -53,7 +53,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 # time: compare consecutive groups (B-A) + (C-B)
 # reference: all others against common reference (A-C) + (B-C)
 # nested: (A-B)+(C-D) 
-PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly", robustTrend=F){
   
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
@@ -64,7 +64,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     dataSet <- .save.deseq.res(dataSet);
   }else{
     dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
-    dataSet <- .perform_limma_edger(dataSet);
+    dataSet <- .perform_limma_edger(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
 }
@@ -216,7 +216,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 }
 
 
-.perform_limma_edger <- function(dataSet){
+.perform_limma_edger <- function(dataSet, robustTrend = F){
   design <- dataSet$design;
   paramSet <- readSet(paramSet, "paramSet");
   contrast.matrix <- dataSet$contrast.matrix;
@@ -247,8 +247,8 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
       saveSet(msgSet, "msgSet");  
       return(0);
     }
-    fit2 <- contrasts.fit(fit, contrast.matrix)
-    fit2 <- eBayes(fit2)
+    fit2 <- contrasts.fit(fit, contrast.matrix);
+    fit2 <- eBayes(fit2, trend=robustTrend, robust=robustTrend);
     topFeatures <- topTable(fit2, number = Inf, adjust.method = "fdr");
   } else {
     set.seed(1) 
@@ -395,9 +395,11 @@ MultiCovariateRegression <- function(fileName,
                                      contrast = "anova",  # comparison class from analysis.var (only if categorical)
                                      # fixed.effects = NULL,  # metadata variables to adjust for
                                      random.effects = NULL, # metadata variables to adjust for
+                                     robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object
+
   dataSet <- readDataset(fileName);
-  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, F)
+  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, robustTrend, F)
   if(is.list(interim)){
     res <- 1;
   }else{
@@ -412,8 +414,9 @@ MultiCovariateRegression <- function(fileName,
                                      contrast = "anova",  # comparison class from analysis.var (only if categorical)
                                      # fixed.effects = NULL,  # metadata variables to adjust for
                                      random.effects = NULL, # metadata variables to adjust for
+                                     robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
-  
+
   # load libraries
   library(limma)
   library(dplyr)
@@ -433,11 +436,14 @@ MultiCovariateRegression <- function(fileName,
   }
   covariates <- dataSet$meta.info
 
+  matched_indices <- match(colnames(feature_table), rownames(covariates))
+  covariates <- covariates[matched_indices, ];
+  dataSet$meta.info <- covariates;
   fixed.effects <- adj.vec
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
   covariates[,c(var.types == "character")] <- lapply(covariates[,c(var.types == "character")], factor);
-  
+
   # aggregate vars
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
@@ -458,8 +464,10 @@ MultiCovariateRegression <- function(fileName,
     dataSet$rmidx <- rmidx;
   }
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
-
+  
   if(!identical(colnames(feature_table), rownames(covariates))){
+    print(colnames(feature_table));
+    print(rownames(covariates));
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
     return(0)
@@ -491,7 +499,7 @@ MultiCovariateRegression <- function(fileName,
     
     for(col in 1:ncol(covariates)){
       if(dataSet$cont.inx[colnames(covariates)[col]]){
-        covariates[,col] <- as.numeric( covariates[,col])
+        covariates[,col] <- as.numeric(as.character(covariates[,col]))
       }
     }
     
@@ -518,7 +526,7 @@ MultiCovariateRegression <- function(fileName,
 
     # get results
     fit <- contrasts.fit(fit, contrast.matrix);
-    fit <- eBayes(fit);
+    fit <- eBayes(fit, trend=robustTrend, robust=robustTrend);
     rest <- topTable(fit, number = Inf);
     
     if(contrast != "anova"){    
@@ -535,7 +543,7 @@ MultiCovariateRegression <- function(fileName,
         contrast.matrix <- do.call(makeContrasts, myargs);
         fit <- lmFit(feature_table, design)
         fit <- contrasts.fit(fit, contrast.matrix);
-        fit <- eBayes(fit);
+        fit <- eBayes(fit, trend=robustTrend, robust=robustTrend);
         res.noadj <- topTable(fit, number = Inf);
         dataSet$res.noadj <- res.noadj;
     }
@@ -566,14 +574,14 @@ MultiCovariateRegression <- function(fileName,
     }
     
     # get results
-    fit <- eBayes(fit);
+    fit <- eBayes(fit, trend=robustTrend, robust=robustTrend);
     rest <- topTable(fit, number = Inf, coef = analysis.var);
     colnames(rest)[1] <- dataSet$par1 <- analysis.var;
     
     ### get results with no adjustment
     if(internal){
     design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
-    fit <- eBayes(lmFit(feature_table, design));
+    fit <- eBayes(lmFit(feature_table, design), trend=robustTrend, robust=robustTrend);
     res.noadj <- topTable(fit, number = Inf);
     dataSet$res.noadj <- res.noadj;
     }

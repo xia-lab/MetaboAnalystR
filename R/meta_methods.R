@@ -15,7 +15,7 @@ SetGroupContrast <- function(dataName, grps){
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
     
     # regenerate factor to drop levels, force the levels order
-    group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
+                                                                                                                                                                                        group <- factor(dataSet$cls[sel.inx], levels=grp.nms);  
     data <- dataSet$data.norm[, sel.inx];
     dataSet$cls <- group;
     dataSet$data.norm <- data;
@@ -87,7 +87,6 @@ CheckMetaDataIntegrity <- function(){
     }
         
     print("Passed exp condition check!");
-    
     # now construct a common matrix to faciliated plotting across all studies
     dataName <- sel.nms[1];
     dataSet <- readDataset(dataName);
@@ -174,10 +173,11 @@ CheckMetaDataIntegrity <- function(){
   # if entrez, get symbols for display
   shared.nms <- rownames(common.matrix);
   if(id.type == "entrez"){ 
-    symbols <- doEntrez2SymbolMapping(shared.nms, paramSet$data.org, paramSet$data.idType);
+    symbols <- doEntrez2SymbolMapping(shared.nms, paramSet$data.org, id.type);
   }else{ # display itself
     symbols <- shared.nms;
   }
+    paramSet$data.idType <- id.type;
   names(symbols) <- shared.nms;
   
   common.matrix[!is.finite(common.matrix)] <- NA;
@@ -321,7 +321,7 @@ PerformMetaDeAnal <- function(paramSet){
   
   aggr <- data.frame()
   inmex.ind.ordered <- lapply(inmex.ind, function(x){
-    print(dim(x))
+    #print(dim(x))
     x<-x[order(rownames(x)),]
   })
   
@@ -686,7 +686,6 @@ GetMetaResultGeneIDLinks <- function(){
 }
 
 GetMetaResultColNames<-function(){
-  save.image("metaRes.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 

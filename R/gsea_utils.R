@@ -58,18 +58,22 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     }
   }
 
-  if(mode == "simple"){
-    fgseaRes <- fgsea(pathways = current.geneset, 
-                      stats = rankedVec,
-                      minSize=15,
-                      maxSize=500,
-                      nperm=10000);
-  } else {
-    fgseaRes <- fgsea(pathways = current.geneset, 
-                      stats = rankedVec,
-                      minSize=15,
-                      maxSize=500);
-  }
+  set.seed(123)
+  if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
+      fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
+                          stats    = rankedVec,
+                          minSize  = 5,
+                          maxSize = 500,
+                          scoreType = "pos",
+                          nperm=10000)    
+    }else{
+      fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
+                          stats    = rankedVec,
+                          minSize  = 5,
+                          maxSize = 500,
+                          scoreType = "pos")   
+     
+    }
   
   fgseaRes <- fgseaRes[!duplicated(fgseaRes$pathway),]
   
@@ -154,6 +158,8 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
   
+  fgseaRes <- .signif_df(fgseaRes, 4);
+
   json.res <- list(
     fun.link = setres$current.setlink[1],
     fun.anot = fun.anot,
@@ -462,3 +468,4 @@ est.hyper <- function (z, D, d12)
                   log(d0.est/D))
   return(list(d0 = d0.est, s2 = s2.est))
 }
+

@@ -574,12 +574,12 @@ paraCheck <- function(name, para) {
 ##and the pvalue from a hypergeometric test.
 hyperGeoTest <- function(geneSet, universe, hits) {
   ##number of genes in universe
-  N <- length(universe) 			
+  N <- length(universe)
   ##remove genes from gene set that are not in universe			
   geneSet <- intersect(geneSet[[1]], universe) 
   ##size of gene set	
   m <- length(geneSet) 							
-  Nm <- N-m	
+  Nm <- N-m
   ##hits in gene set
   overlap <- intersect(geneSet, hits) 	
   ##number of hits in gene set		
@@ -665,7 +665,11 @@ multiHyperGeoTest <- function(collectionOfGeneSets, universe, hits,
 gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
   
   # create gene set library object
-  gs.rds <- readRDS(file)
+  gs.rds <- readRDS(file);
+  if(is.null(names(gs.rds))){ # some go lib does not give names
+    names(gs.rds) <- c("link", "term", "sets");
+  }
+
   gs.names <- data.frame(name = gs.rds$term, id = names(gs.rds$sets))
   gs.lib <- gs.rds[["sets"]]
   

@@ -123,9 +123,11 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
-                          scoreType = "pos")    
+                          scoreType = "pos")   
+     
     }
   }
+  res <- .signif_df(res, 4);
   res <- res[order(res$pval),];
   resTable <- res;
   # process results;
@@ -245,6 +247,10 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     hit.num = hit.num,
     total= total
   );
+
+  if(ridgeType == "gsea"){
+    enr.res[["ES"]] <- unname(unlist(resTable[,"ES"]));
+  }
   
   res.list <- list(data=data.list, 
                    genelist=gene.list, 

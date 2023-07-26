@@ -42,7 +42,6 @@ SanityCheckMeta <- function(fileName,init){
       return(0)
     }
     for(i in 1:ncol(meta)){
-      
       meta[,i]=as.factor( meta[,i])
     }
     dataSet$cls <- cls.lbl
@@ -59,7 +58,6 @@ SanityCheckMeta <- function(fileName,init){
 # the data in the memory could be changed
 GetGroupNames <- function(dataName, meta="NA"){
   dataSet <- readDataset(dataName);
-  save.image("grp.RData");
   if(meta == "NA"){
     grpnms = levels(factor(dataSet$meta.info[,1]));
   }else{
@@ -104,7 +102,7 @@ GetDiscMetas <- function(dataName=""){
     keepidx <-  which(dataSet$disc.inx)
   }
   colnms<- colnames(dataSet$meta.info)[keepidx]
-  print(colnms)
+  #print(colnms)
   return(colnms);
 }
 

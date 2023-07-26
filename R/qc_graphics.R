@@ -235,7 +235,7 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
   dpi <- as.numeric(dpi)
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
-  print(format)
+  #print(format)
   Cairo(file=imgNm, width=8, height=6, type=format, bg="white", dpi=dpi, unit="in");
   plot <- meanSdPlot(dat, ranks=FALSE) 
   dev.off();

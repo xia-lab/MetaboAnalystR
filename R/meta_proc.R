@@ -447,7 +447,7 @@ ReadOmicsData <- function(fileName) {
     meta.info <- data.frame(meta.info);
     smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
     rownames(meta.info) <- smpl.nms;
-    
+    print(meta.info);
     disc.inx <- GetDiscreteInx(meta.info);
     if(sum(disc.inx) == length(disc.inx)){
       na.msg <- "All metadata columns are OK!"
@@ -628,7 +628,6 @@ DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, 
   #}
   cls <- as.factor(trimmed.meta); 
 
-
   if(alg =="limma"){
     res <- performLimmaMeta(trimmed.data, cls, "newcolumn");
   }else if(alg=="edger"){
@@ -674,7 +673,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   hit.inx <- which(hit.inx);
   
   res.sig<-res[hit.inx, , drop=F];
-  print(colnames(res.sig));
+  #print(colnames(res.sig));
   if("logFC" %in% colnames(res.sig)){
   hit.inx <- abs(as.numeric(res.sig[, "logFC"])) > fc.lvl #foldchange
   }else{
@@ -810,9 +809,10 @@ CheckMetaIntegrity <- function(){
   for(i in 1:length(sel.nms)){
     dat = readDataset(sel.nms[i])
     cnms[[i]] <- colnames(dat$data.norm);
-    metas[[i]] <- as.vector(dat$meta[,1]);
-    meta.dfs[[i]] <- dat$meta;
+    metas[[i]] <- as.vector(dat$meta.info[,1]);
+    meta.dfs[[i]] <- dat$meta.info;
   }
+
   if(length(metas) == 0){
     msgSet$current.msg <- paste0('Please make sure row(s) corresponding to meta-data start with "#CLASS" or to include a metadata file.' );
     saveSet(msgSet, "msgSet");
@@ -821,7 +821,7 @@ CheckMetaIntegrity <- function(){
   
   for(i in 1:length(sel.nms)){
     if(length(unique(metas[[i]]))>2){
-      msgSet$current.msg <- "For meta-data analysis, make sure the meta-data is composed of exactly two different groups";
+      msgSet$current.msg <- "For meta-analysis, make sure the meta-data is composed of exactly two different groups";
       saveSet(msgSet, "msgSet");
       return(0)
     }
@@ -841,6 +841,9 @@ CheckMetaIntegrity <- function(){
   # Merge the data frames in the list while preserving the original order
   metadata <- do.call(rbind, meta.dfs)  
   na.msg <- ""
+  print(metadata);
+  print("metadata");
+
   disc.inx <- GetDiscreteInx(metadata);
   if(sum(disc.inx) == length(disc.inx)){
     msgSet$na.msg <- "All metadata columns are OK!"

@@ -45,9 +45,9 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$annotated <- F;
   # should not contain duplicates, however sanity check
   if(dataType=="prot"){
-   data.proc <- qs::qread("int.mat.qs");
+    data.proc <- qs::qread("int.mat.qs");
   }else{
-  data.proc <- qs::qread("data.raw.qs");
+    data.proc <- qs::qread("data.raw.qs");
   }
   dataSet$data.anot <- data.proc;
   
@@ -56,10 +56,13 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     
     anot.id <- .doAnnotation(feature.vec, idType, paramSet);
     anot.id <- unname(anot.id);
-    
-    symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+    if(idType %in% c("s2f", "generic", "ko")){
+      symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
+    }else{
+      symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+    }
     symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
-
+    
     saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
     
     qs::qsave(anot.id, "annotation.qs");
@@ -105,37 +108,37 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataSet$data.norm <- dataSet$data.anot;
   
   qs::qsave(dataSet$data.anot, file="orig.data.anot.qs"); # keep original copy, not in mem
-
+  
   totalCount <-  sum(colSums(dataSet$data.anot));
   avgCount <- sum(colSums(dataSet$data.anot))/ ncol(dataSet$data.anot);
   minCount <- min(colSums(dataSet$data.anot))
   maxCount <- max(colSums(dataSet$data.anot))
- lvls = ""
- if(any(dataSet$disc.inx.orig)){
-  disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
-  lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
- }
- if(any(dataSet$cont.inx.orig)){
-  cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
-  lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
- }
+  lvls = ""
+  if(any(dataSet$disc.inx.orig)){
+    disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
+    lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
+  }
+  if(any(dataSet$cont.inx.orig)){
+    cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
+    lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
+  }
   missNum = which(is.na(dataSet$data.anot)|dataSet$data.anot=="NA"|dataSet$data.anot=="")
   msgSet$current.msg <- current.msg;
   msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta.info), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls,length(missNum))  
   if(length(missNum)>0){
-   RemoveMissingPercent(dataSet$name, 0.5)
-   ImputeMissingVar(dataSet$name, method="min")
+    RemoveMissingPercent(dataSet$name, 0.5)
+    ImputeMissingVar(dataSet$name, method="min")
   }else{
-   qs::qsave(dataSet$data.anot, file="data.missed.qs");
+    qs::qsave(dataSet$data.anot, file="data.missed.qs");
   }
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   
 }
 
+
 # Annotating genes to internal database
 AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
-  save.image("ann.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -239,10 +242,9 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   return(RegisterData(dataSet));
 }
 
-
 #Convert a vector of ids to vector of entrez ids
 .doAnnotation <- function(feature.vec, idType, paramSet){
-  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
+  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein","uniprot", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
     anot.id <- .doGeneIDMapping(feature.vec, idType, paramSet, "vec");
   }else{
     anot.id <- .doProbeMapping(feature.vec, idType, paramSet);
@@ -250,6 +252,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   }
   return(anot.id);        
 }
+
 
 
 
@@ -262,12 +265,12 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     idType <-"entrez";
     print(".doGeneIDMapping, empty feature.vec, get whole table");
   }
-    col.nm = "";
-    db.nm = "";
-
-  if(paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
+  col.nm = "";
+  db.nm = "";
+  
+  if(idType %in% c("s2f", "ko") || paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
     col.nm = "gene_id";
-    db.nm = paste0("entrez_", paramSet$data.idType);
+    db.nm = paste0("entrez_", idType);
   }else if(idType == "symbol"){
     col.nm = "symbol";
     db.nm = "entrez";
@@ -285,8 +288,8 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     # note, some ID can have version number which is not in the database
     # need to strip it off NM_001402.5 => NM_001402
     if(!(idType == "refseq" && org == "fcd")){ # do not strip, database contains version number.
-    q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
-    feature.vec <- q.mat[,1];
+      q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
+      feature.vec <- q.mat[,1];
     }
     col.nm = "accession";
     if(idType == "tair"){ # only for ath
@@ -296,7 +299,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
       db.nm <- paste0("entrez_", idType);
     }
   }
-
+  
   db.map <-  queryGeneDB(db.nm, org);
   if(org == "smm" && idType == "symbol"){
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
@@ -304,12 +307,12 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
     db.map[, col.nm] <- q.mat[,1];
   }
-
-   hit.inx <- match(feature.vec, db.map[, col.nm]);
-
+  
+  hit.inx <- match(feature.vec, db.map[, col.nm]);
+  
   if(outputType == "vec"){
     entrezs <- db.map[hit.inx, "gene_id"];
-
+    
     mode(entrezs) <- "character";
     rm(db.map, feature.vec); gc();
     return(entrezs);
