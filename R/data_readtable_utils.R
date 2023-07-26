@@ -22,6 +22,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDat
   }  
 
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
+
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$isMetaContain = metaContain
@@ -82,6 +83,7 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDat
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
+
   dataSet$meta.info <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
   dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
@@ -188,7 +190,6 @@ ReadMetaData <- function(metafilename){
     metadata$Dataset[nm.hits2] <- sel.nms[i];
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
-    
     dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]

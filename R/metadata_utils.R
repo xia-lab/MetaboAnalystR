@@ -223,19 +223,21 @@ UpdateMetaStatus <- function(dataName="",colNm){
 
 
 DeleteSample <- function(dataName="",samplNm){
+   print(dataName)
+   print(samplNm)
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
-    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,]
+    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,,drop=F]
     dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm!=samplNm)]
     RegisterData(dataSet);
   }else{
     paramSet <- readSet(paramSet, "paramSet")  
     dataName <- paramSet$dataSet$meta.info$Dataset[rownames(paramSet$dataSet$meta.info)==samplNm];
-    paramSet$dataSet$meta.info <- paramSet$dataSet$meta.info[rownames(paramSet$dataSet$meta.info)!=samplNm,];
+    paramSet$dataSet$meta.info <- paramSet$dataSet$meta.info[rownames(paramSet$dataSet$meta.info)!=samplNm,,drop=F];
     
     dataSet <- readDataset(dataName);
     dataSet$data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm)!=samplNm];
-    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,];
+    dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,,drop=F];
     
     inmex.meta<-qs::qread("inmex_meta.qs");
     inmex.meta$data <- inmex.meta$data[,colnames(inmex.meta$data) !=samplNm]

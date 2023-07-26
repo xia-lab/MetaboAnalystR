@@ -25,10 +25,8 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
   msg <- ""; 
-
   #Filter data
   data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
-  
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
   
