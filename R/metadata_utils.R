@@ -221,8 +221,8 @@ UpdateMetaStatus <- function(dataName="",colNm){
 
 
 DeleteSample <- function(dataName="",samplNm){
-   print(dataName)
-   print(samplNm)
+  #print(dataName)
+  #print(samplNm)
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
     dataSet$meta.info <- dataSet$meta.info[rownames(dataSet$meta.info)!=samplNm,,drop=F]

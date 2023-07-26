@@ -447,7 +447,7 @@ ReadOmicsData <- function(fileName) {
     meta.info <- data.frame(meta.info);
     smpl.nms <- .cleanNames(colnames(data)[-1], "sample_name");
     rownames(meta.info) <- smpl.nms;
-    print(meta.info);
+    #print(meta.info);
     disc.inx <- GetDiscreteInx(meta.info);
     if(sum(disc.inx) == length(disc.inx)){
       na.msg <- "All metadata columns are OK!"
@@ -841,8 +841,8 @@ CheckMetaIntegrity <- function(){
   # Merge the data frames in the list while preserving the original order
   metadata <- do.call(rbind, meta.dfs)  
   na.msg <- ""
-  print(metadata);
-  print("metadata");
+  #print(metadata);
+  #print("metadata");
 
   disc.inx <- GetDiscreteInx(metadata);
   if(sum(disc.inx) == length(disc.inx)){

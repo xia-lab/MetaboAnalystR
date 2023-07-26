@@ -300,7 +300,7 @@ PlotMultiFacCmpdSummary <- function(dataName,imgName,name, id, meta, version, fo
   }
   print(p)
   dev.off()
-  print(imgName);
+  #print(imgName);
   if(.on.public.web){
     return(imgName);
   }else{
