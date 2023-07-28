@@ -13,22 +13,26 @@
   
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-
+  
   require(dplyr)
-    # prepare lib
+  # prepare lib
   setres <- .loadEnrichLib(fun.type, paramSet)
   current.geneset <- setres$current.geneset;
-
+  
   # prepare query
   ora.nms <- names(ora.vec);
-
+  
   if(is.null(ora.nms)){
     ora.nms <- ora.vec;
     names(ora.vec) <- ora.vec;
   }
   
   # cut to the universe to uploaded genes
-  current.universe <- rownames(dataSet$data.anot); 
+  if(paramSet$anal.type == "genelist"){
+    current.universe <- unique(unlist(current.geneset)); 
+  } else {
+    current.universe <- rownames(dataSet$data.anot); 
+  }
   
   # also make sure pathways only contain genes measured in experiment
   if(!is.null(dataSet$data.anot)){
@@ -97,6 +101,7 @@
       }
     }
   }else{
+    msgSet$current.msg <- "No overlap between queried genes and pathway library!"
     return(0);
   }
   
@@ -137,7 +142,7 @@
   fast.write(resTable, file=csv.nm, row.names=F);
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
   saveSet(paramSet, "paramSet");
-
+  
   saveSet(msgSet, "msgSet");
   return(1);
 }
