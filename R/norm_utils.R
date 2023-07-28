@@ -21,6 +21,7 @@
 #'
 
 PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false"){
+
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
@@ -44,6 +45,12 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
 
   #Normalize data
   data <- NormalizeData(data, norm.opt, "NA", "NA");
+
+  # Curve-fitting can't handle negative values
+  if(paramSet$oneDataAnalType == "dose"){
+    add.val <- abs(min(data)) + 0.05*abs(min(data))
+    data <- data + add.val
+  }
   
   msg <- paste(norm.msg, msg);
   dataSet$data.norm <- data
