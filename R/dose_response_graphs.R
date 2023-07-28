@@ -11,15 +11,16 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
   ))
 }
 
-PreparePODJSON <- function(fileNm, scale, xMin=-Inf, xMax=Inf, geneDB, org){
+PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
+
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 
   bmdcalc.res <- FilterBMDResults(dataSet)
   
-  if(scale == "log10"){
+  if(doseScale == "log10"){
     bmdcalc.res[,3:6] <- log10(bmdcalc.res[,3:6])
-  } else if(scale == "log2"){
+  } else if(doseScale == "log2"){
     bmdcalc.res[,3:6] <- log2(bmdcalc.res[,3:6])
   }
   

@@ -47,7 +47,7 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   data <- NormalizeData(data, norm.opt, "NA", "NA");
 
   # Curve-fitting can't handle negative values
-  if(paramSet$oneDataAnalType == "dose"){
+  if(paramSet$oneDataAnalType == "dose" & min(data) < 0){
     add.val <- abs(min(data)) + 0.05*abs(min(data))
     data <- data + add.val
   }
