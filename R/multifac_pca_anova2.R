@@ -2,7 +2,7 @@
 #'@description Perform Two-way ANOVA 
 #'Perform within-subjects anova
 #'@param x Input the data
-#'@paxram time.fac Input the time factor
+#'@param time.fac Input the time factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

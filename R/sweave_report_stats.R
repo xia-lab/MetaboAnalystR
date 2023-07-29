@@ -791,19 +791,21 @@ CreatePLSdoc <- function(mSetObj=NA){
     "\\end{figure}"
   );
   cat(plsrhist, file=rnwFile, append=TRUE, sep="\n");
-  
-  plsdahist <- c(
-    # classification fig
-    "\\begin{figure}[htp]",
-    "\\begin{center}",
-    paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.class,"}", sep=""),
-    "\\caption{PLS-DA classification using different number of components. The red star indicates the best classifier.}",
-    "\\end{center}",
-    paste("\\label{",mSetObj$imgSet$pls.class,"}", sep=""),
-    "\\end{figure}"
-  );
-  cat(plsdahist, file=rnwFile, append=TRUE, sep="\n");
-  
+
+  if(!is.null(mSetObj$imgSet$pls.class)){
+    plsdahist <- c(
+        # classification fig
+        "\\begin{figure}[htp]",
+        "\\begin{center}",
+        paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$pls.class,"}", sep=""),
+        "\\caption{PLS-DA classification using different number of components. The red star indicates the best classifier.}",
+        "\\end{center}",
+        paste("\\label{",mSetObj$imgSet$pls.class,"}", sep=""),
+        "\\end{figure}"
+    );
+    cat(plsdahist, file=rnwFile, append=TRUE, sep="\n");
+  }
+
   if(!is.null(mSetObj$imgSet$pls.permut)){ # may not be performed (not by default)
     plsdahist <- c(
         # permutation fig

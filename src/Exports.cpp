@@ -15,7 +15,6 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // melt_dataframe
-/*
 List melt_dataframe(const DataFrame& data, const IntegerVector& id_ind, const IntegerVector& measure_ind, String variable_name, String value_name, SEXP measure_attributes, bool factorsAsStrings, bool valueAsFactor);
 RcppExport SEXP _MetaboAnalystR_melt_dataframe(SEXP dataSEXP, SEXP id_indSEXP, SEXP measure_indSEXP, SEXP variable_nameSEXP, SEXP value_nameSEXP, SEXP measure_attributesSEXP, SEXP factorsAsStringsSEXP, SEXP valueAsFactorSEXP) {
 BEGIN_RCPP
@@ -33,7 +32,7 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-*/
+
 /* .C calls */
 RcppExport void C_imodwt(void *, void *, void *, void *, void *, void *, void *, void *);
 RcppExport void C_modwt(void *, void *, void *, void *, void *, void *, void *, void *);
@@ -85,7 +84,7 @@ static const R_CallMethodDef CallEntries[] = {
   {"impute_with_linear_interpolation_base",  (DL_FUNC) &impute_with_linear_interpolation_base,  3},
   {"breaks_on_nBins",  (DL_FUNC) &breaks_on_nBins,  4},
   {"fmatch",  (DL_FUNC) &fmatch,  5},
-  //{"_MetaboAnalystR_melt_dataframe", (DL_FUNC) &_MetaboAnalystR_melt_dataframe, 8},
+  {"_MetaboAnalystR_melt_dataframe", (DL_FUNC) &_MetaboAnalystR_melt_dataframe, 8},
   {NULL, NULL, 0}
 };
 

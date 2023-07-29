@@ -8,6 +8,8 @@ aov.mixed(x)
 }
 \arguments{
 \item{x}{Input the data}
+
+\item{time.fac}{Input the time factor}
 }
 \description{
 Perform Two-way ANOVA 

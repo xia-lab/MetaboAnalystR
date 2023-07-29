@@ -372,8 +372,12 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
                     " are provided an option to select the metabolites to use as currency.\n");
     cat(descr.curr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
-    
-    curr.desc <- paste("The user's selected list of currency metabolites is: ", currency, ".");
+    if(.on.public.web){
+        curr.desc <- paste("The user's selected list of currency metabolites is: ", currency, ".");
+    } else {
+        if(!exists("currency_r")){currency_r <- currency}
+        curr.desc <- paste("The user's selected list of currency metabolites is: ", currency_r, ".");
+    }
     cat(curr.desc, file=rnwFile, append=TRUE, sep="\n");
     
     descr.add <- c("\\subsubsection{Analysis Customization: Adducts}\n",

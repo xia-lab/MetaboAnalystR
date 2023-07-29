@@ -1369,6 +1369,7 @@ PerformDataInspect <- function(datapath = NULL,
 #' @author Zhiqiang Pang
 #' @noRd
 FastRunningShow_customized <- function(fullUserPath){
+  metaboanalyst_env <<- new.env();
   OptiLCMS:::FastRunningShow_customized(fullUserPath)
 }
 
@@ -1377,6 +1378,7 @@ FastRunningShow_customized <- function(fullUserPath){
 #' @author Zhiqiang Pang
 #' @noRd
 FastRunningShow_auto <- function(fullUserPath){
+  metaboanalyst_env <<- new.env();
   OptiLCMS:::FastRunningShow_auto(fullUserPath)
 }
 
@@ -1525,11 +1527,12 @@ PerformParamsOptimization <- function(mSet,
 
 #' PerformPeakProfiling
 #' @param mSet mSet
-#' @param params params
+#' @param Params Params
 #' @param plotSettings plotSettings
+#' @param ncore number of cores
 #' @export
-PerformPeakProfiling <- function(mSet, params, plotSettings) {
-  return(OptiLCMS::PerformPeakProfiling(mSet, params, plotSettings));
+PerformPeakProfiling <- function(mSet, Params, plotSettings, ncore) {
+  return(OptiLCMS::PerformPeakProfiling(mSet, Params, plotSettings, ncore));
 }
 
 
