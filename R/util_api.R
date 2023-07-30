@@ -102,7 +102,8 @@ my.namemap.api <- function(endpoint="/internal_mapcompounds"){
     return(.set.mSet(mSetObj));
 }
 
-my.kegg.plot <- function(endpoint="/pathway_kegg_plot"){
+my.kegg.plot <- function(endpoint="/pathway_kegg_plot", 
+                         format = "png", width = 8, height = 8, dpi = 72){
   
     call <- paste(api.base, endpoint, sep="");
     mSetObj <- .do.api.call(call);
@@ -127,7 +128,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot"){
       
       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
       
-      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+      Cairo::Cairo(file = imgName, dpi=dpi, width=w, height=h, type=format, bg="white");
       par(mai=rep(0,4));
       plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=mSetObj$api$inmex.plot.bg.cols,
                 vertex.frame.color=mSetObj$api$inmex.plot.line.cols);
@@ -137,6 +138,8 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot"){
       
       imgName <- mSetObj$api$imgName;
       # pathway
+      if(!exists("dpi")){dpi <- 72;}
+      if(!exists('width')){w <- h <- width <- height <- 8}
       if(is.null(dpi)){
         Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
       }else{
@@ -144,7 +147,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot"){
           width <- 8;
           w <- h <- width;
         }
-        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+        Cairo::Cairo(file = imgName, dpi=dpi, width=width, height=height, type=format, bg="white");
       }
       
       par(mai=rep(0,4));

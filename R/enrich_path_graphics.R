@@ -48,7 +48,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
                      dpi = dpi, format = format)
     }
     saveRDS(toSend, "tosend.rds");
-    return(my.kegg.plot());
+    return(my.kegg.plot(dpi = dpi, format = format, width = width, height = height));
   }
 }
 
