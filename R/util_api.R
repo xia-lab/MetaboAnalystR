@@ -41,8 +41,8 @@ my.qea.kegg <- function(endpoint="/msetqea"){
     call <- paste(api.base, endpoint, sep="");
     mSetObj <- .do.api.call(call);
     
-    if(is.null(mSetObj) || is.null(mSetObj$dataSet$qea.mat)){
-      AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
+    if(is.null(mSetObj) || is.null(mSetObj$analSet$qea.mat)){
+      AddErrMsg("Error! QEA Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
       return(0)
     }
 
@@ -163,7 +163,9 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
 .do.api.call <- function(call, file.send = "tosend.rds"){
 
     load_httr();
-    request <- httr::POST(url = call, body = list(rds = upload_file(file.send, "application/octet-stream")))
+    request <- httr::POST(url = call, 
+                          body = list(rds = upload_file(file.send, "application/octet-stream")),
+                          encode = "multipart")
     
     # check if successful
     if(request$status_code != 200){
