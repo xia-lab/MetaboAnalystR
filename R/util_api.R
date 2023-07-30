@@ -41,8 +41,8 @@ my.qea.kegg <- function(endpoint="/msetqea"){
     call <- paste(api.base, endpoint, sep="");
     mSetObj <- .do.api.call(call);
     
-    if(is.null(mSetObj) || is.null(mSetObj$dataSet$qea.mat)){
-      AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
+    if(is.null(mSetObj) || is.null(mSetObj$analSet$qea.mat)){
+      AddErrMsg("Error! QEA Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
       return(0)
     }
 
