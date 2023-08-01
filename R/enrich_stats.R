@@ -20,9 +20,15 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   # make a clean dataSet$cmpd data based on name mapping
   # only valid hmdb name will be used
-  nm.map <- GetFinalNameMap(mSetObj);
-  valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
-  ora.vec <- nm.map$hmdb[valid.inx];
+
+  # SSP input for enrich is different
+  if(mSetObj$analSet$type=="msetssp"){
+      ora.vec <- mSetObj$dataSet$cmpd;
+  }else{
+     nm.map <- GetFinalNameMap(mSetObj);
+     valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
+     ora.vec <- nm.map$hmdb[valid.inx];
+  }
   
   q.size<-length(ora.vec);
   
