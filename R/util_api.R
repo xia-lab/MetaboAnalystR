@@ -26,11 +26,11 @@ my.hyperscore.kegg <- function(endpoint="/msetora"){
     
     # parse json response from server to results
     if(is.null(mSetObj) || is.null(mSetObj$analSet$ora.mat)){
-      AddErrMsg("Error! Mset ORA via api.xialab.ca unsuccessful!")
+      AddErrMsg("Error! Mset ORA via xialab.ca/api unsuccessful!")
       return(0)
     }
 
-    print("Mset ORA via api.metaboanalyst.ca successful!")
+    print("Mset ORA via xialab.ca/api successful!")
     
     fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
     return(.set.mSet(mSetObj));
@@ -42,11 +42,11 @@ my.qea.kegg <- function(endpoint="/msetqea"){
     mSetObj <- .do.api.call(call);
     
     if(is.null(mSetObj) || is.null(mSetObj$analSet$qea.mat)){
-      AddErrMsg("Error! QEA Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
+      AddErrMsg("Error! QEA Pathway Analysis via xialab.ca/api unsuccessful!")
       return(0)
     }
 
-    print("Enrichment QEA via api.metaboanalyst.ca successful!")
+    print("Enrichment QEA via xialab.ca/api successful!")
     
     fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
     return(.set.mSet(mSetObj));
@@ -58,11 +58,11 @@ my.pathway.qea <- function(endpoint="/pathwayqea"){
     mSetObj <- .do.api.call(call);
     
     if(is.null(mSetObj) || is.null(mSetObj$analSet$qea.mat)){
-      AddErrMsg("Error! Pathway QEA via api.metaboanalyst.ca unsuccessful!")
+      AddErrMsg("Error! Pathway QEA via xialab.ca/api unsuccessful!")
       return(0)
     }
 
-    print("Pathway QEA via api.metaboanalyst.ca successful!")
+    print("Pathway QEA via xialab.ca/api successful!")
     
     fast.write.csv(mSetObj$analSet$qea.mat, file="pathway_results.csv");
     return(.set.mSet(mSetObj));
@@ -74,16 +74,16 @@ my.integ.kegg <- function(endpoint="/jointpath"){
     mSetObj <- .do.api.call(call);
     
     if(is.null(mSetObj) || is.null(mSetObj$dataSet$path.mat)){
-      AddErrMsg("Error! Joint Pathway Analysis via api.metaboanalyst.ca unsuccessful!")
+      AddErrMsg("Error! Joint Pathway Analysis via xialab.ca/api unsuccessful!")
       return(0)
     }
     
-    print("Joint Pathway Analysis via api.metaboanalyst.ca successful!")
+    print("Joint Pathway Analysis via xialab.ca/api successful!")
     
     rownames(mSetObj$dataSet$path.mat) <- mSetObj$dataSet$jointpa.pathnames
     fast.write.csv(mSetObj$dataSet$path.mat, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
-    
-    mSetObj$dataSet$pathinteg.impMat <- impMat;    
+    qs::qsave(mSetObj$dataSet$pathinteg.impTopo, file = "pathinteg.impTopo.qs")
+    #mSetObj$dataSet$pathinteg.impMat <- impMat;    
     return(.set.mSet(mSetObj));
  }
 
@@ -93,12 +93,12 @@ my.namemap.api <- function(endpoint="/internal_mapcompounds"){
     request <- .do.api.call(call);
 
     if(is.null(request) ||is.null(request$name.map)){
-        AddErrMsg("Error! Compound name mapping via api.metaboanalyst.ca unsuccessful!")
+        AddErrMsg("Error! Compound name mapping via xialab.ca/api unsuccessful!")
         return(0)
     }
 
     mSetObj <- request;
-    print("Compound name mapping via api.metaboanalyst.ca successful!");
+    print("Compound name mapping via xialab.ca/api successful!");
     return(.set.mSet(mSetObj));
 }
 
@@ -109,7 +109,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
     mSetObj <- .do.api.call(call);
 
     if(is.null(mSetObj)){
-        AddErrMsg("Error! Call api.metaboanalyst.ca unsuccessful!")
+        AddErrMsg("Error! Call xialab.ca/api unsuccessful!")
         return(0)
     }
     
@@ -123,12 +123,10 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
       pathName <- gsub(",","", pathName);
       
       dpi <- 72
-      width <- 8;
-      w <- h <- width;
       
       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
       
-      Cairo::Cairo(file = imgName, dpi=dpi, width=w, height=h, type=format, bg="white");
+      Cairo::Cairo(file = imgName, dpi=dpi, width=width, height=height, type=format, bg="white");
       par(mai=rep(0,4));
       plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=mSetObj$api$inmex.plot.bg.cols,
                 vertex.frame.color=mSetObj$api$inmex.plot.line.cols);

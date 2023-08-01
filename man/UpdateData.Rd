@@ -4,7 +4,7 @@
 \alias{UpdateData}
 \title{Update data for filtering}
 \usage{
-UpdateData(mSetObj = NA)
+UpdateData(mSetObj = NA, order.group = FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

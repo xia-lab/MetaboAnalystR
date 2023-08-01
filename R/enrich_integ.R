@@ -240,7 +240,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   ora.vec <- rownames(impMat);
   impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
   rownames(impMat) <- ora.vec;
-
+  mSetObj$dataSet$pathinteg.impMat <- impMat;
   if(!.on.public.web){
      # make this lazy load
     if(!exists("my.integ.kegg")){ # public web on same user dir
@@ -1213,6 +1213,14 @@ GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
     return(cbind(pathName, paste(unique(all.nms), collapse="; ")));
 }
 
+
+
+#' CreateIntegMatchingTable
+#'
+#' @param mSetObj mSetObj Object
+#'
+#' @export
+#'
 CreateIntegMatchingTable <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1245,7 +1253,7 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
   fast.write.csv(res, "jointpa_matched_features.csv", row.names = T)
 
   if(!.on.public.web){
-    return(1)
+    return(mSetObj)
   }else{
     return(.set.mSet(mSetObj));
   }

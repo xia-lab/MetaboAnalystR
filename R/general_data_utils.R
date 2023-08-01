@@ -173,7 +173,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj<-SetPeakFormat(mSetObj, "pvalue");
   #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
   anal.type <<- "mummichog";
-  api.base <<- "http://api.xialab.ca";
+  api.base <<- "https://www.xialab.ca/api";
   return(mSetObj)
 }
 
@@ -235,7 +235,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     url.pre <<- "";
   }
   
-  api.base <<- "http://api.xialab.ca"
+  api.base <<- "https://www.xialab.ca/api"
   
 }
 #'For two factor time series only
