@@ -4,7 +4,6 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", analSet){
-  save.image("enr.RData");
   enr.mat <- qs:::qread("enr.mat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;

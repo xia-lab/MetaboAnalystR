@@ -10,7 +10,6 @@
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec){
-  save.image("enr.RData")
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
 
@@ -32,7 +31,7 @@
     current.universe <- rownames(dataSet$data.anot); 
   }else if(paramSet$anal.type == "metadata"){
     analSet <- readSet(analSet, "analSet")
-    current.universe <- rownames(analSet$meta.mat); 
+    current.universe <- rownames(analSet$meta.mat.all); 
   }else{
     current.universe <- unique(unlist(current.geneset)); 
   }
