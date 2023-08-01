@@ -4,7 +4,7 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ##################################################
 my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", analSet){
-  cat("my.enrich.net===",netNm, type, overlapType);
+  save.image("enr.RData");
   enr.mat <- qs:::qread("enr.mat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
@@ -58,7 +58,11 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   names(cnt) <- id;
   cnt2 <- cnt[V(g)$name];
   
-  V(g)$size <- my.rescale(log(cnt2+1, base=10), 8, 32);
+  if (all(cnt2 == cnt2[1])){
+    V(g)$size <- rep(16, length(cnt2))
+  }else{
+    V(g)$size <- my.rescale(log(cnt2+1, base=10), 8, 32);
+  }
   
   # layout
   pos.xy <- layout.auto(g);

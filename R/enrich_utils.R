@@ -10,9 +10,9 @@
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec){
-  
-  paramSet <- readSet(paramSet, "paramSet");
+  save.image("enr.RData")
   msgSet <- readSet(msgSet, "msgSet");
+  paramSet <- readSet(paramSet, "paramSet");
 
   require(dplyr)
     # prepare lib
@@ -28,8 +28,14 @@
   }
   
   # cut to the universe to uploaded genes
-  current.universe <- rownames(dataSet$data.anot); 
-  
+  if(paramSet$anal.type == "onedata"){
+    current.universe <- rownames(dataSet$data.anot); 
+  }else if(paramSet$anal.type == "metadata"){
+    analSet <- readSet(analSet, "analSet")
+    current.universe <- rownames(analSet$meta.mat); 
+  }else{
+    current.universe <- unique(unlist(current.geneset)); 
+  }
   # also make sure pathways only contain genes measured in experiment
   if(!is.null(dataSet$data.anot)){
     current.geneset <- lapply(current.geneset, function(x){x[x %in% current.universe]})
