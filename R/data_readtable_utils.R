@@ -26,6 +26,8 @@ ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDat
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$isMetaContain = metaContain
+  paramSet$oneDataAnalType <- oneDataAnalType;
+
   # rename data to data.orig
   int.mat <- dataSet$data;
   int.mat <- int.mat[,which(colnames(int.mat) %in% rownames(meta.info$meta.info))]

@@ -15,13 +15,13 @@
   paramSet <- readSet(paramSet, "paramSet");
 
   require(dplyr)
-    # prepare lib
+  # prepare lib
   setres <- .loadEnrichLib(fun.type, paramSet)
   current.geneset <- setres$current.geneset;
-
+  
   # prepare query
   ora.nms <- names(ora.vec);
-
+  
   if(is.null(ora.nms)){
     ora.nms <- ora.vec;
     names(ora.vec) <- ora.vec;
@@ -103,6 +103,7 @@
       }
     }
   }else{
+    msgSet$current.msg <- "No overlap between queried genes and pathway library!"
     return(0);
   }
   
@@ -143,7 +144,7 @@
   fast.write(resTable, file=csv.nm, row.names=F);
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
   saveSet(paramSet, "paramSet");
-
+  
   saveSet(msgSet, "msgSet");
   return(1);
 }

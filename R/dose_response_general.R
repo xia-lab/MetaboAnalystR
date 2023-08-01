@@ -1097,7 +1097,12 @@ gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
   }
 
   # do gsoa
-  results.summary <- gsoa.fun(paste0(paramSet$lib.path, paramSet$data.org, "/", gs.lib), 
+  if(paramSet$data.org == "generic"){
+    orgDir <- paramSet$data.idType
+  }else{
+    orgDir <- paramSet$data.org
+  }
+  results.summary <- gsoa.fun(paste0(paramSet$lib.path, orgDir, "/", gs.lib), 
                                 universe, hits, bmd.res, 1.0, FDR)
   # append to list of results
   results <- results.summary$results
