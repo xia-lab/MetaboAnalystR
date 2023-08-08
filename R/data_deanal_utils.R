@@ -440,7 +440,7 @@ MultiCovariateRegression <- function(fileName,
   matched_indices <- match(colnames(feature_table), rownames(covariates))
   covariates <- covariates[matched_indices, ,drop=F ];
   dataSet$meta.info <- covariates;
-  fixed.effects <- adj.vec
+  #fixed.effects <- adj.vec
   # process covariates
   var.types <- lapply(covariates, class) %>% unlist();
   covariates[,c(var.types == "character")] <- lapply(covariates[,c(var.types == "character")], factor);
@@ -448,14 +448,14 @@ MultiCovariateRegression <- function(fileName,
   # aggregate vars
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
-  if(!is.null(fixed.effects)){
-    all.vars = c(all.vars, fixed.effects);
-    vars <- c(vars, fixed.effects);
-  }
-  if(!is.null(random.effects) & !is.na(random.effects) & random.effects!="NA" ){
+  #if(!is.null(fixed.effects)){
+  #  all.vars = c(all.vars, fixed.effects);
+  #  vars <- c(vars, fixed.effects);
+  #}
+  if(!is.null(random.effects) && !is.na(random.effects) && random.effects!="NA" && random.effects!="" ){
     all.vars = c(all.vars, random.effects);
   }
-  #print(all.vars);
+  print(all.vars);
   
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
@@ -516,7 +516,7 @@ MultiCovariateRegression <- function(fileName,
     contrast.matrix <- do.call(makeContrasts, myargs);
     
     # handle blocking factor
-    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA" | random.effects == "") {
       fit <- lmFit(feature_table, design);
     } else {
       block.vec <- covariates[,random.effects];

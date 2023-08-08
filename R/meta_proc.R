@@ -275,7 +275,7 @@ ImputeMissingVar <- function(dataName="", method="min"){
     current.msg <- c(current.msg ,"Variables with missing values were excluded.");
     row.nms<-row.nms[good.inx]
   }else if(method=="min"){
-    new.mat<- ReplaceMissingByLoD(int.mat);
+    new.mat<- suppressWarnings(ReplaceMissingByLoD(int.mat));
     current.msg <- c(current.msg, "Missing variables were replaced by LoDs (1/5 of the min positive value for each variable)");
   }else if(method=="colmin"){
     new.mat<-apply(int.mat, 1, function(x){

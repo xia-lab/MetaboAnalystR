@@ -15,7 +15,7 @@
 #'License: MIT
 #'@export
 #'
-ReadTabExpressData <- function(fileName, metafileName,metaContain="false",oneDataAnalType, path="") {
+ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneDataAnalType="default", path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);

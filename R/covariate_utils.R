@@ -167,7 +167,7 @@ invert_named_vector <- function(input_named_vec) {
 
 
 PlotCovariateMap <- function(dataName, theme="default", imgName="NA", format="png", dpi=72){
-  dataSet <- qs::qread(dataName);
+  dataSet <- readDataset(dataName);
   both.mat <- dataSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
   logp_val <- dataSet$cov$thresh
