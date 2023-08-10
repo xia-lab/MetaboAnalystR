@@ -21,7 +21,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   if (dataSet$de.method=="deseq2"){
     dds <- qs::qread("deseq.res.obj.rds");
     vec <- as.numeric(c(dataSet$contrast.matrix[,inx]));
-    inx <- 1;
+    inx <- 1; # NOTE FROM JE: is this always correct? What happens when there are multiple comparisons ... we just always do the first column? 
     res <- results(dds, contrast = vec, independentFiltering = FALSE, cooksCutoff = Inf);
     topFeatures <- data.frame(res@listData);
     rownames(topFeatures) <- rownames(res);
@@ -53,29 +53,28 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   
   resTable<-resTable[hit.inx.p,];
   
-  maxFC.inx <- hit.inx - 1; # not sure if this is also true for edgeR
+  maxFC.inx <- hit.inx - 1;
   logfc.mat <- resTable[,1:maxFC.inx, drop=F];
-  pos.mat <- abs(logfc.mat[,inx]);
-  #fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
-  fc.vec <- pos.mat;
-  hit.inx.fc <- fc.vec >= fc.lvl;
-  resTable <- resTable[hit.inx.fc,];
+  if(paramSet$oneDataAnalType == "dose"){
+    pos.mat <- abs(logfc.mat);
+    fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
+    hit.inx.fc <- fc.vec >= fc.lvl;
+    resTable <- resTable[hit.inx.fc,];
+  } else {
+    pos.mat <- abs(logfc.mat[,inx]);
+    fc.vec <- pos.mat;
+    hit.inx.fc <- fc.vec >= fc.lvl;
+    resTable <- resTable[hit.inx.fc,];
+  }
   
   if (nrow(resTable) == 0){
     msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff.");
   }
   
   ### Note, rowname of resTable must be entrez ID
-  
+  # calculate differently if dose-response
   de.Num <- nrow(resTable);
   non.de.Num <- nrow(dataSet$data.norm) - de.Num;
-  # display at most 5000 genes for the server (two main reasons)
-  # 1) should not have more 22% (human: 23000) DE of all genes (biological)
-  # 2) IE canvas can display no more than 6800 pixels (computational)
-  #if (nrow(resTable) > 5000){
-  #  resTable <- resTable[1:5000,];
-  #  msgSet$current.msg <- paste(msgSet$current.msg, " Due to computational constraints, only top 5000 genes will be used. ", collapse="\n");
-  #}
   
   # may need to update data, class and meta.info
   data <- dataSet$data.norm;
