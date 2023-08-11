@@ -275,7 +275,6 @@ GetCurrentJson <-function(type){
 
 
 SelectDataSet <- function(){
-  
   paramSet <- readSet(paramSet, "paramSet");
   if(!exists('nm.vec')){
     AddErrMsg("No dataset is selected for analysis!");
@@ -323,10 +322,12 @@ GetDiscreteInx <- function(my.dat, min.rep=2){
 }
 
 GetNumbericalInx <- function(my.dat){
+  suppressWarnings({
   good.inx <- apply(my.dat, 2, function(x){
     isNum = as.numeric(as.character(x[x!="NA"]))
     return(all(!is.na(as.numeric(as.character(isNum)))));
   });
+  })
   return(good.inx);
 }
 

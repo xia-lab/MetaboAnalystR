@@ -82,6 +82,7 @@ RemoveDuplicates <- function(data, lvlOpt, quiet=T, paramSet, msgSet){
 # within, leading and trailing spaces
 # remove /
 ClearFactorStrings<-function(query){
+  suppressWarnings({
   # remove leading and trailing space
    query<- sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", query, perl=TRUE); 
   # kill multiple white space
@@ -93,6 +94,7 @@ ClearFactorStrings<-function(query){
     query <- gsub("[^[:alnum:] ]", "_", query);
    query<-factor(query, levels= unique(query))
   }
+  })
   return (query);
 }
 
