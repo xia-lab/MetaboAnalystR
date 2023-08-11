@@ -7,13 +7,29 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-#'Read tab delimited file
-#'@description read tab delimited file, used in single gene expression;
-#'@param fileName file name of the data, .txt format
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: MIT
-#'@export
+#' Read Tabular Expression Data and Metadata
+#'
+#' This function reads tabular expression data along with metadata and processes the data.
+#'
+#' @param fileName A character string specifying the name of the expression data file.
+#' @param metafileName A character string specifying the name of the metadata file, ignore if metaContain = true
+#' @param metaContain A logical value indicating whether metadata is contained in the data file
+#' @param oneDataAnalType The type of analysis to perform on the one-data setup.
+#' @param path The path to the files if they are located in a different directory.
+#'
+#' @return A processed dataset object containing expression data and metadata.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' ReadTabExpressData(fileName = "expression_data.csv", metafileName = "metadata.csv",
+#'                    metaContain = TRUE, oneDataAnalType = "default", path = "")
+#' }
+#'
+#' @export
+#' @license MIT License
 #'
 ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneDataAnalType="default", path="") {
   dataSet <- .readTabData(paste0(path, fileName));
@@ -117,7 +133,25 @@ ReadAnnotationTable <- function(fileName) {
 }
 
 
-###read in metadata file for meta-analysis mode
+#' Read Metadata for Meta-Analysis Mode
+#'
+#' This function reads metadata for meta-analysis mode and performs necessary checks.
+#'
+#' @param metafilename A character string specifying the name of the metadata file.
+#'
+#' @return An integer indicating the success of reading and processing metadata.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' ReadMetaData(metafilename = "metadata.csv")
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 ReadMetaData <- function(metafilename){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet,"msgSet");

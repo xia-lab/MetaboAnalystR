@@ -194,7 +194,7 @@ ReadMergedExpressTable <- function(dataName){
 # as well as to prepare for GO analysis
 # no return, as set global 
 
-SetupMetaStats <- function(BHth, paramSet,analSet){
+SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
     meta.mat <- analSet$meta.mat.all;
     paramSet$BHth <- BHth;
     #all common genes
@@ -371,7 +371,23 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   
 }
 
-
+#' Perform Batch Correction
+#'
+#' This function performs batch correction using the ComBat method.
+#'
+#' @return A list of datasets after batch correction.
+#'
+#' @author Guangyan Zhou\email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' PerformBatchCorrection()
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 PerformBatchCorrection <- function(){
     .prepare.batch();
     .perform.computing();

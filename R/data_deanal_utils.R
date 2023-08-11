@@ -7,7 +7,20 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-#in DE analysis page, select metadata primary factor, secondary factor and blocking factor 
+#' Select Metadata Factors for DE Analysis
+#'
+#' This function is used to select metadata factors for a Differential Expression (DE) analysis.
+#'
+#' @param dataName A character string specifying the name of the dataset.
+#' @param meta0 The primary metadata factor
+#' @param meta1 The secondary metadata factor
+#' @param block1 The blocking factor for
+#'
+#' @author Guangyan Zhou, \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @export
+#'
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   dataSet <- readDataset(dataName);
   if(meta0 == "NA"){
@@ -47,12 +60,23 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   }
 }
 
-# perform differential analysis
-# default: all pair-wise comparison (A-B) + (B-C) + (A-C)
-# custom: only compare two groups (A-C)
-# time: compare consecutive groups (B-A) + (C-B)
-# reference: all others against common reference (A-C) + (B-C)
-# nested: (A-B)+(C-D) 
+#' Perform Differential Analysis
+#'
+#' This function performs differential analysis based on different types of comparisons.
+#'
+#' @param dataName A character string specifying the name of the dataset.
+#' @param anal.type The type of analysis to perform. Options: "default", "custom", "time", "reference", "nested".
+#' @param par1 Parameter 1, depending on the analysis type.
+#' @param par2 Parameter 2, depending on the analysis type.
+#' @param nested.opt Option for nested analysis. Options: "intonly" (default), "all".
+#' @param robustTrend Logical. If TRUE, use robust trend test.
+#'
+#' @return Results of the differential analysis.
+#' @details default: all pair-wise comparison (A-B) + (B-C) + (A-C), custom: only compare two groups (A-C), time: compare consecutive groups (B-A) + (C-B), reference: all others against common reference (A-C) + (B-C), nested: (A-B)+(C-D) 
+#' @author Guangyan Zhou, \email{guangyan.zhou@mail.mcgill.ca}
+#' @export
+#' @license MIT
+#'
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly", robustTrend=F){
 
   dataSet <- readDataset(dataName);
@@ -314,7 +338,6 @@ SetupDesignMatrix<-function(dataName="", deMethod){
 #'License: MIT
 #'@export
 #'
-
 PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   dataSet <- readDataset(dataName);
   dataSet$pval <- p.lvl

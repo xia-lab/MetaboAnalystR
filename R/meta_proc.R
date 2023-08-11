@@ -6,12 +6,23 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-#'Sanity check individual dataset for meta-analysis 
-#'@param fileName The filename of dataset in qs format
-#'@author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
-#'McGill University, Canada
-#'License: MIT
-#'@export
+#' Perform Data Sanity Check
+#'
+#' This function performs a sanity check on the input data, including class labels and data matrix.
+#'
+#' @param fileName The name of the data file to be checked.
+#'
+#' @return A modified dataset after performing data sanity checks.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#'
+#' @examples
+#' \dontrun{
+#' SanityCheckData("data_filename")
+#' }
+#'
+#' @export
+#' @license MIT License
 #'
 SanityCheckData <- function(fileName){
   msgSet <- readSet(msgSet, "msgSet");
@@ -129,6 +140,26 @@ UpdateSampleBasedOnLoading<-function(filenm, gene.id, omicstype){
   sink();
 }
 
+#' Plot Data Profile
+#'
+#' This function generates data profile plots for quality control, including box plots and PCA plots.
+#'
+#' @param dataName The name of the dataset to be used for plotting.
+#' @param type The type of data profile to plot (e.g., "boxplot" or "pca").
+#' @param boxplotName The name of the file to save the box plot image.
+#' @param pcaName The name of the file to save the PCA plot image.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' PlotDataProfile("data_filename", "boxplot", "boxplot_image.png", "pca_image.png")
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 PlotDataProfile<-function(dataName,type, boxplotName, pcaName){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
@@ -237,6 +268,24 @@ CheckDataType <- function(dataName, type){
 
 }
 
+#' Remove Variables with High Missing Percentage
+#'
+#' This function removes variables (columns) from the dataset that have a high percentage of missing values.
+#'
+#' @param dataName The name of the dataset to be processed.
+#' @param percent The threshold percentage of missing values above which variables will be removed.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' RemoveMissingPercent("data_filename", 0.2)
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 RemoveMissingPercent <- function(dataName="", percent=perct){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
@@ -258,7 +307,24 @@ RemoveMissingPercent <- function(dataName="", percent=perct){
   RegisterData(dataSet);
 }
 
-
+#' Impute Missing Values in Variables
+#'
+#' This function imputes missing values in variables (columns) of the dataset using various methods.
+#'
+#' @param dataName The name of the dataset to be processed.
+#' @param method The imputation method to be used. Can be one of "exclude", "min", "colmin", "mean", "median", "knn_var", "knn_smp", "bpca", "ppca", "svdImpute".
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' ImputeMissingVar("data_filename", method = "min")
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 ImputeMissingVar <- function(dataName="", method="min"){
   dataSet <- readDataset(dataName);
   msgSet <- readSet(msgSet, "msgSet"); 
@@ -333,7 +399,20 @@ ImputeMissingVar <- function(dataName="", method="min"){
   RegisterData(dataSet);
 }
 
-
+#' Filter Data by Count and Variance
+#'
+#' This function filters the data in a dataset by count and variance thresholds.
+#'
+#' @param nm The name of the dataset to be processed.
+#' @param countOpt The option to use for count filtering. Can be "pct" (percentage) or "count" (absolute count).
+#' @param count The count threshold for filtering.
+#' @param var The variance threshold for filtering.
+#'
+#' @return The filtered dataset.
+#'
+#' @export
+#' @license MIT License
+#'
 FilteringData <- function(nm, countOpt="pct",count, var){
   dataSet <- readDataset(nm);
   
@@ -407,13 +486,18 @@ ReplaceMissingByLoD <- function(int.mat){
     return (int.mat);
 }
 
-#'Read individual dataset for meta-analysis.
-#'@description parse gene expression dataset into R object.
-#'@param fileName File name of data table.
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: MIT
-#'@export
+#' Read Omics Data for Meta-Analysis
+#'
+#' This function reads gene expression data and parses it into an R object for meta-analysis.
+#'
+#' @param fileName File name of the data table.
+#' @author Jeff Xia \email{jeff.xia@mcgill.ca}
+#' @details McGill University, Canada
+#' @license MIT License
+#'
+#' @return A registered dataset object for further analysis.
+#'
+#' @export
 #'
 ReadOmicsData <- function(fileName) {
   # need to handle reading .csv files too!
@@ -566,97 +650,6 @@ ReadOmicsData <- function(fileName) {
 }
 
 
-
-PerformDEAnalMeta <- function(filenm, alg="ttest", meta=1, p.lvl=0.05, fc.lvl=0, nonpar=FALSE){
-    res <- DoStatComparison(filenm, alg, meta, "NA", "NA", "NA", p.lvl, fc.lvl, nonpar=FALSE);
-    return(res);
-}
-
-DoStatComparison <- function(dataName, alg="ttest", meta=1, selected, meta.vec, normOpt, p.lvl=0.05, fc.lvl=0, nonpar=FALSE){
-  if(meta == "null"){
-    meta = 1;
-  }
-  
-  dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");
-  
-  data.filtered <- readDataQs("data.filtered.qs", paramSet$anal.type, dataName);
-  if(normOpt != "none" && alg == "limma"){
-    data.comparison <- NormalizeData(data.filtered, normOpt, "NA", "NA");
-  }else{
-    data.comparison <- data.filtered;
-  }
-
-  if(alg == "deseq2" || alg == "edger"){
-    if(dataSet$isValueNormalized == "false"){
-      data.comparison <- round(data.comparison);
-    }
-  }
-  
-  
-  if(dataSet$de.method == alg && dataSet$de.norm == normOpt){
-    return(UpdateDE(dataName, p.lvl, fc.lvl));
-  }
-  
-  if(selected == "NA"){ # process page
-    if(meta == ""){
-      meta <- 1;
-    }
-    metavec <- dataSet$meta.info[,meta];
-    sel <- unique(metavec);
-  }else{
-    metavec <- dataSet$meta.info[,meta];
-    sel <- strsplit(selected, "; ")[[1]];
-  }
-  
-  dataSet$meta.info$newcolumn <- metavec;
-  metadf <- dataSet$meta.info;
-
-  sel_meta1 = metadf[which(metadf[,"newcolumn"] %in% sel[1]),];
-  sel_meta2 = metadf[which(metadf[,"newcolumn"] %in% sel[2]),];
-  nms1 <- rownames(sel_meta1);
-  nms2 <- rownames(sel_meta2);
-  sel_meta_more_than_2 = metadf[which(metadf[,"newcolumn"] %in% sel),];
-  nms <- rownames(sel_meta_more_than_2);
-
-  sel.meta <- "newcolumn";
-  trimmed.data <-  as.matrix(data.comparison[,which(colnames(data.comparison) %in% nms)]);
-  trimmed.meta <- dataSet$meta.info[,sel.meta][which(rownames(dataSet$meta.info) %in% nms)];
-  trimmed.meta <- make.names(trimmed.meta);
-  #if(min(trimmed.data) < 0){
-  #  trimmed.data = trimmed.data + abs(min(trimmed.data));
-  #}
-  cls <- as.factor(trimmed.meta); 
-
-  if(alg =="limma"){
-    res <- performLimmaMeta(trimmed.data, cls, "newcolumn");
-  }else if(alg=="edger"){
-    res <- performEdgeRMeta(trimmed.data, cls);
-    inx <- colnames(res) == "logCPM";
-    res <- res[,-inx];
-  }else if(alg =="deseq2"){
-    trimmed.meta <- dataSet$meta.info[which(rownames(dataSet$meta.info) %in% nms),sel.meta, drop=F];
-    performDeseq2Meta(trimmed.data, trimmed.meta)
-    .perform.computing();
-    dataSet <- .save.deseq.res(dataSet);
-    res <- dataSet$comp.res;
-  }
-
-  colnames(res) <-  c("logFC", "P.Value", "adj.P.Val");
-  
-  res <- res[order(res[,2], decreasing=FALSE),];
-
-  res <- as.matrix(res);
-  de <- res;
-
-  dataSet$de.norm <- normOpt;
-  dataSet$de.method <- alg;
-  dataSet$comp.res <- de;
-  RegisterData(dataSet);
-  
-  return(UpdateDE(dataName, p.lvl, fc.lvl));
-}
-
 UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   dataSet <- readDataset(dataName);
   
@@ -697,74 +690,17 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   return(RegisterData(dataSet, c(1, sig.count, non.sig.count)))
 }
 
-
-performLimmaMeta <-function(trimmed.data, cls, sel.meta="newcolumn"){
-  require(edgeR);
-  inx = 0;
-  myargs <- list();
-  grp.nms <- levels(cls);
-  
-  for(m in 1:(length(grp.nms)-1)){
-    for(n in (m+1):length(grp.nms)){
-      inx <- inx + 1;
-      myargs[[inx]] <- paste(grp.nms[m], "-", grp.nms[n], sep="");
-    }
-  }
-  
-  design <- model.matrix(~0 + cls) # no intercept
-  colnames(design) <- levels(cls);
-  myargs[["levels"]] <- design;
-  contrast.matrix <- do.call(makeContrasts, myargs);
-  vfit <- lmFit(trimmed.data, design);
-  vfit <- contrasts.fit(vfit, contrasts=contrast.matrix);
-  vfit <- eBayes(vfit);
-  topFeatures <- topTable(vfit, number = Inf, adjust.method = "fdr");
-
-  if(length(unique(cls)) == 2){
-    res = data.frame(stat=topFeatures[,"logFC"], P.Value=topFeatures[,"P.Value"], adj.P.Val=topFeatures[,"adj.P.Val"])
-  }else{
-    res = data.frame(stat=topFeatures[,"F"], P.Value=topFeatures[,"P.Value"], adj.P.Val=topFeatures[,"adj.P.Val"])
-  }
-  rownames(res) <- rownames(topFeatures);
-  return(res);
-}
-
-
-performEdgeRMeta <-function(trimmed.data, trimmed.meta){
-  require(edgeR);
-
-  y <- DGEList(counts = trimmed.data, group = trimmed.meta);
-  y <- calcNormFactors(y);
-  y <- estimateCommonDisp(y, verbose = FALSE);
-  y <- estimateTagwiseDisp(y);
-  et <- edgeR::exactTest(y);
-  tt <- edgeR::topTags(et, n=nrow(y$table), adjust.method="BH", sort.by="PValue");
-  res <- tt@.Data[[1]];
-  colnames(res)[which(colnames(res) == "PValue")] = "P.Value";
-  res <- res[,c(1,3,2,4)];
-  return(res)
-}
-
-performDeseq2Meta <-function(trimmed.data, trimmed.meta){
-  trimmed.data <<- trimmed.data;
-  trimmed.meta <<- trimmed.meta;
-  my.fun <- function(){
-    suppressMessages(require(DESeq2));
-    dds <- DESeqDataSetFromMatrix(countData=round(trimmed.data), colData = trimmed.meta, design = ~newcolumn)
-    geoMeans = apply(counts(dds), 1, gm_mean);
-    dds <- DESeq2::estimateSizeFactors(dds, geoMeans = geoMeans);
-    dds <- DESeq2::DESeq(dds, test="Wald", fitType="parametric");
-    res <- DESeq2::results(dds, independentFiltering = FALSE, cooksCutoff =  Inf);
-    res <- as.matrix(res);
-    res <- res[,c(2,5,6)];
-    return(res);
-  }
-  
-  dat.in <- list(data=trimmed.data, meta=trimmed.meta, my.fun=my.fun);
-  qs::qsave(dat.in, file="dat.in.qs");
-  return(1);
-}
-
+#' Perform Sanity Check on Metadata
+#'
+#' This function performs a sanity check on the metadata associated with the datasets.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @license MIT License
+#'
+#' @return integer 0 or 1 to indicate success or failure
+#'
+#' @export
+#'
 SanityCheckMetaData <- function(){
    paramSet <- readSet(paramSet, "paramSet");
    meta <- paramSet$dataSet$meta.info;
@@ -793,7 +729,23 @@ SanityCheckMetaData <- function(){
    return(1)
 }
 
-
+#' Check the integrity and consistency of metadata for meta-analysis
+#'
+#' This function checks the integrity and consistency of metadata across
+#' different datasets intended for meta-analysis. It ensures that metadata
+#' is properly aligned, consistent, and categorized as discrete or continuous.
+#'
+#' @export
+#'
+#' @return
+#' Returns 1 to indicate successful completion of checks and updates.
+#'
+#' @examples
+#' CheckMetaIntegrity()
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#'
+#' @param None
 CheckMetaIntegrity <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");

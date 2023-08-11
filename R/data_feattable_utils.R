@@ -1,4 +1,27 @@
-
+#' Get Significant Genes from Analysis
+#'
+#' This function retrieves significant genes from the DE analysis based on the specified parameters.
+#'
+#' @param dataName A character string specifying the name of the dataset.
+#' @param res.nm A character string specifying the name of the output result table
+#' @param p.lvl The significance threshold for p-values.
+#' @param fc.lvl The fold change threshold.
+#' @param inx The index for comparison (e.g., in case of multiple comparisons).
+#'
+#' @return A list of information including the filename, significant gene details, and counts.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' GetSigGenes(dataName = "MyData", res.nm = "result_A", p.lvl = 0.05,
+#'             fc.lvl = 1, inx = 1)
+#' }
+#'
+#' @export
+#' @license MIT License
+#'
 GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");

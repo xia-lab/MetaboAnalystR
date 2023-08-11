@@ -4,15 +4,36 @@
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-#' CovariateScatter.Anal
-#' @param imgName image name
-#' @param imgFormat image format
-#' @param analysis.var variable of analysis
-#' @param ref reference group
-#' @param block block name
-#' @param thresh threshold
-#' @param contrast.cls contrast group
+#' Perform Covariate Scatter Analysis
+#'
+#' This function performs a covariate scatter analysis based on the specified parameters.
+#'
+#' @param dataName A character string specifying the name of the dataset.
+#' @param imgName A character string specifying the name of the image to save.
+#' @param imgFormat The format of the image to create (e.g., "png", "jpeg").
+#' @param analysis.var The analysis variable.
+#' @param ref The reference variable.
+#' @param block The blocking variable.
+#' @param thresh The significance threshold.
+#' @param pval.selection The method for p-value selection ("fdr" or "raw").
+#' @param contrast.cls The contrast class ("anova" or "t").
+#'
+#' @return Result is saved in analSet object.
+#'
+#' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
+#' @details Additional details about the function, if needed.
+#'
+#' @examples
+#' \dontrun{
+#' CovariateScatter.Anal(dataName = "MyData", analysis.var = "variableA",
+#'                       imgName = "scatter_plot", imgFormat = "png",
+#'                       thresh = 0.05, pval.selection = "fdr",
+#'                       contrast.cls = "anova")
+#' }
+#'
 #' @export
+#' @license MIT License
+#'
 CovariateScatter.Anal <- function(dataName, 
                                   imgName="NA", 
                                   imgFormat="png", 
