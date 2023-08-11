@@ -280,7 +280,7 @@ ComputeRankedVec <- function(data, opt, inx = 1){
   }else if (opt == "s2n"){
     res <- CalculateS2N(matr, as.numeric(cls)-1)
     rankedVec <- res;
-  }else if(opt == "pval"){
+  }else if(opt == "tstat"){
     m <- length(colnames(matr))
     if (data$de.method=="limma"){
       if("t" %in% colnames(matr)){
