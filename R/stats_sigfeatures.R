@@ -213,18 +213,19 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@param delta delta
 #'@param imgA0 imgA0
 #'@param imgSig imgSig
+#'@param dpi dpi value of images
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'@import qs
-EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig){
-    .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig);
+EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 72){
+    .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig, dpi);
     .perform.computing();
     .save.ebam.init(mSetObj);
 }
 
-.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig){
+.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 72){
   mSetObj <- .get.mSet(mSetObj);
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
@@ -237,8 +238,8 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
   }
   conc.ebam <- t(mSetObj$dataSet$norm); # in sam column is sample, row is gene
   
-  imgA0 = paste(imgA0, "dpi72.png", sep="");
-  imgSig = paste(imgSig, "dpi72.png", sep="");
+  imgA0 = paste(imgA0, "dpi", dpi, ".png", sep="");
+  imgSig = paste(imgSig, "dpi", dpi, ".png", sep="");
 
   my.fun <- function(){
     library(siggenes);
@@ -260,7 +261,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     }
     
     # plotting ebam sig features
-    Cairo::Cairo(file = dat.in$imgSig, unit="in", dpi=72, width=7, height=7, type="png", bg="white");
+    Cairo::Cairo(file = dat.in$imgSig, unit="in", dpi=dpi, width=7, height=7, type="png", bg="white");
     plot(ebam_out, delta);
     dev.off();
     
