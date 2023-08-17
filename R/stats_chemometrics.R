@@ -167,7 +167,16 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'@export
 #'
 PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, 
-                           width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
+                           width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0, cex.opt="na"){
+
+  # add option to adjust label size. Should be global to remember previous state
+  if(cex.opt=="na"){                
+    pca.cex <<- 1.0;
+  }else if(cex.opt=="increase"){
+    pca.cex <<- pca.cex + 0.1;
+  }else{
+    pca.cex <<- pca.cex - 0.1;
+  }
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -253,18 +262,18 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
       cols <- rep("black", length(cols));
     }
     if(show == 1){
-      text(pc1, pc2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+      text(pc1, pc2, label=text.lbls, pos=4, xpd=T, cex=0.75*pca.cex);
       points(pc1, pc2, pch=pchs, col=cols);
     }else{
       if(length(uniq.cols) == 1){
-        points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
+        points(pc1, pc2, pch=pchs, col=cols, cex=1.0*pca.cex);
       }else{
         if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
           my.cols <- adjustcolor(cols, alpha.f = 0.4);
           my.cols[pchs == 21] <- "black";
-          points(pc1, pc2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+          points(pc1, pc2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*pca.cex);
         }else{
-          points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+          points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2*pca.cex);
         }
       }
     }
@@ -316,7 +325,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }else{
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
     points(pc1, pc2, pch=15, col="magenta");
-    text(pc1, pc2, label=text.lbls, pos=4, col ="blue", xpd=T, cex=0.8);
+    text(pc1, pc2, label=text.lbls, pos=4, col ="blue", xpd=T, cex=0.8*pca.cex);
   }
   par(op);
   dev.off();
@@ -671,13 +680,21 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@param reg Numeric, default is 0.95
 #'@param show Show labels, 1 or 0
 #'@param grey.scale Numeric, use a grey scale (0) or not (1)
-#'@param use.sparse Logical, use a sparse algorithm (T) or not (F)
 #'@export
 #'
-PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, use.sparse=FALSE){
+PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  # add option to adjust label size. Should be global to remember previous state
+  if(cex.opt=="na"){                
+    pls.cex <<- 1.0;
+  }else if(cex.opt=="increase"){
+    pls.cex <<- pls.cex + 0.1;
+  }else{
+    pls.cex <<- pls.cex - 0.1;
+  }
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -760,18 +777,18 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     cols <- rep("black", length(cols));
   }
   if(show==1){ # display sample name set on
-    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*pls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
     if (length(uniq.cols) == 1) {
-      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0*pls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
-        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*pls.cex);
       }else{
-        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2*pls.cex);
       }
     }
   }
@@ -1566,10 +1583,19 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  # add option to adjust label size. Should be global to remember previous state
+  if(cex.opt=="na"){                
+    opls.cex <<- 1.0;
+  }else if(cex.opt=="increase"){
+    opls.cex <<- opls.cex + 0.1;
+  }else{
+    opls.cex <<- opls.cex - 0.1;
+  }
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -1584,7 +1610,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   mSetObj$imgSet$opls.score2d <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,3,3));
+
+  par(mar=c(5,5,3,8));
+  
   lv1 <- mSetObj$analSet$oplsda$scoreMN[,1];
   lv2 <- mSetObj$analSet$oplsda$orthoScoreMN[,1];
   xlabel <- paste("T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["p1", "R2X"],1), "%)");
@@ -1639,18 +1667,18 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
     cols <- rep("black", length(cols));
   }
   if(show==1){ # display sample name set on
-    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*opls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
     if (length(uniq.cols) == 1) {
-      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0*opls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
-        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*opls.cex);
       }else{
-        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2*opls.cex);
       }
     }
   }
@@ -1659,8 +1687,18 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   if(grey.scale) {
     uniq.cols <- "black";
   }
-  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  #legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+
+  # move legend to outside 
+  op <- par(xpd=T);
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  shift <- par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  lgd.y <- axis.lims[4] - shift;
+  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
   
+  par(op);  
+
   dev.off();
   return(.set.mSet(mSetObj));
 }
@@ -1720,7 +1758,7 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   if(is.na(width)){
     w <- h <- 8;
   }else if(width == 0){
-    
+    w <- h <- 8;
   }else{
     w <- h <- width;
   }
@@ -2149,9 +2187,18 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
+
+  # add option to adjust label size. Should be global to remember previous state
+  if(cex.opt=="na"){                
+    spls.cex <<- 1.0;
+  }else if(cex.opt=="increase"){
+    spls.cex <<- spls.cex + 0.1;
+  }else{
+    spls.cex <<- spls.cex - 0.1;
+  }
 
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -2230,18 +2277,18 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
     cols <- rep("black", length(cols));
   }
   if(show==1){ # display sample name set on
-    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*spls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
     if (length(uniq.cols) == 1) {
-      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0*spls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
-        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*spls.cex);
       }else{
-        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2*spls.cex);
       }
     }
   }

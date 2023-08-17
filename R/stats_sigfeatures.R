@@ -333,7 +333,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
 
-  mSetObj$imgSet$sam.cmpd <- imgName;
+  mSetObj$imgSet$ebam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
 
