@@ -6,16 +6,17 @@
 #'@param varequal Logical, indicates if variance is equal. Default is set to TRUE
 #'@param delta numeric
 #'@param imgName image name, character
+#'@param dpi image dpi, integer
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'@import siggenes
 #'@import qs
-SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
+SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=72){
 
   mSetObj <- .get.mSet(mSetObj);
-  .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName);
+  .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName, dpi);
   .perform.computing();
 
   if(.on.public.web){ 
@@ -26,10 +27,10 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
   return(.set.mSet(mSetObj));
 }
 
-.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName){
+.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=72){
 
   if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
-  imgName = paste(imgName, "dpi72.png", sep="");
+  imgName = paste(imgName, "dpi", dpi, ".png", sep="");
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
   cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
 
@@ -85,7 +86,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE);
     
     # plot SAM plot
-    Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=72, width=8, height=8, type="png", bg="white");
+    Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dpi, width=8, height=8, type="png", bg="white");
     siggenes::plot(sam_out, delta);
     dev.off();        
     
