@@ -175,8 +175,11 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     mSetObj <- .get.mSet(mSetObj);
     .prepare.sam.cmpd(mSetObj, imgName, format, dpi, width);
-    .perform.computing();
-    # no need to collect results, as only plotting image here
+    .perform.computing();    
+    if(.on.public.web){
+        # need to update image name after plotting
+        mSetObj <- mSet;
+    }
     return(.set.mSet(mSetObj))
 }
 
