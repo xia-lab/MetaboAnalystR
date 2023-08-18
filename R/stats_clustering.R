@@ -347,6 +347,8 @@ PlotClustPCA <- function(mSetObj,
   }
 
   mSetObj <- .get.mSet(mSetObj);
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(anal == "km"){
     clust.num <- max(mSetObj$analSet$kmeans$cluster);
@@ -360,8 +362,6 @@ PlotClustPCA <- function(mSetObj,
   }
   
   if(clust.num>20) return();
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
     w <- 9;
