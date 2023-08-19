@@ -276,18 +276,19 @@ RemoveSelectedMeta <- function(mSetObj=NA, meta){
 #' @param init can be 0 or 1
 #' @export
 SanityCheckMeta <- function(mSetObj=NA, init = 1){
+
   msg <- NULL;
   mSetObj <- .get.mSet(mSetObj);
   
   meta.info  <- mSetObj$dataSet$meta.info
-  
+ 
   cls.lbl <- meta.info[,1]
   cls.num <- length(levels(cls.lbl));
   msg <- c(msg, paste0("A total of ", length(colnames(mSetObj$dataSet$meta.info)), " metadata factors were detected: ", paste0(colnames(mSetObj$dataSet$meta.info), collapse=", "), "."));
   msg <- c(msg, paste0("The primary metadata factor is: ", colnames(mSetObj$dataSet$meta.info)[1], ", which contains ", cls.num, " groups."));
 
-  check.inx <-apply(meta.info , 2, function(x){ ( sum(is.na(x))/length(x) + sum(x=="NA")/length(x) + sum(x=="")/length(x) ) >0})
-  
+  check.inx <-apply(meta.info , 2, function(x){ ( sum(is.na(x))/length(x) + sum(x=="NA", na.rm=TRUE)/length(x) + sum(x=="", na.rm=TRUE)/length(x) ) >0});
+
   if(sum(check.inx)>0){
     if(init == 0){
       mSetObj$dataSet$meta.info <- meta.info[,!check.inx]
