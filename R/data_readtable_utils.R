@@ -87,6 +87,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   
   # rename data to data.orig
   int.mat <- dataSet$data;
+  data.proc <- int.mat;
   paramSet$dataSet$meta.info <- dataSet$meta.info;
   dataSet$cls <- dataSet$meta.info[,1];
   dataSet$data <- NULL;
