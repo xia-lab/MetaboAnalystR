@@ -324,7 +324,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     # now try to extract something for viewing
     tryCatch({
         fileConn <- file(filePath, encoding = "UTF-8");
-        text <- readLines(fileConn, n=500); # max 500 lines
+        text <- readLines(fileConn, n=200); # max 200 lines
         write.csv(text, file="raw_dataview.csv");
     },
     error = function(e) return(e),
@@ -338,8 +338,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   # save a table output at the earliest time for viewing
   row.num <- nrow(dat);
   col.num <- ncol(dat);
-  if(row.num > 1000){
-      row.num <- 1000;
+  if(row.num > 200){
+      row.num <- 200;
   }
   if(col.num > 20){
       col.num <- 20;

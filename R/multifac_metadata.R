@@ -168,9 +168,32 @@ Read.TextDataTs <- function(mSetObj=NA, filePath, format="rowu"){
     AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
     AddErrMsg("Missing values should be blank or NA without quote.");
     AddErrMsg("Make sure the file delimeters are commas.");
+
+    # now try to extract something for viewing
+    tryCatch({
+        fileConn <- file(filePath, encoding = "UTF-8");
+        text <- readLines(fileConn, n=500); # max 500 lines
+        write.csv(text, file="raw_dataview.csv");
+    },
+    error = function(e) return(e),
+    finally = {
+        close(fileConn)
+    });
+
     return(0);
   }
   
+  # save a table output at the earliest time for viewing
+  row.num <- nrow(dat);
+  col.num <- ncol(dat);
+  if(row.num > 200){
+      row.num <- 200;
+  }
+  if(col.num > 20){
+      col.num <- 20;
+  }
+  write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+
   msg <- NULL;
   
   # two factor time series data
