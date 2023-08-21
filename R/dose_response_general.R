@@ -676,6 +676,7 @@ FilterDRFit <- function()
 ### Calculation of BMD values from fitted dose-response curves
 PerformBMDCalc <- function(ncpus = 1)
 {
+
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   f.drc <- dataSet$drcfit.obj;
@@ -864,13 +865,14 @@ PerformBMDCalc <- function(ncpus = 1)
   dres$conv.pass <- rowSums(is.na(dres)) == 0
   
   # is the bmd < highest dose?
-  dres$hd.pass <- dres$bmd < tail(dose, n = 1)
+  dres$hd.pass <- dres$bmd < max(dose)
   
   # is the CI of the bmd narrow enough?
   dres$CI.pass <- dres$bmdu/dres$bmdl < 40
   
   # is the bmd < lowest dose/10?
-  dres$ld.pass <- dres$bmdl > (unique(dose)[2]/10)
+  low.dose <- sort(unique(dose))[2]
+  dres$ld.pass <- dres$bmdl > (low.dose/10)
   
   # aggregate all filters
   # flag genes that don't pass low dose condition by keeping the column, but do 

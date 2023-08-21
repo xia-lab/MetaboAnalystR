@@ -22,7 +22,7 @@
 #' @export
 #' @license MIT License
 #'
-GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
+GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FDR = "true"){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
@@ -68,11 +68,11 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1){
   resTable <- resTable[!is.na(resTable[,1]),]
   orig.resTable <- resTable;
   # select based on p-value
-  if(dataSet$type == "array"){
-    hit.inx.p <- resTable$adj.P.Val <= p.lvl; 
+  if(FDR == "true"){
+      hit.inx.p <- resTable$adj.P.Val <= p.lvl; 
   } else {
-    hit.inx.p <- resTable$adj.P.Val <= p.lvl; 
-  }
+      hit.inx.p <- resTable$P.Value <= p.lvl; 
+  } 
   
   resTable<-resTable[hit.inx.p,];
   
