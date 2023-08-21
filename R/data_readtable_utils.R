@@ -68,7 +68,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   }
   msgSet$current.msg <- paste(msg, collapse="; ");
   #res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
-  #data.proc <- res[[1]];
+  data.proc <- int.mat #res[[1]];
   #msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
  
@@ -94,7 +94,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   
   dataSet$imgSet <- list();
   dataSet$reportSummary <- list();
-  
+
   }
 
   # save processed data for download user option
