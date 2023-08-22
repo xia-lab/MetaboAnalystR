@@ -67,9 +67,9 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     # msg <- c(msg, "the remaining", sum(na.inx), "missing variables were replaced with data min");
   }
   msgSet$current.msg <- paste(msg, collapse="; ");
-  res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
-  data.proc <- res[[1]];
-  msgSet <- res[[2]];
+  #res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
+  data.proc <- int.mat #res[[1]];
+  #msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
  
 
@@ -87,6 +87,8 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   
   # rename data to data.orig
   int.mat <- dataSet$data;
+  data.proc <- int.mat;
+  paramSet$dataSet$meta.info <- dataSet$meta.info;
   dataSet$cls <- dataSet$meta.info[,1];
   dataSet$data <- NULL;
   dataSet$listData <- FALSE;

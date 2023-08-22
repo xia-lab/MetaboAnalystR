@@ -24,7 +24,7 @@ GetExtendRange<-function(vec, unit=10){
 RemoveDuplicates <- function(data, lvlOpt, quiet=T, paramSet, msgSet){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-
+  paramSet$lvlOpt <- lvlOpt;
   all.nms <- rownames(data);
   colnms <- colnames(data);
   dup.inx <- duplicated(all.nms);
