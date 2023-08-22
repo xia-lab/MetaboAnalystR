@@ -195,7 +195,7 @@ NormalizeData <-function (data, norm.opt, colNorm="NA", scaleNorm="NA"){
     msg <- paste(msg, "VSN followed by quantile normalization.", collapse=" ");
   }else if(norm.opt=="logcount"){ # for count data, do it in DE analysis, as it is dependent on design matrix
     require(edgeR);
-    nf <- calcNormFactors(data);
+    nf <- calcNormFactors(data, method = "none");
     y <- voom(data,plot=F,lib.size=colSums(data)*nf);
     data <- y$E; # copy per million
     msg <- paste(msg, "Limma based on log2-counts per million transformation.", collapse=" ");
