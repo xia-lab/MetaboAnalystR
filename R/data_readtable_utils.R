@@ -78,7 +78,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   
   # re-order everything numerically by dose
   dose <- as.numeric(gsub(".*_", "", as.character(metadata[,1])))
-  dataSet$data <- dataSet$data[ ,order(dose)]
+  int.mat <- int.mat[ ,order(dose)]
   meta.reorder <- as.data.frame(metadata[order(dose),])
   colnames(meta.reorder) <- colnames(metadata)
   dataSet$meta.info <- meta.reorder
@@ -87,7 +87,6 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
 
   # rename data to data.orig
-  int.mat <- dataSet$data;
   data.proc <- int.mat;
   paramSet$dataSet$meta.info <- dataSet$meta.info;
   dataSet$cls <- dataSet$meta.info[,1];
