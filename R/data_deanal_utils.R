@@ -78,13 +78,6 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 #' @license MIT
 #'
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly", robustTrend=F){
-dataName <<- dataName
-anal.type <<- anal.type
-par1 <<- par1
-par2 <<- par2
-nested.opt <<- nested.opt
-robustTrend <<- robustTrend
-save.image(file="test.RData")
 
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
