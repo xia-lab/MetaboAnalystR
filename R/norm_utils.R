@@ -21,7 +21,6 @@
 #'
 
 PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false"){
-
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);

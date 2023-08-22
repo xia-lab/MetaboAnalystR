@@ -30,20 +30,20 @@
 #'
 #' @export
 #' @license MIT License
-#'
+
 ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneDataAnalType="default", path="") {
   dataSet <- .readTabData(paste0(path, fileName));
   if(is.null(dataSet)){
     return(0);
   }  
-
+  
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
-
+  
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$isMetaContain <- metaContain
   paramSet$oneDataAnalType <- oneDataAnalType;
-
+  
   # rename data to data.orig
   int.mat <- dataSet$data;
   int.mat <- int.mat[,which(colnames(int.mat) %in% rownames(meta.info$meta.info))]
@@ -59,7 +59,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     int.mat <- int.mat[good.inx,];
     msg <- c(msg, paste("removed ", sum(!good.inx), " features with over 50% missing values"));
   }
- 
+  
   minVal <- min(int.mat, na.rm=T);
   na.inx <- is.na(int.mat);
   if(sum(na.inx) > 0){
@@ -71,49 +71,50 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   data.proc <- int.mat #res[[1]];
   #msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
- 
+  
   metadata <- meta.info$meta.info;
   dataSet$meta.info <- metadata;
   if(oneDataAnalType == "dose"){
-  
-  # re-order everything numerically by dose
-  dose <- as.numeric(gsub(".*_", "", as.character(metadata[,1])))
-  int.mat <- int.mat[ ,order(dose)]
-  meta.reorder <- as.data.frame(metadata[order(dose),])
-  colnames(meta.reorder) <- colnames(metadata)
-  dataSet$meta.info <- meta.reorder
-
-  # re-level the factor to be numeric instead of alphabetic
-  dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
-
-  # rename data to data.orig
-  data.proc <- int.mat;
-  paramSet$dataSet$meta.info <- dataSet$meta.info;
-  dataSet$cls <- dataSet$meta.info[,1];
-  dataSet$data <- NULL;
-  dataSet$listData <- FALSE;
-  
-  dataSet$imgSet <- list();
-  dataSet$reportSummary <- list();
-
+    
+    # re-order everything numerically by dose
+    dose <- as.numeric(gsub(".*_", "", as.character(metadata[,1])))
+    int.mat <- int.mat[ ,order(dose)]
+    meta.reorder <- as.data.frame(metadata[order(dose),])
+    colnames(meta.reorder) <- colnames(metadata)
+    rownames(meta.reorder) <- rownames(meta.info$meta.info)[order(dose)]
+    dataSet$meta.info <- meta.reorder
+    
+    # re-level the factor to be numeric instead of alphabetic
+    dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
+    
+    # rename data to data.orig
+    data.proc <- int.mat;
+    paramSet$dataSet$meta.info <- dataSet$meta.info;
+    dataSet$cls <- dataSet$meta.info[,1];
+    dataSet$data <- NULL;
+    dataSet$listData <- FALSE;
+    
+    dataSet$imgSet <- list();
+    dataSet$reportSummary <- list();
+    
   }
-
+  
   # save processed data for download user option
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(dataSet$meta.info) %in% colnames(data.proc))
-
+  
   paramSet$dataSet <- list();
   meta.types <- rep("disc", ncol(dataSet$meta.info));
   meta.types[meta.info$cont.inx] <- "cont";
   names(meta.types) <- colnames(dataSet$meta.info);
-
+  
   paramSet$dataSet$meta.types <- meta.types;
   paramSet$dataSet$meta.info <- dataSet$metaOrig <- dataSet$meta.info[metaInx,,drop=F]
   paramSet$dataSet$disc.inx <- dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
   paramSet$dataSet$cont.inx <- dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
-
+  
   meta.types <- rep("disc", ncol(dataSet$meta.info));
   meta.types[meta.info$cont.inx] <- "cont";
   names(meta.types) <- colnames(dataSet$meta.info);
