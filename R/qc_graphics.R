@@ -66,8 +66,15 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
     print(bp);
     dev.off();
     str <- "NA"
-
   
+  imgSet <- readSet(imgSet, "imgSet");
+  if(grepl("norm", imgNm)){
+    imgSet$qc.boxplot_norm <- imgNm;
+  }else{
+    imgSet$qc.boxplot <- imgNm;
+  }
+  saveSet(imgSet);
+
   return(str)
 }
 
@@ -128,7 +135,11 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
     print(g)
     dev.off();
     str <- "NA"
-  
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc.density_norm <- imgNm;
+  saveSet(imgSet);
+
   return(str);
 }
 
@@ -221,7 +232,11 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
   print(g);
   dev.off();
   str <- "NA"
-  
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$libsize <- imgNm;
+  saveSet(imgSet);
+
   return(str);
 }
 
@@ -241,6 +256,10 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
   dev.off();
   str <- "NA"
   
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc.meanstd <- imgNm;
+  saveSet(imgSet);
+
   return(str);
 }
 
@@ -416,5 +435,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   dev.off();
   str <- "NA"
   
+  imgSet <- readSet(imgSet, "imgSet");
+  if(grepl("norm", imgNm)){
+    imgSet$qc.pcaplot_norm <- imgNm;
+  }else{
+    imgSet$qc.pcaplot <- imgNm;
+  }
+  print(imgSet);
+  saveSet(imgSet);
+
   return(str)
 }

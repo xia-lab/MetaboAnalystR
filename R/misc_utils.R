@@ -882,6 +882,9 @@ saveSet <- function(obj=NA, set="", output=1){
     if(globalConfig$anal.mode == "api"){ 
       qs:::qsave(obj, paste0(set, ".qs"));
     }else{
+      if(set == ""){
+        set <- obj$objName;
+      }
       if(set == "dataSet"){
         dataSet <<- obj;
       }else if(set == "analSet"){

@@ -204,10 +204,12 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     myargs[[1]] <- paste(grp.nms, collapse = "-")
     dataSet$grp.nms <- grp.nms;
     filename <- paste("SigGene_", paste(grp.nms, collapse = "_vs_"), sep = "")
+    dataSet$contrast <- paste(grp.nms, collapse = "_vs_");
   } else if (anal.type == "reference") {
     ref <- par1;
     cntr.cls <- grp.nms[grp.nms != ref]
     myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
+    dataSet$ref <- ref; 
     filename <- paste("SigGene_reference_", ref, sep = "");
   } else if (anal.type == "nested") {
     grp.nms1 <- strsplit(par1, " vs. ")[[1]]
@@ -219,17 +221,20 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     }
     grp.nms <- unique(c(grp.nms1, grp.nms2))
     if (nested.opt == "intonly") {
+      dataSet$nested.int.opt <- "True";
       myargs[[1]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
     } else {
+      dataSet$nested.int.opt <- "False";
       myargs[[1]] <- paste(grp.nms1, collapse = "-")
       myargs[[2]] <- paste(grp.nms2, collapse = "-")
       myargs[[3]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
     }
+    dataSet$contrast <- paste(paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
     filename <- paste("SigGene_nested_", paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
   } else {
     print(paste("Not supported: ", anal.type))
   }
-  
+
   dataSet$filename <- filename;
   require(limma);
   design <- dataSet$design;
@@ -319,6 +324,9 @@ SetupDesignMatrix<-function(dataName="", deMethod){
   colnames(design) <- levels(cls);
   dataSet$design <- design;
   dataSet$de.method <- deMethod;
+  dataSet$pval <- 0.05;
+  dataSet$fc.val <- 1;
+
   saveSet(paramSet, "paramSet");
   return(RegisterData(dataSet));
 }
@@ -616,6 +624,18 @@ MultiCovariateRegression <- function(fileName,
   dataSet$de.method <- "limma"
   dataSet$comp.type <- "default"
   dataSet$fit.obj <- fit;
+
+  dataSet$pval <- 0.05;
+  dataSet$fc.val <- 1;
+  dataSet$analysis.var <- analysis.var;
+  dataSet$de.adj <- random.effects;
+
+  if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+    dataSet$de.adj <- "NA"
+  }else{
+    dataSet$de.adj <- random.effects
+  }
+
   RegisterData(dataSet);
   return(dataSet);
 }

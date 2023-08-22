@@ -39,9 +39,9 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   }
   
   # save parameters for report
-  dataSet$norm.opt <- norm.opt;
-  dataSet$var.perc <- var.thresh;
-  dataSet$abun.perc <- count.thresh;
+  paramSet$norm.opt <- norm.opt;
+  paramSet$var.perc <- var.thresh;
+  paramSet$abun.perc <- count.thresh;
 
   #Normalize data
   data <- NormalizeData(data, norm.opt, "NA", "NA");
@@ -61,6 +61,7 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   
   msgSet$current.msg <- msg; 
   saveSet(msgSet, "msgSet");
+  saveSet(paramSet, "paramSet");
   return(RegisterData(dataSet));
 }
 

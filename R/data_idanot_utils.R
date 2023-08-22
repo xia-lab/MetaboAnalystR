@@ -84,6 +84,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
         data.anot <- data.proc[hit.inx,];
         rownames(data.anot) <- matched.entrez;
         current.msg <- paste(current.msg, "Data is now transformed to gene-level (Entrez) expression.");
+        paramSet$lvl.opt <- lvlOpt;
         res <- RemoveDuplicates(data.anot, lvlOpt, quiet=F, paramSet, msgSet);
         dataSet$data.anot <- res[[1]];
         msgSet <- res[[2]];
@@ -198,7 +199,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     
     # now, deal with duplicated entrez id
     # first, average duplicate rows
-    
+    paramSet$lvl.opt <- lvlOpt;
     res <- RemoveDuplicates(data.norm, lvlOpt, quiet=F, paramSet, msgSet);
     int.mat <- res[[1]];
     msgSet <- res[[2]];

@@ -38,10 +38,11 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   .on.public.web <<- onWeb;
   dataSet <- list(annotated=FALSE);
   dataSet <<- dataSet;
-  analSet <<- list(annotated=FALSE);
-  paramSet <<- list(annotated=FALSE);
-  msgSet <<- list(annotated=FALSE);
-  cmdSet <<- list(annotated=FALSE);
+  analSet <<- list(objName="analSet");
+  paramSet <<- list( objName="paramSet");
+  msgSet <<- list(objName="msgSet");
+  cmdSet <<- list(objName="cmdSet");
+  imgSet <<- list(objName="imgSet");
   if(paramSet$on.public.web){
   anal.mode <- "web";
   }else{

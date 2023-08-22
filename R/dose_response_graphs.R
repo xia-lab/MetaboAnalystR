@@ -178,6 +178,10 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
   Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$PlotGeneBMD <- imgName;
+  saveSet(imgSet);
 }
 
 PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
@@ -249,6 +253,10 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
   Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$PlotGeneDRCurve <- imgName;
+  saveSet(imgSet);
 }
 
 PlotDRModelBars <- function(imgNm, dpi, format){
@@ -264,6 +272,10 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$PlotDRModelBars <- imgNm;
+  saveSet(imgSet);
 }
 
 PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
@@ -309,6 +321,10 @@ PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
   Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$PlotDRHistogram <- imgNm;
+  saveSet(imgSet);
 }
 
 PlotPWHeatmap <- function(pathway, pwcount, units){
@@ -383,5 +399,8 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
     grid.text(pathway, y = 1.02, x = 0.5, gp=gpar(fontsize=14, fontface="bold"))
     dev.off();
 
+    imgSet <- readSet(imgSet, "imgSet");
+    imgSet$PlotPWHeatmap <- imgNm;
+    saveSet(imgSet);
 }
 

@@ -41,7 +41,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
 
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
-  paramSet$isMetaContain = metaContain
+  paramSet$isMetaContain <- metaContain
   paramSet$oneDataAnalType <- oneDataAnalType;
 
   # rename data to data.orig
@@ -67,24 +67,25 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     # msg <- c(msg, "the remaining", sum(na.inx), "missing variables were replaced with data min");
   }
   msgSet$current.msg <- paste(msg, collapse="; ");
-  #res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);
+  #res <- RemoveDuplicates(int.mat, "mean", quiet=T, paramSet, msgSet);Gene-level summarization
   data.proc <- int.mat #res[[1]];
   #msgSet <- res[[2]];
   paramSet$smpl.num <- ncol(data.proc);
  
-
+  metadata <- meta.info$meta.info;
+  dataSet$meta.info <- metadata;
   if(oneDataAnalType == "dose"){
   
   # re-order everything numerically by dose
-  dose <- as.numeric(gsub(".*_", "", as.character(dataSet$meta.info[,1])))
+  dose <- as.numeric(gsub(".*_", "", as.character(metadata[,1])))
   dataSet$data <- dataSet$data[ ,order(dose)]
-  meta.reorder <- as.data.frame(dataSet$meta.info[order(dose),])
-  colnames(meta.reorder) <- colnames(dataSet$meta.info)
+  meta.reorder <- as.data.frame(metadata[order(dose),])
+  colnames(meta.reorder) <- colnames(metadata)
   dataSet$meta.info <- meta.reorder
 
   # re-level the factor to be numeric instead of alphabetic
   dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
-  
+
   # rename data to data.orig
   int.mat <- dataSet$data;
   data.proc <- int.mat;
@@ -102,11 +103,18 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   fast.write(data.proc, file="data_processed.csv");
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
-  metaInx = which(rownames(meta.info$meta.info) %in% colnames(data.proc))
+  metaInx = which(rownames(dataSet$meta.info) %in% colnames(data.proc))
 
-  dataSet$meta.info <- dataSet$metaOrig <- meta.info$meta.info[metaInx,,drop=F]
-  dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
-  dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
+  paramSet$dataSet <- list();
+  meta.types <- rep("disc", ncol(dataSet$meta.info));
+  meta.types[meta.info$cont.inx] <- "cont";
+  names(meta.types) <- colnames(dataSet$meta.info);
+
+  paramSet$dataSet$meta.types <- meta.types;
+  paramSet$dataSet$meta.info <- dataSet$metaOrig <- dataSet$meta.info[metaInx,,drop=F]
+  paramSet$dataSet$disc.inx <- dataSet$disc.inx <-dataSet$disc.inx.orig <- meta.info$disc.inx
+  paramSet$dataSet$cont.inx <- dataSet$cont.inx <-dataSet$cont.inx.orig  <- meta.info$cont.inx
+
   meta.types <- rep("disc", ncol(dataSet$meta.info));
   meta.types[meta.info$cont.inx] <- "cont";
   names(meta.types) <- colnames(dataSet$meta.info);
@@ -120,7 +128,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   return(RegisterData(dataSet));
 }
 
-#read annotation table file when user selects custom annotation option
+#read annotation table file when user selects custom annotdataSet$meta.info <-ation option
 ReadAnnotationTable <- function(fileName) {
   anot.data <- .readDataTable(fileName);
   msgSet <- readSet(msgSet, "msgSet");
