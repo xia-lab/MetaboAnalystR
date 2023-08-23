@@ -39,8 +39,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # PreparePrenormData() called already
   data <- qs::qread("prenorm.qs");
 
-print(dim(data));
-
   cls <- mSetObj$dataSet$prenorm.cls;
 
   # note, setup time factor
@@ -222,7 +220,7 @@ print(dim(data));
   mSetObj$dataSet$trans.method <- transnm;
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
-
+  
   return(.set.mSet(mSetObj));
 }
 
