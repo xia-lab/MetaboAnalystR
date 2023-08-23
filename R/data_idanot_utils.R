@@ -199,7 +199,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     
     # now, deal with duplicated entrez id
     # first, average duplicate rows
-    paramSet$lvl.opt <- lvlOpt;
+    dataSet$lvl.opt <- lvlOpt;
     res <- RemoveDuplicates(data.norm, lvlOpt, quiet=F, paramSet, msgSet);
     int.mat <- res[[1]];
     msgSet <- res[[2]];

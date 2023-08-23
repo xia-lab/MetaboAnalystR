@@ -267,6 +267,7 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
     }else{
         res <- cbind(ID=metade.genes, dat.mat);
     }
+    analSet$meta.res.table <- res;
     fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
 
     return(list(paramSet, analSet))
@@ -330,47 +331,6 @@ PlotCochranQ <- function(imgNm){
     return (Qmean);
 }
 
-#'Plot PCA plot for meta-analysis samples
-#'@description 
-#'@param imgNm name of the image to output
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: MIT
-#'@export
-#'
-
-PlotMetaPCA <- function(imgNm, dpi, format,factor){
-  inmex.meta <- qs::qread("inmex_meta.qs");
-  x <- inmex.meta[["data"]];
-  dpi <- as.numeric(dpi);
-  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-  require('lattice');
-  require('ggplot2');
-  #remove infinity
-  x[!is.finite(x)] <- NA;
-  pca <- prcomp(t(na.omit(x)));
-  imp.pca<-summary(pca)$importance;
-  xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")
-  ylabel <- paste0("PC2"," (", 100*round(imp.pca[2,][2], 3), "%)")
-  names <- colnames(x);
-  pca.res <- as.data.frame(pca$x);
-  # increase xlim ylim for text label
-  xlim <- GetExtendRange(pca.res$PC1);
-  ylim <- GetExtendRange(pca.res$PC2);
-  Conditions <- factor(inmex.meta$cls.lbl)
-  Datasets <- factor(inmex.meta$data.lbl)
-  pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +
-    geom_point(size=4, alpha=0.5) + 
-    xlim(xlim)+ ylim(ylim) + 
-    xlab(xlabel) + ylab(ylabel) + 
-    theme_bw()
-  
-  Cairo(file=imgNm, width=8, height=6, type=format, bg="white", unit="in", dpi=dpi);
-  print(pcafig);
-  dev.off();
-  
-}
-
 #' Perform Batch Correction
 #'
 #' This function performs batch correction using the ComBat method.
@@ -391,8 +351,9 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
 PerformBatchCorrection <- function(){
     .prepare.batch();
     .perform.computing();
+    paramSet <- readSet(paramSet, "paramSet");
+    paramSet$performedBatch <- T;
     return(dataSets);
-    # no need to , already done
 }
 
 .prepare.batch<-function(){

@@ -486,6 +486,12 @@ ReplaceMissingByLoD <- function(int.mat){
     return (int.mat);
 }
 
+SetDataTypeMeta <- function(dataName, type){
+    dataSet <- readDataset(dataName);
+    dataSet$data.type <- type;
+    RegisterData(dataSet)
+}
+
 #' Read Omics Data for Meta-Analysis
 #'
 #' This function reads gene expression data and parses it into an R object for meta-analysis.
@@ -855,4 +861,88 @@ CheckMetaIntegrity <- function(){
   saveSet(paramSet, "paramSet");
   return(1)
   
+}
+
+
+#'Plot PCA plot for meta-analysis samples
+#'@description 
+#'@param imgNm name of the image to output
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: MIT
+#'@export
+#'
+
+PlotMetaPCA <- function(imgNm, dpi, format,factor){
+  inmex.meta <- qs::qread("inmex_meta.qs");
+  x <- inmex.meta[["data"]];
+  dpi <- as.numeric(dpi);
+  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
+  require('lattice');
+  require('ggplot2');
+  #remove infinity
+  x[!is.finite(x)] <- NA;
+  pca <- prcomp(t(na.omit(x)));
+  imp.pca<-summary(pca)$importance;
+  xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")
+  ylabel <- paste0("PC2"," (", 100*round(imp.pca[2,][2], 3), "%)")
+  names <- colnames(x);
+  pca.res <- as.data.frame(pca$x);
+  # increase xlim ylim for text label
+  xlim <- GetExtendRange(pca.res$PC1);
+  ylim <- GetExtendRange(pca.res$PC2);
+  Conditions <- factor(inmex.meta$cls.lbl)
+  Datasets <- factor(inmex.meta$data.lbl)
+  pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +
+    geom_point(size=4, alpha=0.5) + 
+    xlim(xlim)+ ylim(ylim) + 
+    xlab(xlabel) + ylab(ylabel) + 
+    theme_bw()
+  
+  Cairo(file=imgNm, width=8, height=6, type=format, bg="white", unit="in", dpi=dpi);
+  print(pcafig);
+  dev.off();
+  
+  imgSet <- readSet(imgSet, "imgSet");
+  if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
+    imgSet$PlotMetaPCA <- imgNm;
+  }else{
+    imgSet$PlotMetaPCA_batch <- imgNm;
+  }
+  saveSet(imgSet);
+}
+
+
+PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
+  require("ggplot2")
+  inmex.meta <- qs::qread("inmex_meta.qs");
+  dat <- inmex.meta$data;
+  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
+  dpi <- as.numeric(dpi);
+  
+  df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE);
+  df <- stack(df);
+
+  Factor <- inmex.meta$data.lbl;
+  
+  conv <- data.frame(ind=colnames(inmex.meta$data), class=Factor);
+  conv$ind <- gsub("-", ".", conv$ind);
+  df1 <- merge(df, conv, by="ind");
+  Cairo(file=imgNm, width=10, height=6, type=format, bg="white", dpi=dpi, unit="in");
+  g =ggplot(df1, aes(x=values)) + 
+        geom_line(aes(color=class, group=ind), stat="density", alpha=0.3) + 
+        geom_line(aes(color=class), stat="density", alpha=0.6, size=1.5) +
+        theme_bw()
+  print(g);
+  dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
+    imgSet$PlotMetaDensity <- imgNm;
+  }else{
+    imgSet$PlotMetaDensity_batch <- imgNm;
+  }
+  saveSet(imgSet);
+
+
 }

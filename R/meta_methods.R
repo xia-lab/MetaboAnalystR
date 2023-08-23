@@ -177,7 +177,7 @@ CheckMetaDataIntegrity <- function(){
   }else{ # display itself
     symbols <- shared.nms;
   }
-    paramSet$data.idType <- id.type;
+  paramSet$data.idType <- id.type;
   names(symbols) <- shared.nms;
   
   common.matrix[!is.finite(common.matrix)] <- NA;
@@ -852,30 +852,6 @@ f.Q <- function(dadj, varadj){
   tmp1<-w*dadj
   mu<-rowSums(tmp1)/rowSums(w)
   Q<-rowSums(w*(dadj - mu)^2)
-}
-
-PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
-  require("ggplot2")
-  inmex.meta <- qs::qread("inmex_meta.qs");
-  dat <- inmex.meta$data;
-  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
-  dpi <- as.numeric(dpi);
-  
-  df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE);
-  df <- stack(df);
-
-  Factor <- inmex.meta$data.lbl;
-  
-  conv <- data.frame(ind=colnames(inmex.meta$data), class=Factor);
-  conv$ind <- gsub("-", ".", conv$ind);
-  df1 <- merge(df, conv, by="ind");
-  Cairo(file=imgNm, width=10, height=6, type=format, bg="white", dpi=dpi, unit="in");
-  g =ggplot(df1, aes(x=values)) + 
-        geom_line(aes(color=class, group=ind), stat="density", alpha=0.3) + 
-        geom_line(aes(color=class), stat="density", alpha=0.6, size=1.5) +
-        theme_bw()
-  print(g);
-  dev.off();
 }
 
 effectsize <- function(tstat,ntilde,m){
