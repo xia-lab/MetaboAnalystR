@@ -21,11 +21,10 @@
 #' @return Result is saved in analSet object.
 #'
 #' @author Guangyan Zhou \email{guangyan.zhou@mail.mcgill.ca}
-#' @details Additional details about the function, if needed.
 #'
 #' @examples
 #' \dontrun{
-#' CovariateScatter.Anal(dataName = "MyData", analysis.var = "variableA",
+#' CovariateScatter.Anal(dataName = "estrogen.txt", analysis.var = "variableA",
 #'                       imgName = "scatter_plot", imgFormat = "png",
 #'                       thresh = 0.05, pval.selection = "fdr",
 #'                       contrast.cls = "anova")
