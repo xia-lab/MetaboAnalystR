@@ -146,6 +146,7 @@ GetSampleInfo <- function(dataName, clsLbl){
     return(c(grpLbls, smplInfo));
 }
 
+#for metadata
 GetMetaSummaryData<- function(){
     paramSet <- readSet(paramSet, "paramSet");
     inmex.meta <- qs::qread("inmex_meta.qs");
@@ -153,7 +154,7 @@ GetMetaSummaryData<- function(){
     sel.nms <- paste(sel.nms, collapse="; ")
     cls.lbls <- unique(inmex.meta$cls.lbl)
     cls.lbls <- paste(cls.lbls, collapse="; ")
-    paramSet$summaryVec <- c(length(colnames(inmex.meta$data)),nrow(inmex.meta$data), sel.nms, cls.lbls);
+    paramSet$summaryVecMeta <- c(length(colnames(inmex.meta$data)),nrow(inmex.meta$data), sel.nms, cls.lbls);
     saveSet(paramSet);
     return(c(length(colnames(inmex.meta$data)),nrow(inmex.meta$data), sel.nms, cls.lbls))
 }

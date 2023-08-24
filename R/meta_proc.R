@@ -710,6 +710,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
 SanityCheckMetaData <- function(){
    paramSet <- readSet(paramSet, "paramSet");
    meta <- paramSet$dataSet$meta.info;
+   mdata.all <- paramSet$mdata.all; 
    sel.nms <- names(mdata.all)[mdata.all==1];
    sampleNms.all <- vector();
    for(i in 1:length(sel.nms)){
