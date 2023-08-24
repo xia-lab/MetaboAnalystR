@@ -30,6 +30,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                        clstDist="average", colorGradient="bwm", font.size = 8,
                        viewOpt="overview",rankingMethod="mean",
                        topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
+
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
   
@@ -1502,6 +1503,7 @@ heckbert <- function(dmin, dmax, m){
 PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",drawBorder=F,includeRowNames=T, imgName, format="png", dpi=96, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj <- .get.mSet(mSetObj);
+
   metaData <- mSetObj$dataSet$meta.info;
   smp.nms <- rownames(metaData);
   meta.num <- ncol(metaData)

@@ -39,40 +39,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # PreparePrenormData() called already
   data <- qs::qread("prenorm.qs");
 
-print(dim(data));
-
   cls <- mSetObj$dataSet$prenorm.cls;
-
-  # note, setup time factor
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    if(is.null(mSetObj$dataSet$prenorm.facA)){
-        nfacA <- mSetObj$dataSet$facA;
-        nfacB <- mSetObj$dataSet$facB;
-    }else{
-      nfacA <- mSetObj$dataSet$prenorm.facA;
-      nfacB <- mSetObj$dataSet$prenorm.facB;
-    }
-    
-    mSetObj$dataSet$facA <- nfacA;
-    mSetObj$dataSet$facB <- nfacB;
-    if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
-      # determine time factor and should order first by subject then by each time points
-      if(tolower(mSetObj$dataSet$facA.lbl) == "time"){ 
-        time.fac <- nfacA;
-        exp.fac <- nfacB;
-      }else{
-        time.fac <- nfacB;
-        exp.fac <- nfacA;
-      }
-      # now make sure time fac is ordered
-      lvls <- levels(time.fac);
-      time.points <- as.numeric(as.character(lvls));
-      ord.lvls <- lvls[order(time.points)];
-      time.fac <- ordered(time.fac, levels = ord.lvls);
-      mSetObj$dataSet$time.fac <- time.fac;
-      mSetObj$dataSet$exp.fac <- exp.fac;
-    }
-  }
   
   colNames <- colnames(data);
   rowNames <- rownames(data);
@@ -207,13 +174,6 @@ print(dim(data));
   }
 
   mSetObj$dataSet$norm <- as.data.frame(data);
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    if(!identical(rownames(mSetObj$dataSet$norm), rownames(mSetObj$dataSet$meta.info))){
-      mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[match(rownames(mSetObj$dataSet$norm), rownames(mSetObj$dataSet$meta.info)), ]
-      print("Metadata and data norm order synchronized.")
-    }
-    mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[rownames(data),]  
-  }
 
   qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
   mSetObj$dataSet$cls <- cls;
@@ -222,6 +182,33 @@ print(dim(data));
   mSetObj$dataSet$trans.method <- transnm;
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
+
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+    
+    # make sure the data and metadata are in sync 
+    my.sync <- .sync.data.metadata(mSetObj$dataSet$norm, mSetObj$dataSet$meta.info);
+    mSetObj$dataSet$norm <- my.sync$data;
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
+
+    # note, setup time factor
+    if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
+      # determine time factor and should order first by subject then by each time points
+      if(tolower(mSetObj$dataSet$facA.lbl) == "time"){ 
+        time.fac <- nfacA;
+        exp.fac <- nfacB;
+      }else{
+        time.fac <- nfacB;
+        exp.fac <- nfacA;
+      }
+      # now make sure time fac is ordered
+      lvls <- levels(time.fac);
+      time.points <- as.numeric(as.character(lvls));
+      ord.lvls <- lvls[order(time.points)];
+      time.fac <- ordered(time.fac, levels = ord.lvls);
+      mSetObj$dataSet$time.fac <- time.fac;
+      mSetObj$dataSet$exp.fac <- exp.fac;
+    }
+  }
 
   return(.set.mSet(mSetObj));
 }
@@ -495,17 +482,9 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
   if(is.null(mSetObj$dataSet$filt)){
     data <- qs::qread("data_proc.qs");
     cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      facA <- mSetObj$dataSet$proc.facA;
-      facB <- mSetObj$dataSet$proc.facB;
-    }
   }else{
     data <- mSetObj$dataSet$filt;
     cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      facA <- mSetObj$dataSet$filt.facA;
-      facB <- mSetObj$dataSet$filt.facB;
-    }
   }
 
   # update feature 
@@ -517,21 +496,14 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
   smpl.hit.inx <- rownames(data) %in% smpl.nm.vec;
   data <- CleanDataMatrix(data[!smpl.hit.inx,,drop=FALSE]);
   cls <- as.factor(as.character(cls[!smpl.hit.inx]));
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    facA <- as.factor(as.character(facA[!smpl.hit.inx]));
-    facB <- as.factor(as.character(facB[!smpl.hit.inx]));
-  }
+
   #AddMsg("Successfully updated the sample items!");
   
   # update groups (note these are to retain, not exclude)
   grp.hit.inx <- cls %in% grp.nm.vec;
   data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
   cls <- droplevels(factor(cls[grp.hit.inx])); 
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    facA <- droplevels(factor(facA[grp.hit.inx]));
-    facB <- droplevels(factor(facB[grp.hit.inx]));
-  }
-  
+
   # we need to allow users to add order information
   # if not order, use alphabetic order. See this post
   # https://omicsforum.ca/t/pca-miscolored-and-groups-mislabed/2217
@@ -544,9 +516,11 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
   # now set to 
   mSetObj$dataSet$edit <- data;
   mSetObj$dataSet$edit.cls <- cls; 
+
+  # make sure metadata are in sync with data
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    mSetObj$dataSet$edit.facA <- facA;
-    mSetObj$dataSet$edit.facB <- facB;
+      my.sync <- .sync.data.metadata(data, mSetObj$dataSet$meta.info);
+      mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
 
   if(.on.public.web){
@@ -581,25 +555,21 @@ PreparePrenormData <- function(mSetObj=NA){
     }
     prenorm <- mydata;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-    if(substring(mSetObj$dataSet$format,4,5) == "mf"){
-      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$edit.facA;
-      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$edit.facB;
-    }
   }else if(!is.null(mSetObj$dataSet$filt)){
     prenorm <- mSetObj$dataSet$filt;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$filt.facA;
-      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$filt.facB;
-    }
   }else{
     prenorm <- qs::qread("data_proc.qs");
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
-    if(substring(mSetObj$dataSet$format,4,5) == "mf"){
-      mSetObj$dataSet$prenorm.facA <- mSetObj$dataSet$proc.facA;
-      mSetObj$dataSet$prenorm.facB <- mSetObj$dataSet$proc.facB;
-    }
   }
+
+  # make sure the meta.info is synchronized with data
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+    my.sync <- .sync.data.metadata(prenorm, mSetObj$dataSet$meta.info);
+    prenorm <- my.sync$data;
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
+  }
+
   qs::qsave(prenorm, "prenorm.qs");
   mSetObj$dataSet$prenorm.smpl.nms <- rownames(prenorm);
   mSetObj$dataSet$prenorm.feat.nms <- colnames(prenorm);

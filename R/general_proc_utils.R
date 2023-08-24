@@ -27,26 +27,11 @@ SanityCheckData <- function(mSetObj=NA){
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
 
-  # check class info
+  # check class info only for one factor data
+  # For "mf", there is a dedicated page/step "SanityCheckMeta" for this
+
   if(mSetObj$dataSet$cls.type == "disc"){
-    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      metadata <- mSetObj$dataSet$meta.info
-      if(mSetObj$dataSet$design.type =="time"){
-        msg<-c(msg, "The data is time-series data.");
-      }else if(mSetObj$dataSet$design.type =="time0"){
-        msg<-c(msg, "The data is time-series only data.");
-      }else{
-        msg<-c(msg, "The data is not time-series data.");
-      }
-      clsA.num <- length(levels(metadata[,1]));
-      clsB.num <- length(levels(metadata[,2]));
-      if(ncol(metadata) == 2){
-        msg<-c(msg, paste(clsA.num, "groups were detected in samples for factor", colnames(metadata)[1]));
-        msg<-c(msg, paste(clsB.num, "groups were detected in samples for factor", colnames(metadata)[2]));
-      }else{
-        msg <- c(msg, paste0(clsA.num, " groups were detected from primary meta-data factor: ", colnames(mSetObj$dataSet$meta.info)[1], "."));
-      }
-    }else{
+
      # added mSetObj$dataSet$pair.checked to allow edit group function names not overwritten by original files
       if(mSetObj$dataSet$paired & !(mSetObj$dataSet$pair.checked)){ 
         msg<-c(msg,"Samples are paired.");
@@ -172,30 +157,9 @@ SanityCheckData <- function(mSetObj=NA){
         msg <- c(msg, "<font color='red'>Only a subset of methods will be available for analysis!</font>");
       }
       
-      if(mSetObj$analSet$type == "mf"){
-        msg <- c(msg, paste0(cls.num, " groups were detected from primary meta-data factor: ", colnames(mSetObj$dataSet$meta.info)[1], "."));
-        #msg <- c(msg, paste0(length(colnames(mSetObj$dataSet$meta.info)), " meta-data factors were detected: ", paste0(colnames(mSetObj$dataSet$meta.info), collapse=", "), "."));
-        cls.vec <- vector()
-        meta.info  <- mSetObj$dataSet$meta.info
-        meta.types <- mSetObj$dataSet$meta.types
-        for(i in 1:ncol(meta.info)){
-            if(meta.types[i] == "disc"){
-              cls.lbl <- meta.info[,i];
-              qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
-              if(sum(qb.inx) > 0){
-                cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
-              } else {
-                cls.Clean <- cls.lbl;
-              }
-              meta.name <- colnames(meta.info)[i]
-              if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
-                cls.vec <- c(cls.vec, meta.name)
-              }
-            }
-        }
-     }else{
-        msg <- c(msg, paste(cls.num, "groups were detected in samples."));
-     }
+ 
+      msg <- c(msg, paste(cls.num, "groups were detected in samples."));
+     
       
       if("NMDR_id" %in% names(mSetObj$dataSet)){
         msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "group labels:", paste0(unique(cls.lbl), collapse = ", ")))
@@ -203,44 +167,17 @@ SanityCheckData <- function(mSetObj=NA){
       
       mSetObj$dataSet$cls.num <- cls.num;
       mSetObj$dataSet$min.grp.size <- min.grp.size;
+    
+    
+    ord.inx <- order(mSetObj$dataSet$orig.cls);
+    mSetObj$dataSet$orig.cls <- cls[ord.inx];
+    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
+    orig.data <- orig.data[ord.inx, , drop=FALSE];
+    qs::qsave(orig.data, file="data_orig.qs");
+    if(mSetObj$dataSet$paired){
+        mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
     }
     
-    #samples may not be sorted properly, need to do some sorting at the beginning 
-    if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      metadata <- mSetObj$dataSet$meta.info
-      nfacA <- metadata[,1];
-      nfacB <- metadata[,2];
-      if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
-        # determine time factor and should order first by subject then by each time points
-        if(tolower(colnames(metadata)[1]) == "time"){ 
-          time.fac <- nfacA;
-          exp.fac <- nfacB;
-        }else{
-          time.fac <- nfacB;
-          exp.fac <- nfacA;
-        }
-        # update with new index
-        ord.inx <- order(exp.fac);
-      }else{
-        ord.inx <- order(nfacA);
-      }
-      mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
-      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
-      mSetObj$dataSet$facA <- mSetObj$dataSet$orig.facA <- metadata[,1][ord.inx];
-      mSetObj$dataSet$facB <- mSetObj$dataSet$orig.facB <- metadata[,2][ord.inx];
-      orig.data <- orig.data[ord.inx,];
-      mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[rownames(orig.data), ];
-      qs::qsave(orig.data, file="data_orig.qs");
-    }else{
-      ord.inx <- order(mSetObj$dataSet$orig.cls);
-      mSetObj$dataSet$orig.cls <- cls[ord.inx];
-      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
-      orig.data <- orig.data[ord.inx, , drop=FALSE];
-      qs::qsave(orig.data, file="data_orig.qs");
-      if(mSetObj$dataSet$paired){
-        mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
-      }
-    }
   }
   msg<-c(msg,"Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed.");
   msg<-c(msg,"<font color=\"orange\">Other special characters or punctuations (if any) will be stripped off.</font>");
@@ -309,19 +246,23 @@ SanityCheckData <- function(mSetObj=NA){
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
   
-  qs::qsave(as.data.frame(int.mat), "preproc.qs");
-  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+
   if(is.null(mSetObj$dataSet$meta.info)){
     mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
     colnames(mSetObj$dataSet$meta.info) = "Class";
   }
   
+  # make sure the meta.info is synchronized with data
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    mSetObj$dataSet$proc.facA <- mSetObj$dataSet$orig.facA;
-    mSetObj$dataSet$proc.facB <- mSetObj$dataSet$orig.facB;
+    my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
+    int.mat <- my.sync$data;
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-  
+
+  qs::qsave(as.data.frame(int.mat), "preproc.qs");
+  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
+
   if(!.on.public.web){
     print(c("Successfully passed sanity check!", msg))
   }
@@ -460,10 +401,6 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
   
   # save a copy
   mSetObj$dataSet$filt.cls <- cls;
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    mSetObj$dataSet$filt.facA <- mSetObj$dataSet$proc.facA; 
-    mSetObj$dataSet$filt.facB <- mSetObj$dataSet$proc.facB; 
-  }
   
   msg <- "";
   if(qcFilter == "T"){
@@ -499,7 +436,7 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
     filter.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
-  if(filter.cutoff == 0){ # R package or privilidged user choose 0
+  if(filter.cutoff == 0){ 
      mSetObj$dataSet$filt <- int.mat;
      msg <- paste(msg, "No statistical filter was applied.");
   }else{
@@ -510,6 +447,13 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
 
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
+
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+      # make sure metadata are in sync with data
+      my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
+      mSetObj$dataSet$meta.info <- my.sync$metadata;
+  }
+
   return(.set.mSet(mSetObj));
 }
 
