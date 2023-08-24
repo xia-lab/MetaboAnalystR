@@ -75,7 +75,6 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   metadata <- meta.info$meta.info;
   dataSet$meta.info <- metadata;
   if(oneDataAnalType == "dose"){
-    
     # re-order everything numerically by dose
     dose <- as.numeric(gsub(".*_", "", as.character(metadata[,1])))
     int.mat <- int.mat[ ,order(dose)]
@@ -85,6 +84,8 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     dataSet$meta.info <- meta.reorder
     
     # re-level the factor to be numeric instead of alphabetic
+    dataSet$meta.info[,1] <- format(as.numeric(as.character(dataSet$meta.info[,1])), scientific = FALSE) # remove scientific notation
+    dataSet$meta.info[,1] <- gsub(" ", "", dataSet$meta.info[,1])
     dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
     
     # rename data to data.orig

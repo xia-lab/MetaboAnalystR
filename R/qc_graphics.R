@@ -395,12 +395,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
     }
     width <- 12
     height <- 6
-  }else{
+  } else {
+    
     Factor <- dataSet$meta.info[,1];
     pca.rest <- pca.res
     pca.rest$Conditions <- Factor
     pca.rest$names <- rownames(pca.res)
-    if(length(rownames(pca.res))>20){
+    
+    if(length(rownames(pca.res))>20){ # only add sample labels if less than 20 samples
 
       pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions)) +
         geom_point(size=3, alpha=0.5) + 
@@ -408,11 +410,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
-        theme_bw() +
-        scale_color_okabeito() +
-        scale_fill_okabeito()
+        theme_bw()
 
-    }else{
+    } else {
 
       require('ggrepel');
       pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=rownames(pca.res))) +
@@ -422,12 +422,19 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
         xlab(xlabel) + 
         ylab(ylabel) +
         geom_text_repel(force=1.5) +
-        theme_bw() +
-        scale_color_okabeito() +
-        scale_fill_okabeito()
+        theme_bw()
     }
     width <- 10
     height <- 6
+    
+    # set color depending on analysis type
+    if(paramSet$oneDataAnalType == "dose"){
+      pal <- colorRampPalette(c("#2196F3", "#DE690D"))
+      col.pal <- pal(length(unique(pca.rest$Conditions)))
+      pcafig <- pcafig + scale_fill_manual(values = col.pal) + scale_color_manual(values = col.pal)
+    } else {
+      pcafig <- pcafig + scale_fill_okabeito() + scale_color_okabeito()
+    }
   }
 
   Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);

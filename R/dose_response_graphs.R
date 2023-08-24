@@ -308,9 +308,9 @@ PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
     geom_vline(aes(xintercept = s.pods[1], colour = "gene20"), size = 1) +
     scale_color_manual(name = "tPOD", 
                        values = c(gene20 = "#A7414A", percentile10th = "#6A8A82", mode = "#CC9B31"),
-                       labels = c(paste0("20th gene: ", round(s.pods[1],2)), 
-                                  paste0("Max 1st peak: ", round(s.pods[3],2)),
-                                  paste0("10th percentile: ", round(s.pods[2],2)))) + 
+                       labels = c(paste0("20th gene: ", signif(s.pods[1],2)), 
+                                  paste0("Max 1st peak: ", signif(s.pods[3],2)),
+                                  paste0("10th percentile: ", signif(s.pods[2],2)))) + 
     theme_bw()
   p <- p + xlab(xTitle) + ylab("Density function") + 
     theme(axis.text.x = element_text(face="bold"), legend.position = c(.95, .95),

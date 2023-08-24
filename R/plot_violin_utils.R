@@ -9,14 +9,16 @@
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
   
-  library(see);
+  require(see)
+  require(ggplot2)
+  require(lattice)
+
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
-  require(ggplot2)
   imgName <- paste(imageName,"dpi",dpi,".",format,sep="");
-  require(lattice);
+
   if(length(dataSet$rmidx)>0){
     data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
   }else{
@@ -54,11 +56,20 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
           geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
           theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
           stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-          scale_fill_okabeito() + 
-          scale_color_okabeito() + 
           ggtitle(cmpdNm) + 
           theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
           theme_bw()
+        
+        # dose often breaks because so many groups, also makes more sense with a gradient
+        if(paramSet$oneDataAnalType == "dose"){
+          pal <- colorRampPalette(c("#2196F3", "#DE690D"))
+          col.pal <- pal(length(levels(cls)))
+          p.norm <- p.norm + scale_fill_manual(values = col.pal) + 
+            scale_color_manual(values = col.pal) +
+            theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        } else {
+          p.norm <- p.norm + scale_fill_okabeito() + scale_color_okabeito()
+        }
       }else{
         df.norm$name <- as.numeric(df.norm$name )
         p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+

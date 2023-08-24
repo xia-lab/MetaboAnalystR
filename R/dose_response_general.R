@@ -159,7 +159,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
 
 #3_drcfit.R
 ### fit different models to each dose-response curve and choose the best fit 
-PerformDRFit <- function(ncpus = 1)
+PerformDRFit <- function(ncpus = 2)
 {
 
   paramSet <- readSet(paramSet, "paramSet");
@@ -703,8 +703,11 @@ PerformBMDCalc <- function(ncpus = 1)
 
   # get only correct rows
   inx.bmd <- rownames(data) %in% as.character(dfitall$gene.id)
-  data <- data[inx.bmd, ]
-  data.mean <- data.mean[inx.bmd, ]
+  data <- as.data.frame(data) # this keeps correct shape in case of only 1 row
+  data <- data[inx.bmd, ] %>% as.matrix()
+
+  data.mean <- as.data.frame(data.mean)
+  data.mean <- data.mean[inx.bmd, ] %>% as.matrix()
 
   item <- dataSet$drcfit.obj$fitres.filt[,1]
   fitres.bmd <- f.drc$fitres.filt
@@ -910,13 +913,17 @@ PerformBMDCalc <- function(ncpus = 1)
     res.mods <- dataSet$drcfit.obj$fitres.filt[,c(1,3,4,5,6)];
     res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
     res[,c(3:10)] <- apply(res[,c(3:10)], 2, function(x) as.numeric(as.character(x)));
-    res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) round(x, digits = 2));
+    res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) signif(x, digits = 2));
     rownames(res) <- as.character(res$item);
     colnames(res) <- c("gene.id","mod.name","lof.p","bmdl","bmd","bmdu","b","c","d","e");
     res <- res[order(res$bmd), ];
     dataSet$html.resTable <- res;
     RegisterData(dataSet);
-    return(1);
+    if(dim(disp.res)[1] == 1){
+      return(3)
+    } else {
+      return(1)
+    }
   } else {
     return(2)
   }
@@ -980,7 +987,7 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
     trans.pod["feat.10th"] <- unname(quantile(bmds, 0.1))
     
   } 
-  if ("mode" %in% pod){
+  if ("mode" %in% pod & length(bmds) > 1){
     
     # get density plot
     density.bmd <- density(bmds, na.rm = TRUE)
