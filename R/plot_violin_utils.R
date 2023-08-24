@@ -54,11 +54,18 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
           geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
           theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
           stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-          scale_fill_okabeito() + 
-          scale_color_okabeito() + 
           ggtitle(cmpdNm) + 
           theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
           theme_bw()
+        
+        # dose often breaks because so many groups, also makes more sense with a gradient
+        if(paramSet$oneDataAnalType == "dose"){
+          pal <- colorRampPalette(c("#2196F3", "#DE690D"))
+          col.pal <- pal(length(levels(cls)))
+          p.norm <- p.norm + scale_fill_manual(values = col.pal) + scale_color_manual(values = col.pal)
+        } else {
+          p.norm <- p.norm + scale_fill_okabeito() + scale_color_okabeito()
+        }
       }else{
         df.norm$name <- as.numeric(df.norm$name )
         p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
