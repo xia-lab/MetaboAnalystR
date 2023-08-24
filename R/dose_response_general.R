@@ -703,8 +703,11 @@ PerformBMDCalc <- function(ncpus = 1)
 
   # get only correct rows
   inx.bmd <- rownames(data) %in% as.character(dfitall$gene.id)
-  data <- data[inx.bmd, ]
-  data.mean <- data.mean[inx.bmd, ]
+  data <- as.data.frame(data) # this keeps correct shape in case of only 1 row
+  data <- data[inx.bmd, ] %>% as.matrix()
+
+  data.mean <- as.data.frame(data.mean)
+  data.mean <- data.mean[inx.bmd, ] %>% as.matrix()
 
   item <- dataSet$drcfit.obj$fitres.filt[,1]
   fitres.bmd <- f.drc$fitres.filt
@@ -916,7 +919,11 @@ PerformBMDCalc <- function(ncpus = 1)
     res <- res[order(res$bmd), ];
     dataSet$html.resTable <- res;
     RegisterData(dataSet);
-    return(1);
+    if(dim(disp.res)[1] == 1){
+      return(3)
+    } else {
+      return(1)
+    }
   } else {
     return(2)
   }
@@ -980,7 +987,7 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
     trans.pod["feat.10th"] <- unname(quantile(bmds, 0.1))
     
   } 
-  if ("mode" %in% pod){
+  if ("mode" %in% pod & length(bmds) > 1){
     
     # get density plot
     density.bmd <- density(bmds, na.rm = TRUE)

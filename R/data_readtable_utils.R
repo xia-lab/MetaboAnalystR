@@ -85,6 +85,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     
     # re-level the factor to be numeric instead of alphabetic
     dataSet$meta.info[,1] <- format(as.numeric(as.character(dataSet$meta.info[,1])), scientific = FALSE) # remove scientific notation
+    dataSet$meta.info[,1] <- gsub(" ", "", dataSet$meta.info[,1])
     dataSet$meta.info[,1] <- factor(dataSet$meta.info[,1], levels = unique(dataSet$meta.info[,1]))
     
     # rename data to data.orig

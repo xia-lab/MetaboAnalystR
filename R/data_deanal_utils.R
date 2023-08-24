@@ -83,12 +83,12 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   paramSet <- readSet(paramSet, "paramSet");
 
   if (dataSet$de.method == "deseq2") {
-    dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     .prepare.deseq(dataSet, anal.type, par1, par2 , nested.opt);
     .perform.computing();
     dataSet <- .save.deseq.res(dataSet);
   }else{
-    dataSet <- .prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
@@ -151,7 +151,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 }
 
 
-.prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   msgSet <- readSet(msgSet, "msgSet");
   cat(anal.type, par1, par2, nested.opt, "\n")
   set.seed(1337);

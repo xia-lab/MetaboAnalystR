@@ -53,6 +53,7 @@ GetMetaCol<- function(dataName=""){
         g[g > 2 + 1] <- 2+1
         paste(tapply(x, g, paste, collapse = "."), collapse = " vs ")
       })
+      nms <- unlist(nms)
       
       # for two ".", difficult to know which one - just leave as is
       
