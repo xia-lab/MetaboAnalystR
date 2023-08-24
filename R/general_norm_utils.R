@@ -210,6 +210,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     }
   }
 
+  
   return(.set.mSet(mSetObj));
 }
 
