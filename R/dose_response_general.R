@@ -161,6 +161,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
 ### fit different models to each dose-response curve and choose the best fit 
 PerformDRFit <- function(ncpus = 1)
 {
+
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   if(!exists("models")){

@@ -1079,7 +1079,7 @@ PerformAPIDRFit <- function(){
   
   toSend <- list(dataSet = dataSetWeb,
                  models = models,
-                 cpus = cpus)
+                 cpus = 4)
   
   # rds file to be sent to server
   library(httr)
