@@ -38,20 +38,23 @@ GetMetaCol<- function(dataName=""){
     if(inx > 2){
       resT <- resT[,1:inx-1];
       nms <- gsub("logFC.", "logFC_", colnames(resT));
-      nms <- gsub("\\.", " vs ", nms);
- 
-      nmidx <- sapply(nms, function(x) length(unlist(gregexpr(" vs ",x))))
-      if(any(nmidx>1)){
-      nmv <- names(nmidx)[which(nmidx>1)]
-      nmv <- sapply(nmv, function(x) unlist(gregexpr(" vs [0-9]",x)))
-      for(i in 1:length(nmv)){
-        for(j in 1:length(nmv[[i]])){
-          substr(names(nmv)[i], nmv[[i]][j],nmv[[i]][j]+3) <- "...."
-        }
-        names(nmv)[i] <- gsub("\\....",".", names(nmv)[i])
-       }
-       nms[which(nmidx>1)] <- names(nmv)
-      }
+      
+      # if there are decimals, we don't want to replace them with "vs"
+      # find number of decimals in each column name
+      num.dec <- lengths(regmatches(nms, gregexpr("\\.", nms)))
+      
+      # when only one ".", it's easy
+      nms[num.dec == 1] <- gsub("\\.", " vs ", nms[num.dec == 1])
+      
+      # for three ".", replace only the middle
+      nms[num.dec == 3] <- sapply(strsplit(nms[num.dec == 3], "\\."), function(x) {
+        g <- seq_along(x)
+        g[g < 2] <- 2
+        g[g > 2 + 1] <- 2+1
+        paste(tapply(x, g, paste, collapse = "."), collapse = " vs ")
+      })
+      
+      # for two ".", difficult to know which one - just leave as is
       
       return(as.vector(nms));
     }else{
