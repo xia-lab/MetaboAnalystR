@@ -910,7 +910,7 @@ PerformBMDCalc <- function(ncpus = 1)
     res.mods <- dataSet$drcfit.obj$fitres.filt[,c(1,3,4,5,6)];
     res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
     res[,c(3:10)] <- apply(res[,c(3:10)], 2, function(x) as.numeric(as.character(x)));
-    res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) round(x, digits = 2));
+    res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) signif(x, digits = 2));
     rownames(res) <- as.character(res$item);
     colnames(res) <- c("gene.id","mod.name","lof.p","bmdl","bmd","bmdu","b","c","d","e");
     res <- res[order(res$bmd), ];
