@@ -554,8 +554,9 @@ ReadOmicsData <- function(fileName) {
       meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
     }
     dataSet$meta.info <- dataSet$metaOrig <- meta.info
+    print(head(meta.info));
     data <- data[-cls.inx,];
-    dataSet$fst.cls <- dataSet$meta.info[which(dataSet$meta.info[,1]!="NA"),1]
+    dataSet$cls <- dataSet$fst.cls <- dataSet$meta.info[which(dataSet$meta.info[,1]!="NA"),1]
     if(ncol(meta.info)>1){
       dataSet$sec.cls <- dataSet$meta.info[which(dataSet$meta.info[,2]!="NA"),2]
     }
@@ -715,7 +716,8 @@ SanityCheckMetaData <- function(){
    sampleNms.all <- vector();
    for(i in 1:length(sel.nms)){
      dataSet <- readDataset(sel.nms[i]);
-     sampleNms <- rownames(dataSet$data);
+     data <- readDataQs("data.raw.qs", paramSet$anal.type, sel.nms[i]);
+     sampleNms <- rownames(data);
      #check if sample names match
      if(!all(sampleNms %in% rownames(meta))){
         msgSet$current.msg <- paste(msgSet$current.msg, "Some samples are not annotated in metadata file!");
@@ -725,6 +727,7 @@ SanityCheckMetaData <- function(){
      meta.ind <- meta[sampleNms, , drop = FALSE]
      meta.ind <- meta.ind[match(sampleNms, rownames(meta.ind)), ]
      dataSet$meta.info <- meta.ind;
+
      sampleNms.all <- c(sampleNms.all, sampleNms);
      RegisterData(dataSet);
    }

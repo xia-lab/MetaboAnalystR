@@ -240,7 +240,7 @@ ReadMetaData <- function(metafilename){
     dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
-
+    dataSet$cls <- dataSet$meta.info[,1];
     meta.types <- rep("disc", ncol(dataSet$meta.info));
     meta.types[cont.inx[colnames(metadata1)]] <- "cont";
     names(meta.types) <- colnames(dataSet$meta.info);

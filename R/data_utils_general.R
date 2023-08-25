@@ -33,8 +33,6 @@ Set.Config <-function(anal.mode="web"){
 Init.Data <-function(onWeb=T, dataPath="data/"){
   path = "../../";
   adj.vec <<- "";
-  paramSet <- list(annotated=FALSE);
-  paramSet$on.public.web <- onWeb;
   .on.public.web <<- onWeb;
   dataSet <- list(annotated=FALSE);
   dataSet <<- dataSet;
@@ -43,6 +41,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   msgSet <<- list(objName="msgSet");
   cmdSet <<- list(objName="cmdSet");
   imgSet <<- list(objName="imgSet");
+  paramSet$on.public.web <- onWeb;
+
   if(paramSet$on.public.web){
   anal.mode <- "web";
   }else{
