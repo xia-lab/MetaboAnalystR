@@ -24,7 +24,8 @@ ReadMetaData <- function(mSetObj=NA, metafilename){
   # order samples in same way as in abundance table
 
   smpl.nms <- metadata[,1];
-  data.smpl.nms <- unname(mSetObj$dataSet$url.smp.nms);
+  data.smpl.nms <- names(mSetObj$dataSet$url.smp.nms);
+
   nm.hits <- data.smpl.nms %in% smpl.nms;
   if(!all(nm.hits)){
     perct <- round(sum(!nm.hits)/length(data.smpl.nms)*100, 3);
@@ -44,6 +45,10 @@ ReadMetaData <- function(mSetObj=NA, metafilename){
   nm.hits2 <- which(smpl.nms %in% data.smpl.nms);
   metadata1 <- metadata[nm.hits2,];
   smpl.nms <- smpl.nms[nm.hits2];
+
+  # now get cleaned sample names based on data
+  smpl.nms <- mSetObj$dataSet$url.smp.nms[smpl.nms];
+
   metadata1 <- metadata1[,-1];
   metadata1[] <- lapply( metadata1, factor);
 
@@ -302,7 +307,7 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
 
   msg <- NULL;
   mSetObj <- .get.mSet(mSetObj);
-  
+
   meta.info  <- mSetObj$dataSet$meta.info
  
   cls.lbl <- meta.info[,1]

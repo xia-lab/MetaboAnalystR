@@ -348,40 +348,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
 
   msg <- NULL;
   
-  if(substring(format,4,5)=="mf"){
-    # two factor time series data
-    if(substring(format,1,3)=="row"){ # sample in row
-      msg<-c(msg, "Samples are in rows and features in columns");
-      smpl.nms <-dat[,1];
-      all.nms <- colnames(dat);
-      facA.lbl <- all.nms[2];
-      cls.lbl <- facA <- dat[,2]; # default assign facA to cls.lbl in order for one-factor analysis
-      facB.lbl <- all.nms[3];
-      facB <- dat[,3];
-      conc <- dat[,-c(1:3)];
-      var.nms <- colnames(conc);
-    }else{ # sample in col
-      msg<-c(msg, "Samples are in columns and features in rows.");
-      all.nms <- dat[,1];
-      facA.lbl <- all.nms[1];
-      cls.lbl <- facA <- dat[1,-1];
-      facB.lbl <- all.nms[2];
-      facB <- dat[2,-1];
-      var.nms <- dat[-c(1:2),1];
-      conc<-t(dat[-c(1:2),-1]);
-      smpl.nms <- rownames(conc);
-    }
-
-    metadata <- data.frame(metaA=as.factor(as.character(facA)), metaB=as.factor(as.character(facB)), stringsAsFactors=T);
-    colnames(metadata) <- c(facA.lbl, facB.lbl)
-    mSetObj$dataSet$meta.info <- metadata
-    mSetObj$dataSet$types.cls.lbl <- sapply(metadata, function(x) class(x) ) 
-    mSetObj$dataSet$meta.types <- c("disc", "disc");
-    names(mSetObj$dataSet$types.cls.lbl) <- c(facA.lbl, facB.lbl)
-    names(mSetObj$dataSet$meta.types) <- c(facA.lbl, facB.lbl)
-
-  }else{
-    
     if(substring(format,1,3)=="row"){ # sample in row
       msg <- c(msg, "Samples are in rows and features in columns");
       smpl.nms <-dat[,1];
@@ -416,7 +382,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
         conc <- t(dat[-1,]);
       }
     }
-  }
+  
   
   mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
   
@@ -527,17 +493,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   } else {
     if(lbl.type == "disc"){
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
-      
-      if(substring(format,4,5)=="mf"){
-        
-        mSetObj$dataSet$facA.type <- is.numeric(facA);
-        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
-        mSetObj$dataSet$facA.lbl <- facA.lbl;
-        
-        mSetObj$dataSet$facB.type <- is.numeric(facB);
-        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
-        mSetObj$dataSet$facB.lbl <- facB.lbl;
-      }
       
     } else { # continuous
       

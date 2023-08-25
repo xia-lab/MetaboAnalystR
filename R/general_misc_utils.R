@@ -296,8 +296,11 @@ CleanNumber <-function(bdata){
   bdata;
 }
 
+
+# replace space with underscore
 # only keep alphabets, numbers, "." "_", "-" and @
 CleanNames <- function(query){
+  query <- gsub(" +","_",query);
   query <- gsub("[^[:alnum:].@_-]", "", query);
   return(make.unique(query));
 }
@@ -1328,3 +1331,35 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, priv
     }
     return(max.allow);
 }
+
+# make data and metadata share the same samples and in same order    
+.sync.data.metadata <- function(my.data, my.metadata){ 
+
+     if(!identical(rownames(my.data), rownames(my.metadata))){
+
+        # now get the overlap, using first as anchor
+        smpl.nms <- rownames(my.data);
+        shared.inx <- smpl.nms %in% rownames(my.metadata);
+        shared.nms <- smpl.nms[shared.inx];
+
+        if(sum(!shared.inx)>0){
+            print(paste("Those samples are removed from data: ", paste(smpl.nms[!shared.inx], collapse="; "), collapse=" "));
+        }
+
+        # update both
+        my.data <- my.data[shared.nms,,drop=FALSE];
+        my.metadata <- my.metadata[shared.nms,,drop=FALSE];
+
+        # drop levels for factor column in case the whole group is gone
+        for(i in 1:ncol(my.metadata)){
+            if(class(my.metadata[,i]) == "factor"){
+                my.metadata[,i] <- droplevels(my.metadata[,i]);
+            }
+        }
+        
+        print(paste("Successfully performed synchronization: a total of", length(shared.nms), "samples that are shared between the two tables are left.", collapse=" "));
+      }
+
+      return(list(data=my.data, metadata=my.metadata));
+}
+
