@@ -494,17 +494,6 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     if(lbl.type == "disc"){
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
       
-      if(substring(format,4,5)=="mf"){
-        
-        mSetObj$dataSet$facA.type <- is.numeric(facA);
-        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
-        mSetObj$dataSet$facA.lbl <- facA.lbl;
-        
-        mSetObj$dataSet$facB.type <- is.numeric(facB);
-        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
-        mSetObj$dataSet$facB.lbl <- facB.lbl;
-      }
-      
     } else { # continuous
       
       mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- tryCatch({

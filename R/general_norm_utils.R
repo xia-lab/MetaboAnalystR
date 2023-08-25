@@ -190,6 +190,16 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     mSetObj$dataSet$norm <- my.sync$data;
     mSetObj$dataSet$meta.info <- my.sync$metadata;
 
+    if(is.null(mSetObj$dataSet$prenorm.facA)){
+        nfacA <- mSetObj$dataSet$facA;
+        nfacB <- mSetObj$dataSet$facB;
+    }else{
+       nfacA <- mSetObj$dataSet$prenorm.facA;
+       nfacB <- mSetObj$dataSet$prenorm.facB;
+    }
+    
+    mSetObj$dataSet$facA <- nfacA;
+    mSetObj$dataSet$facB <- nfacB;
     # note, setup time factor
     if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
       # determine time factor and should order first by subject then by each time points
