@@ -350,15 +350,25 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   namesVec <- colnames(proc.data[,pre.inx, drop=FALSE]);
   
   # only get common ones
-  nm.inx <- namesVec %in% colnames(mSetObj$dataSet$norm)
+  if(anal.type == "roc" & !is.null(mSetObj$dataSet$norm.orig)){
+    if(ncol(mSetObj[["dataSet"]][["norm.orig"]])!=ncol(mSetObj[["dataSet"]][["norm"]])){
+      # keep using original normalization results to avoid over-written issue
+      norm_dt <- mSetObj$dataSet$norm.orig;
+    } else {
+      norm_dt <- mSetObj$dataSet$norm;
+    }
+  } else {
+    norm_dt <- mSetObj$dataSet$norm;
+  }
+  nm.inx <- namesVec %in% colnames(norm_dt)
   namesVec <- namesVec[nm.inx];
   pre.inx <- pre.inx[nm.inx];
   
-  norm.inx<-match(namesVec, colnames(mSetObj$dataSet$norm));
+  norm.inx<-match(namesVec, colnames(norm_dt));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
   
   rangex.pre <- range(proc.data[, pre.inx, drop=FALSE], na.rm=T);
-  rangex.norm <- range(mSetObj$dataSet$norm[, norm.inx, drop=FALSE], na.rm=T);
+  rangex.norm <- range(norm_dt[, norm.inx, drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-GetVariableLabel(mSetObj$dataSet$type);
@@ -385,13 +395,13 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
     plot.new()
   }else{
     op<-par(mar=c(4,7,4,2), xaxt="s");
-    plot(density(apply(mSetObj$dataSet$norm, 2, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
+    plot(density(apply(norm_dt, 2, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
     mtext("After Normalization",3, 1);
   }
 
   # fig 4
   op<-par(mar=c(7,7,0,2), xaxt="s");
-  boxplot(mSetObj$dataSet$norm[,norm.inx, drop=FALSE], names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", horizontal=T, show.names=T);
+  boxplot(norm_dt[,norm.inx, drop=FALSE], names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(paste("Normalized",x.label),1, 5);
   
   dev.off();

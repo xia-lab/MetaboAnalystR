@@ -975,6 +975,13 @@ Setup.MapData <- function(mSetObj=NA, qvec){
   return(.set.mSet(mSetObj));
 }
 
+# this is only for SSP: for those with conc above threshold
+Update.MapData <- function(mSetObj=NA, qvec){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$ssp.cmpd <- qvec;
+  return(.set.mSet(mSetObj));
+}
+
 GetMetaInfo <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$dataSet$design.type == "regular"){

@@ -244,7 +244,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 9;
   }else{
     w <-width;
   }
@@ -295,7 +295,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, w
   if(is.na(width)){
     w <- 9;
   }else if(width == 0){
-    w <- 7;
+    w <- 9;
   }else{
     w <- width;
   }
@@ -433,9 +433,9 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h)
   
   if(enrichType == "ora"){
-    mSetObj$imgSet$ora <- imgName
+    mSetObj$imgSet$ora_dot <- imgName
   }else if(enrichType == "qea"){
-    mSetObj$imgSet$qea <-imgName;
+    mSetObj$imgSet$qea_dot <-imgName;
   }
   
   mSetObj$imgSet$current.img <- imgName;
