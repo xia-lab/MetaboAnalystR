@@ -508,15 +508,17 @@ GetLimmaResTable<-function(fit.obj){
 #'across the different datasets included in meta-analysis.
 #'@param mSetObj Input name of the created mSet Object.
 #'@param gene.id Input the name of the selected feature.
+#'@param format format, in "png" etc.
+#'@param dpi dpi value for the image.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PlotSelectedFeature<-function(mSetObj=NA, gene.id){
+PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
-  imgName <- paste(gene.id, ".png", sep="");
+  imgName <- paste(gene.id, ".", format, sep="");
   mSetObj$imgSet$meta.anal$plot <- imgName
 
   if(.on.public.web){
@@ -525,7 +527,7 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
   num <- sum(mdata.all == 1);
   # calculate width based on the dataset number
   if(num == 1){
-    Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+    Cairo::Cairo(file = imgName, width=280, height=320, type=format, bg="white", dpi = dpi);
     myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
                      xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
   }else{
@@ -541,7 +543,7 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id){
       width=160*rn;
     }
     
-    Cairo::Cairo(file = imgName, width=width, height=height, type="png", bg="white");
+    Cairo::Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi = dpi);
     data.lbl <- as.character(metastat.meta$data.lbl);
     data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
     
