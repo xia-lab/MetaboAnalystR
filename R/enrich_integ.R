@@ -835,7 +835,7 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
 #'@import igraph  
 #'@import qs
 PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
-
+  
   mSetObj <- .get.mSet(mSetObj);
 
   path.id <- current.kegglib$path.ids[pathName];
@@ -893,11 +893,14 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
       }
     }
   }
-  
+
+  if(length(stats)!=length(topo)) {
+    topo <- current.kegglib[["bc.list"]][[path.id]]
+  }
   V(g)$stats <- stats;
   V(g)$topo <- topo;
   V(g)$adducts <- adducts;
-  
+
   if(.on.public.web){ 
     return(PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi));  
   }else{ 
@@ -934,29 +937,36 @@ PlotInmexGraph <- function(mSetObj, pathName,
     line.color <- "dimgray";
   }
 
+  if(is.null(dpi) & format == "pdf"){
+    dpi <- 96;
+  }
+
   if(!is.null(dpi)){
     pathName <- gsub("\\s","_", pathName);
     pathName <- gsub(",","", pathName);
 
     imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
+    mSetObj$imgSet$pathinteg.path <- imgName;
     if(is.na(width)){
         width <- 8;
     }
     w <- h <- width;
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+    Cairo::Cairo(file = imgName, dpi=dpi, width=w, height=h, type=format, bg="white");
     par(mai=rep(0,4));
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     dev.off();
+    if(.on.public.web){.set.mSet(mSetObj)}
     return(imgName);
   }else{
     imgName <- paste(pathName, ".png", sep="");
-    mSetObj$imgSet$pathinteg.path <- imgName
+    mSetObj$imgSet$pathinteg.path <- imgName;
     Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
     par(mai=rep(0,4));
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     nodeInfo <- GetKEGGNodeInfo(pathName, g, width, height);
     dev.off();
-#cat("nodeInfo", nodeInfo, "\n")
+    
     mSetObj$dataSet$current.kegg <- list(graph=g, bg.color=bg.color, line.color=line.color);
   
     # remember the current graph

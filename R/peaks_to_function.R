@@ -1098,6 +1098,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
   
   
   ## confirming ms2 id type
+  if(is.null(mSetObj$paramSet$ContainsMS2)){mSetObj$paramSet$ContainsMS2<-FALSE}
   if(mSetObj$paramSet$ContainsMS2){
     ms2id <- mSetObj$paramSet$ms2id.type;
     if(!(ms2id %in% c("hmdb_ids", "inchikeys", "pubchem_CIDs", "pubchem_SIDs", "SMILES"))){
