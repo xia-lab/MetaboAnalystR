@@ -1632,7 +1632,12 @@ PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(ggheatmap);
   dev.off();
-  return(1);
+  if(.on.public.web){
+    .set.mSet(mSetObj)  
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }  
 }
 
 # Get lower triangle of the correlation matrix
