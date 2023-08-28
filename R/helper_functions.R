@@ -160,7 +160,7 @@ GetMetaSummaryData<- function(){
     cls.lbls <- paste(cls.lbls, collapse="; ")
     paramSet$summaryVecMeta <- c(length(colnames(inmex.meta$data)),nrow(inmex.meta$data), sel.nms, cls.lbls);
     saveSet(paramSet);
-    return(c(length(colnames(inmex.meta$data)),nrow(inmex.meta$data), sel.nms, cls.lbls))
+    return(paramSet$summaryVecMeta)
 }
 
 GetDatasetNamesString <- function(){

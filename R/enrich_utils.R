@@ -202,7 +202,7 @@
   return(res);
 }
 
-GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "orange", gseaRankOpt="", sigLevel = 0.05, pwNum=20, inx = 1){
+GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "teal", gseaRankOpt="", sigLevel = 0.05, pwNum=20, inx = 1){
     dataSet <- readDataset(dataName);
     if(!exists("compute.ridgeline")){ # public web on same user dir
         compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_ridgeline.Rc");    

@@ -110,6 +110,9 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   cat(json.mat);
   sink();
   
+  paramSet$jsonNms$heatmapGSEA <- json.nm
+  saveSet(paramSet, "paramSet");
+
   return(json.nm)
 }
 

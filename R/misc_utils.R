@@ -1060,3 +1060,45 @@ generate_continuous_colors <- function(n, primary_color="red", filenm=NULL) {
     return(filenm);
   }
 }
+
+makeReadable <- function(str){
+    result <- switch(str,
+                 pct = "Percent",
+                 abs = "Absolute",
+                 log = "Log2",
+                 rle = "RLE",
+                 array = "Microarray",
+                 count= "RNA-Seq",
+                 hsa = "H. sapiens (human)",
+                 mmu = "M. musculus (mouse)",
+                 rno = "R. norvegicus (rat)",
+                 cel = "C. elegans (roundworm)",
+                 dme = "D. melanogaster (fruitfly)",
+                 dre = "D. rerio (zebrafish)",
+                 sce = "S. cerevisiae (yeast)",
+                 eco = "E. coli",
+                 ath = "A. thaliana (Arabidopsis)",
+                 bta = "B. taurus (cow)",
+                 gga = "G. gallus (chicken)",
+                 mun = "M. unguiculatus (Mongolian gerbil)",
+                 bsu = "B. subtilis",
+                 pae = "P. aeruginosa",
+                 mtb = "M. tuberculosis",
+                 smm = "S. mansoni (schistosomiasis)",
+                 tbr = "T. brucei (trypanosoma)",
+                 pfa = "P. falciparum (malaria)",
+                 cjo = "C. japonica (japanese quail)",
+                 xla = "X. laevis (African clawed frog)",
+                 ppr = "P. promelas (fathead minnow; custom)",
+                 fhm = "P. promelas (fathead minnow; NCBI)",
+                 nlf = "L. pipiens (northern leopard frog)",
+                 omk = "O. mykiss (rainbow trout)",
+                 ham = "H. americanus (American lobster)",
+                 cdi = "C. dilutus",
+                 dma = "D. magna",
+                 rsu = "R. subcapitata",
+                 haz = "H. azteca",
+                 fcd = "F. candida",
+                 str)
+
+}

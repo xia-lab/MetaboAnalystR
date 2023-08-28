@@ -6,11 +6,11 @@
 ## Jessica Ewald, jessica.ewald@mail.mcgill.ca
 ##################################################
 
-compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "orange", sigLevel = 0.05, pwNum=20, inx = 1){
+compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "teal", sigLevel = 0.05, pwNum=20, inx = 1){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
-  
+  imageName <- paste0(imgNm, "dpi" , dpi, ".", format);
   anal.type <- paramSet$anal.type;
   require("dplyr");
   require("fgsea");
@@ -179,7 +179,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
           axis.text.x = element_text(color = "black"),
           axis.text.y = element_text(size=12,color = "black"))
    
-  Cairo::Cairo(file=paste0(imgNm, "dpi" , dpi, ".", format), width=18, height=12, type=format, bg="white", dpi=dpi, unit="in");
+  Cairo::Cairo(file=imageName, width=18, height=12, type=format, bg="white", dpi=dpi, unit="in");
   print(rp);
   dev.off();
   
@@ -279,5 +279,9 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(jsonNm));
   saveSet(paramSet, "paramSet");
   
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$compute.ridgeline <- imageName;
+  saveSet(imgSet);
+
   return(totalSigPws)
 }

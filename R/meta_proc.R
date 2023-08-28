@@ -461,8 +461,12 @@ FilteringDataOmics <- function(dataSet, countOpt="pct",count, var){
 
   saveDataQs(data, "data.filtered.qs", paramSet$anal.type, dataName);
 
-  dataSet$data.norm <- data
- 
+  dataSet$data.norm <- data;
+  dataSet$norm.opt <- countOpt;
+  dataSet$count.thresh <- count.thresh;
+  dataSet$var.thresh <- var.thresh;
+  dataSet$filter.opt <- countOpt;
+
   saveSet(msgSet, "msgSet");      
   return(RegisterData(dataSet))
 }
@@ -554,7 +558,6 @@ ReadOmicsData <- function(fileName) {
       meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
     }
     dataSet$meta.info <- dataSet$metaOrig <- meta.info
-    print(head(meta.info));
     data <- data[-cls.inx,];
     dataSet$cls <- dataSet$fst.cls <- dataSet$meta.info[which(dataSet$meta.info[,1]!="NA"),1]
     if(ncol(meta.info)>1){
