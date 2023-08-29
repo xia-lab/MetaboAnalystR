@@ -606,7 +606,8 @@ GetRFConfMat <- function(mSetObj=NA){
 
 GetRFConfRowNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  rownames(mSetObj$analSet$rf$confusion);
+  res <- rownames(mSetObj$analSet$rf$confusion);
+  if(is.null(res)){return("")} else {return(res)}
 }
 
 GetRFConfColNames <- function(mSetObj=NA){
