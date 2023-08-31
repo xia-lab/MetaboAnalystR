@@ -109,7 +109,8 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   sink(json.nm);
   cat(json.mat);
   sink();
-  
+
+  paramSet$GSEAPathway <- cmpdNm;
   paramSet$jsonNms$heatmapGSEA <- json.nm
   saveSet(paramSet, "paramSet");
 
@@ -129,5 +130,9 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
   g <- plotEnrichment(current.geneset[[cmpdNm]], analSet$rankedVec)
   print(g)
   dev.off();
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$GSEAbarcode <- imgName;
+  saveSet(imgSet);
+  print(imgSet$GSEAbarcode);
   return(imgName);
 }

@@ -448,7 +448,6 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   }else{
     imgSet$qc.pcaplot <- imgNm;
   }
-  print(imgSet);
   saveSet(imgSet);
 
   return(str)
