@@ -85,7 +85,7 @@ PrepareUpsetData <- function(fileNm){
   uniq.nms <- unique(df$name)
   new.df <- dcast(df, name ~ set, value.var='set', fill=0)
   rownames(new.df) <- new.df[,1]
-  new.df <- new.df[,-1]
+  new.df <- new.df[,-1, drop=F]
   
   gene.map <-  queryGeneDB("entrez", paramSet$data.org);
   gene.map[] <- lapply(gene.map, as.character)
