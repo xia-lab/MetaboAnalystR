@@ -1187,11 +1187,17 @@ extractMetaFactors <- function(mSetObj = NA, file_path = NULL){
   })
   colNMs <- colnames(dt)
   metafactors <- colNMs[!((colNM_num == 1) | (colNM_num == nrow(dt)))]
+  metafactors_levels <- colNM_num[!((colNM_num == 1) | (colNM_num == nrow(dt)))]
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$metafactors <- metafactors;
+  mSetObj$dataSet$metafactors_levels <- metafactors_levels;
   mSetObj$dataSet$filename <- basename(file_path)
   .set.mSet(mSetObj);
-  return(metafactors)
+  if(.on.public.web){
+    return(metafactors)
+  } else {
+    return(mSetObj)
+  }
 }
 
 extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
@@ -1203,19 +1209,31 @@ extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cmpdIDs <- cmpdIDs;
   .set.mSet(mSetObj);
-  return(cmpdIDs)
+  if(.on.public.web){
+    return(cmpdIDs)
+  } else {
+    return(mSetObj)
+  }
 }
 
 getMetabolonMetaFactor <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$metafactors -> metafactors;
-  return(metafactors)
+  if(.on.public.web){
+    return(metafactors)
+  } else {
+    return(mSetObj)
+  }
 }
 
 getMetabolonCMPDIDs <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cmpdIDs -> cmpdIDs;
-  return(cmpdIDs)
+  if(.on.public.web){
+    return(cmpdIDs)
+  } else {
+    return(mSetObj)
+  }
 }
 
 ReadXLSXsheetsInfo <- function(file_path){
@@ -1238,23 +1256,33 @@ FormatMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
   
   if(!all(dt_table[,1] == dt_meta$PARENT_SAMPLE_NAME)){
     AddErrMsg("Sample names in 'Peak Area Data' are not matched with the ones in 'Sample Meta Data'!")
-    return(0)
+    if(.on.public.web){
+      return(0)
+    } else {
+      return(mSetObj)
+    }
   }
   GroupsVec <- dt_meta[,metafactor]
   SampleVec <- dt_table[,1]
   dt_tablex <- dt_table[,-1]
-  
-  #save(dt_ids, dt_meta, dt_table, metafactor, featureID, file = "FormatMetabolonSheets.rda")
-  
+
   if(featureID == "NA"){
     dt_done <- data.frame(Samples = SampleVec,
                           Groups = GroupsVec,
                           dt_tablex)
   } else {
-    
     idx_col <- which(!is.na(dt_ids[,featureID]))
     dt_tablex2 <- dt_tablex[,idx_col]
-    colnames(dt_tablex2) <- as.data.frame(dt_ids[,featureID])[,1][idx_col]
+    IDvecs <-as.data.frame(dt_ids[,featureID])[,1][idx_col]
+    
+    if((featureID =="HMDB") | (featureID =="KEGG") | (featureID =="PUBCHEM")){
+      IDvecs <- vapply(IDvecs, function(x){
+        vc <- strsplit(x, ",")[[1]]
+        vc[length(vc)]
+      }, FUN.VALUE = character(1L))
+    }
+    
+    colnames(dt_tablex2) <- IDvecs
     dt_done <- data.frame(Samples = SampleVec,
                           Groups = GroupsVec,
                           dt_tablex2)
@@ -1262,9 +1290,29 @@ FormatMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
   }
   
   write.csv(dt_done, file = "metaboanalyst_input.csv", row.names = F)
-  return(1)
+  if(.on.public.web){
+    return(1)
+  } else {
+    return(mSetObj)
+  }
 }
 
-
+ValidateMetaFactor2Level <- function(mSetObj = NA, metafactor){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$metafactors -> metafactors;
+  mSetObj$dataSet$metafactors_levels -> metafactors_levels;
+  
+  mlvl <- metafactors_levels[metafactor == metafactors];
+  
+  if(.on.public.web){
+    if(mlvl == 2){
+      return(1)
+    } else {
+      return(0)
+    }
+  } else {
+    return(mSetObj)
+  }
+}
 
 
