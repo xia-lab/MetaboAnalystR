@@ -1166,3 +1166,105 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
     return(0);
 }
 
+
+##### Functionalities for processing Metabolon dataset
+ValidateMetabolonData <- function(file_path = NULL) {
+  if(is.null(file_path)){
+    return(0)
+  }
+  sheetnms <- ReadXLSXsheetsInfo(file_path)
+  if(("Chemical Annotation" %in% sheetnms) & 
+     ("Sample Meta Data" %in% sheetnms) & 
+     ("Peak Area Data" %in% sheetnms)){
+    return(1)
+  }
+}
+
+extractMetaFactors <- function(mSetObj = NA, file_path = NULL){
+  dt <- read_excel(file_path, sheet = "Sample Meta Data")
+  colNM_num <- apply(dt, 2, FUN = function(x){
+    length(unique(x))
+  })
+  colNMs <- colnames(dt)
+  metafactors <- colNMs[!((colNM_num == 1) | (colNM_num == nrow(dt)))]
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$metafactors <- metafactors;
+  mSetObj$dataSet$filename <- basename(file_path)
+  .set.mSet(mSetObj);
+  return(metafactors)
+}
+
+extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
+  dt <- read_excel(file_path, sheet = "Chemical Annotation")
+  idx <- vapply(colnames(dt), FUN = function(x){
+    x %in% c("HMDB", "KEGG", "INCHIKEY","SMILES", "PUBCHEM", "CHEMICAL_NAME")
+  }, logical(1L))
+  cmpdIDs <- colnames(dt)[idx]
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$cmpdIDs <- cmpdIDs;
+  .set.mSet(mSetObj);
+  return(cmpdIDs)
+}
+
+getMetabolonMetaFactor <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$metafactors -> metafactors;
+  return(metafactors)
+}
+
+getMetabolonCMPDIDs <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$cmpdIDs -> cmpdIDs;
+  return(cmpdIDs)
+}
+
+ReadXLSXsheetsInfo <- function(file_path){
+  sheetsnms <- "";
+  require(readxl)
+  sheetsnms <- excel_sheets(file_path)
+  return(sheetsnms)
+}
+
+FormatMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
+  mSetObj <- .get.mSet(mSetObj);
+  filenm <- mSetObj$dataSet$filename;
+  
+  if(featureID != "NA"){
+    dt_ids <- read_excel(filenm, sheet = "Chemical Annotation")
+  }
+  
+  dt_meta <- read_excel(filenm, sheet = "Sample Meta Data")
+  dt_table <- read_excel(filenm, sheet = "Peak Area Data")
+  
+  if(!all(dt_table[,1] == dt_meta$PARENT_SAMPLE_NAME)){
+    AddErrMsg("Sample names in 'Peak Area Data' are not matched with the ones in 'Sample Meta Data'!")
+    return(0)
+  }
+  GroupsVec <- dt_meta[,metafactor]
+  SampleVec <- dt_table[,1]
+  dt_tablex <- dt_table[,-1]
+  
+  #save(dt_ids, dt_meta, dt_table, metafactor, featureID, file = "FormatMetabolonSheets.rda")
+  
+  if(featureID == "NA"){
+    dt_done <- data.frame(Samples = SampleVec,
+                          Groups = GroupsVec,
+                          dt_tablex)
+  } else {
+    
+    idx_col <- which(!is.na(dt_ids[,featureID]))
+    dt_tablex2 <- dt_tablex[,idx_col]
+    colnames(dt_tablex2) <- as.data.frame(dt_ids[,featureID])[,1][idx_col]
+    dt_done <- data.frame(Samples = SampleVec,
+                          Groups = GroupsVec,
+                          dt_tablex2)
+    colnames(dt_done)[-c(1:2)] <- colnames(dt_tablex2)
+  }
+  
+  write.csv(dt_done, file = "metaboanalyst_input.csv", row.names = F)
+  return(1)
+}
+
+
+
+
