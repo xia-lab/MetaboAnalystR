@@ -638,6 +638,7 @@ FilterDRFit <- function()
   
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
+
   # get results
   fitres.all <- as.data.table(dataSet$drcfit.obj$fitres.all)
   fitres.filt <-fitres.all[fitres.all$mod.name!="Const"]
@@ -666,7 +667,7 @@ FilterDRFit <- function()
   dataSet$drcfit.obj$data <- data
   dataSet$drcfit.obj$data.mean <- data.mean
   dataSet$drcfit.obj$item <- item
-  
+  saveSet(paramSet);
   RegisterData(dataSet);
   return(1)
 }
@@ -1136,6 +1137,8 @@ GetFitResultMatrix <- function(){
   res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
   res <- apply(res, 2, function(x) as.numeric(as.character(x)));
+  dataSet$curvefit.resTable <- res;
+  RegisterData(dataSet);
   return(res);
 }
 

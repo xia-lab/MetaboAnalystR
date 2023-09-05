@@ -27,7 +27,7 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
-    cmpdNm <- analSet$sig.genes.symbols[inx]; 
+    cmpdNm <- analSet$comp.genes.symbols[inx]; 
     if(type== "volcano"){
       cmpdNm <- "";
     }    
@@ -233,7 +233,7 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
-    cmpdNm <- analSet$sig.genes.symbols[inx]; 
+    cmpdNm <- analSet$comp.genes.symbols[inx]; 
 
         Cairo(file = imgName,  width=320*dpi/72, height=380*dpi/72, type=format, dpi=dpi, bg="white");
         dat <- data.norm

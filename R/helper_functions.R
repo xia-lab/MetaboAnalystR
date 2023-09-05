@@ -193,7 +193,7 @@ GetMetaInfo <- function(dataName=""){
 
 GetExpressResultGeneSymbols<-function(){
   analSet <- readSet(analSet, "analSet");
-  return(analSet$sig.genes.symbols);
+  return(analSet$comp.genes.symbols);
 }
 
 GetExpressResultGeneIDLinks <- function(dataName=""){

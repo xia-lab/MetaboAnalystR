@@ -137,9 +137,9 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     fast.write(signif(resTable,5), file=filename);
   }
   if(is.null(gene.anot)){
-    analSet$sig.genes.symbols <- rownames(resTable); # use the id provided
+    analSet$comp.genes.symbols <- rownames(dataSet$comp.res); # use the id provided
   }else{
-    analSet$sig.genes.symbols <- gene.anot$symbol;
+    analSet$comp.genes.symbols <- gene.anot$symbol;
   }
   dataSet$cls.stat <- cls;
   dataSet$meta.stat <- meta.info;
