@@ -126,7 +126,7 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
   imgName <- gsub(" ", "_",  imgName);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
   
-  Cairo(file = imgName, dpi=72, width=340, height=300, type="png", bg="transparent");
+  Cairo(file = imgName, dpi=dpi, width=340, height=300, type="png", bg="transparent");
   g <- plotEnrichment(current.geneset[[cmpdNm]], analSet$rankedVec)
   print(g)
   dev.off();
