@@ -246,6 +246,7 @@ SanityCheckData <- function(mSetObj=NA){
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
   
+  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
 
   if(is.null(mSetObj$dataSet$meta.info)){
     mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
@@ -260,7 +261,7 @@ SanityCheckData <- function(mSetObj=NA){
   }
 
   qs::qsave(as.data.frame(int.mat), "preproc.qs");
-  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+  
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
 
   if(!.on.public.web){
