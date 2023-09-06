@@ -9,7 +9,7 @@
 
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
-.performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec){
+.performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
 
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
@@ -144,6 +144,10 @@
   csv.nm <- paste(file.nm, ".csv", sep="");    
   fast.write(resTable, file=csv.nm, row.names=F);
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$enrTables[[vis.type]] <- resTable;
+  saveSet(imgSet);
   saveSet(paramSet, "paramSet");
   
   saveSet(msgSet, "msgSet");

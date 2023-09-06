@@ -184,7 +184,7 @@ PerformHeatmapEnrichment <- function(dataName="", file.nm, fun.type, IDs){
   }
   sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
   names(gene.vec) <- sym.vec;
-  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec);
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "heatmap");
   if(res == 0){
     return(0);
   }else{
@@ -368,7 +368,7 @@ InitEnrichmentNetwork <- function(dataName, type){
   analSet <- readSet(analSet, "analSet");
 
   analSet <- .getEnrNetList(dataSet, analSet);
-  res <- .performEnrichAnalysis(dataSet, paste0("enrichment_", type), type, analSet$list.genes);
+  res <- .performEnrichAnalysis(dataSet, paste0("enrichment_", type), type, analSet$list.genes, "network");
   if(res){
     .prepareEnrichNet(dataSet, paste0('enrichNet_', type), 'list', "mixed", analSet);
   }
@@ -390,7 +390,7 @@ PerformListEnrichmentView <- function(dataName="", file.nm, fun.type, netNm, IDs
   analSet$list.genes <- gene.vec
   saveSet(analSet, "analSet");
   }
-  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, analSet$list.genes);
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, analSet$list.genes, "network");
   if(res){
     .prepareEnrichNet(dataSet, netNm, 'list', "mixed", analSet);
   }
@@ -601,13 +601,13 @@ if(grp.num <= 18){ # update color and respect default
   }
 }
 
-PerformORA <- function(dataName="", file.nm, fun.type, IDs){
+PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(dataName);
   gene.vec <- unlist(strsplit(IDs, "; "));
   sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
   names(gene.vec) <- sym.vec;
-  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec);
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "upset");
   return(res);
 }
 

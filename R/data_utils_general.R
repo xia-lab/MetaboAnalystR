@@ -40,7 +40,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet <<- list( objName="paramSet");
   msgSet <<- list(objName="msgSet");
   cmdSet <<- list(objName="cmdSet");
-  imgSet <<- list(objName="imgSet");
+  imgSet <<- list(objName="imgSet",enrTables=list());
   paramSet$on.public.web <- onWeb;
 
   if(paramSet$on.public.web){

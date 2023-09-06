@@ -284,7 +284,7 @@ PerformVolcanoEnrichment<-function(dataName="", file.nm, fun.type, IDs, type, in
   }
   sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
   names(gene.vec) <- sym.vec;
-  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec);
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "volcano");
   return(res);
 }
 

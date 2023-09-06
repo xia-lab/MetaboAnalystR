@@ -12,7 +12,6 @@
 #'@export
 #'
 PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx=1, mode = "multi",rankOpt=""){
-  cat("performGSEA===",dataName, file.nm, fun.type, netNm, mType, selectedFactorInx, mode, rankOpt);
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -173,8 +172,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     cls = dataSet$meta.info[inx,],
     sample.nms = sampleNms
   );
-  
-  if(mType == "network"){
+
     res.mat<-matrix(0, nrow=length(fun.pval), ncol=4);
     colnames(res.mat)<-c("Total","Hits", "P.Value", "FDR");
     res.mat[,"Total"] <- fgseaRes[,"total"];
@@ -184,15 +182,24 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     res.mat <- data.matrix(data.frame(res.mat, stringsAsFactors=FALSE));
     rownames(res.mat) <- fgseaRes[,"pathway"];
     qs:::qsave(res.mat, "enr.mat.qs");
+
+  imgSet <- readSet(imgSet, "imgSet");
+  if(mType == "network"){
+
     analSet$list.genes <- doEntrez2SymbolMapping(rownames(dataSet$sig.mat), paramSet$data.org, paramSet$data.idType);
     analSet <- SetListNms(dataSet);
     analSet <- .prepareEnrichNet(dataSet, netNm, "meta", "mixed", analSet);
-    file.nm <- gsub("gsea", "enrichment", file.nm)
-    json.res$naviString <- "Enrichment Network"
+    file.nm <- gsub("gsea", "enrichment", file.nm);
+    json.res$naviString <- "Enrichment Network";
+    imgSet$enrTables[["network"]] <- res.mat;
+    saveSet(imgSet, "imgSet");
   }else{
     json.res$org <- paramSet$data.org
     json.res$analType <- anal.type
     json.res$naviString <- "GSEA";
+    imgSet$enrTables[["gsea"]] <- res.mat;
+    saveSet(imgSet, "imgSet");
+
   }
   
   json.mat <- RJSONIO::toJSON(json.res);
