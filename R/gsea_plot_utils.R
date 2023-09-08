@@ -6,6 +6,10 @@
 ## J. Xia, jeff.xia@mcgill.ca
 ###################################################
 PlotGShm <-function(dataName="", cmpdNm="", IDs){
+  dataName <<- dataName;
+  cmpdNm <<- cmpdNm;
+  IDs <<- IDs;
+  save.image("gs.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   

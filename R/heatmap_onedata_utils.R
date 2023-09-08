@@ -17,9 +17,6 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   data.stat <- qs::qread("data.stat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   res.tbl <- dataSet$comp.res; #dataSet$sig.mat for sig only
-  if(nrow(res.tbl) > 5000){
-    res.tbl <- res.tbl[c(1:5000),];
-  }
   res.tbl <- res.tbl[which(rownames(res.tbl) %in% rownames(data.stat)),]
   sig.ids <- rownames(dataSet$sig.mat);
   if("P.Value" %in% colnames(res.tbl)){
@@ -40,7 +37,7 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   all.ids <- all.ids[all.ids %in% rownames(data.stat)];
   hit.inz <- sig.ids %in% rownames(data.stat);
   sig.ids <- sig.ids[hit.inz];
-  
+
   
   #sig only
   #dat <- t(scale(t(data.stat[sig.ids, , drop=F])));
@@ -58,23 +55,23 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   # convert order to rank (score that can used to sort) 
   if(nrow(dat)> 1){
     dat.dist <- dist(dat);
-    gene.ward.ord <- hclust(dat.dist, "ward.D")$order;
+    gene.ward.ord <- fastcluster::hclust(dat.dist, "ward.D")$order;
     gene.ward.rk <- match(orig.gene.nms, orig.gene.nms[gene.ward.ord]);
-    gene.ave.ord <- hclust(dat.dist, "ave")$order;
+    gene.ave.ord <- fastcluster::hclust(dat.dist, "ave")$order;
     gene.ave.rk <- match(orig.gene.nms, orig.gene.nms[gene.ave.ord]);
-    gene.single.ord <- hclust(dat.dist, "single")$order;
+    gene.single.ord <- fastcluster::hclust(dat.dist, "single")$order;
     gene.single.rk <- match(orig.gene.nms, orig.gene.nms[gene.single.ord]);
-    gene.complete.ord <- hclust(dat.dist, "complete")$order;
+    gene.complete.ord <- fastcluster::hclust(dat.dist, "complete")$order;
     gene.complete.rk <- match(orig.gene.nms, orig.gene.nms[gene.complete.ord]);
     
     dat.dist <- dist(t(dat));
-    smpl.ward.ord <- hclust(dat.dist, "ward.D")$order;
+    smpl.ward.ord <- fastcluster::hclust(dat.dist, "ward.D")$order;
     smpl.ward.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ward.ord])
-    smpl.ave.ord <- hclust(dat.dist, "ave")$order;
+    smpl.ave.ord <- fastcluster::hclust(dat.dist, "ave")$order;
     smpl.ave.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ave.ord])
-    smpl.single.ord <- hclust(dat.dist, "single")$order;
+    smpl.single.ord <- fastcluster::hclust(dat.dist, "single")$order;
     smpl.single.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.single.ord])
-    smpl.complete.ord <- hclust(dat.dist, "complete")$order;
+    smpl.complete.ord <- fastcluster::hclust(dat.dist, "complete")$order;
     smpl.complete.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.complete.ord])
   }else{
     # force not to be single element vector which will be scaler
@@ -82,7 +79,7 @@ PrepareExpressHeatmapJSON <- function(dataSet){
     stat.fc <- matrix(stat.fc);
     gene.ward.rk <- gene.ave.rk <- gene.single.rk <- gene.complete.rk <- matrix(1);
     smpl.ward.rk <- smpl.ave.rk <- smpl.single.rk <- smpl.complete.rk <- 1:ncol(dat);
-  }
+}
   
   gene.cluster <- list(
     pval = stat.pvals, 
