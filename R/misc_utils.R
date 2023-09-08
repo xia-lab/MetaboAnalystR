@@ -1151,3 +1151,15 @@ makeReadable <- function(str){
                  str)
 
 }
+
+AddFeatureToReport <- function(imgName){
+    imgSet <- readSet(imgSet, "imgSet");
+    if (is.null(imgSet$featureList)) {
+      imgSet$featureList <- list()
+    }
+    if (!imgName %in% unlist(imgSet$featureList)) {
+      # Add imgName to imgSet$featureList
+      imgSet$featureList <- append(imgSet$featureList, list(imgName))
+    }    
+    saveSet(imgSet);
+}

@@ -146,6 +146,7 @@
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
 
   imgSet <- readSet(imgSet, "imgSet");
+  rownames(resTable) <- NULL;
   imgSet$enrTables[[vis.type]] <- resTable;
   saveSet(imgSet);
   saveSet(paramSet, "paramSet");

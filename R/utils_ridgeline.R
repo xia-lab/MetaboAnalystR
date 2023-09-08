@@ -280,7 +280,8 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   saveSet(paramSet, "paramSet");
 
   imgSet <- readSet(imgSet, "imgSet");
-  imgSet$enrTables[["ridgeline"]] <- enr.res;
+  rownames(resTable) <- NULL;
+  imgSet$enrTables[["ridgeline"]] <- resTable;
   imgSet$compute.ridgeline <- imageName;
   saveSet(imgSet);
 
