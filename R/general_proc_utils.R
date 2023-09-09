@@ -66,12 +66,11 @@ SanityCheckData <- function(mSetObj=NA){
           return(0);
         }else{
           pairs <- as.numeric(pairs);
-        }
-        
+        }  
+  
         label <- as.numeric(pairs);
         cls <- as.factor(ifelse(label>0,1,0));
-        mSetObj$dataSet$pairs <- label;
-        
+        mSetObj$dataSet$pairs <- label;       
         lev <- unique(pairs);
         uni.cl <- length(lev);
         uni.cl.abs <- uni.cl/2;             
@@ -99,10 +98,15 @@ SanityCheckData <- function(mSetObj=NA){
           index<-as.vector(cbind(x,y));
           cls<-cls[index];
           pairs <- pairs[index];
+          orig.data<- orig.data[index,];
+
           mSetObj$dataSet$pairs <- pairs;
           mSetObj$dataSet$orig.cls <- cls;
+
+          #add sync for paired names
+          mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
+
           mSetObj$dataSet$pair.checked <- TRUE;
-          orig.data<- orig.data[index,];
           #qs::qsave(orig.data, file="data_orig.qs");
         
       } else {

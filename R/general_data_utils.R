@@ -31,7 +31,7 @@
 #'or msspec (MS spectra data)
 #'@param anal.type Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, mf, 
 #'cmpdmap, smpmap, or pathinteg
-#'@param paired Indicate if the data is paired or not. Logical, default set to FALSE
+#'@param paired indicate if the data is paired or not. Logical, default set to FALSE
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -993,10 +993,6 @@ GetOrigSmplSize <- function(mSetObj=NA){
   length(mSetObj$dataSet$orig.cls);
 }
 
-GetOrigSmplGroupNames <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  as.character(mSetObj$dataSet$orig.cls);
-}
 
 GetOrigSmplGroupNamesPerMeta <- function(mSetObj=NA, metaname="NA"){
   mSetObj <- .get.mSet(mSetObj);
@@ -1004,8 +1000,8 @@ GetOrigSmplGroupNamesPerMeta <- function(mSetObj=NA, metaname="NA"){
     as.character(mSetObj$dataSet$meta.info[,metaname]);
   }else if(!is.null(mSetObj$dataSet$meta.info[,1])) {
     as.character(mSetObj$dataSet$meta.info[,1]);
-  }else {
-    return(GetOrigSmplGroupNames(NA))
+  }else { # single factor
+    return(GetOrigGrpNms(NA))
   }
 }
 
