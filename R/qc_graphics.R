@@ -69,9 +69,9 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
   
   imgSet <- readSet(imgSet, "imgSet");
   if(grepl("norm", imgNm)){
-    imgSet$qc.boxplot_norm <- imgNm;
+    imgSet$qc_norm_boxplot <- imgNm;
   }else{
-    imgSet$qc.boxplot <- imgNm;
+    imgSet$qc_boxplot <- imgNm;
   }
   saveSet(imgSet);
 
@@ -444,9 +444,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   
   imgSet <- readSet(imgSet, "imgSet");
   if(grepl("norm", imgNm)){
-    imgSet$qc.pcaplot_norm <- imgNm;
+    imgSet$qc_norm_pca <- imgNm;
   }else{
-    imgSet$qc.pcaplot <- imgNm;
+    imgSet$qc_pca <- imgNm;
   }
   saveSet(imgSet);
 

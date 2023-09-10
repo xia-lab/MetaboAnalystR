@@ -911,11 +911,11 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   dev.off();
   
   imgSet <- readSet(imgSet, "imgSet");
-  if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
-    imgSet$PlotMetaPCA <- imgNm;
-  }else{
-    imgSet$PlotMetaPCA_batch <- imgNm;
-  }
+  #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
+    imgSet$qc_meta_pca <- imgNm;
+  #}else{
+  #  imgSet$qc_meta_pca_batch <- imgNm;
+  #}
   saveSet(imgSet);
 }
 
@@ -944,11 +944,11 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
   dev.off();
 
   imgSet <- readSet(imgSet, "imgSet");
-  if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
-    imgSet$PlotMetaDensity <- imgNm;
-  }else{
-    imgSet$PlotMetaDensity_batch <- imgNm;
-  }
+  #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
+    imgSet$qc_meta_density <- imgNm;
+  #}else{
+  #  imgSet$qc_meta_density_batch <- imgNm;
+  #}
   saveSet(imgSet);
 
 

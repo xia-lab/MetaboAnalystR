@@ -5,7 +5,6 @@
 ## Jeff Xia, jeff.xia@mcgill.ca
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
-
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
   
@@ -154,8 +153,8 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
       # calculate layout
       if(singleCol){
         layout <- c(1, num);
-        height <- 200*num;
-        width <- 280;
+        h <- 200*num;
+        w <- 280;
         row.num <- num;
       }else{
 
