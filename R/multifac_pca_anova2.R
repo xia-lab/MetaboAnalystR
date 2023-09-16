@@ -63,21 +63,23 @@ aov.2way <- function(x){
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
                        p.cor="fdr", designType="time0", phenOpt="between"){
 
-require(rstatix)
-
   mSetObj <- .get.mSet(mSetObj);
+
   if(length(meta.vec.aov) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
-    if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
-      AddErrMsg("Metadata and data tables not synchronized!"); #should have been re-ordered in Normalization()
-      return(0);
-    }
+
   }else{
+
+   if(designType %in% c("time0", "time")){
+     # make sure subject is not in the metadata of interest
+      if("subject" %in% tolower((meta.vec.aov))){
+        AddErrMsg("Subject is already accounted for in the analysis.");
+        return(0);
+      }
+   }
+
     sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.aov]
-    if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
-      AddErrMsg("Metadata and data tables not synchronized!"); # should have been re-ordered in Normalization()
-      return(0);
-    }
+
     if(length(meta.vec.aov) == 1){
       sel.meta.df <- as.data.frame(sel.meta.df)
     }
@@ -93,6 +95,11 @@ require(rstatix)
       mSetObj$dataSet$facA.lbl <- colnames(sel.meta.df)[1]
       mSetObj$dataSet$facB.lbl <- colnames(sel.meta.df)[2]
     }
+  }
+
+  if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
+      AddErrMsg("Metadata and data tables not synchronized!"); #should have been re-ordered in Normalization()
+      return(0);
   }  
 
   # make sure all metadata are factor variable types
@@ -100,7 +107,8 @@ require(rstatix)
     meta <- colnames(sel.meta.df)[i]
     mettype <- mSetObj$dataSet$meta.types[meta]
     if(mettype == "cont"){
-      return(-1);
+      AddErrMsg("Selected metadata must be categorical.");
+      return(0);
     }
   }
 
@@ -116,6 +124,8 @@ require(rstatix)
     dat <- mSetObj$dataSet$norm
   }
   
+  require(rstatix);
+
   # now perform ANOVA depending on experimental design
   if(designType == "time0"){
 
