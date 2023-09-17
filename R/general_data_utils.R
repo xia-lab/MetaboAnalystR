@@ -1250,6 +1250,49 @@ FormatMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
   dt_meta <- read_excel(filenm, sheet = "Sample Meta Data")
   dt_table <- read_excel(filenm, sheet = "Peak Area Data")
   
+  if(metafactor == "all_mf"){
+    # format meta factor table
+    colNM_num <- apply(dt_meta, 2, FUN = function(x){
+      length(unique(x))
+    })
+    colNMs <- colnames(dt_meta)
+    metafactors <- colNMs[!((colNM_num == 1) | (colNM_num == nrow(dt_meta)))]
+    metafactors_levels <- colNM_num[!((colNM_num == 1) | (colNM_num == nrow(dt_meta)))]
+    dt_meta_done <- data.frame(Samples = dt_meta[,1], 
+                               dt_meta[,names(metafactors_levels)])
+    write.csv(dt_meta_done, file = "metaboanalyst_input_meta.csv", quote = F, row.names = F);
+    
+    # format data table
+    dt_tablex <- dt_table
+    
+    if(featureID == "NA"){
+      dt_done <- dt_tablex
+    } else {
+      idx_col <- which(!is.na(dt_ids[,featureID]))
+      dt_tablex2 <- dt_tablex[,idx_col+1]
+      IDvecs <-as.data.frame(dt_ids[,featureID])[,1][idx_col]
+      
+      if((featureID =="HMDB") | (featureID =="KEGG") | (featureID =="PUBCHEM")){
+        IDvecs <- vapply(IDvecs, function(x){
+          vc <- strsplit(x, ",")[[1]]
+          vc[length(vc)]
+        }, FUN.VALUE = character(1L))
+      }
+      
+      colnames(dt_tablex2) <- IDvecs
+      dt_done <- data.frame(Samples = dt_tablex[,1],
+                            dt_tablex2)
+      colnames(dt_done)[-c(1)] <- colnames(dt_tablex2)
+    }
+    
+    write.csv(dt_done, file = "metaboanalyst_input.csv", row.names = F)
+    if(.on.public.web){
+      return(1)
+    } else {
+      return(mSetObj)
+    }
+  }
+  
   if(!all(dt_table[,1] == dt_meta$PARENT_SAMPLE_NAME)){
     AddErrMsg("Sample names in 'Peak Area Data' are not matched with the ones in 'Sample Meta Data'!")
     if(.on.public.web){
