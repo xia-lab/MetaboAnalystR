@@ -431,7 +431,16 @@ MultiCovariateRegression <- function(fileName,
                                      internal=F){ # whether returns 0/1 or dataset object
 
   dataSet <- readDataset(fileName);
-  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, robustTrend, F)
+  if(!exists('adj.vec')){
+    adj.vec <- "";
+  }else{
+    if(length(adj.vec) > 0){
+
+    }else{
+      adj.vec <- ""
+    }
+  }
+  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, adj.vec, robustTrend, F)
   if(is.list(interim)){
     res <- 1;
   }else{
@@ -448,14 +457,14 @@ MultiCovariateRegression <- function(fileName,
                                      random.effects = NULL, # metadata variables to adjust for
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
-
+  print(random.effects);
   # load libraries
-  library(limma)
-  library(dplyr)
+  library(limma);
+  library(dplyr);
   
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet$rmidx <- NULL
+  dataSet$rmidx <- NULL;
 
   # for embedded inside tools (ExpressAnalyst etc)
   if(internal){
@@ -464,11 +473,11 @@ MultiCovariateRegression <- function(fileName,
   #feature_table <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
   feature_table <- inmex.meta$data[,colnames(inmex.meta$data) %in% colnames(dataSet$data.norm)];
   }else{
-  feature_table <- dataSet$data.norm 
+  feature_table <- dataSet$data.norm;
   }
-  covariates <- dataSet$meta.info
+  covariates <- dataSet$meta.info;
 
-  matched_indices <- match(colnames(feature_table), rownames(covariates))
+  matched_indices <- match(colnames(feature_table), rownames(covariates));
   covariates <- covariates[matched_indices, ,drop=F ];
   dataSet$meta.info <- covariates;
   #fixed.effects <- adj.vec
