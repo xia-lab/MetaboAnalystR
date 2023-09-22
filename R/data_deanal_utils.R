@@ -432,12 +432,12 @@ MultiCovariateRegression <- function(fileName,
 
   dataSet <- readDataset(fileName);
   if(!exists('adj.vec')){
-    adj.vec <- "";
+    adj.vec <- "NA";
   }else{
     if(length(adj.vec) > 0){
 
     }else{
-      adj.vec <- ""
+      adj.vec <- "NA"
     }
   }
   interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, adj.vec, robustTrend, F)
@@ -495,7 +495,6 @@ MultiCovariateRegression <- function(fileName,
   if(!is.null(random.effects) && !is.na(random.effects) && random.effects!="NA" && random.effects!="" ){
     all.vars = c(all.vars, random.effects);
   }
-  print(all.vars);
   
   covariates <- covariates[,all.vars,drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
