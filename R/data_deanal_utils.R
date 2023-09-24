@@ -425,13 +425,21 @@ MultiCovariateRegression <- function(fileName,
                                      analysis.var, # metadata variable name
                                      ref = NULL, # reference class from analysis.var metadata (only if categorical)
                                      contrast = "anova",  # comparison class from analysis.var (only if categorical)
-                                     # fixed.effects = NULL,  # metadata variables to adjust for
-                                     random.effects = NULL, # metadata variables to adjust for
+                                     blocking.factor = NULL, 
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object
 
   dataSet <- readDataset(fileName);
-  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, random.effects, robustTrend, F)
+  if(!exists('adj.vec')){ ## covariate to adjust for
+    adj.vec <- "NA";
+  }else{
+    if(length(adj.vec) > 0){
+
+    }else{
+      adj.vec <- "NA"
+    }
+  }
+  interim <- .multiCovariateRegression(dataSet, analysis.var, ref, contrast, blocking.factor, adj.vec, robustTrend, F)
   if(is.list(interim)){
     res <- 1;
   }else{
@@ -444,18 +452,18 @@ MultiCovariateRegression <- function(fileName,
                                      analysis.var, # metadata variable name
                                      ref = NULL, # reference class from analysis.var metadata (only if categorical)
                                      contrast = "anova",  # comparison class from analysis.var (only if categorical)
-                                     # fixed.effects = NULL,  # metadata variables to adjust for
-                                     random.effects = NULL, # metadata variables to adjust for
+                                     # fixed.effects = NULL,  
+                                     blocking.factor = NULL, 
+                                     adj.factors="NA",# metadata variables to adjust for
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
-
   # load libraries
-  library(limma)
-  library(dplyr)
+  library(limma);
+  library(dplyr);
   
   # need a line for read dataSet
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet$rmidx <- NULL
+  dataSet$rmidx <- NULL;
 
   # for embedded inside tools (ExpressAnalyst etc)
   if(internal){
@@ -464,11 +472,11 @@ MultiCovariateRegression <- function(fileName,
   #feature_table <- dataSet$data.norm[rownames(dataSet$data.norm) %in% rownames(inmex.meta$data), ];
   feature_table <- inmex.meta$data[,colnames(inmex.meta$data) %in% colnames(dataSet$data.norm)];
   }else{
-  feature_table <- dataSet$data.norm 
+  feature_table <- dataSet$data.norm;
   }
-  covariates <- dataSet$meta.info
+  covariates <- dataSet$meta.info;
 
-  matched_indices <- match(colnames(feature_table), rownames(covariates))
+  matched_indices <- match(colnames(feature_table), rownames(covariates));
   covariates <- covariates[matched_indices, ,drop=F ];
   dataSet$meta.info <- covariates;
   #fixed.effects <- adj.vec
@@ -479,16 +487,18 @@ MultiCovariateRegression <- function(fileName,
   # aggregate vars
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
-  #if(!is.null(fixed.effects)){
-  #  all.vars = c(all.vars, fixed.effects);
-  #  vars <- c(vars, fixed.effects);
-  #}
-  if(!is.null(random.effects) && !is.na(random.effects) && random.effects!="NA" && random.effects!="" ){
-    all.vars = c(all.vars, random.effects);
+
+  if(adj.factors!="NA"){
+    vars = c(vars, adj.factors);
   }
-  print(all.vars);
   
-  covariates <- covariates[,all.vars,drop=F];
+  if(!is.null(blocking.factor) && !is.na(blocking.factor) && blocking.factor!="NA" && blocking.factor!="" ){
+    all.vars = c(all.vars, blocking.factor);
+  }
+
+  all.vars<- unique(all.vars);
+    
+  covariates <- covariates[,unique(c(vars, all.vars)),drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
   
   if(length(rmidx)>0){
@@ -547,10 +557,10 @@ MultiCovariateRegression <- function(fileName,
     contrast.matrix <- do.call(makeContrasts, myargs);
     
     # handle blocking factor
-    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA" | random.effects == "") {
+    if (is.null(blocking.factor) | is.na(blocking.factor) | blocking.factor=="NA" | blocking.factor == "") {
       fit <- lmFit(feature_table, design);
     } else {
-      block.vec <- covariates[,random.effects];
+      block.vec <- covariates[,blocking.factor];
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
     }
@@ -596,10 +606,10 @@ MultiCovariateRegression <- function(fileName,
     }
     
     # handle blocking factor
-    if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+    if (is.null(blocking.factor) | is.na(blocking.factor) | blocking.factor=="NA") {
       fit <- lmFit(feature_table, design);
     } else {
-      block.vec <- covariates[, random.effects];
+      block.vec <- covariates[, blocking.factor];
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec);
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus);
     }
@@ -628,12 +638,12 @@ MultiCovariateRegression <- function(fileName,
   dataSet$pval <- 0.05;
   dataSet$fc.val <- 1;
   dataSet$analysis.var <- analysis.var;
-  dataSet$de.adj <- random.effects;
+  dataSet$de.adj <- adj.factors;
 
-  if (is.null(random.effects) | is.na(random.effects) | random.effects=="NA") {
+  if (is.null(adj.factors) | is.na(adj.factors) | adj.factors=="NA") {
     dataSet$de.adj <- "NA"
   }else{
-    dataSet$de.adj <- random.effects
+    dataSet$de.adj <- adj.factors;
   }
 
   RegisterData(dataSet);
