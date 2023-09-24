@@ -454,7 +454,7 @@ MultiCovariateRegression <- function(fileName,
                                      contrast = "anova",  # comparison class from analysis.var (only if categorical)
                                      # fixed.effects = NULL,  
                                      blocking.factor = NULL, 
-                                     adj.factors=NULL,# metadata variables to adjust for
+                                     adj.factors="NA",# metadata variables to adjust for
                                      robustTrend = F, 
                                      internal=F){ # whether returns 0/1 or dataset object, T for metaanal covariate
   # load libraries
@@ -488,11 +488,17 @@ MultiCovariateRegression <- function(fileName,
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
 
-  if(!is.null(adj.factors) && !is.na(adj.factors) && adj.factors!="NA" && adj.factors!="" ){
-    all.vars = c(all.vars, adj.factors);
+  if(adj.factors!="NA"){
+    vars = c(vars, adj.factors);
+  }
+  
+  if(!is.null(blocking.factor) && !is.na(blocking.factor) && blocking.factor!="NA" && blocking.factor!="" ){
+    all.vars = c(all.vars, blocking.factor);
   }
 
-  covariates <- covariates[,all.vars,drop=F];
+  all.vars<- unique(all.vars);
+    
+  covariates <- covariates[,unique(c(vars, all.vars)),drop=F];
   rmidx <-which(apply(covariates, 1, function(x) "NA" %in% x))
   
   if(length(rmidx)>0){
