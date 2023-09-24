@@ -68,10 +68,13 @@ MapListIds <- function(listNm, geneIDs, org, idType){
     dataSet$seeds.proteins <- seed.proteins;
     if(i == 1){
       all.prot.mat <- prot.mat;
-      totalseed.proteins <- seed.proteins;
+      totalseed.proteins = seed.proteins
+      list.num <- length(seed.proteins);
     }else{
-      totalseed.proteins <- c(totalseed.proteins, seed.proteins);
+      totalseed.proteins  = c(totalseed.proteins, seed.proteins);
       all.prot.mat <- rbind(all.prot.mat, prot.mat)
+      list.num <-  paste(list.num, length(seed.proteins), sep="; ");
+
     }
     inx <- inx + 1;
     RegisterData(dataSet); 
@@ -90,6 +93,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   saveSet(paramSet, "paramSet");
   paramSet$mdata.all <- mdata.all
   paramSet$anal.type <- "genelist";
+  paramSet$list.num <- list.num
 
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
@@ -142,9 +146,12 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     if(i == 1){
       all.prot.mat <- prot.mat;
       totalseed.proteins = seed.proteins
+      list.num <- length(seed.proteins);
     }else{
       totalseed.proteins  = c(totalseed.proteins, seed.proteins);
       all.prot.mat <- rbind(all.prot.mat, prot.mat)
+      list.num <-  paste(list.num, length(seed.proteins), sep="; ");
+
     }
     RegisterData(dataSet); 
   }
@@ -153,6 +160,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
   all.prot.mat <- data.frame(as.numeric(all.prot.mat[,1]), rownames(all.prot.mat));
   paramSet$all.prot.mat <- all.prot.mat
   paramSet$listNms <- listNms
+  paramSet$list.num <- list.num
   mdata.all <- list();
   for(i in 1:length(listNms)){
     mdata.all[i] <- 1;
