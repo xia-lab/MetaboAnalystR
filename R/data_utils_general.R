@@ -75,8 +75,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
 
   if(file.exists("/home/glassfish/sqlite/")){
     sqlite.path <- "/home/glassfish/sqlite/";  #public server
-  }else if(file.exists("/Users/jeffxia/Dropbox/sqlite/")){
-    sqlite.path <- "/Users/jeffxia/Dropbox/sqlite/"; #xia local
+  }else if(file.exists("/Users/xialab/Dropbox/sqlite/")){
+    sqlite.path <- "/Users/xialab/Dropbox/sqlite/"; #xia local
   }else if(file.exists("/Users/jeffxia/Dropbox/sqlite/")){
     sqlite.path <- "/Users/jeffxia/Dropbox/sqlite/"; #xia local2
   }else if(file.exists("/media/zzggyy/disk/sqlite/")){  
@@ -90,6 +90,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   }else if(file.exists("/Users/lzy/sqlite/")){ # luyao local
     sqlite.path <- "/Users/lzy/sqlite/";
   }else{
+    print("Could not find the path to SQLite database!");
     sqlite.path <- "";
   }
 
