@@ -116,14 +116,14 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
-                          scoreType = "pos",
+                          scoreType = "std",
                           nperm=10000)    
     }else{
       res <- fgsea::fgsea(pathways = current.geneset, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
-                          scoreType = "pos")   
+                          scoreType = "std")   
      
     }
   }
