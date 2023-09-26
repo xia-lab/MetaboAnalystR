@@ -63,14 +63,14 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
-                          scoreType = "pos",
+                          scoreType = "std",
                           nperm=10000)    
     }else{
       fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
-                          scoreType = "pos")   
+                          scoreType = "std")   
      
     }
   
@@ -134,6 +134,7 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
   }
   
   fgseaRes=fgseaRes[order(fgseaRes$pval),]
+
   if(nrow(fgseaRes[which(fgseaRes$pval < 0.05),])<20 ){
     if(nrow(fgseaRes)>20){
       fgseaRes <- fgseaRes[c(1:20),]
