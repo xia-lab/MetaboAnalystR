@@ -8,11 +8,11 @@
 
 PlotDataBox <- function(fileName, boxplotName, dpi, format){
   dataSet <- readDataset(fileName);
-  res <- qc.boxplot(as.matrix(dataSet$data.norm), boxplotName, dpi, format);
-  return(res);
+  qc.boxplot(as.matrix(dataSet$data.norm), boxplotName, dpi, format, F);
+  return("NA");
 }
 
-qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
+qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
   dpi <- as.numeric(dpi)
   require('ggplot2')
   require('lattice');
@@ -62,9 +62,7 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
     theme_bw()
   bp <- bp + coord_flip();
 
-    Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
-    print(bp);
-    dev.off();
+
     str <- "NA"
   
   imgSet <- readSet(imgSet, "imgSet");
@@ -74,8 +72,23 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png"){
     imgSet$qc_boxplot <- imgNm;
   }
   saveSet(imgSet);
-
-  return(str)
+  if(interactive){
+    library(plotly);
+        m <- list(
+                l = 50,
+                r = 50,
+                b = 20,
+                t = 20,
+                pad = 0.5
+            )
+    ggp_build <- layout(ggplotly(bp), autosize = FALSE, width = 700, height = 500, margin = m)
+    return(ggp_build);
+  }else{
+  Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
+  print(bp);
+  dev.off();
+  return("NA")
+  }
 }
 
 
@@ -324,11 +337,11 @@ rowV = function(x, mean, ...) {
 
 PlotDataPCA <- function(fileName, pcaName, dpi, format){
   dataSet <- readDataset(fileName);
-  res <- qc.pcaplot(dataSet, dataSet$data.norm, pcaName, dpi, format);
-  return(res);
+  qc.pcaplot(dataSet, dataSet$data.norm, pcaName, dpi, format, F);
+  return("NA");
 }
 
-qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
+qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
 
   dpi <- as.numeric(dpi);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
@@ -437,9 +450,6 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
     }
   }
 
-  Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
-  print(pcafig);
-  dev.off();
   str <- "NA"
   
   imgSet <- readSet(imgSet, "imgSet");
@@ -450,5 +460,21 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png"){
   }
   saveSet(imgSet);
 
-  return(str)
+  if(interactive){
+    library(plotly);
+        m <- list(
+                l = 50,
+                r = 50,
+                b = 20,
+                t = 20,
+                pad = 0.5
+            )
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m)
+    return(ggp_build);
+  }else{
+    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
+    print(pcafig);
+    dev.off();
+    return("NA");
+  }
 }
