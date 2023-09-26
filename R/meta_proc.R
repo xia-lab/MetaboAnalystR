@@ -880,7 +880,7 @@ CheckMetaIntegrity <- function(){
 #'@export
 #'
 
-PlotMetaPCA <- function(imgNm, dpi, format,factor){
+PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   inmex.meta <- qs::qread("inmex_meta.qs");
   x <- inmex.meta[["data"]];
   dpi <- as.numeric(dpi);
@@ -917,10 +917,25 @@ PlotMetaPCA <- function(imgNm, dpi, format,factor){
   #  imgSet$qc_meta_pca_batch <- imgNm;
   #}
   saveSet(imgSet);
+
+  if(interactive){
+    library(plotly);
+        m <- list(
+                l = 50,
+                r = 50,
+                b = 20,
+                t = 20,
+                pad = 0.5
+            )
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m)
+    return(ggp_build);
+  }else{
+    return(1)
+  }
 }
 
 
-PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
+PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   require("ggplot2")
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat <- inmex.meta$data;
@@ -935,11 +950,11 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
   conv <- data.frame(ind=colnames(inmex.meta$data), class=Factor);
   conv$ind <- gsub("-", ".", conv$ind);
   df1 <- merge(df, conv, by="ind");
-  Cairo(file=imgNm, width=10, height=6, type=format, bg="white", dpi=dpi, unit="in");
   g =ggplot(df1, aes(x=values)) + 
         geom_line(aes(color=class, group=ind), stat="density", alpha=0.3) + 
         geom_line(aes(color=class), stat="density", alpha=0.6, size=1.5) +
         theme_bw()
+  Cairo(file=imgNm, width=10, height=6, type=format, bg="white", dpi=dpi, unit="in");
   print(g);
   dev.off();
 
@@ -951,5 +966,18 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, factor){
   #}
   saveSet(imgSet);
 
-
+  if(interactive){
+    library(plotly);
+        m <- list(
+                l = 50,
+                r = 50,
+                b = 20,
+                t = 20,
+                pad = 0.5
+            )
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 700, height = 500, margin = m)
+    return(ggp_build);
+  }else{
+    return(1)
+  }
 }
