@@ -1133,11 +1133,11 @@ GetFitResultMatrix <- function(){
   res <- dataSet$html.resTable;
   res <- res[,-c(1,2)];
   res <- as.matrix(res);
+  res <- signif(res, 5)
   res[is.nan(res)] <- 0;
   res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
   res <- apply(res, 2, function(x) as.numeric(as.character(x)));
-  dataSet$curvefit.resTable <- res;
   RegisterData(dataSet);
   return(res);
 }
