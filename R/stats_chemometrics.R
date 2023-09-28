@@ -931,7 +931,9 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   pls3d$cls = cls;
   # see if there is secondary
   
-  imgName = paste(imgName, ".", format, sep="");
+  imgName <- paste(imgName, ".", format, sep="");
+  mSetObj$imgSet$pls.score3d <- imgName;
+
   json.mat <- rjson::toJSON(pls3d);
   sink(imgName);
   cat(json.mat);
@@ -948,6 +950,7 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   my.json.scatter(imgName, T);
 
   if(.on.public.web){
+    mSet <<- mSetObj;
     return(1);
   }else{
     return(.set.mSet(mSetObj));
