@@ -147,7 +147,11 @@
 
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
-  imgSet$enrTables[[vis.type]] <- resTable;
+  imgSet$enrTables[[vis.type]] <- list()
+  imgSet$enrTables[[vis.type]]$table <- resTable;
+  imgSet$enrTables[[vis.type]]$library <- fun.type
+  imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis"
+
   saveSet(imgSet);
   saveSet(paramSet, "paramSet");
   

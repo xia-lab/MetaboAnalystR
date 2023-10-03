@@ -1148,8 +1148,14 @@ makeReadable <- function(str){
                    "mgu4120a" = "Agilent Mouse Array (chip mgug4120a)",
                    "mgu4121a" = "Agilent Mouse Array (chip mgug4121a)",
                    "mgu4122a" = "Agilent Mouse Array (chip mgug4122a)",
+                   "kegg" = "KEGG",
+                    "reactome" = "Reactome",
+                    "go_bp" = "GO:BP",
+                    "go_mf" = "GO:MF",
+                    "go_cc" = "GO:CC",
+                    "panth" = "PANTHER Slim",
+                    "motif_set" = "Motif",
                  str)
-
 }
 
 AddFeatureToReport <- function(imgName){

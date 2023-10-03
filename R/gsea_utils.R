@@ -192,13 +192,19 @@ PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactor
     analSet <- .prepareEnrichNet(dataSet, netNm, "meta", "mixed", analSet);
     file.nm <- gsub("gsea", "enrichment", file.nm);
     json.res$naviString <- "Enrichment Network";
-    imgSet$enrTables[["network"]] <- res.mat;
+    imgSet$enrTables[["network"]]$table <- res.mat;
+    imgSet$enrTables[["network"]]$library <- fun.type;
+    imgSet$enrTables[["network"]]$algo <- "GSEA"
+
     saveSet(imgSet, "imgSet");
   }else{
     json.res$org <- paramSet$data.org
     json.res$analType <- anal.type
     json.res$naviString <- "GSEA";
-    imgSet$enrTables[["gsea"]] <- res.mat;
+    imgSet$enrTables[["gsea"]]$table <- res.mat;
+    imgSet$enrTables[["gsea"]]$library <- fun.type;
+    imgSet$enrTables[["gsea"]]$algo <- "GSEA";
+
     saveSet(imgSet, "imgSet");
 
   }
