@@ -419,5 +419,10 @@ GetMetaMethodPVal <-function(){
 SetUniverseOpt <- function(universe.opt){
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$universe.opt <- universe.opt;
+  if(paramSet$universe.opt == "uploaded"){
+    paramSet$universe.opt.readable <- "Uploaded Data";
+  }else{
+    paramSet$universe.opt.readable <- "Gene Set Library";
+  }
   saveSet(paramSet);
 }

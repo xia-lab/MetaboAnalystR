@@ -81,7 +81,12 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(bp), autosize = FALSE, width = 700, height = 500, margin = m)
+    if(length(dataSet$meta.info) == 2){
+    w=1000;
+    }else{
+    w=800;
+    }
+    ggp_build <- layout(ggplotly(bp), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build);
   }else{
   Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
@@ -94,11 +99,11 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
 
 PlotDataDensity <- function(fileName, imgNm, dpi,format){
   dataSet <- readDataset(fileName);
-  res <- qc.density(dataSet, imgNm, dpi, format);
+  res <- qc.density(dataSet, imgNm, dpi, format, FALSE);
   return(res);
 }
 
-qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
+qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
   require("ggplot2")
   dat <- dataSet$data.norm
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
@@ -143,17 +148,32 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format){
     height <- 6
   }
   
-
-    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
-    print(g)
-    dev.off();
-    str <- "NA"
-
   imgSet <- readSet(imgSet, "imgSet");
   imgSet$qc.density_norm <- imgNm;
   saveSet(imgSet);
 
-  return(str);
+  if(interactive){
+    library(plotly);
+        m <- list(
+                l = 50,
+                r = 50,
+                b = 20,
+                t = 20,
+                pad = 0.5
+            )
+    if(length(dataSet$meta.info) == 2){
+    w=1000;
+    }else{
+    w=800;
+    }
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build);
+  }else{
+    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
+    print(g)
+    dev.off();
+    return("NA")
+  }
 }
 
 
@@ -460,6 +480,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
   }
   saveSet(imgSet);
 
+
   if(interactive){
     library(plotly);
         m <- list(
@@ -469,7 +490,12 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m)
+    if(length(dataSet$meta.info) == 2){
+    w=1000;
+    }else{
+    w=800;
+    }
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m)
     return(ggp_build);
   }else{
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
