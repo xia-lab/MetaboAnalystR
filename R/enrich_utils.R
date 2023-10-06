@@ -31,8 +31,10 @@
   if(paramSet$anal.type == "onedata"){
     current.universe <- rownames(dataSet$data.anot); 
   }else if(paramSet$anal.type == "metadata"){
-    analSet <- readSet(analSet, "analSet")
-    current.universe <- rownames(analSet$meta.mat.all); 
+    #analSet <- readSet(analSet, "analSet")
+    #current.universe <- rownames(analSet$meta.mat.all); 
+    #Meta-analysis, if uploaded datasets are only with shared genes, the universe will result in wrong results
+    current.universe <- unique(unlist(current.geneset)); 
   }else{
     current.universe <- unique(unlist(current.geneset)); 
   }
