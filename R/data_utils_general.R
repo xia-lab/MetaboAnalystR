@@ -67,7 +67,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$anal.type <- "onedata";
   paramSet$api.bool <- F;
   paramSet$api.base <<- "http://api.xialab.ca" #dose response
-
+  paramSet$universe.opt <- "uploaded";
   dataSets <<- list();
   
 

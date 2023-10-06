@@ -26,17 +26,19 @@
     ora.nms <- ora.vec;
     names(ora.vec) <- ora.vec;
   }
-  
-  # cut to the universe to uploaded genes
-  if(paramSet$anal.type == "onedata"){
-    current.universe <- rownames(dataSet$data.anot); 
-  }else if(paramSet$anal.type == "metadata"){
-    #analSet <- readSet(analSet, "analSet")
-    #current.universe <- rownames(analSet$meta.mat.all); 
-    #Meta-analysis, if uploaded datasets are only with shared genes, the universe will result in wrong results
-    current.universe <- unique(unlist(current.geneset)); 
+
+  if(paramSet$universe.opt == "library"){
+    current.universe <- unique(unlist(current.geneset));     
   }else{
-    current.universe <- unique(unlist(current.geneset)); 
+    # cut to the universe to uploaded genes
+    if(paramSet$anal.type == "onedata"){
+      current.universe <- rownames(dataSet$data.anot); 
+    }else if(paramSet$anal.type == "metadata"){
+      analSet <- readSet(analSet, "analSet")
+      current.universe <- rownames(analSet$meta.mat.all); 
+    }else{
+      current.universe <- unique(unlist(current.geneset)); 
+    }
   }
 
   # also make sure pathways only contain genes measured in experiment

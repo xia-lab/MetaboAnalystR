@@ -414,3 +414,10 @@ GetMetaMethodPVal <-function(){
   paramSet <- readSet(paramSet, "paramSet");
   return(paramSet$BHth);
 }
+
+#for enrichment analysis
+SetUniverseOpt <- function(universe.opt){
+  paramSet <- readSet(paramSet, "paramSet");
+  paramSet$universe.opt <- universe.opt;
+  saveSet(paramSet);
+}
