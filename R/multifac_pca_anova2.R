@@ -365,7 +365,6 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@importFrom plotly plot_ly add_markers layout
 #'
 iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
-  save.image("ipca.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   metadata <- mSetObj$dataSet$meta.info
@@ -419,10 +418,7 @@ iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   
   
   # now set color for each group
-  if(is.null(mSetObj$dataSet$facA)){
-    mSetObj$dataSet$facA <- mSetObj$dataSet$meta.info[,1];
-  }
-  cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
+  cols <- unique(GetColorSchema(pca3d$score$facA)); 
   pca3d$score$colors <- my.col2rgb(cols);
   
   json.obj <- rjson::toJSON(pca3d);
