@@ -66,12 +66,11 @@ SanityCheckData <- function(mSetObj=NA){
           return(0);
         }else{
           pairs <- as.numeric(pairs);
-        }
-        
+        }  
+  
         label <- as.numeric(pairs);
         cls <- as.factor(ifelse(label>0,1,0));
-        mSetObj$dataSet$pairs <- label;
-        
+        mSetObj$dataSet$pairs <- label;       
         lev <- unique(pairs);
         uni.cl <- length(lev);
         uni.cl.abs <- uni.cl/2;             
@@ -99,10 +98,15 @@ SanityCheckData <- function(mSetObj=NA){
           index<-as.vector(cbind(x,y));
           cls<-cls[index];
           pairs <- pairs[index];
+          orig.data<- orig.data[index,];
+
           mSetObj$dataSet$pairs <- pairs;
           mSetObj$dataSet$orig.cls <- cls;
+
+          #add sync for paired names
+          mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
+
           mSetObj$dataSet$pair.checked <- TRUE;
-          orig.data<- orig.data[index,];
           #qs::qsave(orig.data, file="data_orig.qs");
         
       } else {
@@ -246,6 +250,7 @@ SanityCheckData <- function(mSetObj=NA){
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
   
+  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
 
   if(is.null(mSetObj$dataSet$meta.info)){
     mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
@@ -260,7 +265,7 @@ SanityCheckData <- function(mSetObj=NA){
   }
 
   qs::qsave(as.data.frame(int.mat), "preproc.qs");
-  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+  
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
 
   if(!.on.public.web){
