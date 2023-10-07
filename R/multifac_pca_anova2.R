@@ -355,15 +355,15 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@importFrom plotly plot_ly add_markers layout
 #'
 iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
-  
+  save.image("ipca.RData");
   mSetObj <- .get.mSet(mSetObj);
-
+  
   metadata <- mSetObj$dataSet$meta.info
   data.types <- mSetObj$dataSet$meta.types
-
+  
   # RhpcBLASctl::blas_set_num_threads(1);
   # RhpcBLASctl::omp_set_num_threads(1);
-
+  
   pca <- prcomp(mSetObj$dataSet$norm, center=T, scale=F);
   imp.pca <- summary(pca)$importance;
   
@@ -375,26 +375,26 @@ iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   pca3d$score$name <- rownames(mSetObj$dataSet$norm);
   facA <- mSetObj$dataSet$facA;
   facA <- as.character(facA);
-
+  
   pca3d$score$facA <- metadata[, metaCol];
   metadata.list <- list();
-
+  
   for(i in 1:ncol(metadata)){
     if(data.types[colnames(metadata)[i]] == "disc"){
-    metadata.list[[ colnames(metadata)[i] ]] <- levels(metadata[, i])
+      metadata.list[[ colnames(metadata)[i] ]] <- levels(metadata[, i])
     }else{
-    metadata.list[[ colnames(metadata)[i] ]] <- unique(metadata[, i])
+      metadata.list[[ colnames(metadata)[i] ]] <- unique(metadata[, i])
     }
   }
-
+  
   facB <- metadata[, metaShape];
   facB <- as.character(facB);
-
+  
   pca3d$score$metadata_list <- metadata.list
   pca3d$score$metadata <- metadata
   pca3d$score$metadata_type <- mSetObj$dataSet$meta.types
-
-
+  
+  
   pca3d$score$facB <- facB;
   
   pca3d$loadings$axis <- paste("Loadings", 1:3);
@@ -402,13 +402,16 @@ iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   colnames(coords) <- NULL; 
   pca3d$loadings$xyz <- coords;
   pca3d$loadings$name <- colnames(mSetObj$dataSet$norm);
-
+  
   dists <- GetDist3D(coords0);
   colset <- GetRGBColorGradient(dists);
   pca3d$loadings$cols <- colset;
-    
-
+  
+  
   # now set color for each group
+  if(is.null(mSetObj$dataSet$facA)){
+    mSetObj$dataSet$facA <- mSetObj$dataSet$meta.info[,1];
+  }
   cols <- unique(GetColorSchema(mSetObj$dataSet$facA)); # this does not matter
   pca3d$score$colors <- my.col2rgb(cols);
   
@@ -416,18 +419,18 @@ iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   sink(fileNm);
   cat(json.obj);
   sink();
-
+  
   qs::qsave(pca3d$score, "score3d.qs");
   qs::qsave(pca3d$loading, "loading3d.qs");
-
+  
   #mbSetObj$pca3d
-
+  
   if(!exists("my.json.scatter")){
     .load.scripts.on.demand("util_scatter3d.Rc");    
   }
-
+  
   my.json.scatter(fileNm, T);
-
+  
   return(.set.mSet(mSetObj));
 }
 
