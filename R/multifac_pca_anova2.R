@@ -70,7 +70,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 
   }else{
 
-   if(designType %in% c("time0", "time")){
+   if(designType %in% c("time")){
      # make sure subject is not in the metadata of interest
       if("subject" %in% tolower((meta.vec.aov))){
         AddErrMsg("Subject is already accounted for in the analysis.");
@@ -160,6 +160,8 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     
     fileName <- "oneway_anova_repeated.csv";
     rownames(aov.mat)<-colnames(dat);
+
+
     aov.mat <- cbind(aov.mat, p.adjust(aov.mat[,2], p.cor));
     colnames(aov.mat) <- c("F-value", "Raw P-val", "Adjusted P-val");
     p.value <- aov.mat[,3];
@@ -216,26 +218,28 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       rm(time.fac, exp.fac, aov.sbj, pos=".GlobalEnv");
       fileName <- "anova_within_sbj.csv";
       
-    } else { # g2 (two-factor analysis)
-      aov.facA <<- mSetObj$dataSet$facA;
-      aov.facB <<- mSetObj$dataSet$facB;
-      
-    tryCatch(
-      {
-        aov.mat <- t(apply(as.matrix(dat), 2, aov.2way));
-      }, warning = function(w){ print('warning in aov.2way') },
-      error = function(e) {
-        if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
-          AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
-          return(0);
-        }
-        print(e$message)
-      }
-    )
+    } else { 
 
-      rm(aov.facA, aov.facB, pos=".GlobalEnv");
+        # g2 (two-factor analysis)
+        aov.facA <<- mSetObj$dataSet$facA;
+        aov.facB <<- mSetObj$dataSet$facB;
       
-      fileName <- "anova_between_sbj.csv";
+        tryCatch(
+            {
+                aov.mat <- t(apply(as.matrix(dat), 2, aov.2way));
+        }, warning = function(w){ print('warning in aov.2way') },
+            error = function(e) {
+            if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
+                AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+                return(0);
+            }
+            print(e$message)
+        }
+        )
+
+        rm(aov.facA, aov.facB, pos=".GlobalEnv");
+      
+        fileName <- "anova_between_sbj.csv";
     }
     
     # make table for display/download  
@@ -268,7 +272,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     aov.mat <- aov.mat2[inx.imp, ,drop=F];
     ord.inx <- order(aov.mat[,2], aov.mat[,3], decreasing = FALSE);
   }
-  
+
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
   
   if(dim(aov.mat)[1] != 0){
@@ -277,7 +281,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       return(0)
     }
   }
-  
+
   fast.write.csv(aov.mat, file=fileName);
   names(p.value) <- colnames(dat);
   aov2<-list (
@@ -285,7 +289,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     sig.nm = fileName,
     thresh = -log10(thresh),
     multi.c = p.cor,
-    sig.mat = aov.mat,
+    sig.mat = na.omit(aov.mat),
     p.log = -log10(p.value),
     inx.imp = inx.imp,
     vennC = vennC
