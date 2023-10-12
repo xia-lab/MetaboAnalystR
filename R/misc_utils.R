@@ -185,11 +185,7 @@ PerformHeatmapEnrichment <- function(dataName="", file.nm, fun.type, IDs){
   sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
   names(gene.vec) <- sym.vec;
   res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "heatmap");
-  if(res == 0){
-    return(0);
-  }else{
-    return(1);
-  }
+  return(1);
 }
 
 .prepareEnrichNet<-function(dataSet, netNm, type, overlapType, analSet){
@@ -599,16 +595,6 @@ if(grp.num <= 18){ # update color and respect default
     sink();
     return(filenm);
   }
-}
-
-PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(dataName);
-  gene.vec <- unlist(strsplit(IDs, "; "));
-  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
-  names(gene.vec) <- sym.vec;
-  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "upset");
-  return(res);
 }
 
   GetGeneList <- function(dataSetObj=NA,fileNm, type){

@@ -94,7 +94,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     #                   minSize = 10,
     #                   maxSize = 500);
 
-    res <- .performEnrichAnalysis(dataSet, imgNm, fun.type, rownames(sigmat), "ridgeline")
+    .performEnrichAnalysis(dataSet, imgNm, fun.type, rownames(sigmat), "ridgeline")
     res <- qs::qread("enr.mat.qs");
     colnames(res) <- c("size", "expected", "overlap", "pval", "padj");
     

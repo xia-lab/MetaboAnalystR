@@ -10,7 +10,6 @@
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
-
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
 
@@ -94,6 +93,7 @@
     hits.query <- hits.query[ord.inx];
     
     imp.inx <- res.mat[,4] <= 0.05;
+    imp.inx[is.na(imp.inx)] <- F
     if(sum(imp.inx) < 10){ # too little left, give the top ones
       topn <- ifelse(nrow(res.mat) > 10, 10, nrow(res.mat));
       res.mat <- res.mat[1:topn,];
@@ -160,7 +160,7 @@
   saveSet(paramSet, "paramSet");
   
   saveSet(msgSet, "msgSet");
-  return(1);
+  return(resTable);
 }
 
 
