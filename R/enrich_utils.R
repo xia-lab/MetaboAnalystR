@@ -160,7 +160,7 @@
   saveSet(paramSet, "paramSet");
   
   saveSet(msgSet, "msgSet");
-  return(resTable);
+  return(1);
 }
 
 
