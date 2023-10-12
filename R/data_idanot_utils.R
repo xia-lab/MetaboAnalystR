@@ -132,6 +132,9 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   }else{
     qs::qsave(dataSet$data.anot, file="data.missed.qs");
   }
+
+  fast.write(dataSet$data.anot, file="data_annotated.csv");
+
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   return(RegisterData(dataSet, matched.len));   

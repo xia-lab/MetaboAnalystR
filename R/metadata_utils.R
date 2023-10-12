@@ -405,8 +405,11 @@ GetMetaSummary <- function(dataName=""){
   disc.vec <- paste(names(dataSet$disc.inx)[which(dataSet$disc.inx)],collapse=", ")  
   cont.vec <- paste(names(dataSet$cont.inx)[which(dataSet$cont.inx)],collapse=", ")  
   na.vec <- na.check(meta)
-  return(c(ncol(meta),length(which(dataSet$disc.inx)),disc.vec,
-           length(which(dataSet$cont.inx)),cont.vec,names(meta)[1],length(unique(meta[,1])),paste(unique(meta[,1]),collapse=", "),na.vec ));
+  res <- c(ncol(meta),length(which(dataSet$disc.inx)),disc.vec,
+           length(which(dataSet$cont.inx)),cont.vec,names(meta)[1],length(unique(meta[,1])),paste(unique(meta[,1]),collapse=", "),na.vec )
+  paramSet$metadata.summary <- res;
+  saveSet(paramSet);
+  return(res);
 }
 
 na.check <- function(mydata){

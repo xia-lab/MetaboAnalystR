@@ -101,7 +101,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   }
   
   # save processed data for download user option
-  fast.write(data.proc, file="data_processed.csv");
+  fast.write(data.proc, file="data_original.csv");
   qs::qsave(data.proc, "data.raw.qs");
   dataSet$data.norm  <- data.proc;
   metaInx = which(rownames(dataSet$meta.info) %in% colnames(data.proc))

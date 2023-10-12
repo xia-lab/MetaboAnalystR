@@ -21,6 +21,7 @@
 #'@export
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
+  print("maplistids");
   #geneIDs is text one string, need to make to vector
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -76,7 +77,10 @@ MapListIds <- function(listNm, geneIDs, org, idType){
       list.num <-  paste(list.num, length(seed.proteins), sep="; ");
 
     }
+    dataSet$listNum <- length(dataSet$seeds.proteins);
+    print(dataSet$listNum);
     inx <- inx + 1;
+    fast.write.csv(dataSet$prot.mat, paste0(dataSet$name, ".csv"));
     RegisterData(dataSet); 
   }
   paramSet$all.ent.mat <- all.prot.mat;
@@ -98,7 +102,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   #RegisterData(dataSet);
-  return(RegisterData(dataSet));
+  return(1);
 }
 
 
