@@ -6,7 +6,7 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 # given a gene id, plot its expression profile as violin plot
-PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano", format="png", dpi=dpi, singleCol = F){
+PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolcano", format="png", dpi=72){
   
   require(see)
   require(ggplot2)
@@ -132,7 +132,7 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
     }else{
       cmpdNm <- gene.id;
     }
-    num <- sum(mdata.all == 1);
+    num <- length(mdata.all);
     # calculate width based on the dateset number
     if(num == 1){
       Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi);
@@ -151,23 +151,13 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id, type="notvolcano"
       myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
     }else{
       # calculate layout
-      if(singleCol){
-        layout <- c(1, num);
-        h <- 200*num;
-        w <- 280;
-        row.num <- num;
-      }else{
-
           h=500;
-          if(num>5){
-            w=100*num;
-          }else{
-            w=140*num;
-          }
-      } 
+          w=600;
+      
       width = w*dpi/72
       height = h*dpi/72
-      
+      print(w)
+      print(h)
       Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi=dpi);
       data.lbl <- as.character(inmex.meta$data.lbl);
       data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
