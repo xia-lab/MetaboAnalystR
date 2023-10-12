@@ -39,7 +39,7 @@ PrepareUpsetData <- function(fileNm){
   for(nm in sel.nms){
     if(anal.type == "metadata"){
       dataSet <- readDataset(nm);
-      sel.dats[[nm]] <- rownames(dataSet$sig.mat);
+      sel.dats[[nm]] <- dataSet$sig.mat$ids;
     }else if(anal.type == "onedata"){
 
     }else{

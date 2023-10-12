@@ -222,3 +222,13 @@ GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type
     }
     return(compute.ridgeline(dataSet, imgNm, dpi, format, fun.type, ridgeType, ridgeColor, sigLevel, pwNum, inx));
 }
+
+PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){
+  paramSet <- readSet(paramSet, "paramSet");
+  dataSet <- readDataset(dataName);
+  gene.vec <- unlist(strsplit(IDs, "; "));
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  names(gene.vec) <- sym.vec;
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "upset");
+  return(res);
+}
