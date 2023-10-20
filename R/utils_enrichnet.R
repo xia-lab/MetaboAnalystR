@@ -208,6 +208,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
                   genelist=initsbls, 
                   analType=anal.type, 
                   org=paramSet$data.org, 
+                  backgroundColor=list("#514F6A", "#222222"),
                   naviString = "Enrichment Network");
   netName <- paste0(netNm, ".json");
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(netName));
