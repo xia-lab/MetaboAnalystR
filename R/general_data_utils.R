@@ -1225,6 +1225,7 @@ getMetabolonMetaFactor <- function(mSetObj = NA){
 getMetabolonCMPDIDs <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cmpdIDs -> cmpdIDs;
+  if(is.null(cmpdIDs)){cmpdIDs <- "NULL"}
   if(.on.public.web){
     return(cmpdIDs)
   } else {
