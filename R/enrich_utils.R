@@ -10,6 +10,7 @@
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
+save.image("enr.RData");
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
 
@@ -33,8 +34,8 @@
     if(paramSet$anal.type == "onedata"){
       current.universe <- rownames(dataSet$data.anot); 
     }else if(paramSet$anal.type == "metadata"){
-      analSet <- readSet(analSet, "analSet")
-      current.universe <- rownames(analSet$meta.mat.all); 
+      inmex <- qs::qread("inmex_meta.qs");
+      current.universe <- rownames(inmex$data); 
     }else{
       current.universe <- unique(unlist(current.geneset)); 
     }
@@ -187,7 +188,7 @@
   
   my.lib <- readRDS(my.path);
   
-  if(substr(fun.type, 0, 2)=="go"){
+  if(substr(fun.type, 0, 2)=="go"){  
     if(is.null(names(my.lib))){ # some go lib does not give names
       names(my.lib) <- c("link", "term", "sets");
     }
