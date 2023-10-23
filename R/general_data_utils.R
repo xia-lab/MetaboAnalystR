@@ -706,7 +706,9 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png"
   }else{
     w <- width;
   }
-  
+
+  mSetObj$imgSet$cmpdSum <- imgName;
+
   if(!mSetObj$dataSet$design.type %in% c("time", "time0", "multi")){
 
     proc.data <- qs::qread("data_proc.qs");
@@ -840,6 +842,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png"
   }
   
   if(.on.public.web){
+    .set.mSet(mSetObj);
     return(imgName);
   }else{
     return(.set.mSet(mSetObj));
