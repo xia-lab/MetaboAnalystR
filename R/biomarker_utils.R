@@ -978,7 +978,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
   mSetObj <- .get.mSet(mSetObj);
   
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
-  imgName = paste(imgName, "_", version, "dpi", dpi, ".", format, sep="");
+  imgName = paste("roc_univ_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
   
   x <- mSetObj$dataSet$norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
@@ -996,8 +996,21 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
   
   w <- h <- 6; 
   
-  mSetObj$imgSet$roc.univ.plot <- imgName;
-  mSetObj$imgSet$roc.univ.name <- feat.nm;
+  if(length(mSetObj$imgSet$roc.univ.name)==0){
+    mSetObj$imgSet$roc.univ.name <- feat.nm;
+    mSetObj$imgSet$roc.univ.plot <- imgName;
+  } else {
+    if(feat.nm %in% mSetObj$imgSet$roc.univ.name){
+        idx <- which(feat.nm %in% mSetObj$imgSet$roc.univ.name);
+        mSetObj$imgSet$roc.univ.name[idx] <- feat.nm;
+        mSetObj$imgSet$roc.univ.plot[idx] <- imgName;
+    } else {
+        mSetObj$imgSet$roc.univ.name <- c(mSetObj$imgSet$roc.univ.name, feat.nm);
+        mSetObj$imgSet$roc.univ.plot <- c(mSetObj$imgSet$roc.univ.plot, imgName);
+    }   
+  }
+  #mSetObj$imgSet$roc.univ.plot <- imgName;
+  #mSetObj$imgSet$roc.univ.name <- feat.nm;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(oma=c(0,0,1,0));
@@ -1068,7 +1081,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   }
 
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
-  imgName = paste(imgName, "_box_", version, "dpi", dpi, ".", format, sep="");
+  imgName = paste("roc_boxplot_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
   
   x <- mSetObj$dataSet$norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
@@ -1076,8 +1089,21 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   w <- 200*scale;
   h <- 400*scale; 
   col <- unique(GetColorSchema(y));
-
-  mSetObj$imgSet$roc.univ.boxplot <- imgName;
+  
+  if(length(mSetObj$imgSet$roc.univ.boxplot)==0){
+    mSetObj$imgSet$roc.univ.boxplot <- imgName;
+    mSetObj$imgSet$roc.univ.name2 <- feat.nm;
+  } else {
+    if(feat.nm %in% mSetObj$imgSet$roc.univ.name2){
+        idx <- which(feat.nm %in% mSetObj$imgSet$roc.univ.name);
+        mSetObj$imgSet$roc.univ.boxplot[idx] <- imgName;
+    } else {
+        mSetObj$imgSet$roc.univ.name2 <- c(mSetObj$imgSet$roc.univ.name2, feat.nm);
+        mSetObj$imgSet$roc.univ.boxplot <- c(mSetObj$imgSet$roc.univ.boxplot, imgName);
+    }   
+  }
+    
+  #mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
   Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
   
@@ -2136,7 +2162,7 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   w <- 8; h <- 8;
   mSetObj$imgSet$roc.perm.plot <- imgName;
-  save(mSetObj, file = "mSetObj_____2119.rda")
+  
   if(mSetObj$analSet$ROCtest$perm.res$perf.measure == "auroc"){
     mSetObj$imgSet$roc.perm.method <- "auroc"
   }else{
