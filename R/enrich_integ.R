@@ -938,7 +938,11 @@ PlotInmexGraph <- function(mSetObj, pathName,
   }
 
   if(is.null(dpi) & format == "pdf"){
-    dpi <- 96;
+    dpi <- 72;
+  }
+
+  if(is.null(dpi) & format == "svg"){
+    dpi <- 72;
   }
 
   if(!is.null(dpi)){
