@@ -979,8 +979,13 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
   
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
   imgName = paste("roc_univ_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
+
+  data_ori_norm <- mSetObj$dataSet$norm
+  if(!is.null(mSetObj$dataSet$norm.orig)){
+    data_ori_norm <- mSetObj$dataSet$norm.orig
+  }
   
-  x <- mSetObj$dataSet$norm[, feat.nm];
+  x <- data_ori_norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
   
   if(isPartial){
@@ -1080,10 +1085,15 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
     load_ggplot()
   }
 
+  data_ori_norm <- mSetObj$dataSet$norm
+  if(!is.null(mSetObj$dataSet$norm.orig)){
+    data_ori_norm <- mSetObj$dataSet$norm.orig
+  }
+
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
   imgName = paste("roc_boxplot_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
   
-  x <- mSetObj$dataSet$norm[, feat.nm];
+  x <- data_ori_norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
   scale <- dpi/72;
   w <- 200*scale;
@@ -1102,7 +1112,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
         mSetObj$imgSet$roc.univ.boxplot <- c(mSetObj$imgSet$roc.univ.boxplot, imgName);
     }   
   }
-    
+  
   #mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
   Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
