@@ -518,8 +518,21 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
-  imgName <- paste(gene.id, ".", format, sep="");
-  mSetObj$imgSet$meta.anal$plot <- imgName
+  imgName <- paste("meta_ft_", gene.id, ".", format, sep="");
+
+  if(is.null(mSetObj$imgSet$meta.anal$plot)){
+        mSetObj$imgSet$meta.anal$ids <- gene.id;
+        mSetObj$imgSet$meta.anal$plot <- imgName;
+  } else {
+        idx <- which(gene.id %in% mSetObj$imgSet$meta.anal$ids)
+        if(length(idx) == 0){
+            mSetObj$imgSet$meta.anal$plot <- c(mSetObj$imgSet$meta.anal$plot, imgName);
+            mSetObj$imgSet$meta.anal$ids <- c(mSetObj$imgSet$meta.anal$ids, gene.id);        
+        } else {
+            mSetObj$imgSet$meta.anal$plot[idx] <- imgName;
+            mSetObj$imgSet$meta.anal$ids[idx] <- gene.id;
+        }
+  }
 
   if(.on.public.web){
     load_lattice()
