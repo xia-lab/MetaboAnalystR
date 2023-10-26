@@ -825,7 +825,8 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     }
 
     # filename <- paste0(imgName, ".png")
-    filename <- paste0(imgName, width,"_", dpi,".", format)
+    # filename <- paste0(imgName, width,"_", dpi,".", format)
+    filename <- paste0(imgName, "dpi", dpi,".", format)
 
     ggsave(p, 
            filename=filename,
