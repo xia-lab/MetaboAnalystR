@@ -390,7 +390,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'License: GNU GPL (>= 2)
 #'@export
 
-FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, privileged=F){
+FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0){
 
   mSetObj <- .get.mSet(mSetObj);
   
