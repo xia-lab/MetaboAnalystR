@@ -1843,7 +1843,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
 
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- ReplaceMin(mSetObj);
-    mSetObj <- FilterVariable(mSetObj, "iqr", NULL, "F", 25);
+    mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
     mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
@@ -1867,7 +1867,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
 
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- ReplaceMin(mSetObj);
-    mSetObj <- FilterVariable(mSetObj, "iqr", NULL, "F", 25);
+    mSetObj <- FilterVariable(mSetObj,"F", 25, "iqr", NULL);
     mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
@@ -1883,7 +1883,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
  
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- ReplaceMin(mSetObj);
-    mSetObj <- FilterVariable(mSetObj, "iqr", NULL, "F", 25);
+    mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
     mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
@@ -1896,7 +1896,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     # file.copy(from = paste0(fileTitle, "_orig.qs"), to = "data_orig.qs", overwrite = TRUE)
     # mSetObj <- SanityCheckData(mSetObj);
     # mSetObj <- ReplaceMin(mSetObj);
-    # mSetObj <- FilterVariable(mSetObj, "iqr", NULL, "F", 25)
+    # mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL)
     # mSetObj <- PreparePrenormData(mSetObj)
     # mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20)
     # file.rename("data_orig.qs", "data_orig1.qs");
@@ -1909,7 +1909,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     # mSetObj$dataSet <- mSet$dataSet2;
     # mSetObj <- SanityCheckData(mSetObj);
     # mSetObj <- ReplaceMin(mSetObj);
-    # mSetObj <- FilterVariable(mSetObj, "iqr", NULL, "F", 25)
+    # mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL)
     # mSetObj <- PreparePrenormData(mSetObj)
     # mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20)
     # file.rename("data_orig.qs", "data_orig2.qs");

@@ -442,23 +442,23 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
-  if(var.cutoff == 0){ 
-     msg <- paste(msg, "No variance filter was applied.");
-  }else{
-     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, privileged);
+  if(var.cutoff > 0){ 
+     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type);
      int.mat <- filt.res$data;
      msg <- paste(msg, filt.res$msg);
   }
 
-  if(int.cutoff == 0){ 
-     msg <- paste(msg, "No intensity filter was applied.");
-  }else{
-     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, privileged);
+  if(int.cutoff > 0){ 
+     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type);
      int.mat <- filt.res$data;
      msg <- paste(msg, filt.res$msg);
   }
 
   mSetObj$dataSet$filt <- int.mat;
+
+  if(msg == ""){
+     msg <- "No data filtering is performed."
+  }
 
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
