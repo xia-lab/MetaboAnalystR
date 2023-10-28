@@ -380,9 +380,9 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'is the non-parametric relative standard deviation, "mean" which is the mean, "sd" which is the standard
 #'deviation, "mad" which is the median absolute deviation, or "iqr" which is the interquantile range.
 #'@param filter.cutoff percent to be filtered, for example, 5 (5\%)
-#'@param qcFilter Filter the variables based on QC samples - True (T), or use non-QC based filtering - False (F).  
+#'@param qc.filter Filter the variables based on QC samples - True (T), or use non-QC based filtering - False (F).  
 #'@param rsd Define the relative standard deviation cut-off. Variables with a RSD greater than this number
-#'will be removed from the dataset. It is only necessary to specify this argument if qcFilter is True (T). 
+#'will be removed from the dataset. It is only necessary to specify this argument if qc.filter is True (T). 
 #'Otherwise, it will not be used in the function.
 #'@param privileged use could keep this option as True (T) for local MetaboAnalystR
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
@@ -390,7 +390,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'License: GNU GPL (>= 2)
 #'@export
 
-FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd, privileged=F){
+FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, privileged=F){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -408,7 +408,7 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
   mSetObj$dataSet$filt.cls <- cls;
   
   msg <- "";
-  if(qcFilter == "T"){
+  if(qc.filter == "T"){
     rsd <- rsd/100;
     # need to check if QC exists
     qc.hits <- tolower(as.character(cls)) %in% "qc";
@@ -437,18 +437,28 @@ FilterVariable <- function(mSetObj=NA, filter, filter.cutoff=NULL, qcFilter, rsd
     }
   }
 
-  if(is.null(filter.cutoff)){ # no explicit user choice, will apply default empirical filtering
-    filter.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
+  # no explicit user choice, will apply default empirical filtering based on variance
+  if(is.null(var.cutoff)){ 
+    var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
-  if(filter.cutoff == 0){ 
-     mSetObj$dataSet$filt <- int.mat;
-     msg <- paste(msg, "No statistical filter was applied.");
+  if(var.cutoff == 0){ 
+     msg <- paste(msg, "No variance filter was applied.");
   }else{
-     filt.res <- PerformFeatureFilter(int.mat, filter, filter.cutoff, mSetObj$analSet$type, privileged);
-     mSetObj$dataSet$filt <- filt.res$data;
+     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, privileged);
+     int.mat <- filt.res$data;
      msg <- paste(msg, filt.res$msg);
   }
+
+  if(int.cutoff == 0){ 
+     msg <- paste(msg, "No intensity filter was applied.");
+  }else{
+     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, privileged);
+     int.mat <- filt.res$data;
+     msg <- paste(msg, filt.res$msg);
+  }
+
+  mSetObj$dataSet$filt <- int.mat;
 
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;

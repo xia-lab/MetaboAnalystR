@@ -1280,7 +1280,7 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, priv
 
     remain.num <- ncol(int.mat)*(1-(filter.cutoff/100));
     remain <- rk <= remain.num;
-    msg <- paste(msg, "Feature filtering based on", nm);
+    msg <- paste(msg, "Feature filtering based on", nm, "[", sum(remain), "];");
 
     if(!privilidged){
         max.allow <- .get.max.allow(anal.type);  
