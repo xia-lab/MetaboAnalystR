@@ -196,7 +196,11 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   mdata.siggenes <<- vector("list");
   meta.selected <<- TRUE;
   anal.type <<- anal.type;
-  
+  if(.on.public.web){
+    primary.user <<- FALSE; # default 
+  }else{
+    primary.user <<- TRUE;
+   }
   if(.on.public.web){
     # disable parallel prcessing for public server
     library(BiocParallel);

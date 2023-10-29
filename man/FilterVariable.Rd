@@ -4,7 +4,7 @@
 \alias{FilterVariable}
 \title{Methods for non-specific filtering of variables}
 \usage{
-FilterVariable(mSetObj=NA, filter, qcFilter, rsd)
+FilterVariable(mSetObj=NA, qc.filter, rsd, filter, filter.cutoff)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
