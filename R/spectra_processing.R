@@ -1295,7 +1295,7 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
     imgName <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = dpi, format = format, width = width)
     str <- imgName
   }else if(format == "svg2"){
-    imgName0 <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = 72, format = "png", width = 6)
+    imgName0 <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = 72, format = "png", width = NA)
     format <- "svg";
     width <- 6;
     imgName <- paste0(title, ".", format);
