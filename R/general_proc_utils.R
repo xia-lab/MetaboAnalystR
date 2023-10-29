@@ -122,7 +122,7 @@ SanityCheckData <- function(mSetObj=NA){
         }
         
         # allow it pass to sanity check and correct there
-        if(anal.type != "network"){ # add exception for DSPC correlation network 
+        if(anal.type != "network" & anal.type != "mf"){ # add exception for DSPC correlation network 
           if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
             AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
             AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
@@ -133,6 +133,11 @@ SanityCheckData <- function(mSetObj=NA){
                 AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
                 return(-1);
             }
+          }
+        } else if(anal.type == "mf"){
+          if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
+            msg <- c(msg, paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
+            msg <- c(msg, "The primary factor is highly possible a continuous variable.")
           }
         }
         
@@ -155,7 +160,7 @@ SanityCheckData <- function(mSetObj=NA){
       }
       min.grp.size <- min(table(cls.lbl));
       cls.num <- length(levels(cls.lbl));
-      if(cls.num/min.grp.size > 3){
+      if((cls.num/min.grp.size > 3) & (anal.type != "mf")){
         mSetObj$dataSet$small.smpl.size <- 1;
         msg <- c(msg, "<font color='red'>Too many groups with very small number of replicates!</font>");
         msg <- c(msg, "<font color='red'>Only a subset of methods will be available for analysis!</font>");
