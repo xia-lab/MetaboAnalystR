@@ -188,16 +188,21 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
         p_all[[lv]] <- df.orig
       }
       
-      alldata <- do.call(rbind, p_all)
-      alldata$Dataset <- factor(as.character(alldata$facA), levels=levels(out.fac))
-      colnames(alldata) <- c("Dataset", "value", "Factor")
-      
-      p.time <- ggplot2::ggplot(alldata, aes(x=Dataset, y=value, fill=Factor)) + geom_boxplot()  + theme_bw()
-      p.time <- p.time + scale_fill_manual(values=col) + 
-        theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Expression")
-      p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      myplot <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+    alldata <- do.call(rbind, p_all)
+    alldata$Dataset <- factor(as.character(alldata$facA), levels=levels(out.fac))
+    colnames(alldata) <- c("Dataset", "value", "Factor")
+
+    # Changed x=Dataset to x=Factor
+    p.time <- ggplot2::ggplot(alldata, aes(x=Factor, y=value, fill=Factor)) + geom_boxplot()  + theme_bw()
+    p.time <- p.time + scale_fill_manual(values=col) + 
+      theme(axis.text.x = element_text(angle=90, hjust=1))
+    p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Expression")
+    p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+
+    # Adding facet_wrap to create a separate panel for each Dataset
+    p.time <- p.time + facet_wrap(~ Dataset, scales = "free_x")
+
+    myplot <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }
   }
   print(myplot);
