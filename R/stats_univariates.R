@@ -70,8 +70,8 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
+PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -86,74 +86,44 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$fc <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  par(mar=c(5,5,2,3));
-  
+    
   fc = mSetObj$analSet$fc;
-  if(fc$paired){
-    ylim <- c(-nrow(mSetObj$dataSet$norm)/2, nrow(mSetObj$dataSet$norm)/2);
-    xlim <- c(0, ncol(mSetObj$dataSet$norm));
-    plot(NULL, xlim=xlim, ylim=ylim, xlab = GetVariableLabel(mSetObj$dataSet$type),
-         ylab=paste("Count with FC >=", fc$max.thresh, "or <=", fc$min.thresh));
-    for(i in 1:ncol(fc$fc.all)){
-      segments(i,0, i, fc$fc.all[1,i], col= ifelse(fc$inx.up[i],"magenta", "darkgrey"),
-               lwd= ifelse(fc$inx.up[i], 2, 1));
-      segments(i,0, i, -fc$fc.all[2,i], col= ifelse(fc$inx.down[i], "magenta", "darkgrey"),
-               lwd= ifelse(fc$inx.down[i], 2, 1));
+
+    library(ggplot2);
+    fc_data <- data.frame(
+      x = 1:length(fc$fc.log),
+      y = fc$fc.log,
+      Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
+      label = names(fc$inx.imp)
+    )
+    
+    topVal <- max(abs(fc$fc.log))
+    ylim <- c(-topVal, topVal)
+
+    p <- ggplot(fc_data, aes(x=x, y=y, color=Significance)) +
+      geom_point(aes(shape=Significance), size=3) +
+      scale_color_manual(values = c("Significant" = "magenta", "Unsignificant" = "darkgrey"),
+                         name = "Significance") +
+      coord_cartesian(xlim=c(NA, NA), ylim=ylim) +
+      labs(x = GetVariableLabel(mSetObj$dataSet$type),
+           y = "Log2 (FC)") +
+      theme(axis.text.y = element_text(),
+            axis.text.y.right = element_text()) +
+      geom_hline(yintercept = log2(fc$max.thresh), linetype = 3) +
+      geom_hline(yintercept = log2(fc$min.thresh), linetype = 3) +
+      geom_hline(yintercept = 0, size = 1);
     }
-    abline(h=fc$max.thresh, lty=3);
-    abline(h=fc$min.thresh, lty=3);
-    abline(h=0, lwd=1);
+
+  if(interactive){
+    library(plotly);
+    ggp_build <- layout(ggplotly(p, tooltip = c("label")), autosize = FALSE, width = 1200, height = 800)
+    return(ggp_build);
   }else{
-    if(fc$raw.thresh > 0){
-      # be symmetrical
-      topVal <- max(abs(fc$fc.log));
-      ylim <- c(-topVal, topVal);
-      plot(fc$fc.log,  ylab="Log2 (FC)", ylim = ylim, xlab = GetVariableLabel(mSetObj$dataSet$type), pch=19, axes=F,
-           col= ifelse(fc$inx.imp, "magenta", "darkgrey"));
-      axis(2);
-      axis(4); # added by Beomsoo
-      abline(h=log2(fc$max.thresh), lty=3);
-      abline(h=log2(fc$min.thresh), lty=3);
-      abline(h=0, lwd=1);
-    }else{ # plot side by side
-      
-      dat1 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 1, ];
-      dat2 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 2, ];
-      
-      mns1 <- colMeans(dat1);
-      mn1 <- mean(mns1);
-      sd1 <- sd(mns1);
-      msd1.top <- mn1 + 2*sd1;
-      msd1.low <- mn1 - 2*sd1;
-      
-      mns2 <- colMeans(dat2);
-      mn2 <- mean(mns2);
-      sd2 <- sd(mns2);
-      msd2.top <- mn2 + 2*sd2;
-      msd2.low <- mn2 - 2*sd2;
-      
-      ylims <- range(c(mns1, mns2, msd1.top, msd2.top, msd1.low, msd2.low));
-      new.mns <- c(mns1, rep(NA, 5), mns2);
-      cols <- c(rep("magenta", length(mns1)), rep(NA, 5), rep("blue", length(mns2)));
-      pchs <- c(rep(15, length(mns1)), rep(NA, 5), rep(19, length(mns2)));
-      plot(new.mns, ylim=ylims, pch = pchs, col = cols, cex = 1.25, axes=F, ylab="");
-      axis(2);
-      axis(4); # added by Beomsoo
-      abline(h=mn1, col="magenta", lty=3, lwd=2);
-      abline(h=msd1.low, col="magenta", lty=3, lwd=1);
-      abline(h=msd1.top, col="magenta", lty=3, lwd=1);
-      abline(h=mn2, col="blue", lty=3, lwd=2);
-      abline(h=msd2.low, col="blue", lty=3, lwd=1);
-      abline(h=msd2.top, col="blue", lty=3, lwd=1);
-      # abline(h=mean(all.mns), col="darkgrey", lty=3);
-      axis(1, at=1:length(new.mns), labels=c(1:length(mns1),rep(NA, 5),1:length(mns2)));
-    }
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    print(p);
+    dev.off();
+    return(.set.mSet(mSetObj));
   }
-  dev.off();
-  
-  return(.set.mSet(mSetObj));
 }
 
 #'Used by higher functions to calculate fold change 
