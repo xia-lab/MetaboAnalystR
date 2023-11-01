@@ -561,8 +561,7 @@ CovariateScatter.Anal <- function(mSetObj,
 
   if(sig.num > 0){ 
     sig.p <- p.value[inx.imp];
-    sig.mat <- rest[inx.imp,];
-    sig.mat <- sapply(sig.mat, function(x) signif(x, 5));
+    sig.mat <- signif(rest[inx.imp, ,drop=FALSE], 5);
     rownames(sig.mat) <- rownames(rest)[inx.imp]
     # order the result simultaneously
     ord.inx <- order(sig.p, decreasing = FALSE);
