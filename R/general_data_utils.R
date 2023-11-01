@@ -67,6 +67,13 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   mSetObj$dataSet <- dataSet;
   mSetObj$analSet <- analSet;
   mSetObj$imgSet <- list();
+  mSetObj$imgSet$margin.config <- list(
+                   l = 50,
+                   r = 50,
+                   b = 20,
+                   t = 20,
+                   pad = 0.5
+  )
   mSetObj$msgSet <- list(); # store various message during data processing
   mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
   mSetObj$cmdSet <- vector(mode="character"); # store R command

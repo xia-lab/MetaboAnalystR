@@ -833,7 +833,7 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'@import qs
 
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
@@ -2787,7 +2787,6 @@ json.res <- list(
 
 ## Internal function for calculating GSEA, no RT
 .compute.mummichog.fgsea <- function(mSetObj, permNum){
-
   num_perm <- permNum;
   total_cpds <- mSetObj$cpd_exp #scores from all matched compounds
   
@@ -3176,99 +3175,69 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 #' @export
 
 PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
-                            num_annot = 5){
-  mSetObj <- .get.mSet(mSetObj);
+                            num_annot = 5, interactive=F){  
+
+  mSetObj <- .get.mSet(mSetObj)
   anal.type0 <- mSetObj$paramSet$anal.type
-  if(anal.type0 == "mummichog"){
-    mummi.mat <- mSetObj$mummi.resmat
-    y <- -log10(mummi.mat[,5]);
-    x <- mummi.mat[,8]/mummi.mat[,4]
-    pathnames <- rownames(mummi.mat)
-  }else{
-    gsea.mat <- mSetObj$mummi.gsea.resmat
-    y <- -log10(gsea.mat[,3])
-    x <- gsea.mat[,2]/gsea.mat[,1]
-    pathnames <- rownames(gsea.mat)
+  
+  if (anal.type0 == "mummichog") {
+    mat <- mSetObj$mummi.resmat
+    y <- -log10(mat[, 5])
+    x <- mat[, 8] / mat[, 4]
+    pathnames <- rownames(mat)
+  } else {
+    mat <- mSetObj$mummi.gsea.resmat
+    y <- -log10(mat[, 3])
+    x <- mat[, 2] / mat[, 1]
+    pathnames <- rownames(mat)
   }
   
-  inx <- order(y, decreasing= T);
-  
-  y <- y[inx];
-  x <- x[inx]; 
-  path.nms <- pathnames[inx];
+  inx <- order(y, decreasing = TRUE)
+  y <- y[inx]
+  x <- x[inx]
+  pathnames <- pathnames[inx]
   
   # set circle size based on enrichment factor
-  sqx <- sqrt(x);
-  min.x <- min(sqx, na.rm = TRUE);
-  max.x <- max(sqx, na.rm = TRUE);
+  radi.vec <- sqrt(x)
   
-  if(min.x == max.x){ # only 1 value
-    max.x = 1.5*max.x;
-    min.x = 0.5*min.x;
-  }
+  # Create the data frame
+  df <- data.frame(y, x, pathnames)
   
-  maxR <- (max.x - min.x)/40;
-  minR <- (max.x - min.x)/160;
-  radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
+  # Generate ggplot
+  library(ggplot2);
+  p <- ggplot(df, aes(x = x, y = y)) +
+    geom_point(aes(size = radi.vec, color = y, text = paste("Pathway:", pathnames, 
+                                "<br>Enrichment Factor:", round(x, 2), 
+                                "<br>-log10(p):", round(y, 2)))) +
+    scale_size_continuous(range = c(3, 15)) +
+    scale_color_gradient(low = "yellow", high = "red") +
+    xlab("Enrichment Factor") +
+    ylab("-log10(p)") +
+    theme_minimal();
   
-  # set background color according to combo.p
-  bg.vec <- heat.colors(length(y));
+  # Add text labels for top num_annot points
+  top_indices <- head(order(-df$y), num_annot)
+  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
   
-  if(format == "png"){
-    bg = "transparent";
-  }else{
-    bg="white";
-  }
-  
-  if(is.na(width)){
-    w <- 7;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w;
-  
-  df <- data.frame(path.nms, x, y)
-  
-  if(labels == "default"){
-    pk.inx <- GetTopInx(df$y, num_annot, T)
-  }
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$mummi.plot <- imgName
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
-  op <- par(mar=c(6,5,2,3));
-  plot(x, y, type="n", axes=F, xlab="Enrichment Factor", ylab="-log10(p)", bty = "l");
-  axis(1);
-  axis(2);
-  symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
-  
-  if(labels=="default"){
-    text(x[pk.inx], y[pk.inx], labels = path.nms[pk.inx], pos=3, xpd=T, cex=0.8)
-  }else if(labels == "all"){
-    text(x, y, labels = path.nms, pos=3, xpd=T, cex=0.8)
+  if (anal.type0 == "mummichog") {
+    list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattermum.json")
+  } else {
+    list_data <- list(pval = unname(y), enr = unname(mat[, 5]), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattergsea.json")
   }
-  
-  par(op);
-  dev.off();
-  if(anal.type0 == "mummichog"){
-    df <- list(pval=unname(y), enr=unname(x), pathnames=path.nms);
-    sink("scattermum.json");
-    cat(RJSONIO::toJSON(df));
-    sink();
+
+  if(interactive){
+    library(plotly);
+    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 1000, height = 800, margin = mSetObj$imgSet$margin.config)
+    return(ggp_build);
   }else{
-    df <- list(pval=unname(y), enr=unname(gsea.mat[,5]), pathnames=path.nms);
-    sink("scattergsea.json");
-    cat(RJSONIO::toJSON(df));
-    sink();
+    return(.set.mSet(mSetObj));
   }
-  
-  return(.set.mSet(mSetObj));
   
 }
-
 #' PlotPSEAIntegPaths
 #' @description Plots both the original mummichog and the GSEA results by combining p-values
 #' using the Fisher's method (sumlog). 

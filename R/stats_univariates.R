@@ -340,8 +340,9 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  
+PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
+
+  library(ggplot2)
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -352,15 +353,35 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <- width;
   }
-  h <- w*6/8;
+  h <- w * 6 / 8;
   
   mSetObj$imgSet$tt <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(mSetObj$analSet$tt$p.log, ylab="-log10(raw.p)", xlab=GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$tt$tt.nm, pch=19,
-       col= ifelse(mSetObj$analSet$tt$inx.imp, "magenta", "darkgrey"));
-  axis(4); 
-  dev.off();
+  tt_data <- data.frame(
+    p_log = mSetObj$analSet$tt$p.log,
+    label = names(mSetObj$analSet$tt$p.log),
+    seq = seq_along(mSetObj$analSet$tt$p.log),
+    Status = factor(ifelse(mSetObj$analSet$tt$inx.imp, "Significant", "Unsignificant"))
+  )
+
+  p <- ggplot(tt_data, aes(x=seq, y=p_log, col=Status, label=label)) +
+       geom_point() +
+       labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
+       scale_color_manual(
+         values = c("Significant" = "magenta", "Unsignificant" = "darkgrey")
+       )
+
+  if (interactive) {
+    library(plotly);
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "p_log")), autosize = FALSE, width = 1200, height = 800)
+    return(ggp_build);
+  } else {
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    p <- p + ggrepel::geom_text_repel(data = subset(tt_data, Status == "Significant"))
+    print(p);
+    dev.off();
+  }
+
   return(.set.mSet(mSetObj));
 }
 
@@ -452,7 +473,6 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
     inx.p = inx.p,
     sig.mat = sig.var
   );
-  
   mSetObj$analSet$volcano <- volcano;
   return(.set.mSet(mSetObj));
 }
@@ -477,8 +497,8 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 #'
 
 # using ggplot
-PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA){
-  
+PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, interactive=F){
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -493,7 +513,6 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
   h <- w*6/10;
   
    mSetObj$imgSet$volcano <- imgName;
-   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
 
    vcn <- mSetObj$analSet$volcano;
    imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
@@ -508,12 +527,16 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
    mycols[mycols=="UP"] <- "firebrick";
    mycols[mycols=="DOWN"] <- "cornflowerblue";
    mycols[mycols=="Non-SIG"] <- "grey";
-
-   de$delabel <- NA
-   de$delabel[imp.inx] <- rownames(de)[imp.inx];
+   
+   de$label <- NA
+   if(interactive){
+   de$label <- rownames(de);
+   }else{
+   de$label[imp.inx] <- rownames(de)[imp.inx];
+   }
    require(ggplot2);
 
-   p <- ggplot(data=de, aes(x=de[,1], y=de[,2], col=Status, label=delabel)) +
+   p <- ggplot(data=de, aes(x=de[,1], y=de[,2], col=Status, label=label)) +
         scale_color_manual(values=mycols) +
         geom_vline(xintercept=c(vcn$min.xthresh, vcn$max.xthresh), linetype="dashed", color="black") +
         geom_hline(yintercept=vcn$thresh.y, linetype="dashed", color="black") +
@@ -523,18 +546,29 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
    if(plotLbl){
     p <- p +  ggrepel::geom_text_repel();
    }
+    mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme);
 
-   if(plotTheme == 0){
-      p <- p + theme_bw();
-   }else if(plotTheme == 1){
-      p <- p + theme_grey();
-   }else if(plotTheme == 2){
-      p <- p + theme_minimal();
-   }else{
-      p <- p + theme_classic();
+   if(!interactive){
+    if(plotTheme == 0){
+       p <- p + theme_bw();
+    }else if(plotTheme == 1){
+       p <- p + theme_grey();
+    }else if(plotTheme == 2){
+       p <- p + theme_minimal();
+    }else{
+       p <- p + theme_classic();
+    }
    }
-   print(p);
-   dev.off();
+
+  if(interactive){
+    library(plotly);
+    ggp_build <- layout(ggplotly(p, tooltip = c("label")), autosize = FALSE, width = 1200, height = 800, margin = mSetObj$imgSet$margin.config)
+    return(ggp_build);
+  } else {
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    print(p)
+    dev.off();
+  }
 
    return(.set.mSet(mSetObj));
 }
