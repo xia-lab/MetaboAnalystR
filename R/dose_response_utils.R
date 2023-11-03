@@ -968,7 +968,7 @@ PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
     gene.vec <- as.matrix(bmdcalc.res[which(bmdcalc.res$bmd > xMin & bmdcalc.res$bmd < xMax),1])
     sym.vec <- doEntrez2SymbolMapping(gene.vec);
     names(gene.vec) <- sym.vec;
-    res <- PerformEnrichAnalysis(file.nm, fun.type, gene.vec);
+    res <- .performEnrichAnalysis(file.nm, fun.type, gene.vec, "curvefit");
     enr1.mat <<- enr.mat
     return(res);
 }

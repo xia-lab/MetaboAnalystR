@@ -58,7 +58,7 @@ PrepareUpsetData <- function(fileNm){
   }
 
   if(anal.type == "metadata" & paramSet$meta.selected){
-    sel.dats[["meta_dat"]] <- as.character(analSet$meta.stat$de);
+    sel.dats[["meta_dat"]] <- as.character(rownames(analSet$meta.mat));
   }
   
   if(length(sel.dats) == 0){
