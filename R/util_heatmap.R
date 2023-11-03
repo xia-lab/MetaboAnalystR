@@ -62,13 +62,13 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   }
   mum.version <- mSetObj$paramSet$version <- version
   
-  if(filtOpt == "filtered"){
-    mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion, minLib);
-    matched_res <- qs::qread("mum_res.qs");
-    res_table <- matched_res;
-    data = data[which(l %in% res_table[,"Query.Mass"]),]
-    res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
-  }
+  #if(filtOpt == "filtered"){
+  #  mSetObj <- .setup.psea.library(mSetObj, libOpt, libVersion, minLib);
+  #  matched_res <- qs::qread("mum_res.qs");
+  #  res_table <- matched_res;
+  #  data = data[which(l %in% res_table[,"Query.Mass"]),]
+  #  res = res[which(rownames(res) %in% res_table[,"Query.Mass"]),]
+  #}
   
   stat.pvals <- unname(as.vector(res[,2]));
   t.stat <- unname(as.vector(res[,1]));
@@ -178,7 +178,7 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
     data = res,
     org = org
   );
-  
+
   mSetObj$dataSet$hm_peak_names = gene.id
   mSetObj$dataSet$gene.cluster = gene.cluster
   
