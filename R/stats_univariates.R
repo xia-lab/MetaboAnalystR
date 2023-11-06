@@ -120,7 +120,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
       space = "Lab", na.value = "darkgrey", 
       guide = "colourbar", name="Log2FC"
     ) +
-    scale_size(range = c(1.5, 4)) +
+    scale_size(range = c(1.5, 4), guide = FALSE) +
     coord_cartesian(ylim = c(-topVal, topVal)) +
     labs(x = "Identifier", y = "Log2 Fold Change") +
     theme_bw() +
@@ -557,8 +557,8 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
     geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
     labs(x = "log2(FC)", y = "-log10(p-value)") +
     theme_minimal() +
-    guides(color = guide_colorbar(barwidth = 10, barheight = 1),
-           size = guide_legend(override.aes = list(color = "grey"))) +
+    guides(color = guide_colorbar(order = 1),
+           size = "none") +
     theme(legend.position = "right")
   
   # Print the plot
