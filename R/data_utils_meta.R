@@ -284,10 +284,11 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
   # save the result
   if(inmex.meta$id.type == "entrez"){ # row name gene symbols
     metade.nms <- inmex.meta$gene.symbls[metade.genes];
-    res <- cbind(EntrezID=metade.genes, Name=metade.nms,AverageFc=analSet$meta.avgFC, dat.mat);
+    res <- cbind(EntrezID=metade.genes, Name=metade.nms,dat.mat);
   }else{
-    res <- cbind(ID=metade.genes, AverageFc=analSet$meta.avgFC, dat.mat);
+    res <- cbind(ID=metade.genes, dat.mat);
   }
+  print(head(res));
   analSet$meta.res.table <- res;
   fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
   
