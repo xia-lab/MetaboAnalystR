@@ -900,8 +900,11 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   ylim <- GetExtendRange(pca.res$PC2);
   Conditions <- factor(inmex.meta$cls.lbl)
   Datasets <- factor(inmex.meta$data.lbl)
+
   pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +
     geom_point(size=4, alpha=0.5) + 
+    scale_color_discrete(name = "Conditions") + # Name the color legend
+    scale_shape_discrete(name = "Datasets") + # Name the shape legend
     xlim(xlim)+ ylim(ylim) + 
     xlab(xlabel) + ylab(ylabel) + 
     theme_bw()
