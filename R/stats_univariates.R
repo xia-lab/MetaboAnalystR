@@ -70,10 +70,10 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  library(scales);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -86,74 +86,59 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj$imgSet$fc <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  par(mar=c(5,5,2,3));
   
   fc = mSetObj$analSet$fc;
-  if(fc$paired){
-    ylim <- c(-nrow(mSetObj$dataSet$norm)/2, nrow(mSetObj$dataSet$norm)/2);
-    xlim <- c(0, ncol(mSetObj$dataSet$norm));
-    plot(NULL, xlim=xlim, ylim=ylim, xlab = GetVariableLabel(mSetObj$dataSet$type),
-         ylab=paste("Count with FC >=", fc$max.thresh, "or <=", fc$min.thresh));
-    for(i in 1:ncol(fc$fc.all)){
-      segments(i,0, i, fc$fc.all[1,i], col= ifelse(fc$inx.up[i],"magenta", "darkgrey"),
-               lwd= ifelse(fc$inx.up[i], 2, 1));
-      segments(i,0, i, -fc$fc.all[2,i], col= ifelse(fc$inx.down[i], "magenta", "darkgrey"),
-               lwd= ifelse(fc$inx.down[i], 2, 1));
-    }
-    abline(h=fc$max.thresh, lty=3);
-    abline(h=fc$min.thresh, lty=3);
-    abline(h=0, lwd=1);
-  }else{
-    if(fc$raw.thresh > 0){
-      # be symmetrical
-      topVal <- max(abs(fc$fc.log));
-      ylim <- c(-topVal, topVal);
-      plot(fc$fc.log,  ylab="Log2 (FC)", ylim = ylim, xlab = GetVariableLabel(mSetObj$dataSet$type), pch=19, axes=F,
-           col= ifelse(fc$inx.imp, "magenta", "darkgrey"));
-      axis(2);
-      axis(4); # added by Beomsoo
-      abline(h=log2(fc$max.thresh), lty=3);
-      abline(h=log2(fc$min.thresh), lty=3);
-      abline(h=0, lwd=1);
-    }else{ # plot side by side
-      
-      dat1 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 1, ];
-      dat2 <- mSetObj$dataSet$norm[as.numeric(mSetObj$dataSet$cls) == 2, ];
-      
-      mns1 <- colMeans(dat1);
-      mn1 <- mean(mns1);
-      sd1 <- sd(mns1);
-      msd1.top <- mn1 + 2*sd1;
-      msd1.low <- mn1 - 2*sd1;
-      
-      mns2 <- colMeans(dat2);
-      mn2 <- mean(mns2);
-      sd2 <- sd(mns2);
-      msd2.top <- mn2 + 2*sd2;
-      msd2.low <- mn2 - 2*sd2;
-      
-      ylims <- range(c(mns1, mns2, msd1.top, msd2.top, msd1.low, msd2.low));
-      new.mns <- c(mns1, rep(NA, 5), mns2);
-      cols <- c(rep("magenta", length(mns1)), rep(NA, 5), rep("blue", length(mns2)));
-      pchs <- c(rep(15, length(mns1)), rep(NA, 5), rep(19, length(mns2)));
-      plot(new.mns, ylim=ylims, pch = pchs, col = cols, cex = 1.25, axes=F, ylab="");
-      axis(2);
-      axis(4); # added by Beomsoo
-      abline(h=mn1, col="magenta", lty=3, lwd=2);
-      abline(h=msd1.low, col="magenta", lty=3, lwd=1);
-      abline(h=msd1.top, col="magenta", lty=3, lwd=1);
-      abline(h=mn2, col="blue", lty=3, lwd=2);
-      abline(h=msd2.low, col="blue", lty=3, lwd=1);
-      abline(h=msd2.top, col="blue", lty=3, lwd=1);
-      # abline(h=mean(all.mns), col="darkgrey", lty=3);
-      axis(1, at=1:length(new.mns), labels=c(1:length(mns1),rep(NA, 5),1:length(mns2)));
-    }
-  }
-  dev.off();
   
-  return(.set.mSet(mSetObj));
+  library(ggplot2);
+  fc_data <- data.frame(
+    x = 1:length(fc$fc.log),
+    y = fc$fc.log,
+    Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
+    label = names(fc$inx.imp)
+  )
+  
+  # Get the maximum absolute fold change for plotting limits
+  topVal <- max(abs(fc$fc.log))
+  ylim <- c(-topVal, topVal)
+  
+  # Assign colors based on significance and fold change
+  fc_data$ColorValue <- ifelse(fc_data$Significance == "Significant", fc_data$y, NA)
+  fc_data$ColorValue <- as.numeric(fc_data$ColorValue) # Ensure this is numeric
+  
+  sig_fc_range <- range(fc_data$ColorValue, na.rm = TRUE)
+  
+  fc_data$tooltip <- paste0("Label: ", fc_data$label,
+                            "\nLog2FC: ", round(fc_data$y, 2)
+  )
+  
+  # Plot
+  p <- ggplot(fc_data, aes(x = x, y = y, label = label, text = tooltip)) +
+    geom_point(aes(color = ColorValue, size = abs(y))) +
+    scale_color_gradient2(
+      low = "blue", mid = "grey", high = "red", 
+      midpoint = 0, limits = sig_fc_range, 
+      space = "Lab", na.value = "darkgrey", 
+      guide = "colourbar", name="Log2FC"
+    ) +
+    scale_size(range = c(1.5, 4), guide = FALSE) +
+    coord_cartesian(ylim = c(-topVal, topVal)) +
+    labs(x = "Identifier", y = "Log2 Fold Change") +
+    theme_bw() +
+    theme(legend.position = "right") +
+    geom_hline(yintercept = log2(fc$max.thresh), linetype = 3) +
+    geom_hline(yintercept = log2(fc$min.thresh), linetype = 3) +
+    geom_hline(yintercept = 0, size = 1)
+  
+  if(interactive){
+    library(plotly);
+    ggp_build <- layout(ggplotly(p, tooltip = "text"), autosize = FALSE, width = 800, height = 600)
+    return(ggp_build);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    print(p);
+    dev.off();
+    return(.set.mSet(mSetObj));
+  }
 }
 
 #'Used by higher functions to calculate fold change 
@@ -187,22 +172,22 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     fc.all <- signif(2^fc.log, 5);
   }else{
     # compute the FC of two group means (unit is group)
-
-      data <- qs::qread("row_norm.qs");
-      m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-      m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
-      
-      # create a named matrix of sig vars for display
-      if(cmpType == 0){
-        ratio <- m1/m2;
-      }else{
-        ratio <- m2/m1;
-      }
-      fc.all <- signif(ratio, 5);
-      ratio[ratio < 0] <- 0;
-      fc.log <- signif(log2(ratio), 5);
-      fc.log[is.infinite(fc.log) & fc.log < 0] <- -99;
-      fc.log[is.infinite(fc.log) & fc.log > 0] <- 99;
+    
+    data <- qs::qread("row_norm.qs");
+    m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
+    m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
+    
+    # create a named matrix of sig vars for display
+    if(cmpType == 0){
+      ratio <- m1/m2;
+    }else{
+      ratio <- m2/m1;
+    }
+    fc.all <- signif(ratio, 5);
+    ratio[ratio < 0] <- 0;
+    fc.log <- signif(log2(ratio), 5);
+    fc.log[is.infinite(fc.log) & fc.log < 0] <- -99;
+    fc.log[is.infinite(fc.log) & fc.log > 0] <- 99;
     
   }
   names(fc.all) <- names(fc.log) <- colnames(data);  
@@ -301,7 +286,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       p.value = p.value,
       p.log = p.log,
       inx.imp = inx.imp,
-      sig.mat = sig.mat
+      sig.mat = sig.mat,
+      fdr.p = fdr.p
     );
   }else{
     tt <- list (
@@ -312,7 +298,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       t.score = t.stat,
       p.value = p.value,
       p.log = p.log,
-      inx.imp = inx.imp
+      inx.imp = inx.imp,
+      fdr.p = fdr.p
     );
   }
   
@@ -341,8 +328,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
-
   library(ggplot2)
+  library(scales);
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -361,19 +348,29 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
     p_log = mSetObj$analSet$tt$p.log,
     label = names(mSetObj$analSet$tt$p.log),
     seq = seq_along(mSetObj$analSet$tt$p.log),
-    Status = factor(ifelse(mSetObj$analSet$tt$inx.imp, "Significant", "Unsignificant"))
+    Status = factor(ifelse(mSetObj$analSet$tt$inx.imp, "Significant", "Unsignificant")),
+    P.Value = mSetObj$analSet$tt$p.value,
+    FDR = mSetObj$analSet$tt$fdr.p
   )
-
-  p <- ggplot(tt_data, aes(x=seq, y=p_log, col=Status, label=label)) +
-       geom_point() +
-       labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
-       scale_color_manual(
-         values = c("Significant" = "magenta", "Unsignificant" = "darkgrey")
-       )
-
+  
+  # Assuming your data frame is set up correctly as tt_data
+  tt_data$p_log_rescaled <- rescale(tt_data$p_log)  # Rescale p_log for sizing
+  # Create a copy of p_log to use for coloring significant points
+  tt_data$color_value <- ifelse(tt_data$Status == "Significant", tt_data$p_log, NA)
+  
+  # Now create the ggplot
+  p <- ggplot(tt_data, aes(x=seq, y=p_log, label=label, FDR=FDR, P.Value=P.Value)) +
+    geom_point(aes(color = color_value, size = p_log)) + # Use color_value for color scale
+    scale_color_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
+    scale_size_continuous(range = c(1, 4)) + # Adjust size range as needed
+    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
+    theme_bw() +
+    guides(color = guide_colourbar(order = 1), size = "none") # Hide the size guide
+  
+  
   if (interactive) {
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("label", "p_log")), autosize = FALSE, width = 1200, height = 800)
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "FDR", "P.Value")), autosize = FALSE, width = 800, height = 600)
     return(ggp_build);
   } else {
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
@@ -381,7 +378,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
     print(p);
     dev.off();
   }
-
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -404,7 +401,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, 
                          cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   # Note, volcano is based on t-tests and fold change analysis
@@ -419,7 +416,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   
   inx.p <- p.value <= threshp;
   p.log <- -log10(p.value);
-
+  
   #### fc analysis
   mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
   mSetObj <- .get.mSet(mSetObj);
@@ -427,13 +424,13 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);
   max.xthresh <- log2(fcthresh);
   min.xthresh <- log2(1/fcthresh);
-
+  
   fc.log <- mSetObj$analSet$fc$fc.log;
   fc.all <- mSetObj$analSet$fc$fc.all;
   
   inx.up <- mSetObj$analSet$fc$inx.up;
   inx.down <- mSetObj$analSet$fc$inx.down;
-
+  
   # subset inx.p to inx.up/down
   keep.inx <- names(inx.p) %in% names(inx.up)
   inx.p <- inx.p[keep.inx]
@@ -471,7 +468,9 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
     inx.down = inx.down,
     p.log = p.log,
     inx.p = inx.p,
-    sig.mat = sig.var
+    sig.mat = sig.var,
+    p.value = p.value
+    
   );
   mSetObj$analSet$volcano <- volcano;
   return(.set.mSet(mSetObj));
@@ -498,7 +497,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 
 # using ggplot
 PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, interactive=F){
-
+  
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -512,65 +511,86 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
   }
   h <- w*6/10;
   
-   mSetObj$imgSet$volcano <- imgName;
-
-   vcn <- mSetObj$analSet$volcano;
-   imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
-
-   de <- data.frame(cbind(vcn$fc.log, vcn$p.log));
-   de$Status <- "Non-SIG";
-   de$Status[vcn$inx.p & vcn$inx.up] <- "UP";
-   de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
-   de$Status <- as.factor(de$Status);
-
-   mycols <- levels(de$Status);
-   mycols[mycols=="UP"] <- "firebrick";
-   mycols[mycols=="DOWN"] <- "cornflowerblue";
-   mycols[mycols=="Non-SIG"] <- "grey";
-   
-   de$label <- NA
-   if(interactive){
-   de$label <- rownames(de);
-   }else{
-   de$label[imp.inx] <- rownames(de)[imp.inx];
-   }
-   require(ggplot2);
-
-   p <- ggplot(data=de, aes(x=de[,1], y=de[,2], col=Status, label=label)) +
-        scale_color_manual(values=mycols) +
-        geom_vline(xintercept=c(vcn$min.xthresh, vcn$max.xthresh), linetype="dashed", color="black") +
-        geom_hline(yintercept=vcn$thresh.y, linetype="dashed", color="black") +
-        geom_point() + 
-        labs(x ="log2(FC)", y = "-log10(p)");
-
-   if(plotLbl){
+  mSetObj$imgSet$volcano <- imgName;
+  
+  vcn <- mSetObj$analSet$volcano;
+  imp.inx<-(vcn$inx.up | vcn$inx.down) & vcn$inx.p;
+  
+  de <- data.frame(cbind(vcn$fc.log, vcn$p.log));
+  colnames(de) <- c("fc.log", "p.log");
+  de$P.Value <- vcn$p.value;
+  de$Fold.Change <-vcn$fc.all
+  de$Status <- "Non-SIG";
+  de$Status[vcn$inx.p & vcn$inx.up] <- "UP";
+  de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
+  de$Status <- as.factor(de$Status);
+  
+  mycols <- levels(de$Status);
+  mycols[mycols=="UP"] <- "firebrick";
+  mycols[mycols=="DOWN"] <- "cornflowerblue";
+  mycols[mycols=="Non-SIG"] <- "grey";
+  
+  de$label <- NA
+  if(interactive){
+    de$label <- rownames(de);
+  }else{
+    de$label[imp.inx] <- rownames(de)[imp.inx];
+  }
+  require(ggplot2);
+  require(scales);
+  
+  de$size <- rescale(de$p.log, to = c(1.5, 4))
+  
+  # Create a new variable for gradient coloring based on significance
+  de$FoldChange <- ifelse(de$Status != "Non-SIG", de$fc.log, NA)
+  
+  # Get the range of log fold changes for significant points
+  sig_fc_range <- range(de$fc.log[de$Status != "Non-SIG"], na.rm = TRUE)
+  
+  # Create the ggplot
+  p <- ggplot(data = de, aes(x = fc.log, y = p.log, label = label, Fold.Change = Fold.Change, P.Value= P.Value)) +
+    geom_point(aes(color = FoldChange, size = size)) +
+    scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0,
+                          limits = sig_fc_range, space = "Lab", na.value = "grey", guide = "colourbar") +
+    scale_size_continuous(range = c(1, 4)) +
+    geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black") +
+    geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
+    labs(x = "log2(FC)", y = "-log10(p-value)") +
+    theme_minimal() +
+    guides(color = guide_colorbar(order = 1),
+           size = "none") +
+    theme(legend.position = "right")
+  
+  # Print the plot
+  
+  if(plotLbl){
     p <- p +  ggrepel::geom_text_repel();
-   }
-    mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme);
-
-   if(!interactive){
+  }
+  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme);
+  
+  if(!interactive){
     if(plotTheme == 0){
-       p <- p + theme_bw();
+      p <- p + theme_bw();
     }else if(plotTheme == 1){
-       p <- p + theme_grey();
+      p <- p + theme_grey();
     }else if(plotTheme == 2){
-       p <- p + theme_minimal();
+      p <- p + theme_minimal();
     }else{
-       p <- p + theme_classic();
+      p <- p + theme_classic();
     }
-   }
-
+  }
+  
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("label")), autosize = FALSE, width = 1200, height = 800, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 800, height = 600, margin = mSetObj$imgSet$margin.config)
     return(ggp_build);
   } else {
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     print(p)
     dev.off();
   }
-
-   return(.set.mSet(mSetObj));
+  
+  return(.set.mSet(mSetObj));
 }
 
 #'ANOVA
@@ -604,10 +624,10 @@ kwtest <- function(x, cls) {
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 FisherLSD <- function(aov.obj, thresh){
-    if(!exists("my.lsd.test")){ # public web on same user dir
-      .load.scripts.on.demand("util_lsd.Rc");    
-    }
-    return(my.lsd.test(aov.obj,"cls", alpha=thresh));
+  if(!exists("my.lsd.test")){ # public web on same user dir
+    .load.scripts.on.demand("util_lsd.Rc");    
+  }
+  return(my.lsd.test(aov.obj,"cls", alpha=thresh));
 }
 
 #'Return only the signicant comparison names
@@ -648,162 +668,162 @@ parseFisher <- function(fisher, cut.off){
 #'
 ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
   
-   mSetObj <- .get.mSet(mSetObj);
-   if(!nonpar){
-      aov.nm <- "One-way ANOVA";
-    }else{
-      aov.nm <- "Kruskal Wallis Test";
-    }
-
-    sig.num <- 0;
-    aov.res <- sig.mat <- NULL;
-
-    data <- as.matrix(mSetObj$dataSet$norm);
-    cls <- mSetObj$dataSet$cls;
-    if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
-        res <- PerformFastUnivTests(data, cls);
-    } else {
-        my.res <- GetFtestRes(mSetObj, nonpar);
-        aov.res <- my.res$aov.res;
-        res <- my.res$f.res;
-    }
-
-    fstat <- res[,1];
-    p.value <- res[,2];
-    names(fstat) <- names(p.value) <- colnames(data);
-    fdr.p <- p.adjust(p.value, "fdr");
-    
-    if(all_results==TRUE){
-        all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
-        rownames(all.mat) <- names(p.value);
-        colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
-        fast.write.csv(all.mat, "anova_all_results.csv")
-    }
-    
-    inx.imp <- fdr.p <= thresh;
-    sig.num <- sum(inx.imp, na.rm = TRUE);
-    AddMsg(paste(c("A total of", sig.num, "significant features were found."), collapse=" "));
-
-    res <- 0;
-    sig.f <- sig.p <- sig.fdr <- 1;
-
-    if(sig.num > 0){
-        res <- 1;
-        sig.f <- fstat[inx.imp];
-        sig.p <- p.value[inx.imp];
-        sig.fdr <- fdr.p[inx.imp];
-        if(exists("aov.res")){
-            qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
-        }
-    }
-
-    aov<-list (
-            aov.nm = aov.nm,
-            nonpar = nonpar,
-            sig.num = sig.num,
-            raw.thresh = thresh,
-            thresh = -log10(thresh), # only used for plot threshold line
-            p.value = p.value,
-            p.log = -log10(p.value),
-            fdr.p = fdr.p,
-            inx.imp = inx.imp,
-            sig.f = sig.f,
-            sig.p = sig.p,
-            sig.fdr = sig.fdr
-        );
-
-    mSetObj$analSet$aov <- aov;
+  mSetObj <- .get.mSet(mSetObj);
+  if(!nonpar){
+    aov.nm <- "One-way ANOVA";
+  }else{
+    aov.nm <- "Kruskal Wallis Test";
+  }
   
-    if(.on.public.web){
-        .set.mSet(mSetObj);
-        return(res);
-    }else{
-        return(.set.mSet(mSetObj));
+  sig.num <- 0;
+  aov.res <- sig.mat <- NULL;
+  
+  data <- as.matrix(mSetObj$dataSet$norm);
+  cls <- mSetObj$dataSet$cls;
+  if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+    res <- PerformFastUnivTests(data, cls);
+  } else {
+    my.res <- GetFtestRes(mSetObj, nonpar);
+    aov.res <- my.res$aov.res;
+    res <- my.res$f.res;
+  }
+  
+  fstat <- res[,1];
+  p.value <- res[,2];
+  names(fstat) <- names(p.value) <- colnames(data);
+  fdr.p <- p.adjust(p.value, "fdr");
+  
+  if(all_results==TRUE){
+    all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
+    rownames(all.mat) <- names(p.value);
+    colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
+    fast.write.csv(all.mat, "anova_all_results.csv")
+  }
+  
+  inx.imp <- fdr.p <= thresh;
+  sig.num <- sum(inx.imp, na.rm = TRUE);
+  AddMsg(paste(c("A total of", sig.num, "significant features were found."), collapse=" "));
+  
+  res <- 0;
+  sig.f <- sig.p <- sig.fdr <- 1;
+  
+  if(sig.num > 0){
+    res <- 1;
+    sig.f <- fstat[inx.imp];
+    sig.p <- p.value[inx.imp];
+    sig.fdr <- fdr.p[inx.imp];
+    if(exists("aov.res")){
+      qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
     }
+  }
+  
+  aov<-list (
+    aov.nm = aov.nm,
+    nonpar = nonpar,
+    sig.num = sig.num,
+    raw.thresh = thresh,
+    thresh = -log10(thresh), # only used for plot threshold line
+    p.value = p.value,
+    p.log = -log10(p.value),
+    fdr.p = fdr.p,
+    inx.imp = inx.imp,
+    sig.f = sig.f,
+    sig.p = sig.p,
+    sig.fdr = sig.fdr
+  );
+  
+  mSetObj$analSet$aov <- aov;
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(res);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 # Do posthoc tests on significant features from ANOVA tests
 Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  sig.num <- mSetObj$analSet$aov$sig.num;
+  inx.imp <- mSetObj$analSet$aov$inx.imp;
+  sig.f <- mSetObj$analSet$aov$sig.f;
+  sig.p <- mSetObj$analSet$aov$sig.p;
+  sig.fdr <- mSetObj$analSet$aov$sig.fdr;
+  nonpar <- mSetObj$analSet$aov$nonpar;
+  cmp.res <- NULL;
+  post.nm <- NULL;
+  
+  if(nonpar){
+    sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), 'NA');
+    colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
+    fileName <- "kw_posthoc.csv";
+  }else{     
+    fileName <- "anova_posthoc.csv";    
     
-    mSetObj <- .get.mSet(mSetObj);
-    sig.num <- mSetObj$analSet$aov$sig.num;
-    inx.imp <- mSetObj$analSet$aov$inx.imp;
-    sig.f <- mSetObj$analSet$aov$sig.f;
-    sig.p <- mSetObj$analSet$aov$sig.p;
-    sig.fdr <- mSetObj$analSet$aov$sig.fdr;
-    nonpar <- mSetObj$analSet$aov$nonpar;
-    cmp.res <- NULL;
-    post.nm <- NULL;
-
-    if(nonpar){
-        sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), 'NA');
-        colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
-        fileName <- "kw_posthoc.csv";
-    }else{     
-        fileName <- "anova_posthoc.csv";    
- 
-        # do post-hoc only for signficant entries
-        # note aov obj is not avaible using fast version
-        # need to recompute using slower version for the sig ones
-        if(.on.public.web & RequireFastUnivTests(mSetObj)){
-            data <- as.matrix(mSetObj$dataSet$norm);
-            cls <- mSetObj$dataSet$cls;
-            aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
-        }else{
-            aov.imp <- qs::qread("aov_res_imp.qs");
-        }
-
-        # note this is only for post-hoc analysis. max 1000 in case too large
-        if(sig.num > 1000){
-            # update inx.imp   
-            my.ranks <- rank(sig.p);
-            inx.imp <- my.ranks <= 1000;
-            aov.imp <- aov.imp[inx.imp];
-        }
-
-        if(post.hoc=="tukey"){
-            tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
-            my.cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
-            post.nm = "Tukey's HSD";
-        }else{
-            fisher.res<-lapply(aov.imp, FisherLSD, thresh);
-            my.cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
-            post.nm = "Fisher's LSD";
-        }
-        
-        cmp.res <- my.cmp.res;
-        # post hoc only top 1000;
-
-        if(sig.num > 1000){
-            cmp.res <- rep(NA, sig.num); 
-            cmp.res[inx.imp] <- my.cmp.res;
-            post.nm <- paste(post.nm, "(top 1000)");
-        }
-        # create the result dataframe,
-        # note, the last column is string, not double
-        sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), cmp.res);
-        colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
+    # do post-hoc only for signficant entries
+    # note aov obj is not avaible using fast version
+    # need to recompute using slower version for the sig ones
+    if(.on.public.web & RequireFastUnivTests(mSetObj)){
+      data <- as.matrix(mSetObj$dataSet$norm);
+      cls <- mSetObj$dataSet$cls;
+      aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
+    }else{
+      aov.imp <- qs::qread("aov_res_imp.qs");
     }
-
-    rownames(sig.mat) <- names(sig.p);
-    # order the result simultaneously
-    ord.inx <- order(sig.p, decreasing = FALSE);
-    sig.mat <- sig.mat[ord.inx,,drop=F];
-
-    # note only display top 1000 max for web (save all to the file)
-    fast.write.csv(sig.mat,file=fileName);
+    
+    # note this is only for post-hoc analysis. max 1000 in case too large
     if(sig.num > 1000){
-        sig.mat <- sig.mat[1:1000,];
+      # update inx.imp   
+      my.ranks <- rank(sig.p);
+      inx.imp <- my.ranks <= 1000;
+      aov.imp <- aov.imp[inx.imp];
     }
-
-    aov <- mSetObj$analSet$aov; 
-    # add to the list, don't use append, as it does not overwrite
-    aov$sig.nm <- fileName;
-    aov$post.hoc <- post.hoc;
-    aov$sig.mat <- sig.mat;
-
-    mSetObj$analSet$aov <- aov;
-    return(.set.mSet(mSetObj));  
+    
+    if(post.hoc=="tukey"){
+      tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
+      my.cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
+      post.nm = "Tukey's HSD";
+    }else{
+      fisher.res<-lapply(aov.imp, FisherLSD, thresh);
+      my.cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
+      post.nm = "Fisher's LSD";
+    }
+    
+    cmp.res <- my.cmp.res;
+    # post hoc only top 1000;
+    
+    if(sig.num > 1000){
+      cmp.res <- rep(NA, sig.num); 
+      cmp.res[inx.imp] <- my.cmp.res;
+      post.nm <- paste(post.nm, "(top 1000)");
+    }
+    # create the result dataframe,
+    # note, the last column is string, not double
+    sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), cmp.res);
+    colnames(sig.mat) <- c("f.value", "p.value", "-log10(p)", "FDR", post.nm);
+  }
+  
+  rownames(sig.mat) <- names(sig.p);
+  # order the result simultaneously
+  ord.inx <- order(sig.p, decreasing = FALSE);
+  sig.mat <- sig.mat[ord.inx,,drop=F];
+  
+  # note only display top 1000 max for web (save all to the file)
+  fast.write.csv(sig.mat,file=fileName);
+  if(sig.num > 1000){
+    sig.mat <- sig.mat[1:1000,];
+  }
+  
+  aov <- mSetObj$analSet$aov; 
+  # add to the list, don't use append, as it does not overwrite
+  aov$sig.nm <- fileName;
+  aov$post.hoc <- post.hoc;
+  aov$sig.mat <- sig.mat;
+  
+  mSetObj$analSet$aov <- aov;
+  return(.set.mSet(mSetObj));  
 }
 
 #'Plot ANOVA 
@@ -1180,65 +1200,65 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   if(length(inx1) ==1 || length(inx2) == 1){
     equal.var <- TRUE; # overwrite use option if one does not have enough replicates
   }
-    data <- as.matrix(mSetObj$dataSet$norm);
-    if(!exists("mem.tt")){
-        require("memoise");
-        mem.tt <<- memoise(.get.ttest.res);
-    }
-    return(mem.tt(data, inx1, inx2, paired, equal.var, nonpar));
+  data <- as.matrix(mSetObj$dataSet$norm);
+  if(!exists("mem.tt")){
+    require("memoise");
+    mem.tt <<- memoise(.get.ttest.res);
+  }
+  return(mem.tt(data, inx1, inx2, paired, equal.var, nonpar));
 }
 
 .get.ttest.res <- function(data, inx1, inx2, paired=FALSE, equal.var=TRUE, nonpar=F){
-
-   print("Performing regular t-tests ....");
-   univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
-   if(nonpar){
-     univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
-   }
-   my.fun <- function(x) {
-     tmp <- try(univ.test(x));
-     if(class(tmp) == "try-error") {
-       return(c(NA, NA));
-     }else{
-       return(c(tmp$statistic, tmp$p.value));
-     }
-   }
-   res <- apply(data, 2, my.fun);
-   return(t(res));
+  
+  print("Performing regular t-tests ....");
+  univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+  if(nonpar){
+    univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
+  }
+  my.fun <- function(x) {
+    tmp <- try(univ.test(x));
+    if(class(tmp) == "try-error") {
+      return(c(NA, NA));
+    }else{
+      return(c(tmp$statistic, tmp$p.value));
+    }
+  }
+  res <- apply(data, 2, my.fun);
+  return(t(res));
 }
 
 GetFtestRes <- function(mSetObj=NA, nonpar=F){
   
-    if(!exists("mem.aov")){
-        require("memoise");
-        mem.aov <<- memoise(.get.ftest.res);
-    }
-
-    mSetObj <- .get.mSet(mSetObj);  
-    data <- as.matrix(mSetObj$dataSet$norm);
-    cls <- mSetObj$dataSet$cls;
-    print("using cache .......");
-    return(mem.aov(data, cls, nonpar));
+  if(!exists("mem.aov")){
+    require("memoise");
+    mem.aov <<- memoise(.get.ftest.res);
+  }
+  
+  mSetObj <- .get.mSet(mSetObj);  
+  data <- as.matrix(mSetObj$dataSet$norm);
+  cls <- mSetObj$dataSet$cls;
+  print("using cache .......");
+  return(mem.aov(data, cls, nonpar));
 }
 
 .get.ftest.res <- function(data, cls, nonpar){
-
-    print("Performing regular ANOVA F-tests ....");
-
-    aov.res <- my.res <- NULL;
-    if(!nonpar){
-        aov.res <- apply(data, 2, aof, cls);
-        anova.res <- lapply(aov.res, anova);
-        my.res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));        
-    }else{
-        anova.res <- apply(data, 2, kwtest, cls);
-        my.res <- unlist(lapply(anova.res, function(x) {c(x$statistic, x$p.value)}));
-    }
-    my.res <- list(
-                    aov.res = aov.res,
-                    f.res = data.frame(matrix(my.res, nrow=ncol(data), byrow=T), stringsAsFactors=FALSE)
-                );
-    return(my.res);
+  
+  print("Performing regular ANOVA F-tests ....");
+  
+  aov.res <- my.res <- NULL;
+  if(!nonpar){
+    aov.res <- apply(data, 2, aof, cls);
+    anova.res <- lapply(aov.res, anova);
+    my.res <- unlist(lapply(anova.res, function(x) { c(x["F value"][1,], x["Pr(>F)"][1,])}));        
+  }else{
+    anova.res <- apply(data, 2, kwtest, cls);
+    my.res <- unlist(lapply(anova.res, function(x) {c(x$statistic, x$p.value)}));
+  }
+  my.res <- list(
+    aov.res = aov.res,
+    f.res = data.frame(matrix(my.res, nrow=ncol(data), byrow=T), stringsAsFactors=FALSE)
+  );
+  return(my.res);
 }
 
 #'Utility method to perform the univariate analysis automatically
