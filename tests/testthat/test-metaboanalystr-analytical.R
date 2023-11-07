@@ -121,8 +121,8 @@ test_that("Power Analysis Module Works", {
   
   # check if right module
   expect_match(anal.type, "power")
-  expect_equal(mSet$analSet$power$pwrD[1], 0.004901929)
-  expect_equal(mSet$analSet$power$Jpred[1], 3)
+  expect_equal(mSet$analSet$power.mat[2,1], 0.004901929)
+  expect_equal(mSet$analSet$power.mat[1,1], 3)
 })
 
 test_that("MS Peaks to Paths Module Works", {

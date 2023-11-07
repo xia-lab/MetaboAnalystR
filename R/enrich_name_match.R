@@ -353,7 +353,7 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   return.cols <- c(TRUE, TRUE, mSetObj$return.cols, TRUE);
   html.res <- html.res[,return.cols, drop=F];
   csv.res <- csv.res[,return.cols, drop=F];
-  
+
   # store the value for report
   mSetObj$dataSet$map.table <- csv.res;
   fast.write.csv(csv.res, file="name_map.csv", row.names=F);

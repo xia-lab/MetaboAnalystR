@@ -157,8 +157,8 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
     mSetObj$dataSet$pos_inx <- mode.info == "positive"
   }
   
-  mSetObj$paramSet$mumRT = rt
-  mSetObj$dataSet$mumType = "list";
+  mSetObj$paramSet$mumRT = rt;
+  mSetObj$dataSet$mum.type = "list";
   mSetObj$msgSet$read.msg <- paste("A total of", length(input$p.value), 
                                    "m/z features were found in your uploaded data.");
   mSetObj$dataSet$fileName <- file_name;
@@ -487,7 +487,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$check.msg <- NULL;
-  if(mSetObj$dataSet$mumType == "table"){
+  if(mSetObj$dataSet$mum.type == "table"){
     mSetObj$paramSet$mumDataContainsPval <- 1;
     orig.data<- qs::qread("data_orig.qs");
     l = sapply(colnames(orig.data),function(x) return(unname(strsplit(x,"/", fixed=TRUE)[[1]][1])))
@@ -2513,7 +2513,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
       rawpval <- as.numeric(sigpvalue);
       adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
     }, error = function(e){
-      if(mSetObj$dataSet$mumType == "table"){
+      if(mSetObj$dataSet$mum.type == "table"){
         if(!exists("adjustedp")){
           adjustedp <- rep(NA, length = length(res.mat[,1]))
         }
@@ -2668,7 +2668,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
       rawpval <- as.numeric(sigpvalue);
       adjustedp <- 1 - (pgamma(1-rawpval, shape = fit.gamma$estimate["shape"], rate = fit.gamma$estimate["scale"]));
     }, error = function(e){
-      if(mSetObj$dataSet$mumType == "table"){
+      if(mSetObj$dataSet$mum.type == "table"){
         if(!exists("adjustedp")){
           adjustedp <- rep(NA, length = length(res.mat[,1]))
         }
@@ -3813,7 +3813,8 @@ PreparePeakTable4PSEA <- function(mSetObj=NA){
   }
 
   ####### NOTE: need to use Ttests.Anal because Convert2Mummichog function takes as input result list from Ttests.anal: mSetObj$analSet$tt
-  
+  ## This is hack, should be better addressed later
+
   if(.on.public.web){
     
     is.rt <- mSetObj$paramSet$mumRT;
@@ -3828,6 +3829,9 @@ PreparePeakTable4PSEA <- function(mSetObj=NA){
     mSetObj<-Read.PeakListData(mSetObj, filename);
     mSetObj<-SanityCheckMummichogData(mSetObj);
     .on.public.web <<- T;
+
+    # don't forget the original!
+    mSetObj$dataSet$mum.type <- "table";
     .set.mSet(mSetObj);
     return(1)
     

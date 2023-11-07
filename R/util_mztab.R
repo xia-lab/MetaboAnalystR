@@ -119,7 +119,7 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   colnames(assay_table_all) <- gsub("\\[|\\]", "", colnames(assay_table_all))
   
   fast.write.csv(assay_table_all, "mzTab_parsed.csv", row.names = F)
-  
+
   mSetObj$dataSet$cls.type <- "disc";
   mSetObj$dataSet$format <- "colu";
   
@@ -230,7 +230,7 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   }
   
   mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- as.factor(as.character(cls.lbl));
-  mSetObj$dataSet$mumType <- "table";
+  mSetObj$dataSet$mum.type <- "table";
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
