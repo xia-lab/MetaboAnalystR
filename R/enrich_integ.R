@@ -290,6 +290,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     hits.both <- cbind(hits.cmpds, hits.genes);
     hitI <- apply(hits.both, 1, unlist);
 
+    #fast.write.csv(hitI, file="MetaboAnalyst_result_pathway_combined.csv", row.names=TRUE);
+
     # now update the hits.query and res.table
     my.res$hits.query <- hitI;
     resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);    
@@ -301,8 +303,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   # do some sorting
   ord.inx<-order(resTable[,"Raw p"], resTable[,"Impact"]);   
   resTable <- resTable[ord.inx, , drop=FALSE];
-  
-  hits.query <-  hits.query[ord.inx];
 
   # now save to csv
   fast.write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
