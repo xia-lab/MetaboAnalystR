@@ -526,7 +526,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     mSetObj$dataSet$cmpd <- var.nms;
   }
   
-  mSetObj$dataSet$mumType <- "table";
+  mSetObj$dataSet$mum.type <- "table";
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream

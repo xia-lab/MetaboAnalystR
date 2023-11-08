@@ -262,6 +262,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   }
   
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
+  hits.path <- my.res$hits.path;
+  hits.query <- my.res$hits.query;
   
   # combine pvals require performing analysis on compounds and genes separately. Note, we need to use the top from merge queries 
   if(libOpt == "integ" && integOpt != "query"){
@@ -271,6 +273,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       AddErrMsg("Failed to perform integration - not hits found for compound input.");
       return(0);
     }
+
+    hits.cmpds <- my.res$hits.query;
     fast.write.csv(res.cmpd$res.table, file="MetaboAnalyst_result_pathway_cmpd.csv", row.names=TRUE);
     
     # perform gene enrichment
@@ -279,20 +283,27 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       AddErrMsg("Failed to perform integration - not hits found for gene input.");
       return(0);
     }
+    hits.genes <- my.res$hits.query;
     fast.write.csv(res.gene$res.table, file="MetaboAnalyst_result_pathway_gene.csv", row.names=TRUE);
     
-    # now merge p val
+    # merge two lists
+    hits.both <- cbind(hits.cmpds, hits.genes);
+    hitI <- apply(hits.both, 1, unlist);
+
+    #fast.write.csv(hitI, file="MetaboAnalyst_result_pathway_combined.csv", row.names=TRUE);
+
+    # now update the hits.query and res.table
+    my.res$hits.query <- hitI;
     resI <- .performIntegPathMergeP(res.cmpd$res.table, res.gene$res.table, my.res$res.table, integOpt);    
     my.res$res.table <- resI;
   }
   
   resTable <- my.res$res.table;
-  hits.path <- my.res$hits.path;
-  
+
   # do some sorting
   ord.inx<-order(resTable[,"Raw p"], resTable[,"Impact"]);   
   resTable <- resTable[ord.inx, , drop=FALSE];
-  
+
   # now save to csv
   fast.write.csv(resTable, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
   
@@ -317,6 +328,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   # store results from individual analysis (for other analyses, not pvali)
   mSetObj$dataSet$path.mat <- resTable;
   mSetObj$dataSet$path.hits <- hits.path;
+  mSetObj$dataSet$hits.query <- hits.query;
   mSetObj$dataSet$pathinteg.impMat <- impMat;
   # Perform meta integ for global metabolomics and genes
   if(integOpt == "pvali") {
@@ -408,12 +420,17 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   
     # get the matched query for each pathway
     hits.query <- lapply(ms.list, function(x) {ora.vec%in%unlist(x);});
+
     hit.num <- unlist(lapply(hits.query, function(x){sum(x)}), use.names=FALSE);
   
     if(sum(hit.num) == 0){
         AddErrMsg("No hits found for your input!");
         return(NULL);
     }
+
+    # now replace with actual ids
+    hits.query <- lapply(hits.query, function(x){ora.vec[x]});
+    names(hits.query) <- current.kegglib$path.ids;
 
     # prepare for the result table
     res.mat<-matrix(0, nrow=set.size, ncol=8);
@@ -460,7 +477,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     res.mat <- res.mat[hit.num>0, , drop=FALSE];
     res.mat <- res.mat[!is.na(res.mat[,8]), , drop=FALSE];
     resTable <- signif(res.mat,5);
-    return(list(hits.path=hits.path, res.table=resTable));
+    return(list(hits.path=hits.path, res.table=resTable, hits.query=hits.query));
 }
 
 # internal function to integrate untargeted metabolomics and genes

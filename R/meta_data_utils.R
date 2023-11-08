@@ -396,18 +396,18 @@ PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
 
 PerformDataNormalization <- function(data, norm.opt){
   
-  msg <- NULL;
+  msg <- "Selected normalization method:" ;
   row.nms <- rownames(data);
   col.nms <- colnames(data);
   if(norm.opt=="log"){
     data <- log10(data);
-    msg <- paste(msg, "Log10 transformation.", collapse=" ");
+    msg <- paste(msg, "```Log10 transformation```.", collapse=" ");
   }else if(norm.opt=="vsn"){
     data <- limma::normalizeVSN(data);
-    msg <- paste(msg, "VSN normalization.", collapse=" ");
+    msg <- paste(msg, "```VSN normalization```.", collapse=" ");
   }else if(norm.opt=="quantile"){
     data <- preprocessCore::normalize.quantiles(data, copy=TRUE);
-    msg <- paste(msg, "Quantile normalization.", collapse=" ");
+    msg <- paste(msg, "```Quantile normalization```.", collapse=" ");
   }else{
     msg <- paste("Unknown normalization: ", norm.opt, collapse=" ");
     print(msg);
@@ -459,7 +459,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   
   gc();
   
-  mSetObj$dataSet$deparam <- paste(c("P value cutoff:", p.lvl, "Fold-Change cutoff:", fc.lvl))
+  mSetObj$dataSet$deparam <- paste(c("P value cutoff:```", p.lvl, "```; Fold-Change cutoff: ```", fc.lvl, "```"))
   mSetObj$dataSet$desig <- paste(c("Number of significant features:", sig.count, "Number of non-significant features:", non.sig.count))
   # record the sig gene vec
   if(.on.public.web){

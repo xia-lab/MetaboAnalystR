@@ -640,7 +640,7 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   }
   
   mSetObj$paramSet$mumRT = rt
-  mSetObj$dataSet$mumType = "list";
+  mSetObj$dataSet$mum.type = "list";
   mSetObj$msgSet$read.msg <- c(paste("A total of", length(input$p.value), 
                                    "m/z features were found in your uploaded data."),
                                paste(length(unique(as.character(cmpd_input))),

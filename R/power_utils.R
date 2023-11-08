@@ -119,7 +119,9 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
     fdr.lvl <- signif(pi0-pi0/10, 3);
   }
 
-  pwrD <- predictpower(ssD, samplesizes=N, alpha=fdr.lvl)
+  pwrD <- predictpower(ssD, samplesizes=N, alpha=fdr.lvl);
+  mSetObj$analSet$power$fdr.lvl <- fdr.lvl;
+  mSetObj$analSet$power$smplSize <- smplSize;
   mSetObj$analSet$power$ssD <- ssD;
   mSetObj$analSet$power$Jpred <- Jpred;
   mSetObj$analSet$power$pwrD <- pwrD;
@@ -178,8 +180,10 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
   points(Jpred, pwrD, pch=17);
   dev.off();
   
-  mSetObj$analSet$power$pwrD <- pwrD;
-  mSetObj$analSet$power$Jpred <- Jpred;
+  power.mat <- signif(cbind(Jpred, pwrD), 5);
+  colnames(power.mat) <- c("Sample Size (per group)", "Predicted power");
+  fast.write.csv(power.mat, file="predicted_sample_powers.csv");
+  mSetObj$analSet$power.mat <- power.mat;
   
   if(.on.public.web){
     .set.mSet(mSetObj);
@@ -196,6 +200,6 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
 
 GetPowerValuesX <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$analSet$power$Jpred);
+  return(mSetObj$analSet$power.mat[,1]);
 }
 

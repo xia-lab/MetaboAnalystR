@@ -182,6 +182,10 @@ PerformMetaPSEA <- function(mSetObj=NA,
   require(plyr);
   mSetObj <- .get.mSet(mSetObj);
 
+  # record lib
+  mSetObj$paramSet$lib <- lib;
+  .set.mSet(mSetObj);
+
   metaFiles <- mSetObj[["IncludedDataSets"]]
   #metaFiles <- unique(metaFiles);
   version <- mum.version <- mSetObj$paramSet$version;

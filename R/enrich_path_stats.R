@@ -106,7 +106,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     msg.vec <<- c(msg.vec, "No hits in the selected pathway library!")
     return(0)
   }
-  
+
+
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=8);
   rownames(res.mat)<-names(current.mset);

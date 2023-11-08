@@ -627,7 +627,7 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
   sigmat <- cbind(allsums, allnames)
   colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
   rownames(sigmat) <- c(names(metastat.de), "Meta-Analysis")
-  mSetObj$analSet$sigfeat.matrix <- sigmat
+  mSetObj$analSet$sigfeat.matrix <- sigmat;
 
   require(reshape2)
   df <- melt(sel.dats, value.name="id")

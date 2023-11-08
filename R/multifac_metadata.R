@@ -380,7 +380,7 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
         msg <- c(msg, paste0( "<b>",paste0(cls.vec, collapse=", "),"</b>", " meta-data factors are assigned to be continuous and remaining are categorical."));
         msg <- c(msg, "For categorical metadata, at least <b>two</b> groups with <b>three replicates</b> per group are required.");
         msg <- c(msg, "Please double check if these auto-assigned metadata types are correct.");
-        msg <- c(msg, "You can manually update the metadata using the table below.");
+        #msg <- c(msg, "You can manually update the metadata using the table below.");
     }
   }
 
