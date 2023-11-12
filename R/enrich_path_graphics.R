@@ -671,8 +671,6 @@ PlotPathSummaryGG <- function(mSetObj = NA,
   }
   h <- w;
   
-  print(imgName);
-  print("imgName======");
   mSetObj$imgSet$path.overview<-imgName;
   
   jointGlobal <- FALSE;
