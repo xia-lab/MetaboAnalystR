@@ -3245,7 +3245,7 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
 
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 1000, height = 800, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 800, height = 600, margin = mSetObj$imgSet$margin.config)
     return(ggp_build);
   }else{
     if(is.na(width)){

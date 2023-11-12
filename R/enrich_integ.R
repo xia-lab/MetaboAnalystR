@@ -563,6 +563,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   mSetObj$dataSet$integResGlobal <- integResGlobal;
   
   # correct the database as metab
+
   jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
   if(.on.public.web & jointGlobal){
     if(libOpt == "mgenetic") {
