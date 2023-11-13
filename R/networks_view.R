@@ -376,6 +376,7 @@ PrepareSubnetDownloads <- function(nm){
 }
 
 ComputeSubnetStats <- function(comps){
+  library(igraph);
   net.stats <- as.data.frame(matrix(0, ncol = 3, nrow = length(comps)));
   colnames(net.stats) <- c("Node", "Edge", "Query");
   for(i in 1:length(comps)){
@@ -607,6 +608,7 @@ community.significance.test <- function(graph, vs, ...) {
 ###################
 #'@import RColorBrewer
 convertIgraph2JSON <- function(net.nm, filenm){
+  library(igraph);
   net.nm<<-net.nm;
   filenm<<-filenm;
 
@@ -829,6 +831,7 @@ ExtractModule<- function(nodeids){
 }
 
 PerformLayOut <- function(net.nm, algo){
+  library(igraph);
   g <- pheno.comps[[net.nm]];
   vc <- vcount(g);
   if(algo == "Default"){

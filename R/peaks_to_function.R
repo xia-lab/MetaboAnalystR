@@ -3179,7 +3179,6 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
 
   mSetObj <- .get.mSet(mSetObj)
   anal.type0 <- mSetObj$paramSet$anal.type
-  
   if (anal.type0 == "mummichog") {
     mat <- mSetObj$mummi.resmat
     y <- -log10(mat[, 5])
@@ -3188,7 +3187,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   } else {
     mat <- mSetObj$mummi.gsea.resmat
     y <- -log10(mat[, 3])
-    x <- mat[, 2] / mat[, 1]
+    x <- mat[,5]
     pathnames <- rownames(mat)
   }
   
@@ -3197,29 +3196,44 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   x <- x[inx]
   pathnames <- pathnames[inx]
   
-  # set circle size based on enrichment factor
-  radi.vec <- sqrt(x)
+
   
   # Create the data frame
   df <- data.frame(y, x, pathnames)
   
   # Generate ggplot
   library(ggplot2);
+  if (anal.type0 == "mummichog") {
+  # set circle size based on enrichment factor
+  radi.vec <- sqrt(abs(x))
   p <- ggplot(df, aes(x = x, y = y)) +
     geom_point(aes(size = radi.vec, color = y, text = paste("Pathway:", pathnames, 
-                                "<br>Enrichment Factor:", round(x, 2), 
-                                "<br>-log10(p):", round(y, 2)))) +
+                                "<br>Enrichment Factor:", round(x, 3), 
+                                "<br>-log10(p):", round(y, 3)))) +
     scale_size_continuous(range = c(3, 15)) +
-    scale_color_gradient(low = "yellow", high = "red") +
+    scale_color_gradient(low = "yellow", high = "red", name="-log10(p)") +
     xlab("Enrichment Factor") +
     ylab("-log10(p)") +
     theme_minimal();
-  
+mSetObj$imgSet$mummi.plot<- imgName
+  }else{
+  # set circle size based on P-val
+  radi.vec <- sqrt(abs(y))
+  p <- ggplot(df, aes(x = x, y = y)) +
+    geom_point(aes(size = radi.vec, color = x, text = paste("Pathway:", pathnames, 
+                                "<br>NES:", round(x, 3), 
+                                "<br>-log10(p):", round(y, 3)))) +
+    scale_size_continuous(range = c(2, 10)) +
+    scale_color_gradient2(low = "#458B00", mid = "#fffee0", high = "#7f0000", midpoint = 0, name="NES") +
+    xlab("NES") +
+    ylab("-log10(p)") +
+    theme_minimal();
+mSetObj$imgSet$mummi.gsea.plot<- imgName
+  }
   # Add text labels for top num_annot points
   top_indices <- head(order(-df$y), num_annot)
   p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
   
-  mSetObj$imgSet$mummi.plot <- imgName
   
   if (anal.type0 == "mummichog") {
     list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
@@ -3231,10 +3245,22 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
 
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 1000, height = 800, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 800, height = 600, margin = mSetObj$imgSet$margin.config)
     return(ggp_build);
   }else{
-    return(.set.mSet(mSetObj));
+    if(is.na(width)){
+       w <- 7;
+     }else if(width == 0){
+       w <- 7;
+     }else{
+       w <- width;
+     }
+     h <- w;
+     imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
+     print(p);
+     dev.off()
+     return(.set.mSet(mSetObj));
   }
   
 }

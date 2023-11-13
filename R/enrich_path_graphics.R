@@ -302,6 +302,7 @@ PlotPathSummary<-function(mSetObj=NA,
         min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
       combo.p <- -log10(combo.resmat[,7])
       combo.p <- scales::rescale(combo.p, c(0,4))
+
     } else {
       x <-  mSetObj$dataSet$path.mat[,8];
       y <-  mSetObj$dataSet$path.mat[,4];
@@ -316,7 +317,8 @@ PlotPathSummary<-function(mSetObj=NA,
     print(paste("Unknown analysis type: ", mSetObj$analSet$type));
     return(0);
   }
-  
+        orig.y <- y;
+
   # first sort values based on p
   if(!jointGlobal){
     y = -log10(y);
@@ -413,6 +415,11 @@ PlotPathSummary<-function(mSetObj=NA,
     }
   }
   
+  # Create a data frame for ggplot
+  data <- data.frame(x = x, y = y, radi = radi.vec, color = bg.vec, path = path.nms)
+  data$pval <- orig.y; 
+  mSetObj$analSet$pathSummaryDf <- data;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(6,5,2,3));
   plot(x, 
@@ -634,4 +641,163 @@ getndp <- function(x, tol=2*.Machine$double.eps){
     warning("Tolerance reached, ndp possibly underestimated.")
   }
   ndp
+}
+PlotPathSummaryGG <- function(mSetObj = NA, 
+                              show.grid = FALSE, 
+                              imgName = "plot", 
+                              format = "png", 
+                              dpi = 72, 
+                              width = NA, 
+                              height = NA, 
+                              xlim = NA, 
+                              ylim = NA,
+                              interactive=F) {
+  save.image("path.RData");
+  library(ggplot2)
+  library(scales)
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Get data frame for ggplot
+  data <- mSetObj$analSet$pathSummaryDf;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$path.overview<-imgName;
+  
+  jointGlobal <- FALSE;
+  if (mSetObj$analSet$type == "pathinteg") { # this is integrative analysis
+    jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
+  }
+  if(jointGlobal){
+    xlabNM = "Enriched Pathways of Genes/Proteins";
+    ylabNM = "Enriched Pathways from Peaks";
+  } else {
+    xlabNM = "Pathway Impact";
+    ylabNM = "-log10(p)";
+  }
+  
+  x<- data$x;
+  y<- data$y;
+
+  if(is.na(xlim)) {
+    max_x <- max(x)
+  } else {
+    if(xlim > max(x)){
+      max_x <- xlim;
+    } else {
+      max_x <- max(x)
+    }
+  }
+  
+  if(is.na(ylim)){
+    max_y <- max(y)
+  } else {
+    if(ylim > max(y)){
+      max_y <- ylim;
+    } else {
+      max_y <- max(y)
+    }
+  }
+  
+if(ylabNM == "-log10(p)"){
+    ytooltipNm <- "P-value";
+    ytooltipVal <- data$pval;
+}else{
+    ytooltipNm <- ylabNM;
+    ytooltipVal <- data$y;
+
+}
+
+  data$text <- paste(" Pathway:", data$path, 
+                            "<br>",xlabNM, ":", round(data$x, 3), 
+                            "<br>",ytooltipNm, ":", signif(ytooltipVal, 3))
+  
+  if(interactive){
+    library(plotly);
+    sizeref <- max(data$radi) / 25
+    ggp <- plot_ly(data, x = ~x, y = ~y, type = 'scatter', mode = 'markers',
+                   marker = list(
+                     size = ~radi, 
+                     sizeref = sizeref,
+                     color = ~y, 
+                     colorscale = 'Heat',
+                     line = list(color = 'black', width = 1),  # Add black outline
+                     colorbar = list(
+                       title = ylabNM,
+                       len = 0.5  # Adjust the length of the colorbar
+                     ),
+                     showscale = TRUE
+                   ),
+                   text = ~text,  # Add tooltip
+                   hoverinfo = 'text') %>%
+      layout(
+        autosize = FALSE, 
+        xaxis = list(
+          title = xlabNM,
+          range = if (!is.na(xlim)) c(min(data$x), max(data$x)) else NULL,
+          showgrid = show.grid,
+          gridcolor = if (show.grid) "blue" else NULL
+        ),
+        yaxis = list(
+          title = ylabNM,
+          range = if (!is.na(ylim)) c(min(data$y), max(data$y)) else NULL,
+          showgrid = show.grid,
+          gridcolor = if (show.grid) "blue" else NULL
+        ),
+        width = 800, 
+        height = 600
+      )
+    return(ggp)
+  }else{
+    
+    p <- ggplot(data, aes(x = x, y = y, size = radi, fill = y, label = path, text = text)) +
+      geom_point(shape=21) + # 21 is filled circle
+      scale_size_continuous(range = c(2, 10),name=xlabNM) +
+      scale_fill_gradient(low = "#FFFFED", high = "#FF0000", name=ylabNM) +
+      labs(x = xlabNM, y = ylabNM) +
+      theme_bw()
+
+    if (!is.na(xlim)) {
+      p <- p + xlim(min(x), max(x))
+    }
+    
+    if (!is.na(ylim)) {
+      p <- p + ylim(min(y), max(y))
+    }
+    
+    if (show.grid) {
+      p <- p + theme(panel.grid.major = element_line(colour = "blue"),
+                     panel.grid.minor = element_line(colour = "blue"))
+    } else {
+      p <- p + theme(panel.grid = element_blank())
+    }
+    
+    # Adjust width and height
+    if (is.na(width)) {
+      plot_width <- 7
+    } else {
+      plot_width <- width
+    }
+    
+    if (is.na(height)) {
+      plot_height <- plot_width
+    } else {
+      plot_height <- height
+    }
+    # Save the plot
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    print(p);
+    dev.off();
+  }
+  
+  return(.set.mSet(mSetObj))
 }
