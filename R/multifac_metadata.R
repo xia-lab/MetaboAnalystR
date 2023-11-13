@@ -413,6 +413,7 @@ SetDataTypeOfMeta <- function(mSetObj=NA){
     }
   }
   mSetObj$dataSet$meta.info <- meta.info
+  qs::qsave(meta.info, file = "info4batch.qs")
   return(.set.mSet(mSetObj));
 }
 
