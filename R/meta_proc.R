@@ -845,7 +845,6 @@ CheckMetaIntegrity <- function(){
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
     
-    
     dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
@@ -898,8 +897,8 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   # increase xlim ylim for text label
   xlim <- GetExtendRange(pca.res$PC1);
   ylim <- GetExtendRange(pca.res$PC2);
-  Conditions <- factor(inmex.meta$cls.lbl)
-  Datasets <- factor(inmex.meta$data.lbl)
+  Conditions <- factor(inmex.meta$cls.lbl);
+  Datasets <- factor(inmex.meta$data.lbl);
 
   pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +
     geom_point(size=4, alpha=0.5) + 
