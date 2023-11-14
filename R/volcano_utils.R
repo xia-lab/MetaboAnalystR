@@ -17,7 +17,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   anal.type <- paramSet$anal.type;
 
   inx <- as.numeric(inx)
-  print("Prepare volcano anal");
+  #print("Prepare volcano anal");
   limit_fc <- T; #whether limit to -10 to 10 fc
   if(anal.type == "metadata"){
     if(paramSet$selDataNm == "meta_default"){
@@ -133,7 +133,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
     conv = gene.anot,
     analType = anal.type,
     org=paramSet$data.org,
-    
+    dat.opt = paramSet$selDataNm,
     naviString = "Volcano Plot"
   );
   
