@@ -335,6 +335,7 @@ GetListEnrGeneNumber <- function(){
     }else{
     tot.count <- 0;
     listSizes <- list();
+    dataSet <- readDataset(paramSet$selDataNm);
       gene.mat <- dataSet$sig.mat;
       
       # convert to entrezs
@@ -345,7 +346,7 @@ GetListEnrGeneNumber <- function(){
       names(en.ids) <- doEntrez2SymbolMapping(en.ids, paramSet$data.org, paramSet$data.idType)
       all.enIDs <- en.ids
       }
-print(all.enIDs)
+
       listSizes[[1]] <- list(
         name = paramSet$selDataNm,
         label = paramSet$selDataNm,
