@@ -264,11 +264,15 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                    pathwayPvals = pval.list, 
                    pathwayCols = col.list, 
                    enrRes = enr.res,
+                   dat.opt = paramSet$selDataNm,
                    naviString="ridge");
   csv.nm <- paste0(imgNm, ".csv");
   
   fast.write(resTable, file=csv.nm);
   
+  analSet$ridgeline <- res.list;
+  saveSet(analSet, "analSet");
+
   json.obj <- rjson::toJSON(res.list);
   sink(jsonNm);
   cat(json.obj);
