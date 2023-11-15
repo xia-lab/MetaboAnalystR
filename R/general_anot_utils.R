@@ -223,6 +223,8 @@ PerformCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
 
   mSetObj$dataSet$cmpd.orig <- cmpdIDs;
   mSetObj$dataSet$cmpd.org <- org;
+  mSetObj$dataSet$cmpd.id.type <- idType;
+
   if(idType == "name"){
     cmpd.mat <- getDataFromTextArea(cmpdIDs, "tab");
   }else{ # all other id should not contains space
