@@ -4296,7 +4296,6 @@ votep <-
 
 PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
                               num_annot = 5, interactive=F){  
-  save.image("paths.RData");
   library(plotly);
   library(dplyr);
   mSetObj <- .get.mSet(mSetObj)
