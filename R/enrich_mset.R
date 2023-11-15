@@ -379,6 +379,7 @@ SearchByName <- function(mSetObj=NA, query){
 SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
   
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj$paramSet$lib.nm <- libNm; 
   mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
   
   if(!.on.public.web){
@@ -413,6 +414,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
 SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
   
     mSetObj <- .get.mSet(mSetObj);
+    mSetObj$paramSet$lib.nm <- libNm; 
     mSetObj$msgSet$lib.msg <- paste("Your selected pathway library code is \\textbf{", libNm, "}(KEGG organisms abbreviation).");
 
     destfile <- paste0(libNm, ".qs");
