@@ -4293,3 +4293,143 @@ votep <-
     res
   }
 
+
+PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
+                              num_annot = 5, interactive=F){  
+  library(plotly);
+  library(dplyr);
+  mSetObj <- .get.mSet(mSetObj)
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  anal.type0 <- mSetObj$paramSet$anal.type
+  if (anal.type0 == "mummichog") {
+    mat <- mSetObj$mummi.resmat
+    y <- -log10(mat[, 5])
+    x <- mat[, 8] / mat[, 4]
+    pathnames <- rownames(mat)
+  } else {
+    mat <- mSetObj$mummi.gsea.resmat
+    y <- -log10(mat[, 3])
+    x <- mat[,5]
+    pathnames <- rownames(mat)
+  }
+  
+  inx <- order(y, decreasing = TRUE)
+  y <- y[inx]
+  x <- x[inx]
+  pathnames <- pathnames[inx]
+  
+  
+  
+  # Create the data frame
+  df <- data.frame(y, x, pathnames)
+  
+  df <- df %>%
+    group_by(x, y) %>%
+    summarize(
+      pathnames_agg = paste(pathnames, collapse = "<br>"),
+      .groups = 'drop'
+    )
+  
+  radi.vec <- sqrt(abs(as.numeric(df$x)))
+  sizeref <- max(radi.vec) / 25
+  # Generate ggplot
+  library(ggplot2);
+  if (anal.type0 == "mummichog") {
+    # set circle size based on enrichment factor
+    # Assuming df, x, y, pathnames, and other relevant variables are already defined
+
+    
+    # Create the plot with Plotly
+    p <- plot_ly(data = df, x = ~x, y = ~y,
+                 type = 'scatter', mode = 'markers',
+                 marker = list(size = ~radi.vec*10,  # Adjust size factor as needed
+                               color = ~y, 
+                               #sizeref = sizeref,
+                               colorscale = list(c(0, "yellow"), c(1, "red")),
+                               colorbar = list(title = "-log10(p)",len=0.5),
+                               line = list(color = 'black', width = 1)),
+                 text = ~paste(pathnames_agg, 
+                               "<br>Enrichment Factor:", round(x, 3), 
+                               "<br>-log10(p):", round(y, 3)),
+                 hoverinfo = 'text') %>%
+      layout(xaxis = list(title = 'Enrichment Factor'),
+             yaxis = list(title = '-log10(p)'),
+             hovermode='closest',
+            width = 800, 
+            height = 600)
+    
+    mSetObj$imgSet$mummi.plot<- imgName
+  }else{
+    # Assuming df, y, pathnames, imgName, and num_annot are already defined
+    
+    # Create the plot with Plotly
+    p <- plot_ly(data = df, x = ~x, y = ~y, 
+                 type = 'scatter', mode = 'markers',
+                 marker = list(size = ~radi.vec*10,  # Adjust size factor as needed
+                               color = ~x, 
+                               colorscale = list(c(0, "#458B00"), c(0.5, "#fffee0"), c(1, "#7f0000")),
+                               colorbar = list(
+                                 title = "NES",
+                                 len = 0.5  # Adjust the length of the colorbar
+                               ),
+                               line = list(color = 'black', width = 1)),
+                 text = ~paste(pathnames_agg, 
+                               "<br>Enrichment Factor:", round(x, 3), 
+                               "<br>-log10(p):", round(y, 3)),
+                 hoverinfo = 'text') %>%
+      layout(
+        xaxis = list(title = 'NES'),
+        yaxis = list(title = '-log10(p)'),
+        hovermode='closest',
+        width = 800, 
+        height = 600)
+    
+    mSetObj$imgSet$mummi.gsea.plot<- imgName
+  }
+  
+  improve_text_position <- function(x) {
+    positions <- c('top', 'bottom')
+    sapply(seq_along(x), function(i) positions[(i %% length(positions)) + 1])
+  }
+  
+  # Update traces with improved text positions
+  text_positions <- improve_text_position(df$y)
+  # Add text labels for top num_annot points
+  top_indices <- head(order(-df$y), num_annot)
+  for(i in top_indices) {
+    
+    p <- p %>% add_annotations(
+      x = df$x[i], y = df$y[i], 
+      text = df$pathnames_agg[i], 
+      showarrow = FALSE, 
+      xanchor = 'center', 
+      yanchor = text_positions[i],
+      font = list(size = 13))
+  }  
+  
+  if (anal.type0 == "mummichog") {
+    list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattermum.json")
+  } else {
+    list_data <- list(pval = unname(y), enr = unname(mat[, 5]), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattergsea.json")
+  }
+  
+  library(plotly);
+  if(interactive){
+    return(p);
+  }else{
+    if(is.na(width)){
+      w <- 7;
+    }else if(width == 0){
+      w <- 7;
+    }else{
+      w <- width;
+    }
+    h <- w;
+    plotly::save_image(p, file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
+    
+    return(.set.mSet(mSetObj));
+  }
+}

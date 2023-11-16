@@ -841,31 +841,65 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotANOVA <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=72, width=NA,interactive=F){
+  library(plotly)
+  library(ggplot2)
+  mSetObj <- .get.mSet(mSetObj)
   
-  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$aov$p.log
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
   
-  lod <- mSetObj$analSet$aov$p.log;
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
+  if (is.na(width)) {
+    w <- 9
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
   }
-  h <- w*6/9;
+  h <- w * 6 / 9
   
-  mSetObj$imgSet$anova <- imgName;
+  mSetObj$imgSet$anova <- imgName
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(lod, ylab="-log10(raw.p)", xlab = GetVariableLabel(mSetObj$dataSet$type), main=mSetObj$analSet$aov$aov.nm, type="n");
-  red.inx <- which(mSetObj$analSet$aov$inx.imp);
-  blue.inx <- which(!mSetObj$analSet$aov$inx.imp);
-  points(red.inx, lod[red.inx], bg="red", cex=1.2, pch=21);
-  points(blue.inx, lod[blue.inx], bg="green", pch=21);
-  dev.off();
+  aov <- mSetObj$analSet$aov;
+  
+  df <- data.frame(
+    seq = seq_along(aov$p.value),
+    label = names(aov$p.value),
+    p.log = aov$p.log,
+    p.value = aov$p.value,
+    inx.imp = aov$inx.imp,
+    fdr.p = aov$fdr.p
+  )
+  df$p.log <- as.numeric(df$p.log)
+  df$color_value <- ifelse(df$inx.imp == 1, df$p.log, NA)
+  
+  
+  # Create a ggplot object
+  p <- ggplot(df, aes(x = seq, y = p.log, text = paste("Label: ", label, "<br>p-value: ", signif(p.value,4), "<br>FDR: ", signif(fdr.p,4)))) +
+    geom_point(aes(color = color_value, size = p.log)) + # Use color_value for color scale
+    scale_color_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", name="-log10(raw-p)") + # Gradient from light blue to dark grey
+    labs(
+      x = GetVariableLabel(mSetObj$dataSet$type),
+      y = "-log10(raw-p)",
+    ) +
+    theme_minimal()+
+    theme(
+      panel.grid.major = element_blank(),  # Remove major gridlines
+      panel.grid.minor = element_blank(),  # Remove minor gridlines
+      axis.line = element_line(color = "black")  # Add axis lines
+    )
+
+  if(interactive){
+    # Convert the ggplot object to a plotly object
+    plotly_obj <- ggplotly(p, tooltip = "text")
+
+    # Export the plotly object
+    return(plotly_obj);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    print(p)
+    dev.off();
+  }
   return(.set.mSet(mSetObj));
 }
 
