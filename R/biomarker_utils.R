@@ -301,7 +301,10 @@ SetAnalysisMode <- function(mSetObj=NA, mode){
 PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum=2, propTraining=2/3){
   mSetObj <- .get.mSet(mSetObj);
   
-  mSetObj$analMethod <- cls.method;
+  mSetObj$analSet$exp.method <- cls.method;
+  mSetObj$analSet$rank.method <- rank.method;
+  mSetObj$analSet$exp.lvNum <- lvNum;
+
   data <- mSetObj$dataSet$norm;
   cls <- mSetObj$dataSet$cls;
   
@@ -418,7 +421,8 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
 PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=100){
   
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$analMethod <- method;
+  mSetObj$analSet$tester.method <- method;
+  mSetObj$analSet$tester.lvNum <- lvNum;
   data <- mSetObj$dataSet$norm;
   cls <- mSetObj$dataSet$cls;    
   
@@ -2037,7 +2041,7 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
   
   cls <- mSetObj$dataSet$cls;
   datmat <- mSetObj$dataSet$norm;
-  clsMethod <- mSetObj$analMethod;
+  clsMethod <- mSetObj$analSet$exp.method;
   
   splitMat <- GetTrainTestSplitMat(cls, propTraining, cvRuns);
   trainInx <- splitMat$training.mat;
@@ -2443,6 +2447,7 @@ SetCustomData <- function(mSetObj=NA, selected.cmpds, selected.smpls){
   
   mSetObj$dataSet$norm.orig <- data.norm.orig;
   mSetObj$dataSet$norm <- data.norm;
+  mSetObj$dataSet$selected.cmpds <- paste(selected.cmpds, collapse="; ");
   mSetObj$dataSet$cls <- cls;
   return(.set.mSet(mSetObj));
 }
