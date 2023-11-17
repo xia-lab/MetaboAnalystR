@@ -112,7 +112,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     ratio.mat <- CalculatePairwiseDiff(norm.data);
     
     fstats <- Get.Fstat(ratio.mat, cls);
-    hit.inx <- rank(-fstats) < ratioNum;  # get top n
+    hit.inx <- rank(-fstats) <= ratioNum;  # get top n
     
     ratio.mat <- ratio.mat[, hit.inx, drop=FALSE];
     
@@ -170,7 +170,8 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   data <- CleanData(data, T, F);
   
   if(ratio){
-    mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F)
+    mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F);
+
   }
 
   mSetObj$dataSet$norm <- as.data.frame(data);
