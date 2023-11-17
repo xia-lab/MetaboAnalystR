@@ -18,7 +18,7 @@
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ"){
+UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ",vis.type=""){
 
   mSetObj <- .get.mSet(mSetObj);
   # make sure this is annotated   
@@ -184,6 +184,18 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   fun.pval <<- resTable[,5];
   hit.num <<- resTable[,4];
   csv.nm <- paste(file.nm, ".csv", sep="");
+
+  if(is.null(mSetObj$imgSet$enrTables)){
+      mSetObj$imgSet$enrTables <- list();
+  }
+
+  mSetObj$imgSet$enrTables[[vis.type]] <- list();
+  mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+  mSetObj$imgSet$enrTables[[vis.type]]$library <- libOpt;
+  mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+  .set.mSet(mSetObj);
+
+
   fast.write.csv(resTable, file=csv.nm, row.names=F);
   return(1);
 }

@@ -5,18 +5,18 @@
 ###################################################
 
 # note: hit.query, resTable must synchronize
-PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs){
+PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs, vis.type=""){
     # prepare query
     ora.vec <- unlist(strsplit(IDs, "; ", fixed=TRUE));
     names(ora.vec) <- as.character(ora.vec);
     mSetObj <- .get.mSet(mSetObj);
-    res <- PerformEnrichAnalysis(mSetObj$org, file.nm, fun.type, ora.vec);
+    res <- PerformEnrichAnalysis(mSetObj, mSetObj$org, file.nm, fun.type, ora.vec, vis.type);
     return(res);
 }
 
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
-PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
+PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec, vis.type=""){
     if(fun.type %in% c("keggc", "smpdb")){
         .load.enrich.compound.lib(org.code, fun.type);
     }else{
@@ -132,6 +132,15 @@ PerformEnrichAnalysis <- function(org.code, file.nm, fun.type, ora.vec){
     hit.num <<- resTable[,4];
     csv.nm <- paste(file.nm, ".csv", sep="");
     fast.write.csv(resTable, file=csv.nm, row.names=F);
+    mSetObj <- .get.mSet(mSetObj);
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- fun.type;
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+    .set.mSet(mSetObj);
     return(1);
 }
 
