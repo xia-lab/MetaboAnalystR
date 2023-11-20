@@ -23,7 +23,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
   mSetObj <- .get.mSet(mSetObj);
   LoadKEGGKO_lib(category);
   #if(enrich.type == "hyper"){ else PerformKOEnrichAnalysis_Table
-  PerformKOEnrichAnalysis_List(file.nm);
+  mSetObj <- PerformKOEnrichAnalysis_List(mSetObj, file.nm);
   
   if(.on.public.web == FALSE){
     return(.set.mSet(mSetObj)); 
@@ -36,7 +36,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'Utility function for PerformKOEnrichAnalysis_KO01100
 #'@description Please note: only return hits in map KO01100
 #'@param file.nm Input the file name 
-PerformKOEnrichAnalysis_List <- function(file.nm){
+PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;
   } else if(idtype == "gene&cmpd"){
@@ -134,8 +134,8 @@ PerformKOEnrichAnalysis_List <- function(file.nm){
     }
   }
   
-  Save2KEGGJSON(hits.query, res.mat, file.nm, hits.all);
-  return(1);
+  mSetObj <- Save2KEGGJSON(mSetObj,hits.query, res.mat, file.nm, hits.all);
+  return(mSetObj);
 }
 
 ## Utility function for OrganizeJsonforNextwork
@@ -300,7 +300,7 @@ OrganizeTarJsonforNextwork <- function(mSetObj=NA){
 
 # Utility function for PerformKOEnrichAnalysis_List
 # for KO01100
-Save2KEGGJSON <- function(hits.query, res.mat, file.nm, hits.all){
+Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
 
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   AddMsg("Functional enrichment analysis was completed");
