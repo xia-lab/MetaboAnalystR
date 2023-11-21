@@ -167,7 +167,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
 
   dataSet$pval <- p.lvl;
   dataSet$fc.val <- fc.lvl;
-
+  dataSet$comp.res.filename <- filename;
   res <- RegisterData(dataSet);
   if(res == 1){
     return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
