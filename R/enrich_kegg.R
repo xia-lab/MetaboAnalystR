@@ -28,7 +28,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
   if(.on.public.web == FALSE){
     return(.set.mSet(mSetObj)); 
   } else {
-    mSet <<- mSetObj;
+    .set.mSet(mSetObj)
     return(1L);
   }
 }
@@ -425,6 +425,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
   hit.num <<- resTable[,4];
   csv.nm <- paste(file.nm, ".csv", sep="");
   fast.write.csv(resTable, file=csv.nm, row.names=F);
+  return(mSetObj);
 }
 
 # Utility function for Save2KEGGJSON
