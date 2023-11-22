@@ -67,7 +67,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 
   if(length(meta.vec.aov) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
-
+    meta.vec.aov <- colnames(sel.meta.df)[c(1,2)];
   }else{
 
    if(designType %in% c("time")){
@@ -288,11 +288,14 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     type = designType,
     sig.nm = fileName,
     thresh = -log10(thresh),
+    raw.thresh = thresh,
     multi.c = p.cor,
     sig.mat = na.omit(aov.mat),
     p.log = -log10(p.value),
     inx.imp = inx.imp,
-    vennC = vennC
+    vennC = vennC,
+    selected.meta = meta.vec.aov,
+    phenotype.factor= phenOpt
   );
   
   mSetObj$analSet$aov2 <- aov2;
