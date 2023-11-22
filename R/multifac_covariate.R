@@ -415,12 +415,14 @@ CovariateScatter.Anal <- function(mSetObj,
   # get inputs
   if(!exists('adj.vec')){
     adj.bool = F;
+    adj.vec= "NA"
     vars <- analysis.var;
   }else{
     if(length(adj.vec) > 0){
       adj.bool = T;
       vars <- c(analysis.var, adj.vec)
-    }else{
+    }else{    
+      adj.vec= "NA"
       adj.bool = F;
       vars <- analysis.var;
     }
@@ -611,6 +613,13 @@ CovariateScatter.Anal <- function(mSetObj,
   cat(jsonObj);
   sink();
   
+  mSetObj$paramSet$cov <- list(
+    sig.num = sig.num,
+    raw.thresh = thresh,
+    primary.meta = analysis.var,
+    covariates = adj.vec
+  )
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(res);
@@ -620,7 +629,7 @@ CovariateScatter.Anal <- function(mSetObj,
 }
 
 
-PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72){
+PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72, interactive=F){
   mSetObj <- .get.mSet(mSetObj); 
   both.mat <- mSetObj$analSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
@@ -631,54 +640,68 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   if(nrow(both.mat) < topFeature){
     topFeature <- nrow(both.mat);
   }
-  if(theme == "default"){
-    p <- ggplot(both.mat, mapping = aes(x = pval.no, y = pval.adj, label = Row.names)) +
-      geom_rect(mapping = aes(xmin = logp_val, xmax = Inf, 
-                              ymin = logp_val, ymax = Inf),
-                fill = "#6699CC") +
-      geom_rect(mapping = aes(xmin = -Inf, xmax = logp_val, 
-                              ymin = -Inf, ymax = logp_val),
-                fill = "grey") +
-      geom_rect(mapping = aes(xmin = logp_val, xmax = Inf, 
-                              ymin = -Inf, ymax = logp_val),
-                fill = "#E2808A") +
-      geom_rect(mapping = aes(xmin = -Inf, xmax = logp_val, 
-                              ymin = logp_val, ymax = Inf),
-                fill = "#94C973") +
-      guides(size="none") +
-      #annotate("text", x = 0.8, y = 0, label = "Never significant", size = 3) +
-      #annotate("text", x = 2, y = 0, label = "Significant without adjustment", size = 3) +
-      #annotate("text", x = 0.4, y = 1.5, label = "Significant with adjustment", size = 3) +
-      #annotate("text", x = 2.25, y = 1.5, label = "Always significant", size = 3) +
-      geom_point(aes(size=pval.adj), alpha=0.5) +
-      geom_abline(slope=1, intercept = 0, linetype="dashed", color = "red", size = 1) +
-      xlab("-log10(P-value): no covariate adjustment") +
-      ylab("-log10(P-value): adjusted") +
-      geom_text_repel(data = both.mat[c(1:topFeature),], 
-                  aes(x=pval.no,y=pval.adj,label=Row.names)) +
-      theme_bw();
-  }else{
-    p <- ggplot(both.mat, mapping = aes(x = pval.no, y = pval.adj, label = Row.names)) +
-      guides(size="none") +
-      geom_point(aes(size=pval.adj), alpha=0.5) +
-      geom_abline(slope=1, intercept = 0, linetype="dashed", color = "red", size = 1) +
-      geom_vline(xintercept = logp_val) +
-      geom_hline(yintercept = logp_val) +
-      xlab("-log10(P-value): no covariate adjustment") +
-      ylab("-log10(P-value): adjusted") +
-      geom_text_repel(data = both.mat[c(1:topFeature),], 
-                  aes(x=pval.no,y=pval.adj,label=Row.names))
-  }
   
   mSetObj$imgSet$covAdj <- imgName;
-
+  
   width <- 8;
   height <- 8.18;
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format, bg="white");
-  print(p)
-  dev.off()
+
+    library(plotly)
+    threshold <- logp_val               
+    
+    both.mat$category <- with(both.mat, case_when(
+      pval.no > threshold & pval.adj > threshold ~ "Significant in both",
+      pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
+      pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
+      TRUE ~ "Non-significant"
+    ))
+
+    # Define a list or data frame mapping categories to properties
+    category_properties <- data.frame(
+      category = c("Significant in both", "Significant in pval.no only", 
+                   "Significant in pval.adj only", "Non-significant"),
+      color = c('#6699CC', '#94C973', '#E2808A', 'grey'),
+      name = c("Significant", "Non-Sig. after adjustment", 
+               "Sig. after adjustment", "Non-Significant")
+    )
+    
+    # Initialize an empty plotly object
+    plotly_fig <- plot_ly()
+    
+    # Iterate over each category to add traces
+    for (i in 1:nrow(category_properties)) {
+      cat_data <- subset(both.mat, category == category_properties$category[i])
+      
+      if (nrow(cat_data) > 0) {
+        plotly_fig <- plotly_fig %>%
+          add_trace(data = cat_data, 
+                    x = ~pval.no, y = ~pval.adj, 
+                    type = 'scatter', mode = 'markers', 
+                    text = ~paste("Feature:", Row.names, 
+                                  "<br>Adjusted Pval:", round(pval.adj, 3), 
+                                  "<br>Non-adjusted Pval:", round(pval.no, 3)),
+                    name = category_properties$name[i], 
+                    marker = list(color = category_properties$color[i]), 
+                    alpha = 0.5)
+      }
+    }
+    
+    # Set the layout
+    plotly_fig <- plotly_fig %>%
+      layout(xaxis = list(title = "-log10(P-value): no covariate adjustment"),
+             yaxis = list(title = "-log10(P-value): adjusted"))
+    
+  if(interactive){
+    return(plotly_fig);
+  }else{
+    print("reached img export");
+    library(reticulate);
+    use_miniconda('r-reticulate')
+    py_run_string("import sys")
+    plotly::save_image(plotly_fig, file = imgName, unit="in", dpi=dpi, width=width, height=height);    
+    return(.set.mSet(mSetObj));
+  }
   
-  return(.set.mSet(mSetObj));
 }
 
 FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName){
