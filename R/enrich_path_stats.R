@@ -115,10 +115,10 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   if(nodeImp == "rbc"){
     imp.list <- current.kegglib$rbc;
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is relative betweenness centrality.";
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is `relative betweenness centrality`.";
   }else{
     imp.list <- current.kegglib$dgr;
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is out degree centrality.";
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is `out degree centrality`.";
   }
   imp.list <- imp.list[gd.sets];
 
@@ -128,11 +128,11 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   if(method == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
-    mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is Fishers' exact test.";
+    mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Fishers' exact test`.";
   }else{
     # use lower.tail = F for P(X>x)
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
-    mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is Hypergeometric test.";
+    mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Hypergeometric test`.";
   }
   
   res.mat[,5] <- -log10(res.mat[,4]);
@@ -297,10 +297,10 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   # calculate the impact values
   if(nodeImp == "rbc"){
     imp.list <- current.kegglib$rbc[hit.inx];
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is relative betweenness centrality.";
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is `relative betweenness centrality`.";
   }else{
     imp.list <- current.kegglib$dgr[hit.inx];
-    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is out degree centrality.";
+    mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is `out degree centrality`.";
   }
 
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);

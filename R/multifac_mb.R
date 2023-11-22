@@ -18,6 +18,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
     mSetObj$dataSet$exp.fac <- sel.meta.df[,2]
     mSetObj$dataSet$time.fac <- sel.meta.df[,1]
+    meta.vec.mb <- colnames(sel.meta.df);
   }else{
     sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.mb]
     mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
@@ -73,7 +74,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
     return(0);
   }
   fast.write.csv(signif(MB.stats, 5), file="meba_sig_features.csv");
-  mSetObj$analSet$MB <-list(stats=MB.stats);
+  mSetObj$analSet$MB <-list(stats=MB.stats, selected.meta=meta.vec.mb);
   return(.set.mSet(mSetObj));
 }
 
