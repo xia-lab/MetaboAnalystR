@@ -355,7 +355,12 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
   asca <- list(
     facNum = Fac, 
     Xoff = Xoff,
-    models = c(output,LIST)
+    models = c(output,LIST),
+    meta.vec = meta.vec.asca,
+    model.a = a,
+    model.b = b,
+    model.ab = x,
+    model.res = res 
   );
   qs::qsave(asca, file="asca.qs");
 
