@@ -90,12 +90,13 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
     randomness = "Using a constant (123456)";
   }else if(randomOn == 0){ # keep current
     rn.sd <- mSetObj$dataSet$rn.seed;
-    randomness = "On";
+    randomness = "Fix current random seed";
+
   }else{ # random on
     cur.inx <- mSetObj$dataSet$cur.inx + 1;
     rn.sd <- mSetObj$dataSet$random.seeds[cur.inx];        
     mSetObj$dataSet$cur.inx <- cur.inx;
-    randomness = "Fix current random seed";
+    randomness = "On";
   }
   set.seed(rn.sd);
   # save the 
