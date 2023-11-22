@@ -1,11 +1,10 @@
-
 my.fgsea <- function(mSetObj, pathways, stats, ranks,
-                   nperm,
-                   minSize=1, maxSize=Inf,
-                   nproc=0,
-                   gseaParam=1,
-                   BPPARAM=NULL) {
-
+                     nperm,
+                     minSize=1, maxSize=Inf,
+                     nproc=0,
+                     gseaParam=1,
+                     BPPARAM=NULL) {
+  
   # Warning message for ties in stats
   ties <- sum(duplicated(stats[stats != 0]))
   if (ties != 0) {
@@ -83,10 +82,39 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   K <- max(pathwaysSizes)
   
   #perform gsea
-  gseaStatRes <- do.call(rbind,
-                         lapply(pathwaysFiltered, fgsea::calcGseaStat,
-                                stats=stats,
-                                returnLeadingEdge=TRUE))
+  if (packageVersion("fgsea") > "1.24.0"){
+    stats <- sort(stats, decreasing = TRUE)
+    gseaResults <- lapply(pathwaysFiltered, function(selectedPathway) {
+      # Using tryCatch to handle errors within lapply
+      tryCatch({
+        # Ensure 'selectedPathway' is not empty and does not contain NA values
+        if (length(selectedPathway) > 0 && !any(is.na(selectedPathway))) {
+          # Calculate GSEA statistics for this pathway
+          fgsea::calcGseaStat(
+            stats = stats,
+            selectedStats = selectedPathway,
+            gseaParam = gseaParam,
+            returnLeadingEdge = TRUE
+          )
+        } else {
+          # If 'selectedPathway' is empty or contains NA, return a default list
+          warning("Selected pathway is empty or contains NA values. Returning default list...")
+          list(res = 0, leadingEdge = c())
+        }
+      }, error = function(e) {
+        # If there's an error, return a default list
+        warning("Error in calcGseaStat: ", e$message, ". Returning default list...")
+        list(res = 0, leadingEdge = c())
+      })
+    })
+    gseaStatRes <- do.call(rbind, gseaResults)
+  }else{
+    gseaStatRes <- do.call(rbind,
+                           lapply(pathwaysFiltered, fgsea::calcGseaStat,
+                                  stats=stats,
+                                  returnLeadingEdge=TRUE))
+  }
+    
   
   leadingEdges <- mapply("[", list(names(stats)), gseaStatRes[, "leadingEdge"], SIMPLIFY = FALSE)
   pathwayScores <- unlist(gseaStatRes[, "res"])
