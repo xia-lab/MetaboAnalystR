@@ -423,8 +423,6 @@ CovariateScatter.Anal <- function(mSetObj,
       adj.bool = T;
       vars <- c(analysis.var, adj.vec);
       cov.vec <- adj.vec;
-    }else{
-      vars <- c(analysis.var, adj.vec)
     }else{    
       adj.vec= "NA"
       adj.bool = F;
@@ -623,13 +621,6 @@ CovariateScatter.Anal <- function(mSetObj,
   cat(jsonObj);
   sink();
   
-  mSetObj$paramSet$cov <- list(
-    sig.num = sig.num,
-    raw.thresh = thresh,
-    primary.meta = analysis.var,
-    covariates = adj.vec
-  )
-
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(res);
