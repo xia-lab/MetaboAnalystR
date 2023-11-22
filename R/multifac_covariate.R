@@ -412,6 +412,7 @@ CovariateScatter.Anal <- function(mSetObj,
   library(limma)
   library(dplyr)
   
+  cov.vec <- "NA";
   # get inputs
   if(!exists('adj.vec')){
     adj.bool = F;
@@ -419,7 +420,8 @@ CovariateScatter.Anal <- function(mSetObj,
   }else{
     if(length(adj.vec) > 0){
       adj.bool = T;
-      vars <- c(analysis.var, adj.vec)
+      vars <- c(analysis.var, adj.vec);
+      cov.vec <- adj.vec;
     }else{
       adj.bool = F;
       vars <- analysis.var;
@@ -551,7 +553,7 @@ CovariateScatter.Anal <- function(mSetObj,
   
   names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   fdr.p <- rest[,"adj.P.Val"];
-  inx.imp <- p.value <= thresh;
+  inx.imp <- fdr.p <= thresh;
   sig.num <- sum(inx.imp);
   
   # save a copy 
@@ -585,7 +587,10 @@ CovariateScatter.Anal <- function(mSetObj,
       p.value.no = both.mat$pval.no,
       p.log = -log10(p.value),
       inx.imp = inx.imp,
-      sig.mat = sig.mat
+      sig.mat = sig.mat,
+      primary.var = analysis.var,
+      cov.var = cov.vec,
+      block = block
     );
   }else{
     res <- 0;
@@ -596,7 +601,10 @@ CovariateScatter.Anal <- function(mSetObj,
       p.value = p.value,
       p.value.no = both.mat$pval.no,
       p.log = -log10(p.value),
-      inx.imp = inx.imp
+      inx.imp = inx.imp,
+      primary.var = analysis.var,
+      cov.var = cov.vec,
+      block = block
     );
   }
   

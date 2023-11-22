@@ -180,6 +180,14 @@ CreateNORMdoc <- function(mSetObj=NA){
   
   cat(descr1, file=rnwFile, append=TRUE);
   
+  if(!is.null(mSetObj$dataSet[["rownorm.method"]])){
+      norm.desc <- paste("Row-wise normalization: ", mSetObj$dataSet$rownorm.method, "; ",
+                         "Data transformation: ",mSetObj$dataSet$trans.method, "; ",
+                         "Data scaling: ",mSetObj$dataSet$scale.method, ".", sep="");
+  }else{
+      norm.desc <- "No normalization methods were applied."
+  }
+
   descr2 <- c("\\begin{enumerate}",
               "\\item{Row-wise procedures: }",
               "\\begin{itemize}",
@@ -211,26 +219,18 @@ CreateNORMdoc <- function(mSetObj=NA){
               "\n\n",
               if(exists("norm", where=mSetObj$imgSet)){
                 paste("Figure", fig.count<<-fig.count+1,"shows the effects before and after normalization.\n");
-              })
+              },
+              norm.desc,
+              "\n\n")
   
   cat(descr2, file=rnwFile, append=TRUE, sep="\n");
-  
-    if(!is.null(mSetObj$dataSet[["rownorm.method"]])){
-      norm.desc <- paste("Row-wise normalization: ", mSetObj$dataSet$rownorm.method, "; ",
-                         "Data transformation: ",mSetObj$dataSet$trans.method, "; ",
-                         "Data scaling: ",mSetObj$dataSet$scale.method, ".", sep="");
-    }else{
-      norm.desc <- "No normalization methods were applied."
-    }
-  
-  
+    
   if(exists("norm", where=mSetObj$imgSet)){
     cmdhist <- c( "\\begin{figure}[htp]",
                   "\\begin{center}",
                   paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$norm,"}", sep=""),
                   "\\caption{Box plots and kernel density plots before and after normalization.",
-                  "The boxplots show at most 50 features due to space limit. The density plots are based on all samples.",
-                  "Selected methods :", norm.desc, "}",
+                  "The boxplots show at most 50 features due to space limit. The density plots are based on all samples.}",
                   "\\end{center}",
                   paste("\\label{",mSetObj$imgSet$norm,"}", sep=""),
                   "\\end{figure}",
