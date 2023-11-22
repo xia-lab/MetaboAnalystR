@@ -74,6 +74,8 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
   if(length(meta.vec.rf) >0) {
     norm <- cbind(sel.meta.vecs, norm);
     colnames(norm)[1:length(meta.vec.rf)] <- meta.vec.rf;
+  }else{
+    meta.vec.rf <- "NA"
   }
 
   # set up random numbers
@@ -82,15 +84,18 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
     mSetObj$dataSet$cur.inx <- 0;
     mSetObj$dataSet$rn.seed <- mSetObj$dataSet$random.seeds[1];
   }
-  
+  randomness = "";
   if(randomOn == -1){
     rn.sd <- 123456;
+    randomness = "Using a constant (123456)";
   }else if(randomOn == 0){ # keep current
     rn.sd <- mSetObj$dataSet$rn.seed;
+    randomness = "On";
   }else{ # random on
     cur.inx <- mSetObj$dataSet$cur.inx + 1;
     rn.sd <- mSetObj$dataSet$random.seeds[cur.inx];        
     mSetObj$dataSet$cur.inx <- cur.inx;
+    randomness = "Fix current random seed";
   }
   set.seed(rn.sd);
   # save the 
@@ -108,7 +113,9 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
   
   fast.write.csv(sigmat, file="randomforests_sigfeatures.csv");
   mSetObj$analSet$rf <- rf_out;
+  mSetObj$analSet$rf.random <- randomness;
   mSetObj$analSet$rf.sigmat <- sigmat;
+  mSetObj$analSet$meta.vec.rf <- meta.vec.rf;
   mSetObj$dataSet$norm.meta <- norm;
   return(.set.mSet(mSetObj));
 }
