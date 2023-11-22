@@ -710,11 +710,13 @@ FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, var
   mSetObj <- .get.mSet(mSetObj);
   if(!exists('cov.vec')){
     adj.bool = F;
+    cov.vec = "NA";
   }else{
     if(length(cov.vec) > 0){
       adj.bool = T;
     }else{
       adj.bool = F;
+      cov.vec = "NA";
     }
   }
 
@@ -761,6 +763,8 @@ FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, var
   fileName <- "correlation_feature.csv";
   fast.write.csv(sig.mat,file=fileName);
   
+  mSetObj$analSet$corr$cov.vec <- cov.vec;  
+  mSetObj$analSet$corr$dist.name <- dist.name;  
   mSetObj$analSet$corr$sig.nm <- fileName;
   mSetObj$analSet$corr$cor.mat <- sig.mat;
   mSetObj$analSet$corr$pattern <- varName;
