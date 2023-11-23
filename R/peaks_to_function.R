@@ -46,19 +46,19 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
     #anal.type <<- "gsea_peaks";    
     mSetObj$paramSet$anal.type <- "gsea_peaks";
     mSetObj$mum_nm <- "mummichog_query_gsea.json";
-    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_gsea.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_gsea.csv";
   }else if(algOpt == "mum"){
     #anal.type <<- "mummichog"
     mSetObj$paramSet$anal.type <- "mummichog";
     #set json (for kegg network) and csv names
     mSetObj$mum_nm <- "mummichog_query_mummichog.json";
-    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv";
   }else{
     #anal.type <<- "integ_peaks"
     mSetObj$paramSet$anal.type <- "integ_peaks";
     #set json (for kegg network) and csv names
     mSetObj$mum_nm <- "mummichog_query_integ.json";
-    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_integ.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_integ.csv";
   }
   return(.set.mSet(mSetObj));
 }
@@ -511,8 +511,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   msg.vec <- NULL;
-  mSetObj$mum_nm <- "mummichog_query.json"
-  mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
+  mSetObj$mum_nm <- "mummichog_query_mummichog.json"
+  mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
   ndat <- mSetObj$dataSet$mummi.orig;
   pos_inx = mSetObj$dataSet$pos_inx
   ndat <- data.frame(cbind(ndat, pos_inx), stringsAsFactors = FALSE)
@@ -910,7 +910,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     ord.inx <- order(dfcombo[,6]);
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     
-    fast.write.csv(dfcombo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
     mSetObj$integ.resmat <- dfcombo;
     matched_cpds <- names(mSetObj$cpd_exp)
     colnames(mum.df)[1] = "pathways";
@@ -991,7 +991,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     colnames(df.combo) <- c("Total_Size", "Hits", "Sig_Hits", "Mummichog_Pvals", "GSEA_Pvals", "Combined_Pvals")
     ord.inx <- order(df.combo[,6]);
     df.combo <- signif(as.matrix(df.combo[ord.inx, ]), 4);
-    fast.write.csv(df.combo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(df.combo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
     mSetObj$integ.resmat <- df.combo
     
     ## transform ecpd to cpd for json files
@@ -2854,7 +2854,7 @@ json.res <- list(
   Cpd.Hits <- Cpd.Hits[Cpd.Hits != ""]
   
   res.mat <- cbind(res.mat, Cpd.Hits[ord.inx])
-  fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  fast.write.csv(res.mat, file=mSetObj$mum_nm_csv, row.names=TRUE);
   
   matched_cpds <- names(mSetObj$cpd_exp)
   inx2<- stats::na.omit(match(rownames(res.mat), mSetObj$pathways$name))
@@ -2948,7 +2948,7 @@ json.res <- list(
   EC.Hits <- qs::qread("pathwaysFiltered.qs")
   EC.Hits <- lapply(seq_along(EC.Hits), function(i) paste(names(EC.Hits[[i]]), collapse = ";"))
   res.mat <- cbind(res.mat, EC.Hits)
-  fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  fast.write.csv(res.mat, file=mSetObj$mum_nm_csv, row.names=TRUE);
   
   # need to convert ECs to compounds for json
   total_ecpds <- unique(mSetObj$total_matched_ecpds) #all matched compounds
@@ -3182,7 +3182,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 #' License: GNU GPL (>= 2)
 #' @export
 
-PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
+PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default",
                             num_annot = 5, interactive=F){  
 
   mSetObj <- .get.mSet(mSetObj)
@@ -3211,36 +3211,41 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   
   # Generate ggplot
   library(ggplot2);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if (anal.type0 == "mummichog") {
   # set circle size based on enrichment factor
   radi.vec <- sqrt(abs(x))
   p <- ggplot(df, aes(x = x, y = y)) +
     geom_point(aes(size = radi.vec, color = y, text = paste("Pathway:", pathnames, 
                                 "<br>Enrichment Factor:", round(x, 3), 
-                                "<br>-log10(p):", round(y, 3)))) +
-    scale_size_continuous(range = c(3, 15)) +
+                                "<br>-log10(p):", round(y, 3))), stroke = 0.5) +
+    scale_size_continuous(range = c(1, 5)) +
     scale_color_gradient(low = "yellow", high = "red", name="-log10(p)") +
     xlab("Enrichment Factor") +
     ylab("-log10(p)") +
     theme_minimal();
+
+  # Add text labels for top num_annot points
+  top_indices <- head(order(-df$y), num_annot)
+  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
+
 mSetObj$imgSet$mummi.plot<- imgName
+
   }else{
   # set circle size based on P-val
   radi.vec <- sqrt(abs(y))
   p <- ggplot(df, aes(x = x, y = y)) +
     geom_point(aes(size = radi.vec, color = x, text = paste("Pathway:", pathnames, 
                                 "<br>NES:", round(x, 3), 
-                                "<br>-log10(p):", round(y, 3)))) +
-    scale_size_continuous(range = c(2, 10)) +
+                                "<br>-log10(p):", round(y, 3))), stroke = 0.5) +
+    scale_size_continuous(range = c(1, 5)) +
     scale_color_gradient2(low = "#458B00", mid = "#fffee0", high = "#7f0000", midpoint = 0, name="NES") +
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
 mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
-  # Add text labels for top num_annot points
-  top_indices <- head(order(-df$y), num_annot)
-  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
+
   
   
   if (anal.type0 == "mummichog") {
@@ -3264,7 +3269,6 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
        w <- width;
      }
      h <- w;
-     imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
      print(p);
      dev.off()
