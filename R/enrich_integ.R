@@ -317,7 +317,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       })
     names(my.hits.genes) <- names(current.kegglib$path.ids);
     my.hits.genes <- my.hits.genes[unname(which(sapply(my.hits.genes, length)!=0))]
-    my.cmpds <- RJSONIO::fromJSON("mummichog_query.json");
+    my.cmpds <- RJSONIO::fromJSON(mSetObj$mum_nm);
     my.hits.cmpds <- my.cmpds$hits.sig;
     names(my.hits.cmpds) <- my.cmpds$path.nms;
     mSetObj$dataSet$my.hits <- list(my.hits.genes = my.hits.genes, 

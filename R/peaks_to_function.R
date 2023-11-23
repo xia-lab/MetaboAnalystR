@@ -45,12 +45,20 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
   if(algOpt == "gsea"){
     #anal.type <<- "gsea_peaks";    
     mSetObj$paramSet$anal.type <- "gsea_peaks";
+    mSetObj$mum_nm <- "mummichog_query_gsea.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_gsea.json";
   }else if(algOpt == "mum"){
     #anal.type <<- "mummichog"
     mSetObj$paramSet$anal.type <- "mummichog";
+    #set json (for kegg network) and csv names
+    mSetObj$mum_nm <- "mummichog_query_mummichog.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.json";
   }else{
     #anal.type <<- "integ_peaks"
     mSetObj$paramSet$anal.type <- "integ_peaks";
+    #set json (for kegg network) and csv names
+    mSetObj$mum_nm <- "mummichog_query_integ.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_integ.json";
   }
   return(.set.mSet(mSetObj));
 }
@@ -3897,7 +3905,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
 
 PrepareIntegCMPDList <- function(mSetObj) {
   CMPDSet <- NULL;
-  my.cmpds <- RJSONIO::fromJSON("mummichog_query.json");
+  my.cmpds <- RJSONIO::fromJSON(mSetObj$mum_nm);
   CMPDSet <- unique(unlist(my.cmpds[["hits.sig"]]));
   return(CMPDSet)
 }
