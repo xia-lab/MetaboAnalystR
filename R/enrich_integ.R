@@ -603,7 +603,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
 
 .plotIntegGlobalMergeP <- function(mSetObj = NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
                                    labels.x = 5, labels.y = 5, scale.axis = TRUE) {
-  
   mSetObj <- .get.mSet(mSetObj);
   ### Here is the ploting function below
   combo.resmat <- mSetObj$dataSet$integResGlobal
