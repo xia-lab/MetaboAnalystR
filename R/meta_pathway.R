@@ -193,10 +193,13 @@ PerformMetaPSEA <- function(mSetObj=NA,
   ## TO solve the strong interferation 
   if(file.exists("mum_res.qs")) file.remove("mum_res.qs")
   if(file.exists("pathwaysFiltered.qs")) file.remove("pathwaysFiltered.qs")
-  if(file.exists("mummichog_pathway_enrichment.csv")) file.remove("mummichog_pathway_enrichment.csv")
+  if(file.exists("mummichog_pathway_enrichment_mummichog.csv")) file.remove("mummichog_pathway_enrichment_mummichog.csv")
+  if(file.exists(mSetObj$mum_nm_csv)) file.remove(mSetObj$mum_nm_csv)
+
+
   if(file.exists("mummichog_matched_compound_all.csv")) file.remove("mummichog_matched_compound_all.csv")
-  if(file.exists("mummichog_integ_pathway_enrichment.csv")) file.remove("mummichog_integ_pathway_enrichment.csv")
-  if(file.exists("mummichog_fgsea_pathway_enrichment.csv")) file.remove("mummichog_fgsea_pathway_enrichment.csv")
+  if(file.exists("mummicho_pathway_enrichment_integ.csv")) file.remove("mmummicho_pathway_enrichment_integ.csv")
+  if(file.exists("mummichog_pathway_enrichment_gsea.csv")) file.remove("mummichog_pathway_enrichment_gsea.csv")
   if(file.exists("ms_peaks_meta_anal_path_res.json")) file.remove("ms_peaks_meta_anal_path_res.json")
   if(file.exists("initial_ecs.qs")) file.remove("initial_ecs.qs")
 
@@ -230,12 +233,12 @@ PerformMetaPSEA <- function(mSetObj=NA,
 
       if(anal.type0 == "mummichog"){
         pathResults[[metaFiles[i]]] <- mSetObj0$mummi.resmat
-        pathResultsWhole[[metaFiles[i]]] <- read.csv("mummichog_pathway_enrichment.csv")
+        pathResultsWhole[[metaFiles[i]]] <- read.csv(mSetObj$mum_nm_csv)
       }else if(anal.type0 == "gsea_peaks"){
         pathResults[[metaFiles[i]]] <- mSetObj0$mummi.gsea.resmat
       }else{ # integ
         pathResults[[metaFiles[i]]] <- mSetObj0$integ.resmat
-        pathResultsWhole[[metaFiles[i]]] <- read.csv("mummichog_pathway_enrichment.csv")
+        pathResultsWhole[[metaFiles[i]]] <- read.csv(mSetObj$mum_nm_csv)
       }
     
       if(i != length(metaFiles)){
@@ -277,8 +280,8 @@ PerformMetaPSEA <- function(mSetObj=NA,
     # do individual putative compound annotation
     if((length(ins_tol) > 1) || (length(unique(adduct.list)) > 1)){
       
-      mSetObj$mum_nm <- "mummichog_query.json"
-      mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
+      mSetObj$mum_nm <- "mummichog_query_mummichog.json"
+      mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
       
       if(version == "v2"){
         mSetObj$paramSet$mumRT <- TRUE

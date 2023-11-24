@@ -45,12 +45,20 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
   if(algOpt == "gsea"){
     #anal.type <<- "gsea_peaks";    
     mSetObj$paramSet$anal.type <- "gsea_peaks";
+    mSetObj$mum_nm <- "mummichog_query_gsea.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_gsea.csv";
   }else if(algOpt == "mum"){
     #anal.type <<- "mummichog"
     mSetObj$paramSet$anal.type <- "mummichog";
+    #set json (for kegg network) and csv names
+    mSetObj$mum_nm <- "mummichog_query_mummichog.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv";
   }else{
     #anal.type <<- "integ_peaks"
     mSetObj$paramSet$anal.type <- "integ_peaks";
+    #set json (for kegg network) and csv names
+    mSetObj$mum_nm <- "mummichog_query_integ.json";
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_integ.csv";
   }
   return(.set.mSet(mSetObj));
 }
@@ -503,8 +511,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   msg.vec <- NULL;
-  mSetObj$mum_nm <- "mummichog_query.json"
-  mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment.csv"
+  mSetObj$mum_nm <- "mummichog_query_mummichog.json"
+  mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
   ndat <- mSetObj$dataSet$mummi.orig;
   pos_inx = mSetObj$dataSet$pos_inx
   ndat <- data.frame(cbind(ndat, pos_inx), stringsAsFactors = FALSE)
@@ -902,7 +910,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     ord.inx <- order(dfcombo[,6]);
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     
-    fast.write.csv(dfcombo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
     mSetObj$integ.resmat <- dfcombo;
     matched_cpds <- names(mSetObj$cpd_exp)
     colnames(mum.df)[1] = "pathways";
@@ -983,7 +991,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     colnames(df.combo) <- c("Total_Size", "Hits", "Sig_Hits", "Mummichog_Pvals", "GSEA_Pvals", "Combined_Pvals")
     ord.inx <- order(df.combo[,6]);
     df.combo <- signif(as.matrix(df.combo[ord.inx, ]), 4);
-    fast.write.csv(df.combo, "mummichog_integ_pathway_enrichment.csv", row.names = TRUE)
+    fast.write.csv(df.combo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
     mSetObj$integ.resmat <- df.combo
     
     ## transform ecpd to cpd for json files
@@ -2846,7 +2854,7 @@ json.res <- list(
   Cpd.Hits <- Cpd.Hits[Cpd.Hits != ""]
   
   res.mat <- cbind(res.mat, Cpd.Hits[ord.inx])
-  fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  fast.write.csv(res.mat, file=mSetObj$mum_nm_csv, row.names=TRUE);
   
   matched_cpds <- names(mSetObj$cpd_exp)
   inx2<- stats::na.omit(match(rownames(res.mat), mSetObj$pathways$name))
@@ -2940,7 +2948,7 @@ json.res <- list(
   EC.Hits <- qs::qread("pathwaysFiltered.qs")
   EC.Hits <- lapply(seq_along(EC.Hits), function(i) paste(names(EC.Hits[[i]]), collapse = ";"))
   res.mat <- cbind(res.mat, EC.Hits)
-  fast.write.csv(res.mat, file="mummichog_fgsea_pathway_enrichment.csv", row.names=TRUE);
+  fast.write.csv(res.mat, file=mSetObj$mum_nm_csv, row.names=TRUE);
   
   # need to convert ECs to compounds for json
   total_ecpds <- unique(mSetObj$total_matched_ecpds) #all matched compounds
@@ -3174,7 +3182,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 #' License: GNU GPL (>= 2)
 #' @export
 
-PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
+PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default",
                             num_annot = 5, interactive=F){  
 
   mSetObj <- .get.mSet(mSetObj)
@@ -3203,36 +3211,41 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width
   
   # Generate ggplot
   library(ggplot2);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if (anal.type0 == "mummichog") {
   # set circle size based on enrichment factor
   radi.vec <- sqrt(abs(x))
   p <- ggplot(df, aes(x = x, y = y)) +
     geom_point(aes(size = radi.vec, color = y, text = paste("Pathway:", pathnames, 
                                 "<br>Enrichment Factor:", round(x, 3), 
-                                "<br>-log10(p):", round(y, 3)))) +
-    scale_size_continuous(range = c(3, 15)) +
+                                "<br>-log10(p):", round(y, 3))), stroke = 0.5) +
+    scale_size_continuous(range = c(1, 5)) +
     scale_color_gradient(low = "yellow", high = "red", name="-log10(p)") +
     xlab("Enrichment Factor") +
     ylab("-log10(p)") +
     theme_minimal();
+
+  # Add text labels for top num_annot points
+  top_indices <- head(order(-df$y), num_annot)
+  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
+
 mSetObj$imgSet$mummi.plot<- imgName
+
   }else{
   # set circle size based on P-val
   radi.vec <- sqrt(abs(y))
   p <- ggplot(df, aes(x = x, y = y)) +
     geom_point(aes(size = radi.vec, color = x, text = paste("Pathway:", pathnames, 
                                 "<br>NES:", round(x, 3), 
-                                "<br>-log10(p):", round(y, 3)))) +
-    scale_size_continuous(range = c(2, 10)) +
+                                "<br>-log10(p):", round(y, 3))), stroke = 0.5) +
+    scale_size_continuous(range = c(1, 5)) +
     scale_color_gradient2(low = "#458B00", mid = "#fffee0", high = "#7f0000", midpoint = 0, name="NES") +
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
 mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
-  # Add text labels for top num_annot points
-  top_indices <- head(order(-df$y), num_annot)
-  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
+
   
   
   if (anal.type0 == "mummichog") {
@@ -3256,7 +3269,6 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
        w <- width;
      }
      h <- w;
-     imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
      print(p);
      dev.off()
@@ -3287,12 +3299,10 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import scales
-
-PlotPSEAIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
-                           labels.x = 5, labels.y = 5, scale.axis = TRUE){
-  
+PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default", 
+                               labels.x = 5, labels.y = 5, scale.axis = TRUE, interactive=F){
   mSetObj <- .get.mSet(mSetObj);
-
+  
   # check if mummichog + gsea was performed
   if(is.null(mSetObj$mummi.resmat) | is.null(mSetObj$mummi.gsea.resmat)){
     print("Both mummichog and fGSEA must be performed!")
@@ -3361,49 +3371,77 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wi
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$integpks.plot <- imgName
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg=bg);
-  op <- par(mar=c(6,5,2,3));
+  library(ggplot2)
+  library(plotly)
+  library(dplyr)
+
+  df$radi.vec <- radi.vec;
+  df$bg.vec <- bg.vec;
   
-  # color blocks only make sense if scaled...
-  if(scale.axis){
-    plot(x, y, type="n", axes=F, xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
-    axis(1);
-    axis(2);
-    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
-    
-    axis.lims <- par("usr")
-    
-    # mummichog sig
-    mum.x <- c(axis.lims[1], axis.lims[1], axis.lims[2], axis.lims[2])
-    mum.y <- c(2, axis.lims[4], axis.lims[4], 2)
-    polygon(mum.x, mum.y, col=rgb(82/255,193/255,188/255,0.3), border = NA)
-    
-    # gsea sig
-    gsea.x <- c(2,2,axis.lims[4],axis.lims[4])
-    gsea.y <- c(axis.lims[1],axis.lims[4],axis.lims[4],axis.lims[1])
-    polygon(gsea.x, gsea.y, col=rgb(216/255,126/255,178/255,0.3), border = NA)
-  }else{
-    plot(x, y, type="n", xlim=c( 0, round(max(x)) ), ylim=c(0, round(max(y)) ), xlab="GSEA -log10(p)", ylab="Mummichog -log10(p)", bty = "l");
-    symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
+  df <- df %>%
+    mutate(sig_category = case_when(
+      x >= 2 & y >= 2 ~ "sig_both",
+      x >= 2 & y < 2  ~ "sig_gsea",
+      x < 2  & y >= 2 ~ "sig_mummichog",
+      TRUE                       ~ "unsig" # Cases where neither is significant
+    ))
+  df <- df %>%
+    mutate(tooltip_text = paste("Pathway:", path.nms, 
+                                "<br>GSEA -log10(p):", round(x, 3), 
+                                "<br>Mummichog -log10(p):", round(y, 3)))
+  df_unsig <- df %>% filter(sig_category == "unsig")
+  df_sig_both <- df %>% filter(sig_category == "sig_both")
+  df_sig_mummichog <- df %>% filter(sig_category == "sig_mummichog")
+  df_sig_gsea <- df %>% filter(sig_category == "sig_gsea")
+  # Create the base plot
+  p <- plot_ly() %>%
+    layout(xaxis = list(title = "GSEA -log10(p)"),
+           yaxis = list(title = "Mummichog -log10(p)"),
+         height = 600,
+         width = plot_width)
+  
+  # Conditional marker addition with line width settings
+  if (nrow(df_unsig) > 0) {
+    p <- p %>% add_markers(data = df_unsig, x = ~x, y = ~y, size = ~radi.vec, color = I("#d3d3d3"),
+                           text = ~tooltip_text, name = "Unsignificant",
+                           marker = list(line = list(color = '#000', width = 2)))
   }
   
-  if(labels=="default"){
-    text(x[all.inx], y[all.inx], labels = path.nms[all.inx], pos=3, xpd=T, cex=0.8)
-  }else if(labels == "all"){
-    text(x, y, labels = path.nms, pos=3, xpd=T, cex=0.8)
+  if (nrow(df_sig_both) > 0) {
+    p <- p %>% add_markers(data = df_sig_both, x = ~x, y = ~y, size = ~radi.vec, color = I("#FF0000"),
+                           text = ~tooltip_text, name = "Both Significant",
+                           marker = list(line = list(color = '#000', width = 2)))
   }
   
-  par(op);
-  dev.off();
+  if (nrow(df_sig_mummichog) > 0) {
+    p <- p %>% add_markers(data = df_sig_mummichog, x = ~x, y = ~y, size = ~radi.vec, color = I("#0000FF"),
+                           text = ~tooltip_text, name = "Sig. in Mummichog",
+                           marker = list(line = list(color = '#000', width = 2)))
+  }
+  
+  if (nrow(df_sig_gsea) > 0) {
+    p <- p %>% add_markers(data = df_sig_gsea, x = ~x, y = ~y, size = ~radi.vec, color = I("#008000"),
+                           text = ~tooltip_text, name = "Sig. in GSEA",
+                           marker = list(line = list(color = '#000', width = 2)))
+  }
   
   df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
   cat(RJSONIO::toJSON(df));
   sink();
   
-  return(.set.mSet(mSetObj));
+  if(interactive){
+    return(p);
+  }else{
+    print("reached img export");
+    library(reticulate);
+    use_miniconda('r-reticulate')
+    py_run_string("import sys")
+    plotly::save_image(p, file = imgName, unit="in", dpi=dpi, width=w, height=h);    
+    return(.set.mSet(mSetObj));
+  }
+  
 }
-
 ###############################
 ####### Getters For Web #######
 ###############################
@@ -3897,7 +3935,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
 
 PrepareIntegCMPDList <- function(mSetObj) {
   CMPDSet <- NULL;
-  my.cmpds <- RJSONIO::fromJSON("mummichog_query.json");
+  my.cmpds <- RJSONIO::fromJSON(mSetObj$mum_nm);
   CMPDSet <- unique(unlist(my.cmpds[["hits.sig"]]));
   return(CMPDSet)
 }
