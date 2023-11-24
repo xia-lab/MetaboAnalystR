@@ -660,8 +660,6 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   both.mat <- mSetObj$analSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
   logp_val <- mSetObj$analSet$cov$thresh
-  load_ggplot();
-  library(ggrepel);
   topFeature <- 5;
   if(nrow(both.mat) < topFeature){
     topFeature <- nrow(both.mat);
@@ -671,63 +669,45 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   
   width <- 8;
   height <- 8.18;
-
-    library(plotly)
-    threshold <- logp_val               
-    
-    both.mat$category <- with(both.mat, case_when(
-      pval.no > threshold & pval.adj > threshold ~ "Significant in both",
-      pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
-      pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
-      TRUE ~ "Non-significant"
-    ))
-
-    # Define a list or data frame mapping categories to properties
-    category_properties <- data.frame(
-      category = c("Significant in both", "Significant in pval.no only", 
-                   "Significant in pval.adj only", "Non-significant"),
-      color = c('#6699CC', '#94C973', '#E2808A', 'grey'),
-      name = c("Significant", "Non-Sig. after adjustment", 
-               "Sig. after adjustment", "Non-Significant")
-    )
-    
-    # Initialize an empty plotly object
-    plotly_fig <- plot_ly()
-    
-    # Iterate over each category to add traces
-    for (i in 1:nrow(category_properties)) {
-      cat_data <- subset(both.mat, category == category_properties$category[i])
-      
-      if (nrow(cat_data) > 0) {
-        plotly_fig <- plotly_fig %>%
-          add_trace(data = cat_data, 
-                    x = ~pval.no, y = ~pval.adj, 
-                    type = 'scatter', mode = 'markers', 
-                    text = ~paste("Feature:", Row.names, 
-                                  "<br>Adjusted Pval:", round(pval.adj, 3), 
-                                  "<br>Non-adjusted Pval:", round(pval.no, 3)),
-                    name = category_properties$name[i], 
-                    marker = list(color = category_properties$color[i]), 
-                    alpha = 0.5)
-      }
-    }
-    
-    # Set the layout
-    plotly_fig <- plotly_fig %>%
-      layout(xaxis = list(title = "-log10(P-value): no covariate adjustment"),
-             yaxis = list(title = "-log10(P-value): adjusted"))
-    
+  
+  library(plotly)
+  threshold <- logp_val               
+  
+  both.mat$category <- with(both.mat, case_when(
+    pval.no > threshold & pval.adj > threshold ~ "Significant in both",
+    pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
+    pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
+    TRUE ~ "Non-significant"
+  ))
+  
+  # Define a list or data frame mapping categories to properties
+  category_properties <- data.frame(
+    category = c("Significant in both", "Significant in pval.no only", 
+                 "Significant in pval.adj only", "Non-significant"),
+    color = c('#6699CC', '#94C973', '#E2808A', 'grey'),
+    name = c("Significant", "Non-Sig. after adjustment", 
+             "Sig. after adjustment", "Non-Significant")
+  )
+  
+  p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = category, text = paste("Feature:", Row.names, 
+                                                                                               "<br>Adjusted Pval:", signif(10^(-pval.adj), 4), 
+                                                                                               "<br>Non-adjusted Pval:", signif(10^(-pval.no), 4)))) +
+    geom_point(alpha = 0.5) +
+    scale_color_manual(values = setNames(category_properties$color, category_properties$category), name="") +
+    labs(x = "-log10(P-value): no covariate adjustment", y = "-log10(P-value): adjusted") +
+    theme_minimal() +
+    theme(legend.title = element_blank())
+  
   if(interactive){
-    return(plotly_fig);
+    library(plotly);
+    ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    return(ggp_build);
   }else{
-    print("reached img export");
-    library(reticulate);
-    use_miniconda('r-reticulate')
-    py_run_string("import sys")
-    plotly::save_image(plotly_fig, file = imgName, unit="in", dpi=dpi, width=width, height=height);    
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);    
+    print(p)
+    dev.off()
     return(.set.mSet(mSetObj));
   }
-  
 }
 
 FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName){
