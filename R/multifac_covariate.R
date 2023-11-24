@@ -405,6 +405,7 @@ GetPrimaryType <- function(analysis.var){
 #' @param ref reference group
 #' @param block block name
 #' @param thresh threshold
+#' @param pval.type pvalue type (raw or fdr)
 #' @param contrast.cls contrast group
 #' @export
 CovariateScatter.Anal <- function(mSetObj, 
@@ -414,6 +415,7 @@ CovariateScatter.Anal <- function(mSetObj,
                                   ref = NULL, 
                                   block = "NA", 
                                   thresh=0.05,
+                                  pval.type="fdr",
                                   contrast.cls = "anova"){
 
   # load libraries
@@ -444,7 +446,6 @@ CovariateScatter.Anal <- function(mSetObj,
   feature_table <- t(mSetObj$dataSet$norm);
   
   # process inputs
-  thresh <- as.numeric(thresh)
   ref <- make.names(ref)
   analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   
@@ -560,17 +561,26 @@ CovariateScatter.Anal <- function(mSetObj,
   }    
   
   p.value <- rest[,"P.Value"];
-  
-  names(fstat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   fdr.p <- rest[,"adj.P.Val"];
-  inx.imp <- fdr.p <= thresh;
-  sig.num <- sum(inx.imp);
-  
-  # save a copy 
+  names(fstat) <- names(p.value) <- names(fdr.p) <- colnames(mSetObj$dataSet$norm);
+
+  # sort and save a copy 
   fileName <- "covariate_result.csv";
   my.ord.inx <- order(p.value, decreasing = FALSE);
-  fast.write.csv(signif(rest[my.ord.inx,],5),file=fileName);
+  rest <- signif(rest[my.ord.inx,],5);
+  fast.write.csv(rest,file=fileName);
 
+  # note the plot is always on raw scale for visualization purpose
+  if(pval.type=="fdr"){
+    inx.imp <- fdr.p <= thresh;
+    # locate the cutoff on the sorted raw p value
+    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]));
+  }else{ # raw p value
+    inx.imp <- p.value <= thresh;
+    raw.thresh <- thresh;
+  }
+  sig.num <- sum(inx.imp);
+  
   if(sig.num > 0){ 
     sig.p <- p.value[inx.imp];
     sig.mat <- signif(rest[inx.imp, ,drop=FALSE], 5);
@@ -589,10 +599,11 @@ CovariateScatter.Anal <- function(mSetObj,
     #fileName <- "covariate_result.csv"
     #fast.write.csv(sig.mat,file=fileName);
     cov<-list (
+      pval.type=pval.type,
       sig.num = sig.num,
       sig.nm = fileName,
-      raw.thresh = thresh,
-      thresh = -log10(thresh), # only used for plot threshold line
+      raw.thresh = raw.thresh,
+      thresh = -log10(raw.thresh), # only used for plot threshold line
       p.value = p.value,
       p.value.no = both.mat$pval.no,
       p.log = -log10(p.value),
@@ -605,9 +616,10 @@ CovariateScatter.Anal <- function(mSetObj,
   }else{
     res <- 0;
     cov<-list (
+      pval.type = pval.type,
       sig.num = sig.num,
-      raw.thresh = thresh,
-      thresh = -log10(thresh), # only used for plot threshold line
+      raw.thresh = raw.thresh,
+      thresh = -log10(raw.thresh), # only used for plot threshold line
       p.value = p.value,
       p.value.no = both.mat$pval.no,
       p.log = -log10(p.value),
@@ -635,6 +647,11 @@ CovariateScatter.Anal <- function(mSetObj,
   }else{
     return(.set.mSet(mSetObj));
   } 
+}
+
+GetRawCovThresh <- function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj); 
+  return(mSetObj$analSet$cov$thresh);
 }
 
 
