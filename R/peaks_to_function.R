@@ -3258,7 +3258,7 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
 
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("text")), autosize = FALSE, width = 800, height = 600, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
     return(ggp_build);
   }else{
     if(is.na(width)){
@@ -3301,6 +3301,7 @@ mSetObj$imgSet$mummi.gsea.plot<- imgName
 #' @import scales
 PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default", 
                                labels.x = 5, labels.y = 5, scale.axis = TRUE, interactive=F){
+  
   mSetObj <- .get.mSet(mSetObj);
   
   # check if mummichog + gsea was performed
@@ -3374,56 +3375,36 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
   library(ggplot2)
   library(plotly)
   library(dplyr)
-
+  
   df$radi.vec <- radi.vec;
   df$bg.vec <- bg.vec;
   
   df <- df %>%
-    mutate(sig_category = case_when(
-      x >= 2 & y >= 2 ~ "sig_both",
-      x >= 2 & y < 2  ~ "sig_gsea",
-      x < 2  & y >= 2 ~ "sig_mummichog",
-      TRUE                       ~ "unsig" # Cases where neither is significant
+    mutate(category = case_when(
+      x >= 2 & y >= 2 ~ "Both Significant",
+      x >= 2 & y < 2  ~ "Sig. in GSEA",
+      x < 2  & y >= 2 ~ "Sig. in Mummichog",
+      TRUE                       ~ "Unsignificant" # Cases where neither is significant
     ))
   df <- df %>%
     mutate(tooltip_text = paste("Pathway:", path.nms, 
                                 "<br>GSEA -log10(p):", round(x, 3), 
                                 "<br>Mummichog -log10(p):", round(y, 3)))
-  df_unsig <- df %>% filter(sig_category == "unsig")
-  df_sig_both <- df %>% filter(sig_category == "sig_both")
-  df_sig_mummichog <- df %>% filter(sig_category == "sig_mummichog")
-  df_sig_gsea <- df %>% filter(sig_category == "sig_gsea")
-  # Create the base plot
-  p <- plot_ly() %>%
-    layout(xaxis = list(title = "GSEA -log10(p)"),
-           yaxis = list(title = "Mummichog -log10(p)"),
-         height = 600,
-         width = plot_width)
   
-  # Conditional marker addition with line width settings
-  if (nrow(df_unsig) > 0) {
-    p <- p %>% add_markers(data = df_unsig, x = ~x, y = ~y, size = ~radi.vec, color = I("#d3d3d3"),
-                           text = ~tooltip_text, name = "Unsignificant",
-                           marker = list(line = list(color = '#000', width = 2)))
-  }
+  color_mapping <- c("Unsignificant" = "#d3d3d3", 
+                     "Both Significant" = "#FF0000", 
+                     "Sig. in Mummichog" = "#0000FF", 
+                     "Sig. in GSEA" = "#008000")
   
-  if (nrow(df_sig_both) > 0) {
-    p <- p %>% add_markers(data = df_sig_both, x = ~x, y = ~y, size = ~radi.vec, color = I("#FF0000"),
-                           text = ~tooltip_text, name = "Both Significant",
-                           marker = list(line = list(color = '#000', width = 2)))
-  }
-  
-  if (nrow(df_sig_mummichog) > 0) {
-    p <- p %>% add_markers(data = df_sig_mummichog, x = ~x, y = ~y, size = ~radi.vec, color = I("#0000FF"),
-                           text = ~tooltip_text, name = "Sig. in Mummichog",
-                           marker = list(line = list(color = '#000', width = 2)))
-  }
-  
-  if (nrow(df_sig_gsea) > 0) {
-    p <- p %>% add_markers(data = df_sig_gsea, x = ~x, y = ~y, size = ~radi.vec, color = I("#008000"),
-                           text = ~tooltip_text, name = "Sig. in GSEA",
-                           marker = list(line = list(color = '#000', width = 2)))
-  }
+  p <- ggplot(df, aes(x = x, y = y, text = paste("Pathway:", path.nms, 
+                                                          "<br>GSEA p-val:", signif(10^-x, 4), 
+                                                          "<br>Mummichog p-val:", signif(10^-y, 4)))) +
+    geom_point(aes(size = radi.vec, color = category), alpha = 0.5) +
+    scale_color_manual(values = color_mapping, name="") +
+    scale_size_continuous(range = c(1, 5), guide="none") +
+    labs(x = "GSEA -log10(p)", y = "Mummichog -log10(p)") +
+    theme_minimal() +
+    theme(legend.position = "right")
   
   df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
@@ -3431,13 +3412,18 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
   sink();
   
   if(interactive){
-    return(p);
+    plotly_p <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), legend = list(
+      traceorder = "normal",
+      orientation = "v",
+      yanchor = "top",
+      xanchor = "left",
+      itemsizing = "constant"  # This tries to make legend item sizes constant
+    ),autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    return(plotly_p);
   }else{
-    print("reached img export");
-    library(reticulate);
-    use_miniconda('r-reticulate')
-    py_run_string("import sys")
-    plotly::save_image(p, file = imgName, unit="in", dpi=dpi, width=w, height=h);    
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);   
+    print(p)
+    dev.off();
     return(.set.mSet(mSetObj));
   }
   
