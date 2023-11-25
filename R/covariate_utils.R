@@ -113,10 +113,14 @@ CovariateScatter.Anal <- function(dataName,
     rownames(sig.mat) <- make.names(rownames(rest)[inx.imp])
     # order the result simultaneously
   }else{
-    AddMsg(paste(c("No significant genes are detected, please adjust your parameters", collapse=" ")));
+    current.msg <- paste(c("No significant genes are detected, please adjust your parameters", collapse=" "));
+    AddMsg(current.msg);
+    msgSet$current.msg <<- current.msg;
     return(0);
   }
-  AddMsg(paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" "));
+  current.msg <- paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" ");
+  AddMsg(current.msg);
+  msgSet$current.msg <<- current.msg;
 
   both.mat <- both.mat[rownames(rest),]
 
