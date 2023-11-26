@@ -602,6 +602,7 @@ CovariateScatter.Anal <- function(mSetObj,
       pval.type=pval.type,
       sig.num = sig.num,
       sig.nm = fileName,
+      p.thresh = thresh,
       raw.thresh = raw.thresh,
       thresh = -log10(raw.thresh), # only used for plot threshold line
       p.value = p.value,
