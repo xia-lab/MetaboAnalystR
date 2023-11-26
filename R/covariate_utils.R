@@ -194,7 +194,7 @@ PlotCovariateMap <- function(dataName, theme="default", imgName="NA", format="pn
   both.mat <- dataSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
   logp_val <- dataSet$cov$thresh
-  load_ggplot();
+  library(ggplot2)
   library(ggrepel);
   topFeature <- 5;
   if(nrow(both.mat) < topFeature){
@@ -280,7 +280,7 @@ PlotMultiFacCmpdSummary <- function(dataName,imgName,name, id, meta, version, fo
   paramSet <- readSet(paramSet, "paramSet");
 
   if(.on.public.web){
-    load_ggplot()
+    library(ggplot2)
   }
   
   if(is.na(width)){
