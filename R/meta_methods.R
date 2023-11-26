@@ -510,6 +510,7 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
 #'
 PerformVoteCounting <- function(BHth = 0.05, minVote){
   paramSet <- readSet(paramSet, "paramSet");
+  paramSet$minVote <- minVote;
   mdata.all <- paramSet$mdata.all;
   analSet <- readSet(analSet, "analSet");
 
@@ -585,9 +586,13 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 #'@export
 #'
 PerformMetaMerge<-function(BHth=0.05){
+  save.image("merge.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  if(!paramSet$performedDE){
+    analSet <- PerformMetaDeAnal(paramSet);
+    paramSet <- readSet(paramSet, "paramSet");
+  }
   paramSet$inmex.method <- "merge";
   meta.mat <<- meta.stat <<- NULL;
   inmex.meta <- qs::qread("inmex_meta.qs");
@@ -890,12 +895,10 @@ DoMetaSigUpdate <- function(BHth=0.05,fc.val=0){
 
     meta.mat.all <- analSet$meta.mat.all;
     if("VoteCounts" %in% colnames(meta.mat.all)){
-    paramSet$BHth <- 0.05;
-        if(fc.val == 0){
-        significant <- rep(T, nrow(meta.mat.all))
-        }else{
-        significant <- abs(meta.mat.all$AverageFc) >= fc.val
-        }
+        minCount <- BHth;
+        paramSet$BHth <- 0.05;
+        significant <- (abs(meta.mat.all$AverageFc) >= fc.val & (meta.mat.all[,ncol(meta.mat.all)] >= minCount))
+        
     }else{
     significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
     }

@@ -115,3 +115,10 @@ PrepareUpsetData <- function(fileNm){
   
   return(1); 
 }
+
+#Record upset intersection mode for report
+SetUpsetMode <- function(mode){
+      paramSet <- readSet(paramSet, "paramSet");
+      paramSet$upsetMode <- mode;
+      saveSet(paramSet);
+}
