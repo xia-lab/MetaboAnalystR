@@ -71,7 +71,6 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'@export
 #'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
-  
   mSetObj <- .get.mSet(mSetObj);
   library(scales);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -112,27 +111,39 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
   )
   
   # Plot
+  
   p <- ggplot(fc_data, aes(x = x, y = y, label = label, text = tooltip)) +
-    geom_point(aes(color = ColorValue, size = abs(y))) +
+    geom_point(aes( size = abs(y), color =ColorValue, fill=ColorValue) , shape = 21, stroke = 0.5) +  # Adjust stroke as needed
+    
     scale_color_gradient2(
       low = "blue", mid = "grey", high = "red", 
       midpoint = 0, limits = sig_fc_range, 
       space = "Lab", na.value = "darkgrey", 
       guide = "colourbar", name="Log2FC"
     ) +
-    scale_size(range = c(1.5, 4), guide = FALSE) +
-    coord_cartesian(ylim = c(-topVal, topVal)) +
+    scale_fill_gradient2(
+      low = "blue", mid = "grey", high = "red", 
+      midpoint = 0, limits = sig_fc_range, 
+      space = "Lab", na.value = "darkgrey", name="Log2FC"
+    ) +
+    scale_size(range = c(1.5, 4), guide = "none") +
     labs(x = "Identifier", y = "Log2 Fold Change") +
     theme_bw() +
     theme(legend.position = "right") +
-    geom_hline(yintercept = log2(fc$max.thresh), linetype = 3) +
-    geom_hline(yintercept = log2(fc$min.thresh), linetype = 3) +
-    geom_hline(yintercept = 0, size = 1)
+    geom_hline(yintercept = 0, linewidth = 1)
+  
   
   if(interactive){
+    ###check out this tutorial --> modify plotly object directly
+    ###https://plotly.com/ggplot2/getting-started/#modify-with-build
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = "text"), autosize = FALSE, width = 800, height = 600)
-    return(ggp_build);
+    ggp_build <- layout(ggplotly(p, tooltip = "text"), autosize = FALSE, width = 900, height = 600)
+    fig <- plotly_build(ggp_build)
+    vec <- rep("rgba(22,22,22,1)", nrow(fc_data))
+    attr(vec, "apiSrc") <- TRUE
+    fig$x[[1]][[1]]$marker$line$color <- vec;
+    fig$x[[1]][[1]]$marker$line$size <- 1;
+    return(fig);
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     print(p);
@@ -140,6 +151,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
     return(.set.mSet(mSetObj));
   }
 }
+
 
 #'Used by higher functions to calculate fold change 
 #'@description Utility method to calculate FC, used in higher function
