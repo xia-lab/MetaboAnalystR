@@ -372,18 +372,23 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
   
   # Now create the ggplot
   p <- ggplot(tt_data, aes(x=seq, y=p_log, label=label, FDR=FDR, P.Value=P.Value)) +
-    geom_point(aes(color = color_value, size = p_log)) + # Use color_value for color scale
-    scale_color_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
-    scale_size_continuous(range = c(1, 4)) + # Adjust size range as needed
-    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
     theme_bw() +
-    guides(color = guide_colourbar(order = 1), size = "none") # Hide the size guide
+    geom_point(aes( size = p_log, color =color_value, fill=color_value) , shape = 21, stroke = 0.5) +
+    scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
+    scale_fill_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
+    scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
+    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)")
   
   
   if (interactive) {
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("label", "FDR", "P.Value")), autosize = FALSE, width = 800, height = 600)
-    return(ggp_build);
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "FDR", "P.Value")), autosize = FALSE, width = 900, height = 600)
+    fig <- plotly_build(ggp_build)
+    vec <- rep("rgba(22,22,22,1)", nrow(tt_data))
+    attr(vec, "apiSrc") <- TRUE
+    fig$x[[1]][[1]]$marker$line$color <- vec;
+    fig$x[[1]][[1]]$marker$line$size <- 1;
+    return(fig);
   } else {
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     p <- p + ggrepel::geom_text_repel(data = subset(tt_data, Status == "Significant"))
@@ -509,7 +514,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 
 # using ggplot
 PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, interactive=F){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -561,16 +566,16 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
   
   # Create the ggplot
   p <- ggplot(data = de, aes(x = fc.log, y = p.log, label = label, Fold.Change = Fold.Change, P.Value= P.Value)) +
-    geom_point(aes(color = FoldChange, size = size)) +
-    scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0,
+    geom_point(aes( size = size, color =FoldChange, fill=FoldChange) , shape = 21, stroke = 0.5) +
+    scale_color_gradient2(low = "black", mid = "black", high = "black", midpoint = 0,
+                          limits = sig_fc_range, space = "Lab", na.value = "black", guide="none") +
+    scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0,
                           limits = sig_fc_range, space = "Lab", na.value = "grey", guide = "colourbar") +
-    scale_size_continuous(range = c(1, 4)) +
+    scale_size_continuous(range = c(1, 4),guide="none") +
     geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black") +
     geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
     labs(x = "log2(FC)", y = "-log10(p-value)") +
     theme_minimal() +
-    guides(color = guide_colorbar(order = 1),
-           size = "none") +
     theme(legend.position = "right")
   
   # Print the plot
@@ -594,7 +599,12 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
   
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 800, height = 600, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 900, height = 600, margin = mSetObj$imgSet$margin.config)
+    fig <- plotly_build(ggp_build)
+    vec <- rep("rgba(22,22,22,1)", nrow(de))
+    attr(vec, "apiSrc") <- TRUE
+    fig$x[[1]][[1]]$marker$line$color <- vec;
+    fig$x[[1]][[1]]$marker$line$size <- 1;
     return(ggp_build);
   } else {
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
