@@ -412,7 +412,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   # save a copy
   mSetObj$dataSet$filt.cls <- cls;
   
-  msg <- "";
+  msg <- NULL;
   if(qc.filter == "T"){
     rsd <- rsd/100;
     # need to check if QC exists
@@ -450,19 +450,19 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(var.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type);
      int.mat <- filt.res$data;
-     msg <- paste(msg, filt.res$msg);
+     msg <- c(msg, filt.res$msg);
   }
 
   if(int.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type);
      int.mat <- filt.res$data;
-     msg <- paste(msg, filt.res$msg);
+     msg <- c(msg, filt.res$msg);
   }
 
   mSetObj$dataSet$filt <- int.mat;
 
-  if(msg == ""){
-     msg <- "No data filtering is performed."
+  if(is.null(msg)){
+     msg <- "No data filtering was performed."
   }
 
   AddMsg(msg);
