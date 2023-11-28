@@ -6,7 +6,7 @@
 ReadMetaData <- function(mSetObj=NA, metafilename){
   mSetObj <- .get.mSet(mSetObj);
   
-  metadata <- .readDataTable(metafilename);
+  metadata <- .readDataTable(metafilename, FALSE);
   metadata[is.na(metadata)] = "NA"
   if(class(metadata) == "try-error"){
     AddErrMsg("Failed to read in the metadata file! Please make sure that the metadata file is in the right format and does not have empty cells or contains NA.");

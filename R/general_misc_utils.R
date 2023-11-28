@@ -91,9 +91,9 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #' @importFrom data.table fread
 #' @export
 
-.readDataTable <- function(fileName){
+.readDataTable <- function(fileName, save.copy=TRUE){
 
-  dat <- tryCatch(
+    dat <- tryCatch(
             {
                 data.table::fread(fileName, header=TRUE, check.names=FALSE, 
                                   blank.lines.skip=TRUE, data.table=FALSE, integer64 = "numeric");
@@ -105,14 +105,51 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
                 return(.my.slowreaders(fileName));
             });
             
-  if(any(dim(dat) == 0)){
+    if(any(dim(dat) == 0)){
         dat <- .my.slowreaders(fileName);
-  }
+    }
 
-  # need to remove potential empty columns !! NOTE the single |, not || which is for atomic operation
-  dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
+    # need to remove potential empty columns !! NOTE the single |, not || which is for atomic operation
+    dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
 
-  return(dat);
+    if(save.copy){
+        # now try to save something for user side view or debugging
+        if(class(dat) == "try-error" || ncol(dat) == 1){
+            AddErrMsg("Data format error. Failed to read in the data!");
+            AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
+            AddErrMsg("Please also check the followings: ");
+            AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+            AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+            AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+            AddErrMsg("Missing values should be blank or NA without quote.");
+            AddErrMsg("Make sure the file delimeters are commas.");
+
+            # now try to extract something for viewing
+            tryCatch({
+                fileConn <- file(filePath, encoding = "UTF-8");
+                text <- readLines(fileConn, n=100); # max 100 lines
+                write.csv(text, file="raw_dataview.csv");
+            },
+            error = function(e) return(e),
+            finally = {
+                close(fileConn)
+            });
+
+            return(0);
+        }
+  
+        # save a table output at the earliest time for viewing
+        row.num <- nrow(dat);
+        col.num <- ncol(dat);
+        if(row.num > 100){
+            row.num <- 100;
+        }
+        if(col.num > 10){
+            col.num <- 10;
+        }
+        write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+    }
+    return(dat);
 }
 
 .my.slowreaders <- function(fileName){
