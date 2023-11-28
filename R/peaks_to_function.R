@@ -4417,20 +4417,20 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wid
     sapply(seq_along(x), function(i) positions[(i %% length(positions)) + 1])
   }
   
-  # Update traces with improved text positions
-  text_positions <- improve_text_position(df$y)
+
+  #text_positions <- improve_text_position(df$y)
   # Add text labels for top num_annot points
-  top_indices <- head(order(-df$y), num_annot)
-  for(i in top_indices) {
-    
-    p <- p %>% add_annotations(
-      x = df$x[i], y = df$y[i], 
-      text = df$pathnames_agg[i], 
-      showarrow = FALSE, 
-      xanchor = 'center', 
-      yanchor = text_positions[i],
-      font = list(size = 13))
-  }  
+  #top_indices <- head(order(-df$y), num_annot)
+  #for(i in top_indices) {
+  #  
+  #  p <- p %>% add_annotations(
+  #    x = df$x[i], y = df$y[i], 
+  #    text = df$pathnames_agg[i], 
+  #    showarrow = FALSE, 
+  #    xanchor = 'center', 
+  #    yanchor = text_positions[i],
+  #    font = list(size = 13))
+  #}  
   
   if (anal.type0 == "mummichog") {
     list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
