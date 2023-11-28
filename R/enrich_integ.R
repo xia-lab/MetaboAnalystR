@@ -1280,7 +1280,7 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
 
   res <- data.frame(matrix(unlist(overlap.results), nrow=length(overlap.results), byrow=T), stringsAsFactors=FALSE)
   rownames(res) <- names(current.kegglib$path.ids)[match(match_paths, current.kegglib$path.ids)] 
-  colnames(res) <- "matched_features"
+  colnames(res) <- "matched_features";
   fast.write.csv(res, "jointpa_matched_features.csv", row.names = T)
 
   if(!.on.public.web){
