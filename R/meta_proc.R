@@ -883,6 +883,7 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   inmex.meta <- qs::qread("inmex_meta.qs");
   x <- inmex.meta[["data"]];
   dpi <- as.numeric(dpi);
+  plotlyNm <- paste0(imgNm, ".rda");
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require('lattice');
   require('ggplot2');
@@ -913,6 +914,8 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   dev.off();
   
   imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc_meta_pca_plotly <- plotlyNm;
+
   #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
     imgSet$qc_meta_pca <- imgNm;
   #}else{
@@ -920,7 +923,7 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   #}
   saveSet(imgSet);
 
-  if(interactive){
+  #if(interactive){
     library(plotly);
         m <- list(
                 l = 50,
@@ -929,11 +932,12 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m)
-    return(ggp_build);
-  }else{
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m);
+    save(ggp_build, file=plotlyNm);
+    #return(ggp_build);
+  ##}else{
     return(1)
-  }
+  #}
 }
 
 
