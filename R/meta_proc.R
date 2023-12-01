@@ -932,7 +932,7 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m);
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m);
     save(ggp_build, file=plotlyNm);
     #return(ggp_build);
   ##}else{
@@ -947,7 +947,8 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   dat <- inmex.meta$data;
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   dpi <- as.numeric(dpi);
-  
+  plotlyNm <- paste0(imgNm, ".rda");
+
   df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE);
   df <- stack(df);
 
@@ -965,6 +966,8 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   dev.off();
 
   imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc_meta_density_plotly <- plotlyNm;
+
   #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
     imgSet$qc_meta_density <- imgNm;
   #}else{
@@ -972,7 +975,7 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   #}
   saveSet(imgSet);
 
-  if(interactive){
+ # if(interactive){
     library(plotly);
         m <- list(
                 l = 50,
@@ -981,9 +984,11 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 700, height = 500, margin = m)
-    return(ggp_build);
-  }else{
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 800, height = 600, margin = m)
+    save(ggp_build, file=plotlyNm);
+
+  #  return(ggp_build);
+  #}else{
     return(1)
-  }
+  #}
 }
