@@ -435,12 +435,15 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   
   mSetObj <- .get.mSet(mSetObj);
   
+  colnms <- GetMetaResultColNames();
   if(single.type == "fc"){
     meta.mat <- cbind(fc.mat, meta.mat);
   }else{
     meta.mat <- cbind(pval.mat, meta.mat);
   }
   meta.mat <- signif(as.matrix(meta.mat), 5);
+  colnames(meta.mat) <- colnms;
+
   mSetObj$analSet$meta.mat <- meta.mat;
   
   if(.on.public.web == TRUE){  
@@ -620,8 +623,8 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
 
   sums <- unlist(lapply(metastat.de, length))
   names <- unlist(lapply(metastat.de, paste, collapse = ", "))
-  metasum <- length(meta.stat$idd)
-  metaname <- paste(meta.stat$idd, collapse = ", ")
+  metasum <- length(meta.stat$de)
+  metaname <- paste(meta.stat$de, collapse = ", ")
   allsums <- c(sums, metasum)
   allnames <- c(names, metaname)
   sigmat <- cbind(allsums, allnames)
