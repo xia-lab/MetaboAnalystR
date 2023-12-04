@@ -135,6 +135,20 @@ PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
   }
   
   mSetObj <- Save2KEGGJSON(mSetObj,hits.query, res.mat, file.nm, hits.all);
+
+    mSetObj <- .get.mSet(mSetObj);
+    vis.type <- "keggGlobal";
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    res.mat <- as.data.frame(res.mat);
+    res.mat$Name <- rownames(res.mat);
+    res.mat <- res.mat[c("Name", setdiff(names(res.mat), "Name"))]
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- res.mat;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- "KEGG";
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+    .set.mSet(mSetObj);
   return(mSetObj);
 }
 
@@ -216,7 +230,7 @@ OrganizeJsonforNextwork <- function(mSetObj=NA){
   sink("network_enrichment_pathway_0.json")
   cat(json.mat);
   sink();
-  
+
   return(1);
 }
 
