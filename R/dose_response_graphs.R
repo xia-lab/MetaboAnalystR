@@ -11,10 +11,10 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
   ))
 }
 
-PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
+PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
 
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   bmdcalc.res <- FilterBMDResults(dataSet)
   
@@ -92,8 +92,8 @@ PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
   cat(json.obj);
   sink();
 
-  RegisterData(dataSet)
-  return(1);
+    mSetObj$dataSet <- dataSet;
+    return(.set.mSet(mSetObj));
 }
 
 PlotGeneBMD <- function(gene.id, gene.symbol, scale){
@@ -184,9 +184,10 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
   saveSet(imgSet);
 }
 
-PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
+
   require(ggplot2)
   require(scales)
 
@@ -254,14 +255,15 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotGeneDRCurve <- imgName;
-  saveSet(imgSet);
+  dataSet$PlotGeneDRCurve <- imgName;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotDRModelBars <- function(imgNm, dpi, format){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
+
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
   p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
@@ -273,14 +275,14 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRModelBars <- imgNm;
-  saveSet(imgSet);
+  dataSet$PlotDRModelBars <- imgNm;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
   s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
@@ -322,14 +324,14 @@ PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRHistogram <- imgNm;
-  saveSet(imgSet);
+  dataSet$PlotDRHistogram <- imgNm;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotPWHeatmap <- function(pathway, pwcount, units){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotPWHeatmap <- function(mSetObj=NA, pathway, pwcount, units){
+    mSetObj <- .get.mSet(mSetObj);  
+    dataSet <- mSetObj$dataSet;
 
     require(pheatmap)
     require(grid)
@@ -399,8 +401,8 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
     grid.text(pathway, y = 1.02, x = 0.5, gp=gpar(fontsize=14, fontface="bold"))
     dev.off();
 
-    imgSet <- readSet(imgSet, "imgSet");
-    imgSet$PlotPWHeatmap <- imgNm;
-    saveSet(imgSet);
+    dataSet$PlotPWHeatmap <- imgNm;
+    mSetObj$dataSet <- dataSet;
+    return(.set.mSet(mSetObj));
 }
 
