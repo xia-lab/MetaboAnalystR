@@ -839,11 +839,9 @@ InitItemSelect <- function(){
 }
 
 ####################DrcFit object###################
-GetNumberDoses <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  print(dataSet$itemselect$dose);
-    return(length(unique(dataSet$itemselect$dose))-1) # number of doses minus 0
+GetNumberDoses <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(length(levels(mSetObj$dataSet$cls))-1) # number of doses minus 0
 }
 
 GetDrcFitAllRes <- function(){
@@ -961,7 +959,7 @@ FilterBMDResults <- function(dataSet){
   return(bmdcalc.res)
 }
 
-PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
+PerformDREnrichment<-function(mSetObj=NA, file.nm, fun.type, xMin, xMax){
     paramSet <- readSet(paramSet, "paramSet");
     dataSet <- readDataset(paramSet$dataName);
     bmdcalc.res <- FilterBMDResults(dataSet);
@@ -972,6 +970,7 @@ PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
     enr1.mat <<- enr.mat
     return(res);
 }
+
 GetDRRes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
@@ -1067,48 +1066,6 @@ interpFits <- function(){
 
 }
 
-# create request for dose response API
-
-PerformAPIDRFit <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-
-  dataSetWeb <- dataSet
-  models <- models
-  cpus <- cpus
-  
-  toSend <- list(dataSet = dataSetWeb,
-                 models = models,
-                 cpus = 18)
-  
-  # rds file to be sent to server
-  library(httr)
-  base <- paramSet$api.base
-  endpoint <- "/fitcurves"
-  call <- paste(base, endpoint, sep="")
-  print(call)
-  
-  saveRDS(toSend, "tosend.rds")
-  request <- suppressWarnings(try(httr::POST(url = call, 
-                        body = list(rds = upload_file("tosend.rds", "application/octet-stream"))), silent = TRUE))
-  
-  # check if successful
-  if(inherits(request, "try-error")){
-    PerformDRFit()
-    current.msg <<- c("Failed to connect to Xia Lab API Server!")
-    return(0)
-  }
-  
-  # now process return
-  request <- httr::content(request, "raw")
-  request <- base::unserialize(request)
-  if(!is.null(request$drcfit.obj)){
-    dataSet <<- request
-    RegisterData(dataSet);
-  }
-
-  return(1)
-}
 
 #### use the pureErrorAnova function from alr3. alr3 is now deprecated, so extracted these 
 # lines from the alr3 source code in the CRAN archive
