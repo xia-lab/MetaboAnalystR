@@ -307,6 +307,7 @@ SelectDataSet <- function(){
   rm('nm.vec', envir = .GlobalEnv);
 
   paramSet$mdata.all <- mdata.all
+  saveSet(paramSet, "paramSet");
   return(1);
   
 }

@@ -845,7 +845,6 @@ CheckMetaIntegrity <- function(){
     metadata1 <- metadata[nm.hits2,,drop=F];
     metadata1[] <- lapply( metadata1, factor)
     
-    
     dataSet$meta.info <- dataSet$metaOrig <- metadata1
     dataSet$disc.inx <-dataSet$disc.inx.orig <- disc.inx[colnames(metadata1)]
     dataSet$cont.inx <-dataSet$cont.inx.orig  <- cont.inx[colnames(metadata1)]
@@ -884,6 +883,7 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   inmex.meta <- qs::qread("inmex_meta.qs");
   x <- inmex.meta[["data"]];
   dpi <- as.numeric(dpi);
+  plotlyNm <- paste0(imgNm, ".rda");
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require('lattice');
   require('ggplot2');
@@ -898,10 +898,13 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   # increase xlim ylim for text label
   xlim <- GetExtendRange(pca.res$PC1);
   ylim <- GetExtendRange(pca.res$PC2);
-  Conditions <- factor(inmex.meta$cls.lbl)
-  Datasets <- factor(inmex.meta$data.lbl)
+  Conditions <- factor(inmex.meta$cls.lbl);
+  Datasets <- factor(inmex.meta$data.lbl);
+
   pcafig <- ggplot(pca.res, aes(x=PC1, y=PC2,  color=Conditions ,shape=Datasets)) +
     geom_point(size=4, alpha=0.5) + 
+    scale_color_discrete(name = "Conditions") + # Name the color legend
+    scale_shape_discrete(name = "Datasets") + # Name the shape legend
     xlim(xlim)+ ylim(ylim) + 
     xlab(xlabel) + ylab(ylabel) + 
     theme_bw()
@@ -911,6 +914,8 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   dev.off();
   
   imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc_meta_pca_plotly <- plotlyNm;
+
   #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
     imgSet$qc_meta_pca <- imgNm;
   #}else{
@@ -918,7 +923,7 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
   #}
   saveSet(imgSet);
 
-  if(interactive){
+  #if(interactive){
     library(plotly);
         m <- list(
                 l = 50,
@@ -927,11 +932,12 @@ PlotMetaPCA <- function(imgNm, dpi, format, interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 700, height = 500, margin = m)
-    return(ggp_build);
-  }else{
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m);
+    save(ggp_build, file=plotlyNm);
+    #return(ggp_build);
+  ##}else{
     return(1)
-  }
+  #}
 }
 
 
@@ -941,7 +947,8 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   dat <- inmex.meta$data;
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   dpi <- as.numeric(dpi);
-  
+  plotlyNm <- paste0(imgNm, ".rda");
+
   df <- data.frame(inmex.meta$data, stringsAsFactors = FALSE);
   df <- stack(df);
 
@@ -959,6 +966,8 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   dev.off();
 
   imgSet <- readSet(imgSet, "imgSet");
+  imgSet$qc_meta_density_plotly <- plotlyNm;
+
   #if(is.null(paramSet$performedBatch) || !paramSet$performedBatch){
     imgSet$qc_meta_density <- imgNm;
   #}else{
@@ -966,7 +975,7 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
   #}
   saveSet(imgSet);
 
-  if(interactive){
+ # if(interactive){
     library(plotly);
         m <- list(
                 l = 50,
@@ -975,9 +984,11 @@ PlotMetaDensity<- function(imgNm, dpi=72, format, interactive=F){
                 t = 20,
                 pad = 0.5
             )
-    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 700, height = 500, margin = m)
-    return(ggp_build);
-  }else{
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 800, height = 600, margin = m)
+    save(ggp_build, file=plotlyNm);
+
+  #  return(ggp_build);
+  #}else{
     return(1)
-  }
+  #}
 }

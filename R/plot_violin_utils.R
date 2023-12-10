@@ -11,13 +11,13 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
   require(see)
   require(ggplot2)
   require(lattice)
-
+  
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
   anal.type <- paramSet$anal.type;
   imgName <- paste(imageName,"dpi",dpi,".",format,sep="");
-
+  
   if(length(dataSet$rmidx)>0){
     data.norm <- dataSet$data.norm[,-dataSet$rmidx]  
   }else{
@@ -136,7 +136,6 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
     # calculate width based on the dateset number
     if(num == 1){
       Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi);
-      
       col <- unique(GetColorSchema(as.character(inmex.meta$cls.lbl)));   
       df.norm <- data.frame(value=inmex.meta$plot.data[gene.id,], name = as.character(inmex.meta$cls.lbl))
       p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
@@ -151,8 +150,12 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
     }else{
       # calculate layout
-          h=500;
-          w=600;
+      h=500;
+      if(num <= 3){
+        w=600;
+      }else{
+        w=num*150
+      }
       
       width = w*dpi/72
       height = h*dpi/72
@@ -192,12 +195,24 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       alldata$Dataset <- factor(as.character(alldata$facA), levels=levels(out.fac))
       colnames(alldata) <- c("Dataset", "value", "Factor")
       
-      p.time <- ggplot2::ggplot(alldata, aes(x=Dataset, y=value, fill=Factor)) + geom_boxplot()  + theme_bw()
-      p.time <- p.time + scale_fill_manual(values=col) + 
-        theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Expression")
-      p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      myplot <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+      # Assuming alldata, col, and cmpdNm are already defined
+      p.time <- ggplot(alldata, aes(x = Factor, y = value, fill=Factor)) +
+        theme_bw() +
+        geom_violin(trim = FALSE, aes(color = Factor)) +
+        geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+        scale_fill_manual(values = col) +
+        theme(axis.title.x = element_blank(),   # Remove x-axis title
+              axis.text.x = element_blank(),     # Remove x-axis tick text
+              plot.title = element_text(size = 11, hjust = 0.5, face = "bold"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank()) +
+        ggtitle(cmpdNm) +
+        ylab("Expression")
+      
+      # Adding facet_wrap to create a separate panel for each Dataset
+      p.time <- p.time + facet_wrap(~ Dataset, scales = "free_x")
+
+      myplot <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     }
   }
   print(myplot);
@@ -205,11 +220,11 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
 }
 
 UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png", dpi=72){
-
+  
   require(ggplot2);
   require(see);
   require(lattice);
-
+  
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
@@ -218,37 +233,37 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
   meta <- dataSet$meta.info[dataSet$meta.info[,boxmeta]!="NA",boxmeta,drop=F];
   cls <- droplevels(meta[,boxmeta]);
   data.norm <- dataSet$data.norm[,colnames(dataSet$data.norm) %in% rownames(meta)];
-
+  
   if(anal.type == "onedata"){
     ids <- rownames(dataSet$comp.res);
     inx <- which(ids == gene.id);
     cmpdNm <- analSet$comp.genes.symbols[inx]; 
-
-        Cairo(file = imgName,  width=320*dpi/72, height=380*dpi/72, type=format, dpi=dpi, bg="white");
-        dat <- data.norm
-       
-      df.norm <- data.frame(value=dat[gene.id,], name = cls);
-      if(dataSet$disc.inx[boxmeta]){
-        p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
-          geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
-          geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
-          theme_bw()+
-          theme(legend.position = "none") +  xlab(boxmeta) +
-          stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-          scale_fill_okabeito() + 
-          scale_color_okabeito() + 
-          ggtitle(cmpdNm) + 
-          theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank())
-      }else{
-        df.norm$name <- as.numeric(as.character(df.norm$name ))
-        p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
-          geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
-          xlab(boxmeta) +
-          theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
-          ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
-          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
-      }
-      myplot <- p.norm + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+    
+    Cairo(file = imgName,  width=320*dpi/72, height=380*dpi/72, type=format, dpi=dpi, bg="white");
+    dat <- data.norm
+    
+    df.norm <- data.frame(value=dat[gene.id,], name = cls);
+    if(dataSet$disc.inx[boxmeta]){
+      p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
+        geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
+        geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+        theme_bw()+
+        theme(legend.position = "none") +  xlab(boxmeta) +
+        stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
+        scale_fill_okabeito() + 
+        scale_color_okabeito() + 
+        ggtitle(cmpdNm) + 
+        theme(axis.text.x = element_text(angle=90, hjust=1), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+    }else{
+      df.norm$name <- as.numeric(as.character(df.norm$name ))
+      p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
+        geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
+        xlab(boxmeta) +
+        theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
+        ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
+        theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+    }
+    myplot <- p.norm + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
     
     
   }else{ # metadata

@@ -488,7 +488,7 @@ MultiCovariateRegression <- function(fileName,
   all.vars <- c(analysis.var);
   vars <- c(analysis.var);
 
-  if(adj.factors!="NA"){
+  if(all(adj.factors != "NA")){
     vars = c(vars, adj.factors);
   }
   
@@ -640,7 +640,7 @@ MultiCovariateRegression <- function(fileName,
   dataSet$analysis.var <- analysis.var;
   dataSet$de.adj <- adj.factors;
 
-  if (is.null(adj.factors) | is.na(adj.factors) | adj.factors=="NA") {
+  if(all(adj.factors != "NA")){
     dataSet$de.adj <- "NA"
   }else{
     dataSet$de.adj <- adj.factors;

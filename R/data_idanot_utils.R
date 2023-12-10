@@ -258,8 +258,6 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
 }
 
 
-
-
 # mapping between genebank, refseq and entrez
 .doGeneIDMapping <- function(feature.vec, idType, paramSet, outputType="vec"){
     org <- paramSet$data.org;

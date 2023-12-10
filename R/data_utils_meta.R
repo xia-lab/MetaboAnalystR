@@ -193,84 +193,105 @@ ReadMergedExpressTable <- function(dataName){
 # function to set up results combining individual data analysis
 # as well as to prepare for GO analysis
 # no return, as set global 
-
 SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
-    meta.mat <- analSet$meta.mat.all;
-    paramSet$BHth <- BHth;
-    #all common genes
-    inmex.meta <- qs::qread("inmex_meta.qs");
-    gene.ids <- rownames(inmex.meta$data);
-    # meta.sig genes
-    metade.genes <- rownames(meta.mat);
+  meta.mat <- analSet$meta.mat.all;
+  paramSet$BHth <- BHth;
 
-    # setup individual sig genes & stats
-    # that overlap with meta.sig
-    inmex.de <- list();
+  #all common genes
+  inmex.meta <- qs::qread("inmex_meta.qs");
+  gene.ids <- rownames(inmex.meta$data);
+  # meta.sig genes
+  metade.genes <- rownames(meta.mat);
+  
+  # setup individual sig genes & stats
+  # that overlap with meta.sig
+  inmex.de <- list();
+  
+  pval.mat <- fc.mat <- matrix(nrow=nrow(meta.mat), ncol=length(paramSet$mdata.all));
+  
+  for(i in 1:length(analSet$inmex.ind)){
+    de.res <- analSet$inmex.ind[[i]];
+    
+    hit.inx <- de.res[,2] <= BHth;
+    hit.inx <- which(hit.inx); # need to get around NA
+    inmex.de[[i]] <- rownames(de.res)[hit.inx];
+    
+    # only choose the genes that are also meta sig genes from in
+    # individual analysis for display
+    de.res <- de.res[metade.genes,];
+    
+    fc.mat[,i] <- de.res[,1];
+    pval.mat[,i] <- de.res[,2];
+  }
 
-    pval.mat <- fc.mat <- matrix(nrow=nrow(meta.mat), ncol=length(paramSet$mdata.all));
+  
+  dataNms <- names(analSet$inmex.ind);
+  newNms <- substring(dataNms,0, nchar(dataNms)-4);
+  colnames(fc.mat) <- paste0(newNms, "_FC");
+  colnames(pval.mat) <- paste0(newNms, "_Pval");
+  
+  names(inmex.de) <- names(analSet$inmex.ind);
+  
+  # calculate gain/loss
+  deindst <- unique(unlist(inmex.de));
+  gains=metade.genes[which(!(metade.genes %in% deindst))];
+  losses=deindst[which(!(deindst %in% metade.genes))];
+  all.de <- cbind(gene.ids %in% metade.genes, gene.ids %in% deindst);
+  colnames(all.de) <- c("Meta-DE", "Individual-DE");
+  if(inmex.meta$id.type == "entrez"){ 
+    names(metade.genes) <- inmex.meta$gene.symbls[metade.genes];
+    names(gains) <- inmex.meta$gene.symbls[gains];
+    names(losses) <- inmex.meta$gene.symbls[losses];
+  }
+  
+  # de genes from individual 
+  de.len <- sapply(inmex.de, length);
+  stat <- c(length(metade.genes), de.len);
+  names(stat) <- c("Meta", substr(names(inmex.de), 0, nchar(names(inmex.de))-4));
+  meta.stat <- list(
+    stat = stat,
+    de = metade.genes,
+    idd = gains,
+    loss = losses
+  );
+ 
+  analSet$fc.mat <- fc.mat;
+  analSet$pval.mat <- pval.mat;
+  analSet$inmex.de <- inmex.de;
+  analSet$meta.stat <- meta.stat;
 
-    for(i in 1:length(analSet$inmex.ind)){
-        de.res <- analSet$inmex.ind[[i]];
+  if(colnames(analSet$meta.mat.all)[1] != "AverageFc"){
+    #cal sampleNumbers
+    meta.info <- paramSet$dataSet$meta.info;
+    sampleCounts <- table(meta.info$Dataset)
+    sampleNumbers <- as.vector(sampleCounts)
+    sampleNumbers <- unname(sampleNumbers)
 
-        hit.inx <- de.res[,2] <= BHth;
-        hit.inx <- which(hit.inx); # need to get around NA
-        inmex.de[[i]] <- rownames(de.res)[hit.inx];
+    # Compute weighted average of fold change values
+    weightedAvgFC <- rowSums(fc.mat * sampleNumbers) / sum(sampleNumbers)
 
-        # only choose the genes that are also meta sig genes from in
-        # individual analysis for display
-        de.res <- de.res[metade.genes,];
+    # Convert to a data frame for easier handling and naming
+    weightedAvgFC_df <- as.data.frame(weightedAvgFC)
+    colnames(weightedAvgFC_df) <- "AverageFc"
+    analSet$avg.fc.mat <- weightedAvgFC_df;
+    analSet$meta.avgFC <- as.vector(analSet$avg.fc.mat[,1]);
+    names(analSet$meta.avgFC) <- rownames(analSet$meta.mat.all);
+    analSet$meta.mat.all <- cbind(weightedAvgFC_df, analSet$meta.mat.all);
+  }
 
-        fc.mat[,i] <- de.res[,1];
-        pval.mat[,i] <- de.res[,2];
-    }
-    dataNms <- names(analSet$inmex.ind);
-    newNms <- substring(dataNms,0, nchar(dataNms)-4);
-    colnames(fc.mat) <- paste0(newNms, "_FC");
-    colnames(pval.mat) <- paste0(newNms, "_Pval");
-
-    names(inmex.de) <- names(analSet$inmex.ind);
-
-    # calculate gain/loss
-    deindst <- unique(unlist(inmex.de));
-    gains=metade.genes[which(!(metade.genes %in% deindst))];
-    losses=deindst[which(!(deindst %in% metade.genes))];
-    all.de <- cbind(gene.ids %in% metade.genes, gene.ids %in% deindst);
-    colnames(all.de) <- c("Meta-DE", "Individual-DE");
-    if(inmex.meta$id.type == "entrez"){ 
-        names(metade.genes) <- inmex.meta$gene.symbls[metade.genes];
-        names(gains) <- inmex.meta$gene.symbls[gains];
-        names(losses) <- inmex.meta$gene.symbls[losses];
-    }
-
-    # de genes from individual 
-    de.len <- sapply(inmex.de, length);
-    stat <- c(length(metade.genes), de.len);
-    names(stat) <- c("Meta", substr(names(inmex.de), 0, nchar(names(inmex.de))-4));
-    meta.stat <- list(
-            stat = stat,
-            de = metade.genes,
-            idd = gains,
-            loss = losses
-        );
-
-    analSet$fc.mat <- fc.mat;
-    analSet$pval.mat <- pval.mat;
-    analSet$inmex.de <- inmex.de;
-    analSet$meta.stat <- meta.stat;
-
-    dat.mat <- cbind(fc.mat, pval.mat, meta.mat);
-    dat.mat <- signif(dat.mat, 5);
-    # save the result
-    if(inmex.meta$id.type == "entrez"){ # row name gene symbols
-        metade.nms <- inmex.meta$gene.symbls[metade.genes];
-        res <- cbind(EntrezID=metade.genes, Name=metade.nms, dat.mat);
-    }else{
-        res <- cbind(ID=metade.genes, dat.mat);
-    }
-    analSet$meta.res.table <- res;
-    fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
-
-    return(list(paramSet, analSet))
+  dat.mat <- cbind(fc.mat, pval.mat, meta.mat);
+  dat.mat <- signif(dat.mat, 5);
+  # save the result
+  if(inmex.meta$id.type == "entrez"){ # row name gene symbols
+    metade.nms <- inmex.meta$gene.symbls[metade.genes];
+    res <- cbind(EntrezID=metade.genes, Name=metade.nms,dat.mat);
+  }else{
+    res <- cbind(ID=metade.genes, dat.mat);
+  }
+  analSet$meta.res.table <- res;
+  fast.write(res, file=paste("meta_sig_genes_", paramSet$inmex.method, ".csv", sep=""), row.names=F);
+  
+  return(list(paramSet, analSet))
 }
 
 #compute Cochran’s Q to help FEM/REM

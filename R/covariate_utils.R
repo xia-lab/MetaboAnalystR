@@ -113,15 +113,21 @@ CovariateScatter.Anal <- function(dataName,
     rownames(sig.mat) <- make.names(rownames(rest)[inx.imp])
     # order the result simultaneously
   }else{
-    AddMsg(paste(c("No significant genes are detected, please adjust your parameters", collapse=" ")));
+    current.msg <- paste(c("No significant genes are detected, please adjust your parameters", collapse=" "));
+    AddMsg(current.msg);
+    msgSet$current.msg <<- current.msg;
     return(0);
   }
-  AddMsg(paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" "));
+  current.msg <- paste(c("A total of", length(which(inx.imp == TRUE)), "significant features were found."), collapse=" ");
+  AddMsg(current.msg);
+  msgSet$current.msg <<- current.msg;
 
   both.mat <- both.mat[rownames(rest),]
 
   rest$label <- invert_named_vector(dataSet$enrich_ids)[as.character(rest$ids)];
   dataSet$comp.res <- rest;
+  rownames(sig.mat) <- gsub("^X(?=[0-9])", "", rownames(sig.mat), perl = TRUE)
+
   dataSet$sig.mat <- sig.mat;
   sig.mat$label <-  invert_named_vector(dataSet$enrich_ids)[as.character(sig.mat$ids)];
 
@@ -192,7 +198,7 @@ PlotCovariateMap <- function(dataName, theme="default", imgName="NA", format="pn
   both.mat <- dataSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
   logp_val <- dataSet$cov$thresh
-  load_ggplot();
+  library(ggplot2)
   library(ggrepel);
   topFeature <- 5;
   if(nrow(both.mat) < topFeature){
@@ -278,7 +284,7 @@ PlotMultiFacCmpdSummary <- function(dataName,imgName,name, id, meta, version, fo
   paramSet <- readSet(paramSet, "paramSet");
 
   if(.on.public.web){
-    load_ggplot()
+    library(ggplot2)
   }
   
   if(is.na(width)){

@@ -18,11 +18,11 @@ my.json.scatter <- function(dataSet, filenm="abc"){
       if(i == 1){
         seeds <- rownames(dataSet$sig.mat);
         meta <- dataSet$meta.info;
-        meta$dataSet <- rep(sel.nms[i],nrow(meta));
+        #meta$dataSet <- rep(sel.nms[i],nrow(meta));
       }else{
         seeds <- c(seeds, rownames(dataSet$sig.mat));
         currMeta <- dataSet$meta.info;
-        currMeta$dataSet <- rep(sel.nms[i],nrow(currMeta));
+        #currMeta$dataSet <- rep(sel.nms[i],nrow(currMeta));
         meta <- rbind(meta, currMeta);
       }
     }

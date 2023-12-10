@@ -25,12 +25,10 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   datanm.vec <- names(mdata.all)[mdata.all==1];
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat.inx <- inmex.meta$data.lbl %in% datanm.vec;
-  
   gene.vec <- rownames(all.meta.mat);
   
   #all genes
   dat <- inmex.meta$plot.data[gene.vec, dat.inx, drop=F]; 
-  
   
   # scale each gene for each dataset
   dat <- t(scale(t(dat)));
@@ -63,9 +61,9 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   #}else{ # single data
   #  annotation <- data.frame(class= cls.lbls);
   #}
-  annotation <- paramSet$dataSet$meta.info;
+  annotation <- paramSet$dataSet$meta.info[dat.inx,];
   rownames(annotation) <- colnames(dat);
-  
+
   ####
   sig.inx <-which( rownames(dat) %in% rownames(meta.mat)) -1 ;
   if(paramSet$inmex.method != "votecount"){
@@ -135,7 +133,7 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   disc.inx <- rep(F, ncol(meta)*nrow(meta));  
   
   for (i in 1:ncol(meta)){
-    cls <- meta[,i];
+    cls <- as.factor(meta[,i]);
     grp.nm <- grps[i];
     meta.vec <- c(meta.vec, as.character(cls))
     # make sure each label are unqiue across multiple meta data
@@ -174,7 +172,7 @@ PrepareMetaHeatmapJSON <- function(dataSet){
   gene.id <- anot.res$symbol; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
   gene.entrez <- anot.res$gene_id; if(length(gene.entrez) ==1) { gene.entrez <- matrix(gene.entrez) };        
   gene.name <- anot.res$name; if(length(gene.name) ==1) { gene.name <- matrix(gene.name) };
-  
+  print(nmeta)
   json.res <- list(
     data.type = "array",
     gene.id = as.character(anot.res$symbol),
@@ -185,7 +183,7 @@ PrepareMetaHeatmapJSON <- function(dataSet){
     sample.names = orig.smpl.nms,
     meta = data.frame(nmeta),
     meta.anot = meta_anot,
-    data.lbl = inmex.meta$data.lbl,
+    data.lbl = datanm.vec,
     data = res,
     sigInx = sig.inx
   );

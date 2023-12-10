@@ -317,23 +317,7 @@ PerformMetaDeAnal <- function(paramSet){
     }
   }
   analSet$inmex.ind <- inmex.ind;
-  #calculate average log fc
-  
-  aggr <- data.frame()
-  inmex.ind.ordered <- lapply(inmex.ind, function(x){
-    #print(dim(x))
-    x<-x[order(rownames(x)),]
-  })
-  
-  for (i in 1:length(inmex.ind.ordered)){
-    if(i == 1){
-      aggr <- inmex.ind.ordered[[i]]
-    }else{
-      aggr <- aggr + inmex.ind.ordered[[i]];
-    }
-  }
-  aggr <- aggr/length(inmex.ind.ordered);
-  analSet$meta.avgFC <- aggr[,1];
+ 
   return(analSet);
 }
 
@@ -425,6 +409,8 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
+  saveSet(res[[2]], "analSet");
+
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
@@ -509,6 +495,7 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   analSet$meta.mat.all <- pc.mat;
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
+  saveSet(res[[2]], "analSet");
 
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
@@ -523,6 +510,7 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
 #'
 PerformVoteCounting <- function(BHth = 0.05, minVote){
   paramSet <- readSet(paramSet, "paramSet");
+  paramSet$minVote <- minVote;
   mdata.all <- paramSet$mdata.all;
   analSet <- readSet(analSet, "analSet");
 
@@ -582,7 +570,8 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
-
+  saveSet(res[[2]], "analSet");
+  print(length(sig.inx));
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
@@ -597,9 +586,13 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 #'@export
 #'
 PerformMetaMerge<-function(BHth=0.05){
+  save.image("merge.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  if(!paramSet$performedDE){
+    analSet <- PerformMetaDeAnal(paramSet);
+    paramSet <- readSet(paramSet, "paramSet");
+  }
   paramSet$inmex.method <- "merge";
   meta.mat <<- meta.stat <<- NULL;
   inmex.meta <- qs::qread("inmex_meta.qs");
@@ -623,6 +616,7 @@ PerformMetaMerge<-function(BHth=0.05){
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
+  saveSet(res[[2]], "analSet");
 
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
@@ -685,10 +679,16 @@ GetMetaResultGeneIDLinks <- function(){
   return(annots);
 }
 
-GetMetaResultColNames<-function(){
+GetMetaResultColNames<-function(type="averageFc"){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
-
+  if(type == "averageFc"){
+    if("AverageFc" %in% colnames(analSet$meta.mat)){
+      c(colnames(analSet$meta.mat));
+    }else{
+      c("AverageFc", colnames(analSet$meta.mat));
+    }
+  }else{
   mdata.all <- paramSet$mdata.all;
   sel.nms <- names(mdata.all)[mdata.all==1];
 
@@ -697,16 +697,19 @@ GetMetaResultColNames<-function(){
     max.col <- 9 - ncol(analSet$meta.mat.all);
     sel.nms <- sel.nms[1:max.col];
   }
-
+  
   c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(analSet$meta.mat));
+  }
 }
 
 # single.type return logFC or p value for individual data analysis
-GetMetaResultMatrix<-function(single.type="fc"){
+GetMetaResultMatrix<-function(single.type="averageFc"){
 
   analSet <- readSet(analSet, "analSet");
 
-  if(single.type == "fc"){
+  if(single.type == "averageFc"){
+    dat.mat <- analSet$avg.fc.mat;
+  }else if(single.type == "fc"){
     dat.mat <- analSet$fc.mat;
   }else{
     dat.mat <- analSet$pval.mat;
@@ -717,8 +720,11 @@ GetMetaResultMatrix<-function(single.type="fc"){
     max.col <- 9 - ncol(analSet$meta.mat.all);
     dat.mat <- dat.mat[,1:max.col];
   }
+  if(single.type == "averageFc"){
+  meta.mat2 <- analSet$meta.mat.all;
+  }else{
   meta.mat2 <- cbind(dat.mat, analSet$meta.mat.all);
-
+  }
   # display at most 1000 genes
   if(nrow(meta.mat2) > 1000){
     meta.mat2 <- meta.mat2[1:1000,]; # already sorted based on meta-p values
@@ -877,19 +883,29 @@ setIncludeMeta <- function(metaBool){
     saveSet(paramSet, "paramSet");
 }
 
-DoMetaSigUpdate <- function(BHth=0.05, voteCount=2){
+DoMetaSigUpdate <- function(BHth=0.05,fc.val=0){
     paramSet <- readSet(paramSet, "paramSet");
     analSet <- readSet(analSet, "analSet");
+    paramSet$BHth <- BHth;
+    paramSet$fc.thresh <- fc.val;
+
+    res <- SetupMetaStats(BHth, paramSet, analSet);
+    analSet <- res[[2]];
+    saveSet(res[[1]], "paramSet");
+
     meta.mat.all <- analSet$meta.mat.all;
     if("VoteCounts" %in% colnames(meta.mat.all)){
-    sig.inx <- which(meta.mat.all[,ncol(meta.mat.all)] >= BHth);
+        minCount <- BHth;
+        paramSet$BHth <- 0.05;
+        significant <- (abs(meta.mat.all$AverageFc) >= fc.val & (meta.mat.all[,ncol(meta.mat.all)] >= minCount))
+        
     }else{
-    sig.inx <- which(meta.mat.all[,ncol(meta.mat.all)] <= BHth);
+    significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
     }
-    analSet$meta.mat <- meta.mat.all[sig.inx,];
-    res <- SetupMetaStats(BHth, paramSet, analSet);
-    saveSet(res[[1]], "paramSet");
+    meta.mat.all <- meta.mat.all[order(-significant, meta.mat.all[,ncol(meta.mat.all)]), ]
+    meta.mat <- meta.mat.all[significant,];
+    analSet$meta.mat.all <- meta.mat.all;
+    analSet$meta.mat <- meta.mat;
     saveSet(analSet, "analSet");
-
     return(nrow(analSet$meta.mat));
 }

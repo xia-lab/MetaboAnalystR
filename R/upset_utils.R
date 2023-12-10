@@ -58,7 +58,7 @@ PrepareUpsetData <- function(fileNm){
   }
 
   if(anal.type == "metadata" & paramSet$meta.selected){
-    sel.dats[["meta_dat"]] <- as.character(analSet$meta.stat$de);
+    sel.dats[["meta_dat"]] <- as.character(rownames(analSet$meta.mat));
   }
   
   if(length(sel.dats) == 0){
@@ -114,4 +114,11 @@ PrepareUpsetData <- function(fileNm){
   sink();
   
   return(1); 
+}
+
+#Record upset intersection mode for report
+SetUpsetMode <- function(mode){
+      paramSet <- readSet(paramSet, "paramSet");
+      paramSet$upsetMode <- mode;
+      saveSet(paramSet);
 }

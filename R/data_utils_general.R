@@ -38,6 +38,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   dataSet <<- dataSet;
   analSet <<- list(objName="analSet");
   paramSet <<- list( objName="paramSet");
+
   msgSet <<- list(objName="msgSet");
   cmdSet <<- list(objName="cmdSet");
   imgSet <<- list(objName="imgSet",enrTables=list(),featureList=list());
@@ -69,6 +70,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$api.base <<- "http://api.xialab.ca" #dose response
   paramSet$universe.opt <- "uploaded";
   paramSet$universe.opt.readable <- "Uploaded data";
+  paramSet$fc.thresh <- 0;
   dataSets <<- list();
   
 

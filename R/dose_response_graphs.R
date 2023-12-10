@@ -57,6 +57,16 @@ PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
     colnames(details.out) <- c("Name", "pathBMD", "pval", "adj.pval", "perc.path", "num.hits")
     data.table::fwrite(details.out, quote = FALSE, row.names = FALSE, sep = "\t", file="gse.txt");
 
+    resTable <- details.out;
+    vis.type <- "curvefit";
+    imgSet <- readSet(imgSet, "imgSet");
+    rownames(resTable) <- NULL;
+    imgSet$enrTables[[vis.type]] <- list()
+    imgSet$enrTables[[vis.type]]$table <- resTable;
+    imgSet$enrTables[[vis.type]]$library <- geneDB;
+    imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis"
+    saveSet(imgSet);
+
     #prepare pathway table 
     details.50 <- details$gene.matches[names(details$gene.matches) %in% data.sorted$name]
     details.50 <- lapply(details.50, as.list)

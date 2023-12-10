@@ -973,11 +973,7 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
       
       # get 20 lowest BMDs
       bmd.sort <- sort(bmds)
-      low.20 <- bmd.sort[1:20]
-      
-      # bootstrap median of 20 BMDs
-      median.boot <- boot(data = low.20, statistic = fun.boot, R = 2000)
-      trans.pod["feat.20"] <- unname(median.boot$t0)
+      trans.pod["feat.20"] <- bmd.sort[20]
       
     }
     

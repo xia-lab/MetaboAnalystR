@@ -17,14 +17,19 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   anal.type <- paramSet$anal.type;
 
   inx <- as.numeric(inx)
-  print("Prepare volcano anal");
+  #print("Prepare volcano anal");
   limit_fc <- T; #whether limit to -10 to 10 fc
   if(anal.type == "metadata"){
     if(paramSet$selDataNm == "meta_default"){
+       if(is.null(paramSet$fc.thresh)){
+         paramSet$fc.thresh <- 0; 
+       }
+
       data <- qs:::qread("allMeta.mat.qs")    
       p.value <- data[, 2]
       data <- cbind(unname(analSet$meta.avgFC[rownames(data)]), data);
-      fcthresh <- 0;
+      fcthresh <- paramSet$fc.thresh;
+      threshp <- paramSet$BHth;
       inx <- 1;
     }else{
       dataSet <- readDataset(paramSet$selDataNm);
@@ -38,8 +43,8 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
     data <- as.matrix(dataSet$comp.res);
     p.value <- data[, "adj.P.Val"];
   }
+
   paramSet$fcthreshu <- fcthresh
-  
   inx.p <- p.value <= threshp;
   
   zero.inx <- unname(p.value) == 0;
@@ -128,7 +133,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
     conv = gene.anot,
     analType = anal.type,
     org=paramSet$data.org,
-    
+    dat.opt = paramSet$selDataNm,
     naviString = "Volcano Plot"
   );
   
