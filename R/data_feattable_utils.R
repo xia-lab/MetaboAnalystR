@@ -78,7 +78,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   
   maxFC.inx <- hit.inx - 1;
   logfc.mat <- resTable[,1:maxFC.inx, drop=F];
-  print(head(logfc.mat));
+  #print(head(logfc.mat));
   if(paramSet$oneDataAnalType == "dose"){
     pos.mat <- abs(logfc.mat);
     fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
@@ -98,6 +98,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   ### Note, rowname of resTable must be entrez ID
   # calculate differently if dose-response
   de.Num <- nrow(resTable);
+
   non.de.Num <- nrow(dataSet$data.norm) - de.Num;
   
   # may need to update data, class and meta.info
