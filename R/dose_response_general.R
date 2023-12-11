@@ -1027,7 +1027,7 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
 
 #5b_gsPOD.R
 ### Calculation of transcriptomic POD from BMDs
-gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
+gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB="No match", pval = 1.0, FDR = FALSE)
 { 
   paramSet <- readSet(paramSet, "paramSet");
   gs <- geneDB;
@@ -1088,8 +1088,8 @@ gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
 
 
 GetFitResultMatrix <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   res <- dataSet$html.resTable;
   res <- res[,-c(1,2)];
   res <- as.matrix(res);
@@ -1098,7 +1098,6 @@ GetFitResultMatrix <- function(){
   res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
   res <- apply(res, 2, function(x) as.numeric(as.character(x)));
-  RegisterData(dataSet);
   return(res);
 }
 
@@ -1108,20 +1107,20 @@ GetFitResultColNames <-function(){
 }
 
 GetFitResultGeneIDs <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,1]))
 }
 
 GetFitResultModelNms <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,2]))
 }
 
 GetFitResultGeneIDLinks <- function(org){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   if (org == "noAnn"){
     ids <- as.character(dataSet$html.resTable[,1]);
     symbs <- ids;
@@ -1129,20 +1128,22 @@ GetFitResultGeneIDLinks <- function(org){
     return(annots);
   } else if (org == "s2f"){
     ids <- as.character(dataSet$html.resTable[,1]);
-    symbs <- doEntrez2SymbolMapping(ids)
+    #symbs <- doEntrez2SymbolMapping(ids)
+    symbs <- ids;
     annots <- paste("<a style='color: #a7414a' href='https://www.ecoomicsdb.ca/EcoOmicsDB/#/query?ortho=", ids, "' target='_blank'>", symbs, "</a>", sep="");
     return(annots);    
   } else {
     ids <- as.character(dataSet$html.resTable[,1]);
-    symbs <- doEntrez2SymbolMapping(ids)
+    #symbs <- doEntrez2SymbolMapping(ids)
+    symbs <- ids;
     annots <- paste("<a style='color: #a7414a' href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>", symbs, "</a>", sep="");
     return(annots);
   }
 }
 
 GetFitResultGeneSymbols <-function(org){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   if (org == "noAnn") {
     return(as.character(dataSet$html.resTable[,1]));
   } else {

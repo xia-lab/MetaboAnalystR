@@ -96,9 +96,9 @@ PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, g
     return(.set.mSet(mSetObj));
 }
 
-PlotGeneBMD <- function(gene.id, gene.symbol, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
   params <- dataSet$drcfit.obj$fitres.filt[dataSet$drcfit.obj$fitres.filt$gene.id == gene.id,]
   model.nm <- as.vector(params$mod.name)
   b <- as.numeric(as.vector(params$b))
@@ -175,7 +175,7 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
   }
   
   imgName <- paste("Gene_bmd_", gene.id, ".png", sep="");
-  Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+  Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
 
@@ -251,7 +251,7 @@ PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d,
   }
   
   imgName <- paste("Gene_", gene.id, "_", model.nm, ".png", sep="");
-  Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+  Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
 
@@ -271,7 +271,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
   p <- p + xlab("Best fit model") + ylab("Count") + theme(axis.text.x = element_text(face="bold"), legend.position = "bottom")
   
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
 
@@ -320,7 +320,7 @@ PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
           legend.box.just = "right")
 
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
 
@@ -391,7 +391,7 @@ PlotPWHeatmap <- function(mSetObj=NA, pathway, pwcount, units){
 
     # print out image
     imgNm <- paste("Pw_", pwcount, ".png", sep="");
-    Cairo (file=imgNm, width=8, height=8, unit="in",dpi=300, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, width=8, height=8, unit="in",dpi=300, type="png", bg="white");
     setHook("grid.newpage", function() pushViewport(viewport(x=1,y=0.95,width=1, height=0.9, name="vp", just=c("right","top"))), action="prepend")
     pheatmap(pw.data, cluster_cols = FALSE, cluster_rows = FALSE, show_rownames = TRUE, show_colnames = TRUE, 
              border_color = NA, labels_col = labs.col, annotation_row = ann.row, legend = FALSE,
