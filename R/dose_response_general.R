@@ -27,8 +27,8 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   mSetObj <- .get.mSet(mSetObj);
 
   #prepare param
-  deg.FDR <- as.logical(deg.FDR)
-  wtt <- as.logical(wtt)
+  #deg.FDR <- as.logical(deg.FDR)
+  #wtt <- as.logical(wtt)
   
   #get data
   data <- t(mSetObj$dataSet$norm);
@@ -52,7 +52,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
 
   dose.ratio <- median(dose.ratio)
   zero.rep <- dose.uniq[2]/dose.ratio    
-  dataSet$zero.log <- zero.rep
+  mSetObj$dataSet$zero.log <- zero.rep
 
   doseranks <- as.numeric(as.factor(dose))
   irow <- 1:length(item);
@@ -123,6 +123,9 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   data.mean <- data.mean[res$all.pass, ]
   item <- item[res$all.pass]
 
+  print(nrow(data.select));
+  print("data.select======");
+
   mSetObj$dataSet$itemselect <- list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res);  
   
@@ -149,7 +152,7 @@ PerformDRFit <- function(mSetObj=NA, ncpus=2){
   # definition of necessary data
   dose <- itemselect$dose
   doseranks <- as.numeric(as.factor(dose)); 
-  data <- t(mSetObj$dataSet$norm);
+  data <- itemselect$data
   data.mean <- itemselect$data.mean 
   
   # calculations for starting values and other uses
@@ -896,9 +899,6 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
 ### Calculation of transcriptomic POD from BMDs
 sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
 
-  mSetObj <- .get.mSet(mSetObj);
-  dataSet <- mSetObj$dataSet;
-
   f.drc <- dataSet$drcfit.obj;
   f.its <- dataSet$itemselect;
 
@@ -1144,9 +1144,9 @@ GetFitResultGeneIDLinks <- function(org){
 GetFitResultGeneSymbols <-function(org){
   mSetObj <- .get.mSet(NA);
   dataSet <- mSetObj$dataSet;
-  if (org == "noAnn") {
+  #if (org == "noAnn") {
     return(as.character(dataSet$html.resTable[,1]));
-  } else {
-    return(doEntrez2SymbolMapping(as.character(dataSet$html.resTable[,1])));
-  }
+  #} else {
+  #  return(doEntrez2SymbolMapping(as.character(dataSet$html.resTable[,1])));
+  #}
 }

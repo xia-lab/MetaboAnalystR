@@ -62,7 +62,8 @@ PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, g
     details.50 <- lapply(details.50, as.list)
     test <- reshape2::melt(details.50)[,c(1,3)]
     colnames(test) <- c("entrez", "pathway")
-    test$symbol <- doEntrez2SymbolMapping(test$entrez)
+    test$symbol <- test$entrez 
+    #test$symbol <- doEntrez2SymbolMapping(test$entrez)
     dataSet$pathway.ids <- test
     
     #generate dataframe with model fit interpolations
@@ -70,7 +71,8 @@ PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, g
     qs::qsave(fit.interp, "fit.interp.qs");
 
     # fill blank gene names with NA
-    geneNms <- doEntrez2SymbolMapping(bmdcalc.res$id)[order(bmdcalc.res$bmd)]
+    #geneNms <- doEntrez2SymbolMapping(bmdcalc.res$id)[order(bmdcalc.res$bmd)]
+    geneNms <- bmdcalc.res$id[order(bmdcalc.res$bmd)]
     geneNms[geneNms == ""] <- "---"
 
     res <- density(bmdcalc.res$bmd)
@@ -285,7 +287,7 @@ PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
   dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
-  s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
+  s.pods <- sensPOD(mSetObj, pod = c("feat.20", "feat.10th", "mode"), scale)
   
   bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass,]
 
