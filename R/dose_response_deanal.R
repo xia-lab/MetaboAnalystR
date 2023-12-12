@@ -65,14 +65,17 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0){
 
     names(p.value) <- names(ave.fc) <- rownames(res.all);
 
-    inx.imp <- p.value <= p.thresh & abs(ave.fc) >= fc.thresh;
-    sig.count <- sum(inx.imp);
+    inx.unsig <- !(p.value <= p.thresh & abs(ave.fc) >= fc.thresh);
+    inx.up <- p.value <= p.thresh & ave.fc >= fc.thresh;
+    inx.down <- p.value <= p.thresh & ave.fc <= -fc.thresh;
+
+    sig.count <- sum(!inx.unsig);
 
     if(sig.count > 0){
 
         res.all2 <- cbind(res.all,  "AveFC"=ave.fc);
         
-        hit.inx <- which(inx.imp);
+        hit.inx <- which(!inx.unsig);
         sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
         fast.write.csv(sig.res, file="limma_sig_features.csv");
  
@@ -99,7 +102,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0){
                 fc.thresh = fc.thresh,
                 p.log = -log10(p.value),
                 fc.log = ave.fc, 
-                inx.imp = inx.imp,
+                inx.unsig = inx.unsig,
+                inx.up = inx.up,
+                inx.down = inx.down,
                 sig.mat = sig.mat
               );
     .set.mSet(mSetObj);
@@ -118,9 +123,10 @@ GetSigTable.Dose <- function(mSetObj=NA){
 GetDoseUpMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$dose$p.log;
-  red.inx<- which(mSetObj$analSet$dose$inx.imp);
-  if(sum(red.inx) > 0){
-    return(as.matrix(cbind(red.inx, lod[red.inx])));
+  fc <- mSetObj$analSet$dose$fc.log;
+  inx<- which(mSetObj$analSet$dose$inx.up);
+  if(sum(inx) > 0){
+    return(as.matrix(cbind(fc[inx], lod[inx])));
   }else{
     return(as.matrix(cbind(-1, -1)));
   }
@@ -128,9 +134,9 @@ GetDoseUpMat <- function(mSetObj=NA){
 
 GetDoseUpIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  red.inx<- which(mSetObj$analSet$dose$inx.imp);
-  if(sum(red.inx) > 0){
-    return(names(mSetObj$analSet$dose$p.log)[red.inx]);
+  inx<- which(mSetObj$analSet$dose$inx.up);
+  if(sum(inx) > 0){
+    return(names(mSetObj$analSet$dose$p.log)[inx]);
   }else{
     return("NA");
   }
@@ -139,9 +145,10 @@ GetDoseUpIDs <- function(mSetObj=NA){
 GetDoseDnMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   lod <- mSetObj$analSet$dose$p.log;
-  blue.inx <- which(!mSetObj$analSet$dose$inx.imp);
-  if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+  fc <- mSetObj$analSet$dose$fc.log;
+  inx <- which(mSetObj$analSet$dose$inx.down);
+  if(sum(inx) > 0){
+    return(as.matrix(cbind(fc[inx], lod[inx])));
   }else{
     return(as.matrix(cbind(-1, -1)));
   }
@@ -149,9 +156,32 @@ GetDoseDnMat <- function(mSetObj=NA){
 
 GetDoseDnIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  blue.inx<- which(!mSetObj$analSet$dose$inx.imp);
-  if(sum(blue.inx) > 0){
-    return(names(mSetObj$analSet$dose$p.log)[blue.inx]);
+  inx<- which(mSetObj$analSet$dose$inx.down);
+  if(sum(inx) > 0){
+    return(names(mSetObj$analSet$dose$p.log)[inx]);
+  }else{
+    return("NA");
+  }
+}
+
+GetDoseUnsigMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  lod <- mSetObj$analSet$dose$p.log;
+  fc <- mSetObj$analSet$dose$fc.log;
+
+  inx <- which(mSetObj$analSet$dose$inx.unsig);
+  if(sum(inx) > 0){
+    return(as.matrix(cbind(fc[inx], lod[inx])));
+  }else{
+    return(as.matrix(cbind(-1, -1)));
+  }
+}
+
+GetDoseUnsigIDs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  inx<- which(mSetObj$analSet$dose$inx.unsig);
+  if(sum(inx) > 0){
+    return(names(mSetObj$analSet$dose$p.log)[inx]);
   }else{
     return("NA");
   }
