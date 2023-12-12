@@ -101,6 +101,8 @@ PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, g
 PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
+  data <- t(dataSet$norm);
+
   params <- dataSet$drcfit.obj$fitres.filt[dataSet$drcfit.obj$fitres.filt$gene.id == gene.id,]
   model.nm <- as.vector(params$mod.name)
   b <- as.numeric(as.vector(params$b))
@@ -125,7 +127,7 @@ PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
     exposure[exposure == 0] <- dataSet$zero.log
   }
 
-  df <- data.frame(Exposure = exposure, Expression = dataSet$data.norm[gene.id,])
+  df <- data.frame(Exposure = exposure, Expression = data[gene.id,])
   p <- ggplot(data=df, aes(x=Exposure, y=Expression)) + geom_point() + xlab("Concentration") +
     ggtitle(gene.symbol) + theme_bw() + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
   
@@ -189,10 +191,11 @@ PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
 PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
+  data <- t(dataSet$norm);
 
   require(ggplot2)
   require(scales)
-
+  
   exposure <- dataSet$drcfit.obj$dose
   labels <- unique(exposure)
   
@@ -200,7 +203,7 @@ PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d,
     exposure[exposure == 0] <- dataSet$zero.log
   }
 
-  df <- data.frame(Dose = exposure, Expression = dataSet$data.norm[gene.id,])
+  df <- data.frame(Dose = exposure, Expression = data[gene.id,])
   p <- ggplot(data=df, aes(x=Dose, y=Expression)) + geom_point() + ggtitle(gene.symbol) + 
        theme_bw() +
        theme(plot.title = element_text(hjust = 0.5, face = "bold"),
