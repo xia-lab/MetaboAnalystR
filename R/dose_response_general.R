@@ -1,9 +1,39 @@
+#Reorder dose
+Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
+                          lbl.type="disc", nmdr = FALSE){
+    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
+    mSetObj <- .get.mSet(mSetObj);
+
+    conc <- qs::qread(file="data_orig.qs");
+    int.mat <- conc;
+    dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
+
+    meta.reorder <- mSetObj$dataSet$cls[order(dose)]
+    int.mat <- int.mat[order(dose), ];
+
+    meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
+    meta.reorder <- gsub(" ", "", meta.reorder)
+    meta.reorder <- factor(meta.reorder, levels = unique(meta.reorder))
+
+
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
+    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
+
+    qs::qsave(int.mat, file="data_orig.qs");
+    return(.set.mSet(mSetObj));
+}
+
 # Step 1: prepare data for computing
 PrepareDataForDoseResponse <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
 
+  #important to order by rownames, otherwise code doesn't work!!!!!!!!
+  mSetObj$dataSet$comp.res <- mSetObj$dataSet$comp.res[order(rownames(mSetObj$dataSet$comp.res)), ]
+
   data <- t(mSetObj$dataSet$norm);
+  data <- data[order(rownames(data)), ]
+
   dose <- as.numeric(as.character(mSetObj$dataSet$cls));
   fdose <- as.factor(dose);
 
@@ -18,7 +48,7 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
   s <- sapply(1:nrowd, calcmean);
   data.mean <- as.matrix(t(s));
   
-  mSetObj$dataSet$itemselect <- list(dose = dose, item = item, design = design, data.mean = data.mean);
+  mSetObj$dataSet$itemselect <- structure(list(dose = dose, item = item, design = design, data.mean = data.mean), class="omicdata");
   return(.set.mSet(mSetObj));
 }
 
@@ -126,9 +156,9 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   print(nrow(data.select));
   print("data.select======");
 
-  mSetObj$dataSet$itemselect <- list(data = data.select, dose = dose,
-                  item = item, data.mean = data.mean, itemselect.res = res);  
-  
+  mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
+                  item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
+  saveRDS(mSetObj, "msetobj.rds");
   return(.set.mSet(mSetObj));
 }
 
@@ -656,8 +686,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
   # get necessary data for fitting
   dose <- f.drc$dose
   doseranks <- as.numeric(as.factor(dose)) 
-  #data <- f.its$data;
-  data <- f.drc$data;
+  data <- f.its$data
   data.mean <- f.its$data.mean
 
   # get only correct rows
@@ -668,14 +697,15 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
   data.mean <- as.data.frame(data.mean)
   data.mean <- data.mean[inx.bmd, ] %>% as.matrix()
 
-  item <- f.drc$fitres.filt[,1];
-  fitres.bmd <- f.drc$fitres.filt;
+  item <- dataSet$drcfit.obj$fitres.filt[,1]
+  fitres.bmd <- f.drc$fitres.filt
 
   if(ctrl.mode == "sampleMean"){
     bmr.mode <- "ctrl.mean"
   } else {
     bmr.mode <- "ctrl.mod"
   }
+  
   
   # function to calculate the bmd from the best fit model
   ################################################################
@@ -881,11 +911,11 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
 
     mSetObj$dataSet <- dataSet;
     .set.mSet(mSetObj);
-
+    fast.write.csv(res, "curvefit_detailed_table.csv");
     print("Completed PerformBMDCalc");
 
     if(dim(disp.res)[1] == 1){
-      return(3)
+      return(3);
     } else {
       return(1)
     }
@@ -898,7 +928,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
 #5a_sensPOD.R
 ### Calculation of transcriptomic POD from BMDs
 sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
-
+  dataSet <- mSetObj$dataSet;
   f.drc <- dataSet$drcfit.obj;
   f.its <- dataSet$itemselect;
 
