@@ -444,7 +444,7 @@ PlotClustPCA <- function(mSetObj,
 #'@export
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
-                           smplDist, clstDist, palette, font.size, method.nm, top.num, viewOpt, rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
+                           smplDist, clstDist, palette,fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,  method.nm, top.num,  rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T){
   
   mSetObj <- .get.mSet(mSetObj);
   var.nms = colnames(mSetObj$dataSet$norm);
@@ -483,7 +483,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     }
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));
-  PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, font.size, viewOpt, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, includeRowNames);
+  PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, showColnm,showRownm);
 }
 
 #'Create Heat Map Plot
@@ -515,14 +515,17 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
-                        clstDist, palette, font.size, viewOpt="detail", rowV=T, 
-                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
-
+                        clstDist, palette,  fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV=T, 
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T){
 
   mSetObj <- .get.mSet(mSetObj);
+ plotjs <- paste0(imgName, ".json");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  mSetObj$imgSet$heatmap <- imgName;
 
+  mSetObj$imgSet$heatmap <- imgName;
+  require(iheatmapr);
+
+  
   cls <- mSetObj$dataSet$cls;
   cls.type <- mSetObj$dataSet$cls.type;
   cls.class <- mSetObj$dataSet$type.cls.lbl;
@@ -546,7 +549,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }
   
   # need to control for very large data plotting
-  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+  if(ncol(hc.dat) > 1000 ){
      includeRowNames <- FALSE;
   }
   if(.on.public.web){
@@ -575,9 +578,11 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     colors <- topo.colors(256);
   }else if(palette == "gray"){
     colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
-  }else{
+  }else if(palette == "bwm"){
     colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
-  }
+  }else{
+    colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
+}
 
   if(cls.type == "disc"){
     annotation <- data.frame(class = hc.cls);
@@ -585,30 +590,17 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }else{
     annotation <- NA;
   }
-  # compute size for heatmap
-  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
-  h <- plot_dims$height;
-  w <- plot_dims$width;
+ 
   
   # make the width smaller for group average
-  if(grp.ave){
-    w <- length(levels(cls))*25 + 300;
-    w <- round(w/72,2);
-  }
-
+ 
   if(border){
     border.col<-"grey60";
   }else{
     border.col <- NA;
   }
-
-  if(format=="pdf"){
-    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  }
-  if(cls.type == "disc"){    
-
+ 
+  
     if(ordered.cls){
         ord.inx <- order(hc.cls);
         hc.cls <- hc.cls[ord.inx];
@@ -637,25 +629,68 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
         rownames(annotation) <- rownames(hc.dat); 
     }
 
-    pheatmap::pheatmap(t(hc.dat), 
-             annotation=annotation, 
-             annotation_colors = ann_colors,
-             annotation_legend = show.annot.legend, 
-             fontsize=font.size, 
-             clustering_distance_rows = smplDist,
-             clustering_distance_cols = smplDist,
-             clustering_method = clstDist, 
-             border_color = border.col,
-             cluster_rows = colV, 
-             cluster_cols = rowV,
-             scale = scaleOpt, 
-             legend = show.legend,
-             show_rownames=includeRowNames,
-             color = colors);
-  }else{
-    heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
-  }
-  dev.off();
+ 
+    data1sc <- t(hc.dat)
+    data1sc <- scale_mat(data1sc, scaleOpt)
+    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+    w = min(1200,ncol(data1sc)*unitCol+50)
+    h = min(2000,nrow(data1sc)*unitRow+50)
+   if(grp.ave){
+        
+    p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
+                  layout = list(font = list(size = fzAnno)),
+                  colors = colors,
+                    colorbar_grid = setup_colorbar_grid(x_start = 2) 
+    )
+      w = w+300
+   }else{
+      
+    p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
+                  layout = list(font = list(size = fzAnno),showlegend=F),
+                  colors = colors )
+    }
+
+    p<- p%>%
+      add_col_annotation(annotation, show_colorbar=show.annot.legend,
+                         side = "top", size = annoPer #, buffer = 0.015 , inner_buffer = bf / 3
+      )
+
+      
+    if (showColnm) {
+      p <- p%>%
+      add_col_labels(size = 0.2, font = list(size = fzCol))
+    } 
+    
+    
+    if (showRownm) {
+      p <- p%>%
+        add_row_labels(size = 0.2, font = list(size = fzRow), side = "right") 
+    } 
+    
+    
+    if (rowV) {
+    dend_col <- hclust(dist(t(data1sc), method = smplDist), method = clstDist)
+    p <- p %>% add_col_dendro(dend_col)
+    
+  } 
+  if (colV) {
+    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+    p <- p %>% add_row_dendro(dend_row)
+    
+  } 
+  
+    as_list <- to_plotly_list(p)
+    as_list[["layout"]][["width"]] <- w
+    as_list[["layout"]][["height"]] <- h
+ 
+  #  as_list[["layout"]][["annoHeight"]] <- round(0.1*h, 1)
+    as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
+    as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
+ 
+    print(plotjs)
+    write(as_json, plotjs)
+
+
   return(.set.mSet(mSetObj));
 }
 
@@ -800,4 +835,17 @@ GetXYCluster<-function(total){
     nrow<-total;
   }
   c(nrow, ncol);
+}
+
+scale_mat = function(mat, scale){
+  if(!(scale %in% c("none", "row", "column"))){
+    stop("scale argument shoud take values: 'none', 'row' or 'column'")
+  }
+  mat = switch(scale, none = mat, row = scale_rows(mat), column = t(scale_rows(t(mat))))
+  return(mat)
+} 
+scale_rows = function(x){
+  m = apply(x, 1, mean, na.rm = T)
+  s = apply(x, 1, sd, na.rm = T)
+  return((x - m) / s)
 }
