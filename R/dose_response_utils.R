@@ -725,9 +725,9 @@ GetItemSelectModels <- function(){
   return(models)
 }
 
-GetItemSelectData <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectData <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -739,9 +739,9 @@ GetItemSelectData <- function(){
   return(itemselect$data);
 }
 
-GetItemSelectDataRowNms <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectDataRowNms <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -753,9 +753,9 @@ GetItemSelectDataRowNms <- function(){
   return(rownames(itemselect$data));
 }
 
-GetItemSelectDataColNms <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectDataColNms <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -767,9 +767,9 @@ GetItemSelectDataColNms <- function(){
   return(colnames(itemselect$data));
 }
 
-GetItemSelectDose <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectDose <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -781,9 +781,9 @@ GetItemSelectDose <- function(){
   return(itemselect$dose)
 }
 
-GetItemSelectItems <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectItems <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -795,9 +795,9 @@ GetItemSelectItems <- function(){
   return(itemselect$item)
 }
 
-GetItemSelectDataMean <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetItemSelectDataMean <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   itemselect <- dataSet$itemselect;
   # Checks
@@ -820,9 +820,9 @@ GetItemSelectDataMeanColNms <- function(){
   return(colnames(itemselect$data.mean));
 }
 
-InitItemSelect <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+InitItemSelect <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   if(!exists("data.select") || !exists("dose") || !exists("item") || !exists("data.mean") || !exists("data.mean.colnames")){
     print("Could not find data vector!");
@@ -834,21 +834,20 @@ InitItemSelect <- function(){
   reslist <- list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean)  
   dataSet$itemselect <- structure(reslist, class = "itemselect")
-  RegisterData(dataSet);
+  mSetObj$dataSet <- dataSet;
+  .set.mSet(mSetObj);
   return(1);
 }
 
 ####################DrcFit object###################
-GetNumberDoses <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  print(dataSet$itemselect$dose);
-    return(length(unique(dataSet$itemselect$dose))-1) # number of doses minus 0
+GetNumberDoses <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(length(levels(mSetObj$dataSet$cls))-1) # number of doses minus 0
 }
 
-GetDrcFitAllRes <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetDrcFitAllRes <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   f.drc <- dataSet$drcfit.obj;
   
@@ -863,9 +862,9 @@ GetDrcFitAllRes <- function(){
   return(res)
 }
 
-GetDrcFitAllResColNms <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetDrcFitAllResColNms <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   f.drc <- dataSet$drcfit.obj;
   
@@ -878,9 +877,9 @@ GetDrcFitAllResColNms <- function(){
   return(colnames(res))
 }
 
-GetDrcFitAllGeneIds <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetDrcFitAllGeneIds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   f.drc <- dataSet$drcfit.obj;
   
@@ -903,9 +902,9 @@ GetDrcFitAllModNms <- function(){
   return(res[,2])
 }
 
-GetDrcFitAllInvStatus <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+GetDrcFitAllInvStatus <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   f.drc <- dataSet$drcfit.obj;
   
@@ -917,9 +916,9 @@ GetDrcFitAllInvStatus <- function(){
   return(res[,ncol(res)])
 }
 
-InitDrcFitObj <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+InitDrcFitObj <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
   if(!exists("drc.res.modelnms") || !exists("drc.res.gene.ids") || !exists("drc.res") || !exists("drc.res.colnms") || !exists("drc.res.invstatus")){
     print("Could not find drc meta objects!");
@@ -936,7 +935,8 @@ InitDrcFitObj <- function(){
   
   dataSet$drcfit.obj <- structure(reslist, class = "drcfit")
   
-  RegisterData(dataSet);
+  mSetObj$dataSet <- dataSet;
+  .set.mSet(mSetObj);
   return(1);
 }
 
@@ -961,9 +961,9 @@ FilterBMDResults <- function(dataSet){
   return(bmdcalc.res)
 }
 
-PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
-    paramSet <- readSet(paramSet, "paramSet");
-    dataSet <- readDataset(paramSet$dataName);
+PerformDREnrichment<-function(mSetObj=NA, file.nm, fun.type, xMin, xMax){
+   mSetObj <- .get.mSet(mSetObj);
+   dataSet <- mSetObj$dataSet;
     bmdcalc.res <- FilterBMDResults(dataSet);
     gene.vec <- as.matrix(bmdcalc.res[which(bmdcalc.res$bmd > xMin & bmdcalc.res$bmd < xMax),1])
     sym.vec <- doEntrez2SymbolMapping(gene.vec);
@@ -972,9 +972,10 @@ PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
     enr1.mat <<- enr.mat
     return(res);
 }
-GetDRRes <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+
+GetDRRes <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
   obj.bmd <- dataSet$bmdcalc.obj
   
   bmdcalc.obj <- obj.bmd
@@ -997,14 +998,15 @@ GetDRRes <- function(){
   
   #update sig genes
   dataSet$sig.mat <- dataSet$comp.res[which(rownames(dataSet$comp.res) %in% bmdcalc.res$id),];
-  RegisterData(dataSet);
+  mSetObj$dataSet <- dataSet;
+  .set.mSet(mSetObj);
   return(res)  
   
 }
 
-interpFits <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+interpFits <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
 
     fitres.filt <- dataSet$drcfit.obj$fitres.filt
     resp.list <- vector(mode = "list", length = nrow(fitres.filt))
@@ -1067,48 +1069,6 @@ interpFits <- function(){
 
 }
 
-# create request for dose response API
-
-PerformAPIDRFit <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-
-  dataSetWeb <- dataSet
-  models <- models
-  cpus <- cpus
-  
-  toSend <- list(dataSet = dataSetWeb,
-                 models = models,
-                 cpus = 18)
-  
-  # rds file to be sent to server
-  library(httr)
-  base <- paramSet$api.base
-  endpoint <- "/fitcurves"
-  call <- paste(base, endpoint, sep="")
-  print(call)
-  
-  saveRDS(toSend, "tosend.rds")
-  request <- suppressWarnings(try(httr::POST(url = call, 
-                        body = list(rds = upload_file("tosend.rds", "application/octet-stream"))), silent = TRUE))
-  
-  # check if successful
-  if(inherits(request, "try-error")){
-    PerformDRFit()
-    current.msg <<- c("Failed to connect to Xia Lab API Server!")
-    return(0)
-  }
-  
-  # now process return
-  request <- httr::content(request, "raw")
-  request <- base::unserialize(request)
-  if(!is.null(request$drcfit.obj)){
-    dataSet <<- request
-    RegisterData(dataSet);
-  }
-
-  return(1)
-}
 
 #### use the pureErrorAnova function from alr3. alr3 is now deprecated, so extracted these 
 # lines from the alr3 source code in the CRAN archive

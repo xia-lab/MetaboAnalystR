@@ -1,68 +1,72 @@
-#1_omicsdata.R
-### import, check and optionnally normalize omics data
-PrepareDataForDoseResponse <- function()
-{
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  dataSet$comp.res <- dataSet$comp.res[order(rownames(dataSet$comp.res)), ]
+#Reorder dose
+Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
+                          lbl.type="disc", nmdr = FALSE){
+    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
+    mSetObj <- .get.mSet(mSetObj);
 
-  data <- dataSet$data.norm
+    conc <- qs::qread(file="data_orig.qs");
+    int.mat <- conc;
+    dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
+
+    meta.reorder <- mSetObj$dataSet$cls[order(dose)]
+    int.mat <- int.mat[order(dose), ];
+
+    meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
+    meta.reorder <- gsub(" ", "", meta.reorder)
+    meta.reorder <- factor(meta.reorder, levels = unique(meta.reorder))
+
+
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
+    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
+
+    qs::qsave(int.mat, file="data_orig.qs");
+    return(.set.mSet(mSetObj));
+}
+
+# Step 1: prepare data for computing
+PrepareDataForDoseResponse <- function(mSetObj=NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  #important to order by rownames, otherwise code doesn't work!!!!!!!!
+  mSetObj$dataSet$comp.res <- mSetObj$dataSet$comp.res[order(rownames(mSetObj$dataSet$comp.res)), ]
+
+  data <- t(mSetObj$dataSet$norm);
   data <- data[order(rownames(data)), ]
 
-  # definition of doses and item identifiers
-  dose <- as.numeric(gsub(".*_", "", as.character(dataSet$meta.info[,1])))
-  
+  dose <- as.numeric(as.character(mSetObj$dataSet$cls));
+  fdose <- as.factor(dose);
+
   # control of the design
-  design <- table(dose, dnn = "")
-  fdose <- as.factor(dose)
+  design <- table(dose, dnn = "");
   tdata <- t(data)
   nrowd <- nrow(data)
   item <- rownames(data)
   
   # the following 3 steps tested faster than aggregate
-  calcmean <- function(i){tapply(tdata[, i], fdose, mean)}
-  s <- sapply(1:nrowd, calcmean)
-  data.mean <- as.matrix(t(s))
+  calcmean <- function(i){tapply(tdata[, i], fdose, mean)};
+  s <- sapply(1:nrowd, calcmean);
+  data.mean <- as.matrix(t(s));
   
-  reslist <- list(dose = dose, item = item, 
-                  design = design, data.mean = data.mean)  
-  
-  dataSet$omicdata <- structure(reslist, class = "omicdata")
-  RegisterData(dataSet);
-  return(1);
+  mSetObj$dataSet$itemselect <- structure(list(dose = dose, item = item, design = design, data.mean = data.mean), class="omicdata");
+  return(.set.mSet(mSetObj));
 }
 
-#2_itemselect.R
-### select significantly responsive items 
-GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "no", ncpus = 1)
-{
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+# Step 2: select significantly responsive items 
+PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "no", ncpus = 1){
+  mSetObj <- .get.mSet(mSetObj);
+
   #prepare param
-  deg.FDR <- as.logical(deg.FDR)
-  wtt <- as.logical(wtt)
+  #deg.FDR <- as.logical(deg.FDR)
+  #wtt <- as.logical(wtt)
   
   #get data
-  data <- dataSet$data.norm
-  data <- data[order(rownames(data)), ]
-  omicdata <- dataSet$omicdata
-  res <- dataSet$comp.res
-  
-  # Checks
-  if (!inherits(omicdata, "omicdata"))
-    stop("Use only with 'omicdata' objects, created with the function omicdata")
-  
-  if (!is.logical(deg.FDR))
-    stop("deg.FDR must be either TRUE or FALSE")
-  if (!is.logical(wtt))
-    stop("wtt must be either TRUE or FALSE")
-  if ((wtt.pval <=0) | (wtt.pval > 1))
-    stop("deg.pval must be in ]0; 1[.")
-  
-  # load libraries
-  #require(nparcomp)
-  
+  data <- t(mSetObj$dataSet$norm);
+  data <- data[order(rownames(data)), ];
+
   # get data
+  res <- mSetObj$dataSet$comp.res;  # not sure all (current) or only sig?
+  omicdata <- mSetObj$dataSet$itemselect;
   data.mean <- omicdata$data.mean
   item <- omicdata$item
   dose <- omicdata$dose
@@ -78,14 +82,14 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
 
   dose.ratio <- median(dose.ratio)
   zero.rep <- dose.uniq[2]/dose.ratio    
-  dataSet$zero.log <- zero.rep
+  mSetObj$dataSet$zero.log <- zero.rep
 
   doseranks <- as.numeric(as.factor(dose))
-  irow <- 1:length(item)
-  nselect <- dim(data)[1]
+  irow <- 1:length(item);
+  nselect <- dim(data)[1];
   
   # get column with max log fold change
-  fc.cols <- c(1:(length(unique(dose))-1))
+  fc.cols <- c(1:(length(unique(dose))-1));
   res$max.lfc <- apply(res[,fc.cols], 1, function(x){max(abs(x))})
   
   # determine if probes pass FC filter
@@ -149,48 +153,36 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   data.mean <- data.mean[res$all.pass, ]
   item <- item[res$all.pass]
 
-  
-  reslist <- list(data = data.select, dose = dose,
-                  item = item, data.mean = data.mean, itemselect.res = res)  
-  
-  dataSet$itemselect <- structure(reslist, class = "itemselect")
-  RegisterData(dataSet);
+  print(nrow(data.select));
+  print("data.select======");
+
+  mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
+                  item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
+  saveRDS(mSetObj, "msetobj.rds");
+  return(.set.mSet(mSetObj));
 }
 
 #3_drcfit.R
 ### fit different models to each dose-response curve and choose the best fit 
-PerformDRFit <- function(ncpus = 2)
-{
+PerformDRFit <- function(mSetObj=NA, ncpus=2){
 
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
   if(!exists("models")){
     print("Could not find models vector!");
     return(0);
   }
 
-  itemselect <- dataSet$itemselect;
-  
-  # Checks
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
-  
-  model.choices <- c("Exp2","Exp3","Exp4","Exp5","Lin","Poly2","Poly3","Poly4","Hill","Power")
-  if (sum(models %in% model.choices) != length(models))
-    stop("You must identify statistical models with the correct identifiers")
-  if (sum(duplicated(model.choices)) > 0)
-    stop("Do not add duplicate model choices")
-  
   require(data.table)
   require(dplyr)
   require(drc)
   require(alr3)
   
+  mSetObj <- .get.mSet(mSetObj);
+  itemselect <- mSetObj$dataSet$itemselect;
+
   # definition of necessary data
-  #selectindex <- itemselect$selectindex
   dose <- itemselect$dose
-  doseranks <- as.numeric(as.factor(dose)) 
-  data <- itemselect$data 
+  doseranks <- as.numeric(as.factor(dose)); 
+  data <- itemselect$data
   data.mean <- itemselect$data.mean 
   
   # calculations for starting values and other uses
@@ -204,7 +196,6 @@ PerformDRFit <- function(ncpus = 2)
   nselect <- nrow(data)
   
   AICdigits <- 2 # number of digits for rounding the AIC values
-  
   kcrit = 2 # for defining AIC or BIC 
   
   # function to fit all the models an choose the best on one item
@@ -232,7 +223,7 @@ PerformDRFit <- function(ncpus = 2)
     dset <<- dset # I have to do this, otherwise the neill.test function can't find it
     
     # for choice of the linear trend (decreasing or increasing)
-    modlin <- lm(signal ~ doseranks)
+    modlin <- lm(signal ~ doseranks);
     adv.incr <- coef(modlin)[2] >= 0
     
     # initialize results dataframe
@@ -614,33 +605,28 @@ PerformDRFit <- function(ncpus = 2)
   }
   
   
-  dres <- as.data.frame(res)
+  res <- as.data.frame(res)
   
-  reslist <- list(fitres.all = dres, fitres.filt = data.frame(), data = dataSet$itemselect$data,
-                  dose = dataSet$itemselect$dose, data.mean = dataSet$itemselect$data.mean, 
-                  item = dataSet$itemselect$item) 
+  reslist <- list(fitres.all = res, fitres.filt = data.frame(), data = data,
+                  dose = itemselect$dose, data.mean = itemselect$data.mean, 
+                  item = itemselect$item) 
   
-  dataSet$drcfit.obj <- structure(reslist, class = "drcfit")
+  mSetObj$dataSet$drcfit.obj <- structure(reslist, class = "drcfit")
   
-  RegisterData(dataSet);
-
-  return(1);
+  print("Completed PerformDRFit!");
+  return(.set.mSet(mSetObj));
 }
 
-FilterDRFit <- function()
-{
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  f.drc <- dataSet$drcfit.obj;
-  # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+FilterDRFit <- function(mSetObj=NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+  f.drc <- mSetObj$dataSet$drcfit.obj;
   
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
 
   # get results
-  fitres.all <- as.data.table(dataSet$drcfit.obj$fitres.all)
+  fitres.all <- as.data.table(f.drc$fitres.all)
   fitres.filt <-fitres.all[fitres.all$mod.name!="Const"]
   
   # get best fit for each feature based on selected criteria
@@ -658,36 +644,37 @@ FilterDRFit <- function()
   
   # remove rows that had no signficant fits
   idx <- as.numeric(fitres.filt$item.ind)
-  data <- dataSet$drcfit.obj$data[idx, ]
-  data.mean <- dataSet$drcfit.obj$data.mean[idx, ]
-  item <- dataSet$drcfit.obj$item[idx]
+  data <- f.drc$data[idx, ]
+  data.mean <- f.drc$data.mean[idx, ]
+  item <- f.drc$item[idx]
   
   # update drcfit object
-  dataSet$drcfit.obj$fitres.filt <- as.data.frame(fitres.filt)
-  dataSet$drcfit.obj$data <- data
-  dataSet$drcfit.obj$data.mean <- data.mean
-  dataSet$drcfit.obj$item <- item
-  saveSet(paramSet);
-  RegisterData(dataSet);
-  return(1)
+  f.drc$fitres.filt <- as.data.frame(fitres.filt);
+  f.drc$data <- data;
+  f.drc$data.mean <- data.mean;
+  f.drc$item <- item;
+  
+  mSetObj$dataSet$drcfit.obj <- f.drc;
+  print("Completed FilterDRFit!");
+
+  return(.set.mSet(mSetObj));
 }
 
 
 
 #4_bmdcalc.R
 ### Calculation of BMD values from fitted dose-response curves
-PerformBMDCalc <- function(ncpus = 1)
-{
+PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
 
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(mSetObj);
+
+  save.image("TestDose44.RData");
+
+  dataSet <- mSetObj$dataSet;
   f.drc <- dataSet$drcfit.obj;
   f.its <- dataSet$itemselect;
 
   num.sds <- as.numeric(num.sds);
-  # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
   
   require(data.table)
   require(dplyr)
@@ -718,6 +705,7 @@ PerformBMDCalc <- function(ncpus = 1)
   } else {
     bmr.mode <- "ctrl.mod"
   }
+  
   
   # function to calculate the bmd from the best fit model
   ################################################################
@@ -897,7 +885,7 @@ PerformBMDCalc <- function(ncpus = 1)
   disp.res <- cbind(disp.res, fitres.bmd[,c("mod.name", "SDres", "lof.p")])
   disp.res <- cbind(disp.res, dres[dres$all.pass, c("bmr", "bmd", "bmdl", "bmdu")])
   
-  dnld.file <- merge(dataSet$drcfit.obj$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
+  dnld.file <- merge(f.drc$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
   data.table::fwrite(as.data.frame(dnld.file), quote = FALSE, row.names = FALSE, sep = "\t", file="bmd.txt");
 
   # collect results to return
@@ -911,7 +899,7 @@ PerformBMDCalc <- function(ncpus = 1)
   # make table for html display
   if(dim(disp.res)[1] > 0) {
     res <- disp.res[,c(1,2,4,7,6,8)];
-    res.mods <- dataSet$drcfit.obj$fitres.filt[,c(1,3,4,5,6)];
+    res.mods <- f.drc$fitres.filt[,c(1,3,4,5,6)];
     res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
     res[,c(3:10)] <- apply(res[,c(3:10)], 2, function(x) as.numeric(as.character(x)));
     res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) signif(x, digits = 2));
@@ -919,9 +907,15 @@ PerformBMDCalc <- function(ncpus = 1)
     colnames(res) <- c("gene.id","mod.name","lof.p","bmdl","bmd","bmdu","b","c","d","e");
     res <- res[order(res$bmd), ];
     dataSet$html.resTable <- res;
-    RegisterData(dataSet);
+    dataSet$drcfit.obj <- f.drc;
+
+    mSetObj$dataSet <- dataSet;
+    .set.mSet(mSetObj);
+    fast.write.csv(res, "curvefit_detailed_table.csv");
+    print("Completed PerformBMDCalc");
+
     if(dim(disp.res)[1] == 1){
-      return(3)
+      return(3);
     } else {
       return(1)
     }
@@ -933,10 +927,11 @@ PerformBMDCalc <- function(ncpus = 1)
 
 #5a_sensPOD.R
 ### Calculation of transcriptomic POD from BMDs
-sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
-{
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
+  dataSet <- mSetObj$dataSet;
+  f.drc <- dataSet$drcfit.obj;
+  f.its <- dataSet$itemselect;
+
   pod.choices <- c("feat.20", "feat.10th", "mode")
   if (sum(pod %in% pod.choices) != length(pod))
     stop("You must identify pod methods with the correct identifiers")
@@ -960,8 +955,8 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
   
   # prepare results
   trans.pod <- c(rep(NA, length(pod)))
-  names(trans.pod) <- pod.choices[(pod.choices %in% pod)]
-  
+  names(trans.pod) <- pod.choices[(pod.choices %in% pod)];
+
   # calculate transcriptomic pod from specified method
   if ("feat.20" %in% pod){
     
@@ -973,15 +968,12 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
       
       # get 20 lowest BMDs
       bmd.sort <- sort(bmds)
-      low.20 <- bmd.sort[1:20]
-      
-      # bootstrap median of 20 BMDs
-      median.boot <- boot(data = low.20, statistic = fun.boot, R = 2000)
-      trans.pod["feat.20"] <- unname(median.boot$t0)
+      trans.pod["feat.20"] <- bmd.sort[20]
       
     }
     
   } 
+
   if ("feat.10th" %in% pod){
     
     # POD = 10th percentile BMD from all significant probes
@@ -1065,12 +1057,10 @@ sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
 
 #5b_gsPOD.R
 ### Calculation of transcriptomic POD from BMDs
-gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
+gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB="No match", pval = 1.0, FDR = FALSE)
 { 
   paramSet <- readSet(paramSet, "paramSet");
   gs <- geneDB;
-  if (!inherits(obj.data, "omicdata"))
-    stop("Use only with 'omicdata' objects, created with the function omicdata")
 
   require(data.table)
   require(dplyr)
@@ -1128,8 +1118,8 @@ gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB, pval = 1.0, FDR = FALSE)
 
 
 GetFitResultMatrix <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   res <- dataSet$html.resTable;
   res <- res[,-c(1,2)];
   res <- as.matrix(res);
@@ -1138,7 +1128,6 @@ GetFitResultMatrix <- function(){
   res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
   res <- apply(res, 2, function(x) as.numeric(as.character(x)));
-  RegisterData(dataSet);
   return(res);
 }
 
@@ -1148,20 +1137,20 @@ GetFitResultColNames <-function(){
 }
 
 GetFitResultGeneIDs <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,1]))
 }
 
 GetFitResultModelNms <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,2]))
 }
 
 GetFitResultGeneIDLinks <- function(org){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
   if (org == "noAnn"){
     ids <- as.character(dataSet$html.resTable[,1]);
     symbs <- ids;
@@ -1169,23 +1158,25 @@ GetFitResultGeneIDLinks <- function(org){
     return(annots);
   } else if (org == "s2f"){
     ids <- as.character(dataSet$html.resTable[,1]);
-    symbs <- doEntrez2SymbolMapping(ids)
+    #symbs <- doEntrez2SymbolMapping(ids)
+    symbs <- ids;
     annots <- paste("<a style='color: #a7414a' href='https://www.ecoomicsdb.ca/EcoOmicsDB/#/query?ortho=", ids, "' target='_blank'>", symbs, "</a>", sep="");
     return(annots);    
   } else {
     ids <- as.character(dataSet$html.resTable[,1]);
-    symbs <- doEntrez2SymbolMapping(ids)
+    #symbs <- doEntrez2SymbolMapping(ids)
+    symbs <- ids;
     annots <- paste("<a style='color: #a7414a' href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>", symbs, "</a>", sep="");
     return(annots);
   }
 }
 
 GetFitResultGeneSymbols <-function(org){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  if (org == "noAnn") {
+  mSetObj <- .get.mSet(NA);
+  dataSet <- mSetObj$dataSet;
+  #if (org == "noAnn") {
     return(as.character(dataSet$html.resTable[,1]));
-  } else {
-    return(doEntrez2SymbolMapping(as.character(dataSet$html.resTable[,1])));
-  }
+  #} else {
+  #  return(doEntrez2SymbolMapping(as.character(dataSet$html.resTable[,1])));
+  #}
 }

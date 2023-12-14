@@ -11,10 +11,10 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
   ))
 }
 
-PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
+PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
 
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   bmdcalc.res <- FilterBMDResults(dataSet)
   
@@ -62,7 +62,8 @@ PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
     details.50 <- lapply(details.50, as.list)
     test <- reshape2::melt(details.50)[,c(1,3)]
     colnames(test) <- c("entrez", "pathway")
-    test$symbol <- doEntrez2SymbolMapping(test$entrez)
+    test$symbol <- test$entrez 
+    #test$symbol <- doEntrez2SymbolMapping(test$entrez)
     dataSet$pathway.ids <- test
     
     #generate dataframe with model fit interpolations
@@ -70,7 +71,8 @@ PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
     qs::qsave(fit.interp, "fit.interp.qs");
 
     # fill blank gene names with NA
-    geneNms <- doEntrez2SymbolMapping(bmdcalc.res$id)[order(bmdcalc.res$bmd)]
+    #geneNms <- doEntrez2SymbolMapping(bmdcalc.res$id)[order(bmdcalc.res$bmd)]
+    geneNms <- bmdcalc.res$id[order(bmdcalc.res$bmd)]
     geneNms[geneNms == ""] <- "---"
 
     res <- density(bmdcalc.res$bmd)
@@ -92,13 +94,15 @@ PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
   cat(json.obj);
   sink();
 
-  RegisterData(dataSet)
-  return(1);
+    mSetObj$dataSet <- dataSet;
+    return(.set.mSet(mSetObj));
 }
 
-PlotGeneBMD <- function(gene.id, gene.symbol, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
+  data <- t(dataSet$norm);
+
   params <- dataSet$drcfit.obj$fitres.filt[dataSet$drcfit.obj$fitres.filt$gene.id == gene.id,]
   model.nm <- as.vector(params$mod.name)
   b <- as.numeric(as.vector(params$b))
@@ -123,7 +127,7 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
     exposure[exposure == 0] <- dataSet$zero.log
   }
 
-  df <- data.frame(Exposure = exposure, Expression = dataSet$data.norm[gene.id,])
+  df <- data.frame(Exposure = exposure, Expression = data[gene.id,])
   p <- ggplot(data=df, aes(x=Exposure, y=Expression)) + geom_point() + xlab("Concentration") +
     ggtitle(gene.symbol) + theme_bw() + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
   
@@ -175,7 +179,7 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
   }
   
   imgName <- paste("Gene_bmd_", gene.id, ".png", sep="");
-  Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+  Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
 
@@ -184,12 +188,14 @@ PlotGeneBMD <- function(gene.id, gene.symbol, scale){
   saveSet(imgSet);
 }
 
-PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale){
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
+  data <- t(dataSet$norm);
+
   require(ggplot2)
   require(scales)
-
+  
   exposure <- dataSet$drcfit.obj$dose
   labels <- unique(exposure)
   
@@ -197,7 +203,7 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
     exposure[exposure == 0] <- dataSet$zero.log
   }
 
-  df <- data.frame(Dose = exposure, Expression = dataSet$data.norm[gene.id,])
+  df <- data.frame(Dose = exposure, Expression = data[gene.id,])
   p <- ggplot(data=df, aes(x=Dose, y=Expression)) + geom_point() + ggtitle(gene.symbol) + 
        theme_bw() +
        theme(plot.title = element_text(hjust = 0.5, face = "bold"),
@@ -250,18 +256,19 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
   }
   
   imgName <- paste("Gene_", gene.id, "_", model.nm, ".png", sep="");
-  Cairo(file = imgName, width=280, height=320, type="png", bg="white");
+  Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotGeneDRCurve <- imgName;
-  saveSet(imgSet);
+  dataSet$PlotGeneDRCurve <- imgName;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotDRModelBars <- function(imgNm, dpi, format){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
+
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
   p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
@@ -269,21 +276,21 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   p <- p + xlab("Best fit model") + ylab("Count") + theme(axis.text.x = element_text(face="bold"), legend.position = "bottom")
   
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRModelBars <- imgNm;
-  saveSet(imgSet);
+  dataSet$PlotDRModelBars <- imgNm;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
+  mSetObj <- .get.mSet(mSetObj);  
+  dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
-  s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
+  s.pods <- sensPOD(mSetObj, pod = c("feat.20", "feat.10th", "mode"), scale)
   
   bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass,]
 
@@ -318,18 +325,18 @@ PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
           legend.box.just = "right")
 
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
   print(p)
   dev.off();
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRHistogram <- imgNm;
-  saveSet(imgSet);
+  dataSet$PlotDRHistogram <- imgNm;
+  mSetObj$dataSet <- dataSet;
+  return(.set.mSet(mSetObj));
 }
 
-PlotPWHeatmap <- function(pathway, pwcount, units){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+PlotPWHeatmap <- function(mSetObj=NA, pathway, pwcount, units){
+    mSetObj <- .get.mSet(mSetObj);  
+    dataSet <- mSetObj$dataSet;
 
     require(pheatmap)
     require(grid)
@@ -389,7 +396,7 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
 
     # print out image
     imgNm <- paste("Pw_", pwcount, ".png", sep="");
-    Cairo (file=imgNm, width=8, height=8, unit="in",dpi=300, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, width=8, height=8, unit="in",dpi=300, type="png", bg="white");
     setHook("grid.newpage", function() pushViewport(viewport(x=1,y=0.95,width=1, height=0.9, name="vp", just=c("right","top"))), action="prepend")
     pheatmap(pw.data, cluster_cols = FALSE, cluster_rows = FALSE, show_rownames = TRUE, show_colnames = TRUE, 
              border_color = NA, labels_col = labs.col, annotation_row = ann.row, legend = FALSE,
@@ -399,8 +406,8 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
     grid.text(pathway, y = 1.02, x = 0.5, gp=gpar(fontsize=14, fontface="bold"))
     dev.off();
 
-    imgSet <- readSet(imgSet, "imgSet");
-    imgSet$PlotPWHeatmap <- imgNm;
-    saveSet(imgSet);
+    dataSet$PlotPWHeatmap <- imgNm;
+    mSetObj$dataSet <- dataSet;
+    return(.set.mSet(mSetObj));
 }
 
