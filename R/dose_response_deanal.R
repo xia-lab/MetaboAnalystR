@@ -114,6 +114,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
                 inx.down = inx.down,
                 sig.mat = sig.mat
               );
+
+    fast.write.csv(res.all, "limma_restable.csv");
+
     .set.mSet(mSetObj);
     return(sig.count);
 }
@@ -192,4 +195,20 @@ GetDoseUnsigIDs <- function(mSetObj=NA){
   }else{
     return("NA");
   }
+}
+
+GetDoseDEMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  print(head(mSetObj$dataSet$comp.res));
+  return(as.matrix(signif(mSetObj$dataSet$comp.res),4));
+}
+
+GetDoseDERows <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(rownames(mSetObj$dataSet$comp.res));
+}
+
+GetDoseDEColumns <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(colnames(mSetObj$dataSet$comp.res));
 }
