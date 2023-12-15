@@ -26,7 +26,8 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  save(mSetObj, ppm1, ppm2, database, similarity_meth, precMZ, sim_cutoff, ionMode, file = "mSetObj___performMS2search.rda")
+  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
+       file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -47,13 +48,61 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   if(database == "all"){ # "HMDB_experimental_PosDB"
     database_opt <- "all";
+  } else if(database == "hmdb_exp") {
+    database_opt <- "HMDB_experimental_PosDB";
   }
   # now let call OPTILCMS to search the database
   df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
-  Concensus_spec <- list(as.vector(1L), list(list(df)))
-  peak_mtx <- matrix(c(precMZ-1e-10, precMZ+1e-10, 12, 13), ncol = 4)
+  Concensus_spec <- list(as.vector(0L), list(list(df)))
+  peak_mtx <- matrix(c(precMZ-1e-10, precMZ+1e-10, NA, NA), ncol = 4)
   colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
-  SpectraSearchingSingle(Concensus_spec, 0, peak_mtx, ppm1, ppm2, ion_mode_idx, dbpath, database_opt)
+  results <- SpectraSearchingSingle(Concensus_spec, 0, peak_mtx, ppm1, ppm2, 
+                                    ion_mode_idx, dbpath, database_opt)
   
+  results_clean <- lapply(results, msmsResClean)
+  mSetObj$dataSet$msms_result <- results_clean
   return(.set.mSet(mSetObj));
+}
+
+msmsResClean <- function(res){
+  
+  allcmpds <- res[["Compounds"]];
+  allcmpds_unique <- unique(allcmpds);
+  allscore <- res[["Scores"]][[1]];
+  
+  idx <- vapply(allcmpds_unique, function(cmpd){
+    idx1 <- (allcmpds == cmpd)
+    msco <- max(allscore[idx1])
+    idx2 <- (allscore == msco)
+    which(idx1 & idx2)[1]
+  }, FUN.VALUE = integer(1L))
+  
+  res[["IDs"]] <- res[["IDs"]][idx]
+  res[["Scores"]][[1]] <- res[["Scores"]][[1]][idx]
+  res[["dot_product"]][[1]] <- res[["dot_product"]][[1]][idx]
+  res[["Neutral_loss"]][[1]] <- res[["Neutral_loss"]][[1]][idx]
+  res[["Compounds"]] <- res[["Compounds"]][idx]
+  res[["Formulas"]] <- res[["Formulas"]][idx]
+  
+  res
+}
+
+GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Compounds"]])
+}
+
+GetMSMSFormulas_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Formulas"]])
+}
+
+GetMSMSSimScores_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Formulas"]])
+}
+
+plotMirror <- function(){
+  
+  
 }
