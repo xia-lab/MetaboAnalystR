@@ -266,9 +266,23 @@ PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d,
 }
 
 PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
-
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
+
+  # Ensure all models are represented in the dataset
+  existing_models <- unique(dataSet$bmdcalc.obj$bmdcalc.res$mod.name)
+  missing_models <- setdiff(models, existing_models)
+
+  # Add rows for missing models (with default or NA values)
+  for (model in missing_models) {
+    missing_row <- data.frame(id = paste0(model, "Sample"),
+                              mod.name = model, 
+                              bmd = NA, bmdl = NA, bmdu = NA, bmr = NA,
+                              conv.pass = FALSE, hd.pass = FALSE, 
+                              CI.pass = FALSE, ld.pass = FALSE, 
+                              all.pass = FALSE)
+    dataSet$bmdcalc.obj$bmdcalc.res <- rbind(dataSet$bmdcalc.obj$bmdcalc.res, missing_row)
+  }
 
   require(ggplot2)
   p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
