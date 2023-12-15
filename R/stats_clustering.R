@@ -570,19 +570,29 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }
   
   # set up colors for heatmap
-  if(palette=="gbr"){
-    colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-  }else if(palette == "heat"){
-    colors <- heat.colors(256);
-  }else if(palette == "topo"){
-    colors <- topo.colors(256);
-  }else if(palette == "gray"){
-    colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
-  }else if(palette == "bwm"){
-    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
-  }else{
-    colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
-}
+    if(palette=="gbr"){
+        colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+    }else if(palette == "heat"){
+        colors <- grDevices::heat.colors(256);
+    }else if(palette == "topo"){
+        colors <- grDevices::topo.colors(256);
+    }else if(palette == "gray"){
+        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+    }else if(palette == "byr"){
+        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+    }else if(palette == "viridis") {
+        colors <- rev(viridis::viridis(10))
+    }else if(palette == "plasma") {
+        colors <- rev(viridis::plasma(10))
+    }else if(palette == "npj"){
+        colors <- c("#00A087FF","white","#E64B35FF")
+    }else if(palette == "aaas"){
+        colors <- c("#4DBBD5FF","white","#E64B35FF");
+    }else if(palette == "d3"){
+        colors <- c("#2CA02CFF","white","#FF7F0EFF");
+    }else {
+        colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
+    }
 
   if(cls.type == "disc"){
     annotation <- data.frame(class = hc.cls);

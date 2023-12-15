@@ -2645,12 +2645,21 @@ GetPLSLoadAxesSpec<-function(mSetObj=NA){
 
 GetPLSLoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  rownames(mSetObj$analSet$plsr$imp.loads);
+  #res <- rownames(mSetObj$analSet$plsr$imp.loads);
+  #if(length(res)>2500){
+  #  rownames(mSetObj$analSet$plsr$imp.loads)[1:2500];
+  #} else {
+    rownames(mSetObj$analSet$plsr$imp.loads);
+  #}  
 }
 
 GetPLSLoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]);
+  #if(nrow(mSetObj$analSet$plsr$imp.loads[,c(1:2)])>2500){
+  #  as.matrix(mSetObj$analSet$plsr$imp.loads[1:2500,c(1:2)]);
+  #} else {
+    as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]);
+  #}  
 }
 
 GetPCALoadAxesSpec <- function(mSetObj=NA){
@@ -2660,13 +2669,26 @@ GetPCALoadAxesSpec <- function(mSetObj=NA){
 
 GetPCALoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  rownames(mSetObj$analSet$pca$imp.loads);
+  #if(nrow(mSetObj$analSet$pca$imp.loads[,c(1:2)])>2500){
+  #  res <- rownames(mSetObj$analSet$pca$imp.loads)[1:2500];
+  #} else {
+    res <- rownames(mSetObj$analSet$pca$imp.loads);
+  #}  
+  #cat("GetPCALoadCmpds ==> ", length(res), "\n")
+  return(res)  
 }
 
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]);
+  #if(nrow(mSetObj$analSet$pca$imp.loads[,c(1:2)])>2500){
+  #  res <- as.matrix(mSetObj$analSet$pca$imp.loads[1:2500,c(1:2)]);
+  #} else {
+    res <- as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]);
+  #}
+  #cat("GetPCALoadMat ==> ", nrow(res), "\n")
+  return(res)
 }
+
 
 #'For plotting PCA, selects max top 9 components
 #'@description Rotate PCA analysis
@@ -2688,10 +2710,12 @@ GetOPLSLoadAxesSpec <- function(mSetObj=NA){
 GetOPLSSigCmpds <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "splot"){
-    rownames(mSetObj$analSet$oplsda$splot.mat);
+    res <- rownames(mSetObj$analSet$oplsda$splot.mat);
   }else{
-    rownames(mSetObj$analSet$oplsda$vip.mat);
+    res <- rownames(mSetObj$analSet$oplsda$vip.mat);
   }
+  #if(length(res)>2500){res <- res[1:2500]}
+  return(res)
 }
 
 GetOPLSSigColNames <- function(mSetObj=NA, type){
@@ -2705,10 +2729,12 @@ GetOPLSSigColNames <- function(mSetObj=NA, type){
 GetOPLSSigMat <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "splot"){
-    as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
+    res <- as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
   }else{
-    as.matrix(mSetObj$analSet$oplsda$vip.mat);
+    res <- as.matrix(mSetObj$analSet$oplsda$vip.mat);
   }
+  #if(nrow(res)>2500){res <- res[1:2500,]}
+  return(res)
 }
 
 GetDefaultSPLSCVComp <- function(mSetObj=NA){
