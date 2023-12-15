@@ -81,6 +81,9 @@ msmsResClean <- function(res){
   res[["Neutral_loss"]][[1]] <- res[["Neutral_loss"]][[1]][idx]
   res[["Compounds"]] <- res[["Compounds"]][idx]
   res[["Formulas"]] <- res[["Formulas"]][idx]
+  res[["SMILEs"]] <- res[["SMILEs"]][idx]
+  res[["InchiKeys"]] <- res[["InchiKeys"]][idx]
+  res[["Precursors"]] <- res[["Precursors"]][idx]
   
   return(res)
 }
@@ -192,7 +195,22 @@ GetMSMSFormulas_single <- function(mSetObj=NA, idx = 1){
 
 GetMSMSSimScores_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Formulas"]])
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Scores"]][[1]],2))
+}
+
+GetMSMSSmiles_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["SMILEs"]])
+}
+
+GetMSMSInchiKeys_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["InchiKeys"]])
+}
+
+GetMSMSPrecs_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Precursors"]],4))
 }
 
 plotMirror <- function(){
