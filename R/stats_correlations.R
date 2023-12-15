@@ -159,13 +159,13 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, viewOpt, fix.col, no.clst, corrCutoff=0){
+                          colors, fix.col, no.clst,fz, unit, corrCutoff=0){
   
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
   corrCutoff <- as.numeric(corrCutoff)
-  
+  print(c(fz,unit))
   if(target == 'row'){
     data <- t(data);
   }
@@ -197,94 +197,69 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }
   
   # set up parameter for heatmap
-  if(colors=="gbr"){
-    colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-  }else if(colors == "heat"){
-    colors <- heat.colors(256);
-  }else if(colors == "topo"){
-    colors <- topo.colors(256);
-  }else if(colors == "gray"){
-    colors <- colorRampPalette(c("grey90", "grey10"))(256);
-  }else{
-    colors <- rev(colorRampPalette(c(RColorBrewer::brewer.pal(10, "RdBu"), "#001833"))(256));
-  }
+    if(colors=="gbr"){
+        colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+    }else if(colors == "heat"){
+        colors <- grDevices::heat.colors(256);
+    }else if(colors == "topo"){
+        colors <- grDevices::topo.colors(256);
+    }else if(colors == "gray"){
+        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+    }else if(colors == "byr"){
+        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+    }else if(colors == "viridis") {
+        colors <- rev(viridis::viridis(10))
+    }else if(colors == "plasma") {
+        colors <- rev(viridis::plasma(10))
+    }else if(colors == "npj"){
+        colors <- c("#00A087FF","white","#E64B35FF")
+    }else if(colors == "aaas"){
+        colors <- c("#4DBBD5FF","white","#E64B35FF");
+    }else if(colors == "d3"){
+        colors <- c("#2CA02CFF","white","#FF7F0EFF");
+    }else {
+        colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
+    }
   
+  require(iheatmapr);
+  plotjs <- paste0(imgName, ".json");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
-  if(viewOpt == "overview"){
-    if(is.na(width)){
-      w <- 9;
-    }else if(width == 0){
-      w <- 7.2;
-    }else{
-      w <- 7.2;
-    }
-    h <- w;
-    mSetObj$imgSet$corr.heatmap <- imgName;
-    
-  }else{
-    if(ncol(corr.mat) > 50){
-      myH <- ncol(corr.mat)*12 + 40;
-    }else if(ncol(corr.mat) > 20){
-      myH <- ncol(corr.mat)*12 + 60;
-    }else{
-      myH <- ncol(corr.mat)*12 + 120;
-    }
-    h <- round(myH/72,2);
-    
-    if(is.na(width)){
-      w <- h;
-    }else if(width == 0){
-      w <- h <- 7.2;
-      
-    }else{
-      w <- h <- 7.2;
-    }
-    mSetObj$imgSet$corr.heatmap <- imgName;
-  }
-  
-  if(format=="pdf"){
-    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  }
-  
-  if(no.clst){
-    rowv=FALSE;
-    colv=FALSE;
-    dendro= "none";
-  }else{
-    rowv=TRUE;
-    colv=TRUE;
-    dendro= "both";
-  }
-  
+   
+    w = max(min(1300,ncol(corr.mat)*unit+50),300)
+    h = max(min(1300,nrow(corr.mat)*unit+50),300)
   if(fix.col){
-    breaks <- seq(from = -1, to = 1, length = 257);
-    res <- pheatmap::pheatmap(corr.mat, 
-                              fontsize=8, fontsize_row=8, 
-                              cluster_rows = colv, 
-                              cluster_cols = rowv,
-                              color = colors,
-                              breaks = breaks
-    );
+    p <- iheatmap(corr.mat,  name = "correltion", 
+                  colors = colors,zmin=-1,zmid=0, zmax=1) %>%
+      add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
+      add_col_labels(size = 0.2, font = list(size = fz)) 
+ 
   }else{
-    res <- pheatmap::pheatmap(corr.mat, 
-                              fontsize=8, fontsize_row=8, 
-                              cluster_rows = colv, 
-                              cluster_cols = rowv,
-                              color = colors
-    );
+    p <- iheatmap(corr.mat,  name = "correltion", 
+                  colors = colors ) %>%
+      add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
+      add_col_labels(size = 0.2,font = list(size = fz) ) 
   }
   
-  dev.off();
-
   if(!no.clst){ # when no clustering, tree_row is NA
-    new.ord <- res$tree_row$order;
-    corr.mat <- corr.mat[new.ord, new.ord];
-    mSetObj$analSet$pwcor$new.ord <- new.ord;
+   p <- p  %>% add_row_clustering() %>% 
+      add_col_clustering()
+    
   }
+  
+   as_list <- to_plotly_list(p)
 
+
+    
+    as_list[["layout"]][["width"]] <- w
+    as_list[["layout"]][["height"]] <- h
+
+
+    as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
+    as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
+ 
+ print(plotjs)
+    write(as_json, plotjs)  
   fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
   return(.set.mSet(mSetObj));
 }
