@@ -45,12 +45,9 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   if(dbpath =="" || !file.exists(dbpath)){
     stop("Database file does not exist! Please check!")
   }
+  # now set up the database option
+  database_opt <- generateMS2dbOpt(database, ionMode);
   
-  if(database == "all"){ # "HMDB_experimental_PosDB"
-    database_opt <- "all";
-  } else if(database == "hmdb_exp") {
-    database_opt <- "HMDB_experimental_PosDB";
-  }
   # now let call OPTILCMS to search the database
   df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
   Concensus_spec <- list(as.vector(0L), list(list(df)))
@@ -61,6 +58,7 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -84,7 +82,102 @@ msmsResClean <- function(res){
   res[["Compounds"]] <- res[["Compounds"]][idx]
   res[["Formulas"]] <- res[["Formulas"]][idx]
   
-  res
+  return(res)
+}
+
+generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
+  if(database == "all"){ 
+    database_opt <- "all";
+  } else if(database == "hmdb_exp") {
+    if(ionMode == "positive"){
+      database_opt <- "HMDB_experimental_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "HMDB_experimental_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "hmdb_pre"){
+    if(ionMode == "positive"){
+      database_opt <- "HMDB_predicted_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "HMDB_predicted_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "gnps"){
+    if(ionMode == "positive"){
+      database_opt <- "GNPS_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "GNPS_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "mines"){
+    if(ionMode == "positive"){
+      database_opt <- "MINEs_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "MINEs_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "lipidblast"){
+    if(ionMode == "positive"){
+      database_opt <- "LipidBlast_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "LipidBlast_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "mona"){
+    if(ionMode == "positive"){
+      database_opt <- "MoNA_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "MoNA_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "massbank"){
+    if(ionMode == "positive"){
+      database_opt <- "MassBank_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "MassBank_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "riken"){
+    if(ionMode == "positive"){
+      database_opt <- "RIKEN_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "RIKEN_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "respect"){
+    if(ionMode == "positive"){
+      database_opt <- "ReSpect_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "ReSpect_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "msdial"){
+    if(ionMode == "positive"){
+      database_opt <- "MSDIAL_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "MSDIAL_NegDB";
+    } else {
+      database_opt <- "all";
+    }
+  } else if(database == "bmdms"){
+    if(ionMode == "positive"){
+      database_opt <- "BMDMS_PosDB";
+    } else if(ionMode == "negative") {
+      database_opt <- "BMDMS_PosDB";
+    } else {
+      database_opt <- "all";
+    }
+  }
+  return(database_opt)
 }
 
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
