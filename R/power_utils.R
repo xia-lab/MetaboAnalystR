@@ -108,9 +108,15 @@ GetSampleSizeLadder <- function(maxNum){
 PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   res <- round(length(mSetObj$analSet$power$pdD@statistics)/2);
   ssD <- sampleSize(mSetObj$analSet$power$pdD, method="congrad", control=list(from=-6, to=6, resolution=res));
+
+  # This is only plotted at background based on user request (only shown on download page)
+  Cairo::Cairo(file = "effect_size_distribution_dpi96.png", unit="in", dpi=96, width=8, height=7, type="png", bg="white");
+  plot(ssD@theta, ssD@lambda, type='l', xlab = "effect size", ylab = "density of effect sizes (conjugate gradient)");
+  dev.off();
+
   Jpred <- GetSampleSizeLadder(smplSize);
   N <- sqrt(Jpred/2);
   
