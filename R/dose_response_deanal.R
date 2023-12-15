@@ -5,6 +5,7 @@
 PerformDoseDEAnal<-function(mSetObj=NA){
 
   # check if already performed. No parameter required
+  # remove this file if performs normalization again
   if(file.exists("limma.sig.qs")){
     return(1);
   }
@@ -52,13 +53,19 @@ PerformDoseDEAnal<-function(mSetObj=NA){
 
 
 # get result based on threshold (p.value and average FC
-ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0){
+ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.bool=T){
 
     mSetObj <- .get.mSet(mSetObj); 
     res.all <- qs::qread("limma.sig.qs");
 
+    fdr.bool <- as.logical(fdr.bool);
+
     colNum <- ncol(res.all);
-    p.value <- res.all$adj.P.Val;
+    if(fdr.bool){
+        p.value <- res.all$adj.P.Val;
+    }else{
+        p.value <- res.all$P.Value;
+    }
 
     fc.mat <- res.all[,1:(colNum-4)];
     ave.fc <- apply(fc.mat, 1, mean);
@@ -107,6 +114,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0){
                 inx.down = inx.down,
                 sig.mat = sig.mat
               );
+
+    fast.write.csv(res.all, "limma_restable.csv");
+
     .set.mSet(mSetObj);
     return(sig.count);
 }
@@ -185,4 +195,20 @@ GetDoseUnsigIDs <- function(mSetObj=NA){
   }else{
     return("NA");
   }
+}
+
+GetDoseDEMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  print(head(mSetObj$dataSet$comp.res));
+  return(as.matrix(signif(mSetObj$dataSet$comp.res),4));
+}
+
+GetDoseDERows <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(rownames(mSetObj$dataSet$comp.res));
+}
+
+GetDoseDEColumns <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(colnames(mSetObj$dataSet$comp.res));
 }

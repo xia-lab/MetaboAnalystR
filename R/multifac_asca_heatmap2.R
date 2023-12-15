@@ -27,13 +27,14 @@
 PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
                        scaleOpt="row", format="png", dpi=72, 
                        width=NA, smplDist="pearson", 
-                       clstDist="average", colorGradient="bwm", font.size = 8,
-                       viewOpt="overview",rankingMethod="mean",
-                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
-
+                       clstDist="average", colorGradient="npj", 
+                       fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,
+                       rankingMethod="mean",
+                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F){
+print(c( unitCol,unitRow))
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
-  
+
   if(length(meta.vec.hm2) == 0){
     AddErrMsg("Please select at least one meta-data for annotation!");
     return(0);
@@ -83,24 +84,41 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   var.nms <- colnames(data);
   
   # set up parameter for heatmap
-  if(colorGradient=="gbr"){
-    colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-  }else if(colorGradient == "heat"){
-    colors <- heat.colors(256);
-  }else if(colorGradient == "topo"){
-    colors <- topo.colors(256);
-  }else if(colorGradient == "gray"){
-    colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
-  }else{
-    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
-  }
+ 
+    if(colorGradient=="gbr"){
+        colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+    }else if(colorGradient == "heat"){
+        colors <- grDevices::heat.colors(256);
+    }else if(colorGradient == "topo"){
+        colors <- grDevices::topo.colors(256);
+    }else if(colorGradient == "gray"){
+        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+    }else if(colorGradient == "byr"){
+        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+    }else if(colorGradient == "viridis") {
+        colors <- rev(viridis::viridis(10))
+    }else if(colorGradient == "plasma") {
+        colors <- rev(viridis::plasma(10))
+    }else if(colorGradient == "npj"){
+        colors <- c("#00A087FF","white","#E64B35FF")
+    }else if(colorGradient == "aaas"){
+        colors <- c("#4DBBD5FF","white","#E64B35FF");
+    }else if(colorGradient == "d3"){
+        colors <- c("#2CA02CFF","white","#FF7F0EFF");
+    }else {
+        colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
+    }
+
+
   
   if(drawBorder){
     border.col<-"grey60";
   }else{
     border.col <- NA;
   }
-  
+
+  require(iheatmapr);
+  plotjs <- paste0(imgName, ".json");
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$htmaptwo <- imgName;
   
@@ -139,30 +157,19 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   hc.dat <- as.matrix(data);
 
   # need to control for very large data plotting
-  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+  if(ncol(hc.dat) > 1000){
      includeRowNames <- FALSE;
   }
   if(.on.public.web){
-    if(ncol(hc.dat) > 5000){
+    if(ncol(hc.dat) > 2000){
         filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
         rk <- rank(-filter.val, ties.method='random');
-        hc.dat <- hc.dat[,rk <=5000];
-        data <- data[,rk <=5000];
-        print("Data is reduced to 5000 vars based on IQR ..");
+        hc.dat <- hc.dat[,rk <=2000];
+        data <- data[,rk <=2000];
+        print("Data is reduced to 2000 vars based on IQR ..");
     }
   }
 
-  # compute size for heatmap
-  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
-  h <- plot_dims$height;
-  w <- plot_dims$width;
-  
-  if(format=="pdf"){
-    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  }
-  
   if(ncol(annotation)>1){
       annotation <- annotation[,c(length(annotation):1)];
   }else{
@@ -172,22 +179,48 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   hc.dat <- hc.dat[rownames(annotation),]; #order data matrix per annotation
   colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
 
-  pheatmap::pheatmap(t(hc.dat), 
-                     annotation=annotation, 
-                     fontsize=font.size, 
-                     clustering_distance_rows = smplDist,
-                     #clustering_distance_cols = smplDist,
-                     clustering_method = clstDist, 
-                     border_color = border.col,
-                     cluster_rows = T, 
-                     cluster_cols = F,
-                     scale = scaleOpt,
-                     legend = show.legend,
-                     annotation_legend = show.annot.legend, 
-                     show_rownames=includeRowNames,
-                     color = colors);
-  dev.off();
+  data1sc <- t(hc.dat)
+  data1sc <- scale_mat(data1sc, scaleOpt)
+  cb_grid <- setup_colorbar_grid(nrow = min(20, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
+      sz <- max(as.numeric(annoPer) / 100, 0.015)
+      bf <- min(0.01, (sz / 3))
+    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+     p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
+                  layout = list(font = list(size = fzAnno)),
+                  colors = colors,
+                  colorbar_grid = cb_grid
+    )%>%
+      add_col_annotation(annotation,
+                         side = "top", size = annoPer , buffer = bf , inner_buffer = bf / 3
+      )%>% add_row_dendro(dend_row)
+
+   
+    if (showColnm) {
+      p <- p%>%
+      add_col_labels(size = 0.2, font = list(size = fzCol))
+    } 
+ 
+    if (showRownm) {
+      p <- p%>%
+        add_row_labels(size = 0.2, font = list(size = fzRow), side = "right") 
+    } 
+    
+    as_list <- to_plotly_list(p)
+
+    w = min(1200,ncol(data1sc)*unitCol+50)
+    h = min(1500,nrow(data1sc)*unitRow+50)
+    
+       as_list[["layout"]][["width"]] <- w
+    as_list[["layout"]][["height"]] <- h
+
+
+    as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
+    as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
+ 
+    print(plotjs)
+    write(as_json, plotjs)  
   
+   
   mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
   return(.set.mSet(mSetObj));
 }
@@ -1655,4 +1688,17 @@ get_lower_tri<-function(cormat){
 get_upper_tri <- function(cormat){
   cormat[lower.tri(cormat)]<- NA
   return(cormat)
+}
+
+scale_mat = function(mat, scale){
+  if(!(scale %in% c("none", "row", "column"))){
+    stop("scale argument shoud take values: 'none', 'row' or 'column'")
+  }
+  mat = switch(scale, none = mat, row = scale_rows(mat), column = t(scale_rows(t(mat))))
+  return(mat)
+} 
+scale_rows = function(x){
+  m = apply(x, 1, mean, na.rm = T)
+  s = apply(x, 1, sd, na.rm = T)
+  return((x - m) / s)
 }

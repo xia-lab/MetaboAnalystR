@@ -221,6 +221,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     }
   }
 
+  if(file.exists("limma.sig.qs")){
+    file.remove("limma.sig.qs") # so limma is reperformed
+  }
   
   return(.set.mSet(mSetObj));
 }
