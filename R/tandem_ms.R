@@ -84,6 +84,20 @@ msmsResClean <- function(res){
   res[["SMILEs"]] <- res[["SMILEs"]][idx]
   res[["InchiKeys"]] <- res[["InchiKeys"]][idx]
   res[["Precursors"]] <- res[["Precursors"]][idx]
+  res[["MS2refs"]] <- res[["MS2refs"]][idx]
+  
+  # sort based on score (high -> low)
+  iddx <- order(res[["Scores"]][[1]], decreasing = T)
+  res[["IDs"]] <- res[["IDs"]][iddx]
+  res[["Scores"]][[1]] <- res[["Scores"]][[1]][iddx]
+  res[["dot_product"]][[1]] <- res[["dot_product"]][[1]][iddx]
+  res[["Neutral_loss"]][[1]] <- res[["Neutral_loss"]][[1]][iddx]
+  res[["Compounds"]] <- res[["Compounds"]][iddx]
+  res[["Formulas"]] <- res[["Formulas"]][iddx]
+  res[["SMILEs"]] <- res[["SMILEs"]][iddx]
+  res[["InchiKeys"]] <- res[["InchiKeys"]][iddx]
+  res[["Precursors"]] <- res[["Precursors"]][iddx]
+  res[["MS2refs"]] <- res[["MS2refs"]][iddx]
   
   return(res)
 }
@@ -213,7 +227,49 @@ GetMSMSPrecs_single <- function(mSetObj=NA, idx = 1){
   return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Precursors"]],4))
 }
 
-plotMirror <- function(){
+GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["dot_product"]][[1]],2))
+}
+
+plotMirror <- function(mSetObj=NA, featureidx = 1,
+                       precMZ, compoundName, score, ppm, 
+                       cutoff_relative = 5,
+                       imageNM = "",
+                       dpi = 300, format = "png", width = 8, height = 8,
+                       display_plot = F){
+  # Fetch mSetobj
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # get plotting function
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting
+  
+  # Fetch data for plotting
+  spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
   
   
+  # now, let's plot
+  title <- paste0("Mirror plot of precursor: ", precMZ)
+  subtitle <- paste0(compoundName, "\n", score)
+  p1 <- MirrorPlotting(spec_top, 
+                       spec_bottom, 
+                       ppm = ppm,
+                       title= title, 
+                       subtitle = subtitle,
+                       cutoff_relative = cutoff_relative)
+  
+  # Construct the plot file name
+  plot_filename <- paste0(sub_dir, "/", as.character(paste0(mz, "__", rt)), "_", j, ".png")
+   
+  # Save the plot with Cairo
+  if(display_plot){
+    print(p1)
+  } else {
+    Cairo::Cairo(
+      file = imageNM, #paste0("mirrorplot_", precMZ, "_", dpi, ".", format),
+      unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+    print(p1)
+    dev.off()
+  }
+  return(1)
 }
