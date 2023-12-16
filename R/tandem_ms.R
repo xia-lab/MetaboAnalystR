@@ -233,24 +233,33 @@ GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
 }
 
 plotMirror <- function(mSetObj=NA, featureidx = 1,
-                       precMZ, compoundName, score, ppm, 
-                       cutoff_relative = 5,
+                       precMZ, ppm, 
                        imageNM = "",
                        dpi = 300, format = "png", width = 8, height = 8,
-                       display_plot = F){
+                       cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
-  
+  save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
+       file = "mSetObj___plotMirror.rda")
   # get plotting function
   MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
   # Fetch data for plotting
   spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
+  spec_top <- spec_df
   
+  ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+  spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+  
+  # compoundName, score
+  compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
+  score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+  cat("compoundName ==> ", compoundName, "\n")
+  cat("score        ==> ", score, "\n")
   
   # now, let's plot
   title <- paste0("Mirror plot of precursor: ", precMZ)
-  subtitle <- paste0(compoundName, "\n", score)
+  subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
   p1 <- MirrorPlotting(spec_top, 
                        spec_bottom, 
                        ppm = ppm,
@@ -258,18 +267,24 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        subtitle = subtitle,
                        cutoff_relative = cutoff_relative)
   
-  # Construct the plot file name
-  plot_filename <- paste0(sub_dir, "/", as.character(paste0(mz, "__", rt)), "_", j, ".png")
-   
-  # Save the plot with Cairo
-  if(display_plot){
-    print(p1)
+  # Save the static plot with Cairo
+  Cairo::Cairo(
+    file = imageNM, #paste0("mirrorplot_", precMZ, "_", dpi, ".", format),
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+
+  # Save the interactive plot with ggplot
+  
+  
+  if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
+    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    mSetObj[["imgSet"]][["msmsmirror"]] <- df
   } else {
-    Cairo::Cairo(
-      file = imageNM, #paste0("mirrorplot_", precMZ, "_", dpi, ".", format),
-      unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
-    print(p1)
-    dev.off()
+    mSetObj[["imgSet"]][["msmsmirror"]] -> df0
+    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df1)
   }
-  return(1)
+  
+  return(.set.mSet(mSetObj))
 }
