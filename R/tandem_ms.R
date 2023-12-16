@@ -275,7 +275,14 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   dev.off()
 
   # Save the interactive plot with ggplot
+  px <- plotly::ggplotly(p1);
   
+  pxl <- list(px$x$data,px$x$layout,px$x$config);
+  names(pxl) <- c("data","layout","config");
+  jsonlist <- RJSONIO::toJSON(pxl, pretty = T,force = TRUE,.na = "null");
+  sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
+  cat(jsonlist);
+  sink();
   
   if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
     df <- data.frame(indx = featureidx, imageNM = imageNM)
@@ -283,7 +290,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   } else {
     mSetObj[["imgSet"]][["msmsmirror"]] -> df0
     df <- data.frame(indx = featureidx, imageNM = imageNM)
-    mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df1)
+    mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
   }
   
   return(.set.mSet(mSetObj))
