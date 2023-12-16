@@ -1136,7 +1136,7 @@ GetFitResultColNames <-function(){
   return(names);
 }
 
-GetFitResultGeneIDs <- function(){
+GetFitResultFeatureIDs <- function(){
   mSetObj <- .get.mSet(NA);
   dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,1]))
@@ -1146,37 +1146,4 @@ GetFitResultModelNms <- function(){
   mSetObj <- .get.mSet(NA);
   dataSet <- mSetObj$dataSet;
   return(as.character(dataSet$html.resTable[,2]))
-}
-
-GetFitResultGeneIDLinks <- function(org){
-  mSetObj <- .get.mSet(NA);
-  dataSet <- mSetObj$dataSet;
-  if (org == "noAnn"){
-    ids <- as.character(dataSet$html.resTable[,1]);
-    symbs <- ids;
-    annots <- ids;
-    return(annots);
-  } else if (org == "s2f"){
-    ids <- as.character(dataSet$html.resTable[,1]);
-    #symbs <- doEntrez2SymbolMapping(ids)
-    symbs <- ids;
-    annots <- paste("<a style='color: #a7414a' href='https://www.ecoomicsdb.ca/EcoOmicsDB/#/query?ortho=", ids, "' target='_blank'>", symbs, "</a>", sep="");
-    return(annots);    
-  } else {
-    ids <- as.character(dataSet$html.resTable[,1]);
-    #symbs <- doEntrez2SymbolMapping(ids)
-    symbs <- ids;
-    annots <- paste("<a style='color: #a7414a' href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>", symbs, "</a>", sep="");
-    return(annots);
-  }
-}
-
-GetFitResultGeneSymbols <-function(org){
-  mSetObj <- .get.mSet(NA);
-  dataSet <- mSetObj$dataSet;
-  #if (org == "noAnn") {
-    return(as.character(dataSet$html.resTable[,1]));
-  #} else {
-  #  return(doEntrez2SymbolMapping(as.character(dataSet$html.resTable[,1])));
-  #}
 }
