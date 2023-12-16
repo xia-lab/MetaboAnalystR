@@ -228,6 +228,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
    
     w = max(min(1300,ncol(corr.mat)*unit+50),300)
     h = max(min(1300,nrow(corr.mat)*unit+50),300)
+ 
   if(fix.col){
     p <- iheatmap(corr.mat,  name = "correltion", 
                   colors = colors,zmin=-1,zmid=0, zmax=1) %>%
@@ -249,6 +250,10 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   
    as_list <- to_plotly_list(p)
 
+     if(ncol(corr.mat)<100){
+         w=w+(100-ncol(corr.mat))*6
+         h=h+(100-ncol(corr.mat))*6
+        }
 
     
     as_list[["layout"]][["width"]] <- w
