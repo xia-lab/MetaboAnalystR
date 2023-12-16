@@ -1408,6 +1408,10 @@ QuerySingleItem <- function(idType, itemVec){
 }
 
 QueryExposure <- function(mSetObj=NA){
+
+    if (file.exists("met_snp_restable.csv")) {
+        return(1);
+    }
   .init.multilist();
   #itemVec<<-itemVec;
   #save.image("QueryExposure.RData");
@@ -1442,7 +1446,10 @@ QueryExposure <- function(mSetObj=NA){
   mSetObj$dataSet$exposure <- exposure;
   mSetObj$dataSet$mirtarget <- mirtargetu;
   mSetObj$dataSet$mirtable <- unique(mirtableu);
-  print(head(mir.resu));
+
+  fast.write.csv(mSetObj$dataSet$mirtable, file="met_snp_restable.csv");
+
+  print(head(mSetObj$dataSet$mirtable));
   .set.mSet(mSetObj);
 }
   if(.on.public.web){
@@ -1453,6 +1460,10 @@ QueryExposure <- function(mSetObj=NA){
 }
 
 QueryOutcome <- function(itemVec){
+    if (file.exists("dis_snp_restable.csv")) {
+        return(1);
+    }
+
   mSetObj <- .get.mSet(mSetObj);
   itemVec.id <- trimws(itemVec);
   # itemVec <<-itemVec;
@@ -1468,6 +1479,9 @@ QueryOutcome <- function(itemVec){
   mSetObj$dataSet$outcome <- ieugwas.res;
   .set.mSet(mSetObj);
   }
+
+  fast.write.csv(ieugwas.res, file="dis_snp_restable.csv");
+
   if(.on.public.web){
     return(1);
   }else{
