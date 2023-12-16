@@ -81,6 +81,23 @@ msmsResClean <- function(res){
   res[["Neutral_loss"]][[1]] <- res[["Neutral_loss"]][[1]][idx]
   res[["Compounds"]] <- res[["Compounds"]][idx]
   res[["Formulas"]] <- res[["Formulas"]][idx]
+  res[["SMILEs"]] <- res[["SMILEs"]][idx]
+  res[["InchiKeys"]] <- res[["InchiKeys"]][idx]
+  res[["Precursors"]] <- res[["Precursors"]][idx]
+  res[["MS2refs"]] <- res[["MS2refs"]][idx]
+  
+  # sort based on score (high -> low)
+  iddx <- order(res[["Scores"]][[1]], decreasing = T)
+  res[["IDs"]] <- res[["IDs"]][iddx]
+  res[["Scores"]][[1]] <- res[["Scores"]][[1]][iddx]
+  res[["dot_product"]][[1]] <- res[["dot_product"]][[1]][iddx]
+  res[["Neutral_loss"]][[1]] <- res[["Neutral_loss"]][[1]][iddx]
+  res[["Compounds"]] <- res[["Compounds"]][iddx]
+  res[["Formulas"]] <- res[["Formulas"]][iddx]
+  res[["SMILEs"]] <- res[["SMILEs"]][iddx]
+  res[["InchiKeys"]] <- res[["InchiKeys"]][iddx]
+  res[["Precursors"]] <- res[["Precursors"]][iddx]
+  res[["MS2refs"]] <- res[["MS2refs"]][iddx]
   
   return(res)
 }
@@ -192,10 +209,89 @@ GetMSMSFormulas_single <- function(mSetObj=NA, idx = 1){
 
 GetMSMSSimScores_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Formulas"]])
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Scores"]][[1]],2))
 }
 
-plotMirror <- function(){
+GetMSMSSmiles_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["SMILEs"]])
+}
+
+GetMSMSInchiKeys_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["InchiKeys"]])
+}
+
+GetMSMSPrecs_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Precursors"]],4))
+}
+
+GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["dot_product"]][[1]],2))
+}
+
+plotMirror <- function(mSetObj=NA, featureidx = 1,
+                       precMZ, ppm, 
+                       imageNM = "",
+                       dpi = 300, format = "png", width = 8, height = 8,
+                       cutoff_relative = 5){
+  # Fetch mSetobj
+  mSetObj <- .get.mSet(mSetObj);
+  save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
+       file = "mSetObj___plotMirror.rda")
+  # get plotting function
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
+  # Fetch data for plotting
+  spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
+  spec_top <- spec_df
   
+  ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+  spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+  
+  # compoundName, score
+  compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
+  score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+  cat("compoundName ==> ", compoundName, "\n")
+  cat("score        ==> ", score, "\n")
+  
+  # now, let's plot
+  title <- paste0("Mirror plot of precursor: ", precMZ)
+  subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
+  p1 <- MirrorPlotting(spec_top, 
+                       spec_bottom, 
+                       ppm = ppm,
+                       title= title, 
+                       subtitle = subtitle,
+                       cutoff_relative = cutoff_relative)
+  
+  # Save the static plot with Cairo
+  Cairo::Cairo(
+    file = imageNM, #paste0("mirrorplot_", precMZ, "_", dpi, ".", format),
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+
+  # Save the interactive plot with ggplot
+  px <- plotly::ggplotly(p1);
+  
+  pxl <- list(px$x$data,px$x$layout,px$x$config);
+  names(pxl) <- c("data","layout","config");
+  jsonlist <- RJSONIO::toJSON(pxl, pretty = T,force = TRUE,.na = "null");
+  sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
+  cat(jsonlist);
+  sink();
+  
+  if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
+    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    mSetObj[["imgSet"]][["msmsmirror"]] <- df
+  } else {
+    mSetObj[["imgSet"]][["msmsmirror"]] -> df0
+    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
+  }
+  
+  return(.set.mSet(mSetObj))
 }

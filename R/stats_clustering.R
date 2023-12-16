@@ -519,12 +519,12 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T){
 
   mSetObj <- .get.mSet(mSetObj);
- plotjs <- paste0(imgName, ".json");
+  plotjs <- paste0(imgName, ".json");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
 
   mSetObj$imgSet$heatmap <- imgName;
   require(iheatmapr);
-
+  
   
   cls <- mSetObj$dataSet$cls;
   cls.type <- mSetObj$dataSet$cls.type;
@@ -639,12 +639,13 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
         rownames(annotation) <- rownames(hc.dat); 
     }
 
- 
     data1sc <- t(hc.dat)
     data1sc <- scale_mat(data1sc, scaleOpt)
     dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
+ 
+
    if(grp.ave){
         
     p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
@@ -681,14 +682,23 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     if (rowV) {
     dend_col <- hclust(dist(t(data1sc), method = smplDist), method = clstDist)
     p <- p %>% add_col_dendro(dend_col)
-    
-  } 
+    } 
+
   if (colV) {
     dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
-    p <- p %>% add_row_dendro(dend_row)
-    
+    p <- p %>% add_row_dendro(dend_row)  
   } 
-  
+    
+      if(ncol(data1sc)<100){
+         w=w+(100-ncol(data1sc))*6
+      
+        }
+    
+     if(nrow(data1sc)<100){
+         h=h+(100-nrow(data1sc))*5
+      
+        }
+
     as_list <- to_plotly_list(p)
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h

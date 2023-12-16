@@ -188,7 +188,7 @@ PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
   saveSet(imgSet);
 }
 
-PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
+PlotMetaboliteDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
   data <- t(dataSet$norm);
@@ -255,12 +255,12 @@ PlotGeneDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d,
     }
   }
   
-  imgName <- paste("Gene_", gene.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
+  imgName <- paste("Metabolite_", gene.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
   Cairo::Cairo(file = imgName, width=5.25, height=6, type="png", unit="in", dpi=dpi, format=format, bg="white");
   print(p)
   dev.off();
 
-  dataSet$PlotGeneDRCurve <- imgName;
+  dataSet$PlotMetaboliteDRCurve <- imgName;
   mSetObj$dataSet <- dataSet;
   return(.set.mSet(mSetObj));
 }

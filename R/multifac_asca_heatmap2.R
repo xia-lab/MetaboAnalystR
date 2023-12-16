@@ -181,7 +181,13 @@ print(c( unitCol,unitRow))
 
   data1sc <- t(hc.dat)
   data1sc <- scale_mat(data1sc, scaleOpt)
-  cb_grid <- setup_colorbar_grid(nrow = min(20, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
+   if(useTopFeature){
+   cb_grid <- setup_colorbar_grid(nrows = 2, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
+   }else{
+    cb_grid <- setup_colorbar_grid(nrows = min(20, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
+
+   }
+
       sz <- max(as.numeric(annoPer) / 100, 0.015)
       bf <- min(0.01, (sz / 3))
     dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
@@ -209,8 +215,18 @@ print(c( unitCol,unitRow))
 
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(1500,nrow(data1sc)*unitRow+50)
+
+     if(ncol(data1sc)<100){
+         w=w+(100-ncol(data1sc))*6
+      
+        }
     
-       as_list[["layout"]][["width"]] <- w
+     if(nrow(data1sc)<100){
+         h=h+(100-nrow(data1sc))*5
+      
+        }
+    
+    as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
 
 
@@ -1559,22 +1575,34 @@ PlotMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", 
   # set up parameter for heatmap
   if(colorGradient=="gbr"){
     colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-  }else if(colorGradient == "heat"){
+    }else if(colorGradient == "heat"){
     colors <- heat.colors(256);
-  }else if(colorGradient == "topo"){
+    }else if(colorGradient == "topo"){
     colors <- topo.colors(256);
-  }else if(colorGradient == "gray"){
-    colors <- colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
-  }else{
-    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
-  }
-  
+    }else if(colorGradient == "gray"){
+        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+    }else if(colorGradient == "byr"){
+        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+    }else if(colorGradient == "viridis") {
+        colors <- rev(viridis::viridis(10))
+    }else if(colorGradient == "plasma") {
+        colors <- rev(viridis::plasma(10))
+    }else if(colorGradient == "npj"){
+        colors <- c("#00A087FF","white","#E64B35FF")
+    }else if(colorGradient == "aaas"){
+        colors <- c("#4DBBD5FF","white","#E64B35FF");
+    }else if(colorGradient == "d3"){
+        colors <- c("#2CA02CFF","white","#FF7F0EFF");
+    }else {
+         colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    }
+
   if(drawBorder){
     border.col<-"grey60";
   }else{
     border.col <- NA;
   }
-  
+   
   if(clustSelOpt == "both"){
     rowBool = T;
     colBool = T;
