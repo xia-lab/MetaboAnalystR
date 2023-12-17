@@ -199,6 +199,7 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
 
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
+  idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
   return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Compounds"]])
 }
 
@@ -294,4 +295,177 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   }
   
   return(.set.mSet(mSetObj))
+}
+
+SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"){
+  
+  # Fetch mSetobj
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(filename == ""){
+    AddErrMsg("The msp file is empty!");
+  }
+  
+  
+  if(format_type == "mzmine"){
+    data_table <- read.delim(filename, header = F)
+    
+    start_idxs <- vapply(data_table[,1], function(x){x == "BEGIN IONS"}, 
+                         FUN.VALUE = logical(1L), USE.NAMES = F)
+    if(length(which(start_idxs)) > 50){
+      AddMsg("Only first 50 tandem spectra will be searched!")
+      keep50 = TRUE;
+    } else {
+      keep50 = FALSE;
+    }
+    
+    end_idxs <- vapply(data_table[,1], function(x){x == "END IONS"}, 
+                       FUN.VALUE = logical(1L), USE.NAMES = F)
+    ms2_idxs <- vapply(data_table[,1], function(x){grepl(pattern = "Num peaks", x)}, 
+                       FUN.VALUE = logical(1L), USE.NAMES = F)#Num peaks
+    
+    ms2_num <- vapply(data_table[ms2_idxs,1], function(x){
+      as.integer(sub("Num peaks=", "",x))
+    }, FUN.VALUE = integer(1L), USE.NAMES = F)
+    
+    start_idxs <- which(start_idxs)
+    end_idxs <- which(end_idxs)
+    ms2_idxs <- which(ms2_idxs)
+    
+    if(keep50){
+      start_idxs <- start_idxs[1:50]
+      end_idxs <- end_idxs[1:50]
+      ms2_idxs <- ms2_idxs[1:50]
+      ms2_num <- ms2_num[1:50]
+    }
+    
+    ms2spec <- vector(mode = "list", length(ms2_num))
+    for(i in 1:length(ms2_num)){
+      this_spec <- data_table[c(start_idxs[i]:end_idxs[i]),]
+      idx_prec <- grep("PEPMASS=", this_spec)
+      prec_mz <- as.double(sub("PEPMASS=", "", this_spec[idx_prec]))
+      len_ms2_spec <- ms2_num[i]
+      ms2_this_idx <- grep("Num peaks=", this_spec)
+      spec_strs <- this_spec[c((ms2_this_idx+1):(length(this_spec)-1))]
+      spec_list <- lapply(spec_strs, function(x){
+        vals <- as.double(strsplit(x, " ")[[1]])
+        data.frame(mz = vals[1], int = vals[2])
+      })
+      ms2_spec <- do.call(rbind, spec_list)
+      ms2spec[[i]] <- list(precursor = prec_mz, ms2_spec = ms2_spec)
+    }
+  } else if(format_type == "msdial"){
+    data_table <- read.delim(filename, header = F,sep = "\n")
+    
+    start_idxs <- vapply(data_table[,1], function(x){grepl("NAME: ",x)}, 
+                         FUN.VALUE = logical(1L), USE.NAMES = F)
+    ms2_idxs <- vapply(data_table[,1], function(x){grepl("Num Peaks: ",x)}, 
+                         FUN.VALUE = logical(1L), USE.NAMES = F)
+    
+    non0_idxs <- vapply(data_table[ms2_idxs,1], function(x){x == "Num Peaks: 0"}, 
+                        FUN.VALUE = logical(1L), USE.NAMES = F)
+    
+    ms2_num <- vapply(data_table[ms2_idxs,1], function(x){
+      as.integer(sub("Num Peaks: ", "",x))
+    }, FUN.VALUE = integer(1L), USE.NAMES = F)
+    
+    if(length(which(!non0_idxs)) > 50){
+      AddMsg("Only first 50 tandem spectra will be searched!")
+      keep50 = TRUE;
+    } else {
+      keep50 = FALSE;
+    }
+    
+    start_idxs <- which(start_idxs)
+    end_idxs <- c(start_idxs[-1]-1, nrow(data_table))
+    ms2_idxs <- which(ms2_idxs)
+    
+    start_idxs <- start_idxs[!non0_idxs]
+    end_idxs <- end_idxs[!non0_idxs]
+    ms2_idxs <- ms2_idxs[!non0_idxs]
+    ms2_num <- ms2_num[!non0_idxs]
+    if(keep50){
+      start_idxs <- start_idxs[1:50]
+      end_idxs <- end_idxs[1:50]
+      ms2_idxs <- ms2_idxs[1:50]
+      ms2_num <- ms2_num[1:50]
+    }
+    
+    ms2spec <- vector(mode = "list", length(ms2_num))
+    for(i in 1:length(ms2_num)){
+      this_spec <- data_table[c(start_idxs[i]:end_idxs[i]),]
+      idx_prec <- grep("PRECURSORMZ: ", this_spec)
+      prec_mz <- as.double(sub("PRECURSORMZ: ", "", this_spec[idx_prec]))
+      len_ms2_spec <- ms2_num[i]
+      ms2_this_idx <- grep("Num Peaks: ", this_spec)
+      spec_strs <- this_spec[c((ms2_this_idx+1):(length(this_spec)))]
+      spec_list <- lapply(spec_strs, function(x){
+        vals <- as.double(strsplit(x, "\t")[[1]])
+        data.frame(mz = vals[1], int = vals[2])
+      })
+      ms2_spec <- do.call(rbind, spec_list)
+      ms2spec[[i]] <- list(precursor = prec_mz, ms2_spec = ms2_spec)
+    }
+  }
+
+  save(ms2spec, file = "ms2spec____410.rda")
+  mSetObj[["dataSet"]][["spectrum_set"]] <- ms2spec
+  return(.set.mSet(mSetObj))
+}
+
+performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
+                                  dbpath = "",
+                                  database = "all", 
+                                  similarity_meth = 0,
+                                  precMZ = NA, sim_cutoff = 30, ionMode = "positive",
+                                  unit1 = "ppm", unit2 = "ppm"){
+  require("OptiLCMS")
+  mSetObj <- .get.mSet(mSetObj);
+  # fetch the searching function
+  SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
+  
+  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
+       file = "mSetObj___performMS2searchBatch.rda")
+  # configure ppm/da param
+  if(unit1 == "da"){
+    ppm1 <- ppm1/precMZ*1e6;
+  }
+  if(unit2 == "da"){
+    ppm2 <- ppm2/precMZ*1e6;
+  }
+  
+  if(ionMode == "positive"){
+    ion_mode_idx = 1;
+  } else {
+    ion_mode_idx = 0;
+  }
+  
+  if(dbpath =="" || !file.exists(dbpath)){
+    stop("Database file does not exist! Please check!")
+  }
+  # now set up the database option
+  database_opt <- generateMS2dbOpt(database, ionMode);
+  
+  # now let call OPTILCMS to search the database
+  # df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
+  spec_set <- mSetObj[["dataSet"]][["spectrum_set"]]
+  spec_set_ms2 <- lapply(spec_set, function(x){list(as.matrix(x[[2]]))})
+  spec_set_prec <- sapply(spec_set, function(x){x[[1]]})
+  Concensus_spec <- list(as.vector(seq(0,length(spec_set)-1)), spec_set_ms2)
+  
+  peak_mtx <- cbind(spec_set_prec-1e-10, spec_set_prec+1e-10, NA, NA)
+  colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+  results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
+                                   ion_mode_idx, dbpath, database_opt)
+   
+  results_clean <- lapply(results, msmsResClean)
+  mSetObj$dataSet$msms_result <- results_clean
+  mSetObj$dataSet$spec_set_prec <- spec_set_prec
+  return(.set.mSet(mSetObj));
+}
+
+GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$spec_set_prec -> spec_set_prec
+  return(spec_set_prec)
 }

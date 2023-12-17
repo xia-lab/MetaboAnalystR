@@ -1,3 +1,9 @@
+########################
+# Methods for dose response graphics, 
+# adapted from ExpressAnalystR
+# Jeff Xia (jeff.xia@xialab.ca)
+###########################################
+
 GetFunctionalDetails <- function(data.sorted, gene.matches){
     data.sorted$Adjusted.Pvalue[data.sorted$Adjusted.Pvalue == 1] <- 0.99999
   return(list(
@@ -9,93 +15,6 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
     pathways.observedhits = data.sorted$`Observed Hits`,
     gene.matches = gene.matches
   ))
-}
-
-PreparePODJSON <- function(mSetObj=NA, fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
-
-  mSetObj <- .get.mSet(mSetObj);  
-  dataSet <- mSetObj$dataSet;
-
-  bmdcalc.res <- FilterBMDResults(dataSet)
-  
-  if(doseScale == "log10"){
-    bmdcalc.res[,3:6] <- log10(bmdcalc.res[,3:6])
-  } else if(doseScale == "log2"){
-    bmdcalc.res[,3:6] <- log2(bmdcalc.res[,3:6])
-  }
-  
-  gene.vec <- as.matrix(bmdcalc.res[which(bmdcalc.res$bmd > xMin & bmdcalc.res$bmd < xMax),1])
-  
-  if (org == "noAnn") {
-    # fill blank gene names with NA
-    geneNms <- bmdcalc.res$id[order(bmdcalc.res$bmd)]
-    geneNms[geneNms == ""] <- "---"
-
-    res <- density(bmdcalc.res$bmd)
-
-    pod <- list(
-      geneIds = bmdcalc.res$id[order(bmdcalc.res$bmd)],
-      geneNms = geneNms,
-      geneBmds = sort(bmdcalc.res$bmd),
-      x = res$x,
-      y = res$y,
-      Details = NULL
-    )
-
-  } else {
-    # get gene set-based POD
-    gs.POD <- gsPOD(dataSet$omicdata, bmdcalc.res, gene.vec, geneDB)
-
-
-    #print(head(gs.POD$geneset.stats));
-    #prepare pathways summary
-    data.sorted = gs.POD$geneset.stats[order(gs.POD$geneset.stats$Adjusted.Pvalue),]
-    details <- GetFunctionalDetails(data.sorted, gs.POD$geneset.matches)
-
-    # make out file
-    details.out <- as.data.frame(details[-7])
-    colnames(details.out) <- c("Name", "pathBMD", "pval", "adj.pval", "perc.path", "num.hits")
-    data.table::fwrite(details.out, quote = FALSE, row.names = FALSE, sep = "\t", file="gse.txt");
-
-    #prepare pathway table 
-    details.50 <- details$gene.matches[names(details$gene.matches) %in% data.sorted$name]
-    details.50 <- lapply(details.50, as.list)
-    test <- reshape2::melt(details.50)[,c(1,3)]
-    colnames(test) <- c("entrez", "pathway")
-    test$symbol <- test$entrez 
-    #test$symbol <- doEntrez2SymbolMapping(test$entrez)
-    dataSet$pathway.ids <- test
-    
-    #generate dataframe with model fit interpolations
-    fit.interp <- interpFits();
-    qs::qsave(fit.interp, "fit.interp.qs");
-
-    # fill blank gene names with NA
-    #geneNms <- doEntrez2SymbolMapping(bmdcalc.res$id)[order(bmdcalc.res$bmd)]
-    geneNms <- bmdcalc.res$id[order(bmdcalc.res$bmd)]
-    geneNms[geneNms == ""] <- "---"
-
-    res <- density(bmdcalc.res$bmd)
-
-
-    pod <- list(
-      geneIds = bmdcalc.res$id[order(bmdcalc.res$bmd)],
-      geneNms = geneNms,
-      geneBmds = sort(bmdcalc.res$bmd),
-      x = res$x,
-      y = res$y,
-      Details = details
-    )
-  }
-  
-  require(RJSONIO);
-  json.obj <- toJSON(pod);
-  sink(fileNm);
-  cat(json.obj);
-  sink();
-
-    mSetObj$dataSet <- dataSet;
-    return(.set.mSet(mSetObj));
 }
 
 PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
@@ -266,9 +185,23 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b,
 }
 
 PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
-
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
+
+  # Ensure all models are represented in the dataset
+  existing_models <- unique(dataSet$bmdcalc.obj$bmdcalc.res$mod.name)
+  missing_models <- setdiff(models, existing_models)
+
+  # Add rows for missing models (with default or NA values)
+  for (model in missing_models) {
+    missing_row <- data.frame(id = paste0(model, "Sample"),
+                              mod.name = model, 
+                              bmd = NA, bmdl = NA, bmdu = NA, bmr = NA,
+                              conv.pass = FALSE, hd.pass = FALSE, 
+                              CI.pass = FALSE, ld.pass = FALSE, 
+                              all.pass = FALSE)
+    dataSet$bmdcalc.obj$bmdcalc.res <- rbind(dataSet$bmdcalc.obj$bmdcalc.res, missing_row)
+  }
 
   require(ggplot2)
   p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
