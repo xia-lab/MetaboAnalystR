@@ -1,3 +1,6 @@
+# methods for dose response analysis, adapted from ExpressAnalystR
+# Jeff Xia (jeff.xia@xialab.ca)
+
 #Reorder dose
 Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
@@ -8,8 +11,9 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
     int.mat <- conc;
     dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
 
-    meta.reorder <- mSetObj$dataSet$cls[order(dose)]
-    int.mat <- int.mat[order(dose), ];
+    dose.order <- order(dose);
+    meta.reorder <- mSetObj$dataSet$cls[dose.order];
+    int.mat <- int.mat[dose.order, ];
 
     meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
     meta.reorder <- gsub(" ", "", meta.reorder)
@@ -55,10 +59,6 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
 # Step 2: select significantly responsive items 
 PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "no", ncpus = 1){
   mSetObj <- .get.mSet(mSetObj);
-
-  #prepare param
-  #deg.FDR <- as.logical(deg.FDR)
-  #wtt <- as.logical(wtt)
   
   #get data
   data <- t(mSetObj$dataSet$norm);
@@ -153,12 +153,12 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   data.mean <- data.mean[res$all.pass, ]
   item <- item[res$all.pass]
 
-  print(nrow(data.select));
-  print("data.select======");
+  #print(nrow(data.select));
+  #print("data.select======");
 
   mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
-  saveRDS(mSetObj, "msetobj.rds");
+  #saveRDS(mSetObj, "msetobj.rds");
   return(.set.mSet(mSetObj));
 }
 
@@ -1055,79 +1055,15 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   return(trans.pod)
 }
 
-#5b_gsPOD.R
-### Calculation of transcriptomic POD from BMDs
-gsPOD <- function(obj.data, bmd.res, gene.vec, geneDB="No match", pval = 1.0, FDR = FALSE)
-{ 
-  paramSet <- readSet(paramSet, "paramSet");
-  gs <- geneDB;
-
-  require(data.table)
-  require(dplyr)
-  require(boot)
-  
-  # gather components
-  universe <- obj.data$item
-  hits <- gene.vec
-  
-  # calculate transcriptomic pod from specified method
-  if (gs == "panther.bp"){
-    gs.lib <- "go_panthbp.rds"
-
-  } else if (gs == "panther.mf"){
-    gs.lib <- "go_panthmf.rds"
-
-  } else if (gs == "panther.cc"){
-    gs.lib <- "go_panthcc.rds" 
-
-  } else if (gs == "kegg"){
-    gs.lib <- "kegg.rds"
-
-  } else if (gs == "go.bp"){
-    gs.lib <- "go_bp.rds"
-
-  } else if (gs == "go.mf"){
-    gs.lib <- "go_mf.rds"
-
-  } else if (gs == "go.cc"){
-    gs.lib <- "go_cc.rds"
-  } else if (gs == "reactome"){
-    gs.lib <- "reactome.rds"
-  } else {
-    gs.lib <- "No match"
-  }
-
-  # do gsoa
-  if(paramSet$data.org == "generic"){
-    orgDir <- paramSet$data.idType
-  }else{
-    orgDir <- paramSet$data.org
-  }
-  results.summary <- gsoa.fun(paste0(paramSet$lib.path, orgDir, "/", gs.lib), 
-                                universe, hits, bmd.res, 1.0, FDR)
-  # append to list of results
-  results <- results.summary$results
-  genematches <- results.summary$genematches
-
-  gsPOD.results <- list(results, genematches)
-  names(gsPOD.results) <- c("geneset.stats", "geneset.matches")
-  
-  return(gsPOD.results)
-
-}
-
 
 GetFitResultMatrix <- function(){
   mSetObj <- .get.mSet(NA);
-  dataSet <- mSetObj$dataSet;
-  res <- dataSet$html.resTable;
-  res <- res[,-c(1,2)];
-  res <- as.matrix(res);
-  res <- signif(res, 5)
+  res <- mSetObj$dataSet$html.resTable[,-c(1,2)];
+  res <- signif(as.matrix(res), 5)
   res[is.nan(res)] <- 0;
-  res <- as.data.frame(res);
+  #res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  res <- apply(res, 2, function(x) as.numeric(as.character(x)));
+  #res <- apply(res, 2, function(x) as.numeric(as.character(x)));
   return(res);
 }
 
@@ -1138,12 +1074,10 @@ GetFitResultColNames <-function(){
 
 GetFitResultFeatureIDs <- function(){
   mSetObj <- .get.mSet(NA);
-  dataSet <- mSetObj$dataSet;
-  return(as.character(dataSet$html.resTable[,1]))
+  return(as.character(mSetObj$dataSet$html.resTable[,1]))
 }
 
 GetFitResultModelNms <- function(){
   mSetObj <- .get.mSet(NA);
-  dataSet <- mSetObj$dataSet;
-  return(as.character(dataSet$html.resTable[,2]))
+  return(as.character(mSetObj$dataSet$html.resTable[,2]))
 }
