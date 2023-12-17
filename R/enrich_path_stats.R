@@ -39,7 +39,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     }
     return(0);
   }
-
+ 
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
     # make this lazy load
     if(!exists("my.ora.kegg")){ # public web on same user dir
@@ -59,10 +59,11 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
                      method = mSetObj$api$method, oraVec = mSetObj$api$oraVec)
     }
+ 
     saveRDS(toSend, "tosend.rds")
     return(my.ora.kegg());
   }
-
+ 
   current.mset <- current.kegglib$mset.list;
   uniq.count <- current.kegglib$uniq.count;
   
@@ -96,7 +97,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     AddErrMsg("Less than 3 metabolites left - too few to perform meaningful enrichment analysis!");
     return(0);
   }
-
+ 
   hits <- lapply(current.mset, function(x){x[x %in% ora.vec]});
   hit.num <-unlist(lapply(hits, function(x){length(x)}), use.names=FALSE);
   set.num <- unlist(lapply(current.mset, length), use.names=FALSE);
@@ -154,12 +155,12 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$ora.mat <- signif(res.mat,5);
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
-  
+
   save.mat <- mSetObj$analSet$ora.mat;  
+
   hit.inx <- match(rownames(save.mat), current.kegglib$path.ids);
   rownames(save.mat) <- names(current.kegglib$path.ids)[hit.inx];
   fast.write.csv(save.mat, file="pathway_results.csv");
-  
   return(.set.mSet(mSetObj));
 }
 
@@ -516,6 +517,16 @@ GetQEA.smpdbIDs <- function(mSetObj=NA){
     all.lks <-paste("<a href=http://www.smpdb.ca/view/",hmdb.vec," target=_new>SMP</a>", sep="");
     return(all.lks)
   }
+}
+
+GetOrgPathLbl <-function(mSetObj=NA){
+  org = read.csv("../../libs/orgpath.csv")
+  return(org$label);
+}
+
+GetOrgPathVal <-function(mSetObj=NA){
+  org = read.csv("../../libs/orgpath.csv")
+  return(org$id);
 }
 
 ComputePathHeatmap <-function(mSetObj=NA, libOpt, fileNm, type){

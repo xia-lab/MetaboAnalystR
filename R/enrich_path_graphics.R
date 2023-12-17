@@ -268,7 +268,7 @@ PlotPathSummary<-function(mSetObj=NA,
                           ylim = NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   jointGlobal <- FALSE;
   if(mSetObj$analSet$type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
@@ -317,6 +317,7 @@ PlotPathSummary<-function(mSetObj=NA,
     print(paste("Unknown analysis type: ", mSetObj$analSet$type));
     return(0);
   }
+
         orig.y <- y;
 
   # first sort values based on p
@@ -340,6 +341,7 @@ PlotPathSummary<-function(mSetObj=NA,
     }
     
     bg.vec <- heat.colors(length(y));
+
   } else {
     inx <- order(combo.p, decreasing= T);
     pathnames <- combo.resmat$pathways
