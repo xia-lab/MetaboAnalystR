@@ -1,6 +1,9 @@
-#' Perform Differential Analysis
+###########################################
+# Perform Differential Analysis
 # ANOVA-like contrast, the null hypothesis would be that there is no DE between any of the conditions. 
 # NO need to manually specify all pairwise comparisons between conditions. Just use one "reference" condition (zero dose)
+# Jeff Xia (jeff.xia@xialab.ca)
+###########################################
 
 PerformDoseDEAnal<-function(mSetObj=NA){
 
@@ -81,7 +84,6 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
     if(sig.count > 0){
 
         res.all2 <- cbind(res.all,  "AveFC"=ave.fc);
-        
         hit.inx <- which(!inx.unsig);
         sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
         fast.write.csv(sig.res, file="limma_sig_features.csv");
@@ -199,7 +201,7 @@ GetDoseUnsigIDs <- function(mSetObj=NA){
 
 GetDoseDEMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(head(mSetObj$dataSet$comp.res));
+  #print(head(mSetObj$dataSet$comp.res));
   return(as.matrix(signif(mSetObj$dataSet$comp.res),4));
 }
 
