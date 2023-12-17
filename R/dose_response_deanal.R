@@ -1,7 +1,9 @@
-#' Perform Differential Analysis
+###########################################
+# Perform Differential Analysis
 # ANOVA-like contrast, the null hypothesis would be that there is no DE between any of the conditions. 
 # NO need to manually specify all pairwise comparisons between conditions. Just use one "reference" condition (zero dose)
 # Jeff Xia (jeff.xia@xialab.ca)
+###########################################
 
 PerformDoseDEAnal<-function(mSetObj=NA){
 

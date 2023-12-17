@@ -1,5 +1,8 @@
-# methods for dose response analysis, adapted from ExpressAnalystR
+###########################################
+# methods for dose response analysis,
+# adapted from ExpressAnalystR
 # Jeff Xia (jeff.xia@xialab.ca)
+###########################################
 
 #Reorder dose
 Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
@@ -1059,11 +1062,12 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
 GetFitResultMatrix <- function(){
   mSetObj <- .get.mSet(NA);
   res <- mSetObj$dataSet$html.resTable[,-c(1,2)];
+
+  # turn off scientific notation (Java cannot recognize it)
+  options(scipen=999);
   res <- signif(as.matrix(res), 5)
   res[is.nan(res)] <- 0;
-  #res <- as.data.frame(res);
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  #res <- apply(res, 2, function(x) as.numeric(as.character(x)));
   return(res);
 }
 
