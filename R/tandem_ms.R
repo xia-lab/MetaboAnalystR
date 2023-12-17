@@ -199,6 +199,7 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
 
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
+  idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
   return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Compounds"]])
 }
 
@@ -412,3 +413,59 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
   return(.set.mSet(mSetObj))
 }
 
+performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
+                                  dbpath = "",
+                                  database = "all", 
+                                  similarity_meth = 0,
+                                  precMZ = NA, sim_cutoff = 30, ionMode = "positive",
+                                  unit1 = "ppm", unit2 = "ppm"){
+  require("OptiLCMS")
+  mSetObj <- .get.mSet(mSetObj);
+  # fetch the searching function
+  SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
+  
+  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
+       file = "mSetObj___performMS2searchBatch.rda")
+  # configure ppm/da param
+  if(unit1 == "da"){
+    ppm1 <- ppm1/precMZ*1e6;
+  }
+  if(unit2 == "da"){
+    ppm2 <- ppm2/precMZ*1e6;
+  }
+  
+  if(ionMode == "positive"){
+    ion_mode_idx = 1;
+  } else {
+    ion_mode_idx = 0;
+  }
+  
+  if(dbpath =="" || !file.exists(dbpath)){
+    stop("Database file does not exist! Please check!")
+  }
+  # now set up the database option
+  database_opt <- generateMS2dbOpt(database, ionMode);
+  
+  # now let call OPTILCMS to search the database
+  # df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
+  spec_set <- mSetObj[["dataSet"]][["spectrum_set"]]
+  spec_set_ms2 <- lapply(spec_set, function(x){list(as.matrix(x[[2]]))})
+  spec_set_prec <- sapply(spec_set, function(x){x[[1]]})
+  Concensus_spec <- list(as.vector(seq(0,length(spec_set)-1)), spec_set_ms2)
+  
+  peak_mtx <- cbind(spec_set_prec-1e-10, spec_set_prec+1e-10, NA, NA)
+  colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+  results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
+                                   ion_mode_idx, dbpath, database_opt)
+   
+  results_clean <- lapply(results, msmsResClean)
+  mSetObj$dataSet$msms_result <- results_clean
+  mSetObj$dataSet$spec_set_prec <- spec_set_prec
+  return(.set.mSet(mSetObj));
+}
+
+GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$spec_set_prec -> spec_set_prec
+  return(spec_set_prec)
+}
