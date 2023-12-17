@@ -265,11 +265,11 @@ PerformMRAnalysis <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThres
   # perform mr
   method.type <- mSetObj$dataSet$methodType;
   mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
-  rownames(mr.res) <- mr.res$method;
+  #rownames(mr.res) <- mr.res$method;
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
   mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
-  rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
+  #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
   fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
   #"Q"           "Q_df"        "Q_pval"
   mSetObj$dataSet$mr.hetero_mat <- round(data.matrix(mr_heterogeneity.res[6:8]),3) 
@@ -278,14 +278,20 @@ PerformMRAnalysis <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThres
   mr_pleiotropy_test.res <- TwoSampleMR::mr_pleiotropy_test(dat);
   fast.write.csv(mr_pleiotropy_test.res, file="mr_pleiotropy_results.csv", row.names=FALSE);
   mr.hetero.num <- mr_heterogeneity.res[5:8];
-  mr.res.num <- mr.res[5:9];
+  mr.res.num <- mr.res[4:9];
   mr.pleio.num <- mr_pleiotropy_test.res[5:7];
   mr.pleio.num$method <- "MR Egger";
   merge1 <- merge(mr.res.num, mr.hetero.num, by="method", all.x=TRUE);
   merge2 <- merge(merge1, mr.pleio.num, by="method", all.x=TRUE);
-  rownames(merge2) <- merge2$method;
+  #rownames(merge2) <- merge2$method;
+  method.vec <- merge2$method;
+  exposure.vec <- merge2$exposure;
+  merge2$exposure <- NULL;
+  print(head(merge2));
   merge2 <- signif(merge2[2:11], 5);
   merge2[is.na(merge2)] <- "-";
+  merge2$method <- method.vec
+  merge2$exposure <- exposure.vec
   mSetObj$dataSet$mr_results_merge <- merge2
   mSetObj$dataSet$mr.pleio_mat <- signif(data.matrix(mr_pleiotropy_test.res[5:7]),5)
   mSetObj$dataSet$mr_results <- mr.res;
