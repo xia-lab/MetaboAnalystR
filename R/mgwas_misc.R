@@ -1,157 +1,8 @@
 
 ##################################################
 ## R script for mGWAS-Explorer
-## Description: GO/Pathway ORA
-## Author: Yannan, yannan.fan@mail.mcgill.ca
+## Description: utility functions
 ###################################################
-
-# need to obtain the full path to convert (from imagemagik) for cropping images
-GetBashFullPath<-function(){
-    path <- system("which bash", intern=TRUE);
-    if((length(path) == 0) && (typeof(path) == "character")){
-        print("Could not find bash in the PATH!");
-        return("NA");
-    }
-    return(path);
-}
-
-cleanMem <- function(n=10) { for (i in 1:n) gc() }
-
-# new range [a, b]
-rescale2NewRange <- function(qvec, a, b){
-    q.min <- min(qvec);
-    q.max <- max(qvec);
-    if(length(qvec) < 50){
-        a <- a*2;
-    }
-    if(q.max == q.min){
-        new.vec <- rep(1.5, length(qvec));
-    }else{
-        coef.a <- (b-a)/(q.max-q.min);
-        const.b <- b - coef.a*q.max;
-        new.vec <- coef.a*qvec + const.b;
-    }
-    return(new.vec);
-}
-
-`%fin%` <- function(x, table) {
-  fmatch(x, table, nomatch = 0L) > 0L
-}
-
-###########
-# improved list of objects
-.ls.objects <- function (pos = 1, pattern, order.by,
-                        decreasing=FALSE, head=FALSE, n=5) {
-    napply <- function(names, fn) sapply(names, function(x)
-                                         fn(get(x, pos = pos)))
-    names <- ls(pos = pos, pattern = pattern)
-    obj.class <- napply(names, function(x) as.character(class(x))[1])
-    obj.mode <- napply(names, mode)
-    obj.type <- ifelse(is.na(obj.class), obj.mode, obj.class)
-    obj.prettysize <- napply(names, function(x) {
-                           capture.output(format(utils::object.size(x), units = "auto")) })
-    obj.size <- napply(names, object.size)
-    obj.dim <- t(napply(names, function(x)
-                        as.numeric(dim(x))[1:2]))
-    vec <- is.na(obj.dim)[, 1] & (obj.type != "function")
-    obj.dim[vec, 1] <- napply(names, length)[vec]
-    out <- data.frame(obj.type, obj.size, obj.prettysize, obj.dim)
-    names(out) <- c("Type", "Size", "PrettySize", "Rows", "Columns")
-    if (!missing(order.by))
-        out <- out[order(out[[order.by]], decreasing=decreasing), ]
-    if (head)
-        out <- head(out, n)
-    out
-}
-
-# shorthand
-ShowMemoryUse <- function(..., n=40) {
-    library(pryr);
-    sink(); # make sure print to screen
-    print(mem_used());
-    print(sessionInfo());
-    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
-    print(warnings());
-}
-
-color_scale <- function(c1="grey", c2="red") {
-  pal <- colorRampPalette(c(c1, c2))
-  colors <- pal(100)
-  return(colors)
-}
-
-
-ComputeColorGradient <- function(nd.vec, background="black", centered){
-    require("RColorBrewer");
-
-    minval = min(nd.vec, na.rm=TRUE);
-    maxval = max(nd.vec, na.rm=TRUE);
-    res = maxval-minval;
-
-    if(res == 0){
-        return(rep("#FF0000", length(nd.vec)));
-    }
-    color <- GetColorGradient(background, centered);
-    breaks <- generate_breaks(nd.vec, length(color), center = centered);
-    return(scale_vec_colours(nd.vec, col = color, breaks = breaks));
-}
-
-generate_breaks = function(x, n, center = F){
-    if(center){
-        m = max(abs(c(min(x, na.rm = T), max(x, na.rm = T))))
-        res = seq(-m, m, length.out = n + 1)
-    }
-    else{
-        res = seq(min(x, na.rm = T), max(x, na.rm = T), length.out = n + 1)
-    }
-    return(res)
-}
-
-scale_vec_colours = function(x, col = rainbow(10), breaks = NA){
-    breaks <- sort(unique(breaks));
-    return(col[as.numeric(cut(x, breaks = breaks, include.lowest = T))])
-}
-
-GetColorGradient <- function(background, center){
-    if(background == "black"){
-        if(center){
-            return(c(colorRampPalette(c("#31A231", "#5BC85B", "#90EE90", "#C1FFC1"))(50), colorRampPalette(c("#FF9DA6", "#FF7783", "#E32636", "#BD0313"))(50)));
-        }else{
-            return(colorRampPalette(rev(heat.colors(9)))(100));
-        }
-    }else{ # white background
-        if(center){
-            return(c(colorRampPalette(c("#137B13", "#31A231", "#5BC85B", "#90EE90"))(50), colorRampPalette(c("#FF7783", "#E32636", "#BD0313", "#96000D"))(50)));
-        }else{
-           # return(colorRampPalette(c("grey", "orange", "red", "darkred"))(100));
-           # return(colorRampPalette(c("#80d0f0", rainbow(8, start=0.8, end=1)))(100));
-            return(colorRampPalette(hsv(h = seq(0.72, 1, 0.035), s = 0.72, v = 1))(100));
-        }
-    }
-}
-
-rescale <- function(x, from, to){
-  (x - min(x)) / max(x - min(x)) * (to - from) + from
-}
-
-# parse two-column list as a string input from text area in web page
-.parseListData <- function(my.input){
-  if(grepl("\n", my.input[1])) {
-    lines <- strsplit(my.input, "\r|\n|\r\n")[[1]];
-  }else{
-    lines <- my.input;
-  }
-  my.lists <- strsplit(lines, "\\s+");
-  my.mat <- do.call(rbind, my.lists);
-  if(dim(my.mat)[2] == 1){ # add *
-    my.mat <- cbind(my.mat, rep("*", nrow(my.mat)));
-  }else if(dim(my.mat)[2] > 2){
-    my.mat <- my.mat[,1:2];
-    current.msg <- "More than two columns found in the list. Only first two columns will be used.";
-    print(currret.msg);
-  }
-  return(my.mat);
-}
 
 QueryMet2Dis <- function(db.path, q.vec, table.nm, col.nm){
   require('RSQLite');
@@ -177,15 +28,6 @@ QueryMet2Dis <- function(db.path, q.vec, table.nm, col.nm){
 
 Query.mGWASDB <- function(db.path, q.vec, table.nm, col.nm, biofluid="all", population="all", db.opt="kegg"){
   require('RSQLite');
-   #db.path<<-db.path;
-   #q.vec<<-q.vec;
-   #table.nm<<-table.nm;
-   #col.nm<<-col.nm;
-   #biofluid<<-biofluid;
-   #population<<-population;
-   #db.opt <<- db.opt;
-   #save.image("Query.mGWASDB.RData")
-
   db.path <- paste0(db.path, ".sqlite");
  
   if(.on.public.web){
@@ -215,9 +57,6 @@ Query.mGWASDB <- function(db.path, q.vec, table.nm, col.nm, biofluid="all", popu
     table2.nm <- "metabolites";
     statement <- .get_statement(table1.nm, table2.nm, col.nm, query, biofluid, population);
   }else if(table.nm=="exposure"){
-    # table1.nm <- "snp2met";
-    # table2.nm <- "metabolites";
-    # statement <- .get_statement(table1.nm, table2.nm, col.nm, query, biofluid, population);
     statement <- paste("SELECT * FROM snp2met LEFT JOIN snp
                     ON snp.snp_orig=snp2met.snp_orig
                      LEFT JOIN metabolites
@@ -371,192 +210,7 @@ Query.DisGeNETDB <- function(db.path, q.vec, table.nm, col.nm){
   return(mir.dic);
 }
 
-# Load httr
-load_httr <- function(){
-  suppressMessages(library(httr))
-}
-
-# Load reshape, necessary for graphics
-load_reshape <- function(){
-  suppressMessages(library(reshape))
-}
-
-overlap_ratio <- function(x, y) {
-  x <- unlist(x)
-  y <- unlist(y)
-  length(intersect(x, y))/length(unique(c(x,y)))
-}
-
-# Load ggplot2
-load_ggplot <- function(){
-  suppressMessages(library(ggplot2))
-}
-
-hex2rgb <- function(cols){
-  return(apply(sapply(cols, col2rgb), 2, function(x){paste("rgb(", x[1], ",", x[2], ",", x[3], ")", sep="")}));
-}
-
 `%notin%` <- Negate(`%in%`)
-
-gg_color_hue <- function(grp.num, filenm=NULL) {
-  grp.num <- as.numeric(grp.num)
-  pal18 <- c("#3cb44b", "#f032e6", "#ffe119", "#e6194B", "#f58231", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#42d4f4","#000075", "#ff4500");
-  if(grp.num <= 18){ # update color and respect default
-    colArr <- pal18[1:grp.num];
-  }else{
-    colArr <- colorRampPalette(pal18)(grp.num);
-  }
-  if(is.null(filenm)){
-    return(colArr);
-  }else{
-    sink(filenm);
-    cat(toJSON(colArr));
-    sink();
-    return(filenm);
-  }
-}
-
-Prepare3DManhattanJSON <- function(pmid){
-  qs.dir <- "../../data/manhattan/";
-  qs.filenm <- paste0(qs.dir, pmid, ".qs");
-  json.res <- qs::qread(qs.filenm);
-  library(RJSONIO)
-  json.mat <- toJSON(json.res, .na='null');
-  file.nm <- "manhattan_0.json";
-  sink(file.nm)
-  cat(json.mat);
-  sink();
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(paste("JSON files are downloaded!"))
-  }
-}
-
-PrepareMiamiJSON <- function(){
-  #save.image("PrepareMiamiJSON.RData")
-  qs.dir <- "../../data/phemr_miami";
-  
-  #qs.dir <- "../../data/phemr_heatmap";
-  
-  
-  qs.filenm <- paste0(qs.dir, ".qs");
-  json.res <- qs::qread(qs.filenm);
-  library(RJSONIO)
-  json.mat <- toJSON(json.res, .na='null');
-  file.nm <- "miami_0.json";
-  sink(file.nm)
-  cat(json.mat);
-  sink();
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(paste("JSON files are downloaded!"))
-  }
-}
-
-.manhattan <- function(x, chr="CHR", bp="BP", p="P", snp="SNP", met="Metabolite", Consequence="Consequence", rsID="rsID",Gene="Gene",Metabolite="Metabolite",Chr="Chr",super_class="super_class",chr_bp="chr_bp",
-                       col=c("gray10", "gray60"), chrlabs=NULL,
-                       suggestiveline=-log10(1e-5), genomewideline=-log10(5e-8),
-                       highlight=NULL, logp=TRUE, annotatePval = NULL, annotateTop = TRUE, ...) {
-  x<<-x;
-  #save.image("manhattan.RData")
-  # https://github.com/stephenturner/qqman
-  # Not sure why, but package check will warn without this.
-  CHR=BP=P=index=NULL
-
-  # Check for sensible dataset
-  ## Make sure you have chr, bp and p columns.
-  if (!(chr %in% names(x))) stop(paste("Column", chr, "not found!"))
-  if (!(bp %in% names(x))) stop(paste("Column", bp, "not found!"))
-  if (!(p %in% names(x))) stop(paste("Column", p, "not found!"))
-  ## warn if you don't have a snp column
-  if (!(snp %in% names(x))) warning(paste("No SNP column found. OK unless you're trying to highlight."))
-  ## make sure chr, bp, and p columns are numeric.
-  if (!is.numeric(x[[chr]])) stop(paste(chr, "column should be numeric. Do you have 'X', 'Y', 'MT', etc? If so change to numbers and try again."))
-  if (!is.numeric(x[[bp]])) stop(paste(bp, "column should be numeric."))
-  if (!is.numeric(x[[p]])) stop(paste(p, "column should be numeric."))
-
-  # Create a new data.frame with columns called CHR, BP, and P.
-  # d=data.frame(CHR=x[[chr]], BP=x[[bp]], P=x[[p]], pos = NA, index = NA) # with millions of SNPs, create dataframe at once
-  #  rather than dynamically allocated(see line 72-73, and remove line 87 and line 91 )
-
-  # If the input data frame has a SNP column, add it to the new data frame you're creating.
-  if (!is.null(x[[snp]])) d = data.frame(CHR=x[[chr]], BP=x[[bp]], P=x[[p]], pos = NA, index = NA ,SNP=x[[snp]],met=x[[met]], Consequence=x[[Consequence]],
-                                         rsID=x[[rsID]], Gene=x[[Gene]], Metabolite=x[[Metabolite]], Chr=x[[Chr]], super_class=x[[super_class]], chr_bp=x[[chr_bp]], stringsAsFactors = FALSE) else
-                                           d = data.frame(CHR=x[[chr]], BP=x[[bp]], P=x[[p]], pos = NA, index = NA, Consequence=x[[Consequence]], met=x[[met]],
-                                                          rsID=x[[rsID]], Gene=x[[Gene]], Metabolite=x[[Metabolite]], Chr=x[[Chr]], super_class=x[[super_class]], chr_bp=x[[chr_bp]])
-
-
-                                         # Set positions, ticks, and labels for plotting
-                                         ## Sort and keep only values where is numeric.
-                                         #d <- subset(d[order(d$CHR, d$BP), ], (P>0 & P<=1 & is.numeric(P)))
-                                         #  d <- subset(d, (is.numeric(CHR) & is.numeric(BP) & is.numeric(P)))       ## unused, all three variables are numeric, line:63-65
-                                         d <- d[order(d$CHR, d$BP), ]
-                                         #d$logp <- ifelse(logp, yes=-log10(d$P), no=d$P)
-                                         if (logp) {
-                                           d$logp <- -log10(d$P)
-                                         } else {
-                                           d$logp <- d$P
-                                         }
-                                         # d$pos=NA
-
-
-                                         # Fixes the bug where one chromosome is missing by adding a sequential index column.
-                                         # d$index=NA
-                                         # ind = 0
-                                         # for (i in unique(d$CHR)){
-                                         #     ind = ind + 1
-                                         #     d[d$CHR==i,]$index = ind
-                                         # }
-                                         d$index = rep.int(seq_along(unique(d$CHR)), times = tapply(d$SNP,d$CHR,length))  # replcace the for loop of line 92-96 to improve efficiency
-
-                                         # This section sets up positions and ticks. Ticks should be placed in the
-                                         # middle of a chromosome. The a new pos column is added that keeps a running
-                                         # sum of the positions of each successive chromsome. For example:
-                                         # chr bp pos
-                                         # 1   1  1
-                                         # 1   2  2
-                                         # 2   1  3
-                                         # 2   2  4
-                                         # 3   1  5
-                                         nchr = length(unique(d$CHR))
-                                         if (nchr==1) { ## For a single chromosome
-                                           ## Uncomment the next two linex to plot single chr results in Mb
-                                           #options(scipen=999)
-                                           #d$pos=d$BP/1e6
-                                           d$pos=d$BP
-                                           #  ticks=floor(length(d$pos))/2+1          ## unused, from code line: 169
-                                           xlabel = paste('Chromosome',unique(d$CHR),'position')
-                                           #  labs = ticks          ## unused, from code line: 169
-                                         } else { ## For multiple chromosomes
-                                           lastbase=0
-                                           ticks=NULL
-                                           for (i in unique(d$index)) {
-                                             if (i==1) {
-                                               d[d$index==i, ]$pos=d[d$index==i, ]$BP
-                                             } else {
-                                               ## chromosome position maybe not start at 1, eg. 9999. So gaps may be produced.
-                                               lastbase = lastbase +max(d[d$index==(i-1),"BP"])   # replace line 128
-                                               d[d$index == i,"BP"] = d[d$index == i,"BP"]-min(d[d$index==i,"BP"]) +1
-                                               d[d$index == i, "pos"] = d[d$index == i,"BP"] + lastbase    # replace line 129
-                                               # lastbase=lastbase+tail(subset(d,index==i-1)$BP, 1)
-                                               # d[d$index==i, ]$pos=d[d$index==i, ]$BP+lastbase
-
-                                             }
-                                             # Old way: assumes SNPs evenly distributed
-                                             # ticks=c(ticks, d[d$index==i, ]$pos[floor(length(d[d$index==i, ]$pos)/2)+1])
-                                             # New way: doesn't make that assumption
-                                             # ticks = c(ticks, (min(d[d$index == i,]$pos) + max(d[d$index == i,]$pos))/2 + 1)  # see line 136, to reduce the burden of for loop
-                                           }
-                                           ticks <-tapply(d$pos,d$index,quantile,probs=0.5)   # replace line 135
-                                           xlabel = 'Chromosome'
-                                           #labs = append(unique(d$CHR),'') ## I forgot what this was here for... if seems to work, remove.
-                                           labs <- unique(d$CHR)
-                                         }
-
-                                         return(d);
-}
 
 .get_statement <- function(table1.nm,table2.nm, col.nm, query, biofluid, population){
   statement1 <- paste("SELECT * FROM ", table1.nm,
@@ -1043,15 +697,8 @@ simpleQuery <- function(query=NULL, file=NULL,
     if(is.null(html.table)) {
       html.table <- tmp.table
     } else {   
-      #print(head(tmp.table))
-      colnames(html.table) <- colnames(tmp.table)
-      #print("*****")
-      #print(head(html.table))
-      #print(dim(html.table))
-      #print("=====")
-      #print(head(tmp.table))
-      #print(dim(tmp.table))
-      html.table <- rbind(html.table, tmp.table)
+      colnames(html.table) <- colnames(tmp.table);
+      html.table <- rbind(html.table, tmp.table);
     }
   }
   
@@ -1275,27 +922,6 @@ GetCompleteDisList <- function(){
   return(res);
 }
 
-#'Replace infinite numbers
-#'@description Replace -Inf, Inf to 99999 and -99999
-#'@param bdata Input matrix to clean numbers
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: MIT License
-#'
-CleanNumber <-function(bdata){
-  if(sum(bdata==Inf)>0){
-    inx <- bdata == Inf;
-    bdata[inx] <- NA;
-    bdata[inx] <- 999999;
-  }
-  if(sum(bdata==-Inf)>0){
-    inx <- bdata == -Inf;
-    bdata[inx] <- NA;
-    bdata[inx] <- -999999;
-  }
-  bdata;
-}
-
 SetEqtlTissue <- function(){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$eqtlTissue <- nms.vec;
@@ -1504,38 +1130,6 @@ flatten_response <- function(response, field = "results") {
     jsonlite::fromJSON(flatten = TRUE) %>%
     purrr::pluck(field) %>%
     tibble::as_tibble()
-}
-
-query_melodipresto <- function(route, params = NULL,
-                             mode = c("raw", "table"),
-                             method = c("GET", "POST"),
-                             retry_times = 3,
-                             retry_pause_min = 1) {
-  #route<<-route;
-  #params<<-params;
-  #print(mode);
-  #print(method);
-  #retry_times<<-retry_times;
-  #retry_pause_min<<-retry_pause_min;
-  #save.image("query_melodipresto.RData")
-  mode <- match.arg(mode)
-  method <- match.arg(method)
-  if (method == "GET") {
-    method_func <- api_get_request
-  } else if (method == "POST") {
-    method_func <- api_post_request
-  }
-  res <- api_request(
-    route = route, params = params, mode = mode, method = method_func,
-    retry_times = retry_times, retry_pause_min = retry_pause_min
-  )
-  l <- list();
-  library(magrittr)
-  for (i in 1:length(res$data)){
-    l[[i]] <- res$data[[i]] %>% 
-      tibble::as_tibble()
-  }
-  df <- do.call("rbind", l);
 }
 
 clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_p1 = 1, 
@@ -1777,38 +1371,5 @@ get_ld_proxies <- function(rsid, bfile, searchspace=NULL, tag_kb=5000, tag_nsnp=
 
 
 
-#'Record R Commands
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param cmd Commands 
-#'@export
-RecordRCommand <- function(mSetObj, cmd){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$cmdSet <- c(mSetObj$cmdSet, cmd);
-  .set.mSet(mSetObj)
-  return(1);
-}
 
-SaveRCommands <- function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj);
-  cmds <- paste(mSetObj$cmdSet, collapse="\n");
-  pid.info <- paste0("# PID of current job: ", Sys.getpid());
-  cmds <- c(pid.info, cmds);
-  write(cmds, file = "Rhistory.R", append = FALSE);
-}
 
-#'Export R Command History
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@export
-GetRCommandHistory <- function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj);
-  if(length(mSetObj$cmdSet) == 0){
-    return("No commands found");
-  }
-  return(mSetObj$cmdSet);
-}
-
-ClearRCommandHistory <- function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$cmdSet$cmdVec <- c();
-  .set.mSet(mSetObj)
-}
