@@ -644,7 +644,8 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
- 
+       sz <- max(as.numeric(annoPer) / 100, 0.015)
+      bf <- min(0.01, (sz / 3))
 
    if(grp.ave){
         
@@ -658,12 +659,14 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
       
     p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
                   layout = list(font = list(size = fzAnno),showlegend=F),
-                  colors = colors )
+                  colors = colors ,
+ colorbar_grid =setup_colorbar_grid(nrows = min(15, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
+)
     }
 
     p<- p%>%
       add_col_annotation(annotation, show_colorbar=show.annot.legend,
-                         side = "top", size = annoPer #, buffer = 0.015 , inner_buffer = bf / 3
+                         side = "top", size = annoPer , buffer = bf , inner_buffer = bf / 3
       )
 
       
