@@ -83,7 +83,7 @@ CreateHeader <- function(usrName){
               "options(width=60);",
               "@",
               "\\SweaveOpts{eps=FALSE,pdf=TRUE}",
-              "\\title{Metabolomic Data Analysis with MetaboAnalyst 5.0}",
+              "\\title{Metabolomic Data Analysis with MetaboAnalyst 6.0}",
               paste("\\author{ Name: ", usrName, " }", sep=""),
               "\\begin{document}",
               "\\parskip=.3cm",

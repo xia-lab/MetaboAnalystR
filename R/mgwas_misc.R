@@ -1,6 +1,5 @@
-
 ##################################################
-## R script for mGWAS-Explorer
+## R script for mGWAS
 ## Description: utility functions
 ###################################################
 
