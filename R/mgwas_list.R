@@ -1885,3 +1885,107 @@ SetPpiDb  <- function(db, req, conf){
   net.info <<- .set.net.names("mr_single");
 
 }
+
+GetQueryNum <-function(){
+  if(net.type=="metabo_phenotypes"){
+    return(as.numeric(net.stats$Query))
+  }
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$dataSet$query.nums)
+}
+
+GetTypeNum <-function(){
+  if(net.type=="metabo_phenotypes"){
+    return(as.numeric(net.stats$Node))
+  }
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$dataSet$type.nums)
+}
+
+PrepareCSV <- function(table.nm){
+  # table.nm<<-table.nm;
+  # save.image("PrepareCSV.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  if(table.nm=="mr_res_single"){
+    fast.write.csv(mSetObj$dataSet$mr_res_single, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="mr_res_loo"){
+    fast.write.csv(mSetObj$dataSet$mr_res_loo, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="mr_res"){
+    fast.write.csv(mSetObj$dataSet$mr_results, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="manhattan"){
+    fast.write.csv(mSetObj$dataSet$snp2met, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  } else if(anal.type == "multilist" || anal.type == "snp2mir" || anal.type == "tf2genemir" || anal.type == "gene2tfmir"){
+    fast.write.csv(mSetObj$dataSet[[table.nm]], file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  } else {
+    fast.write.csv(mSetObj$dataSet$snp.res, file=paste(net.type, ".csv", sep=""), row.names = FALSE);
+  }
+}
+
+GetTableNames <- function(){
+  #save.image("GetTableNames.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$mirtable;
+}
+
+GetSeedsColumn <- function(mSetObj=NA){
+  #save.image("GetSeedsColumn.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  tbls = unique(mSetObj$dataSet$mirtable);
+  vec = vector();
+  #print(tbls);
+  for( i in 1:length(tbls)){
+    nms = strsplit(tbls[i], "2")[[1]];
+    orignms = nms;
+    nms= gsub("lit", "Literature",nms);
+    nms= gsub("snp", "SNP",nms)
+    nms= gsub("gene_eqtl", "eGene",nms);
+    nms= gsub("gene", "Gene",nms)
+    nms= gsub("met_study", "Metabolite",nms)
+    nms= gsub("met", "Metabolite",nms)
+    nms= gsub("dis", "Disease",nms)
+    nms= gsub("pos", "Positional Mapping",nms)
+    nms= gsub("snp_pos", "Positional Mapping",nms)
+    nms= gsub("drug", "Drug",nms);
+    nms= gsub("protein", "Protein",nms); # this is for ppi
+    nms= gsub("prot", "Protein",nms); # this is for snp2protein
+    nms= gsub("mr", "MR",nms);
+    
+    if(tbls[i] %in% c("protein2protein")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])) + length(unique(mSetObj$dataSet[tbls[i]][[1]][,2])) )
+    }else if(tbls[i] %in% c("snp2gene")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,2])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,9])))
+    }else if(tbls[i] %in% c("snp2egene")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,4])))
+    }else if(tbls[i] %in% c("snp2prot")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])))
+    }else if(tbls[i] %in% c("gene2snp")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,6])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])))
+    }else if(tbls[i] %in% c("snp2dis")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])))
+    }else if(tbls[i] %in% c("dis2snp")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])))
+    }else if(tbls[i] %in% c("met2gene")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,5])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,2])))
+    }else if(tbls[i] %in% c("gene2met")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,2])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,5])))
+    }else if(tbls[i] %in% c("gene2dis")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])))
+    }else if(tbls[i] %in% c("met2dis")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,4])))
+    }else if(tbls[i] %in% c("snp2met")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])))
+    }else if(tbls[i] %in% c( "met2snp")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])))
+    }else if(tbls[i] %in% c( "snp2met_study")){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,4])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])))
+    }else if(orignms[1] == "dis"){
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,2])))
+    }else if(tbls[i] %in% c("mr2lit")){
+      vec[i]=paste0(nms[1],":" ,length(unique(c(mSetObj$dataSet[tbls[i]][[1]][,1],mSetObj$dataSet[tbls[i]][[1]][,11]))),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,6])))
+    }else{
+      vec[i]=paste0(nms[1],":" ,length(unique(mSetObj$dataSet[tbls[i]][[1]][,1])),", ",nms[2],": ",length(unique(mSetObj$dataSet[tbls[i]][[1]][,3])))
+    }
+  }
+  return(vec)
+}
+

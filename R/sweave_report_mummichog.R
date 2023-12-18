@@ -91,9 +91,9 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
     
     descr <- c("\\subsubsection{Parameters}\n",
                "Users also need to specify the mass accuracy (ppm), the ion mode (positive or negative), and the p-value cutoff", 
-               " to delineate between significantly enriched and non-significantly enriched m/z features (for mummichog only). ", 
-               "Currently, MetaboAnalyst 5.0 only supports the handling of peaks obtained from high-resolution MS instruments", 
-               " such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation.",
+               " to delineate between significantly and non-significantly enriched pathways (pathway-level only), and pathway library used.", 
+               " Currently, MetaboAnalyst 6.0 is primarily designed to support peaks obtained from high-resolution MS instruments", 
+               " such as Orbitrap, or TOF instruments.",
                "\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
