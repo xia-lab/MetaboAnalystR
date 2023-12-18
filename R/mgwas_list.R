@@ -1367,6 +1367,7 @@ QueryExposure <- function(mSetObj=NA){
 
     mSetObj$dataSet$mir.res <- mir.resu;
     mSetObj$dataSet$exposure <- merged_table;
+    mSetObj$dataSet$exposure.orig <- merged_table;
     mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
   
