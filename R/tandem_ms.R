@@ -200,6 +200,7 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
   idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
+  .set.mSet(mSetObj)
   return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Compounds"]])
 }
 
@@ -246,18 +247,39 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
   # Fetch data for plotting
-  spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
-  spec_top <- spec_df
-  
-  ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
-  spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
-  
-  # compoundName, score
-  compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
-  score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
-  cat("compoundName ==> ", compoundName, "\n")
-  cat("score        ==> ", score, "\n")
-  
+  if(!is.null(mSetObj[["dataSet"]][["spectrum_dataframe"]])){
+    spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
+    spec_top <- spec_df
+    
+    ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+    # compoundName, score
+    compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
+    score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+    cat("compoundName ==> ", compoundName, "\n")
+    cat("score        ==> ", score, "\n")
+    
+  } else {
+    if(!is.null(mSetObj[["dataSet"]][["current_msms_idx"]])){
+      current_msms_idx <- mSetObj[["dataSet"]][["current_msms_idx"]]
+    } else {
+      current_msms_idx <- 1
+    }
+    cat("Now the current_msms_idx ==> ", current_msms_idx, "\n")
+    cat("Now the featureidx ==> ", featureidx, "\n")
+    spec_df <- mSetObj[["dataSet"]][["spectrum_set"]][[current_msms_idx]][["ms2_spec"]]
+    spec_top <- spec_df
+    
+    ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+    # compoundName, score
+    compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
+    score <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Scores"]][[1]][featureidx]
+    cat("compoundName ==> ", compoundName, "\n")
+    cat("score        ==> ", score, "\n")
+    
+  }
+
   # now, let's plot
   title <- paste0("Mirror plot of precursor: ", precMZ)
   subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
@@ -306,6 +328,8 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     AddErrMsg("The msp file is empty!");
   }
   
+  save(mSetObj, filename, format_type,
+       file = "mSetObj___SaintyCheckMSPfile.rda")
   
   if(format_type == "mzmine"){
     data_table <- read.delim(filename, header = F)
@@ -468,4 +492,9 @@ GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$spec_set_prec -> spec_set_prec
   return(spec_set_prec)
+}
+
+FetchExampleMSP <- function(URL = ""){
+  download.file(url = URL, destfile = basename(URL), method = "curl")
+  return(1)
 }
