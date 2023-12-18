@@ -78,16 +78,31 @@ GetResCol <- function(netType, colInx){
     return(res);
 }
 
-RemoveEntry <- function(mSetObj=NA, mir.id) {
+RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$mir.res) == mir.id);
+  inx <- which(rownames(dataSet$exposure) == mir.id);
   if(length(inx) > 0){
-    mSetObj$dataSet$mir.res <- dataSet$mir.res[-inx,];
-    .set.mSet(mSetObj);
+    if(is.null(mSetObj$dataSet$exposure.orig)){
+        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
+    }
+    mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
   }
+  return(.set.mSet(mSetObj));
+}
+
+AddEntryExposure <- function(mSetObj=NA, mir.id) {
+  # mir.id<<-mir.id;
+  # save.image("RemoveEntry.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
+  inx <- which(rownames(dataSet$exposure.orig) == mir.id);
+  if(length(inx) > 0){
+    mSetObj$dataSet$exposure <- rbind(dataSet$exposure, dataSet$exposure.orig[inx,]);
+  }
+  return(.set.mSet(mSetObj));
 }
 
 # batch remove based on

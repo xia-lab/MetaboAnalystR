@@ -63,6 +63,7 @@ PerformMRAnalysis <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThres
   merge2[is.na(merge2)] <- "-";
   merge2$method <- method.vec
   merge2$exposure <- exposure.vec
+  merge2 <- merge2[order(merge2$exposure, merge2$method), ]
   mSetObj$dataSet$mr_results_merge <- merge2
   mSetObj$dataSet$mr.pleio_mat <- signif(data.matrix(mr_pleiotropy_test.res[5:7]),5)
   mSetObj$dataSet$mr_results <- mr.res;
