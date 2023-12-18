@@ -1299,13 +1299,13 @@ QuerySingleItem <- function(idType, itemVec){
   }
 }
 
-QueryExposure <- function(mSetObj=NA){
+QueryExposure <- function(mSetObj=NA, itemsStr){
 
   .init.multilist();
   #itemVec<<-itemVec;
   #save.image("QueryExposure.RData");
   mSetObj <- .get.mSet(mSetObj);
-  itemVec <- mSetObj$name.map$query.vec;
+  itemVec <- strsplit(itemsStr, split = ", ")[[1]]
   print(itemVec);
   tableName <- "exposure";
   idType <- "name";
