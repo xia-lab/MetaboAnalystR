@@ -1447,38 +1447,36 @@ QueryExposure <- function(mSetObj=NA){
   library(dplyr)
   library(tidyr)
   res <- mir.dic[, c("rsid","name","symbol")];
-
+           
 # Create summary tables for metabolites and genes
-summary_table <- res %>%
-  group_by(rsid) %>%
-  summarise(
-    metabolites = paste(unique(name), collapse = ", "),
-    genes = paste(unique(symbol), collapse = ", ")
-  ) %>%
-  ungroup()
+    summary_table <- res %>%
+      group_by(rsid) %>%
+      summarise(
+        metabolites = paste(unique(name), collapse = ", "),
+        genes = paste(unique(symbol), collapse = ", ")
+      ) %>%
+      ungroup()
 
-# Rename column for merging
-colnames(summary_table)[1] <- "SNP"
+    # Rename column for merging
+    colnames(summary_table)[1] <- "SNP"
 
-# Merge with exposure data
-merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
+    # Merge with exposure data
+    merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
 
-# Number of columns in the data frame
-num_cols <- ncol(merged_table)
+    # Number of columns in the data frame
+    num_cols <- ncol(merged_table)
 
-# Create a sequence of column indices with the first column moved to the fourth position
-# Adjust this as needed for your specific column arrangement
-new_order <- c(2:3, 1, 4:num_cols)
+    # Create a sequence of column indices with the first column moved to the fourth position
+    # Adjust this as needed for your specific column arrangement
+    new_order <- c(2:3, 1, 4:num_cols)
 
-# Reorder the columns
-merged_table <- merged_table[, new_order]
+    # Reorder the columns
+    merged_table <- merged_table[, new_order]
 
-print(head(merged_table));
-
-  mSetObj$dataSet$mir.res <- mir.resu;
-  mSetObj$dataSet$exposure <- merged_table;
-  mSetObj$dataSet$mirtarget <- mirtargetu;
-  mSetObj$dataSet$mirtable <- unique(mirtableu);
+    mSetObj$dataSet$mir.res <- mir.resu;
+    mSetObj$dataSet$exposure <- merged_table;
+    mSetObj$dataSet$mirtarget <- mirtargetu;
+    mSetObj$dataSet$mirtable <- unique(mirtableu);
   
   .set.mSet(mSetObj);
 }

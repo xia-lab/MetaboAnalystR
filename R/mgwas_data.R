@@ -85,9 +85,24 @@ RemoveEntry <- function(mSetObj=NA, mir.id) {
   dataSet <- mSetObj$dataSet;
   inx <- which(rownames(dataSet$mir.res) == mir.id);
   if(length(inx) > 0){
+    if(is.null(mSetObj$dataSet$mir.res.orig)){
+        mSetObj$dataSet$mir.res.orig <- mSetObj$dataSet$mir.res;
+    }
     mSetObj$dataSet$mir.res <- dataSet$mir.res[-inx,];
-    .set.mSet(mSetObj);
   }
+  return(.set.mSet(mSetObj));
+}
+
+AddEntry <- function(mSetObj=NA, mir.id) {
+  # mir.id<<-mir.id;
+  # save.image("RemoveEntry.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
+  inx <- which(rownames(dataSet$mir.res.orig) == mir.id);
+  if(length(inx) > 0){
+    mSetObj$dataSet$mir.res <- rbind(dataSet$mir.res, dataSet$mir.res.orig[inx,]);
+  }
+  return(.set.mSet(mSetObj));
 }
 
 # batch remove based on
