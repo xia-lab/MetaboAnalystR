@@ -301,6 +301,7 @@ UpdateEntries <- function(mSetObj=NA, col.id, method, value, action) {
 
 GetResRowNames <- function(netType){
   mSetObj <- .get.mSet(mSetObj);
+  save.image("rownames.RData");
   analSet <- mSetObj$analSet$type;
    #netType<<-netType
    #save.image("GetResRowNames.RData")
@@ -312,6 +313,7 @@ GetResRowNames <- function(netType){
    resTable <- mSetObj$dataSet[netType][[1]]
   }  else{
     resTable <- dataSet$mir.res;
+
   }
   if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
     resTable <- resTable[1:1000, ];

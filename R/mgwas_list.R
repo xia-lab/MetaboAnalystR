@@ -1409,14 +1409,12 @@ QuerySingleItem <- function(idType, itemVec){
 
 QueryExposure <- function(mSetObj=NA){
 
-    if (file.exists("met_snp_restable.csv")) {
-        return(1);
-    }
   .init.multilist();
   #itemVec<<-itemVec;
   #save.image("QueryExposure.RData");
   mSetObj <- .get.mSet(mSetObj);
-  itemVec <- mSetObj$name.map$hit.values;
+  itemVec <- mSetObj$name.map$query.vec;
+  print(itemVec);
   tableName <- "exposure";
   idType <- "name";
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
@@ -1442,14 +1440,46 @@ QueryExposure <- function(mSetObj=NA){
   mSetObj$dataSet$tableStats <- data.frame(Query=length(unique(snp.nms)),Mapped=length(unique(met.nms)),stringsAsFactors = FALSE);
   mirtableu <-  "exposure";
   net.info <<- .set.net.names("study");
+
+  ## get associated metabolites for each snp
+  mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
+  print(head(mir.dic));
+  library(dplyr)
+  library(tidyr)
+  res <- mir.dic[, c("rsid","name","symbol")];
+
+# Create summary tables for metabolites and genes
+summary_table <- res %>%
+  group_by(rsid) %>%
+  summarise(
+    metabolites = paste(unique(name), collapse = ", "),
+    genes = paste(unique(symbol), collapse = ", ")
+  ) %>%
+  ungroup()
+
+# Rename column for merging
+colnames(summary_table)[1] <- "SNP"
+
+# Merge with exposure data
+merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
+
+# Number of columns in the data frame
+num_cols <- ncol(merged_table)
+
+# Create a sequence of column indices with the first column moved to the fourth position
+# Adjust this as needed for your specific column arrangement
+new_order <- c(2:3, 1, 4:num_cols)
+
+# Reorder the columns
+merged_table <- merged_table[, new_order]
+
+print(head(merged_table));
+
   mSetObj$dataSet$mir.res <- mir.resu;
-  mSetObj$dataSet$exposure <- exposure;
+  mSetObj$dataSet$exposure <- merged_table;
   mSetObj$dataSet$mirtarget <- mirtargetu;
   mSetObj$dataSet$mirtable <- unique(mirtableu);
-
-  fast.write.csv(mSetObj$dataSet$mirtable, file="met_snp_restable.csv");
-
-  print(head(mSetObj$dataSet$mirtable));
+  
   .set.mSet(mSetObj);
 }
   if(.on.public.web){
