@@ -78,29 +78,29 @@ GetResCol <- function(netType, colInx){
     return(res);
 }
 
-RemoveEntry <- function(mSetObj=NA, mir.id) {
+RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$mir.res) == mir.id);
+  inx <- which(rownames(dataSet$exposure) == mir.id);
   if(length(inx) > 0){
-    if(is.null(mSetObj$dataSet$mir.res.orig)){
-        mSetObj$dataSet$mir.res.orig <- mSetObj$dataSet$mir.res;
+    if(is.null(mSetObj$dataSet$exposure.orig)){
+        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
     }
-    mSetObj$dataSet$mir.res <- dataSet$mir.res[-inx,];
+    mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
   }
   return(.set.mSet(mSetObj));
 }
 
-AddEntry <- function(mSetObj=NA, mir.id) {
+AddEntryExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$mir.res.orig) == mir.id);
+  inx <- which(rownames(dataSet$exposure.orig) == mir.id);
   if(length(inx) > 0){
-    mSetObj$dataSet$mir.res <- rbind(dataSet$mir.res, dataSet$mir.res.orig[inx,]);
+    mSetObj$dataSet$exposure <- rbind(dataSet$exposure, dataSet$exposure.orig[inx,]);
   }
   return(.set.mSet(mSetObj));
 }
