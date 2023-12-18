@@ -1338,14 +1338,15 @@ QueryExposure <- function(mSetObj=NA){
   print(head(mir.dic));
   library(dplyr)
   library(tidyr)
-  res <- mir.dic[, c("rsid","name","symbol")];
+  res <- mir.dic[, c("rsid","name","symbol","entrez")];
            
 # Create summary tables for metabolites and genes
     summary_table <- res %>%
       group_by(rsid) %>%
       summarise(
         metabolites = paste(unique(name), collapse = ", "),
-        genes = paste(unique(symbol), collapse = ", ")
+        genes = paste(unique(symbol), collapse = ", "),
+        gene_id = paste(unique(entrez), collapse = ", "),
       ) %>%
       ungroup()
 
