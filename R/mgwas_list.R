@@ -83,114 +83,6 @@ SetLDR2 <- function(opt){
 
 }
 
-QueryMultiList <- function(){
-  #save.image("QueryMultiList.RData")
-  mSetObj <- .get.mSet(mSetObj);
-  .init.multilist();
-      for(i in 1:length(mSetObj$dataSet$mapType)){
-    # if (mSetObj$dataSet$mapType[i] == "mirna") {
-    #   input.type=paste("mir2", dataSet$targetOpt, sep="");
-    # } else{
-      if(mSetObj$dataSet$mapType[i] == "snp2met"){
-        input.type="snp2met";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2egene"){
-        for (j in 1:length(mSetObj$dataSet$eqtlTissue)){
-          input.type=mSetObj$dataSet$eqtlTissue[j];  
-          print(input.type)
-        }
-      }else if(mSetObj$dataSet$mapType[i] == "pos_mapping"){
-        input.type="snp_pos";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2dis"){
-        input.type="snp2dis";  
-      }else if(mSetObj$dataSet$mapType[i] == "snp2prot"){
-        input.type="snp2prot";  
-      }else if(mSetObj$dataSet$mapType[i] == "disease"){
-        input.type="dis2snp";
-      }else if(mSetObj$dataSet$mapType[i] == "met2snp"){
-        input.type="met2snp";
-      }else if(mSetObj$dataSet$mapType[i] == "met2snp2gene"){
-        input.type="met2snp2gene";
-      }else if(mSetObj$dataSet$mapType[i] == "dis2snp2met"){
-        input.type="dis2snp2met";
-      }else if(mSetObj$dataSet$mapType[i] == "gene2snp2met"){
-        input.type="gene2snp2met";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2ld2dis"){
-        input.type="snp2ld2dis";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2ld2prot"){
-        input.type="snp2ld2prot";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2ld2egene"){
-        input.type="snp2ld2egene";
-      }else if(mSetObj$dataSet$mapType[i] == "snp2ld2met"){
-        input.type="snp2ld2met";
-      }else if(mSetObj$dataSet$mapType[i] == "protein2protein"){
-        input.type=mSetObj$dataSet$mapType[i];
-      }else if(mSetObj$dataSet$mapType[i] %in% c("met2gene", "met2gene_expand")){
-        input.type=mSetObj$dataSet$mapType[i];
-      }else if(mSetObj$dataSet$mapType[i] %in% c("gene2met", "gene2met_expand")){
-        input.type=mSetObj$dataSet$mapType[i];
-      }else if(mSetObj$dataSet$mapType[i] == "met2dis"){
-        input.type=mSetObj$dataSet$mapType[i];
-      }else if(mSetObj$dataSet$mapType[i] == "gene2dis"){
-        input.type=mSetObj$dataSet$mapType[i];
-      }
-    # }
-    #print(input.type)
-    res <- SearchMultiNet(input.type);
-    if(res != 1) return(0);
-    net.info <<- .set.net.names(input.type);
-  }
-
-  typesu <<- mSetObj$dataSet$mapType;
-
-  if(length(nodeu.ids) == 0){
-    current.msg <<- paste("No interactions have been detected the given interaction types");
-    return(c(0,0,1));
-  }
-
-  node.res <- data.frame(Id=nodeu.ids, Label=nodeu.nms);
-  un.inx= !duplicated(node.res$Id)
-  node.res <- node.res[un.inx,];
-
-  edgeu.res[edgeu.res== "<NA>"] = 'NA'
-  edgeu.res = na.omit(edgeu.res);
-
-  
-  fast.write.csv(node.res, file="orig_node_list.csv", row.names=FALSE);
-  # fast.write.csv(mir.resu, file="mirnet_mir_target.csv", row.names=FALSE);
-
-  mSetObj$dataSet$mir.mapped <- na.omit(mir.mappedu);
-  mSetObj$dataSet$mir.res <- mir.resu;
-  mSetObj$dataSet$snp2gene <- snp2gene;
-  mSetObj$dataSet$protein2protein <- protein2protein;
-  mSetObj$dataSet$snp2egene <- snp2egene;
-  mSetObj$dataSet$snp2met <- snp2met;
-  mSetObj$dataSet$gene2snp <- gene2snp;
-  mSetObj$dataSet$drug2met <- drug2met;
-  mSetObj$dataSet$dis2snp <- dis2snp;
-  mSetObj$dataSet$snp2dis <- snp2dis;
-  mSetObj$dataSet$snp2prot <- snp2prot;
-  mSetObj$dataSet$met2snp <- met2snp;
-  mSetObj$dataSet$met2gene <- met2gene;
-  mSetObj$dataSet$gene2met <- gene2met;
-  mSetObj$dataSet$met2dis <- met2dis;
-  mSetObj$dataSet$gene2dis <- gene2dis;
-  mSetObj$dataSet$mirtarget <- mirtargetu;
-  mSetObj$dataSet$mirtable <- unique(mirtableu);
-  mSetObj$dataSet$seeds <- seedsu;
-  mSetObj$dataSet$nodeNumbers <-edgeNumU
-  .set.mSet(mSetObj);
-  net.info <<- net.info;
-  multi.net <<- list(
-    node.data = node.res,
-    edge.data = edgeu.res
-  );
-  if(.on.public.web){
-    return(1);
-  }else{
-    return(current.msg);
-  }
-}
-
 .set.net.names <- function(input.type){
 
   if (grepl("eqtl", input.type)) {
@@ -1409,14 +1301,12 @@ QuerySingleItem <- function(idType, itemVec){
 
 QueryExposure <- function(mSetObj=NA){
 
-    if (file.exists("met_snp_restable.csv")) {
-        return(1);
-    }
   .init.multilist();
   #itemVec<<-itemVec;
   #save.image("QueryExposure.RData");
   mSetObj <- .get.mSet(mSetObj);
-  itemVec <- mSetObj$name.map$hit.values;
+  itemVec <- mSetObj$name.map$query.vec;
+  print(itemVec);
   tableName <- "exposure";
   idType <- "name";
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
@@ -1442,14 +1332,46 @@ QueryExposure <- function(mSetObj=NA){
   mSetObj$dataSet$tableStats <- data.frame(Query=length(unique(snp.nms)),Mapped=length(unique(met.nms)),stringsAsFactors = FALSE);
   mirtableu <-  "exposure";
   net.info <<- .set.net.names("study");
+
+  ## get associated metabolites for each snp
+  mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
+  print(head(mir.dic));
+  library(dplyr)
+  library(tidyr)
+  res <- mir.dic[, c("rsid","name","symbol")];
+
+# Create summary tables for metabolites and genes
+summary_table <- res %>%
+  group_by(rsid) %>%
+  summarise(
+    metabolites = paste(unique(name), collapse = ", "),
+    genes = paste(unique(symbol), collapse = ", ")
+  ) %>%
+  ungroup()
+
+# Rename column for merging
+colnames(summary_table)[1] <- "SNP"
+
+# Merge with exposure data
+merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
+
+# Number of columns in the data frame
+num_cols <- ncol(merged_table)
+
+# Create a sequence of column indices with the first column moved to the fourth position
+# Adjust this as needed for your specific column arrangement
+new_order <- c(2:3, 1, 4:num_cols)
+
+# Reorder the columns
+merged_table <- merged_table[, new_order]
+
+print(head(merged_table));
+
   mSetObj$dataSet$mir.res <- mir.resu;
-  mSetObj$dataSet$exposure <- exposure;
+  mSetObj$dataSet$exposure <- merged_table;
   mSetObj$dataSet$mirtarget <- mirtargetu;
   mSetObj$dataSet$mirtable <- unique(mirtableu);
-
-  fast.write.csv(mSetObj$dataSet$mirtable, file="met_snp_restable.csv");
-
-  print(head(mSetObj$dataSet$mirtable));
+  
   .set.mSet(mSetObj);
 }
   if(.on.public.web){
