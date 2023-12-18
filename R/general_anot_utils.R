@@ -473,13 +473,13 @@ HMDBID2KEGGID<-function(ids){
 #'@export
 #'
 doGeneIDMapping <- function(q.vec, org, type){
-  
+  print(org)
   sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
   if(!file.exists(sqlite.path)){
     #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
     sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
-                         org.code, "_genes.sqlite");
-    sqlite.path <- paste0(getwd(), "/",org.code, "_genes.sqlite")
+                         org, "_genes.sqlite");
+    sqlite.path <- paste0(getwd(), "/",org, "_genes.sqlite")
     download.file(sqlite_url,destfile = sqlite.path, method = "curl")
   }
   con <- .get.sqlite.con(sqlite.path); 
