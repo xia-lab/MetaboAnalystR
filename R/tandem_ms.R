@@ -199,6 +199,8 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
 
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
+  idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
+  .set.mSet(mSetObj)
   return(mSetObj[["dataSet"]][["msms_result"]][[idx]][["Compounds"]])
 }
 
@@ -245,18 +247,39 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
   # Fetch data for plotting
-  spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
-  spec_top <- spec_df
-  
-  ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
-  spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
-  
-  # compoundName, score
-  compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
-  score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
-  cat("compoundName ==> ", compoundName, "\n")
-  cat("score        ==> ", score, "\n")
-  
+  if(!is.null(mSetObj[["dataSet"]][["spectrum_dataframe"]])){
+    spec_df <- mSetObj[["dataSet"]][["spectrum_dataframe"]] # query spec
+    spec_top <- spec_df
+    
+    ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+    # compoundName, score
+    compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
+    score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+    cat("compoundName ==> ", compoundName, "\n")
+    cat("score        ==> ", score, "\n")
+    
+  } else {
+    if(!is.null(mSetObj[["dataSet"]][["current_msms_idx"]])){
+      current_msms_idx <- mSetObj[["dataSet"]][["current_msms_idx"]]
+    } else {
+      current_msms_idx <- 1
+    }
+    cat("Now the current_msms_idx ==> ", current_msms_idx, "\n")
+    cat("Now the featureidx ==> ", featureidx, "\n")
+    spec_df <- mSetObj[["dataSet"]][["spectrum_set"]][[current_msms_idx]][["ms2_spec"]]
+    spec_top <- spec_df
+    
+    ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
+    # compoundName, score
+    compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
+    score <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Scores"]][[1]][featureidx]
+    cat("compoundName ==> ", compoundName, "\n")
+    cat("score        ==> ", score, "\n")
+    
+  }
+
   # now, let's plot
   title <- paste0("Mirror plot of precursor: ", precMZ)
   subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
@@ -305,6 +328,8 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     AddErrMsg("The msp file is empty!");
   }
   
+  save(mSetObj, filename, format_type,
+       file = "mSetObj___SaintyCheckMSPfile.rda")
   
   if(format_type == "mzmine"){
     data_table <- read.delim(filename, header = F)
@@ -412,3 +437,64 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
   return(.set.mSet(mSetObj))
 }
 
+performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
+                                  dbpath = "",
+                                  database = "all", 
+                                  similarity_meth = 0,
+                                  precMZ = NA, sim_cutoff = 30, ionMode = "positive",
+                                  unit1 = "ppm", unit2 = "ppm"){
+  require("OptiLCMS")
+  mSetObj <- .get.mSet(mSetObj);
+  # fetch the searching function
+  SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
+  
+  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
+       file = "mSetObj___performMS2searchBatch.rda")
+  # configure ppm/da param
+  if(unit1 == "da"){
+    ppm1 <- ppm1/precMZ*1e6;
+  }
+  if(unit2 == "da"){
+    ppm2 <- ppm2/precMZ*1e6;
+  }
+  
+  if(ionMode == "positive"){
+    ion_mode_idx = 1;
+  } else {
+    ion_mode_idx = 0;
+  }
+  
+  if(dbpath =="" || !file.exists(dbpath)){
+    stop("Database file does not exist! Please check!")
+  }
+  # now set up the database option
+  database_opt <- generateMS2dbOpt(database, ionMode);
+  
+  # now let call OPTILCMS to search the database
+  # df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
+  spec_set <- mSetObj[["dataSet"]][["spectrum_set"]]
+  spec_set_ms2 <- lapply(spec_set, function(x){list(as.matrix(x[[2]]))})
+  spec_set_prec <- sapply(spec_set, function(x){x[[1]]})
+  Concensus_spec <- list(as.vector(seq(0,length(spec_set)-1)), spec_set_ms2)
+  
+  peak_mtx <- cbind(spec_set_prec-1e-10, spec_set_prec+1e-10, NA, NA)
+  colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+  results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
+                                   ion_mode_idx, dbpath, database_opt)
+   
+  results_clean <- lapply(results, msmsResClean)
+  mSetObj$dataSet$msms_result <- results_clean
+  mSetObj$dataSet$spec_set_prec <- spec_set_prec
+  return(.set.mSet(mSetObj));
+}
+
+GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$spec_set_prec -> spec_set_prec
+  return(spec_set_prec)
+}
+
+FetchExampleMSP <- function(URL = ""){
+  download.file(url = URL, destfile = basename(URL), method = "curl")
+  return(1)
+}

@@ -3606,6 +3606,17 @@ GetTopInx <- function(vec, n, dec=T){
   return (vec);
 }
 
+GetOrgMummichogLbl <-function(mSetObj=NA){
+  org = read.csv("../../libs/orgmummichog.csv")
+  return(org$label);
+}
+
+GetOrgMummichogVal <-function(mSetObj=NA){
+  org = read.csv("../../libs/orgmummichog.csv")
+  return(org$id);
+}
+
+
 #########################################
 ########### Utility Functions ###########
 #########################################
