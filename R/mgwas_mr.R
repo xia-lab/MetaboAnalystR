@@ -49,7 +49,6 @@ PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
 
   mSetObj <- .get.mSet(mSetObj);
   exposure.dat <- mSetObj$dataSet$exposure;
-  print(head(exposure.dat));
   exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id")]
   colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id")
   exposure.snp <- mSetObj$dataSet$exposure$SNP;
@@ -65,18 +64,26 @@ PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
  
 }
 
-PerformLDProxies <- function(mSetObj=NA, ldProxies, ldThresh, pldSNPs, mafThresh){
+PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh){
   mSetObj <- .get.mSet(mSetObj);
   exposure.dat <- mSetObj$dataSet$exposure.ldp;
   exposure.snp <- exposure.dat$SNP;
   outcome.id <- mSetObj$dataSet$outcome$id;
+
+  if(ldProxyOpt == "no_proxy"){
+    ldProxies <- F;
+    pldSNPs <- 0;
+  }else{
+    ldProxies <- TRUE;
+    ldProxies <- as.numeric(T);
+  }
 
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
                                                    rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
   
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
-  return(sum(outcome.dat$mr_keep.outcome))
+  return(sum(!outcome.dat$mr_keep.outcome))
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
@@ -90,6 +97,21 @@ PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
   mSetObj$dataSet$harmonized.dat <- dat;
   return(.set.mSet(mSetObj))
 }
+
+PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
+      mSetObj <- .get.mSet(mSetObj);
+      res1 <- PerformLDClumping(mSetObj, ldclumpOpt);
+      mSetObj <- .get.mSet(mSetObj);
+      res2 <- PerformLDProxies(mSetObj, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh);
+      mSetObj <- .get.mSet(mSetObj);
+      res <- PerformHarmonization(mSetObj=NA, harmonizeOpt);
+      mSetObj <- .get.mSet(mSetObj);
+      outcome.dat <- mSetObj$dataSet$outcome.dat;
+      print(res1+res2);
+      print("snpfilter");
+      return(res1 + res2)
+}
+
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -324,15 +346,18 @@ PlotScatter<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <-width;
   }
-  h <- 8*length(unique(mr.res$id.exposure));
+  h <- 9
   
   #record img
   mSetObj$imgSet$mr.scatter <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  .mr_scatterPlot(mr.res, mr.dat);
+  plot.list <- .mr_scatterPlot(mr.res, mr.dat);
+  for(exposure in names(plot.list)){
+  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(plot.list[[exposure]])
+  dev.off()
+  }
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
@@ -356,7 +381,7 @@ PlotScatter<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     exposure_data$beta.exposure.sign <- ifelse(exposure_data$beta.exposure < 0, -1, 1)
     exposure_data$beta.exposure <- abs(exposure_data$beta.exposure)
     exposure_data$beta.outcome <- exposure_data$beta.outcome * exposure_data$beta.exposure.sign
-    
+    exposure_data <- exposure_data[order(exposure_data$beta.exposure), ] # Order by beta.exposure
     mrres_exposure <- mr_results[mr_results$exposure == exposure, ]
     mrres_exposure$a <- 0
     
@@ -380,13 +405,11 @@ PlotScatter<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
       labs(colour="MR Test", x=paste("SNP effect on", exposure), y="Outcome effect") +
       theme(legend.position="right", legend.direction="vertical") +
       guides(colour=guide_legend(ncol=2))
-    
+
     plot_list[[exposure]] <- p
   }
   
-  combined_plot <- patchwork::wrap_plots(plot_list, ncol = 1) + patchwork::plot_layout(guides = "collect")
-  print(combined_plot)
-  dev.off();
+  return(plot_list);
 }
 
 PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -408,15 +431,18 @@ PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <-width;
   }
   h <- w;
-    h <- h*length(unique(mr.res_single$id.exposure));
 
   #record img
   mSetObj$imgSet$mr.scatter <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  .mr_forestPlot(mr.res_single);
+  plot.list <- .mr_forestPlot(mr.res_single);
+
+  for(exposure in names(plot.list)){
+  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(plot.list[[exposure]])
+  dev.off()
+  }
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
@@ -437,21 +463,23 @@ PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     singlesnp_results$up <- exp(singlesnp_results$up)
     singlesnp_results$lo <- exp(singlesnp_results$lo)
   }
-  
-  p <- ggplot(singlesnp_results, aes(y=SNP, x=b)) +
-    geom_vline(xintercept=ifelse(exponentiate, 1, 0), linetype="dotted") +
-    geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
-    geom_point(aes(colour=as.factor(tot))) +
-    facet_wrap(exposure ~ ., scales = "free", ncol=1) +  # Faceting by exposure
-    scale_colour_manual(values=c("black", "red")) +
-    scale_size_manual(values=c(0.3, 1)) +
-    theme_minimal() +
-    theme(legend.position="none", 
-          text=element_text(size=14)) +
-    labs(y="", x="MR effect size")
-  
-  print(p)
-  dev.off()
+  plot_list <- list();
+for(exposure in unique(singlesnp_results$exposure)) {
+    exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
+    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
+    p <- ggplot(exposure_data, aes(y=SNP, x=b)) +
+      geom_vline(xintercept=ifelse(exponentiate, 1, 0), linetype="dotted") +
+      geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
+      geom_point(aes(colour=as.factor(tot))) +
+      scale_colour_manual(values=c("black", "red")) +
+      scale_size_manual(values=c(0.3, 1)) +
+      theme_minimal() +
+      theme(legend.position="none", 
+            text=element_text(size=14)) +
+      labs(y="", x="MR effect size")
+    plot_list[[exposure]] <- p;
+  }
+  return(plot_list)
 }
 
 PlotLeaveOneOut<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -472,15 +500,18 @@ PlotLeaveOneOut<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
     w <-width;
   }
   h <- w;
-  h <- h*length(unique(mr.res_loo$id.exposure));
 
   #record img
   mSetObj$imgSet$mr.scatter <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  .mr_looPlot(mr.res_loo);
+  plot.list <- .mr_looPlot(mr.res_loo);
+
+  for(exposure in names(plot.list)){
+  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(plot.list[[exposure]])
+  dev.off()
+  }  
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
@@ -489,26 +520,31 @@ PlotLeaveOneOut<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 .mr_looPlot <- function(leaveoneout_results) {
   requireNamespace("ggplot2", quietly=TRUE)
-  requireNamespace("plyr", quietly=TRUE)
 
   leaveoneout_results$up <- leaveoneout_results$b + 1.96 * leaveoneout_results$se
   leaveoneout_results$lo <- leaveoneout_results$b - 1.96 * leaveoneout_results$se
   leaveoneout_results$tot <- ifelse(leaveoneout_results$SNP == "All", 1, 0.01)
 
-  p <- ggplot(leaveoneout_results, aes(y=SNP, x=b)) +
-    geom_vline(xintercept=0, linetype="dotted") +
-    geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
-    geom_point(aes(colour=as.factor(tot))) +
-    facet_wrap(exposure ~ ., scales = "free", ncol=1) +  # Faceting by exposure
-    scale_colour_manual(values=c("black", "red")) +
-    scale_size_manual(values=c(0.3, 1)) +
-    theme_minimal() +
-    theme(legend.position="none", 
-          text=element_text(size=14)) +
-    labs(y="", x="MR leave-one-out sensitivity analysis")
+  plot_list <- list();
+  # Iterate through each unique exposure and create a plot
+  for(exposure in unique(leaveoneout_results$exposure)) {
+    exposure_data <- leaveoneout_results[leaveoneout_results$exposure == exposure, ]
+    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
 
-  print(p)
-  dev.off();
+    p <- ggplot(exposure_data, aes(y=SNP, x=b)) +
+      geom_vline(xintercept=0, linetype="dotted") +
+      geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
+      geom_point(aes(colour=as.factor(tot))) +
+      scale_colour_manual(values=c("black", "red")) +
+      scale_size_manual(values=c(0.3, 1)) +
+      theme_minimal() +
+      theme(legend.position="none", 
+            text=element_text(size=14)) +
+      labs(y="", x="MR leave-one-out sensitivity analysis")
+    plot_list[[exposure]] <- p;
+  }
+
+  return(plot_list)
 }
 
 PlotFunnel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
@@ -528,15 +564,19 @@ PlotFunnel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     w <-width;
   }
-  h <- 8*length(unique(mr.res_single$id.exposure));
+  h <- 9
 
   #record img
   mSetObj$imgSet$mr.scatter <- imgName
   mSetObj$imgSet$current.img <- imgName;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  .mr_funnelPlot(mr.res_single);
+
+  plot.list <- .mr_funnelPlot(mr.res_single);
+  for(exposure in names(plot.list)){
+  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(plot.list[[exposure]])
+  dev.off()
+  }    
+
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
@@ -544,26 +584,30 @@ PlotFunnel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 }
 
 .mr_funnelPlot <- function(singlesnp_results) {
-
   library(ggplot2)
-  #library(plyr)
 
   # Modify the SNP column
   singlesnp_results$SNP <- gsub("All - ", "", singlesnp_results$SNP)
   am <- unique(grep("All", singlesnp_results$SNP, value=TRUE))
   am <- gsub("All - ", "", am)
 
-  # Create the funnel plot
-  p <- ggplot(singlesnp_results, aes(y = 1/se, x=b)) +
-    geom_point() +
-    geom_vline(data=subset(singlesnp_results, SNP %in% am), aes(xintercept=b, colour=SNP)) +
-    scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", 
-                                   "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
-                                   "#ffff99", "#b15928")) +
-    facet_wrap(exposure ~ ., scales = "free", ncol=1) +  # Faceting by exposure
-    labs(y=expression(1/SE[IV]), x=expression(beta[IV]), colour="MR Method") +
-    theme(legend.position="right", legend.direction="vertical",text=element_text(size=14))
+  # Iterate through each unique exposure and create a plot
+  plot_list <- list();
+  for(exposure in unique(singlesnp_results$exposure)) {
+    exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
+    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
 
-  print(p)
-  dev.off();
+    p <- ggplot(exposure_data, aes(y = 1/se, x=b)) +
+      geom_point() +
+      geom_vline(data=subset(exposure_data, SNP %in% am), aes(xintercept=b, colour=SNP)) +
+      scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", 
+                                     "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
+                                     "#ffff99", "#b15928")) +
+      labs(y=expression(1/SE[IV]), x=expression(beta[IV]), colour="MR Method") +
+      theme(legend.position="right", legend.direction="vertical", text=element_text(size=14))
+    plot_list[[exposure]] <- p;
+  }
+
+  return(plot_list)
+
 }

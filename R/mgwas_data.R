@@ -94,7 +94,6 @@ GetResColByName <- function(netType, name){
   } else{
     df <- dataSet$mir.res;
   }
-
     colInx <- which(colnames(df) == name);
     res <- df[, colInx];
 
