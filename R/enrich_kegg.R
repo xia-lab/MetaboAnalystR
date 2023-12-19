@@ -42,9 +42,9 @@ PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
   } else if(idtype == "gene&cmpd"){
     matchidx <- match(names(current.cmpd.set), names(current.geneset))
     current.set <- list()
-    # TO-DO: Fix code to handle case if length(current.cmpd.set) > length(current.geneset).
+       # TO-DO: Fix code to handle case if length(current.cmpd.set) > length(current.geneset).
     #   Then, start loop with current.cmpd.set
-    for(i in c(1:length(current.geneset))){
+    for(i in  1:length(current.geneset)){
       if(i %in% matchidx){
         cidx <- which(matchidx==i) 
         mergels <- c(current.cmpd.set[cidx][[1]], current.geneset[i][[1]])
@@ -55,12 +55,14 @@ PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
     }
     # Add compound sets that did not match
     cidx <- which(is.na(matchidx))
+if(length(cidx)>0){
     for(i in c(1:length(cidx))){
       current.set[[names(current.cmpd.set[cidx[i]])]] <- current.cmpd.set[cidx[i]][[1]]
     }
-  } else{
+  } 
+}else{
     current.set <- current.geneset;    
-  }
+  } 
   current.universe <- unique(unlist(current.set));
   
   # prepare for the result table
@@ -331,7 +333,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
     ko.edge.map <- ko.edge.map[ko.edge.map$net=="ko01100",];  #only one map
     ko.edge.map <<- ko.edge.map;
   }
-  
+
   hits.edge <- list();
   hits.node <- list();
   hits.edge.all <- list();
@@ -500,7 +502,7 @@ LoadKEGGKO_lib<-function(category){
       ko.edge.map <<- .readDataTable("ko_edge.csv"); 
     }
   } 
-  
+
   kos.01100 <- ko.edge.map$gene[ko.edge.map$net == "ko01100"];
   current.mset <- lapply(current.mset, 
                          function(x) {
@@ -548,7 +550,7 @@ MapKO2KEGGEdges<- function(kos, net="ko01100"){
   all.hits <- ko.edge.map$gene %in% names(kos) & ko.edge.map$net == net;
   my.map <- ko.edge.map[all.hits, ];
   q.map <- data.frame(gene=names(kos), expr=as.numeric(kos));
-  
+
   # first merge to get ko abundance to each edge
   dat <- merge(my.map, q.map, by="gene");
   
@@ -586,7 +588,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     # Store universe for enrichment analysis
     names(pathways$cpds) <- pathways$name
     current.cmpd.set <<- pathways$cpds;
-    
+    print("this current.cmpd.set ")
     # Read pathway names and ids in the target pathway map (e.g. ko01100)
     
     if(.on.public.web){
