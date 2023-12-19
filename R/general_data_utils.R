@@ -235,6 +235,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     url.pre <<-"/media/zzggyy/disk/sqlite/"; #zgy local)
   }else if(file.exists("/home/zgy/sqlite/")){
     url.pre <<-"/home/zgy/sqlite/"; #zgy local)
+    plink.path <<- "/home/zgy/plink/";
   } else if(file.exists("/home/le/sqlite/")){# le local
     url.pre <<-"/home/le/sqlite/";
   } else if(file.exists("/Users/jessicaewald/sqlite/")){# jess local

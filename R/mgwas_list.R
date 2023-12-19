@@ -1300,7 +1300,8 @@ QuerySingleItem <- function(idType, itemVec){
 }
 
 QueryExposure <- function(mSetObj=NA, itemsStr){
-
+  library(dplyr)
+  library(tidyr)
   .init.multilist();
   #itemVec<<-itemVec;
   #save.image("QueryExposure.RData");
@@ -1323,6 +1324,13 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
                      "Consequence", "EAF","URL", "SE");
   fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);
+
+  #res <- res %>%
+  #    group_by(Metabolite) %>%
+  #    arrange(`P-value`) %>%
+  #    slice_min(order_by = `P-value`, n = 20) %>%
+  #    ungroup()   
+
   display.res <- res;
   met.nms <<- res[,"Common Name"];
   snp.nms <<- res[, "SNP"];
@@ -1336,10 +1344,9 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   ## get associated metabolites for each snp
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
   print(head(mir.dic));
-  library(dplyr)
-  library(tidyr)
+
   res <- mir.dic[, c("rsid","name","symbol","entrez")];
-           
+     
 # Create summary tables for metabolites and genes
     summary_table <- res %>%
       group_by(rsid) %>%

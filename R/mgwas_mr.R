@@ -4,7 +4,107 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-PerformMRAnalysis <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
+PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
+
+  mSetObj <- .get.mSet(mSetObj);
+  exposure.dat <- mSetObj$dataSet$exposure;
+  print(head(exposure.dat));
+  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name")]
+  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure")
+  exposure.snp <- mSetObj$dataSet$exposure$SNP;
+
+  if(ldclumpOpt!="no_ldclump"){
+    exposure.dat <- clump_data_local_ld(exposure.dat);
+    exposure.snp <- exposure.dat$SNP;
+  }
+
+  mSetObj$dataSet$exposure.dat.ldp <- exposure.dat;
+  mSetObj <- .get.mSet(mSetObj);
+
+}
+
+PerformLDProxies <- function(mSetObj=NA, ldProxies, ldThresh, pldSNPs, mafThresh){
+  mSetObj <- .get.mSet(mSetObj);
+  save.image("ldprox.RData");
+  exposure.dat <- mSetObj$dataSet$exposure.dat.ldp;
+  exposure.snp <- exposure.dat$SNP;
+  outcome.id <- mSetObj$dataSet$outcome$id;
+
+  outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
+  mSetObj$dataSet$outcome.dat <- outcome.dat;
+  mSetObj <- .get.mSet(mSetObj);
+}
+
+PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
+  mSetObj <- .get.mSet(mSetObj);
+  exposure.dat <- mSetObj$dataSet$exposure.dat.ldp;
+  outcome.dat <- mSetObj$dataSet$outcome.dat;
+  
+  print(head(outcome.dat));
+  print("outcome.dat");
+  dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
+
+  mSetObj$dataSet$harmonized.dat <- dat;
+  mSetObj <- .get.mSet(mSetObj);
+}
+
+PerformMRAnalysis <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+
+  #4. perform mr
+  method.type <- mSetObj$dataSet$methodType;
+  mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
+  #rownames(mr.res) <- mr.res$method;
+  #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
+  # Heterogeneity tests
+  mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
+  #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
+  fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
+  #"Q"           "Q_df"        "Q_pval"
+  mSetObj$dataSet$mr.hetero_mat <- round(data.matrix(mr_heterogeneity.res[6:8]),3) 
+  
+  # Test for directional horizontal pleiotropy
+  mr_pleiotropy_test.res <- TwoSampleMR::mr_pleiotropy_test(dat);
+  fast.write.csv(mr_pleiotropy_test.res, file="mr_pleiotropy_results.csv", row.names=FALSE);
+  mr.hetero.num <- mr_heterogeneity.res[5:8];
+  mr.res.num <- mr.res[4:9];
+  mr.pleio.num <- mr_pleiotropy_test.res[5:7];
+  mr.pleio.num$method <- "MR Egger";
+  merge1 <- merge(mr.res.num, mr.hetero.num, by="method", all.x=TRUE);
+  merge2 <- merge(merge1, mr.pleio.num, by="method", all.x=TRUE);
+  #rownames(merge2) <- merge2$method;
+  method.vec <- merge2$method;
+  exposure.vec <- merge2$exposure;
+  merge2$exposure <- NULL;
+  print(head(merge2));
+  merge2 <- signif(merge2[2:11], 5);
+  merge2[is.na(merge2)] <- "-";
+  merge2$method <- method.vec
+  merge2$exposure <- exposure.vec
+  merge2 <- merge2[order(merge2$exposure, merge2$method), ]
+  mSetObj$dataSet$mr_results_merge <- merge2
+  mSetObj$dataSet$mr.pleio_mat <- signif(data.matrix(mr_pleiotropy_test.res[5:7]),5)
+  mSetObj$dataSet$mr_results <- mr.res;
+  fast.write.csv(mr.res, file="mr_results.csv", row.names=FALSE);
+  mSetObj$dataSet$mr_dat <- dat;
+  mSetObj$dataSet$mr.res_mat <- signif(data.matrix(mr.res[6:9]), 5) #"nsnp","b","se","pval" 
+
+  res_single <- TwoSampleMR::mr_singlesnp(dat, all_method = method.type);
+  mSetObj$dataSet$mr_res_single <- res_single;
+  res_loo <- TwoSampleMR::mr_leaveoneout(dat);
+  mSetObj$dataSet$mr_res_loo <- res_loo;
+
+  .set.mSet(mSetObj);
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(current.msg);
+  }
+}
+
+
+PerformMRAnalysisOld <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
   # ldclumpOpt<<-ldclumpOpt;
   # ldProxies<<-ldProxies;
   # ldThresh<<-ldThresh;
@@ -21,19 +121,25 @@ PerformMRAnalysis <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafThres
   colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure")
   exposure.snp <- mSetObj$dataSet$exposure$SNP;
   outcome.id <- mSetObj$dataSet$outcome$id;
-  # LD clumping
+
+  #1. LD clumping
   if(ldclumpOpt!="no_ldclump"){
     exposure.dat <- clump_data_local_ld(exposure.dat);
     exposure.snp <- exposure.dat$SNP;
   }
-  # get effects of instruments on outcome
+
+  #2. get effects of instruments on outcome
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
                                                    rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
+  
   fast.write.csv(outcome.dat, file="mr_outcome_data.csv", row.names=FALSE);
-  # harmonise the exposure and outcome data
+
+  #3. harmonise the exposure and outcome data
   dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
   fast.write.csv(dat, file="mr_harmonized_data.csv", row.names=FALSE);
-  # perform mr
+
+
+  #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
   mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
   #rownames(mr.res) <- mr.res$method;
