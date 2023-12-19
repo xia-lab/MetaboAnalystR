@@ -241,6 +241,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
+  cat("Now the height is == > ", height, "\n")
   save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
        file = "mSetObj___plotMirror.rda")
   # get plotting function
@@ -252,6 +253,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    if(length(ref_str) == 0){
+      return (1);
+    }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
@@ -271,6 +275,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    if(length(ref_str) == 0){
+      return (1);
+    }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
@@ -594,6 +601,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
   mSetObj$dataSet$spec_set_prec <- spec_set_prec
+  save(mSetObj, file = "mSetObj___597.rda")
   return(.set.mSet(mSetObj));
 }
 
@@ -667,6 +675,25 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
   
   mSetObj[["msgSet"]][["sanity_msgvec"]] <- c(mSetObj[["msgSet"]][["sanity_msgvec"]][1:2], Msg)
   return(.set.mSet(mSetObj))
+}
+
+SummarizeCMPDResults <- function(mSetObj=NA, top_cutoff = 60, low_cutoff = 20){
+  mSetObj <- .get.mSet(mSetObj);
+  msms_result <- mSetObj[["dataSet"]][["msms_result"]]
+  
+  top_scores <- vapply(msms_result, function(x){
+    if(length(x[["Scores"]][[1]]) == 0){
+      return(0.0)
+    }
+    max(x[["Scores"]][[1]])
+  }, FUN.VALUE = double(1L))
+  
+  res <- vector(mode = "integer", length = 3L)
+  res[1] <- length(which(top_scores >= top_cutoff))
+  res[2] <- length(which((top_scores < top_cutoff) & (top_scores >= low_cutoff)))
+  res[3] <- length(which(top_scores < low_cutoff))
+  
+  return(res)
 }
 
 GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
