@@ -1172,8 +1172,6 @@ SearchMultiNet <- function(input.type){
     res <- .searchMultiNet_snp2dis(input.type)
   }else if (input.type  %in% c("snp2prot")){
     res <- .searchMultiNet_snp2prot(input.type)
-  }else if(input.type == "protein2protein"){
-    res <- .searchMultiNet_protein2protein(input.type);
   }else if(input.type %in% c("met2gene", "gene2met", "met2gene_expand", "gene2met_expand")){
     res <- .searchMultiNet_met2gene(input.type);
   }else if(input.type == "met2dis"){
@@ -1323,13 +1321,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   # update col names
   colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
                      "Consequence", "EAF","URL", "SE");
-  fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);
-
-  #res <- res %>%
-  #    group_by(Metabolite) %>%
-  #    arrange(`P-value`) %>%
-  #    slice_min(order_by = `P-value`, n = 20) %>%
-  #    ungroup()   
+  fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  
 
   display.res <- res;
   met.nms <<- res[,"Common Name"];
@@ -1460,85 +1452,6 @@ QueryPheMR <- function(itemVec, resOpt){
   }else{
     return(current.msg);
   }
-}
-
-
-SetPpiDb  <- function(db, req, conf){
-  #db<<-db;
-  #req<<-req;
-  #conf<<-conf;
-  #save.image("SetPpiDb.RData")
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$ppiOpts$db.name=db;
-  if(req=="true"){
-    mSetObj$dataSet$ppiOpts$require.exp=TRUE;
-  }else{
-    mSetObj$dataSet$ppiOpts$require.exp=FALSE;
-  }
-  mSetObj$dataSet$ppiOpts$min.score=as.numeric(conf);
-  .set.mSet(mSetObj);
-}
-
-.searchMultiNet_protein2protein <-function(input.type){
-  #input.type<<-input.type;
-  #save.image("searchMultiNet_protein2protein.RData")
-  mSetObj <- .get.mSet(mSetObj);
-  mir.vec <- unique(unname(nodeu.ids))
-  table.nm = paste("hsa", mSetObj$dataSet$ppiOpts$db.name, sep="_")
-  require.exp = mSetObj$dataSet$ppiOpts$require.exp
-  min.score = as.numeric(mSetObj$dataSet$ppiOpts$min.score)
-  
-  mir.dic <- QueryPpiSQLiteZero(table.nm, mir.vec, require.exp, min.score);
-  
-  hit.num <- nrow(mir.dic)
-  if (hit.num == 0) {
-    current.msg <<- "No hits found in the PPI database. Please check your input. ";
-    print(current.msg);
-    return(0);
-  } else{
-    res <- mir.dic[ , c("id1", "id2", "name1", "name2")];
-    #rownames(res) <- mir.dic$mirnet;
-    current.msg <<- paste("A total of unqiue", hit.num, "pairs of  protein-protein interactions were identified!");
-    
-    # update the data
-    
-    colnames(res) <- c("ID1","ID2","Symbol1","Symbol2");
-    if(table.nm == "hsa_string"){
-      res$Literature <- rep("25352553", nrow(res));
-    }else if(table.nm == "hsa_innate"){
-      res$Literature <- rep("23180781", nrow(res));
-    }else if(table.nm == "hsa_rolland"){
-      res$Literature <- rep("25416956", nrow(res));
-    }else if(table.nm == "hsa_huri"){
-      res$Literature <- rep("32296183", nrow(res));
-    }
-    display.res <- res;
-    edge.res <- data.frame(Source=res[,"Symbol1"],Target=res[,"Symbol2"],stringsAsFactors = FALSE);    # IDs
-    
-    if(nrow(res)!=0){
-      row.names(edge.res) <- 1:nrow(res);
-    }
-    
-    node.ids <- c(ID1=res[,"Symbol1"], ID2=res[,"Symbol2"]);
-    node.nms <- c(Name1=res[,"ID1"], Name2=res[,"ID2"]);
-    edgeu.res <<- rbind(edgeu.res, edge.res); #edgeu.res is an empty dataframe defined in QueryNet
-    edgeu.res <<- edgeu.res[!duplicated(edgeu.res), ];
-    nodeu.ids <<- c(nodeu.ids, node.ids);
-    edgeNumU <<- c(edgeNumU, nrow(edge.res))
-    nodeu.nms <<- c(nodeu.nms, node.nms);
-    
-    na.res = rep("Not Applicable", nrow(res))
-    ## need to change the column name ##
-    gene.nms <<- c(gene.nms, res[,"Symbol1"], res[,"Symbol2"]);
-    res <- data.frame(Name1=res[,"Symbol1"], ID1=res[,"ID1"], Name2=res[,"Symbol2"], ID2=res[,"ID2"], Reference=res[,"Literature"], EdgeAttr1=rep("", nrow(res)),
-                      EdgeAttr2=rep(1, nrow(res)), EdgeType=rep("ppi", nrow(res)),stringsAsFactors = FALSE);
-    mir.resu <<- rbind(mir.resu, res);
-    mirtargetu <<- c(mirtargetu, "protein2protein");
-    protein2protein <<- rbind(protein2protein, display.res);
-    mSetObj$dataSet$tableStats <- data.frame(Query=length(unique(mir.dic[,"name1"])),Mapped=length(unique(mir.dic[,"name2"])),stringsAsFactors = FALSE);
-    mirtableu <<- c(mirtableu, "protein2protein");
-  }
-  return(1);
 }
 
 .searchMultiNet_met2gene <-function(input.type){
@@ -1816,7 +1729,7 @@ SetPpiDb  <- function(db, req, conf){
 }
 
 
-PrepareCSV <- function(table.nm){
+PrepareMgwasCSV <- function(table.nm){
   # table.nm<<-table.nm;
   # save.image("PrepareCSV.RData")
   mSetObj <- .get.mSet(mSetObj);
