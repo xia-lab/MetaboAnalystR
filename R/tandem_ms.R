@@ -594,6 +594,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
   mSetObj$dataSet$spec_set_prec <- spec_set_prec
+  save(mSetObj, file = "mSetObj___597.rda")
   return(.set.mSet(mSetObj));
 }
 
@@ -667,6 +668,25 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
   
   mSetObj[["msgSet"]][["sanity_msgvec"]] <- c(mSetObj[["msgSet"]][["sanity_msgvec"]][1:2], Msg)
   return(.set.mSet(mSetObj))
+}
+
+SummarizeCMPDResults <- function(mSetObj=NA, top_cutoff = 60, low_cutoff = 20){
+  mSetObj <- .get.mSet(mSetObj);
+  msms_result <- mSetObj[["dataSet"]][["msms_result"]]
+  
+  top_scores <- vapply(msms_result, function(x){
+    if(length(x[["Scores"]][[1]]) == 0){
+      return(0.0)
+    }
+    max(x[["Scores"]][[1]])
+  }, FUN.VALUE = double(1L))
+  
+  res <- vector(mode = "integer", length = 3L)
+  res[1] <- length(which(top_scores >= top_cutoff))
+  res[2] <- length(which((top_scores < top_cutoff) & (top_scores >= low_cutoff)))
+  res[3] <- length(which(top_scores < low_cutoff))
+  
+  return(res)
 }
 
 GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
