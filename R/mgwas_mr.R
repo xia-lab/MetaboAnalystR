@@ -4,13 +4,54 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
+CreateResTableExposure <- function(mSetObj=NA, type="ld"){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "ld"){
+    exposure <- mSetObj$dataSet$exposure.ldp
+  }else if(type == "harmonized"){
+    exposure <- mSetObj$dataSet$harmonized.dat
+  }
+  ## get associated metabolites for each snp
+  mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
+  print(head(mir.dic));
+
+  res <- mir.dic[, c("rsid","name","symbol","entrez")];
+     
+   # Create summary tables for metabolites and genes
+    summary_table <- res %>%
+      group_by(rsid) %>%
+      summarise(
+        metabolites = paste(unique(name), collapse = ", "),
+        genes = paste(unique(symbol), collapse = ", "),
+        gene_id = paste(unique(entrez), collapse = ", "),
+      ) %>%
+      ungroup()
+
+    # Rename column for merging
+    colnames(summary_table)[1] <- "SNP"
+
+    # Merge with exposure data
+    merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
+
+    # Number of columns in the data frame
+    num_cols <- ncol(merged_table)
+
+    # Create a sequence of column indices with the first column moved to the fourth position
+    # Adjust this as needed for your specific column arrangement
+    new_order <- c(2:3, 1, 4:num_cols)
+
+    # Reorder the columns
+    merged_table <- merged_table[, new_order]
+}
+
+
 PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
 
   mSetObj <- .get.mSet(mSetObj);
   exposure.dat <- mSetObj$dataSet$exposure;
   print(head(exposure.dat));
-  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name")]
-  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure")
+  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id")]
+  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id")
   exposure.snp <- mSetObj$dataSet$exposure$SNP;
 
   if(ldclumpOpt!="no_ldclump"){
@@ -18,40 +59,42 @@ PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
     exposure.snp <- exposure.dat$SNP;
   }
 
-  mSetObj$dataSet$exposure.dat.ldp <- exposure.dat;
-  mSetObj <- .get.mSet(mSetObj);
-
+  mSetObj$dataSet$exposure.ldp <- exposure.dat;
+  .set.mSet(mSetObj)
+  return(nrow(mSetObj$dataSet$exposure)-nrow(exposure.dat));
+ 
 }
 
 PerformLDProxies <- function(mSetObj=NA, ldProxies, ldThresh, pldSNPs, mafThresh){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("ldprox.RData");
-  exposure.dat <- mSetObj$dataSet$exposure.dat.ldp;
+  exposure.dat <- mSetObj$dataSet$exposure.ldp;
   exposure.snp <- exposure.dat$SNP;
   outcome.id <- mSetObj$dataSet$outcome$id;
 
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
                                                    rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
+  
   mSetObj$dataSet$outcome.dat <- outcome.dat;
-  mSetObj <- .get.mSet(mSetObj);
+  .set.mSet(mSetObj)
+  return(sum(outcome.dat$mr_keep.outcome))
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
   mSetObj <- .get.mSet(mSetObj);
-  exposure.dat <- mSetObj$dataSet$exposure.dat.ldp;
+  exposure.dat <- mSetObj$dataSet$exposure.ldp;
   outcome.dat <- mSetObj$dataSet$outcome.dat;
   
-  print(head(outcome.dat));
-  print("outcome.dat");
   dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
+  print(unique(dat$SNP))
 
   mSetObj$dataSet$harmonized.dat <- dat;
-  mSetObj <- .get.mSet(mSetObj);
+  return(.set.mSet(mSetObj))
 }
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-
+  dat <- mSetObj$dataSet$harmonized.dat
+  save.image("MR.RData");
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
   mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
