@@ -1815,21 +1815,6 @@ SetPpiDb  <- function(db, req, conf){
 
 }
 
-GetQueryNum <-function(){
-  if(net.type=="metabo_phenotypes"){
-    return(as.numeric(net.stats$Query))
-  }
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$dataSet$query.nums)
-}
-
-GetTypeNum <-function(){
-  if(net.type=="metabo_phenotypes"){
-    return(as.numeric(net.stats$Node))
-  }
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$dataSet$type.nums)
-}
 
 PrepareCSV <- function(table.nm){
   # table.nm<<-table.nm;
@@ -1850,10 +1835,5 @@ PrepareCSV <- function(table.nm){
   }
 }
 
-GetTableNames <- function(){
-  #save.image("GetTableNames.RData")
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$mirtable;
-}
 
 
