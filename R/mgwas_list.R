@@ -1305,7 +1305,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   #save.image("QueryExposure.RData");
   mSetObj <- .get.mSet(mSetObj);
   itemVec <- strsplit(itemsStr, split = ", ")[[1]]
-  print(itemVec);
+  #print(itemVec);
   tableName <- "exposure";
   idType <- "name";
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
@@ -1335,7 +1335,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
 
   ## get associated metabolites for each snp
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
-  print(head(mir.dic));
+  #print(head(mir.dic));
 
   res <- mir.dic[, c("rsid","name","symbol","entrez")];
      

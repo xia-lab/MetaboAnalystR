@@ -78,6 +78,30 @@ GetResCol <- function(netType, colInx){
     return(res);
 }
 
+# "ID", "Accession","Gene", "PMID"
+GetResColByName <- function(netType, name){
+   #netType<<-netType;
+   #colInx<<-colInx;
+   #save.image("GetMirResCol.RData");
+  mSetObj <- .get.mSet(mSetObj);
+  analSet <- mSetObj$analSet$type;
+  dataSet <- mSetObj$dataSet;
+  if(netType == "manhattan" || analSet == "studyview" || analSet == "search"){
+    df <-mSetObj$dataSet$snp2met;
+  } else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
+    # mr_results_merge
+    df <-dataSet[netType][[1]];
+  } else{
+    df <- dataSet$mir.res;
+  }
+    colInx <- which(colnames(df) == name);
+    res <- df[, colInx];
+
+    hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
+    res[hit.inx] <- "N/A";
+    return(res);
+}
+
 RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
