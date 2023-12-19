@@ -241,6 +241,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
+  cat("Now the height is == > ", height, "\n")
   save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
        file = "mSetObj___plotMirror.rda")
   # get plotting function
@@ -252,6 +253,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    if(length(ref_str) == 0){
+      return (1);
+    }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
@@ -271,6 +275,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    if(length(ref_str) == 0){
+      return (1);
+    }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
