@@ -197,6 +197,29 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
   return(database_opt)
 }
 
+Updatecurrentmsmsidx <- function(mSetObj=NA, label = ""){
+  mSetObj <- .get.mSet(mSetObj);
+  if(label != ""){
+    idx <- which(label == mSetObj[["dataSet"]][["prec_mzrt_included"]])
+    cat("Now the Updatecurrentmsmsidx ===>  ", idx, "\n")
+    idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
+  }
+  return(.set.mSet(mSetObj))
+}
+
+Setcurrentmsmsidx <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  cat("Now the Setcurrentmsmsidx ===>  ", idx, "\n")
+  idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
+  return(.set.mSet(mSetObj))
+}
+
+GetMSMSFeatureLabel <- function(mSetObj=NA, idx = 1){
+  mSetObj <- .get.mSet(mSetObj);
+  llb <- mSetObj[["dataSet"]][["prec_mzrt_included"]][idx]
+  return(llb)
+}
+
 GetMSMSCompoundNames_single <- function(mSetObj=NA, idx = 1){
   mSetObj <- .get.mSet(mSetObj);
   idx -> mSetObj[["dataSet"]][["current_msms_idx"]]
@@ -253,7 +276,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
-    if(length(ref_str) == 0){
+    if(is.na(ref_str)){
       return (1);
     }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
@@ -275,7 +298,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
-    if(length(ref_str) == 0){
+    if(is.na(ref_str)){
       return (1);
     }
     spec_bottom <- OptiLCMS:::parse_ms2peaks(ref_str)
@@ -288,7 +311,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   }
 
   # now, let's plot
-  title <- paste0("Mirror plot of precursor: ", precMZ)
+  title <- paste0("Precursor: ", precMZ)
   subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
   p1 <- MirrorPlotting(spec_top, 
                        spec_bottom, 
@@ -700,6 +723,12 @@ GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$spec_set_prec -> spec_set_prec
   return(spec_set_prec)
+}
+
+GetMSMSPrecMZvec_msp_min <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$spec_set_prec -> spec_set_prec
+  return(min(spec_set_prec))
 }
 
 FetchExampleMSP <- function(URL = ""){
