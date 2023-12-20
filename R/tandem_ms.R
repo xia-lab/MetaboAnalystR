@@ -581,7 +581,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                                   database = "all", 
                                   similarity_meth = 0,
                                   precMZ = NA, sim_cutoff = 30, ionMode = "positive",
-                                  unit1 = "ppm", unit2 = "ppm"){
+                                  unit1 = "ppm", unit2 = "ppm", ncores = 1){
   require("OptiLCMS")
   mSetObj <- .get.mSet(mSetObj);
   # fetch the searching function
@@ -618,8 +618,57 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   peak_mtx <- cbind(spec_set_prec-1e-10, spec_set_prec+1e-10, NA, NA)
   colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
-  results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
-                                   ion_mode_idx, dbpath, database_opt)
+  
+  if(ncores == 1){
+    results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
+                                     ion_mode_idx, dbpath, database_opt)
+  } else {
+    # for multiple cores
+    require(parallel);
+    cl <- makeCluster(getOption("cl.cores", ncores))
+    clusterExport(cl, c("Concensus_spec", "peak_mtx", "spec_set_prec",
+                        "ppm1", "ppm2", "ion_mode_idx", "dbpath", 
+                        "database_opt", "SpectraSearchingBatch"), envir = environment())
+    res1 <- list()
+    res1 <- parLapply(cl, 
+                      1:ncores, 
+                      function(x, Concensus_spec, peak_mtx,  
+                               ppm1, ppm2, ion_mode_idx, dbpath, 
+                               database_opt, ncores){
+                        length_data <- length(Concensus_spec[[1]])
+                        lg_pcore <- ceiling(length_data/ncores)
+                        
+                        if(ncores == x){
+                          vec_idx <- ((x-1)*lg_pcore+1):length_data
+                        } else {
+                          vec_idx <- ((x-1)*lg_pcore+1):(x*lg_pcore)
+                        }
+                        
+                        Concensus_spec0 <- Concensus_spec
+                        Concensus_spec0[[1]] <- 0:length(vec_idx)
+                        Concensus_spec0[[2]] <- Concensus_spec0[[2]][vec_idx]
+                        
+                        res0 <- SpectraSearchingBatch(Concensus_spec0, 
+                                                      0:(length(vec_idx)-1), 
+                                                      peak_mtx[vec_idx,], 
+                                                      ppm1, ppm2, ion_mode_idx, dbpath, database_opt)
+                        res0},
+                      Concensus_spec = Concensus_spec,
+                      peak_mtx = peak_mtx,
+                      ppm2 = ppm2,
+                      ppm1 = ppm1,
+                      ion_mode_idx = ion_mode_idx,
+                      dbpath = dbpath,
+                      database_opt = database_opt,
+                      ncores = ncores)
+    stopCluster(cl)
+    
+    res <- list()
+    for(i in 1:ncores){
+      res <- c(res, res1[[i]])
+    }
+    res -> results
+  }
    
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
