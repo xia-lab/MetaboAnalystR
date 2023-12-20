@@ -75,7 +75,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
     pldSNPs <- 0;
   }else{
     ldProxies <- TRUE;
-    ldProxies <- as.numeric(T);
+    pldSNPs <- as.numeric(T);
   }
 
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
