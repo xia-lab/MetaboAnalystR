@@ -13,7 +13,7 @@ CreateResTableExposure <- function(mSetObj=NA, type="ld"){
   }
   ## get associated metabolites for each snp
   mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
-  print(head(mir.dic));
+  #print(head(mir.dic));
 
   res <- mir.dic[, c("rsid","name","symbol","entrez")];
      
@@ -142,7 +142,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   method.vec <- merge2$method;
   exposure.vec <- merge2$exposure;
   merge2$exposure <- NULL;
-  print(head(merge2));
+  #print(head(merge2));
   merge2 <- signif(merge2[2:11], 5);
   merge2[is.na(merge2)] <- "-";
   merge2$method <- method.vec
@@ -229,7 +229,7 @@ PerformMRAnalysisOld <- function(ldclumpOpt, ldProxies, ldThresh, pldSNPs, mafTh
   method.vec <- merge2$method;
   exposure.vec <- merge2$exposure;
   merge2$exposure <- NULL;
-  print(head(merge2));
+  #print(head(merge2));
   merge2 <- signif(merge2[2:11], 5);
   merge2[is.na(merge2)] <- "-";
   merge2$method <- method.vec
