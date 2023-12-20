@@ -83,7 +83,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
   
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
-  return(sum(!outcome.dat$mr_keep.outcome))
+  return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
