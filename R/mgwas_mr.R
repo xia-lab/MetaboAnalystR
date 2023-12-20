@@ -72,7 +72,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
 
   if(ldProxyOpt == "no_proxy"){
     ldProxies <- F;
-    pldSNPs <- F
+    pldSNPs <- F;
   }else{
     ldProxies <- T;
     pldSNPs <- T;
