@@ -60,7 +60,7 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
 }
 
 # Step 2: select significantly responsive items 
-PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "no", ncpus = 1){
+PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "yes", ncpus = 4){
   mSetObj <- .get.mSet(mSetObj);
   
   #get data
@@ -167,7 +167,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
 
 #3_drcfit.R
 ### fit different models to each dose-response curve and choose the best fit 
-PerformDRFit <- function(mSetObj=NA, ncpus=2){
+PerformDRFit <- function(mSetObj=NA, ncpus=4){
 
   if(!exists("models")){
     print("Could not find models vector!");
@@ -667,7 +667,7 @@ FilterDRFit <- function(mSetObj=NA){
 
 #4_bmdcalc.R
 ### Calculation of BMD values from fitted dose-response curves
-PerformBMDCalc <- function(mSetObj=NA, ncpus=2){
+PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   mSetObj <- .get.mSet(mSetObj);
 
