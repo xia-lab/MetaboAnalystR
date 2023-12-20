@@ -75,7 +75,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
     pldSNPs <- 0;
   }else{
     ldProxies <- TRUE;
-    ldProxies <- as.numeric(T);
+    pldSNPs <- as.numeric(T);
   }
 
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
@@ -83,7 +83,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
   
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
-  return(sum(!outcome.dat$mr_keep.outcome))
+  return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
