@@ -210,7 +210,7 @@ print(c( unitCol,unitRow))
       p <- p%>%
         add_row_labels(size = 0.2, font = list(size = fzRow), side = "right") 
     } 
-    
+
     as_list <- to_plotly_list(p)
 
     w = min(1200,ncol(data1sc)*unitCol+50)
@@ -226,6 +226,12 @@ print(c( unitCol,unitRow))
       
         }
     
+    mSetObj$imgSet$heatmap_multifac_param <- list();
+    mSetObj$imgSet$heatmap_multifac_param$width <- w;
+    mSetObj$imgSet$heatmap_multifac_param$height <- h;
+
+    saveRDS(p, "heatmap_multifac.rds")
+
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
 

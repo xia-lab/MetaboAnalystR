@@ -702,6 +702,13 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
       
         }
 
+    mSetObj$imgSet$heatmap_stats_param <- list();
+    mSetObj$imgSet$heatmap_stats_param$width <- w;
+    mSetObj$imgSet$heatmap_stats_param$height <- h;
+
+    # Adjust the height and width (in pixels)
+    saveRDS(p, "heatmap_stats.rds")
+
     as_list <- to_plotly_list(p)
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h

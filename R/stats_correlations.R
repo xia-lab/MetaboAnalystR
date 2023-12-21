@@ -224,7 +224,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   require(iheatmapr);
   plotjs <- paste0(imgName, ".json");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
+  mSetObj$imgSet$corr.heatmap <- imgName;
    
     w = max(min(1300,ncol(corr.mat)*unit+50),300)
     h = max(min(1300,nrow(corr.mat)*unit+50),300)
@@ -248,6 +248,12 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     
   }
   
+    mSetObj$imgSet$heatmap_stats_corr_param <- list();
+    mSetObj$imgSet$heatmap_stats_corr_param$width <- w;
+    mSetObj$imgSet$heatmap_stats_corr_param$height <- h;
+
+    saveRDS(p, "heatmap_stats_corr.rds")
+
    as_list <- to_plotly_list(p)
 
      if(ncol(corr.mat)<100){
