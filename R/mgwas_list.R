@@ -1316,11 +1316,11 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     return(0);
   } else {
   res <- mir.dic[ , c("metabolite_orig","hmdb","kegg","snp_orig", "chr", "pos_hg19","note", "name","ratio_single","beta","p_value","metabolite_id","ea","nea","pmid",
-                      "most_severe_consequence", "eaf","link","se")];
+                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid")];
   res <- .parse_snp2met_exposure(res); # remove NA
   # update col names
   colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
-                     "Consequence", "EAF","URL", "SE");
+                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid");
   fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  
 
   display.res <- res;

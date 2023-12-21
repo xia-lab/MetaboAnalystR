@@ -83,9 +83,9 @@ GetResColByName <- function(netType, name){
    #netType<<-netType;
    #colInx<<-colInx;
    #save.image("GetMirResCol.RData");
-  mSetObj <- .get.mSet(mSetObj);
-  analSet <- mSetObj$analSet$type;
-  dataSet <- mSetObj$dataSet;
+   mSetObj <- .get.mSet(mSetObj);
+   analSet <- mSetObj$analSet$type;
+   dataSet <- mSetObj$dataSet;
   if(netType == "manhattan" || analSet == "studyview" || analSet == "search"){
     df <-mSetObj$dataSet$snp2met;
   } else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {

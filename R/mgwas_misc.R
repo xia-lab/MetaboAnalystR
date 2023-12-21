@@ -1141,17 +1141,14 @@ clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_
   if ("pval.exposure" %in% names(dat) & "pval.outcome" %in% 
       names(dat)) {
     message("pval.exposure and pval.outcome columns present. Using pval.exposure for clumping.")
-  }
-  else if (!"pval.exposure" %in% names(dat) & "pval.outcome" %in% 
+  } else if (!"pval.exposure" %in% names(dat) & "pval.outcome" %in% 
            names(dat)) {
     message("pval.exposure column not present, using pval.outcome column for clumping.")
     pval_column <- "pval.outcome"
-  }
-  else if (!"pval.exposure" %in% names(dat)) {
+  } else if (!"pval.exposure" %in% names(dat)) {
     message("pval.exposure not present, setting clumping p-value to 0.99 for all variants")
     dat$pval.exposure <- 0.99
-  }
-  else {
+  } else {
     pval_column <- "pval.exposure"
   }
   if (!"id.exposure" %in% names(dat)) {

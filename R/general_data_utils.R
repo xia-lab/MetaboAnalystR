@@ -224,6 +224,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   # plotting required by all
   Cairo::CairoFonts(regular="Arial:style=Regular",bold="Arial:style=Bold",italic="Arial:style=Italic",bolditalic = "Arial:style=Bold Italic",symbol = "Symbol")
   
+  plink.path <<- "/home/glassfish/plink/";
   # sqlite db path for gene annotation
   if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
     url.pre <<- "/home/glassfish/sqlite/";
