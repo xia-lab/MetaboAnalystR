@@ -49,8 +49,8 @@ PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
 
   mSetObj <- .get.mSet(mSetObj);
   exposure.dat <- mSetObj$dataSet$exposure;
-  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id")]
-  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id")
+  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
+  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
   exposure.snp <- mSetObj$dataSet$exposure$SNP;
 
   if(ldclumpOpt!="no_ldclump"){
@@ -92,8 +92,7 @@ PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
   outcome.dat <- mSetObj$dataSet$outcome.dat;
   
   dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
-  print(unique(dat$SNP))
-
+print(head(dat));
   mSetObj$dataSet$harmonized.dat <- dat;
   return(.set.mSet(mSetObj))
 }
