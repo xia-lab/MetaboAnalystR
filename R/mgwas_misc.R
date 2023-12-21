@@ -1157,9 +1157,9 @@ clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_
   d <- data.frame(rsid = dat$SNP, pval = dat[[pval_column]], 
                   id = dat$id.exposure)
   ########## use a local LD reference panel, faster
-  out <- ieugwasr::ld_clump(d, clump_kb = clump_kb, clump_r2 = clump_r2, 
+  out <- ld_clump_custom(d, clump_kb = clump_kb, clump_r2 = clump_r2, 
                             clump_p = clump_p1, pop = pop,
-                            plink_bin = genetics.binaRies::get_plink_binary(),
+                            plink_bin = paste0(plink.path, "plink"),
                             bfile = paste0(plink.path, pop)
                             )
   keep <- paste(dat$SNP, dat$id.exposure) %in% paste(out$rsid, 
@@ -1365,7 +1365,76 @@ get_ld_proxies <- function(rsid, bfile, searchspace=NULL, tag_kb=5000, tag_nsnp=
   return(ld)
 }
 
+ld_clump_custom <- function (dat = NULL, clump_kb = 10000, clump_r2 = 0.001, clump_p = 0.99, 
+          pop = "EUR", access_token = NULL, bfile = NULL, plink_bin = NULL) 
+{
+  stopifnot("rsid" %in% names(dat))
+  stopifnot(is.data.frame(dat))
+  if (is.null(bfile)) {
+    message("Please look at vignettes for options on running this locally if you need to run many instances of this command.")
+  }
+  if (!"pval" %in% names(dat)) {
+    if ("p" %in% names(dat)) {
+      warning("No 'pval' column found in dat object. Using 'p' column.")
+      dat[["pval"]] <- dat[["p"]]
+    }
+    else {
+      warning("No 'pval' column found in dat object. Setting p-values for all SNPs to clump_p parameter.")
+      dat[["pval"]] <- clump_p
+    }
+  }
+  if (!"id" %in% names(dat)) {
+    dat$id <- random_string(1)
+  }
+  if (is.null(bfile)) {
+    access_token = check_access_token()
+  }
+  ids <- unique(dat[["id"]])
+  res <- list()
+  for (i in 1:length(ids)) {
+    x <- subset(dat, dat[["id"]] == ids[i])
+    if (nrow(x) == 1) {
+      message("Only one SNP for ", ids[i])
+      res[[i]] <- x
+    }
+    else {
+      message("Clumping ", ids[i], ", ", nrow(x), " variants, using ", 
+              pop, " population reference")
+      if (is.null(bfile)) {
+        res[[i]] <- ld_clump_api(x, clump_kb = clump_kb, 
+                                 clump_r2 = clump_r2, clump_p = clump_p, pop = pop, 
+                                 access_token = access_token)
+      }
+      else {
+        res[[i]] <- ld_clump_local_custom(x, clump_kb = clump_kb, 
+                                   clump_r2 = clump_r2, clump_p = clump_p, bfile = bfile, 
+                                   plink_bin = plink_bin)
+      }
+    }
+  }
+  res <- dplyr::bind_rows(res)
+  return(res)
+}
 
-
-
-
+ld_clump_local_custom <- function (dat, clump_kb, clump_r2, clump_p, bfile, plink_bin) 
+{
+  shell <- ifelse(Sys.info()["sysname"] == "Windows", "cmd", 
+                  "sh")
+  fn <- "clump_local_intermediate"
+  write.table(data.frame(SNP = dat[["rsid"]], P = dat[["pval"]]), 
+              file = fn, row.names = F, col.names = T, quote = F)
+  fun2 <- paste0(shQuote(plink_bin, type = shell), " --bfile ", 
+                 shQuote(bfile, type = shell), " --clump ", shQuote(fn, 
+                                                                    type = shell), " --clump-p1 ", clump_p, " --clump-r2 ", 
+                 clump_r2, " --clump-kb ", clump_kb, " --out ", shQuote(fn, 
+                                                                        type = shell))
+  system(fun2)
+  res <- read.table(paste(fn, ".clumped", sep = ""), header = T)
+  unlink(paste(fn, "*", sep = ""))
+  y <- subset(dat, !dat[["rsid"]] %in% res[["SNP"]])
+  if (nrow(y) > 0) {
+    message("Removing ", length(y[["rsid"]]), " of ", nrow(dat), 
+            " variants due to LD with other variants or absence from LD reference panel")
+  }
+  return(subset(dat, dat[["rsid"]] %in% res[["SNP"]]))
+}
