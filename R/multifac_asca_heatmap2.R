@@ -31,7 +31,6 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                        fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,
                        rankingMethod="mean",
                        topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F){
-print(c( unitCol,unitRow))
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
 
@@ -181,7 +180,9 @@ print(c( unitCol,unitRow))
 
   data1sc <- t(hc.dat)
   data1sc <- scale_mat(data1sc, scaleOpt)
-w = min(1200,ncol(data1sc)*unitCol+50)
+
+  data1sc = round(data1sc,5)
+    w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(1500,nrow(data1sc)*unitRow+50)
     
     if(ncol(data1sc)<100){
