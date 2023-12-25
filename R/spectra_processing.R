@@ -1773,3 +1773,41 @@ checkdataexits <- function(fileNM){
   }
   return(1)
 }
+
+PerformSWATHDesignDetection <- function(mSetObj=NA, file = ""){
+  mSetObj <- .get.mSet(mSetObj);
+  DetectMS2Design <- OptiLCMS:::DetectMS2Design;
+  df <- DetectMS2Design(file)
+  cat("====== df ----> ", nrow(df), "\n")
+  mSetObj[["dataSet"]][["swath_design"]] <- df
+  return(.set.mSet(mSetObj));
+}
+
+GetSWATHDesginLow <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  df <- mSetObj[["dataSet"]][["swath_design"]]
+  if(nrow(df) == 0){
+    return(0)
+  }
+  vecs <- as.double(df[,1])
+  return(vecs)
+}
+
+GetSWATHDesginUp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  df <- mSetObj[["dataSet"]][["swath_design"]]
+  if(nrow(df) == 0){
+    return(0)
+  }
+  vecs <- as.double(df[,2])
+  return(vecs)
+}
+
+exportSwathDesign <- function(lowMZs, UpMZs){
+  vecs <- character(length = length(lowMZs))
+  for(i in seq(lowMZs)){
+    vecs[i] <- paste(lowMZs[i], UpMZs[i], sep = "\t")
+  }
+  write.table(vecs, file = "swath_design_metaboanalyst.txt", quote = F, sep = "\n", col.names = F, row.names = F)
+  return(1)
+}
