@@ -31,7 +31,6 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                        fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,
                        rankingMethod="mean",
                        topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F){
-print(c( unitCol,unitRow))
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
 
@@ -181,12 +180,32 @@ print(c( unitCol,unitRow))
 
   data1sc <- t(hc.dat)
   data1sc <- scale_mat(data1sc, scaleOpt)
-   if(useTopFeature){
-   cb_grid <- setup_colorbar_grid(nrows = 2, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
-   }else{
-    cb_grid <- setup_colorbar_grid(nrows = min(20, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
 
-   }
+  data1sc = round(data1sc,5)
+    w = min(1200,ncol(data1sc)*unitCol+50)
+    h = min(1500,nrow(data1sc)*unitRow+50)
+    
+    if(ncol(data1sc)<100){
+         w=w+(100-ncol(data1sc))*6
+      
+        }
+    
+     if(nrow(data1sc)<100){
+         h=h+(100-nrow(data1sc))*5
+      
+        }
+
+
+  if(h<750){
+   cb_grid <- setup_colorbar_grid(nrows = 3, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
+ 
+  } else if(h<1500){
+   cb_grid <- setup_colorbar_grid(nrows = 7, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
+ 
+  }else{
+   cb_grid <- setup_colorbar_grid(nrows =11, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
+ 
+  }
 
       sz <- max(as.numeric(annoPer) / 100, 0.015)
       bf <- min(0.01, (sz / 3))
