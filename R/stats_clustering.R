@@ -516,7 +516,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette,  fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV=T, 
-                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T){
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T, maxFeature=2000){
 
   mSetObj <- .get.mSet(mSetObj);
   plotjs <- paste0(imgName, ".json");
@@ -553,11 +553,11 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
      includeRowNames <- FALSE;
   }
   if(.on.public.web){
-    if(ncol(hc.dat) > 5000){
+    if(ncol(hc.dat) > maxFeature){
         filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
         rk <- rank(-filter.val, ties.method='random');
-        hc.dat <- hc.dat[,rk <=5000];
-        print("Data is reduced to 5000 vars based on IQR ..");
+        hc.dat <- hc.dat[,rk <= maxFeature];
+        print(paste("Data is reduced to max allowed vars based on IQR: ", maxFeature));
     }
   }
 
