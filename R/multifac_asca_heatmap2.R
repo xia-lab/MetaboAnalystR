@@ -30,8 +30,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
                        clstDist="average", colorGradient="npj", 
                        fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,
                        rankingMethod="mean",
-                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F){
-print(c( unitCol,unitRow))
+                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F, maxFeature=2000){
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
 
@@ -161,12 +160,12 @@ print(c( unitCol,unitRow))
      includeRowNames <- FALSE;
   }
   if(.on.public.web){
-    if(ncol(hc.dat) > 2000){
+    if(ncol(hc.dat) > maxFeature){
         filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
         rk <- rank(-filter.val, ties.method='random');
-        hc.dat <- hc.dat[,rk <=2000];
-        data <- data[,rk <=2000];
-        print("Data is reduced to 2000 vars based on IQR ..");
+        hc.dat <- hc.dat[,rk <= maxFeature];
+        data <- data[,rk <= maxFeature];
+        print(paste("Data is reduced to max vars based on IQR ..", maxFeature));
     }
   }
 
@@ -181,19 +180,18 @@ print(c( unitCol,unitRow))
 
   data1sc <- t(hc.dat)
   data1sc <- scale_mat(data1sc, scaleOpt)
-w = min(1200,ncol(data1sc)*unitCol+50)
-    h = min(1500,nrow(data1sc)*unitRow+50)
-    
-    if(ncol(data1sc)<100){
-         w=w+(100-ncol(data1sc))*6
-      
-        }
-    
-     if(nrow(data1sc)<100){
-         h=h+(100-nrow(data1sc))*5
-      
-        }
 
+  data1sc = round(data1sc,5)
+  w = min(1200,ncol(data1sc)*unitCol+50)
+  h = min(1500,nrow(data1sc)*unitRow+50)
+    
+  if(ncol(data1sc)<100){
+     w=w+(100-ncol(data1sc))*6
+  }
+    
+  if(nrow(data1sc)<100){
+    h=h+(100-nrow(data1sc))*5      
+  }
 
   if(h<750){
    cb_grid <- setup_colorbar_grid(nrows = 3, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)

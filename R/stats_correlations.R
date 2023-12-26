@@ -228,7 +228,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
    
     w = max(min(1300,ncol(corr.mat)*unit+50),300)
     h = max(min(1300,nrow(corr.mat)*unit+50),300)
- 
+       corr.mat = round(corr.mat,5)
   if(fix.col){
     p <- iheatmap(corr.mat,  name = "correltion", 
                   colors = colors,zmin=-1,zmid=0, zmax=1) %>%
