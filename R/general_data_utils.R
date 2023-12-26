@@ -112,7 +112,7 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
       }
     }
   }
-  
+  mSetObj$paramSet$report.format <- "html"
   .init.global.vars(anal.type);
   print("MetaboAnalyst R objects initialized ...");
   return(.set.mSet(mSetObj));

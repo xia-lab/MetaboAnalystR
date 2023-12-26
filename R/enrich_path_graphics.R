@@ -644,6 +644,7 @@ getndp <- function(x, tol=2*.Machine$double.eps){
   }
   ndp
 }
+
 PlotPathSummaryGG <- function(mSetObj = NA, 
                               show.grid = FALSE, 
                               imgName = "plot", 
@@ -654,7 +655,6 @@ PlotPathSummaryGG <- function(mSetObj = NA,
                               xlim = NA, 
                               ylim = NA,
                               interactive=F) {
-  save.image("path.RData");
   library(ggplot2)
   library(scales)
   

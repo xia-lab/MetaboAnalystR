@@ -185,7 +185,6 @@ UpdateEntries <- function(mSetObj=NA, col.id, method, value, action) {
 
 GetResRowNames <- function(netType){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("rownames.RData");
   analSet <- mSetObj$analSet$type;
    #netType<<-netType
    #save.image("GetResRowNames.RData")
