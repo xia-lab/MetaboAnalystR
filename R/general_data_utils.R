@@ -649,7 +649,7 @@ GetCurrentMsg <- function(){
 #'@export
 #'
 
-PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png", dpi=72, width=NA){
+PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",version=0, format="png", dpi=72){
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -668,9 +668,11 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png"
     cls.type <- mSetObj$dataSet$cls.type
     }
   }else{
-    sel.cls <- meta.info[,meta]
-    cls.type <- unname(mSetObj$dataSet$meta.types[meta])
-    
+    if(meta2 == "NA"){
+        meta2 <- 2;
+    }
+    sel.cls <- meta.info[,meta2]
+    cls.type <- unname(mSetObj$dataSet$meta.types[meta2])
   }
   
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
@@ -680,11 +682,8 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png"
     imgName <- paste(imgName, "_", version, "_summary_dpi", dpi, ".", format, sep="");
   }
   
-  if(is.na(width)){
     w <- 7.5;
-  }else{
-    w <- width;
-  }
+
 
   mSetObj$imgSet$cmpdSum <- imgName;
 
@@ -762,10 +761,15 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", version, format="png"
       xlab = "Time";
       cls.type = "disc";
     }else{ # factor a split within factor b
-      out.fac <- mSetObj$dataSet$meta.info[,1];
-      in.fac <- sel.cls;
-      xlab = colnames(meta.info)[1]
-      cls.type = cls.type;
+        if(meta == "NA"){
+          out.fac <- mSetObj$dataSet$meta.info[,1];
+          xlab = colnames(meta.info)[1]
+        }else{
+          out.fac <- mSetObj$dataSet$meta.info[,meta];
+          xlab = meta
+        }
+        in.fac <- sel.cls;
+        cls.type = cls.type; 
     }
     
     # two images per row
