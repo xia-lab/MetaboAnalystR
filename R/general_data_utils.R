@@ -642,14 +642,15 @@ GetCurrentMsg <- function(){
 #'@param dpi Input the dpi of the image to create
 #'@param width Input the width of the image to create
 #'@param meta meta is "NA"
-#'@param version version
+#'@param meta2 only applicable for multifac module, secondary factor
+#'@param count img count number
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
 
-PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",version=0, format="png", dpi=72){
+PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -677,9 +678,9 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",version=0,
   
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
   if(meta != "NA"){
-    imgName <- paste(imgName, "_", meta, "_", version, "_summary_dpi", dpi, ".", format, sep="");
+    imgName <- paste(imgName, "_", meta, "_", count, "_summary_dpi", dpi, ".", format, sep="");
   }else{
-    imgName <- paste(imgName, "_", version, "_summary_dpi", dpi, ".", format, sep="");
+    imgName <- paste(imgName, "_", count, "_summary_dpi", dpi, ".", format, sep="");
   }
   
     w <- 7.5;
