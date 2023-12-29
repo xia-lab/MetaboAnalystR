@@ -674,7 +674,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   library(plotly)
   threshold <- logp_val               
   
-  both.mat$category <- with(both.mat, case_when(
+  both.mat$category <- with(both.mat, dplyr::case_when(
     pval.no > threshold & pval.adj > threshold ~ "Significant in both",
     pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
     pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",

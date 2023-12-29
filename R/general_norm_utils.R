@@ -657,3 +657,10 @@ RequireFastUnivTests <- function(mSetObj=NA){
         return(TRUE);
   }
 }
+
+UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
+  mSetObj <- .get.mSet(mSetObj);
+  # need to record the clicked compounds
+  mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
+  return(.set.mSet(mSetObj));
+}
