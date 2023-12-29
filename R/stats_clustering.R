@@ -638,15 +638,16 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
         annotation <- data.frame(class = hc.cls);
         rownames(annotation) <- rownames(hc.dat); 
     }
-
+    annotation$class <- factor(annotation$class, levels = rev(levels(annotation$class)))
     data1sc <- t(hc.dat)
     data1sc <- scale_mat(data1sc, scaleOpt)
-      data1sc = round(data1sc,5)
+    data1sc = round(data1sc,5)
+
     dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
-       sz <- max(as.numeric(annoPer) / 100, 0.015)
-      bf <- min(0.01, (sz / 3))
+    sz <- max(as.numeric(annoPer) / 100, 0.015)
+    bf <- min(0.01, (sz / 3))
 
    if(grp.ave){
         
@@ -661,8 +662,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
                   layout = list(font = list(size = fzAnno),showlegend=F),
                   colors = colors ,
- colorbar_grid =setup_colorbar_grid(nrows = min(15, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
-)
+            colorbar_grid =setup_colorbar_grid(nrows = min(15, round(nrow(data1sc)*unitRow/140)), x_start = 1.1, y_start = 0.85, x_spacing = 0.15))
     }
 
     p<- p%>%

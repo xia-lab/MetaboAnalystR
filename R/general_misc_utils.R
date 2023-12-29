@@ -624,6 +624,7 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
     }
 
     # make sure the NA
+    colVec <- gsub("##", "#", colVec)
     na.inx <- colVec == "#NA";
     colVec[na.inx] <- cols[na.inx];
     shapeVec[shapeVec == 0] <- 21;

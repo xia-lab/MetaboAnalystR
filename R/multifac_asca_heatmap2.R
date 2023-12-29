@@ -72,6 +72,12 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   } 
 
   annotation <- as.data.frame(sel.meta.df[ordInx, ]);
+  
+  idx = which(mSetObj$dataSet$meta.types[names(annotation)]=="disc")
+  for(col in idx){
+  annotation[[col]] = factor(annotation[[col]] , levels = rev(levels(annotation[[col]] )))
+  }
+ 
   # set up data set
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
