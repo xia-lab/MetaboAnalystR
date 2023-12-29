@@ -1798,13 +1798,6 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   return(.set.mSet(mSetObj));
 }
 
-UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
-  mSetObj <- .get.mSet(mSetObj);
-  # need to record the clicked compounds
-  mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
-  return(.set.mSet(mSetObj));
-}
-
 # 
 #' PlotOPLS.Imp
 #' OPLS VIP plotting function
