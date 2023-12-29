@@ -62,7 +62,6 @@ aov.2way <- function(x){
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
                        p.cor="fdr", designType="time0", phenOpt="between"){
-
   mSetObj <- .get.mSet(mSetObj);
 
   if(length(meta.vec.aov) == 0){
