@@ -633,6 +633,12 @@ GetCurrentMsg <- function(){
   return(msg.vec[length(msg.vec)]);
 }
 
+SetCmpdSummaryType <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$paramSet$cmpdSummaryType <- type;
+  .set.mSet(mSetObj);
+}
+
 #'Plot compound summary
 #'change to use dataSet$proc instead of dataSet$orig in
 #'case of too many NAs
@@ -652,7 +658,12 @@ GetCurrentMsg <- function(){
 
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
-  
+  save.image("cmpd.RData");
+  if(is.null(mSetObj$paramSet$cmpdSummaryType)){
+    mSetObj$paramSet$cmpdSummaryType <- "violin";
+  }
+  plotType <- mSetObj$paramSet$cmpdSummaryType
+  print(paste("plottype==", plotType))
   if(.on.public.web){
     load_ggplot()
     load_grid()
@@ -705,7 +716,13 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     if(cls.type == "disc"){
       df.orig <- data.frame(value=proc.data[, cmpdNm], name = sel.cls)
       p.orig <- ggplot2::ggplot(df.orig, aes(x=name, y=value, fill=name))  
-      p.orig <- p.orig + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
+      # Conditional plotting based on the cmpdSummaryType
+        if(plotType == "violin"){
+          p.orig <- p.orig + geom_violin(trim=FALSE) 
+        } else {
+          p.orig <- p.orig + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA)
+        }
+      p.orig <- p.orig + theme_bw() + geom_jitter(size=1)
       p.orig <- p.orig + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
       p.orig <- p.orig + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
       p.orig <- p.orig + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
@@ -728,7 +745,12 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     if(cls.type == "disc"){
       df.norm <- data.frame(value=mSetObj$dataSet$norm[, cmpdNm], name = sel.cls)
       p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
-      p.norm <- p.norm + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
+        if(plotType == "violin"){
+          p.norm <- p.norm + geom_violin(trim=FALSE) 
+        } else {
+          p.norm <- p.norm + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) 
+        }
+      p.norm <- p.norm + theme_bw() + geom_jitter(size=1)
       p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
       p.norm <- p.norm + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
       p.norm <- p.norm + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
@@ -807,7 +829,13 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
 
     if(cls.type == "disc"){
-        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1) 
+        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) 
+        if(plotType == "boxplot"){
+        p.time <- p.time + geom_boxplot(outlier.shape = NA, outlier.colour=NA) 
+        }else{
+        p.time <- p.time + geom_violin(trim=FALSE) 
+        }
+        p.time <- p.time + theme_bw() + geom_jitter(size=1) 
         p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
         p.time <- p.time + scale_fill_manual(values=col) + theme(axis.text.x = element_text(angle=90, hjust=1))
         p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
@@ -878,6 +906,7 @@ GetMetaInfo <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 # 
+
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
   mSetObj <- .get.mSet(mSetObj);  
   if(mSetObj$dataSet$design.type == "regular"){
@@ -889,6 +918,8 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
     }else{
       my.cls <- cls.lbl;
     }
+  }else if(mSetObj$dataSet$design.type %in% c("multi", "time", "time0")){
+    my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
   }else{
     if(exp.fac == mSetObj$dataSet$facA.lbl){
       my.cls <- mSetObj$dataSet$facA;  
@@ -905,7 +936,6 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
     return(.set.mSet(mSetObj));
   }
 }
-
 # groups entering analysis
 GetNormGroupNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

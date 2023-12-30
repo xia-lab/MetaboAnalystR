@@ -522,7 +522,7 @@ GetUniqueMetaNames <-function(mSetObj=NA, metadata){
 #'License: GPL-3 License
 #'@export
 #'
-PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta, version, format="png", dpi=72, width=NA){
+PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta,meta2, version, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
