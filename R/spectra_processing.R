@@ -111,7 +111,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   users_path <- paste0(users.path, "/uploadAll/")
   ## Prepare Asari code to execute
-  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res  > ");
+  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res  >> ");
   #str_asari <- paste0(str_asari, "sed '1,$s/",gsub("\\/", "\\\\/", users.path), "//' > ")
   #str_asari <- paste0(str_asari, "awk '{gsub(\"", users.path, "\",\"\")}1' > ")
   str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
@@ -127,13 +127,15 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");
   
   ## Construct the default pipeline
-  str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
+  #str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
   str <- paste0(str, ';\n',  planString)
-  str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
+  str <- paste0(str, '\n',  "OptiLCMS:::MessageOutput('\nStep 2/6: Start raw spectral processing with Asari! 
+                  \nThis step may take a long time...', '\n', NULL)")
+  #str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   
-  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
+  #str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
+  #str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
+  #str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
   
   # sink command for running
   sink("ExecuteRawSpec.sh");
@@ -141,8 +143,10 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   cat(conf_inf);
   
   # str_asari
-  cat(paste0("\nsrun ", str_asari, "; \n\n"));
-  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  
+  cat(paste0("\nsrun R -e \"\n", str, "\n\"; ", str_asari, "; \n\n"));
+  
+  #cat(paste0("\nsrun ", str_asari, "; \n\n"));
   
   sink();
   
