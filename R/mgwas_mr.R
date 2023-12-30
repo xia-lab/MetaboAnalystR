@@ -81,6 +81,11 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
   outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
                                                    rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
   
+  if(is.null(outcome.dat)){
+    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data. Please try different input."))
+    return(-2);
+  }
+
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
   return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
@@ -99,9 +104,14 @@ print(head(dat));
 
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
       mSetObj <- .get.mSet(mSetObj);
+      err.vec <<- "";
       res1 <- PerformLDClumping(mSetObj, ldclumpOpt);
       mSetObj <- .get.mSet(mSetObj);
       res2 <- PerformLDProxies(mSetObj, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh);
+      if(res2 == -2){
+        #empty outcome.dat error.
+        return(-2);
+      }
       mSetObj <- .get.mSet(mSetObj);
       res <- PerformHarmonization(mSetObj=NA, harmonizeOpt);
       mSetObj <- .get.mSet(mSetObj);
