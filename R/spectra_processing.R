@@ -137,6 +137,15 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   #str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
   #str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
   
+  # check the latest result folder
+  load("params.rda")
+  minFrc <- peakParams[["minFraction"]];
+  
+  str2 <- paste0('library(OptiLCMS)');
+  str2 <- paste0(str2, ";\n", "metaboanalyst_env <- new.env()");
+  str2 <- paste0(str2, ";\n", "setwd(\'",users.path,"\')");
+  str2 <- paste0(str2, ";\n", "OptiLCMS:::PerformAsariResultsFormating(", minFrc, ")")
+  
   # sink command for running
   sink("ExecuteRawSpec.sh");
   
@@ -144,9 +153,9 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   # str_asari
   
-  cat(paste0("\nsrun R -e \"\n", str, "\n\"; ", str_asari, "; \n\n"));
-  
-  #cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str, "\n\";"));
+  cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
   
   sink();
   
@@ -553,13 +562,17 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
       stop("Invalid mSet Object! Please check!")
     }
   }
-
+  
   require(MSnbase);
   require(ggrepel);
   raw_data <- mSet@rawOnDisk;
   samples_names <- raw_data@phenoData@data[["sample_name"]];
   rawFiles <- raw_data@processingData@files;
   
+  if(any(raw_data@phenoData@data[["sample_group"]] == "MS2")) {
+    samples_names <- samples_names[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+    rawFiles <- rawFiles[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+  }
   if(mSet@params[["BlankSub"]]){
     samples_names <- 
       samples_names[raw_data@phenoData@data[["sample_group"]] != "BLANK"];
@@ -594,56 +607,64 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   rtValue <- resDT[featureOder, "rt"];
   
   chromPeaks0 <- mSet@peakfilling$msFeatureData$chromPeaks;
-  groupval <- OptiLCMS:::groupval;
-  mat <- groupval(mSet);
-  
-  orderN <- mat[featureOder,sampleOrder];
-  if(is.na(orderN)) {
-    errorProne <- TRUE;
-    orderN <- numeric();
+  if(is.null(chromPeaks0)){
+    # for asari results
+    chromPeaks <- resDT[featureNum,]
+    orderN <- 1
+    js <- rjson::fromJSON(file = paste0(featureNum,".json"))
+    colv <- unique(js[["fill"]][js[["label"]] == sample])
+    
   } else {
-    chromPeaks <- as.data.frame(chromPeaks0);
-    rtlist <- (mSet@peakRTcorrection$adjustedRT);
-    RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+    groupval <- OptiLCMS:::groupval;
+    mat <- groupval(mSet);
+    
+    orderN <- mat[featureOder,sampleOrder];
+    if(is.na(orderN)) {
+      errorProne <- TRUE;
+      orderN <- numeric();
+    } else {
+      chromPeaks <- as.data.frame(chromPeaks0);
+      rtlist <- (mSet@peakRTcorrection$adjustedRT);
+      RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+    }
+    
+    if(length(orderN) == 0) {
+      
+      chromPeaks0 <- mSet@peakpicking[["chromPeaks"]];
+      chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
+      orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
+                        chromPeaks$mzmax+0.02 > mzValue & 
+                        chromPeaks$rtmin-5 < rtValue &
+                        chromPeaks$rtmax+5 > rtValue);
+    }
+    
+    if(length(orderN) == 0){
+      # EIC extraction to handle the filled peaks from gap filling step
+      
+      rtlist <- (mSet@peakRTcorrection$adjustedRT);
+      RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+      chromPeaks0 <- mSet@peakAnnotation[["peaks"]];
+      chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
+      orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
+                        chromPeaks$mzmax+0.02 > mzValue & 
+                        chromPeaks$rtmin-5 < rtValue &
+                        chromPeaks$rtmax+5 > rtValue)
+    } 
+    
+    if(length(orderN) == 0) {
+      # EIC extraction of some corner cases, just in case.
+      
+      errorProne <- TRUE;
+      rawList <- mSet@peakgrouping[[2]]@listData;
+      rawList[["peakidx"]] <- NULL;
+      orderN <- which((abs(rawList[["mzmed"]] - mzValue) < 2e-3)
+                      & (abs(rawList[["rtmed"]] - rtValue) < 3));
+      chromPeaks <- rawList;
+    }
+    
+    js <- rjson::fromJSON(file = paste0(featureNum,".json"))
+    colv <- unique(js[["fill"]][samples_names == sample])
   }
-  
-  
-  if(length(orderN) == 0) {
-
-    chromPeaks0 <- mSet@peakpicking[["chromPeaks"]];
-    chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
-    orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
-                      chromPeaks$mzmax+0.02 > mzValue & 
-                      chromPeaks$rtmin-5 < rtValue &
-                      chromPeaks$rtmax+5 > rtValue);
-  }
-  
-  if(length(orderN) == 0){
-    # EIC extraction to handle the filled peaks from gap filling step
-
-    rtlist <- (mSet@peakRTcorrection$adjustedRT);
-    RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
-    chromPeaks0 <- mSet@peakAnnotation[["peaks"]];
-    chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
-    orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
-                      chromPeaks$mzmax+0.02 > mzValue & 
-                      chromPeaks$rtmin-5 < rtValue &
-                      chromPeaks$rtmax+5 > rtValue)
-  } 
-  
-  if(length(orderN) == 0) {
-    # EIC extraction of some corner cases, just in case.
-
-    errorProne <- TRUE;
-    rawList <- mSet@peakgrouping[[2]]@listData;
-    rawList[["peakidx"]] <- NULL;
-    orderN <- which((abs(rawList[["mzmed"]] - mzValue) < 2e-3)
-                    & (abs(rawList[["rtmed"]] - rtValue) < 3));
-    chromPeaks <- rawList;
-  }
-  
-  js <- rjson::fromJSON(file = paste0(featureNum,".json"))
-  colv <- unique(js[["fill"]][samples_names == sample])
   
   if(is0Feature & errorProne) {
     minRT <- chromPeaks$rtmin[orderN];
@@ -806,7 +827,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
       method = "loess",
       se = FALSE,
       span = 0.25,
-      size = 0.35,
+      linewidth = 0.35,
       formula = "y ~ x") + 
     scale_color_identity() + 
     scale_fill_identity() 
@@ -1209,6 +1230,332 @@ GeneratePeakList <- function(userPath) {
             quote = TRUE, 
             row.names = FALSE);
   feat.num <- nrow(ann_data);
+  cat("Total number of features is ", feat.num, "\n")
+  return(feat.num);
+}
+
+
+generateAsariPeakList <-  function(userPath) {
+  
+  setwd(userPath)
+  
+  alfs <- list.files(".", pattern = "results_metabo_asari_res")
+  alfs_idx <- as.numeric(gsub("results_metabo_asari_res_","",alfs))
+  result_folder <- alfs[which.max(alfs_idx)];
+  
+  # generate metaboanalyst table
+  load("mSet.rda")
+  ftable <- read.csv(paste0(result_folder, "/preferred_Feature_table.tsv"), sep = "\t")
+  features <- paste0(ftable$mz, "__", ftable$rtime)
+  ftable1 <- ftable[,c(12:ncol(ftable))]
+  allSamples <- colnames(ftable1)
+  allGroups <- 
+    vapply(allSamples, FUN = function(x){
+      idx <- which(mSet@rawOnDisk@phenoData@data[["sample_name"]] == x)
+      mSet@rawOnDisk@phenoData@data[["sample_group"]][idx]
+    }, character(1L))
+  ftable2 <- t(data.frame(Groups = allGroups))
+  ftable3 <- data.frame(Samples = c("Groups", features))
+  ftable0 <- rbind(ftable2, ftable1)
+  ftable0 <- cbind(ftable3, ftable0)
+  rownames(ftable0) <- NULL;
+  mSet@dataSet <- ftable0;
+  write.csv(ftable0, file = "metaboanalyst_input.csv", row.names = F, quote = F)
+  
+  # generate peak_feature_summary
+  ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t")
+  idx_num <- ftable$id_number
+  idx_row <- vapply(idx_num, FUN = function(x){
+    which(ftab_annotation[,1] == x)
+  }, FUN.VALUE = integer(1L))
+  ftab_annotation <- ftab_annotation[idx_row, ]
+  
+  annots <- strsplit(ftab_annotation[,6], ",")
+  adds <- vapply(annots, function(x){
+    if(length(x) == 0){
+      return("")
+    } else {
+      return(x[2])
+    }
+  }, FUN.VALUE = character(1L))
+  isos <- vapply(annots, function(x){
+    if(length(x) == 0){
+      return("")
+    } else {
+      return(x[1])
+    }
+  }, FUN.VALUE = character(1L))
+  #all_annots <- rjson::fromJSON(file = paste0(result_folder, "/Annotated_empiricalCompounds.json"))
+  
+  all_recrds <- ftab_annotation$matched_DB_records
+  all_forumus <- sapply(all_recrds, function(x){
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- vapply(res, FUN = function(y){
+        strsplit(strsplit(y, "'")[[1]][2], "_")[[1]][1]
+      }, character(1L), USE.NAMES = F)
+      if(length(res2) == 1){
+        res2 <- paste0(res2, ";")
+      } else {
+        res2 <- paste0(res2, collapse = "; ")
+      }
+      return(res2)
+    }
+  })
+  
+  all_cmpds <- ftab_annotation$matched_DB_shorts
+  all_cmpd <- sapply(all_cmpds, function(x){
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- lapply(res, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- vapply(res2, function(nn){
+        if(length(nn)==1){
+          nn[[1]][2]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(paste0(res2x, collapse = "; "))
+        }
+      }, FUN.VALUE = character(1L))
+      
+      if(length(res2_done) == 1){
+        res2_done <- paste0(res2_done, ";")
+      } else {
+        res2_done <- paste0(res2_done, collapse = "; ")
+      }
+      return(res2_done)
+    }
+  })
+  all_hmdb <- sapply(all_cmpds, function(x){
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- lapply(res, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- vapply(res2, function(nn){
+        if(length(nn)==1){
+          nn[[1]][1]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(paste0(res2x, collapse = "; "))
+        }
+      }, FUN.VALUE = character(1L))
+      
+      if(length(res2_done) == 1){
+        res2_done <- paste0(res2_done, ";")
+      } else {
+        res2_done <- paste0(res2_done, collapse = "; ")
+      }
+      return(res2_done)
+    }
+  })
+  
+  Formula2Cmpd_list <- lapply(1:length(all_recrds), function(x){
+    res <- list()
+    if(ftab_annotation$matched_DB_records[x] == ""){
+      return(res)
+    }
+    
+    fms <- ftab_annotation$matched_DB_records[x]
+    res <- strsplit(fms, "\\), \\(")
+    res <- gsub("\\(|\\)", "", res[[1]])
+    res2 <- vapply(res, FUN = function(y){
+      strsplit(strsplit(y, "'")[[1]][2], "_")[[1]][1]
+    }, character(1L), USE.NAMES = F)
+    res2_ori <- res2
+    res2 <- unique(res2)
+    res <- rep(list(list(cmpd = vector(mode = "character"),
+                         hmdb = vector(mode = "character"))), length(res2))
+    
+    names(res) <- res2
+    
+    this_cmpd <- ftab_annotation$matched_DB_shorts[x]
+    #cmpd
+    resx <- strsplit(this_cmpd, "\\), \\(")
+    if(length(resx[[1]]) == 0){
+      
+    } else {
+      resx <- gsub("\\(|\\)", "", resx[[1]])
+      res2cmpd <- lapply(resx, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- lapply(res2cmpd, function(nn){
+        if(length(nn)==1){
+          nn[[1]][2]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(res2x)
+        }
+      })
+      
+      for(nn in 1:length(res2_done)){
+        res[[res2_ori[nn]]][["cmpd"]] <- unique(c(res[[res2_ori[nn]]][["cmpd"]], res2_done[[nn]]))
+      }
+    }
+    #hmdb
+    resy <- strsplit(this_cmpd, "\\), \\(")
+    if(length(resy[[1]]) == 0){
+      
+    } else {
+      resy <- gsub("\\(|\\)", "", resy[[1]])
+      res2hmdb <- lapply(resy, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- lapply(res2hmdb, function(nn){
+        if(length(nn)==1){
+          nn[[1]][1]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][1]
+          }
+          return(res2x)
+        }
+      })
+      
+      for(nn in 1:length(res2_done)){
+        res[[res2_ori[nn]]][["hmdb"]] <- unique(c(res[[res2_ori[nn]]][["hmdb"]], res2_done[[nn]]))
+      }
+    }
+    
+    return(res)
+  })
+  
+  mSet@peakAnnotation[["Formula2Cmpd"]] <- Formula2Cmpd_list
+  
+  # peak_feature_summary
+  LogNorm<-function(x, min.val){
+    log10((x + sqrt(x^2 + min.val^2))/2)
+  }
+  CalCV<- function(x){
+    x <- as.numeric(x)
+    sd(x)/mean(x)
+  }
+  ftable1 -> data
+  allGroups -> groups
+  
+  min.val <- min(abs(data[data!=0]))/10;
+  data<-apply(data, 2, LogNorm, min.val);
+  
+  sample_data_log <- data;
+  cvs <- round(apply(data, 1,FUN = CalCV),4)*100
+  lvls <- groups[groups != "QC"];
+  sample_data_log <- sample_data_log[,groups != "QC"];
+  groups <- as.factor(lvls);
+  
+  ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
+  pvals <- ttest_res[,2]
+  pfdr <-p.adjust(pvals, method = "fdr")
+  pvals <- signif(pvals, 8)
+  pfdr <- round(signif(pfdr, 8), 8)
+  
+  pvals[is.nan(pvals)] = 1
+  pfdr[is.nan(pfdr)] = 1
+  
+  my.dat <- data.frame(mz = ftab_annotation$mz,
+                       rt = ftab_annotation$rtime,
+                       adduct = adds,
+                       isotopes = isos,
+                       Formula = all_forumus,
+                       Compound = all_cmpd,
+                       HMDBID = all_hmdb,
+                       intenVale = ftable$peak_area,
+                       pvals = pvals,
+                       pfdr = pfdr,
+                       cvs = cvs)
+  
+  HMDBIDs <- my.dat$HMDBID
+  HMDBIDs[HMDBIDs==""] <- NA
+  mSet@peakAnnotation[["massMatching"]] <- data.frame(Compound = my.dat$Compound, 
+                                                      Formula = my.dat$Formula, 
+                                                      HMDBID = HMDBIDs)
+  
+  write.table(my.dat, sep = "\t",
+              file = "peak_feature_summary.tsv",
+              row.names = FALSE,
+              quote = FALSE);
+  write.csv(my.dat, 
+            file = "peak_feature_summary.csv", 
+            quote = TRUE, 
+            row.names = FALSE);
+  
+  FeatureOrder <- order(pvals)
+  qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
+            file = "formula2cmpd.qs")
+  
+  
+  # generate peak_result_summary
+  mzrange <- vapply(allSamples, FUN = function(x){
+    ftab_annotation$mz -> mzs;
+    idx <- which(colnames(ftable1) == x)
+    min_mz <- round(min(mzs[ftable1[,idx] != 0]), 4)
+    max_mz <- round(max(mzs[ftable1[,idx] != 0]), 4)
+    paste0(min_mz, "~", max_mz)
+  }, FUN.VALUE = character(1L));
+  
+  rtrange <- vapply(allSamples, FUN = function(x){
+    ftab_annotation$rtime -> rts;
+    idx <- which(colnames(ftable1) == x)
+    min_rt <- round(min(rts[ftable1[,idx] != 0]), 2)
+    max_rt <- round(max(rts[ftable1[,idx] != 0]), 2)
+    paste0(min_rt, "~", max_rt)
+  }, FUN.VALUE = character(1L))
+  
+  peak_num <- vapply(allSamples, FUN = function(x){
+    idx <- which(colnames(ftable1) == x)
+    length(which(ftable1[,idx] != 0))
+  }, FUN.VALUE = integer(1L))
+  
+  peak_ratio_missing <- vapply(allSamples, FUN = function(x){
+    idx <- which(colnames(ftable1) == x)
+    round(1-length(which(ftable1[,idx] != 0))/nrow(ftable1),4)*100
+  }, FUN.VALUE = double(1L))
+  
+  datam <- data.frame(samples = allSamples,
+                      groups = allGroups,
+                      rtrange = rtrange,
+                      mzrange = mzrange,
+                      peak_num = peak_num,
+                      missing = peak_ratio_missing)
+  
+  mSet@peakAnnotation[["peak_result_summary"]] <- as.matrix(datam)
+  
+  write.table(
+    datam,
+    file = paste0("peak_result_summary.txt"),
+    row.names = FALSE,
+    col.names = FALSE,
+    quote = FALSE
+  );
+  
+  feat.num <- nrow(ftable1);
   cat("Total number of features is ", feat.num, "\n")
   return(feat.num);
 }
