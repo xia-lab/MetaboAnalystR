@@ -36,7 +36,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }
 
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -85,6 +85,154 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   return(as.integer(1))
 }
 
+
+#' CreateMS2RawRscript#'
+#' @noRd
+#' @author Zhiqiang Pang
+CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
+  
+  guestName <- guestName;
+  planString <- planString;
+  
+  cat("current planString ---> ", planString, "\n")
+  cat("current guestName  ---> ", guestName, "\n")
+  
+  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+    users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
+  }else {
+    users.path <-getwd();
+  }
+  
+  ## Prepare Configuration script for slurm running
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  
+  ## Prepare R script for running
+  # need to require("OptiLCMS")
+  str <- paste0('library(OptiLCMS)');
+  
+  # Set working dir & init env & files included
+  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
+  str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
+  str <- paste0(str, ";\n", "load(\'mSet.rda\')");
+  
+  if(mode == "dda"){
+    # import feature list
+    str <- paste0(str, ";\n", "ft <- mSet@peakAnnotation[[\'camera_output\']][,c(2,3,5,6)]");
+    # progress 104
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 104
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # import data
+    if(file.exists("upload/MS2")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
+                                                  full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
+    } else if(any(grepl("MS2_", list.files("upload/")))) {
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
+                                                  pattern = \"^MS2_\",
+                                                  full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
+    }
+    # progress 110
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 110
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # perform deconvolution
+    cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = 5,ppm2 = 10,
+                                    sn = 12,filtering = 0,
+                                    window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\',
+                                    ncores = 4L)";
+    str <- paste0(str, ";\n", cmd_deco)
+    # progress 140
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 140
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # PerformSpectrumConsenus
+    cmd_consenus <- "mSet <- PerformSpectrumConsenus (mSet, ppm2 = 15, concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
+                                     user_dbCorrection = FALSE)";
+    str <- paste0(str, ";\n", cmd_consenus)
+    # progress 150
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 150
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # PerformDBSearchingBatch
+    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = 10, ppm2 = 25,
+                                     rt_tol = 5, database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+    str <- paste0(str, ";\n", cmd_seareching)
+    # progress 180
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 180
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # PerformResultsExport
+    cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
+                                  topN = 10L, ncores = 4L)";
+    str <- paste0(str, ";\n", cmd_export)
+    # progress 190
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 190
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # FormatMSnAnnotation
+    cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
+    str <- paste0(str, ";\n", cmd_annotation)
+    # progress 198
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 198
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # progress 200 
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'MS/MS data processing finished completely! \'),
+      ecol = \'\n\',
+      progress = 200
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+
+    
+  } else {
+    # for swath-dia
+  }
+  
+  # sink command for running
+  sink("ExecuteRawSpec.sh", append = TRUE);
+  
+  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  
+  sink();
+  
+  return(1)
+}
+
+
+
 #' CreateRawRscript4Asari
 #' @description used to create a running for raw spectra processing
 #' this file will be run by SLURM by using OptiLCMS and Asari from python.
@@ -99,7 +247,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   }
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   require(R.utils)
   allMSFiles <- list.files("upload", full.names = T, recursive = T)
