@@ -82,7 +82,7 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
                                                    rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
   
   if(is.null(outcome.dat)){
-    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data. Please try different input."))
+    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data. The server might be busy or try different input."))
     return(-2);
   }
 
