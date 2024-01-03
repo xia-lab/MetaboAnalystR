@@ -120,8 +120,8 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", "ft <- mSet@peakAnnotation[[\'camera_output\']][,c(2,3,5,6)]");
     # progress 104
     cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+      mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),
+      ecol = \'\',
       progress = 104
     )";
     str <- paste0(str, ";\n", cmd_prgs)
@@ -138,13 +138,19 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     }
     # progress 110
     cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+      mes = paste0(\'Step 7/12: MS/MS data imported completely! \n\n\'),
+      ecol = \'\',
       progress = 110
     )";
     str <- paste0(str, ";\n", cmd_prgs)
     
     # perform deconvolution
+    # progress 120
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),
+      ecol = \'\',
+      progress = 120
+    )";
     cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = 5,ppm2 = 10,
                                     sn = 12,filtering = 0,
@@ -153,73 +159,140 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
     cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+      mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),
+      ecol = \'\',
       progress = 140
     )";
     str <- paste0(str, ";\n", cmd_prgs)
     
-    # PerformSpectrumConsenus
-    cmd_consenus <- "mSet <- PerformSpectrumConsenus (mSet, ppm2 = 15, concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
-                                     user_dbCorrection = FALSE)";
-    str <- paste0(str, ";\n", cmd_consenus)
-    # progress 150
+  } else {
+    # for swath-dia
+    # progress 102
     cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
-      progress = 150
+      mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),
+      ecol = \'\',
+      progress = 102
     )";
     str <- paste0(str, ";\n", cmd_prgs)
     
-    # PerformDBSearchingBatch
-    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+    # import data
+    if(file.exists("upload/MS2")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(mSet = mSet, filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
+                                                  full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
+    } else if(any(grepl("MS2_", list.files("upload/")))) {
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
+                                                  pattern = \"^MS2_\",
+                                                  full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
+    }
+    
+    # progress 110
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\n\'),
+      ecol = \'\',
+      progress = 110
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # perform deconvolution
+    # progress 120
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),
+      ecol = \'\',
+      progress = 120
+    )";
+    cmd_deco <- "mSet <- PerformDIADeconvolution(mSet,
+                                    min_width = 5,ppm2 = 10,
+                                    sn = 12,filtering = 0,
+                                    ncores = 4L)";
+    str <- paste0(str, ";\n", cmd_deco)
+    # progress 140
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),
+      ecol = \'\',
+      progress = 140
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+  }
+  
+  # PerformSpectrumConsenus
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 9/12: MS/MS spectra consensus is starting .. \n\'),
+      ecol = \'\',
+      progress = 145
+    )";
+  str <- paste0(str, ";\n", cmd_prgs)
+  cmd_consenus <- "mSet <- PerformSpectrumConsenus (mSet, ppm2 = 15, concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
+                                     user_dbCorrection = FALSE)";
+  str <- paste0(str, ";\n", cmd_consenus)
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\n\'),
+      ecol = \'\',
+      progress = 150
+    )";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # PerformDBSearchingBatch
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\n\'),
+      ecol = \'\',
+      progress = 150
+    )";
+  str <- paste0(str, ";\n", cmd_prgs)
+  cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = 10, ppm2 = 25,
                                      rt_tol = 5, database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\', 
                                      use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
-    str <- paste0(str, ";\n", cmd_seareching)
-    # progress 180
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+  str <- paste0(str, ";\n", cmd_seareching)
+  # progress 180
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\n\'),
+      ecol = \'\',
       progress = 180
     )";
-    str <- paste0(str, ";\n", cmd_prgs)
-    
-    # PerformResultsExport
-    cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
-                                  topN = 10L, ncores = 4L)";
-    str <- paste0(str, ";\n", cmd_export)
-    # progress 190
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # PerformResultsExport
+  # progress 190
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 11/12: MS/MS data processing result exporting.. \n\'),
+      ecol = \'\',
       progress = 190
     )";
-    str <- paste0(str, ";\n", cmd_prgs)
-    
-    # FormatMSnAnnotation
-    cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
-    str <- paste0(str, ";\n", cmd_annotation)
-    # progress 198
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+  str <- paste0(str, ";\n", cmd_prgs)
+  cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
+                                  topN = 10L, ncores = 4L)";
+  str <- paste0(str, ";\n", cmd_export)
+  # progress 190
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),
+      ecol = \'\',
+      progress = 190
+    )";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # FormatMSnAnnotation
+  cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
+  str <- paste0(str, ";\n", cmd_annotation)
+  # progress 198
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),
+      ecol = \'\',
       progress = 198
     )";
-    str <- paste0(str, ";\n", cmd_prgs)
-    
-    # progress 200 
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'MS/MS data processing finished completely! \'),
-      ecol = \'\n\',
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # progress 200 
+  cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'<b>Everything of this LC-MS/MS dataset has been completed successfully! </b>\n\n\'),
+      ecol = \'\',
       progress = 200
     )";
-    str <- paste0(str, ";\n", cmd_prgs)
-
-    
-  } else {
-    # for swath-dia
-  }
+  str <- paste0(str, ";\n", cmd_prgs)
+  
   
   # sink command for running
   sink("ExecuteRawSpec.sh", append = TRUE);
