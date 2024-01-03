@@ -103,7 +103,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
     cat("\n\n", file=rnwFile, append=TRUE);
     cat(mSetObj$msgSet$read.msg, file=rnwFile, append=TRUE, sep="\n");
     
-  }else if(mSetObj$dataSet$type=="pktable"){
+  }else if(mSetObj$dataSet$type=="pktable" | mSetObj$dataSet$type=="pktable-ma"){
     descr <- c("\\subsubsection{Reading Peak Intensity Table}\n",
                "The peak intensity table should be uploaded in comma separated values (.csv) format.",
                "Samples can be in rows or columns, with class labels immediately following the sample IDs.\n");
