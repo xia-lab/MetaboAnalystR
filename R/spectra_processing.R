@@ -332,10 +332,10 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   users_path <- paste0(users.path, "/uploadAll/")
   ## Prepare Asari code to execute
-  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res  >> ");
+  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res ");
   #str_asari <- paste0(str_asari, "sed '1,$s/",gsub("\\/", "\\\\/", users.path), "//' > ")
   #str_asari <- paste0(str_asari, "awk '{gsub(\"", users.path, "\",\"\")}1' > ")
-  str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
+  #str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
