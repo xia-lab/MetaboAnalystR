@@ -277,6 +277,10 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   # FormatMSnAnnotation
   cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
   str <- paste0(str, ";\n", cmd_annotation)
+  
+  cmd_write <- "write.csv(dtx, file = \'compound_msn_results.csv\', row.names = F, col.names = F)";
+  str <- paste0(str, ";\n", cmd_write)
+  
   # progress 198
   cmd_prgs <- "OptiLCMS:::MessageOutput(
       mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),
@@ -286,11 +290,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   str <- paste0(str, ";\n", cmd_prgs)
   
   # progress 200 
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'<b>Everything of this LC-MS/MS dataset has been completed successfully! </b>\n\n\'),
-      ecol = \'\',
-      progress = 200
-    )";
+  cmd_prgs <- "OptiLCMS:::jobFinished()";
   str <- paste0(str, ";\n", cmd_prgs)
   
   
