@@ -108,7 +108,7 @@ CreateSummaryTable <- function(mSetObj=NA){
   
   sum.dat<-NULL;
   plenth <- mSetObj$dataSet$proc.feat.num;
-  if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin'){
+  if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin' | mSetObj$dataSet$type=='pktable-ma'){
     orig.data<- qs::qread("data_orig.qs");
     for(i in 1:nrow(orig.data)){
       srow<-orig.data[i,];
