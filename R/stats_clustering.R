@@ -642,8 +642,8 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     data1sc <- t(hc.dat)
     data1sc <- scale_mat(data1sc, scaleOpt)
     data1sc = round(data1sc,5)
-
-    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+    
+    
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
     sz <- max(as.numeric(annoPer) / 100, 0.015)
@@ -684,12 +684,27 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     
     
     if (rowV) {
-    dend_col <- hclust(dist(t(data1sc), method = smplDist), method = clstDist)
+    if(smplDist=="correlation"){
+      my.dist2 <- cor(data1sc, method="pearson")
+      my.dist2 <- 1-my.dist2 
+      my.dist2 <- as.dist(my.dist2, diag = FALSE, upper = F)
+    }else{
+      my.dist2 = dist(t(data1sc), method = smplDist)
+    }
+    dend_col <- hclust( my.dist2, method = clstDist)
     p <- p %>% add_col_dendro(dend_col)
     } 
 
   if (colV) {
-    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+   if(smplDist=="correlation"){
+      my.dist <- cor(t(data1sc), method="pearson")
+      my.dist <- 1-my.dist 
+      my.dist <- as.dist(my.dist, diag = FALSE, upper = F)
+    }else{
+      my.dist = dist(data1sc, method = smplDist)
+    }
+
+    dend_row <- hclust(my.dist, method = clstDist)
     p <- p %>% add_row_dendro(dend_row)  
   } 
     
