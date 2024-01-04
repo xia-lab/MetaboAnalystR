@@ -669,8 +669,12 @@ convertCovariate2Fun <- function(){
     rts <- vapply(features, function(x){
       strsplit(x, "__")[[1]][2]
     }, character(1L));
+    if("t" %in% colnames(dt)){
+      df <- data.frame(mz = mzs, rt = rts, tscore = dt$t, pvalue = dt$adj.P.Val)
+    } else {
+      df <- data.frame(mz = mzs, rt = rts, pvalue = dt$adj.P.Val)
+    }
     
-    df <- data.frame(mz = mzs, rt = rts, tscore = dt$t, pvalue = dt$adj.P.Val)
     write.table(df, file = "metaboanalyst_input_functional_analy.txt", quote = F, row.names = F, sep = "\t")
     return(1)
 }
