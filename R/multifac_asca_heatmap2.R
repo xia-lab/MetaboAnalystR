@@ -199,16 +199,30 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     h=h+(100-nrow(data1sc))*5      
   }
 
-  if(h<750){
-   cb_grid <- setup_colorbar_grid(nrows = 3, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
- 
-  } else if(h<1500){
-   cb_grid <- setup_colorbar_grid(nrows = 7, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
- 
+  if(any(apply(annotation[,names(idx),drop=F],2, function(x) length(unique(x)))>10)){
+    if(h<750){
+      nr = 2  
+      ys = 0.85
+    } else if(h<1500){
+      nr = 4.5
+      ys = 0.9  
+    }else{
+      nr = 9
+      ys = 0.95 
+    }
   }else{
-   cb_grid <- setup_colorbar_grid(nrows =11, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
- 
-  }
+   if(h<750){
+      nr = 3  
+      ys = 0.85
+    } else if(h<1500){
+      nr = 7
+      ys = 0.95  
+    }else{
+      nr = 11
+     ys = 0.95
+   }
+ }
+
 
       sz <- max(as.numeric(annoPer) / 100, 0.015)
       bf <- min(0.01, (sz / 3))
@@ -225,7 +239,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
      p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
                   layout = list(font = list(size = fzAnno)),
                   colors = colors,
-                  colorbar_grid = cb_grid
+                  colorbar_grid = setup_colorbar_grid(nrows =nr, x_start = 1.1, y_start = ys, x_spacing = 0.15)
     )%>%
       add_col_annotation(annotation,
                          side = "top", size = annoPer , buffer = bf , inner_buffer = bf / 3
