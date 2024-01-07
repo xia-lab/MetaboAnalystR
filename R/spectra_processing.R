@@ -1209,6 +1209,118 @@ getMalariaRawData <- function(homedir) {
   }
 }
 
+getBloodRawData <- function(homedir) {
+  print("Downloading raw blood Data.... ")
+  datalink <- "https://www.dropbox.com/scl/fi/eofgffstyp9p4dbpj2s0f/blood_dda.zip";
+  desfile <- paste0(homedir,"/blood_dda.zip");
+  markerfile <- paste0(homedir, "/upload/QC/QC1.mzML");
+  download.file(datalink, 
+                destfile = desfile, 
+                method = "wget", quiet = TRUE);
+  unzip(zipfile = desfile, exdir = paste0(homedir, "/upload"))
+  
+  # do some verification here
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  } 
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/scl/fi/eofgffstyp9p4dbpj2s0f/blood_dda.zip")
+    try(system(cmd),silent = TRUE)
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    print("Downloading failed, please contact Zhiqiang Pang! ")
+    return(0)
+  }
+}
+
+getCOVIDRawData <- function(homedir) {
+  print("Downloading raw covid Data.... ")
+  datalink <- "https://www.dropbox.com/scl/fi/a7kizcjw1q9y4jkyzv2fx/swath_data_file.zip";
+  desfile <- paste0(homedir,"/swath_data_file.zip");
+  markerfile <- paste0(homedir, "/upload/MS2/Covid_Cov_16_MS2.mzML");
+  download.file(datalink, 
+                destfile = desfile, 
+                method = "wget", quiet = TRUE);
+  unzip(zipfile = desfile, exdir = paste0(homedir, "/upload"))
+  
+  # do some verification here
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  } 
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/scl/fi/a7kizcjw1q9y4jkyzv2fx/swath_data_file.zip")
+    try(system(cmd),silent = TRUE)
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    print("Downloading failed, please contact Zhiqiang Pang! ")
+    return(0)
+  }
+}
+
 ################## ------------- Shell function here below ------------- ######################
 
 #' InitializePlan
@@ -2488,7 +2600,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
     mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
     mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
   }
-  save(mSetObj, featurelabel, result_num, sub_idx, ppm, imageNM, dpi, format, width, height, file = "PerformMirrorPlottingWeb___mSet.rda")
+
   fl <- gsub("mz|sec|min", "", featurelabel)
   fl <- strsplit(fl,"@")[[1]]
   mz <- as.double(fl[1])
