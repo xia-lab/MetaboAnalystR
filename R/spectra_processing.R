@@ -85,7 +85,6 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   return(as.integer(1))
 }
 
-
 #' CreateMS2RawRscript#'
 #' @noRd
 #' @author Zhiqiang Pang
@@ -280,6 +279,11 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   
   cmd_write <- "write.csv(dtx, file = \'compound_msn_results.csv\', row.names = F, col.names = F)";
   str <- paste0(str, ";\n", cmd_write)
+  cmd_write <- "write.table(dtx, file = \'compound_msn_results.tsv\', row.names = F, quote = FALSE, sep = \'\\t\')";
+  str <- paste0(str, ";\n", cmd_write)
+  
+  cmd_saving <- "qs::qsave(mSet, file = \'msn_mset_result.qs\')";
+  str <- paste0(str, ";\n", cmd_saving)
   
   # progress 198
   cmd_prgs <- "OptiLCMS:::MessageOutput(
@@ -303,8 +307,6 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   
   return(1)
 }
-
-
 
 #' CreateRawRscript4Asari
 #' @description used to create a running for raw spectra processing
@@ -2422,7 +2424,6 @@ PerformSWATHDesignDetection <- function(mSetObj=NA, file = ""){
   mSetObj <- .get.mSet(mSetObj);
   DetectMS2Design <- OptiLCMS:::DetectMS2Design;
   df <- DetectMS2Design(file)
-  cat("====== df ----> ", nrow(df), "\n")
   mSetObj[["dataSet"]][["swath_design"]] <- df
   return(.set.mSet(mSetObj));
 }
@@ -2455,3 +2456,69 @@ exportSwathDesign <- function(lowMZs, UpMZs){
   write.table(vecs, file = "swath_design_metaboanalyst.txt", quote = F, sep = "\n", col.names = F, row.names = F)
   return(1)
 }
+
+PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_idx, ppm, imageNM, dpi, format, width, height){
+  mSetObj <- .get.mSet(mSetObj);
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting
+  parse_ms2peaks <- OptiLCMS:::parse_ms2peaks
+  
+  if(is.null(mSetObj[["analSet"]][["ms2res"]])){
+    mSet_raw <- qs::qread("msn_mset_result.qs")
+    mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
+    if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
+      peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
+      peak_mtx <- do.call(rbind, peak_list)
+      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+      peak_mtx <- peak_mtx[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    } else {
+      peak_mtx <- mSet_raw@MSnData[["peak_mtx"]][mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    }
+    
+    DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
+     res <- x[[1]][[1]]
+     if(length(res) == 0) {
+       return(NULL)
+     } else {
+       x[[1]]
+     }
+    })
+    mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+  } else {
+    mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+  }
+  save(mSetObj, featurelabel, result_num, sub_idx, ppm, imageNM, dpi, format, width, height, file = "PerformMirrorPlottingWeb___mSet.rda")
+  fl <- gsub("mz|sec|min", "", featurelabel)
+  fl <- strsplit(fl,"@")[[1]]
+  mz <- as.double(fl[1])
+  rt <- as.double(fl[2])
+  peak_mtx <- as.data.frame(peak_mtx)
+  idx <- which((peak_mtx$mzmin-0.00005 <= mz) & (peak_mtx$mzmax+0.00005 >= mz) & (peak_mtx$rtmin-0.5 <= rt) & (peak_mtx$rtmax+0.5 >= rt))
+  ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
+  uidx <- vapply(ucmpds, function(x){
+    which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
+  }, FUN.VALUE = integer(1L))
+  spec_bottom <- DBAnnoteRes[[idx]][["MS2Pekas"]][uidx][sub_idx+1]
+  spec_bottom <- parse_ms2peaks(spec_bottom)
+  
+  spec_top_m <- mSetObj[["analSet"]][["ms2res"]][["Concensus_spec"]][[2]][[idx]][[1]]
+  compound_name <- DBAnnoteRes[[idx]][["Compounds"]][uidx][sub_idx+1]
+  title <- paste0(mz, "__", rt)
+  subtitle <- paste0(compound_name)
+  p1 <- MirrorPlotting(spec_top_m, 
+                       spec_bottom, 
+                       ppm = ppm,
+                       title= title, 
+                       subtitle = subtitle,
+                       cutoff_relative = 5)
+  Cairo::Cairo(
+    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+
+  return(.set.mSet(mSetObj));
+}
+
+
