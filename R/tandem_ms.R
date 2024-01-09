@@ -46,6 +46,9 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     stop("Database file does not exist! Please check!")
   }
   # now set up the database option
+  database <- gsub("\\[|\\]", "", database)
+  database <- gsub(" ", "", database)
+  database <- strsplit(database, ",")[[1]]
   database_opt <- generateMS2dbOpt(database, ionMode);
   
   # now let call OPTILCMS to search the database
@@ -103,98 +106,108 @@ msmsResClean <- function(res){
 }
 
 generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
-  if(database == "all"){ 
-    database_opt <- "all";
-  } else if(database == "hmdb_exp") {
-    if(ionMode == "positive"){
-      database_opt <- "HMDB_experimental_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "HMDB_experimental_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "hmdb_pre"){
-    if(ionMode == "positive"){
-      database_opt <- "HMDB_predicted_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "HMDB_predicted_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "gnps"){
-    if(ionMode == "positive"){
-      database_opt <- "GNPS_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "GNPS_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "mines"){
-    if(ionMode == "positive"){
-      database_opt <- "MINEs_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MINEs_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "lipidblast"){
-    if(ionMode == "positive"){
-      database_opt <- "LipidBlast_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "LipidBlast_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "mona"){
-    if(ionMode == "positive"){
-      database_opt <- "MoNA_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MoNA_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "massbank"){
-    if(ionMode == "positive"){
-      database_opt <- "MassBank_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MassBank_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "riken"){
-    if(ionMode == "positive"){
-      database_opt <- "RIKEN_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "RIKEN_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "respect"){
-    if(ionMode == "positive"){
-      database_opt <- "ReSpect_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "ReSpect_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "msdial"){
-    if(ionMode == "positive"){
-      database_opt <- "MSDIAL_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MSDIAL_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "bmdms"){
-    if(ionMode == "positive"){
-      database_opt <- "BMDMS_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "BMDMS_PosDB";
-    } else {
-      database_opt <- "all";
-    }
+  prefix = ""
+  database_opts = ""
+  if(length(database)>1){
+    prefix = "mcst_\t"; # multiple customized
   }
-  return(database_opt)
+  for(i in database){
+    if(i == "all"){ 
+      database_opt <- "all";
+      return("all")
+    } else if(i == "hmdb_exp") {
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_experimental_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_experimental_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "hmdb_pre"){
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_predicted_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_predicted_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "gnps"){
+      if(ionMode == "positive"){
+        database_opt <- "GNPS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "GNPS_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mines"){
+      if(ionMode == "positive"){
+        database_opt <- "MINEs_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MINEs_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "lipidblast"){
+      if(ionMode == "positive"){
+        database_opt <- "LipidBlast_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "LipidBlast_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mona"){
+      if(ionMode == "positive"){
+        database_opt <- "MoNA_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MoNA_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "massbank"){
+      if(ionMode == "positive"){
+        database_opt <- "MassBank_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MassBank_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "riken"){
+      if(ionMode == "positive"){
+        database_opt <- "RIKEN_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "RIKEN_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "respect"){
+      if(ionMode == "positive"){
+        database_opt <- "ReSpect_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "ReSpect_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "msdial"){
+      if(ionMode == "positive"){
+        database_opt <- "MSDIAL_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MSDIAL_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "bmdms"){
+      if(ionMode == "positive"){
+        database_opt <- "BMDMS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "BMDMS_PosDB";
+      } else {
+        database_opt <- "all";
+      }
+    }
+    database_opts <- paste0(database_opts, database_opt, "\t")
+  }
+  database_str <- paste0(prefix, database_opts)
+ return(database_str)
 }
 
 Updatecurrentmsmsidx <- function(mSetObj=NA, label = ""){
@@ -607,6 +620,9 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     stop("Database file does not exist! Please check!")
   }
   # now set up the database option
+  database <- gsub("\\[|\\]", "", database)
+  database <- gsub(" ", "", database)
+  database <- strsplit(database, ",")[[1]]
   database_opt <- generateMS2dbOpt(database, ionMode);
   
   # now let call OPTILCMS to search the database
