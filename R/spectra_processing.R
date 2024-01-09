@@ -157,11 +157,20 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
       ecol = \'\',
       progress = 120
     )";
-    cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
+    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite")){
+      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = 5,ppm2 = 10,
                                     sn = 12,filtering = 0,
                                     window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\',
                                     ncores = 4L)";
+    } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
+      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = 5,ppm2 = 10,
+                                    sn = 12,filtering = 0,
+                                    window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
+                                    ncores = 4L)";
+    }
+
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
     cmd_prgs <- "OptiLCMS:::MessageOutput(
@@ -248,10 +257,18 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
       progress = 150
     )";
   str <- paste0(str, ";\n", cmd_prgs)
-  cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite")){
+    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = 10, ppm2 = 25,
                                      rt_tol = 5, database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\', 
                                      use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+  } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
+    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = 10, ppm2 = 25,
+                                     rt_tol = 5, database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+  }
+
   str <- paste0(str, ";\n", cmd_seareching)
   # progress 180
   cmd_prgs <- "OptiLCMS:::MessageOutput(
