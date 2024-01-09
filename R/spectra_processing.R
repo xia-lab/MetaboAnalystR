@@ -34,7 +34,10 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }else {
     users.path <-getwd();
   }
-
+  
+  ## create algorithm marker
+  write.table("optilcms", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  
   ## Prepare Configuration script for slurm running
   conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
@@ -320,6 +323,9 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   } else {
     users.path <-getwd();
   }
+  
+  ## create algorithm marker
+  write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   
   ## Prepare Configuration script for slurm running
   conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
@@ -765,6 +771,20 @@ retrieveModeInfo <- function(){
     return("auto")
   } else {
     return("customized")
+  }
+}
+
+#' retrieveAlgorithmInfo
+#' @description retrieveAlgorithmInfo
+#' @noRd
+#' @author Zhiqiang Pang
+retrieveAlgorithmInfo <- function(){
+  if(!file.exists("ms1_algorithm.txt")){return("optilcms")}
+  plantext <- readLines("ms1_algorithm.txt")
+  if(grepl("asari", plantext)){
+    return("asari")
+  } else {
+    return("optilcms")
   }
 }
 
@@ -1601,7 +1621,7 @@ generateAsariPeakList <-  function(userPath) {
   ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t")
   idx_num <- ftable$id_number
   idx_row <- vapply(idx_num, FUN = function(x){
-    which(ftab_annotation[,1] == x)
+    which(ftab_annotation[,1] == x)[1]
   }, FUN.VALUE = integer(1L))
   ftab_annotation <- ftab_annotation[idx_row, ]
   
