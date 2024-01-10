@@ -168,7 +168,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj$dataSet$mr_res_single <- res_single;
   res_loo <- TwoSampleMR::mr_leaveoneout(dat);
   mSetObj$dataSet$mr_res_loo <- res_loo;
-  print(head(merge2))
+  #print(head(merge2))
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
