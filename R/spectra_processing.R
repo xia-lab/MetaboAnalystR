@@ -34,7 +34,14 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }else {
     users.path <-getwd();
   }
-
+  
+  ## create algorithm marker
+  if(grepl("ROIExtraction", planString)){
+    write.table("centWave_auto", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  } else {
+    write.table("centWave_manual", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  }
+  
   ## Prepare Configuration script for slurm running
   conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
@@ -150,11 +157,20 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
       ecol = \'\',
       progress = 120
     )";
-    cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
+    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite")){
+      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = 5,ppm2 = 10,
                                     sn = 12,filtering = 0,
                                     window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\',
                                     ncores = 4L)";
+    } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
+      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = 5,ppm2 = 10,
+                                    sn = 12,filtering = 0,
+                                    window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
+                                    ncores = 4L)";
+    }
+
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
     cmd_prgs <- "OptiLCMS:::MessageOutput(
@@ -241,10 +257,18 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
       progress = 150
     )";
   str <- paste0(str, ";\n", cmd_prgs)
-  cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite")){
+    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = 10, ppm2 = 25,
                                      rt_tol = 5, database_path = \'/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Bio_v09102023.sqlite\', 
                                      use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+  } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
+    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = 10, ppm2 = 25,
+                                     rt_tol = 5, database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+  }
+
   str <- paste0(str, ";\n", cmd_seareching)
   # progress 180
   cmd_prgs <- "OptiLCMS:::MessageOutput(
@@ -320,6 +344,9 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   } else {
     users.path <-getwd();
   }
+  
+  ## create algorithm marker
+  write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   
   ## Prepare Configuration script for slurm running
   conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
@@ -765,6 +792,24 @@ retrieveModeInfo <- function(){
     return("auto")
   } else {
     return("customized")
+  }
+}
+
+#' retrieveAlgorithmInfo
+#' @description retrieveAlgorithmInfo
+#' @noRd
+#' @author Zhiqiang Pang
+retrieveAlgorithmInfo <- function(){
+  if(!file.exists("ms1_algorithm.txt")){return("optilcms")}
+  plantext <- readLines("ms1_algorithm.txt")
+  if(grepl("asari", plantext)){
+    return("asari")
+  } else if(grepl("centWave_auto", plantext)){
+    return("centWave_auto")
+  } else if(grepl("centWave_manual", plantext)){
+    return("centWave_manual")
+  } else {
+    return("optilcms")
   }
 }
 
@@ -1601,7 +1646,7 @@ generateAsariPeakList <-  function(userPath) {
   ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t")
   idx_num <- ftable$id_number
   idx_row <- vapply(idx_num, FUN = function(x){
-    which(ftab_annotation[,1] == x)
+    which(ftab_annotation[,1] == x)[1]
   }, FUN.VALUE = integer(1L))
   ftab_annotation <- ftab_annotation[idx_row, ]
   
