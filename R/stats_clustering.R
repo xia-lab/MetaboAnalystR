@@ -872,7 +872,6 @@ colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
     uniq.cols <- unique(cols);    
     names(uniq.cols) <- unique(as.character(hc.cls));
     ann_colors <- list(class= uniq.cols);
-    
     if(grp.ave){ # only use group average
       lvs <- levels(cls);
       my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
@@ -887,22 +886,6 @@ colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
       rownames(annotation) <- rownames(hc.dat); 
     }
  
-    pheatmap::pheatmap(t(hc.dat[,ncol(hc.dat):1]), 
-                       annotation=annotation, 
-                       annotation_colors = ann_colors,
-                       annotation_legend = show.annot.legend, 
-                       fontsize_row=fzRow, 
-                       fontsize_col=fzCol,
-                       clustering_distance_rows = smplDist,
-                       clustering_distance_cols = smplDist,
-                       clustering_method = clstDist, 
-                       border_color = border.col,
-                       cluster_rows = colV, 
-                       cluster_cols = rowV,
-                       scale = scaleOpt, 
-                       legend = show.legend,
-                       show_rownames=includeRowNames,
-                       color = colors);
 
    p<- pheatmap::pheatmap(t(hc.dat), 
                      annotation=annotation, 
@@ -927,6 +910,7 @@ colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
    }
   pheatmap::pheatmap(t(hc.dat), 
                      annotation=annotation, 
+                      annotation_colors = ann_colors,
                       fontsize_row=fzRow, 
                       fontsize_col=fzCol,
                      clustering_distance_rows = smplDist,
