@@ -154,6 +154,8 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
                   item = item, data.mean = data.mean, itemselect.res = res)  
   
   dataSet$itemselect <- structure(reslist, class = "itemselect")
+  saveRDS(dataSet, "dataSet.rds");
+
   RegisterData(dataSet);
 }
 
@@ -187,7 +189,6 @@ PerformDRFit <- function(ncpus = 2)
   require(alr3)
   
   # definition of necessary data
-  #selectindex <- itemselect$selectindex
   dose <- itemselect$dose
   doseranks <- as.numeric(as.factor(dose)) 
   data <- itemselect$data 

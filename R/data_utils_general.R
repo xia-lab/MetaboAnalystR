@@ -71,12 +71,15 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$universe.opt <- "uploaded";
   paramSet$universe.opt.readable <- "Uploaded data";
   paramSet$fc.thresh <- 0;
+  paramSet$report.format <- "pdf";
   dataSets <<- list();
   
 
   paramSet$jsonNms <- list()
 
-  if(file.exists("/home/glassfish/sqlite/")){
+  if(file.exists("/data/sqlite/")){
+    sqlite.path <- "/data/sqlite/";  #vip server
+  }else if(file.exists("/home/glassfish/sqlite/")){
     sqlite.path <- "/home/glassfish/sqlite/";  #public server
   }else if(file.exists("/Users/xialab/Dropbox/sqlite/")){
     sqlite.path <- "/Users/xialab/Dropbox/sqlite/"; #xia local

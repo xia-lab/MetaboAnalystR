@@ -64,14 +64,7 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
 
 
     str <- "NA"
-  
-  imgSet <- readSet(imgSet, "imgSet");
-  if(grepl("norm", imgNm)){
-    imgSet$qc_norm_boxplot <- imgNm;
-  }else{
-    imgSet$qc_boxplot <- imgNm;
-  }
-  saveSet(imgSet);
+
   if(interactive){
     library(plotly);
         m <- list(
@@ -89,6 +82,13 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
     ggp_build <- layout(ggplotly(bp), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build);
   }else{
+  imgSet <- readSet(imgSet, "imgSet");
+  if(grepl("norm", imgNm)){
+    imgSet$qc_norm_boxplot <- imgNm;
+  }else{
+    imgSet$qc_boxplot <- imgNm;
+  }
+  saveSet(imgSet);
   Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
   print(bp);
   dev.off();
@@ -147,10 +147,6 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     width <- 8
     height <- 6
   }
-  
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$qc.density_norm <- imgNm;
-  saveSet(imgSet);
 
   if(interactive){
     library(plotly);
@@ -169,6 +165,9 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build);
   }else{
+    imgSet <- readSet(imgSet, "imgSet");
+    imgSet$qc.density_norm <- imgNm;
+    saveSet(imgSet);
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
     print(g)
     dev.off();
@@ -471,15 +470,6 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
   }
 
   str <- "NA"
-  
-  imgSet <- readSet(imgSet, "imgSet");
-  if(grepl("norm", imgNm)){
-    imgSet$qc_norm_pca <- imgNm;
-  }else{
-    imgSet$qc_pca <- imgNm;
-  }
-  saveSet(imgSet);
-
 
   if(interactive){
     library(plotly);
@@ -498,6 +488,13 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
     ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m)
     return(ggp_build);
   }else{
+    imgSet <- readSet(imgSet, "imgSet");
+    if(grepl("norm", imgNm)){
+      imgSet$qc_norm_pca <- imgNm;
+    }else{
+      imgSet$qc_pca <- imgNm;
+    }
+    saveSet(imgSet);
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
     print(pcafig);
     dev.off();
