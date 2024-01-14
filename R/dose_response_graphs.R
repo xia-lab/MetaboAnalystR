@@ -229,13 +229,13 @@ PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
 
   if(scale == "log10"){
     dens <- density(log10(bmd.hist$bmd));
-    xTitle <- paste0("log10(Gene-level BMD) (", units, ")")
+    xTitle <- "log10(Feature-level BMD)";
   } else if(scale == "log2"){
     dens <- density(log2(bmd.hist$bmd));
-    xTitle <- paste0("log2(Gene-level BMD) (", units, ")")
+    xTitle <- "log2(Feature-level BMD)";
   } else {
     dens <- density(bmd.hist$bmd);
-    xTitle <- paste0("Gene-level BMD (", units, ")")
+    xTitle <- "Feature-level BMD";
   }
   
   dens <- data.frame(x = dens$x, y = dens$y)

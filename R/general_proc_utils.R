@@ -36,7 +36,7 @@ SanityCheckData <- function(mSetObj=NA){
       if(mSetObj$dataSet$paired & !(mSetObj$dataSet$pair.checked)){ 
         msg<-c(msg,"Samples are paired.");
         # need to first set up pair information if not csv file
-        if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" )){
+        if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" | mSetObj$dataSet$type=="pktable-ma")){
           pairs <- ReadPairFile();
           # check if they are of the right length
           if(length(pairs)!=length(mSetObj$dataSet$url.smp.nms)){

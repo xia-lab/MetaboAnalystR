@@ -199,24 +199,47 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     h=h+(100-nrow(data1sc))*5      
   }
 
-  if(h<750){
-   cb_grid <- setup_colorbar_grid(nrows = 3, x_start = 1.1, y_start = 0.85, x_spacing = 0.15)
- 
-  } else if(h<1500){
-   cb_grid <- setup_colorbar_grid(nrows = 7, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
- 
+  if(any(apply(annotation[,names(idx),drop=F],2, function(x) length(unique(x)))>10)){
+    if(h<750){
+      nr = 2  
+      ys = 0.85
+    } else if(h<1500){
+      nr = 4.5
+      ys = 0.9  
+    }else{
+      nr = 9
+      ys = 0.95 
+    }
   }else{
-   cb_grid <- setup_colorbar_grid(nrows =11, x_start = 1.1, y_start = 0.95, x_spacing = 0.15)
- 
-  }
+   if(h<750){
+      nr = 3  
+      ys = 0.85
+    } else if(h<1500){
+      nr = 7
+      ys = 0.95  
+    }else{
+      nr = 11
+     ys = 0.95
+   }
+ }
+
 
       sz <- max(as.numeric(annoPer) / 100, 0.015)
       bf <- min(0.01, (sz / 3))
-    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+
+      if(smplDist=="correlation"){
+      my.dist <- cor(t(data1sc), method="pearson")
+      my.dist <- 1-my.dist 
+      my.dist <- as.dist(my.dist, diag = FALSE, upper = F)
+         }else{
+      my.dist = dist(data1sc, method = smplDist)
+      }
+   
+     dend_row <- hclust(my.dist, method = clstDist)
      p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
                   layout = list(font = list(size = fzAnno)),
                   colors = colors,
-                  colorbar_grid = cb_grid
+                  colorbar_grid = setup_colorbar_grid(nrows =nr, x_start = 1.1, y_start = ys, x_spacing = 0.15)
     )%>%
       add_col_annotation(annotation,
                          side = "top", size = annoPer , buffer = bf , inner_buffer = bf / 3
@@ -268,6 +291,211 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
   return(.set.mSet(mSetObj));
 }
 
+#'Create high resolution static HeatMap for download only
+#'@description '@param #same as PlotHeatMap2
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+
+PlotStaticHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
+                       scaleOpt="row", format="png", dpi=72, 
+                       width=NA, smplDist="pearson", 
+                       clstDist="average", colorGradient="bwm", fzCol,fzRow,
+                       viewOpt="overview",rankingMethod="mean",
+                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
+  mSetObj <- .get.mSet(mSetObj);
+  meta.info <- mSetObj$dataSet$meta.info
+
+  if(length(meta.vec.hm2) == 0){
+    AddErrMsg("Please select at least one meta-data for annotation!");
+    return(0);
+  }else{
+    meta.vec.hm2 <- meta.vec.hm2[complete.cases(meta.vec.hm2)];
+    sel.meta.df <- as.data.frame(meta.info[, meta.vec.hm2, drop=FALSE]);
+    meta.inxs <- which(colnames(meta.info) %in% meta.vec.hm2);
+  }
+  
+  for(i in 1:length(meta.inxs)){
+    inx <- meta.inxs[i];
+    inx2 <- which(colnames(sel.meta.df) == meta.vec.hm2[i]);
+    if(mSetObj$dataSet$meta.types[inx] == "cont"){
+      sel.meta.df[,inx2] <- as.numeric(as.character(sel.meta.df[,inx2]));
+    }else{
+      if(mSetObj$dataSet$types.cls.lbl[inx] == "numeric"){
+        sel.meta.df[,inx2] <- as.factor( as.numeric( levels(sel.meta.df[,inx2]))[sel.meta.df[,inx2]]);
+      }
+    }
+  }
+  
+  if(length(sort.vec.hm2) == 0){
+    ord.vec <- 1;
+  }else{
+    ord.vec <- match(sort.vec.hm2, colnames(sel.meta.df));
+  }
+  
+  if(length(ord.vec) == 1){
+    ordInx <- order(sel.meta.df[, ord.vec]);
+  }else if(length(ord.vec) == 2){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2]]);
+  }else if(length(ord.vec) == 3){
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]]);
+  }else{
+    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]]);
+  } 
+  
+  annotation <- as.data.frame(sel.meta.df[ordInx, ]);
+  # set up data set
+  if(dataOpt=="norm"){
+    my.data <- mSetObj$dataSet$norm;
+  }else{
+    my.data <- qs::qread("prenorm.qs");
+  }
+  
+  data <- my.data[ordInx, ];
+  var.nms <- colnames(data);
+  
+  # set up parameter for heatmap
+   if(colorGradient=="gbr"){
+        colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+    }else if(colorGradient == "heat"){
+        colors <- grDevices::heat.colors(256);
+    }else if(colorGradient == "topo"){
+        colors <- grDevices::topo.colors(256);
+    }else if(colorGradient == "gray"){
+        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+    }else if(colorGradient == "byr"){
+        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+    }else if(colorGradient == "viridis") {
+        colors <- rev(viridis::viridis(10))
+    }else if(colorGradient == "plasma") {
+        colors <- rev(viridis::plasma(10))
+    }else if(colorGradient == "npj"){
+        colors <- c("#00A087FF","white","#E64B35FF")
+    }else if(colorGradient == "aaas"){
+        colors <- c("#4DBBD5FF","white","#E64B35FF");
+    }else if(colorGradient == "d3"){
+        colors <- c("#2CA02CFF","white","#FF7F0EFF");
+    }else {
+        colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    }
+
+  if(drawBorder){
+    border.col<-"grey60";
+  }else{
+    border.col <- NA;
+  }
+  
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$htmaptwo <- imgName;
+  
+  if(useTopFeature){
+    if(rankingMethod == "aov2"){
+      if(is.null(mSetObj$analSet$aov2$sig.mat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
+      }
+      mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
+    }else if(rankingMethod == "lm"){
+      if(is.null(mSetObj$analSet$cov$sig.mat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
+      }
+      mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
+    }else if(rankingMethod == "rf"){
+      if(is.null(mSetObj$analSet$cov$rf.sigmat)){
+        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
+        return(0);
+      }
+      mat <- as.matrix(mSetObj$analSet$rf.sigmat);
+      
+    }else{ # "mean" or "iqr"
+      mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, mSetObj$analSet$type)$data;
+      mat <- t(mat);
+    }
+    
+    var.nms <- rownames(mat);
+    if(length(var.nms) > topFeature){
+      var.nms <- var.nms[c(1:topFeature)];
+    }
+    data <- data[, var.nms];
+  }
+  
+  hc.dat <- as.matrix(data);
+  
+  # need to control for very large data plotting
+  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+    includeRowNames <- FALSE;
+  }
+  if(.on.public.web){
+    if(ncol(hc.dat) > 5000){
+      filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+      rk <- rank(-filter.val, ties.method='random');
+      hc.dat <- hc.dat[,rk <=5000];
+      data <- data[,rk <=5000];
+      print("Data is reduced to 5000 vars based on IQR ..");
+    }
+  }
+  
+  # compute size for heatmap
+  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+  
+  if(format=="pdf"){
+    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  }
+  
+  if(ncol(annotation)>1){
+    annotation <- annotation[,c(length(annotation):1)];
+  }else{
+    colnames(annotation) <- meta.vec.hm2[1];
+  }
+  
+  hc.dat <- hc.dat[rownames(annotation),]; #order data matrix per annotation
+  colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
+  p<- pheatmap::pheatmap(t(hc.dat), 
+                     annotation=annotation, 
+                      fontsize_row=fzRow, 
+                       fontsize_col=fzCol,
+                     clustering_distance_rows = smplDist,
+                     #clustering_distance_cols = smplDist,
+                     clustering_method = clstDist, 
+                     border_color = border.col,
+                     cluster_rows = T, 
+                     cluster_cols = F,
+                     scale = scaleOpt,
+                     legend = show.legend,
+                     annotation_legend = show.annot.legend, 
+                     show_rownames=includeRowNames,
+                     color = colors,
+                     silent = TRUE);
+  p$tree_row$order <- rev(p$tree_row$order)
+  pheatmap::pheatmap(t(hc.dat), 
+                     annotation=annotation, 
+                      fontsize_row=fzRow, 
+                       fontsize_col=fzCol,
+                     clustering_distance_rows = smplDist,
+                     #clustering_distance_cols = smplDist,
+                     clustering_method = clstDist, 
+                     border_color = border.col,
+                     cluster_rows = p$tree_row, 
+                     cluster_cols = F,
+                     scale = scaleOpt,
+                     legend = show.legend,
+                     annotation_legend = show.annot.legend, 
+                     show_rownames=includeRowNames,
+                     color = colors);
+  
+  dev.off();
+  
+  mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
+  return(.set.mSet(mSetObj));
+}
+
 get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15, cellwidth = 15){
   png("NUL", type = "cairo"); # trick to avoid open device in server 
   heat_map <- pheatmap::pheatmap(dat, annotation=annotation, cellheight = cellheight, cellwidth = cellwidth);
@@ -299,7 +527,7 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
       w <- 7.2;
     }
     if(h > w){
-      h <- w;
+      h <- w+1.2;
     }
   }
   
