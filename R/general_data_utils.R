@@ -226,7 +226,10 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   plink.path <<- "/home/glassfish/plink/";
   # sqlite db path for gene annotation
-  if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
+  if(file.exists("/data/sqlite/")){ #vip server
+    url.pre <<- "/data/sqlite/";
+    plink.path <<- "/home/glassfish/plink/";
+  }else if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
     url.pre <<- "/home/glassfish/sqlite/";
     plink.path <<- "/home/glassfish/plink/";
   }else if(file.exists("/Users/xia/Dropbox/sqlite/")){ # xia local

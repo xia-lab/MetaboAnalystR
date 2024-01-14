@@ -253,7 +253,7 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     mSetObj$imgSet$heatmap_multifac_param$height <- h;
 
     saveRDS(p, "heatmap_multifac.rds")
-
+      
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
 
@@ -262,9 +262,8 @@ PlotHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm",
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
     print(plotjs)
-    write(as_json, plotjs)  
-  
-   
+    write(as_json, plotjs)
+
   mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
   return(.set.mSet(mSetObj));
 }
