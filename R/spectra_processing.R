@@ -2674,6 +2674,16 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
                        title= title, 
                        subtitle = subtitle,
                        cutoff_relative = 5)
+  # add some modification
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    text=element_text(family="serif", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
+  
   Cairo::Cairo(
     file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
     unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")

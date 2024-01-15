@@ -332,6 +332,14 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        title= title, 
                        subtitle = subtitle,
                        cutoff_relative = cutoff_relative)
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    text=element_text(family="Helvetica", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
   
   # Save the static plot with Cairo
   Cairo::Cairo(
