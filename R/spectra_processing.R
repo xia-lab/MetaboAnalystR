@@ -1669,6 +1669,7 @@ generateAsariPeakList <-  function(userPath) {
   
   all_recrds <- ftab_annotation$matched_DB_records
   all_forumus <- sapply(all_recrds, function(x){
+    if(is.na(x)){return("")}
     res <- strsplit(x, "\\), \\(")
     if(length(res[[1]]) == 0){
       return("")
@@ -1688,6 +1689,7 @@ generateAsariPeakList <-  function(userPath) {
   
   all_cmpds <- ftab_annotation$matched_DB_shorts
   all_cmpd <- sapply(all_cmpds, function(x){
+    if(is.na(x)){return("")}
     res <- strsplit(x, "\\), \\(")
     if(length(res[[1]]) == 0){
       return("")
@@ -1719,6 +1721,7 @@ generateAsariPeakList <-  function(userPath) {
     }
   })
   all_hmdb <- sapply(all_cmpds, function(x){
+    if(is.na(x)){return("")}
     res <- strsplit(x, "\\), \\(")
     if(length(res[[1]]) == 0){
       return("")
@@ -1749,6 +1752,8 @@ generateAsariPeakList <-  function(userPath) {
       return(res2_done)
     }
   })
+  
+  ftab_annotation$matched_DB_records[is.na(ftab_annotation$matched_DB_records)] <- ""
   
   Formula2Cmpd_list <- lapply(1:length(all_recrds), function(x){
     res <- list()
@@ -2669,6 +2674,16 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
                        title= title, 
                        subtitle = subtitle,
                        cutoff_relative = 5)
+  # add some modification
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    text=element_text(family="serif", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
+  
   Cairo::Cairo(
     file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
     unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")

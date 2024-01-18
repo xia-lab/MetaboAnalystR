@@ -557,9 +557,19 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   filems2_name <- tools::file_path_sans_ext(basename(msmsfile))
   cmpd_input <- as.data.frame(.readDataTable(msmsfile));
   cmpd_input <- as.data.frame(apply(cmpd_input, 2, function(x){x[is.na(x)] <- ""; x}));
-  colnames(cmpd_input) <- paste0("CMPD_", seq(ncol(cmpd_input)));
   
   if(nrow(cmpd_input) == nrow(input)){
+    colnames(cmpd_input) <- paste0("CMPD_", seq(ncol(cmpd_input)));
+    mSetObj$dataSet$cmpd.orig <-cmpd_input
+  } else if (colnames(cmpd_input)[1] == "index") {
+    cmpd_ncol <- ncol(cmpd_input)-1
+    new_cmpd_input <- as.data.frame(matrix("", ncol = cmpd_ncol, nrow = nrow(input)))
+    for(uu in 1:nrow(cmpd_input)){
+      idx_sub <- as.integer(cmpd_input[uu, 1])
+      new_cmpd_input[idx_sub, ] <- cmpd_input[uu, -1]
+    }
+    new_cmpd_input -> cmpd_input
+    colnames(cmpd_input) <- paste0("CMPD_", seq(ncol(cmpd_input)));
     mSetObj$dataSet$cmpd.orig <-cmpd_input
   } else {
     AddErrMsg("Peak table and compound candidate table have different rows. Please correct.");
@@ -662,4 +672,26 @@ SetMS2IDType <- function(mSetObj=NA, IDtype = "hmdb_ids"){
     stop("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.")
   }
   return(.set.mSet(mSetObj))
+}
+
+formatfunresult <- function(){
+  setwd("/tank/islets_samples/case_study/guest8509032390121001213tmp/")
+  df <- read.csv("peaks_ms1_islets.txt")
+  df_cmpd <- read.csv("compound_msn_results.csv")
+  dfx_list <- list()
+  for(i in 1:nrow(df)){
+    cat("==>", i, "\n")
+    if(any((df$mz[i]>df_cmpd$mzmin) & (df$mz[i] < df_cmpd$mzmax) & 
+           (df$rt[i]>df_cmpd$rtmin) & (df$rt[i] < df_cmpd$rtmax))){
+      idx <- which((df$mz[i]>df_cmpd$mzmin) & (df$mz[i] < df_cmpd$mzmax) & 
+                     (df$rt[i]>df_cmpd$rtmin) & (df$rt[i] < df_cmpd$rtmax))
+      dfx <- cbind(i, df_cmpd[idx[1], c("InchiKey_1", "InchiKey_2", "InchiKey_3", "InchiKey_4", "InchiKey_5")])
+      dfx_list <- c(dfx_list, list(dfx))
+    }
+  }
+  
+  dfx <- do.call(rbind, dfx_list)
+  colnames(dfx)[1] <- "index"
+  write.csv(dfx, file = "compound_ms2_islet.csv", row.names = F)
+  
 }
