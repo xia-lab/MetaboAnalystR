@@ -245,6 +245,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   if(!no.clst){ # when no clustering, tree_row is NA
    p <- p  %>% add_row_clustering() %>% 
       add_col_clustering()
+     new.ord <- p@xaxes@listData[["x"]]@order;
+     corr.mat <- corr.mat[new.ord, new.ord];
+     mSetObj$analSet$pwcor$new.ord <- new.ord;
     
   }
   
@@ -279,7 +282,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
 # use Hmisc for fast but lazy computing 
 ComputeCorrP <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-
   data <- mSetObj$analSet$pwcor$data;
   cor.method <- mSetObj$analSet$pwcor$cor.method;
   pval.mat <- Hmisc::rcorr(as.matrix(data), type=cor.method)$P;
@@ -288,6 +290,7 @@ ComputeCorrP <- function(mSetObj=NA){
     new.ord <- mSetObj$analSet$pwcor$new.ord;
     pval.mat <- pval.mat[new.ord, new.ord];
   }
+
   fast.write.csv(signif(pval.mat,5), file="pval_corr_table.csv");
   return(1);
 }
