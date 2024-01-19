@@ -230,14 +230,16 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     h = max(min(1300,nrow(corr.mat)*unit+50),300)
        corr.mat = round(corr.mat,5)
   if(fix.col){
-    p <- iheatmap(corr.mat,  name = "correltion", 
-                  colors = colors,zmin=-1,zmid=0, zmax=1) %>%
+    p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient", 
+                  colors = colors,zmin=-1,zmid=0, zmax=1,
+          colorbar_grid = setup_colorbar_grid(y_start = 0.85)) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2, font = list(size = fz)) 
  
   }else{
-    p <- iheatmap(corr.mat,  name = "correltion", 
-                  colors = colors ) %>%
+    p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient" , 
+                  colors = colors,
+ colorbar_grid = setup_colorbar_grid(y_start = 0.85) ) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2,font = list(size = fz) ) 
   }
