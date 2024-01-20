@@ -238,7 +238,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
  
   }else{
     p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient" , 
-                  colors = colors,
+                  colors = colors,zmin=min(corr.mat),zmid=mean(min(corr.mat),max(corr.mat)), zmax=max(corr.mat),
  colorbar_grid = setup_colorbar_grid(y_start = 0.85) ) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2,font = list(size = fz) ) 
@@ -274,11 +274,191 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
- print(plotjs)
+     print(plotjs)
     write(as_json, plotjs)  
   fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
   return(.set.mSet(mSetObj));
 }
+
+#'Create high resolution static HeatMap for download only
+#'@description '@param #same as PlotCorrHeatMap
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@import qs
+#'@export
+#'
+
+PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
+                          colors, viewOpt, fix.col, no.clst, corrCutoff=0){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  main <- xlab <- ylab <- NULL;
+  data <- mSetObj$dataSet$norm;
+  corrCutoff <- as.numeric(corrCutoff)
+  
+  if(target == 'row'){
+    data <- t(data);
+  }
+  
+  if(.on.public.web){
+    if(ncol(data) > 1000){
+        filter.val <- apply(data.matrix(data), 2, IQR, na.rm=T);
+        rk <- rank(-filter.val, ties.method='random');
+        data <- as.data.frame(data[,rk <=1000]);
+        print("Data is reduced to 1000 vars ..");
+    }
+  }
+  # compare p-values w. hmisc + cor.test
+  colnames(data) <- substr(colnames(data), 1, 18);
+  corr.mat <- cor(data, method=cor.method);
+
+  # NA gives error w. hclust
+  corr.mat[abs(corr.mat) < corrCutoff] <- 0;
+  
+  # save data for lazy pval computing
+  mSetObj$analSet$pwcor <- list();
+  mSetObj$analSet$pwcor$data <- data;
+  mSetObj$analSet$pwcor$cor.method <- cor.method;
+  mSetObj$analSet$pwcor$no.clst <- no.clst;
+
+  if(.on.public.web){
+    load_gplots()
+    load_rcolorbrewer()
+  }
+  
+  # set up parameter for heatmap
+   if(colors=="gbr"){
+    colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+  }else if(colors == "heat"){
+    colors <- grDevices::heat.colors(256);
+  }else if(colors == "topo"){
+    colors <- grDevices::topo.colors(256);
+  }else if(colors == "gray"){
+    colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+  }else if(colors == "byr"){
+    colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+  }else if(colors == "viridis") {
+    colors <- rev(viridis::viridis(10))
+  }else if(colors == "plasma") {
+    colors <- rev(viridis::plasma(10))
+  }else if(colors == "npj"){
+    colors <- c("#00A087FF","white","#E64B35FF")
+  }else if(colors == "aaas"){
+    colors <- c("#4DBBD5FF","white","#E64B35FF");
+  }else if(colors == "d3"){
+    colors <- c("#2CA02CFF","white","#FF7F0EFF");
+  }else {
+colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+  }
+  
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(viewOpt == "overview"){
+    if(is.na(width)){
+      w <- 9;
+    }else if(width == 0){
+      w <- 7.2;
+    }else{
+      w <- 7.2;
+    }
+    h <- w;
+    mSetObj$imgSet$corr.heatmap <- imgName;
+    
+  }else{
+    if(ncol(corr.mat) > 50){
+      myH <- ncol(corr.mat)*12 + 40;
+    }else if(ncol(corr.mat) > 20){
+      myH <- ncol(corr.mat)*12 + 60;
+    }else{
+      myH <- ncol(corr.mat)*12 + 120;
+    }
+    h <- round(myH/72,2);
+    
+    if(is.na(width)){
+      w <- h;
+    }else if(width == 0){
+      w <- h <- 7.2;
+      
+    }else{
+      w <- h <- 7.2;
+    }
+    mSetObj$imgSet$corr.heatmap <- imgName;
+  }
+  
+  if(format=="pdf"){
+    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  }
+  
+  if(no.clst){
+    rowv=FALSE;
+    colv=FALSE;
+    dendro= "none";
+  }else{
+    rowv=TRUE;
+    colv=TRUE;
+    dendro= "both";
+  }
+   
+  
+  if(fix.col){
+    breaks <- seq(from = -1, to = 1, length = 257);
+    res <- pheatmap::pheatmap(corr.mat, 
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors,
+                              breaks = breaks,  silent = TRUE
+    );
+   if(colv){
+     res$tree_row$order <- rev(res$tree_row$order)
+     colv <-  res$tree_row
+   }else{
+     corr.mat <- corr.mat[,ncol(corr.mat):1]
+   }
+  pheatmap::pheatmap(corr.mat, 
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors,
+                              breaks = breaks
+    );
+  }else{
+    res <- pheatmap::pheatmap(corr.mat, 
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors,  silent = TRUE
+    );
+  if(colv){
+     res$tree_row$order <- rev(res$tree_row$order)
+     colv <-  res$tree_row
+   }else{
+     corr.mat <- corr.mat[,ncol(corr.mat):1]
+   }
+  pheatmap::pheatmap(corr.mat, 
+                              fontsize=8, fontsize_row=8, 
+                              cluster_rows = colv, 
+                              cluster_cols = rowv,
+                              color = colors
+    );
+  }
+  
+  dev.off();
+
+  if(!no.clst){ # when no clustering, tree_row is NA
+    new.ord <- res$tree_row$order;
+    corr.mat <- corr.mat[new.ord, new.ord];
+    mSetObj$analSet$pwcor$new.ord <- new.ord;
+  }
+
+  return(.set.mSet(mSetObj));
+}
+
+
 
 # this is for p values for correlation heatmap (all pair-wise). 
 # use Hmisc for fast but lazy computing 
