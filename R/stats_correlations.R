@@ -238,8 +238,8 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
  
   }else{
     p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient" , 
-                  colors = colors,zmin=min(corr.mat),zmid=mean(min(corr.mat),max(corr.mat)), zmax=max(corr.mat),
- colorbar_grid = setup_colorbar_grid(y_start = 0.85) ) %>%
+         colors = colors,zmin=min(corr.mat),zmid=mean(min(corr.mat),max(corr.mat)), zmax=max(corr.mat),
+       colorbar_grid = setup_colorbar_grid(y_start = 0.85) ) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2,font = list(size = fz) ) 
   }
