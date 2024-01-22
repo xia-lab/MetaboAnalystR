@@ -140,7 +140,9 @@
         id <- matched_resn$X2[i];
         idx <- which(cpd.lib[["id"]]==id)
         dbTypedID <- cpd.lib$ms2IDs[idx];
-        if(dbTypedID == "") {
+        if(is.na(dbTypedID)) {
+          return(TRUE)
+        } else if(dbTypedID == "") {
           return(TRUE)
         } else if(all(ref_cmpdlistn[idx,] == "")) {
           return(TRUE)
@@ -174,7 +176,9 @@
         id <- matched_resp$X2[i];
         idx <- which(cpd.lib[["id"]]==id)
         dbTypedID <- cpd.lib$ms2IDs[idx];
-        if(dbTypedID == "") {
+        if(is.na(dbTypedID)) {
+          return(TRUE)
+        } else if(dbTypedID == "") {
           return(TRUE)
         } else if(all(ref_cmpdlistp[idx,] == "")) {
           return(TRUE)
@@ -222,7 +226,9 @@
       id <- matched_res$X2[i];
       idx <- which(cpd.lib[["id"]]==id)
       dbTypedID <- cpd.lib$ms2IDs[idx];
-      if(dbTypedID == "") {
+      if(is.na(dbTypedID)) {
+        return(TRUE)
+      } else if(dbTypedID == "") {
         return(TRUE)
       } else if(all(ref_cmpdlistp[idx,] == "")) {
         return(TRUE)
@@ -259,7 +265,9 @@
       id <- matched_res$X2[i];
       idx <- which(cpd.lib[["id"]]==id)
       dbTypedID <- cpd.lib$ms2IDs[idx];
-      if(dbTypedID == "") {
+      if(is.na(dbTypedID)) {
+        return(TRUE)
+      } else if(dbTypedID == "") {
         return(TRUE)
       } else if(all(ref_cmpdlistn[idx,] == "")) {
         return(TRUE)
