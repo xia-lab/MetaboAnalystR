@@ -78,17 +78,32 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
     pldSNPs <- T;
   }
 
-  outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
-  
-  if(is.null(outcome.dat)){
-    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data. The server might be busy or try different input."))
+  captured_messages <<- "";
+
+  outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh)))
+   
+  last_msg <- captured_messages[length(captured_messages)];
+  print(last_msg);
+  if(length(grep("Server error: 502", last_msg)) > 0 || length(grep("Failed to retrieve results from server", last_msg))){
+    AddErrMsg(paste0("The server is busy, try again later!"))
+    return(-2);   
+  }else if(is.null(outcome.dat)){
+    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
     return(-2);
   }
 
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
   return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
+}
+
+capture_messages <- function(expr) {
+  withCallingHandlers(expr, message = function(m) {
+    # Append the message to the global variable
+    captured_messages <<- c(captured_messages, conditionMessage(m))
+    invokeRestart("muffleMessage")
+  })
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
