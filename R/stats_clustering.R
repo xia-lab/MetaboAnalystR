@@ -654,6 +654,15 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     sz <- max(as.numeric(annoPer) / 100, 0.015)
     bf <- min(0.01, (sz / 3))
 
+    dendrow_size = ifelse(w>800,0.05,0.15) 
+    if(h>1500){
+    dendcol_size = 0.03
+    }else if(h<1000){
+     dendcol_size = 0.1
+    }else{
+     dendcol_size = 0.05
+   }
+
    if(grp.ave){
         
     p <- iheatmap(data1sc,  name = "value", x_categorical = TRUE,
@@ -697,7 +706,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
       my.dist2 = dist(t(data1sc), method = smplDist)
     }
     dend_col <- hclust( my.dist2, method = clstDist)
-    p <- p %>% add_col_dendro(dend_col)
+    p <- p %>% add_col_dendro(dend_col,size=dendcol_size)
     } 
 
   if (colV) {
@@ -710,7 +719,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     }
 
     dend_row <- hclust(my.dist, method = clstDist)
-    p <- p %>% add_row_dendro(dend_row)  
+    p <- p %>% add_row_dendro(dend_row,size=dendrow_size)  
   } 
     
       if(ncol(data1sc)<100){
@@ -734,7 +743,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
  
-  #  as_list[["layout"]][["annoHeight"]] <- round(0.1*h, 1)
+
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
