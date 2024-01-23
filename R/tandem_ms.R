@@ -26,8 +26,8 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
-       file = "mSetObj___performMS2search.rda")
+  # save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
+  #      file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -61,6 +61,19 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
+  
+  res_df <- data.frame(IDs = results_clean[[1]][["IDs"]],
+                       Scores = results_clean[[1]][["Scores"]][[1]],
+                       Similarity_score = results_clean[[1]][["dot_product"]][[1]],
+                       CompoundName = results_clean[[1]][["Compounds"]],
+                       Formula = results_clean[[1]][["Formulas"]],
+                       SMILES = results_clean[[1]][["SMILEs"]],
+                       InchiKeys = results_clean[[1]][["InchiKeys"]],
+                       Precursors = results_clean[[1]][["Precursors"]],
+                       MS2_reference = results_clean[[1]][["MS2refs"]])
+  
+  qs::qsave(results_clean, file = "MS2searchSingle_results.qs")
+  write.csv(res_df, file = "MS2searchSingle_results.csv", row.names = F)
   
   return(.set.mSet(mSetObj));
 }
@@ -859,3 +872,80 @@ GetNonIncludedPrecMZRTs <- function(mSetObj=NA){
   return(all_nonprecmzrt)
 }
 
+
+PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72, format="png", width = 12, height = 8){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  save(mSetObj, imageNM, dpi, format, width, height, file = "PlotMS2SummarySingle_input.rda")
+  
+  if(is.null(mSetObj[["dataSet"]][["msms_result"]])){
+    if(file.exists("MS2searchSingle_results.qs")){
+      ms2_res <- qs::qread("MS2searchSingle_results.qs")[[1]]
+    } else {
+      return(0)
+    }
+  } else {
+    ms2_res <- mSetObj[["dataSet"]][["msms_result"]][[1]]
+  }
+  
+  if(option == 0L){
+    ms2_res[["dot_product"]][[1]] -> simi_vec;
+    num <- c(length(which(simi_vec>=0.8)),
+             length(which(simi_vec>=0.6 & simi_vec<0.8)),
+             length(which(simi_vec<0.6)))
+    
+    levls <- factor(c("High(>0.8)", "Medium(0.6-0.8)", "Low(<0.6)"), levels = c("High(>0.8)", "Medium(0.6-0.8)", "Low(<0.6)"))
+    
+    df <- data.frame(levls = levls,
+                     Number = num)
+    
+    cbPalette <- c("#009E73", "#E69F00", "#999999")
+    require(ggplot2)
+    p1 <- ggplot(data=df, aes(x=levls, y=Number)) +
+      geom_bar(stat="identity", aes(fill=levls), width = 0.618)+
+      geom_text(aes(label=Number), vjust=1.6, color="white", size=6)+
+      theme_minimal() + scale_fill_manual(values=cbPalette) + 
+      scale_color_manual(values=cbPalette) + 
+      guides(fill=guide_legend(title="Confidence Level"))+
+      theme(axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14),  
+            axis.title.x = element_text(size = 14),
+            axis.title.y = element_text(size = 14))
+    
+  } else {
+    ms2_res[["Scores"]][[1]] -> simi_vec;
+    num <- c(length(which(simi_vec>=80)),
+             length(which(simi_vec>=60 & simi_vec<80)),
+             length(which(simi_vec<60)))
+    
+    levls <- factor(c("High(>80)", "Medium(60-80)", "Low(<60)"), levels = c("High(>80)", "Medium(60-80)", "Low(<60)"))
+    
+    df <- data.frame(levls = levls,
+                     Number = num)
+    
+    cbPalette <- c("#009E73", "#E69F00", "#999999")
+    require(ggplot2)
+    p1 <- ggplot(data=df, aes(x=levls, y=Number)) +
+      geom_bar(stat="identity", aes(fill=levls), width = 0.618)+
+      geom_text(aes(label=Number), vjust=1.6, color="white", size=6)+
+      theme_minimal() + scale_fill_manual(values=cbPalette) + 
+      scale_color_manual(values=cbPalette) + 
+      guides(fill=guide_legend(title="Confidence Level"))+
+      theme(axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14),  
+            axis.title.x = element_text(size = 14),
+            axis.title.y = element_text(size = 14))
+    
+  }
+  
+  imageNM <- paste0(imageNM, "_", dpi, ".", format)
+  
+  Cairo::Cairo(
+    file = imageNM, 
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+  mSetObj[["imgSet"]]$ms2sumsingle <- imageNM
+  
+  return(.set.mSet(mSetObj))
+}
