@@ -362,11 +362,12 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   dev.off()
 
   # Save the interactive plot with ggplot
+  save(p1, file = "p1.rda")
   px <- plotly::ggplotly(p1);
   
-  pxl <- list(px$x$data,px$x$layout,px$x$config);
-  names(pxl) <- c("data","layout","config");
-  jsonlist <- RJSONIO::toJSON(pxl, pretty = T,force = TRUE,.na = "null");
+  #pxl <- list(px$x$data,px$x$layout,px$x$config);
+  #names(pxl) <- c("data","layout","config");
+  jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
   cat(jsonlist);
   sink();
