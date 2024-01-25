@@ -139,7 +139,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$harmonized.dat
-  save.image("MR.RData");
+  #save.image("MR.RData");
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
   #mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
