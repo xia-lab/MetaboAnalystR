@@ -682,10 +682,16 @@ updateSpectra3DPCA <- function(featureNM = 100){
   colnames(coords) <- NULL; 
   pca3d$loading$xyz <- coords;
   pca3d$loading$name <- rownames(mSet_pca$rotation);
-  pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
-                                 "@", 
-                                 round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
-  
+
+  if(is.null(mSet@peakfilling[["FeatureGroupTable"]])){
+    pca3d$loading$entrez <- mSet@dataSet[["Samples"]][-1][sort(selectRow_idx)]
+  } else {
+    pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
+                                   "@", 
+                                   round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
+    
+  }
+
   pca3d$loading$cols <- cols;
   
   pca3d$cls =  df$group;
