@@ -480,7 +480,7 @@ PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   singlesnp_results$up <- singlesnp_results$b + 1.96 * singlesnp_results$se
   singlesnp_results$lo <- singlesnp_results$b - 1.96 * singlesnp_results$se
-  singlesnp_results$tot <- ifelse(singlesnp_results$SNP %in% c("All - Inverse variance weighted", "All - MR Egger"), 1, 0.01)
+  singlesnp_results$tot <- ifelse(grepl("^All -", singlesnp_results$SNP), 1, 0.01)
   
   if(exponentiate) {
     singlesnp_results$b <- exp(singlesnp_results$b)
