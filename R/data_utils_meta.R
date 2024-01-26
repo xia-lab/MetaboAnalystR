@@ -194,6 +194,9 @@ ReadMergedExpressTable <- function(dataName){
 # as well as to prepare for GO analysis
 # no return, as set global 
 SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
+  paramSet <<- paramSet;
+  analSet <<- analSet;
+  save.image("metastat.RData");
   meta.mat <- analSet$meta.mat.all;
   paramSet$BHth <- BHth;
 
@@ -222,8 +225,13 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
     
     fc.mat[,i] <- de.res[,1];
     pval.mat[,i] <- de.res[,2];
+    if(i == 1){
+        rownames(fc.mat) <- rownames(de.res);
+        rownames(pval.mat) <- rownames(de.res);
+    }
   }
-
+  print("pval======mat");
+  print(head(pval.mat))
   
   dataNms <- names(analSet$inmex.ind);
   newNms <- substring(dataNms,0, nchar(dataNms)-4);
@@ -255,12 +263,15 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
     loss = losses
   );
  
+  fc.mat <- fc.mat[match(rownames(meta.mat), rownames(fc.mat)), ]
+  pval.mat <- pval.mat[match(rownames(meta.mat), rownames(pval.mat)), ]
+
   analSet$fc.mat <- fc.mat;
   analSet$pval.mat <- pval.mat;
   analSet$inmex.de <- inmex.de;
   analSet$meta.stat <- meta.stat;
 
-  if(colnames(analSet$meta.mat.all)[1] != "AverageFc"){
+  if(colnames(analSet$meta.mat.all)[1] != "AverageFc" && paramSet$inmex.method != "merge"){
     #cal sampleNumbers
     meta.info <- paramSet$dataSet$meta.info;
     sampleCounts <- table(meta.info$Dataset)
@@ -269,10 +280,11 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
 
     # Compute weighted average of fold change values
     weightedAvgFC <- rowSums(fc.mat * sampleNumbers) / sum(sampleNumbers)
-
+    
     # Convert to a data frame for easier handling and naming
     weightedAvgFC_df <- as.data.frame(weightedAvgFC)
     colnames(weightedAvgFC_df) <- "AverageFc"
+    weightedAvgFC_df <- weightedAvgFC_df[match(rownames(analSet$meta.mat.all), rownames(weightedAvgFC_df)), ,drop=F]
     analSet$avg.fc.mat <- weightedAvgFC_df;
     analSet$meta.avgFC <- as.vector(analSet$avg.fc.mat[,1]);
     names(analSet$meta.avgFC) <- rownames(analSet$meta.mat.all);

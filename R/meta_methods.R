@@ -586,7 +586,6 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 #'@export
 #'
 PerformMetaMerge<-function(BHth=0.05){
-  save.image("merge.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
   if(!paramSet$performedDE){
@@ -606,7 +605,7 @@ PerformMetaMerge<-function(BHth=0.05){
   ord.inx <- order(res.all$adj.P.Val, decreasing=F);
   dm.mat <- as.matrix(res.all[ord.inx,c("logFC", "adj.P.Val")]);
   qs::qsave(dm.mat, "allMeta.mat.qs");
-  colnames(dm.mat) <- c("CombinedLogFC", "Pval");
+  colnames(dm.mat) <- c("AverageFc", "Pval");
   
   sig.inx <- which(dm.mat[,"Pval"] <= BHth);
   analSet$meta.mat <- dm.mat[sig.inx,];
@@ -682,6 +681,7 @@ GetMetaResultGeneIDLinks <- function(){
 GetMetaResultColNames<-function(type="averageFc"){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
+
   if(type == "averageFc"){
     if("AverageFc" %in% colnames(analSet$meta.mat)){
       c(colnames(analSet$meta.mat));
@@ -729,8 +729,8 @@ GetMetaResultMatrix<-function(single.type="averageFc"){
   if(nrow(meta.mat2) > 1000){
     meta.mat2 <- meta.mat2[1:1000,]; # already sorted based on meta-p values
   }
-
   meta.mat2 <-signif(as.matrix(meta.mat2), 5);
+  print("===meta.mat2");
   meta.mat2;
 }
 
@@ -893,7 +893,8 @@ DoMetaSigUpdate <- function(BHth=0.05,fc.val=0){
     analSet <- res[[2]];
     saveSet(res[[1]], "paramSet");
 
-    meta.mat.all <- analSet$meta.mat.all;
+    meta.mat.all <- as.data.frame(analSet$meta.mat.all);
+
     if("VoteCounts" %in% colnames(meta.mat.all)){
         minCount <- BHth;
         paramSet$BHth <- 0.05;

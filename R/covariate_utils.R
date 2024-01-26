@@ -58,11 +58,24 @@ CovariateScatter.Anal <- function(dataName,
   }else{
     if(length(adj.vec) > 0){
       adj.bool = T;
+      if("Dataset" %in% adj.vec){
+        current.msg <- "Dataset can not be used as covariate!";
+        AddMsg(current.msg);
+        msgSet$current.msg <<- current.msg;
+        return(-1)
+      }
     }else{
       adj.bool = F;
       adj.vec <- "NA"
     }
   }
+
+  if("Dataset" == block){
+      current.msg <- "Dataset can not be used as blocking factor!";
+      AddMsg(current.msg);
+      msgSet$current.msg <<- current.msg;
+      return(-1)
+   }
 
   dataSet <- .multiCovariateRegression(dataSet,analysis.var, ref,contrast.cls, blocking.factor=block,adj.vec, F, T);
 

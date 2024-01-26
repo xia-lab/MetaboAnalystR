@@ -247,6 +247,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
 
 
 .perform_limma_edger <- function(dataSet, robustTrend = F){
+  require(limma);
   design <- dataSet$design;
   paramSet <- readSet(paramSet, "paramSet");
   contrast.matrix <- dataSet$contrast.matrix;
@@ -413,6 +414,7 @@ PerformLimma<-function(data, group){
 
 # get result table from eBayes fit object
 GetLimmaResTable<-function(fit.obj){
+  require(limma);
   resTable <- topTable(fit.obj, number=Inf, adjust.method="BH");
   if(!is.null(resTable$ID)){ # for older version
     rownames(resTable) <- resTable$ID;

@@ -464,3 +464,21 @@ ClearRCommandHistory <- function(){
   cmdSet <- readSet(cmdSet, "cmdSet"); 
   cmdSet$cmdVec <- c();
 }
+
+CheckListHasFC <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  if(paramSet$numOfLists > 1){
+    dataSet <- readDataset(paramSet$selDataNm);    
+  }else{
+    dataSet <- readDataset("datalist1")
+  }
+  sigmat <- as.data.frame(dataSet$prot.mat)
+  sigmat$entrez <- rownames(sigmat);
+  expr.vec <- sigmat[,1];
+  print(sum(expr.vec));
+  if(sum(expr.vec) == 0){
+    return(1);
+  }else{
+    return(0);
+  }
+}
