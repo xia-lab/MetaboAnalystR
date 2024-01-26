@@ -17,6 +17,7 @@ processMSMSupload <- function(mSetObj=NA, spectrum){
 
 performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                    dbpath = "",
+                                   frgdbpath = "",
                                    database = "all", 
                                    similarity_meth = 0,
                                    precMZ = NA, sim_cutoff = 30, ionMode = "positive",
@@ -26,8 +27,8 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  # save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
-  #      file = "mSetObj___performMS2search.rda")
+  save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2,
+       file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -61,6 +62,25 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
+  
+  # to extract fragments
+  require(RSQLite)
+  require(DBI)
+  require(progress)
+  con <- dbConnect(SQLite(), frgdbpath)
+  dt_idx <- dbGetQuery(con, "SELECT * FROM Index_table")
+  dbDisconnect(con)
+  
+  frgs_list <- lapply(results_clean[[1]][["IDs"]], function(n){
+    dbs <- dt_idx$DB_Tables[which((dt_idx$Min_ID <= n) & (n <= dt_idx$Max_ID))]
+    
+    con <- dbConnect(SQLite(), frgdbpath)
+    res <- dbGetQuery(con, paste0("SELECT Fragments FROM ", dbs, " WHERE ID=",n))
+    dbDisconnect(con)
+    strsplit(res$Fragments, "\t")[[1]]
+  })
+
+  mSetObj$dataSet$frgs_result[[1]] <- frgs_list
   
   res_df <- data.frame(IDs = results_clean[[1]][["IDs"]],
                        Scores = results_clean[[1]][["Scores"]][[1]],
@@ -302,6 +322,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    frgs_vec <- mSetObj$dataSet$frgs_result[[1]][[featureidx]]
     if(is.na(ref_str)){
       return (1);
     }
@@ -336,6 +357,15 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     
   }
 
+  # prepare fragments
+  normalize_spectrum <- OptiLCMS:::normalize_spectrum
+  bottom <- normalize_spectrum(spec_bottom, cutoff_relative)
+  frgs_vec_done <- vapply(bottom$mz, function(x){
+    y <- frgs_vec[spec_bottom[,1] == x]
+    if(is.na(y)){return("")}
+    return(y[1])
+  }, FUN.VALUE = character(1L))
+  
   # now, let's plot
   title <- paste0("Precursor: ", precMZ)
   subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
@@ -346,10 +376,10 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        subtitle = subtitle,
                        cutoff_relative = cutoff_relative)
   p1 <- p1 + theme(
-    axis.title.x = element_text(size = 16),
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 14),
-    axis.title.y = element_text(size = 16),
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.y = element_text(size = 14),
     text=element_text(family="Helvetica", face = "plain"),
     plot.subtitle=element_text(size=13, face="plain", color="black"),
     plot.title=element_text(size=18, face="plain", color="black"))
@@ -367,6 +397,54 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
   #names(pxl) <- c("data","layout","config");
+  px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850
+  px[["x"]][["layout"]][["height"]] <- px[["height"]] <- 425
+  px[["x"]][["layout"]][["yaxis"]][["title"]][["font"]][["size"]] <- 16
+  px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
+  #px[["x"]][["layout"]][["title"]] <-NULL
+  px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
+  
+  if(length(px[["x"]][["data"]])>2){
+    px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
+  }
+  
+  ## update the top data  -data1
+  if(length(px[["x"]][["data"]][[1]])>0){
+    if(length(px[["x"]][["data"]][[1]][["text"]])>0){
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
+    }
+  }
+  
+  ## update the bottom data  -data2
+  if(length(px[["x"]][["data"]][[2]])>0){
+    if(length(px[["x"]][["data"]][[2]][["text"]])>0){
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("-","",px[["x"]][["data"]][[2]][["text"]])
+      non_na_txt <- px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])]
+      frgs_vec_done[frgs_vec_done==""] <- "Unknown"
+      new_labels <- sapply(1:length(non_na_txt), function(x){
+          paste0(non_na_txt[x], "<br />Fragment Formula: ", frgs_vec_done[ceiling(x/2)])
+      })
+      px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])] <- new_labels
+    }
+  }
+  
+  ## update the matched star  -data3
+  if(length(px[["x"]][["data"]])>2){
+    if(length(px[["x"]][["data"]][[3]])>0){
+      if(length(px[["x"]][["data"]][[3]][["text"]])>0){
+        px[["x"]][["data"]][[3]][["text"]] <- gsub("<br />star_intensity.*","",px[["x"]][["data"]][[3]][["text"]])
+        px[["x"]][["data"]][[3]][["text"]] <- paste0("<b>Matched Fragment: </b><br />", px[["x"]][["data"]][[3]][["text"]])
+      }
+    }
+  }
+
+  
   jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
   cat(jsonlist);
@@ -910,7 +988,7 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72
       guides(fill=guide_legend(title="Confidence Level"))+
       theme(axis.text.x = element_text(size = 14),
             axis.text.y = element_text(size = 14),  
-            axis.title.x = element_text(size = 14),
+            axis.title.x = element_blank(),
             axis.title.y = element_text(size = 14))
     
   } else {
@@ -934,8 +1012,8 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72
       guides(fill=guide_legend(title="Confidence Level"))+
       theme(axis.text.x = element_text(size = 14),
             axis.text.y = element_text(size = 14),  
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14))
+            axis.title.y = element_text(size = 14),
+            axis.title.x = element_blank())
     
   }
   
