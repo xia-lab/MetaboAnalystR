@@ -27,8 +27,8 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2,
-       file = "mSetObj___performMS2search.rda")
+  # save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2,
+  #      file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -345,6 +345,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    frgs_vec <- mSetObj$dataSet$frgs_result[[current_msms_idx]][[featureidx]]
     if(is.na(ref_str)){
       return (1);
     }
@@ -691,6 +692,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
 
 performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                   dbpath = "",
+                                  frgdbpath = "",
                                   database = "all", 
                                   similarity_meth = 0,
                                   precMZ = NA, sim_cutoff = 30, ionMode = "positive",
@@ -788,6 +790,29 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
    
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
+  
+  # to extract fragments
+  require(RSQLite)
+  require(DBI)
+  require(progress)
+  con <- dbConnect(SQLite(), frgdbpath)
+  dt_idx <- dbGetQuery(con, "SELECT * FROM Index_table")
+  dbDisconnect(con)
+  
+  for(k in 1:length(results_clean)){
+    frgs_list <- lapply(results_clean[[k]][["IDs"]], function(n){
+      dbs <- dt_idx$DB_Tables[which((dt_idx$Min_ID <= n) & (n <= dt_idx$Max_ID))]
+      
+      con <- dbConnect(SQLite(), frgdbpath)
+      res <- dbGetQuery(con, paste0("SELECT Fragments FROM ", dbs, " WHERE ID=",n))
+      dbDisconnect(con)
+      strsplit(res$Fragments, "\t")[[1]]
+    })
+    
+    mSetObj$dataSet$frgs_result[[k]] <- frgs_list
+  }
+
+  
   mSetObj$dataSet$spec_set_prec <- spec_set_prec
   save(mSetObj, file = "mSetObj___597.rda")
   return(.set.mSet(mSetObj));
