@@ -102,7 +102,7 @@ capture_messages <- function(expr) {
   withCallingHandlers(expr, message = function(m) {
     # Append the message to the global variable
     captured_messages <<- c(captured_messages, conditionMessage(m))
-    invokeRestart("muffleMessage")
+    #invokeRestart("muffleMessage")
   })
 }
 
