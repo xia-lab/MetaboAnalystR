@@ -330,8 +330,12 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
     score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+    smiles <- mSetObj[["dataSet"]][["msms_result"]][[1]][["SMILEs"]][featureidx]
+    inchikeys <- mSetObj[["dataSet"]][["msms_result"]][[1]][["InchiKeys"]][featureidx]
+    formulas <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Formulas"]][featureidx]
     cat("compoundName ==> ", compoundName, "\n")
     cat("score        ==> ", score, "\n")
+    current_msms_idx <- 1;
     
   } else {
     if(!is.null(mSetObj[["dataSet"]][["current_msms_idx"]])){
@@ -353,6 +357,10 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
     score <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Scores"]][[1]][featureidx]
+    smiles <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["SMILEs"]][featureidx]
+    inchikeys <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["InchiKeys"]][featureidx]
+    formulas <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Formulas"]][featureidx]
+    
     cat("compoundName ==> ", compoundName, "\n")
     cat("score        ==> ", score, "\n")
     
@@ -366,6 +374,18 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     if(is.na(y)){return("")}
     return(y[1])
   }, FUN.VALUE = character(1L))
+  write.table(bottom[,c(1:2)], 
+              file = paste0("reference_spectrum_",featureidx-1, "_", precMZ,".txt"), 
+              row.names = F, col.names = T)
+  
+  df_cmpd <- data.frame(CompoundName = compoundName,
+                        score = score,
+                        SMILES = smiles,
+                        InchiKeys = inchikeys,
+                        Formula = formulas)
+  write.table(df_cmpd, 
+              file = paste0("compound_info_",featureidx-1, "_", precMZ,".txt"), 
+              row.names = F, col.names = T)
   
   # now, let's plot
   title <- paste0("Precursor: ", precMZ)
