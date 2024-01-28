@@ -52,6 +52,12 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   database <- strsplit(database, ",")[[1]]
   database_opt <- generateMS2dbOpt(database, ionMode);
   
+  # now need to check if need to convert to NL
+  if(mSetObj[["dataSet"]]$MSMS_db_option == "nl"){
+    mSetObj$dataSet$spectrum_dataframe$mz <- precMZ - mSetObj$dataSet$spectrum_dataframe$mz
+    mSetObj$dataSet$spectrum_dataframe <- mSetObj$dataSet$spectrum_dataframe[mSetObj$dataSet$spectrum_dataframe$mz>0, ]
+  }
+  
   # now let call OPTILCMS to search the database
   df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
   Concensus_spec <- list(as.vector(0L), list(list(df)))
@@ -1071,5 +1077,15 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72
   dev.off()
   mSetObj[["imgSet"]]$ms2sumsingle <- imageNM
   
+  return(.set.mSet(mSetObj))
+}
+
+
+setMS2DBOpt <- function(mSetObj=NA, DBoption = "regular") {
+  mSetObj <- .get.mSet(mSetObj);
+  if(DBoption!="regular" & DBoption!="nl"){
+    stop("Wrong MS2DBopt. Must be either regular or nl");
+  }
+  mSetObj[["dataSet"]]$MSMS_db_option <- DBoption;
   return(.set.mSet(mSetObj))
 }
