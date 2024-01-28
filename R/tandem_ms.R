@@ -702,6 +702,9 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
   }
+  if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
+    Msg <- c(Msg, paste0("Database searching is based on <u>Neutral Loss</u> spectra of corresponding MS/MS spectra."))
+  }
   if(keep20){
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
@@ -710,10 +713,26 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
   }
 
   save(ms2spec, file = "ms2spec____410.rda")
+  save(ms2spec_full, file = "ms2spec_full____410.rda")
+  save(mSetObj, file = "mSetObj____410.rda")
+  
+  if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
+    ms2spec <- lapply(ms2spec, convert2NLspec)
+    ms2spec_full <- lapply(ms2spec_full, convert2NLspec)
+  }
   mSetObj[["msgSet"]][["sanity_msgvec"]] <- Msg
   mSetObj[["dataSet"]][["spectrum_set"]] <- ms2spec
   mSetObj[["dataSet"]][["spectrum_set_full"]] <- ms2spec_full
   return(.set.mSet(mSetObj))
+}
+
+convert2NLspec <- function(data_spec){
+  spectrum_dataframe <- data_spec$ms2_spec
+  precMZ <- data_spec$precursor
+  spectrum_dataframe$mz <- precMZ - spectrum_dataframe$mz
+  spectrum_dataframe <- spectrum_dataframe[spectrum_dataframe$mz>0, ]
+  data_spec$ms2_spec <- spectrum_dataframe
+  return(data_spec)
 }
 
 performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
