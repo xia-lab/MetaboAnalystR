@@ -316,9 +316,8 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
-  cat("Now the height is == > ", height, "\n")
-  save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
-       file = "mSetObj___plotMirror.rda")
+  #cat("Now the height is == > ", height, "\n")
+
   # get plotting function
   MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
@@ -419,7 +418,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   dev.off()
 
   # Save the interactive plot with ggplot
-  save(p1, file = "p1.rda")
+  # save(p1, file = "p1.rda")
   px <- plotly::ggplotly(p1);
   
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
@@ -499,9 +498,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
   }
   
   Msg <- vector(mode = "character");
-  save(mSetObj, filename, format_type,
-       file = "mSetObj___SaintyCheckMSPfile.rda")
-  
+
   if(format_type == "mzmine"){
     data_table <- read.delim(filename, header = F)
     mSetObj[["dataSet"]][["spectrum_raw"]] <- data_table
@@ -712,10 +709,6 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   }
 
-  save(ms2spec, file = "ms2spec____410.rda")
-  save(ms2spec_full, file = "ms2spec_full____410.rda")
-  save(mSetObj, file = "mSetObj____410.rda")
-  
   if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
     ms2spec <- lapply(ms2spec, convert2NLspec)
     ms2spec_full <- lapply(ms2spec_full, convert2NLspec)
@@ -746,9 +739,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   mSetObj <- .get.mSet(mSetObj);
   # fetch the searching function
   SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
-  
-  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
-       file = "mSetObj___performMS2searchBatch.rda")
+
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -859,7 +850,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
 
   
   mSetObj$dataSet$spec_set_prec <- spec_set_prec
-  save(mSetObj, file = "mSetObj___597.rda")
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -868,8 +859,7 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     return (1);
   }
   mSetObj <- .get.mSet(mSetObj);
-  save(mSetObj, included_str,
-       file = "mSetObj___DataUpdatefromInclusionList.rda")
+  
   Msg = vector()
   included_list <- strsplit(included_str, "\n")[[1]]
   
@@ -1024,9 +1014,7 @@ GetNonIncludedPrecMZRTs <- function(mSetObj=NA){
 
 PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72, format="png", width = 12, height = 8){
   mSetObj <- .get.mSet(mSetObj);
-  
-  save(mSetObj, imageNM, dpi, format, width, height, file = "PlotMS2SummarySingle_input.rda")
-  
+
   if(is.null(mSetObj[["dataSet"]][["msms_result"]])){
     if(file.exists("MS2searchSingle_results.qs")){
       ms2_res <- qs::qread("MS2searchSingle_results.qs")[[1]]
