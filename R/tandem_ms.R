@@ -510,12 +510,12 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     start_idxs <- vapply(data_table[,1], function(x){x == "BEGIN IONS"}, 
                          FUN.VALUE = logical(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS spectra included in your data."))
-    if(length(which(start_idxs)) > 50){
-      AddMsg("Only first 50 tandem spectra will be searched!")
-      Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
-      keep50 = TRUE;
+    if(length(which(start_idxs)) > 20){
+      AddMsg("Only first 20 tandem spectra will be searched!")
+      Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
+      keep20 = TRUE;
     } else {
-      keep50 = FALSE;
+      keep20 = FALSE;
     }
     
     end_idxs <- vapply(data_table[,1], function(x){x == "END IONS"}, 
@@ -560,11 +560,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
       ms2spec_full[[i]] <- list(precursor = prec_mz, prec_rt = prec_rt, ms2_spec = ms2_spec)
     }
     
-    if(keep50){
-      start_idxs <- start_idxs[1:50]
-      end_idxs <- end_idxs[1:50]
-      ms2_idxs <- ms2_idxs[1:50]
-      ms2_num <- ms2_num[1:50]
+    if(keep20){
+      start_idxs <- start_idxs[1:20]
+      end_idxs <- end_idxs[1:20]
+      ms2_idxs <- ms2_idxs[1:20]
+      ms2_num <- ms2_num[1:20]
     }
     
     ms2spec <- vector(mode = "list", length(ms2_num))
@@ -615,12 +615,12 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     }, FUN.VALUE = integer(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS records detected in your data."))
     Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
-    if(length(which(!non0_idxs)) > 50){
-      AddMsg("Only first 50 tandem spectra will be searched!")
-      Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
-      keep50 = TRUE;
+    if(length(which(!non0_idxs)) > 20){
+      AddMsg("Only first 20 tandem spectra will be searched!")
+      Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
+      keep20 = TRUE;
     } else {
-      keep50 = FALSE;
+      keep20 = FALSE;
     }
     
     start_idxs <- which(start_idxs)
@@ -662,11 +662,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
       ms2spec_full[[i]] <- list(precursor = prec_mz, prec_rt = prec_rt, ms2_spec = ms2_spec)
     }
     
-    if(keep50){
-      start_idxs <- start_idxs[1:50]
-      end_idxs <- end_idxs[1:50]
-      ms2_idxs <- ms2_idxs[1:50]
-      ms2_num <- ms2_num[1:50]
+    if(keep20){
+      start_idxs <- start_idxs[1:20]
+      end_idxs <- end_idxs[1:20]
+      ms2_idxs <- ms2_idxs[1:20]
+      ms2_num <- ms2_num[1:20]
     }
     
     ms2spec <- vector(mode = "list", length(ms2_num))
@@ -702,7 +702,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
   }
-  if(keep50){
+  if(keep20){
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   } else {
@@ -861,24 +861,24 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     which(x == prec_mzrt_all)[1]
   }, FUN.VALUE = integer(1L))
   
-  if(length(included_list)>50){
+  if(length(included_list)>20){
     mSetObj[["dataSet"]][["prec_mz_included"]] <- 
-      mSetObj[["dataSet"]][["prec_mz_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_mz_all"]][idxs][1:20];
     
     mSetObj[["dataSet"]][["prec_rt_included"]] <-
-      mSetObj[["dataSet"]][["prec_rt_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_rt_all"]][idxs][1:20];
     
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- 
-      mSetObj[["dataSet"]][["prec_mzrt_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_mzrt_all"]][idxs][1:20];
     mSetObj[["dataSet"]][["spectrum_set"]] <- 
-      mSetObj[["dataSet"]][["spectrum_set_full"]][idxs][1:50];
+      mSetObj[["dataSet"]][["spectrum_set_full"]][idxs][1:20];
     
     ms2spec <- mSetObj[["dataSet"]][["spectrum_set"]];
     all_precmz <- vapply(ms2spec, function(x){x[[1]]}, FUN.VALUE = double(1L))
     all_precrt <- vapply(ms2spec, function(x){x[[2]]}, FUN.VALUE = double(1L))
     msms_frg_num <- vapply(ms2spec, function(x){nrow(x[[3]])}, FUN.VALUE = double(1L))
     
-    Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
+    Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
     Msg <- c(Msg, paste0("The m/z range of all precursors in your data is from ", min(all_precmz), " to ", max(all_precmz), "."))
     Msg <- c(Msg, paste0("The retention time range of all included precursors in your data is from ", min(all_precrt), " to ", max(all_precrt), "."))
     Msg <- c(Msg, paste0("The minimum number of MS/MS fragments is ", min(msms_frg_num), "."))
