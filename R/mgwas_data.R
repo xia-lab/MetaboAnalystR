@@ -289,7 +289,7 @@ addEntrezID <- function(data){
 }
 
 
-PerformCmpdMapping <- function(mSetObj=NA, cmpdIDs, idType, tissueType, population){
+PerformCmpdMapping2 <- function(mSetObj=NA, cmpdIDs, idType, tissueType, population){
   
   mSetObj <- .get.mSet(mSetObj);
   org <- "hsa";
