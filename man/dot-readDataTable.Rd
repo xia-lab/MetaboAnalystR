@@ -4,7 +4,7 @@
 \alias{.readDataTable}
 \title{Read data table}
 \usage{
-.readDataTable(fileName)
+.readDataTable(fileName, save.copy = TRUE)
 }
 \arguments{
 \item{fileName}{Input filename}

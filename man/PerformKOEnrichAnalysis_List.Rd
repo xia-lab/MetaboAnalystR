@@ -4,9 +4,11 @@
 \alias{PerformKOEnrichAnalysis_List}
 \title{Utility function for PerformKOEnrichAnalysis_KO01100}
 \usage{
-PerformKOEnrichAnalysis_List(file.nm)
+PerformKOEnrichAnalysis_List(mSetObj, file.nm)
 }
 \arguments{
+\item{mSetObj}{mSetObj object}
+
 \item{file.nm}{Input the file name}
 }
 \description{
