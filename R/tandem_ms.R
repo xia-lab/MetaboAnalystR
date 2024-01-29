@@ -1,4 +1,12 @@
 # This script is used to search tandem MS spectrum 
+
+#' processMSMSupload
+#'
+#' @param mSetObj mSetObj
+#' @param spectrum spectrum for uploading
+#' @export
+#' @author Zhiqiang Pang
+
 processMSMSupload <- function(mSetObj=NA, spectrum){
   #
   mSetObj <- .get.mSet(mSetObj);
@@ -15,6 +23,21 @@ processMSMSupload <- function(mSetObj=NA, spectrum){
   return(.set.mSet(mSetObj));
 }
 
+#' performMS2searchSingle
+#'
+#' @param mSetObj mSetObj
+#' @param ppm1 ppm value for ms1
+#' @param ppm2 ppm value for ms2
+#' @param dbpath database path
+#' @param frgdbpath fragmentation database path
+#' @param database database option
+#' @param similarity_meth similarity computing method
+#' @param precMZ mz of precursor
+#' @param sim_cutoff filtration cutoff of similarity score. will be enabled soon.
+#' @param ionMode ion mode, for ESI+, is should be 1. for ESI-, it should be 0
+#' @param unit1 ppm or da for ms1 matching
+#' @param unit2 ppm or da for ms2
+#' @export
 performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                    dbpath = "",
                                    frgdbpath = "",
@@ -27,8 +50,6 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  # save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2,
-  #      file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -309,6 +330,20 @@ GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
   return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["dot_product"]][[1]],2))
 }
 
+#' plotMirror
+#' @param mSetObj mSetObj
+#' @param featureidx index of feature
+#' @param precMZ mz of precursor
+#' @param ppm ppm for ms2 fragment matching mz error
+#' @param imageNM image name
+#' @param dpi dpi of images
+#' @param format format of images
+#' @param width width of images
+#' @param height height of images
+#' @param cutoff_relative cutoff of relative intensity to filter out
+#' @export
+#' @author Zhiqiang Pang
+
 plotMirror <- function(mSetObj=NA, featureidx = 1,
                        precMZ, ppm, 
                        imageNM = "",
@@ -488,7 +523,17 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   return(.set.mSet(mSetObj))
 }
 
-SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"){
+
+#' SaintyCheckMSPfile
+#'
+#' @param mSetObj mSetObj
+#' @param filename filename with path
+#' @param format_type format type, can be 'mzmine' or 'msdial'
+#' @param keepAllspec if you want to search all spectra from your local, turn keepAllspec to TRUE. it is FALSE by default.
+#' @export
+#' @author Zhiqiang Pang
+
+SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine", keepAllspec = FALSE){
   
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
@@ -727,6 +772,24 @@ convert2NLspec <- function(data_spec){
   data_spec$ms2_spec <- spectrum_dataframe
   return(data_spec)
 }
+
+#' performMS2searchBatch
+#'
+#' @param mSetObj mSetObj
+#' @param ppm1 ppm value for ms1
+#' @param ppm2 ppm value for ms2
+#' @param dbpath database path
+#' @param frgdbpath fragmentation database path
+#' @param database database option
+#' @param similarity_meth similarity computing method
+#' @param precMZ mz of precursor
+#' @param sim_cutoff filtration cutoff of similarity score. will be enabled soon.
+#' @param ionMode ion mode, for ESI+, is should be 1. for ESI-, it should be 0
+#' @param unit1 ppm or da for ms1 matching
+#' @param unit2 ppm or da for ms2
+#' @param ncores number of cpu cores used to search
+#' @export
+#' @author Zhiqiang Pang 
 
 performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                   dbpath = "",
@@ -1088,6 +1151,13 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72
 }
 
 
+#' setMS2DBOpt
+#'
+#' @param mSetObj mSetObj object
+#' @param DBoption database option to define neutral loss or not, can be either 'regualr" or 'nl'.
+#' @export
+#' @author Zhiqiang Pang 
+#' 
 setMS2DBOpt <- function(mSetObj=NA, DBoption = "regular") {
   mSetObj <- .get.mSet(mSetObj);
   if(DBoption!="regular" & DBoption!="nl"){
