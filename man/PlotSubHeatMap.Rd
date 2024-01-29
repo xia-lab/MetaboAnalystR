@@ -15,17 +15,24 @@ PlotSubHeatMap(
   smplDist,
   clstDist,
   palette,
-  font.size,
+  fzCol,
+  fzRow,
+  fzAnno,
+  annoPer,
+  unitCol,
+  unitRow,
   method.nm,
   top.num,
-  viewOpt,
   rowV = T,
   colV = T,
   border = T,
   grp.ave = F,
   show.legend = T,
   show.annot.legend = T,
-  includeRowNames = T
+  showColnm = T,
+  showRownm = T,
+  viewOpt,
+  download = F
 )
 }
 \arguments{
@@ -55,8 +62,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{top.num}{Input the top number}
 
-\item{viewOpt}{Set heatmap options, default is set to "detail"}
-
 \item{rowV}{Default is set to T}
 
 \item{colV}{Default is set to T}
@@ -64,6 +69,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{border}{Indicate whether or not to show cell-borders, default is set to T}
 
 \item{grp.ave}{Logical, default is set to F}
+
+\item{viewOpt}{Set heatmap options, default is set to "detail"}
 }
 \description{
 Plot a sub heatmap based on results from t-tests/ANOVA, VIP or randomforest
