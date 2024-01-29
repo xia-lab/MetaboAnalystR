@@ -12,6 +12,7 @@ CovariateScatter.Anal(
   ref = NULL,
   block = "NA",
   thresh = 0.05,
+  pval.type = "fdr",
   contrast.cls = "anova"
 )
 }
@@ -29,6 +30,8 @@ CovariateScatter.Anal(
 \item{block}{block name}
 
 \item{thresh}{threshold}
+
+\item{pval.type}{pvalue type (raw or fdr)}
 
 \item{contrast.cls}{contrast group}
 }
