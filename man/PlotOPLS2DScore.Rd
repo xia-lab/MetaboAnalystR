@@ -14,7 +14,8 @@ PlotOPLS2DScore(
   inx2,
   reg = 0.95,
   show = 1,
-  grey.scale = 0
+  grey.scale = 0,
+  cex.opt = "na"
 )
 }
 \arguments{

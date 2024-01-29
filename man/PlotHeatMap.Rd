@@ -15,8 +15,12 @@ PlotHeatMap(
   smplDist,
   clstDist,
   palette,
-  font.size,
-  viewOpt = "detail",
+  fzCol,
+  fzRow,
+  fzAnno,
+  annoPer,
+  unitCol,
+  unitRow,
   rowV = T,
   colV = T,
   var.inx = NULL,
@@ -24,7 +28,9 @@ PlotHeatMap(
   grp.ave = F,
   show.legend = T,
   show.annot.legend = T,
-  includeRowNames = T
+  showColnm = T,
+  showRownm = T,
+  maxFeature = 2000
 )
 }
 \arguments{
@@ -50,8 +56,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{palette}{Input color palette choice}
 
-\item{viewOpt}{Set heatmap options, default is set to "detail"}
-
 \item{rowV}{Default is set to T}
 
 \item{colV}{Default is set to T}
@@ -61,6 +65,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{border}{Indicate whether or not to show cell-borders, default is set to T}
 
 \item{grp.ave}{Logical, default is set to F}
+
+\item{viewOpt}{Set heatmap options, default is set to "detail"}
 
 \item{metadata}{metadata}
 }

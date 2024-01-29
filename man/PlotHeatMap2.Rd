@@ -14,16 +14,22 @@ PlotHeatMap2(
   width = NA,
   smplDist = "pearson",
   clstDist = "average",
-  colorGradient = "bwm",
-  font.size = 8,
-  viewOpt = "overview",
+  colorGradient = "npj",
+  fzCol,
+  fzRow,
+  fzAnno,
+  annoPer,
+  unitCol,
+  unitRow,
   rankingMethod = "mean",
   topFeature = 2000,
   useTopFeature = F,
   drawBorder = T,
   show.legend = T,
   show.annot.legend = T,
-  includeRowNames = T
+  showColnm = T,
+  showRownm = F,
+  maxFeature = 2000
 )
 }
 \arguments{
@@ -49,8 +55,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{colorGradient}{Select heatmap colors: bwm, gray}
 
-\item{viewOpt}{Select overview or detailed view: overview or detail}
-
 \item{rankingMethod}{rankingMethod}
 
 \item{topFeature}{topFeature}
@@ -58,6 +62,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{useTopFeature}{Use significant features only: F or T (default false)}
 
 \item{drawBorder}{Show cell borders: F or T (default F)}
+
+\item{viewOpt}{Select overview or detailed view: overview or detail}
 
 \item{includeRowNames}{includeRowNames, logical}
 }

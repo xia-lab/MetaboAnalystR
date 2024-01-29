@@ -6,12 +6,10 @@
 \usage{
 PlotMetaHeatmap(
   mSetObj = NA,
-  viewOpt = "detailed",
   clustSelOpt = "both",
   smplDist = "pearson",
   clstDist = "average",
   colorGradient = "bwm",
-  drawBorder = F,
   includeRowNames = T,
   imgName,
   format = "png",
