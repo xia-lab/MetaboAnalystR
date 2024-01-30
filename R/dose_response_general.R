@@ -11,7 +11,6 @@ PrepareDataForDoseResponse <- function()
 
   # definition of doses and item identifiers
   dose <- as.numeric(gsub(".*_", "", as.character(dataSet$meta.info[,1])))
-  
   # control of the design
   design <- table(dose, dnn = "")
   fdose <- as.factor(dose)
@@ -84,20 +83,54 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   irow <- 1:length(item)
   nselect <- dim(data)[1]
   
-  # get column with max log fold change
-  fc.cols <- c(1:(length(unique(dose))-1))
-  res$max.lfc <- apply(res[,fc.cols], 1, function(x){max(abs(x))})
-  
-  # determine if probes pass FC filter
-  res$lfc.pass <- res$max.lfc > FC
-  
-  # determine if probes pass differential expression filter
-  if (deg.FDR == TRUE){
-    res$deg.pass <- res$adj.P.Val < deg.pval
-  } else{
-    res$deg.pass <- res$P.Value < deg.pval
+  if(dataSet$de.method == "deseq2"){
+
+    table_list <- dataSet$comp.res.list;
+
+    num_rows <- nrow(table_list[[1]])
+
+    # Initialize combined result vectors with FALSE
+    combined_lfc_pass <- rep(FALSE, num_rows)
+    combined_deg_pass <- rep(FALSE, num_rows)
+
+    # Loop through each table
+    for(i in 1:length(table_list)) {
+        # Current table
+        res <- table_list[[i]]
+
+
+        # Determine if probes pass FC filter
+        res$lfc.pass <- res[,1] > FC
+
+        # Determine if probes pass differential expression filter
+        if (deg.FDR == TRUE) {
+            res$deg.pass <- res$adj.P.Val < deg.pval
+        } else {
+            res$deg.pass <- res$P.Value < deg.pval
+        }
+
+        # Update the combined vectors
+        combined_lfc_pass <- combined_lfc_pass | res$lfc.pass
+        combined_deg_pass <- combined_deg_pass | res$deg.pass
+    }   
+    res$lfc.pass <- combined_lfc_pass;
+    res$deg.pass <- combined_deg_pass;
+
+  }else{
+    # get column with max log fold change
+    fc.cols <- c(1:(length(unique(dose))-1))
+    res$max.lfc <- apply(res[,fc.cols], 1, function(x){max(abs(x))})
+
+    # determine if probes pass FC filter
+    res$lfc.pass <- res$max.lfc > FC
+
+    # determine if probes pass differential expression filter
+    if (deg.FDR == TRUE){
+      res$deg.pass <- res$adj.P.Val < deg.pval
+    } else{
+      res$deg.pass <- res$P.Value < deg.pval
+    }
   }
-  
   ### Williams trend test function ###
   wtt.func <- function(i){
     if((res[i, "lfc.pass"] & res[i, "deg.pass"])){

@@ -80,10 +80,7 @@ GetMetaColLength<- function(dataName=""){
   if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
   } else if (dataSet$de.method=="deseq2"){
-    inx <- match("baseMean", colnames(dataSet$comp.res))
-    if(dataSet$contrast.type == "default"){
-        return(dim(dataSet$contrast.matrix)[2]);
-    }
+    return(length(dataSet$comp.res.list));
   } else {
     inx <- match("logCPM", colnames(dataSet$comp.res))
   }

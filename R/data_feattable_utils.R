@@ -27,6 +27,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
   dataSet <- readDataset(dataName);
+
   total <- nrow(dataSet$comp.res);
   resTable <- dataSet$comp.res;
   filename <- dataSet$filename;
@@ -42,23 +43,10 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   # for > comparisons - in this case, use the largest logFC among all comparisons
   # further filter by logFC
   if (dataSet$de.method=="deseq2"){
-    dds <- qs::qread("deseq.res.obj.rds");
-    vec <- as.numeric(c(dataSet$contrast.matrix[,inx]));
-    inx <- 1; # NOTE FROM JE: is this always correct? What happens when there are multiple comparisons ... we just always do the first column? 
-    res <- results(dds, contrast = vec, independentFiltering = FALSE, cooksCutoff = Inf);
-    topFeatures <- data.frame(res@listData);
-    rownames(topFeatures) <- rownames(res);
-    nms <- colnames(topFeatures);
-    nms[which(nms == "padj")] <- "adj.P.Val";
-    nms[which(nms == "pvalue")] <- "P.Value";
-    nms[which(nms == "log2FoldChange")] <- "logFC";
-    colnames(topFeatures) <- nms;
-    topFeatures <- topFeatures[c(2,1,3,4,5,6)];
-    # order the result based on raw p
-    ord.inx <- order(topFeatures$P.Value);
-    resTable <- topFeatures[ord.inx, ];
+    inx=1;
     hit.inx <- which(colnames(resTable) == "baseMean"); 
-    dataSet$comp.res <- resTable;
+    dataSet$comp.res <- dataSet$comp.res.list[[inx]];
+    resTable <- dataSet$comp.res;
   } else if (dataSet$de.method=="limma"){
     hit.inx <- which(colnames(resTable) == "AveExpr");
   } else {

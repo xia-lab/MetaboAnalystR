@@ -101,17 +101,18 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     contrast.matrix <- dataSet$contrast.matrix;
     design <- dataSet$design
     if(length(dataSet$rmidx)>0){
-       data.anot <- dataSet$data.anot[,-dataSet$rmidx]
+      data.anot <- dataSet$data.anot[,-dataSet$rmidx]
     }else{
-       data.anot <- dataSet$data.anot
+      data.anot <- dataSet$data.anot
     }
-   if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
-        fst.cls <- paste0(dataSet$analysisVar,"_",dataSet$fst.cls)
-      }else{
-        fst.cls <- dataSet$fst.cls
-     }
+    if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
+      fst.cls <- paste0(dataSet$analysisVar,"_",dataSet$fst.cls)
+    }else{
+      fst.cls <- dataSet$fst.cls
+    }
+    
     if (is.null(dataSet$sec.cls) | all(dataSet$sec.cls=="NA")){
-     colData <- data.frame(fst.cls)
+      colData <- data.frame(fst.cls)
       colnames(colData) <- "condition"    
       dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     } else {
@@ -119,23 +120,37 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
       colnames(colData) <- c("condition", "type", "condition_type");
       dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
     }   
-   
+    
     dds <- DESeq(dds, betaPrior=FALSE) 
     qs::qsave(dds, "deseq.res.obj.rds");
-    vec <- as.numeric(c(contrast.matrix[,1]));
-    res <- results(dds, contrast = vec, independentFiltering = FALSE, cooksCutoff = Inf);
-    topFeatures <- data.frame(res@listData);
-    rownames(topFeatures) <- rownames(res);
-    nms <- colnames(topFeatures);
-    nms[which(nms == "padj")] <- "adj.P.Val";
-    nms[which(nms == "pvalue")] <- "P.Value";
-    nms[which(nms == "log2FoldChange")] <- "logFC";
-    colnames(topFeatures) <- nms;
-    topFeatures <- topFeatures[c(2,1,3,4,5,6)];
-    # order the result based on raw p
-    ord.inx <- order(topFeatures$P.Value);
-    topFeatures <- topFeatures[ord.inx, ];
-    return(topFeatures);
+    
+    contrasts <- list()
+    colnames(contrast.matrix) <- sub("-", " vs ", colnames(contrast.matrix))
+    i = 1;
+    for (col in colnames(contrast.matrix)) {
+      levels <- strsplit(col, " vs ")[[1]]
+      contrasts[[col]] <- contrast.matrix[,i]
+      i = i +1;
+    }
+    
+    results_list <- list()
+    for (contrast_name in names(contrasts)) {
+      vec <- contrasts[[contrast_name]]
+      res <- results(dds, contrast=vec, independentFiltering=FALSE, cooksCutoff=Inf)
+      topFeatures <- data.frame(res@listData);
+      rownames(topFeatures) <- rownames(res);
+      nms <- colnames(topFeatures);
+      nms[which(nms == "padj")] <- "adj.P.Val";
+      nms[which(nms == "pvalue")] <- "P.Value";
+      nms[which(nms == "log2FoldChange")] <- "logFC";
+      colnames(topFeatures) <- nms;
+      topFeatures <- topFeatures[c(2,1,3,4,5,6)];
+      # order the result based on raw p
+      ord.inx <- order(topFeatures$P.Value);
+      topFeatures <- topFeatures[ord.inx, ];
+      results_list[[contrast_name]]<- topFeatures;
+    }
+    return(results_list);
   }
   dat.in <- list(data=dataSet, contrast.matrix = dataSet$contrast.matrix, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
@@ -145,7 +160,8 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 .save.deseq.res <- function(dataSet){
   dat.in <- qs::qread("dat.in.qs"); 
   my.res <- dat.in$my.res;
-  dataSet$comp.res <- my.res;
+  dataSet$comp.res.list <- my.res;
+  dataSet$comp.res <- my.res[[1]];
   qs::qsave(my.res, file="dat.comp.res.qs");
   return(dataSet);
 }
