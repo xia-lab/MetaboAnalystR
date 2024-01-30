@@ -196,7 +196,6 @@ ReadMergedExpressTable <- function(dataName){
 SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
   paramSet <<- paramSet;
   analSet <<- analSet;
-  save.image("metastat.RData");
   meta.mat <- analSet$meta.mat.all;
   paramSet$BHth <- BHth;
 

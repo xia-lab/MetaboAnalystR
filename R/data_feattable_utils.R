@@ -43,7 +43,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   # for > comparisons - in this case, use the largest logFC among all comparisons
   # further filter by logFC
   if (dataSet$de.method=="deseq2"){
-    inx=1;
     hit.inx <- which(colnames(resTable) == "baseMean"); 
     dataSet$comp.res <- dataSet$comp.res.list[[inx]];
     resTable <- dataSet$comp.res;
