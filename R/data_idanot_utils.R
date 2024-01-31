@@ -162,18 +162,24 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   
   dataSet$gene.org <- org;
   dataSet$gene <- gene.vec;
-  if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
-    enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
+  if(idtype == "NA"){
+    enIDs <- gene.vec;
+    symbol.map <- data.frame(gene_id=enIDs, symbol=enIDs, name=enIDs);
   }else{
-    enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
-    names(enIDs) <- gene.vec;
-  }
+    if(idtype %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "s2f")){
+      enIDs <- .doGeneIDMapping(gene.vec, idtype, paramSet, "vec");
+    }else{
+      enIDs <- .doProbeMapping(gene.vec, idtype, paramSet);
+      names(enIDs) <- gene.vec;
+    }
+  
   
   tblNm <- getEntrezTableName(org, "entrez");
   symbol.map <- queryGeneDB(tblNm, org);
   symbol.map <- symbol.map[which(symbol.map$gene_id %in% enIDs),];
+  }
   saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
-  
+
   
   if(idtype == "kos"){
     kos <- enIDs$kos;
