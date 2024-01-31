@@ -198,7 +198,7 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
 #'@export
 #'
 Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
-  
+
   dat <- .readDataTable(filePath);
   
   mSetObj <- .get.mSet(mSetObj);
@@ -213,8 +213,8 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
     mSetObj[["dataSet"]][which(grepl("_edata",names(mSetObj[["dataSet"]])))]<-NULL;
     
   }
-  
-  
+
+
   if(class(dat) == "try-error") {
     AddErrMsg("Data format error. Failed to read in the data!");
     AddErrMsg("Please check the followings: ");
@@ -234,24 +234,24 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
     AddErrMsg("Missing values should be blank or NA without quote.");
     return("F");
   }
-  
+
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
-    cls.nms <- factor(dat[,2]);
-    order.nms <- factor(dat[,4]);
-    batch.nms <- factor(dat[,3]);
+    cls.nms <- factor(as.character(dat[,2]));
+    order.nms <- factor(as.character(dat[,4]));
+    batch.nms <- factor(as.character(dat[,3]));
     conc <- dat[,-c(1:4)];
     var.nms <- colnames(conc);
   }else{ # sample in col
     smpl.nms <-colnames(dat[1,])[-1];
-    cls.nms <- factor(dat[1,][-1]);
-    order.nms <- factor(unname(dat[3,])[-1]);
-    batch.nms <- factor(unname(dat[2,])[-1]);
+    cls.nms <- factor(as.character(dat[1,][-1])); #factor(dat[1,][-1]);
+    order.nms <- factor(as.character(unname(dat[3,]))[-1]);
+    batch.nms <- factor(as.character(unname(dat[2,]))[-1]);
     conc <- t(dat[-c(1:3),]);
     var.nms <- unname(conc[1,]);
     conc <- conc[-1,]
   }
-  
+
   #checking and make sure QC labels are unique
   # qc.inx <- toupper(substr(smpl.nms, 0, 2)) == "QC"; # Old code, delete !
   qc.inx <- grepl("QC",smpl.nms)
@@ -363,12 +363,12 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
   
   int.mat[is.na(int.mat)] <- 0;
   int.mat[is.nan(int.mat)] <- 0;
-  
+
   mSetObj$dataSet$table <- int.mat;
   mSetObj$dataSet$class.cls <- cls.nms;
   mSetObj$dataSet$batch.cls <- batch.nms;
   mSetObj$dataSet$order.cls <- order.nms;
-  
+
   # free memory
   gc();
   if(.on.public.web){
@@ -419,16 +419,16 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
   
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
-    cls.nms <- factor(dat[,2]);
-    order.nms <- factor(dat[,4]);
-    batch.nms <- factor(dat[,3]);
+    cls.nms <- factor(as.character(dat[,2]));
+    order.nms <- factor(as.character(dat[,4]));
+    batch.nms <- factor(as.character(dat[,3]));
     conc <- dat[,-c(1:4)];
     var.nms <- colnames(conc);
   }else{ # sample in col
     smpl.nms <-dat[1,];
-    cls.nms <- factor(dat[2,]);
-    order.nms <- factor(dat[4,]);
-    batch.nms <- factor(dat[3,]);
+    cls.nms <- factor(as.character(dat[2,]));
+    order.nms <- factor(as.character(dat[4,]));
+    batch.nms <- factor(as.character(dat[3,]));
     conc <- t(dat[-c(1:4),]);
     var.nms <- colnames(conc);
   }
