@@ -5,14 +5,16 @@
 ## G. Zhou, guangyan.zhou@mail.mcgill.ca
 ## Jeff Xia, jeff.xia@mcgill.ca
 ###################################################  
-
-
-# note: hit.query, resTable must synchronize
-# ora.vec should contains entrez ids, named by their gene symbols
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
+  #dataSet <<- dataSet;
+  #file.nm <<- file.nm;
+  #fun.type <<- fun.type;
+  #ora.vec <<- ora.vec;
+  #vis.type <<- vis.type;
+  #save.image("enrich.RData");
+
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
-
   require(dplyr)
   # prepare lib
   setres <- .loadEnrichLib(fun.type, paramSet)
@@ -25,7 +27,7 @@
     ora.nms <- ora.vec;
     names(ora.vec) <- ora.vec;
   }
-
+  
   if(paramSet$universe.opt == "library"){
     current.universe <- unique(unlist(current.geneset));     
   }else{
@@ -39,7 +41,7 @@
       current.universe <- unique(unlist(current.geneset)); 
     }
   }
-
+  
   # also make sure pathways only contain genes measured in experiment
   if(!is.null(dataSet$data.anot)){
     current.geneset <- lapply(current.geneset, function(x){x[x %in% current.universe]})
@@ -91,6 +93,22 @@
     ord.inx<-order(res.mat[,4]);
     res.mat <- signif(res.mat[ord.inx,],3);
     hits.query <- hits.query[ord.inx];
+
+    res.mat.all <- as.data.frame(res.mat);
+    res.mat.all$Pathway <- rownames(res.mat);
+    res.mat.all$Genes <- rep("NA",nrow(res.mat))
+    # Iterate through the list and add comma-separated values to the data frame
+    for (name in names(hits.query)) {
+      if (name %in% res.mat.all$Pathway) {
+        res.mat.all[which(res.mat.all$Pathway == name), "Genes"] <- paste(hits.query[[name]], collapse = ",")
+      }
+    }
+
+    res.mat.all <- res.mat.all[which(res.mat.all$Genes != "NA"), ];
+    res.mat.all$Pathway <- NULL;
+    resTable.all <- data.frame(Pathway=rownames(res.mat[which(res.mat.all$Genes != "NA"), ]), res.mat.all);
+    csv.nm <- paste(file.nm, ".csv", sep="");    
+    write.csv(resTable.all, file=csv.nm, row.names=F);
     
     imp.inx <- res.mat[,4] <= 0.05;
     imp.inx[is.na(imp.inx)] <- F
@@ -124,6 +142,7 @@
   fun.padj <- resTable[,6]; if(length(fun.padj) ==1) { fun.padj <- matrix(fun.padj) };
   hit.num <- resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
+  
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
   json.res <- list(
     fun.link = setres$current.setlink[1],
@@ -145,24 +164,23 @@
   fun.hits <<- hits.query;
   fun.pval <<- resTable[,5];
   hit.num <<- resTable[,4];
-  csv.nm <- paste(file.nm, ".csv", sep="");    
-  fast.write(resTable, file=csv.nm, row.names=F);
+  #csv.nm <- paste(file.nm, ".csv", sep="");    
+  #fast.write(resTable, file=csv.nm, row.names=F);
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
-
+  
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
   imgSet$enrTables[[vis.type]] <- list()
   imgSet$enrTables[[vis.type]]$table <- resTable;
   imgSet$enrTables[[vis.type]]$library <- fun.type
   imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis"
-
+  
   saveSet(imgSet);
   saveSet(paramSet, "paramSet");
   
   saveSet(msgSet, "msgSet");
   return(1);
 }
-
 
 .loadEnrichLib <- function(fun.type, paramSet){
   
