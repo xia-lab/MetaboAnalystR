@@ -52,7 +52,7 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
   
   if(format=="row"){ # sample in row
     smpl.nms <-dat[,1];
-    cls.nms <- factor(dat[,2]);
+    cls.nms <- factor(as.character(dat[,2]));
     conc <- dat[,-c(1,2)];
     var.nms <- colnames(conc);
   }else{ # sample in col
