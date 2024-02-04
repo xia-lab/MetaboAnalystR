@@ -105,7 +105,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   
   if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
     users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
-  }else {
+  } else {
     users.path <-getwd();
   }
   
@@ -121,15 +121,35 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
   str <- paste0(str, ";\n", "load(\'mSet.rda\')");
   
+  # parse param string
+  # planString <- "ppm1:5.0;ppm2:10.0;filtering:200.0;targets_opt:sigs;db_opt:[hmdb_exp, hmdb_pre, gnps];win_size:1.5;similarity_method:dot_product;ionMode:positive;intensity_threshold:10000.0;enabledDDADeco:true"
+  param_strs <- strsplit(planString, ";")[[1]]
+  param_list <- strsplit(param_strs, ":")
+  names(param_list) <- vapply(param_list, function(x){x[1]}, FUN.VALUE = character(1L))
+  param_list <- lapply(param_list, function(x){x[2]})
+  if(param_list$enabledDDADeco == "true"){
+    param_list$enabledDDADeco <- TRUE;
+  }
+  if(param_list$similarity_method =="entropy"){
+    param_list$useentropy <- TRUE;
+  } else {
+    param_list$useentropy <- FALSE;
+  }
+  param_list$db_opt <- gsub(" ", "", param_list$db_opt);
+  param_list$db_opt <- gsub("\\[", "c('", param_list$db_opt);
+  param_list$db_opt <- gsub("]", "')", param_list$db_opt);
+  param_list$db_opt <- gsub(",", "','", param_list$db_opt)
+  
+  
   if(mode == "dda"){
     # import feature list
     str <- paste0(str, ";\n", "ft <- mSet@peakAnnotation[[\'camera_output\']][,c(2,3,5,6)]");
+    str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+    str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}")
+    str <- paste0(str, ";\n", "cat('There are total of ', nrow(ft), ' target MS1 features included for MS2 data processing!')")
+    
     # progress 104
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),
-      ecol = \'\',
-      progress = 104
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),ecol = \'\',progress = 104)";
     str <- paste0(str, ";\n", cmd_prgs)
     
     # import data
@@ -152,43 +172,42 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     
     # perform deconvolution
     # progress 120
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),
-      ecol = \'\',
-      progress = 120
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
     if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
-      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
-                                    ppm1 = 5,ppm2 = 10,
-                                    sn = 12,filtering = 0,
-                                    window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\',
-                                    ncores = 4L)";
-    } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
-      cmd_deco <- "mSet <- PerformDDADeconvolution(mSet,
-                                    ppm1 = 5,ppm2 = 10,
-                                    sn = 12,filtering = 0,
-                                    window_size = 1.5, intensity_thresh = 1.6e5,database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
-                                    ncores = 4L)";
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering, 
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold, 
+                                    ", database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")) {
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering, 
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold, 
+                                    ", database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ", useEntropy = ", param_list$useentropy, ")");
     }
 
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),
-      ecol = \'\',
-      progress = 140
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),ecol = \'\',progress = 140)";
     str <- paste0(str, ";\n", cmd_prgs)
     
   } else {
     # for swath-dia
     # progress 102
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),
-      ecol = \'\',
-      progress = 102
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),ecol = \'\',progress = 102)";
     str <- paste0(str, ";\n", cmd_prgs)
+    if(param_list[["targets_opt"]] == "sigs") {
+      str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+    }
     
     # import data
     if(file.exists("upload/MS2")){
@@ -202,99 +221,77 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     }
     
     # progress 110
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\n\'),
-      ecol = \'\',
-      progress = 110
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\n\'),ecol = \'\',progress = 110)";
     str <- paste0(str, ";\n", cmd_prgs)
+    
+    if(param_list[["targets_opt"]] == "sigs") {
+      str <- paste0(str, ";\n", "if(length(idx)>0){mSet@MSnData[['peak_mtx']] <- mSet@MSnData[['peak_mtx']][idx]}")
+      str <- paste0(str, ";\n", "cat('There are total of ', length(mSet@MSnData[['peak_mtx']]), ' target MS1 features included for MS2 data processing!\n')")
+    }
+
     
     # perform deconvolution
     # progress 120
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),
-      ecol = \'\',
-      progress = 120
-    )";
-    cmd_deco <- "mSet <- PerformDIADeconvolution(mSet,
-                                    min_width = 5,ppm2 = 10,
-                                    sn = 12,filtering = 0,
-                                    ncores = 4L)";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
+    cmd_deco <- paste0("mSet <- PerformDIADeconvolution(mSet,
+                                    min_width = 5,
+                                    ppm2 = ", param_list$ppm2,
+                                    ", sn = 12,
+                                    filtering = ", param_list$filtering, ",
+                                    ncores = 4L)");
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
-    cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),
-      ecol = \'\',
-      progress = 140
-    )";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),ecol = \'\',progress = 140)";
     str <- paste0(str, ";\n", cmd_prgs)
   }
   
   # PerformSpectrumConsenus
   # progress 150
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 9/12: MS/MS spectra consensus is starting .. \n\'),
-      ecol = \'\',
-      progress = 145
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus is starting .. \n\'),ecol = \'\',progress = 145)";
   str <- paste0(str, ";\n", cmd_prgs)
-  cmd_consenus <- "mSet <- PerformSpectrumConsenus (mSet, ppm2 = 15, concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
-                                     user_dbCorrection = FALSE)";
+  cmd_consenus <- paste0("mSet <- PerformSpectrumConsenus (mSet, ppm2 = ", param_list$ppm2, ", concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
+                                     user_dbCorrection = FALSE)");
   str <- paste0(str, ";\n", cmd_consenus)
   # progress 150
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\n\'),
-      ecol = \'\',
-      progress = 150
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # PerformDBSearchingBatch
   # progress 150
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\n\'),
-      ecol = \'\',
-      progress = 150
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
   if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
-    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
-                                     ppm1 = 10, ppm2 = 25,
-                                     rt_tol = 5, database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\', 
-                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5, 
+                                     database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     databaseOptions =", param_list$db_opt, ")");
   } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
-    cmd_seareching <- "mSet <- PerformDBSearchingBatch (mSet,
-                                     ppm1 = 10, ppm2 = 25,
-                                     rt_tol = 5, database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
-                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L)";
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5, 
+                                     database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     databaseOptions =", param_list$db_opt, ")");
   }
 
   str <- paste0(str, ";\n", cmd_seareching)
   # progress 180
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\n\'),
-      ecol = \'\',
-      progress = 180
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\n\'),ecol = \'\',progress = 180)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # PerformResultsExport
   # progress 190
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 11/12: MS/MS data processing result exporting.. \n\'),
-      ecol = \'\',
-      progress = 190
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exporting.. \n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
   cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
                                   topN = 10L, ncores = 4L)";
   str <- paste0(str, ";\n", cmd_export)
   # progress 190
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),
-      ecol = \'\',
-      progress = 190
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # FormatMSnAnnotation
@@ -310,11 +307,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   str <- paste0(str, ";\n", cmd_saving)
   
   # progress 198
-  cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),
-      ecol = \'\',
-      progress = 198
-    )";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),ecol = \'\',progress = 198)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # progress 200 

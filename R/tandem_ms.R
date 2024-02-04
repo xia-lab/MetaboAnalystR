@@ -165,111 +165,6 @@ msmsResClean <- function(res){
   return(res)
 }
 
-generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
-  prefix = ""
-  database_opts = ""
-  if(length(database)>1){
-    prefix = "mcst_\t"; # multiple customized
-  }
-  for(i in database){
-    if(i == "all"){ 
-      database_opt <- "all";
-      return("all")
-    } else if(i == "hmdb_exp") {
-      if(ionMode == "positive"){
-        database_opt <- "HMDB_experimental_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "HMDB_experimental_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "hmdb_pre"){
-      if(ionMode == "positive"){
-        database_opt <- "HMDB_predicted_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "HMDB_predicted_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "gnps"){
-      if(ionMode == "positive"){
-        database_opt <- "GNPS_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "GNPS_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "mines"){
-      if(ionMode == "positive"){
-        database_opt <- "MINEs_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MINEs_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "lipidblast"){
-      if(ionMode == "positive"){
-        database_opt <- "LipidBlast_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "LipidBlast_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "mona"){
-      if(ionMode == "positive"){
-        database_opt <- "MoNA_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MoNA_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "massbank"){
-      if(ionMode == "positive"){
-        database_opt <- "MassBank_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MassBank_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "riken"){
-      if(ionMode == "positive"){
-        database_opt <- "RIKEN_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "RIKEN_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "respect"){
-      if(ionMode == "positive"){
-        database_opt <- "ReSpect_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "ReSpect_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "msdial"){
-      if(ionMode == "positive"){
-        database_opt <- "MSDIAL_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MSDIAL_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "bmdms"){
-      if(ionMode == "positive"){
-        database_opt <- "BMDMS_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "BMDMS_PosDB";
-      } else {
-        database_opt <- "all";
-      }
-    }
-    database_opts <- paste0(database_opts, database_opt, "\t")
-  }
-  database_str <- paste0(prefix, database_opts)
- return(database_str)
-}
-
 Updatecurrentmsmsidx <- function(mSetObj=NA, label = ""){
   mSetObj <- .get.mSet(mSetObj);
   if(label != ""){
@@ -411,7 +306,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   bottom <- normalize_spectrum(spec_bottom, cutoff_relative)
   frgs_vec_done <- vapply(bottom$mz, function(x){
     y <- frgs_vec[spec_bottom[,1] == x]
-    if(is.na(y)){return("")}
+    if(is.na(y[1])){return("")}
     return(y[1])
   }, FUN.VALUE = character(1L))
   write.table(bottom[,c(1:2)], 
