@@ -348,9 +348,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   dev.off()
 
   # Save the interactive plot with ggplot
-  # save(p1, file = "p1.rda")
-  px <- plotly::ggplotly(p1);
-  
+  save(p1, file = "p1.rda")
+  # px <- plotly::ggplotly(p1);
+  px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
   #names(pxl) <- c("data","layout","config");
   px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850

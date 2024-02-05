@@ -819,7 +819,7 @@ retrieveAlgorithmInfo <- function(){
 #' @param sample 
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-
+save(mSet, featureNum, sample, showlabel, file = "plotSingleXIC.rda")
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -981,6 +981,9 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     
     if(any(is.na(res0$Intensity))){
       res0 <- res0[!is.na(res0$Intensity),]
+    }
+    if(nrow(res0)==0){
+      res0 <- data.frame(Retention_Time = c(minRT, maxRT), Intensity = 0.001)
     }
     minRT <- min(res0$Retention_Time);
     maxRT <- max(res0$Retention_Time);
@@ -1624,7 +1627,7 @@ generateAsariPeakList <-  function(userPath) {
   
   # generate metaboanalyst table
   load("mSet.rda")
-  ftable <- read.csv(paste0(result_folder, "/preferred_Feature_table.tsv"), sep = "\t")
+  ftable <- read.csv(paste0(result_folder, "/preferred_Feature_table.tsv"), sep = "\t", check.names=FALSE)
   features <- paste0(ftable$mz, "__", ftable$rtime)
   ftable1 <- ftable[,c(12:ncol(ftable))]
   allSamples <- colnames(ftable1)
@@ -1642,7 +1645,7 @@ generateAsariPeakList <-  function(userPath) {
   write.csv(ftable0, file = "metaboanalyst_input.csv", row.names = F, quote = F)
   
   # generate peak_feature_summary
-  ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t")
+  ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t", check.names=FALSE)
   idx_num <- ftable$id_number
   idx_row <- vapply(idx_num, FUN = function(x){
     which(ftab_annotation[,1] == x)[1]
@@ -1678,7 +1681,7 @@ generateAsariPeakList <-  function(userPath) {
         strsplit(strsplit(y, "'")[[1]][2], "_")[[1]][1]
       }, character(1L), USE.NAMES = F)
       if(length(res2) == 1){
-        res2 <- paste0(res2, ";")
+        res2 <- paste0(res2, "; ")
       } else {
         res2 <- paste0(res2, collapse = "; ")
       }
@@ -1712,7 +1715,7 @@ generateAsariPeakList <-  function(userPath) {
       }, FUN.VALUE = character(1L))
       
       if(length(res2_done) == 1){
-        res2_done <- paste0(res2_done, ";")
+        res2_done <- paste0(res2_done, "; ")
       } else {
         res2_done <- paste0(res2_done, collapse = "; ")
       }
@@ -1881,6 +1884,10 @@ generateAsariPeakList <-  function(userPath) {
                                                       Formula = my.dat$Formula, 
                                                       HMDBID = HMDBIDs)
   
+  FeatureOrder <- order(pvals)
+  my.dat <- my.dat[FeatureOrder,]
+  qs::qsave(FeatureOrder, file = "FeatureOrder.qs")
+  
   write.table(my.dat, sep = "\t",
               file = "peak_feature_summary.tsv",
               row.names = FALSE,
@@ -1890,7 +1897,6 @@ generateAsariPeakList <-  function(userPath) {
             quote = TRUE, 
             row.names = FALSE);
   
-  FeatureOrder <- order(pvals)
   qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
             file = "formula2cmpd.qs")
   
