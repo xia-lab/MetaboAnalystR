@@ -819,7 +819,7 @@ retrieveAlgorithmInfo <- function(){
 #' @param sample 
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-save(mSet, featureNum, sample, showlabel, file = "plotSingleXIC.rda")
+  
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -2624,10 +2624,33 @@ exportSwathDesign <- function(lowMZs, UpMZs){
   return(1)
 }
 
-PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_idx, ppm, imageNM, dpi, format, width, height){
+#' PerformMirrorPlottingWeb
+#'
+#' @param mSetObj mSetObj
+#' @param fragDB_path Fragmentation database path
+#' @param featurelabel featurelabel
+#' @param result_num result_num
+#' @param sub_idx sub_idx
+#' @param ppm ppm
+#' @param imageNM imageNM
+#' @param dpi dpi
+#' @param format format
+#' @param width width
+#' @param height height
+#' @export
+
+PerformMirrorPlottingWeb <- function(mSetObj=NA, 
+                                     fragDB_path,
+                                     featurelabel, 
+                                     result_num, sub_idx, 
+                                     ppm, imageNM, 
+                                     dpi, format, width, height){
   mSetObj <- .get.mSet(mSetObj);
-  MirrorPlotting <- OptiLCMS:::MirrorPlotting
-  parse_ms2peaks <- OptiLCMS:::parse_ms2peaks
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting;
+  parse_ms2peaks <- OptiLCMS:::parse_ms2peaks;
+  
+  require("RSQLite")
+  require("DBI")
   
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
     mSet_raw <- qs::qread("msn_mset_result.qs")
@@ -2655,6 +2678,9 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
     mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
     mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
   }
+  
+  #save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2678.rda")
+  #cat("==== fragDB_path ---> ", fragDB_path, "\n");
 
   fl <- gsub("mz|sec|min", "", featurelabel)
   fl <- strsplit(fl,"@")[[1]]
@@ -2678,7 +2704,44 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
                        ppm = ppm,
                        title= title, 
                        subtitle = subtitle,
-                       cutoff_relative = 5)
+                       cutoff_relative = 1)
+  
+  DBID_num <- DBAnnoteRes[[idx]][["IDs"]][uidx][sub_idx+1]
+  frgs_vec_done <- vector("character", 0L)
+  if(length(DBID_num)==1){
+    
+    con <- dbConnect(SQLite(), fragDB_path)
+    db <- dbGetQuery(con, paste0("SELECT DB_Tables FROM Index_table where Max_ID>",DBID_num," AND Min_ID<",DBID_num))
+    frgs <- dbGetQuery(con, paste0("SELECT Fragments FROM ", db, " where ID='",DBID_num,"'"))
+    dbDisconnect(con)
+    
+    frgs_vec <- strsplit(frgs$Fragments, split = "\t")[[1]]
+    normalize_spectrum <- OptiLCMS:::normalize_spectrum
+    bottom <- normalize_spectrum(spec_bottom, 1)
+    frgs_vec_done <- vapply(bottom$mz, function(x){
+      y <- frgs_vec[spec_bottom[,1] == x]
+      if(is.na(y[1])){return("")}
+      return(y[1])
+    }, FUN.VALUE = character(1L))
+    
+    write.table(bottom[,c(1:2)], 
+                file = paste0("reference_spectrum_",result_num, "_", sub_idx,".txt"), 
+                row.names = F, col.names = T)
+    
+    compoundName <- DBAnnoteRes[[idx]][["Compounds"]][sub_idx+1]
+    score <- DBAnnoteRes[[idx]][["Scores"]][[1]][sub_idx+1]
+    inchikeys <- DBAnnoteRes[[idx]][["InchiKeys"]][sub_idx+1]
+    formulas <- DBAnnoteRes[[idx]][["Formula"]][sub_idx+1]
+    
+    df_cmpd <- data.frame(CompoundName = compoundName,
+                          score = score,
+                          InchiKeys = inchikeys,
+                          Formula = formulas)
+    write.table(df_cmpd, 
+                file = paste0("compound_info_",result_num, "_", sub_idx,".txt"), 
+                row.names = F, col.names = T)
+  }
+  
   # add some modification
   p1 <- p1 + theme(
     axis.title.x = element_text(size = 16),
@@ -2694,6 +2757,68 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA, featurelabel, result_num, sub_i
     unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
   print(p1)
   dev.off()
+  
+  # Save the interactive plot with ggplot
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png")
+  save(p1, file = "p1.rda")
+  # px <- plotly::ggplotly(p1);
+  px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
+  #pxl <- list(px$x$data,px$x$layout,px$x$config);
+  #names(pxl) <- c("data","layout","config");
+  px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850
+  px[["x"]][["layout"]][["height"]] <- px[["height"]] <- 425
+  px[["x"]][["layout"]][["yaxis"]][["title"]][["font"]][["size"]] <- 16
+  px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
+  #px[["x"]][["layout"]][["title"]] <-NULL
+  px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
+  
+  if(length(px[["x"]][["data"]])>2){
+    px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
+  }
+  
+  ## update the top data  -data1
+  if(length(px[["x"]][["data"]][[1]])>0){
+    if(length(px[["x"]][["data"]][[1]][["text"]])>0){
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
+    }
+  }
+  
+  ## update the bottom data  -data2
+  if(length(px[["x"]][["data"]][[2]])>0){
+    if(length(px[["x"]][["data"]][[2]][["text"]])>0){
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("-","",px[["x"]][["data"]][[2]][["text"]])
+      if(length(frgs_vec_done)>0){
+        non_na_txt <- px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])]
+        frgs_vec_done[frgs_vec_done==""] <- "Unknown"
+        new_labels <- sapply(1:length(non_na_txt), function(x){
+          paste0(non_na_txt[x], "<br />Fragment Formula: ", frgs_vec_done[ceiling(x/2)])
+        })
+        px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])] <- new_labels
+      }
+    }
+  }
+  
+  ## update the matched star  -data3
+  if(length(px[["x"]][["data"]])>2){
+    if(length(px[["x"]][["data"]][[3]])>0){
+      if(length(px[["x"]][["data"]][[3]][["text"]])>0){
+        px[["x"]][["data"]][[3]][["text"]] <- gsub("<br />star_intensity.*","",px[["x"]][["data"]][[3]][["text"]])
+        px[["x"]][["data"]][[3]][["text"]] <- paste0("<b>Matched Fragment: </b><br />", px[["x"]][["data"]][[3]][["text"]])
+      }
+    }
+  }
+  
+  
+  jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
+  sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
+  cat(jsonlist);
+  sink();
 
   return(.set.mSet(mSetObj));
 }

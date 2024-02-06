@@ -805,10 +805,8 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     
     mSetObj$dataSet$frgs_result[[k]] <- frgs_list
   }
-
   
-  mSetObj$dataSet$spec_set_prec <- spec_set_prec
-  
+  mSetObj$dataSet$spec_set_prec <- spec_set_prec;
   return(.set.mSet(mSetObj));
 }
 
