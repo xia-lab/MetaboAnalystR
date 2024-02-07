@@ -339,7 +339,24 @@ PerformVolcanoBatchEnrichment <- function(dataName="", file.nm, fun.type, IDs, i
   colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "FDR");
   
   # need to cut to the universe covered by the pathways, not all genes
-  current.universe <- unique(unlist(current.geneset)); 
+  if(paramSet$universe.opt == "library"){
+    current.universe <- unique(unlist(current.geneset));     
+  }else{
+    # cut to the universe to uploaded genes
+    if(paramSet$anal.type == "onedata"){
+      current.universe <- rownames(dataSet$data.anot); 
+    }else if(paramSet$anal.type == "metadata"){
+      inmex <- qs::qread("inmex_meta.qs");
+      current.universe <- rownames(inmex$data); 
+    }else{
+      if(!is.null(paramSet$backgroundUniverse)){
+        current.universe <- paramSet$backgroundUniverse;
+      }else{
+        current.universe <- unique(unlist(current.geneset)); 
+      }
+    }
+  }
+  
   hits.inx <- ora.vec %in% current.universe;
   ora.vec <- ora.vec[hits.inx];
   ora.nms <- ora.nms[hits.inx];
@@ -371,6 +388,9 @@ PerformVolcanoBatchEnrichment <- function(dataName="", file.nm, fun.type, IDs, i
   
   # use lower.tail = F for P(X>x)
   raw.pvals <- phyper(hit.num-1, set.size, uniq.count-set.size, q.size, lower.tail=F);
+  # Replace NaN values with 1
+  raw.pvals[is.nan(raw.pvals)] <- 1
+
   res.mat[,4]<- raw.pvals;
   res.mat[,5] <- raw.pvals;
   

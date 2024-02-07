@@ -182,7 +182,8 @@ CheckMetaDataIntegrity <- function(){
   
   common.matrix[!is.finite(common.matrix)] <- NA;
   common.matrix <- na.omit(common.matrix);
-
+  print(dim(common.matrix));
+  print("common.matrix====");
   inmex.meta <- list(data=common.matrix,
                      plot.data=plot.matrix,
                      id.type = id.type,

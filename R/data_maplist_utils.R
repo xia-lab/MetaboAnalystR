@@ -262,7 +262,6 @@ ReadListFile <- function(fileName) {
 }
 
 ReadUniverseFile <- function(fileName) {
- save.image("universe.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
 
