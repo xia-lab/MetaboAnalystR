@@ -85,6 +85,8 @@
   
   # use lower.tail = F for P(X>x)
   raw.pvals <- phyper(hit.num-1, set.size, uniq.count-set.size, q.size, lower.tail=F);
+  # Replace NaN values with 1
+  raw.pvals[is.nan(raw.pvals)] <- 1
   res.mat[,4]<- raw.pvals;
   res.mat[,5] <- p.adjust(raw.pvals, "fdr");
   
