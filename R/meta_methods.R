@@ -572,7 +572,6 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
-  print(length(sig.inx));
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 
