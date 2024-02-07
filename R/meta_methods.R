@@ -182,7 +182,8 @@ CheckMetaDataIntegrity <- function(){
   
   common.matrix[!is.finite(common.matrix)] <- NA;
   common.matrix <- na.omit(common.matrix);
-
+  print(dim(common.matrix));
+  print("common.matrix====");
   inmex.meta <- list(data=common.matrix,
                      plot.data=plot.matrix,
                      id.type = id.type,
@@ -571,7 +572,6 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   res <- SetupMetaStats(BHth, paramSet, analSet);
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
-  print(length(sig.inx));
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
 }
 

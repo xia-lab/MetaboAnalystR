@@ -229,9 +229,8 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
         rownames(pval.mat) <- rownames(de.res);
     }
   }
-  print("pval======mat");
-  print(head(pval.mat))
-  
+
+ 
   dataNms <- names(analSet$inmex.ind);
   newNms <- substring(dataNms,0, nchar(dataNms)-4);
   colnames(fc.mat) <- paste0(newNms, "_FC");
