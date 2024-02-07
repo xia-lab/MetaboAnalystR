@@ -152,7 +152,6 @@ ResetMetaTab <- function(dataName=""){
   RegisterData(dataSet);
 }
 
-
 GetResColType <- function(dataName="",colNm="NA"){
   if(dataName != "NA"){
     dat <- readDataset(dataName);
@@ -166,6 +165,17 @@ GetResColType <- function(dataName="",colNm="NA"){
   }else{
     meta.status <- ifelse(dat$disc.inx[colNm],"disc","cont")
   }
+  
+  if(length(meta.status == 0)){
+    meta.status <- dat$disc.inx <- rep("disc", ncol(dat$meta.info))
+    if(dataName != "NA"){
+      RegisterData(dat);
+    }else{
+      paramSet$dataSet <- dat;
+      saveSet(paramSet);
+    }
+  }
+  print(meta.status);
   return(meta.status);
 }
 

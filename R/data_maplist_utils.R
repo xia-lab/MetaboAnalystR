@@ -37,7 +37,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet <- res[[2]];
   msgSet <- res[[3]];
   paramSet$numOfLists <- length(dataList)
-
+paramSet$backgroundUniverse <-NULL;
   all.prot.mat <- list(); 
   inx <- 0;
   for(i in 1:length(dataList)){
@@ -169,6 +169,7 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
   for(i in 1:length(listNms)){
     mdata.all[i] <- 1;
   }
+  paramSet$backgroundUniverse <-NULL;
   names(mdata.all) <- listNms;
   paramSet$mdata.all <- mdata.all;
 
@@ -258,4 +259,35 @@ ReadListFile <- function(fileName) {
 .is_valid_numeric <- function(x) {
   as_numeric <- suppressWarnings(as.numeric(x))
   !is.na(as_numeric)
+}
+
+ReadUniverseFile <- function(fileName) {
+ save.image("universe.RData");
+  paramSet <- readSet(paramSet, "paramSet");
+  msgSet <- readSet(msgSet, "msgSet");
+
+  dat1 <- data.table::fread(fileName, header=FALSE, check.names=FALSE, data.table=FALSE);
+  rowNms <- dat1[,1]
+  if(length(dat1) == 1){
+    dat1[,1] <- 0
+  }else{
+    dat1[,1] <- dat1[,2]
+    dat1 <- dat1[,-2];
+  }
+
+    GeneAnotDB <-unique(.doGeneIDMapping(rowNms, paramSet$data.idType, paramSet,"table"));
+    
+    na.inx <- is.na(GeneAnotDB[,1]) | is.na(GeneAnotDB[,2]);
+    if(sum(!na.inx) < 2){
+      msgSet$current.msg <- paste0("Less than two hits found in database for the background universe!");
+      saveSet(msgSet, "msgSet");
+      return(0);
+    }
+    backgroundUniverse <- GeneAnotDB[!na.inx,2];
+
+
+    paramSet$backgroundUniverse <- backgroundUniverse;
+    saveSet(paramSet, "paramSet");
+
+    return(length(backgroundUniverse))
 }

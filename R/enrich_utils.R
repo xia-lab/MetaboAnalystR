@@ -38,7 +38,11 @@
       inmex <- qs::qread("inmex_meta.qs");
       current.universe <- rownames(inmex$data); 
     }else{
-      current.universe <- unique(unlist(current.geneset)); 
+      if(!is.null(paramSet$backgroundUniverse)){
+        current.universe <- paramSet$backgroundUniverse;
+      }else{
+        current.universe <- unique(unlist(current.geneset)); 
+      }
     }
   }
   

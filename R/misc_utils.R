@@ -352,7 +352,7 @@ GetListEnrGeneNumber <- function(){
         label = paramSet$selDataNm,
         size = length(all.enIDs)
       )
-    
+     
   }
   analSet$list.genes <- all.enIDs;
   analSet$listSizes <- listSizes;
@@ -365,7 +365,6 @@ InitEnrichmentNetwork <- function(dataName, type){
   analSet <- readSet(analSet, "analSet");
 
   analSet <- .getEnrNetList(dataSet, analSet);
-  print(head(analSet$list.genes));
   res <- .performEnrichAnalysis(dataSet, paste0("enrichment_", type), type, analSet$list.genes, "network");
   if(res){
     .prepareEnrichNet(dataSet, paste0('enrichNet_', type), 'list', "mixed", analSet);
