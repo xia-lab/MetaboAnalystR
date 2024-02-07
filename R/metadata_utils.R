@@ -168,7 +168,9 @@ GetResColType <- function(dataName="",colNm="NA"){
   }
   
   if(length(meta.status == 0)){
-    meta.status <- dat$disc.inx <- rep(T, ncol(dat$meta.info))
+    meta.status <- rep(T, ncol(dat$meta.info))
+    names(meta.status) <- colnames(dat$meta.info);
+    dat$disc.inx <- meta.status;
     if(dataName != "NA"){
       RegisterData(dat);
     }else{
