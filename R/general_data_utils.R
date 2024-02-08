@@ -241,10 +241,6 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/zgy/sqlite/")){
     url.pre <<-"/home/zgy/sqlite/"; #zgy local)
     plink.path <<- "/home/zgy/plink/";
-  } else if(file.exists("/home/le/sqlite/")){# le local
-    url.pre <<-"/home/le/sqlite/";
-  } else if(file.exists("/Users/jessicaewald/sqlite/")){# jess local
-    url.pre <<-"/Users/jessicaewald/sqlite/";
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{
@@ -453,9 +449,13 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     return(0);
   }
 
-  # black slash could kill Rserve immediately
+  # replace black slash 
   smpl.nms <- gsub("\\\\", "-", smpl.nms);
-  url.smp.nms <- CleanNames(smpl.nms);
+
+  #url.smp.nms <- CleanNames(smpl.nms);
+  # now use clean names for all, as spaces causes a lot of issues
+  smpl.nms <- url.smp.nms <- CleanNames(smpl.nms);
+
   names(url.smp.nms) <- smpl.nms;
   
   var.nms <- gsub("\\\\", "-", var.nms);
