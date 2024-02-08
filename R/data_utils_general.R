@@ -477,8 +477,8 @@ CheckListHasFC <- function(){
   expr.vec <- sigmat[,1];
   print(sum(expr.vec));
   if(sum(expr.vec) == 0){
-    return(1);
-  }else{
     return(0);
+  }else{
+    return(1);
   }
 }
