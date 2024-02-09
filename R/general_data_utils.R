@@ -226,7 +226,10 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   
   plink.path <<- "/home/glassfish/plink/";
   # sqlite db path for gene annotation
-  if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
+  if(file.exists("/data/sqlite/")){ #vip server
+    url.pre <<- "/data/sqlite/";
+    plink.path <<- "/home/glassfish/plink/";
+  }else if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
     url.pre <<- "/home/glassfish/sqlite/";
     plink.path <<- "/home/glassfish/plink/";
   }else if(file.exists("/Users/xia/Dropbox/sqlite/")){ # xia local
@@ -238,10 +241,6 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/zgy/sqlite/")){
     url.pre <<-"/home/zgy/sqlite/"; #zgy local)
     plink.path <<- "/home/zgy/plink/";
-  } else if(file.exists("/home/le/sqlite/")){# le local
-    url.pre <<-"/home/le/sqlite/";
-  } else if(file.exists("/Users/jessicaewald/sqlite/")){# jess local
-    url.pre <<-"/Users/jessicaewald/sqlite/";
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{
@@ -450,9 +449,13 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     return(0);
   }
 
-  # black slash could kill Rserve immediately
+  # replace black slash 
   smpl.nms <- gsub("\\\\", "-", smpl.nms);
-  url.smp.nms <- CleanNames(smpl.nms);
+
+  #url.smp.nms <- CleanNames(smpl.nms);
+  # now use clean names for all, as spaces causes a lot of issues
+  smpl.nms <- url.smp.nms <- CleanNames(smpl.nms);
+
   names(url.smp.nms) <- smpl.nms;
   
   var.nms <- gsub("\\\\", "-", var.nms);
@@ -633,6 +636,12 @@ GetCurrentMsg <- function(){
   return(msg.vec[length(msg.vec)]);
 }
 
+SetCmpdSummaryType <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$paramSet$cmpdSummaryType <- type;
+  .set.mSet(mSetObj);
+}
+
 #'Plot compound summary
 #'change to use dataSet$proc instead of dataSet$orig in
 #'case of too many NAs
@@ -652,7 +661,12 @@ GetCurrentMsg <- function(){
 
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
-  
+  save.image("cmpd.RData");
+  if(is.null(mSetObj$paramSet$cmpdSummaryType)){
+    mSetObj$paramSet$cmpdSummaryType <- "violin";
+  }
+  plotType <- mSetObj$paramSet$cmpdSummaryType
+  print(paste("plottype==", plotType))
   if(.on.public.web){
     load_ggplot()
     load_grid()
@@ -705,7 +719,13 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     if(cls.type == "disc"){
       df.orig <- data.frame(value=proc.data[, cmpdNm], name = sel.cls)
       p.orig <- ggplot2::ggplot(df.orig, aes(x=name, y=value, fill=name))  
-      p.orig <- p.orig + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
+      # Conditional plotting based on the cmpdSummaryType
+        if(plotType == "violin"){
+          p.orig <- p.orig + geom_violin(trim=FALSE) 
+        } else {
+          p.orig <- p.orig + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA)
+        }
+      p.orig <- p.orig + theme_bw() + geom_jitter(size=1)
       p.orig <- p.orig + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
       p.orig <- p.orig + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
       p.orig <- p.orig + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
@@ -728,7 +748,12 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     if(cls.type == "disc"){
       df.norm <- data.frame(value=mSetObj$dataSet$norm[, cmpdNm], name = sel.cls)
       p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
-      p.norm <- p.norm + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
+        if(plotType == "violin"){
+          p.norm <- p.norm + geom_violin(trim=FALSE) 
+        } else {
+          p.norm <- p.norm + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) 
+        }
+      p.norm <- p.norm + theme_bw() + geom_jitter(size=1)
       p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
       p.norm <- p.norm + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
       p.norm <- p.norm + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
@@ -807,7 +832,13 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
 
     if(cls.type == "disc"){
-        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) + geom_boxplot(outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1) 
+        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) 
+        if(plotType == "boxplot"){
+        p.time <- p.time + geom_boxplot(outlier.shape = NA, outlier.colour=NA) 
+        }else{
+        p.time <- p.time + geom_violin(trim=FALSE) 
+        }
+        p.time <- p.time + theme_bw() + geom_jitter(size=1) 
         p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
         p.time <- p.time + scale_fill_manual(values=col) + theme(axis.text.x = element_text(angle=90, hjust=1))
         p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
@@ -878,6 +909,7 @@ GetMetaInfo <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 # 
+
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
   mSetObj <- .get.mSet(mSetObj);  
   if(mSetObj$dataSet$design.type == "regular"){
@@ -889,6 +921,8 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
     }else{
       my.cls <- cls.lbl;
     }
+  }else if(mSetObj$dataSet$design.type %in% c("multi", "time", "time0")){
+    my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
   }else{
     if(exp.fac == mSetObj$dataSet$facA.lbl){
       my.cls <- mSetObj$dataSet$facA;  
@@ -905,7 +939,6 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
     return(.set.mSet(mSetObj));
   }
 }
-
 # groups entering analysis
 GetNormGroupNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1279,4 +1312,108 @@ ValidateMetaFactor2Level <- function(mSetObj = NA, metafactor){
   }
 }
 
+generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
+  prefix = ""
+  database_opts = ""
+  if(length(database)>1){
+    prefix = "mcst_\t"; # multiple customized
+  }
+  for(i in database){
+    if(i == "all"){ 
+      database_opt <- "all";
+      return("all")
+    } else if(i == "hmdb_exp") {
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_experimental_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_experimental_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "hmdb_pre"){
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_predicted_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_predicted_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "gnps"){
+      if(ionMode == "positive"){
+        database_opt <- "GNPS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "GNPS_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mines"){
+      if(ionMode == "positive"){
+        database_opt <- "MINEs_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MINEs_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "lipidblast"){
+      if(ionMode == "positive"){
+        database_opt <- "LipidBlast_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "LipidBlast_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mona"){
+      if(ionMode == "positive"){
+        database_opt <- "MoNA_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MoNA_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "massbank"){
+      if(ionMode == "positive"){
+        database_opt <- "MassBank_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MassBank_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "riken"){
+      if(ionMode == "positive"){
+        database_opt <- "RIKEN_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "RIKEN_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "respect"){
+      if(ionMode == "positive"){
+        database_opt <- "ReSpect_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "ReSpect_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "msdial"){
+      if(ionMode == "positive"){
+        database_opt <- "MSDIAL_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MSDIAL_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "bmdms"){
+      if(ionMode == "positive"){
+        database_opt <- "BMDMS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "BMDMS_PosDB";
+      } else {
+        database_opt <- "all";
+      }
+    }
+    database_opts <- paste0(database_opts, database_opt, "\t")
+  }
+  database_str <- paste0(prefix, database_opts)
+  return(database_str)
+}
 

@@ -13,9 +13,10 @@ PlotCorrHeatMap(
   target,
   cor.method,
   colors,
-  viewOpt,
   fix.col,
   no.clst,
+  fz,
+  unit,
   corrCutoff = 0
 )
 }
@@ -39,8 +40,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{colors}{Indicate the colors for the heatmap, "bwm" for default, "gbr" for red/green, "heat" for heat colors,
 "topo" for topo colors, and "gray" for gray scale.}
 
-\item{viewOpt}{Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.}
-
 \item{fix.col}{Logical, fix colors (TRUE) or not (FALSE).}
 
 \item{no.clst}{Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).}
@@ -48,6 +47,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{corrCutoff}{set corrCutoff
 McGill University, Canada
 License: GNU GPL (>= 2)}
+
+\item{viewOpt}{Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.}
 }
 \description{
 Plot correlation heatmap

@@ -36,6 +36,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'Utility function for PerformKOEnrichAnalysis_KO01100
 #'@description Please note: only return hits in map KO01100
 #'@param file.nm Input the file name 
+#'@param mSetObj mSetObj object
 PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;

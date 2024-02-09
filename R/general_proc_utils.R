@@ -36,7 +36,7 @@ SanityCheckData <- function(mSetObj=NA){
       if(mSetObj$dataSet$paired & !(mSetObj$dataSet$pair.checked)){ 
         msg<-c(msg,"Samples are paired.");
         # need to first set up pair information if not csv file
-        if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" )){
+        if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" | mSetObj$dataSet$type=="pktable-ma")){
           pairs <- ReadPairFile();
           # check if they are of the right length
           if(length(pairs)!=length(mSetObj$dataSet$url.smp.nms)){
@@ -381,7 +381,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'than 5000 variables for effective computing. 
 #'@usage FilterVariable(mSetObj=NA, filter, qcFilter, rsd)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param filter Select the filter option, "rsd" which is the relative standard deviation, "nrsd" which
+#'@param var.filter Select the filter option, "rsd" which is the relative standard deviation, "nrsd" which
 #'is the non-parametric relative standard deviation, "mean" which is the mean, "sd" which is the standard
 #'deviation, "mad" which is the median absolute deviation, or "iqr" which is the interquantile range.
 #'@param filter.cutoff percent to be filtered, for example, 5 (5\%)
@@ -389,7 +389,9 @@ ImputeMissingVar <- function(mSetObj=NA, method="min"){
 #'@param rsd Define the relative standard deviation cut-off. Variables with a RSD greater than this number
 #'will be removed from the dataset. It is only necessary to specify this argument if qc.filter is True (T). 
 #'Otherwise, it will not be used in the function.
-#'@param privileged use could keep this option as True (T) for local MetaboAnalystR
+#'@param int.cutoff int.cutoff value, numeric
+#'@param var.cutoff var.cutoff value
+#'@param int.filter int.filter value
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

@@ -1,4 +1,12 @@
 # This script is used to search tandem MS spectrum 
+
+#' processMSMSupload
+#'
+#' @param mSetObj mSetObj
+#' @param spectrum spectrum for uploading
+#' @export
+#' @author Zhiqiang Pang
+
 processMSMSupload <- function(mSetObj=NA, spectrum){
   #
   mSetObj <- .get.mSet(mSetObj);
@@ -15,8 +23,24 @@ processMSMSupload <- function(mSetObj=NA, spectrum){
   return(.set.mSet(mSetObj));
 }
 
+#' performMS2searchSingle
+#'
+#' @param mSetObj mSetObj
+#' @param ppm1 ppm value for ms1
+#' @param ppm2 ppm value for ms2
+#' @param dbpath database path
+#' @param frgdbpath fragmentation database path
+#' @param database database option
+#' @param similarity_meth similarity computing method
+#' @param precMZ mz of precursor
+#' @param sim_cutoff filtration cutoff of similarity score. will be enabled soon.
+#' @param ionMode ion mode, for ESI+, is should be 1. for ESI-, it should be 0
+#' @param unit1 ppm or da for ms1 matching
+#' @param unit2 ppm or da for ms2
+#' @export
 performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                    dbpath = "",
+                                   frgdbpath = "",
                                    database = "all", 
                                    similarity_meth = 0,
                                    precMZ = NA, sim_cutoff = 30, ionMode = "positive",
@@ -26,8 +50,6 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   # fetch the searching function
   SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
   
-  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
-       file = "mSetObj___performMS2search.rda")
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -46,7 +68,16 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     stop("Database file does not exist! Please check!")
   }
   # now set up the database option
+  database <- gsub("\\[|\\]", "", database)
+  database <- gsub(" ", "", database)
+  database <- strsplit(database, ",")[[1]]
   database_opt <- generateMS2dbOpt(database, ionMode);
+  
+  # now need to check if need to convert to NL
+  if(mSetObj[["dataSet"]]$MSMS_db_option == "nl"){
+    mSetObj$dataSet$spectrum_dataframe$mz <- precMZ - mSetObj$dataSet$spectrum_dataframe$mz
+    mSetObj$dataSet$spectrum_dataframe <- mSetObj$dataSet$spectrum_dataframe[mSetObj$dataSet$spectrum_dataframe$mz>0, ]
+  }
   
   # now let call OPTILCMS to search the database
   df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
@@ -58,6 +89,38 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
+  
+  # to extract fragments
+  require(RSQLite)
+  require(DBI)
+  require(progress)
+  con <- dbConnect(SQLite(), frgdbpath)
+  dt_idx <- dbGetQuery(con, "SELECT * FROM Index_table")
+  dbDisconnect(con)
+  
+  frgs_list <- lapply(results_clean[[1]][["IDs"]], function(n){
+    dbs <- dt_idx$DB_Tables[which((dt_idx$Min_ID <= n) & (n <= dt_idx$Max_ID))]
+    
+    con <- dbConnect(SQLite(), frgdbpath)
+    res <- dbGetQuery(con, paste0("SELECT Fragments FROM ", dbs, " WHERE ID=",n))
+    dbDisconnect(con)
+    strsplit(res$Fragments, "\t")[[1]]
+  })
+
+  mSetObj$dataSet$frgs_result[[1]] <- frgs_list
+  
+  res_df <- data.frame(IDs = results_clean[[1]][["IDs"]],
+                       Scores = results_clean[[1]][["Scores"]][[1]],
+                       Similarity_score = results_clean[[1]][["dot_product"]][[1]],
+                       CompoundName = results_clean[[1]][["Compounds"]],
+                       Formula = results_clean[[1]][["Formulas"]],
+                       SMILES = results_clean[[1]][["SMILEs"]],
+                       InchiKeys = results_clean[[1]][["InchiKeys"]],
+                       Precursors = results_clean[[1]][["Precursors"]],
+                       MS2_reference = results_clean[[1]][["MS2refs"]])
+  
+  qs::qsave(results_clean, file = "MS2searchSingle_results.qs")
+  write.csv(res_df, file = "MS2searchSingle_results.csv", row.names = F)
   
   return(.set.mSet(mSetObj));
 }
@@ -100,101 +163,6 @@ msmsResClean <- function(res){
   res[["MS2refs"]] <- res[["MS2refs"]][iddx]
   
   return(res)
-}
-
-generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
-  if(database == "all"){ 
-    database_opt <- "all";
-  } else if(database == "hmdb_exp") {
-    if(ionMode == "positive"){
-      database_opt <- "HMDB_experimental_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "HMDB_experimental_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "hmdb_pre"){
-    if(ionMode == "positive"){
-      database_opt <- "HMDB_predicted_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "HMDB_predicted_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "gnps"){
-    if(ionMode == "positive"){
-      database_opt <- "GNPS_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "GNPS_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "mines"){
-    if(ionMode == "positive"){
-      database_opt <- "MINEs_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MINEs_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "lipidblast"){
-    if(ionMode == "positive"){
-      database_opt <- "LipidBlast_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "LipidBlast_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "mona"){
-    if(ionMode == "positive"){
-      database_opt <- "MoNA_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MoNA_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "massbank"){
-    if(ionMode == "positive"){
-      database_opt <- "MassBank_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MassBank_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "riken"){
-    if(ionMode == "positive"){
-      database_opt <- "RIKEN_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "RIKEN_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "respect"){
-    if(ionMode == "positive"){
-      database_opt <- "ReSpect_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "ReSpect_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "msdial"){
-    if(ionMode == "positive"){
-      database_opt <- "MSDIAL_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "MSDIAL_NegDB";
-    } else {
-      database_opt <- "all";
-    }
-  } else if(database == "bmdms"){
-    if(ionMode == "positive"){
-      database_opt <- "BMDMS_PosDB";
-    } else if(ionMode == "negative") {
-      database_opt <- "BMDMS_PosDB";
-    } else {
-      database_opt <- "all";
-    }
-  }
-  return(database_opt)
 }
 
 Updatecurrentmsmsidx <- function(mSetObj=NA, label = ""){
@@ -257,6 +225,20 @@ GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
   return(round(mSetObj[["dataSet"]][["msms_result"]][[idx]][["dot_product"]][[1]],2))
 }
 
+#' plotMirror
+#' @param mSetObj mSetObj
+#' @param featureidx index of feature
+#' @param precMZ mz of precursor
+#' @param ppm ppm for ms2 fragment matching mz error
+#' @param imageNM image name
+#' @param dpi dpi of images
+#' @param format format of images
+#' @param width width of images
+#' @param height height of images
+#' @param cutoff_relative cutoff of relative intensity to filter out
+#' @export
+#' @author Zhiqiang Pang
+
 plotMirror <- function(mSetObj=NA, featureidx = 1,
                        precMZ, ppm, 
                        imageNM = "",
@@ -264,9 +246,8 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
-  cat("Now the height is == > ", height, "\n")
-  save(mSetObj, featureidx, precMZ, ppm, imageNM, dpi, format, width, height, cutoff_relative, 
-       file = "mSetObj___plotMirror.rda")
+  #cat("Now the height is == > ", height, "\n")
+
   # get plotting function
   MirrorPlotting <- OptiLCMS:::MirrorPlotting
   
@@ -276,6 +257,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    frgs_vec <- mSetObj$dataSet$frgs_result[[1]][[featureidx]]
     if(is.na(ref_str)){
       return (1);
     }
@@ -283,8 +265,12 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][featureidx]
     score <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]][featureidx]
+    smiles <- mSetObj[["dataSet"]][["msms_result"]][[1]][["SMILEs"]][featureidx]
+    inchikeys <- mSetObj[["dataSet"]][["msms_result"]][[1]][["InchiKeys"]][featureidx]
+    formulas <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Formulas"]][featureidx]
     cat("compoundName ==> ", compoundName, "\n")
     cat("score        ==> ", score, "\n")
+    current_msms_idx <- 1;
     
   } else {
     if(!is.null(mSetObj[["dataSet"]][["current_msms_idx"]])){
@@ -298,6 +284,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["MS2refs"]][featureidx]
+    frgs_vec <- mSetObj$dataSet$frgs_result[[current_msms_idx]][[featureidx]]
     if(is.na(ref_str)){
       return (1);
     }
@@ -305,11 +292,36 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     # compoundName, score
     compoundName <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Compounds"]][featureidx]
     score <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Scores"]][[1]][featureidx]
+    smiles <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["SMILEs"]][featureidx]
+    inchikeys <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["InchiKeys"]][featureidx]
+    formulas <- mSetObj[["dataSet"]][["msms_result"]][[current_msms_idx]][["Formulas"]][featureidx]
+    
     cat("compoundName ==> ", compoundName, "\n")
     cat("score        ==> ", score, "\n")
     
   }
 
+  # prepare fragments
+  normalize_spectrum <- OptiLCMS:::normalize_spectrum
+  bottom <- normalize_spectrum(spec_bottom, cutoff_relative)
+  frgs_vec_done <- vapply(bottom$mz, function(x){
+    y <- frgs_vec[spec_bottom[,1] == x]
+    if(is.na(y[1])){return("")}
+    return(y[1])
+  }, FUN.VALUE = character(1L))
+  write.table(bottom[,c(1:2)], 
+              file = paste0("reference_spectrum_",featureidx-1, "_", precMZ,".txt"), 
+              row.names = F, col.names = T)
+  
+  df_cmpd <- data.frame(CompoundName = compoundName,
+                        score = score,
+                        SMILES = smiles,
+                        InchiKeys = inchikeys,
+                        Formula = formulas)
+  write.table(df_cmpd, 
+              file = paste0("compound_info_",featureidx-1, "_", precMZ,".txt"), 
+              row.names = F, col.names = T)
+  
   # now, let's plot
   title <- paste0("Precursor: ", precMZ)
   subtitle <- paste0(compoundName, "\nMatching Score: ", round(score,3))
@@ -319,6 +331,14 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
                        title= title, 
                        subtitle = subtitle,
                        cutoff_relative = cutoff_relative)
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 14),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.y = element_text(size = 14),
+    text=element_text(family="Helvetica", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
   
   # Save the static plot with Cairo
   Cairo::Cairo(
@@ -328,11 +348,60 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   dev.off()
 
   # Save the interactive plot with ggplot
-  px <- plotly::ggplotly(p1);
+  save(p1, file = "p1.rda")
+  # px <- plotly::ggplotly(p1);
+  px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
+  #pxl <- list(px$x$data,px$x$layout,px$x$config);
+  #names(pxl) <- c("data","layout","config");
+  px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850
+  px[["x"]][["layout"]][["height"]] <- px[["height"]] <- 425
+  px[["x"]][["layout"]][["yaxis"]][["title"]][["font"]][["size"]] <- 16
+  px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
+  #px[["x"]][["layout"]][["title"]] <-NULL
+  px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
   
-  pxl <- list(px$x$data,px$x$layout,px$x$config);
-  names(pxl) <- c("data","layout","config");
-  jsonlist <- RJSONIO::toJSON(pxl, pretty = T,force = TRUE,.na = "null");
+  if(length(px[["x"]][["data"]])>2){
+    px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
+  }
+  
+  ## update the top data  -data1
+  if(length(px[["x"]][["data"]][[1]])>0){
+    if(length(px[["x"]][["data"]][[1]][["text"]])>0){
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
+    }
+  }
+  
+  ## update the bottom data  -data2
+  if(length(px[["x"]][["data"]][[2]])>0){
+    if(length(px[["x"]][["data"]][[2]][["text"]])>0){
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("-","",px[["x"]][["data"]][[2]][["text"]])
+      non_na_txt <- px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])]
+      frgs_vec_done[frgs_vec_done==""] <- "Unknown"
+      new_labels <- sapply(1:length(non_na_txt), function(x){
+          paste0(non_na_txt[x], "<br />Fragment Formula: ", frgs_vec_done[ceiling(x/2)])
+      })
+      px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])] <- new_labels
+    }
+  }
+  
+  ## update the matched star  -data3
+  if(length(px[["x"]][["data"]])>2){
+    if(length(px[["x"]][["data"]][[3]])>0){
+      if(length(px[["x"]][["data"]][[3]][["text"]])>0){
+        px[["x"]][["data"]][[3]][["text"]] <- gsub("<br />star_intensity.*","",px[["x"]][["data"]][[3]][["text"]])
+        px[["x"]][["data"]][[3]][["text"]] <- paste0("<b>Matched Fragment: </b><br />", px[["x"]][["data"]][[3]][["text"]])
+      }
+    }
+  }
+
+  
+  jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
   cat(jsonlist);
   sink();
@@ -349,7 +418,17 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   return(.set.mSet(mSetObj))
 }
 
-SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"){
+
+#' SaintyCheckMSPfile
+#'
+#' @param mSetObj mSetObj
+#' @param filename filename with path
+#' @param format_type format type, can be 'mzmine' or 'msdial'
+#' @param keepAllspec if you want to search all spectra from your local, turn keepAllspec to TRUE. it is FALSE by default.
+#' @export
+#' @author Zhiqiang Pang
+
+SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine", keepAllspec = FALSE){
   
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
@@ -359,9 +438,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
   }
   
   Msg <- vector(mode = "character");
-  save(mSetObj, filename, format_type,
-       file = "mSetObj___SaintyCheckMSPfile.rda")
-  
+
   if(format_type == "mzmine"){
     data_table <- read.delim(filename, header = F)
     mSetObj[["dataSet"]][["spectrum_raw"]] <- data_table
@@ -370,12 +447,12 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     start_idxs <- vapply(data_table[,1], function(x){x == "BEGIN IONS"}, 
                          FUN.VALUE = logical(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS spectra included in your data."))
-    if(length(which(start_idxs)) > 50){
-      AddMsg("Only first 50 tandem spectra will be searched!")
-      Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
-      keep50 = TRUE;
+    if(length(which(start_idxs)) > 20){
+      AddMsg("Only first 20 tandem spectra will be searched!")
+      Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
+      keep20 = TRUE;
     } else {
-      keep50 = FALSE;
+      keep20 = FALSE;
     }
     
     end_idxs <- vapply(data_table[,1], function(x){x == "END IONS"}, 
@@ -420,11 +497,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
       ms2spec_full[[i]] <- list(precursor = prec_mz, prec_rt = prec_rt, ms2_spec = ms2_spec)
     }
     
-    if(keep50){
-      start_idxs <- start_idxs[1:50]
-      end_idxs <- end_idxs[1:50]
-      ms2_idxs <- ms2_idxs[1:50]
-      ms2_num <- ms2_num[1:50]
+    if(keep20){
+      start_idxs <- start_idxs[1:20]
+      end_idxs <- end_idxs[1:20]
+      ms2_idxs <- ms2_idxs[1:20]
+      ms2_num <- ms2_num[1:20]
     }
     
     ms2spec <- vector(mode = "list", length(ms2_num))
@@ -475,12 +552,12 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     }, FUN.VALUE = integer(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS records detected in your data."))
     Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
-    if(length(which(!non0_idxs)) > 50){
-      AddMsg("Only first 50 tandem spectra will be searched!")
-      Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
-      keep50 = TRUE;
+    if(length(which(!non0_idxs)) > 20){
+      AddMsg("Only first 20 tandem spectra will be searched!")
+      Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
+      keep20 = TRUE;
     } else {
-      keep50 = FALSE;
+      keep20 = FALSE;
     }
     
     start_idxs <- which(start_idxs)
@@ -522,11 +599,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
       ms2spec_full[[i]] <- list(precursor = prec_mz, prec_rt = prec_rt, ms2_spec = ms2_spec)
     }
     
-    if(keep50){
-      start_idxs <- start_idxs[1:50]
-      end_idxs <- end_idxs[1:50]
-      ms2_idxs <- ms2_idxs[1:50]
-      ms2_num <- ms2_num[1:50]
+    if(keep20){
+      start_idxs <- start_idxs[1:20]
+      end_idxs <- end_idxs[1:20]
+      ms2_idxs <- ms2_idxs[1:20]
+      ms2_num <- ms2_num[1:20]
     }
     
     ms2spec <- vector(mode = "list", length(ms2_num))
@@ -562,22 +639,56 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
   }
-  if(keep50){
+  if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
+    Msg <- c(Msg, paste0("Database searching is based on <u>Neutral Loss</u> spectra of corresponding MS/MS spectra."))
+  }
+  if(keep20){
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   } else {
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   }
 
-  save(ms2spec, file = "ms2spec____410.rda")
+  if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
+    ms2spec <- lapply(ms2spec, convert2NLspec)
+    ms2spec_full <- lapply(ms2spec_full, convert2NLspec)
+  }
   mSetObj[["msgSet"]][["sanity_msgvec"]] <- Msg
   mSetObj[["dataSet"]][["spectrum_set"]] <- ms2spec
   mSetObj[["dataSet"]][["spectrum_set_full"]] <- ms2spec_full
   return(.set.mSet(mSetObj))
 }
 
+convert2NLspec <- function(data_spec){
+  spectrum_dataframe <- data_spec$ms2_spec
+  precMZ <- data_spec$precursor
+  spectrum_dataframe$mz <- precMZ - spectrum_dataframe$mz
+  spectrum_dataframe <- spectrum_dataframe[spectrum_dataframe$mz>0, ]
+  data_spec$ms2_spec <- spectrum_dataframe
+  return(data_spec)
+}
+
+#' performMS2searchBatch
+#'
+#' @param mSetObj mSetObj
+#' @param ppm1 ppm value for ms1
+#' @param ppm2 ppm value for ms2
+#' @param dbpath database path
+#' @param frgdbpath fragmentation database path
+#' @param database database option
+#' @param similarity_meth similarity computing method
+#' @param precMZ mz of precursor
+#' @param sim_cutoff filtration cutoff of similarity score. will be enabled soon.
+#' @param ionMode ion mode, for ESI+, is should be 1. for ESI-, it should be 0
+#' @param unit1 ppm or da for ms1 matching
+#' @param unit2 ppm or da for ms2
+#' @param ncores number of cpu cores used to search
+#' @export
+#' @author Zhiqiang Pang 
+
 performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25, 
                                   dbpath = "",
+                                  frgdbpath = "",
                                   database = "all", 
                                   similarity_meth = 0,
                                   precMZ = NA, sim_cutoff = 30, ionMode = "positive",
@@ -586,9 +697,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   mSetObj <- .get.mSet(mSetObj);
   # fetch the searching function
   SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
-  
-  save(mSetObj, ppm1, ppm2, dbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, 
-       file = "mSetObj___performMS2searchBatch.rda")
+
   # configure ppm/da param
   if(unit1 == "da"){
     ppm1 <- ppm1/precMZ*1e6;
@@ -607,6 +716,9 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     stop("Database file does not exist! Please check!")
   }
   # now set up the database option
+  database <- gsub("\\[|\\]", "", database)
+  database <- gsub(" ", "", database)
+  database <- strsplit(database, ",")[[1]]
   database_opt <- generateMS2dbOpt(database, ionMode);
   
   # now let call OPTILCMS to search the database
@@ -672,8 +784,29 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
    
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
-  mSetObj$dataSet$spec_set_prec <- spec_set_prec
-  save(mSetObj, file = "mSetObj___597.rda")
+  
+  # to extract fragments
+  require(RSQLite)
+  require(DBI)
+  require(progress)
+  con <- dbConnect(SQLite(), frgdbpath)
+  dt_idx <- dbGetQuery(con, "SELECT * FROM Index_table")
+  dbDisconnect(con)
+  
+  for(k in 1:length(results_clean)){
+    frgs_list <- lapply(results_clean[[k]][["IDs"]], function(n){
+      dbs <- dt_idx$DB_Tables[which((dt_idx$Min_ID <= n) & (n <= dt_idx$Max_ID))]
+      
+      con <- dbConnect(SQLite(), frgdbpath)
+      res <- dbGetQuery(con, paste0("SELECT Fragments FROM ", dbs, " WHERE ID=",n))
+      dbDisconnect(con)
+      strsplit(res$Fragments, "\t")[[1]]
+    })
+    
+    mSetObj$dataSet$frgs_result[[k]] <- frgs_list
+  }
+  
+  mSetObj$dataSet$spec_set_prec <- spec_set_prec;
   return(.set.mSet(mSetObj));
 }
 
@@ -682,8 +815,7 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     return (1);
   }
   mSetObj <- .get.mSet(mSetObj);
-  save(mSetObj, included_str,
-       file = "mSetObj___DataUpdatefromInclusionList.rda")
+  
   Msg = vector()
   included_list <- strsplit(included_str, "\n")[[1]]
   
@@ -694,24 +826,24 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     which(x == prec_mzrt_all)[1]
   }, FUN.VALUE = integer(1L))
   
-  if(length(included_list)>50){
+  if(length(included_list)>20){
     mSetObj[["dataSet"]][["prec_mz_included"]] <- 
-      mSetObj[["dataSet"]][["prec_mz_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_mz_all"]][idxs][1:20];
     
     mSetObj[["dataSet"]][["prec_rt_included"]] <-
-      mSetObj[["dataSet"]][["prec_rt_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_rt_all"]][idxs][1:20];
     
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- 
-      mSetObj[["dataSet"]][["prec_mzrt_all"]][idxs][1:50];
+      mSetObj[["dataSet"]][["prec_mzrt_all"]][idxs][1:20];
     mSetObj[["dataSet"]][["spectrum_set"]] <- 
-      mSetObj[["dataSet"]][["spectrum_set_full"]][idxs][1:50];
+      mSetObj[["dataSet"]][["spectrum_set_full"]][idxs][1:20];
     
     ms2spec <- mSetObj[["dataSet"]][["spectrum_set"]];
     all_precmz <- vapply(ms2spec, function(x){x[[1]]}, FUN.VALUE = double(1L))
     all_precrt <- vapply(ms2spec, function(x){x[[2]]}, FUN.VALUE = double(1L))
     msms_frg_num <- vapply(ms2spec, function(x){nrow(x[[3]])}, FUN.VALUE = double(1L))
     
-    Msg <- c(Msg, paste0("Only first 50 tandem spectra will be searched by default!"))
+    Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
     Msg <- c(Msg, paste0("The m/z range of all precursors in your data is from ", min(all_precmz), " to ", max(all_precmz), "."))
     Msg <- c(Msg, paste0("The retention time range of all included precursors in your data is from ", min(all_precrt), " to ", max(all_precrt), "."))
     Msg <- c(Msg, paste0("The minimum number of MS/MS fragments is ", min(msms_frg_num), "."))
@@ -835,3 +967,95 @@ GetNonIncludedPrecMZRTs <- function(mSetObj=NA){
   return(all_nonprecmzrt)
 }
 
+
+PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72, format="png", width = 12, height = 8){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(mSetObj[["dataSet"]][["msms_result"]])){
+    if(file.exists("MS2searchSingle_results.qs")){
+      ms2_res <- qs::qread("MS2searchSingle_results.qs")[[1]]
+    } else {
+      return(0)
+    }
+  } else {
+    ms2_res <- mSetObj[["dataSet"]][["msms_result"]][[1]]
+  }
+  
+  if(option == 0L){
+    ms2_res[["dot_product"]][[1]] -> simi_vec;
+    num <- c(length(which(simi_vec>=0.8)),
+             length(which(simi_vec>=0.6 & simi_vec<0.8)),
+             length(which(simi_vec<0.6)))
+    
+    levls <- factor(c("High(>0.8)", "Medium(0.6-0.8)", "Low(<0.6)"), levels = c("High(>0.8)", "Medium(0.6-0.8)", "Low(<0.6)"))
+    
+    df <- data.frame(levls = levls,
+                     Number = num)
+    
+    cbPalette <- c("#009E73", "#E69F00", "#999999")
+    require(ggplot2)
+    p1 <- ggplot(data=df, aes(x=levls, y=Number)) +
+      geom_bar(stat="identity", aes(fill=levls), width = 0.618)+
+      geom_text(aes(label=Number), vjust=1.6, color="white", size=6)+
+      theme_minimal() + scale_fill_manual(values=cbPalette) + 
+      scale_color_manual(values=cbPalette) + 
+      guides(fill=guide_legend(title="Confidence Level"))+
+      theme(axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14),  
+            axis.title.x = element_blank(),
+            axis.title.y = element_text(size = 14))
+    
+  } else {
+    ms2_res[["Scores"]][[1]] -> simi_vec;
+    num <- c(length(which(simi_vec>=80)),
+             length(which(simi_vec>=60 & simi_vec<80)),
+             length(which(simi_vec<60)))
+    
+    levls <- factor(c("High(>80)", "Medium(60-80)", "Low(<60)"), levels = c("High(>80)", "Medium(60-80)", "Low(<60)"))
+    
+    df <- data.frame(levls = levls,
+                     Number = num)
+    
+    cbPalette <- c("#009E73", "#E69F00", "#999999")
+    require(ggplot2)
+    p1 <- ggplot(data=df, aes(x=levls, y=Number)) +
+      geom_bar(stat="identity", aes(fill=levls), width = 0.618)+
+      geom_text(aes(label=Number), vjust=1.6, color="white", size=6)+
+      theme_minimal() + scale_fill_manual(values=cbPalette) + 
+      scale_color_manual(values=cbPalette) + 
+      guides(fill=guide_legend(title="Confidence Level"))+
+      theme(axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14),  
+            axis.title.y = element_text(size = 14),
+            axis.title.x = element_blank())
+    
+  }
+  
+  imageNM <- paste0(imageNM, "_", dpi, ".", format)
+  
+  Cairo::Cairo(
+    file = imageNM, 
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+  mSetObj[["imgSet"]]$ms2sumsingle <- imageNM
+  
+  return(.set.mSet(mSetObj))
+}
+
+
+#' setMS2DBOpt
+#'
+#' @param mSetObj mSetObj object
+#' @param DBoption database option to define neutral loss or not, can be either 'regualr" or 'nl'.
+#' @export
+#' @author Zhiqiang Pang 
+#' 
+setMS2DBOpt <- function(mSetObj=NA, DBoption = "regular") {
+  mSetObj <- .get.mSet(mSetObj);
+  if(DBoption!="regular" & DBoption!="nl"){
+    stop("Wrong MS2DBopt. Must be either regular or nl");
+  }
+  mSetObj[["dataSet"]]$MSMS_db_option <- DBoption;
+  return(.set.mSet(mSetObj))
+}

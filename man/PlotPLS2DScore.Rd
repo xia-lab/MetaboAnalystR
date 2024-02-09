@@ -15,7 +15,7 @@ PlotPLS2DScore(
   reg = 0.95,
   show = 1,
   grey.scale = 0,
-  use.sparse = FALSE
+  cex.opt = "na"
 )
 }
 \arguments{
@@ -40,8 +40,6 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{show}{Show labels, 1 or 0}
 
 \item{grey.scale}{Numeric, use a grey scale (0) or not (1)}
-
-\item{use.sparse}{Logical, use a sparse algorithm (T) or not (F)}
 }
 \description{
 Plot PLS score plot

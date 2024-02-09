@@ -78,12 +78,32 @@ PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNP
     pldSNPs <- T;
   }
 
-  outcome.dat <- TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh))
-  
+  captured_messages <<- "";
+
+  outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh)))
+   
+  last_msg <- captured_messages[length(captured_messages)];
+  print(last_msg);
+  if(length(grep("Server error: 502", last_msg)) > 0 || length(grep("Failed to retrieve results from server", last_msg))){
+    AddErrMsg(paste0("The server is busy, try again later!"))
+    return(-2);   
+  }else if(is.null(outcome.dat)){
+    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
+    return(-2);
+  }
+
   mSetObj$dataSet$outcome.dat <- outcome.dat;
   .set.mSet(mSetObj)
   return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
+}
+
+capture_messages <- function(expr) {
+  withCallingHandlers(expr, message = function(m) {
+    # Append the message to the global variable
+    captured_messages <<- c(captured_messages, conditionMessage(m))
+    #invokeRestart("muffleMessage")
+  })
 }
 
 PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
@@ -92,16 +112,20 @@ PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
   outcome.dat <- mSetObj$dataSet$outcome.dat;
   
   dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
-print(head(dat));
   mSetObj$dataSet$harmonized.dat <- dat;
   return(.set.mSet(mSetObj))
 }
 
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
       mSetObj <- .get.mSet(mSetObj);
+      err.vec <<- "";
       res1 <- PerformLDClumping(mSetObj, ldclumpOpt);
       mSetObj <- .get.mSet(mSetObj);
       res2 <- PerformLDProxies(mSetObj, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh);
+      if(res2 == -2){
+        #empty outcome.dat error.
+        return(-2);
+      }
       mSetObj <- .get.mSet(mSetObj);
       res <- PerformHarmonization(mSetObj=NA, harmonizeOpt);
       mSetObj <- .get.mSet(mSetObj);
@@ -115,10 +139,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$harmonized.dat
-  save.image("MR.RData");
+  #save.image("MR.RData");
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
-  mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
+  #mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
+  mr.res <- mr_modified(dat, method_list = method.type);
   #rownames(mr.res) <- mr.res$method;
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
@@ -158,7 +183,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj$dataSet$mr_res_single <- res_single;
   res_loo <- TwoSampleMR::mr_leaveoneout(dat);
   mSetObj$dataSet$mr_res_loo <- res_loo;
-
+  #print(head(merge2))
   .set.mSet(mSetObj);
   if(.on.public.web){
     return(1);
@@ -455,7 +480,7 @@ PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   singlesnp_results$up <- singlesnp_results$b + 1.96 * singlesnp_results$se
   singlesnp_results$lo <- singlesnp_results$b - 1.96 * singlesnp_results$se
-  singlesnp_results$tot <- ifelse(singlesnp_results$SNP %in% c("All - Inverse variance weighted", "All - MR Egger"), 1, 0.01)
+  singlesnp_results$tot <- ifelse(grepl("^All -", singlesnp_results$SNP), 1, 0.01)
   
   if(exponentiate) {
     singlesnp_results$b <- exp(singlesnp_results$b)
@@ -609,4 +634,67 @@ PlotFunnel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
   return(plot_list)
 
+}
+
+mr_modified <- function (dat, 
+                         parameters = default_parameters(), 
+                         method_list = subset(mr_method_list(), use_by_default)$obj) 
+{
+  library(TwoSampleMR)
+  mr_raps_modified <- function (b_exp, b_out, se_exp, se_out,parameters) 
+  {
+    out <- try(suppressMessages(mr.raps::mr.raps(b_exp, b_out, se_exp, se_out,
+                                                 over.dispersion = parameters$over.dispersion, 
+                                                 loss.function = parameters$loss.function,
+                                                 diagnosis = FALSE)),
+               silent = T)
+    
+    # The estimated overdispersion parameter is very small. Consider using the simple model without overdispersion
+    # When encountering such warning, change the over.dispersion as 'FASLE'
+    
+    if ('try-error' %in% class(out))
+    {
+      output = list(b = NA, se = NA, pval = NA, nsnp = NA)
+    }
+    else
+    {
+      output = list(b = out$beta.hat, se = out$beta.se, 
+                    pval = pnorm(-abs(out$beta.hat/out$beta.se)) * 2, nsnp = length(b_exp))
+    }
+    return(output)
+  }
+  
+  method_list_modified <- stringr::str_replace_all(method_list, "mr_raps","mr_raps_modified")
+  
+  mr_tab <- plyr::ddply(dat, c("id.exposure", "id.outcome"),function(x1)
+  {
+    x <- subset(x1, mr_keep)
+    
+    if (nrow(x) == 0) {
+      message("No SNPs available for MR analysis of '", x1$id.exposure[1], "' on '", x1$id.outcome[1], "'")
+      return(NULL)
+    }
+    else {
+      message("Analysing '", x1$id.exposure[1], "' on '", x1$id.outcome[1], "'")
+    }
+    res <- lapply(method_list_modified, function(meth)
+    {
+      get(meth)(x$beta.exposure, x$beta.outcome, x$se.exposure, x$se.outcome, parameters)
+    }
+    )
+    
+    methl <- mr_method_list()
+    mr_tab <- data.frame(outcome = x$outcome[1], exposure = x$exposure[1], 
+                         method = methl$name[match(method_list, methl$obj)], 
+                         nsnp = sapply(res, function(x) x$nsnp), 
+                         b = sapply(res, function(x) x$b), 
+                         se = sapply(res, function(x) x$se), 
+                         pval = sapply(res, function(x) x$pval))
+    
+    mr_tab <- subset(mr_tab, !(is.na(b) & is.na(se) & is.na(pval)))
+    
+    return(mr_tab)
+  }
+  )
+  return(mr_tab)
 }

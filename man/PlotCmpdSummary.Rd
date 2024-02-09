@@ -10,7 +10,8 @@ PlotCmpdSummary(
   mSetObj = NA,
   cmpdNm,
   meta = "NA",
-  version,
+  meta2 = "NA",
+  count = 0,
   format = "png",
   dpi = 72,
   width = NA
@@ -23,7 +24,9 @@ PlotCmpdSummary(
 
 \item{meta}{meta is "NA"}
 
-\item{version}{version}
+\item{meta2}{only applicable for multifac module, secondary factor}
+
+\item{count}{img count number}
 
 \item{format}{Input the format of the image to create}
 

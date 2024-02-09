@@ -23,7 +23,10 @@ ReadMetaData <- function(mSetObj=NA, metafilename){
   # are sample names identical to data$orig
   # order samples in same way as in abundance table
 
-  smpl.nms <- metadata[,1];
+  #smpl.nms <- metadata[,1];
+  # force clean names to avoid many issues
+  smpl.nms <- CleanNames(metadata[,1]);
+
   data.smpl.nms <- names(mSetObj$dataSet$url.smp.nms);
 
   nm.hits <- data.smpl.nms %in% smpl.nms;
@@ -249,7 +252,10 @@ Read.TextDataTs <- function(mSetObj=NA, filePath, format="rowu"){
     return(0);
   }
   
-  url.smp.nms <- CleanNames(smpl.nms);
+  #url.smp.nms <- CleanNames(smpl.nms);
+  # now use clean names for all, as spaces causes a lot of issues
+  smpl.nms <- url.smp.nms <- CleanNames(smpl.nms);
+
   names(url.smp.nms) <- smpl.nms;
   
   url.var.nms <- CleanNames(var.nms); # allow space, comma and period
@@ -522,7 +528,7 @@ GetUniqueMetaNames <-function(mSetObj=NA, metadata){
 #'License: GPL-3 License
 #'@export
 #'
-PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta, version, format="png", dpi=72, width=NA){
+PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta,meta2, version, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){

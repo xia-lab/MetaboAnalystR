@@ -14,7 +14,7 @@ or msspec (MS spectra data)}
 \item{anal.type}{Indicate the analysis module to be performed: stat, pathora, pathqea, msetora, msetssp, msetqea, mf, 
 cmpdmap, smpmap, or pathinteg}
 
-\item{paired}{Indicate if the data is paired or not. Logical, default set to FALSE}
+\item{paired}{indicate if the data is paired or not. Logical, default set to FALSE}
 }
 \description{
 This functions handles the construction of a mSetObj object for storing data for further processing and analysis.

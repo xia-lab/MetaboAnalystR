@@ -444,8 +444,8 @@ PlotClustPCA <- function(mSetObj,
 #'@export
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
-                           smplDist, clstDist, palette,fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,  method.nm, top.num,  rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T){
-  
+                           smplDist, clstDist, palette,fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,  method.nm, top.num,  rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T,viewOpt,download=F){
+  print(download)
   mSetObj <- .get.mSet(mSetObj);
   var.nms = colnames(mSetObj$dataSet$norm);
   if(top.num < length(var.nms)){
@@ -483,7 +483,12 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     }
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));
-  PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, showColnm,showRownm);
+  if(download==T){
+ PlotStaticHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,viewOpt, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend,showRownm);
+  }else{
+ PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, showColnm,showRownm);
+}
+ 
 }
 
 #'Create Heat Map Plot
@@ -642,12 +647,21 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     data1sc <- t(hc.dat)
     data1sc <- scale_mat(data1sc, scaleOpt)
     data1sc = round(data1sc,5)
-
-    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
+    
+    
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
     sz <- max(as.numeric(annoPer) / 100, 0.015)
     bf <- min(0.01, (sz / 3))
+
+    dendrow_size = ifelse(w>800,0.05,0.15) 
+    if(h>1500){
+    dendcol_size = 0.03
+    }else if(h<1000){
+     dendcol_size = 0.1
+    }else{
+     dendcol_size = 0.05
+   }
 
    if(grp.ave){
         
@@ -684,13 +698,28 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     
     
     if (rowV) {
-    dend_col <- hclust(dist(t(data1sc), method = smplDist), method = clstDist)
-    p <- p %>% add_col_dendro(dend_col)
+    if(smplDist=="correlation"){
+      my.dist2 <- cor(data1sc, method="pearson")
+      my.dist2 <- 1-my.dist2 
+      my.dist2 <- as.dist(my.dist2, diag = FALSE, upper = F)
+    }else{
+      my.dist2 = dist(t(data1sc), method = smplDist)
+    }
+    dend_col <- hclust( my.dist2, method = clstDist)
+    p <- p %>% add_col_dendro(dend_col,size=dendcol_size)
     } 
 
   if (colV) {
-    dend_row <- hclust(dist(data1sc, method = smplDist), method = clstDist)
-    p <- p %>% add_row_dendro(dend_row)  
+   if(smplDist=="correlation"){
+      my.dist <- cor(t(data1sc), method="pearson")
+      my.dist <- 1-my.dist 
+      my.dist <- as.dist(my.dist, diag = FALSE, upper = F)
+    }else{
+      my.dist = dist(data1sc, method = smplDist)
+    }
+
+    dend_row <- hclust(my.dist, method = clstDist)
+    p <- p %>% add_row_dendro(dend_row,size=dendrow_size)  
   } 
     
       if(ncol(data1sc)<100){
@@ -714,7 +743,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
  
-  #  as_list[["layout"]][["annoHeight"]] <- round(0.1*h, 1)
+
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
@@ -724,6 +753,193 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
 
   return(.set.mSet(mSetObj));
 }
+
+#'Create high resolution static HeatMap for download only
+#'@description '@param #same as PlotHeatMap
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@import qs
+#'@export
+#'
+PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+                        width=NA, dataOpt, scaleOpt, smplDist, 
+                        clstDist, palette, fzCol,fzRow, viewOpt="detail", rowV=T, 
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
+
+  mSetObj <- .get.mSet(mSetObj);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$heatmap <- imgName;
+  
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
+  ordered.cls <- is.ordered(cls);
+  
+  # record the paramters
+  mSetObj$analSet$htmap <- list(dist.par=smplDist, clust.par=clstDist);
+  
+  # set up data set
+  if(dataOpt=="norm"){
+    my.data <- mSetObj$dataSet$norm;
+  }else{
+    my.data <- qs::qread("prenorm.qs");
+  }
+  
+  if(is.null(var.inx)){
+    hc.dat<-as.matrix(my.data);
+  }else{
+    hc.dat<-as.matrix(my.data[,var.inx]);
+  }
+  
+  # need to control for very large data plotting
+  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+    includeRowNames <- FALSE;
+  }
+  if(.on.public.web){
+    if(ncol(hc.dat) > 5000){
+      filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+      rk <- rank(-filter.val, ties.method='random');
+      hc.dat <- hc.dat[,rk <=5000];
+      print("Data is reduced to 5000 vars based on IQR ..");
+    }
+  }
+  
+  colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
+  
+  if(!ordered.cls && cls.class == "integer"){
+    hc.cls <- as.factor(as.numeric(levels(cls))[cls]);
+  }else{
+    hc.cls <- cls;
+  }
+  
+  # set up colors for heatmap
+  if(palette=="gbr"){
+    colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+  }else if(palette == "heat"){
+    colors <- grDevices::heat.colors(256);
+  }else if(palette == "topo"){
+    colors <- grDevices::topo.colors(256);
+  }else if(palette == "gray"){
+    colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+  }else if(palette == "byr"){
+    colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+  }else if(palette == "viridis") {
+    colors <- rev(viridis::viridis(10))
+  }else if(palette == "plasma") {
+    colors <- rev(viridis::plasma(10))
+  }else if(palette == "npj"){
+    colors <- c("#00A087FF","white","#E64B35FF")
+  }else if(palette == "aaas"){
+    colors <- c("#4DBBD5FF","white","#E64B35FF");
+  }else if(palette == "d3"){
+    colors <- c("#2CA02CFF","white","#FF7F0EFF");
+  }else {
+colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+  }
+  
+  if(cls.type == "disc"){
+    annotation <- data.frame(class = hc.cls);
+    rownames(annotation) <- rownames(hc.dat); 
+  }else{
+    annotation <- NA;
+  }
+  # compute size for heatmap
+  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+  
+  # make the width smaller for group average
+  if(grp.ave){
+    w <- length(levels(cls))*25 + 300;
+    w <- round(w/72,2);
+  }
+  
+  if(border){
+    border.col<-"grey60";
+  }else{
+    border.col <- NA;
+  }
+  
+  if(format=="pdf"){
+    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  }
+  if(cls.type == "disc"){    
+    
+    if(ordered.cls){
+      ord.inx <- order(hc.cls);
+      hc.cls <- hc.cls[ord.inx];
+      hc.dat <- hc.dat[ord.inx,];
+    }else if(cls.class =="integer"){
+      hc.cls <- as.factor(as.numeric(levels(hc.cls))[hc.cls]);
+    }
+   # set up color schema for samples
+    cols <- GetColorSchema(hc.cls, palette == "gray");
+    uniq.cols <- unique(cols);    
+    names(uniq.cols) <- unique(as.character(hc.cls));
+    ann_colors <- list(class= uniq.cols);
+    if(grp.ave){ # only use group average
+      lvs <- levels(cls);
+      my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
+      for(i in 1:length(lvs)){
+        my.mns[i,]<- colMeans(hc.dat[hc.cls==lvs[i], ]);
+      }
+      rownames(my.mns) <- lvs;
+      colnames(my.mns) <- colnames(hc.dat);
+      hc.dat <- my.mns;
+      hc.cls <- as.factor(lvs);
+      annotation <- data.frame(class = hc.cls);
+      rownames(annotation) <- rownames(hc.dat); 
+    }
+ 
+
+   p<- pheatmap::pheatmap(t(hc.dat), 
+                     annotation=annotation, 
+                      fontsize_row=fzRow, 
+                       fontsize_col=fzCol,
+                     clustering_distance_rows = smplDist,
+                     clustering_method = clstDist, 
+                     border_color = border.col,
+                     cluster_rows = colV, 
+                     cluster_cols = rowV,
+                     scale = scaleOpt,
+                     legend = show.legend,
+                     annotation_legend = show.annot.legend, 
+                     show_rownames=includeRowNames,
+                     color = colors,
+                     silent = TRUE);
+   if(colV){
+     p$tree_row$order <- rev(p$tree_row$order)
+     colV <-  p$tree_row
+   }else{
+     hc.dat <- hc.dat[,ncol(hc.dat):1]
+   }
+  pheatmap::pheatmap(t(hc.dat), 
+                     annotation=annotation, 
+                      annotation_colors = ann_colors,
+                      fontsize_row=fzRow, 
+                      fontsize_col=fzCol,
+                     clustering_distance_rows = smplDist,
+                     clustering_method = clstDist, 
+                     border_color = border.col,
+                     cluster_rows =  colV, 
+                     cluster_cols = rowV,
+                     scale = scaleOpt,
+                     legend = show.legend,
+                     annotation_legend = show.annot.legend, 
+                     show_rownames=includeRowNames,
+                     color = colors);
+  
+  }else{
+    heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+  }
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
 
 ##############################################
 ##############################################

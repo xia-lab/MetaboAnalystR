@@ -4,24 +4,28 @@
 \alias{FilterVariable}
 \title{Methods for non-specific filtering of variables}
 \usage{
-FilterVariable(mSetObj=NA, qc.filter, rsd, filter, filter.cutoff)
+FilterVariable(mSetObj=NA, filter, qcFilter, rsd)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{filter}{Select the filter option, "rsd" which is the relative standard deviation, "nrsd" which
+\item{qc.filter}{Filter the variables based on QC samples - True (T), or use non-QC based filtering - False (F).}
+
+\item{rsd}{Define the relative standard deviation cut-off. Variables with a RSD greater than this number
+will be removed from the dataset. It is only necessary to specify this argument if qc.filter is True (T). 
+Otherwise, it will not be used in the function.}
+
+\item{var.filter}{Select the filter option, "rsd" which is the relative standard deviation, "nrsd" which
 is the non-parametric relative standard deviation, "mean" which is the mean, "sd" which is the standard
 deviation, "mad" which is the median absolute deviation, or "iqr" which is the interquantile range.}
 
+\item{var.cutoff}{var.cutoff value}
+
+\item{int.filter}{int.filter value}
+
+\item{int.cutoff}{int.cutoff value, numeric}
+
 \item{filter.cutoff}{percent to be filtered, for example, 5 (5\%)}
-
-\item{qcFilter}{Filter the variables based on QC samples - True (T), or use non-QC based filtering - False (F).}
-
-\item{rsd}{Define the relative standard deviation cut-off. Variables with a RSD greater than this number
-will be removed from the dataset. It is only necessary to specify this argument if qcFilter is True (T). 
-Otherwise, it will not be used in the function.}
-
-\item{privileged}{use could keep this option as True (T) for local MetaboAnalystR}
 }
 \description{
 This is a function that filters the dataset, dependent on the user-specified method

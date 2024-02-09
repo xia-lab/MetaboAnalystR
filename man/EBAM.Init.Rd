@@ -12,7 +12,8 @@ EBAM.Init(
   A0 = -99,
   delta,
   imgA0,
-  imgSig
+  imgSig,
+  dpi = 72
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ EBAM.Init(
 \item{imgA0}{imgA0}
 
 \item{imgSig}{imgSig}
+
+\item{dpi}{dpi value of images}
 }
 \description{
 deteriming a0, only applicable for z.ebam (default)

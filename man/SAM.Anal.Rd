@@ -10,7 +10,8 @@ SAM.Anal(
   paired = FALSE,
   varequal = TRUE,
   delta = 0,
-  imgName
+  imgName,
+  dpi = 72
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ SAM.Anal(
 \item{delta}{numeric}
 
 \item{imgName}{image name, character}
+
+\item{dpi}{image dpi, integer}
 }
 \description{
 Perform SAM

@@ -6,12 +6,13 @@
 \usage{
 PlotPeaks2Paths(
   mSetObj = NA,
-  imgName,
+  imgName = "",
   format = "png",
   dpi = 72,
   width = 9,
   labels = "default",
-  num_annot = 5
+  num_annot = 5,
+  interactive = F
 )
 }
 \arguments{

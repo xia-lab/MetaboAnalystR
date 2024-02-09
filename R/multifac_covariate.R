@@ -569,6 +569,7 @@ CovariateScatter.Anal <- function(mSetObj,
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file=fileName);
+  qs::qsave(rest, file = "covariate_result.qs");
 
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
@@ -655,6 +656,28 @@ GetRawCovThresh <- function(mSetObj){
   return(mSetObj$analSet$cov$thresh);
 }
 
+convertCovariate2Fun <- function(){
+    if(!file.exists("covariate_result.qs")){
+        return(0)
+    }
+    dt <- qs::qread("covariate_result.qs");
+    features <- rownames(dt)
+    
+    mzs <- vapply(features, function(x){
+      strsplit(x, "__")[[1]][1]
+    }, character(1L));
+    rts <- vapply(features, function(x){
+      strsplit(x, "__")[[1]][2]
+    }, character(1L));
+    if("t" %in% colnames(dt)){
+      df <- data.frame(mz = mzs, rt = rts, tscore = dt$t, pvalue = dt$adj.P.Val)
+    } else {
+      df <- data.frame(mz = mzs, rt = rts, pvalue = dt$adj.P.Val)
+    }
+    
+    write.table(df, file = "metaboanalyst_input_functional_analy.txt", quote = F, row.names = F, sep = "\t")
+    return(1)
+}
 
 PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72, interactive=F){
   mSetObj <- .get.mSet(mSetObj); 

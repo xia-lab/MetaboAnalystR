@@ -2763,7 +2763,8 @@ json.res <- list(
   fisher.p = as.numeric(res.mat[,5]),
   gamma.p = as.numeric(res.mat[,9]),
   peakToMet = mSetObj$cpd_form_dict,
-  peakTable = matched_res
+  peakTable = matched_res,
+  pathIDs = names(hits.all)
 );
 
   json.mat <- RJSONIO::toJSON(json.res);

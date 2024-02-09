@@ -113,7 +113,12 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
         mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
     }
     mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
+    if(!is.null(mSetObj$dataSet$harmonized.dat)){
+        inx <- which(rownames(mSetObj$dataSet$harmonized.dat) %in% rownames(mSetObj$dataSet$exposure));
+        mSetObj$dataSet$harmonized.dat <- mSetObj$dataSet$harmonized.dat[inx,];
+    }
   }
+
   return(.set.mSet(mSetObj));
 }
 
@@ -284,7 +289,7 @@ addEntrezID <- function(data){
 }
 
 
-PerformCmpdMapping <- function(mSetObj=NA, cmpdIDs, idType, tissueType, population){
+PerformCmpdMapping2 <- function(mSetObj=NA, cmpdIDs, idType, tissueType, population){
   
   mSetObj <- .get.mSet(mSetObj);
   org <- "hsa";

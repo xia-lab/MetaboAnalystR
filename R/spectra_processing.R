@@ -34,9 +34,16 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }else {
     users.path <-getwd();
   }
-
+  
+  ## create algorithm marker
+  if(grepl("ROIExtraction", planString)){
+    write.table("centWave_auto", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  } else {
+    write.table("centWave_manual", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  }
+  
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -85,6 +92,239 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   return(as.integer(1))
 }
 
+#' CreateMS2RawRscript#'
+#' @noRd
+#' @author Zhiqiang Pang
+CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
+  
+  guestName <- guestName;
+  planString <- planString;
+  
+  cat("current planString ---> ", planString, "\n")
+  cat("current guestName  ---> ", guestName, "\n")
+  
+  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+    users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
+  } else {
+    users.path <-getwd();
+  }
+  
+  ## Prepare Configuration script for slurm running
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  
+  ## Prepare R script for running
+  # need to require("OptiLCMS")
+  str <- paste0('library(OptiLCMS)');
+  
+  # Set working dir & init env & files included
+  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
+  str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
+  str <- paste0(str, ";\n", "load(\'mSet.rda\')");
+  
+  # parse param string
+  # planString <- "ppm1:5.0;ppm2:10.0;filtering:200.0;targets_opt:sigs;db_opt:[hmdb_exp, hmdb_pre, gnps];win_size:1.5;similarity_method:dot_product;ionMode:positive;intensity_threshold:10000.0;enabledDDADeco:true"
+  param_strs <- strsplit(planString, ";")[[1]]
+  param_list <- strsplit(param_strs, ":")
+  names(param_list) <- vapply(param_list, function(x){x[1]}, FUN.VALUE = character(1L))
+  param_list <- lapply(param_list, function(x){x[2]})
+  if(param_list$enabledDDADeco == "true"){
+    param_list$enabledDDADeco <- TRUE;
+  }
+  if(param_list$similarity_method =="entropy"){
+    param_list$useentropy <- TRUE;
+  } else {
+    param_list$useentropy <- FALSE;
+  }
+  param_list$db_opt <- gsub(" ", "", param_list$db_opt);
+  param_list$db_opt <- gsub("\\[", "c('", param_list$db_opt);
+  param_list$db_opt <- gsub("]", "')", param_list$db_opt);
+  param_list$db_opt <- gsub(",", "','", param_list$db_opt)
+  
+  
+  if(mode == "dda"){
+    # import feature list
+    str <- paste0(str, ";\n", "ft <- mSet@peakAnnotation[[\'camera_output\']][,c(2,3,5,6)]");
+    str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+    str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}")
+    str <- paste0(str, ";\n", "cat('There are total of ', nrow(ft), ' target MS1 features included for MS2 data processing!')")
+    
+    # progress 104
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),ecol = \'\',progress = 104)";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # import data
+    if(file.exists("upload/MS2")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
+                                                  full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
+    } else if(any(grepl("MS2_", list.files("upload/")))) {
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
+                                                  pattern = \"^MS2_\",
+                                                  full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
+    }
+    # progress 110
+    cmd_prgs <- "OptiLCMS:::MessageOutput(
+      mes = paste0(\'Step 7/12: MS/MS data imported completely! \n\n\'),
+      ecol = \'\',
+      progress = 110
+    )";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    # perform deconvolution
+    # progress 120
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
+    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering, 
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold, 
+                                    ", database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")) {
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering, 
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold, 
+                                    ", database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    }
+
+    str <- paste0(str, ";\n", cmd_deco)
+    # progress 140
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),ecol = \'\',progress = 140)";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+  } else {
+    # for swath-dia
+    # progress 102
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),ecol = \'\',progress = 102)";
+    str <- paste0(str, ";\n", cmd_prgs)
+    if(param_list[["targets_opt"]] == "sigs") {
+      str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+    }
+    
+    # import data
+    if(file.exists("upload/MS2")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(mSet = mSet, filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
+                                                  full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
+    } else if(any(grepl("MS2_", list.files("upload/")))) {
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
+                                                  pattern = \"^MS2_\",
+                                                  full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
+    }
+    
+    # progress 110
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\n\'),ecol = \'\',progress = 110)";
+    str <- paste0(str, ";\n", cmd_prgs)
+    
+    if(param_list[["targets_opt"]] == "sigs") {
+      str <- paste0(str, ";\n", "if(length(idx)>0){mSet@MSnData[['peak_mtx']] <- mSet@MSnData[['peak_mtx']][idx]}")
+      str <- paste0(str, ";\n", "cat('There are total of ', length(mSet@MSnData[['peak_mtx']]), ' target MS1 features included for MS2 data processing!\n')")
+    }
+
+    
+    # perform deconvolution
+    # progress 120
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
+    cmd_deco <- paste0("mSet <- PerformDIADeconvolution(mSet,
+                                    min_width = 5,
+                                    ppm2 = ", param_list$ppm2,
+                                    ", sn = 12,
+                                    filtering = ", param_list$filtering, ",
+                                    ncores = 4L)");
+    str <- paste0(str, ";\n", cmd_deco)
+    # progress 140
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),ecol = \'\',progress = 140)";
+    str <- paste0(str, ";\n", cmd_prgs)
+  }
+  
+  # PerformSpectrumConsenus
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus is starting .. \n\'),ecol = \'\',progress = 145)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  cmd_consenus <- paste0("mSet <- PerformSpectrumConsenus (mSet, ppm2 = ", param_list$ppm2, ", concensus_fraction = 0.2, database_path = '', use_rt = FALSE,
+                                     user_dbCorrection = FALSE)");
+  str <- paste0(str, ";\n", cmd_consenus)
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\n\'),ecol = \'\',progress = 150)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # PerformDBSearchingBatch
+  # progress 150
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\n\'),ecol = \'\',progress = 150)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5, 
+                                     database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     databaseOptions =", param_list$db_opt, ")");
+  } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5, 
+                                     database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     databaseOptions =", param_list$db_opt, ")");
+  }
+
+  str <- paste0(str, ";\n", cmd_seareching)
+  # progress 180
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\n\'),ecol = \'\',progress = 180)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # PerformResultsExport
+  # progress 190
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exporting.. \n\'),ecol = \'\',progress = 190)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
+                                  topN = 10L, ncores = 4L)";
+  str <- paste0(str, ";\n", cmd_export)
+  # progress 190
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # FormatMSnAnnotation
+  cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
+  str <- paste0(str, ";\n", cmd_annotation)
+  
+  cmd_write <- "write.csv(dtx, file = \'compound_msn_results.csv\', row.names = F, col.names = F)";
+  str <- paste0(str, ";\n", cmd_write)
+  cmd_write <- "write.table(dtx, file = \'compound_msn_results.tsv\', row.names = F, quote = FALSE, sep = \'\\t\')";
+  str <- paste0(str, ";\n", cmd_write)
+  
+  cmd_saving <- "qs::qsave(mSet, file = \'msn_mset_result.qs\')";
+  str <- paste0(str, ";\n", cmd_saving)
+  
+  # progress 198
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),ecol = \'\',progress = 198)";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  # progress 200 
+  cmd_prgs <- "OptiLCMS:::jobFinished()";
+  str <- paste0(str, ";\n", cmd_prgs)
+  
+  
+  # sink command for running
+  sink("ExecuteRawSpec.sh", append = TRUE);
+  
+  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  
+  sink();
+  
+  return(1)
+}
+
 #' CreateRawRscript4Asari
 #' @description used to create a running for raw spectra processing
 #' this file will be run by SLURM by using OptiLCMS and Asari from python.
@@ -98,8 +338,11 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
     users.path <-getwd();
   }
   
+  ## create algorithm marker
+  write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
+  
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   require(R.utils)
   allMSFiles <- list.files("upload", full.names = T, recursive = T)
@@ -111,10 +354,10 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   users_path <- paste0(users.path, "/uploadAll/")
   ## Prepare Asari code to execute
-  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res  >> ");
+  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res ");
   #str_asari <- paste0(str_asari, "sed '1,$s/",gsub("\\/", "\\\\/", users.path), "//' > ")
   #str_asari <- paste0(str_asari, "awk '{gsub(\"", users.path, "\",\"\")}1' > ")
-  str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
+  #str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -137,6 +380,15 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   #str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
   #str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
   
+  # check the latest result folder
+  load("params.rda")
+  minFrc <- peakParams[["minFraction"]];
+  
+  str2 <- paste0('library(OptiLCMS)');
+  str2 <- paste0(str2, ";\n", "metaboanalyst_env <- new.env()");
+  str2 <- paste0(str2, ";\n", "setwd(\'",users.path,"\')");
+  str2 <- paste0(str2, ";\n", "OptiLCMS:::PerformAsariResultsFormating(", minFrc, ")")
+  
   # sink command for running
   sink("ExecuteRawSpec.sh");
   
@@ -144,9 +396,9 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   # str_asari
   
-  cat(paste0("\nsrun R -e \"\n", str, "\n\"; ", str_asari, "; \n\n"));
-  
-  #cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str, "\n\";"));
+  cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
   
   sink();
   
@@ -423,10 +675,16 @@ updateSpectra3DPCA <- function(featureNM = 100){
   colnames(coords) <- NULL; 
   pca3d$loading$xyz <- coords;
   pca3d$loading$name <- rownames(mSet_pca$rotation);
-  pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
-                                 "@", 
-                                 round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
-  
+
+  if(is.null(mSet@peakfilling[["FeatureGroupTable"]])){
+    pca3d$loading$entrez <- mSet@dataSet[["Samples"]][-1][sort(selectRow_idx)]
+  } else {
+    pca3d$loading$entrez <- paste0(round(mSet@peakfilling[["FeatureGroupTable"]]@listData$mzmed, 4), 
+                                   "@", 
+                                   round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
+    
+  }
+
   pca3d$loading$cols <- cols;
   
   pca3d$cls =  df$group;
@@ -536,6 +794,24 @@ retrieveModeInfo <- function(){
   }
 }
 
+#' retrieveAlgorithmInfo
+#' @description retrieveAlgorithmInfo
+#' @noRd
+#' @author Zhiqiang Pang
+retrieveAlgorithmInfo <- function(){
+  if(!file.exists("ms1_algorithm.txt")){return("optilcms")}
+  plantext <- readLines("ms1_algorithm.txt")
+  if(grepl("asari", plantext)){
+    return("asari")
+  } else if(grepl("centWave_auto", plantext)){
+    return("centWave_auto")
+  } else if(grepl("centWave_manual", plantext)){
+    return("centWave_manual")
+  } else {
+    return("optilcms")
+  }
+}
+
 #' plotSingleXIC
 #' @description plotSingleXIC
 #' @param mSet 
@@ -543,7 +819,7 @@ retrieveModeInfo <- function(){
 #' @param sample 
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-
+  
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -553,13 +829,17 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
       stop("Invalid mSet Object! Please check!")
     }
   }
-
+  
   require(MSnbase);
   require(ggrepel);
   raw_data <- mSet@rawOnDisk;
   samples_names <- raw_data@phenoData@data[["sample_name"]];
   rawFiles <- raw_data@processingData@files;
   
+  if(any(raw_data@phenoData@data[["sample_group"]] == "MS2")) {
+    samples_names <- samples_names[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+    rawFiles <- rawFiles[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+  }
   if(mSet@params[["BlankSub"]]){
     samples_names <- 
       samples_names[raw_data@phenoData@data[["sample_group"]] != "BLANK"];
@@ -594,56 +874,64 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   rtValue <- resDT[featureOder, "rt"];
   
   chromPeaks0 <- mSet@peakfilling$msFeatureData$chromPeaks;
-  groupval <- OptiLCMS:::groupval;
-  mat <- groupval(mSet);
-  
-  orderN <- mat[featureOder,sampleOrder];
-  if(is.na(orderN)) {
-    errorProne <- TRUE;
-    orderN <- numeric();
+  if(is.null(chromPeaks0)){
+    # for asari results
+    chromPeaks <- resDT[featureNum,]
+    orderN <- 1
+    js <- rjson::fromJSON(file = paste0(featureNum,".json"))
+    colv <- unique(js[["fill"]][js[["label"]] == sample])
+    
   } else {
-    chromPeaks <- as.data.frame(chromPeaks0);
-    rtlist <- (mSet@peakRTcorrection$adjustedRT);
-    RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+    groupval <- OptiLCMS:::groupval;
+    mat <- groupval(mSet);
+    
+    orderN <- mat[featureOder,sampleOrder];
+    if(is.na(orderN)) {
+      errorProne <- TRUE;
+      orderN <- numeric();
+    } else {
+      chromPeaks <- as.data.frame(chromPeaks0);
+      rtlist <- (mSet@peakRTcorrection$adjustedRT);
+      RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+    }
+    
+    if(length(orderN) == 0) {
+      
+      chromPeaks0 <- mSet@peakpicking[["chromPeaks"]];
+      chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
+      orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
+                        chromPeaks$mzmax+0.02 > mzValue & 
+                        chromPeaks$rtmin-5 < rtValue &
+                        chromPeaks$rtmax+5 > rtValue);
+    }
+    
+    if(length(orderN) == 0){
+      # EIC extraction to handle the filled peaks from gap filling step
+      
+      rtlist <- (mSet@peakRTcorrection$adjustedRT);
+      RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
+      chromPeaks0 <- mSet@peakAnnotation[["peaks"]];
+      chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
+      orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
+                        chromPeaks$mzmax+0.02 > mzValue & 
+                        chromPeaks$rtmin-5 < rtValue &
+                        chromPeaks$rtmax+5 > rtValue)
+    } 
+    
+    if(length(orderN) == 0) {
+      # EIC extraction of some corner cases, just in case.
+      
+      errorProne <- TRUE;
+      rawList <- mSet@peakgrouping[[2]]@listData;
+      rawList[["peakidx"]] <- NULL;
+      orderN <- which((abs(rawList[["mzmed"]] - mzValue) < 2e-3)
+                      & (abs(rawList[["rtmed"]] - rtValue) < 3));
+      chromPeaks <- rawList;
+    }
+    
+    js <- rjson::fromJSON(file = paste0(featureNum,".json"))
+    colv <- unique(js[["fill"]][samples_names == sample])
   }
-  
-  
-  if(length(orderN) == 0) {
-
-    chromPeaks0 <- mSet@peakpicking[["chromPeaks"]];
-    chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
-    orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
-                      chromPeaks$mzmax+0.02 > mzValue & 
-                      chromPeaks$rtmin-5 < rtValue &
-                      chromPeaks$rtmax+5 > rtValue);
-  }
-  
-  if(length(orderN) == 0){
-    # EIC extraction to handle the filled peaks from gap filling step
-
-    rtlist <- (mSet@peakRTcorrection$adjustedRT);
-    RawData@featureData@data$retentionTime <- rtlist[[sampleOrder]];
-    chromPeaks0 <- mSet@peakAnnotation[["peaks"]];
-    chromPeaks <- as.data.frame(chromPeaks0[(chromPeaks0[,"sample"] == sampleOrder),])
-    orderN <- which(chromPeaks$mzmin-0.02 < mzValue & 
-                      chromPeaks$mzmax+0.02 > mzValue & 
-                      chromPeaks$rtmin-5 < rtValue &
-                      chromPeaks$rtmax+5 > rtValue)
-  } 
-  
-  if(length(orderN) == 0) {
-    # EIC extraction of some corner cases, just in case.
-
-    errorProne <- TRUE;
-    rawList <- mSet@peakgrouping[[2]]@listData;
-    rawList[["peakidx"]] <- NULL;
-    orderN <- which((abs(rawList[["mzmed"]] - mzValue) < 2e-3)
-                    & (abs(rawList[["rtmed"]] - rtValue) < 3));
-    chromPeaks <- rawList;
-  }
-  
-  js <- rjson::fromJSON(file = paste0(featureNum,".json"))
-  colv <- unique(js[["fill"]][samples_names == sample])
   
   if(is0Feature & errorProne) {
     minRT <- chromPeaks$rtmin[orderN];
@@ -693,6 +981,9 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     
     if(any(is.na(res0$Intensity))){
       res0 <- res0[!is.na(res0$Intensity),]
+    }
+    if(nrow(res0)==0){
+      res0 <- data.frame(Retention_Time = c(minRT, maxRT), Intensity = 0.001)
     }
     minRT <- min(res0$Retention_Time);
     maxRT <- max(res0$Retention_Time);
@@ -806,7 +1097,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
       method = "loess",
       se = FALSE,
       span = 0.25,
-      size = 0.35,
+      linewidth = 0.35,
       formula = "y ~ x") + 
     scale_color_identity() + 
     scale_fill_identity() 
@@ -953,6 +1244,118 @@ getMalariaRawData <- function(homedir) {
     return(1)
   } else {
     cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/s/kwwe8q2yvsvbcf5/malaria.zip")
+    try(system(cmd),silent = TRUE)
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    print("Downloading failed, please contact Zhiqiang Pang! ")
+    return(0)
+  }
+}
+
+getBloodRawData <- function(homedir) {
+  print("Downloading raw blood Data.... ")
+  datalink <- "https://www.dropbox.com/scl/fi/eofgffstyp9p4dbpj2s0f/blood_dda.zip";
+  desfile <- paste0(homedir,"/blood_dda.zip");
+  markerfile <- paste0(homedir, "/upload/QC/QC1.mzML");
+  download.file(datalink, 
+                destfile = desfile, 
+                method = "wget", quiet = TRUE);
+  unzip(zipfile = desfile, exdir = paste0(homedir, "/upload"))
+  
+  # do some verification here
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  } 
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/scl/fi/eofgffstyp9p4dbpj2s0f/blood_dda.zip")
+    try(system(cmd),silent = TRUE)
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    print("Downloading failed, please contact Zhiqiang Pang! ")
+    return(0)
+  }
+}
+
+getCOVIDRawData <- function(homedir) {
+  print("Downloading raw covid Data.... ")
+  datalink <- "https://www.dropbox.com/scl/fi/a7kizcjw1q9y4jkyzv2fx/swath_data_file.zip";
+  desfile <- paste0(homedir,"/swath_data_file.zip");
+  markerfile <- paste0(homedir, "/upload/MS2/Covid_Cov_16_MS2.mzML");
+  download.file(datalink, 
+                destfile = desfile, 
+                method = "wget", quiet = TRUE);
+  unzip(zipfile = desfile, exdir = paste0(homedir, "/upload"))
+  
+  # do some verification here
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  } 
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/scl/fi/a7kizcjw1q9y4jkyzv2fx/swath_data_file.zip")
     try(system(cmd),silent = TRUE)
     try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
   }
@@ -1209,6 +1612,340 @@ GeneratePeakList <- function(userPath) {
             quote = TRUE, 
             row.names = FALSE);
   feat.num <- nrow(ann_data);
+  cat("Total number of features is ", feat.num, "\n")
+  return(feat.num);
+}
+
+
+generateAsariPeakList <-  function(userPath) {
+  
+  setwd(userPath)
+  
+  alfs <- list.files(".", pattern = "results_metabo_asari_res")
+  alfs_idx <- as.numeric(gsub("results_metabo_asari_res_","",alfs))
+  result_folder <- alfs[which.max(alfs_idx)];
+  
+  # generate metaboanalyst table
+  load("mSet.rda")
+  ftable <- read.csv(paste0(result_folder, "/preferred_Feature_table.tsv"), sep = "\t", check.names=FALSE)
+  features <- paste0(ftable$mz, "__", ftable$rtime)
+  ftable1 <- ftable[,c(12:ncol(ftable))]
+  allSamples <- colnames(ftable1)
+  allGroups <- 
+    vapply(allSamples, FUN = function(x){
+      idx <- which(mSet@rawOnDisk@phenoData@data[["sample_name"]] == x)
+      mSet@rawOnDisk@phenoData@data[["sample_group"]][idx]
+    }, character(1L))
+  ftable2 <- t(data.frame(Groups = allGroups))
+  ftable3 <- data.frame(Samples = c("Groups", features))
+  ftable0 <- rbind(ftable2, ftable1)
+  ftable0 <- cbind(ftable3, ftable0)
+  rownames(ftable0) <- NULL;
+  mSet@dataSet <- ftable0;
+  write.csv(ftable0, file = "metaboanalyst_input.csv", row.names = F, quote = F)
+  
+  # generate peak_feature_summary
+  ftab_annotation <- read.csv(paste0(result_folder, "/Feature_annotation.tsv"), sep = "\t", check.names=FALSE)
+  idx_num <- ftable$id_number
+  idx_row <- vapply(idx_num, FUN = function(x){
+    which(ftab_annotation[,1] == x)[1]
+  }, FUN.VALUE = integer(1L))
+  ftab_annotation <- ftab_annotation[idx_row, ]
+  
+  annots <- strsplit(ftab_annotation[,6], ",")
+  adds <- vapply(annots, function(x){
+    if(length(x) == 0){
+      return("")
+    } else {
+      return(x[2])
+    }
+  }, FUN.VALUE = character(1L))
+  isos <- vapply(annots, function(x){
+    if(length(x) == 0){
+      return("")
+    } else {
+      return(x[1])
+    }
+  }, FUN.VALUE = character(1L))
+  #all_annots <- rjson::fromJSON(file = paste0(result_folder, "/Annotated_empiricalCompounds.json"))
+  
+  all_recrds <- ftab_annotation$matched_DB_records
+  all_forumus <- sapply(all_recrds, function(x){
+    if(is.na(x)){return("")}
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- vapply(res, FUN = function(y){
+        strsplit(strsplit(y, "'")[[1]][2], "_")[[1]][1]
+      }, character(1L), USE.NAMES = F)
+      if(length(res2) == 1){
+        res2 <- paste0(res2, "; ")
+      } else {
+        res2 <- paste0(res2, collapse = "; ")
+      }
+      return(res2)
+    }
+  })
+  
+  all_cmpds <- ftab_annotation$matched_DB_shorts
+  all_cmpd <- sapply(all_cmpds, function(x){
+    if(is.na(x)){return("")}
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- lapply(res, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- vapply(res2, function(nn){
+        if(length(nn)==1){
+          nn[[1]][2]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(paste0(res2x, collapse = "; "))
+        }
+      }, FUN.VALUE = character(1L))
+      
+      if(length(res2_done) == 1){
+        res2_done <- paste0(res2_done, "; ")
+      } else {
+        res2_done <- paste0(res2_done, collapse = "; ")
+      }
+      return(res2_done)
+    }
+  })
+  all_hmdb <- sapply(all_cmpds, function(x){
+    if(is.na(x)){return("")}
+    res <- strsplit(x, "\\), \\(")
+    if(length(res[[1]]) == 0){
+      return("")
+    } else {
+      res <- gsub("\\(|\\)", "", res[[1]])
+      res2 <- lapply(res, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- vapply(res2, function(nn){
+        if(length(nn)==1){
+          nn[[1]][1]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(paste0(res2x, collapse = "; "))
+        }
+      }, FUN.VALUE = character(1L))
+      
+      if(length(res2_done) == 1){
+        res2_done <- paste0(res2_done, ";")
+      } else {
+        res2_done <- paste0(res2_done, collapse = "; ")
+      }
+      return(res2_done)
+    }
+  })
+  
+  ftab_annotation$matched_DB_records[is.na(ftab_annotation$matched_DB_records)] <- ""
+  
+  Formula2Cmpd_list <- lapply(1:length(all_recrds), function(x){
+    res <- list()
+    if(ftab_annotation$matched_DB_records[x] == ""){
+      return(res)
+    }
+    
+    fms <- ftab_annotation$matched_DB_records[x]
+    res <- strsplit(fms, "\\), \\(")
+    res <- gsub("\\(|\\)", "", res[[1]])
+    res2 <- vapply(res, FUN = function(y){
+      strsplit(strsplit(y, "'")[[1]][2], "_")[[1]][1]
+    }, character(1L), USE.NAMES = F)
+    res2_ori <- res2
+    res2 <- unique(res2)
+    res <- rep(list(list(cmpd = vector(mode = "character"),
+                         hmdb = vector(mode = "character"))), length(res2))
+    
+    names(res) <- res2
+    
+    this_cmpd <- ftab_annotation$matched_DB_shorts[x]
+    #cmpd
+    resx <- strsplit(this_cmpd, "\\), \\(")
+    if(length(resx[[1]]) == 0){
+      
+    } else {
+      resx <- gsub("\\(|\\)", "", resx[[1]])
+      res2cmpd <- lapply(resx, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- lapply(res2cmpd, function(nn){
+        if(length(nn)==1){
+          nn[[1]][2]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][2]
+          }
+          return(res2x)
+        }
+      })
+      
+      for(nn in 1:length(res2_done)){
+        res[[res2_ori[nn]]][["cmpd"]] <- unique(c(res[[res2_ori[nn]]][["cmpd"]], res2_done[[nn]]))
+      }
+    }
+    #hmdb
+    resy <- strsplit(this_cmpd, "\\), \\(")
+    if(length(resy[[1]]) == 0){
+      
+    } else {
+      resy <- gsub("\\(|\\)", "", resy[[1]])
+      res2hmdb <- lapply(resy, FUN = function(y){
+        w <- strsplit(y, ";")[[1]]
+        strsplit(w, "\\$")
+      })
+      
+      res2_done <- lapply(res2hmdb, function(nn){
+        if(length(nn)==1){
+          nn[[1]][1]
+        } else {
+          res2x <- vector(mode = "character", length = length(nn))
+          for(kk in 1:length(nn)){
+            res2x[kk] <- nn[[kk]][1]
+          }
+          return(res2x)
+        }
+      })
+      
+      for(nn in 1:length(res2_done)){
+        res[[res2_ori[nn]]][["hmdb"]] <- unique(c(res[[res2_ori[nn]]][["hmdb"]], res2_done[[nn]]))
+      }
+    }
+    
+    return(res)
+  })
+  
+  mSet@peakAnnotation[["Formula2Cmpd"]] <- Formula2Cmpd_list
+  
+  # peak_feature_summary
+  LogNorm<-function(x, min.val){
+    log10((x + sqrt(x^2 + min.val^2))/2)
+  }
+  CalCV<- function(x){
+    x <- as.numeric(x)
+    sd(x)/mean(x)
+  }
+  ftable1 -> data
+  allGroups -> groups
+  
+  min.val <- min(abs(data[data!=0]))/10;
+  data<-apply(data, 2, LogNorm, min.val);
+  
+  sample_data_log <- data;
+  cvs <- round(apply(data, 1,FUN = CalCV),4)*100
+  lvls <- groups[groups != "QC"];
+  sample_data_log <- sample_data_log[,groups != "QC"];
+  groups <- as.factor(lvls);
+  
+  ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
+  pvals <- ttest_res[,2]
+  pfdr <-p.adjust(pvals, method = "fdr")
+  pvals <- signif(pvals, 8)
+  pfdr <- round(signif(pfdr, 8), 8)
+  
+  pvals[is.nan(pvals)] = 1
+  pfdr[is.nan(pfdr)] = 1
+  
+  my.dat <- data.frame(mz = ftab_annotation$mz,
+                       rt = ftab_annotation$rtime,
+                       adduct = adds,
+                       isotopes = isos,
+                       Formula = all_forumus,
+                       Compound = all_cmpd,
+                       HMDBID = all_hmdb,
+                       intenVale = ftable$peak_area,
+                       pvals = pvals,
+                       pfdr = pfdr,
+                       cvs = cvs)
+  
+  HMDBIDs <- my.dat$HMDBID
+  HMDBIDs[HMDBIDs==""] <- NA
+  mSet@peakAnnotation[["massMatching"]] <- data.frame(Compound = my.dat$Compound, 
+                                                      Formula = my.dat$Formula, 
+                                                      HMDBID = HMDBIDs)
+  
+  FeatureOrder <- order(pvals)
+  my.dat <- my.dat[FeatureOrder,]
+  qs::qsave(FeatureOrder, file = "FeatureOrder.qs")
+  
+  write.table(my.dat, sep = "\t",
+              file = "peak_feature_summary.tsv",
+              row.names = FALSE,
+              quote = FALSE);
+  write.csv(my.dat, 
+            file = "peak_feature_summary.csv", 
+            quote = TRUE, 
+            row.names = FALSE);
+  
+  qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
+            file = "formula2cmpd.qs")
+  
+  
+  # generate peak_result_summary
+  mzrange <- vapply(allSamples, FUN = function(x){
+    ftab_annotation$mz -> mzs;
+    idx <- which(colnames(ftable1) == x)
+    min_mz <- round(min(mzs[ftable1[,idx] != 0]), 4)
+    max_mz <- round(max(mzs[ftable1[,idx] != 0]), 4)
+    paste0(min_mz, "~", max_mz)
+  }, FUN.VALUE = character(1L));
+  
+  rtrange <- vapply(allSamples, FUN = function(x){
+    ftab_annotation$rtime -> rts;
+    idx <- which(colnames(ftable1) == x)
+    min_rt <- round(min(rts[ftable1[,idx] != 0]), 2)
+    max_rt <- round(max(rts[ftable1[,idx] != 0]), 2)
+    paste0(min_rt, "~", max_rt)
+  }, FUN.VALUE = character(1L))
+  
+  peak_num <- vapply(allSamples, FUN = function(x){
+    idx <- which(colnames(ftable1) == x)
+    length(which(ftable1[,idx] != 0))
+  }, FUN.VALUE = integer(1L))
+  
+  peak_ratio_missing <- vapply(allSamples, FUN = function(x){
+    idx <- which(colnames(ftable1) == x)
+    round(1-length(which(ftable1[,idx] != 0))/nrow(ftable1),4)*100
+  }, FUN.VALUE = double(1L))
+  
+  datam <- data.frame(samples = allSamples,
+                      groups = allGroups,
+                      rtrange = rtrange,
+                      mzrange = mzrange,
+                      peak_num = peak_num,
+                      missing = peak_ratio_missing)
+  
+  mSet@peakAnnotation[["peak_result_summary"]] <- as.matrix(datam)
+  
+  write.table(
+    datam,
+    file = paste0("peak_result_summary.txt"),
+    row.names = FALSE,
+    col.names = FALSE,
+    quote = FALSE
+  );
+  
+  feat.num <- nrow(ftable1);
   cat("Total number of features is ", feat.num, "\n")
   return(feat.num);
 }
@@ -1854,7 +2591,6 @@ PerformSWATHDesignDetection <- function(mSetObj=NA, file = ""){
   mSetObj <- .get.mSet(mSetObj);
   DetectMS2Design <- OptiLCMS:::DetectMS2Design;
   df <- DetectMS2Design(file)
-  cat("====== df ----> ", nrow(df), "\n")
   mSetObj[["dataSet"]][["swath_design"]] <- df
   return(.set.mSet(mSetObj));
 }
@@ -1887,3 +2623,204 @@ exportSwathDesign <- function(lowMZs, UpMZs){
   write.table(vecs, file = "swath_design_metaboanalyst.txt", quote = F, sep = "\n", col.names = F, row.names = F)
   return(1)
 }
+
+#' PerformMirrorPlottingWeb
+#'
+#' @param mSetObj mSetObj
+#' @param fragDB_path Fragmentation database path
+#' @param featurelabel featurelabel
+#' @param result_num result_num
+#' @param sub_idx sub_idx
+#' @param ppm ppm
+#' @param imageNM imageNM
+#' @param dpi dpi
+#' @param format format
+#' @param width width
+#' @param height height
+#' @export
+
+PerformMirrorPlottingWeb <- function(mSetObj=NA, 
+                                     fragDB_path,
+                                     featurelabel, 
+                                     result_num, sub_idx, 
+                                     ppm, imageNM, 
+                                     dpi, format, width, height){
+  mSetObj <- .get.mSet(mSetObj);
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting;
+  parse_ms2peaks <- OptiLCMS:::parse_ms2peaks;
+  
+  require("RSQLite")
+  require("DBI")
+  
+  if(is.null(mSetObj[["analSet"]][["ms2res"]])){
+    mSet_raw <- qs::qread("msn_mset_result.qs")
+    mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
+    if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
+      peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
+      peak_mtx <- do.call(rbind, peak_list)
+      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+      peak_mtx <- peak_mtx[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    } else {
+      peak_mtx <- mSet_raw@MSnData[["peak_mtx"]][mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    }
+    
+    DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
+     res <- x[[1]][[1]]
+     if(length(res) == 0) {
+       return(NULL)
+     } else {
+       x[[1]]
+     }
+    })
+    mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+  } else {
+    mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+  }
+  
+  #save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2678.rda")
+  #cat("==== fragDB_path ---> ", fragDB_path, "\n");
+
+  fl <- gsub("mz|sec|min", "", featurelabel)
+  fl <- strsplit(fl,"@")[[1]]
+  mz <- as.double(fl[1])
+  rt <- as.double(fl[2])
+  peak_mtx <- as.data.frame(peak_mtx)
+  idx <- which((peak_mtx$mzmin-0.00005 <= mz) & (peak_mtx$mzmax+0.00005 >= mz) & (peak_mtx$rtmin-0.5 <= rt) & (peak_mtx$rtmax+0.5 >= rt))
+  ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
+  uidx <- vapply(ucmpds, function(x){
+    which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
+  }, FUN.VALUE = integer(1L))
+  spec_bottom <- DBAnnoteRes[[idx]][["MS2Pekas"]][uidx][sub_idx+1]
+  spec_bottom <- parse_ms2peaks(spec_bottom)
+  
+  spec_top_m <- mSetObj[["analSet"]][["ms2res"]][["Concensus_spec"]][[2]][[idx]][[1]]
+  compound_name <- DBAnnoteRes[[idx]][["Compounds"]][uidx][sub_idx+1]
+  title <- paste0(mz, "__", rt)
+  subtitle <- paste0(compound_name)
+  p1 <- MirrorPlotting(spec_top_m, 
+                       spec_bottom, 
+                       ppm = ppm,
+                       title= title, 
+                       subtitle = subtitle,
+                       cutoff_relative = 1)
+  
+  DBID_num <- DBAnnoteRes[[idx]][["IDs"]][uidx][sub_idx+1]
+  frgs_vec_done <- vector("character", 0L)
+  if(length(DBID_num)==1){
+    
+    con <- dbConnect(SQLite(), fragDB_path)
+    db <- dbGetQuery(con, paste0("SELECT DB_Tables FROM Index_table where Max_ID>",DBID_num," AND Min_ID<",DBID_num))
+    frgs <- dbGetQuery(con, paste0("SELECT Fragments FROM ", db, " where ID='",DBID_num,"'"))
+    dbDisconnect(con)
+    
+    frgs_vec <- strsplit(frgs$Fragments, split = "\t")[[1]]
+    normalize_spectrum <- OptiLCMS:::normalize_spectrum
+    bottom <- normalize_spectrum(spec_bottom, 1)
+    frgs_vec_done <- vapply(bottom$mz, function(x){
+      y <- frgs_vec[spec_bottom[,1] == x]
+      if(is.na(y[1])){return("")}
+      return(y[1])
+    }, FUN.VALUE = character(1L))
+    
+    write.table(bottom[,c(1:2)], 
+                file = paste0("reference_spectrum_",result_num, "_", sub_idx,".txt"), 
+                row.names = F, col.names = T)
+    
+    compoundName <- DBAnnoteRes[[idx]][["Compounds"]][sub_idx+1]
+    score <- DBAnnoteRes[[idx]][["Scores"]][[1]][sub_idx+1]
+    inchikeys <- DBAnnoteRes[[idx]][["InchiKeys"]][sub_idx+1]
+    formulas <- DBAnnoteRes[[idx]][["Formula"]][sub_idx+1]
+    
+    df_cmpd <- data.frame(CompoundName = compoundName,
+                          score = score,
+                          InchiKeys = inchikeys,
+                          Formula = formulas)
+    write.table(df_cmpd, 
+                file = paste0("compound_info_",result_num, "_", sub_idx,".txt"), 
+                row.names = F, col.names = T)
+  }
+  
+  # add some modification
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    text=element_text(family="serif", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
+  
+  Cairo::Cairo(
+    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+  
+  # Save the interactive plot with ggplot
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png")
+  save(p1, file = "p1.rda")
+  # px <- plotly::ggplotly(p1);
+  px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
+  #pxl <- list(px$x$data,px$x$layout,px$x$config);
+  #names(pxl) <- c("data","layout","config");
+  px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850
+  px[["x"]][["layout"]][["height"]] <- px[["height"]] <- 425
+  px[["x"]][["layout"]][["yaxis"]][["title"]][["font"]][["size"]] <- 16
+  px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
+  #px[["x"]][["layout"]][["title"]] <-NULL
+  px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
+  
+  if(length(px[["x"]][["data"]])>2){
+    px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
+  }
+  
+  ## update the top data  -data1
+  if(length(px[["x"]][["data"]][[1]])>0){
+    if(length(px[["x"]][["data"]][[1]][["text"]])>0){
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
+    }
+  }
+  
+  ## update the bottom data  -data2
+  if(length(px[["x"]][["data"]][[2]])>0){
+    if(length(px[["x"]][["data"]][[2]][["text"]])>0){
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("-","",px[["x"]][["data"]][[2]][["text"]])
+      if(length(frgs_vec_done)>0){
+        non_na_txt <- px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])]
+        frgs_vec_done[frgs_vec_done==""] <- "Unknown"
+        new_labels <- sapply(1:length(non_na_txt), function(x){
+          paste0(non_na_txt[x], "<br />Fragment Formula: ", frgs_vec_done[ceiling(x/2)])
+        })
+        px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])] <- new_labels
+      }
+    }
+  }
+  
+  ## update the matched star  -data3
+  if(length(px[["x"]][["data"]])>2){
+    if(length(px[["x"]][["data"]][[3]])>0){
+      if(length(px[["x"]][["data"]][[3]][["text"]])>0){
+        px[["x"]][["data"]][[3]][["text"]] <- gsub("<br />star_intensity.*","",px[["x"]][["data"]][[3]][["text"]])
+        px[["x"]][["data"]][[3]][["text"]] <- paste0("<b>Matched Fragment: </b><br />", px[["x"]][["data"]][[3]][["text"]])
+      }
+    }
+  }
+  
+  
+  jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
+  sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
+  cat(jsonlist);
+  sink();
+
+  return(.set.mSet(mSetObj));
+}
+
+

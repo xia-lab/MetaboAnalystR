@@ -92,7 +92,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #' @export
 
 .readDataTable <- function(fileName, save.copy=TRUE){
-
+    
     dat <- tryCatch(
             {
                 data.table::fread(fileName, header=TRUE, check.names=FALSE, 
@@ -105,6 +105,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
                 return(.my.slowreaders(fileName));
             });
             
+
     if(any(dim(dat) == 0)){
         dat <- .my.slowreaders(fileName);
     }
@@ -115,27 +116,32 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
     if(save.copy){
         # now try to save something for user side view or debugging
         if(class(dat) == "try-error" || ncol(dat) == 1){
-            AddErrMsg("Data format error. Failed to read in the data!");
-            AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
-            AddErrMsg("Please also check the followings: ");
-            AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-            AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
-            AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
-            AddErrMsg("Missing values should be blank or NA without quote.");
-            AddErrMsg("Make sure the file delimeters are commas.");
+            if((ncol(dat)==1) & (colnames(dat)[1] == "m.z" || colnames(dat)[1] == "mz")){
+                # do nothing, because this is not a bug
+            } else {
+                AddErrMsg("Data format error. Failed to read in the data!");
+                AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
+                AddErrMsg("Please also check the followings: ");
+                AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
+                AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
+                AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
+                AddErrMsg("Missing values should be blank or NA without quote.");
+                AddErrMsg("Make sure the file delimeters are commas.");
 
-            # now try to extract something for viewing
-            tryCatch({
-                fileConn <- file(filePath, encoding = "UTF-8");
-                text <- readLines(fileConn, n=100); # max 100 lines
-                write.csv(text, file="raw_dataview.csv");
-            },
-            error = function(e) return(e),
-            finally = {
-                close(fileConn)
-            });
+                # now try to extract something for viewing
+                tryCatch({
+                    fileConn <- file(filePath, encoding = "UTF-8");
+                    text <- readLines(fileConn, n=100); # max 100 lines
+                    write.csv(text, file="raw_dataview.csv");
+                },
+                error = function(e) return(e),
+                finally = {
+                    close(fileConn)
+                });
 
-            return(0);
+                return(0);
+            }
+
         }
   
         # save a table output at the earliest time for viewing
