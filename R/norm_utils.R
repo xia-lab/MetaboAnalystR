@@ -102,6 +102,7 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
     msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low relative abundance (average expression signal).", collapse=" ");
   }
   
+  if(var.thresh > 0){
   data <- data[!rm.inx,];
   filter.val <- apply(data, 1, IQR, na.rm=T);
   nm <- "Interquantile Range";
@@ -113,7 +114,9 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   remain <- rk < nrow(data)*kp.pct;
   data <- data[remain&good.inx,];
   filt.msg <<- paste(msg, paste("Filtered ", nrow(data), " low variance genes based on IQR"), collapse=" ");
-
+  }else{
+  filt.msg <<- paste(msg, paste("Filtered 0 low variance genes based on IQR"), collapse=" ");
+  }
   return(data);
 }
 
