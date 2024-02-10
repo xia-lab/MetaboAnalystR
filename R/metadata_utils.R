@@ -99,7 +99,6 @@ GetDiscMetas <- function(dataName=""){
     keepidx <- which(keepVec %in% colnames(dataSet$meta.info))
     keepidx <- intersect(keepidx,which(dataSet$disc.inx))
   }else{
-    print(dataSet$disc.inx);
     keepidx <-  which(dataSet$disc.inx)
   }
   colnms<- colnames(dataSet$meta.info)[keepidx]
@@ -166,8 +165,8 @@ GetResColType <- function(dataName="",colNm="NA"){
   }else{
     meta.status <- ifelse(dat$disc.inx[colNm],"disc","cont")
   }
-  
-  if(length(meta.status == 0)){
+
+  if(length(meta.status) == 0){
     meta.status <- rep(T, ncol(dat$meta.info))
     names(meta.status) <- colnames(dat$meta.info);
     dat$disc.inx <- meta.status;
