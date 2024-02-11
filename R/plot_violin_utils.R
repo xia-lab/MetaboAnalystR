@@ -7,7 +7,7 @@
 ###################################################
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolcano", format="png", dpi=72){
-  
+  save.image("violin.RData");
   require(see)
   require(ggplot2)
   require(lattice)
@@ -48,7 +48,9 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       }
       
       col <- unique(GetColorSchema(cls));   
-      df.norm <- data.frame(value=dat[gene.id,], name = cls);
+
+      df.norm <- data.frame(value=unlist(dat[which(rownames(dat) == gene.id),]), name = cls);
+
       if(dataSet$disc.inx[dataSet$analysisVar]){
         p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
           geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
