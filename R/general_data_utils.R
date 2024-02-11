@@ -661,7 +661,7 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("cmpd.RData");
+  #save.image("cmpd.RData");
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
   }
