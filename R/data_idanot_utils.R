@@ -29,6 +29,12 @@
 #'@export
 #'
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){
+  dataName <<- dataName;
+  org <<- org;
+  dataType <<- dataType;
+  idType <<- idType;
+  lvlOpt <<- lvlOpt;
+  save.image("dataannot.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -254,7 +260,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
 
 #Convert a vector of ids to vector of entrez ids
 .doAnnotation <- function(feature.vec, idType, paramSet){
-  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein","uniprot", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f")){
+  if(idType %in% c("entrez", "symbol", "refseq", "gb", "embl_gene","embl_protein","uniprot", "embl_transcript", "orf", "tair", "wormbase", "ko", "custom", "cds", "s2f", "string")){
     anot.id <- .doGeneIDMapping(feature.vec, idType, paramSet, "vec");
   }else{
     anot.id <- .doProbeMapping(feature.vec, idType, paramSet);
@@ -295,7 +301,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   }else{
     # note, some ID can have version number which is not in the database
     # need to strip it off NM_001402.5 => NM_001402
-    if(!(idType == "refseq" && org == "fcd")){ # do not strip, database contains version number.
+    if(!(idType == "refseq" && org == "fcd") && !(idType == "string" && org == "cel") ){ # do not strip, database contains version number.
       q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
       feature.vec <- q.mat[,1];
     }
@@ -303,7 +309,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     if(idType == "tair"){ # only for ath
       db.nm = "tair";
     }else { 
-      # if(idType %in% c("gb", "refseq", "embl_gene", "embl_transcript", "embl_protein", "orf", "wormbase")){
+      # if(idType %in% c("gb", "refseq", "embl_gene", "embl_transcript", "embl_protein", "orf", "wormbase", "string")){
       db.nm <- paste0("entrez_", idType);
     }
   }
