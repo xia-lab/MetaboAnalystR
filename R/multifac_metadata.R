@@ -505,7 +505,7 @@ UpdateMetaOrder <- function(mSetObj=NA, metaName){
 
 GetUniqueMetaNames <-function(mSetObj=NA, metadata){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("unique");
+  #save.image("unique");
   data.type <- mSetObj[["dataSet"]][["meta.types"]][metadata];
   
   if(is.null(data.type) || data.type == "cont"){

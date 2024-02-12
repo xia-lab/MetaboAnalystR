@@ -671,7 +671,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   mSetObj <- .get.mSet(mSetObj);
 
-  save.image("TestDose44.RData");
+  #save.image("TestDose44.RData");
 
   dataSet <- mSetObj$dataSet;
   f.drc <- dataSet$drcfit.obj;

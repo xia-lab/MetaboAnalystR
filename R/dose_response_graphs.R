@@ -17,97 +17,8 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
   ))
 }
 
-PlotGeneBMD <- function(mSetObj=NA, gene.id, gene.symbol, scale){
-  mSetObj <- .get.mSet(mSetObj);
-  dataSet <- mSetObj$dataSet;
-  data <- t(dataSet$norm);
 
-  params <- dataSet$drcfit.obj$fitres.filt[dataSet$drcfit.obj$fitres.filt$gene.id == gene.id,]
-  model.nm <- as.vector(params$mod.name)
-  b <- as.numeric(as.vector(params$b))
-  c <- as.numeric(as.vector(params$c))
-  d <- as.numeric(as.vector(params$d))
-  if(is.nan(d)){
-    d <- 1
-  }
-  e <- as.numeric(as.vector(params$e))
-  if(is.nan(e)){
-    e <- 1
-  }
-
-  bmd.params <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$id == gene.id, ]
-  bmd <- bmd.params$bmd
-  bmdl <- bmd.params$bmdl
-  bmdu <- bmd.params$bmdu
-  
-  exposure <- dataSet$drcfit.obj$dose
-  
-  if(scale != "natural"){
-    exposure[exposure == 0] <- dataSet$zero.log
-  }
-
-  df <- data.frame(Exposure = exposure, Expression = data[gene.id,])
-  p <- ggplot(data=df, aes(x=Exposure, y=Expression)) + geom_point() + xlab("Concentration") +
-    ggtitle(gene.symbol) + theme_bw() + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-  
-  if(model.nm == "Poly2"){
-    p <- p + geom_smooth(method = "lm", formula = y ~ poly(x, 2))
-  }else if(model.nm == "Poly3"){
-    p <- p + geom_smooth(method = "lm", formula = y ~ poly(x, 3))
-  }else if(model.nm == "Poly4"){
-    p <- p + geom_smooth(method = "lm", formula = y ~ poly(x, 4))
-  }else if(model.nm == "Exp2"){
-    exp2fun <- function(e,b,x){return(e*exp(b*x))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ exp2fun(e,b,x), n = 1000)
-  }else if(model.nm == "Exp3"){
-    exp3fun <- function(e,b,x,d){return(e*(exp(sign(b)*(abs(b)*x)^d)))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ exp3fun(e,b,x,d), n = 1000)
-  }else if(model.nm == "Exp4"){
-    exp4fun <- function(e,c,b,x){return(e*(c - (c-1)*exp((-1)*b*x)))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ exp4fun(e,c,b,x), n = 1000)
-  }else if(model.nm == "Exp5"){
-    exp5fun <- function(e,c,b,x,d){return(e*(c - (c-1)*exp((-1)*(b*x)^d)))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ exp5fun(e,c,b,x,d), n = 1000)
-  }else if(model.nm == "Lin"){
-    p <- p + geom_smooth(method = "lm", formula = y ~ x)
-  }else if(model.nm == "Hill"){
-    hillfun <- function(c,d,x,e,b){return(c + (d - c) / (1 + (x/e)^b))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ hillfun(c,d,x,e,b), n = 1000)
-  }else if(model.nm == "Power"){
-    powerfun <- function(e,b,x,c){return(e + b*(x^c))}
-    p <- p + geom_smooth(method = "lm", formula = y ~ powerfun(e,b,x,c), n = 1000)
-  }
-
-  p <- p + geom_rect(aes(xmin = bmdl, xmax = bmdu, ymin = -Inf, ymax = Inf), fill = "red3", alpha = 0.01) + 
-    geom_vline(xintercept = bmdl, linetype = "dashed", color = "red3") + 
-    geom_vline(xintercept = bmd, color = "red3") + 
-    geom_vline(xintercept = bmdu, linetype = "dashed", color = "red3")
-
-  if(scale == "log2"){
-    if(model.nm == "Exp3" | model.nm == "Exp5" | model.nm == "Hill"){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      p <- p + scale_x_continuous(trans='log2', breaks = unique(exposure), labels = labels)
-    }
-  } else if(scale == "log10"){
-    if(model.nm == "Exp3" | model.nm == "Exp5" | model.nm == "Hill"){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      p <- p + scale_x_continuous(trans='log10', breaks = unique(exposure), labels = labels)
-    }
-  }
-  
-  imgName <- paste("Gene_bmd_", gene.id, ".png", sep="");
-  Cairo::Cairo(file = imgName, width=280, height=320, type="png", bg="white");
-  print(p)
-  dev.off();
-
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotGeneBMD <- imgName;
-  saveSet(imgSet);
-}
-
-PlotMetaboliteDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
+PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
   data <- t(dataSet$norm);
@@ -122,8 +33,8 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b,
     exposure[exposure == 0] <- dataSet$zero.log
   }
 
-  df <- data.frame(Dose = exposure, Expression = data[gene.id,])
-  p <- ggplot(data=df, aes(x=Dose, y=Expression)) + geom_point() + ggtitle(gene.symbol) + 
+  df <- data.frame(Dose = exposure, Expression = data[feat.id,])
+  p <- ggplot(data=df, aes(x=Dose, y=Expression)) + geom_point() + ggtitle(feat.lbl) + 
        theme_bw() +
        theme(plot.title = element_text(hjust = 0.5, face = "bold"),
              axis.text.x = element_text(angle=90)) + 
@@ -173,15 +84,23 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, gene.id, gene.symbol, model.nm, b,
       p <- p + scale_x_continuous(trans='log10', breaks = unique(exposure), labels = labels)
     }
   }
-  
-  imgName <- paste("Metabolite_", gene.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
+
+  # need to clean feat.id in case contain /
+  feat.id <- CleanNames(feat.id);
+  imgName <- paste("Metabolite_", feat.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
   Cairo::Cairo(file = imgName, width=5.25, height=6, type="png", unit="in", dpi=dpi, format=format, bg="white");
   print(p)
   dev.off();
 
   dataSet$PlotMetaboliteDRCurve <- imgName;
   mSetObj$dataSet <- dataSet;
-  return(.set.mSet(mSetObj));
+
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(imgName);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
 }
 
 PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
@@ -267,80 +186,4 @@ PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
   return(.set.mSet(mSetObj));
 }
 
-PlotPWHeatmap <- function(mSetObj=NA, pathway, pwcount, units){
-    mSetObj <- .get.mSet(mSetObj);  
-    dataSet <- mSetObj$dataSet;
-
-    require(pheatmap)
-    require(grid)
-
-    pws <- dataSet$pathway.ids
-    fit.interp <- qs::qread("fit.interp.qs");
-    bmd.vals <- dataSet$html.resTable[,c(1,5)]
-
-    pw.genes <- pws[pws$pathway == pathway,][,c(1,3)]
-
-    pw.data <- base::merge(pw.genes, fit.interp, by.x = "entrez", by.y = "row.names", all = FALSE)
-    pw.data <- base::merge(bmd.vals, pw.data, by.x = "gene.id", by.y = "entrez", all = FALSE)
-    pw.data <- distinct(pw.data)
-    rownames(pw.data) <- pw.data$symbol
-    sym.bmd <- pw.data[,c(2:3)]
-    pw.data <- pw.data[,-c(1:3)]
-
-    # reduce the number of significant digits
-    labels.col <- as.numeric(colnames(pw.data))
-    labels.col <- signif(labels.col, 2)
-
-    # make labels to display on heatmap
-    inds <- c(seq(1,100,by=20),100)
-    labs.col <- rep("", 100)
-    labs.col[inds] <- labels.col[inds]
-
-    # find the index of each bmd
-    bmd.ind <- unlist(lapply(sym.bmd[,1], function(x){min(which(labels.col > x))}))
-    names(bmd.ind) <- sym.bmd$symbol
-
-    # convert down regulated - version 2
-    down.reg <- pw.data[,1] > 0.25
-    names(down.reg) <- rownames(pw.data)
-    pw.data[down.reg,] <- -1*(pw.data[down.reg,] - 1)
-
-    # re-order data (BMD)
-    pw.data <- pw.data[order(bmd.ind),]
-    down.reg <- down.reg[order(bmd.ind)]
-    bmd.ind <- bmd.ind[order(bmd.ind)]
-
-    # change color of bmd cells
-    for(i in c(1:dim(pw.data)[1])){
-      pw.data[i, bmd.ind[i]] <- 1.01
-    }
-
-    # Change names of factors
-    down.reg[down.reg==TRUE] <- "Down"
-    down.reg[down.reg==FALSE] <- "Up"
-    ann.row <- data.frame(Regulation = as.factor(down.reg))
-
-    # Specify colors
-    ann.cols <- list(Regulation = c(Up = "#821717", Down = "#4c743e"))[1]
-    cell.cols <- c(colorRampPalette(c("#5c998a", "#e6a519", "#b2343e"))(100), "#000000")
-
-    # get x-axis label
-    xlab <- paste0("Concentration (", units, ")")
-
-    # print out image
-    imgNm <- paste("Pw_", pwcount, ".png", sep="");
-    Cairo::Cairo(file=imgNm, width=8, height=8, unit="in",dpi=300, type="png", bg="white");
-    setHook("grid.newpage", function() pushViewport(viewport(x=1,y=0.95,width=1, height=0.9, name="vp", just=c("right","top"))), action="prepend")
-    pheatmap(pw.data, cluster_cols = FALSE, cluster_rows = FALSE, show_rownames = TRUE, show_colnames = TRUE, 
-             border_color = NA, labels_col = labs.col, annotation_row = ann.row, legend = FALSE,
-             color = cell.cols, annotation_colors = ann.cols, annotation_names_row = FALSE)
-    setHook("grid.newpage", NULL, "replace")
-    grid.text(xlab, y=-0.02, x = 0.4, gp=gpar(fontsize=12))
-    grid.text(pathway, y = 1.02, x = 0.5, gp=gpar(fontsize=14, fontface="bold"))
-    dev.off();
-
-    dataSet$PlotPWHeatmap <- imgNm;
-    mSetObj$dataSet <- dataSet;
-    return(.set.mSet(mSetObj));
-}
 
