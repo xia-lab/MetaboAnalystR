@@ -1905,7 +1905,8 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
     dend_col <- hclust( my.dist2, method = clstDist)
     p <- p %>% add_col_dendro(dend_col,  size = ifelse(h>1300,0.02,0.05))
     } 
- 
+    saveRDS(p,"metadata_heatmap.rds");
+
      # Adjust the height and width (in pixels)
  
     as_list <- to_plotly_list(p)
@@ -1917,6 +1918,50 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
  
     print(plotjs)
     write(as_json, plotjs)
+
+  ##plot static
+  plot_dims <- get_pheatmap_dims(met, NA, "overview", width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+  viewOpt <- "overview";
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+       displayText = metaData;
+    if(viewOpt == "overview"){
+       displayText = F;
+    }
+
+   p <- pheatmap::pheatmap(met, 
+                       fontsize=12, fontsize_row=8, 
+                       clustering_distance_rows = smplDist,
+                       clustering_distance_cols = smplDist,
+                       clustering_method = clstDist, 
+                      # border_color = border.col,
+                       cluster_rows = rowBool, 
+                       cluster_cols = colBool,
+                       scale = "column",
+                       show_rownames= includeRowNames,
+                       color = colors,
+                       display_numbers=displayText,silent = TRUE);
+       if(rowBool){
+         p$tree_row$order <- rev(p$tree_row$order)
+         rowBool <-  p$tree_row
+      }else{
+         met <- met[,ncol(met):1]
+      }
+    
+    pheatmap::pheatmap(met, 
+                       fontsize=12, fontsize_row=8, 
+                       clustering_distance_rows = smplDist,
+                       clustering_distance_cols = smplDist,
+                       clustering_method = clstDist, 
+                      # border_color = border.col,
+                       cluster_rows = rowBool, 
+                       cluster_cols = colBool,
+                       scale = "column",
+                       show_rownames= includeRowNames,
+                       color = colors,
+                       display_numbers=displayText);
+  dev.off();
 
   return(.set.mSet(mSetObj));
 }
