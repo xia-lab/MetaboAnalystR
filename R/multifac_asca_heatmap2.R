@@ -1809,7 +1809,7 @@ heckbert <- function(dmin, dmax, m){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",includeRowNames=T, imgName, format="png", dpi=96, width=NA){
+PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",includeRowNames=T, imgName, format="png", dpi=96,width=NA){
    plotjs <- paste0(imgName, ".json");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj <- .get.mSet(mSetObj);

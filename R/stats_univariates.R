@@ -299,7 +299,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       p.log = p.log,
       inx.imp = inx.imp,
       sig.mat = sig.mat,
-      fdr.p = fdr.p
+      fdr.p = fdr.p,
+      adjust.method = pvalType
     );
   }else{
     tt <- list (
@@ -311,7 +312,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       p.value = p.value,
       p.log = p.log,
       inx.imp = inx.imp,
-      fdr.p = fdr.p
+      fdr.p = fdr.p,
+      adjust.method = pvalType
     );
   }
   
@@ -358,27 +360,41 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
   
   tt_data <- data.frame(
     p_log = mSetObj$analSet$tt$p.log,
+    fdr_log = -log10(mSetObj$analSet$tt$fdr.p),
     label = names(mSetObj$analSet$tt$p.log),
     seq = seq_along(mSetObj$analSet$tt$p.log),
     Status = factor(ifelse(mSetObj$analSet$tt$inx.imp, "Significant", "Unsignificant")),
     P.Value = mSetObj$analSet$tt$p.value,
     FDR = mSetObj$analSet$tt$fdr.p
   )
-  
+  p.thresh <- mSetObj$analSet$tt$raw.thresh
+  adjust.method <- mSetObj$analSet$tt$adjust.method
   # Assuming your data frame is set up correctly as tt_data
   tt_data$p_log_rescaled <- rescale(tt_data$p_log)  # Rescale p_log for sizing
   # Create a copy of p_log to use for coloring significant points
   tt_data$color_value <- ifelse(tt_data$Status == "Significant", tt_data$p_log, NA)
   
   # Now create the ggplot
+  if(adjust.method == "fdr"){
+  p <- ggplot(tt_data, aes(x=seq, y=fdr_log, label=label, FDR=FDR, P.Value=P.Value)) +
+    theme_bw() +
+    geom_point(aes( size = p_log, color =color_value, fill=color_value) , shape = 21, stroke = 0.5) +
+    scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
+    scale_fill_gradient(low = "yellow", high = "red", na.value = "darkgrey", guide = "colourbar", name="-Log(FDR.p)") +
+    scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
+    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(FDR.p)") +
+    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "grey", size=0.5) # Add horizontal line at p-value threshold
+
+  }else{
   p <- ggplot(tt_data, aes(x=seq, y=p_log, label=label, FDR=FDR, P.Value=P.Value)) +
     theme_bw() +
     geom_point(aes( size = p_log, color =color_value, fill=color_value) , shape = 21, stroke = 0.5) +
     scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
-    scale_fill_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
+    scale_fill_gradient(low = "yellow", high = "red", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
     scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
-    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)")
-  
+    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
+    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "grey", size=0.5) # Add horizontal line at p-value threshold
+  }
   
   if (interactive) {
     library(plotly);
