@@ -104,7 +104,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   
   # deal with no hits
   if(length(hits)==0){
-    AddMsg("No hits in the selected pathway library!");
+    AddErrMsg("No hits in the selected pathway library!");
     return(0)
   }
 
@@ -192,7 +192,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method); # on local, everything is done
   
-  if(mSetObj$analSet$qea.hits == 0){
+  if(length(mSetObj)==0 || mSetObj== 0){
     return(0);
   }
 
@@ -295,9 +295,8 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   
   # deal with no hits
   if(length(hits)==0){
-    AddMsg("No hits in the selected pathway library!");
-    mSetObj$analSet$qea.hits <- 0;
-    return(mSetObj)
+    AddErrMsg("No hits in the selected pathway library!");
+    return(0)
   }
   
   # calculate the impact values
