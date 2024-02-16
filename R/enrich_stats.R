@@ -452,9 +452,10 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     return(0);
   }
   
+
   hit.members <- unlist(lapply(hits, function(x) paste(x, collapse = "; ")))
   
-  pie.data <- data.frame(Group = names(hits), Hits = as.numeric(hit.num), Members = hit.members)
+  pie.data <- data.frame(cbind(Group = names(hits), Hits = as.numeric(hit.num), Members = hit.members));
   pie.data <- pie.data[!(pie.data[,2]==0), ]
   ord.inx <- order(pie.data[,2], decreasing = T);
   pie.data <- pie.data[ord.inx, , drop = FALSE];
