@@ -2638,21 +2638,12 @@ GetPLSLoadAxesSpec<-function(mSetObj=NA){
 
 GetPLSLoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  #res <- rownames(mSetObj$analSet$plsr$imp.loads);
-  #if(length(res)>2500){
-  #  rownames(mSetObj$analSet$plsr$imp.loads)[1:2500];
-  #} else {
-    rownames(mSetObj$analSet$plsr$imp.loads);
-  #}  
+  rownames(mSetObj$analSet$plsr$imp.loads);  
 }
 
 GetPLSLoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  #if(nrow(mSetObj$analSet$plsr$imp.loads[,c(1:2)])>2500){
-  #  as.matrix(mSetObj$analSet$plsr$imp.loads[1:2500,c(1:2)]);
-  #} else {
-    as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]);
-  #}  
+  signif(as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]), 5);
 }
 
 GetPCALoadAxesSpec <- function(mSetObj=NA){
@@ -2662,24 +2653,12 @@ GetPCALoadAxesSpec <- function(mSetObj=NA){
 
 GetPCALoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  #if(nrow(mSetObj$analSet$pca$imp.loads[,c(1:2)])>2500){
-  #  res <- rownames(mSetObj$analSet$pca$imp.loads)[1:2500];
-  #} else {
-    res <- rownames(mSetObj$analSet$pca$imp.loads);
-  #}  
-  #cat("GetPCALoadCmpds ==> ", length(res), "\n")
-  return(res)  
+  rownames(mSetObj$analSet$pca$imp.loads);  
 }
 
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  #if(nrow(mSetObj$analSet$pca$imp.loads[,c(1:2)])>2500){
-  #  res <- as.matrix(mSetObj$analSet$pca$imp.loads[1:2500,c(1:2)]);
-  #} else {
-    res <- as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]);
-  #}
-  #cat("GetPCALoadMat ==> ", nrow(res), "\n")
-  return(res)
+  signif(as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]),5);
 }
 
 
@@ -2707,7 +2686,6 @@ GetOPLSSigCmpds <- function(mSetObj=NA, type){
   }else{
     res <- rownames(mSetObj$analSet$oplsda$vip.mat);
   }
-  #if(length(res)>2500){res <- res[1:2500]}
   return(res)
 }
 
@@ -2726,8 +2704,7 @@ GetOPLSSigMat <- function(mSetObj=NA, type){
   }else{
     res <- as.matrix(mSetObj$analSet$oplsda$vip.mat);
   }
-  #if(nrow(res)>2500){res <- res[1:2500,]}
-  return(res)
+  return(signif(res,5))
 }
 
 GetDefaultSPLSCVComp <- function(mSetObj=NA){

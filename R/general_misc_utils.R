@@ -1324,7 +1324,7 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 
     remain.num <- ncol(int.mat)*(1-(filter.cutoff/100));
     remain <- rk <= remain.num;
-    msg <- paste(msg, "Feature filtering based on <b>", nm, "</b> - removed <b>", sum(!remain), "</b>based on the cutoff.");
+    msg <- paste(msg, "Feature filtering based on ", nm, " - removed <b>", sum(!remain), "</b>based on the cutoff.");
 
     # note, primary.user is a global variable set from web, TRUE for registered users or local MetaboAnalystR user
     if(!primary.user){
