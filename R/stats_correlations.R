@@ -254,8 +254,8 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   }
   
     mSetObj$imgSet$heatmap_stats_corr_param <- list();
-    mSetObj$imgSet$heatmap_stats_corr_param$width <- w;
-    mSetObj$imgSet$heatmap_stats_corr_param$height <- h;
+    mSetObj$imgSet$heatmap_stats_corr_param$width <- 1000;
+    mSetObj$imgSet$heatmap_stats_corr_param$height <- h*1.5;
 
     saveRDS(p, "heatmap_stats_corr.rds")
 

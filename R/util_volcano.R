@@ -37,12 +37,12 @@ my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png
   mycols[mycols=="UP"] <- "firebrick";
   mycols[mycols=="DOWN"] <- "cornflowerblue";
   mycols[mycols=="Non-SIG"] <- "grey";
-  
+  de <- de[order(-de$p.log), ]
   de$label <- NA
   if(interactive){
     de$label <- rownames(de);
   }else{
-    de$label[imp.inx] <- rownames(de)[imp.inx];
+    de$label[c(1:5)] <- rownames(de)[c(1:5)];
   }
   require(ggplot2);
   require(scales);

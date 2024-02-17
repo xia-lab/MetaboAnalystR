@@ -406,8 +406,10 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interact
     fig$x[[1]][[1]]$marker$line$size <- 1;
     return(fig);
   } else {
+    tt_data <- tt_data[order(-tt_data$fdr_log), ]
+    tt_data$top_label <- ifelse(seq_along(tt_data$fdr_log) <= 5, tt_data$label, NA)
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    p <- p + ggrepel::geom_text_repel(data = subset(tt_data, Status == "Significant"))
+    p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(tt_data, !is.na(top_label)))
     print(p);
     dev.off();
   }
