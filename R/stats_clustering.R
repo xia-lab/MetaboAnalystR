@@ -989,11 +989,11 @@ GetAllSOMClusterMembers <- function(mSetObj=NA){
       xTrue<-clust$x == i;
       yTrue<-clust$y == j;
       if(i==0 & j==0){ # bug in R, the first one need to be different
-        clust.df <- rbind(paste(rownames(mSetObj$dataSet$norm)[xTrue & yTrue], collapse = " "));
-        rowNameVec <- c(paste("Cluster(", i, ",", j,")"));
+        clust.df <- rbind(paste0(rownames(mSetObj$dataSet$norm)[xTrue & yTrue], collapse = "; "));
+        rowNameVec <- c(paste0("Cluster(", i, ",", j,")"));
       }else{
-        clust.df <- rbind(clust.df, paste(rownames(mSetObj$dataSet$norm)[xTrue & yTrue], collapse=" "));
-        rowNameVec <- c(rowNameVec, paste("Cluster(", i, ",", j,")"));
+        clust.df <- rbind(clust.df, paste0(rownames(mSetObj$dataSet$norm)[xTrue & yTrue], collapse="; "));
+        rowNameVec <- c(rowNameVec, paste0("Cluster(", i, ",", j,")"));
       }
       j = j+1;
     }
