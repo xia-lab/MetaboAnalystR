@@ -589,6 +589,9 @@ CovariateScatter.Anal <- function(mSetObj,
     # order the result simultaneously
     ord.inx <- order(sig.p, decreasing = FALSE);
     sig.mat <- sig.mat[ord.inx,,drop=F];
+  }else{
+    # just top 10
+    sig.mat <- rest[,1:10,]; 
   }
   
   AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
@@ -626,6 +629,7 @@ CovariateScatter.Anal <- function(mSetObj,
       p.value.no = both.mat$pval.no,
       p.log = -log10(p.value),
       inx.imp = inx.imp,
+      sig.mat = sig.mat,
       primary.var = analysis.var,
       cov.var = cov.vec,
       block = block
