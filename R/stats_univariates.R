@@ -823,7 +823,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=72, width=NA,int
   # Create a ggplot object
   p <- ggplot(df, aes(x = seq, y = p.log, text = paste("Label: ", label, "<br>p-value: ", signif(p.value,4), "<br>FDR: ", signif(fdr.p,4)))) +
     geom_point(aes(color = color_value, size = p.log)) + # Use color_value for color scale
-    scale_color_gradient(low = "lightblue", high = "darkblue", na.value = "darkgrey", name="-log10(raw-p)") + # Gradient from light blue to dark grey
+    scale_color_gradient(low = "yellow", high = "red", na.value = "darkgrey", name="-log10(raw-p)") + # Gradient from light blue to dark grey
     labs(
       x = GetVariableLabel(mSetObj$dataSet$type),
       y = "-log10(raw-p)",
