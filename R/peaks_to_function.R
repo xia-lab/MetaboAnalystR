@@ -840,13 +840,13 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'@export
 #'@import qs
 
-PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
+PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, init=T){
   
   mSetObj <- .get.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
   mSetObj$dataSet$paramSet <- mSetObj$paramSet;
-
+  mSetObj$initPSEA <- init;
   if(mSetObj$paramSet$mumRT & version=="v2"){
     mSetObj <- .init.RT.Permutations(mSetObj, permNum)
   } else {
@@ -911,7 +911,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     
     fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
-    mSetObj$integ.resmat <- dfcombo;
+
+    if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+        mSetObj$integ.resmat <- dfcombo;
+    }
+
     matched_cpds <- names(mSetObj$cpd_exp)
     colnames(mum.df)[1] = "pathways";
     inx2<-na.omit(match(mum.df$pathways[ord.inx], mSetObj$pathways$name))
@@ -943,6 +947,18 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100){
     sink(mSetObj$mum_nm);
     cat(json.mat);
     sink();
+
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    vis.type <- "mumEnr";
+    resTable <- dfcombo[,c(2:6)];
+    resTable <- cbind(Name=rownames(dfcombo),resTable);
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- dfcombo;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA and Mummichog integrative Analysis";
+    .set.mSet(mSetObj);
   }
   return(mSetObj);
 }
@@ -2597,6 +2613,19 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
+
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    vis.type <- "mumEnr";
+    resTable <- res.mat[,c(2,3,5,9)];
+    resTable <- cbind(Name=path.nms[ord.inx], res.mat);
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
+    .set.mSet(mSetObj);
+
   return(mSetObj);
 }
 
@@ -2747,7 +2776,9 @@ rownames(res.mat) <- path.nms[ord.inx]
 
 .save.mummichog.restable(res.mat, EC.Hits, mSetObj$mum_nm_csv);
 
-mSetObj$mummi.resmat <- res.mat[,-11];
+if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    mSetObj$mummi.resmat <- res.mat[,-11];
+}
 mSetObj$path.nms <- path.nms[ord.inx]
 mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
 mSetObj$path.pval <- as.numeric(res.mat[,5])
@@ -2771,6 +2802,19 @@ json.res <- list(
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
+
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    vis.type <- "mumEnr";
+    resTable <- cbind(Name=path.nms[ord.inx], res.mat[,c(7,8,5,9)]);
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";
+    .set.mSet(mSetObj);
+  
+
   return(mSetObj);
 }
 
@@ -2847,9 +2891,11 @@ json.res <- list(
   # order by p-values
   ord.inx <- order(res.mat[,3]);
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
-  
-  mSetObj$mummi.gsea.resmat <- res.mat;
-  
+
+  if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    mSetObj$mummi.gsea.resmat <- res.mat;
+  }
+
   Cpd.Hits <- qs::qread("pathwaysFiltered.qs")
   Cpd.Hits <- unlist(lapply(seq_along(Cpd.Hits), function(i) paste(names(Cpd.Hits[[i]]), collapse = ";")))
   Cpd.Hits <- Cpd.Hits[Cpd.Hits != ""]
@@ -2876,6 +2922,17 @@ json.res <- list(
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
+
+    if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
+    }
+    vis.type <- "mumEnr";
+    resTable <- cbind(Name=rownames(res.mat), res.mat);
+    mSetObj$imgSet$enrTables[[vis.type]] <- list();
+    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
+    .set.mSet(mSetObj);
   
   return(mSetObj);
 }
@@ -4397,13 +4454,15 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wid
     
     mSetObj$imgSet$mummi.plot<- imgName
   }else{
+  radi.vec <- sqrt(abs(as.numeric(df$y)))
+
     # Assuming df, y, pathnames, imgName, and num_annot are already defined
-    
     # Create the plot with Plotly
     p <- plot_ly(data = df, x = ~x, y = ~y, 
                  type = 'scatter', mode = 'markers',
-                 marker = list(size = ~radi.vec*10,  # Adjust size factor as needed
+                 marker = list(size = ~radi.vec*15,  # Adjust size factor as needed
                                color = ~x, 
+                               sizeref = sizeref,
                                colorscale = list(c(0, "#458B00"), c(0.5, "#fffee0"), c(1, "#7f0000")),
                                colorbar = list(
                                  title = "NES",
@@ -4468,4 +4527,48 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wid
     
     return(.set.mSet(mSetObj));
   }
+}
+
+
+doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
+  
+  mSetObj<-.get.mSet(mSetObj);
+  
+  if(ids == "overall"){
+    .on.public.web <<- F;
+    is.rt <- mSetObj$paramSet$mumRT;
+    mSetObj<-PreparePrenormData(mSetObj)
+    mSetObj<-Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
+    mSetObj<-Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE)
+    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode);
+    mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE)
+    mSetObj<-SetPeakFormat(mSetObj, "mpt")
+    #mSetObj<-UpdateInstrumentParameters(mSetObj, 10, mSetObj$dataSet$mode);
+    filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
+    mSetObj<-Read.PeakListData(mSetObj, filename);
+    mSetObj<-SanityCheckMummichogData(mSetObj)
+    mSetObj<-SetPeakEnrichMethod(mSetObj, "mum", "v2")
+    mSetObj<-SetMummichogPval(mSetObj, 0.05)
+    .on.public.web <<- T;
+    .set.mSet(mSetObj);
+    anal.type <<- "integ";
+  }else{
+    gene.vec <- unlist(strsplit(ids, "; "));
+    anal.type <<- "mummichog";
+    is.rt <- mSetObj$paramSet$mumRT;
+    if(is.rt){
+      feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)
+      colnames(feat_info_split) <- c("m.z", "r.t")
+      mSetObj$dataSet$input_mzlist <- as.numeric(feat_info_split[,1]);
+      mSetObj$dataSet$N <- length(mSetObj$dataSet$input_mzlist);
+    }else{
+      mSetObj$dataSet$input_mzlist <- gene.vec;
+      mSetObj$dataSet$N <- length(gene.vec);
+    }
+  }
+  
+  mSetObj$mum_nm <- paste0(nm,".json");
+  mSetObj$mum_nm_csv <- paste0(nm,".csv");
+  .set.mSet(mSetObj);
+  return(PerformPSEA("NA", libNm, "current", 3, 100, F));
 }
