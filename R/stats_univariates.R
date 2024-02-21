@@ -639,12 +639,14 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
   names(fstat) <- names(p.value) <- colnames(data);
   fdr.p <- p.adjust(p.value, "fdr");
   
-  if(all_results==TRUE){
-    all.mat <- data.frame(signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
+  #if(all_results==TRUE){
+    all.mat <- data.frame(signif(fstat,5), signif(p.value,5), signif(-log10(p.value),5), signif(fdr.p,5));
     rownames(all.mat) <- names(p.value);
-    colnames(all.mat) <- c("p.value", "-log10(p)", "FDR");
-    fast.write.csv(all.mat, "anova_all_results.csv")
-  }
+    colnames(all.mat) <- c("F.stat", "p.value", "-log10(p)", "FDR");
+    ord.inx <- order(p.value);
+    ord.mat <- all.mat[ord.inx,];
+    fast.write.csv(ord.mat, "anova_all_results.csv")
+  #}
   
   inx.imp <- fdr.p <= thresh;
   sig.num <- sum(inx.imp, na.rm = TRUE);
@@ -661,8 +663,14 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
     if(exists("aov.res")){
       qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
     }
+    sig.mat <- all.mat[inx.imp,];
+    ord.inx <- order(sig.mat$p.value);
+    sig.mat <- sig.mat[ord.inx,];
+  }else{
+    # sig.mat contain top 10 (sig or not does not matter) for report;
+    sig.mat <- ord.mat[1:10,];
   }
-  
+
   aov<-list (
     aov.nm = aov.nm,
     nonpar = nonpar,
@@ -675,7 +683,8 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
     inx.imp = inx.imp,
     sig.f = sig.f,
     sig.p = sig.p,
-    sig.fdr = sig.fdr
+    sig.fdr = sig.fdr,
+    sig.mat = sig.mat
   );
   
   mSetObj$analSet$aov <- aov;
