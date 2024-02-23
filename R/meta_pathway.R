@@ -1658,7 +1658,7 @@ newDataset <- function(mSetObj, dataName, dataName2 = NULL) {
 
 FormatmSet <- function(mSetObj, dataName){
   mSetObj0 <- list();
-  mSetObj <- .get.mSet(mSetObj);
+  #mSetObj <- .get.mSet(mSetObj);
   dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
   
   for(nm in dataNMs){
