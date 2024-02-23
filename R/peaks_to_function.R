@@ -843,10 +843,11 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, init=T){
   
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj$initPSEA <- init;
+  .set.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
   mSetObj$dataSet$paramSet <- mSetObj$paramSet;
-  mSetObj$initPSEA <- init;
   if(mSetObj$paramSet$mumRT & version=="v2"){
     mSetObj <- .init.RT.Permutations(mSetObj, permNum)
   } else {
@@ -914,6 +915,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
 
     if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
         mSetObj$integ.resmat <- dfcombo;
+        mSetObj$paramSet$integ.lib <- mSetObj$lib.organism;
     }
 
     matched_cpds <- names(mSetObj$cpd_exp)
@@ -2589,8 +2591,11 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   rownames(res.mat) <- path.nms[ord.inx];
   
   .save.mummichog.restable(res.mat, Cpd.Hits, mSetObj$mum_nm_csv);
+  if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
+    mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
+  }
 
-  mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
   mSetObj$path.pval <- as.numeric(res.mat[,9])
@@ -2778,6 +2783,7 @@ rownames(res.mat) <- path.nms[ord.inx]
 
 if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
     mSetObj$mummi.resmat <- res.mat[,-11];
+    mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
 }
 mSetObj$path.nms <- path.nms[ord.inx]
 mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
@@ -2893,7 +2899,10 @@ json.res <- list(
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
 
   if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    print("mSetObj$paramSet");
     mSetObj$mummi.gsea.resmat <- res.mat;
+    mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
+
   }
 
   Cpd.Hits <- qs::qread("pathwaysFiltered.qs")
@@ -3247,6 +3256,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   anal.type0 <- mSetObj$paramSet$anal.type
   if (anal.type0 == "mummichog") {
     mat <- mSetObj$mummi.resmat
+    print(head(mat));
     y <- -log10(mat[, 5])
     x <- mat[, 8] / mat[, 4]
     pathnames <- rownames(mat)
@@ -3287,7 +3297,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   top_indices <- head(order(-df$y), num_annot)
   p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
 
-mSetObj$imgSet$mummi.plot<- imgName
+  mSetObj$imgSet$mummi.plot<- imgName
 
   }else{
   # set circle size based on P-val
@@ -3301,7 +3311,7 @@ mSetObj$imgSet$mummi.plot<- imgName
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
-mSetObj$imgSet$mummi.gsea.plot<- imgName
+    mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
 
   
@@ -4454,7 +4464,7 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wid
     
     mSetObj$imgSet$mummi.plot<- imgName
   }else{
-  radi.vec <- sqrt(abs(as.numeric(df$y)))
+    radi.vec <- sqrt(abs(as.numeric(df$y)))
 
     # Assuming df, y, pathnames, imgName, and num_annot are already defined
     # Create the plot with Plotly
