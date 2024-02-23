@@ -913,7 +913,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
 
-    if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    if( is.null(mSetObj$initPSEA || mSetObj$initPSEA)){
         mSetObj$integ.resmat <- dfcombo;
         mSetObj$paramSet$integ.lib <- mSetObj$lib.organism;
     }
@@ -960,8 +960,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj$imgSet$enrTables[[vis.type]]$table <- dfcombo;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA and Mummichog integrative Analysis";
-    .set.mSet(mSetObj);
-  }
+    }
   return(mSetObj);
 }
 
@@ -1245,6 +1244,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
                                 cpd.treen){
 
   ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
+  print(paste0("compoundLib"));
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   pos_inx <- mSetObj$dataSet$pos_inx;
   ref_mzlistp <- ref_mzlist[pos_inx];
@@ -1668,6 +1668,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     mSetObj <- qs::qread(metaFiles[meta_file])
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
+    print(paste0("compoundLibMeta"));
     print(paste0("Got ", length(ref_mzlist), " mass features."))
     pos_inx <- mSetObj$dataSet$pos_inx;
     ref_mzlistp <- ref_mzlist[pos_inx];
@@ -2591,7 +2592,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   rownames(res.mat) <- path.nms[ord.inx];
   
   .save.mummichog.restable(res.mat, Cpd.Hits, mSetObj$mum_nm_csv);
-  if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+  if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
     mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
     mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
   }
@@ -2619,18 +2620,16 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   cat(json.mat);
   sink();
 
-    if(is.null(mSetObj$imgSet$enrTables)){
-        mSetObj$imgSet$enrTables <- list();
-    }
-    vis.type <- "mumEnr";
-    resTable <- res.mat[,c(2,3,5,9)];
-    resTable <- cbind(Name=path.nms[ord.inx], res.mat);
-    mSetObj$imgSet$enrTables[[vis.type]] <- list();
-    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
-    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
-    .set.mSet(mSetObj);
-
+        if(is.null(mSetObj$imgSet$enrTables)){
+            mSetObj$imgSet$enrTables <- list();
+        }
+        vis.type <- "mumEnr";
+        resTable <- res.mat[,c(2,3,5,9)];
+        resTable <- cbind(Name=path.nms[ord.inx], res.mat);
+        mSetObj$imgSet$enrTables[[vis.type]] <- list();
+        mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+        mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+        mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog Analysis";    
   return(mSetObj);
 }
 
@@ -2781,7 +2780,7 @@ rownames(res.mat) <- path.nms[ord.inx]
 
 .save.mummichog.restable(res.mat, EC.Hits, mSetObj$mum_nm_csv);
 
-if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
     mSetObj$mummi.resmat <- res.mat[,-11];
     mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
 }
@@ -2817,9 +2816,7 @@ json.res <- list(
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";
-    .set.mSet(mSetObj);
-  
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";  
 
   return(mSetObj);
 }
@@ -2898,7 +2895,7 @@ json.res <- list(
   ord.inx <- order(res.mat[,3]);
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
 
-  if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+  if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
     print("mSetObj$paramSet");
     mSetObj$mummi.gsea.resmat <- res.mat;
     mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
@@ -2932,17 +2929,6 @@ json.res <- list(
   cat(json.mat);
   sink();
 
-    if(is.null(mSetObj$imgSet$enrTables)){
-        mSetObj$imgSet$enrTables <- list();
-    }
-    vis.type <- "mumEnr";
-    resTable <- cbind(Name=rownames(res.mat), res.mat);
-    mSetObj$imgSet$enrTables[[vis.type]] <- list();
-    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
-    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
-    .set.mSet(mSetObj);
-  
   return(mSetObj);
 }
 
