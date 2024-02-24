@@ -843,10 +843,11 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, init=T){
   
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj$initPSEA <- init;
+  .set.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
   mSetObj$dataSet$paramSet <- mSetObj$paramSet;
-  mSetObj$initPSEA <- init;
   if(mSetObj$paramSet$mumRT & version=="v2"){
     mSetObj <- .init.RT.Permutations(mSetObj, permNum)
   } else {
@@ -912,8 +913,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
 
-    if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+    if( is.null(mSetObj$initPSEA || mSetObj$initPSEA)){
         mSetObj$integ.resmat <- dfcombo;
+        mSetObj$paramSet$integ.lib <- mSetObj$lib.organism;
     }
 
     matched_cpds <- names(mSetObj$cpd_exp)
@@ -958,8 +960,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj$imgSet$enrTables[[vis.type]]$table <- dfcombo;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA and Mummichog integrative Analysis";
-    .set.mSet(mSetObj);
-  }
+    }
   return(mSetObj);
 }
 
@@ -1243,6 +1244,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
                                 cpd.treen){
 
   ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
+  print(paste0("compoundLib"));
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   pos_inx <- mSetObj$dataSet$pos_inx;
   ref_mzlistp <- ref_mzlist[pos_inx];
@@ -1666,6 +1668,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     mSetObj <- qs::qread(metaFiles[meta_file])
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
+    print(paste0("compoundLibMeta"));
     print(paste0("Got ", length(ref_mzlist), " mass features."))
     pos_inx <- mSetObj$dataSet$pos_inx;
     ref_mzlistp <- ref_mzlist[pos_inx];
@@ -2589,8 +2592,11 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   rownames(res.mat) <- path.nms[ord.inx];
   
   .save.mummichog.restable(res.mat, Cpd.Hits, mSetObj$mum_nm_csv);
+  if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
+    mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
+    mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
+  }
 
-  mSetObj$mummi.resmat <- res.mat[,-11]; # not using adjusted for display other computing
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
   mSetObj$path.pval <- as.numeric(res.mat[,9])
@@ -2614,18 +2620,16 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   cat(json.mat);
   sink();
 
-    if(is.null(mSetObj$imgSet$enrTables)){
-        mSetObj$imgSet$enrTables <- list();
-    }
-    vis.type <- "mumEnr";
-    resTable <- res.mat[,c(2,3,5,9)];
-    resTable <- cbind(Name=path.nms[ord.inx], res.mat);
-    mSetObj$imgSet$enrTables[[vis.type]] <- list();
-    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
-    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
-    .set.mSet(mSetObj);
-
+        if(is.null(mSetObj$imgSet$enrTables)){
+            mSetObj$imgSet$enrTables <- list();
+        }
+        vis.type <- "mumEnr";
+        resTable <- res.mat[,c(2,3,5,9)];
+        resTable <- cbind(Name=path.nms[ord.inx], res.mat);
+        mSetObj$imgSet$enrTables[[vis.type]] <- list();
+        mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+        mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
+        mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog Analysis";    
   return(mSetObj);
 }
 
@@ -2776,8 +2780,9 @@ rownames(res.mat) <- path.nms[ord.inx]
 
 .save.mummichog.restable(res.mat, EC.Hits, mSetObj$mum_nm_csv);
 
-if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
     mSetObj$mummi.resmat <- res.mat[,-11];
+    mSetObj$paramSet$mummi.lib <- mSetObj$lib.organism;
 }
 mSetObj$path.nms <- path.nms[ord.inx]
 mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
@@ -2811,9 +2816,7 @@ json.res <- list(
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";
-    .set.mSet(mSetObj);
-  
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";  
 
   return(mSetObj);
 }
@@ -2892,8 +2895,11 @@ json.res <- list(
   ord.inx <- order(res.mat[,3]);
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
 
-  if(mSetObj$initPSEA || is.null(mSetObj$initPSEA)){
+  if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
+    print("mSetObj$paramSet");
     mSetObj$mummi.gsea.resmat <- res.mat;
+    mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
+
   }
 
   Cpd.Hits <- qs::qread("pathwaysFiltered.qs")
@@ -2923,17 +2929,6 @@ json.res <- list(
   cat(json.mat);
   sink();
 
-    if(is.null(mSetObj$imgSet$enrTables)){
-        mSetObj$imgSet$enrTables <- list();
-    }
-    vis.type <- "mumEnr";
-    resTable <- cbind(Name=rownames(res.mat), res.mat);
-    mSetObj$imgSet$enrTables[[vis.type]] <- list();
-    mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
-    mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA Analysis";
-    .set.mSet(mSetObj);
-  
   return(mSetObj);
 }
 
@@ -3247,6 +3242,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   anal.type0 <- mSetObj$paramSet$anal.type
   if (anal.type0 == "mummichog") {
     mat <- mSetObj$mummi.resmat
+    print(head(mat));
     y <- -log10(mat[, 5])
     x <- mat[, 8] / mat[, 4]
     pathnames <- rownames(mat)
@@ -3287,7 +3283,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   top_indices <- head(order(-df$y), num_annot)
   p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
 
-mSetObj$imgSet$mummi.plot<- imgName
+  mSetObj$imgSet$mummi.plot<- imgName
 
   }else{
   # set circle size based on P-val
@@ -3301,7 +3297,7 @@ mSetObj$imgSet$mummi.plot<- imgName
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
-mSetObj$imgSet$mummi.gsea.plot<- imgName
+    mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
 
   
@@ -4454,7 +4450,7 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, wid
     
     mSetObj$imgSet$mummi.plot<- imgName
   }else{
-  radi.vec <- sqrt(abs(as.numeric(df$y)))
+    radi.vec <- sqrt(abs(as.numeric(df$y)))
 
     # Assuming df, y, pathnames, imgName, and num_annot are already defined
     # Create the plot with Plotly

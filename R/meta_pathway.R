@@ -178,12 +178,27 @@ PerformMetaPSEA <- function(mSetObj=NA,
                             rank.metric="mean", 
                             mutual.feats = TRUE, 
                             pooled_cutoff = 0.05) {
+                            mSetObj<<-NA; 
+                            lib <<- "hsa_kegg"; 
+                            libVersion <<- "current"; 
+                            minLib <<- 3; 
+                            permNum <<- 100; 
+                            metaLevel <<- "pathway";
+                            combine.level<<-"pvalue"; 
+                            pval.method <<- "fisher"; 
+                            es.method <<- "fixed";
+                            rank.metric<<-"mean"; 
+                            mutual.feats <<- FALSE; 
+                            pooled_cutoff <<- 0.001
+  save.image("metapsea.RData");
 
   require(plyr);
   mSetObj <- .get.mSet(mSetObj);
 
   # record lib
   mSetObj$paramSet$lib <- lib;
+  mSetObj$initPSEA <- true;
+
   .set.mSet(mSetObj);
 
   metaFiles <- mSetObj[["IncludedDataSets"]]
@@ -1658,7 +1673,7 @@ newDataset <- function(mSetObj, dataName, dataName2 = NULL) {
 
 FormatmSet <- function(mSetObj, dataName){
   mSetObj0 <- list();
-  mSetObj <- .get.mSet(mSetObj);
+  #mSetObj <- .get.mSet(mSetObj);
   dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
   
   for(nm in dataNMs){
