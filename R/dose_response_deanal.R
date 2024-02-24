@@ -98,6 +98,7 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
         output <- c(1, sig.count, non.sig.count);
     }else{
         output <- c(1, 0, nrow(res.all));
+        sig.mat <- as.matrix(cbind(-1, -1));
     }
 
     if(nrow(sig.mat) > 1000){
@@ -156,6 +157,7 @@ GetDoseUpIDs <- function(mSetObj=NA){
 
 GetDoseDnMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+ #save.image("TestD.RData");
   lod <- mSetObj$analSet$dose$p.log;
   fc <- mSetObj$analSet$dose$fc.log;
   inx <- which(mSetObj$analSet$dose$inx.down);

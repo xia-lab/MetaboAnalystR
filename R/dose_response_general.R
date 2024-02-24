@@ -56,9 +56,11 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
   data.mean <- as.matrix(t(s));
   
   mSetObj$dataSet$itemselect <- structure(list(dose = dose, item = item, design = design, data.mean = data.mean), class="omicdata");
+  print("PrepareDataForDoseResponse === OK");
   return(.set.mSet(mSetObj));
 }
 
+# PrepareSigDRItems(mSet, 0.2,0.0,TRUE,FALSE,
 # Step 2: select significantly responsive items 
 PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "yes", ncpus = 4){
   mSetObj <- .get.mSet(mSetObj);
@@ -149,8 +151,11 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
     res$all.pass[is.na(res$all.pass)] <- FALSE
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
-  }
+}
 
+  if(sum(res$all.pass) == 0){
+    return(0);
+  }
   # select only data that passes all filters
   data.select <- data[res$all.pass, ]
   data.mean <- data.mean[res$all.pass, ]
@@ -162,6 +167,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
   #saveRDS(mSetObj, "msetobj.rds");
+  print("PrepareSigDRItems === OK");
   return(.set.mSet(mSetObj));
 }
 
@@ -594,21 +600,31 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
   
   # Loop on items
   # parallel or sequential computation
+  my.fitoneitem <-  function(i) {
+                     tmp <- try(fitoneitem(i));
+                     if(class(tmp) == "try-error") {
+                       return(NA);
+                     }else{
+                       return(tmp);
+                     }
+                   };
   if (ncpus != 1) 
   {
     clus <- parallel::makeCluster(ncpus, type = "FORK")
-    res <- parallel::parLapply(clus, 1:nselect, fitoneitem)
+    res <- parallel::parLapply(clus, 1:nselect, my.fitoneitem)
     parallel::stopCluster(clus)
-    res <- rbindlist(res)
   }
   else
   {
-    res <- base::lapply(1:nselect, fitoneitem)
-    res <- rbindlist(res)
+    res <- base::lapply(1:nselect, my.fitoneitem)
+
   }
   
-  
-  res <- as.data.frame(res)
+  # remove those with errors during modeling 
+  na.inx <- is.na(res);
+  print(paste("A total of", sum(na.inx), "errors in modeling and were removed."));
+  res[na.inx] <- NULL;
+  res <- as.data.frame(rbindlist(res));
   
   reslist <- list(fitres.all = res, fitres.filt = data.frame(), data = data,
                   dose = itemselect$dose, data.mean = itemselect$data.mean, 
