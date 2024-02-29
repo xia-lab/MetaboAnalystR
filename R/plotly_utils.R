@@ -41,6 +41,7 @@ gg2list_new <- function(p, width = NULL, height = NULL,
   has_facet <- plotly:::has_facet;
   linewidth_or_size <- plotly:::linewidth_or_size;
   compact <- plotly:::compact
+  options(bitmapType='cairo')
   
   dev_fun <- if (capabilities("aqua") || capabilities("png")) {
     grDevices::png
@@ -57,15 +58,17 @@ gg2list_new <- function(p, width = NULL, height = NULL,
       call. = FALSE
     )
   }
+
   # if a device (or RStudio) is already open, use the device size as default size
   if (!is.null(grDevices::dev.list()) || plotly:::is_rstudio()) {
     width <- width %||% default(grDevices::dev.size("px")[1])
     height <- height %||% default(grDevices::dev.size("px")[2])
   }
+
   # open the device and make sure it closes on exit
   dev_fun(filename = tempfile_path, width = width %||% 640, height = height %||% 480)
   on.exit(grDevices::dev.off(), add = TRUE)
-  
+
   # check the value of dynamicTicks
   dynamicValues <- c(FALSE, TRUE, "x", "y")
   if (length(setdiff(dynamicTicks, dynamicValues))) {
@@ -76,7 +79,7 @@ gg2list_new <- function(p, width = NULL, height = NULL,
       ), call. = FALSE
     )
   }
-  
+
   # ------------------------------------------------------------------------
   # Our internal version of ggplot2::ggplot_build(). Modified from
   # https://github.com/hadley/ggplot2/blob/0cd0ba/R/plot-build.r#L18-L92
