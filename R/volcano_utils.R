@@ -41,7 +41,13 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   }else{
     dataSet <- readDataset(dataName);
     data <- as.matrix(dataSet$comp.res);
-    p.value <- data[, "adj.P.Val"];
+    print(paramSet$use.fdr)
+    print("volcano")
+    if(is.null(paramSet$use.fdr) || paramSet$use.fdr){
+        p.value <- data[, "adj.P.Val"];
+    }else{
+        p.value <- data[, "P.Value"];
+    }
   }
 
   paramSet$fcthreshu <- fcthresh
