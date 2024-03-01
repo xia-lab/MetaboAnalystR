@@ -632,23 +632,35 @@ PerformDRFit <- function(ncpus = 2)
     
   } ##################################### end of fitoneitem
   
+  my.fitoneitem <-  function(i) {
+                     tmp <- try(fitoneitem(i));
+                     if(class(tmp) == "try-error") {
+                       return(NA);
+                     }else{
+                       return(tmp);
+                     }
+                   };
+
   # Loop on items
   # parallel or sequential computation
   if (ncpus != 1) 
   {
     clus <- parallel::makeCluster(ncpus, type = "FORK")
-    res <- parallel::parLapply(clus, 1:nselect, fitoneitem)
+    res <- parallel::parLapply(clus, 1:nselect, my.fitoneitem)
     parallel::stopCluster(clus)
-    res <- rbindlist(res)
+    #res <- rbindlist(res)
   }
   else
   {
-    res <- base::lapply(1:nselect, fitoneitem)
-    res <- rbindlist(res)
+    res <- base::lapply(1:nselect, my.fitoneitem)
+    #res <- rbindlist(res)
   }
   
-  
-  dres <- as.data.frame(res)
+  na.inx <- is.na(res);
+  print(paste("A total of", sum(na.inx), "errors in modeling and were removed."));
+  res[na.inx] <- NULL;
+  dres <- as.data.frame(rbindlist(res));
+
   
   reslist <- list(fitres.all = dres, fitres.filt = data.frame(), data = dataSet$itemselect$data,
                   dose = dataSet$itemselect$dose, data.mean = dataSet$itemselect$data.mean, 
@@ -1200,7 +1212,7 @@ GetFitResultGeneIDLinks <- function(org){
   } else if (org == "s2f"){
     ids <- as.character(dataSet$html.resTable[,1]);
     symbs <- doEntrez2SymbolMapping(ids)
-    annots <- paste("<a style='color: #a7414a' href='https://www.ecoomicsdb.ca/EcoOmicsDB/#/query?ortho=", ids, "' target='_blank'>", symbs, "</a>", sep="");
+    annots <- paste("<a style='color: #a7414a' href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>", symbs, "</a>", sep="");
     return(annots);    
   } else {
     ids <- as.character(dataSet$html.resTable[,1]);
