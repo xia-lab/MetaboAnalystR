@@ -118,6 +118,58 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   return(.set.mSet(mSetObj));
 }
 
+
+#' Convert2AnalObject
+#' This function is used to convert mSet object from raw spectra processing for the following analysis.
+#' @param mSet mSet from raw spectral processing pipeline, OptiLCMS
+#' @param data.type data type, should be 'spec'
+#' @param anal.type analysis type, should be 'raw'
+#' @param paired data is paired or not, use FALSE by default
+#' @export
+Convert2AnalObject <- function(mSet, data.type, anal.type, paired=FALSE){
+  
+  if((typeof(mSet) == "S4") & (class(mSet) == "mSet")){
+    MSnResults = mSet@MSnResults
+    MSnData = mSet@MSnData
+  } else {
+    stop("This is not a valid mSet from raw spectral processing!")
+  }
+  
+  dataSet <- list();
+  dataSet$type <- data.type;
+  dataSet$design.type <- "regular"; # one factor to two factor
+  dataSet$cls.type <- "disc"; # default until specified otherwise
+  dataSet$format <- "rowu";
+  dataSet$paired <- paired;
+  dataSet$pair.checked <- FALSE;
+  analSet <- list();
+  analSet$type <- anal.type;
+  analSet$ms2res <- MSnResults;
+  analSet$ms2data <- MSnData;
+
+  Sys.setenv("OMP_NUM_THREADS" = 2); # to control parallel computing for some packages
+  Sys.setenv("OPENBLAS_NUM_THREADS" = 2);
+  mSetObj <- list();
+  mSetObj$dataSet <- dataSet;
+  mSetObj$analSet <- analSet;
+  mSetObj$imgSet <- list();
+  mSetObj$imgSet$margin.config <- list(
+    l = 50,
+    r = 50,
+    b = 20,
+    t = 20,
+    pad = 0.5
+  )
+  mSetObj$msgSet <- list(); # store various message during data processing
+  mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
+  mSetObj$cmdSet <- vector(mode="character"); # store R command
+  metaboanalyst_env <<- new.env(); # init a marker env for raw data processing
+  mSetObj$paramSet$report.format <- "html"
+  .init.global.vars(anal.type);
+  print("MetaboAnalyst R objects initialized ...");
+  return(mSetObj);
+}
+
 # Clean Data Objects to avoid interference
 CleanDataObjects <- function(mSetObj, anal.type){
   if(anal.type == "metapaths") {
