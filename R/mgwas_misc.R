@@ -694,73 +694,7 @@ as.num <- function(x, na.strings = "NA") {
   x[na] = NA_real_
   x
 }
-
-QueryPpiSQLiteZero <- function(table.nm, q.vec, requireExp, min.score){
-  #table.nm<<-table.nm;
-  #q.vec<<-q.vec;
-  #requireExp<<-requireExp;
-  #min.score<<-min.score;
-  #save.image("QueryPpiSQLiteZero.RData")
-  require('RSQLite')
-  db.path <- paste(url.pre, "ppi.sqlite", sep="");
-  if(.on.public.web){
-    ppi.db <- dbConnect(SQLite(), db.path);
-  }else{
-    msg <- paste("Downloading", db.path);
-    db.name <- gsub(sqlite.path, "", db.path);
-    if(!file.exists(db.name)){
-      print(msg);
-      download.file(db.path, db.name);
-    }
-    ppi.db <- dbConnect(SQLite(), db.name);
-  }
-  query <- paste(shQuote(q.vec),collapse=",");
   
-  if(grepl("string$", table.nm)){
-    if(requireExp){
-      statement <- paste("SELECT * FROM ",table.nm, " WHERE ((id1 IN (", query, ")) OR (id2 IN (", query, ")) OR (name1 IN (", query, "))OR (name2 IN (", query, ")))  AND combined_score >=", min.score, " AND experimental > 0", sep="");
-    }else{
-      statement <- paste("SELECT * FROM ",table.nm, " WHERE ((id1 IN (", query, ")) OR (id2 IN (", query, ")) OR (name1 IN (", query, "))OR (name2 IN (", query, ")))  AND combined_score >=", min.score, sep="");
-    }
-  }else{
-    statement <- paste("SELECT * FROM ",table.nm, " WHERE ((id1 IN (", query, ")) OR (id2 IN (", query, ")) OR (name1 IN (", query, "))OR (name2 IN (", query, ")))", sep="");
-  }
-  
-  ppi.res <- .query.sqlite(ppi.db, statement);
-  hit.inx1 <- ppi.res[,1] %in% q.vec
-  # hit.inx2 <- ppi.res[,2] %in% q.vec
-  ppi.res1 <- ppi.res[(hit.inx1),]
-  # 
-  hit.inx3 <- ppi.res[,3] %in% q.vec
-  # hit.inx4 <- ppi.res[,4] %in% q.vec
-  ppi.res2 <- ppi.res[(hit.inx3),]
-  ppi.res = rbind(ppi.res1,ppi.res2)
-  
-  return(ppi.res);
-}
-  
-
-GetCompleteMetList <- function(){
-  #save.image("GetCompleteMetList.RData");
-  # get pre-saved metabolite name with beta and se
-  met.nms <- .get.my.lib("mr_met_nms.qs");
-  return(met.nms);
-}
-
-GetCompletePheMRMetDisList <- function(){
-  #save.image("GetCompletePheMRMetDisList.RData");
-  met.nms <- .get.my.lib("phemr_browse_met_nms.qs");
-  dis.nms <- .get.my.lib("phemr_browse_dis_nms.qs")
-  return(c(met.nms, dis.nms));
-}
-
-GetCompleteDisList <- function(){
-  # get disease from ieugwasr
-  #save.image("GetCompleteDisList.RData")
-  ieugwas.db <- .get.my.lib("ieugwas_202210.qs");
-  return(sort(paste(ieugwas.db$trait, ieugwas.db$id, sep = " | ")));
-
-}
 
 .parse_snp2met_exposure <- function(res){
   res <- res[complete.cases(res[ , 10]),]; # beta
@@ -1291,3 +1225,4 @@ ld_clump_local_custom <- function (dat, clump_kb, clump_r2, clump_p, bfile, plin
   }
   return(subset(dat, dat[["rsid"]] %in% res[["SNP"]]))
 }
+

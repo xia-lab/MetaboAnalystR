@@ -1,9 +1,203 @@
 ##################################################
-## R script for mGWAS
+## R script for MR analysis 
 ## Description: Data/resource management functions
-## Author: Le, le.chang@mail.mcgill.ca
+## Adapted from mGWAS-Explorer
 ###################################################
 
+SetLDProxy <- function(opt){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$ld.proxy <- opt;
+  .set.mSet(mSetObj);
+}
+
+SetLDR2 <- function(opt){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$ld.r2 <- as.numeric(opt);
+  .set.mSet(mSetObj);
+}
+
+QueryExposure <- function(mSetObj=NA, itemsStr){
+
+    library(dplyr)
+    library(tidyr)
+
+    mSetObj <- .get.mSet(mSetObj);
+    itemVec <- strsplit(itemsStr, split = ", ")[[1]]
+
+    tableName <- "exposure";
+    idType <- "name";
+    mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
+    hit.num <- nrow(mir.dic);
+    if (hit.num == 0) {
+        current.msg <<- "No hits found in the database. Please make sure to select a metabolite from the drop-down list.";
+        print(current.msg);
+        return(0);
+    } 
+
+    res <- mir.dic[ , c("metabolite_orig","hmdb","kegg","snp_orig", "chr", "pos_hg19","note", "name","ratio_single","beta","p_value","metabolite_id","ea","nea","pmid",
+                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid")];
+    res <- .parse_snp2met_exposure(res); # remove NA
+    # update col names
+    colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
+                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid");
+    fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  
+
+    display.res <- res;
+    met.nms <<- res[,"Common Name"];
+    snp.nms <<- res[, "SNP"];
+    res <- data.frame(Name1=res[,"SNP"], ID1=res[,"SNP"], Name2=res[,"Common Name"],ID2=res[,"KEGG"], Reference=res[,"PMID"], P_value=res[,"P-value"], stringsAsFactors = FALSE);
+    mir.resu <- res;
+    exposure <- display.res;
+    mSetObj$dataSet$tableStats <- data.frame(Query=length(unique(snp.nms)),Mapped=length(unique(met.nms)),stringsAsFactors = FALSE);
+    mirtableu <-  "exposure";
+
+    ## get associated metabolites for each snp
+    mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
+
+    res <- mir.dic[, c("rsid","name","symbol","entrez")];
+     
+    # Create summary tables for metabolites and genes
+    summary_table <- res %>%
+      group_by(rsid) %>%
+      summarise(
+        metabolites = paste(unique(name), collapse = ", "),
+        genes = paste(unique(symbol), collapse = ", "),
+        gene_id = paste(unique(entrez), collapse = ", "),
+      ) %>%
+      ungroup()
+
+    # Rename column for merging
+    colnames(summary_table)[1] <- "SNP"
+
+    # Merge with exposure data
+    merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
+
+    # Number of columns in the data frame
+    num_cols <- ncol(merged_table)
+
+    # Create a sequence of column indices with the first column moved to the fourth position
+    # Adjust this as needed for your specific column arrangement
+    new_order <- c(2:3, 1, 4:num_cols)
+
+    # Reorder the columns
+    merged_table <- merged_table[, new_order]
+
+    mSetObj$dataSet$mir.res <- mir.resu;
+    mSetObj$dataSet$exposure <- merged_table;
+    mSetObj$dataSet$exposure.orig <- merged_table;
+    #mSetObj$dataSet$mirtarget <- mirtargetu;
+    mSetObj$dataSet$mirtable <- unique(mirtableu);
+
+    if(.on.public.web){
+        return(.set.mSet(mSetObj));
+    }else{
+        return(current.msg);
+    }
+}
+
+QueryOutcome <- function(itemVec){
+
+    if (file.exists("dis_snp_restable.csv")) {
+        return(1);
+    }
+
+    mSetObj <- .get.mSet(mSetObj);
+    itemVec.id <- trimws(itemVec);
+
+    ieugwas.db <- .get.my.lib("ieugwas_202210.qs");
+    ieugwas.res <- ieugwas.db[ieugwas.db$id == itemVec.id,];
+    hit.num <- nrow(ieugwas.res);
+    if (hit.num == 0) {
+        current.msg <<- "No hits found in the database. Please make sure to select an outcome from the drop-down list.";
+        print(current.msg);
+        return(0);
+    } 
+
+    mSetObj$dataSet$outcome <- ieugwas.res;
+    fast.write.csv(ieugwas.res, file="dis_snp_restable.csv");
+
+    if(.on.public.web){
+        return(.set.mSet(mSetObj));
+    }else{
+        return(current.msg);
+    }  
+}
+
+.query_mr_results <- function(mir.dic, resOpt){
+  res <- mir.dic[ , c("exposure", "outcome_nm", "nsnp", "method", "b", "se", "pval")];
+  res$b <- signif(res$b, digits = 5);
+  res$se <- signif(res$se, digits = 5);
+  res$pval <- signif(res$pval, digits = 5)
+  
+  res <- res[order(res$pval),];
+  # update col names
+  colnames(res) <- c("Metabolite","Trait", "N SNP", "Method", "Effect Size", "S.E.", "P-value");
+  file.nm <- paste0("browse_", resOpt, ".csv")
+  fast.write.csv(res, file=file.nm, row.names=FALSE);
+  display.res <- res;
+  mir.resu <<- res;
+  mr_results <<- display.res;
+  mirtableu <<-  "mr_results";
+}
+
+.query_mr_sensitivity <- function(mir.dic, resOpt){
+  mir.dic$correct_causal_direction <- ifelse(mir.dic$correct_causal_direction == 1, "Yes", "No")
+  res <- mir.dic;
+  res$steiger_pval <- signif(res$steiger_pval, digits = 5);
+  res$Q_pval <- signif(res$Q_pval, digits = 5);
+  res$pval <- signif(res$pval, digits = 5)
+  
+  # update col names
+  colnames(res) <- c("Metabolite","Trait", "Directionality", "Steiger P-value", "Heterogeneity Method", 
+                     "Heterogeneity P-value", "Pleiotropy P-value");
+  
+  file.nm <- paste0("browse_", resOpt, ".csv")
+  fast.write.csv(res, file=file.nm, row.names=FALSE);
+  display.res <- res;
+  mir.resu <<- res;
+  mr_sensitivity <<- display.res;
+  mirtableu <<-  "mr_sensitivity";
+}
+
+.query_mr_single <- function(mir.dic, resOpt){
+  res <- mir.dic[ , c("exposure", "outcome_nm", "SNP", "b", "se", "p")];
+  res$b <- signif(res$b, digits = 5);
+  res$se <- signif(res$se, digits = 5);
+  res$p <- signif(res$p, digits = 5)
+  
+  res$method <- "Wald ratio";
+  res <- res[order(res$p),]
+  # update col names
+  colnames(res) <- c("Metabolite","Trait", "SNP",  "Effect Size", "S.E.", "P-value","Method");
+  res <- res[,c("Metabolite","Trait", "SNP", "Method", "Effect Size", "S.E.", "P-value")]
+  file.nm <- paste0("browse_", resOpt, ".csv")
+  fast.write.csv(res, file=file.nm, row.names=FALSE);
+  display.res <- res;
+  mir.resu <<- res;
+  mr_single <<- display.res;
+  mirtableu <<-  "mr_single";
+
+}
+
+
+PrepareMgwasCSV <- function(table.nm){
+  # table.nm<<-table.nm;
+  # save.image("PrepareCSV.RData")
+  mSetObj <- .get.mSet(mSetObj);
+  if(table.nm=="mr_res_single"){
+    fast.write.csv(mSetObj$dataSet$mr_res_single, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="mr_res_loo"){
+    fast.write.csv(mSetObj$dataSet$mr_res_loo, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="mr_res"){
+    fast.write.csv(mSetObj$dataSet$mr_results, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="manhattan"){
+    fast.write.csv(mSetObj$dataSet$snp2met, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  } else if(anal.type == "multilist" || anal.type == "snp2mir" || anal.type == "tf2genemir" || anal.type == "gene2tfmir"){
+    fast.write.csv(mSetObj$dataSet[[table.nm]], file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  } else {
+    fast.write.csv(mSetObj$dataSet$snp.res, file=paste(net.type, ".csv", sep=""), row.names = FALSE);
+  }
+}
 
 SetupListData <- function(mSetObj=NA, mirs, idType, tissue, population){
   mSetObj <- .get.mSet(mSetObj);
@@ -59,47 +253,30 @@ SetupIndListData <- function(mSetObj=NA, mirs, inputType, idType, tissue, popula
 
 # "ID", "Accession","Gene", "PMID"
 GetResCol <- function(netType, colInx){
-   #netType<<-netType;
-   #colInx<<-colInx;
-   #save.image("GetMirResCol.RData");
+
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
-  if(netType == "manhattan" || analSet == "studyview" || analSet == "search"){
-    res <- mSetObj$dataSet$snp2met[, colInx];
-  } else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
-    # mr_results_merge
-    res <- dataSet[netType][[1]][, colInx];
-  } else{
-    res <- dataSet$mir.res[, colInx];
-  }
-    hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
-    res[hit.inx] <- "N/A";
-    return(res);
+  res <- dataSet[netType][[1]][, colInx];
+  hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
+  res[hit.inx] <- "N/A";
+  return(res);
 }
 
 # "ID", "Accession","Gene", "PMID"
 GetResColByName <- function(netType, name){
-   #netType<<-netType;
-   #colInx<<-colInx;
-   #save.image("GetMirResCol.RData");
-   mSetObj <- .get.mSet(mSetObj);
-   analSet <- mSetObj$analSet$type;
-   dataSet <- mSetObj$dataSet;
-  if(netType == "manhattan" || analSet == "studyview" || analSet == "search"){
-    df <-mSetObj$dataSet$snp2met;
-  } else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
-    # mr_results_merge
-    df <-dataSet[netType][[1]];
-  } else{
-    df <- dataSet$mir.res;
-  }
-    colInx <- which(colnames(df) == name);
-    res <- df[, colInx];
 
-    hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
-    res[hit.inx] <- "N/A";
-    return(res);
+  mSetObj <- .get.mSet(mSetObj);
+  analSet <- mSetObj$analSet$type;
+  dataSet <- mSetObj$dataSet;
+
+  df <-dataSet[netType][[1]];
+  colInx <- which(colnames(df) == name);
+  res <- df[, colInx];
+
+  hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
+  res[hit.inx] <- "N/A";
+  return(res);
 }
 
 RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
