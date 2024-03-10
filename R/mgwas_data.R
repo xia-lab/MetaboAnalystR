@@ -134,65 +134,11 @@ AddEntryExposure <- function(mSetObj=NA, mir.id) {
   return(.set.mSet(mSetObj));
 }
 
-# batch remove based on
-UpdateEntries <- function(mSetObj=NA, col.id, method, value, action) {
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(col.id == "name"){
-    col <- mSetObj$dataSet$snp.res$Metabolite;
-  }else if(col.id == "rsid"){
-    col <- mSetObj$dataSet$snp.res$rsID;
-  }else if(col.id == "chr"){
-    col <- mSetObj$dataSet$snp.res$Chr;
-  }else if(col.id == "p_value"){
-    col <- mSetObj$dataSet$snp.res$`P-value`
-  }else if(col.id == "consequence"){
-    col <- mSetObj$dataSet$snp.res$Consequence;
-  }else if(col.id == "symbol"){
-    col <- mSetObj$dataSet$snp.res$Gene;
-  }else if(col.id == "pmid"){
-    col <- mSetObj$dataSet$snp.res$PMID;
-  } else {
-    print(paste("unknown column:", col.id));
-  }
-  
-  if(method == "contain"){
-    hits <- grepl(value, col, ignore.case = TRUE);
-  }else if(method == "match"){
-    hits <- tolower(col) %in% tolower(value);
-  }else{ # at least
-    if( col.id == "p_value"){
-      col.val <- as.numeric(col);
-      na.inx <- is.na(col.val);
-      col.val[na.inx] <- max(col.val[!na.inx]);
-      hits <- col.val > as.numeric(value);
-    } else {
-      print("This is only for P-value at this moment.");
-      return("NA");
-    }
-  }
-  
-  if(action == "keep"){
-    hits = !hits;
-  }
-  
-  if(sum(hits) > 0){
-    row.ids <- rownames(mSetObj$dataSet$snp.res)[hits];
-    mSetObj$dataSet$snp.res <- mSetObj$dataSet$snp.res[!hits,];
-    fast.write.csv(mSetObj$dataSet$snp.res, file="mgwas_snp_met.csv", row.names=FALSE);
-    #.prepareIdeogramJSON(mSetObj$dataSet$snp.res);
-    .set.mSet(mSetObj);
-    return(row.ids);
-  }else{
-    return("NA");
-  }
-}
 
 GetResRowNames <- function(netType){
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
-   #netType<<-netType
-   #save.image("GetResRowNames.RData")
+
   if(netType == "manhattan" || analSet == "studyview"){
     resTable <- mSetObj$dataSet$snp2met_study; 
   }else if (analSet == "search"){
@@ -200,9 +146,9 @@ GetResRowNames <- function(netType){
   }else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
    resTable <- mSetObj$dataSet[netType][[1]]
   }  else{
-    resTable <- dataSet$mir.res;
-
+    resTable <- mSetObj$dataSet$mir.res;
   }
+
   if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
     resTable <- resTable[1:1000, ];
     current.msg <<- "Due to computational constraints, only the top 1000 rows will be displayed.";
@@ -351,62 +297,4 @@ SetMRMethod <- function(){
   }
 }
 
-UpdateMREntries <- function(mSetObj=NA, col.id, method, value, action) {
-  #col.id<<-col.id;
-  #method<<-method;
-  #value<<-value;
-  #action<<-action;
-  #save.image("UpdateMREntries.RData")
-  
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(col.id == "name"){
-    col <- mSetObj$dataSet$exposure$Metabolite;
-  }else if(col.id == "rsid"){
-    col <- mSetObj$dataSet$exposure$SNP;
-  }else if(col.id == "chr"){
-    col <- mSetObj$dataSet$exposure$Chr;
-  }else if(col.id == "beta"){
-    col <- mSetObj$dataSet$exposure$Beta
-  }else if(col.id == "se"){
-    col <- mSetObj$dataSet$exposure$SE;
-  }else if(col.id == "pval"){
-    col <- mSetObj$dataSet$exposure$`P-value`;
-  }else if(col.id == "pmid"){
-    col <- mSetObj$dataSet$exposure$PMID;
-  } else {
-    print(paste("unknown column:", col.id));
-  }
-  
-  if(method == "contain"){
-    hits <- grepl(value, col, ignore.case = TRUE);
-  }else if(method == "match"){
-    hits <- tolower(col) %in% tolower(value);
-  }else{ # at least
-    if( col.id == "pval"){
-      col.val <- as.numeric(col);
-      na.inx <- is.na(col.val);
-      col.val[na.inx] <- max(col.val[!na.inx]);
-      hits <- col.val > as.numeric(value);
-    } else {
-      print("This is only for P-value at this moment.");
-      return("NA");
-    }
-  }
-  
-  if(action == "keep"){
-    hits = !hits;
-  }
-  
-  if(sum(hits) > 0){
-    row.ids <- rownames(mSetObj$dataSet$exposure)[hits];
-    mSetObj$dataSet$exposure <- mSetObj$dataSet$exposure[!hits,];
-    fast.write.csv(mSetObj$dataSet$exposure, file="mr_exposure_data.csv", row.names=FALSE);
-    .set.mSet(mSetObj);
-    return(row.ids);
-  }else{
-    return("NA");
-  }
-}
 
