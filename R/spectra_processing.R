@@ -2896,4 +2896,230 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   return(.set.mSet(mSetObj));
 }
 
+#' PerformMirrorPlotting
+#'
+#' @param mSetObj mSetObj
+#' @param fragDB_path Fragmentation database path
+#' @param featurelabel featurelabel
+#' @param peak_idx peak_idx
+#' @param sub_idx sub_idx
+#' @param ppm ppm
+#' @param interactive interactive or not
+#' @param imageNM imageNM
+#' @param dpi dpi
+#' @param format format
+#' @param width width
+#' @param height height
+#' @export
+
+PerformMirrorPlotting <- function(mSetObj=NA, 
+                                  fragDB_path = NA,
+                                  peak_idx, sub_idx, 
+                                  interactive = T,
+                                  ppm, 
+                                  dpi, format, width, height){
+  mSetObj <- .get.mSet(mSetObj);
+  MirrorPlotting <- OptiLCMS:::MirrorPlotting;
+  parse_ms2peaks <- OptiLCMS:::parse_ms2peaks;
+  if(is.null(mSetObj[["analSet"]][["ms2res"]])){
+    stop("Your mSet object does not contain MS2 analysis results!")
+  } else {
+    mSetObj[["analSet"]][["ms2res"]] -> MSnResults
+    mSetObj[["analSet"]][["ms2data"]] -> MSnData
+  }
+  peak_idx0 <- peak_idx-1
+  idx <- which(peak_idx0 == MSnResults[["Concensus_spec"]][[1]])
+  if(!(peak_idx0 %in% MSnResults[["Concensus_spec"]][[1]])){
+    message(paste0("No corresponding MS2 results found for peak: ", peak_idx))
+    return(.set.mSet(mSetObj));
+  }
+  useFrg = FALSE;
+  
+  if(!is.na(fragDB_path)){
+    if(file.exists(fragDB_path)){
+      useFrg = TRUE;
+    } else {
+      useFrg = FALSE;
+      warning("fragDB_path does not exist!")
+    }
+  }
+  
+  require("RSQLite")
+  require("DBI")
+  require("plotly")
+  
+  if(is.null(mSetObj[["analSet"]][["DBAnnoteRes"]])) {
+    mSetObj[["analSet"]][["ms2res"]] <- MSnResults;
+    if(is.list(MSnData[["peak_mtx"]])){
+      peak_list <- lapply(MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
+      peak_mtx <- do.call(rbind, peak_list)
+      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+    } else {
+      peak_mtx <- MSnData[["peak_mtx"]]
+    }
+    
+    DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
+      res <- x[[1]][[1]]
+      if(length(res) == 0) {
+        return(NULL)
+      } else {
+        x[[1]]
+      }
+    })
+    mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+  } else {
+    mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
+    mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+  }
+  
+  # fl <- gsub("mz|sec|min", "", featurelabel)
+  # fl <- strsplit(fl,"@")[[1]]
+  # mz <- as.double(fl[1])
+  # rt <- as.double(fl[2])
+  peak_mtx <- as.data.frame(peak_mtx)
+  mz <- mean(as.numeric(peak_mtx[peak_idx, c(1:2)]))
+  rt <- mean(as.numeric(peak_mtx[peak_idx, c(3:4)]))
+  mz <- round(mz, 4)
+  rt <- round(rt, 2)
+  
+  result_num <- idx #<- peak_idx;
+  ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
+  uidx <- vapply(ucmpds, function(x){
+    which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
+  }, FUN.VALUE = integer(1L))
+  spec_bottom <- DBAnnoteRes[[idx]][["MS2Pekas"]][uidx][sub_idx]
+  spec_bottom <- parse_ms2peaks(spec_bottom)
+  
+  spec_top_m <- mSetObj[["analSet"]][["ms2res"]][["Concensus_spec"]][[2]][[idx]][[1]]
+  compound_name <- DBAnnoteRes[[idx]][["Compounds"]][uidx][sub_idx]
+  title <- paste0(mz, "__", rt)
+  subtitle <- paste0(compound_name)
+  p1 <- MirrorPlotting(spec_top_m, 
+                       spec_bottom, 
+                       ppm = ppm,
+                       title= title, 
+                       subtitle = subtitle,
+                       cutoff_relative = 0.1)
+  
+  DBID_num <- DBAnnoteRes[[idx]][["IDs"]][uidx][sub_idx]
+  frgs_vec_done <- vector("character", 0L)
+  if(length(DBID_num)==1){
+    
+    if(useFrg){
+      con <- dbConnect(SQLite(), fragDB_path)
+      db <- dbGetQuery(con, paste0("SELECT DB_Tables FROM Index_table where Max_ID>",DBID_num," AND Min_ID<",DBID_num))
+      frgs <- dbGetQuery(con, paste0("SELECT Fragments FROM ", db, " where ID='",DBID_num,"'"))
+      dbDisconnect(con)
+      
+      frgs_vec <- strsplit(frgs$Fragments, split = "\t")[[1]]
+      normalize_spectrum <- OptiLCMS:::normalize_spectrum
+      bottom <- normalize_spectrum(spec_bottom, 1)
+      frgs_vec_done <- vapply(bottom$mz, function(x){
+        y <- frgs_vec[spec_bottom[,1] == x]
+        if(is.na(y[1])){return("")}
+        return(y[1])
+      }, FUN.VALUE = character(1L))
+      
+      write.table(bottom[,c(1:2)], 
+                  file = paste0("reference_spectrum_",result_num, "_", sub_idx,".txt"), 
+                  row.names = F, col.names = T)
+      
+      compoundName <- DBAnnoteRes[[idx]][["Compounds"]][sub_idx]
+      score <- DBAnnoteRes[[idx]][["Scores"]][[1]][sub_idx]
+      inchikeys <- DBAnnoteRes[[idx]][["InchiKeys"]][sub_idx]
+      formulas <- DBAnnoteRes[[idx]][["Formula"]][sub_idx]
+      
+      df_cmpd <- data.frame(CompoundName = compoundName,
+                            score = score,
+                            InchiKeys = inchikeys,
+                            Formula = formulas)
+      write.table(df_cmpd, 
+                  file = paste0("compound_info_",result_num, "_", sub_idx,".txt"), 
+                  row.names = F, col.names = T)
+    }
+  }
+  
+  # add some modification
+  p1 <- p1 + theme(
+    axis.title.x = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    text=element_text(family="serif", face = "plain"),
+    plot.subtitle=element_text(size=13, face="plain", color="black"),
+    plot.title=element_text(size=18, face="plain", color="black"))
+  
+  Cairo::Cairo(
+    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
+    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
+  print(p1)
+  dev.off()
+  
+  # Save the interactive plot with ggplot
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png")
+  save(p1, file = "p1.rda")
+  px <- plotly::ggplotly(p1);
+  # px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
+  #pxl <- list(px$x$data,px$x$layout,px$x$config);
+  #names(pxl) <- c("data","layout","config");
+  px[["x"]][["layout"]][["width"]] <- px[["width"]] <- 850
+  px[["x"]][["layout"]][["height"]] <- px[["height"]] <- 425
+  px[["x"]][["layout"]][["yaxis"]][["title"]][["font"]][["size"]] <- 16
+  px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
+  #px[["x"]][["layout"]][["title"]] <-NULL
+  px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
+  
+  if(length(px[["x"]][["data"]])>2){
+    px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
+  }
+  
+  ## update the top data  -data1
+  if(length(px[["x"]][["data"]][[1]])>0){
+    if(length(px[["x"]][["data"]][[1]][["text"]])>0){
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[1]][["text"]])
+      px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
+    }
+  }
+  
+  ## update the bottom data  -data2
+  if(length(px[["x"]][["data"]][[2]])>0){
+    if(length(px[["x"]][["data"]][[2]][["text"]])>0){
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("normalized|-normalized","Relative Intensity",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("y: 0<br />","",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("mz: [0-9]+.[0-9]+<br />mz","mz",px[["x"]][["data"]][[2]][["text"]])
+      px[["x"]][["data"]][[2]][["text"]] <- gsub("-","",px[["x"]][["data"]][[2]][["text"]])
+      if(useFrg){
+        if(length(frgs_vec_done)>0){
+          non_na_txt <- px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])]
+          frgs_vec_done[frgs_vec_done==""] <- "Unknown"
+          new_labels <- sapply(1:length(non_na_txt), function(x){
+            paste0(non_na_txt[x], "<br />Fragment Formula: ", frgs_vec_done[ceiling(x/2)])
+          })
+          px[["x"]][["data"]][[2]][["text"]][!is.na(px[["x"]][["data"]][[2]][["text"]])] <- new_labels
+        }
+      }
+    }
+  }
+  
+  ## update the matched star  -data3
+  if(length(px[["x"]][["data"]])>2){
+    if(length(px[["x"]][["data"]][[3]])>0){
+      if(length(px[["x"]][["data"]][[3]][["text"]])>0){
+        px[["x"]][["data"]][[3]][["text"]] <- gsub("<br />star_intensity.*","",px[["x"]][["data"]][[3]][["text"]])
+        px[["x"]][["data"]][[3]][["text"]] <- paste0("<b>Matched Fragment: </b><br />", px[["x"]][["data"]][[3]][["text"]])
+      }
+    }
+  }
+  
+  if(interactive){
+    save(px, file = "px.rda")
+    print(px)
+  }
+  
+  return(.set.mSet(mSetObj));
+}
+
 

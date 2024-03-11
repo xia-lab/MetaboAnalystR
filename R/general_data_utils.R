@@ -118,6 +118,58 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   return(.set.mSet(mSetObj));
 }
 
+
+#' Convert2AnalObject
+#' This function is used to convert mSet object from raw spectra processing for the following analysis.
+#' @param mSet mSet from raw spectral processing pipeline, OptiLCMS
+#' @param data.type data type, should be 'spec'
+#' @param anal.type analysis type, should be 'raw'
+#' @param paired data is paired or not, use FALSE by default
+#' @export
+Convert2AnalObject <- function(mSet, data.type, anal.type, paired=FALSE){
+  
+  if((typeof(mSet) == "S4") & (class(mSet) == "mSet")){
+    MSnResults = mSet@MSnResults
+    MSnData = mSet@MSnData
+  } else {
+    stop("This is not a valid mSet from raw spectral processing!")
+  }
+  
+  dataSet <- list();
+  dataSet$type <- data.type;
+  dataSet$design.type <- "regular"; # one factor to two factor
+  dataSet$cls.type <- "disc"; # default until specified otherwise
+  dataSet$format <- "rowu";
+  dataSet$paired <- paired;
+  dataSet$pair.checked <- FALSE;
+  analSet <- list();
+  analSet$type <- anal.type;
+  analSet$ms2res <- MSnResults;
+  analSet$ms2data <- MSnData;
+
+  Sys.setenv("OMP_NUM_THREADS" = 2); # to control parallel computing for some packages
+  Sys.setenv("OPENBLAS_NUM_THREADS" = 2);
+  mSetObj <- list();
+  mSetObj$dataSet <- dataSet;
+  mSetObj$analSet <- analSet;
+  mSetObj$imgSet <- list();
+  mSetObj$imgSet$margin.config <- list(
+    l = 50,
+    r = 50,
+    b = 20,
+    t = 20,
+    pad = 0.5
+  )
+  mSetObj$msgSet <- list(); # store various message during data processing
+  mSetObj$msgSet$msg.vec <- vector(mode="character");     # store error messages
+  mSetObj$cmdSet <- vector(mode="character"); # store R command
+  metaboanalyst_env <<- new.env(); # init a marker env for raw data processing
+  mSetObj$paramSet$report.format <- "html"
+  .init.global.vars(anal.type);
+  print("MetaboAnalyst R objects initialized ...");
+  return(mSetObj);
+}
+
 # Clean Data Objects to avoid interference
 CleanDataObjects <- function(mSetObj, anal.type){
   if(anal.type == "metapaths") {
@@ -661,12 +713,12 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
-  #save.image("cmpd.RData");
+
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
   }
   plotType <- mSetObj$paramSet$cmpdSummaryType
-  print(paste("plottype==", plotType))
+  #print(paste("plottype==", plotType))
   if(.on.public.web){
     load_ggplot()
     load_grid()
@@ -676,11 +728,11 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   
   if(meta == "NA"){
     if(mSetObj$dataSet$design.type == "multi"){
-    sel.cls <- meta.info[,2]
-    cls.type <- unname(mSetObj$dataSet$meta.types[2])
+        sel.cls <- meta.info[,2]
+        cls.type <- unname(mSetObj$dataSet$meta.types[2])
     }else{
-    sel.cls <- mSetObj$dataSet$cls
-    cls.type <- mSetObj$dataSet$cls.type
+        sel.cls <- mSetObj$dataSet$cls
+        cls.type <- mSetObj$dataSet$cls.type
     }
   }else{
     if(meta2 == "NA"){
@@ -1034,62 +1086,30 @@ GetNameCheckMsgs <- function(mSetObj=NA){
   return(mSet$msgSet$nmcheck.msg);
 }
 
-#'Function to retrieve all available datasets from the Metabolomics Workbench.
-#'@description This function uses the httr R package to make an API
-#'call to the Metabolomics Workbench to retrieve a table of
-#'all compatible datasets.
-#'@usage ListNMDRStudies(mSetObj=NA)
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
-#'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-ListNMDRStudies <- function(mSetObj=NA){
-  
-  # The Metabolomics Workbench API url
-  call <- "https://www.metabolomicsworkbench.org/rest/study/study_id/ST/named_metabolites"
-  
-  # Use httr::GET to send the request to the Metabolomics Workbench API
-  # The response will be saved in query_results
-  query_results <- httr::GET(call, encode = "json")
-  
-  # Check if response is ok
-  # 200 is ok! 401 means an error has occured on the user's end.
-  if(query_results$status_code!=200){
-    AddErrMsg("REST url to Metabolomics Workbench failed!")
-    return(0)
-  }
-  
-  # Parse the response into a table
-  query_results_text <- content(query_results, "text", encoding = "UTF-8")
-  query_results_json <- rjson::fromJSON(query_results_text, flatten = TRUE)
-  query_results_table <- t(rbind.data.frame(query_results_json))
-  rownames(query_results_table) <- query_results_table[,1]
-  
-  # Keep studies with > 10 metabolites
-  num_metabolites <- as.numeric(query_results_table[,"num_metabolites"])
-  keep.inx <- num_metabolites > 10
-  query_results_table_keep <- query_results_table[keep.inx, ]
-  query_results_table_keep <- subset(query_results_table_keep, select = - c(analysis_id, analysis_type, 
-                                                                            num_metabolites,
-                                                                            ms_type, units))
-  
-  query_results_table_keep <- data.frame(query_results_table_keep)
-  
-  load_stringr()
-  query_results_table_keep$lipid <- stringr::str_detect(query_results_table_keep$study_title, fixed("lipid", ignore_case=TRUE))
-  
-  mSetObj$dataSet$NMDR_studies <- query_results_table_keep
-  
-  if(!.on.public.web){
-    fast.write.csv(query_results_table_keep, "all_metabolomics_workbench_studies.csv")
+
+ValidateMetabolonData <- function(file_path = NULL) {
+  if(.on.public.web){
+    # make this lazy load
+    if(!exists("my.validate.metabolon.data")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.validate.metabolon.data(file_path));
   }else{
-    qs::qsave(query_results_table_keep, "metabolomics_workbench_studies.qs")
+    return(my.validate.metabolon.data(file_path));
   }
-  
-  return(.set.mSet(mSetObj));
 }
 
+ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
+  if(.on.public.web){
+    # make this lazy load
+    if(!exists("my.read.metabolon.sheets")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
+  }else{
+    return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
+  }
+}
 
 #'Function to retrieve dataset from the Metabolomics Workbench.
 #'@description This function uses the httr R package to make an API
@@ -1119,301 +1139,4 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
     return(0);
 }
 
-
-##### Functionalities for processing Metabolon dataset
-ValidateMetabolonData <- function(file_path = NULL) {
-  if(is.null(file_path)){
-    return(0)
-  }
-  sheetnms <- ReadXLSXsheetsInfo(file_path)
-  if(("Chemical Annotation" %in% sheetnms) & 
-     ("Sample Meta Data" %in% sheetnms) & 
-     ("Peak Area Data" %in% sheetnms)){
-    return(1)
-  }
-}
-
-extractMetaFactors <- function(mSetObj = NA, file_path = NULL){
-  dt <- read_excel(file_path, sheet = "Sample Meta Data")
-  colNM_num <- apply(dt, 2, FUN = function(x){
-    length(unique(x))
-  })
-  colNMs <- colnames(dt)
-  metafactors <- colNMs[!((colNM_num == 1) | (colNM_num == nrow(dt)))]
-  metafactors_levels <- colNM_num[!((colNM_num == 1) | (colNM_num == nrow(dt)))]
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$metafactors <- metafactors;
-  mSetObj$dataSet$metafactors_levels <- metafactors_levels;
-  mSetObj$dataSet$filename <- basename(file_path)
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(metafactors)
-  } else {
-    return(mSetObj)
-  }
-}
-
-extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
-  dt <- read_excel(file_path, sheet = "Chemical Annotation")
-  idx <- vapply(colnames(dt), FUN = function(x){
-    x %in% c("HMDB", "KEGG", "INCHIKEY","SMILES", "PUBCHEM", "CHEMICAL_NAME")
-  }, logical(1L))
-  cmpdIDs <- colnames(dt)[idx]
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$cmpdIDs <- cmpdIDs;
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(cmpdIDs)
-  } else {
-    return(mSetObj)
-  }
-}
-
-getMetabolonMetaFactor <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$metafactors -> metafactors;
-  if(.on.public.web){
-    return(metafactors)
-  } else {
-    return(mSetObj)
-  }
-}
-
-getMetabolonCMPDIDs <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$cmpdIDs -> cmpdIDs;
-  if(is.null(cmpdIDs)){cmpdIDs <- "NULL"}
-  if(.on.public.web){
-    return(cmpdIDs)
-  } else {
-    return(mSetObj)
-  }
-}
-
-ReadXLSXsheetsInfo <- function(file_path){
-  sheetsnms <- "";
-  require(readxl)
-  sheetsnms <- excel_sheets(file_path)
-  return(sheetsnms)
-}
-
-ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
-  mSetObj <- .get.mSet(mSetObj);
-  filenm <- mSetObj$dataSet$filename;
-  
-  if(featureID != "NA"){
-    dt_ids <- read_excel(filenm, sheet = "Chemical Annotation")
-  }
-  
-  dt_meta <- read_excel(filenm, sheet = "Sample Meta Data")
-  dt_table <- read_excel(filenm, sheet = "Peak Area Data")
-  
-  if(metafactor == "all_mf"){
-    # format meta factor table
-    colNM_num <- apply(dt_meta, 2, FUN = function(x){
-      length(unique(x))
-    })
-    colNMs <- colnames(dt_meta)
-    metafactors <- colNMs[!((colNM_num == 1) | (colNM_num == nrow(dt_meta)))]
-    metafactors_levels <- colNM_num[!((colNM_num == 1) | (colNM_num == nrow(dt_meta)))]
-    dt_meta_done <- data.frame(Samples = dt_meta[,1], 
-                               dt_meta[,names(metafactors_levels)])
-    write.csv(dt_meta_done, file = "metaboanalyst_input_meta.csv", quote = F, row.names = F);
-    
-    # format data table
-    dt_tablex <- dt_table
-    
-    if(featureID == "NA"){
-      dt_done <- dt_tablex
-    } else {
-      idx_col <- which(!is.na(dt_ids[,featureID]))
-      dt_tablex2 <- dt_tablex[,idx_col+1]
-      IDvecs <-as.data.frame(dt_ids[,featureID])[,1][idx_col]
-      
-      if((featureID =="HMDB") | (featureID =="KEGG") | (featureID =="PUBCHEM")){
-        IDvecs <- vapply(IDvecs, function(x){
-          vc <- strsplit(x, ",")[[1]]
-          vc[length(vc)]
-        }, FUN.VALUE = character(1L))
-      }
-      
-      colnames(dt_tablex2) <- IDvecs
-      dt_done <- data.frame(Samples = dt_tablex[,1],
-                            dt_tablex2)
-      colnames(dt_done)[-c(1)] <- colnames(dt_tablex2)
-    }
-    
-    write.csv(dt_done, file = "metaboanalyst_input.csv", row.names = F)
-    if(.on.public.web){
-      return(1)
-    } else {
-      return(mSetObj)
-    }
-  }
-  
-  if(!all(dt_table[,1] == dt_meta$PARENT_SAMPLE_NAME)){
-    AddErrMsg("Sample names in 'Peak Area Data' are not matched with the ones in 'Sample Meta Data'!")
-    if(.on.public.web){
-      return(0)
-    } else {
-      return(mSetObj)
-    }
-  }
-  GroupsVec <- dt_meta[,metafactor]
-  SampleVec <- dt_table[,1]
-  dt_tablex <- dt_table[,-1]
-
-  if(featureID == "NA"){
-    dt_done <- data.frame(Samples = SampleVec,
-                          Groups = GroupsVec,
-                          dt_tablex)
-  } else {
-    idx_col <- which(!is.na(dt_ids[,featureID]))
-    dt_tablex2 <- dt_tablex[,idx_col]
-    IDvecs <-as.data.frame(dt_ids[,featureID])[,1][idx_col]
-    
-    if((featureID =="HMDB") | (featureID =="KEGG") | (featureID =="PUBCHEM")){
-      IDvecs <- vapply(IDvecs, function(x){
-        vc <- strsplit(x, ",")[[1]]
-        vc[length(vc)]
-      }, FUN.VALUE = character(1L))
-    }
-    
-    colnames(dt_tablex2) <- IDvecs
-    dt_done <- data.frame(Samples = SampleVec,
-                          Groups = GroupsVec,
-                          dt_tablex2)
-    colnames(dt_done)[-c(1:2)] <- colnames(dt_tablex2)
-  }
-  
-  write.csv(dt_done, file = "metaboanalyst_input.csv", row.names = F)
-  if(.on.public.web){
-    return(1)
-  } else {
-    return(mSetObj)
-  }
-}
-
-ValidateMetaFactor2Level <- function(mSetObj = NA, metafactor){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$metafactors -> metafactors;
-  mSetObj$dataSet$metafactors_levels -> metafactors_levels;
-  
-  mlvl <- metafactors_levels[metafactor == metafactors];
-  
-  if(.on.public.web){
-    if(mlvl == 2){
-      return(1)
-    } else {
-      return(0)
-    }
-  } else {
-    return(mSetObj)
-  }
-}
-
-generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
-  prefix = ""
-  database_opts = ""
-  if(length(database)>1){
-    prefix = "mcst_\t"; # multiple customized
-  }
-  for(i in database){
-    if(i == "all"){ 
-      database_opt <- "all";
-      return("all")
-    } else if(i == "hmdb_exp") {
-      if(ionMode == "positive"){
-        database_opt <- "HMDB_experimental_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "HMDB_experimental_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "hmdb_pre"){
-      if(ionMode == "positive"){
-        database_opt <- "HMDB_predicted_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "HMDB_predicted_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "gnps"){
-      if(ionMode == "positive"){
-        database_opt <- "GNPS_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "GNPS_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "mines"){
-      if(ionMode == "positive"){
-        database_opt <- "MINEs_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MINEs_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "lipidblast"){
-      if(ionMode == "positive"){
-        database_opt <- "LipidBlast_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "LipidBlast_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "mona"){
-      if(ionMode == "positive"){
-        database_opt <- "MoNA_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MoNA_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "massbank"){
-      if(ionMode == "positive"){
-        database_opt <- "MassBank_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MassBank_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "riken"){
-      if(ionMode == "positive"){
-        database_opt <- "RIKEN_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "RIKEN_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "respect"){
-      if(ionMode == "positive"){
-        database_opt <- "ReSpect_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "ReSpect_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "msdial"){
-      if(ionMode == "positive"){
-        database_opt <- "MSDIAL_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "MSDIAL_NegDB";
-      } else {
-        database_opt <- "all";
-      }
-    } else if(i == "bmdms"){
-      if(ionMode == "positive"){
-        database_opt <- "BMDMS_PosDB";
-      } else if(ionMode == "negative") {
-        database_opt <- "BMDMS_PosDB";
-      } else {
-        database_opt <- "all";
-      }
-    }
-    database_opts <- paste0(database_opts, database_opt, "\t")
-  }
-  database_str <- paste0(prefix, database_opts)
-  return(database_str)
-}
 
