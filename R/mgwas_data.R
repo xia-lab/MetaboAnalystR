@@ -316,15 +316,15 @@ GetResRowNames <- function(netType){
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
 
-  if(netType == "manhattan" || analSet == "studyview"){
-    resTable <- mSetObj$dataSet$snp2met_study; 
-  }else if (analSet == "search"){
-    resTable <- mSetObj$dataSet$snp2met_single;
-  }else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
-   resTable <- mSetObj$dataSet[netType][[1]]
-  }  else{
-    resTable <- mSetObj$dataSet$mir.res;
-  }
+  #if(netType == "manhattan" || analSet == "studyview"){
+  #  resTable <- mSetObj$dataSet$snp2met_study; 
+  #}else if (analSet == "search"){
+  #  resTable <- mSetObj$dataSet$snp2met_single;
+  #}else if (anal.type == "multilist"  || anal.type == "mrmodule" || anal.type == "mrbrowse") {
+    resTable <- mSetObj$dataSet[netType][[1]]
+  #} else{
+  #  resTable <- mSetObj$dataSet$mir.res;
+  #}
 
   if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
     resTable <- resTable[1:1000, ];
