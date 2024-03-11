@@ -1123,3 +1123,108 @@ setMS2DBOpt <- function(mSetObj=NA, DBoption = "regular") {
   mSetObj[["dataSet"]]$MSMS_db_option <- DBoption;
   return(.set.mSet(mSetObj))
 }
+
+generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
+  prefix = ""
+  database_opts = ""
+  if(length(database)>1){
+    prefix = "mcst_\t"; # multiple customized
+  }
+  for(i in database){
+    if(i == "all"){ 
+      database_opt <- "all";
+      return("all")
+    } else if(i == "hmdb_exp") {
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_experimental_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_experimental_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "hmdb_pre"){
+      if(ionMode == "positive"){
+        database_opt <- "HMDB_predicted_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "HMDB_predicted_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "gnps"){
+      if(ionMode == "positive"){
+        database_opt <- "GNPS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "GNPS_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mines"){
+      if(ionMode == "positive"){
+        database_opt <- "MINEs_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MINEs_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "lipidblast"){
+      if(ionMode == "positive"){
+        database_opt <- "LipidBlast_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "LipidBlast_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "mona"){
+      if(ionMode == "positive"){
+        database_opt <- "MoNA_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MoNA_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "massbank"){
+      if(ionMode == "positive"){
+        database_opt <- "MassBank_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MassBank_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "riken"){
+      if(ionMode == "positive"){
+        database_opt <- "RIKEN_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "RIKEN_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "respect"){
+      if(ionMode == "positive"){
+        database_opt <- "ReSpect_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "ReSpect_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "msdial"){
+      if(ionMode == "positive"){
+        database_opt <- "MSDIAL_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "MSDIAL_NegDB";
+      } else {
+        database_opt <- "all";
+      }
+    } else if(i == "bmdms"){
+      if(ionMode == "positive"){
+        database_opt <- "BMDMS_PosDB";
+      } else if(ionMode == "negative") {
+        database_opt <- "BMDMS_PosDB";
+      } else {
+        database_opt <- "all";
+      }
+    }
+    database_opts <- paste0(database_opts, database_opt, "\t")
+  }
+  database_str <- paste0(prefix, database_opts)
+  return(database_str)
+}
