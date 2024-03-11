@@ -945,7 +945,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 }
 
 #5a_sensPOD.R
-### Calculation of transcriptomic POD from BMDs
+### Calculation of metabolomic POD from BMDs
 sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   dataSet <- mSetObj$dataSet;
   f.drc <- dataSet$drcfit.obj;
