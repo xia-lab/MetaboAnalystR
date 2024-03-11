@@ -423,12 +423,12 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
 #'
 #' @param mSetObj mSetObj
 #' @param filename filename with path
-#' @param format_type format type, can be 'mzmine' or 'msdial'
+#' @param format_type format type, can be 'mgf' or 'msp'
 #' @param keepAllspec if you want to search all spectra from your local, turn keepAllspec to TRUE. it is FALSE by default.
 #' @export
 #' @author Zhiqiang Pang
 
-SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine", keepAllspec = FALSE){
+SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", keepAllspec = FALSE){
   
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
@@ -533,7 +533,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "sec")
     
-  } else if(format_type == "msdial"){
+  } else if(format_type == "msp"){
     data_table <- read.delim(filename, header = F,sep = "\n")
     mSetObj[["dataSet"]][["spectrum_raw"]] <- data_table
     
@@ -638,6 +638,70 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "mzmine"
     mSetObj[["dataSet"]][["prec_mz_included"]] <- all_precmz
     mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
+  } else if(format_type == "mgf") {
+    require(MSnbase)
+    mgf_dt <- readMgfData(filename)
+    total_size <- length(mgf_dt@assayData)
+    Msg <- c(Msg, "Your MGF file is a standard MGF file!")
+    scannames <- names(mgf_dt@assayData)
+    counts <- vapply(1:total_size, FUN = function(x){
+      mgf_dt@assayData[[scannames[x]]]@peaksCount
+    }, FUN.VALUE = integer(length = 1L))
+    non0_idxs <- which(counts != 0)
+    scannames <- scannames[non0_idxs]
+    
+    Msg <- c(Msg, paste0("A total of ",total_size, " MS/MS records detected in your data."))
+    Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
+    if(length(non0_idxs) > 20){
+      AddMsg("Only first 20 tandem spectra will be searched!")
+      Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
+      keep20 = TRUE;
+    } else {
+      keep20 = FALSE;
+    }
+    
+    ms2spec_full <- lapply(1:total_size, function(x){
+      prec_mz <- round(mgf_dt@assayData[[scannames[x]]]@precursorMz,5)
+      prec_rt <-round(mgf_dt@assayData[[scannames[x]]]@rt,3)
+      ms2_spec <- cbind(mgf_dt@assayData[[scannames[x]]]@mz, 
+                        mgf_dt@assayData[[scannames[x]]]@intensity)
+      list(precursor = prec_mz, prec_rt = prec_rt, ms2_spec = ms2_spec)
+    })
+    
+    prec_mz_all <- vapply(ms2spec_full, function(x){x[[1]]}, FUN.VALUE = double(1L))
+    prec_rt_all <- vapply(ms2spec_full, function(x){x[[2]]}, FUN.VALUE = double(1L))
+
+    mSetObj[["dataSet"]][["prec_mz_all"]] <- prec_mz_all
+    mSetObj[["dataSet"]][["prec_rt_all"]] <- prec_rt_all
+    mSetObj[["dataSet"]][["prec_mzrt_all"]] <- paste0(prec_mz_all, "mz@", prec_rt_all, "min")
+    
+    
+    if(keep20){
+      scannames <- scannames[1:20]
+    }
+    
+    ms2spec <- lapply(1:length(scannames), FUN = function(x){
+      prec_mz <- round(mgf_dt@assayData[[scannames[x]]]@precursorMz,5)
+      prec_rt <-round(mgf_dt@assayData[[scannames[x]]]@rt,3)
+      ms2_spec <- cbind(mgf_dt@assayData[[scannames[x]]]@mz, 
+                        mgf_dt@assayData[[scannames[x]]]@intensity)
+      list(precursor = prec_mz,prec_rt = prec_rt, ms2_spec = ms2_spec)
+    })
+      
+    
+    all_precmz <- vapply(ms2spec, function(x){x[[1]]}, FUN.VALUE = double(1L))
+    all_precrt <- vapply(ms2spec, function(x){x[[2]]}, FUN.VALUE = double(1L))
+    msms_frg_num <- vapply(ms2spec, function(x){nrow(x[[3]])}, FUN.VALUE = double(1L))
+    
+    Msg <- c(Msg, paste0("The m/z range of all precursors in your data is from ", min(all_precmz), " to ", max(all_precmz), "."))
+    Msg <- c(Msg, paste0("The retention time range of all included precursors in your data is from ", min(all_precrt), " to ", max(all_precrt), "."))
+    Msg <- c(Msg, paste0("The minimum number of MS/MS fragments is ", min(msms_frg_num), "."))
+    Msg <- c(Msg, paste0("The maximum number of MS/MS fragments is ", max(msms_frg_num), "."))
+    
+    mSetObj[["dataSet"]][["prec_mz_included"]] <- all_precmz
+    mSetObj[["dataSet"]][["prec_rt_included"]] <- all_precrt
+    mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
+    
   }
   if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
     Msg <- c(Msg, paste0("Database searching is based on <u>Neutral Loss</u> spectra of corresponding MS/MS spectra."))
