@@ -299,6 +299,33 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   return(.set.mSet(mSetObj));
 }
 
+
+RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
+  # mir.id<<-mir.id;
+  # save.image("RemoveEntry.RData")
+  if(!exists("entries.vec")){
+    return(0);
+  }
+  print(entries.vec);
+  mSetObj <- .get.mSet(mSetObj);
+  dataSet <- mSetObj$dataSet;
+  inx <- which(rownames(dataSet$exposure) %in% entries.vec);
+  if(length(inx) > 0){
+    if(is.null(mSetObj$dataSet$exposure.orig)){
+        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
+    }
+    mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
+    if(!is.null(mSetObj$dataSet$harmonized.dat)){
+        inx <- which(rownames(mSetObj$dataSet$harmonized.dat) %in% rownames(mSetObj$dataSet$exposure));
+        mSetObj$dataSet$harmonized.dat <- mSetObj$dataSet$harmonized.dat[inx,];
+    }
+  }
+
+  return(.set.mSet(mSetObj));
+}
+
+
+
 AddEntryExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
