@@ -2653,12 +2653,14 @@ GetPCALoadAxesSpec <- function(mSetObj=NA){
 
 GetPCALoadCmpds <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  rownames(mSetObj$analSet$pca$imp.loads);  
+  res <- rownames(mSetObj$analSet$pca$imp.loads);
+  return(as.character(res))
 }
 
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  signif(as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]),5);
+  res <- signif(as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]),5);
+  return(matrix(as.numeric(res), ncol = 2))
 }
 
 

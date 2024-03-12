@@ -190,7 +190,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
                             rank.metric<<-"mean"; 
                             mutual.feats <<- FALSE; 
                             pooled_cutoff <<- 0.001
-  save.image("metapsea.RData");
+  #save.image("metapsea.RData");
 
   require(plyr);
   mSetObj <- .get.mSet(mSetObj);
