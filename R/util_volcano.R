@@ -4,7 +4,10 @@
 #######################
 
 # using ggplot
-my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, interactive=F){
+# if labelNum = -1 --> all sig labels
+# if labelNum = 0 --> no labels
+# else top labels #
+my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA,labelNum=5,  interactive=F){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -37,12 +40,17 @@ my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png
   mycols[mycols=="UP"] <- "firebrick";
   mycols[mycols=="DOWN"] <- "cornflowerblue";
   mycols[mycols=="Non-SIG"] <- "grey";
-  de <- de[order(-de$p.log), ]
+  de$compositeScore <- de$p.log * de$fc.log
+  imp.inx <- imp.inx[order( -de$compositeScore)]
+  de <- de[order( -de$compositeScore), ]
   de$label <- NA
   if(interactive){
     de$label <- rownames(de);
+  }else if(labelNum < 0 || labelNum > length(rownames(de))){
+    de$label[imp.inx] <- rownames(de)[imp.inx];
   }else{
-    de$label[c(1:5)] <- rownames(de)[c(1:5)];
+    de$label[c(1:labelNum)] <- rownames(de)[c(1:labelNum)];
+    
   }
   require(ggplot2);
   require(scales);

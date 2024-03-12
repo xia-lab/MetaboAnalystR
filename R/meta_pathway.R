@@ -1385,7 +1385,6 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
   msg <- NULL;
   
   for(i in seq(data_oriNM)){
-
     conc <- qs::qread(data_oriNM[i]);
     
     if(i == 2){

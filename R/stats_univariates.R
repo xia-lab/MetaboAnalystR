@@ -530,13 +530,13 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 #'@export
 #'
 
-PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, interactive=F){
+PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, labelNum=5,interactive=F){
 
     # make this lazy load
     if(!exists("my.plot.volcano")){ # public web on same user dir
       .load.scripts.on.demand("util_volcano.Rc");    
     }
-    return(my.plot.volcano(mSetObj, imgName, plotLbl, plotTheme, format, dpi, width, interactive));
+    return(my.plot.volcano(mSetObj, imgName, plotLbl, plotTheme, format, dpi,  width,labelNum, interactive));
 }
 
 #'ANOVA
