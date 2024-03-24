@@ -757,7 +757,9 @@ RemoveFile<-function(fileName){
 }
 
 # do memory cleaning after removing many objects
-cleanMem <- function(n=10) { for (i in 1:n) gc() }
+cleanMem <- function() { 
+    gc(); 
+}
 
 #'Retrieve last command from the Rhistory.R file
 #'@description Fetches the last command from the Rhistory.R file

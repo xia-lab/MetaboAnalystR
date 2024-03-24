@@ -347,6 +347,7 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     
   }
     dbDisconnect(pheno.db);
+    cleanMem();
     return(pheno.dic);
 }
 
