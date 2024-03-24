@@ -2657,12 +2657,31 @@ GetPCALoadCmpds <- function(mSetObj=NA){
   return(as.character(res))
 }
 
+GetPCALoadCmpdsNlength <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  res <- rownames(mSetObj$analSet$pca$imp.loads);
+  return(length(res))
+}
+
+getPCALoadCmpdsSplit <- function(mSetObj=NA, n = 0, total = 10){
+  mSetObj <- .get.mSet(mSetObj);
+  res <- rownames(mSetObj$analSet$pca$imp.loads);
+  res <- as.character(res);
+  n0 <- n+1;
+  nbatch <- ceiling(length(res)/total); # number of feature per batch
+  if(nbatch*n0 < length(res)){
+    res_vec <- c(res[c((1 + nbatch*n):(nbatch*n0))])
+  } else {
+    res_vec <- c(res[c((1 + nbatch*n):(length(res)))])
+  }
+  return(res_vec)
+}
+
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   res <- signif(as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]),5);
   return(matrix(as.numeric(res), ncol = 2))
 }
-
 
 #'For plotting PCA, selects max top 9 components
 #'@description Rotate PCA analysis

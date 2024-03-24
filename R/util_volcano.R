@@ -7,8 +7,8 @@
 # if labelNum = -1 --> all sig labels
 # if labelNum = 0 --> no labels
 # else top labels #
-my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA,labelNum=5,  interactive=F){
-
+my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=72, width=NA,labelNum=5,  interactive=F){
+  save.image("volc.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -40,9 +40,14 @@ my.plot.volcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png
   mycols[mycols=="UP"] <- "firebrick";
   mycols[mycols=="DOWN"] <- "cornflowerblue";
   mycols[mycols=="Non-SIG"] <- "grey";
-  de$compositeScore <- de$p.log * de$fc.log
-  imp.inx <- imp.inx[order( -de$compositeScore)]
-  de <- de[order( -de$compositeScore), ]
+
+  # Calculate percentile ranks (0-100 scale for easier interpretation)
+  de$p.rank <- rank(de$p.log) / length(de$p.log) * 100  # Higher p-values (lower significance) get lower rank
+  de$fc.rank <- rank(abs(de$fc.log)) / length(de$fc.log) * 100  # Higher absolute fold changes get higher rank
+  de$combinedRank <- pmax(de$p.rank, de$fc.rank)
+
+  imp.inx <- imp.inx[order(-de$combinedRank)]
+  de <- de[order(-de$combinedRank), ]
   de$label <- NA
   if(interactive){
     de$label <- rownames(de);
