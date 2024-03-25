@@ -100,7 +100,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
     sqlite.path <- "";
   }
 
-
+  print(paste("sqlitePath:", sqlite.path));
   if(!.on.public.web) {
     paramSet$sqlite.path <- paste0(getwd(), "/");
     paramSet$lib.path <- "https://www.expressanalyst.ca/ExpressAnalyst/resources/data/";
