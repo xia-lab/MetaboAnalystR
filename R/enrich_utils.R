@@ -257,3 +257,17 @@ PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){
   res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "upset");
   return(res);
 }
+
+PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx=1, mode = "multi",rankOpt=""){
+    if(!exists("my.perform.gsea")){ 
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+    }
+    return(my.perform.gsea(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx, mode,rankOpt));
+}
+
+ComputeRankedVec <- function(data, opt, inx = 1){
+   if(!exists("my.compute.ranked.vec")){ 
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+    }
+   return(my.compute.ranked.vec(data, opt, inx));
+}
