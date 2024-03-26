@@ -72,7 +72,6 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$universe.opt.readable <- "Uploaded data";
   paramSet$fc.thresh <- 0;
   paramSet$report.format <- "pdf";
-  dataSets <<- list();
   
 
   paramSet$jsonNms <- list()
@@ -165,8 +164,10 @@ RegisterData <- function(dataSet, output=1){
   saveSet(paramSet, "paramSet");
 
   if(paramSet$on.public.web){
-    dataSets[[dataName]] <- dataSet;
-    dataSets <<- dataSets;
+    #dataSets[[dataName]] <- dataSet;
+    #dataSets[[dataName]] <- 1;
+    #dataSets <<- dataSets;
+    qs::qsave(dataSet, file=dataName);
     return(output);
   }else{
     if(paramSet$api.bool){

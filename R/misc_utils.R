@@ -916,10 +916,16 @@ readDataset <- function(fileName=""){
         path <- user.path;
         obj <- load_qs(paste0(path, fileName));
       }else{
-        obj <- qs:::qread(fileName);
+        obj <- qs::qread(fileName);
       }
     }else{
-       obj <- dataSets[[fileName]];
+       #obj <- dataSets[[fileName]];
+            if(exists("dataSets") && !is.null(dataSets) && !is.null(dataSets[[fileName]])) {
+                print("datasetsobject");
+                obj <- dataSets[[fileName]]
+            } else {
+                obj <- qs::qread(fileName)
+            }
     }
 
     return(obj);
@@ -1144,7 +1150,7 @@ makeReadable <- function(str){
                     "motif_set" = "Motif",
                     "onedata" = "Gene expression analysis",
                     "genelist" = "Gene list analysis",
-                    "metadata" = "Gene expression meta-analysis
+                    "metadata" = "Gene expression meta-analysis",
                  str)
 }
 

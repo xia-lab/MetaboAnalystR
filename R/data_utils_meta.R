@@ -194,8 +194,6 @@ ReadMergedExpressTable <- function(dataName){
 # as well as to prepare for GO analysis
 # no return, as set global 
 SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
-  paramSet <<- paramSet;
-  analSet <<- analSet;
   meta.mat <- analSet$meta.mat.all;
   paramSet$BHth <- BHth;
 
