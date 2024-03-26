@@ -1067,49 +1067,6 @@ interpFits <- function(){
 
 }
 
-# create request for dose response API
-
-PerformAPIDRFit <- function(){
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-
-  dataSetWeb <- dataSet
-  models <- models
-  cpus <- cpus
-  
-  toSend <- list(dataSet = dataSetWeb,
-                 models = models,
-                 cpus = 18)
-  
-  # rds file to be sent to server
-  library(httr)
-  base <- paramSet$api.base
-  endpoint <- "/fitcurves"
-  call <- paste(base, endpoint, sep="")
-  print(call)
-  
-  saveRDS(toSend, "tosend.rds")
-  request <- suppressWarnings(try(httr::POST(url = call, 
-                        body = list(rds = upload_file("tosend.rds", "application/octet-stream"))), silent = TRUE))
-  
-  # check if successful
-  if(inherits(request, "try-error")){
-    PerformDRFit()
-    current.msg <<- c("Failed to connect to Xia Lab API Server!")
-    return(0)
-  }
-  
-  # now process return
-  request <- httr::content(request, "raw")
-  request <- base::unserialize(request)
-  if(!is.null(request$drcfit.obj)){
-    dataSet <<- request
-    RegisterData(dataSet);
-  }
-
-  return(1)
-}
-
 #### use the pureErrorAnova function from alr3. alr3 is now deprecated, so extracted these 
 # lines from the alr3 source code in the CRAN archive
 pureErrorAnova <- function(mod){UseMethod("pureErrorAnova")}
