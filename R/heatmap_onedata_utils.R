@@ -25,7 +25,17 @@ PrepareExpressHeatmapJSON <- function(dataSet){
     stat.pvals <- res.tbl$PValue; 
   }
 
-  all.ids <- rownames(res.tbl);
+  # Selecting significant gene ids based on data.stat
+  all.ids <- rownames(res.tbl)
+  all.ids <- all.ids[all.ids %in% rownames(data.stat)]
+  # Calculate variance for each gene
+  gene.variances <- apply(data.stat[all.ids, , drop = FALSE], 1, var)
+  # Sorting genes by variance and selecting top 5000 if there are more than that
+  if (length(gene.variances) > 5000) {
+    all.ids <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
+  } else {
+    all.ids <- all.ids
+  }
   
   if("logFC" %in% colnames(res.tbl)){
     stat.fc <- res.tbl$logFC; 
