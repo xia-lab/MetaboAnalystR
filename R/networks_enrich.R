@@ -353,7 +353,7 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
 
 # Perform DSPC network analysis
 PerformDSPC <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj); 
+  mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$norm; 
 
   # glasso cannot work well on large data,
@@ -371,8 +371,11 @@ PerformDSPC <- function(mSetObj=NA){
   }else{
     node.ids <- node.nms;
   }
+  if(length(node.ids)!= ncol(dat)){
+    idx <- which(!(mSetObj[["dataSet"]][["cmpd"]] %in% node.nms))
+    node.ids <- node.ids[-idx]
+  }
   colnames(dat) <- node.ids;
-
   # this is computationally intensive, put a limit if not local
   if(.on.public.web){
     if(ncol(dat) > 1000){
