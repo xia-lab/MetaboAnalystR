@@ -140,7 +140,7 @@ cleanMem <- function() {
   names <- ls(pos = pos, pattern = pattern)
   obj.class <- napply(names, function(x) as.character(class(x))[1])
   obj.mode <- napply(names, mode);
-  print(lapply(dataSets, object.size));
+  print(lapply(dataSet, object.size));
   print(lapply(analSet, object.size));
   obj.type <- ifelse(is.na(obj.class), obj.mode, obj.class)
   obj.prettysize <- napply(names, function(x) {
