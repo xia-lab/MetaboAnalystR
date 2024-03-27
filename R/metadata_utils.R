@@ -127,6 +127,19 @@ GetMetaCell <- function(dataName="",ridx=1,cidx=1){
   return(dataSet$meta.info[ridx,cidx]);
 }
 
+# Note R is column as a vector, operate on row 
+# will lead to different factors, need to transpose
+GetMetaRow <- function(dataName, ridx=1){
+  if(dataName != "NA"){
+    dataSet <- readDataset(dataName);
+  }else{
+    paramSet <- readSet(paramSet, "paramSet")
+    dataSet <- paramSet$dataSet;
+  }
+  my.meta.info <- t(dataSet$meta.info);
+  return(as.character(my.meta.info[, ridx])); # now column operation
+}
+
 ResetMetaTab <- function(dataName=""){
   if(dataName != "NA"){
     dataSet <- readDataset(dataName);
