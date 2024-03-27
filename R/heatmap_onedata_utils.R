@@ -13,7 +13,7 @@
 # all matrix will be combined, 
 # 1 and 2 separated by a row of 'null' 
 # 3 and 1+2 separated by a column of 'null'
-PrepareExpressHeatmapJSON <- function(dataSet){
+PrepareExpressHeatmapJSON <- function(dataSet, displayOpt="sig"){
   data.stat <- qs::qread("data.stat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   res.tbl <- dataSet$comp.res; #dataSet$sig.mat for sig only
@@ -29,12 +29,16 @@ PrepareExpressHeatmapJSON <- function(dataSet){
   all.ids <- rownames(res.tbl)
   all.ids <- all.ids[all.ids %in% rownames(data.stat)]
   # Calculate variance for each gene
-  gene.variances <- apply(data.stat[all.ids, , drop = FALSE], 1, var)
-  # Sorting genes by variance and selecting top 5000 if there are more than that
-  if (length(gene.variances) > 5000) {
-    all.ids <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
-  } else {
-    all.ids <- all.ids
+  if(displayOpt == "all"){
+    gene.variances <- apply(data.stat[all.ids, , drop = FALSE], 1, var)
+    # Sorting genes by variance and selecting top 5000 if there are more than that
+    if (length(gene.variances) > 5000) {
+      all.ids <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
+    } else {
+      all.ids <- all.ids
+    }
+  }else{
+    all.ids <- all.ids[all.ids %in% sig.ids];
   }
   
   if("logFC" %in% colnames(res.tbl)){

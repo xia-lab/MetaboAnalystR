@@ -13,7 +13,7 @@
 #'License: MIT
 #'@export
 #'
-SaveHeatmapJSON <- function(dataName="", fileName){
+SaveHeatmapJSON <- function(dataName="", fileName, displayOpt){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -21,9 +21,9 @@ SaveHeatmapJSON <- function(dataName="", fileName){
   anal.type <- paramSet$anal.type;
 
   if(anal.type == "metadata"){
-    json.res <- PrepareMetaHeatmapJSON(dataSet);
+    json.res <- PrepareMetaHeatmapJSON(dataSet, displayOpt);
   }else{
-    json.res <- PrepareExpressHeatmapJSON(dataSet);
+    json.res <- PrepareExpressHeatmapJSON(dataSet, displayOpt);
   }
   
   json.res$org <- paramSet$data.org

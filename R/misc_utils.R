@@ -1059,6 +1059,10 @@ generate_continuous_colors <- function(n, primary_color="red", filenm=NULL) {
 }
 
 makeReadable <- function(str){
+    if(length(str) != 1) {
+        cat("Warning: 'str' is not a single value\n")
+        return(str)
+    }
     result <- switch(str,
                  pct = "Percent",
                  abs = "Absolute",
