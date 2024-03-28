@@ -38,7 +38,8 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
        theme_bw() +
        theme(plot.title = element_text(hjust = 0.5, face = "bold"),
              axis.text.x = element_text(angle=90)) + 
-       xlab("Concentration") +
+       xlab("Dose") +
+       ylab("Concentration") +
        geom_rect(aes(xmin = bmdl, xmax = bmdu, ymin = -Inf, ymax = Inf), fill = "red3", alpha = 0.01) + 
        geom_vline(xintercept = bmdl, linetype = "dashed", color = "red3") + 
        geom_vline(xintercept = bmd, color = "red3") + geom_vline(xintercept = bmdu, linetype = "dashed", color = "red3")
@@ -88,7 +89,7 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
   # need to clean feat.id in case contain /
   feat.id <- CleanNames(feat.id);
   imgName <- paste("Metabolite_", feat.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
-  Cairo::Cairo(file = imgName, width=5.25, height=6, type="png", unit="in", dpi=dpi, format=format, bg="white");
+  Cairo::Cairo(file = imgName, width=5.25, height=6, type=format, unit="in", dpi=dpi, format=format, bg="white");
   print(p)
   dev.off();
 
@@ -128,7 +129,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
   p <- p + xlab("Best fit model") + ylab("Count") + theme(axis.text.x = element_text(face="bold"), legend.position = "bottom")
   
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=dpi, type=format, bg="white");
   print(p)
   dev.off();
 

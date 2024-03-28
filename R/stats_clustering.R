@@ -208,6 +208,29 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
   }else{
     p <- p + theme(text = element_text(size=8))
   }
+
+    if(any(nchar(as.character(p[["data"]][["Feature"]]))>30)){
+
+      lvls <- levels(p[["data"]][["Feature"]])
+      new_lvls <- vapply(1:length(lvls), FUN = function(x){
+        if(nchar(lvls[x])>30){
+          paste0(substr(lvls[x], 1, 30),"_",x)
+        } else {
+          lvls[x]
+        }
+      }, FUN.VALUE = character(length = 1L))
+      fts <- as.character(p[["data"]][["Feature"]])
+      new_fts <- vapply(1:length(fts), FUN = function(x){
+        if(nchar(fts[x])>30){
+          idx <- which(lvls==fts[x])
+          new_lvls[idx]
+        } else {
+          fts[x]
+        }
+      }, FUN.VALUE = character(length = 1L))
+      p[["data"]][["Feature"]] <- factor(new_fts, levels = new_lvls)
+
+    }
   
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   
@@ -258,7 +281,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
   
   mSetObj <- .get.mSet(mSetObj);
   clust.num <- max(mSetObj$analSet$kmeans$cluster);
-  
+  save(mSetObj, clust.num, file = "PlotKmeans___mSetObj.rda")
   if(clust.num>20) return();
   # calculate arrangement of panel
   ylabel<- GetAbundanceLabel(mSetObj$dataSet$type);
@@ -308,6 +331,29 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
     }
     p <- p + scale_fill_manual(values=dist.cols) + scale_color_manual(values=dist.cols)
   }
+
+    if(any(nchar(as.character(p[["data"]][["Feature"]]))>30)){
+
+      lvls <- levels(p[["data"]][["Feature"]])
+      new_lvls <- vapply(1:length(lvls), FUN = function(x){
+        if(nchar(lvls[x])>30){
+          paste0(substr(lvls[x], 1, 30),"_",x)
+        } else {
+          lvls[x]
+        }
+      }, FUN.VALUE = character(length = 1L))
+      fts <- as.character(p[["data"]][["Feature"]])
+      new_fts <- vapply(1:length(fts), FUN = function(x){
+        if(nchar(fts[x])>30){
+          idx <- which(lvls==fts[x])
+          new_lvls[idx]
+        } else {
+          fts[x]
+        }
+      }, FUN.VALUE = character(length = 1L))
+      p[["data"]][["Feature"]] <- factor(new_fts, levels = new_lvls)
+
+    }
 
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   

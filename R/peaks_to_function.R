@@ -3242,7 +3242,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   anal.type0 <- mSetObj$paramSet$anal.type
   if (anal.type0 == "mummichog") {
     mat <- mSetObj$mummi.resmat
-    print(head(mat));
+    #print(head(mat));
     y <- -log10(mat[, 5])
     x <- mat[, 8] / mat[, 4]
     pathnames <- rownames(mat)
