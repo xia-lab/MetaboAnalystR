@@ -3265,6 +3265,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
   
   # Generate ggplot
   library(ggplot2);
+  library(ggrepel)
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if (anal.type0 == "mummichog") {
   # set circle size based on enrichment factor
@@ -3281,8 +3282,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
 
   # Add text labels for top num_annot points
   top_indices <- head(order(-df$y), num_annot)
-  p <- p + geom_text(aes(label = pathnames), data = df[top_indices, ], nudge_y = 0.2, size = 3)
-
+  p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
   mSetObj$imgSet$mummi.plot<- imgName
 
   }else{
@@ -3297,6 +3297,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
+    p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
     mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
 
