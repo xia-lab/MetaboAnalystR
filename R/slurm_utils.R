@@ -70,12 +70,12 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
   isSlurm = FALSE;
   isPengLocal = F;
   if(grepl("glassfish", userDir)){
-    seq2funPath = "/data/glassfish/projects/ecoomicsanalyst/seq2fun_source/Seq2Fun/bin/seq2fun";
-    databasePath = "/data/glassfish/projects/ecoomicsanalyst/seq2fun_database";
+    seq2funPath = "/data/glassfish/seq_software/seq2fun_source/Seq2Fun/bin/seq2fun";
+    databasePath = "/data/glassfish/seq_software/seq2fun_database";
     isSlurm = TRUE;
   } else if(grepl("peng", userDir)) {
-    seq2funPath = "/home/peng/ecoomicsanalyst_test/software/Seq2Fun/bin/seq2fun";
-    databasePath = "/home/peng/ecoomicsanalyst_test/seq2fun_database";
+    seq2funPath = "/home/peng/expressanalyst_test/software/Seq2Fun/bin/seq2fun";
+    databasePath = "/home/peng/expressanalyst_test/seq2fun_database";
     isSlurm = FALSE;
   } else if(grepl("jeffxia/Dropbox", userDir)) { # jeff local
     seq2funPath = "/Users/jeffxia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
@@ -308,19 +308,19 @@ submitMysqlJobStatus <- function(userDir, jobID, numSamples){
 SubmitJobSlm <- function(userDir, email, database, des, readEnds, shellscriptDir, minScore){
   isPengLocal = FALSE;
   if(grepl("glassfish", userDir)){
-    fastpPath = "/data/glassfish/projects/ecoomicsanalyst/fastp_source/fastp";
-    salmonPath = "/data/glassfish/projects/ecoomicsanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
-    databasePath = "/data/glassfish/projects/ecoomicsanalyst/salmon_database";
+    fastpPath = "/data/glassfish/projects/expressanalyst/fastp_source/fastp";
+    salmonPath = "/data/glassfish/projects/expressanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
+    databasePath = "/data/glassfish/projects/expressanalyst/salmon_database";
     isPengLocal = FALSE;
   } else if(grepl("zgy", userDir)) { # zgy local
-    fastpPath = "/data/glassfish/projects/ecoomicsanalyst/fastp_source/fastp";
-    salmonPath = "/data/glassfish/projects/ecoomicsanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
-    databasePath = "/data/glassfish/projects/ecoomicsanalyst/salmon_database";
+    fastpPath = "/data/glassfish/projects/expressanalyst/fastp_source/fastp";
+    salmonPath = "/data/glassfish/projects/expressanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
+    databasePath = "/data/glassfish/projects/expressanalyst/salmon_database";
     isPengLocal = FALSE;
   } else {
     fastpPath = "/home/peng/software/fastp/fastp";
     salmonPath = "/home/peng/software/salmon-latest_linux_x86_64/bin/salmon";
-    databasePath = "/home/peng/ecoomicsanalyst_test/database/salmon";
+    databasePath = "/home/peng/expressanalyst_test/database/salmon";
     isPengLocal = TRUE;
   }
   
@@ -456,9 +456,9 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
   isSlurm = FALSE;
   isPengLocal = F;
   if(grepl("glassfish", userDir)){
-    fastpPath = "/data/glassfish/projects/ecoomicsanalyst/fastp_source/fastp";
-    kallistoPath = "/data/glassfish/projects/ecoomicsanalyst/kallisto_source/kallisto";
-    databasePath = "/data/glassfish/projects/ecoomicsanalyst/kallisto_database";
+    fastpPath = "/data/glassfish/seq_software/fastp_source/fastp";
+    kallistoPath = "/data/glassfish/seq_software/kallisto_source/kallisto";
+    databasePath = "/data/glassfish/seq_software/kallisto_database";
     isPengLocal = FALSE;
     isSlurm = T;
   } else if(grepl("zgy", userDir)) { # jeff local
@@ -471,10 +471,10 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
     kallistoPath = "/Users/xia/Dropbox/resources/eoa/software/kallisto_source/kallisto";
     databasePath = "/Users/xia/Dropbox/resources/eoa/kallisto_database/";
     isSlurm = F;
-  }  else {
+  } else {
     fastpPath = "/home/peng/software/fastp/fastp";
     kallistoPath = "/home/peng/software/kallisto/kallisto";
-    databasePath = "/home/peng/ecoomicsanalyst_test/database/kallisto";
+    databasePath = "/home/peng/expressanalyst_test/database/kallisto";
     isPengLocal = TRUE;
   }
   
