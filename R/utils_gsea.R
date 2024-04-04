@@ -182,6 +182,15 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
     res.mat[,"FDR"] <- fgseaRes[,"padj"];
     res.mat <- data.matrix(data.frame(res.mat, stringsAsFactors=FALSE));
     rownames(res.mat) <- fgseaRes[,"pathway"];
+
+  # Check for and handle duplicate row names in enr.mat
+  if(any(duplicated(rownames(res.mat)))) {
+    res.mat <- res.mat[!duplicated(rownames(res.mat)), ]
+    print("Duplicates in enr.mat were removed.")
+  } else {
+    res.mat <- res.mat
+  }
+
     qs:::qsave(res.mat, "enr.mat.qs");
 
   imgSet <- readSet(imgSet, "imgSet");

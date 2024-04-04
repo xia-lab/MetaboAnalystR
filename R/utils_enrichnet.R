@@ -1,30 +1,32 @@
-##################################################
-## R script for ExpressAnalyst
-## Description: Compute enrichment network
-## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
-##################################################
 my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", analSet){
   enr.mat <- qs:::qread("enr.mat.qs");
+
+  hits <-  enr.mat[,"Hits"];
+  pvals <- enr.mat[,"P.Value"];
+  
+  pvalue <- pvals;
+  id <- names(pvalue);
+  
   paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
   
   if(is.null(enr.mat)){
     return(0);
   }
-  hits <-  enr.mat[,"Hits"];
-  pvals <- enr.mat[,"P.Value"];
+  
   require(igraph);
   require(reshape);
-  pvalue <- pvals;
-  id <- names(pvalue);
+
   current.geneset <- qs::qread("current_geneset.qs");
   hits.query <- qs::qread("hits_query.qs")
   hits.query <- hits.query[rownames(enr.mat)];
   geneSets <- hits.query;
-  n <- length(pvalue);
+  n <- nrow(enr.mat);
   w <- matrix(NA, nrow=n, ncol=n);
+  print("a");
   colnames(w) <- rownames(w) <- id;
-  
+    print("bc");
+
   for (i in 1:n) {
     for (j in i:n) {
       w[i,j] <- overlap_ratio(geneSets[id[i]], geneSets[id[j]], overlapType)
@@ -34,11 +36,11 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   wd <- wd[wd[,1] != wd[,2],];
   wd <- wd[!is.na(wd[,3]),];
   
-  g <- graph.data.frame(wd[,-3], directed=F);
+  g <- graph_from_data_frame(wd[,-3], directed=F);
   if(type == "list"){
-    g <- delete.edges(g, E(g)[wd[,3] < 0.3]);
+    g <- delete_edges(g, E(g)[wd[,3] < 0.3]);
   }else{
-    g <- delete.edges(g, E(g)[wd[,3] < 0.3]);
+    g <- delete_edges(g, E(g)[wd[,3] < 0.3]);
   }
   idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
   
@@ -50,8 +52,18 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
     (x - min(x)) / max(x - min(x)) * (to - from) + from
   }
   
-  V(g)$color <- ComputeColorGradient(-log(my.normalize(pvalue) + min(pvalue/2)), "black", F, F);
-  V(g)$colorw <- ComputeColorGradient(-log(my.normalize(pvalue) + min(pvalue/2)), "white", F, F);
+  
+  # Compute normalized p-values for color gradient
+  normalized_pvalues <- -log(my.normalize(pvalue) + min(pvalue/2))
+  
+  # Ensure that you compute colors only for existing vertices in the graph
+  existing_vertices <- V(g)$name
+  vertex_colors <- ComputeColorGradient(normalized_pvalues[names(normalized_pvalues) %in% existing_vertices], "black", F, F)
+  vertex_colorsw <- ComputeColorGradient(normalized_pvalues[names(normalized_pvalues) %in% existing_vertices], "white", F, F)
+  
+  # Assign colors only to existing vertices
+  V(g)$color <- vertex_colors
+  V(g)$colorw <- vertex_colorsw
   
   cnt <- hits;
   names(cnt) <- id;
@@ -64,7 +76,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   }
   
   # layout
-  pos.xy <- layout.auto(g);
+  pos.xy <- layout_nicely(g);
   
   # now create the json object
   nodes <- vector(mode="list");
@@ -87,7 +99,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
     );
   }
   
-  edge.mat <- get.edgelist(g);
+  edge.mat <- as_edgelist(g);
   edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
   
   # covert to json
@@ -155,7 +167,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   V(bg)$size <- my.rescale(log(node.dgr2, base=10), 8, 24); 
   
   # layout
-  pos.xy <- layout.auto(bg);
+  pos.xy <- layout_nicely(bg);
   
   # now create the json object
   bnodes <- vector(mode="list");
@@ -186,17 +198,17 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   paramSet$current.net.nm <- netNm
   ppi.comps[[netNm]] <- bg;
   analSet$ppi.comps <- ppi.comps
-
+  
   bedge.mat <- get.edgelist(bg);
   bedge.mat <- cbind(id=paste0("b", 1:nrow(bedge.mat)), source=bedge.mat[,1], target=bedge.mat[,2]);
   initsbls <- doEntrez2SymbolMapping(analSet$list.genes, paramSet$data.org, paramSet$data.idType)
   names(initsbls) <- analSet$list.genes
-
+  
   #for rjson generation
   edge.mat <- apply(edge.mat, 1, as.list)
   bedge.mat <- apply(bedge.mat, 1, as.list)
   enr.mat <- apply(enr.mat, 1, as.list)
-
+  
   netData <- list(nodes=nodes, 
                   edges=edge.mat, 
                   bnodes=bnodes, 
@@ -211,12 +223,12 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
                   backgroundColor=list("#514F6A", "#222222"),
                   dat.opt = paramSet$selDataNm,
                   naviString = "Enrichment Network");
-
+  
   netName <- paste0(netNm, ".json");
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(netName));
   paramSet$jsonNms$network <- netName;
   saveSet(paramSet, "paramSet");
-
+  
   analSet$enrichNet <- netData;
   saveSet(analSet, "analSet");
   sink(netName);

@@ -431,6 +431,15 @@ PerformVolcanoBatchEnrichment <- function(dataName="", file.nm, fun.type, IDs, i
   #get gene symbols
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
   res.mat[,"Hits"] <- res.mat[,"Hits"]
+
+  # Check for and handle duplicate row names in enr.mat
+  if(any(duplicated(rownames(res.mat)))) {
+    res.mat <- res.mat[!duplicated(rownames(res.mat)), ]
+    print("Duplicates in enr.mat were removed.")
+  } else {
+    res.mat <- res.mat
+  }
+
   qs:::qsave(res.mat, "enr.mat.qs");
   msgSet$current.msg <- "Functional enrichment analysis was completed";
   
