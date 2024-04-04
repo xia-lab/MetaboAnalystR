@@ -987,7 +987,6 @@ PrepareReport <- function(objective, abstract, animalDetails, exposureDetails, c
   data.orig <- qs::qread("data.raw.qs"); 
   dataSet$reportSummary$read.msg <<- paste("In this analysis, the uploaded data files were combined into a ", nrow(data.orig),
                                           " (wells) by ", ncol(data.orig), " (samples) data matrix.", sep="");
-  
 }
 
 convertPNG2PDF <- function(filenm){
@@ -1172,4 +1171,18 @@ AddFeatureToReport <- function(imgName){
       imgSet$featureList <- append(imgSet$featureList, list(imgName))
     }    
     saveSet(imgSet);
+}
+
+initMetaTable <- function(paired = TRUE){
+   sink(file = "metaTable.txt", append = F)
+   cat("sample\tforward_file\treverse_file\tgroup\n")
+   sink()
+   return(1)
+}
+
+insertMetaInfo <- function(str){
+   sink(file = "metaTable.txt", append = T)
+   cat(str)
+   sink()
+   return(1)
 }
