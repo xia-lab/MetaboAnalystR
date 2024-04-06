@@ -3237,7 +3237,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 
 PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default",
                             num_annot = 5, interactive=F){  
-
+  save.image("gsea.RData")
   mSetObj <- .get.mSet(mSetObj)
   anal.type0 <- mSetObj$paramSet$anal.type
   if (anal.type0 == "mummichog") {
@@ -3297,8 +3297,9 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
     xlab("NES") +
     ylab("-log10(p)") +
     theme_minimal();
-    p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
-    mSetObj$imgSet$mummi.gsea.plot<- imgName
+  top_indices <- head(order(-df$y), num_annot)
+  p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
+  mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
 
   
