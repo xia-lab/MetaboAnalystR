@@ -293,7 +293,7 @@ CreateSampleSum <- function(){
   CreateBPI(); # Done
   CreateIntensityStats(); # Done
   CreatePCA(); # Done
-  CreatePCA3D(); # Done
+  #CreatePCA3D(); # Done
   createSpectraSumDoc(); # Done
   createSpectraTIC(); # Done
   
