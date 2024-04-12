@@ -925,7 +925,6 @@ readDataset <- function(fileName=""){
     }else{
        #obj <- dataSets[[fileName]];
             if(exists("dataSets") && !is.null(dataSets) && !is.null(dataSets[[fileName]])) {
-                print("datasetsobject");
                 obj <- dataSets[[fileName]]
             } else {
                 obj <- qs::qread(fileName)

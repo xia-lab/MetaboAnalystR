@@ -23,10 +23,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   geneSets <- hits.query;
   n <- nrow(enr.mat);
   w <- matrix(NA, nrow=n, ncol=n);
-  print("a");
   colnames(w) <- rownames(w) <- id;
-    print("bc");
-
   for (i in 1:n) {
     for (j in i:n) {
       w[i,j] <- overlap_ratio(geneSets[id[i]], geneSets[id[j]], overlapType)
