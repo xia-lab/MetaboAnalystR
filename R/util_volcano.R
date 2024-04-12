@@ -8,7 +8,7 @@
 # if labelNum = 0 --> no labels
 # else top labels #
 my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=72, width=NA,labelNum=5,  interactive=F){
-  save.image("volc.RData");
+  #save.image("volc.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -51,12 +51,15 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   de$label <- NA
   if(interactive){
     de$label <- rownames(de);
+  }else if(labelNum == 0){
+    de$label <- NA;
   }else if(labelNum < 0 || labelNum > length(rownames(de))){
     de$label[imp.inx] <- rownames(de)[imp.inx];
   }else{
     de$label[c(1:labelNum)] <- rownames(de)[c(1:labelNum)];
     
   }
+
   require(ggplot2);
   require(scales);
   

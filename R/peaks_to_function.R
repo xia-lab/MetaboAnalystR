@@ -3237,7 +3237,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 
 PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default",
                             num_annot = 5, interactive=F){  
-  save.image("gsea.RData")
+  #save.image("gsea.RData")
   mSetObj <- .get.mSet(mSetObj)
   anal.type0 <- mSetObj$paramSet$anal.type
   if (anal.type0 == "mummichog") {
