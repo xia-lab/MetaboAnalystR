@@ -11,7 +11,7 @@
 #'@export
 #'
 Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, threshp=0.05, analType="NA", inx=1){
-  save.image('volc.RData');
+  #save.image('volc.RData');
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 

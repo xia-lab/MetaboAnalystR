@@ -7,7 +7,7 @@
 ###################################################
 # given a gene id, plot its expression profile as violin plot
 PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolcano", format="png", dpi=72){
-  save.image("violin.RData");
+
   require(see)
   require(ggplot2)
   require(lattice)

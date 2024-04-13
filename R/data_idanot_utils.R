@@ -34,7 +34,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   dataType <<- dataType;
   idType <<- idType;
   lvlOpt <<- lvlOpt;
-  save.image("dataannot.RData");
+  #save.image("dataannot.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
