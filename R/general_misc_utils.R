@@ -643,24 +643,36 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
     return(.set.mSet(mSetObj));
 }
 
-GetShapeSchema <- function(mSetObj=NA, show.name, grey.scale){
-  mSetObj <- .get.mSet(mSetObj);
+GetShapeSchema <- function(my.cls, show.name=0, grey.scale=0){
+
+  lvs <- levels(my.cls); 
+  grp.num <- length(lvs);
+
   if(exists("shapeVec") && all(shapeVec >= 0)){
-    sps <- rep(0, length=length(mSetObj$dataSet$cls));
-    clsVec <- as.character(mSetObj$dataSet$cls)
-    grpnms <- names(shapeVec);
-    for(i in 1:length(grpnms)){
-      sps[clsVec == grpnms[i]] <- shapeVec[i];
-    }
-    shapes <- sps;
+    # double check in case user excluded some groups
+    shapes <- shapeVec[names(colVec) %in% levels(my.cls)];
   }else{
-    if(show.name | grey.scale){
-      shapes <- as.numeric(mSetObj$dataSet$cls)+1;
+      if(show.name | grey.scale){
+      shapes <- 1:grp.num;
     }else{
-      shapes <- rep(21, length(mSetObj$dataSet$cls));
+      shapes <- rep(21, grp.num);
     }
+    names(shapes) <- lvs;
   }
   return(shapes);
+}
+
+# from grouped assigned to each sample
+ExpandSchema<-function(my.cls, schema){
+    my.vec <- rep(0, length=length(my.cls));
+    clsVec <- as.character(my.cls)
+    grpnms <- levels(my.cls);
+    for(i in 1:length(grpnms)){
+      nm <- grpnms[i];
+      my.vec[clsVec == nm] <- schema[nm];
+    }
+
+    return(my.vec);
 }
 
 pal_18 <- c("#e6194B", "#3cb44b", "#4363d8", "#42d4f4", "#f032e6", "#ffe119", "#911eb4", "#f58231", "#bfef45",
@@ -711,21 +723,22 @@ GetColorSchema <- function(my.cls, grayscale=F){
    grp.num <- length(lvs);
    if(grayscale){
       dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
-   }else if(exists("colVec") && !any(colVec =="#NA") && length(colVec) == length(levels(my.cls))){
-      dist.cols <- colVec;
+      names(dist.cols) <- lvs;
+   }else if(exists("colVec") && !any(colVec =="#NA")){
+
+      # make sure to sync with cls in case user exclude some groups
+      dist.cols <- colVec[names(colVec) %in% levels(my.cls)];
+
    }else{             
       if(grp.num <= 18){ # update color and respect default
           dist.cols <- pal_18[1:grp.num];
       }else{
           dist.cols <- colorRampPalette(pal_18)(grp.num);
       }
+      names(dist.cols) <- lvs;
    }
 
-   colors <- vector(mode="character", length=length(my.cls));
-   for(i in 1:length(lvs)){
-     colors[my.cls == lvs[i]] <- dist.cols[i];
-   }
-   return (colors);
+   return (dist.cols);
 }
 
 #'Remove folder

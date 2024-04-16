@@ -49,12 +49,16 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   }
   
   mSetObj$imgSet$tree <- imgName;
-  
+  cls <- mSetObj$dataSet$cls;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(cex=0.8, mar=c(4,2,2,8));
   if(mSetObj$dataSet$cls.type == "disc"){
     clusDendro <- as.dendrogram(hc_tree);
-    cols <- GetColorSchema(mSetObj$dataSet$cls);
+
+    col.def <- GetColorSchema(cls);
+    cols <- ExpandSchema(cls, col.def);
+
     names(cols) <- rownames(hc.dat);
     labelColors <- cols[hc_tree$order];
     colLab <- function(n){
@@ -72,7 +76,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
     par(cex=1);
     
     if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      legend.nm <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+      legend.nm <- as.character(sort(as.factor(as.numeric(levels(cls))[cls])));
     }else{
       legend.nm <- as.character(mSetObj$dataSet$cls);
     }
@@ -671,8 +675,10 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     }
 
     # set up color schema for samples
-    cols <- GetColorSchema(hc.cls, palette == "gray");
-    uniq.cols <- unique(cols);    
+    col.def <- GetColorSchema(hc.cls, palette == "gray");
+    cols <- ExpandSchema(cls, col.def);
+
+    uniq.cols <- col.def;    
     names(uniq.cols) <- unique(as.character(hc.cls));
     ann_colors <- list(class= uniq.cols);
   
@@ -923,8 +929,11 @@ colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
       hc.cls <- as.factor(as.numeric(levels(hc.cls))[hc.cls]);
     }
    # set up color schema for samples
-    cols <- GetColorSchema(hc.cls, palette == "gray");
-    uniq.cols <- unique(cols);    
+  
+    col.def <- GetColorSchema(hc.cls, palette == "gray");
+    cols <- ExpandSchema(cls, col.def);
+
+    uniq.cols <- col.def;  
     names(uniq.cols) <- unique(as.character(hc.cls));
     ann_colors <- list(class= uniq.cols);
     if(grp.ave){ # only use group average
@@ -1003,12 +1012,15 @@ colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
 #'License: GNU GPL (>= 2)
 GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   mSetObj <- .get.mSet(mSetObj);
+  cls <- mSetObj$dataSet$cls;
   clust <- mSetObj$analSet$som$visual;
   xTrue <- clust$x == i;
   yTrue <- clust$y == j;
   hit.inx <- xTrue & yTrue;
   
-  all.cols <- GetColorSchema(mSetObj$dataSet$cls);
+  col.def <-  GetColorSchema(cls);
+  all.cols <- ExpandSchema(cls, col.def);
+
   paste("<font color=\"", all.cols[hit.inx], "\">", rownames(mSetObj$dataSet$norm)[hit.inx], "</font>",collapse =", ");
 }
 
@@ -1068,7 +1080,10 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'License: GNU GPL (>= 2)
 GetKMClusterMembers <- function(mSetObj=NA, i){
   mSetObj <- .get.mSet(mSetObj);
-  all.cols <- GetColorSchema(mSetObj$dataSet$cls);
+
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  all.cols <- ExpandSchema(cls, col.def);
   hit.inx <- mSetObj$analSet$kmeans$cluster== i;
   
   paste("<font color=\"", all.cols[hit.inx], "\">", rownames(mSetObj$dataSet$norm)[hit.inx], "</font>",collapse =", ");

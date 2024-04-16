@@ -1102,7 +1102,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   scale <- dpi/72;
   w <- 200*scale;
   h <- 400*scale; 
-  col <- unique(GetColorSchema(y));
+  col <- GetColorSchema(y);
   
   if(length(mSetObj$imgSet$roc.univ.boxplot)==0){
     mSetObj$imgSet$roc.univ.boxplot <- imgName;

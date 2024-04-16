@@ -574,7 +574,7 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
   
   if (cls.type == "disc"){ ## code to execute if primary class is discrete
     
-    uniq.cols <- GetColorSchema(unique(cls))
+    uniq.cols <- unique(GetColorSchema(cls));
     
     if (cls.type2 == "disc"){
       pch.vec <- as.numeric(cls2)

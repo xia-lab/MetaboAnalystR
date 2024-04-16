@@ -229,35 +229,27 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
     xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
     ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
     
-    cols <- GetColorSchema(cls, grey.scale==1);
-    uniq.cols <- unique(cols);
+    col.def <- GetColorSchema(cls, grey.scale==1);
+    cols <- ExpandSchema(cls, col.def);
     
     plot(pc1, pc2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot",
          col=cols, pch=as.numeric(cls)+1); ## added
     grid(col = "lightgray", lty = "dotted", lwd = 1);
     
-    # make sure name and number of the same order DO NOT USE levels, which may be different
-    legend.nm <- unique(as.character(sort(cls)));
-    ## uniq.cols <- unique(cols);
-    
-    ## BHAN: when same color is choosen; it makes an error
-    if ( length(uniq.cols) > 1 ) {
-      names(uniq.cols) <- legend.nm;
-    }
-    
     # draw ellipse
     for(i in 1:length(lvs)){
-      if (length(uniq.cols) > 1) {
-        polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+      if (length(col.def) > 1) {
+        polygon(pts.array[,,i], col=adjustcolor(col.def[lvs[i]], alpha=0.2), border=NA);
       } else {
-        polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+        polygon(pts.array[,,i], col=adjustcolor(col.def, alpha=0.2), border=NA);
       }
       if(grey.scale) {
         lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
       }
     }
     
-    pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+    pchs.def <- GetShapeSchema(cls, show, grey.scale);
+    pchs <- ExpandSchema(cls, pchs.def);
     if(grey.scale) {
       cols <- rep("black", length(cols));
     }
@@ -265,7 +257,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
       text(pc1, pc2, label=text.lbls, pos=4, xpd=T, cex=0.75*pca.cex);
       points(pc1, pc2, pch=pchs, col=cols);
     }else{
-      if(length(uniq.cols) == 1){
+      if(length(col.def) == 1){
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0*pca.cex);
       }else{
         if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
@@ -277,50 +269,18 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
         }
       }
     }
-    uniq.pchs <- unique(pchs);
-    
-    if(length(uniq.cols) != length(levels(cls))){     
-      if(mSetObj$dataSet$type.cls.lbl=="integer"){
-        names(cols) <- as.numeric(cls)
-      }else{
-        names(cols) <- as.character(cls)
-      }
-      match.inx <- match(levels(cls), names(cols))
-      uniq.cols <- cols[match.inx]
-    }
     
     # after the fix above
     if(grey.scale) {
-      uniq.cols <- "black";
+      col.def <- "black";
     }
-    
-    # JX: This patch breaks plot for multi-group legend; If it occurs, 
-    # need to fix source - why col or pch are not unique when requested
-    
-    #    if(length(uniq.pchs) != length(levels(cls))){     
-    #      if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    #        names(pchs) <- as.numeric(cls)
-    #      }else{
-    #        names(pchs) <- as.character(cls)
-    #     }      
-    #      match.inx <- match(levels(cls), names(pchs))
-    #      uniq.pchs <- pchs[match.inx]
-    #    }
-    
-    #if(length(lvs) < 6){
-    #  legend("topright",inset = c(-0.2, 0), legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
-    #}else if (length(lvs) < 10){
-    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
-    #}else{
-    #  legend("topright", inset = c(-0.2, 0),legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
-    #}
 
     axis.lims <- par("usr"); # x1, x2, y1 ,y2
     shift <- par("cxy")[1];
     lgd.x <- axis.lims[2] + shift;
     lgd.y <- axis.lims[4] - shift;
     par(xpd=T);
-    legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
+    legend(lgd.x, lgd.y, legend = names(pchs.def), pch=pchs.def, col=col.def, box.lty=0);
     
   }else{
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
@@ -374,8 +334,8 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   pca3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(as.factor(cls)));
-  pca3d$score$colors <- my.col2rgb(cols);
+  col.def <- GetColorSchema(as.factor(cls));
+  pca3d$score$colors <- my.col2rgb(col.def);
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- rjson::toJSON(pca3d);
   sink(imgName);
@@ -744,35 +704,27 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
   
-  ## cols = as.numeric(dataSet$cls)+1;
-  cols <- GetColorSchema(cls, grey.scale==1);
-  uniq.cols <- unique(cols);
+  col.def <- GetColorSchema(cls, grey.scale==1);
+  cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
   grid(col = "lightgray", lty = "dotted", lwd = 1);
-  
-  # make sure name and number of the same order DO NOT USE levels, which may be different
-  legend.nm <- unique(as.character(sort(cls)));
-  ## uniq.cols <- unique(cols);
-  
-  ## BHAN: when same color is choosen for black/white; it makes an error
-  # names(uniq.cols) <- legend.nm;
-  if (length(uniq.cols) > 1) {
-    names(uniq.cols) <- legend.nm;
-  }
+
   # draw ellipse
   for(i in 1:length(lvs)){
-    if ( length(uniq.cols) > 1) {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+    if (length(col.def) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(col.def[lvs[i]], alpha=0.2), border=NA);
     } else {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(col.def, alpha=0.2), border=NA);
     }
     if(grey.scale) {
       lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
     }
   }
   
-  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs <- ExpandSchema(cls, pchs.def);
+
   if(grey.scale) {
     cols <- rep("black", length(cols));
   }
@@ -780,7 +732,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*pls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
-    if (length(uniq.cols) == 1) {
+    if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*pls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
@@ -793,35 +745,11 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     }
   }
   
-  uniq.pchs <- unique(pchs);
   
   if(grey.scale) {
-    uniq.cols <- "black";
+    col.def <- "black";
   }
   
-  if(length(uniq.cols) != length(levels(cls))){
-    
-    if(cls.type=="integer"){
-      names(cols) <- as.numeric(cls)
-    }else{
-      names(cols) <- as.character(cls)
-    }
-    
-    match.inx <- match(levels(cls), names(cols))
-    uniq.cols <- cols[match.inx]
-  }
-  
-  if(length(uniq.pchs) != length(levels(cls))){
-    
-    #if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    #  names(pchs) <- as.numeric(cls)
-    #}else{
-    names(pchs) <- as.character(cls)
-    #}
-    
-    match.inx <- match(levels(cls), names(pchs))
-    uniq.pchs <- pchs[match.inx]
-  }
   
   op <- par(xpd=T);
   # move legend to outside 
@@ -829,7 +757,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   shift <- par("cxy")[1];
   lgd.x <- axis.lims[2] + shift;
   lgd.y <- axis.lims[4] - shift;
-  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
+  legend(lgd.x, lgd.y, legend = names(pchs.def), pch=pchs.def, col=col.def, box.lty=0);
   
   par(op);
   dev.off();
@@ -876,8 +804,8 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   pls3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(cls1));
-  pls3d$score$colors <- my.col2rgb(cols);
+  col.def <- GetColorSchema(cls1);
+  pls3d$score$colors <- my.col2rgb(col.def);
   
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- rjson::toJSON(pls3d);
@@ -1589,7 +1517,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  cls <- mSetObj$dataSet$cls;
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
     opls.cex <<- 1.0;
@@ -1624,10 +1552,10 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
-  lvs <- levels(mSetObj$dataSet$cls);
+  lvs <- levels(cls);
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
-    inx <- mSetObj$dataSet$cls == lvs[i];
+    inx <- cls == lvs[i];
     groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
     groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
     pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
@@ -1639,33 +1567,28 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   y.ext<-(yrg[2]-yrg[1])/12;
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
-  
-  cols <- GetColorSchema(mSetObj$dataSet$cls, grey.scale==1);
-  uniq.cols <- unique(cols);
+
+  col.def <- GetColorSchema(cls, grey.scale==1);
+  cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   
-  # make sure name and number of the same order DO NOT USE levels, which may be different
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-  ## uniq.cols <- unique(cols);
-  
-  if (length(uniq.cols) > 1 ) {
-    names(uniq.cols) <- legend.nm;
-  }
   # draw ellipse
   for(i in 1:length(lvs)){
-    if ( length(uniq.cols) > 1) {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+    if ( length(col.def) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(col.def[lvs[i]], alpha=0.2), border=NA);
     } else {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(col.def, alpha=0.2), border=NA);
     }
     if(grey.scale) {
       lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
     }
   }
   
-  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs <- ExpandSchema(cls, pchs.def);
+
   if(grey.scale) {
     cols <- rep("black", length(cols));
   }
@@ -1673,7 +1596,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
     text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*opls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
-    if (length(uniq.cols) == 1) {
+    if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*opls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
@@ -1686,11 +1609,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
     }
   }
   
-  uniq.pchs <- unique(pchs);
   if(grey.scale) {
-    uniq.cols <- "black";
+    col.def <- "black";
   }
-  #legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
 
   # move legend to outside 
   op <- par(xpd=T);
@@ -1698,7 +1619,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   shift <- par("cxy")[1];
   lgd.x <- axis.lims[2] + shift;
   lgd.y <- axis.lims[4] - shift;
-  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);
+  legend(lgd.x, lgd.y, legend = names(pchs.def), pch=pchs.def, col=col.def, box.lty=0);
   
   par(op);  
 
@@ -2228,7 +2149,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   lvs <- levels(cls);
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
-    inx <- mSetObj$dataSet$cls == lvs[i];
+    inx <- cls == lvs[i];
     groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
     groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
     pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
@@ -2241,34 +2162,27 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims <- c(yrg[1]-y.ext, yrg[2]+y.ext);
   
-  cols <- GetColorSchema(mSetObj$dataSet$cls, grey.scale==1);
-  uniq.cols <- unique(cols);
+  col.def <- GetColorSchema(cls, grey.scale==1);
+  cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   
-  # make sure name and number of the same order DO NOT USE levels, which may be different
-  legend.nm <- unique(as.character(sort(cls)));
-  ## uniq.cols <- unique(cols);
-  
-  ## BHAN: when same color is choosen for black/white; it makes an error
-  # names(uniq.cols) <- legend.nm;
-  if (length(uniq.cols) > 1) {
-    names(uniq.cols) <- legend.nm;
-  }
   # draw ellipse
   for(i in 1:length(lvs)){
-    if (length(uniq.cols) > 1) {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+    if (length(col.def) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(col.def[lvs[i]], alpha=0.25), border=NA);
     } else {
-      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+      polygon(pts.array[,,i], col=adjustcolor(col.def, alpha=0.25), border=NA);
     }
     if(grey.scale) {
       lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
     }
   }
   
-  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs <- ExpandSchema(cls, pchs.def);
+
   if(grey.scale) {
     cols <- rep("black", length(cols));
   }
@@ -2276,7 +2190,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
     text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75*spls.cex);
     points(lv1, lv2, pch=pchs, col=cols);
   }else{
-    if (length(uniq.cols) == 1) {
+    if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*spls.cex);
     } else {
       if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
@@ -2289,9 +2203,8 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
     }
   }
   
-  uniq.pchs <- unique(pchs);
   if(grey.scale) {
-    uniq.cols <- "black";
+    col.def <- "black";
   }
 
   op <- par(xpd=T);
@@ -2300,7 +2213,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   shift <- par("cxy")[1];
   lgd.x <- axis.lims[2] + shift;
   lgd.y <- axis.lims[4] - shift;
-  legend(lgd.x, lgd.y, legend = legend.nm, pch=uniq.pchs, col=uniq.cols, box.lty=0);  
+  legend(lgd.x, lgd.y, legend = names(pchs.def), pch=pchs.def, col=col.def, box.lty=0);  
   par(op);
 
   dev.off();
@@ -2356,8 +2269,8 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   spls3d$score$facA <- cls;
   
   # now set color for each group
-  cols <- unique(GetColorSchema(cls1));
-  spls3d$score$colors <- my.col2rgb(cols);
+  col.def <- GetColorSchema(cls1);
+  spls3d$score$colors <- my.col2rgb(col.def);
   
   imgName = paste(imgName, ".", format, sep="");
   json.obj <- rjson::toJSON(spls3d);
@@ -2791,35 +2704,35 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   }
   h <- w;
   
-  legend.nm <- unique(as.character(sort(cls)));
-  maxlength <- max(nchar(unique(as.character(cls))))
-  
+  col.def <- GetColorSchema(cls);
+  my.col <- ExpandSchema(cls, col.def);
+  legend.nm <- names(col.def);
+
+
+  lgd.len = length(col.def);
+  if(lgd.len < 4){
+     omaVal=oma=c(10,3,3,3)
+  }else{
+     if(lgd.len %% 3 == 0){
+        lgd.len = 3;
+     }else if(lgd.len %% 4 == 0){
+        lgd.len = 4;
+     }
+     omaVal = oma=c(15,3,3,3)
+  }
+
+   pchs.def <- GetShapeSchema(cls, 1); # use different shapes here
+   my.pch <- ExpandSchema(cls, pchs.def);
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   if(cls.type == "disc"){
 
-    my.col <- GetColorSchema(cls);
-    uniq.cols <-unique(my.col);
-    my.pch <- as.numeric(cls)+1;
-    uniq.pchs <-unique(my.pch);
-
-    numOfCol = length(uniq.cols);
-    if(length(uniq.cols)<4){
-        omaVal=oma=c(10,3,3,3)
-    }else{
-        if(numOfCol %% 3 == 0){
-            numOfCol = 3;
-        }else if(numOfCol %% 4 == 0){
-            numOfCol = 4;
-        }
-        omaVal = oma=c(15,3,3,3)
-    }
-
     pairs(mat, col=my.col, pch=my.pch, labels=lbls, oma=omaVal);
     par(xpd = TRUE)
-    if(numOfCol > 4){
-      legend("bottom", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.9, bty = "n", ncol =numOfCol);
+    if(lgd.len > 4){
+      legend("bottom", legend = legend.nm, pch=pchs.def, col=col.def, cex=0.9, bty = "n", ncol =lgd.len);
     }else{
-      legend("bottom", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, bty = "n", ncol =numOfCol);
+      legend("bottom", legend = legend.nm, pch=pchs.def, col=col.def, bty = "n", ncol =lgd.len);
     }
   }else{
     pairs(mat, labels=lbls);

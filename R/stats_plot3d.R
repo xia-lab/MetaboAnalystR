@@ -68,17 +68,18 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png",
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
 
-  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
+  cls <- mSetObj$dataSet$cls;
+  pchs <- as.numeric(cls)+1;
   uniq.pchs <- unique(pchs);
   
   if(mSetObj$dataSet$cls.type == "disc"){
 
-    cols <- GetColorSchema(mSetObj$dataSet$cls);
-    legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-    uniq.cols <- unique(cols);
+    col.def <-  GetColorSchema(cls);
+    all.cols <- ExpandSchema(cls, col.def);
+
     Plot3D(mSetObj$analSet$pca$x[, inx1], mSetObj$analSet$pca$x[, inx2], mSetObj$analSet$pca$x[, inx3], xlab= xlabel, ylab=ylabel,
            zlab=zlabel, angle =angl, color=cols, pch=pchs);
-    legend("topleft", legend =legend.nm, pch=uniq.pchs, col=uniq.cols);
+    legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
     dev.off();
     
     
@@ -162,14 +163,14 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   zlabel <- spls3d$score$axis[3]
   
   # static
-  cols <- GetColorSchema(mSetObj$dataSet$cls);
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-  uniq.cols <- unique(cols);
-  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
+  pchs <- as.numeric(cls)+1;
   uniq.pchs <- unique(pchs);
   Plot3D(coords[,inx1], coords[,inx2], coords[,inx3], xlab= xlabel, ylab=ylabel,
          zlab=zlabel, angle = angl, color=cols, pch=pchs);
-  legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -233,14 +234,14 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
   zlabel <- spls3d$score$axis[3]
   
   # static
-  cols <- GetColorSchema(mSetObj$dataSet$cls);
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-  uniq.cols <- unique(cols);
-  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
+  pchs <- as.numeric(cls)+1;
   uniq.pchs <- unique(pchs);
   Plot3D(coords[,inx1], coords[,inx2], coords[,inx3], xlab= xlabel, ylab=ylabel,
          zlab=zlabel, angle = angl, color=cols, pch=pchs);
-  legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
   dev.off();
   
   return(.set.mSet(mSetObj));
@@ -291,14 +292,15 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
   zlabel <- paste("Component", inx3, "(", round(100*mSetObj$analSet$plsr$Xvar[inx3]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
   
-  cols <- GetColorSchema(mSetObj$dataSet$cls);
-  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
-  uniq.cols <- unique(cols);
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
+
   pchs <- as.numeric(mSetObj$dataSet$cls)+1;
   uniq.pchs <- unique(pchs);
   Plot3D(mSetObj$analSet$plsr$score[,inx1], mSetObj$analSet$plsr$score[,inx2], mSetObj$analSet$plsr$score[,inx3], xlab= xlabel, ylab=ylabel,
          zlab=zlabel, angle =angl, color=cols, pch=pchs);
-  legend("topleft", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
   dev.off();
 
   return(.set.mSet(mSetObj));

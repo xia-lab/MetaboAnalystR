@@ -177,10 +177,10 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   }else{
     cls <- mSetObj$dataSet$cls;
   }
-  cols <- GetColorSchema(cls);
-  uniq.cols <- unique(cols);
+
+  col.def <- GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
   
-  legend.nm <- unique(as.character(sort(cls)));
   dist.res <- randomForest::outlier(mSetObj$analSet$rf);
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -212,7 +212,7 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   plot.new();
   plot.window(c(0,1), c(0,1));
   
-  legend("center", legend =legend.nm, pch=15, col=uniq.cols);
+  legend("center", legend =names(col.def), pch=15, col=col.def);
   
   dev.off();
   return(.set.mSet(mSetObj));
