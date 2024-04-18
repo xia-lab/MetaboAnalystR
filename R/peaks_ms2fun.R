@@ -138,16 +138,17 @@
       
       keepRow.idx <- vapply(1:nrow(matched_resn), function(i){
         id <- matched_resn$X2[i];
+        id0 <- as.integer(matched_resn$X1[i]);
         idx <- which(cpd.lib[["id"]]==id)
         dbTypedID <- cpd.lib$ms2IDs[idx];
         if(is.na(dbTypedID)) {
           return(TRUE)
         } else if(dbTypedID == "") {
           return(TRUE)
-        } else if(all(ref_cmpdlistn[idx,] == "")) {
+        } else if(all(ref_cmpdlistn[id0,] == "")) {
           return(TRUE)
         } else {
-          if(any(dbTypedID %in% ref_cmpdlistn[idx,])) {
+          if(any(dbTypedID %in% ref_cmpdlistn[id0,])) {
             return(TRUE)
           } else {
             return(FALSE)
@@ -174,16 +175,17 @@
       
       keepRow.idx <- vapply(1:nrow(matched_resp), function(i){
         id <- matched_resp$X2[i];
+        id0 <- as.integer(matched_resp$X1[i]);
         idx <- which(cpd.lib[["id"]]==id)
         dbTypedID <- cpd.lib$ms2IDs[idx];
         if(is.na(dbTypedID)) {
           return(TRUE)
         } else if(dbTypedID == "") {
           return(TRUE)
-        } else if(all(ref_cmpdlistp[idx,] == "")) {
+        } else if(all(ref_cmpdlistp[id0,] == "")) {
           return(TRUE)
         } else {
-          if(any(dbTypedID %in% ref_cmpdlistp[idx,])) {
+          if(any(dbTypedID %in% ref_cmpdlistp[id0,])) {
             return(TRUE)
           } else {
             return(FALSE)
@@ -224,16 +226,17 @@
     
     keepRow.idx <- vapply(1:nrow(matched_res), function(i){
       id <- matched_res$X2[i];
+      id0 <- as.integer(matched_res$X1[i]);
       idx <- which(cpd.lib[["id"]]==id)
       dbTypedID <- cpd.lib$ms2IDs[idx];
       if(is.na(dbTypedID)) {
         return(TRUE)
       } else if(dbTypedID == "") {
         return(TRUE)
-      } else if(all(ref_cmpdlistp[idx,] == "")) {
+      } else if(all(ref_cmpdlistp[id0,] == "")) {
         return(TRUE)
       } else {
-        if(any(dbTypedID %in% ref_cmpdlistp[idx,])) {
+        if(any(dbTypedID %in% ref_cmpdlistp[id0,])) {
           return(TRUE)
         } else {
           return(FALSE)
@@ -264,15 +267,16 @@
     keepRow.idx <- vapply(1:nrow(matched_res), function(i){
       id <- matched_res$X2[i];
       idx <- which(cpd.lib[["id"]]==id)
+      id0 <- as.integer(matched_res$X1[i]);
       dbTypedID <- cpd.lib$ms2IDs[idx];
       if(is.na(dbTypedID)) {
         return(TRUE)
       } else if(dbTypedID == "") {
         return(TRUE)
-      } else if(all(ref_cmpdlistn[idx,] == "")) {
+      } else if(all(ref_cmpdlistn[id0,] == "")) {
         return(TRUE)
       } else {
-        if(any(dbTypedID %in% ref_cmpdlistn[idx,])) {
+        if(any(dbTypedID %in% ref_cmpdlistn[id0,])) {
           return(TRUE)
         } else {
           return(FALSE)
