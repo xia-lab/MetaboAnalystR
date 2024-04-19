@@ -206,6 +206,9 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   bedge.mat <- apply(bedge.mat, 1, as.list)
   enr.mat <- apply(enr.mat, 1, as.list)
   
+  #paramSet$current.sigmajsR.nm <- paste0(netNm, ".rda");
+  #save(nodes, edge.mat, file = paramSet$current.sigmajsR.nm);
+
   netData <- list(nodes=nodes, 
                   edges=edge.mat, 
                   bnodes=bnodes, 

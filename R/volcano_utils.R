@@ -1,4 +1,4 @@
-##################################################
+  ##################################################
 ## R scripts for ExpressAnalyst 
 ## Functions related to volcano plot
 ## Author: Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
@@ -10,7 +10,7 @@
 #'License: MIT
 #'@export
 #'
-Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, threshp=0.05, analType="NA", inx=1){
+Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, threshp=0.05, analType="NA", inx=1, dpi=72, format="png"){
   #save.image('volc.RData');
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -42,8 +42,6 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   }else{
     dataSet <- readDataset(dataName);
     data <- as.matrix(dataSet$comp.res);
-    print(paramSet$use.fdr)
-    print("volcano")
     if(is.null(paramSet$use.fdr) || paramSet$use.fdr){
         p.value <- data[, "adj.P.Val"];
     }else{
@@ -172,6 +170,57 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(jsonNm, "enrichment_result.csv"))
   paramSet$jsonNms["volcano"] <- fileNm;
 
+    # Generate volcano_data
+    volcano_data <- data.frame(
+        gene = gene.anot$symbol,                  # Gene names
+        log2FoldChange = fc.log,                  # Log fold change values
+        pValue = p.value,                         # Raw p-values
+        negLog10PValue = p.log,                   # -log10 p-value values
+        significant = ifelse(inx.up & inx.p, "upregulated", 
+                             ifelse(inx.down & inx.p, "downregulated", "nonsignificant")) # Determine significance
+    )
+
+
+  # Append hover_text after defining volcano_data
+  volcano_data$hover_text <- with(volcano_data, paste("Gene: ", gene, 
+                                                      "<br>Log2 FC: ", log2FoldChange, 
+                                                      "<br>P-value: ", pValue))
+    library(ggplot2)
+    library(plotly)
+
+    # Create a ggplot
+    gg_volcano <- ggplot(volcano_data, aes(x = log2FoldChange, y = negLog10PValue, 
+                                           color = significant, 
+                                           text = paste("Gene: ", gene, "<br>Log2 FC: ", log2FoldChange, 
+                                                        "<br>P-value: ", format(pValue, scientific = TRUE)))) +
+      geom_point(alpha = 0.6) +  # Adjust point transparency
+      scale_color_manual(values = c("upregulated" = "red", "downregulated" = "blue", "nonsignificant" = "grey")) +
+      labs(x = "Log2 Fold Change", 
+           y = "-Log10 P-value") +
+      theme_minimal()
+
+    # Convert to ggplotly for interactive plot, including tooltips
+    pwidget <- ggplotly(gg_volcano, tooltip = "text")
+
+    # Customize the layout to optimize hover interaction
+    pwidget <- pwidget %>% layout(hovermode = 'closest')
+
+    # Print the plot
+    pwidget
+
+  imgSet <- readSet(imgSet, "imgSet");
+  widgetNm <- paste0(fileNm, ".rda");
+  imgSet$volcanoPlotly <- widgetNm;
+
+  save(pwidget, file = widgetNm);
+
+  imgSet$volcanoPlot <- paste0(fileNm, ".png");
+
+  Cairo::Cairo(file = imgSet$volcanoPlot, unit="px", dpi=dpi, width=1000, height=800, type=format, bg="white");
+  print(gg_volcano)
+  dev.off()
+
+  saveSet(imgSet, "imgSet");
   saveSet(paramSet, "paramSet");
   saveSet(analSet, "analSet");
   return(1);

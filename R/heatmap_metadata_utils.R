@@ -6,6 +6,7 @@
 ## G. Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
+# use by GSEA heatmap module as well to generate all the heatmap for the GSEA pathways to select from
 
 # prepare data for heatmap plotting include
 # 1. meta info (top bars)
@@ -27,15 +28,16 @@ PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
   dat.inx <- inmex.meta$data.lbl %in% datanm.vec;
 
   if(displayOpt == "all"){
-    gene.variances <- apply(inmex.meta$plot.data, 1, var)
+    #get all
+  }else if(displayOpt == "top5000"){
+    gene.variances <- apply(data.stat[all.ids, , drop = FALSE], 1, var)
     # Sorting genes by variance and selecting top 5000 if there are more than that
     if (length(gene.variances) > 5000) {
-      gene.vec <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
-    } else{
-      gene.vec <- rownames(all.meta.mat);
-    }
-  }else{
-    gene.vec <- rownames(meta.mat);
+      all.ids <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
+    } else {
+      all.ids <- all.ids
+    }  }else{
+    all.ids <- all.ids[all.ids %in% sig.ids];
   }
   dat <- inmex.meta$plot.data[gene.vec, dat.inx, drop=F]; 
 

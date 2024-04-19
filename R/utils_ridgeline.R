@@ -172,8 +172,8 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
           axis.title = element_text(size=12, face = "bold"),
           axis.text.x = element_text(color = "black"),
           axis.text.y = element_text(size=12,color = "black"))
-   
-  Cairo::Cairo(file=imageName, width=18, height=12, type=format, bg="white", dpi=dpi, unit="in");
+
+  Cairo::Cairo(file=imageName, width=10, height=8, type=format, bg="white", dpi=dpi, unit="in");
   print(rp);
   dev.off();
   
