@@ -2041,8 +2041,13 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
   
   cls <- mSetObj$dataSet$cls;
   datmat <- mSetObj$dataSet$norm;
-  clsMethod <- mSetObj$analSet$exp.method;
-  
+
+  if(mSetObj$analSet$mode == "test"){
+    clsMethod <- mSetObj$analSet$tester.method;
+  }else{
+    clsMethod <- mSetObj$analSet$exp.method;
+  }
+
   splitMat <- GetTrainTestSplitMat(cls, propTraining, cvRuns);
   trainInx <- splitMat$training.mat;
   testInx <- splitMat$testing.mat;
