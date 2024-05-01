@@ -1157,6 +1157,7 @@ makeReadable <- function(str){
                     "onedata" = "Gene expression analysis",
                     "genelist" = "Gene list analysis",
                     "metadata" = "Gene expression meta-analysis",
+                    "rawSeq" = "Raw RNA-seq data processing"
                  str)
 }
 
