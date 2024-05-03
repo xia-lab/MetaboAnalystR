@@ -155,7 +155,7 @@ plotProfile <-function (mSetObj=NA, varName) {
   
   time.fac <- mSetObj$dataSet$time.fac;
   exp.fac <- mSetObj$dataSet$exp.fac;
-  
+
   cols <- unique(GetColorSchema(exp.fac));
 
   # fold the var into a matrix with
@@ -193,9 +193,12 @@ plotProfile <-function (mSetObj=NA, varName) {
   
   #time.lbl <- unique(as.character(time.fac));
   time.lbl <- unique(levels(time.fac));
-  
-  legend("top", legend=unique(lvlVec), horiz=TRUE, lty=1, bty="n", col=unique(colVec));
-  
+  if(!is.null(lvlVec)){
+    lgd <- unique(lvlVec);
+    if(length(lgd)>0){
+        legend("top", legend=lgd, horiz=TRUE, lty=1, bty="n", col=unique(colVec));
+    }
+  }
   axis(1, label=time.lbl, at=1:length(time.lbl));
   axis(2);
   box();

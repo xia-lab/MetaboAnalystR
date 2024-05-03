@@ -828,6 +828,14 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     dev.off();
     
   }else if(mSetObj$dataSet$design.type =="time0"){
+    # trend with subject
+
+    #sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.mb]
+    sel.meta.df <- mSetObj$dataSet$meta.info;
+    mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
+    mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
+    .set.mSet(mSetObj);
+
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
     plotProfile(mSetObj, cmpdNm);
     dev.off();

@@ -724,7 +724,7 @@ GetColorSchema <- function(my.cls, grayscale=F){
    if(grayscale){
       dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
       names(dist.cols) <- lvs;
-   }else if(exists("colVec") && !any(colVec =="#NA")){
+   }else if(exists("colVec") && length(colVec) >0 && !any(colVec =="#NA")){
 
       # make sure to sync with cls in case user exclude some groups
       dist.cols <- colVec[names(colVec) %in% levels(my.cls)];
