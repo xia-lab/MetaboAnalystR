@@ -168,13 +168,14 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 
 
 prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+  
   msgSet <- readSet(msgSet, "msgSet");
   cat(anal.type, par1, par2, nested.opt, "\n")
   set.seed(1337);
   myargs <- list();
-  cls <- dataSet$cls
-  dataSet$comp.type <- anal.type
-  grp.nms <- levels(cls)
+  cls <- dataSet$cls;
+  dataSet$comp.type <- anal.type;
+  grp.nms <- levels(cls);
   analysisVar <- dataSet$analysisVar
   if(dataSet$cont.inx[analysisVar] |  any(grepl("(^[0-9]+).*", grp.nms))){
     if(grepl( "vs",par1)){
@@ -209,24 +210,24 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
         myargs[[inx]] <- paste(grp.nms[m], "-", grp.nms[n], sep = "");
       }
     }
-    filename <- "SigGene_pairwise";
+    filename <- "sig_genes_pairwise";
   } else if (anal.type == "time") {
     for (i in 2:length(grp.nms)) {
       myargs[[i - 1]] <- paste(grp.nms[i], "-", grp.nms[i-1], sep = "")
     }
-    filename <- "SigGene_time_series";
+    filename <- "sig_genes_time_series";
   } else if (anal.type == "custom") {
     grp.nms <- strsplit(par1, " vs. ")[[1]]
     myargs[[1]] <- paste(grp.nms, collapse = "-")
     dataSet$grp.nms <- grp.nms;
-    filename <- paste("SigGene_", paste(grp.nms, collapse = "_vs_"), sep = "")
+    filename <- paste("sig_genes_", paste(grp.nms, collapse = "_vs_"), sep = "")
     dataSet$contrast <- paste(grp.nms, collapse = "_vs_");
   } else if (anal.type == "reference") {
     ref <- par1;
     cntr.cls <- grp.nms[grp.nms != ref]
     myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
     dataSet$ref <- ref; 
-    filename <- paste("SigGene_reference_", ref, sep = "");
+    filename <- paste("sig_genes_reference_", ref, sep = "");
   } else if (anal.type == "nested") {
     grp.nms1 <- strsplit(par1, " vs. ")[[1]]
     grp.nms2 <- strsplit(par2, " vs. ")[[1]]
@@ -246,12 +247,12 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
       myargs[[3]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
     }
     dataSet$contrast <- paste(paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
-    filename <- paste("SigGene_nested_", paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
+    filename <- paste("sig_genes_nested_", paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
   } else {
     print(paste("Not supported: ", anal.type))
   }
 
-  dataSet$filename <- filename;
+  dataSet$filename <- paste0(filename, "_", dataSet$de.method);
   require(limma);
   design <- dataSet$design;
   myargs[["levels"]] <- design;
