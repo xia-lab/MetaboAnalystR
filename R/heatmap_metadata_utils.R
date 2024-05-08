@@ -16,6 +16,7 @@
 # 1 and 2 separated by a row of 'null' 
 # 3 and 1+2 separated by a column of 'null'
 PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
+  save.image("meta.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
@@ -26,18 +27,20 @@ PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
   datanm.vec <- names(mdata.all)[mdata.all==1];
   inmex.meta <- qs::qread("inmex_meta.qs");
   dat.inx <- inmex.meta$data.lbl %in% datanm.vec;
+  gene.variances <- apply(inmex.meta$plot.data, 1, var)
+  # Sorting genes by variance and selecting top 5000 if there are more than that
 
-  if(displayOpt == "all"){
-    #get all
-  }else if(displayOpt == "top5000"){
-    gene.variances <- apply(data.stat[all.ids, , drop = FALSE], 1, var)
+  if(displayOpt == "top5000"){
+    gene.variances <- apply(inmex.meta$plot.data, 1, var)
     # Sorting genes by variance and selecting top 5000 if there are more than that
     if (length(gene.variances) > 5000) {
-      all.ids <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
-    } else {
-      all.ids <- all.ids
-    }  }else{
-    all.ids <- all.ids[all.ids %in% sig.ids];
+      gene.vec <- names(sort(gene.variances, decreasing = TRUE)[1:5000])
+    } else{
+      gene.vec <- rownames(all.meta.mat);
+    }
+  } else{
+    gene.vec <- rownames(meta.mat);
+    print(length(gene.vec));
   }
   dat <- inmex.meta$plot.data[gene.vec, dat.inx, drop=F]; 
 
