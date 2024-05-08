@@ -40,7 +40,6 @@ PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
     }
   } else{
     gene.vec <- rownames(meta.mat);
-    print(length(gene.vec));
   }
   dat <- inmex.meta$plot.data[gene.vec, dat.inx, drop=F]; 
 
@@ -187,7 +186,6 @@ PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
   gene.id <- anot.res$symbol; if(length(gene.id) ==1) { gene.id <- matrix(gene.id) };
   gene.entrez <- anot.res$gene_id; if(length(gene.entrez) ==1) { gene.entrez <- matrix(gene.entrez) };        
   gene.name <- anot.res$name; if(length(gene.name) ==1) { gene.name <- matrix(gene.name) };
-  print(nmeta)
   json.res <- list(
     data.type = "array",
     gene.id = as.character(anot.res$symbol),
