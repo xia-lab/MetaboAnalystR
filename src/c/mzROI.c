@@ -79,7 +79,7 @@ struct mzROIStruct * checkmzROIBufSize(struct mzROIStruct *mzROI, const unsigned
 
     mzROI = (struct mzROIStruct *) realloc(mzROI, newLength * sizeof(struct mzROIStruct));
     if (mzROI == NULL)
-        error("findmzROI/realloc: buffer memory could not be allocated ! (%d bytes)\n", newLength * sizeof(struct mzROIStruct) );
+        error("findmzROI/realloc: buffer memory could not be allocated !\n");
 
     mzLength->mzROITotal = newLength;
   }
@@ -102,7 +102,7 @@ struct mzROIStruct * checkmzvalBufSize(struct mzROIStruct *mzval, const unsigned
 
     mzval = (struct mzROIStruct *) realloc(mzval, newLength * sizeof(struct mzROIStruct));
     if (mzval == NULL)
-      error("findmzROI/realloc: buffer memory could not be allocated ! (%d bytes)\n", newLength * sizeof(struct mzROIStruct));
+      error("findmzROI/realloc: buffer memory could not be allocated !\n");
 
     mzLength->mzvalTotal = newLength;
   }
@@ -331,7 +331,7 @@ int i,p,del=0;
     p=0;
     struct mzROIStruct * tmp = (struct mzROIStruct *) calloc(mzLength->mzval - del,  sizeof(struct mzROIStruct));
     if (tmp == NULL)
-      error("findmzROI/cleanup: buffer memory could not be allocated ! (%d bytes)\n", (mzLength->mzval - del) * sizeof(struct mzROIStruct));
+      error("findmzROI/cleanup: buffer memory could not be allocated !\n");
     for (i=0; i < mzLength->mzval; i++) {
         if (mzval[i].deleteMe == FALSE) {
             tmp[p].mz = mzval[i].mz;
@@ -382,7 +382,7 @@ struct scanBuf * getScan(int scan, double *pmz, double *pintensity, int *pscanin
         scanbuf->thisScan= (struct scanStruct  *) calloc(N, sizeof(struct scanStruct));
         // scanbuf->thisScan= (struct scanStruct  *) malloc(N * sizeof(struct scanStruct));
         if (scanbuf->thisScan == NULL)
-            error("findmzROI/getThisScan: Memory could not be allocated (%d * %d) !\n",N , sizeof(struct scanStruct));
+            error("findmzROI/getThisScan: Memory could not be allocated!\n");
 
         scanbuf->thisScanLength=N;
 
@@ -414,7 +414,7 @@ struct scanBuf * getScan(int scan, double *pmz, double *pintensity, int *pscanin
         if (N > 0) {
             scanbuf->nextScan= (double *) calloc(N, sizeof(double));
             if (scanbuf->nextScan == NULL)
-                error("findmzROI/getNextScan: Memory could not be allocated (%d * %d) !\n",N , sizeof(struct scanStruct));
+                error("findmzROI/getNextScan: Memory could not be allocated !\n");
             scanbuf->nextScanLength=N;
 
             for (idx=idx1;idx <= idx2; idx++)
@@ -577,11 +577,11 @@ SEXP findmzROI(SEXP mz, SEXP intensity, SEXP scanindex, SEXP mzrange,
 
   struct mzROIStruct * mzROI = (struct mzROIStruct *) calloc(ROI_INIT_LENGTH,  sizeof(struct mzROIStruct));
   if (mzROI == NULL)
-      error("findmzROI/calloc: buffer memory could not be allocated ! (%d bytes)\n",ROI_INIT_LENGTH  * sizeof(struct mzROIStruct) );
+      error("findmzROI/calloc: buffer memory could not be allocated !\n");
 
   struct mzROIStruct * mzval = (struct mzROIStruct *) calloc(MZVAL_INIT_LENGTH,  sizeof(struct mzROIStruct));
   if (mzval == NULL)
-      error("findmzROI/calloc: buffer memory could not be allocated ! (%d bytes)\n",MZVAL_INIT_LENGTH  * sizeof(struct mzROIStruct) );
+      error("findmzROI/calloc: buffer memory could not be allocated !\n");
 
   mzLength.mzvalTotal = MZVAL_INIT_LENGTH;
   mzLength.mzROITotal = ROI_INIT_LENGTH;
