@@ -884,7 +884,7 @@ SEXP test_integer(SEXP x) {
 
 SEXP test_real(SEXP x) {
   int x_val = asReal(x);
-  Rprintf("input asReal(x): %f\n", x_val);
+  //Rprintf("input asReal(x): %f\n", x_val);
 
   //
   double *p_ans;
