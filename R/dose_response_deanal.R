@@ -157,7 +157,7 @@ GetDoseUpIDs <- function(mSetObj=NA){
 
 GetDoseDnMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
- #save.image("TestD.RData");
+  #save.image("TestD.RData");
   lod <- mSetObj$analSet$dose$p.log;
   fc <- mSetObj$analSet$dose$fc.log;
   inx <- which(mSetObj$analSet$dose$inx.down);

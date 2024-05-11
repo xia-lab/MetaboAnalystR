@@ -2093,6 +2093,10 @@ PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="
   if(is.na(width)){
     w <- 10
     h <- 7.5
+    if(meta.num > 10){
+        w <- 16
+        h <- 12
+    }
   }else if(width == 0){
     w <- 8;
     h <- 6;
@@ -2102,14 +2106,6 @@ PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="
   }
 
   textSize = 4;
-  if(meta.num > 25){
-    w <- 24
-    h <- 18
-    textSize = 3.5;
-  }else if(meta.num > 10){
-    w <- 16
-    h <- 12
-  }
 
   library(reshape2)
   library(ggplot2)
