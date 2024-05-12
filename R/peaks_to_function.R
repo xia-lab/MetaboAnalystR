@@ -912,8 +912,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
     
     fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
-
-    if( is.null(mSetObj$initPSEA || mSetObj$initPSEA)){
+    if( is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
         mSetObj$integ.resmat <- dfcombo;
         mSetObj$paramSet$integ.lib <- mSetObj$lib.organism;
     }

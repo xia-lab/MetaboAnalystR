@@ -197,7 +197,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
 
   # record lib
   mSetObj$paramSet$lib <- lib;
-  mSetObj$initPSEA <- true;
+  mSetObj$initPSEA <- TRUE;
 
   .set.mSet(mSetObj);
 
