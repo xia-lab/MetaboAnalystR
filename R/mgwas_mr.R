@@ -4,135 +4,58 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-CreateResTableExposure <- function(mSetObj=NA, type="ld"){
-  mSetObj <- .get.mSet(mSetObj);
-  if(type == "ld"){
-    exposure <- mSetObj$dataSet$exposure.ldp
-  }else if(type == "harmonized"){
-    exposure <- mSetObj$dataSet$harmonized.dat
-  }
-  ## get associated metabolites for each snp
-  mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), snp.nms, "snp2met", "rsid", "all", "all");
-  #print(head(mir.dic));
-
-  res <- mir.dic[, c("rsid","name","symbol","entrez")];
-     
-   # Create summary tables for metabolites and genes
-    summary_table <- res %>%
-      group_by(rsid) %>%
-      summarise(
-        metabolites = paste(unique(name), collapse = ", "),
-        genes = paste(unique(symbol), collapse = ", "),
-        gene_id = paste(unique(entrez), collapse = ", "),
-      ) %>%
-      ungroup()
-
-    # Rename column for merging
-    colnames(summary_table)[1] <- "SNP"
-
-    # Merge with exposure data
-    merged_table <- merge(exposure, summary_table, by = "SNP", all = TRUE)
-
-    # Number of columns in the data frame
-    num_cols <- ncol(merged_table)
-
-    # Create a sequence of column indices with the first column moved to the fourth position
-    # Adjust this as needed for your specific column arrangement
-    new_order <- c(2:3, 1, 4:num_cols)
-
-    # Reorder the columns
-    merged_table <- merged_table[, new_order]
-}
-
-
-PerformLDClumping <- function(mSetObj=NA, ldclumpOpt){
-
-  mSetObj <- .get.mSet(mSetObj);
-  exposure.dat <- mSetObj$dataSet$exposure;
-  exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
-  colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
-  exposure.snp <- mSetObj$dataSet$exposure$SNP;
-
-  if(ldclumpOpt!="no_ldclump"){
-    exposure.dat <- clump_data_local_ld(exposure.dat);
-    exposure.snp <- exposure.dat$SNP;
-  }
-
-  mSetObj$dataSet$exposure.ldp <- exposure.dat;
-  .set.mSet(mSetObj)
-  return(nrow(mSetObj$dataSet$exposure)-nrow(exposure.dat));
- 
-}
-
-PerformLDProxies <- function(mSetObj=NA, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh){
-  mSetObj <- .get.mSet(mSetObj);
-  exposure.dat <- mSetObj$dataSet$exposure.ldp;
-  exposure.snp <- exposure.dat$SNP;
-  outcome.id <- mSetObj$dataSet$outcome$id;
-
-  if(ldProxyOpt == "no_proxy"){
-    ldProxies <- F;
-    pldSNPs <- F;
-  }else{
-    ldProxies <- T;
-    pldSNPs <- T;
-  }
-
-  captured_messages <<- "";
-
-  outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-                                                   rsq = as.numeric(ldThresh), palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=as.numeric(mafThresh)))
-   
-  last_msg <- captured_messages[length(captured_messages)];
-  print(last_msg);
-  if(length(grep("Server error: 502", last_msg)) > 0 || length(grep("Failed to retrieve results from server", last_msg))){
-    AddErrMsg(paste0("The server is busy, try again later!"))
-    return(-2);   
-  }else if(is.null(outcome.dat)){
-    AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
-    return(-2);
-  }
-
-  mSetObj$dataSet$outcome.dat <- outcome.dat;
-  .set.mSet(mSetObj)
-  return(nrow(exposure.dat) - nrow(outcome.dat) + sum(!outcome.dat$mr_keep.outcome))
-}
-
-capture_messages <- function(expr) {
-  withCallingHandlers(expr, message = function(m) {
-    # Append the message to the global variable
-    captured_messages <<- c(captured_messages, conditionMessage(m))
-    #invokeRestart("muffleMessage")
-  })
-}
-
-PerformHarmonization <- function(mSetObj=NA, harmonizeOpt){
-  mSetObj <- .get.mSet(mSetObj);
-  exposure.dat <- mSetObj$dataSet$exposure.ldp;
-  outcome.dat <- mSetObj$dataSet$outcome.dat;
-  
-  dat <- TwoSampleMR::harmonise_data(exposure.dat, outcome.dat, action = as.numeric(harmonizeOpt));
-  mSetObj$dataSet$harmonized.dat <- dat;
-  return(.set.mSet(mSetObj))
-}
-
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
       mSetObj <- .get.mSet(mSetObj);
       err.vec <<- "";
-      res1 <- PerformLDClumping(mSetObj, ldclumpOpt);
-      mSetObj <- .get.mSet(mSetObj);
-      res2 <- PerformLDProxies(mSetObj, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh);
-      if(res2 == -2){
-        #empty outcome.dat error.
-        return(-2);
+      
+      exposure.dat <- mSetObj$dataSet$exposure;
+      exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
+      colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
+      exposure.snp <- mSetObj$dataSet$exposure$SNP;
+      outcome.id <- mSetObj$dataSet$outcome$id;
+
+      # do LD clumping
+      if(ldclumpOpt!="no_ldclump"){
+        exposure.dat <- clump_data_local_ld(exposure.dat);
+        exposure.snp <- exposure.dat$SNP;
+        res1 <- nrow(mSetObj$dataSet$exposure)-nrow(exposure.dat);
+        AddMsg(paste0("LD clumping removed SNP#", res1));
+      }else{
+        AddMsg(paste0("No LD clumping performed."));
       }
-      mSetObj <- .get.mSet(mSetObj);
-      res <- PerformHarmonization(mSetObj=NA, harmonizeOpt);
-      mSetObj <- .get.mSet(mSetObj);
-      outcome.dat <- mSetObj$dataSet$outcome.dat;
-      print(res1+res2);
-      print("snpfilter");
-      return(res1 + res2)
+      mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$dat;
+
+      # now obtain summary statistics for all available outcomes
+      if(ldProxyOpt == "no_proxy"){
+         ldProxies <- F;
+         pldSNPs <- F;
+         AddMsg(paste0("No LD proxy used."));
+      }else{
+         ldProxies <- T;
+         pldSNPs <- T;
+      }
+      captured_messages <<- "";
+      require('magrittr');
+      outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+                                                   rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh)); 
+      last_msg <- captured_messages[length(captured_messages)];
+      print(last_msg);
+      
+      if(length(grep("Server error: 502", captured_messages)) > 0 || length(grep("Failed to retrieve results from server", captured_messages))){
+            AddErrMsg(paste0(last_msg));
+            return(-2);   
+      }
+      if(is.null(outcome.dat) | nrow(outcome.dat) == 0){
+            AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
+            return(-2);
+      }
+      mSetObj$dataSet$outcome.dat <- outcome.dat;
+
+      # do harmonization  
+      dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+      mSetObj$dataSet$harmonized.dat <- dat;
+
+      return(.set.mSet(mSetObj));
 }
 
 
@@ -191,6 +114,15 @@ PerformMRAnalysis <- function(mSetObj=NA){
     return(current.msg);
   }
 }
+
+capture_messages <- function(expr) {
+  withCallingHandlers(expr, message = function(m) {
+    # Append the message to the global variable
+    captured_messages <<- c(captured_messages, conditionMessage(m))
+    #invokeRestart("muffleMessage")
+  })
+}
+
 
 GetMRRes.rowNames<-function(mSetObj=NA){
   #save.image("GetMRRes.rowNames.RData")
