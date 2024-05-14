@@ -133,7 +133,7 @@ msmsResClean <- function(res){
   
   idx <- vapply(allcmpds_unique, function(cmpd){
     idx1 <- (allcmpds == cmpd)
-    msco <- max(allscore[idx1])
+    msco <- max(allscore[idx1], na.rm = TRUE)
     idx2 <- (allscore == msco)
     which(idx1 & idx2)[1]
   }, FUN.VALUE = integer(1L))
@@ -424,7 +424,7 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
 #' @param mSetObj mSetObj
 #' @param filename filename with path
 #' @param format_type format type, can be 'mgf' or 'msp'
-#' @param keepAllspec if you want to search all spectra from your local, turn keepAllspec to TRUE. it is FALSE by default.
+#' @param keepAllspec if you want to search all spectra from your local, set keepAllspec to TRUE. it is FALSE by default.
 #' @export
 #' @author Zhiqiang Pang
 
@@ -447,7 +447,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     start_idxs <- vapply(data_table[,1], function(x){x == "BEGIN IONS"}, 
                          FUN.VALUE = logical(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS spectra included in your data."))
-    if(length(which(start_idxs)) > 20){
+    if((length(which(start_idxs)) > 20) & !keepAllspec){
       AddMsg("Only first 20 tandem spectra will be searched!")
       Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
       keep20 = TRUE;
@@ -552,7 +552,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     }, FUN.VALUE = integer(1L), USE.NAMES = F)
     Msg <- c(Msg, paste0("A total of ", length(which(start_idxs)), " MS/MS records detected in your data."))
     Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
-    if(length(which(!non0_idxs)) > 20){
+    if((length(which(!non0_idxs)) > 20) & (!keepAllspec)){
       AddMsg("Only first 20 tandem spectra will be searched!")
       Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
       keep20 = TRUE;
@@ -652,7 +652,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     
     Msg <- c(Msg, paste0("A total of ",total_size, " MS/MS records detected in your data."))
     Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
-    if(length(non0_idxs) > 20){
+    if((length(non0_idxs) > 20) & (!keepAllspec)) {
       AddMsg("Only first 20 tandem spectra will be searched!")
       Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
       keep20 = TRUE;
@@ -706,6 +706,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
   if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
     Msg <- c(Msg, paste0("Database searching is based on <u>Neutral Loss</u> spectra of corresponding MS/MS spectra."))
   }
+  
+  if(keepAllspec){
+    Msg <- c(Msg, paste0("You can use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
+  }
+
   if(keep20){
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
@@ -759,6 +764,9 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                                   unit1 = "ppm", unit2 = "ppm", ncores = 1){
   require("OptiLCMS")
   mSetObj <- .get.mSet(mSetObj);
+
+  #save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, ncores, file = "performMS2searchBatch__input.rda")
+
   # fetch the searching function
   SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
 
