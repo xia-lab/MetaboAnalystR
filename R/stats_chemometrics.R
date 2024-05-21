@@ -2557,6 +2557,10 @@ GetPLSLoadCmpds <- function(mSetObj=NA){
 GetPLSLoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   signif(as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]), 5);
+  pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
+  pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
+  write(pointMapJson,"pointMap2.json")
+  return(res)
 }
 
 GetPCALoadAxesSpec <- function(mSetObj=NA){
@@ -2593,6 +2597,9 @@ getPCALoadCmpdsSplit <- function(mSetObj=NA, n = 0, total = 10){
 GetPCALoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   res <- signif(as.matrix(mSetObj$analSet$pca$imp.loads[,c(1:2)]),5);
+  pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
+  pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
+   write(pointMapJson,"pointMap.json")
   return(matrix(as.numeric(res), ncol = 2))
 }
 
@@ -2638,7 +2645,11 @@ GetOPLSSigMat <- function(mSetObj=NA, type){
   }else{
     res <- as.matrix(mSetObj$analSet$oplsda$vip.mat);
   }
-  return(signif(res,5))
+  res = signif(res,5)
+  pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
+  pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
+  write(pointMapJson,"pointMap3.json")
+  return(res)
 }
 
 GetDefaultSPLSCVComp <- function(mSetObj=NA){
