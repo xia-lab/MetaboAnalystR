@@ -2556,7 +2556,7 @@ GetPLSLoadCmpds <- function(mSetObj=NA){
 
 GetPLSLoadMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  signif(as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]), 5);
+  res<-signif(as.matrix(mSetObj$analSet$plsr$imp.loads[,c(1:2)]), 5);
   pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
   pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
   write(pointMapJson,"pointMap2.json")
