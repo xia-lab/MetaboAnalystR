@@ -48,7 +48,14 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   require("OptiLCMS")
   mSetObj <- .get.mSet(mSetObj);
   # fetch the searching function
-  SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle
+  SpectraSearchingSingle <- OptiLCMS:::SpectraSearchingSingle;
+  
+  # record parameters
+  mSetObj$dataSet$params <- 
+    data.frame(ppm1 = ppm1, ppm2 = ppm2, database = database, 
+               similarity_meth = similarity_meth, precMZ = precMZ, 
+               ionMode = ionMode, unit1 = unit1, unit2 = unit2,
+               OptiLCMSVersion = packageVersion("OptiLCMS"))
   
   # configure ppm/da param
   if(unit1 == "da"){
@@ -347,8 +354,6 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   print(p1)
   dev.off()
 
-  # Save the interactive plot with ggplot
-  save(p1, file = "p1.rda")
   # px <- plotly::ggplotly(p1);
   px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
@@ -399,7 +404,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
       }
     }
   }
-
+  
+  # Save the interactive plot with ggplot
+  saveRDS(px, file = paste0(gsub(".png|.svg|.pdf", "", imageNM), ".rds"))
   
   jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
@@ -418,6 +425,75 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   return(.set.mSet(mSetObj))
 }
 
+
+readMgfSpectra <- function(filename) {
+  require("MSnbase")
+  cat("Scanning", filename, "...\n")
+  
+  mgf <- scan(file = filename, what = "",
+              sep = "\n", quote = "",
+              allowEscapes = FALSE,
+              quiet = TRUE)
+  
+  ## From http://www.matrixscience.com/help/data_file_help.html#GEN
+  ## Comment lines beginning with one of the symbols #;!/ can be included,
+  ## but only outside of the BEGIN IONS and END IONS statements that delimit an MS/MS dataset.
+  cmts <- grep("^[#;!/]", mgf)
+  if (length(cmts))
+    mgf <- mgf[-cmts]
+  
+  begin <- grep("BEGIN IONS", mgf) + 1L
+  end <- grep("END IONS", mgf) - 1L
+  
+  n <- length(begin)
+  
+
+  spectra <- vector("list", length = n)
+  fdata <- vector("list", length = n)
+  
+  for (i in seq(along = spectra)) {
+    specInfo <- MSnbase:::extractMgfSpectrum2Info(mgf[begin[i]:end[i]],
+                                        centroided = TRUE)
+    spectra[[i]] <- specInfo$spectrum
+    fdata[[i]] <- specInfo$fdata
+  }
+
+  fdata <- do.call(rbind, fdata)
+  
+  names(spectra) <- paste0("X", seq_along(spectra))
+  assaydata <- list2env(spectra)
+  process <- new("MSnProcess",
+                 processing = paste("Data loaded:", date()),
+                 files = filename,
+                 smoothed = FALSE)
+  pdata <- new("AnnotatedDataFrame",
+               data = data.frame(sampleNames = filename,
+                                 fileNumbers = 1))
+
+  rownames(fdata) <- names(spectra)
+  fdata <- AnnotatedDataFrame(data = data.frame(fdata))
+  fdata <- fdata[ls(assaydata), ] ## reorder features
+  ## only levels 0 and 1 for mgf peak lists
+  cache <- MSnbase:::testCacheArg(1, maxCache = 1)
+  tmp <- new("MSnExp",
+             assayData = assaydata,
+             phenoData = pdata,
+             featureData = fdata,
+             processingData = process)
+  newhd <- MSnbase:::.header(tmp)
+
+  .cacheEnv <- MSnbase:::setCacheEnv(list(assaydata = assaydata,
+                                hd = newhd),
+                           cache, lock = TRUE)
+  toReturn <- new("MSnExp",
+                  assayData = assaydata,
+                  phenoData = pdata,
+                  featureData = fdata,
+                  processingData = process,
+                  .cache = .cacheEnv)
+  if (validObject(toReturn))
+    return(toReturn)
+}
 
 #' SaintyCheckMSPfile
 #'
@@ -640,7 +716,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     mSetObj[["dataSet"]][["prec_mzrt_included"]] <- paste0(all_precmz, "mz@", all_precrt, "min")
   } else if(format_type == "mgf") {
     require(MSnbase)
-    mgf_dt <- readMgfData(filename)
+    mgf_dt <- readMgfSpectra(filename)
     total_size <- length(mgf_dt@assayData)
     Msg <- c(Msg, "Your MGF file is a standard MGF file!")
     scannames <- names(mgf_dt@assayData)
@@ -651,7 +727,7 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     scannames <- scannames[non0_idxs]
     
     Msg <- c(Msg, paste0("A total of ",total_size, " MS/MS records detected in your data."))
-    Msg <- c(Msg, paste0("A total of ", length(which(!non0_idxs)), " non-empty MS/MS spectra found in your data."))
+    Msg <- c(Msg, paste0("A total of ", length(non0_idxs), " non-empty MS/MS spectra found in your data."))
     if((length(non0_idxs) > 20) & (!keepAllspec)) {
       AddMsg("Only first 20 tandem spectra will be searched!")
       Msg <- c(Msg, paste0("Only first 20 tandem spectra will be searched by default!"))
@@ -715,7 +791,11 @@ SaintyCheckMSPfile <- function(mSetObj=NA, filename = "", format_type = "msp", k
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   } else {
-    Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
+    if(length(ms2spec)>20){
+      Msg <- c(Msg, paste0("Please click <b>Submit</b> button to start database searching."))
+    } else {
+      Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
+    }
   }
 
   if(mSetObj[["dataSet"]][["MSMS_db_option"]] == "nl"){
@@ -762,11 +842,19 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                                   similarity_meth = 0,
                                   precMZ = NA, sim_cutoff = 30, ionMode = "positive",
                                   unit1 = "ppm", unit2 = "ppm", ncores = 1){
+  cat(10, file = "progress_value.txt")
   require("OptiLCMS")
   mSetObj <- .get.mSet(mSetObj);
+  cat(15, file = "progress_value.txt")
+  #save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, ncores, 
+  #     file = "performMS2searchBatch__input.rda")
 
-  #save(mSetObj, ppm1, ppm2, dbpath, frgdbpath, database, similarity_meth, precMZ, sim_cutoff, ionMode, unit1, unit2, ncores, file = "performMS2searchBatch__input.rda")
-
+  mSetObj$dataSet$params <- 
+    data.frame(ppm1 = ppm1, ppm2 = ppm2, database = database, 
+               similarity_meth = similarity_meth, precMZ = precMZ, 
+               ionMode = ionMode, unit1 = unit1, unit2 = unit2,
+               OptiLCMSVersion = packageVersion("OptiLCMS"))
+  
   # fetch the searching function
   SpectraSearchingBatch <- OptiLCMS:::SpectraSearchingBatch
 
@@ -802,7 +890,9 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   
   peak_mtx <- cbind(spec_set_prec-1e-10, spec_set_prec+1e-10, NA, NA)
   colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
-  
+  cat(18, file = "progress_value.txt")
+  cat("", file = "progress_value_parallel.txt")
+  cat("\nSearching the database now. This step may take a long time....\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
   if(ncores == 1){
     results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
                                      ion_mode_idx, dbpath, database_opt)
@@ -832,10 +922,17 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                         Concensus_spec0[[1]] <- 0:length(vec_idx)
                         Concensus_spec0[[2]] <- Concensus_spec0[[2]][vec_idx]
                         
+                        if(length(vec_idx)==1){
+                          peak_mtx_input <- matrix(peak_mtx[vec_idx,], ncol = 4)
+                        } else {
+                          peak_mtx_input <- peak_mtx[vec_idx,]
+                        }
+                        
                         res0 <- SpectraSearchingBatch(Concensus_spec0, 
                                                       0:(length(vec_idx)-1), 
-                                                      peak_mtx[vec_idx,], 
+                                                      peak_mtx_input, 
                                                       ppm1, ppm2, ion_mode_idx, dbpath, database_opt)
+                        cat("=", file = "progress_value_parallel.txt", append = TRUE)
                         res0},
                       Concensus_spec = Concensus_spec,
                       peak_mtx = peak_mtx,
@@ -846,7 +943,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                       database_opt = database_opt,
                       ncores = ncores)
     stopCluster(cl)
-    
+    cat(70, file = "progress_value.txt")
     res <- list()
     for(i in 1:ncores){
       res <- c(res, res1[[i]])
@@ -856,7 +953,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
    
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
-  
+  cat(80, file = "progress_value.txt")
   # to extract fragments
   require(RSQLite)
   require(DBI)
@@ -864,7 +961,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   con <- dbConnect(SQLite(), frgdbpath)
   dt_idx <- dbGetQuery(con, "SELECT * FROM Index_table")
   dbDisconnect(con)
-  
+  cat(90, file = "progress_value.txt")
   for(k in 1:length(results_clean)){
     frgs_list <- lapply(results_clean[[k]][["IDs"]], function(n){
       dbs <- dt_idx$DB_Tables[which((dt_idx$Min_ID <= n) & (n <= dt_idx$Max_ID))]
@@ -877,7 +974,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     
     mSetObj$dataSet$frgs_result[[k]] <- frgs_list
   }
-  
+  cat(100, file = "progress_value.txt")
   mSetObj$dataSet$spec_set_prec <- spec_set_prec;
   return(.set.mSet(mSetObj));
 }
@@ -921,7 +1018,7 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     Msg <- c(Msg, paste0("The minimum number of MS/MS fragments is ", min(msms_frg_num), "."))
     Msg <- c(Msg, paste0("The maximum number of MS/MS fragments is ", max(msms_frg_num), "."))
     Msg <- c(Msg, paste0("Please use <b>Edit</b> button below to manually update the inclusion list for database searching!"))
-    Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
+    Msg <- c(Msg, paste0("Please click <b>Submit</b> button to start database searching."))
   } else {
     mSetObj[["dataSet"]][["prec_mz_included"]] <- 
       mSetObj[["dataSet"]][["prec_mz_all"]][idxs];
@@ -970,6 +1067,12 @@ SummarizeCMPDResults <- function(mSetObj=NA, top_cutoff = 60, low_cutoff = 20){
   res[3] <- length(which(top_scores < low_cutoff))
   
   return(res)
+}
+
+GetCountsOfIncludedIons <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj[["dataSet"]][["prec_mz_included"]] -> all_precmz;
+  return(length(all_precmz))
 }
 
 GetMSMSPrecMZvec_msp <- function(mSetObj=NA){
@@ -1235,4 +1338,57 @@ generateMS2dbOpt <- function(database = "all", ionMode = "positive"){
   }
   database_str <- paste0(prefix, database_opts)
   return(database_str)
+}
+
+saveCurrentSession <- function(path){
+  save.image(file = paste0(path, "/MS2_rsession.RData"))
+}
+
+saveParams4Processing <- function(ppm_val1, ppm_val2,
+                                  database_path, fragmentDB_pth,
+                                  msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, path){
+  save(ppm_val1, ppm_val2,
+       database_path, fragmentDB_pth,
+       msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, 
+       ionMode, unit1, unit2, file = paste0(path, "/MS2_searching_params.rda"))
+}
+
+finishsearchingjob <- function(mSet){
+  qs::qsave(mSet, file = 'MS2_searching_results.qs')
+  cat("Everything has been finished Successfully !\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
+}
+
+createSLURMBash <- function(path_str){
+  
+  ## Prepare Configuration script for slurm running
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=MS2_searching\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", path_str, "/metaboanalyst_ms2_search.txt\n")
+  
+  ## Prepare R script for running
+  # need to require("OptiLCMS")
+  str <- paste0('library(OptiLCMS)');
+  
+  # Set working dir & init env & files included
+  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
+  str <- paste0(str, ";\n", "setwd(\'",path_str,"\')");
+  str <- paste0(str, ";\n", "load(\'MS2_rsession.RData\')");
+  str <- paste0(str, ";\n", "load(\'MS2_searching_params.rda\')");
+  
+  # start exe performMS2searchBatch
+  str <- paste0(str, ";\n", "performMS2searchBatch(NA, ppm_val1, ppm_val2, database_path, fragmentDB_pth, msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, 4)");
+  str <- paste0(str, ";\n", "finishsearchingjob(mSet)");
+  
+  # Write down the exe sh file
+  sink(paste0(path_str, "/ExecuteRawSpec.sh"));
+  
+  cat(conf_inf);
+  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  
+  sink();
+}
+readProgressSec <- function(path_str){
+  chr <- readLines(paste0(path_str, "/progress_value_parallel.txt"), warn = F)
+  return(nchar(chr));
+}
+loadMS2ResultmSet <- function(){
+  mSet <<- qs::qread("MS2_searching_results.qs");
 }
