@@ -591,7 +591,7 @@ CovariateScatter.Anal <- function(mSetObj,
     sig.mat <- sig.mat[ord.inx,,drop=F];
   }else{
     # just top 10
-    sig.mat <- rest[,1:10,]; 
+    sig.mat <- rest[1:10,]; 
   }
   
   AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
