@@ -236,6 +236,10 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
       str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
                                                   pattern = \"^MS2_\",
                                                   full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
+    } else if(file.exists("isGoogleDriveUpload")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
+                                                  full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
     }
     # progress 110
     cmd_prgs <- "OptiLCMS:::MessageOutput(
@@ -292,6 +296,10 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     } else if(any(grepl("MS2_", list.files("upload/")))) {
       str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
                                                   pattern = \"^MS2_\",
+                                                  full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
+    } else if(file.exists("isGoogleDriveUpload")){
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(mSet = mSet, filesPath = c(list.files(\'upload/MS2\',
+                                                  pattern = \'.mzML|.mzXML|.cdf\',
                                                   full.names = T, recursive = T)), acquisitionMode = \'DIA\', SWATH_file = 'swath_design_metaboanalyst.txt')")
     }
     
@@ -471,8 +479,8 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   # str_asari
   
-  cat(paste0("\nsrun R -e \"\n", str, "\n\";"));
-  cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
+  cat(paste0("\n", str_asari, "; \n\n"));
   cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
   
   sink();
@@ -495,7 +503,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
 #' this file will be run by SLURM by using OptiLCMS and Asari from python.
 #' @noRd
 #' @author Zhiqiang Pang
-CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilenms.vec){
+CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilenms.vec, source_path){
   
   if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
     users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
@@ -511,6 +519,13 @@ CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilen
   
   require(R.utils)
   allMSFiles <- list.files("upload", full.names = T, recursive = T)
+  
+  if(length(allMSFiles)<3 & file.exists("isGoogleDriveUpload")){
+    download_script <- paste0("Rscript --vanilla ", source_path, "/XiaLabPro/R/download_googledrive.R ", users.path)
+  } else {
+    download_script <- "";
+  }
+
   for(i in allMSFiles){
     if(!grepl("^upload/MS2", i)){
       createLink(link = paste0(users.path, "/uploadAll/",basename(i)), target = i)
@@ -558,11 +573,13 @@ CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilen
   sink("ExecuteRawSpec.sh");
   
   cat(conf_inf);
-  
+  if(download_script!=""){
+    cat("\n\n", download_script, "\n\n")
+  }
   # str_asari
   
-  cat(paste0("\nsrun R -e \"\n", str, "\n\";"));
-  cat(paste0("\nsrun ", str_asari, "; \n\n"));
+  cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
+  cat(paste0("\n", str_asari, "; \n\n"));
   cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
   
   sink();
