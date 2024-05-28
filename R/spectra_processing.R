@@ -565,12 +565,7 @@ CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilen
   str <- paste0(str, ';\n',  planString)
   str <- paste0(str, '\n',  "OptiLCMS:::MessageOutput('\nStep 2/6: Start raw spectral processing with Asari! 
                   \nThis step may take a long time...', '\n', NULL)")
-  #str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
-  
-  #str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
-  #str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
-  #str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
-  
+
   # check the latest result folder
   load("params.rda")
   minFrc <- peakParams[["minFraction"]];
