@@ -97,7 +97,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
 #' this file will be run by SLURM by using OptiLCMS
 #' @noRd
 #' @author Guangyan Zhou, Zhiqiang Pang
-CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.vec){
+CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.vec, source_path){
   
   guestName <- guestName;
   planString <- planString;
@@ -116,9 +116,17 @@ CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.v
   }
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=2\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=2#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=2\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   ## Prepare R script for running
+  # download files if needed
+  require(R.utils)
+  allMSFiles <- list.files("upload", full.names = T, recursive = T)
+  if(length(allMSFiles)<3 & file.exists("isGoogleDriveUpload")){
+    download_script <- paste0("Rscript --vanilla ", source_path, "/XiaLabPro/R/download_googledrive.R ", users.path)
+  } else {
+    download_script <- "";
+  }
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
   
@@ -150,6 +158,9 @@ CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.v
   sink("ExecuteRawSpec.sh");
   
   cat(conf_inf);
+  if(download_script!=""){
+    cat("\n\n", download_script, "\n\n")
+  }
   cat(paste0("\nsrun R -e \"\n", str, "\n\""));
       
   sink();
