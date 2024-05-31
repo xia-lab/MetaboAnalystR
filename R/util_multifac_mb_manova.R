@@ -2,6 +2,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
                        beta = NULL, alpha.d = NULL, alpha = NULL, condition.grp,
                        time.grp = NULL, rep.grp = NULL, p = 0.02)
 {
+
   M <- as.matrix(object)
   tr <- function(X) {
     sum(diag(X))
@@ -79,19 +80,22 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
   
   simple.stat <- apply(simple.stat,1,sum,na.rm=TRUE)
   simple.rank <- G-rank(simple.stat)+1
-  indx1 <- simple.rank<=G*p
-  xbar <- sapply(1:G, function(x) apply(matrix(M[x, ], byrow = TRUE,
-                                               ncol = times), 2, mean, na.rm = TRUE))
-  if (is.null(alpha.d))
-    alpha.d <- sapply(1:D, function(x) apply(xbar.d[[x]][,indx1],
-                                             1, mean, na.rm = TRUE))
+  indx1 <- simple.rank<=G*p;
+
+  if(sum(indx1)==0){ # none pass the test => then use top 5
+    indx1 <- simple.rank<=5;
+  }
+
+  xbar <- sapply(1:G, function(x) apply(matrix(M[x, ], byrow = TRUE, ncol = times), 2, mean, na.rm = TRUE))
+  if (is.null(alpha.d)){
+    alpha.d <- sapply(1:D, function(x) apply(xbar.d[[x]][,indx1],1, mean, na.rm = TRUE));
+  }
   if (is.null(alpha))
     alpha <- apply(xbar[,!indx1], 1, mean, na.rm = TRUE)
   
   
   if (is.null(beta.d) || is.null(beta)) {
-    U.d <- lapply(1:D, function(x) apply(xbar.d[[x]][,indx1] - alpha.d[,
-                                                                       x], 2, function(y) y %*% t(y)))
+    U.d <- lapply(1:D, function(x) apply(xbar.d[[x]][,indx1] - alpha.d[,x], 2, function(y) y %*% t(y)));
     U <- apply(xbar[,!indx1] - alpha, 2, function(y) y %*% t(y))
     Ubar.d <- sapply(1:D, function(x) apply(U.d[[x]], 1,
                                             mean, na.rm = TRUE))
