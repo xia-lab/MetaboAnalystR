@@ -698,33 +698,54 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   width <- 8;
   height <- 8.18;
   
-  library(plotly)
-  threshold <- logp_val               
+ library(dplyr)
+  library(ggplot2)
+  threshold <- logp_val                
+both.mat$category <- with(both.mat, dplyr::case_when(
+  pval.no > threshold & pval.adj > threshold ~ "Significant",
+  pval.no > threshold & pval.adj <= threshold ~ "Non-sig. when adjusted",
+  pval.adj > threshold & pval.no <= threshold ~ "Sig. when adjusted",
+  TRUE ~ "Non-sig."
+))
   
-  both.mat$category <- with(both.mat, dplyr::case_when(
-    pval.no > threshold & pval.adj > threshold ~ "Significant in both",
-    pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
-    pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
-    TRUE ~ "Non-significant"
-  ))
-  
-  # Define a list or data frame mapping categories to properties
-  category_properties <- data.frame(
-    category = c("Significant in both", "Significant in pval.no only", 
-                 "Significant in pval.adj only", "Non-significant"),
-    color = c('#6699CC', '#94C973', '#E2808A', 'grey'),
-    name = c("Significant", "Non-Sig. after adjustment", 
-             "Sig. after adjustment", "Non-Significant")
-  )
-  
-  p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = category, text = paste("Feature:", Row.names, 
+ category_counts <- both.mat %>%
+  group_by(category) %>%
+  summarise(count = n(), .groups = 'drop')
+ 
+both.mat <- both.mat %>%
+  left_join(category_counts, by = "category") %>%
+  mutate(name = paste0(category, " (", count, ")"))
+
+both.mat$count = NULL
+
+
+category_properties <- data.frame(
+  category = c("Significant", "Non-sig. when adjusted", 
+               "Sig. when adjusted", "Non-sig."),
+  color = c('#6699CC', '#E2808A',  '#94C973','grey')
+)
+
+category_properties <- category_properties %>%
+  left_join(category_counts, by = "category") %>%
+  mutate(name = paste0(category, " (", count, ")"))
+category_properties = category_properties[!is.na(category_properties$count),]
+category_properties$count = category_properties$category =NULL
+print(category_properties)
+both.mat$name = factor(both.mat$name,levels = category_properties$name)
+  p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = name, text = paste("Feature:", Row.names, 
                                                                                                "<br>Adjusted Pval:", signif(10^(-pval.adj), 4), 
                                                                                                "<br>Non-adjusted Pval:", signif(10^(-pval.no), 4)))) +
-    geom_point(alpha = 0.5) +
-    scale_color_manual(values = setNames(category_properties$color, category_properties$category), name="") +
-    labs(x = "-log10(P-value): no covariate adjustment", y = "-log10(P-value): adjusted") +
-    theme_minimal() +
-    theme(legend.title = element_blank())
+    geom_point(alpha = 0.8) +
+  scale_color_manual(values = setNames(category_properties$color, category_properties$name)) +
+  labs(x = "-log10(P-value): no covariate adjustment", y = "-log10(P-value): covariate adjusted") +
+  theme_minimal() +
+  theme(legend.title = element_blank(),
+        legend.position = "top",
+        panel.grid = element_line(color = "lightgrey", size = 0.15),
+        panel.background = element_rect(fill = "white", color = "white"),
+        plot.background = element_rect(fill = "white", color = "white"))
+
+  
   
   if(interactive){
     library(plotly);
