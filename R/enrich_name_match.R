@@ -295,10 +295,10 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   
   # style for no matches
   if(mSetObj$dataSet$q.type == "name"){
-    no.prestyle<-"<strong style=\"background-color:yellow; font-size=125%; color=\"black\">";
+    no.prestyle<-"<strong style=\"background-color:var(--orange-500); font-size=125%; color=\"black\">";
     no.poststyle<-"</strong>";
   }else{
-    no.prestyle<-"<strong style=\"background-color:red; font-size=125%; color=\"black\">";
+    no.prestyle<-"<strong style=\"background-color:var(--orange-500); font-size=125%; color=\"black\">";
     no.poststyle<-"</strong>";
   }
   

@@ -698,7 +698,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
 }
 
 # Do posthoc tests on significant features from ANOVA tests
-Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
+Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, max.sig=1000){
   
   mSetObj <- .get.mSet(mSetObj);
   sig.num <- mSetObj$analSet$aov$sig.num;
@@ -729,10 +729,10 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
     }
     
     # note this is only for post-hoc analysis. max 1000 in case too large
-    if(sig.num > 1000){
+    if(sig.num > max.sig){
       # update inx.imp   
       my.ranks <- rank(sig.p);
-      inx.imp <- my.ranks <= 1000;
+      inx.imp <- my.ranks <= max.sig;
       aov.imp <- aov.imp[inx.imp];
     }
     
@@ -749,10 +749,10 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
     cmp.res <- my.cmp.res;
     # post hoc only top 1000;
     
-    if(sig.num > 1000){
+    if(sig.num > max.sig){
       cmp.res <- rep(NA, sig.num); 
       cmp.res[inx.imp] <- my.cmp.res;
-      post.nm <- paste(post.nm, "(top 1000)");
+      post.nm <- paste0(post.nm, " (top ", max.sig, ")");
     }
     # create the result dataframe,
     # note, the last column is string, not double
@@ -765,10 +765,10 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05){
   ord.inx <- order(sig.p, decreasing = FALSE);
   sig.mat <- sig.mat[ord.inx,,drop=F];
   
-  # note only display top 1000 max for web (save all to the file)
+  # note only display max for web (save all to the file)
   fast.write.csv(sig.mat,file=fileName);
-  if(sig.num > 1000){
-    sig.mat <- sig.mat[1:1000,];
+  if(sig.num > max.sig){
+    sig.mat <- sig.mat[1:max.sig,];
   }
   
   aov <- mSetObj$analSet$aov; 
