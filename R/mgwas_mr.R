@@ -6,8 +6,8 @@
 
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
       mSetObj <- .get.mSet(mSetObj);
-      err.vec <<- "";
-      
+      err.vec <<- "";      
+      opengwas_jwt_key <- readOpenGWASKey();
       exposure.dat <- mSetObj$dataSet$exposure;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
       colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
@@ -23,7 +23,8 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       }else{
         AddMsg(paste0("No LD clumping performed."));
       }
-      mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$dat;
+      # mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$dat;
+      mSetObj$dataSet$exposure.ldp <- exposure.dat;
 
       # now obtain summary statistics for all available outcomes
       if(ldProxyOpt == "no_proxy"){
@@ -37,7 +38,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       captured_messages <<- "";
       require('magrittr');
       outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-                                                   rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh)); 
+                                                   rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh, opengwas_jwt = opengwas_jwt_key)); 
       last_msg <- captured_messages[length(captured_messages)];
       print(last_msg);
       
@@ -58,6 +59,17 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       return(.set.mSet(mSetObj));
 }
 
+readOpenGWASKey <- function(){
+    if(.on.public.web){
+        df <- read.csv("/home/glassfish/opengwas_api_keys.csv")
+        idx <- sample(1:nrow(df),1)
+        cat("Using ", df$owner, "'s open gwas key...\n")
+        this_key <- df$Key[1]
+        return(this_key)
+    } else {
+        return("")
+    }
+}
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
