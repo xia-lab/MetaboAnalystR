@@ -85,6 +85,13 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     mSetObj$dataSet$spectrum_dataframe$mz <- precMZ - mSetObj$dataSet$spectrum_dataframe$mz
     mSetObj$dataSet$spectrum_dataframe <- mSetObj$dataSet$spectrum_dataframe[mSetObj$dataSet$spectrum_dataframe$mz>0, ]
   }
+
+  # if use entropy
+  if(similarity_meth == 1){
+    useEntropy <- TRUE;
+  } else {
+    useEntropy <- FALSE;
+  }
   
   # now let call OPTILCMS to search the database
   df <- as.matrix(mSetObj$dataSet$spectrum_dataframe)
@@ -92,7 +99,7 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   peak_mtx <- matrix(c(precMZ-1e-10, precMZ+1e-10, NA, NA), ncol = 4)
   colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
   results <- SpectraSearchingSingle(Concensus_spec, 0, peak_mtx, ppm1, ppm2, 
-                                    ion_mode_idx, dbpath, database_opt)
+                                    ion_mode_idx, dbpath, database_opt, useEntropy = useEntropy)
   
   results_clean <- lapply(results, msmsResClean)
   mSetObj$dataSet$msms_result <- results_clean
@@ -893,22 +900,30 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   cat(18, file = "progress_value.txt")
   cat("", file = "progress_value_parallel.txt")
   cat("\nSearching the database now. This step may take a long time....\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
+  
+  # if use entropy
+  if(similarity_meth == 1){
+    useEntropy <- TRUE;
+  } else {
+    useEntropy <- FALSE;
+  }
+  
   if(ncores == 1){
     results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
-                                     ion_mode_idx, dbpath, database_opt)
+                                     ion_mode_idx, dbpath, database_opt, useEntropy = useEntropy)
   } else {
     # for multiple cores
     require(parallel);
     cl <- makeCluster(getOption("cl.cores", ncores))
     clusterExport(cl, c("Concensus_spec", "peak_mtx", "spec_set_prec",
                         "ppm1", "ppm2", "ion_mode_idx", "dbpath", 
-                        "database_opt", "SpectraSearchingBatch"), envir = environment())
+                        "database_opt", "SpectraSearchingBatch", "useEntropy"), envir = environment())
     res1 <- list()
     res1 <- parLapply(cl, 
                       1:ncores, 
                       function(x, Concensus_spec, peak_mtx,  
                                ppm1, ppm2, ion_mode_idx, dbpath, 
-                               database_opt, ncores){
+                               database_opt, ncores, useEntropy){
                         length_data <- length(Concensus_spec[[1]])
                         lg_pcore <- ceiling(length_data/ncores)
                         
@@ -931,7 +946,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                         res0 <- SpectraSearchingBatch(Concensus_spec0, 
                                                       0:(length(vec_idx)-1), 
                                                       peak_mtx_input, 
-                                                      ppm1, ppm2, ion_mode_idx, dbpath, database_opt)
+                                                      ppm1, ppm2, ion_mode_idx, dbpath, database_opt, useEntropy = useEntropy)
                         cat("=", file = "progress_value_parallel.txt", append = TRUE)
                         res0},
                       Concensus_spec = Concensus_spec,
@@ -941,7 +956,8 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                       ion_mode_idx = ion_mode_idx,
                       dbpath = dbpath,
                       database_opt = database_opt,
-                      ncores = ncores)
+                      ncores = ncores,
+                      useEntropy = useEntropy)
     stopCluster(cl)
     cat(70, file = "progress_value.txt")
     res <- list()
