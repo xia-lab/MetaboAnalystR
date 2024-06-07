@@ -279,9 +279,15 @@ submitMysqlJobRename <- function(userDir, jobID, aligner){
       "echo Finish zip files $(date);",
       sep = " ")
   }
+
+  str_mysql2 <- paste("cp -r",
+                     file.path(userDir, "*"),
+                     file.path(pDir, paste0("job_", jobID)),
+                     sep = " ")
   
   sink(file.path(userDir, "renameDirFromMysql.sh"));
   cat(str_mysql1, "\n");
+  cat(str_mysql2, "\n");
   sink();
 }
 
