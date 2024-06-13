@@ -274,7 +274,7 @@ CreateRHistAppendix <- function(){
 CreateFooter <- function(){
   end <- c("\\vspace{5 mm}\n--------------------------------\n\n",
            "The report was generated on \\Sexpr{date()} with \\Sexpr{print(version$version.string)}, OS system:",
-           "\\Sexpr{Sys.info()['sysname']}, version: \\Sexpr{gsub('#[0-9]+', '', Sys.info()['version'])} .\n",
+           "\\Sexpr{Sys.info()['sysname']}.\n",
            "\\end{document}\n\n"
   );
   cat(end, file=rnwFile, append=TRUE);
