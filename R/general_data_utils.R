@@ -341,6 +341,7 @@ SaveRCommands <- function(mSetObj=NA){
 #'Export R Command History
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
+
 GetRCommandHistory <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj); 
   if(length(mSetObj$cmdSet) == 0){
