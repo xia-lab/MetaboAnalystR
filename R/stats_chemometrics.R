@@ -19,7 +19,7 @@ PCA.Anal <- function(mSetObj=NA){
   std.pca <- imp.pca[1,]; # standard devietation
   var.pca <- imp.pca[2,]; # variance explained by each PC
   cum.pca <- imp.pca[3,]; # cummulated variance explained
-  
+
   # store the item to the pca object
   mSetObj$analSet$pca<-append(pca, list(std=std.pca, variance=var.pca, cum.var=cum.pca));
   fast.write.csv(signif(mSetObj$analSet$pca$x,5), file="pca_score.csv");
@@ -27,6 +27,64 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
+}
+
+# use a PERMANOVA to partition the euclidean distance by groups based on current score plot:
+.calculateDistSig <- function(pc.mat, grp){
+
+    data.dist <- dist(as.matrix(pc.mat), method = 'euclidean');
+    res <- vegan::adonis2(formula = data.dist ~ grp);
+
+    # pairwise for multi-grp
+    if(length(levels(grp)) > 2){
+      pair.res <- .permanova_pairwise(x = data.dist, grp);
+      rownames(pair.res) <- pair.res$pairs;
+      pair.res$pairs <- NULL;
+      pair.res <- signif(pair.res,5);
+      fast.write.csv(pair.res, file="pca_pairwise_permanova.csv");
+    }else{
+      pair.res <- NULL;
+    }
+
+    return(list(res, pair.res));
+}
+
+###adopted from ecole package https://rdrr.io/github/phytomosaic/ecole/
+.permanova_pairwise <- function(x,
+                                 grp,
+                                 permutations = 999,
+                                 method = 'bray',
+                                 padj = 'fdr', ...) {
+  f     <- grp
+  if (!all(table(f) > 1)) warning('factor has singletons! perhaps lump them?')
+  co    <- combn(unique(as.character(f)),2)
+  nco   <- NCOL(co)
+  out   <- data.frame(matrix(NA, nrow=nco, ncol=5))
+  dimnames(out)[[2]] <- c('pairs', 'SumOfSqs', 'F.Model', 'R2', 'pval')
+  if (!inherits(x, 'dist')) {
+    D <- vegan::vegdist(x, method=method)
+  } else {
+    D <- x
+  }
+  #cat('Now performing', nco, 'pairwise comparisons. Percent progress:\n')
+  for(j in 1:nco) {
+    cat(round(j/nco*100,0),'...  ')
+    ij  <- f %in% c(co[1,j],co[2,j])
+    Dij <- as.dist(as.matrix(D)[ij,ij])
+    fij <- data.frame(fij = f[ij])
+    a   <- vegan::adonis2(Dij ~ fij, data=fij, permutations = permutations, ...);
+    out[j,1] <- paste(co[1,j], 'vs', co[2,j])
+    out[j,2] <- a$SumOfSqs[1]
+    out[j,3] <- a$F[1]
+    out[j,4] <- a$R2[1]
+    out[j,5] <- a$`Pr(>F)`[1]
+  }
+  #cat('\n')
+  out$p.adj <- p.adjust(out$pval, method=padj)
+  out$SumOfSqs <-NULL
+  #attr(out, 'p.adjust.method') <- padj
+  #cat('\np-adjust method:', padj, '\n\n');
+  return(out)
 }
 
 #'Rotate PCA analysis
@@ -289,6 +347,19 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }
   par(op);
   dev.off();
+
+  # now calculating the significance
+  pc.mat <- cbind(pc1, pc2);
+  res <- .calculateDistSig(pc.mat, mSetObj$dataSet$cls);
+  resTab <- res[[1]][1,];
+  stat.info <- paste("[PERMANOVA] F-value: ", signif(resTab$F, 5),  "; R-squared: ", signif(resTab$R2, 5), "; p-value (based on 999 permutations): ", signif(resTab$Pr, 5), sep="");   
+  stat.info.vec <- c(signif(resTab$F, 5), signif(resTab$R2, 5), signif(resTab$Pr, 5));
+  names(stat.info.vec) <- c("F-value", "R-squared", "p-value");
+
+  pair.res <- res[[2]];
+
+  # store the item to the pca object
+  mSetObj$analSet$pca$permanova.res <-list(stat.info=stat.info, stat.info.vec=stat.info.vec, pair.res=pair.res);
   return(.set.mSet(mSetObj));
 }
 
@@ -2455,6 +2526,26 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72,
 ########## Utilities for web-server ##########
 ##############################################
 ##############################################
+
+GetPCAStats<-function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$pca$permanova.res$stat.info);
+}
+
+GetPCAPermANOVA<-function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$pca$permanova.res$pair.res);
+}
+
+GetPCAPermANOVAText<-function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$analSet$pca$permanova.res$pair.res;
+  # create a HTML table
+  myT <- print(xtable::xtable(res, digits=5), 
+                           type="html", print.results=F, xtable.width=480,
+                           html.table.attributes="border=1 width=480");
+  return(myT);
+}
 
 # get which number of components give best performance
 GetPLSBestTune<-function(mSetObj=NA){
