@@ -1376,7 +1376,7 @@ saveParams4Processing <- function(ppm_val1, ppm_val2,
 
 finishsearchingjob <- function(mSet){
   qs::qsave(mSet, file = 'MS2_searching_results.qs')
-  cat("Everything has been finished Successfully !\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
+  cat("Everything has been finished successfully!\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
 }
 
 createSLURMBash <- function(path_str){
