@@ -56,17 +56,29 @@ my.json.scatter <- function(filenm, containsLoading=F){
   legendData <- list(label=levels(metadf),color=col.s)
   #for IPCA in multifactor
 
-  if("facB" %in% names(res)){
+  print("legendData:")
+  print(legendData)
+  
+  if ("facB" %in% names(res)) {
     meta.vec2 <- res$facB
-    metadf <- res$metadata_list;
-    shape <- vector();
-    meta.vec.num <- as.integer(as.factor(meta.vec2))
-    shape.s <- c("circle", "triangle", "square", "diamond")[1:length(unique(meta.vec2))];
-
-    for(i in 1:length(meta.vec.num)){
-      shape[i] = shape.s[meta.vec.num[i]];
+    shape <- vector()
+    meta.vec2 <- as.factor(meta.vec2)
+    meta.vec.num <- as.integer(meta.vec2)
+    shape.s <- c("circle", "triangle", "square", "diamond")[1:length(levels(meta.vec2))]
+    
+    for (i in 1:length(meta.vec.num)) {
+      shape[i] <- shape.s[meta.vec.num[i]]
     }
-    legendData2 <- list(label=unique(meta.vec2),shape=shape.s);
+    
+    # Build legendData2 based on shape information
+    legendData2 <- list(
+      label = levels(meta.vec2),
+      shape = levels(as.factor(shape))
+    )
+    
+    # Debug: Print legendData2
+    print("legendData2:")
+    print(legendData2)
   }
   
   nodeSize = 18;

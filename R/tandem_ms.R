@@ -141,9 +141,13 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
 
 msmsResClean <- function(res){
   
-  allcmpds <- res[["Compounds"]];
-  allcmpds_unique <- unique(allcmpds);
+  allcmpds <- res[["Compounds"]];  
   allscore <- res[["Scores"]][[1]];
+
+  scores_idxs <- is.finite(allscore);
+
+  allcmpds <- allcmpds[scores_idxs];
+  allcmpds_unique <- unique(allcmpds);
   
   idx <- vapply(allcmpds_unique, function(cmpd){
     idx1 <- (allcmpds == cmpd)
@@ -966,8 +970,9 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     }
     res -> results
   }
-   
+ 
   results_clean <- lapply(results, msmsResClean)
+
   mSetObj$dataSet$msms_result <- results_clean
   cat(80, file = "progress_value.txt")
   # to extract fragments
@@ -1371,7 +1376,7 @@ saveParams4Processing <- function(ppm_val1, ppm_val2,
 
 finishsearchingjob <- function(mSet){
   qs::qsave(mSet, file = 'MS2_searching_results.qs')
-  cat("Everything has been finished Successfully !\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
+  cat("Everything has been finished successfully!\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
 }
 
 createSLURMBash <- function(path_str){
