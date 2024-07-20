@@ -730,7 +730,7 @@ category_properties <- category_properties %>%
   mutate(name = paste0(category, " (", count, ")"))
 category_properties = category_properties[!is.na(category_properties$count),]
 category_properties$count = category_properties$category =NULL
-print(category_properties)
+
 both.mat$name = factor(both.mat$name,levels = category_properties$name)
   p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = name, text = paste("Feature:", Row.names, 
                                                                                                "<br>Adjusted Pval:", signif(10^(-pval.adj), 4), 
