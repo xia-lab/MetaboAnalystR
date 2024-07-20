@@ -720,6 +720,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
   }
+
   plotType <- mSetObj$paramSet$cmpdSummaryType
   #print(paste("plottype==", plotType))
   if(.on.public.web){
@@ -746,6 +747,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   }
   
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
+  imgName <- gsub("@", "_", imgName); # replace special characters;
   if(meta != "NA"){
     imgName <- paste(imgName, "_", meta, "_", count, "_summary_dpi", dpi, ".", format, sep="");
   }else{

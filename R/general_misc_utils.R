@@ -2,7 +2,7 @@
 ### Perform misc tasks
 ### Jeff Xia\email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-###License: GNU GPL (>= 2)
+### License: GNU GPL (>= 2)
 
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
@@ -1423,3 +1423,12 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
       return(list(data=my.data, metadata=my.metadata));
 }
 
+AddFeatureToReport <- function(mSetObj=NA, id, imgName){
+    mSetObj <- .get.mSet(mSetObj);
+    if (is.null(mSetObj$imgSet$featureList)) {
+      mSetObj$imgSet$featureList <- list()
+    }
+    mSetObj$imgSet$featureList[[id]] <- imgName; 
+    print(mSetObj$imgSet$featureList);
+    return(.set.mSet(mSetObj));
+}
