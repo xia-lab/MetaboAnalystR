@@ -88,7 +88,7 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
 
   # need to clean feat.id in case contain /
   feat.id <- CleanNames(feat.id);
-  imgName <- paste("Metabolite_", feat.id, "_", model.nm,"_dpi",dpi, ".", format, sep="");
+  imgName <- paste("Metabolite_", feat.id, "_", model.nm, ".", format, sep="");
   Cairo::Cairo(file = imgName, width=5.25, height=6, type=format, unit="in", dpi=dpi, format=format, bg="white");
   print(p)
   dev.off();
@@ -133,8 +133,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
   print(p)
   dev.off();
 
-  dataSet$PlotDRModelBars <- imgNm;
-  mSetObj$dataSet <- dataSet;
+  mSetObj$imgSet$PlotDRModelBars <- imgNm;
   return(.set.mSet(mSetObj));
 }
 
@@ -182,9 +181,6 @@ PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
   print(p)
   dev.off();
 
-  dataSet$PlotDRHistogram <- imgNm;
-  mSetObj$dataSet <- dataSet;
+  mSetObj$imgSet$PlotDRHistogram <- imgNm;
   return(.set.mSet(mSetObj));
 }
-
-

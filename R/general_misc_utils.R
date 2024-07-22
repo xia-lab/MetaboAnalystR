@@ -1429,6 +1429,14 @@ AddFeatureToReport <- function(mSetObj=NA, id, imgName){
       mSetObj$imgSet$featureList <- list()
     }
     mSetObj$imgSet$featureList[[id]] <- imgName; 
-    print(mSetObj$imgSet$featureList);
+    return(.set.mSet(mSetObj));
+}
+
+AddDoseFeatureToReport <- function(mSetObj=NA, id, imgName){
+    mSetObj <- .get.mSet(mSetObj);
+    if (is.null(mSetObj$imgSet$doseFeatureList)) {
+      mSetObj$imgSet$doseFeatureList <- list()
+    }
+    mSetObj$imgSet$doseFeatureList[[id]] <- imgName; 
     return(.set.mSet(mSetObj));
 }
