@@ -88,6 +88,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
+         
     if(.on.public.web){
         return(.set.mSet(mSetObj));
     }else{
