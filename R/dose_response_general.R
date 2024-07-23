@@ -1078,12 +1078,13 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
 GetFitResultMatrix <- function(){
   mSetObj <- .get.mSet(NA);
   res <- mSetObj$dataSet$html.resTable[,-c(1,2)];
-
   # turn off scientific notation (Java cannot recognize it)
   options(scipen=999);
   res <- signif(as.matrix(res), 5)
   res[is.nan(res)] <- 0;
   colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
+  print(head(res))
+
   return(res);
 }
 

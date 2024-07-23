@@ -6,6 +6,17 @@
 
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
       mSetObj <- .get.mSet(mSetObj);
+
+      #record
+      mSetObj$dataSet$snp_filter_params <- list(
+      ldclumpOpt=ldclumpOpt,
+      ldProxyOpt=ldProxyOpt,
+      ldProxies=ldProxies,
+      ldThresh=ldThresh,
+      pldSNPs=pldSNPs,
+      mafThresh=mafThresh,
+      harmonizeOpt=harmonizeOpt)
+
       err.vec <<- "";      
       opengwas_jwt_key <- readOpenGWASKey();
       exposure.dat <- mSetObj$dataSet$exposure;
@@ -61,7 +72,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
 readOpenGWASKey <- function(){
     if(.on.public.web){
-        df <- read.csv("/home/glassfish/opengwas_api_keys.csv")
+        if(file.exists("/home/zgy/opengwas_api_keys.csv")){
+        df <- read.csv("/home/zgy/opengwas_api_keys.csv");
+        }else{
+        df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
+        }
         idx <- sample(1:nrow(df),1)
         cat("Using ", df$owner, "'s open gwas key...\n")
         this_key <- df$Key[1]
@@ -206,292 +221,255 @@ GetMRMatColNames<-function(mSetObj=NA, type){
     return(colnames(mSetObj$dataSet$mr_results))
   }
 }
-
-PlotScatter<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  imgName <<-imgName;
-  #save.image("PlotScatter.RData")
+PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+  mSetObj <- .get.mSet(mSetObj)
   
+  mr.res <- mSetObj$dataSet$mr_results
+  mr.dat <- mSetObj$dataSet$mr_dat
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # get mr_results and mr_dat
-  mr.res <- mSetObj$dataSet$mr_results;
-  mr.dat <- mSetObj$dataSet$mr_dat;
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 12;
-  }else if(width == 0){
-    w <- 7;
+  if(format == "png"){
+  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
   }else{
-    w <-width;
+  imgName <- paste0(exposure, "_", imgName, ".", format)
+  }
+  if (is.na(width)) {
+    w <- 12
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
   }
   h <- 9
   
-  #record img
-  mSetObj$imgSet$mr.scatter <- imgName
-  mSetObj$imgSet$current.img <- imgName;
+  # Record img
+  mSetObj$imgSet$mr_scatter_plot <- imgName
+  mSetObj$imgSet$current.img <- imgName
   
-  plot.list <- .mr_scatterPlot(mr.res, mr.dat);
-  for(exposure in names(plot.list)){
-  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(plot.list[[exposure]])
+  plot <- .mr_scatterPlot(mr.res, mr.dat, exposure)
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  print(plot)
   dev.off()
-  }
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(1);
+  
+  .set.mSet(mSetObj)
+  if (.on.public.web) {
+    return(1)
   }
 }
 
-.mr_scatterPlot <- function(mr_results, dat) {
-  library("ggplot2",)
+.mr_scatterPlot <- function(mr_results, dat, exposure) {
+  library("ggplot2")
   library("patchwork")
   
-  unique_exposures <- unique(dat$exposure)
-  plot_list <- list()
-  
-  for (exposure in unique_exposures) {
-    exposure_data <- dat[dat$exposure == exposure, ]
-    if (nrow(exposure_data) < 2 || sum(exposure_data$mr_keep) == 0) {
-      next
-    }
-    
-    exposure_data <- exposure_data[exposure_data$mr_keep, ]
-    exposure_data$beta.exposure.sign <- ifelse(exposure_data$beta.exposure < 0, -1, 1)
-    exposure_data$beta.exposure <- abs(exposure_data$beta.exposure)
-    exposure_data$beta.outcome <- exposure_data$beta.outcome * exposure_data$beta.exposure.sign
-    exposure_data <- exposure_data[order(exposure_data$beta.exposure), ] # Order by beta.exposure
-    mrres_exposure <- mr_results[mr_results$exposure == exposure, ]
-    mrres_exposure$a <- 0
-    
-    # MR Egger regression
-    if ("MR Egger" %in% mrres_exposure$method) {
-      temp <- TwoSampleMR::mr_egger_regression(exposure_data$beta.exposure, exposure_data$beta.outcome, exposure_data$se.exposure, exposure_data$se.outcome, default_parameters())
-      mrres_exposure$a[mrres_exposure$method == "MR Egger"] <- temp$b_i
-    }
-    
-    if ("MR Egger (bootstrap)" %in% mrres_exposure$method) {
-      temp <- TwoSampleMR::mr_egger_regression_bootstrap(exposure_data$beta.exposure, exposure_data$beta.outcome, exposure_data$se.exposure, exposure_data$se.outcome, default_parameters())
-      mrres_exposure$a[mrres_exposure$method == "MR Egger (bootstrap)"] <- temp$b_i
-    }
-    
-    p <- ggplot(exposure_data, aes(x=beta.exposure, y=beta.outcome)) +
-      geom_errorbar(aes(ymin=beta.outcome-se.outcome, ymax=beta.outcome+se.outcome), colour="grey", width=0) +
-      geom_errorbarh(aes(xmin=beta.exposure-se.exposure, xmax=beta.exposure+se.exposure), colour="grey", height=0) +
-      geom_point() +
-      geom_abline(data=mrres_exposure, aes(intercept=a, slope=b, colour=method), show.legend=TRUE) +
-      scale_colour_manual(values=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
-      labs(colour="MR Test", x=paste("SNP effect on", exposure), y="Outcome effect") +
-      theme(legend.position="right", legend.direction="vertical") +
-      guides(colour=guide_legend(ncol=2))
-
-    plot_list[[exposure]] <- p
+  exposure_data <- dat[dat$exposure == exposure, ]
+  if (nrow(exposure_data) < 2 || sum(exposure_data$mr_keep) == 0) {
+    return(NULL)
   }
   
-  return(plot_list);
+  exposure_data <- exposure_data[exposure_data$mr_keep, ]
+  exposure_data$beta.exposure.sign <- ifelse(exposure_data$beta.exposure < 0, -1, 1)
+  exposure_data$beta.exposure <- abs(exposure_data$beta.exposure)
+  exposure_data$beta.outcome <- exposure_data$beta.outcome * exposure_data$beta.exposure.sign
+  exposure_data <- exposure_data[order(exposure_data$beta.exposure), ] # Order by beta.exposure
+  mrres_exposure <- mr_results[mr_results$exposure == exposure, ]
+  mrres_exposure$a <- 0
+  
+  # MR Egger regression
+  if ("MR Egger" %in% mrres_exposure$method) {
+    temp <- TwoSampleMR::mr_egger_regression(exposure_data$beta.exposure, exposure_data$beta.outcome, exposure_data$se.exposure, exposure_data$se.outcome, default_parameters())
+    mrres_exposure$a[mrres_exposure$method == "MR Egger"] <- temp$b_i
+  }
+  
+  if ("MR Egger (bootstrap)" %in% mrres_exposure$method) {
+    temp <- TwoSampleMR::mr_egger_regression_bootstrap(exposure_data$beta.exposure, exposure_data$beta.outcome, exposure_data$se.exposure, exposure_data$se.outcome, default_parameters())
+    mrres_exposure$a[mrres_exposure$method == "MR Egger (bootstrap)"] <- temp$b_i
+  }
+  
+  p <- ggplot(exposure_data, aes(x = beta.exposure, y = beta.outcome)) +
+    geom_errorbar(aes(ymin = beta.outcome - se.outcome, ymax = beta.outcome + se.outcome), colour = "grey", width = 0) +
+    geom_errorbarh(aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
+    geom_point() +
+    geom_abline(data = mrres_exposure, aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
+    scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
+    labs(colour = "MR Test", x = paste("SNP effect on", exposure), y = "Outcome effect") +
+    theme(legend.position = "right", legend.direction = "vertical") +
+    guides(colour = guide_legend(ncol = 2))
+  
+  return(p)
 }
-
-PlotForest<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  #imgName <<-imgName;
-  #save.image("PlotForest.RData")
-
-  mSetObj <- .get.mSet(mSetObj);
+PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+  mSetObj <- .get.mSet(mSetObj)
   
-  # get mr_results and mr_dat
-  mr.res_single <- mSetObj$dataSet$mr_res_single;
-
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <-width;
+  mr.res_single <- mSetObj$dataSet$mr_res_single
+  if(format == "png"){
+  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
+    }else{
+  imgName <- paste0(exposure, "_", imgName, ".", format)
   }
-  h <- w;
-
-  #record img
-  mSetObj$imgSet$mr.scatter <- imgName
-  mSetObj$imgSet$current.img <- imgName;
+  if (is.na(width)) {
+    w <- 9
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
+  }
+  h <- w
   
-  plot.list <- .mr_forestPlot(mr.res_single);
-
-  for(exposure in names(plot.list)){
-  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(plot.list[[exposure]])
+  # Record img
+  mSetObj$imgSet$mr_forest_plot <- imgName
+  mSetObj$imgSet$current.img <- imgName
+  
+  plot <- .mr_forestPlot(mr.res_single, exposure)
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  print(plot)
   dev.off()
-  }
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(1);
+  
+  .set.mSet(mSetObj)
+  if (.on.public.web) {
+    return(1)
   }
 }
 
-.mr_forestPlot <- function(singlesnp_results, exponentiate=FALSE) {
-
+.mr_forestPlot <- function(singlesnp_results, exposure, exponentiate = FALSE) {
   library(ggplot2)
-  #library(plyr)
   
   singlesnp_results$up <- singlesnp_results$b + 1.96 * singlesnp_results$se
   singlesnp_results$lo <- singlesnp_results$b - 1.96 * singlesnp_results$se
   singlesnp_results$tot <- ifelse(grepl("^All -", singlesnp_results$SNP), 1, 0.01)
   
-  if(exponentiate) {
+  if (exponentiate) {
     singlesnp_results$b <- exp(singlesnp_results$b)
     singlesnp_results$up <- exp(singlesnp_results$up)
     singlesnp_results$lo <- exp(singlesnp_results$lo)
   }
-  plot_list <- list();
-for(exposure in unique(singlesnp_results$exposure)) {
-    exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
-    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
-    p <- ggplot(exposure_data, aes(y=SNP, x=b)) +
-      geom_vline(xintercept=ifelse(exponentiate, 1, 0), linetype="dotted") +
-      geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
-      geom_point(aes(colour=as.factor(tot))) +
-      scale_colour_manual(values=c("black", "red")) +
-      scale_size_manual(values=c(0.3, 1)) +
-      theme_minimal() +
-      theme(legend.position="none", 
-            text=element_text(size=14)) +
-      labs(y="", x="MR effect size")
-    plot_list[[exposure]] <- p;
-  }
-  return(plot_list)
+  
+  exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
+  exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure
+  p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
+    geom_vline(xintercept = ifelse(exponentiate, 1, 0), linetype = "dotted") +
+    geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
+    geom_point(aes(colour = as.factor(tot))) +
+    scale_colour_manual(values = c("black", "red")) +
+    scale_size_manual(values = c(0.3, 1)) +
+    theme_minimal() +
+    theme(legend.position = "none", text = element_text(size = 14)) +
+    labs(y = "", x = "MR effect size")
+  
+  return(p)
 }
-
-PlotLeaveOneOut<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  #imgName <<-imgName;
-  #save.image("PlotLeaveOneOut.RData")
+PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+  mSetObj <- .get.mSet(mSetObj)
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  mr.res_loo <- mSetObj$dataSet$mr_res_loo;
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <-width;
+  mr.res_loo <- mSetObj$dataSet$mr_res_loo
+  if(format == "png"){
+  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
+      }else{
+  imgName <- paste0(exposure, "_", imgName, ".", format)
   }
-  h <- w;
-
-  #record img
-  mSetObj$imgSet$mr.scatter <- imgName
-  mSetObj$imgSet$current.img <- imgName;
+  if (is.na(width)) {
+    w <- 9
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
+  }
+  h <- w
   
-  plot.list <- .mr_looPlot(mr.res_loo);
-
-  for(exposure in names(plot.list)){
-  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(plot.list[[exposure]])
+  # Record img
+  mSetObj$imgSet$mr_leaveoneout_plot <- imgName
+  mSetObj$imgSet$current.img <- imgName
+  
+  plot <- .mr_looPlot(mr.res_loo, exposure)
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  print(plot)
   dev.off()
-  }  
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(1);
+  
+  .set.mSet(mSetObj)
+  if (.on.public.web) {
+    return(1)
   }
 }
 
-.mr_looPlot <- function(leaveoneout_results) {
-  requireNamespace("ggplot2", quietly=TRUE)
-
+.mr_looPlot <- function(leaveoneout_results, exposure) {
+  requireNamespace("ggplot2", quietly = TRUE)
+  
   leaveoneout_results$up <- leaveoneout_results$b + 1.96 * leaveoneout_results$se
   leaveoneout_results$lo <- leaveoneout_results$b - 1.96 * leaveoneout_results$se
   leaveoneout_results$tot <- ifelse(leaveoneout_results$SNP == "All", 1, 0.01)
+  
+  exposure_data <- leaveoneout_results[leaveoneout_results$exposure == exposure, ]
+  exposure_data <- exposure_data[order(exposure_data$b), ] #
 
-  plot_list <- list();
-  # Iterate through each unique exposure and create a plot
-  for(exposure in unique(leaveoneout_results$exposure)) {
-    exposure_data <- leaveoneout_results[leaveoneout_results$exposure == exposure, ]
-    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
 
-    p <- ggplot(exposure_data, aes(y=SNP, x=b)) +
-      geom_vline(xintercept=0, linetype="dotted") +
-      geom_errorbarh(aes(xmin=lo, xmax=up, size=as.factor(tot), colour=as.factor(tot)), height=0) +
-      geom_point(aes(colour=as.factor(tot))) +
-      scale_colour_manual(values=c("black", "red")) +
-      scale_size_manual(values=c(0.3, 1)) +
-      theme_minimal() +
-      theme(legend.position="none", 
-            text=element_text(size=14)) +
-      labs(y="", x="MR leave-one-out sensitivity analysis")
-    plot_list[[exposure]] <- p;
-  }
+  p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
+    geom_vline(xintercept = 0, linetype = "dotted") +
+    geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
+    geom_point(aes(colour = as.factor(tot))) +
+    scale_colour_manual(values = c("black", "red")) +
+    scale_size_manual(values = c(0.3, 1)) +
+    theme_minimal() +
+    theme(legend.position = "none", text = element_text(size = 14)) +
+    labs(y = "", x = "MR leave-one-out sensitivity analysis")
+  
+  return(p)
 
-  return(plot_list)
 }
 
-PlotFunnel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
-  #imgName <<-imgName;
-  #save.image("PlotFunnel.RData")
+PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+  mSetObj <- .get.mSet(mSetObj)
   
-  mSetObj <- .get.mSet(mSetObj);
-  
-  mr.res_single <- mSetObj$dataSet$mr_res_single;
-  
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 12;
-  }else if(width == 0){
-    w <- 7;
+  mr.res_single <- mSetObj$dataSet$mr_res_single
+  if(format == "png"){
+  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
   }else{
-    w <-width;
+  imgName <- paste0(exposure, "_", imgName, ".", format)
+  }
+  if (is.na(width)) {
+    w <- 12
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
   }
   h <- 9
-
-  #record img
-  mSetObj$imgSet$mr.scatter <- imgName
-  mSetObj$imgSet$current.img <- imgName;
-
-  plot.list <- .mr_funnelPlot(mr.res_single);
-  for(exposure in names(plot.list)){
-  Cairo::Cairo(file = paste0(exposure, "_", imgName), unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(plot.list[[exposure]])
+  
+  # Record img
+  mSetObj$imgSet$mr_funnel_plot <- imgName
+  mSetObj$imgSet$current.img <- imgName
+  
+  plot <- .mr_funnelPlot(mr.res_single, exposure)
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  print(plot)
   dev.off()
-  }    
-
-  .set.mSet(mSetObj);
-  if(.on.public.web){
-    return(1);
+  
+  .set.mSet(mSetObj)
+  if (.on.public.web) {
+    return(1)
   }
 }
 
-.mr_funnelPlot <- function(singlesnp_results) {
+.mr_funnelPlot <- function(singlesnp_results, exposure) {
   library(ggplot2)
-
+  
   # Modify the SNP column
   singlesnp_results$SNP <- gsub("All - ", "", singlesnp_results$SNP)
-  am <- unique(grep("All", singlesnp_results$SNP, value=TRUE))
+  am <- unique(grep("All", singlesnp_results$SNP, value = TRUE))
   am <- gsub("All - ", "", am)
-
-  # Iterate through each unique exposure and create a plot
-  plot_list <- list();
-  for(exposure in unique(singlesnp_results$exposure)) {
-    exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
-    exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
-
-    p <- ggplot(exposure_data, aes(y = 1/se, x=b)) +
-      geom_point() +
-      geom_vline(data=subset(exposure_data, SNP %in% am), aes(xintercept=b, colour=SNP)) +
-      scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", 
-                                     "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
-                                     "#ffff99", "#b15928")) +
-      labs(y=expression(1/SE[IV]), x=expression(beta[IV]), colour="MR Method") +
-      theme(legend.position="right", legend.direction="vertical", text=element_text(size=14))
-    plot_list[[exposure]] <- p;
-  }
-
-  return(plot_list)
-
+  
+  exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
+  exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
+  
+  p <- ggplot(exposure_data, aes(y = 1/se, x = b)) +
+    geom_point() +
+    geom_vline(data = subset(exposure_data, SNP %in% am), aes(xintercept = b, colour = SNP)) +
+    scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", 
+                                   "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
+                                   "#ffff99", "#b15928")) +
+    labs(y = expression(1 / SE[IV]), x = expression(beta[IV]), colour = "MR Method") +
+    theme(legend.position = "right", legend.direction = "vertical", text = element_text(size = 14))
+  
+  return(p)
 }
+
 
 mr_modified <- function (dat, 
                          parameters = default_parameters(), 
