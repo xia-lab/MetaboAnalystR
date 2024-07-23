@@ -58,9 +58,19 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   require(scales);
   
   # size on p values, further boost for sig
-  de$size <- rescale(de$p.log, to = c(1.0, 4))
-  de$size[imp.inx] <- de$size[imp.inx] + 0.5;
-
+  if(length(imp.inx) > 500){
+    de$size <- rescale(de$p.log, to = c(0.5, 3))
+    de$size[imp.inx] <- de$size[imp.inx] + 0.3;
+    my.range <- c(0.5, 4);
+  }else if(length(imp.inx) > 100){
+    de$size <- rescale(de$p.log, to = c(0.8, 4))
+    de$size[imp.inx] <- de$size[imp.inx] + 0.4;
+    my.range <- c(0.8, 5);
+  }else{
+    de$size <- rescale(de$p.log, to = c(1.0, 5))
+    de$size[imp.inx] <- de$size[imp.inx] + 0.5;
+    my.range <- c(1.0, 6);
+  }
   # Create a new variable for gradient coloring based on ALL nodes, as this is continuous, threshold is for plot only
 
     de$FoldChange <- de$fc.log;
@@ -73,9 +83,9 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
                           limits = fc_range, space = "Lab", na.value = "black", guide="none") +
         scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, name = "Log2(FC)",
                           limits = fc_range, space = "Lab", na.value = "grey", guide = "colourbar") +
-        scale_size_continuous(name = "P-value", range = c(1, 6), limits = c(0, 8), breaks = c(0, 1, 1.3, 2, 3), labels = c("1.0", "0.1", "0.05", "0.01", "0.001")) +
-        geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black") +
-        geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
+        scale_size_continuous(name = "P-value", range = my.range, limits = c(0, 8), breaks = c(1, 1.3, 2, 3), labels = c("0.1", "0.05", "0.01", "0.001")) +
+        geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black", size=0.6) +
+        geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black", size=0.6) +
         labs(x = "log2(FC)", y = "-log10(p-value)") +
         theme_minimal() +
         theme(legend.position = "right");
