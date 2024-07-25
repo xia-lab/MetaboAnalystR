@@ -361,47 +361,59 @@ PlotDataPCA <- function(fileName, pcaName, dpi, format){
 }
 
 qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
-
-  dpi <- as.numeric(dpi);
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
-  imgNm <- paste0(fileNm, format, sep="");
-  require('lattice');
-  require('ggplot2');
-  require('reshape');
-  require('see');
-  pca <- prcomp(t(na.omit(x)));
-  imp.pca<-summary(pca)$importance;
-  xlabel <- paste0("PC1"," (", 100*round(imp.pca[2,][1], 3), "%)")
-  ylabel <- paste0("PC2"," (", 100*round(imp.pca[2,][2], 3), "%)")
-  names <- colnames(x);
-  pca.res <- as.data.frame(pca$x);
-  pca.res <- pca.res[,c(1,2)]
-  # increase xlim ylim for text label
-  xlim <- GetExtendRange(pca.res$PC1);
-  ylim <- GetExtendRange(pca.res$PC2);
-
-  if("newcolumn" %in% colnames(dataSet$meta.info)){
-    dataSet$meta.info <- data.frame(dataSet$meta.info[,-which(colnames(dataSet$meta.info) == "newcolumn")]);
+  dpi <- as.numeric(dpi)
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
+  imgNm <- paste0(fileNm, format, sep="")
+  
+  require('lattice')
+  require('ggplot2')
+  require('reshape')
+  require('see')
+  require('ggrepel')
+  
+  pca <- prcomp(t(na.omit(x)))
+  imp.pca <- summary(pca)$importance
+  xlabel <- paste0("PC1"," (", 100 * round(imp.pca[2,][1], 3), "%)")
+  ylabel <- paste0("PC2"," (", 100 * round(imp.pca[2,][2], 3), "%)")
+  pca.res <- as.data.frame(pca$x)
+  pca.res <- pca.res[, c(1, 2)]
+  
+  # Increase xlim and ylim for text label
+  xlim <- GetExtendRange(pca.res$PC1)
+  ylim <- GetExtendRange(pca.res$PC2)
+  
+  if ("newcolumn" %in% colnames(dataSet$meta.info)) {
+    dataSet$meta.info <- data.frame(dataSet$meta.info[, -which(colnames(dataSet$meta.info) == "newcolumn")])
   }
   
- if(!(all(rownames(pca.res)==rownames(dataSet$meta.info)))){
-  pca.res = pca.res[match(rownames(dataSet$meta.info),rownames(pca.res)),]
+  if (!(all(rownames(pca.res) == rownames(dataSet$meta.info)))) {
+    pca.res <- pca.res[match(rownames(dataSet$meta.info), rownames(pca.res)), ]
   }
-
-  if(length(dataSet$meta.info) == 2){
-    Factor1 <- as.vector(dataSet$meta.info[,1])
+  
+  if (length(dataSet$meta.info) == 2) {
+    Factor1 <- as.vector(dataSet$meta.info[, 1])
     factorNm1 <- colnames(dataSet$meta.info)[1]
-    pca.res[,factorNm1] <- Factor1
-    Factor2 <- as.vector(dataSet$meta.info[,2])
+    pca.res[, factorNm1] <- Factor1
+    Factor2 <- as.vector(dataSet$meta.info[, 2])
     factorNm2 <- colnames(dataSet$meta.info)[2]
-    pca.res[,factorNm2] <- Factor2
-    pca.rest <- reshape::melt(pca.res, measure.vars=c(factorNm1,factorNm2))
+    pca.res[, factorNm2] <- Factor2
+    pca.rest <- reshape::melt(pca.res, measure.vars = c(factorNm1, factorNm2))
     colnames(pca.rest)[4] <- "Conditions"
-    pca.rest$names <- c(rownames(pca.res), rownames(pca.res))
-    if(length(pca.rest$names)>20){
-
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=names)) +
-        geom_point(size=3, alpha=0.5) + 
+    pca.rest$names <- rep(rownames(pca.res), times = 2)
+    
+    # Calculate group centroids
+    centroids <- aggregate(. ~ Conditions, data = pca.rest[, c("PC1", "PC2", "Conditions")], mean)
+    # Merge centroids back to the pca.rest dataframe
+    pca.rest <- merge(pca.rest, centroids, by = "Conditions", suffixes = c("", "_centroid"))
+    # Calculate the distance to the centroid
+    pca.rest$distance <- sqrt((pca.rest$PC1 - pca.rest$PC1_centroid)^2 + (pca.rest$PC2 - pca.rest$PC2_centroid)^2)
+    # Identify outliers based on variance threshold (20% here)
+    threshold <- 0.2 * mean(pca.rest$distance, na.rm = TRUE)
+    pca.rest$outlier <- pca.rest$distance > threshold
+    
+    if (length(pca.rest$names) > 20) {
+      pcafig <- ggplot(pca.rest, aes(x = PC1, y = PC2, color = Conditions, label = names)) +
+        geom_point(size = 3, alpha = 0.5) + 
         xlim(xlim) + 
         ylim(ylim) + 
         xlab(xlabel) + 
@@ -410,17 +422,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
         theme_bw() +
         scale_color_okabeito() +
         scale_fill_okabeito()
-
-    }else{
-
-      require('ggrepel');
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=names)) +
-        geom_point(size=4) + 
+    } else {
+      pcafig <- ggplot(pca.rest, aes(x = PC1, y = PC2, color = Conditions, label = names)) +
+        geom_point(size = 4) + 
         xlim(xlim) + 
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) + 
-        geom_text_repel(force=1.5) + 
+        geom_text_repel(force = 1.5) + 
         facet_grid(. ~ variable) + theme_bw() +
         scale_color_okabeito() +
         scale_fill_okabeito()
@@ -428,76 +437,231 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
     width <- 12
     height <- 6
   } else {
+    Factor <- dataSet$meta.info[, 1]
+    pca.res$Conditions <- Factor
+    pca.res$names <- rownames(pca.res)
     
-    Factor <- dataSet$meta.info[,1];
-    pca.rest <- pca.res
-    pca.rest$Conditions <- Factor
-    pca.rest$names <- rownames(pca.res)
+    # Calculate group centroids
+    centroids <- aggregate(. ~ Conditions, data = pca.res[, c("PC1", "PC2", "Conditions")], mean)
+    # Merge centroids back to the pca.res dataframe
+    pca.res <- merge(pca.res, centroids, by = "Conditions", suffixes = c("", "_centroid"))
+    # Calculate the distance to the centroid
+    pca.res$distance <- sqrt((pca.res$PC1 - pca.res$PC1_centroid)^2 + (pca.res$PC2 - pca.res$PC2_centroid)^2)
+    # Identify outliers based on variance threshold (20% here)
+    threshold <- 0.2 * mean(pca.res$distance, na.rm = TRUE)
+    pca.res$outlier <- pca.res$distance > threshold
     
-    if(length(rownames(pca.res))>20){ # only add sample labels if less than 20 samples
-
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions)) +
-        geom_point(size=3, alpha=0.5) + 
+    if (length(rownames(pca.res)) > 20) {
+      pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions)) +
+        geom_point(size = 3, alpha = 0.5) + 
         xlim(xlim) + 
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
         theme_bw()
-
     } else {
-
-      require('ggrepel');
-      pcafig <- ggplot(pca.rest, aes(x=PC1, y=PC2,  color=Conditions, label=rownames(pca.res))) +
-        geom_point(size=4) + 
+      pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions, label = names)) +
+        geom_point(size = 4) + 
         xlim(xlim) + 
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
-        geom_text_repel(force=1.5) +
+        geom_text_repel(force = 1.5) +
         theme_bw()
     }
     width <- 10
     height <- 6
-    
-    # set color depending on analysis type
-    if(paramSet$oneDataAnalType == "dose"){
-      pal <- colorRampPalette(c("#2196F3", "#DE690D"))
-      col.pal <- pal(length(unique(pca.rest$Conditions)))
-      pcafig <- pcafig + scale_fill_manual(values = col.pal) + scale_color_manual(values = col.pal)
-    } else {
-      pcafig <- pcafig + scale_fill_okabeito() + scale_color_okabeito()
+    if(grepl("norm", imgNm)){
+        if (paramSet$oneDataAnalType == "dose") {
+          pal <- colorRampPalette(c("#2196F3", "#DE690D"))
+          col.pal <- pal(length(unique(pca.res$Conditions)))
+          pcafig <- pcafig + scale_fill_manual(values = col.pal) + scale_color_manual(values = col.pal)
+        } else {
+          pcafig <- pcafig + scale_fill_okabeito() + scale_color_okabeito()
+        }
     }
   }
+  
 
-  str <- "NA"
-
-  if(interactive){
-    library(plotly);
-        m <- list(
-                l = 50,
-                r = 50,
-                b = 20,
-                t = 20,
-                pad = 0.5
-            )
-    if(length(dataSet$meta.info) == 2){
-    w=1000;
-    }else{
-    w=800;
-    }
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m)
-    return(ggp_build);
+  # Print the outliers
+  outliers <- pca.res[pca.res$outlier, "names"]
+  if(!is.null(outliers)){
+    paramSet <- readSet(paramSet, "paramSet")
+    paramSet$pca.outliers <- outliers;
   }else{
-    imgSet <- readSet(imgSet, "imgSet");
-    if(grepl("norm", imgNm)){
-      imgSet$qc_norm_pca <- imgNm;
-    }else{
-      imgSet$qc_pca <- imgNm;
+    paramSet$pca.outliers <- c("NA");
+  }
+  saveSet(paramSet);
+  
+  if (interactive) {
+    library(plotly)
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
+    if (length(dataSet$meta.info) == 2) {
+      w = 1000
+    } else {
+      w = 800
     }
-    saveSet(imgSet);
-    Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
-    print(pcafig);
-    dev.off();
-    return("NA");
+    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build)
+  } else {
+    imgSet <- readSet(imgSet, "imgSet")
+    if (grepl("norm", imgNm)) {
+      imgSet$qc_norm_pca <- imgNm
+    } else {
+      imgSet$qc_pca <- imgNm
+    }
+    saveSet(imgSet)
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", unit = "in", dpi = dpi)
+    print(pcafig)
+    dev.off()
+    return("NA")
   }
 }
+
+GetPcaOutliers <- function(){
+    paramSet <- readSet(paramSet, "paramSet")
+    return(paramSet$pca.outliers);
+}
+
+PlotDataNcov5 <- function(fileName, imgName, dpi, format){
+  dataSet <- readDataset(fileName);
+  qc.ncov5(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  return("NA");
+}
+
+qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", interactive=FALSE) {
+  require("ggplot2")
+  require("Cairo")
+  
+  # Ensure dpi is a positive number
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) {
+    stop("DPI must be a positive number.")
+  }
+  
+  # Calculate NCov5 (HighCoverageGeneCount) for each sample
+  HighCoverageGeneCount <- colSums(x > 5)
+  
+  df <- data.frame(Sample = names(HighCoverageGeneCount), HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), stringsAsFactors = FALSE)
+  
+  # Check for non-finite values and remove them
+  df <- df[is.finite(df$HighCoverageGeneCount),]
+  
+  # Calculate IQR and identify outliers
+  Q1 <- quantile(df$HighCoverageGeneCount, 0.25)
+  Q3 <- quantile(df$HighCoverageGeneCount, 0.75)
+  IQR_value <- IQR(df$HighCoverageGeneCount)
+  lower_bound <- Q1 - 3 * IQR_value
+  upper_bound <- Q3 + 3 * IQR_value
+  
+  df$outlier <- ifelse(df$HighCoverageGeneCount < lower_bound | df$HighCoverageGeneCount > upper_bound, "Outlier", "Normal")
+  
+  # Create plot
+  g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = c("Normal" = "steelblue", "Outlier" = "red")) +
+    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
+    theme_minimal() +
+    labs(title = "NCov5 Scores for Each Sample",
+         x = "Sample",
+         y = "Number of Genes with > 5 Uniquely Mapped Reads") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
+  
+  width <- 12
+  height <- 6
+  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
+  imgNm <- paste0(fileNm, format, sep="")
+  
+  if (interactive) {
+    require("plotly")
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
+    w <- 1000
+    
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build)
+  } else {
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return("NA")
+  }
+}
+qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", interactive=FALSE) {
+  require("ggplot2")
+  require("Cairo")
+  
+  # Ensure dpi is a positive number
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) {
+    stop("DPI must be a positive number.")
+  }
+  
+  # Calculate NCov5 (HighCoverageGeneCount) for each sample
+  HighCoverageGeneCount <- colSums(x > 5)
+  
+  df <- data.frame(Sample = names(HighCoverageGeneCount), HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), stringsAsFactors = FALSE)
+  
+  # Check for non-finite values and remove them
+  df <- df[is.finite(df$HighCoverageGeneCount),]
+  
+  # Calculate IQR and identify outliers
+  Q1 <- quantile(df$HighCoverageGeneCount, 0.25)
+  Q3 <- quantile(df$HighCoverageGeneCount, 0.75)
+  IQR_value <- IQR(df$HighCoverageGeneCount)
+  lower_bound <- Q1 - 3 * IQR_value
+  upper_bound <- Q3 + 3 * IQR_value
+  
+  df$outlier <- ifelse(df$HighCoverageGeneCount < lower_bound | df$HighCoverageGeneCount > upper_bound, "Outlier", "Normal")
+  
+  # Create plot
+  g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = c("Normal" = "steelblue", "Outlier" = "red")) +
+    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
+    theme_minimal() +
+    labs(x = "Sample",
+         y = "Number of Genes with > 5 Uniquely Mapped Reads") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
+  
+  width <- 12
+  height <- 6
+  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
+  imgNm <- paste0(fileNm, format, sep="")
+  
+  if (interactive) {
+    require("plotly")
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
+    w <- 1000
+    
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build)
+  } else {
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return("NA")
+  }
+}
+

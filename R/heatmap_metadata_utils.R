@@ -16,7 +16,6 @@
 # 1 and 2 separated by a row of 'null' 
 # 3 and 1+2 separated by a column of 'null'
 PrepareMetaHeatmapJSON <- function(dataSet,displayOpt="sig"){
-  save.image("meta.RData");
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
