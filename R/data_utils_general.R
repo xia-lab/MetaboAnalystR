@@ -470,11 +470,12 @@ CheckListHasFC <- function(){
   }else{
     dataSet <- readDataset("datalist1")
   }
+
   sigmat <- as.data.frame(dataSet$prot.mat)
   sigmat$entrez <- rownames(sigmat);
   expr.vec <- sigmat[,1];
-  print(sum(expr.vec));
-  if(sum(expr.vec) == 0){
+  #print(sum(expr.vec));
+  if(sum(abs(expr.vec)) == 0){
     return(0);
   }else{
     return(1);

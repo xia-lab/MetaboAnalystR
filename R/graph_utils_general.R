@@ -223,29 +223,19 @@ PerformLayOut <- function(net.nm, algo, focus=""){
   g <- analSet$ppi.comps[[net.nm]];
   vc <- vcount(g);
   if(algo == "Default"){
-    if(vc > 3000) {
-      pos.xy <- layout.lgl(g, maxiter = 100);
-    }else if(vc > 2000) {
-      pos.xy <- layout.lgl(g, maxiter = 150);
-    }else if(vc > 1000) {
-      pos.xy <- layout.lgl(g, maxiter = 200);
-    }else if(vc < 150){
-      pos.xy <- layout.kamada.kawai(g);
+    if(vc > 5000) {
+      pos.xy <- layout_with_lgl(g);
+    }else if(vc < 100){
+      pos.xy <- layout_with_kk(g);
     }else{
-      pos.xy <- layout.fruchterman.reingold(g);
+      pos.xy <- layout_with_fr(g);
     }
   }else if(algo == "FrR"){
-    pos.xy <- layout.fruchterman.reingold(g);
+    pos.xy <- layout_with_fr(g, area=34*vc^2);
   }else if(algo == "random"){
-    pos.xy <- layout.random(g);
+    pos.xy <- layout_randomly (g);
   }else if(algo == "lgl"){
-    if(vc > 3000) {
-      pos.xy <- layout.lgl(g, maxiter = 100);
-    }else if(vc > 2000) {
-      pos.xy <- layout.lgl(g, maxiter = 150);
-    }else {
-      pos.xy <- layout.lgl(g, maxiter = 200);
-    }
+    pos.xy <- layout_with_lgl(g);
   }else if(algo == "gopt"){
     # this is a slow one
     if(vc > 3000) {
