@@ -125,7 +125,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
 
   require(ggplot2)
   p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
-        scale_fill_manual(values = c("#282726","#6A8A82"), labels = c("No","Yes"), name = "BMD convergence?") + theme_bw()
+        scale_fill_manual(values = c("#3d3c3b","#0099FF"), labels = c("No","Yes"), name = "BMD convergence?") + theme_bw()
   p <- p + xlab("Best fit model") + ylab("Count") + theme(axis.text.x = element_text(face="bold"), legend.position = "bottom")
   
   imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
