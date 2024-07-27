@@ -69,7 +69,11 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
   
   isSlurm = FALSE;
   isPengLocal = F;
-  if(grepl("glassfish", userDir)){
+  if(file.exists("/home/zgy/NetBeansProjects/")){
+    seq2funPath = "/data/glassfish/seq_software/seq2fun_source/Seq2Fun/bin/seq2fun";
+    databasePath = "/data/glassfish/seq_software/seq2fun_database";
+    isSlurm = FALSE;
+  } else if(grepl("glassfish", userDir)){
     seq2funPath = "/data/glassfish/seq_software/seq2fun_source/Seq2Fun/bin/seq2fun";
     databasePath = "/data/glassfish/seq_software/seq2fun_database";
     isSlurm = TRUE;
@@ -81,10 +85,6 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     seq2funPath = "/Users/jeffxia/Dropbox/resources/eoa/software/Seq2Fun/bin/seq2fun";
     databasePath = "/Users/jeffxia/Dropbox/resources/eoa/seq2fun_database";
     isSlurm = FALSE;
-  } else if(grepl("zgy", userDir)) { # jeff local
-    seq2funPath = "/home/zgy/eoa/software/Seq2Fun/bin/seq2fun";
-    databasePath = "/home/zgy/eoa/seq2fun_database/";
-    isSlurm = F;
   } else if(grepl("ewald", userDir)) { # jess local
     seq2funPath = "/Users/jessicaewald/NetbeansProjects/Seq2Fun/bin/seq2fun";
     databasePath = "/Users/jessicaewald/eoa/seq2fun_database/";
@@ -174,6 +174,7 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     sink();
     
   } else {
+    save.image("s2f.RData");
 
     str <- paste(seq2funPath,
                  "--longlog --sampletable",
@@ -347,12 +348,12 @@ submitMysqlJobStatus <- function(userDir, jobID, numSamples){
 
 SubmitJobSlm <- function(userDir, email, database, des, readEnds, shellscriptDir, minScore){
   isPengLocal = FALSE;
-  if(grepl("glassfish", userDir)){
+   if(file.exists("/home/zgy/NetBeansProjects/")){
     fastpPath = "/data/glassfish/projects/expressanalyst/fastp_source/fastp";
     salmonPath = "/data/glassfish/projects/expressanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
     databasePath = "/data/glassfish/projects/expressanalyst/salmon_database";
-    isPengLocal = FALSE;
-  } else if(grepl("zgy", userDir)) { # zgy local
+    isPengLocal = TRUE;
+  } else if(grepl("glassfish", userDir)){
     fastpPath = "/data/glassfish/projects/expressanalyst/fastp_source/fastp";
     salmonPath = "/data/glassfish/projects/expressanalyst/salmon_source/salmon-latest_linux_x86_64/bin/salmon";
     databasePath = "/data/glassfish/projects/expressanalyst/salmon_database";
@@ -493,19 +494,31 @@ strcmd <- paste0("fastp: ",
 
 
 SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir, minScore, aveFragLen, stdFragLen){
+  userDir <<- userDir;
+  email <<- email;
+  database <<- database;
+  des <<- des;
+  readEnds <<- readEnds;
+  shellscriptDir <<- shellscriptDir;
+  minScore <<- minScore;
+  aveFragLen <<- aveFragLen;
+  stdFragLen <<- stdFragLen;
+  
+  save.image("kls.RData");
   isSlurm = FALSE;
   isPengLocal = F;
-  if(grepl("glassfish", userDir)){
+  if(file.exists("/home/zgy/NetBeansProjects/")){
+    fastpPath = "/data/glassfish/seq_software/fastp_source/fastp";
+    kallistoPath = "/data/glassfish/seq_software/kallisto_source/kallisto";
+    databasePath = "/data/glassfish/seq_software/kallisto_database";
+    isPengLocal = FALSE;
+    isSlurm = F;
+  }else if(grepl("glassfish", userDir)){
     fastpPath = "/data/glassfish/seq_software/fastp_source/fastp";
     kallistoPath = "/data/glassfish/seq_software/kallisto_source/kallisto";
     databasePath = "/data/glassfish/seq_software/kallisto_database";
     isPengLocal = FALSE;
     isSlurm = T;
-  } else if(grepl("zgy", userDir)) { # jeff local
-    fastpPath = "/home/zgy/eoa/software/fastp_source/fastp";
-    kallistoPath = "/home/zgy/eoa/software/kallisto_source/kallisto";
-    databasePath = "/home/zgy/eoa/kallisto_database/";
-    isSlurm = F;
   }else if(grepl("jeffxia/Dropbox", userDir)) { # jeff local
     fastpPath = "/Users/xia/Dropbox/resources/eoa/software/fastp_source/fastp";
     kallistoPath = "/Users/xia/Dropbox/resources/eoa/software/kallisto_source/kallisto";
@@ -523,195 +536,195 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
     fastpOutputR2 = file.path(userDir, "tmp_clean_R2.fastq.gz");
   }
   if(isSlurm){
-  ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Salmon_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=14400:00\n#SBATCH --mem-per-cpu=5000\n#SBATCH --cpus-per-task=4\n";
-  conf_inf <- paste0(conf_inf, "#SBATCH --mail-user=", email, "\n#SBATCH --mail-type=BEGIN\n#SBATCH --mail-type=END\n#SBATCH --mail-type=FAIL\n#SBATCH --mail-type=REQUEUE\n#SBATCH --mail-type=ALL\n");
-  conf_inf <- paste0(conf_inf, "#SBATCH --output=", file.path(userDir, "slurm_logout.txt\n"));
-  
-  if(readEnds == "pe"){
-    str <- paste("cat",
-                 file.path(userDir, "sampleTable.txt"),
-                 "| while read fn ff rf grp; do echo processing sample ${fn};",
-                 fastpPath, 
-                 "--qualified_quality_phred", minScore,
-                 "-i ${ff} -I ${rf} -o", fastpOutputR1, "-O", fastpOutputR2,
-                 "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -c -y -V &&",
-                 kallistoPath, "quant -i",
-                 file.path(databasePath, database, "index/transcripts.idx"),
-                 "-o ${fn}_kallisto -b 100 -t 4",
-                 fastpOutputR1, fastpOutputR2, 
-                 " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
-                 " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
-                 "rm -rf ${fn}_kallisto && ",
-                 "echo Fastp and Kallisto finish sample ${fn}; done && rm",
-                 file.path(userDir, "tmp_clean_*.gz"),
-                 "&& echo Fastp and Kallisto have processed all samples;",
-                 sep = " ");
+    ## Prepare Configuration script for slurm running
+    conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Salmon_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=14400:00\n#SBATCH --mem-per-cpu=5000\n#SBATCH --cpus-per-task=4\n";
+    conf_inf <- paste0(conf_inf, "#SBATCH --mail-user=", email, "\n#SBATCH --mail-type=BEGIN\n#SBATCH --mail-type=END\n#SBATCH --mail-type=FAIL\n#SBATCH --mail-type=REQUEUE\n#SBATCH --mail-type=ALL\n");
+    conf_inf <- paste0(conf_inf, "#SBATCH --output=", file.path(userDir, "slurm_logout.txt\n"));
     
-  } else {
-    str <- paste("cat",
-                 file.path(userDir, "sampleTable.txt"),
-                 "| while read fn ff grp; do echo processing sample ${fn};",
-                 fastpPath, 
-                 "--qualified_quality_phred", minScore,
-                 "-i ${ff} -o", fastpOutputR1,
-                 "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -y &&",
-                 kallistoPath, "quant -i",
-                 file.path(databasePath, database, "index/transcripts.idx"),
-                 "-o ${fn}_kallisto -b 100 -t 4",
-                 "--single -l", aveFragLen, 
-                 "-s", stdFragLen,
-                 fastpOutputR1,
-                 " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
-                 " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
-                 "rm -rf ${fn}_kallisto && ",
-                 "echo Fastp and Kallisto finish sample ${fn}; done && rm",
-                 file.path(userDir, "tmp_clean_*.gz"),
-                 "&& echo Fastp and Kallisto have processed all samples;",
-                 sep = " ");
-  }
-  
-  strcmd <- paste0("fastp: ", 
-                "\nmininum quality score: ", minScore,
-                "\nkallisto: ", 
-                "\ndatabase: ", list.files(file.path(databasePath, database), pattern = ".gz$"),
-                "\nproject_description: ", des);
-
-  str_R <- paste("echo Starting process tables and figures in R $(date);",
-                 "Rscript --vanilla",
-                 file.path(shellscriptDir, "run_process_kallisto.R"),
-                 userDir,
-                 "; echo Finish process tables and figures in R $(date);",
-                 sep = " ");
-  
-  str_checMysql1 <- paste("if ! [[ -x ",
-                          file.path(userDir, "renameDirFromMysql.sh"),
-                          " ]]; then chmod +x ",
-                          file.path(userDir, "renameDirFromMysql.sh"),
-                          "; fi;",
-                          sep = " ");
-  
-  str_runMysql1 <- paste("bash ",
-                         file.path(userDir, "renameDirFromMysql.sh"),
-                         ";",
-                         sep = " ");
-  
-  if(isPengLocal){
-    str_checMysql2 <- paste("if ! [[ -x ",
-                            file.path(userDir, "updateMysql.sh"),
+    if(readEnds == "pe"){
+      str <- paste("cat",
+                   file.path(userDir, "sampleTable.txt"),
+                   "| while read fn ff rf grp; do echo processing sample ${fn};",
+                   fastpPath, 
+                   "--qualified_quality_phred", minScore,
+                   "-i ${ff} -I ${rf} -o", fastpOutputR1, "-O", fastpOutputR2,
+                   "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -c -y -V &&",
+                   kallistoPath, "quant -i",
+                   file.path(databasePath, database, "index/transcripts.idx"),
+                   "-o ${fn}_kallisto -b 100 -t 4",
+                   fastpOutputR1, fastpOutputR2, 
+                   " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
+                   " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
+                   "rm -rf ${fn}_kallisto && ",
+                   "echo Fastp and Kallisto finish sample ${fn}; done && rm",
+                   file.path(userDir, "tmp_clean_*.gz"),
+                   "&& echo Fastp and Kallisto have processed all samples;",
+                   sep = " ");
+      
+    } else {
+      str <- paste("cat",
+                   file.path(userDir, "sampleTable.txt"),
+                   "| while read fn ff grp; do echo processing sample ${fn};",
+                   fastpPath, 
+                   "--qualified_quality_phred", minScore,
+                   "-i ${ff} -o", fastpOutputR1,
+                   "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -y &&",
+                   kallistoPath, "quant -i",
+                   file.path(databasePath, database, "index/transcripts.idx"),
+                   "-o ${fn}_kallisto -b 100 -t 4",
+                   "--single -l", aveFragLen, 
+                   "-s", stdFragLen,
+                   fastpOutputR1,
+                   " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
+                   " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
+                   "rm -rf ${fn}_kallisto && ",
+                   "echo Fastp and Kallisto finish sample ${fn}; done && rm",
+                   file.path(userDir, "tmp_clean_*.gz"),
+                   "&& echo Fastp and Kallisto have processed all samples;",
+                   sep = " ");
+    }
+    
+    strcmd <- paste0("fastp: ", 
+                     "\nmininum quality score: ", minScore,
+                     "\nkallisto: ", 
+                     "\ndatabase: ", list.files(file.path(databasePath, database), pattern = ".gz$"),
+                     "\nproject_description: ", des);
+    
+    str_R <- paste("echo Starting process tables and figures in R $(date);",
+                   "Rscript --vanilla",
+                   file.path(shellscriptDir, "run_process_kallisto.R"),
+                   userDir,
+                   "; echo Finish process tables and figures in R $(date);",
+                   sep = " ");
+    
+    str_checMysql1 <- paste("if ! [[ -x ",
+                            file.path(userDir, "renameDirFromMysql.sh"),
                             " ]]; then chmod +x ",
-                            file.path(userDir, "updateMysql.sh"),
+                            file.path(userDir, "renameDirFromMysql.sh"),
                             "; fi;",
                             sep = " ");
     
-    str_runMysql2 <- paste("bash ",
-                           file.path(userDir, "updateMysql.sh"),
-                           "; rm -rf ",
-                           file.path(userDir, "updateMysql.sh"),
-                           file.path(userDir, "tmp_clean_R1.fastq.gz"),
-                           file.path(userDir, "*_kallisto"),
+    str_runMysql1 <- paste("bash ",
+                           file.path(userDir, "renameDirFromMysql.sh"),
                            ";",
                            sep = " ");
-  }
-  
-  sink(file.path(userDir, "ExecuteRawSeq.sh"));
-  cat(conf_inf, "\n\n");
-  cat(str, "\n\n");
-  cat(str_R, "\n\n");
-  if(isPengLocal){
-    cat(str_checMysql2, "\n\n");
-    cat(str_runMysql2, "\n\n");
-  }
-  # cat(str_runRemove, "\n\n");
-  # cat(str_zipDir, "\n\n");
-  cat(str_checMysql1, "\n\n");
-  cat(str_runMysql1, "\n\n");
-  sink();
-
- sink(file.path(userDir, "analysis_parameters.txt"));
- cat(strcmd, "\n");
- sink();
-}else{
-if(readEnds == "pe"){
-    str <- paste("cat",
-                 file.path(userDir, "sampleTable.txt"),
-                 "| while read fn ff rf grp; do echo processing sample ${fn};",
-                 fastpPath, 
-                 "--qualified_quality_phred", minScore,
-                 "-i ${ff} -I ${rf} -o", fastpOutputR1, "-O", fastpOutputR2,
-                 "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -c -y -V &&",
-                 kallistoPath, "quant -i",
-                 file.path(databasePath, database, "index/transcripts.idx"),
-                 "-o ${fn}_kallisto -b 100 -t 4",
-                 fastpOutputR1, fastpOutputR2, 
-                 " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
-                 " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
-                 "rm -rf ${fn}_kallisto && ",
-                 "echo Fastp and Kallisto finish sample ${fn}; done && rm",
-                 file.path(userDir, "tmp_clean_*.gz"),
-                 "&& echo Fastp and Kallisto have processed all samples;",
-                 sep = " ");
     
-  } else {
-    str <- paste("cat",
-                 file.path(userDir, "sampleTable.txt"),
-                 "| while read fn ff grp; do echo processing sample ${fn};",
-                 fastpPath, 
-                 "--qualified_quality_phred", minScore,
-                 "-i ${ff} -o", fastpOutputR1,
-                 "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -y &&",
-                 kallistoPath, "quant -i",
-                 file.path(databasePath, database, "index/transcripts.idx"),
-                 "-o ${fn}_kallisto -b 100 -t 4",
-                 "--single -l", aveFragLen, 
-                 "-s", stdFragLen,
-                 fastpOutputR1,
-                 " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
-                 " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
-                 "rm -rf ${fn}_kallisto && ",
-                 "echo Fastp and Kallisto finish sample ${fn}; done && rm",
-                 file.path(userDir, "tmp_clean_*.gz"),
-                 "&& echo Fastp and Kallisto have processed all samples;",
-                 sep = " ");
-  }
-  
-  strcmd <- paste0("fastp: ", 
-                "\nmininum quality score: ", minScore,
-                "\nkallisto: ", 
-                "\ndatabase: ", list.files(file.path(databasePath, database), pattern = ".gz$"),
-                "\nproject_description: ", des);
-
-  str_R <- paste("echo Starting process tables and figures in R $(date);",
-                 "Rscript --vanilla",
-                 file.path(shellscriptDir, "run_process_kallisto.R"),
-                 userDir,
-                 "; echo Finish process tables and figures in R $(date);",
-                 sep = " ");
-  
-  str_checMysql1 <- paste("if ! [[ -x ",
-                          file.path(userDir, "renameDirFromMysql.sh"),
-                          " ]]; then chmod +x ",
-                          file.path(userDir, "renameDirFromMysql.sh"),
-                          "; fi;",
-                          sep = " ");
-  
-  str_runMysql1 <- paste("bash ",
-                         file.path(userDir, "renameDirFromMysql.sh"),
-                         ";",
-                         sep = " ");
-
-  sink(file.path(userDir, "ExecuteRawSeq.sh"));
-  cat(str, "\n\n");
-  cat(str_R, "\n\n");
-
-  cat(str_checMysql1, "\n\n");
-  cat(str_runMysql1, "\n\n");
-  sink();
-
- sink(file.path(userDir, "analysis_parameters.txt"));
- cat(strcmd, "\n");
- sink();
-
+    if(isPengLocal){
+      str_checMysql2 <- paste("if ! [[ -x ",
+                              file.path(userDir, "updateMysql.sh"),
+                              " ]]; then chmod +x ",
+                              file.path(userDir, "updateMysql.sh"),
+                              "; fi;",
+                              sep = " ");
+      
+      str_runMysql2 <- paste("bash ",
+                             file.path(userDir, "updateMysql.sh"),
+                             "; rm -rf ",
+                             file.path(userDir, "updateMysql.sh"),
+                             file.path(userDir, "tmp_clean_R1.fastq.gz"),
+                             file.path(userDir, "*_kallisto"),
+                             ";",
+                             sep = " ");
+    }
+    
+    sink(file.path(userDir, "ExecuteRawSeq.sh"));
+    cat(conf_inf, "\n\n");
+    cat(str, "\n\n");
+    cat(str_R, "\n\n");
+    if(isPengLocal){
+      cat(str_checMysql2, "\n\n");
+      cat(str_runMysql2, "\n\n");
+    }
+    # cat(str_runRemove, "\n\n");
+    # cat(str_zipDir, "\n\n");
+    cat(str_checMysql1, "\n\n");
+    cat(str_runMysql1, "\n\n");
+    sink();
+    
+    sink(file.path(userDir, "analysis_parameters.txt"));
+    cat(strcmd, "\n");
+    sink();
+  }else{
+    if(readEnds == "pe"){
+      str <- paste("cat",
+                   file.path(userDir, "sampleTable.txt"),
+                   "| while read fn ff rf grp; do echo processing sample ${fn};",
+                   fastpPath, 
+                   "--qualified_quality_phred", minScore,
+                   "-i ${ff} -I ${rf} -o", fastpOutputR1, "-O", fastpOutputR2,
+                   "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -c -y -V &&",
+                   kallistoPath, "quant -i",
+                   file.path(databasePath, database, "index/transcripts.idx"),
+                   "-o ${fn}_kallisto -b 100 -t 4",
+                   fastpOutputR1, fastpOutputR2, 
+                   " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
+                   " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
+                   "rm -rf ${fn}_kallisto && ",
+                   "echo Fastp and Kallisto finish sample ${fn}; done && rm",
+                   file.path(userDir, "tmp_clean_*.gz"),
+                   "&& echo Fastp and Kallisto have processed all samples;",
+                   sep = " ");
+      
+    } else {
+      str <- paste("cat",
+                   file.path(userDir, "sampleTable.txt"),
+                   "| while read fn ff grp; do echo processing sample ${fn};",
+                   fastpPath, 
+                   "--qualified_quality_phred", minScore,
+                   "-i ${ff} -o", fastpOutputR1,
+                   "-w 4 -h ${fn}_fastp.html -j ${fn}_fastp.json -y &&",
+                   kallistoPath, "quant -i",
+                   file.path(databasePath, database, "index/transcripts.idx"),
+                   "-o ${fn}_kallisto -b 100 -t 4",
+                   "--single -l", aveFragLen, 
+                   "-s", stdFragLen,
+                   fastpOutputR1,
+                   " && mv ${fn}_kallisto/abundance.tsv ${fn}_kallisto_quant.tsv && ", 
+                   " mv ${fn}_kallisto/run_info.json ${fn}_kallisto_log.json && ",
+                   "rm -rf ${fn}_kallisto && ",
+                   "echo Fastp and Kallisto finish sample ${fn}; done && rm",
+                   file.path(userDir, "tmp_clean_*.gz"),
+                   "&& echo Fastp and Kallisto have processed all samples;",
+                   sep = " ");
+    }
+    
+    strcmd <- paste0("fastp: ", 
+                     "\nmininum quality score: ", minScore,
+                     "\nkallisto: ", 
+                     "\ndatabase: ", list.files(file.path(databasePath, database), pattern = ".gz$"),
+                     "\nproject_description: ", des);
+    
+    str_R <- paste("echo Starting process tables and figures in R $(date);",
+                   "Rscript --vanilla",
+                   file.path(shellscriptDir, "run_process_kallisto.R"),
+                   userDir,
+                   "; echo Finish process tables and figures in R $(date);",
+                   sep = " ");
+    
+    str_checMysql1 <- paste("if ! [[ -x ",
+                            file.path(userDir, "renameDirFromMysql.sh"),
+                            " ]]; then chmod +x ",
+                            file.path(userDir, "renameDirFromMysql.sh"),
+                            "; fi;",
+                            sep = " ");
+    
+    str_runMysql1 <- paste("bash ",
+                           file.path(userDir, "renameDirFromMysql.sh"),
+                           ";",
+                           sep = " ");
+    
+    sink(file.path(userDir, "ExecuteRawSeq.sh"));
+    cat(str, "\n\n");
+    cat(str_R, "\n\n");
+    
+    cat(str_checMysql1, "\n\n");
+    cat(str_runMysql1, "\n\n");
+    sink();
+    
+    sink(file.path(userDir, "analysis_parameters.txt"));
+    cat(strcmd, "\n");
+    sink();
+    
     str_sh <- "#!/bin/sh\n";
     
     str_sh <- paste0(str_sh,
@@ -722,111 +735,118 @@ if(readEnds == "pe"){
                      file.path(userDir, "slurm_logout.txt 2>&1 &\n"),
                      "echo $! > ",
                      file.path(userDir, "jobid_pid.txt;"));
-
+    
     sink(file.path(userDir, "launcher.sh"));
     cat(str_sh, "\n");
     sink();
     
-}
-
+  }
+  
   return(1);
 }
 
-UpdatePcaKls <- function(minReads = 20, projectDirStr,
-                       ...){
-  library(data.table);
-  library(lattice);
-  library(ggplot2);
-  library(ggrepel);
-  library(vegan);
-  library(Cairo);
-library(plyr);
-library(magrittr);
-library(tidyverse);
+UpdatePcaKls <- function(minReads = 20, projectDirStr, ...) {
+  library(data.table)
+  library(lattice)
+  library(ggplot2)
+  library(ggrepel)
+  library(vegan)
+  library(Cairo)
+  library(plyr)
+  library(magrittr)
+  library(tidyverse)
 
-  mappingReadsDF <- fread(file.path(projectDirStr, "sampleGroup.txt"),
-                          header = F); 
-  names(mappingReadsDF) <-  c("Sample", "Group");
-  
-  
-  countfile = "";
-  if(file.exists(file.path(projectDirStr, "All_samples_salmon_txi_counts.txt"))){
-    countfile = file.path(projectDirStr, "All_samples_salmon_txi_counts.txt");
+  mappingReadsDF <- fread(file.path(projectDirStr, "sampleGroup.txt"), header = FALSE)
+  names(mappingReadsDF) <-  c("Sample", "Group")
+
+  countfile <- if (file.exists(file.path(projectDirStr, "All_samples_salmon_txi_counts.txt"))) {
+    file.path(projectDirStr, "All_samples_salmon_txi_counts.txt")
   } else {
-    countfile = file.path(projectDirStr, "All_samples_kallisto_txi_counts.txt")
+    file.path(projectDirStr, "All_samples_kallisto_txi_counts.txt")
   }
+  
   allSamKOAbunDF2 <- fread(countfile) %>% 
     dplyr::slice(2:nrow(.)) %>% 
-    column_to_rownames(var = "#NAME");
-  allSamKOAbunDF2[] <- lapply(allSamKOAbunDF2, as.numeric);
-  allSamKOAbunDF2[allSamKOAbunDF2 < minReads] <- 0;
-  allSamKOAbunDF2 %<>% 
-    filter(rowSums(.) > 0);
-  allSamKOAbunDF2 <- t(allSamKOAbunDF2) %>% as.data.frame();
+    column_to_rownames(var = "#NAME")
+  allSamKOAbunDF2[] <- lapply(allSamKOAbunDF2, as.numeric)
+  allSamKOAbunDF2[allSamKOAbunDF2 < minReads] <- 0
+  allSamKOAbunDF2 %<>% filter(rowSums(.) > 0)
+  allSamKOAbunDF2 <- t(allSamKOAbunDF2) %>% as.data.frame()
   
   allSamKOAbunDF2 %>% 
     rownames_to_column(var = "sample") %>% 
-    fwrite(file.path(projectDirStr, "rareTable.txt"),
-           sep = "\t");
+    fwrite(file.path(projectDirStr, "rareTable.txt"), sep = "\t")
   
-  pca <- prcomp(allSamKOAbunDF2);
-  names <- row.names(allSamKOAbunDF2);
-  pca.res <- as.data.frame(pca$x);
-  # increase xlim ylim for text label
-  xlim <- GetExtendRange(pca.res$PC1);
-  ylim <- GetExtendRange(pca.res$PC2);
+  pca <- prcomp(allSamKOAbunDF2, scale. = TRUE)
+  pca.res <- as.data.frame(pca$x)
   
-  if(length(unique(mappingReadsDF$Group)) > 1){
-    Factor = mappingReadsDF$Group;
+  if (length(unique(mappingReadsDF$Group)) > 1) {
+    Factor <- mappingReadsDF$Group
   } else {
-    Factor = mappingReadsDF$Sample;
+    Factor <- mappingReadsDF$Sample
   }
   
-  n.factor <- length(unique(Factor));
+  pca.res$Group <- Factor
+  pca.res$Sample <- rownames(allSamKOAbunDF2)
+  
+  # Calculate group centroids
+  centroids <- aggregate(. ~ Group, data = pca.res[, c("PC1", "PC2", "Group")], mean)
+  
+  # Merge centroids back to the pca.res dataframe
+  pca.res <- merge(pca.res, centroids, by = "Group", suffixes = c("", "_centroid"))
+  
+  # Calculate the distance to the centroid
+  pca.res$distance <- sqrt((pca.res$PC1 - pca.res$PC1_centroid)^2 + (pca.res$PC2 - pca.res$PC2_centroid)^2)
+  
+  # Identify outliers based on variance threshold (20% here)
+  threshold <- 0.2 * mean(pca.res$distance)
+  pca.res$outlier <- pca.res$distance > threshold
+  
+  # Create the PCA plot
+  xlim <- range(pca.res$PC1) * 1.1
+  ylim <- range(pca.res$PC2) * 1.1
+  
   theme.cols <- c("#A7414A","#7A5D1D","#6A8A82", "#CC9B31", "#654242","#A37C27","#281A1A",
-                  "#b7c8c3", "#563838", "#DBA3A8", "#435651", "#ceccca", "#282726");
+                  "#b7c8c3", "#563838", "#DBA3A8", "#435651", "#ceccca", "#282726")
   
-  if(n.factor < 14){
-    fill.cols <- theme.cols[1:n.factor]
+  n.factor <- length(unique(Factor))
+  fill.cols <- if (n.factor < 14) {
+    theme.cols[1:n.factor]
   } else {
-    fill.cols <- sample(theme.cols, size = n.factor, replace = TRUE)
+    sample(theme.cols, size = n.factor, replace = TRUE)
   }
   
-  if(nchar(mappingReadsDF$Sample[1]) < 30){
-    p <- ggplot(pca.res, 
-                aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
-      geom_point(size=4) + 
-      xlim(xlim)+ ylim(ylim) + 
-      labs(color = "Groups") + 
-      geom_text_repel(force=1.5) + 
-      theme_bw() +
-      scale_color_manual(values=fill.cols) + 
-      labs(title = "PCA plot",
-           subtitle = paste0("Min. reads/gene: ", minReads));
+  p <- ggplot(pca.res, aes(x = PC1, y = PC2, color = factor(Group), label = Sample)) +
+    geom_point(size = 4) +
+    xlim(xlim) + ylim(ylim) +
+    labs(color = "Groups") +
+    scale_color_manual(values = fill.cols) +
+    theme_bw() +
+    labs(title = "PCA plot", subtitle = paste0("Min. reads/gene: ", minReads))
+  
+  if (nrow(pca.res) < 30) {
+    p <- p + geom_text_repel(aes(label = Sample), force = 1.5)
   } else {
-    p <- ggplot(pca.res, 
-                aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
-      geom_point(size=4) + 
-      xlim(xlim)+ ylim(ylim) + 
-      labs(color = "Groups") + 
-      geom_text_repel(force=1.5) + 
-      theme(legend.position = "none") +
-      scale_color_manual(values=fill.cols) + 
-      labs(title = "PCA plot",
-           subtitle = paste0("Min. reads/gene:", minReads));
+    p <- p + theme(legend.position = "none")
   }
   
-  if(nchar(mappingReadsDF$Sample[1]) < 20){
-    wd = 8; ht = 6;
-  } else {
-    wd = 16; ht = 12;
-  }
+  # Highlight outliers
+  p <- p + geom_point(data = pca.res[pca.res$outlier, ], aes(x = PC1, y = PC2), color = "red", shape = 21, size = 4, fill = "red", stroke = 1.5)
   
-  Cairo(file=file.path(projectDirStr, "PCA_sample_similarity.png"), 
-        width=wd, height=ht, type="png", bg="white", unit="in", dpi=300);
-  print(p);
-  dev.off();
+  # Print the outliers
+  outliers <- pca.res[pca.res$outlier, "Sample"]
+  cat("Outliers detected:\n")
+  print(outliers)
+  
+  # Save the plot
+  wd <- ifelse(nchar(mappingReadsDF$Sample[1]) < 20, 8, 16)
+  ht <- ifelse(nchar(mappingReadsDF$Sample[1]) < 20, 6, 12)
+  
+  Cairo(file = file.path(projectDirStr, "PCA_sample_similarity.png"), width = wd, height = ht, type = "png", bg = "white", unit = "in", dpi = 300)
+  print(p)
+  dev.off()
 }
+
 
 
 UpdateRareKls <- function(step=10, minReads = 20, projectDirStr,
@@ -974,58 +994,76 @@ library(tidyverse);
   dev.off();
 }
 
+
 pcaPlotS2f <- function(allSamKOAbunDF2,
-                    mappingReadsDF, 
-                    minReads = 20,
-                    projectDirStr){
-  pca <- prcomp(allSamKOAbunDF2);
-  names <- row.names(allSamKOAbunDF2);
-  pca.res <- as.data.frame(pca$x);
-  # increase xlim ylim for text label
-  xlim <- GetExtendRange(pca.res$PC1);
-  ylim <- GetExtendRange(pca.res$PC2);
+                       mappingReadsDF, 
+                       minReads = 20,
+                       projectDirStr) {
   
+  # Perform PCA
+  pca <- prcomp(allSamKOAbunDF2, scale. = TRUE)
+  pca.res <- as.data.frame(pca$x)
+  
+  # Identify groups
   if(length(unique(mappingReadsDF$Group)) > 1){
-    Factor = mappingReadsDF$Group;
+    Factor <- mappingReadsDF$Group
   } else {
-    Factor = mappingReadsDF$Sample;
+    Factor <- mappingReadsDF$Sample
   }
   
-  n.factor <- length(unique(Factor));
-  theme.cols <- c("#A7414A","#7A5D1D","#6A8A82", "#CC9B31", "#654242","#A37C27","#281A1A",
-                  "#b7c8c3", "#563838", "#DBA3A8", "#435651", "#ceccca", "#282726");
+  pca.res$Group <- Factor
+  pca.res$Sample <- row.names(allSamKOAbunDF2)
   
-  if(n.factor < 14){
+  # Calculate group centroids
+  centroids <- aggregate(. ~ Group, data = pca.res[, c("PC1", "PC2", "Group")], mean)
+  
+  # Merge centroids back to the pca.res dataframe
+  pca.res <- merge(pca.res, centroids, by = "Group", suffixes = c("", "_centroid"))
+  
+  # Calculate the distance to the centroid
+  pca.res$distance <- sqrt((pca.res$PC1 - pca.res$PC1_centroid)^2 + (pca.res$PC2 - pca.res$PC2_centroid)^2)
+  
+  # Identify outliers based on variance threshold (20% here)
+  threshold <- 0.2 * mean(pca.res$distance)
+  pca.res$outlier <- pca.res$distance > threshold
+  
+  # Create the PCA plot
+  xlim <- range(pca.res$PC1) * 1.1
+  ylim <- range(pca.res$PC2) * 1.1
+  
+  theme.cols <- c("#A7414A","#7A5D1D","#6A8A82", "#CC9B31", "#654242","#A37C27","#281A1A",
+                  "#b7c8c3", "#563838", "#DBA3A8", "#435651", "#ceccca", "#282726")
+  
+  n.factor <- length(unique(Factor))
+  if (n.factor < 14) {
     fill.cols <- theme.cols[1:n.factor]
   } else {
     fill.cols <- sample(theme.cols, size = n.factor, replace = TRUE)
   }
   
-  if(nrow(pca.res) < 30){
-    p <- ggplot(pca.res, 
-                aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
-      geom_point(size=4) + 
-      xlim(xlim)+ ylim(ylim) + 
-      labs(color = "Groups") + 
-      geom_text_repel(force=1.5) + 
-      theme_bw() +
-      #theme(legend.position = "none") +
-      scale_color_manual(values=fill.cols) + 
-      labs(title = "PCA plot",
-           subtitle = paste0("Min reads per gene/ortholog: ", minReads))
-  } else {
-    p <- ggplot(pca.res, 
-                aes(x=PC1, y=PC2,  color=factor(Factor), label=rownames(pca.res))) +
-      geom_point(size=4) + 
-      xlim(xlim)+ ylim(ylim) + 
-      labs(color = "Groups") + 
-      geom_text_repel(force=1.5) + 
-      #theme_bw() +
-      theme(legend.position = "none") +
-      scale_color_manual(values=fill.cols)
+  p <- ggplot(pca.res, aes(x = PC1, y = PC2, color = factor(Group), label = Sample)) +
+    geom_point(size = 4) +
+    xlim(xlim) + ylim(ylim) +
+    labs(color = "Groups") +
+    scale_color_manual(values = fill.cols) +
+    theme_bw() +
+    labs(title = "PCA plot", subtitle = paste0("Min reads per gene/ortholog: ", minReads))
+  
+  if (nrow(pca.res) < 30) {
+    p <- p + geom_text_repel(aes(label = Sample), force = 1.5)
   }
-  invisible(p);
+  
+  # Highlight outliers
+  p <- p + geom_point(data = pca.res[pca.res$outlier, ], aes(x = PC1, y = PC2), color = "red", shape = 21, size = 4, fill = "red", stroke = 1.5)
+  
+  # Print the outliers
+  outliers <- pca.res[pca.res$outlier, "Sample"]
+  cat("Outliers detected:\n")
+  print(outliers)
+  
+  return(p)
 }
+
 
 UpdatePcaS2f <- function(minReads = 20,
                           projectDirStr,
