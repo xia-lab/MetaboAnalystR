@@ -291,6 +291,46 @@ submitMysqlJobRename <- function(userDir, jobID, aligner){
   sink();
 }
 
+submitMysqlJobRenamePro <- function(userDir, jobID, aligner){
+  pDir = dirname(userDir);
+  
+  str_mysql1 = "";
+  if(aligner == "Seq2Fun"){
+    str_mysql1 <- paste(
+      "echo Starting zip files $(date);",
+      "zip -r -j",
+      file.path(userDir, "Download.zip"),
+      file.path(userDir, "S2fid_*.txt"),
+      file.path(userDir, "Seq2Fun_summary_all_samples.html"),
+      file.path(userDir, "*.png"),
+      file.path(userDir, "metaTable.txt"),
+      file.path(userDir, "analysis_parameters.txt"),
+      "-x",
+      file.path(userDir, "*.fastq.gz;"),
+      "echo Finish zip files $(date);",
+      sep = " ");
+  } else {
+    str_mysql1 <- paste(
+      "echo Starting zip files $(date);",
+      "zip -r -j",
+      file.path(userDir, "Download.zip"),
+      file.path(userDir, "All_samples_*_txi_counts.txt"),
+      file.path(userDir, "*.png"),
+      file.path(userDir, "metaTable.txt"),
+      file.path(userDir, "analysis_parameters.txt"),
+      "-x",
+      file.path(userDir, "*.fastq.gz"),
+      file.path(userDir, "All_samples_*txi_abundance.txt"),
+      file.path(userDir, "All_samples_*txi_length.txt;"),
+      "echo Finish zip files $(date);",
+      sep = " ")
+  }
+
+  sink(file.path(userDir, "renameDirFromMysql.sh"));
+  cat(str_mysql1, "\n");
+  sink();
+}
+
 submitMysqlJobStatus <- function(userDir, jobID, numSamples){
   str_mysql <- paste("mysql -u proftpd -pseq2fun ftp -e ",
                      "\"UPDATE jobs SET jobStatus = 'COMPLETED', numFinSamples =",
