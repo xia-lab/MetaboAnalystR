@@ -228,9 +228,9 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
   mr.dat <- mSetObj$dataSet$mr_dat
   
   if(format == "png"){
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }else{
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 12
@@ -242,7 +242,13 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
   h <- 9
   
   # Record img
-  mSetObj$imgSet$mr_scatter_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_scatter_plot <- imageName
+  } else {
+    mSetObj$imgSet$mr_scatter_plot <- c(mSetObj$imgSet$mr_scatter_plot, imageName)
+  }  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_scatterPlot(mr.res, mr.dat, exposure)
@@ -301,9 +307,9 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   
   mr.res_single <- mSetObj$dataSet$mr_res_single
   if(format == "png"){
-  imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
     }else{
-  imgName <- paste0(exposure, "_", imgName, ".", format)
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 9
@@ -315,7 +321,13 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   h <- w
   
   # Record img
-  mSetObj$imgSet$mr_forest_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_forest_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_forest_plot <- c(mSetObj$imgSet$mr_forest_plot, imageName)
+  }  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_forestPlot(mr.res_single, exposure)
@@ -361,9 +373,9 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
   
   mr.res_loo <- mSetObj$dataSet$mr_res_loo
   if(format == "png"){
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   } else {
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 9
@@ -375,7 +387,14 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
   h <- w
   
   # Record img
-  mSetObj$imgSet$mr_leaveoneout_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_leaveoneout_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_leaveoneout_plot <- c(mSetObj$imgSet$mr_leaveoneout_plot, imageName)
+  } 
+  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_looPlot(mr.res_loo, exposure)
@@ -419,9 +438,9 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   
   mr.res_single <- mSetObj$dataSet$mr_res_single
   if(format == "png"){
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }else{
-    imgName <- paste0(exposure, "_", imgName, "dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 12
@@ -433,7 +452,13 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   h <- 9
   
   # Record img
-  mSetObj$imgSet$mr_funnel_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_funnel_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_funnel_plot <- c(mSetObj$imgSet$mr_funnel_plot, imageName)
+  }
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_funnelPlot(mr.res_single, exposure)
