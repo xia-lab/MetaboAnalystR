@@ -4,7 +4,7 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
+PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, opengwas_jwt_key = ""){
       mSetObj <- .get.mSet(mSetObj);
 
       #record
@@ -17,8 +17,10 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       mafThresh=mafThresh,
       harmonizeOpt=harmonizeOpt)
 
-      err.vec <<- "";      
-      opengwas_jwt_key <- readOpenGWASKey();
+      err.vec <<- "";
+      if(.on.public.web & (opengwas_jwt_key == "")){
+        opengwas_jwt_key <- readOpenGWASKey();
+      }
       exposure.dat <- mSetObj$dataSet$exposure;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
       colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
@@ -73,14 +75,23 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 readOpenGWASKey <- function(){
     if(.on.public.web){
         if(file.exists("/home/zgy/opengwas_api_keys.csv")){
-        df <- read.csv("/home/zgy/opengwas_api_keys.csv");
+            df <- read.csv("/home/zgy/opengwas_api_keys.csv");
         }else{
-        df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
+            df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
         }
         idx <- sample(1:nrow(df),1)
         cat("Using ", df$owner, "'s open gwas key...\n")
         this_key <- df$Key[1]
-        return(this_key)
+        expDate <- df$expDate
+        diff_date <- as.Date(expDate, "%Y/%m/%d") - Sys.Date()
+        diff_date <- as.integer(diff_date)
+        #cat("diff_date ===> ", diff_date, "\n")
+        #cat("this_key  ===> ", this_key, "\n")
+        if(diff_date>0){
+            return(this_key)
+        } else {
+            return("")
+        }        
     } else {
         return("")
     }
