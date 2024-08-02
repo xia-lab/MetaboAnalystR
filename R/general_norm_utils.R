@@ -10,6 +10,18 @@ CleanDataMatrix <- function(ndata){
   return(ndata[,!constCol, drop=FALSE]); # got an error of incorrect number of dimensions, added drop=FALSE to avoid vector conversion
 }
 
+setRatioOption <- function(mSetObj=NA, opt = "sum"){
+    mSetObj <- .get.mSet(mSetObj);
+    mSetObj$dataSet$ratioFilterOpt <- opt
+    return(.set.mSet(mSetObj));
+}
+
+getFeatureNum <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);    
+    return(as.integer(mSetObj[["dataSet"]][["proc.feat.num"]]));
+}
+
+
 #'Normalization
 #'@description This function performs row-wise normalization, transformation, and 
 #'scaling of your metabolomic data. 
@@ -109,7 +121,14 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     min.val <- min(abs(data[data!=0]))/2;
     norm.data <- log2((data + sqrt(data^2 + min.val))/2);
     transnm<-"Log2 Normalization";
-    ratio.mat <- CalculatePairwiseDiff(norm.data);
+
+    if(ncol(norm.data)>1000){
+        mSetObj$dataSet$ratioFilterOpt -> ratioFilterOpt;
+        norm.data0 <- extractTopFeatures(norm.data, 1000, ratioFilterOpt);
+        ratio.mat <- CalculatePairwiseDiff(norm.data0);        
+    } else {
+        ratio.mat <- CalculatePairwiseDiff(norm.data);
+    }    
     
     fstats <- Get.Fstat(ratio.mat, cls);
     hit.inx <- rank(-fstats) <= ratioNum;  # get top n
