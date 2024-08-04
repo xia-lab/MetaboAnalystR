@@ -630,16 +630,17 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
   # Create plot
   g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
     geom_bar(stat = "identity") +
-    scale_fill_manual(values = c("Normal" = "steelblue", "Outlier" = "red")) +
+    scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
     geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
     geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
     theme_minimal() +
-    labs(x = "Sample",
+    labs(title = "NCov5 Scores for Each Sample",
+         x = "Sample",
          y = "Number of Genes with > 5 Uniquely Mapped Reads") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
   
   width <- 12
-  height <- 6
+  height <- 9
   
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
   imgNm <- paste0(fileNm, format, sep="")
@@ -665,3 +666,77 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
   }
 }
 
+
+PlotDataNsig <- function(fileName, imgName, dpi, format){
+  print("nsig80====");
+  dataSet <- readDataset(fileName);
+  qc.nsig(dataSet, dataSet$data.norm, imgName, dpi, format, F);
+  return("NA");
+}
+
+
+qc.nsig <- function(dataSet, x, imgNm="NSig80_plot", dpi=72, format="png", interactive=FALSE) {
+  save.image("sig80.RData")
+  require("ggplot2")
+  require("Cairo")
+  
+  # Ensure dpi is a positive number
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) {
+    stop("DPI must be a positive number.")
+  }
+  
+  # Calculate NSig80 for each sample
+  NSig80 <- apply(x, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
+  
+  df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
+  
+  # Check for non-finite values and remove them
+  df <- df[is.finite(df$NSig80),]
+  
+  # Calculate IQR and identify outliers
+  Q1 <- quantile(df$NSig80, 0.25)
+  Q3 <- quantile(df$NSig80, 0.75)
+  IQR_value <- IQR(df$NSig80)
+  lower_bound <- Q1 - 3 * IQR_value
+  upper_bound <- Q3 + 3 * IQR_value
+  
+  df$outlier <- ifelse(df$NSig80 < lower_bound | df$NSig80 > upper_bound, "Outlier", "Normal")
+  
+  # Create plot
+  g <- ggplot(df, aes(x = Sample, y = NSig80, group = Sample, fill = outlier)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
+    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
+    theme_minimal() +
+    labs(x = "Sample",
+         y = "NSig80 (Number of Genes Capturing 80% of the Signal)") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
+  
+  width <- 12
+  height <- 9
+  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
+  imgNm <- paste0(fileNm, format, sep="")
+  
+  if (interactive) {
+    require("plotly")
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
+    w <- 1000
+    
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build)
+  } else {
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return("NA")
+  }
+}
