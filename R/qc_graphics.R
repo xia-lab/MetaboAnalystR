@@ -177,6 +177,7 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
 
 
 PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
+  library("ggrepel");
   dataSet <- readDataset(fileName);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
@@ -272,9 +273,13 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
   return(str);
 }
 
-PlotDataMeanStd <- function(fileName, densityName, dpi,format){
+PlotDataMeanStd <- function(fileName, imgName, dpi,format){
   dataSet <- readDataset(fileName);
-  res <- qc.meanstd(dataSet$data.norm, densityName, dpi, format);
+  if(grepl("_norm", imgName)){
+    res <- qc.meanstd(dataSet$data.norm, imgName, dpi, format);
+  }else{
+    res <- qc.meanstd(dataSet$data.anot, imgName, dpi, format);
+  }
   return(res);
 }
 
@@ -294,7 +299,6 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
 
   return(str);
 }
-
 
 meanSdPlot <- function(x, ranks = TRUE, xlab = ifelse(ranks, "rank(mean)", "mean"),
                        ylab = "sd", pch, plot = TRUE, bins = 50, ...) {
@@ -330,19 +334,18 @@ meanSdPlot <- function(x, ranks = TRUE, xlab = ifelse(ranks, "rank(mean)", "mean
   fmt = function() function(x) format(round(x, 0), nsmall = 0L, scientific = FALSE)
   
   res$gg = ggplot(data.frame(px = res$px, py = res$py),
-                  aes_string(x = "px", y = "py")) + xlab(xlab) + 
-    ylab(ylab) +
+                  aes_string(x = "px", y = "py")) + 
+    xlab(xlab) + ylab(ylab) +
     geom_hex(bins = bins, ...) +
     scale_fill_gradient(name = "count", trans = "log", labels = fmt()) + 
     geom_line(aes_string(x = "x", y = "y"),
               data = data.frame(x = res[[1]], y = res$sd), color = "red") +
-    theme_bw()
+    theme_bw();
   
   if (plot) print(res$gg)
   
   return(invisible(res))
 }
-
 
 rowV = function(x, mean, ...) {
   sqr     = function(x)  x*x
@@ -354,13 +357,17 @@ rowV = function(x, mean, ...) {
 }
 
 
-PlotDataPCA <- function(fileName, pcaName, dpi, format){
+
+PlotDataPCA <- function(fileName, imgName, dpi, format){
   dataSet <- readDataset(fileName);
-  qc.pcaplot(dataSet, dataSet$data.norm, pcaName, dpi, format, F);
+  if(grepl("_norm", imgName)){
+    qc.pcaplot(dataSet, dataSet$data.norm, imgName, dpi, format, F);
+  }else{
+    qc.pcaplot(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  }
   return("NA");
 }
-
-qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
+qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALSE) {
   dpi <- as.numeric(dpi)
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
   imgNm <- paste0(fileNm, format, sep="")
@@ -421,7 +428,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
         facet_grid(. ~ variable) +
         theme_bw() +
         scale_color_okabeito() +
-        scale_fill_okabeito()
+        scale_fill_okabeito() +
+        theme(
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          plot.title = element_text(size = 18, face = "bold"),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 16)
+        )
     } else {
       pcafig <- ggplot(pca.rest, aes(x = PC1, y = PC2, color = Conditions, label = names)) +
         geom_point(size = 4) + 
@@ -432,7 +446,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
         geom_text_repel(force = 1.5) + 
         facet_grid(. ~ variable) + theme_bw() +
         scale_color_okabeito() +
-        scale_fill_okabeito()
+        scale_fill_okabeito() +
+        theme(
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          plot.title = element_text(size = 18, face = "bold"),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 16)
+        )
     }
     width <- 12
     height <- 6
@@ -458,7 +479,14 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
         ylim(ylim) + 
         xlab(xlabel) + 
         ylab(ylabel) +
-        theme_bw()
+        theme_bw() +
+        theme(
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          plot.title = element_text(size = 18, face = "bold"),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 16)
+        )
     } else {
       pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions, label = names)) +
         geom_point(size = 4) + 
@@ -467,9 +495,16 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=F){
         xlab(xlabel) + 
         ylab(ylabel) +
         geom_text_repel(force = 1.5) +
-        theme_bw()
+        theme_bw() +
+        theme(
+          axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          plot.title = element_text(size = 18, face = "bold"),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 16)
+        )
     }
-    width <- 10
+    width <- 12
     height <- 6
     if(grepl("norm", imgNm)){
         if (paramSet$oneDataAnalType == "dose") {
@@ -531,7 +566,11 @@ GetPcaOutliers <- function(){
 
 PlotDataNcov5 <- function(fileName, imgName, dpi, format){
   dataSet <- readDataset(fileName);
-  qc.ncov5(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  if(grepl("_norm", imgName)){
+    qc.ncov5(dataSet, dataSet$data.norm, imgName, dpi, format, F);
+  }else{
+    qc.ncov5(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  }
   return("NA");
 }
 
@@ -565,80 +604,18 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
   # Create plot
   g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
     geom_bar(stat = "identity") +
-    scale_fill_manual(values = c("Normal" = "steelblue", "Outlier" = "red")) +
+     scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
     geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
     geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
     theme_minimal() +
-    labs(title = "NCov5 Scores for Each Sample",
-         x = "Sample",
+    labs( x = "Sample",
          y = "Number of Genes with > 5 Uniquely Mapped Reads") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
-  
-  width <- 12
-  height <- 6
-  
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
-  imgNm <- paste0(fileNm, format, sep="")
-  
-  if (interactive) {
-    require("plotly")
-    m <- list(
-      l = 50,
-      r = 50,
-      b = 20,
-      t = 20,
-      pad = 0.5
+    theme(
+      text = element_text(size = 11),
+      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate and increase size of x-axis labels
     )
-    w <- 1000
-    
-    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
-    return(ggp_build)
-  } else {
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
-    print(g)
-    dev.off()
-    return("NA")
-  }
-}
-qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", interactive=FALSE) {
-  require("ggplot2")
-  require("Cairo")
   
-  # Ensure dpi is a positive number
-  dpi <- as.numeric(dpi)
-  if (dpi <= 0) {
-    stop("DPI must be a positive number.")
-  }
-  
-  # Calculate NCov5 (HighCoverageGeneCount) for each sample
-  HighCoverageGeneCount <- colSums(x > 5)
-  
-  df <- data.frame(Sample = names(HighCoverageGeneCount), HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), stringsAsFactors = FALSE)
-  
-  # Check for non-finite values and remove them
-  df <- df[is.finite(df$HighCoverageGeneCount),]
-  
-  # Calculate IQR and identify outliers
-  Q1 <- quantile(df$HighCoverageGeneCount, 0.25)
-  Q3 <- quantile(df$HighCoverageGeneCount, 0.75)
-  IQR_value <- IQR(df$HighCoverageGeneCount)
-  lower_bound <- Q1 - 3 * IQR_value
-  upper_bound <- Q3 + 3 * IQR_value
-  
-  df$outlier <- ifelse(df$HighCoverageGeneCount < lower_bound | df$HighCoverageGeneCount > upper_bound, "Outlier", "Normal")
-  
-  # Create plot
-  g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
-    geom_bar(stat = "identity") +
-    scale_fill_manual(values = c("Normal" = "steelblue", "Outlier" = "red")) +
-    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
-    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
-    theme_minimal() +
-    labs(x = "Sample",
-         y = "Number of Genes with > 5 Uniquely Mapped Reads") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
-  
-  width <- 12
+  width <- 8
   height <- 6
   
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
@@ -665,3 +642,150 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
   }
 }
 
+PlotDataNsig <- function(fileName, imgName, dpi, format){
+  dataSet <- readDataset(fileName);
+  if(grepl("_norm", imgName)){
+    qc.nsig(dataSet, dataSet$data.norm, imgName, dpi, format, F);
+  }else{
+    qc.nsig(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  }
+  return("NA");
+}
+
+qc.nsig <- function(dataSet, x, imgNm="NSig80_plot", dpi=72, format="png", interactive=FALSE) {
+  require("ggplot2")
+  require("Cairo")
+  
+  # Ensure dpi is a positive number
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) {
+    stop("DPI must be a positive number.")
+  }
+  
+  # Calculate NSig80 for each sample
+  NSig80 <- apply(x, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
+  
+  df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
+  
+  # Check for non-finite values and remove them
+  df <- df[is.finite(df$NSig80),]
+  
+  # Calculate IQR and identify outliers
+  Q1 <- quantile(df$NSig80, 0.25)
+  Q3 <- quantile(df$NSig80, 0.75)
+  IQR_value <- IQR(df$NSig80)
+  lower_bound <- Q1 - 3 * IQR_value
+  upper_bound <- Q3 + 3 * IQR_value
+  
+  df$outlier <- ifelse(df$NSig80 < lower_bound | df$NSig80 > upper_bound, "Outlier", "Normal")
+  
+  # Create plot
+  g <- ggplot(df, aes(x = Sample, y = NSig80, group = Sample, fill = outlier)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
+    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
+    theme_minimal() +
+    labs(x = "Sample",
+         y = "NSig80 (Number of Genes Capturing 80% of the Signal)") +
+    theme(
+      text = element_text(size = 11),
+      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels for better readability
+    )
+  
+  width <- 8
+  height <- 6
+  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
+  imgNm <- paste0(fileNm, format, sep="")
+  
+  if (interactive) {
+    require("plotly")
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
+    w <- 1000
+    
+    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
+    return(ggp_build)
+  } else {
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return("NA")
+  }
+}
+
+
+PlotDataDendrogram <- function(fileName, imgName,threshold, dpi, format){
+  dataSet <- readDataset(fileName);
+
+  if(grepl("_norm", imgName)){
+    qc.dendrogram(dataSet, dataSet$data.norm, threshold, imgName, dpi, format, F);
+  }else{
+    qc.dendrogram(dataSet, dataSet$data.anot, threshold, imgName, dpi, format, F);
+  }
+  return("NA");
+}
+
+qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot", dpi = 72, format = "png", interactive = FALSE) {
+  require("Cairo")
+  
+  # Ensure dpi is a positive number
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) {
+    stop("DPI must be a positive number.")
+  }
+  
+  # Calculate Spearman's rank correlation matrix
+  spearman_corr <- cor(x, method = "spearman", use = "pairwise.complete.obs")
+  
+  # Convert correlation matrix to distance matrix (1 - correlation)
+  distance_matrix <- as.dist(1 - spearman_corr)
+  
+  # Perform hierarchical clustering
+  hc <- hclust(distance_matrix, method = "average")
+  
+  # Identify samples with a maximum distance greater than the threshold
+  distance_matrix_full <- as.matrix(distance_matrix)
+  max_distances <- apply(distance_matrix_full, 1, max)
+  samples_to_highlight <- names(max_distances[max_distances > threshold])
+  
+  # Create a dendrogram object
+  dend <- as.dendrogram(hc)
+  
+  # Determine the labels' colors based on outlier status
+  label_colors <- ifelse(labels(dend) %in% samples_to_highlight, "red", "black")
+  
+  # Plotting parameters
+  width <- 8
+  height <- 6
+  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
+  imgNm <- paste0(fileNm, format, sep = "")
+  
+  if (interactive) {
+    stop("Interactive mode is not supported with base R plotting.")
+  } else {
+    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    
+    # Plot the dendrogram with base R
+    plot(dend, main = "Dendrogram", ylab = "Height", xlab = "", cex.axis = 0.8, cex.lab = 1.2)
+    
+    # Add colors to the labels
+    labels <- labels(dend)
+    n <- length(labels)
+    for (i in 1:n) {
+      x <- i
+      y <- -0.1 # Positioning below the axis (adjust as necessary)
+      text(x, y, labels[i], srt = 90, adj = 1, xpd = NA, col = label_colors[i], cex = 0.8)
+    }
+    
+    dev.off()
+    return("NA")
+  }
+}

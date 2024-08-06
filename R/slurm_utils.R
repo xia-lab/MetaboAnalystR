@@ -836,7 +836,6 @@ UpdatePcaKls <- function(minReads = 20, projectDirStr, ...) {
   # Print the outliers
   outliers <- pca.res[pca.res$outlier, "Sample"]
   cat("Outliers detected:\n")
-  print(outliers)
   
   # Save the plot
   wd <- ifelse(nchar(mappingReadsDF$Sample[1]) < 20, 8, 16)
