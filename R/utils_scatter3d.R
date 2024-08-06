@@ -162,7 +162,8 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   netData[["misc"]] <- "";
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(filenm));
   paramSet$jsonNms["scatter3d"] <- filenm;
-
+  print(filenm)
+  print("scatter3d");
   saveSet(paramSet, "paramSet");
   
   sink(filenm);

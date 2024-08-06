@@ -279,3 +279,11 @@ ComputeRankedVec <- function(data, opt, inx = 1){
     }
    return(my.compute.ranked.vec(data, opt, inx));
 }
+
+PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
+   if(!exists("plot.gs.view")){ 
+        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+   }
+   return(plot.gs.view(cmpdNm, format, dpi, width));
+
+}

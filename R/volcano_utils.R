@@ -223,6 +223,8 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
   saveSet(imgSet, "imgSet");
   saveSet(paramSet, "paramSet");
   saveSet(analSet, "analSet");
+  print("Volcano OK");
+  
   return(1);
 }
 

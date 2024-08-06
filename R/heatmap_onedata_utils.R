@@ -16,6 +16,7 @@
 # 1 and 2 separated by a row of 'null' 
 # 3 and 1+2 separated by a column of 'null'
 PrepareExpressHeatmapJSON <- function(dataSet, displayOpt="sig"){
+  save.image("heatmap.RData");
   data.stat <- qs::qread("data.stat.qs");
   paramSet <- readSet(paramSet, "paramSet");
   res.tbl <- dataSet$comp.res; #dataSet$sig.mat for sig only

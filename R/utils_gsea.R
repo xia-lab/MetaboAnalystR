@@ -603,7 +603,7 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   return(json.nm)
 }
 
-PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
+plot.gs.view <-function(cmpdNm, format="png", dpi=72, width=NA){
   require("ggplot2");
   require("fgsea");
   current.geneset <- qs::qread("current_geneset.qs");

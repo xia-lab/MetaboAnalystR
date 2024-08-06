@@ -180,7 +180,7 @@ GetFilesToBeSaved <-function(naviString){
 GetMetaInfo <- function(dataName=""){
   paramSet <- readSet(paramSet, "paramSet");
   if(paramSet$anal.type == "metadata"){
-
+  metaNms<-setdiff(colnames(paramSet$dataSet$meta.info),dataSet$rmMetaCol)
   }else{
   dataSet <- readDataset(dataName);
   metaNms<-setdiff(colnames(dataSet$meta.info),dataSet$rmMetaCol)
@@ -273,9 +273,15 @@ GetMetaSigGeneCount <- function(){
   return(nrow(analSet$meta.mat));
 }
 
-GetCurrentJson <-function(type){
-  paramSet <- readSet(paramSet, "paramSet");
-  return(paramSet$jsonNms[[type]]);
+GetCurrentJson <- function(type) {
+  paramSet <- readSet(paramSet, "paramSet")
+  
+  # Check if the list paramSet$jsonNms contains the key 'type'
+  if (!is.null(paramSet$jsonNms[[type]])) {
+    return(paramSet$jsonNms[[type]])
+  } else {
+    return("NA")  # or return a default value if appropriate
+  }
 }
 
 
