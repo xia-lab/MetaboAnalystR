@@ -2733,12 +2733,28 @@ PerformResultSummary <- function(mSet = NA) {
   cmpds <- cmpds[cmpds != "Unknown"]
   cmpdss <- unique(unname(unlist(sapply(cmpds, FUN = function(x){strsplit(x, "; ")}))))
   
-  formulaMsg <- paste0(length(formulass), 
-                       " unique formulas have been matched to HMDB database.")
-  cmpdsMsg <- paste0(length(cmpdss), 
-                       " potential compounds have been matched to HMDB database.");
+  if(file.exists("compound_msn_results.csv")){
+    dt <- read.csv("compound_msn_results.csv");
+    param_list <- qs::qread("msn_param_list.qs");
 
-  return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, formulaMsg, cmpdsMsg))
+    param_list$db_opt <- gsub(" ", "", param_list$db_opt);
+    param_list$db_opt <- gsub("\\[", "", param_list$db_opt);
+    param_list$db_opt <- gsub("]", "", param_list$db_opt);
+    param_list$db_opt <- gsub(",", " , ", param_list$db_opt);
+
+    cmpdsMsg <- paste0(nrow(dt), 
+                         " compounds have been identified based on MS/MS spectra from database: ", param_list$db_opt);
+
+    return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, cmpdsMsg))
+
+  } else {
+    formulaMsg <- paste0(length(formulass), 
+                         " unique formulas have been matched to HMDB database.")
+    cmpdsMsg <- paste0(length(cmpdss), 
+                         " potential compounds have been matched to HMDB database.");
+
+    return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, formulaMsg, cmpdsMsg))
+  }
 }
 
 PerformExtractHMDBCMPD <- function(formula, featureOrder) {
