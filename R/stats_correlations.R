@@ -269,6 +269,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     as_list[["layout"]][["height"]] <- h
     
     if(.on.public.web){
+        reticulate::use_miniconda('r-reticulate')
         plotly::save_image(as_list, imgName, scale = 3)
     }
 
