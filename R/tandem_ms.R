@@ -1109,7 +1109,7 @@ GetMSMSPrecMZvec_msp_min <- function(mSetObj=NA){
 }
 
 FetchExampleMSP <- function(URL = ""){
-  download.file(url = URL, destfile = basename(URL), method = "curl")
+  download.file(url = URL, destfile = basename(URL), method = "libcurl")
   return(1)
 }
 
