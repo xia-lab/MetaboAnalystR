@@ -1368,10 +1368,15 @@ saveCurrentSession <- function(path){
 saveParams4Processing <- function(ppm_val1, ppm_val2,
                                   database_path, fragmentDB_pth,
                                   msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, path){
+  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "JobKill"));
   save(ppm_val1, ppm_val2,
        database_path, fragmentDB_pth,
        msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, 
        ionMode, unit1, unit2, file = paste0(path, "/MS2_searching_params.rda"))
+}
+
+cancelMS2Job <- function(path){
+    write.table(1, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "JobKill"));
 }
 
 finishsearchingjob <- function(mSet){
