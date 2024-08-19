@@ -4,7 +4,7 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt){
+PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, opengwas_jwt_key = ""){
       mSetObj <- .get.mSet(mSetObj);
 
       #record
@@ -17,8 +17,10 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       mafThresh=mafThresh,
       harmonizeOpt=harmonizeOpt)
 
-      err.vec <<- "";      
-      opengwas_jwt_key <- readOpenGWASKey();
+      err.vec <<- "";
+      if(.on.public.web & (opengwas_jwt_key == "")){
+        opengwas_jwt_key <- readOpenGWASKey();
+      }
       exposure.dat <- mSetObj$dataSet$exposure;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
       colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
@@ -73,14 +75,23 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 readOpenGWASKey <- function(){
     if(.on.public.web){
         if(file.exists("/home/zgy/opengwas_api_keys.csv")){
-        df <- read.csv("/home/zgy/opengwas_api_keys.csv");
+            df <- read.csv("/home/zgy/opengwas_api_keys.csv");
         }else{
-        df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
+            df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
         }
         idx <- sample(1:nrow(df),1)
         cat("Using ", df$owner, "'s open gwas key...\n")
         this_key <- df$Key[1]
-        return(this_key)
+        expDate <- df$expDate
+        diff_date <- as.Date(expDate, "%Y/%m/%d") - Sys.Date()
+        diff_date <- as.integer(diff_date)
+        #cat("diff_date ===> ", diff_date, "\n")
+        #cat("this_key  ===> ", this_key, "\n")
+        if(diff_date>0){
+            return(this_key)
+        } else {
+            return("")
+        }        
     } else {
         return("")
     }
@@ -228,9 +239,9 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
   mr.dat <- mSetObj$dataSet$mr_dat
   
   if(format == "png"){
-  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }else{
-  imgName <- paste0(exposure, "_", imgName, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 12
@@ -242,7 +253,13 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
   h <- 9
   
   # Record img
-  mSetObj$imgSet$mr_scatter_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_scatter_plot <- imageName
+  } else {
+    mSetObj$imgSet$mr_scatter_plot <- c(mSetObj$imgSet$mr_scatter_plot, imageName)
+  }  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_scatterPlot(mr.res, mr.dat, exposure)
@@ -301,9 +318,9 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   
   mr.res_single <- mSetObj$dataSet$mr_res_single
   if(format == "png"){
-  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
     }else{
-  imgName <- paste0(exposure, "_", imgName, ".", format)
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 9
@@ -315,7 +332,13 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   h <- w
   
   # Record img
-  mSetObj$imgSet$mr_forest_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_forest_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_forest_plot <- c(mSetObj$imgSet$mr_forest_plot, imageName)
+  }  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_forestPlot(mr.res_single, exposure)
@@ -361,9 +384,9 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
   
   mr.res_loo <- mSetObj$dataSet$mr_res_loo
   if(format == "png"){
-  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
-      }else{
-  imgName <- paste0(exposure, "_", imgName, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  } else {
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 9
@@ -375,7 +398,14 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
   h <- w
   
   # Record img
-  mSetObj$imgSet$mr_leaveoneout_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_leaveoneout_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_leaveoneout_plot <- c(mSetObj$imgSet$mr_leaveoneout_plot, imageName)
+  } 
+  
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_looPlot(mr.res_loo, exposure)
@@ -419,9 +449,9 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   
   mr.res_single <- mSetObj$dataSet$mr_res_single
   if(format == "png"){
-  imgName <- paste0(exposure, "_", imgName, "_dpi", dpi, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }else{
-  imgName <- paste0(exposure, "_", imgName, ".", format)
+    imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
     w <- 12
@@ -433,7 +463,13 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   h <- 9
   
   # Record img
-  mSetObj$imgSet$mr_funnel_plot <- imgName
+  imageName <- imgName
+  names(imageName) <- exposure
+  if(is.null(mSetObj$imgSet$mr_scatter_plot)){
+    mSetObj$imgSet$mr_funnel_plot <- imgName
+  } else {
+    mSetObj$imgSet$mr_funnel_plot <- c(mSetObj$imgSet$mr_funnel_plot, imageName)
+  }
   mSetObj$imgSet$current.img <- imgName
   
   plot <- .mr_funnelPlot(mr.res_single, exposure)

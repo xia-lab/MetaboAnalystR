@@ -604,6 +604,27 @@ CalculatePairwiseDiff <- function(mat){
   round(res,5);
 }
 
+extractTopFeatures <- function(mat, topN = 1000, ratioFilOpt = "sum"){
+  if(ratioFilOpt == "sum"){
+    
+    sum_vals <- apply(mat, 2, sum)
+    order_idx <- order(sum_vals, decreasing = TRUE)
+    matx <- mat[, order_idx]
+    return(matx[,1:topN])
+    
+  } else {
+    cv_cal <- function(x){
+      sd(x,na.rm = TRUE)/mean(x, na.rm = TRUE)
+    }
+    cv_vals <- apply(mat, 2, cv_cal)
+    order_idx <- order(cv_vals, decreasing = TRUE)
+    matx <- mat[, order_idx]
+    return(matx[,1:topN])
+  }
+
+}
+
+
 ##############################################
 ##############################################
 ########## Utilities for web-server ##########

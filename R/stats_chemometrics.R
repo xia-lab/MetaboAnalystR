@@ -1160,7 +1160,7 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   orig.cls <- cls <- as.numeric(mSetObj$dataSet$cls);
   datmat <- as.matrix(mSetObj$dataSet$norm);
   best.num <- mSetObj$analSet$plsda$best.num;
@@ -1231,6 +1231,16 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   }else{
     print(msg);
     return(.set.mSet(mSetObj));
+  }
+}
+
+checkCVperformed <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  best.num <- mSetObj$analSet$plsda$best.num;
+  if(is.null(best.num)){
+    return(0)
+  } else {
+    return(1)
   }
 }
 

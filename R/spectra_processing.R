@@ -116,7 +116,7 @@ CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.v
   }
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=2\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=4\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   ## Prepare R script for running
   # download files if needed
@@ -2733,12 +2733,28 @@ PerformResultSummary <- function(mSet = NA) {
   cmpds <- cmpds[cmpds != "Unknown"]
   cmpdss <- unique(unname(unlist(sapply(cmpds, FUN = function(x){strsplit(x, "; ")}))))
   
-  formulaMsg <- paste0(length(formulass), 
-                       " unique formulas have been matched to HMDB database.")
-  cmpdsMsg <- paste0(length(cmpdss), 
-                       " potential compounds have been matched to HMDB database.");
+  if(file.exists("compound_msn_results.csv")){
+    dt <- read.csv("compound_msn_results.csv");
+    param_list <- qs::qread("msn_param_list.qs");
 
-  return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, formulaMsg, cmpdsMsg))
+    param_list$db_opt <- gsub(" ", "", param_list$db_opt);
+    param_list$db_opt <- gsub("\\[", "", param_list$db_opt);
+    param_list$db_opt <- gsub("]", "", param_list$db_opt);
+    param_list$db_opt <- gsub(",", " , ", param_list$db_opt);
+
+    cmpdsMsg <- paste0(nrow(dt), 
+                         " compounds have been identified based on MS/MS spectra from database: ", param_list$db_opt);
+
+    return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, cmpdsMsg))
+
+  } else {
+    formulaMsg <- paste0(length(formulass), 
+                         " unique formulas have been matched to HMDB database.")
+    cmpdsMsg <- paste0(length(cmpdss), 
+                         " potential compounds have been matched to HMDB database.");
+
+    return(c(IntroMsg, ProcessingMsg, FeatureMsg, ppmMsg, IsotopMsg, AdductsMsg, formulaMsg, cmpdsMsg))
+  }
 }
 
 PerformExtractHMDBCMPD <- function(formula, featureOrder) {

@@ -244,40 +244,42 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
       add_col_labels(size = 0.2,font = list(size = fz) ) 
   }
   
-  if(!no.clst){ # when no clustering, tree_row is NA
-   p <- p  %>% add_row_clustering() %>% 
-      add_col_clustering()
-     new.ord <- p@xaxes@listData[["x"]]@order;
-     corr.mat <- corr.mat[new.ord, new.ord];
-     mSetObj$analSet$pwcor$new.ord <- new.ord;
-    
-  }
+    if(!no.clst){ # when no clustering, tree_row is NA
+        p <- p  %>% add_row_clustering() %>% 
+           add_col_clustering()
+          new.ord <- p@xaxes@listData[["x"]]@order;
+          corr.mat <- corr.mat[new.ord, new.ord];
+          mSetObj$analSet$pwcor$new.ord <- new.ord;
+    }
   
     mSetObj$imgSet$heatmap_stats_corr_param <- list();
     mSetObj$imgSet$heatmap_stats_corr_param$width <- 1000;
     mSetObj$imgSet$heatmap_stats_corr_param$height <- h*1.5;
 
     saveRDS(p, "heatmap_stats_corr.rds")
+    
+    as_list <- to_plotly_list(p)
 
-   as_list <- to_plotly_list(p)
-
-     if(ncol(corr.mat)<100){
-         w=w+(100-ncol(corr.mat))*6
-         h=h+(100-ncol(corr.mat))*6
-        }
-
+    if(ncol(corr.mat)<100){
+        w=w+(100-ncol(corr.mat))*6
+        h=h+(100-ncol(corr.mat))*6
+    }
     
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
-
+    
+    if(.on.public.web){
+        reticulate::use_miniconda('r-reticulate')
+        plotly::save_image(as_list, imgName, scale = 3)
+    }
 
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
-     print(plotjs)
+    print(plotjs)
     write(as_json, plotjs)  
-  fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
-  return(.set.mSet(mSetObj));
+    fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
+    return(.set.mSet(mSetObj));
 }
 
 #'Create high resolution static HeatMap for download only
