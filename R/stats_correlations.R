@@ -159,8 +159,8 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, fix.col, no.clst,fz, unit, corrCutoff=0){
-  
+                          colors, fix.col, no.clst, fz, unit, corrCutoff=0){
+
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
@@ -289,9 +289,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
 #'@export
 #'
 
-PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, viewOpt, fix.col, no.clst, corrCutoff=0){
-  
+PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, colors, viewOpt, fix.col, no.clst, corrCutoff=0){
+ 
+
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
