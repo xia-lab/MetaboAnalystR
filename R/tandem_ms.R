@@ -147,6 +147,8 @@ msmsResClean <- function(res){
   scores_idxs <- is.finite(allscore);
 
   allcmpds <- allcmpds[scores_idxs];
+  allscore <- allscore[scores_idxs];
+
   allcmpds_unique <- unique(allcmpds);
   
   idx <- vapply(allcmpds_unique, function(cmpd){
@@ -970,7 +972,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     }
     res -> results
   }
- 
+  
   results_clean <- lapply(results, msmsResClean)
 
   mSetObj$dataSet$msms_result <- results_clean
@@ -1066,6 +1068,51 @@ DataUpdatefromInclusionList <- function(mSetObj=NA, included_str = ""){
     Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   }
   
+  
+  mSetObj[["msgSet"]][["sanity_msgvec"]] <- c(mSetObj[["msgSet"]][["sanity_msgvec"]][1:2], Msg)
+  return(.set.mSet(mSetObj))
+}
+
+DataUpdatefromInclusionListPro <- function(mSetObj=NA, included_str = ""){
+  if(included_str == ""){
+    return (1);
+  }
+  mSetObj <- .get.mSet(mSetObj);
+  
+  Msg = vector()
+  included_list <- strsplit(included_str, "\n")[[1]]
+  
+  spectrum_set_full <- mSetObj[["dataSet"]][["spectrum_set_full"]]
+  prec_mzrt_all <- mSetObj[["dataSet"]][["prec_mzrt_all"]]
+  
+  idxs <- vapply(included_list, function(x){
+    which(x == prec_mzrt_all)[1]
+  }, FUN.VALUE = integer(1L))
+  
+
+    mSetObj[["dataSet"]][["prec_mz_included"]] <- 
+      mSetObj[["dataSet"]][["prec_mz_all"]][idxs];
+    
+    mSetObj[["dataSet"]][["prec_rt_included"]] <-
+      mSetObj[["dataSet"]][["prec_rt_all"]][idxs];
+    
+    mSetObj[["dataSet"]][["prec_mzrt_included"]] <- 
+      mSetObj[["dataSet"]][["prec_mzrt_all"]][idxs];
+    
+    mSetObj[["dataSet"]][["spectrum_set"]] <- 
+      mSetObj[["dataSet"]][["spectrum_set_full"]][idxs];
+    
+    ms2spec <- mSetObj[["dataSet"]][["spectrum_set"]];
+    all_precmz <- vapply(ms2spec, function(x){x[[1]]}, FUN.VALUE = double(1L))
+    all_precrt <- vapply(ms2spec, function(x){x[[2]]}, FUN.VALUE = double(1L))
+    msms_frg_num <- vapply(ms2spec, function(x){nrow(x[[3]])}, FUN.VALUE = double(1L))
+    
+    Msg <- c(Msg, paste0("A total of ", length(idxs), " tandem spectra will be searched!"))
+    Msg <- c(Msg, paste0("The m/z range of all precursors in your data is from ", min(all_precmz), " to ", max(all_precmz), "."))
+    Msg <- c(Msg, paste0("The retention time range of all included precursors in your data is from ", min(all_precrt), " to ", max(all_precrt), "."))
+    Msg <- c(Msg, paste0("The minimum number of MS/MS fragments is ", min(msms_frg_num), "."))
+    Msg <- c(Msg, paste0("The maximum number of MS/MS fragments is ", max(msms_frg_num), "."))
+    Msg <- c(Msg, paste0("Please click <b>Proceed</b> button to start database searching."))
   
   mSetObj[["msgSet"]][["sanity_msgvec"]] <- c(mSetObj[["msgSet"]][["sanity_msgvec"]][1:2], Msg)
   return(.set.mSet(mSetObj))
@@ -1368,7 +1415,7 @@ saveCurrentSession <- function(path){
 saveParams4Processing <- function(ppm_val1, ppm_val2,
                                   database_path, fragmentDB_pth,
                                   msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, path){
-  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "JobKill"));
+  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "/JobKill"));
   save(ppm_val1, ppm_val2,
        database_path, fragmentDB_pth,
        msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, 
@@ -1376,7 +1423,7 @@ saveParams4Processing <- function(ppm_val1, ppm_val2,
 }
 
 cancelMS2Job <- function(path){
-    write.table(1, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "JobKill"));
+    write.table(1, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = paste0(path, "/JobKill"));
 }
 
 finishsearchingjob <- function(mSet){
