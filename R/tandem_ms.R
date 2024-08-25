@@ -427,11 +427,11 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
   sink();
   
   if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
-    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    df <- data.frame(indx = featureidx, imageNM = imageNM, ft_idx = current_msms_idx)
     mSetObj[["imgSet"]][["msmsmirror"]] <- df
   } else {
     mSetObj[["imgSet"]][["msmsmirror"]] -> df0
-    df <- data.frame(indx = featureidx, imageNM = imageNM)
+    df <- data.frame(indx = featureidx, imageNM = imageNM, ft_idx = current_msms_idx)
     mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
   }
   
