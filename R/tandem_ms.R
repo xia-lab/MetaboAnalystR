@@ -1465,3 +1465,31 @@ readProgressSec <- function(path_str){
 loadMS2ResultmSet <- function(){
   mSet <<- qs::qread("MS2_searching_results.qs");
 }
+
+plotms2Mirror <- function(mSetObj=NA, feature, index){
+    mSetObj <- .get.mSet(mSetObj);
+
+    if(grepl("mz@NonSpecified", feature)){
+        featurelabel_idx <- 1;
+        candidate_idx <- which(mSetObj[["dataSet"]][["msms_result"]][[featurelabel_idx]][["IDs"]] == index)
+        mz <- as.numeric(strsplit(feature, "mz@")[[1]][1])
+    } else {
+        featurelabel_idx <- which(mSetObj[["dataSet"]][["prec_mzrt_included"]] == feature)
+        candidate_idx <- which(mSetObj[["dataSet"]][["msms_result"]][[featurelabel_idx]][["IDs"]] == index)
+        mz <- as.numeric(strsplit(feature, "mz@")[[1]][1])
+    }
+
+
+    # need to set current ms indx
+    mSet[["dataSet"]][["current_msms_idx"]] <<- featurelabel_idx
+    plotMirror(mSetObj, candidate_idx, mz, 5.0, paste0("dyn_mplot_", feature,"_", index, ".svg"), 72.0, "svg", 10, 6)
+
+}
+
+plotrawms2Mirror <- function(mSetObj=NA, feature, index){
+    mSetObj <- .get.mSet(mSetObj);
+    save(mSetObj, file = "mSetObj___plotrawms2Mirror.rda")
+    cat("plotrawms2Mirror == feature ===> ", feature, "\n")
+    cat("plotrawms2Mirror == index   ===> ", index, "\n")
+
+}
