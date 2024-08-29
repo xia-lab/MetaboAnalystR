@@ -495,7 +495,7 @@ PlotClustPCA <- function(mSetObj,
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
                            smplDist, clstDist, palette,fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,  method.nm, top.num,  rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T,viewOpt,download=F){
-  print(download)
+  #print(download)
   mSetObj <- .get.mSet(mSetObj);
   var.nms = colnames(mSetObj$dataSet$norm);
   if(top.num < length(var.nms)){
