@@ -519,8 +519,6 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
 UpdateData <- function(mSetObj=NA, order.group = FALSE){
   mSetObj <- .get.mSet(mSetObj);
-save.image("All_UpdateData_env.RData")
-save(mSetObj,order.group, file = "mSetObj__UpdateData0.rda")
 
   #Reset to default
   mSetObj$dataSet$edit <- NULL; 
@@ -570,7 +568,7 @@ save(mSetObj,order.group, file = "mSetObj__UpdateData0.rda")
       my.sync <- .sync.data.metadata(data, mSetObj$dataSet$meta.info);
       mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-save(mSetObj, file = "mSetObj__UpdateData.rda")
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(length(levels(mSetObj$dataSet$edit.cls)));
