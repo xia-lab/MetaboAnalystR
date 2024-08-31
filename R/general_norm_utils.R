@@ -519,6 +519,8 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
 UpdateData <- function(mSetObj=NA, order.group = FALSE){
   mSetObj <- .get.mSet(mSetObj);
+save.image("All_UpdateData_env.RData")
+save(mSetObj,order.group, file = "mSetObj__UpdateData0.rda")
 
   #Reset to default
   mSetObj$dataSet$edit <- NULL; 
@@ -544,7 +546,13 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
   #AddMsg("Successfully updated the sample items!");
   
   # update groups (note these are to retain, not exclude)
-  if(grp.nm.vec != ""){
+  if(length(grp.nm.vec) ==1){
+    if(grp.nm.vec != ""){
+      grp.hit.inx <- cls %in% grp.nm.vec;
+      data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
+      cls <- droplevels(factor(cls[grp.hit.inx])); 
+    }
+  } else {
     grp.hit.inx <- cls %in% grp.nm.vec;
     data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
     cls <- droplevels(factor(cls[grp.hit.inx])); 
@@ -568,7 +576,7 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
       my.sync <- .sync.data.metadata(data, mSetObj$dataSet$meta.info);
       mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-
+save(mSetObj, file = "mSetObj__UpdateData.rda")
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(length(levels(mSetObj$dataSet$edit.cls)));
