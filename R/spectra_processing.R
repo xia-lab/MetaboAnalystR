@@ -2727,7 +2727,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   
   spec_top_m <- mSetObj[["analSet"]][["ms2res"]][["Concensus_spec"]][[2]][[idx]][[1]]
   compound_name <- DBAnnoteRes[[idx]][["Compounds"]][uidx][sub_idx+1]
-  title <- paste0(mz, "__", rt)
+  title <- paste0("mz: ", mz, "; Retention time: ", rt)
   subtitle <- paste0(compound_name)
   p1 <- MirrorPlotting(spec_top_m, 
                        spec_bottom, 
@@ -2852,11 +2852,11 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   sink();
   
   if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
-    df <- data.frame(indx = result_num, imageNM = imageNM)
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
     mSetObj[["imgSet"]][["msmsmirror"]] <- df
   } else {
     mSetObj[["imgSet"]][["msmsmirror"]] -> df0
-    df <- data.frame(indx = result_num, imageNM = imageNM)
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
     mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
   }
 
