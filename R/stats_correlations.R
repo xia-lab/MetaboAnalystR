@@ -268,9 +268,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
     
-    if(.on.public.web){
-        reticulate::use_miniconda('r-reticulate')
-        plotly::save_image(as_list, imgName, scale = 3)
+    if(.on.public.web){        
+        try(reticulate::use_miniconda('r-reticulate'), silent = TRUE)
+        try(plotly::save_image(as_list, imgName, scale = 3), silent = TRUE)
     }
 
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
