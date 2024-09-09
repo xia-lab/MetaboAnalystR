@@ -351,7 +351,7 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width
   }else if(colors == "d3"){
     colors <- c("#2CA02CFF","white","#FF7F0EFF");
   }else {
-colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   
   
