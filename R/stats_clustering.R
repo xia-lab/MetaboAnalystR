@@ -534,11 +534,10 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));
   if(download==T){
- PlotStaticHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,viewOpt, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend,showRownm);
+    PlotStaticHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,viewOpt, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend,showRownm);
   }else{
- PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, showColnm,showRownm);
-}
- 
+    PlotHeatMap(mSetObj, imgName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist, palette, fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV, colV, var.inx, border, grp.ave, show.legend, show.annot.legend, showColnm,showRownm);
+  } 
 }
 
 #'Create Heat Map Plot
@@ -649,14 +648,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
         colors <- c("#0571b0","#92c5de","white","#f4a582","#ca0020");
     }
 
-  if(cls.type == "disc"){
-    annotation <- data.frame(class = hc.cls);
-    rownames(annotation) <- rownames(hc.dat); 
-  }else{
-    annotation <- NA;
-  }
  
-  
   # make the width smaller for group average
  
   if(border){
@@ -672,6 +664,13 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
         hc.dat <- hc.dat[ord.inx,];
     }else if(cls.class =="integer"){
         hc.cls <- as.factor(as.numeric(levels(hc.cls))[hc.cls]);
+    }
+
+    if(cls.type == "disc"){
+      annotation <- data.frame(class = hc.cls);
+      rownames(annotation) <- rownames(hc.dat); 
+    }else{
+      annotation <- NA;
     }
 
     # set up color schema for samples
@@ -700,6 +699,9 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     data1sc <- scale_mat(data1sc, scaleOpt)
     data1sc = round(data1sc,5)
     
+     if (!colV) {
+    data1sc = data1sc[nrow(data1sc):1,]
+    }
     
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
@@ -888,7 +890,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
   }else if(palette == "d3"){
     colors <- c("#2CA02CFF","white","#FF7F0EFF");
   }else {
-colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   
   if(cls.type == "disc"){

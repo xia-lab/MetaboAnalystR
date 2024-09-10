@@ -61,7 +61,7 @@ aov.2way <- function(x){
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
-                       p.cor="fdr", designType="time0", phenOpt="between"){
+                       p.cor="fdr", designType="time0", phenOpt="between", topN=200){
   mSetObj <- .get.mSet(mSetObj);
 
   if(length(meta.vec.aov) == 0){
@@ -111,13 +111,13 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     }
   }
 
-  # only do for top 200
-  if(dim(mSetObj$dataSet$norm)[2] > 200){
+  # only do for top topN (200 by default)
+  if(dim(mSetObj$dataSet$norm)[2] > topN){
     metab.var <- apply(as.matrix(mSetObj$dataSet$filt), 2, function(x){
       mean.lev <- mean(x)
       var(x/mean.lev)
     })
-    high.var <- names(sort(metab.var, decreasing = TRUE))[1:200]
+    high.var <- names(sort(metab.var, decreasing = TRUE))[1:topN]
     dat <- mSetObj$dataSet$norm[,colnames(mSetObj$dataSet$norm) %in% high.var]
   } else {
     dat <- mSetObj$dataSet$norm
