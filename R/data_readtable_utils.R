@@ -143,53 +143,74 @@ ReadAnnotationTable <- function(fileName) {
   return(1);
 }
 
-#read annotation table file when user selects custom annotation option
 ReadCustomLib <- function(fileName) {
   # Load the msgSet and paramSet objects
   msgSet <- readSet(msgSet, "msgSet")
   paramSet <- readSet(paramSet, "paramSet")
-    
-  # Read the file into a character vector, line by line
-  gene_data <- readLines(fileName)
   
-  # Initialize an empty list to store gene sets by cell line
-  gene_set_list <- list()
+  org <- paramSet$data.org
+  idType <- paramSet$data.idType
 
-  # Sanity check: Ensure the file is not empty
-  if (length(gene_data) == 0) {
-    msgSet$current.msg <- "Error: The input file is empty."
+  # Sanity check: Ensure the file exists
+  if (!file.exists(fileName)) {
+    msgSet$current.msg <- paste("Error: Gene set file", fileName, "not found.")
     saveSet(msgSet, "msgSet")
     return(0)
   }
 
-  # Loop through each line in the file
+  # Read the file into a character vector, line by line
+  gene_data <- readLines(fileName)
+  
+  # Sanity check: Ensure the file is not empty
+  if (length(gene_data) == 0) {
+    msgSet$current.msg <- "Error: The input gene set file is empty."
+    saveSet(msgSet, "msgSet")
+    return(0)
+  }
+
+  # Step 1: Get the universe of all genes across all sets
+  universe_genes <- unlist(lapply(gene_data, function(line) {
+    line_parts <- strsplit(line, "\t+")[[1]]
+    return(line_parts[-1])  # Return only the genes, exclude the set name
+  }))
+
+  # Step 2: Perform ID conversion on the entire universe of genes
+  converted_universe <- .doAnnotation(universe_genes, idType, paramSet)
+  converted_universe <- unname(converted_universe)
+
+  # Create a mapping of original gene IDs to converted IDs (for subsetting later)
+  universe_map <- setNames(converted_universe, universe_genes)
+  print(head(universe_map));
+  # Step 3: Initialize an empty list to store gene sets by cell line
+  gene_set_list <- list()
+
+  # Step 4: Loop through each line and use the pre-processed universe map
   for (line in gene_data) {
     # Split the line by tabs
     line_parts <- strsplit(line, "\t+")[[1]]
-
-    # Sanity check: Each line should have at least two elements (set and genes)
+    
+    # Sanity check: Ensure the line has at least one gene
     if (length(line_parts) < 2) {
-      msgSet$current.msg <- paste("Error: Line in the file does not contain enough data:", line)
+      msgSet$current.msg <- paste("Error: Gene set for", line_parts[1], "is missing gene entries.")
       saveSet(msgSet, "msgSet")
       return(0)
     }
 
-    # The first part is the cell line (set), the rest are the genes
-    set <- line_parts[1]
+    # The first part is the set (e.g., cell line), the rest are the genes
+    set_name <- line_parts[1]
     genes <- line_parts[-1]  # Everything after the first element
 
-    # Sanity check: Ensure that the genes part is not empty
-    if (length(genes) == 0) {
-      msgSet$current.msg <- paste("Error: No genes found for set:", set)
-      saveSet(msgSet, "msgSet")
-      return(0)
-    }
+    # Step 5: Subset the universe map to get the converted IDs for this set
+    converted_ids <- universe_map[genes]
 
-    # Store the genes for the cell line
-    gene_set_list[[set]] <- genes
+    # Filter out any NA values (unmatched IDs)
+    hit_inx <- !is.na(converted_ids)
+
+    # Store the successfully converted IDs for the gene set
+    gene_set_list[[set_name]] <- converted_ids[hit_inx]
   }
 
-  # Save the gene set list into a .qs file if all sanity checks pass
+  # Step 6: Save the gene set list into a .qs file
   qs::qsave(gene_set_list, "custom_lib.qs")
 
   # Update paramSet with the custom library file name
@@ -198,9 +219,11 @@ ReadCustomLib <- function(fileName) {
   # Save msgSet and paramSet after the process
   saveSet(msgSet, "msgSet")
   saveSet(paramSet, "paramSet")
-
+  
   return(1)
 }
+
+
 
 
 GetCustomLibColNames <- function(){

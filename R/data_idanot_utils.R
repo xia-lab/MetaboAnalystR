@@ -29,11 +29,11 @@
 #'@export
 #'
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){
-  dataName <<- dataName;
-  org <<- org;
-  dataType <<- dataType;
-  idType <<- idType;
-  lvlOpt <<- lvlOpt;
+  #dataName <<- dataName;
+  #org <<- org;
+  #dataType <<- dataType;
+  #idType <<- idType;
+  #lvlOpt <<- lvlOpt;
   #save.image("dataannot.RData");
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
