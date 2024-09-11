@@ -143,6 +143,70 @@ ReadAnnotationTable <- function(fileName) {
   return(1);
 }
 
+#read annotation table file when user selects custom annotation option
+ReadCustomLib <- function(fileName) {
+  # Load the msgSet and paramSet objects
+  msgSet <- readSet(msgSet, "msgSet")
+  paramSet <- readSet(paramSet, "paramSet")
+    
+  # Read the file into a character vector, line by line
+  gene_data <- readLines(fileName)
+  
+  # Initialize an empty list to store gene sets by cell line
+  gene_set_list <- list()
+
+  # Sanity check: Ensure the file is not empty
+  if (length(gene_data) == 0) {
+    msgSet$current.msg <- "Error: The input file is empty."
+    saveSet(msgSet, "msgSet")
+    return(0)
+  }
+
+  # Loop through each line in the file
+  for (line in gene_data) {
+    # Split the line by tabs
+    line_parts <- strsplit(line, "\t+")[[1]]
+
+    # Sanity check: Each line should have at least two elements (set and genes)
+    if (length(line_parts) < 2) {
+      msgSet$current.msg <- paste("Error: Line in the file does not contain enough data:", line)
+      saveSet(msgSet, "msgSet")
+      return(0)
+    }
+
+    # The first part is the cell line (set), the rest are the genes
+    set <- line_parts[1]
+    genes <- line_parts[-1]  # Everything after the first element
+
+    # Sanity check: Ensure that the genes part is not empty
+    if (length(genes) == 0) {
+      msgSet$current.msg <- paste("Error: No genes found for set:", set)
+      saveSet(msgSet, "msgSet")
+      return(0)
+    }
+
+    # Store the genes for the cell line
+    gene_set_list[[set]] <- genes
+  }
+
+  # Save the gene set list into a .qs file if all sanity checks pass
+  qs::qsave(gene_set_list, "custom_lib.qs")
+
+  # Update paramSet with the custom library file name
+  paramSet$custom.lib <- fileName
+
+  # Save msgSet and paramSet after the process
+  saveSet(msgSet, "msgSet")
+  saveSet(paramSet, "paramSet")
+
+  return(1)
+}
+
+
+GetCustomLibColNames <- function(){
+  paramSet <- readSet(paramSet, "paramSet")
+  return(paramSet$custom.lib);
+}
 
 #' Read Metadata for Meta-Analysis Mode
 #'

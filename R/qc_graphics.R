@@ -367,6 +367,7 @@ PlotDataPCA <- function(fileName, imgName, dpi, format){
   }
   return("NA");
 }
+
 qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALSE) {
   dpi <- as.numeric(dpi)
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
@@ -504,7 +505,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
           legend.title = element_text(size = 16)
         )
     }
-    width <- 12
+    width <- 8
     height <- 6
     if(grepl("norm", imgNm)){
         if (paramSet$oneDataAnalType == "dose") {

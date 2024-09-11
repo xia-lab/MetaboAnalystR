@@ -198,7 +198,11 @@
 }
 
 .loadEnrichLib <- function(fun.type, paramSet){
-  
+  #if custom return here.
+  if(fun.type == "custom"){
+    return(.loadCustomEnrichLib(fun.type, paramSet));
+  }
+
   if(paramSet$data.org == "generic"){
     folderNm <- paramSet$data.idType;
   }else{
@@ -286,4 +290,78 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
    }
    return(plot.gs.view(cmpdNm, format, dpi, width));
 
+}
+
+.loadCustomEnrichLib <- function(fun.type, paramSet){
+  
+  # Determine folder name based on paramSet information
+  if(paramSet$data.org == "generic"){
+    folderNm <- paramSet$data.idType;
+  }else{
+    folderNm <- paramSet$data.org;
+  }
+
+  
+  # Load the custom gene set library
+  my.lib <- qs::qread("custom_lib.qs")
+
+  # Extract the specific gene set based on the function type (e.g., cell line)
+  current.geneset <- my.lib
+  
+  # Remove any empty pathways (or cell lines with no genes)
+  keep.inx <- lapply(current.geneset, length) > 0
+  current.geneset <- current.geneset[keep.inx]
+
+  # Get the names of the gene sets (e.g., cell line names)
+  set.ids <- names(current.geneset)
+  names(set.ids) <- names(current.geneset)
+
+  # If the function type pertains to GO terms (or similar), normalize the names
+  if(substr(fun.type, 0, 2) == "go") {
+    names(current.geneset) <- firstup(names(current.geneset)) # Capitalize first letter
+    names(current.geneset) <- gsub("-", "_", names(current.geneset)) # Replace hyphen with underscore
+    names(set.ids) <- firstup(names(set.ids))
+    names(set.ids) <- gsub("-", "_", names(set.ids))
+  }
+  print(head(current.geneset));
+  # Save the processed gene set to a new file
+  qs::qsave(current.geneset, "current_geneset.qs")
+  
+  # Create the result object to return
+  res <- list()
+  res$current.setlink <- "" # Empty placeholder for set link
+  res$current.setids <- set.ids # Names (IDs) of the gene sets (cell lines)
+  res$current.geneset <- current.geneset # The actual gene set data
+
+  return(res)
+}
+
+.convert_to_gene_set <- function(data) {
+
+  # Initialize an empty list to store the results
+  result_list <- list()
+  
+  # Loop through each column except the first one (which is 'id')
+  for (col_name in colnames(data)[-1]) {
+    # Split the column into a list of gene sets
+    gene_list <- strsplit(data[[col_name]], ",")
+    names(gene_list) <- data$id
+    
+    # Convert to list format, grouping by GeneSetID
+    gene_set_list <- lapply(unique(unlist(gene_list)), function(set_id) {
+      ids <- names(gene_list)[sapply(gene_list, function(x) set_id %in% x)]
+      if (length(ids) > 0 && set_id != "NA") {
+        return(ids)
+      }
+    })
+    
+    # Remove null values and set names
+    gene_set_list <- gene_set_list[!sapply(gene_set_list, is.null)]
+    names(gene_set_list) <- unique(unlist(gene_list))[unique(unlist(gene_list)) != "NA"]
+    
+    # Store the result in the final list with the column name as the key
+    result_list[[col_name]] <- gene_set_list
+  }
+  
+  return(result_list)
 }
