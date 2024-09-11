@@ -183,9 +183,23 @@ ReadCustomLib <- function(fileName) {
 
     # Create a mapping of original gene IDs to converted IDs (for subsetting later)
     universe_map <- setNames(converted_universe, universe_genes)
+
+    if(!file.exists("symbol.map.qs")){
+        if(idType %in% c("s2f", "generic", "ko")){
+          symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
+        }else{
+          symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+        }
+        symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
+        saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+    }
+
   } else {
     # If no ID conversion, keep the original gene IDs as the universe map
     universe_map <- setNames(universe_genes, universe_genes)
+    symbol.map <- data.frame(gene_id=universe_genes,symbol=universe_genes);
+    saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+
   }
   
   print(head(universe_map))
