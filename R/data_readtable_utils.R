@@ -148,6 +148,7 @@ ReadCustomLib <- function(fileName) {
   msgSet <- readSet(msgSet, "msgSet")
   paramSet <- readSet(paramSet, "paramSet")
   
+  paramSet$init.lib <- "custom";
   org <- paramSet$data.org
   idType <- paramSet$data.idType
 
@@ -174,13 +175,21 @@ ReadCustomLib <- function(fileName) {
     return(line_parts[-1])  # Return only the genes, exclude the set name
   }))
 
-  # Step 2: Perform ID conversion on the entire universe of genes
-  converted_universe <- .doAnnotation(universe_genes, idType, paramSet)
-  converted_universe <- unname(converted_universe)
+  # Step 2: Perform ID conversion if idType is not "NA"
+  if (idType != "NA") {
+    # Perform ID conversion on the entire universe of genes
+    converted_universe <- .doAnnotation(universe_genes, idType, paramSet)
+    converted_universe <- unname(converted_universe)
 
-  # Create a mapping of original gene IDs to converted IDs (for subsetting later)
-  universe_map <- setNames(converted_universe, universe_genes)
-  print(head(universe_map));
+    # Create a mapping of original gene IDs to converted IDs (for subsetting later)
+    universe_map <- setNames(converted_universe, universe_genes)
+  } else {
+    # If no ID conversion, keep the original gene IDs as the universe map
+    universe_map <- setNames(universe_genes, universe_genes)
+  }
+  
+  print(head(universe_map))
+
   # Step 3: Initialize an empty list to store gene sets by cell line
   gene_set_list <- list()
 
@@ -200,13 +209,13 @@ ReadCustomLib <- function(fileName) {
     set_name <- line_parts[1]
     genes <- line_parts[-1]  # Everything after the first element
 
-    # Step 5: Subset the universe map to get the converted IDs for this set
+    # Step 5: Subset the universe map to get the converted IDs (or original IDs if no conversion)
     converted_ids <- universe_map[genes]
 
     # Filter out any NA values (unmatched IDs)
     hit_inx <- !is.na(converted_ids)
 
-    # Store the successfully converted IDs for the gene set
+    # Store the successfully converted IDs (or original IDs) for the gene set
     gene_set_list[[set_name]] <- converted_ids[hit_inx]
   }
 

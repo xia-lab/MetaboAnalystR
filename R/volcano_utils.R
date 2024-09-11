@@ -314,6 +314,7 @@ PerformVolcanoEnrichment<-function(dataName="", file.nm, fun.type, IDs, type, in
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
+  print(paste0(fun.type, "=====volcano"));
 
   fcthreshu <- paramSet$fcthreshu;
   anal.type <- paramSet$anal.type;

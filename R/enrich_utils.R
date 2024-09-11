@@ -323,7 +323,7 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
     names(set.ids) <- firstup(names(set.ids))
     names(set.ids) <- gsub("-", "_", names(set.ids))
   }
-  print(head(current.geneset));
+
   # Save the processed gene set to a new file
   qs::qsave(current.geneset, "current_geneset.qs")
   
