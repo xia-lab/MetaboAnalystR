@@ -192,6 +192,7 @@ ReadCustomLib <- function(fileName) {
         }
         symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
         saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+
     }
 
   } else {
@@ -199,10 +200,8 @@ ReadCustomLib <- function(fileName) {
     universe_map <- setNames(universe_genes, universe_genes)
     symbol.map <- data.frame(gene_id=universe_genes,symbol=universe_genes);
     saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
-
   }
   
-  print(head(universe_map))
 
   # Step 3: Initialize an empty list to store gene sets by cell line
   gene_set_list <- list()
