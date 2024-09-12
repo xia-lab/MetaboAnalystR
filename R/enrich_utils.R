@@ -335,33 +335,3 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
 
   return(res)
 }
-
-.convert_to_gene_set <- function(data) {
-
-  # Initialize an empty list to store the results
-  result_list <- list()
-  
-  # Loop through each column except the first one (which is 'id')
-  for (col_name in colnames(data)[-1]) {
-    # Split the column into a list of gene sets
-    gene_list <- strsplit(data[[col_name]], ",")
-    names(gene_list) <- data$id
-    
-    # Convert to list format, grouping by GeneSetID
-    gene_set_list <- lapply(unique(unlist(gene_list)), function(set_id) {
-      ids <- names(gene_list)[sapply(gene_list, function(x) set_id %in% x)]
-      if (length(ids) > 0 && set_id != "NA") {
-        return(ids)
-      }
-    })
-    
-    # Remove null values and set names
-    gene_set_list <- gene_set_list[!sapply(gene_set_list, is.null)]
-    names(gene_set_list) <- unique(unlist(gene_list))[unique(unlist(gene_list)) != "NA"]
-    
-    # Store the result in the final list with the column name as the key
-    result_list[[col_name]] <- gene_set_list
-  }
-  
-  return(result_list)
-}

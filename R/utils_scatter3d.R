@@ -41,7 +41,9 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   Sys.setenv(RGL_USE_NULL = TRUE);
   require(rgl);
   require(igraph);
+  pca3d<-qs::qread("pca3d.qs");
   pos.xyz <-qs::qread("score_pos_xyz.qs");
+
   nodes <- vector(mode="list");
   names <- c(rownames(pos.xyz));
   metadf <- meta;
@@ -159,7 +161,7 @@ my.json.scatter <- function(dataSet, filenm="abc"){
   }
   netData <- list( nodes=nodes, edges=edge.mat, modules=modules, objects=a$objects, ellipse=meshes, meta=metadf,metatypes=metatypes, loading=nodes2, reductionOpt="pca" , objectsLoading=aLoading$objects, sigMat=sig.mats, omicstype=c("rna.b"));
     
-  netData[["misc"]] <- "";
+  netData[["misc"]] <- pca3d$score$axis;
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(filenm));
   paramSet$jsonNms["scatter3d"] <- filenm;
   print(filenm)

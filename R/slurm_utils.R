@@ -504,7 +504,6 @@ SubmitJobKls <- function(userDir, email, database, des, readEnds, shellscriptDir
   aveFragLen <<- aveFragLen;
   stdFragLen <<- stdFragLen;
   
-  save.image("kls.RData");
   isSlurm = FALSE;
   isPengLocal = F;
   if(file.exists("/home/zgy/NetBeansProjects/")){

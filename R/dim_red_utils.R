@@ -118,6 +118,8 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
     pca3d$org <- paramSet$data.org
     pca3d$analType <- paramSet$anal.type
     pca3d$naviString <- "Scatter 3D"
+    qs::qsave(pca3d, "pca3d.qs");
+
     paramSet$jsonNms$pcascore <- fileName
     json.mat <- rjson::toJSON(pca3d);
     paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
@@ -183,6 +185,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   paramSet$jsonNms$pcaload <- fileName;
+  qs::qsave(pca3d, "pca3d.qs");
   json.mat <- rjson::toJSON(pca3d);
   sink(fileName);
   cat(json.mat);
@@ -208,7 +211,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   if(clustOpt == "pca"){
     pca <- prcomp(t(dat), center=T, scale=T);
     imp.pca<-summary(pca)$importance;
-    pca3d$score$axis <- paste("PC", 1:3, sep="");
+    pca3d$score$axis <- paste("PC", 1:3, " (", 100*round(imp.pca[2,][1:3], 3), "%)", sep="");
     coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
     
     colnames(coords) <- NULL; 
@@ -229,7 +232,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
       pca3d$score$entrez <- pca3d$score$entrez[inx]
     }
   }
-  
+
   pca3d$cls <- dataSet$meta.info;
   colnames(mypos) <- paste("Dim", 1:3, sep="");
   # see if there is secondary
@@ -240,6 +243,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   qs::qsave(mypos, "loading_pos_xyz.qs");
   
   fast.write(mypos, file="expressanalyst_3d_load_pos.csv");
+  qs::qsave(pca3d, "pca3d.qs");
   json.mat <- rjson::toJSON(pca3d);
   paramSet$jsonNms$pcaload <- fileName
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
@@ -347,6 +351,7 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   pca3d$org <- paramSet$data.org
   pca3d$analType <- paramSet$anal.type
   pca3d$naviString <- "Scatter 3D"
+  qs::qsave(pca3d, "pca3d.qs");
   paramSet$jsonNms$pcascore <- fileName
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(fileName))
   rownames(mypos) <- colnames(dataSet$data.norm);
