@@ -269,12 +269,12 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   dat <- na.omit(dat);
   
   if(clustOpt == "pca"){
-    if(opt == "all"){
+    #if(opt == "all"){
       pca <- prcomp(t(dat), center=T, scale=T);
-    }else{
-      dat <- dat[which(rownames(dat) %in% analSet$loadEntrez),]
-      pca <- prcomp(t(dat), center=T, scale=T);
-    }
+    #}else{
+    #  dat <- dat[which(rownames(dat) %in% analSet$loadEntrez),]
+    #  pca <- prcomp(t(dat), center=T, scale=T);
+    #}
     imp.pca<-summary(pca)$importance;
     pca3d$score$axis <- paste("PC", 1:3, " (", 100*round(imp.pca[2,][1:3], 3), "%)", sep="");
     coords <- data.frame(t(signif(pca$x[,1:3], 5)));
