@@ -790,3 +790,84 @@ qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot"
     return("NA")
   }
 }
+
+SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", threshold = 0.1) {
+  dataSet <- readDataset(fileName)
+  
+  summary_df <- data.frame(Sample = character(), 
+                           HighCoverageGeneCount = numeric(), 
+                           NSig80 = numeric(), 
+                           Gini = numeric(), 
+                           Dendrogram_Distance = numeric(),
+                           Outlier_HighCoverageGeneCount = numeric(),
+                           Outlier_NSig80 = numeric(),
+                           Outlier_Gini = numeric(),
+                           Outlier_Dendrogram = numeric(),
+                           stringsAsFactors = FALSE)
+  
+  if (grepl("_norm", imgNameBase)) {
+    data <- dataSet$data.norm
+  } else {
+    data <- dataSet$data.anot
+  }
+  
+  HighCoverageGeneCount <- colSums(data > 5)
+  ncov5_df <- data.frame(Sample = names(HighCoverageGeneCount), 
+                         HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), 
+                         stringsAsFactors = FALSE)
+  
+  NSig80 <- apply(data, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
+  nsig_df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
+  
+  gini_scores <- apply(data, 2, calculate_gini)
+  gini_df <- data.frame(Sample = colnames(data), Gini = gini_scores, stringsAsFactors = FALSE)
+  
+  spearman_corr <- cor(data, method = "spearman", use = "pairwise.complete.obs")
+  distance_matrix <- as.dist(1 - spearman_corr)
+  max_distances <- apply(as.matrix(distance_matrix), 1, max)
+
+  dendrogram_df <- data.frame(Sample = names(max_distances), 
+                              Dendrogram_Distance = max_distances, 
+                              stringsAsFactors = FALSE)
+  
+  # Identify outliers based on NSig80, Gini, and Dendrogram Distance
+  Q1_nsig <- quantile(nsig_df$NSig80, 0.25)
+  Q3_nsig <- quantile(nsig_df$NSig80, 0.75)
+  IQR_nsig <- IQR(nsig_df$NSig80)
+  
+  nsig_outliers <- as.numeric((nsig_df$NSig80 < (Q1_nsig - 3 * IQR_nsig)) | 
+                              (nsig_df$NSig80 > (Q3_nsig + 3 * IQR_nsig)))
+  
+  gini_outliers <- as.numeric(gini_df$Gini > threshold)
+  
+  dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > 0.1)
+  
+  high_coverage_outliers <- as.numeric(ncov5_df$HighCoverageGeneCount < (quantile(ncov5_df$HighCoverageGeneCount, 0.25) - 3 * IQR(ncov5_df$HighCoverageGeneCount)) | 
+                                       ncov5_df$HighCoverageGeneCount > (quantile(ncov5_df$HighCoverageGeneCount, 0.75) + 3 * IQR(ncov5_df$HighCoverageGeneCount)))
+  
+  # Merge all metrics into a single dataframe
+  summary_df <- merge(ncov5_df, nsig_df, by = "Sample")
+  summary_df <- merge(summary_df, gini_df, by = "Sample")
+  summary_df <- merge(summary_df, dendrogram_df, by = "Sample")
+  
+  summary_df$Outlier_HighCoverageGeneCount <- high_coverage_outliers
+  summary_df$Outlier_NSig80 <- nsig_outliers
+  summary_df$Outlier_Gini <- gini_outliers
+  summary_df$Outlier_Dendrogram <- dendrogram_outliers
+  dataSet$summary_df <- summary_df;
+  RegisterData(dataSet)
+  return(1)
+}
+
+GetSummaryTable <- function(dataName){
+  dataSet <- readDataset(dataName)
+  return(dataSet$summary_df);
+}
+
+calculate_gini <- function(x) {
+  n <- length(x)
+  sorted_x <- sort(x)
+  index <- 1:n
+  gini <- (2 * sum(index * sorted_x) / sum(sorted_x)) - (n + 1)
+  return(gini / n)
+}
