@@ -270,8 +270,8 @@ SaveClusterJSON <- function(dataName="", fileNm, clustOpt, opt){
   
   if(clustOpt == "pca"){
     #if(opt == "all"){
-      pca <- prcomp(t(dat), center=T, scale=T);
-    #}else{
+      pca <- prcomp(t(dat));
+   #}else{
     #  dat <- dat[which(rownames(dat) %in% analSet$loadEntrez),]
     #  pca <- prcomp(t(dat), center=T, scale=T);
     #}

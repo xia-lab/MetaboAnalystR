@@ -379,7 +379,7 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
   require('see')
   require('ggrepel')
   
-  pca <- prcomp(t(na.omit(x)), center=T, scale=T);
+  pca <- prcomp(t(na.omit(x)))
   imp.pca <- summary(pca)$importance
   xlabel <- paste0("PC1"," (", 100 * round(imp.pca[2,][1], 3), "%)")
   ylabel <- paste0("PC2"," (", 100 * round(imp.pca[2,][2], 3), "%)")
