@@ -92,89 +92,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   return(as.integer(1))
 }
 
-#' CreateRawRscriptPro
-#' @description used to create a running for raw spectra processing
-#' this file will be run by SLURM by using OptiLCMS
-#' @noRd
-#' @author Guangyan Zhou, Zhiqiang Pang
-CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.vec, source_path){
-  
-  guestName <- guestName;
-  planString <- planString;
-  
-  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
-    users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
-  }else {
-    users.path <-getwd();
-  }
-  
-  ## create algorithm marker
-  if(grepl("ROIExtraction", planString)){
-    write.table("centWave_auto", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
-  } else {
-    write.table("centWave_manual", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
-  }
-  
-  ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=4\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
-  
-  ## Prepare R script for running
-  # download files if needed
-  require(R.utils)
-  allMSFiles <- list.files("upload", full.names = T, recursive = T)
-  if(length(allMSFiles)<3 & file.exists("isGoogleDriveUpload")){
-    download_script <- paste0("Rscript --vanilla ", source_path, "/XiaLabPro/R/download_googledrive.R ", users.path)
-  } else {
-    download_script <- "";
-  }
-  # need to require("OptiLCMS")
-  str <- paste0('library(OptiLCMS)');
-  
-  # Set working dir & init env & files included
-  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
-  str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
-  str <- paste0(str, ";\n", "mSet <- InitDataObjects(\'spec\', \'raw\', FALSE)");
-  str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");
-  
-  ## Construct the opt pipeline
-  if(planString2 == "opt"){
-    str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_opt\')')
-    str <- paste0(str, ';\n',  planString)
-    str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
-  }
-  
-  ## Construct the default pipeline
-  if(planString2 == "default"){
-    str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
-    str <- paste0(str, ';\n',  planString)
-    str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
-  }
-  
-  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
-  
-  # sink command for running
-  sink("ExecuteRawSpec.sh");
-  
-  cat(conf_inf);
-  if(download_script!=""){
-    cat("\n\n", download_script, "\n\n")
-  }
-  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
-      
-  sink();
-    
-  # record the R command
-  mSetObj <- .get.mSet(mSetObj); 
-  mSetObj$cmdSet <- c(mSetObj$cmdSet, str);
-  .set.mSet(mSetObj);
-  
-  # add job cancel control button: 0 means running, 1 means kill!
-  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = "JobKill");
-  
-  return(as.integer(1))
-}
+
 
 #' CreateMS2RawRscript#'
 #' @noRd
@@ -419,6 +337,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   return(1)
 }
 
+
 #' CreateRawRscript4Asari
 #' @description used to create a running for raw spectra processing
 #' this file will be run by SLURM by using OptiLCMS and Asari from python.
@@ -488,100 +407,6 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   
   cat(conf_inf);
   
-  # str_asari
-  
-  cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
-  cat(paste0("\n", str_asari, "; \n\n"));
-  cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
-  
-  sink();
-  
-  # record the R command
-  mSetObj <- .get.mSet(mSetObj); 
-  mSetObj$cmdSet <- c(mSetObj$cmdSet, str);
-  .set.mSet(mSetObj);
-  
-  # add job cancel control button: 0 means running, 1 means kill!
-  write.table(0, quote = FALSE, append = FALSE, row.names = FALSE, col.names = FALSE, file = "JobKill");
-  
-  return(as.integer(1))
-  
-}
-
-
-#' CreateRawRscript4AsariPro
-#' @description used to create a running for raw spectra processing
-#' this file will be run by SLURM by using OptiLCMS and Asari from python.
-#' @noRd
-#' @author Zhiqiang Pang
-CreateRawRscript4AsariPro <- function(guestName, planString, asari_str, rawfilenms.vec, source_path){
-  
-  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
-    users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
-  } else {
-    users.path <-getwd();
-  }
-  
-  ## create algorithm marker
-  write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
-  
-  ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=2\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=8G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
-  
-  require(R.utils)
-  allMSFiles <- list.files("upload", full.names = T, recursive = T)
-  
-  if(length(allMSFiles)<3 & file.exists("isGoogleDriveUpload")){
-    download_script <- paste0("Rscript --vanilla ", source_path, "/XiaLabPro/R/download_googledrive.R ", users.path)
-  } else {
-    download_script <- "";
-  }
-
-  for(i in allMSFiles){
-    if(!grepl("^upload/MS2", i)){
-      createLink(link = paste0(users.path, "/uploadAll/",basename(i)), target = i)
-    }
-  }
-  
-  users_path <- paste0(users.path, "/uploadAll/")
-  ## Prepare Asari code to execute
-  str_asari <- paste0(asari_str, " ", users_path, " --output ", users.path, "/results", " --project metabo_asari_res ");
-  #str_asari <- paste0(str_asari, "sed '1,$s/",gsub("\\/", "\\\\/", users.path), "//' > ")
-  #str_asari <- paste0(str_asari, "awk '{gsub(\"", users.path, "\",\"\")}1' > ")
-  #str_asari <- paste0(str_asari, users.path, "/metaboanalyst_spec_proc.txt 2>&1")
-  
-  ## Prepare R script for running
-  # need to require("OptiLCMS")
-  str <- paste0('library(OptiLCMS)');
-  
-  # Set working dir & init env & files included
-  str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
-  str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
-  str <- paste0(str, ";\n", "mSet <- InitDataObjects(\'spec\', \'raw\', FALSE)");
-  str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");
-  
-  ## Construct the default pipeline
-  #str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
-  str <- paste0(str, ';\n',  planString)
-  str <- paste0(str, '\n',  "OptiLCMS:::MessageOutput('\nStep 2/6: Start raw spectral processing with Asari! 
-                  \nThis step may take a long time...', '\n', NULL)")
-
-  # check the latest result folder
-  load("params.rda")
-  minFrc <- peakParams[["minFraction"]];
-  
-  str2 <- paste0('library(OptiLCMS)');
-  str2 <- paste0(str2, ";\n", "metaboanalyst_env <- new.env()");
-  str2 <- paste0(str2, ";\n", "setwd(\'",users.path,"\')");
-  str2 <- paste0(str2, ";\n", "OptiLCMS:::PerformAsariResultsFormating(", minFrc, ")")
-  
-  # sink command for running
-  sink("ExecuteRawSpec.sh");
-  
-  cat(conf_inf);
-  if(download_script!=""){
-    cat("\n\n", download_script, "\n\n")
-  }
   # str_asari
   
   cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
@@ -2902,7 +2727,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   
   spec_top_m <- mSetObj[["analSet"]][["ms2res"]][["Concensus_spec"]][[2]][[idx]][[1]]
   compound_name <- DBAnnoteRes[[idx]][["Compounds"]][uidx][sub_idx+1]
-  title <- paste0(mz, "__", rt)
+  title <- paste0("mz: ", mz, "; Retention time: ", rt)
   subtitle <- paste0(compound_name)
   p1 <- MirrorPlotting(spec_top_m, 
                        spec_bottom, 
@@ -3027,11 +2852,11 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   sink();
   
   if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
-    df <- data.frame(indx = result_num, imageNM = imageNM)
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
     mSetObj[["imgSet"]][["msmsmirror"]] <- df
   } else {
     mSetObj[["imgSet"]][["msmsmirror"]] -> df0
-    df <- data.frame(indx = result_num, imageNM = imageNM)
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
     mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
   }
 
