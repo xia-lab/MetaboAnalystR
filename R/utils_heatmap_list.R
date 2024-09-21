@@ -6,7 +6,7 @@
 ###################################################
 
 
-.prepareListHeatmapJSON <- function(dataSet){
+my.prepare.list.heatmap.json <- function(dataSet){
   paramSet <- readSet(paramSet, "paramSet");
   dat <- dataSet$prot.mat;
   sig.ids <- rownames(dat);
@@ -100,7 +100,7 @@
   return(json.res);
 }
 
-.prepareMultiListHeatmapJSON <- function(dataSet){
+my.prepare.multilist.heatmap.json <- function(dataSet){
   paramSet <- readSet(paramSet, "paramSet");
   mdata.all <- paramSet$mdata.all;
   sel.nms <- names(mdata.all)

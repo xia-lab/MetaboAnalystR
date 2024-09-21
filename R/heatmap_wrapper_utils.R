@@ -20,10 +20,14 @@ SaveHeatmapJSON <- function(dataName="", fileName, displayOpt){
 
   anal.type <- paramSet$anal.type;
 
+  if(!exists("my.prepare.heatmap.json")){ 
+     compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_heatmap_table.Rc");    
+  }
+
   if(anal.type == "metadata"){
-    json.res <- PrepareMetaHeatmapJSON(dataSet, displayOpt);
+    json.res <- my.prepare.metadata.heatmap.json(dataSet, displayOpt);
   }else{
-    json.res <- PrepareExpressHeatmapJSON(dataSet, displayOpt);
+    json.res <- my.prepare.heatmap.json(dataSet, displayOpt);
   }
   
   json.res$org <- paramSet$data.org
@@ -57,10 +61,15 @@ SaveListHeatmapJSON <- function(dataName="", fileName){
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   anal.type <- paramSet$anal.type;
+
+  if(!exists("my.prepareListHeatmapJSON")){ 
+     compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_heatmap_list.Rc");    
+  }
+
   if(paramSet$numOfLists>1){
-    json.res <- .prepareMultiListHeatmapJSON(dataSet);
+    json.res <- my.prepare.multilist.heatmap.json(dataSet);
   }else{
-    json.res <- .prepareListHeatmapJSON(dataSet);
+    json.res <- my.prepare.list.heatmap.json(dataSet);
   }
 
   json.res$org <- paramSet$data.org
