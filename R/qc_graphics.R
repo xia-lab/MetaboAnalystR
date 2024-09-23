@@ -838,7 +838,7 @@ SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", thresho
   nsig_outliers <- as.numeric((nsig_df$NSig80 < (Q1_nsig - 3 * IQR_nsig)) | 
                               (nsig_df$NSig80 > (Q3_nsig + 3 * IQR_nsig)))
   
-  gini_outliers <- as.numeric(gini_df$Gini > threshold)
+  gini_outliers <- as.numeric(gini_df$Gini > 0.95)
   
   dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > 0.1)
   
@@ -861,7 +861,10 @@ SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", thresho
 
 GetSummaryTable <- function(dataName){
   dataSet <- readDataset(dataName)
-  return(dataSet$summary_df);
+  df <- dataSet$summary_df;
+  df_rounded <- df;
+  df_rounded[sapply(df, is.numeric)] <- lapply(df[sapply(df, is.numeric)], signif, digits = 3)
+  return(df_rounded);
 }
 
 calculate_gini <- function(x) {
