@@ -299,6 +299,37 @@ UpdateMultifacPlot <-function(dataName="",imgName, gene.id, boxmeta,format="png"
   dev.off();
 }
 
+PlotSelectedGeneRaw <- function(gene.id="",imgName="", format="png", dpi=72) {
+
+  library(ggplot2)
+  library(Cairo)
+
+  dataSet <- readDataset("dataset_rawmodule")
+  dat <- dataSet$data.raw
+  cls <- dataSet$meta.info[,1]  # Extract metadata info
+  
+  col <- unique(GetColorSchema(cls))   
+  
+  df.raw <- data.frame(value = unlist(dat[which(rownames(dat) == gene.id), ]), name = cls)
+  imgName <- paste(imgName,"dpi",dpi,".",format,sep="");
+
+  p <- ggplot2::ggplot(df.raw, aes(x = name, y = value, fill = name)) +
+          geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
+          geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
+          theme(legend.position = "none") +  
+          xlab("Metadata") +
+          stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
+          ggtitle(gene.id) + 
+          theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust = 0.5), 
+                panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+          theme_bw()
+
+  # Generate and save the plot using Cairo
+  Cairo(file = imgName, width = 420 * dpi / 72, height = 560 * dpi / 72, type = format, dpi = dpi, bg = "white")
+  print(p)
+  dev.off()
+}
+
 
 
 

@@ -174,7 +174,6 @@ SubmitJobS2f <- function(userDir, email, database, mismatch, minlength, minscore
     sink();
     
   } else {
-    save.image("s2f.RData");
 
     str <- paste(seq2funPath,
                  "--longlog --sampletable",

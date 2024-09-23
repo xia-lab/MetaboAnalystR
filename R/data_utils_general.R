@@ -99,7 +99,6 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
     sqlite.path <- "";
   }
 
-  print(paste("sqlitePath:", sqlite.path));
   if(!.on.public.web) {
     paramSet$sqlite.path <- paste0(getwd(), "/");
     paramSet$lib.path <- "https://www.expressanalyst.ca/ExpressAnalyst/resources/data/";
@@ -108,6 +107,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
     paramSet$sqlite.path <- sqlite.path;
     paramSet$lib.path <- paste0(path, dataPath);
   }
+  print(paste("sqlitePath:", sqlite.path));
+
 
   paramSet$data.org <- "hsa";
   paramSet$module.count <- 0;
