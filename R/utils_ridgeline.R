@@ -6,7 +6,9 @@
 ## Jessica Ewald, jessica.ewald@mail.mcgill.ca
 ##################################################
 
-compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "teal", sigLevel = 0.05, pwNum=20, inx = 1){
+compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "teal",rankOpt="fc", sigLevel = 0.05, pwNum=20, inx = 1){
+  
+  save.image("ridge.RData");
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   analSet <- readSet(analSet, "analSet");
@@ -97,14 +99,9 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     res$padj <- as.numeric(res$padj)
     res$pval <- as.numeric(res$pval)
   } else {
-    rankedVec = "";
-    if(paramSet$selDataNm == "meta_default" && anal.type == "metadata"){
-      fcs <- allmat[,inx];
-      names(fcs) <- rownames(allmat);
-      rankedVec <- analSet$rankedVec;
-    }else{
-      rankedVec<- ComputeRankedVec(dataSet, paramSet$gseaRankOpt, paramSet$selectedFactorInx);
-    }
+
+    rankedVec<- ComputeRankedVec(dataSet, rankOpt, paramSet$selectedFactorInx);
+   
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
       res <- fgsea::fgsea(pathways = current.geneset, 
                           stats    = rankedVec,
@@ -118,7 +115,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std")   
-     
+      
     }
   }
   res <- .signif_df(res, 4);
@@ -172,7 +169,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
           axis.title = element_text(size=12, face = "bold"),
           axis.text.x = element_text(color = "black"),
           axis.text.y = element_text(size=12,color = "black"))
-
+  
   Cairo::Cairo(file=imageName, width=10, height=8, type=format, bg="white", dpi=dpi, unit="in");
   print(rp);
   dev.off();
@@ -229,7 +226,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     }else{
       hit.num <- as.list(resTable[,"size"])[[1]]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
     }  
-
+    
   }
   fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
@@ -241,11 +238,11 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
     hit.num = hit.num,
     total= total
   );
-
+  
   if(ridgeType == "gsea"){
     enr.res[["ES"]] <- unname(unlist(resTable[,"ES"]));
   }
-
+  
   res.list <- list(data=data.list, 
                    genelist=gene.list, 
                    df=df, minPval=minPval, 
@@ -266,7 +263,7 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
-
+  
   json.obj <- rjson::toJSON(res.list);
   sink(jsonNm);
   cat(json.obj);
@@ -276,15 +273,15 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   paramSet$jsonNms$ridge <- jsonNm
   paramSet$partialToBeSaved <- c( paramSet$partialToBeSaved, c(jsonNm));
   saveSet(paramSet, "paramSet");
-
+  
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
   imgSet$enrTables[["ridgeline"]]$table <- resTable;
   imgSet$enrTables[["ridgeline"]]$library <- fun.type;
   imgSet$enrTables[["gsea"]]$algo <- toupper(ridgeType);
-
+  
   imgSet$compute.ridgeline <- imageName;
   saveSet(imgSet);
-
+  
   return(totalSigPws)
 }
