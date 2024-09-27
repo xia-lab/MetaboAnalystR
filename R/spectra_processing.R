@@ -29,7 +29,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   guestName <- guestName;
   planString <- planString;
   
-  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+  if(dir.exists("/home/glassfish/payara6/glassfish/domains/")){
     users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
   }else {
     users.path <-getwd();
@@ -105,7 +105,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cat("current planString ---> ", planString, "\n")
   cat("current guestName  ---> ", guestName, "\n")
   
-  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+  if(dir.exists("/home/glassfish/payara6/glassfish/domains/")){
     users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
   } else {
     users.path <-getwd();
@@ -345,7 +345,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
 #' @author Zhiqiang Pang
 CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.vec){
   
-  if(dir.exists("/home/glassfish/payara5/glassfish/domains/")){
+  if(dir.exists("/home/glassfish/payara6/glassfish/domains/")){
     users.path <-paste0("/data/glassfish/projects/metaboanalyst/", guestName);
   } else {
     users.path <-getwd();
@@ -488,7 +488,7 @@ SetUserPath<-function(path){
 }
 .getDataPath<- function() {
   if(file.exists("/home/zgy/scheduler/MetaboAnalyst.so")){
-    path = "/home/glassfish/payara5/glassfish/domains/domain1/applications/MetaboAnalyst/resources/data/"
+    path = "/home/glassfish/payara6/glassfish/domains/domain1/applications/MetaboAnalyst/resources/data/"
   }else if(dir.exists("/media/zzggyy/disk/")){
     path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/data/"
   }else if(.on.public.web){
