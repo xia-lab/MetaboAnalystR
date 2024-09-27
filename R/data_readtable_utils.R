@@ -193,6 +193,7 @@ ReadCustomLib <- function(fileName) {
         }
         symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
         saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+
     }
 
   } else {

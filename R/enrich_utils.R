@@ -257,7 +257,7 @@ GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type
     if(!exists("compute.ridgeline")){ # public web on same user dir
         compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_ridgeline.Rc");    
     }
-    return(compute.ridgeline(dataSet, imgNm, dpi, format, fun.type, ridgeType, ridgeColor, sigLevel, pwNum, inx));
+    return(compute.ridgeline(dataSet, imgNm, dpi, format, fun.type, ridgeType, ridgeColor,gseaRankOpt, sigLevel, pwNum, inx));
 }
 
 PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){

@@ -195,6 +195,9 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
 
   imgSet <- readSet(imgSet, "imgSet");
   if(mType == "network"){
+    res.mat <- cbind(rownames(res.mat), res.mat)
+    colnames(res.mat)[1] <- "Name";
+    rownames(res.mat) <- NULL;
 
     analSet$list.genes <- doEntrez2SymbolMapping(rownames(dataSet$sig.mat), paramSet$data.org, paramSet$data.idType);
     analSet <- SetListNms(dataSet);
@@ -210,6 +213,10 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
     json.res$org <- paramSet$data.org
     json.res$analType <- anal.type
     json.res$naviString <- "GSEA";
+    res.mat <- cbind(rownames(res.mat), res.mat)
+    colnames(res.mat)[1] <- "Name";
+    rownames(res.mat) <- NULL;
+
     imgSet$enrTables[["gsea"]]$table <- res.mat;
     imgSet$enrTables[["gsea"]]$library <- fun.type;
     imgSet$enrTables[["gsea"]]$algo <- "GSEA";
