@@ -6,7 +6,9 @@
 
 ## Description 
 
-**MetaboAnalystR 4.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
+MetaboAnalystR 4.0 contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
+
+#### If you prefer using the web-based platform in a local environment, we provide long-term stable (LTS) release of [MetaboAnalyst-Pro](https://www.xialab.ca/pro/protools.xhtml) with Enterprise Solution for local installation. Please [contact us](https://www.xialab.ca/pro/contact.xhtml).
 
 The version 4.0 aims to address three key challenges facing global metabolomics. By leveraging the best practices established by the community, MetaboAnalyst R 4.0 offers three key features: 
 1) an auto-optimized feature detection and quantification module for LC-MS1 spectra processing;
