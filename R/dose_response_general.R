@@ -932,16 +932,22 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
     .set.mSet(mSetObj);
     fast.write.csv(res, "curvefit_detailed_table.csv");
     print("Completed PerformBMDCalc");
-
+    
+    if(!.on.public.web){
+        return(.set.mSet(mSetObj))
+    }
     if(dim(disp.res)[1] == 1){
       return(3);
     } else {
       return(1)
     }
-  } else {
+  } else {    
+    if(!.on.public.web){
+        return(.set.mSet(mSetObj))
+    }
     return(2)
   }
-  
+
 }
 
 #5a_sensPOD.R
