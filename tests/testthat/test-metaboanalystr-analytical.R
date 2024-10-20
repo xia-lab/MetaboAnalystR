@@ -98,7 +98,7 @@ test_that("Multiple factors analysis", {
   expect_equal(length(mSet[["analSet"]][["aov2"]][["inx.imp"]]), 2054)
   ## check ASCA
   mSet<-Perform.ASCA(mSet, 1, 1, 2, 2)
-  mSet<-PlotModelScree(mSet, "asca_scree_0_", "png", 72, width=NA)
+  mSet<-PlotASCAModelScree(mSet, "asca_scree_0_", "png", 72, width=NA)
   mSet<-CalculateImpVarCutoff(mSet, 0.05, 0.9)
   expect_true(mSet[["analSet"]][["asca"]])
 

@@ -3398,8 +3398,8 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
   minR <- (max.x - min.x)/160;
   radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
   
-  # set background color according to combo.p
-  bg.vec <- heat.colors(length(combo.p));
+  # Combine the x and y values to create a new variable for heatmap coloring
+  combined_value <- x + y  # You can also use another combination method
   
   if(format == "png"){
     bg = "transparent";
@@ -3416,7 +3416,7 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
   }
   h <- w;
   
-  df <- data.frame(path.nms, x, y)
+  df <- data.frame(path.nms, x, y, combined_value)
   
   if(labels == "default"){
     mummi.inx <- GetTopInx(df$y, labels.y, T)
@@ -3429,37 +3429,26 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
   
   library(ggplot2)
   library(plotly)
-  library(dplyr)
+  library(ggrepel)  # Load ggrepel for improved label placement
   
   df$radi.vec <- radi.vec;
-  df$bg.vec <- bg.vec;
   
-  df <- df %>%
-    mutate(category = case_when(
-      x >= 2 & y >= 2 ~ "Both Significant",
-      x >= 2 & y < 2  ~ "Sig. in GSEA",
-      x < 2  & y >= 2 ~ "Sig. in Mummichog",
-      TRUE                       ~ "Unsignificant" # Cases where neither is significant
-    ))
-  df <- df %>%
-    mutate(tooltip_text = paste("Pathway:", path.nms, 
-                                "<br>GSEA -log10(p):", round(x, 3), 
-                                "<br>Mummichog -log10(p):", round(y, 3)))
+  # Find the top 5 pathways based on the combined values of x and y
+  top_5 <- df[order(df$combined_value, decreasing = TRUE), ][1:5, ]
   
-  color_mapping <- c("Unsignificant" = "#d3d3d3", 
-                     "Both Significant" = "#FF0000", 
-                     "Sig. in Mummichog" = "#0000FF", 
-                     "Sig. in GSEA" = "#008000")
-  
+  # Generate a heatmap color scale based on the combined values of x and y, reversed
   p <- ggplot(df, aes(x = x, y = y, text = paste("Pathway:", path.nms, 
-                                                          "<br>GSEA p-val:", signif(10^-x, 4), 
-                                                          "<br>Mummichog p-val:", signif(10^-y, 4)))) +
-    geom_point(aes(size = radi.vec, color = category), alpha = 0.5) +
-    scale_color_manual(values = color_mapping, name="") +
-    scale_size_continuous(range = c(1, 5), guide="none") +
+                                                 "<br>GSEA p-val:", signif(10^-x, 4), 
+                                                 "<br>Mummichog p-val:", signif(10^-y, 4)))) +
+    geom_point(aes(size = radi.vec, color = combined_value), alpha = 0.7) +  # Slightly increase transparency
+    geom_text_repel(data = top_5, aes(label = path.nms), size = 3) +  # Add repelling labels for top 5 pathways
+    scale_color_gradientn(colors = rev(heat.colors(10)), name="Combined Score") +  # Reversed heat colors
+    scale_size_continuous(range = c(3, 10), guide="none") +  # Increased size range
     labs(x = "GSEA -log10(p)", y = "Mummichog -log10(p)") +
     theme_minimal() +
-    theme(legend.position = "right")
+    theme(legend.position = "none",  # Remove the legend
+          panel.background = element_rect(fill = "white"),  # Set panel background to white
+          plot.background = element_rect(fill = "white"))   # Set plot background to white
   
   df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
@@ -3481,8 +3470,10 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72,
     dev.off();
     return(.set.mSet(mSetObj));
   }
-  
 }
+
+
+
 ###############################
 ####### Getters For Web #######
 ###############################

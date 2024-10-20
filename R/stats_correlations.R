@@ -159,8 +159,8 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@import gplots
 #'
 PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, fix.col, no.clst,fz, unit, corrCutoff=0){
-  
+                          colors, fix.col, no.clst, fz, unit, corrCutoff=0){
+
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
@@ -268,9 +268,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
     
-    if(.on.public.web){
-        reticulate::use_miniconda('r-reticulate')
-        plotly::save_image(as_list, imgName, scale = 3)
+    if(.on.public.web){        
+        try(reticulate::use_miniconda('r-reticulate'), silent = TRUE)
+        try(plotly::save_image(as_list, imgName, scale = 3), silent = TRUE)
     }
 
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
@@ -291,9 +291,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
 #'@export
 #'
 
-PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
-                          colors, viewOpt, fix.col, no.clst, corrCutoff=0){
-  
+PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, colors, viewOpt, fix.col, no.clst, corrCutoff=0){
+ 
+
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
@@ -351,7 +351,7 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width
   }else if(colors == "d3"){
     colors <- c("#2CA02CFF","white","#FF7F0EFF");
   }else {
-colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
   }
   
   

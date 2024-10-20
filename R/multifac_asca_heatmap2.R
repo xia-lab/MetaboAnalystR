@@ -1249,7 +1249,7 @@ PCA.GENES<-function(X){
 
 #'Plot scree plots for each model in ASCA
 #'@description Plot scree plots for each model in ASCA
-#'@usage PlotModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotASCAModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
 #'@param mSetObj Input name of the created mSet Object.
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1262,7 +1262,7 @@ PCA.GENES<-function(X){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1381,7 +1381,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
 #'Plot ASCA interaction plots 
 #'@description Plot ASCA interaction plots 
-#'@usage PlotInteraction(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA)
+#'@usage PlotASCAInteraction(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1395,7 +1395,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
+PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   asca <- qs::qread("asca.qs");

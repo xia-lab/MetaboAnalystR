@@ -699,6 +699,9 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
     data1sc <- scale_mat(data1sc, scaleOpt)
     data1sc = round(data1sc,5)
     
+     if (!colV) {
+    data1sc = data1sc[nrow(data1sc):1,]
+    }
     
     w = min(1200,ncol(data1sc)*unitCol+50)
     h = min(2000,nrow(data1sc)*unitRow+50)
