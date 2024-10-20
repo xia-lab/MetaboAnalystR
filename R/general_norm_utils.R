@@ -519,8 +519,6 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, wid
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
 UpdateData <- function(mSetObj=NA, order.group = FALSE){
   mSetObj <- .get.mSet(mSetObj);
-save.image("All_UpdateData_env.RData")
-save(mSetObj,order.group, file = "mSetObj__UpdateData0.rda")
 
   #Reset to default
   mSetObj$dataSet$edit <- NULL; 
