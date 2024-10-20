@@ -120,6 +120,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
 
     fast.write.csv(res.all, "limma_restable.csv");
 
+    if(!.on.public.web){
+        return(.set.mSet(mSetObj));
+    }
     .set.mSet(mSetObj);
     return(sig.count);
 }
