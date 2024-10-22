@@ -152,42 +152,43 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   sink();
 
 if (dataSet$de.method == "deseq2") {
-significant.genes <- c()
+  significant.genes <- c()
+  
+  # Initialize combined result vectors with FALSE
+  num_rows <- nrow(dataSet$comp.res.list[[1]])
+  combined_lfc_pass <- rep(FALSE, num_rows)
+  combined_deg_pass <- rep(FALSE, num_rows)
+  
+  # Loop through each comparison in the comp.res.list
   for (inx in seq_along(dataSet$comp.res.list)) {
-    # Extract the comparison result table
     resTable <- dataSet$comp.res.list[[inx]]
-    hit.inx <- which(colnames(resTable) == "baseMean")
     
     # Remove rows with NA in the first column
     resTable <- resTable[!is.na(resTable[, 1]), ]
-    orig.resTable <- resTable
     
     # Select based on p-value
     if (FDR == "true") {
-      hit.inx.p <- resTable$adj.P.Val <= p.lvl
+      deg.pass <- resTable$adj.P.Val <= p.lvl
     } else {
-      hit.inx.p <- resTable$P.Value <= p.lvl
+      deg.pass <- resTable$P.Value <= p.lvl
     }
     
-    # Filter based on the selected p-value cutoff
-    resTable <- resTable[hit.inx.p, ]
+    # Filter based on fold change
+    logfc.mat <- abs(resTable[, "logFC"])  # Ensure the correct column is used for logFC
+    lfc.pass <- logfc.mat >= fc.lvl
+
     
-    logfc.mat <- resTable[, 1, drop = FALSE]
-    if (paramSet$oneDataAnalType == "dose") {
-      pos.mat <- abs(logfc.mat)
-      fc.vec <- apply(pos.mat, 1, max)  # Use the largest logFC among all comparisons
-      hit.inx.fc <- fc.vec >= fc.lvl
-      resTable <- resTable[hit.inx.fc, ]
-    } else {
-      pos.mat <- abs(logfc.mat[, inx])
-      fc.vec <- pos.mat
-      hit.inx.fc <- fc.vec >= fc.lvl
-      resTable <- resTable[hit.inx.fc, ]
-    }
-    
-    # Collect unique gene identifiers (assuming rownames are gene identifiers like Entrez IDs)
-    significant.genes <- unique(c(significant.genes, rownames(resTable)))
+    # Update the combined vectors (logical "or" across comparisons)
+    combined_lfc_pass <- combined_lfc_pass | lfc.pass
+    combined_deg_pass <- combined_deg_pass | deg.pass
   }
+ 
+  # Apply the combined filters
+  all_pass <- combined_lfc_pass & combined_deg_pass
+  
+  # Collect significant genes that pass all filters
+  significant.genes <- rownames(resTable)[all_pass]
+ 
   
   # Get the number of unique significant genes across all comparisons
   de.Num.total <- length(significant.genes)
@@ -197,7 +198,7 @@ significant.genes <- c()
   }
   analSet$sig.gene.count.total <- de.Num.total;
 
-} 
+ }
 
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
