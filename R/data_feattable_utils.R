@@ -151,6 +151,54 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   cat(json.obj);
   sink();
 
+if (dataSet$de.method == "deseq2") {
+significant.genes <- c()
+  for (inx in seq_along(dataSet$comp.res.list)) {
+    # Extract the comparison result table
+    resTable <- dataSet$comp.res.list[[inx]]
+    hit.inx <- which(colnames(resTable) == "baseMean")
+    
+    # Remove rows with NA in the first column
+    resTable <- resTable[!is.na(resTable[, 1]), ]
+    orig.resTable <- resTable
+    
+    # Select based on p-value
+    if (FDR == "true") {
+      hit.inx.p <- resTable$adj.P.Val <= p.lvl
+    } else {
+      hit.inx.p <- resTable$P.Value <= p.lvl
+    }
+    
+    # Filter based on the selected p-value cutoff
+    resTable <- resTable[hit.inx.p, ]
+    
+    logfc.mat <- resTable[, 1, drop = FALSE]
+    if (paramSet$oneDataAnalType == "dose") {
+      pos.mat <- abs(logfc.mat)
+      fc.vec <- apply(pos.mat, 1, max)  # Use the largest logFC among all comparisons
+      hit.inx.fc <- fc.vec >= fc.lvl
+      resTable <- resTable[hit.inx.fc, ]
+    } else {
+      pos.mat <- abs(logfc.mat[, inx])
+      fc.vec <- pos.mat
+      hit.inx.fc <- fc.vec >= fc.lvl
+      resTable <- resTable[hit.inx.fc, ]
+    }
+    
+    # Collect unique gene identifiers (assuming rownames are gene identifiers like Entrez IDs)
+    significant.genes <- unique(c(significant.genes, rownames(resTable)))
+  }
+  
+  # Get the number of unique significant genes across all comparisons
+  de.Num.total <- length(significant.genes)
+  
+  if (de.Num.total == 0) {
+    msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")
+  }
+  analSet$sig.gene.count.total <- de.Num.total;
+
+} 
+
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
 
