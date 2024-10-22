@@ -35,6 +35,7 @@ PrepareDataForDoseResponse <- function()
 ### select significantly responsive items 
 GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "no", ncpus = 1)
 {
+
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   #prepare param
@@ -100,7 +101,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
 
 
         # Determine if probes pass FC filter
-        res$lfc.pass <- res[,1] > FC
+        res$lfc.pass <- abs(res[,1]) >= FC
 
         # Determine if probes pass differential expression filter
         if (deg.FDR == TRUE) {
@@ -176,7 +177,9 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
   }
-
+  print(table(res$lfc.pass))
+  print(table(res$deg.pass))
+  print(table(res$all.pass));
   # select only data that passes all filters
   data.select <- data[res$all.pass, ]
   data.mean <- data.mean[res$all.pass, ]
@@ -190,7 +193,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   saveRDS(dataSet, "dataSet.rds");
 
   RegisterData(dataSet);
-}
+  }
 
 #3_drcfit.R
 ### fit different models to each dose-response curve and choose the best fit 

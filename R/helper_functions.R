@@ -9,6 +9,11 @@ GetSigGeneCount <- function(){
   return(analSet$sig.gene.count);
 }
 
+GetSigGeneCountTotal <- function(){
+  analSet <- readSet(analSet, "analSet");
+  return(analSet$sig.gene.count.total);
+}
+
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);

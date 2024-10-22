@@ -151,6 +151,55 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   cat(json.obj);
   sink();
 
+if (dataSet$de.method == "deseq2") {
+  significant.genes <- c()
+  
+  # Initialize combined result vectors with FALSE
+  num_rows <- nrow(dataSet$comp.res.list[[1]])
+  combined_lfc_pass <- rep(FALSE, num_rows)
+  combined_deg_pass <- rep(FALSE, num_rows)
+  
+  # Loop through each comparison in the comp.res.list
+  for (inx in seq_along(dataSet$comp.res.list)) {
+    resTable <- dataSet$comp.res.list[[inx]]
+    
+    # Remove rows with NA in the first column
+    resTable <- resTable[!is.na(resTable[, 1]), ]
+    
+    # Select based on p-value
+    if (FDR == "true") {
+      deg.pass <- resTable$adj.P.Val <= p.lvl
+    } else {
+      deg.pass <- resTable$P.Value <= p.lvl
+    }
+    
+    # Filter based on fold change
+    logfc.mat <- abs(resTable[, "logFC"])  # Ensure the correct column is used for logFC
+    lfc.pass <- logfc.mat >= fc.lvl
+
+    
+    # Update the combined vectors (logical "or" across comparisons)
+    combined_lfc_pass <- combined_lfc_pass | lfc.pass
+    combined_deg_pass <- combined_deg_pass | deg.pass
+  }
+ 
+  # Apply the combined filters
+  all_pass <- combined_lfc_pass & combined_deg_pass
+  
+  # Collect significant genes that pass all filters
+  significant.genes <- rownames(resTable)[all_pass]
+ 
+  
+  # Get the number of unique significant genes across all comparisons
+  de.Num.total <- length(significant.genes)
+  
+  if (de.Num.total == 0) {
+    msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")
+  }
+  analSet$sig.gene.count.total <- de.Num.total;
+
+ }
+
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
 
