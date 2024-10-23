@@ -7,7 +7,8 @@
 perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, log10L = FALSE, permI = 20, .on.public.web = TRUE,
                           scaleC = c("none", "center", "pareto", "standard")[4], ...) {
   xMN <- x;
-  if(class(y) == "matrix"){
+
+  if(class(y)[1] == "matrix"){
     yMCN <- y;
   }else{
     yMCN <- matrix(y, ncol = 1);
