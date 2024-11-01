@@ -168,8 +168,8 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                                   pattern = \'.mzML|.mzXML|.cdf\',
                                                   full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
     } else if(any(grepl("MS2_", list.files("upload/")))) {
-      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\"upload/\",
-                                                  pattern = \"^MS2_\",
+      str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\'upload/\',
+                                                  pattern = \'^MS2_\',
                                                   full.names = T, recursive = T)), targetFeatures = as.matrix(ft), acquisitionMode = \'DDA\')")
     } else if(file.exists("isGoogleDriveUpload")){
       str <- paste0(str, ";\n", "mSet <- PerformMSnImport(filesPath = c(list.files(\'upload/MS2\',
