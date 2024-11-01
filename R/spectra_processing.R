@@ -148,8 +148,14 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   if(mode == "dda"){
     # import feature list
     str <- paste0(str, ";\n", "ft <- mSet@peakAnnotation[[\'camera_output\']][,c(2,3,5,6)]");
-    str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
-    str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}")
+
+    if(param_list[["targets_opt"]] == "sigs") {
+      str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+      str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}");
+    }
+    
+    #str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+    #str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}")
     str <- paste0(str, ";\n", "cat('There are total of ', nrow(ft), ' target MS1 features included for MS2 data processing!')")
     
     # progress 104
@@ -2559,7 +2565,11 @@ PerformResultSummary <- function(mSet = NA) {
   cmpdss <- unique(unname(unlist(sapply(cmpds, FUN = function(x){strsplit(x, "; ")}))))
   
   if(file.exists("compound_msn_results.csv")){
-    dt <- read.csv("compound_msn_results.csv");
+    
+    dt <- try(read.csv("compound_msn_results.csv"), silent = T);
+    if(class(dt) == "try-error"){
+        dt <- data.frame()
+    }
     param_list <- qs::qread("msn_param_list.qs");
 
     param_list$db_opt <- gsub(" ", "", param_list$db_opt);
