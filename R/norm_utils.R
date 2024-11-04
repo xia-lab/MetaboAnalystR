@@ -20,13 +20,13 @@
 #'@export
 #'
 
-PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false"){
+PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false", countOpt="sum"){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
   msg <- ""; 
   #Filter data
-  data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
+  data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped, countOpt);
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
   
@@ -59,12 +59,13 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   qs::qsave(data, file="data.stat.qs");
   
   msgSet$current.msg <- msg; 
+
   saveSet(msgSet, "msgSet");
   saveSet(paramSet, "paramSet");
   return(RegisterData(dataSet));
 }
 
-PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
+PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped, countOpt){
   msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations
@@ -90,9 +91,17 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   data <- raw.data.anot;
   data<- data[,which(colnames(data)%in% rownames(dataSet$meta.info))]
   if (dataSet$type == "count"){
-    sum.counts <- apply(data, 1, sum, na.rm=TRUE);
-    rm.inx <- sum.counts < count.thresh;
-    msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low counts.", collapse=" ");
+    if (countOpt == "sum") {
+        # Sum approach: sum counts across samples for each gene
+        sum.counts <- apply(data, 1, sum, na.rm = TRUE)
+        rm.inx <- sum.counts < count.thresh
+        msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low counts using sum method.", collapse = " ")
+    } else if (countOpt == "average") {
+        # Average approach: calculate average counts across samples for each gene
+        avg.counts <- apply(data, 1, mean, na.rm = TRUE)
+        rm.inx <- avg.counts < count.thresh
+        msg <- paste(msg, "Filtered ", sum(rm.inx), " genes with low counts using average method.", collapse = " ")
+    }
   }else{
     avg.signal <- apply(data, 1, mean, na.rm=TRUE)
     abundance.pct <- count.thresh/100;
@@ -112,11 +121,17 @@ PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
   good.inx <- -filter.val > 0;
   kp.pct <- (100 - var.thresh)/100;
   remain <- rk < nrow(data)*kp.pct;
+    initial_gene_count <- nrow(data)
   data <- data[remain&good.inx,];
-  filt.msg <<- paste(msg, paste("Filtered ", nrow(data), " low variance genes based on IQR"), collapse=" ");
+ # Calculate number of genes filtered by IQR
+    filtered_by_iqr <- initial_gene_count - nrow(data)
+
+    # Update message with correct number of filtered genes
+    filt.msg <<- paste(msg, "Filtered", filtered_by_iqr, "low variance genes based on IQR.")
   }else{
   filt.msg <<- paste(msg, paste("Filtered 0 low variance genes based on IQR"), collapse=" ");
   }
+  
   return(data);
 }
 

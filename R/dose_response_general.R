@@ -98,6 +98,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
     for(i in 1:length(table_list)) {
         # Current table
         res <- table_list[[i]]
+        res <- res[order(rownames(res)), ]
 
 
         # Determine if probes pass FC filter
@@ -923,6 +924,9 @@ PerformBMDCalc <- function(ncpus = 1)
   
   # is the CI of the bmd narrow enough?
   dres$CI.pass <- dres$bmdu/dres$bmdl < 40
+
+  # is the CI of the bmd narrow enough?
+  dres$CI.pass2 <- dres$bmd/dres$bmdl < 20
   
   # is the bmd < lowest dose/10?
   low.dose <- sort(unique(dose))[2]
@@ -931,7 +935,7 @@ PerformBMDCalc <- function(ncpus = 1)
   # aggregate all filters
   # flag genes that don't pass low dose condition by keeping the column, but do 
   # not use for the final filtering
-  dres$all.pass <- (dres$conv.pass & dres$hd.pass & dres$CI.pass)
+  dres$all.pass <- (dres$conv.pass & dres$hd.pass & dres$CI.pass & dres$CI.pass2)
   
   # update the data
   data.select <- data[dres$all.pass, ]
