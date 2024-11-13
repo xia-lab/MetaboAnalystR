@@ -257,7 +257,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     mSetObj$imgSet$heatmap_stats_corr_param$height <- h*1.5;
 
     saveRDS(p, "heatmap_stats_corr.rds")
-    
+      options(device = "pdf") 
     as_list <- to_plotly_list(p)
 
     if(ncol(corr.mat)<100){
