@@ -242,7 +242,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
     p <- p %>%
       add_row_labels(size=0.2, font=list(size=fzRow), side="right")
   }
-
+    options(device = "pdf") 
   as_list <- to_plotly_list(p)
 
   w <- min(1200, ncol(data1sc) * unitCol + 50)
@@ -1889,7 +1889,7 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
     saveRDS(p,"metadata_heatmap.rds");
 
      # Adjust the height and width (in pixels)
- 
+   options(device = "pdf") 
     as_list <- to_plotly_list(p)
    as_list[["layout"]][["width"]] <- w
    as_list[["layout"]][["height"]] <- max(h,500)
