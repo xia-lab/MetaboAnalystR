@@ -597,6 +597,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
+ 
   choices = c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
   lam <- mSetObj$analSet$pca$sdev[choices]
@@ -613,10 +614,73 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   h <- w;
   
   mSetObj$imgSet$pca.biplot<-imgName;
-  
+
+ library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(factoextra) 
+  pca <- prcomp(mSetObj$dataSet$norm, scale=F);
+ 
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+   if(mSetObj$dataSet$type.cls.lbl=="integer"){
+     cls <- as.factor(as.numeric(levels(cls))[cls]);
+   }else{
+      cls <- cls;
+  }
+ 
+  contrib <- get_pca_var(pca)$contrib
+contrib_pc1_pc2 <- contrib[, 1] + contrib[, 2]
+
+top_10_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:10]
+top_10_features <- top_10_features[!is.na(top_10_features)]
+
+ind_data <- data.frame(
+  PC1 = scores[, choices[1]] / lam[1],
+  PC2 = scores[, choices[2]] / lam[2],
+  Group = cls
+)
+ 
+loadings <- pca$rotation
+var_data <- data.frame(
+  PC1 = loadings[, choices[1]] * lam[1],
+  PC2 = loadings[, choices[2]] * lam[2],
+  Variable = rownames(loadings)
+)%>% 
+  filter(Variable %in% top_10_features)
+
+scaling_factor <- max(abs(ind_data$PC1), abs(ind_data$PC2)) / max(abs(var_data$PC1), abs(var_data$PC2))
+ 
+var_data$PC1 <- var_data$PC1 * scaling_factor
+var_data$PC2 <- var_data$PC2 * scaling_factor
+
+group_names <- levels(ind_data$Group)  
+group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_names)
+ 
+p <- ggplot() +
+  geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size = 2, alpha = 0.7) +
+  stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
+  geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
+               color = "#3C5488FF", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+  geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
+                  size = 4, color = "black", max.overlaps = Inf) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
+  labs(title = "",
+       x = paste("PC1 (", round(summary(pca)$importance[2, 1] * 100, 2), "%)", sep = ""),
+       y = paste("PC2 (", round(summary(pca)$importance[2, 2] * 100, 2), "%)", sep = "")) +
+  theme_minimal() +
+  ggsci::scale_color_npg() +
+  ggsci::scale_fill_npg() +
+  theme(
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 11),
+    legend.position = "right"
+  )
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  biplot(t(t(scores[, choices]) / lam), t(t(mSetObj$analSet$pca$rotation[, choices]) * lam), xpd =T, cex=0.9);
+  print(p);
   dev.off();
+
   return(.set.mSet(mSetObj));
 }
 

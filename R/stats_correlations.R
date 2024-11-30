@@ -90,12 +90,12 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
   cor.res <- mSetObj$analSet$corr$cor.mat;
   pattern <- mSetObj$analSet$corr$pattern;
   if(searchType == "feature"){
-  title <- paste(GetVariableLabel(mSetObj$dataSet$type), "correlated with the", pattern);
+    title <- paste(GetVariableLabel(mSetObj$dataSet$type), "correlated with the", pattern);
   }else{
-  title <- paste("Metadata correlated with the", pattern);
+    title <- paste("Metadata correlated with the", pattern);
   }
-  if(nrow(cor.res) > 25){
-    
+
+  if(nrow(cor.res) > 25){    
     # first get most signficant ones (p value)
     ord.inx<-order(cor.res[,3]);
     cor.res <- cor.res[ord.inx, ];
@@ -108,9 +108,9 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
     }
     cor.res <- cor.res[ord.inx, ];
     if(searchType == "feature"){
-    title <- paste("Top 25", tolower(GetVariableLabel(mSetObj$dataSet$type)), "correlated with the", pattern);
+        title <- paste("Top 25", tolower(GetVariableLabel(mSetObj$dataSet$type)), "correlated with the", pattern);
     }else{
-    title <- paste("Top 25 metadata correlated with the", pattern);
+        title <- paste("Top 25 metadata correlated with the", pattern);
     }
   }
   
@@ -179,7 +179,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     }
   }
   # compare p-values w. hmisc + cor.test
-  colnames(data) <- substr(colnames(data), 1, 18);
+  # colnames(data) <- substr(colnames(data), 1, 18);
   corr.mat <- cor(data, method=cor.method);
 
   # NA gives error w. hclust
@@ -226,19 +226,24 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$corr.heatmap <- imgName;
    
-    w = max(min(1300,ncol(corr.mat)*unit+50),300)
-    h = max(min(1300,nrow(corr.mat)*unit+50),300)
-       corr.mat = round(corr.mat,5)
+  w <- max(min(1300,ncol(corr.mat)*unit+50),300);
+  h <- max(min(1300,nrow(corr.mat)*unit+50),300);
+
+  # create a copy to change digits and name trimming
+  my.corr.mat <- round(corr.mat,5);
+  nms <- rownames(my.corr.mat);
+  rownames(my.corr.mat) <- colnames(my.corr.mat) <- substr(nms, 1, 18);
+
   if(fix.col){
-    p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient", 
+    p <- iheatmap(my.corr.mat,  name = "Correlation<br>Coefficient", 
                   colors = colors,zmin=-1,zmid=0, zmax=1,
           colorbar_grid = setup_colorbar_grid(y_start = 0.85)) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2, font = list(size = fz)) 
  
   }else{
-    p <- iheatmap(corr.mat,  name = "Correlation<br>Coefficient" , 
-         colors = colors,zmin=min(corr.mat),zmid=mean(min(corr.mat),max(corr.mat)), zmax=max(corr.mat),
+    p <- iheatmap(my.corr.mat,  name = "Correlation<br>Coefficient" , 
+         colors = colors,zmin=min(my.corr.mat),zmid=mean(min(my.corr.mat),max(my.corr.mat)), zmax=max(my.corr.mat),
        colorbar_grid = setup_colorbar_grid(y_start = 0.85) ) %>%
       add_row_labels(size = 0.2, side = "right",font = list(size = fz))%>%
       add_col_labels(size = 0.2,font = list(size = fz) ) 
@@ -248,7 +253,8 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
         p <- p  %>% add_row_clustering() %>% 
            add_col_clustering()
           new.ord <- p@xaxes@listData[["x"]]@order;
-          corr.mat <- corr.mat[new.ord, new.ord];
+          my.corr.mat <- my.corr.mat[new.ord, new.ord];
+          corr.mat <- corr.mat[new.ord, new.ord]; # for saving
           mSetObj$analSet$pwcor$new.ord <- new.ord;
     }
   
@@ -276,9 +282,9 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
-    print(plotjs)
+    #print(plotjs)
     write(as_json, plotjs)  
-    fast.write.csv(signif(corr.mat, 5), file="correlation_table.csv");
+    fast.write.csv(signif(corr.mat, 7), file="correlation_table.csv");
     return(.set.mSet(mSetObj));
 }
 
