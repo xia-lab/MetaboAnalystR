@@ -1808,8 +1808,6 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
   met <- sapply(metaData, function(x) as.integer(x))
   rownames(met) <- smp.nms;
 
-
-
   # set up parameter for heatmap
   if(colorGradient=="gbr"){
     colors <- colorRampPalette(c("green", "black", "red"), space="rgb")(256);
