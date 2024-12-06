@@ -52,6 +52,8 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     }
   }
 
+  moduleNms.vec <<- NULL;
+
   dataSet <- list();
   dataSet$type <- data.type;
   dataSet$design.type <- "regular"; # one factor to two factor
@@ -1152,4 +1154,8 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
     return(0);
 }
 
-
+SetAnalType <- function(mSetObj=NA, anal.type){
+    mSetObj <- .get.mSet(mSet);
+    mSetObj$analSet$type <- anal.type;
+    return(.set.mSet(mSetObj))
+}
