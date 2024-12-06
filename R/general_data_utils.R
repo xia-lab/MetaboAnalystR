@@ -332,6 +332,25 @@ RecordRCommand <- function(mSetObj=NA, cmd){
   return(.set.mSet(mSetObj));
 }
 
+RecordSysMessage <- function(msg){
+
+  if(!exists("sys.msg.vec")){
+    sys.msg.vec <<- NULL;
+  }
+
+  # add time
+  msg <- paste0("[", Sys.time(), "] ", msg); 
+  sys.msg.vec <<- c(sys.msg.vec, msg);
+  write(msg, file = "Project.log", append = TRUE);
+}
+
+GetSysMessages <- function(){
+  if(!exists("sys.msg.vec")){
+    sys.msg.vec <<- "No message available";
+  }
+  return(sys.msg.vec);
+}
+
 SaveRCommands <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);  
   cmds <- paste(mSetObj$cmdSet, collapse="\n");

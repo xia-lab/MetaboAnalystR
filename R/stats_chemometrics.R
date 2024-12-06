@@ -597,7 +597,6 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
- 
   choices = c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
   lam <- mSetObj$analSet$pca$sdev[choices]
@@ -656,29 +655,39 @@ var_data$PC2 <- var_data$PC2 * scaling_factor
 
 group_names <- levels(ind_data$Group)  
 group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_names)
+
+ cols <- GetColorSchema(cls); 
  
 p <- ggplot() +
-  geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size = 2, alpha = 0.7) +
+  geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
   stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
-               color = "#3C5488FF", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+               color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                   size = 4, color = "black", max.overlaps = Inf) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
-  labs(title = "",
+  labs(title = "Biplot",
        x = paste("PC1 (", round(summary(pca)$importance[2, 1] * 100, 2), "%)", sep = ""),
        y = paste("PC2 (", round(summary(pca)$importance[2, 2] * 100, 2), "%)", sep = "")) +
   theme_minimal() +
-  ggsci::scale_color_npg() +
-  ggsci::scale_fill_npg() +
+ scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
   theme(
-    axis.title = element_text(size = 12),
-    axis.text = element_text(size = 11),
-    legend.position = "right"
-  )
+    axis.title = element_text(size = 12, color = "black"),
+    axis.text = element_text(size = 11, color = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+   legend.text = element_text(size = 12), 
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+    panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank(),
+  plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
+  coord_cartesian(clip = "off")+
+  coord_fixed(ratio = 1)  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(p);
+  print(p );
   dev.off();
 
   return(.set.mSet(mSetObj));
