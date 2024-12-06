@@ -441,6 +441,7 @@ CovariateScatter.Anal <- function(mSetObj,
   }
   
   mSetObj <- .get.mSet(mSetObj);
+ #saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj1.rds")
   covariates <- mSetObj$dataSet$meta.info
   var.types <- mSetObj[["dataSet"]][["meta.types"]]
   feature_table <- t(mSetObj$dataSet$norm);
@@ -654,6 +655,294 @@ CovariateScatter.Anal <- function(mSetObj,
     return(.set.mSet(mSetObj));
   } 
 }
+
+
+CombineFacScatter.Anal <- function(mSetObj, 
+                                  imgName="NA", 
+                                  format="png", 
+                                  meta0="NA",
+                                  meta1="NA",
+                                  anal.type = "ref",
+                                  par1 = NULL, par2 = NULL, 
+                                  nested.opt = "intonly",
+                                  block = "NA", 
+                                  thresh=0.05,
+                                  pval.type="fdr"){
+ 
+ mSetObj <- prepareContrast(meta0,meta1,anal.type ,par1,par2,nested.opt);
+# saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj1.rds")
+ if(!is.list(mSetObj)){
+    return(-1);
+}
+  design <- mSetObj$analSet$design;
+  dataSet<- mSetObj$dataSet
+  contrast.matrix <- mSetObj$analSet$contrast.matrix;
+  feature_table <- t(mSetObj$dataSet$norm);
+  if(length(dataSet$rmidx)>0){
+    data.norm <- feature_table[,-dataSet$rmidx]
+  }else{
+    data.norm <- feature_table
+  }
+  
+
+    if (block=="NA") {
+      fit <- lmFit(data.norm, design)
+    } else {
+     block.vec <-  mSetObj$analSet$combFacdf[,block];
+      corfit <- duplicateCorrelation(data.norm, design, block = block.vec)
+      fit <- lmFit(data.norm, design, block = block.vec, correlation = corfit$consensus)
+    }
+    
+    if (!is.fullrank(design)) {
+      AddErrMsg("This metadata combination is not full rank! Please use other combination.");
+      return(0)
+    }
+    
+    df.residual <- fit$df.residual
+    if (all(df.residual == 0)) {
+      AddErrMsg("All residuals equal 0. There is not enough replicates in each group (no residual degrees of freedom)!");
+      return(-1);
+    }
+    fit2 <- contrasts.fit(fit, contrast.matrix);
+    fit2 <- eBayes(fit2, trend=F, robust=F);
+    rest <- topTable(fit2, number = Inf, adjust.method = "fdr");
+print(colnames(rest))
+colnames(rest)= gsub("\\X.","",colnames(rest))
+colnames(rest) <- gsub("\\.\\.\\.", "-", colnames(rest))
+colnames(rest) <- gsub("\\.$", "-", colnames(rest))
+  if(exists("refovallName",mSetObj$analSet) & anal.type == "ref"){
+    colnames(rest)[ncol(contrast.matrix)] = mSetObj$analSet$refovallName  
+  }
+   # make visualization
+  adj.mat <-  noadj.mat <-  rest[, c("P.Value", "adj.P.Val")]
+  colnames(adj.mat) <- c("pval.adj", "fdr.adj")
+  colnames(noadj.mat) <- c("pval.no", "fdr.no")
+  
+  both.mat <- merge(adj.mat, noadj.mat, by = "row.names")
+  both.mat$pval.adj <- -log10(both.mat$pval.adj)
+  both.mat$fdr.adj <- -log10(both.mat$fdr.adj)
+  both.mat$pval.no <- -log10(both.mat$pval.no)
+  both.mat$fdr.no <- -log10(both.mat$fdr.no)
+  
+  # make plot
+  if( "F" %in% colnames(rest)){
+    fstat <- rest[, "F"];
+  }else{
+    fstat <- rest[, "t"];
+  }    
+  
+  p.value <- rest[,"P.Value"];
+  fdr.p <- rest[,"adj.P.Val"];
+  names(fstat) <- names(p.value) <- names(fdr.p) <- colnames(mSetObj$dataSet$norm);
+  
+  # sort and save a copy;
+  my.ord.inx <- order(p.value, decreasing = FALSE);
+  rest <- signif(rest[my.ord.inx,],5);
+  fast.write.csv(rest,file= mSetObj$analSet$combineFac_filename);
+  qs::qsave(rest, file = "combine_factors_result.qs");
+  
+  # note the plot is always on raw scale for visualization purpose
+  if(pval.type=="fdr"){
+    inx.imp <- fdr.p <= thresh;
+    # locate the cutoff on the sorted raw p value
+    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]));
+  }else{ # raw p value
+    inx.imp <- p.value <= thresh;
+    raw.thresh <- thresh;
+  }
+  sig.num <- sum(inx.imp);
+  
+  if(sig.num > 0){ 
+    sig.p <- p.value[inx.imp];
+    sig.mat <- signif(rest[inx.imp, ,drop=FALSE], 5);
+    rownames(sig.mat) <- rownames(rest)[inx.imp]
+    # order the result simultaneously
+    ord.inx <- order(sig.p, decreasing = FALSE);
+    sig.mat <- sig.mat[ord.inx,,drop=F];
+  }else{
+    # just top 10
+    sig.mat <- rest[1:10,]; 
+  }
+  
+  AddMsg(paste(c("A total of", sum(inx.imp), "significant features were found."), collapse=" "));
+  rownames(both.mat) = both.mat[,1]
+  both.mat <- both.mat[rownames(rest),];
+   if(sig.num> 0){
+    res <- 1;
+     cov<-list (
+      pval.type=pval.type,
+      sig.num = sig.num,
+      sig.nm = mSetObj$analSet$combineFac_filename,
+      p.thresh = thresh,
+      raw.thresh = raw.thresh,
+      thresh = -log10(raw.thresh), # only used for plot threshold line
+      p.value = p.value,
+      p.value.no = both.mat$pval.no,
+      p.log = -log10(p.value),
+      inx.imp = inx.imp,
+      sig.mat = sig.mat,
+      primary.var = meta0,
+      second.var = meta1,
+      block = block
+    );
+  }else{
+    res <- 0;
+    cov<-list (
+      pval.type = pval.type,
+      sig.num = sig.num,
+      raw.thresh = raw.thresh,
+      thresh = -log10(raw.thresh), # only used for plot threshold line
+      p.value = p.value,
+      p.value.no = both.mat$pval.no,
+      p.log = -log10(p.value),
+      inx.imp = inx.imp,
+      sig.mat = sig.mat,
+       primary.var = meta0,
+      second.var = meta1,
+      block = block
+    );
+  }
+  
+  # for detail table
+  mSetObj$analSet$cov <- cov; 
+  # for plotting adjp vs p
+  mSetObj$analSet$cov.mat <- both.mat; 
+  
+  jsonNm <- gsub(paste0(".", format), ".json", imgName);
+  jsonObj <- RJSONIO::toJSON(both.mat);
+  sink(jsonNm);
+  cat(jsonObj);
+  sink();
+  
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(res);
+  }else{
+    return(.set.mSet(mSetObj));
+  } 
+}
+
+
+
+
+prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+  library(limma)
+  library(dplyr)
+  mSetObj <- .get.mSet(mSetObj);
+#saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj0.rds")
+  if(!is.factor(mSetObj$analSet$combFac)){
+    mSetObj$analSet$combFac <- factor(mSetObj$analSet$combFac)
+  }
+  dataSet<- mSetObj$dataSet
+  cat(meta0,meta1,anal.type, par1, par2, nested.opt, "\n")
+  set.seed(1337);
+  myargs <- list();
+  cls <- mSetObj$analSet$combFac;
+  clsdf =  mSetObj$analSet$combFacdf;
+  mSetObj$analSet$comp.type <- anal.type;
+  grp.nms <- levels(cls);
+  analysisVar <-  meta0
+ 
+  if (anal.type == "inter") {
+    if(mSetObj$dataSet$meta.types[meta1]=="disc"){
+       formula <- as.formula(paste("~ ", meta0, "*", meta1))
+       design <- model.matrix(formula, data = clsdf)
+     }else{
+       clsdf[,meta1] = as.numeric( clsdf[,meta1])
+       formula <- as.formula(paste("~ 0+", meta0, "+",meta0, ":" ,meta1 ))
+       design <- model.matrix(formula, data = clsdf)
+     }
+     colnames(design) <- make.names(colnames(design)); 
+  }else{
+    design <- model.matrix(~ 0 + cls)
+    colnames(design) <- levels(cls); 
+  }
+
+  
+  if(dataSet$meta.types[analysisVar]=="cont" |  any(grepl("(^[0-9]+).*", grp.nms))){
+    if(grepl( "vs",par1)){
+      par1 <- strsplit(par1, " vs. ")[[1]]
+      par1 <- paste0(analysisVar,"_",par1[1]," vs. ",analysisVar,"_",par1[2])
+    }else{
+      par1<- paste0(analysisVar,"_",par1)
+    }
+    if(par2 != "NA"){
+      if(grepl( "vs",par2)){
+        par2 <- strsplit(par2, " vs. ")[[1]]
+        par2 <- paste0(analysisVar,"_",par2[1]," vs. ",analysisVar,"_",par2[2])
+      }else{
+        par2<- paste0(analysisVar,"_",par2)
+      }
+    }
+    
+    if(any(grepl("(^[0-9]+).*",  colnames(design)))){
+      colnames(design) = as.character(sapply( colnames(design),function(x) paste0(analysisVar,"_",x)))
+    }
+    grp.nms <- paste0(analysisVar,"_",grp.nms)
+    
+  }
+  mSetObj$analSet$design <- design
+  mSetObj$analSet$par1 <- par1
+  
+  if (anal.type == "inter") {
+     if(mSetObj$dataSet$meta.types[meta1]=="disc"){
+    myargs <- as.list(colnames(design)[-1])
+    }else{
+      myargs <- as.list(colnames(design))
+    }
+     filename <- paste("combine_factors_interaction", meta0,"_",meta1, sep = "");
+  }else if (anal.type == "custom") {
+    grp.nms <- strsplit(par1, " vs. ")[[1]]
+    myargs[[1]] <- paste(grp.nms, collapse = "-")
+    mSetObj$analSet$grp.nms <- grp.nms;
+    filename <- paste("combine_factors_", paste(grp.nms, collapse = "_vs_"), sep = "")
+    mSetObj$analSet$contrast <- paste(grp.nms, collapse = "_vs_");
+  } else if (anal.type == "ref") {
+    ref <- par1;
+    cntr.cls <- grp.nms[grp.nms != ref]
+    myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
+    mSetObj$analSet$ref <- ref; 
+    filename <- paste("combine_factors_reference_", ref, sep = "");
+  } else if (anal.type == "nested") {
+    grp.nms1 <- strsplit(par1, " vs. ")[[1]]
+    grp.nms2 <- strsplit(par2, " vs. ")[[1]]
+    if (all(grp.nms1 == grp.nms2)) {
+      AddErrMsg("The two nested groups are the same. Please choose two different groups.")
+      return(0)
+    }
+    grp.nms <- unique(c(grp.nms1, grp.nms2))
+    print(nested.opt)
+    if (nested.opt) {
+      mSetObj$analSet$nested.int.opt <- "True";
+      myargs[[1]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
+    } else {
+      mSetObj$analSet$nested.int.opt <- "False";
+      myargs[[1]] <- paste(grp.nms1, collapse = "-")
+      myargs[[2]] <- paste(grp.nms2, collapse = "-")
+      myargs[[3]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
+    }
+    mSetObj$analSet$contrast <- paste(paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
+    filename <- paste("combine_factors_nested_", paste(paste(grp.nms1, collapse = "_vs_"), "_", paste(grp.nms2, collapse = "_vs_"), sep = ""), sep = "")
+  } else {
+    print(paste("Not supported: ", anal.type))
+  }
+  
+  myargs[["levels"]] <- design;
+  mSetObj$analSet$combineFac_filename <- paste0(filename,".csv");
+  mSetObj$analSet$contrast.type <- anal.type;
+  contrast.matrix <- do.call(makeContrasts, myargs);
+  mSetObj$analSet$contrast.matrix <- contrast.matrix;
+  return(mSetObj);
+}
+
+
+
+
+
+
+
+
+
 
 GetRawCovThresh <- function(mSetObj){
   mSetObj <- .get.mSet(mSetObj); 
