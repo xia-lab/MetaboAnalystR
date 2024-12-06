@@ -576,7 +576,7 @@ CovariateScatter.Anal <- function(mSetObj,
   if(pval.type=="fdr"){
     inx.imp <- fdr.p <= thresh;
     # locate the cutoff on the sorted raw p value
-    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]));
+    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]),na.rm = T);
   }else{ # raw p value
     inx.imp <- p.value <= thresh;
     raw.thresh <- thresh;
