@@ -183,7 +183,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   # colnames(data) <- substr(colnames(data), 1, 18);
   if(grepl("partial",cor.method)){
   library(ppcor);
-  res <- pcor(data, method=cor.method);
+  res <- pcor(data, method=gsub("partial_","",cor.method));
   corr.mat <- res$estimate;
   rownames(corr.mat) <- colnames(data)
   colnames(corr.mat) <- colnames(data)
