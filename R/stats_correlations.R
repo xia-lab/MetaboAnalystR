@@ -183,7 +183,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
   # colnames(data) <- substr(colnames(data), 1, 18);
   if(grepl("partial",cor.method)){
   library(ppcor);
-  res <- pcor(data, method=cor.stat);
+  res <- pcor(data, method=cor.method);
   corr.mat <- res$estimate;
   rownames(corr.mat) <- colnames(data)
   colnames(corr.mat) <- colnames(data)
@@ -324,7 +324,15 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width
   # compare p-values w. hmisc + cor.test
   colnames(data) <- substr(colnames(data), 1, 18);
 
-  corr.mat <- cor(data, method=cor.method);
+   if(grepl("partial",cor.method)){
+  library(ppcor);
+  res <- pcor(data, method=cor.method);
+  corr.mat <- res$estimate;
+  rownames(corr.mat) <- colnames(data)
+  colnames(corr.mat) <- colnames(data)
+   }else{
+   corr.mat <- cor(data, method=cor.method);
+  }
 
   # NA gives error w. hclust
   corr.mat[abs(corr.mat) < corrCutoff] <- 0;
