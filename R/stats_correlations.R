@@ -178,9 +178,18 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
         print("Data is reduced to 1000 vars ..");
     }
   }
+  
   # compare p-values w. hmisc + cor.test
   # colnames(data) <- substr(colnames(data), 1, 18);
-  corr.mat <- cor(data, method=cor.method);
+  if(grepl("partial",cor.method)){
+  library(ppcor);
+  res <- pcor(data, method=cor.stat);
+  corr.mat <- res$estimate;
+  rownames(corr.mat) <- colnames(data)
+  colnames(corr.mat) <- colnames(data)
+   }else{
+   corr.mat <- cor(data, method=cor.method);
+  }
 
   # NA gives error w. hclust
   corr.mat[abs(corr.mat) < corrCutoff] <- 0;
@@ -273,12 +282,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
     
     as_list[["layout"]][["width"]] <- w
     as_list[["layout"]][["height"]] <- h
-    
-    if(.on.public.web){        
-        try(reticulate::use_miniconda('r-reticulate'), silent = TRUE)
-        try(plotly::save_image(as_list, imgName, scale = 3), silent = TRUE)
-    }
-
+   
     as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
@@ -319,6 +323,7 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width
   }
   # compare p-values w. hmisc + cor.test
   colnames(data) <- substr(colnames(data), 1, 18);
+
   corr.mat <- cor(data, method=cor.method);
 
   # NA gives error w. hclust
