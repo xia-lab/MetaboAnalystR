@@ -12,7 +12,7 @@ PCA.Anal <- function(mSetObj=NA){
   # RhpcBLASctl::blas_set_num_threads(2);
   # RhpcBLASctl::omp_set_num_threads(2);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
-  
+ 
   # obtain variance explained
   sum.pca <- summary(pca);
   imp.pca <- sum.pca$importance;
@@ -26,7 +26,8 @@ PCA.Anal <- function(mSetObj=NA){
   fast.write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
-  return(.set.mSet(mSetObj));
+  .set.mSet(mSetObj)
+  return(length(pca[["center"]]));
 }
 
 # use a PERMANOVA to partition the euclidean distance by groups based on current score plot:
@@ -594,8 +595,8 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@export
 #'
-PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
-  
+PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
+  print(topnum)
   mSetObj <- .get.mSet(mSetObj);
   choices = c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
@@ -631,7 +632,7 @@ library(factoextra)
   contrib <- get_pca_var(pca)$contrib
 contrib_pc1_pc2 <- contrib[, 1] + contrib[, 2]
 
-top_10_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:10]
+top_10_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:topnum]
 top_10_features <- top_10_features[!is.na(top_10_features)]
 
 ind_data <- data.frame(
