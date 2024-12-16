@@ -598,6 +598,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
   print(topnum)
   mSetObj <- .get.mSet(mSetObj);
+ 
   choices = c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
   lam <- mSetObj$analSet$pca$sdev[choices]
@@ -665,7 +666,7 @@ p <- ggplot() +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
-                  size = 4, color = "black", max.overlaps = Inf) +
+                  size = 4, color = "black", max.overlaps = Inf, segment.color = "#636363") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
   labs(title = "Biplot",
