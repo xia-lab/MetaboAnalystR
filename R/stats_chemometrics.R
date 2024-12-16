@@ -666,7 +666,7 @@ p <- ggplot() +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
-                  size = 4, color = "black", max.overlaps = Inf, segment.color = "#636363") +
+                  size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
   labs(title = "Biplot",
@@ -849,7 +849,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   y.ext<-(yrg[2]-yrg[1])/12;
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
-  
+ 
   col.def <- GetColorSchema(cls, grey.scale==1);
   cols <- ExpandSchema(cls, col.def);
   
@@ -907,6 +907,8 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   
   par(op);
   dev.off();
+
+
   return(.set.mSet(mSetObj));
 }
 
@@ -1192,6 +1194,105 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
   
   mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, fit.info=all.info);
   return(.set.mSet(mSetObj));
+}
+
+######### biplot for PLSDA
+########################
+PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
+  print(topnum)
+  print(imgName)
+  mSetObj <- .get.mSet(mSetObj);
+  plsr <- mSetObj$analSet$plsr
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$pls.biplot <- imgName;
+    
+  choices = c(inx1, inx2);
+  scores <- plsr$scores;
+  lam <- apply(scores[,choices], 2, sd)
+  n <- NROW(scores)
+  lam <- lam * sqrt(n);
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+   
+  library(ggplot2)
+  library(ggrepel)
+  library(dplyr)
+  library(factoextra) 
+ 
+  
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(cls))[cls]);
+  }else{
+    cls <- cls;
+  }
+  
+  contrib <-  plsr$vip.mat 
+  contrib_pc1_pc2 <- contrib[, 1] + contrib[, 2]
+  
+  top_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:topnum]
+  top_features <- top_features[!is.na(top_features)]
+  
+  ind_data <- data.frame(
+    PC1 = scores[, choices[1]] / lam[1],
+    PC2 = scores[, choices[2]] / lam[2],
+    Group = cls
+  )
+  
+  loadings <-  plsr$loadings 
+  var_data <- data.frame(
+    PC1 = loadings[, choices[1]],
+    PC2 = loadings[, choices[2]] ,
+    Variable = rownames(loadings)
+  )%>% 
+    filter(Variable %in% top_features)
+  
+  scaling_factor <- max(abs(ind_data$PC1), abs(ind_data$PC2)) / max(abs(var_data$PC1), abs(var_data$PC2))
+  
+  var_data$PC1 <- var_data$PC1 * scaling_factor
+  var_data$PC2 <- var_data$PC2 * scaling_factor
+ 
+  cols <- GetColorSchema(cls); 
+  
+  p <- ggplot() +
+    geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
+    stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
+    geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
+                 color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+    geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
+                    size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
+    labs(title = "Biplot",
+         x = paste("Component 1(", round(100*plsr$Xvar[inx1]/plsr$Xtotvar,1), "%)", sep = ""),
+         y = paste("Component 2(", round(100*plsr$Xvar[inx2]/plsr$Xtotvar,1), "%)", sep = "")) +
+    theme_minimal() +
+    scale_color_manual(values = cols) +
+    scale_fill_manual(values = cols) +
+    theme(
+      axis.title = element_text(size = 12, color = "black"),
+      axis.text = element_text(size = 11, color = "black"),
+      legend.position = "right",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 12), 
+      panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+      panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
+      panel.grid.minor = element_blank(),
+      axis.line = element_blank(),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
+    coord_cartesian(clip = "off")+
+    coord_fixed(ratio = 1)  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(p );
+  dev.off();
+   return(.set.mSet(mSetObj));
 }
 
 ########################################
@@ -2708,6 +2809,10 @@ GetMaxPLSPairComp<-function(mSetObj=NA){
 GetMaxPLSCVComp<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(min(dim(mSetObj$dataSet$norm)[1]-2, dim(mSetObj$dataSet$norm)[2]));
+}
+GetMaxPLSBiplotNum <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(nrow(mSetObj[["analSet"]][["plsr"]][["vip.mat"]]));
 }
 
 GetDefaultPLSPairComp<-function(mSetObj=NA){
