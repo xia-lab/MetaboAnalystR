@@ -468,7 +468,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
     }
   }
-  
+
   if(anal.type == "roc"){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
       AddErrMsg("ROC analysis is only defined for two-group comparisions!");
@@ -509,6 +509,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
+
+
   
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
@@ -1176,5 +1178,6 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
 SetAnalType <- function(mSetObj=NA, anal.type){
     mSetObj <- .get.mSet(mSet);
     mSetObj$analSet$type <- anal.type;
+    anal.type <<- anal.type;
     return(.set.mSet(mSetObj))
 }

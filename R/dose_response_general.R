@@ -14,6 +14,12 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
     int.mat <- conc;
     dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
 
+    # Error check: Ensure metadata is numeric
+    if (any(is.na(dose))) {
+        AddErrMsg("Error: Metadata for dose-response analysis must be numeric. Please check the input file and ensure the dose values are properly formatted.")
+        return(0);
+    }
+
     dose.order <- order(dose);
     meta.reorder <- mSetObj$dataSet$cls[dose.order];
     int.mat <- int.mat[dose.order, ];
