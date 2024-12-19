@@ -439,9 +439,9 @@ CovariateScatter.Anal <- function(mSetObj,
       vars <- analysis.var;
     }
   }
-  
+    
   mSetObj <- .get.mSet(mSetObj);
- #saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj1.rds")
+  
   covariates <- mSetObj$dataSet$meta.info
   var.types <- mSetObj[["dataSet"]][["meta.types"]]
   feature_table <- t(mSetObj$dataSet$norm);
@@ -471,7 +471,7 @@ CovariateScatter.Anal <- function(mSetObj,
   sig.num <- 0;
   
   if(analysis.type == "disc"){
-    # build design and contrast matrix
+    # build design and contrast matrix 
     covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
     grp.nms <- levels(covariates[, analysis.var]);
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
@@ -528,7 +528,7 @@ CovariateScatter.Anal <- function(mSetObj,
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
     }
-    
+
     fit <- eBayes(fit);
     rest <- topTable(fit, number = Inf, coef = analysis.var);
     colnames(rest)[1] <- analysis.var;
@@ -576,7 +576,7 @@ CovariateScatter.Anal <- function(mSetObj,
   if(pval.type=="fdr"){
     inx.imp <- fdr.p <= thresh;
     # locate the cutoff on the sorted raw p value
-    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]));
+    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]),na.rm = T);
   }else{ # raw p value
     inx.imp <- p.value <= thresh;
     raw.thresh <- thresh;
@@ -668,9 +668,9 @@ CombineFacScatter.Anal <- function(mSetObj,
                                   block = "NA", 
                                   thresh=0.05,
                                   pval.type="fdr"){
- 
+
  mSetObj <- prepareContrast(meta0,meta1,anal.type ,par1,par2,nested.opt);
-# saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj1.rds")
+ 
  if(!is.list(mSetObj)){
     return(-1);
 }
@@ -695,7 +695,7 @@ CombineFacScatter.Anal <- function(mSetObj,
     
     if (!is.fullrank(design)) {
       AddErrMsg("This metadata combination is not full rank! Please use other combination.");
-      return(0)
+      return(-1)
     }
     
     df.residual <- fit$df.residual
@@ -706,15 +706,19 @@ CombineFacScatter.Anal <- function(mSetObj,
     fit2 <- contrasts.fit(fit, contrast.matrix);
     fit2 <- eBayes(fit2, trend=F, robust=F);
     rest <- topTable(fit2, number = Inf, adjust.method = "fdr");
-print(colnames(rest))
-colnames(rest)= gsub("\\X.","",colnames(rest))
-colnames(rest) <- gsub("\\.\\.\\.", "-", colnames(rest))
-colnames(rest) <- gsub("\\.$", "-", colnames(rest))
-  if(exists("refovallName",mSetObj$analSet) & anal.type == "ref"){
-    colnames(rest)[ncol(contrast.matrix)] = mSetObj$analSet$refovallName  
-  }
+
+   colnames(rest)= gsub("\\X.","",colnames(rest))
+   colnames(rest) <- gsub("\\.\\.\\.", "-", colnames(rest))
+   colnames(rest) <- gsub("\\.$", "-", colnames(rest))
+ 
+    fit <- lmFit(data.norm,  mSetObj$analSet$design.noadj)
+    fit <- contrasts.fit(fit, mSetObj$analSet$contrast.matrix.noadj);
+    fit <- eBayes(fit);
+    res.noadj <- topTable(fit, number = Inf);
+ 
    # make visualization
-  adj.mat <-  noadj.mat <-  rest[, c("P.Value", "adj.P.Val")]
+  adj.mat <-   rest[, c("P.Value", "adj.P.Val")]
+  noadj.mat <-  res.noadj[, c("P.Value", "adj.P.Val")]
   colnames(adj.mat) <- c("pval.adj", "fdr.adj")
   colnames(noadj.mat) <- c("pval.no", "fdr.no")
   
@@ -745,13 +749,13 @@ colnames(rest) <- gsub("\\.$", "-", colnames(rest))
   if(pval.type=="fdr"){
     inx.imp <- fdr.p <= thresh;
     # locate the cutoff on the sorted raw p value
-    raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]));
+     raw.thresh <- mean(c(p.value[sum(inx.imp)], p.value[sum(inx.imp)+1]),na.rm = T);
   }else{ # raw p value
     inx.imp <- p.value <= thresh;
     raw.thresh <- thresh;
   }
   sig.num <- sum(inx.imp);
-  
+ 
   if(sig.num > 0){ 
     sig.p <- p.value[inx.imp];
     sig.mat <- signif(rest[inx.imp, ,drop=FALSE], 5);
@@ -828,8 +832,21 @@ colnames(rest) <- gsub("\\.$", "-", colnames(rest))
 prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   library(limma)
   library(dplyr)
+
+  if(!exists('adj.vec')){
+    adj.bool = F;
+    adj.vec= "NA"
+  }else{
+    if(length(adj.vec) > 0){
+      adj.bool = T;
+      cov.vec <- adj.vec;
+    }else{    
+      adj.vec= "NA"
+      adj.bool = F; 
+    }
+  }
   mSetObj <- .get.mSet(mSetObj);
-#saveRDS( mSetObj,"/Users/lzy/Documents/MicrobiomeAnalystUser/USER/mSetObj0.rds")
+ 
   if(!is.factor(mSetObj$analSet$combFac)){
     mSetObj$analSet$combFac <- factor(mSetObj$analSet$combFac)
   }
@@ -843,22 +860,40 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   grp.nms <- levels(cls);
   analysisVar <-  meta0
  
-  if (anal.type == "inter") {
+
+
+  if (anal.type == "inter") { 
     if(mSetObj$dataSet$meta.types[meta1]=="disc"){
-       formula <- as.formula(paste("~ ", meta0, "*", meta1))
-       design <- model.matrix(formula, data = clsdf)
-     }else{
-       clsdf[,meta1] = as.numeric( clsdf[,meta1])
-       formula <- as.formula(paste("~ 0+", meta0, "+",meta0, ":" ,meta1 ))
-       design <- model.matrix(formula, data = clsdf)
-     }
-     colnames(design) <- make.names(colnames(design)); 
+      formula <- paste("~ ", meta0, "*", meta1)
+    }else{
+      clsdf[,meta1] = as.numeric( clsdf[,meta1])
+      formula <- as.formula(paste("~ 0+", meta0, "+",meta0, ":" ,meta1 ))
+    }
+    formula.noadj <- as.formula(formula)
+    if(adj.bool){
+      formula <- as.formula(paste(formula," + ",cov.vec))
+      design <- model.matrix(formula, data = clsdf)
+      design.noadj <- model.matrix(formula.noadj, data = clsdf)
+    }else{
+      design <- design.noadj <- model.matrix(formula.noadj, data = clsdf);  
+    }
+    colnames(design) <- make.names(colnames(design)); 
+    colnames(design.noadj) <- make.names(colnames(design.noadj)); 
   }else{
-    design <- model.matrix(~ 0 + cls)
-    colnames(design) <- levels(cls); 
+    design.noadj <-   model.matrix(~ 0 + cls)
+    colnames(design.noadj) <- levels(cls); 
+    if(adj.bool){
+      design <- model.matrix(~ 0 + cls + clsdf[,cov.vec])
+      colnames(design)[1:length(levels(cls))] <- levels(cls)
+      colnames(design)[(length(levels(cls))+1):ncol(design)]  <- make.names(colnames(design)[(length(levels(cls))+1):ncol(design)]); 
+    }else{
+      
+      design <-  design.noadj
+    } 
   }
 
-  
+
+
   if(dataSet$meta.types[analysisVar]=="cont" |  any(grepl("(^[0-9]+).*", grp.nms))){
     if(grepl( "vs",par1)){
       par1 <- strsplit(par1, " vs. ")[[1]]
@@ -877,19 +912,18 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
     
     if(any(grepl("(^[0-9]+).*",  colnames(design)))){
       colnames(design) = as.character(sapply( colnames(design),function(x) paste0(analysisVar,"_",x)))
+      colnames(design.noadj) = as.character(sapply( colnames(design.noadj),function(x) paste0(analysisVar,"_",x)))
     }
     grp.nms <- paste0(analysisVar,"_",grp.nms)
     
   }
   mSetObj$analSet$design <- design
+  mSetObj$analSet$design.noadj <- design.noadj
   mSetObj$analSet$par1 <- par1
   
   if (anal.type == "inter") {
-     if(mSetObj$dataSet$meta.types[meta1]=="disc"){
-    myargs <- as.list(colnames(design)[-1])
-    }else{
-      myargs <- as.list(colnames(design))
-    }
+     kpidx <-  grepl(meta0,colnames(design)) |(grepl(meta1,colnames(design)) & meta1!="NA")
+     myargs <- as.list(colnames(design)[kpidx])  
      filename <- paste("combine_factors_interaction", meta0,"_",meta1, sep = "");
   }else if (anal.type == "custom") {
     grp.nms <- strsplit(par1, " vs. ")[[1]]
@@ -911,7 +945,6 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
       return(0)
     }
     grp.nms <- unique(c(grp.nms1, grp.nms2))
-    print(nested.opt)
     if (nested.opt) {
       mSetObj$analSet$nested.int.opt <- "True";
       myargs[[1]] <- paste("(", paste(grp.nms1, collapse = "-"), ")-(", paste(grp.nms2, collapse = "-"), ")", sep = "")
@@ -926,12 +959,16 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   } else {
     print(paste("Not supported: ", anal.type))
   }
-  
-  myargs[["levels"]] <- design;
+    
   mSetObj$analSet$combineFac_filename <- paste0(filename,".csv");
   mSetObj$analSet$contrast.type <- anal.type;
+  myargs[["levels"]] <- design;
   contrast.matrix <- do.call(makeContrasts, myargs);
   mSetObj$analSet$contrast.matrix <- contrast.matrix;
+  myargs[["levels"]] <- design.noadj;
+  contrast.matrix.noadj <- do.call(makeContrasts, myargs);
+  mSetObj$analSet$contrast.matrix.noadj <- contrast.matrix.noadj;
+  
   return(mSetObj);
 }
 

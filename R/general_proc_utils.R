@@ -475,7 +475,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
       mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-
+ 
   return(.set.mSet(mSetObj));
 }
 
