@@ -8,96 +8,92 @@
 #'License: GNU GPL (>= 2)
 #'@import qs
 #'@export
+CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
+    mSetObj <- .get.mSet(mSetObj);
+    print("metaconsistency========+");
+    msg <- c()  # Initialize the message variable
 
-CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(length(mdata.all) == 0){
-    AddErrMsg("Please upload your data or try our example datasets!");
-    return(0);
-  }
-  
-  include.inx <- mdata.all==1;
-  if(sum(include.inx) < 2){
-    AddErrMsg("At least two datasets are required for meta-analysis!");
-    return(0);
-  }
-  
-  sel.nms <- names(mdata.all)[include.inx];
-  
-  # first check that all class labels are consistent
-  dataSet <- qs::qread(sel.nms[1]);
-  lvls <- levels(dataSet$cls);
-  id.type <- dataSet$id.type;
-  
-  # note, the features are in columns!!!!
-  nms <- colnames(dataSet$data);
-  shared.nms <- nms;
-  for(i in 2:length(sel.nms)){
-    dataSet <- qs::qread(sel.nms[i]);
-    # check if class label is consistent
-    if(!all(levels(dataSet$cls) == lvls)){
-      AddErrMsg(paste(sel.nms[i], "has different group labels", paste(levels(dataSet$cls), collapse=":"), "from", sel.nms[1], paste(lvls, collapse=":")));
-      return(0);
+    msg <- c(msg, "Starting the meta-analysis process...")
+
+    if (length(mdata.all) == 0) {
+        AddErrMsg("Please upload your data or try our example datasets!")
+        return(0)  # Early return for error
     }
-    
-    # check and record if there is common genes            
-    shared.nms <- intersect(shared.nms, colnames(dataSet$data));
-    if(length(shared.nms) < ncol(dataSet$data)/4){
-      AddErrMsg(paste(sel.nms[i], "has less than 25% common features from the previous data sets"));
-      return(0);
+
+    include.inx <- mdata.all == 1
+    if (sum(include.inx) < 2) {
+        AddErrMsg("At least two datasets are required for meta-analysis!")
+        return(0)  # Early return for error
     }
-  }
-  AddMsg("Passed experimental condition check!");
-  
-  # now construct a common matrix to faciliate plotting across all studies
-  dataName <- sel.nms[1];
-  dataSet <- qs::qread(dataName);
-  common.matrix <- dataSet$data[, shared.nms];
-  data.lbl <- rep(dataName, nrow(common.matrix));
-  cls.lbl <- dataSet$cls;
-  
-  for(i in 2:length(sel.nms)){
-    dataName <- sel.nms[i];
-    dataSet <- qs::qread(dataName);
-    ndat <- dataSet$data[, shared.nms];
-    
-    # note, there could be duplicate sample names across studies
-    rownames(ndat) <- paste(rownames(ndat),"_",i, sep="");
-    plot.ndat <- t(scale(t(ndat))); # scale sample wise (default scale column)
-    common.matrix <- rbind(common.matrix, ndat);
-    data.lbl <- c(data.lbl, rep(dataName, nrow(dataSet$data[,])));
-    cls.lbl <- c(cls.lbl, dataSet$cls);
-  }
-  
-  cls.lbl <- factor(cls.lbl);
-  levels(cls.lbl) <- lvls;
-  colnames(common.matrix) <- shared.nms;
-  ord.inx <- order(data.lbl, cls.lbl);
-  cls.lbl <- cls.lbl[ord.inx];
-  data.lbl <- data.lbl[ord.inx];
-  common.matrix <- data.matrix(common.matrix[ord.inx,]);
-  
-  AddMsg("Constructed the commom matrix!");
-  
-  if(nrow(common.matrix) > 5000){  # max sample number allow 5000
-    AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 5000!)"));
-    return(0);
-  }
-  
-  # now from here, we want to transpose the data as in gene expression data 
-  # (i.e. samples in columns) to be easier for further analysis
-  common.matrix <- t(common.matrix);
-  
-  if(combat){
-    pheno <- data.frame(cbind(cls.lbl, data.lbl));
-    modcombat = model.matrix(~1, data=pheno)
-    batch <- data.lbl;
-    combat_edata = sva::ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
-    common.matrix <- combat_edata;
-  }
-  
+
+    sel.nms <- names(mdata.all)[include.inx]
+    msg <- c(msg, paste("Number of datasets selected for analysis:", length(sel.nms)))
+
+    # Check for consistent class labels
+    msg <- c(msg, "Checking group labels for consistency across datasets...")
+    dataSet <- qs::qread(sel.nms[1])
+    lvls <- levels(dataSet$cls)
+    id.type <- dataSet$id.type
+    shared.nms <- colnames(dataSet$data)
+
+    for (i in 2:length(sel.nms)) {
+        dataSet <- qs::qread(sel.nms[i])
+        
+        # Check if class labels are consistent
+        if (!all(levels(dataSet$cls) == lvls)) {
+            AddErrMsg(paste(sel.nms[i], "has different group labels", 
+                            paste(levels(dataSet$cls), collapse=":"), 
+                            "from", sel.nms[1], 
+                            paste(lvls, collapse=":")))
+            return(0)  # Early return for error
+        }
+
+        # Check for shared features
+        #msg <- c(msg, paste("Identifying shared features among the datasets..."))
+        shared.nms <- intersect(shared.nms, colnames(dataSet$data))
+        if (length(shared.nms) < ncol(dataSet$data) / 4) {
+            AddErrMsg(paste(sel.nms[i], "has less than 25% common features from the previous datasets"))
+            return(0)  # Early return for error
+        }
+    }
+
+    AddMsg("Passed experimental condition check!")
+    msg <- c(msg, "Passed experimental condition check!")
+
+    msg <- c(msg, paste("Constructing the common matrix using", length(shared.nms), "shared features across datasets."))
+    # Construct a common matrix
+    common.matrix <- dataSet$data[, shared.nms]
+    data.lbl <- rep(sel.nms[1], nrow(common.matrix))
+    cls.lbl <- dataSet$cls
+
+    for (i in 2:length(sel.nms)) {
+        dataSet <- qs::qread(sel.nms[i])
+        ndat <- dataSet$data[, shared.nms]
+        rownames(ndat) <- paste(rownames(ndat), "_", i, sep="")
+        common.matrix <- rbind(common.matrix, ndat)
+        data.lbl <- c(data.lbl, rep(sel.nms[i], nrow(dataSet$data[,])))
+        cls.lbl <- c(cls.lbl, dataSet$cls)
+    }
+
+    AddMsg("Constructed the common matrix!")
+    msg <- c(msg, "Constructed the common matrix!")
+
+    if (nrow(common.matrix) > 5000) {
+        AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 5000!)"))
+        return(0)  # Early return for error
+    }
+
+    common.matrix <- t(common.matrix)
+
+    if (combat) {
+        msg <- c(msg, "Applying ComBat adjustment for batch effect correction...")
+        pheno <- data.frame(cls.lbl, data.lbl)
+        modcombat <- model.matrix(~1, data=pheno)
+        batch <- data.lbl
+        combat_edata <- sva::ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
+        common.matrix <- combat_edata
+    }
+
   # save the meta-dataset
   res <- data.frame(colnames(common.matrix), cls.lbl, data.lbl, t(common.matrix));
   colnames(res) <- c('Samples', 'Conditions', 'Datasets', rownames(common.matrix));
@@ -129,21 +125,31 @@ CheckMetaDataConsistency<-function(mSetObj=NA, combat=TRUE){
   # setup common stats gene number, smpl number, grp info
   studyinfo <- paste("Sample #:", ncol(metastat.meta$data), "Common ID #:", nrow(metastat.meta$data), "Condition:", paste(levels(metastat.meta$cls.lbl), collapse=" vs. "));
   
-  AddMsg(studyinfo)
-  mSetObj$dataSet$studyinfo <- studyinfo
-  
-  if(.on.public.web){
-    if(length(sel.nms) == 1){
-      .set.mSet(mSetObj)
-      return(2);
-    }else{
-      .set.mSet(mSetObj)
-      return(1);
+
+
+    msg <- c(msg, "Generating and saving the merged dataset file: MetaboAnalyst_merged_data.csv")
+    studyinfo <- paste("Sample #:", ncol(common.matrix), 
+                       "Common ID #:", nrow(common.matrix), 
+                       "Condition:", paste(levels(factor(cls.lbl)), collapse=" vs. "))
+    AddMsg(studyinfo)
+    msg <- c(msg, studyinfo)
+
+    mSetObj$dataSet$studyinfo <- studyinfo
+    mSetObj$msgSet$check.msg <- msg;
+    if (.on.public.web) {
+        if (length(sel.nms) == 1) {
+            .set.mSet(mSetObj)
+            return(2);
+        } else {
+            .set.mSet(mSetObj)
+            return(1);
+        }
+    } else {
+        return(.set.mSet(mSetObj));
     }
-  }else{
-    return(.set.mSet(mSetObj));
-  }
 }
+
+
 
 #'Performs differential expression analysis on individual data
 #'@description This function performs DE analysis on individual data using the common matrix, which

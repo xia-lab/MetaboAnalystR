@@ -360,6 +360,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   pair.res <- res[[2]];
 
   # store the item to the pca object
+  print(stat.info);
   mSetObj$analSet$pca$permanova.res <-list(stat.info=stat.info, stat.info.vec=stat.info.vec, pair.res=pair.res);
   return(.set.mSet(mSetObj));
 }

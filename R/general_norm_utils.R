@@ -691,3 +691,108 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
   return(.set.mSet(mSetObj));
 }
+
+SummarizeNormResults <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  # Check if selectedNormOpts has been defined
+  if (!exists('selectedNormOpts')) {
+    AddErrMsg("Please select which normalization options to explore")
+    return(0)
+  }
+
+  # We'll store the results in a named list, one entry per normOpt
+  resList <- list()
+
+  # Initialize variables for scoring
+  bestNormOpt <- NULL
+  highestScore <- -Inf
+  scores <- list()  # Store scores for each normalization
+
+  # Loop over each chosen normalization
+  for (i in seq_along(selectedNormOpts)) {
+    normOpt <- selectedNormOpts[i]
+
+    # 1) Load the workspace for this normOpt
+    mSetObj <- NA
+    load(paste0(normOpt, '/Rload.RData'))
+
+    mSetObj <- mSet
+
+    # 2) Extract the number of DE features (from Volcano analysis)
+    if (!is.null(mSetObj$analSet$volcano) && !is.null(mSetObj$analSet$volcano$sig.mat)) {
+      numDE <- nrow(mSetObj$analSet$volcano$sig.mat)
+    } else {
+      numDE <- 0  # Default to 0 if not available
+    }
+
+    if(!is.null(mSetObj$analSet$pca$permanova.res)){
+      statObj <- mSetObj$analSet$pca$permanova.res;
+      # For convenience, store both the string summary and numeric stats
+      statInfo     <- statObj$stat.info;      # e.g. "[PERMANOVA] F-value: 2.31; R-squared: 0.12; p-value: 0.03"
+      statInfoVec  <- statObj$stat.info.vec;  # numeric named vector of F-value, R-squared, p-value
+      pairwiseInfo <- statObj$pair.res;       # if present
+      R2 <- statObj$stat.info.vec["R-squared"]
+
+    } else {
+      statInfo     <- "No PCA PERMANOVA results found";
+      statInfoVec  <- NULL;
+      pairwiseInfo <- NULL;
+      R2 <- 0  # Default to 0 if not available
+
+    }
+
+    # 4) Perform Mardia's test for multivariate normality
+    require(MVN)
+    mvnRes <- mvn(as.matrix(mSetObj$dataSet$norm), mvnTest = "mardia")
+    if (!is.null(mvnRes$multivariateNormality)) {
+      skewnessPValue <- as.numeric(as.character(mvnRes$multivariateNormality[1, "p value"]))
+      kurtosisPValue <- as.numeric(as.character(mvnRes$multivariateNormality[2, "p value"]))
+    } else {
+      skewnessPValue <- 0  # Default to 0 for p-value if not available
+      kurtosisPValue <- 0
+    }
+
+    # 5) Calculate a score for the normalization method
+    # Higher R2, higher numDE, and higher normality p-values (closer to normality) are better
+    score <- (R2 * 100) + numDE + (skewnessPValue + kurtosisPValue) * 50
+    scores[[normOpt]] <- score
+
+    # Update the best normalization option
+    if (score > highestScore) {
+      highestScore <- score
+      bestNormOpt <- normOpt
+    }
+
+    # Create a string summarizing Mardia's skewness and kurtosis results
+    mardiaInfo <- paste(
+      "[Mardia Test]",
+      "Skewness p =", signif(skewnessPValue, 5), ";",
+      "Kurtosis p =", signif(kurtosisPValue, 5)
+    )
+
+    # Store everything in a sub-list
+    resList[[normOpt]] <- list(
+      numDE = numDE,
+      pcaR2 = R2,
+      mardiaInfo = mardiaInfo,
+      pcaPermInfo  = statInfo,
+      pcaPermStats = statInfoVec,
+      pcaPairRes   = pairwiseInfo,
+      score = score
+    )
+  }
+
+  # Add the best normalization method to the summary
+  mSetObj$summaryNormResults <- resList
+  mSetObj$summaryNormResults$bestNormOpt <- bestNormOpt
+  mSetObj$summaryNormResults$scores <- scores
+
+  return(.set.mSet(mSetObj))
+}
+
+GetNormDeRes <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    print(unlist(mSetObj$summaryNormResults$de));
+    return(unlist(mSetObj$summaryNormResults$de));
+}
