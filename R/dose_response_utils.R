@@ -958,6 +958,7 @@ FilterBMDResults <- function(dataSet){
   }else{
     bmdcalc.res <- bmdcalc.obj$bmdcalc.res[bmdcalc.obj$bmdcalc.res$all.pass, ]
   }
+
   return(bmdcalc.res)
 }
 
@@ -972,6 +973,7 @@ PerformDREnrichment<-function(file.nm, fun.type, xMin, xMax){
     enr1.mat <<- enr.mat
     return(res);
 }
+
 GetDRRes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);

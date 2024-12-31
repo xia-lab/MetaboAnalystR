@@ -191,7 +191,7 @@ if (dataSet$de.method == "deseq2") {
  
   
   # Get the number of unique significant genes across all comparisons
-  de.Num.total <- length(significant.genes)
+  de.Num.total <- length(unique(significant.genes))
   
   if (de.Num.total == 0) {
     msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")
