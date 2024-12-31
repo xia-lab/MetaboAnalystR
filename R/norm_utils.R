@@ -20,13 +20,13 @@
 #'@export
 #'
 
-PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false"){
+PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, filterUnmapped, islog="false", count.opt="sum"){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- readDataset(dataName);
   msg <- ""; 
   #Filter data
-  data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped);
+  data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped, count.opt);
   dataSet$data.anot <- data;
   msg <- paste(filt.msg, msg);
   
@@ -64,7 +64,7 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   return(RegisterData(dataSet));
 }
 
-PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped){
+PerformFiltering <- function(dataSet, var.thresh, count.thresh, filterUnmapped, count.opt){
   msg <- "";
   if(filterUnmapped == "false"){
     # need to update those with annotations

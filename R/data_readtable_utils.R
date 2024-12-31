@@ -13,7 +13,7 @@
 #'
 #' @param fileName A character string specifying the name of the expression data file.
 #' @param metafileName A character string specifying the name of the metadata file, ignore if metaContain = true
-#' @param metaContain A logical value indicating whether metadata is contained in the data file
+#' @param metaContain A logical value indicating whether metadata is contained in the data file if false, metadata is in separate file
 #' @param oneDataAnalType The type of analysis to perform on the one-data setup.
 #' @param path The path to the files if they are located in a different directory.
 #'
@@ -36,8 +36,35 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   if(is.null(dataSet)){
     return(0);
   }  
-  
+
+  if(metafileName == "" || metafileName == "NA"){
+    metaContain <- "false";
+  }
+
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
+  
+  # Check metadata to determine if it resembles a "dose" pattern with at least 3 replicates per group
+  metadata <- meta.info$meta.info
+  if(is.null(oneDataAnalType) || oneDataAnalType == "") {
+    if(is.numeric(metadata[, 1]) && length(unique(metadata[, 1])) > 1) {
+      # Check if values consistently increase without requiring a fixed increment size
+      sorted_values <- sort(unique(metadata[, 1]))
+      consistent_increase <- all(diff(sorted_values) > 0)
+      
+      # Check if each unique value has at least 3 replicates
+      replicate_counts <- table(metadata[, 1])
+      sufficient_replicates <- all(replicate_counts >= 3)
+      
+      # If values consistently increase and each group has at least 3 replicates, assume dose
+      if(consistent_increase && sufficient_replicates) {
+        oneDataAnalType <- "dose"
+      } else {
+        oneDataAnalType <- "default"
+      }
+    } else {
+      oneDataAnalType <- "default"
+    }
+  }
   
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
@@ -133,7 +160,7 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
 ReadAnnotationTable <- function(fileName) {
   anot.data <- .readDataTable(fileName);
   msgSet <- readSet(msgSet, "msgSet");
-
+  
   if(length(colnames(anot.data)) != 3){
     msgSet$current.msg <- "Please make sure the annotation contains exactly 3 columns";
   }
@@ -152,14 +179,14 @@ ReadCustomLib <- function(fileName) {
   paramSet$init.lib <- "custom";
   org <- paramSet$data.org
   idType <- paramSet$data.idType
-
+  
   # Sanity check: Ensure the file exists
   if (!file.exists(fileName)) {
     msgSet$current.msg <- paste("Error: Gene set file", fileName, "not found.")
     saveSet(msgSet, "msgSet")
     return(0)
   }
-
+  
   # Read the file into a character vector, line by line
   gene_data <- readLines(fileName)
   
@@ -169,33 +196,33 @@ ReadCustomLib <- function(fileName) {
     saveSet(msgSet, "msgSet")
     return(0)
   }
-
+  
   # Step 1: Get the universe of all genes across all sets
   universe_genes <- unlist(lapply(gene_data, function(line) {
     line_parts <- strsplit(line, "\t+")[[1]]
     return(line_parts[-1])  # Return only the genes, exclude the set name
   }))
-
+  
   # Step 2: Perform ID conversion if idType is not "NA"
   if (idType != "NA") {
     # Perform ID conversion on the entire universe of genes
     converted_universe <- .doAnnotation(universe_genes, idType, paramSet)
     converted_universe <- unname(converted_universe)
-
+    
     # Create a mapping of original gene IDs to converted IDs (for subsetting later)
     universe_map <- setNames(converted_universe, universe_genes)
-
+    
     if(!file.exists("symbol.map.qs")){
-        if(idType %in% c("s2f", "generic", "ko")){
-          symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
-        }else{
-          symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
-        }
-        symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
-        saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
-
+      if(idType %in% c("s2f", "generic", "ko")){
+        symbol.map <- .doGeneIDMapping(anot.id, idType, paramSet, "matrix");
+      }else{
+        symbol.map <- .doGeneIDMapping(anot.id, "entrez", paramSet, "matrix");
+      }
+      symbol.map <- symbol.map[which(symbol.map$gene_id %in% anot.id),];
+      saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
+      
     }
-
+    
   } else {
     # If no ID conversion, keep the original gene IDs as the universe map
     universe_map <- setNames(universe_genes, universe_genes)
@@ -203,10 +230,10 @@ ReadCustomLib <- function(fileName) {
     saveDataQs(symbol.map, "symbol.map.qs", paramSet$anal.type, dataName);
   }
   
-
+  
   # Step 3: Initialize an empty list to store gene sets by cell line
   gene_set_list <- list()
-
+  
   # Step 4: Loop through each line and use the pre-processed universe map
   for (line in gene_data) {
     # Split the line by tabs
@@ -218,27 +245,27 @@ ReadCustomLib <- function(fileName) {
       saveSet(msgSet, "msgSet")
       return(0)
     }
-
+    
     # The first part is the set (e.g., cell line), the rest are the genes
     set_name <- line_parts[1]
     genes <- line_parts[-1]  # Everything after the first element
-
+    
     # Step 5: Subset the universe map to get the converted IDs (or original IDs if no conversion)
     converted_ids <- universe_map[genes]
-
+    
     # Filter out any NA values (unmatched IDs)
     hit_inx <- !is.na(converted_ids)
-
+    
     # Store the successfully converted IDs (or original IDs) for the gene set
     gene_set_list[[set_name]] <- converted_ids[hit_inx]
   }
-
+  
   # Step 6: Save the gene set list into a .qs file
   qs::qsave(gene_set_list, "custom_lib.qs")
-
+  
   # Update paramSet with the custom library file name
   paramSet$custom.lib <- fileName
-
+  
   # Save msgSet and paramSet after the process
   saveSet(msgSet, "msgSet")
   saveSet(paramSet, "paramSet")
@@ -323,7 +350,7 @@ ReadMetaData <- function(metafilename){
     # make sure the discrete data is on the left side
     metadata <- cbind(metadata[,disc.inx, drop=FALSE], metadata[,cont.inx, drop=FALSE]);
   }
-
+  
   metadata$Dataset <- rep("NA", nrow(metadata));
   
   mdata.all <- paramSet$mdata.all;
@@ -355,7 +382,7 @@ ReadMetaData <- function(metafilename){
     meta.types[cont.inx[colnames(metadata1)]] <- "cont";
     names(meta.types) <- colnames(dataSet$meta.info);
     dataSet$meta.types <-meta.types;
-
+    
     RegisterData(dataSet);
   }
   
@@ -379,7 +406,7 @@ ReadMetaData <- function(metafilename){
 # can have many classes, stored in meta.info (starts with #) 
 # return a list (data.name, data.frame, meta.data)
 .readTabData <- function(dataName) {
-
+  
   msgSet <- readSet(msgSet, "msgSet");
   if(length(grep('\\.zip$',dataName,perl=TRUE))>0){
     dataName <- unzip(dataName);
@@ -477,18 +504,18 @@ ReadMetaData <- function(metafilename){
 #### return a list
 .readMetaData <- function(metafileName,datOrig,metaContain) {
   msgSet <- readSet(msgSet, "msgSet");
-   na.msg <- ""
+  na.msg <- ""
   if(is.null(msgSet$current.msg)){
     msg <-""
   }else{
     msg <- msgSet$current.msg
   }
   match.msg <- "";
-
+  
   if(metaContain=="true"){
     meta.info <- list();
     # look for #CLASS, could have more than 1 class labels, store in a list
-     cls.inx <- grep("^#CLASS", datOrig[,1]);
+    cls.inx <- grep("^#CLASS", datOrig[,1]);
     if(length(cls.inx) > 0){ 
       for(i in 1:length(cls.inx)){
         inx <- cls.inx[i];
@@ -514,39 +541,39 @@ ReadMetaData <- function(metafilename){
     }
     
     meta.info <- data.frame(meta.info);
- rownames(meta.info) = colnames(datOrig)[-1]
+    rownames(meta.info) = colnames(datOrig)[-1]
   }else{ # metadata input as an individual table
     mydata <- try(data.table::fread(metafileName, header=TRUE, check.names=FALSE, data.table=FALSE));
-   if(class(mydata) == "try-error"){
-    msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
-    saveSet(msgSet, "msgSet");
-    return(NULL);
-  }
- idx = which(!colnames(datOrig) %in% mydata$`#NAME`)
- if(length(idx)>1){
-  if(length(idx)==2){
-    match.msg <- paste0(match.msg,"One sample ", colnames(datOrig)[idx[2]], " was not detected in metadata file and was removed from data table!   ")
-   }else if(length(idx)>5){
-    match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[2:4]],collapse = ", "), ", etc. were not detected in metadata file and were removed  from data table!   ")
-   }else{
-    match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[-1]],collapse = ", "), " were not detected in metadata file and were removed  from data table!   ")
-   }
-   datOrig <- datOrig[,-idx[-1]]
- }
-
- idx = which( !mydata$`#NAME` %in%colnames(datOrig) )
- if(length(idx)>1){
-   if(length(idx)==1){
-     match.msg <- paste0(match.msg,"One sample ", mydata$`#NAME`[idx], " was not detected in data file and was removed from metadata table!   ")
-   }else if(length(idx)>3){
-    match.msg <- paste0(match.msg,length(idx)," samples ", paste(mydata$`#NAME`[1:3],collapse = ", "), ", etc. were not detected in data file and were removed from metadata table!  ")
-   }else{
-    match.msg <- paste0(match.msg, length(idx)," samples ", paste(mydata$`#NAME`[idx],collapse = ", "), " were not detected in data file and were removed from metadata table!  ")
-   }
-   mydata <- mydata[-idx,]
- }
-  mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
-     mydata[is.na(mydata)] <- "NA";
+    if(class(mydata) == "try-error"){
+      msgSet$current.msg <- "Failed to read the metadata table! Please check your data format.";
+      saveSet(msgSet, "msgSet");
+      return(NULL);
+    }
+    idx = which(!colnames(datOrig) %in% mydata$`#NAME`)
+    if(length(idx)>1){
+      if(length(idx)==2){
+        match.msg <- paste0(match.msg,"One sample ", colnames(datOrig)[idx[2]], " was not detected in metadata file and was removed from data table!   ")
+      }else if(length(idx)>5){
+        match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[2:4]],collapse = ", "), ", etc. were not detected in metadata file and were removed  from data table!   ")
+      }else{
+        match.msg <- paste0(match.msg,length(idx[-1])," samples ", paste(colnames(datOrig)[idx[-1]],collapse = ", "), " were not detected in metadata file and were removed  from data table!   ")
+      }
+      datOrig <- datOrig[,-idx[-1]]
+    }
+    
+    idx = which( !mydata$`#NAME` %in%colnames(datOrig) )
+    if(length(idx)>1){
+      if(length(idx)==1){
+        match.msg <- paste0(match.msg,"One sample ", mydata$`#NAME`[idx], " was not detected in data file and was removed from metadata table!   ")
+      }else if(length(idx)>3){
+        match.msg <- paste0(match.msg,length(idx)," samples ", paste(mydata$`#NAME`[1:3],collapse = ", "), ", etc. were not detected in data file and were removed from metadata table!  ")
+      }else{
+        match.msg <- paste0(match.msg, length(idx)," samples ", paste(mydata$`#NAME`[idx],collapse = ", "), " were not detected in data file and were removed from metadata table!  ")
+      }
+      mydata <- mydata[-idx,]
+    }
+    mydata <-  mydata[match(mydata$`#NAME`,colnames(datOrig)[-1]),]
+    mydata[is.na(mydata)] <- "NA";
     # look for #NAME, store in a list
     sam.inx <- grep("^#NAME", colnames(mydata)[1]);
     if(length(sam.inx) > 0){
@@ -557,9 +584,9 @@ ReadMetaData <- function(metafilename){
       saveSet(msgSet, "msgSet");
       return(NULL);
     }
- 
-   # covert to factor
-     mydata <-data.frame(lapply(1:ncol(mydata),function(x){
+    
+    # covert to factor
+    mydata <-data.frame(lapply(1:ncol(mydata),function(x){
       mydata[,x]=unlist(ClearFactorStrings(mydata[,x]))
     }))
     mydata <- mydata[,-1,drop=F]; # converting to character matrix as duplicate row names not allowed in data frame.
@@ -570,7 +597,7 @@ ReadMetaData <- function(metafilename){
     }
     rownames(mydata) <- smpl_nm;
     colnames(mydata) <- smpl_var;
-   
+    
     # empty cell or NA cannot be tolerated in metadata
     na.inx  <- is.na(mydata);
     na.msg <- na.msg1 <- NULL;
@@ -584,38 +611,41 @@ ReadMetaData <- function(metafilename){
       names(meta.info) <- gsub("\\s+","_", names(meta.info));
       na.msg1 <- c(na.msg1, "Blank spaces in group names are replaced with underscore '_'");
     }
-
+    
   }
   
-
   disc.inx <- GetDiscreteInx(meta.info);
-    if(sum(disc.inx) == length(disc.inx)){
-      na.msg <- c(na.msg,"All metadata columns are OK!")
-    }else{
-      bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
-      na.msg <- c(na.msg, paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !"));
-    }
-    
-    cont.inx <- GetNumbericalInx(meta.info);
-    cont.inx <- !disc.inx & cont.inx; # discrete is first
-    
-    rmcol <- intersect(which(!disc.inx),which(!cont.inx ))
+  if(sum(disc.inx) == length(disc.inx)){
+    na.msg <- c(na.msg,"All metadata columns are OK!")
+  }else{
+    bad.meta<- paste(names(disc.inx)[!disc.inx], collapse="; ");
+    na.msg <- c(na.msg, paste0("<font style=\"color:red\">Detected presence of unique values in the following columns: <b>", bad.meta, "</b></font>","Please make sure the metadata is in right format! You can use meta editor to update the information !"));
+  }
   
-    if(length(rmcol)==1){
-     match.msg <- paste0(match.msg, "Column ",names(meta.info)[rmcol]," is removed due to lack of replicates!   " )
-    }else if(length(rmcol)>1){
-     match.msg <- paste0(match.msg, "Columns ",paste(names(meta.info)[rmcol],collapse = ", ")," are removed due to lack of replicates!   " )
-    }
-    
-    if(sum(cont.inx)>0){
-      # make sure the discrete data is on the left side
-      meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
-    }
-    disc.inx <- disc.inx[colnames(meta.info)]
-    cont.inx <- cont.inx[colnames(meta.info)]
-    msgSet$match.msg <-match.msg
-    msgSet$na.msg <- na.msg
-    saveSet(msgSet, "msgSet");  
-    return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))
+  cont.inx <- GetNumbericalInx(meta.info);
+  cont.inx <- !disc.inx & cont.inx; # discrete is first
+  
+  rmcol <- intersect(which(!disc.inx),which(!cont.inx ))
+  
+  if(length(rmcol)==1){
+    match.msg <- paste0(match.msg, "Column ",names(meta.info)[rmcol]," is removed due to lack of replicates!   " )
+  }else if(length(rmcol)>1){
+    match.msg <- paste0(match.msg, "Columns ",paste(names(meta.info)[rmcol],collapse = ", ")," are removed due to lack of replicates!   " )
+  }
+  
+  if(sum(cont.inx)>0){
+    # make sure the discrete data is on the left side
+    meta.info <- cbind(meta.info[,disc.inx, drop=FALSE], meta.info[,cont.inx, drop=FALSE]);
+  }
+  disc.inx <- disc.inx[colnames(meta.info)]
+  cont.inx <- cont.inx[colnames(meta.info)]
+  msgSet$match.msg <-match.msg
+  msgSet$na.msg <- na.msg
+  saveSet(msgSet, "msgSet");  
+  return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))
 }
 
+GetAnalysisType <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$oneDataAnalType);
+}

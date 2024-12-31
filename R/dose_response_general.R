@@ -940,7 +940,7 @@ PerformBMDCalc <- function(ncpus = 1)
   
   # make combined object
   fitres.bmd <- fitres.bmd[dres$all.pass, ]
-  
+
   # make results to display
   disp.res <- data.frame(item = item)
   disp.res <- cbind(disp.res, fitres.bmd[,c("mod.name", "SDres", "lof.p")])

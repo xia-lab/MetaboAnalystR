@@ -184,6 +184,7 @@ GetFilesToBeSaved <-function(naviString){
 
 GetMetaInfo <- function(dataName=""){
   paramSet <- readSet(paramSet, "paramSet");
+  print(paste0("metainfo==dataname=", dataName));
   if(paramSet$anal.type == "metadata"){
   metaNms<-setdiff(colnames(paramSet$dataSet$meta.info),dataSet$rmMetaCol)
   }else{
