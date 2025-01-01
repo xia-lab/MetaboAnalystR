@@ -322,12 +322,12 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   
   hit.inx <- match(feature.vec, db.map[, col.nm]);
   
-  if (outputType == "vec") {
+  if(outputType == "vec"){
     entrezs <- db.map[hit.inx, "gene_id"];
-    unmapped_flag <- is.na(entrezs);  # Create a flag for unmapped entries
+    
     mode(entrezs) <- "character";
     rm(db.map, feature.vec); gc();
-    return(data.frame(entrezs, unmapped = unmapped_flag, stringsAsFactors = FALSE));
+    return(entrezs);
   } else {
     entrezs <- db.map[hit.inx, ];
     
