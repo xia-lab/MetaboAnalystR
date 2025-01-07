@@ -1010,7 +1010,8 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
       my.cls <- cls.lbl;
     }
   }else if(mSetObj$dataSet$design.type %in% c("multi", "time", "time0")){
-    my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
+       my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
+     
   }else{
     if(exp.fac == mSetObj$dataSet$facA.lbl){
       my.cls <- mSetObj$dataSet$facA;  
@@ -1062,6 +1063,22 @@ GetFilesToBeSaved <-function(naviString){
 
 GetExampleDataPath<-function(naviString){
   return(url.pre);
+}
+
+
+
+GetFactors <-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj);  
+  return(ncol(mSetObj$dataSet$meta.info))
+}
+
+
+GetPrimaryInfo <-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj); 
+  meta <- mSetObj$dataSet$meta.info;
+  fac <- names(meta)[1]
+  cls <- paste(unique(meta[,1]),collapse=",")
+  return(paste0(fac," [",cls,"]"))
 }
 
 
