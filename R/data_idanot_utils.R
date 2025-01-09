@@ -269,57 +269,55 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   return(anot.id);        
 }
 
-
-# mapping between genebank, refseq and entrez
-.doGeneIDMapping <- function(feature.vec, idType, paramSet, outputType="vec"){
-    org <- paramSet$data.org;
-  if(is.null(feature.vec)){
-    db.map <-  queryGeneDB("entrez", org);
+.doGeneIDMapping <- function(feature.vec, idType, paramSet, outputType = "vec", keepNA = F) {
+  org <- paramSet$data.org;
+  
+  if (is.null(feature.vec)) {
+    db.map <- queryGeneDB("entrez", org);
     feature.vec <- db.map[, "gene_id"];
-    idType <-"entrez";
+    idType <- "entrez";
     print(".doGeneIDMapping, empty feature.vec, get whole table");
   }
-  col.nm = "";
-  db.nm = "";
   
-  if(idType %in% c("s2f", "ko") || paramSet$data.idType %in% c("s2f", "ko")){ # only for ko
-    col.nm = "gene_id";
-    db.nm = paste0("entrez_", idType);
-  }else if(idType == "symbol"){
-    col.nm = "symbol";
-    db.nm = "entrez";
-  }else if(idType == "entrez"){
-    col.nm = "gene_id";
-    db.nm = "entrez";
-  }else if(idType == "custom"){ # only for ko
-    db.nm = "custom";
-    col.nm = "gene_id";
-  }else if(idType == "cds"){
-    col.nm = "accession";
-    db.nm = "entrez";
-    db.map <- queryGeneDB(paste0("entrez_",idType), org);
-  }else{
-    # note, some ID can have version number which is not in the database
-    # need to strip it off NM_001402.5 => NM_001402
-    if(!(idType == "refseq" && org == "fcd") && !(idType == "string" && org == "cel") ){ # do not strip, database contains version number.
+  col.nm <- "";
+  db.nm <- "";
+  
+  if (idType %in% c("s2f", "ko") || paramSet$data.idType %in% c("s2f", "ko")) {
+    col.nm <- "gene_id";
+    db.nm <- paste0("entrez_", idType);
+  } else if (idType == "symbol") {
+    col.nm <- "symbol";
+    db.nm <- "entrez";
+  } else if (idType == "entrez") {
+    col.nm <- "gene_id";
+    db.nm <- "entrez";
+  } else if (idType == "custom") {
+    db.nm <- "custom";
+    col.nm <- "gene_id";
+  } else if (idType == "cds") {
+    col.nm <- "accession";
+    db.nm <- "entrez";
+    db.map <- queryGeneDB(paste0("entrez_", idType), org);
+  } else {
+    if (!(idType == "refseq" && org == "fcd") && !(idType == "string" && org == "cel")) {
       q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
-      feature.vec <- q.mat[,1];
+      feature.vec <- q.mat[, 1];
     }
-    col.nm = "accession";
-    if(idType == "tair"){ # only for ath
-      db.nm = "tair";
-    }else { 
-      # if(idType %in% c("gb", "refseq", "embl_gene", "embl_transcript", "embl_protein", "orf", "wormbase", "string")){
+    col.nm <- "accession";
+    if (idType == "tair") {
+      db.nm <- "tair";
+    } else {
       db.nm <- paste0("entrez_", idType);
     }
   }
   
-  db.map <-  queryGeneDB(db.nm, org);
-  if(org == "smm" && idType == "symbol"){
+  db.map <- queryGeneDB(db.nm, org);
+  
+  if (org == "smm" && idType == "symbol") {
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
-    feature.vec <- q.mat[,1];
+    feature.vec <- q.mat[, 1];
     q.mat <- do.call(rbind, strsplit(db.map[, col.nm], "\\."));
-    db.map[, col.nm] <- q.mat[,1];
+    db.map[, col.nm] <- q.mat[, 1];
   }
   
   hit.inx <- match(feature.vec, db.map[, col.nm]);
@@ -330,18 +328,26 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     mode(entrezs) <- "character";
     rm(db.map, feature.vec); gc();
     return(entrezs);
-  }else{
-    entrezs <- db.map[hit.inx, ]; 
-    if(idType == "entrez"){
-      entrezs <- entrezs[,c(2,1)];
-    }else{
-      entrezs <- entrezs[,c(2,1)];
+  } else {
+    entrezs <- db.map[hit.inx, ];
+    
+    entrezs <- entrezs[,c(2,1)];
+    unmapped_flag <- is.na(entrezs[, 1]) | is.na(entrezs[, 2]);  # Flag unmapped entries
+    
+    if (!keepNA) {
+      na.inx <- is.na(entrezs[, 1]);
+      entrezs[, 1][na.inx] <- feature.vec[na.inx];
+      na.inx <- is.na(entrezs[, 2]);
+      entrezs[, 2][na.inx] <- feature.vec[na.inx];
+    } else {
+      unmapped.inx <- is.na(entrezs$gene_id);
+      if (any(unmapped.inx)) {
+        entrezs$accession[unmapped.inx] <- feature.vec[unmapped.inx];
+      }
     }
-    na.inx <- is.na(entrezs[,1]);
-    entrezs[,1][na.inx] <- feature.vec[na.inx];
-    na.inx <- is.na(entrezs[,2]);
-    entrezs[,2][na.inx] <- feature.vec[na.inx];
-    colnames(entrezs) <- c("accession", "gene_id")
+    
+    colnames(entrezs) <- c("accession", "gene_id");
+    entrezs <- cbind( entrezs,orig = feature.vec, unmapped = unmapped_flag);  # Add orig and unmapped columns
     return(entrezs);
   }
 }

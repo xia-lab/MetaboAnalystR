@@ -21,8 +21,9 @@
 #'@export
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
+save.image("maplist.RData");
   print("maplistids");
-  #geneIDs is text one string, need to make to vector
+  # Parse geneIDs to vector
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
   dataSet <- list();
@@ -37,24 +38,49 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet <- res[[2]];
   msgSet <- res[[3]];
   paramSet$numOfLists <- length(dataList)
-paramSet$backgroundUniverse <-NULL;
+  paramSet$backgroundUniverse <- NULL;
   all.prot.mat <- list(); 
+  all.mapping <- list(); # Collect all mapping results
   inx <- 0;
-  for(i in 1:length(dataList)){
-    dataSet$name = paste0("datalist", i);
-    listNms[i] = dataSet$name;
+  
+  for (i in seq_along(dataList)) {
+    dataSet$name <- paste0("datalist", i);
+    listNms[i] <- dataSet$name;
     gene.mat <- prot.mat <- dataList[[i]];
-    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet, "table");
-    
-    na.inx <- is.na(GeneAnotDB[,1]) | is.na(GeneAnotDB[,2]);
-    if(sum(!na.inx) < 2){
-      msgSet$current.msg <- "Less than two hits found in uniprot database. "; 
+
+    # Perform gene ID mapping with unmapped flag
+    GeneAnotDB <- .doGeneIDMapping(rownames(gene.mat), idType, paramSet, "table", keepNA = TRUE);
+print(head(GeneAnotDB));
+
+
+
+    # Identify unmapped IDs using the `unmapped` flag
+    unmapped.df <- GeneAnotDB[GeneAnotDB$unmapped, ];
+
+    # Ensure unmapped.df has correct structure
+    if (nrow(unmapped.df) > 0) {
+      unmapped.df$symbol <- "NA"; # Add symbol column for unmapped
+    } else {
+      # Handle case where there are no unmapped entries
+      unmapped.df <- data.frame(accession = character(0),
+                                gene_id = character(0),
+                                unmapped = logical(0),
+                                symbol = character(0),
+                                stringsAsFactors = FALSE);
     }
-    rownames(prot.mat) <- GeneAnotDB[,2];
-    prot.mat <- prot.mat[!na.inx, , drop=F];
-    
-    # now merge duplicates
-    res <- RemoveDuplicates(prot.mat, "mean", quiet=T, paramSet, msgSet); 
+# Check structure of GeneAnotDB
+    # Handle mapped IDs
+    mapped <- GeneAnotDB[!GeneAnotDB$unmapped, c("orig", "gene_id")];
+    mapped$symbol <- doEntrez2SymbolMapping(mapped$gene_id, org, idType);
+
+    # Combine mapped and unmapped results
+    combined.mapping <- rbind(unmapped.df[, c("orig", "gene_id", "symbol")], mapped);
+
+    all.mapping[[i]] <- combined.mapping; # Store the combined mapping
+
+    # Prepare dataSet for the current list
+    prot.mat <- prot.mat[rownames(prot.mat) %in% mapped$gene_id, , drop = F];
+    res <- RemoveDuplicates(prot.mat, "mean", quiet = T, paramSet, msgSet);
     prot.mat <- res[[1]];
     msgSet <- res[[2]];
     dataSet$listInx <- paste0("datalist", inx);
@@ -75,16 +101,22 @@ paramSet$backgroundUniverse <-NULL;
       totalseed.proteins  = c(totalseed.proteins, seed.proteins);
       all.prot.mat <- rbind(all.prot.mat, prot.mat)
       list.num <-  paste(list.num, length(seed.proteins), sep="; ");
-
     }
     dataSet$listNum <- length(dataSet$seeds.proteins);
     print(dataSet$listNum);
-    inx <- inx + 1;
     fast.write.csv(dataSet$prot.mat, paste0(dataSet$name, ".csv"));
-    RegisterData(dataSet); 
+    RegisterData(dataSet);
+    inx <- inx + 1;
   }
+
+  
+  # Save mapping results to a CSV file
+  combined.mapping.df <- do.call(rbind, all.mapping);
+  write.csv(combined.mapping.df, "mapping_results.csv", row.names=F);
+
+  # Update paramSet
   paramSet$all.ent.mat <- all.prot.mat;
-  rownames(all.prot.mat) = doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType);
+  rownames(all.prot.mat) <- doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType);
   all.prot.mat <- data.frame(as.numeric(all.prot.mat[,1]), rownames(all.prot.mat));
   paramSet$all.prot.mat <- all.prot.mat;
   paramSet$listNms <- listNms;
@@ -98,33 +130,29 @@ paramSet$backgroundUniverse <-NULL;
   paramSet$mdata.all <- mdata.all
   paramSet$anal.type <- "genelist";
   paramSet$list.num <- list.num
-
+paramSet$combined.mapping.df <- combined.mapping.df;
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
-  #RegisterData(dataSet);
+
   return(1);
 }
-
 
 MapMultiListIds <- function(listNm, org, geneIDs, type){
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
-  dataSet <- list();
-  dataSet$orig <- "";
-  msgSet$current.msg <- NULL;
-  paramSet$data.org <- org;
-  paramSet$data.idType <- type;
-
-  listNms <- multiFileNamesU; # multiFilesNamesU assigned from java
-  paramSet$numOfLists <-length(multiFileNamesU);
-  notOk = 0
-  for(i in 1:length(listNms)){
-    dataSet = readDataset(listNms[i])
+  listNms <- multiFileNamesU; # Assigned from Java
+  paramSet$numOfLists <- length(listNms);
+  all.mapping <- list(); # Collect all mapping results
+  for(i in seq_along(listNms)){
+    dataSet <- readDataset(listNms[i]);
     dataSet$name <- listNms[i];
     gene.mat <- prot.mat <- dataSet$prot.mat;
-    GeneAnotDB <-.doGeneIDMapping(rownames(gene.mat), idType, paramSet,"table");
+    GeneAnotDB <- .doGeneIDMapping(rownames(gene.mat), type, paramSet, "table", F);
     
+    # Identify unmapped IDs
     na.inx <- is.na(GeneAnotDB[,1]) | is.na(GeneAnotDB[,2]);
+    unmapped <- rownames(gene.mat)[na.inx]; # Unmapped IDs
+
     if(sum(!na.inx) < 2){
       msgSet$current.msg <- paste0("Less than two hits found in database for ", listNms[i]);
       saveSet(msgSet, "msgSet");
@@ -133,52 +161,66 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     rownames(prot.mat) <- GeneAnotDB[,2];
     prot.mat <- prot.mat[!na.inx, , drop=F];
     
-    # now merge duplicates
-    dataSet$listInx <- listNms[i];
+    # Merge duplicates
     res <- RemoveDuplicates(prot.mat, "mean", quiet=F, paramSet, msgSet); 
     prot.mat <- res[[1]];
     msgSet <- res[[2]];
-    if(is.null(dim(prot.mat))){
-      prot.mat <- matrix(prot.mat);
+
+    # Store mapped and unmapped results
+    if (length(unmapped) > 0) {
+      unmapped.df <- data.frame(accession = unmapped, gene_id = rep("NA", length(unmapped)), symbol = rep("NA", length(unmapped)), stringsAsFactors = F);
+    } else {
+      unmapped.df <- data.frame(accession = character(0), gene_id = character(0),symbol=character(0), stringsAsFactors = F);
     }
-    
+
+    # Store mapped and unmapped results
+    mapped <- GeneAnotDB[!GeneAnotDB$unmapped, c("orig", "gene_id")];
+
+    mapped$symbol <- doEntrez2SymbolMapping(mapped$gene_id, org, idType);
+
+    combined.mapping <- rbind(mapped, unmapped.df);
+    all.mapping[[i]] <- combined.mapping; # Store the combined mapping
+
+    # Prepare dataSet
     seed.proteins <- rownames(prot.mat);
     dataSet$GeneAnotDB <- GeneAnotDB;
     dataSet$sig.mat <- gene.mat;
     dataSet$prot.mat <- prot.mat;
     dataSet$seeds.proteins <- seed.proteins;
-    if(i == 1){
-      all.prot.mat <- prot.mat;
-      totalseed.proteins = seed.proteins
-      list.num <- length(seed.proteins);
-    }else{
-      totalseed.proteins  = c(totalseed.proteins, seed.proteins);
-      all.prot.mat <- rbind(all.prot.mat, prot.mat)
-      list.num <-  paste(list.num, length(seed.proteins), sep="; ");
 
-    }
     RegisterData(dataSet); 
   }
-  paramSet$all.ent.mat <- all.prot.mat
-  rownames(all.prot.mat) = doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType)
-  all.prot.mat <- data.frame(as.numeric(all.prot.mat[,1]), rownames(all.prot.mat));
-  paramSet$all.prot.mat <- all.prot.mat
-  paramSet$listNms <- listNms
-  paramSet$list.num <- list.num
-  mdata.all <- list();
-  for(i in 1:length(listNms)){
-    mdata.all[i] <- 1;
-  }
-  paramSet$backgroundUniverse <-NULL;
-  names(mdata.all) <- listNms;
-  paramSet$mdata.all <- mdata.all;
 
-  paramSet$anal.type <- "genelist";
+  # Merge all mapping results into one data frame
+  merged.mapping <- do.call(rbind, all.mapping);
+
+  # Remove duplicates based on the first column (accession)
+  merged.mapping <- merged.mapping[!duplicated(merged.mapping$accession), ];
+
+  # Save the deduplicated mapping results to a CSV file
+  write.csv(merged.mapping, "merged_mapping_results.csv", row.names = F);
+
+  # Update paramSet
+  paramSet$all.ent.mat <- all.prot.mat;
+  rownames(all.prot.mat) <- doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType);
+  all.prot.mat <- data.frame(as.numeric(all.prot.mat[,1]), rownames(all.prot.mat));
+  paramSet$all.prot.mat <- all.prot.mat;
+  paramSet$listNms <- listNms;
+  paramSet$list.num <- list.num;
+  paramSet$combined.mapping.df <- merged.mapping;
   saveSet(paramSet, "paramSet");
 
-  return(RegisterData(dataSet));
+  return(1);
 }
 
+GetMappedTable <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  
+  # Replace NA values with "NA"
+  paramSet$combined.mapping.df[is.na(paramSet$combined.mapping.df)] <- "NA";
+  
+  return(paramSet$combined.mapping.df);
+}
 
 #########################################
 ##########################################

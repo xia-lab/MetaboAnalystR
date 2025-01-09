@@ -72,7 +72,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$universe.opt.readable <- "Uploaded data";
   paramSet$fc.thresh <- 0;
   paramSet$report.format <- "pdf";
-  
+  paramSet$upsetMode <- "NA";
 
   paramSet$jsonNms <- list()
 
