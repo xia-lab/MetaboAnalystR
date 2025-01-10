@@ -709,7 +709,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$dataSet$mummi.proc <- ndat;
   mSetObj$dataSet$expr_dic <- tscores;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
-
+ mSetObj$dataSet$url.var.nms <- ref_mzlist;
   return(.set.mSet(mSetObj));
 }
 
