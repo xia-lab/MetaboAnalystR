@@ -264,8 +264,16 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   mSetObj$dataSet$gene.mat <- gene.mat;
   mSetObj$dataSet$gene <- gene.vec;
 
-  enIDs <- doGeneIDMapping(gene.vec, org, idType);
-  
+  if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+    # for newly added species (including a lot of non-model species. There are no curated gene sqlites
+    # therefore, using another direct matching function to match the KEGG entry directly and quickly
+    enIDs <- doGeneEntryMapping(gene.vec, org, idType);
+  } else if (idType %in% c("ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO")) {
+    enIDs <- doGeneEntryMapping(gene.vec, org, idType);
+  } else {
+    enIDs <- doGeneIDMapping(gene.vec, org, idType);
+  }
+
   if(idType == "kos"){
     kos <- gene.vec;
     mSetObj$dataSet$kos.name.map <- kos
@@ -521,6 +529,98 @@ doGeneIDMapping <- function(q.vec, org, type){
   rm(db.map, q.vec); gc();
   dbDisconnect(con);
   return(entrezs);
+}
+
+doGeneEntryMapping <- function(q.vec, org, type){
+  sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+  if(!file.exists(sqlite.path)){
+    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
+                         "genes_entries_130_species.sqlite");
+    sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
+    download.file(sqlite_url,destfile = sqlite.path, method = "curl")
+  }
+  con <- .get.sqlite.con(sqlite.path);
+  db.map = dbReadTable(con, org);
+
+  #"ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO"
+  if(type == "symbol"){ # gene symbol
+    hit.inx <- match(q.vec, db.map[, "Gene_Symbol"]);
+  } else if(type == "entrez"){ # gene ID
+    hit.inx <- match(q.vec, db.map[, "GeneID"]);
+  } else if(type == "kegg_embl"){ # ensembel id from KEGG
+    hit.inx <- match(q.vec, db.map[, "Ensembl"]);
+  } else if(type == "uniprot"){ # Uniprot ID 
+    hit.inx <- match(q.vec, db.map[, "UniProtID"]);
+  } else if(type == "ncbi_proteinID"){
+    hit.inx <- match(q.vec, db.map[, "ProteinID"]);
+  } else if(type == "kegg_entry") {
+    hit.inx <- match(q.vec, db.map[, "KEGG_entry"]);
+  } else if(type == "gene_name") {
+    hit.inx <- match(q.vec, db.map[, "Gene_Name"]);
+  } else if(type == "KO") {
+    hit.inx <- match(q.vec, db.map[, "KO"]);
+  } else {
+    # unknown ID type
+  }
+
+  kegg_entries <- db.map[hit.inx, "KEGG_entry"];
+  rm(db.map, q.vec); gc();
+  dbDisconnect(con);
+  return(kegg_entries);
+}
+
+doAllGeneIDMapping <- function(gene.vec, org, idType){
+
+    if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+      # for newly added species (including a lot of non-model species. There are no curated gene sqlites
+      # therefore, using another direct matching function to match the KEGG entry directly and quickly
+      entrezs <- doGeneEntryMapping(gene.vec, org, idType);
+    } else if (idType %in% c("ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO")) {
+      entrezs <- doGeneEntryMapping(gene.vec, org, idType);
+    } else {
+      entrezs <- doGeneIDMapping(gene.vec, org, idType);
+    }
+    return(entrezs);
+}
+
+convert2KeggEntry <- function(q.vec, type, org){
+    sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+    if(!file.exists(sqlite.path)){
+      #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+      sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
+                           "genes_entries_130_species.sqlite");
+      sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
+      download.file(sqlite_url,destfile = sqlite.path, method = "curl")
+    }
+    con <- .get.sqlite.con(sqlite.path);
+    db.map = dbReadTable(con, org);
+
+    #"ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO"
+    if(type == "symbol"){ # gene symbol
+      hit.inx <- match(q.vec, db.map[, "Gene_Symbol"]);
+    } else if(type == "entrez"){ # gene ID
+      hit.inx <- match(q.vec, db.map[, "GeneID"]);
+    } else if(type == "kegg_embl"){ # ensembel id from KEGG
+      hit.inx <- match(q.vec, db.map[, "Ensembl"]);
+    } else if(type == "uniprot"){ # Uniprot ID 
+      hit.inx <- match(q.vec, db.map[, "UniProtID"]);
+    } else if(type == "ncbi_proteinID"){
+      hit.inx <- match(q.vec, db.map[, "ProteinID"]);
+    } else if(type == "kegg_entry") {
+      hit.inx <- match(q.vec, db.map[, "KEGG_entry"]);
+    } else if(type == "gene_name") {
+      hit.inx <- match(q.vec, db.map[, "Gene_Name"]);
+    } else if(type == "KO") {
+      hit.inx <- match(q.vec, db.map[, "KO"]);
+    } else {
+      # unknown ID type
+    }
+
+    kegg_entries <- db.map[hit.inx, "KEGG_entry"];
+    rm(db.map, q.vec); gc();
+    dbDisconnect(con);
+    return(kegg_entries);
 }
 
 #'Perform compound mapping
