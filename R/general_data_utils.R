@@ -52,6 +52,8 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE){
     }
   }
 
+  moduleNms.vec <<- NULL;
+
   dataSet <- list();
   dataSet$type <- data.type;
   dataSet$design.type <- "regular"; # one factor to two factor
@@ -466,7 +468,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
     }
   }
-  
+
   if(anal.type == "roc"){
     if(length(unique(cls.lbl[!empty.inx])) > 2){
       AddErrMsg("ROC analysis is only defined for two-group comparisions!");
@@ -507,6 +509,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
+
+
   
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
@@ -1006,7 +1010,8 @@ GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
       my.cls <- cls.lbl;
     }
   }else if(mSetObj$dataSet$design.type %in% c("multi", "time", "time0")){
-    my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
+       my.cls <- mSetObj$dataSet$meta.info[,exp.fac];
+     
   }else{
     if(exp.fac == mSetObj$dataSet$facA.lbl){
       my.cls <- mSetObj$dataSet$facA;  
@@ -1058,6 +1063,22 @@ GetFilesToBeSaved <-function(naviString){
 
 GetExampleDataPath<-function(naviString){
   return(url.pre);
+}
+
+
+
+GetFactors <-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj);  
+  return(ncol(mSetObj$dataSet$meta.info))
+}
+
+
+GetPrimaryInfo <-function(mSetObj=NA, metadata){
+  mSetObj <- .get.mSet(mSetObj); 
+  meta <- mSetObj$dataSet$meta.info;
+  fac <- names(meta)[1]
+  cls <- paste(unique(meta[,1]),collapse=",")
+  return(paste0(fac," [",cls,"]"))
 }
 
 
@@ -1171,4 +1192,9 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
     return(0);
 }
 
-
+SetAnalType <- function(mSetObj=NA, anal.type){
+    mSetObj <- .get.mSet(mSet);
+    mSetObj$analSet$type <- anal.type;
+    anal.type <<- anal.type;
+    return(.set.mSet(mSetObj))
+}
