@@ -91,7 +91,7 @@ PrepareIntegData <- function(mSetObj=NA){
     mSetObj$dataSet$pathinteg.imps$cmpd.mat <- cmpd.mat;
     done <- 1;
   }
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);  
     return(done);
@@ -154,7 +154,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     impMat <- gene.mat;
     
     # saving only
-    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
+    gene.sbls <- doAllGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
     fast.write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     
@@ -191,7 +191,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     impMat <- gene.mat;
     
     # saving only
-    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
+    gene.sbls <- doAllGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     gene.mat <- cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat);
     fast.write.csv(gene.mat, file="MetaboAnalyst_result_genes.csv");
     
@@ -219,12 +219,16 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     fast.write.csv(cbind(Name=cmpd.nms, mSetObj$dataSet$pathinteg.imps$cmpd.mat), file="MetaboAnalyst_result_cmpds.csv");
     
     gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
+
+    if(!(mSetObj$org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+        rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), mSetObj[["dataSet"]][["q.type.gene"]], mSetObj$org);        
+    }
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
     rownames(gene.mat) <- gene.vec;
     # saving 
-    gene.sbls <- doGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
+    gene.sbls <- doAllGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     fast.write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
-    
+    save(cmpd.mat, gene.mat, file = "cmpd_gene_mat___227.rda")
     # used by both integ
     impMat <- rbind(cmpd.mat, gene.mat);
 
@@ -236,7 +240,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       uniq.len <- current.kegglib$cmpd.counts + current.kegglib$gene.counts;
     }
   }
-  
+  save(impMat, file = "impMat___239.rda")
   ora.vec <- rownames(impMat);
   impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
   rownames(impMat) <- ora.vec;
@@ -260,7 +264,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     saveRDS(toSend, "tosend.rds")
     return(my.integ.kegg());
   }
-  
+  save(ora.vec, file = "ora.vec___263.rda")
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
   hits.path <- my.res$hits.path;
   hits.query <- my.res$hits.query;
@@ -335,7 +339,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     .performIntegGlobalMergeP(mSetObj, libOpt);
     mSetObj <- .plotIntegGlobalMergeP(mSetObj = NA, imgName = "integ_peakGene")
   }
-    
+
   return(.set.mSet(mSetObj));
 }
 
@@ -835,6 +839,118 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   }
 }
 
+GetKeggEntryMappingTable <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    org <- mSetObj$org;
+    mSetObj$dataSet$q.type.gene -> idType -> type;
+    query_new_db <- FALSE;
+
+    if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+      # for newly added species (including a lot of non-model species. There are no curated gene sqlites
+      # therefore, using another direct matching function to match the KEGG entry directly and quickly
+      query_new_db <- TRUE;
+    } else if (idType %in% c("ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO")) {
+      query_new_db <- TRUE;
+    } else {
+      # for traditional species and ID
+      query_new_db <- FALSE;
+    }
+
+    if(query_new_db){
+        qvec <- mSetObj$dataSet$gene;
+        enIDs <- mSetObj$dataSet$gene.name.map$hit.values;
+
+        # style for highlighted background for unmatched names
+        pre.style<-NULL;
+        post.style<-NULL;
+
+        # style for no matches
+        if(mSetObj$dataSet$q.type.gene == "name"){
+          no.prestyle<-"<strong style=\"background-color:var(--orange-500); font-size=125%; color=\"black\">";
+          no.poststyle<-"</strong>";
+        }else{
+          no.prestyle<-"<strong style=\"background-color:var(--orange-500); font-size=125%; color=\"black\">";
+          no.poststyle<-"</strong>";
+        }
+
+        # contruct the result table with cells wrapped in html tags
+        # the unmatched will be highlighted in different background
+        html.res<-matrix("", nrow=length(qvec), ncol=5);
+        csv.res<-matrix("", nrow=length(qvec), ncol=5);
+        colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
+
+        sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+        if(!file.exists(sqlite.path)){
+          #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+          sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
+          sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
+          download.file(sqlite_url,destfile = sqlite.path, method = "curl")
+        }
+        con <- .get.sqlite.con(sqlite.path);
+        gene.db <- dbReadTable(con, org);
+  
+        #"ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO"
+        if(type == "symbol"){ # gene symbol
+          hit.inx <- match(qvec, gene.db[, "Gene_Symbol"]);
+        } else if(type == "entrez"){ # gene ID
+          hit.inx <- match(qvec, gene.db[, "GeneID"]);
+        } else if(type == "kegg_embl"){ # ensembel id from KEGG
+          hit.inx <- match(qvec, gene.db[, "Ensembl"]);
+        } else if(type == "uniprot"){ # Uniprot ID 
+          hit.inx <- match(qvec, gene.db[, "UniProtID"]);
+        } else if(type == "ncbi_proteinID"){
+          hit.inx <- match(qvec, gene.db[, "ProteinID"]);
+        } else if(type == "kegg_entry") {
+          hit.inx <- match(qvec, gene.db[, "KEGG_entry"]);
+        } else if(type == "gene_name") {
+          hit.inx <- match(qvec, gene.db[, "Gene_Name"]);
+        } else if(type == "KO") {
+          hit.inx <- match(qvec, gene.db[, "KO"]);
+        } else {
+          # unknown ID type
+        }
+        hit.values<-mSetObj$dataSet$gene.name.map$hit.values;
+        match.state<-mSetObj$dataSet$gene.name.map$match.state;
+        mSetObj$dataSet$gene.name.map$hit.inx <- hit.inx;
+
+        for (i in 1:length(qvec)){
+          if(match.state[i]==1){
+            pre.style<-"";
+            post.style="";
+          }else{ # no matches
+            pre.style<-no.prestyle;
+            post.style<-no.poststyle;
+          }
+          hit <-gene.db[hit.inx[i], ,drop=F];
+save(hit, file = "hit__925.rda")
+          html.res[i, ]<-c(paste(pre.style, qvec[i], post.style, sep=""),
+                           paste(ifelse(match.state[i]==0 || is.na(hit$GeneID),"-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>",hit$GeneID,"</a>", sep="")),  sep=""),
+                           paste(ifelse(match.state[i]==0 || is.na(hit$Gene_Symbol), "-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>", hit$Gene_Symbol,"</a>", sep="")), sep=""),
+                           paste(ifelse(match.state[i]==0 || is.na(hit$Gene_Name),"-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>",hit$Gene_Name,"</a>", sep="")), sep=""),
+                           ifelse(match.state[i]!=1,"View",""));
+          csv.res[i, ]<-c(qvec[i],
+                          ifelse(match.state[i]==0, "NA", hit$GeneID),
+                          ifelse(match.state[i]==0, "NA", hit$Gene_Symbol),
+                          ifelse(match.state[i]==0, "NA", hit$Gene_Name),
+                          match.state[i]);
+        }
+
+        # store the value for report
+        mSetObj$dataSet$gene.map.table <- csv.res;
+
+        fast.write.csv(csv.res, file="gene_name_map.csv", row.names=F);
+save(html.res, file = "html.res__942.rda")
+        if(.on.public.web){
+          .set.mSet(mSetObj)  
+          return(as.vector(html.res));
+        }else{
+          return(.set.mSet(mSetObj));
+        }
+        
+    } else {
+        return(GetGeneMappingResultTable(NA))
+    }    
+}
 
 #'Plot integrated methods pathway analysis
 #'@description Only update the background info for matched node
