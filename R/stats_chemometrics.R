@@ -599,7 +599,6 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
   print(topnum)
   mSetObj <- .get.mSet(mSetObj);
- 
   choices = c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
   lam <- mSetObj$analSet$pca$sdev[choices]
