@@ -1461,3 +1461,12 @@ AddDoseFeatureToReport <- function(mSetObj=NA, id, imgName){
     mSetObj$imgSet$doseFeatureList[[id]] <- imgName; 
     return(.set.mSet(mSetObj));
 }
+
+#reset memoise for volcano, workflow
+ResetMemoise <- function(){
+    rm(mem.tt);
+    rm(mem.aov);
+    rm(mem.univ);
+    rm(mem.par);
+
+}

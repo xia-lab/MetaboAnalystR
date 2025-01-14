@@ -20,6 +20,13 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
         return(0);
     }
 
+    # Check for a minimum of 3 unique doses
+    unique_doses <- unique(dose)
+    if (length(unique_doses) < 3) {
+        AddErrMsg("Error: Dose-response analysis requires at least 3 unique doses. Please provide data with at least 3 distinct dose levels.")
+        return(0)
+    }
+
     dose.order <- order(dose);
     meta.reorder <- mSetObj$dataSet$cls[dose.order];
     int.mat <- int.mat[dose.order, ];
