@@ -285,9 +285,9 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   }else{
     qvec <- mSetObj$dataSet$cmpd;
   }
-  
+
   if(is.null(qvec)){
-    return();
+    return("");
   }
   # style for highlighted background for unmatched names
   pre.style<-NULL;

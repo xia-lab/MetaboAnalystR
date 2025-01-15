@@ -535,8 +535,7 @@ doGeneEntryMapping <- function(q.vec, org, type){
   sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
   if(!file.exists(sqlite.path)){
     #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
-    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
-                         "genes_entries_130_species.sqlite");
+    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
     sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
     download.file(sqlite_url,destfile = sqlite.path, method = "curl")
   }
@@ -588,8 +587,7 @@ convert2KeggEntry <- function(q.vec, type, org){
     sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
     if(!file.exists(sqlite.path)){
       #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
-      sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
-                           "genes_entries_130_species.sqlite");
+      sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
       sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
       download.file(sqlite_url,destfile = sqlite.path, method = "curl")
     }
