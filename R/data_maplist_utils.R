@@ -21,8 +21,8 @@
 #'@export
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
-save.image("maplist.RData");
-  print("maplistids");
+  #save.image("maplist.RData");
+  #print("maplistids");
   # Parse geneIDs to vector
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -50,31 +50,28 @@ save.image("maplist.RData");
 
     # Perform gene ID mapping with unmapped flag
     GeneAnotDB <- .doGeneIDMapping(rownames(gene.mat), idType, paramSet, "table", keepNA = TRUE);
-print(head(GeneAnotDB));
-
-
 
     # Identify unmapped IDs using the `unmapped` flag
     unmapped.df <- GeneAnotDB[GeneAnotDB$unmapped, ];
 
-    # Ensure unmapped.df has correct structure
-    if (nrow(unmapped.df) > 0) {
-      unmapped.df$symbol <- "NA"; # Add symbol column for unmapped
-    } else {
-      # Handle case where there are no unmapped entries
-      unmapped.df <- data.frame(accession = character(0),
-                                gene_id = character(0),
-                                unmapped = logical(0),
-                                symbol = character(0),
-                                stringsAsFactors = FALSE);
-    }
-# Check structure of GeneAnotDB
     # Handle mapped IDs
     mapped <- GeneAnotDB[!GeneAnotDB$unmapped, c("orig", "gene_id")];
     mapped$symbol <- doEntrez2SymbolMapping(mapped$gene_id, org, idType);
 
     # Combine mapped and unmapped results
-    combined.mapping <- rbind(unmapped.df[, c("orig", "gene_id", "symbol")], mapped);
+    # Ensure unmapped.df has correct structure
+    if (nrow(unmapped.df) > 0) {
+      unmapped.df$symbol <- "NA"; # Add symbol column for unmapped
+      combined.mapping <- rbind(unmapped.df[, c("orig", "gene_id", "symbol")], mapped);
+    } else {
+      # Handle case where there are no unmapped entries
+      # unmapped.df <- data.frame(accession = character(0),
+      #                          gene_id = character(0),
+      #                          unmapped = logical(0),
+      #                          symbol = character(0),
+      #                          stringsAsFactors = FALSE);
+      combined.mapping <- mapped;
+    }
 
     all.mapping[[i]] <- combined.mapping; # Store the combined mapping
 
@@ -103,7 +100,7 @@ print(head(GeneAnotDB));
       list.num <-  paste(list.num, length(seed.proteins), sep="; ");
     }
     dataSet$listNum <- length(dataSet$seeds.proteins);
-    print(dataSet$listNum);
+    #print(dataSet$listNum);
     fast.write.csv(dataSet$prot.mat, paste0(dataSet$name, ".csv"));
     RegisterData(dataSet);
     inx <- inx + 1;
@@ -166,19 +163,18 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     prot.mat <- res[[1]];
     msgSet <- res[[2]];
 
-    # Store mapped and unmapped results
-    if (length(unmapped) > 0) {
-      unmapped.df <- data.frame(accession = unmapped, gene_id = rep("NA", length(unmapped)), symbol = rep("NA", length(unmapped)), stringsAsFactors = F);
-    } else {
-      unmapped.df <- data.frame(accession = character(0), gene_id = character(0),symbol=character(0), stringsAsFactors = F);
-    }
-
-    # Store mapped and unmapped results
     mapped <- GeneAnotDB[!GeneAnotDB$unmapped, c("orig", "gene_id")];
-
     mapped$symbol <- doEntrez2SymbolMapping(mapped$gene_id, org, idType);
 
-    combined.mapping <- rbind(mapped, unmapped.df);
+    # Store mapped and unmapped results
+    if (length(unmapped) > 0) {
+        unmapped.df <- data.frame(accession = unmapped, gene_id = rep("NA", length(unmapped)), symbol = rep("NA", length(unmapped)), stringsAsFactors = F);
+        combined.mapping <- rbind(mapped, unmapped.df);
+    } else {
+        #unmapped.df <- data.frame(accession = character(0), gene_id = character(0),symbol=character(0), stringsAsFactors = F);
+        combined.mapping <- mapped;
+    }
+
     all.mapping[[i]] <- combined.mapping; # Store the combined mapping
 
     # Prepare dataSet
