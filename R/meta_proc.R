@@ -6,7 +6,7 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 
-#' Perform Data Sanity Check
+#' Perform Data Integrity Check
 #'
 #' This function performs a sanity check on the input data, including class labels and data matrix.
 #'
@@ -700,7 +700,7 @@ UpdateDE<-function(dataName, p.lvl = 0.05, fc.lvl = 1){
   return(RegisterData(dataSet, c(1, sig.count, non.sig.count)))
 }
 
-#' Perform Sanity Check on Metadata
+#' Perform Integrity Check on Metadata
 #'
 #' This function performs a sanity check on the metadata associated with the datasets.
 #'
