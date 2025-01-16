@@ -151,15 +151,11 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   cat(json.obj);
   sink();
 
-if (dataSet$de.method == "deseq2") {
-  significant.genes <- c()
-  
-  # Initialize combined result vectors with FALSE
-  num_rows <- nrow(dataSet$comp.res.list[[1]])
-  combined_lfc_pass <- rep(FALSE, num_rows)
-  combined_deg_pass <- rep(FALSE, num_rows)
-  
-  # Loop through each comparison in the comp.res.list
+  if (dataSet$de.method == "deseq2") {
+  # Initialize a list to collect data from all comparisons
+  significant_gene_table <- list()
+
+  # Loop through each comparison again to collect significant gene details
   for (inx in seq_along(dataSet$comp.res.list)) {
     resTable <- dataSet$comp.res.list[[inx]]
     
@@ -176,29 +172,55 @@ if (dataSet$de.method == "deseq2") {
     # Filter based on fold change
     logfc.mat <- abs(resTable[, "logFC"])  # Ensure the correct column is used for logFC
     lfc.pass <- logfc.mat >= fc.lvl
-
     
-    # Update the combined vectors (logical "or" across comparisons)
-    combined_lfc_pass <- combined_lfc_pass | lfc.pass
-    combined_deg_pass <- combined_deg_pass | deg.pass
+    # Apply filters to identify significant genes
+    all_pass <- deg.pass & lfc.pass
+    
+    # Extract significant genes and their details
+    significant_genes <- resTable[all_pass, ]
+    
+    # Check if there are any significant genes
+    if (nrow(significant_genes) > 0) {
+      # Add a column to indicate the comparison
+      significant_genes$Comparison <- paste("Comparison", inx)
+      
+      # Append the significant genes to the list
+      significant_gene_table[[inx]] <- significant_genes
+    } else {
+      # If no significant genes, append an empty data frame with consistent columns
+      significant_gene_table[[inx]] <- data.frame()
+    }
   }
- 
-  # Apply the combined filters
-  all_pass <- combined_lfc_pass & combined_deg_pass
-  
-  # Collect significant genes that pass all filters
-  significant.genes <- rownames(resTable)[all_pass]
- 
-  
+
+  # Combine all significant genes into a single data frame
+  if (length(significant_gene_table) > 0) {
+    final_table <- do.call(rbind, significant_gene_table)
+  } else {
+    final_table <- data.frame()
+  }
+
+  # Export the final table as a CSV file if it's not empty
+  output_file <- "Significant_Genes.csv"
+  if (nrow(final_table) > 0) {
+    write.csv(final_table, file = output_file, row.names = TRUE)
+    message(paste("Significant genes table has been successfully exported to:", output_file))
+  } else {
+    message("No significant genes identified to export.")
+  }
+
   # Get the number of unique significant genes across all comparisons
-  de.Num.total <- length(unique(significant.genes))
-  
+  if (length(significant_gene_table) > 0) {
+    all_significant_genes <- unique(unlist(lapply(significant_gene_table, rownames)))
+    de.Num.total <- length(all_significant_genes)
+  } else {
+    de.Num.total <- 0
+  }
+
   if (de.Num.total == 0) {
     msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")
   }
-  analSet$sig.gene.count.total <- de.Num.total;
-
- }
+  analSet$sig.gene.count.total <- de.Num.total
+}
 
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");

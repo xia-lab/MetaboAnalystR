@@ -37,10 +37,6 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
     return(0);
   }  
 
-  if(metafileName == "" || metafileName == "NA"){
-    metaContain <- "false";
-  }
-
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
   
   # Check metadata to determine if it resembles a "dose" pattern with at least 3 replicates per group

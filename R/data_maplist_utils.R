@@ -20,10 +20,8 @@
 #'License: MIT
 #'@export
 #'
-MapListIds <- function(listNm, geneIDs, org, idType){
 
-  #geneIDs <<- geneIDs;
-  #save.image("maplist.RData");
+MapListIds <- function(listNm, geneIDs, org, idType){
   #print("maplistids");
   # Parse geneIDs to vector
   paramSet <- readSet(paramSet, "paramSet");
@@ -49,17 +47,17 @@ MapListIds <- function(listNm, geneIDs, org, idType){
     dataSet$name <- paste0("datalist", i);
     listNms[i] <- dataSet$name;
     gene.mat <- prot.mat <- dataList[[i]];
-
+    
     # Perform gene ID mapping with unmapped flag
     GeneAnotDB <- .doGeneIDMapping(rownames(gene.mat), idType, paramSet, "table", keepNA = TRUE);
-
+    
     # Identify unmapped IDs using the `unmapped` flag
     unmapped.df <- GeneAnotDB[GeneAnotDB$unmapped, ];
-
+    
     # Handle mapped IDs
     mapped <- GeneAnotDB[!GeneAnotDB$unmapped, c("orig", "gene_id")];
     mapped$symbol <- doEntrez2SymbolMapping(mapped$gene_id, org, idType);
-
+    
     # Combine mapped and unmapped results
     # Ensure unmapped.df has correct structure
     if (nrow(unmapped.df) > 0) {
@@ -74,11 +72,12 @@ MapListIds <- function(listNm, geneIDs, org, idType){
       #                          stringsAsFactors = FALSE);
       combined.mapping <- mapped;
     }
-
+    
     all.mapping[[i]] <- combined.mapping; # Store the combined mapping
-
+    
     # Prepare dataSet for the current list
-    prot.mat <- prot.mat[rownames(prot.mat) %in% mapped$gene_id, , drop = F];
+    prot.mat <- prot.mat[rownames(prot.mat) %in% mapped$orig, , drop = F];
+    rownames(prot.mat) <- mapped$gene_id[rownames(prot.mat) %in% mapped$orig]
     res <- RemoveDuplicates(prot.mat, "mean", quiet = T, paramSet, msgSet);
     prot.mat <- res[[1]];
     msgSet <- res[[2]];
@@ -107,12 +106,12 @@ MapListIds <- function(listNm, geneIDs, org, idType){
     RegisterData(dataSet);
     inx <- inx + 1;
   }
-
+  
   
   # Save mapping results to a CSV file
   combined.mapping.df <- do.call(rbind, all.mapping);
   write.csv(combined.mapping.df, "mapping_results.csv", row.names=F);
-
+  
   # Update paramSet
   paramSet$all.ent.mat <- all.prot.mat;
   rownames(all.prot.mat) <- doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType);
@@ -132,7 +131,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet$combined.mapping.df <- combined.mapping.df;
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
-
+  
   return(1);
 }
 

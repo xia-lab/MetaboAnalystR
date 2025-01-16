@@ -178,9 +178,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
   }
-  print(table(res$lfc.pass))
-  print(table(res$deg.pass))
-  print(table(res$all.pass));
+
   # select only data that passes all filters
   data.select <- data[res$all.pass, ]
   data.mean <- data.mean[res$all.pass, ]
@@ -331,7 +329,7 @@ PerformDRFit <- function(ncpus = 2)
         SDres.i <- sigma(fit)
         mod.name <- "Exp3"
         ctrl <- predict(fit)[1]
-        
+
         # append results to dataframe
         res.temp <- data.frame(gene.id = gene.id, mod.name = mod.name, b = b.i, c = c.i, d = d.i, 
                                e = e.i, f = f.i, SDres = SDres.i, AIC.model = AIC.i,
@@ -631,7 +629,7 @@ PerformDRFit <- function(ncpus = 2)
     item.fitres$adv.incr <- c(rep(adv.incr, dim(item.fitres)[1]))
     
     rownames(item.fitres) <- NULL
-    
+
     return(item.fitres)
     
   } ##################################### end of fitoneitem
@@ -728,7 +726,6 @@ FilterDRFit <- function()
 ### Calculation of BMD values from fitted dose-response curves
 PerformBMDCalc <- function(ncpus = 1)
 {
-
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   f.drc <- dataSet$drcfit.obj;
@@ -762,6 +759,7 @@ PerformBMDCalc <- function(ncpus = 1)
 
   item <- dataSet$drcfit.obj$fitres.filt[,1]
   fitres.bmd <- f.drc$fitres.filt
+
 
   if(ctrl.mode == "sampleMean"){
     bmr.mode <- "ctrl.mean"
@@ -945,11 +943,25 @@ PerformBMDCalc <- function(ncpus = 1)
   # make combined object
   fitres.bmd <- fitres.bmd[dres$all.pass, ]
 
-  # make results to display
-  disp.res <- data.frame(item = item)
-  disp.res <- cbind(disp.res, fitres.bmd[,c("mod.name", "SDres", "lof.p")])
-  disp.res <- cbind(disp.res, dres[dres$all.pass, c("bmr", "bmd", "bmdl", "bmdu")])
-  
+    # Step 2: Filter both dres and fitres.bmd by dres$all.pass
+    dres_filtered <- dres[dres$all.pass, ]
+    fitres_bmd_filtered <- fitres.bmd[fitres.bmd$gene.id %in% dres_filtered$id, ]
+
+
+    # Step 3: Ensure alignment by ordering both datasets by their identifier
+    dres_filtered <- dres_filtered[order(dres_filtered$id), ]
+    fitres_bmd_filtered <- fitres_bmd_filtered[order(fitres_bmd_filtered$gene.id), ]
+
+    # Step 4: Verify alignment (optional but recommended)
+    if (!all(fitres_bmd_filtered$gene.id == dres_filtered$id)) {
+        stop("Error: Mismatch between gene.id in fitres.bmd and id in dres.")
+    }
+
+    # Step 5: Create disp.res by combining columns from both data frames
+    disp.res <- data.frame(item = fitres_bmd_filtered$gene.id)
+    disp.res <- cbind(disp.res, fitres_bmd_filtered[, c("mod.name", "SDres", "lof.p")])
+    disp.res <- cbind(disp.res, dres_filtered[, c("bmr", "bmd", "bmdl", "bmdu")])
+
   dnld.file <- merge(dataSet$drcfit.obj$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
   data.table::fwrite(as.data.frame(dnld.file), quote = FALSE, row.names = FALSE, sep = "\t", file="bmd.txt");
 
@@ -963,6 +975,7 @@ PerformBMDCalc <- function(ncpus = 1)
 
   # make table for html display
   if(dim(disp.res)[1] > 0) {
+
     res <- disp.res[,c(1,2,4,7,6,8)];
     res.mods <- dataSet$drcfit.obj$fitres.filt[,c(1,3,4,5,6)];
     res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
@@ -988,6 +1001,7 @@ PerformBMDCalc <- function(ncpus = 1)
 ### Calculation of transcriptomic POD from BMDs
 sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
 {
+  save.image("sensPOD.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   pod.choices <- c("feat.20", "feat.10th", "mode")

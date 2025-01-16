@@ -7,6 +7,7 @@
 
 
 my.prepare.list.heatmap.json <- function(dataSet){
+  save.image("list.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dat <- dataSet$prot.mat;
   sig.ids <- rownames(dat);
