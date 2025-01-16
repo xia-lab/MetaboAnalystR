@@ -291,12 +291,12 @@ GetListEnrGeneNumber <- function(){
   if(anal.type == "genelist"){
     if(paramSet$numOfLists > 1){
         dataSet <- readDataset(paramSet$selDataNm);
-        gene.mat <- dataSet$prot.mat;
-        
-        # convert to entrez
-        expr.val <- gene.mat[,1];
-        en.ids <- rownames(gene.mat);
-        
+        #gene.mat <- dataSet$prot.mat;
+        # expr.val <- gene.mat[,1];
+        # en.ids <- rownames(gene.mat);
+        expr.val <- dataSet$sig.mat[,1];
+        en.ids <- dataSet$GeneAnotDB$gene_id;
+
         names(expr.val) <- en.ids;
         names(en.ids) <- doEntrez2SymbolMapping(en.ids, paramSet$data.org, paramSet$data.idType)
         all.enIDs <- en.ids;
@@ -305,12 +305,12 @@ GetListEnrGeneNumber <- function(){
           label = paramSet$selDataNm,
           size = length(en.ids)
         )
-      
-      
+           
     }else{
-      
-      all.enIDs <- rownames(dataSet$prot.mat);
-      names(all.enIDs ) <- doEntrez2SymbolMapping(all.enIDs, paramSet$data.org, paramSet$data.idType)
+
+      #all.enIDs <- rownames(dataSet$prot.mat);
+      all.enIDs <- dataSet$GeneAnotDB$gene_id;
+      names(all.enIDs) <- doEntrez2SymbolMapping(all.enIDs, paramSet$data.org, paramSet$data.idType)
       listSizes[[1]] <- list(
         name = "datalist1",
         label = "datalist1",
@@ -915,6 +915,7 @@ readSet <- function(obj=NA, set=""){
 load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
 
 readDataset <- function(fileName=""){
+
     if(globalConfig$anal.mode == "api"){
       if(exists('user.path')){
         path <- user.path;

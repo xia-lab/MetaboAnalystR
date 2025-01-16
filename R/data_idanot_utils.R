@@ -421,6 +421,10 @@ getEntrezTableName <- function(data.org, data.idType){
 
 doEntrez2SymbolMapping <- function(entrez.vec,data.org="NA", data.idType="NA"){
 
+  if(data.idType == "symbol"){
+    return(entrez.vec); # nothing to do
+  }
+
   if(data.org == "NA" && data.idType=="NA"){
     paramSet <- readSet(paramSet, "paramSet");
     data.org <- paramSet$data.org;

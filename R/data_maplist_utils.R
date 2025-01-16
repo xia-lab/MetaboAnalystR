@@ -21,6 +21,8 @@
 #'@export
 #'
 MapListIds <- function(listNm, geneIDs, org, idType){
+
+  #geneIDs <<- geneIDs;
   #save.image("maplist.RData");
   #print("maplistids");
   # Parse geneIDs to vector
@@ -127,7 +129,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet$mdata.all <- mdata.all
   paramSet$anal.type <- "genelist";
   paramSet$list.num <- list.num
-paramSet$combined.mapping.df <- combined.mapping.df;
+  paramSet$combined.mapping.df <- combined.mapping.df;
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
 
