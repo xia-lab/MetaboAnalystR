@@ -222,6 +222,15 @@ GetMappedTable <- function(){
   return(paramSet$combined.mapping.df);
 }
 
+GetNumNAs <- function(){
+  paramSet <- readSet(paramSet, "paramSet")
+  
+  # Calculate the number of NA values in the combined.mapping.df
+  numNAs <- sum(is.na(paramSet$combined.mapping.df))
+  
+  return(numNAs)
+}
+
 #########################################
 ##########################################
 ############# private utility methods #### 
