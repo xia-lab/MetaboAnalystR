@@ -341,3 +341,7 @@ ReadUniverseFile <- function(fileName) {
 
     return(length(backgroundUniverse))
 }
+
+GetMappedTable.NAcount <- function(){
+    return(current.na.counts);
+}
