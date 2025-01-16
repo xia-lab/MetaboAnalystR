@@ -217,11 +217,16 @@ GetMappedTable <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   
   # Replace NA values with "NA"
-  paramSet$combined.mapping.df[is.na(paramSet$combined.mapping.df)] <- "NA";
+  my.nas <- is.na(paramSet$combined.mapping.df);
+  current.na.counts <<- sum(my.nas);  
+  paramSet$combined.mapping.df[my.nas] <- "NA";
   
   return(paramSet$combined.mapping.df);
 }
 
+GetMappedTable.NAcount <- function(){
+    return(current.na.counts);
+}
 #########################################
 ##########################################
 ############# private utility methods #### 
