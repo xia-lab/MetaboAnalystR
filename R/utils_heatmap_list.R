@@ -10,7 +10,7 @@ my.prepare.list.heatmap.json <- function(dataSet){
   paramSet <- readSet(paramSet, "paramSet");
   dat <- dataSet$prot.mat;
   sig.ids <- rownames(dat);
-  gene.symbols=doEntrez2SymbolMapping(sig.ids, paramSet$data.org, paramSet$data.idType);
+  gene.symbols <- doEntrez2SymbolMapping(sig.ids, paramSet$data.org, paramSet$data.idType);
   stat.pvals <- dat[,1];
   expval <- 0;
   expval <- sum(dat);
