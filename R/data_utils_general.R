@@ -63,7 +63,7 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$gseaRankOpt <- "fc";
   paramSet$data.idType <- "";
   paramSet$pvalu <- 0.05;
-  paramSet$selDataNm <- "meta_default";
+ 
   paramSet$mdata.all <- list();
   paramSet$anal.type <- "onedata";
   paramSet$api.bool <- F;
@@ -139,7 +139,10 @@ SetAnalType <- function(analType){
   paramSet$meta.selected <- TRUE;
   paramSet$meta.upload <- FALSE; # when upload merged data from meta-analysis b4
   if(analType == "metadata"){
-    paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, "inmex_meta.qs")
+    paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, "inmex_meta.qs");
+    paramSet$selDataNm <- "meta_default";
+  }else{
+    paramSet$selDataNm <- "datalist1";
   }
   saveSet(paramSet, "paramSet");
   return(paste0("Set to ",analType));
@@ -226,9 +229,12 @@ SetListNms <- function(dataSet){
     inmex.meta <- qs::qread("inmex_meta.qs");
     en.ids <- rownames(inmex.meta$data);
     nm <- "meta_data"
-  }else{
+  }else if(anal.type == "onedata"){
     en.ids <- rownames(dataSet$comp.res);
     nm <- "dataSet"
+  }else{ # genelist
+    en.ids <- dataSet$GeneAnotDB$gene_id;
+    nm <- "datalist1"
   }
   names(en.ids) <- doEntrez2SymbolMapping(en.ids, paramSet$data.org, paramSet$data.idType)
   
