@@ -92,12 +92,8 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   }
   
   fgseaRes <- fgseaRes[order(fgseaRes$pval),]
-  if(nrow(fgseaRes[which(fgseaRes$pval < 0.05),])<20 ){
-    if(nrow(fgseaRes)>20){
-      fgseaRes <- fgseaRes[c(1:20),]
-    }
-  }else{
-    fgseaRes <- fgseaRes[which(fgseaRes$pval < 0.05),]
+  if(nrow(fgseaRes)>20 ){
+    fgseaRes <- fgseaRes[c(1:20),]
   } 
   
   current.mset <- current.geneset[fgseaRes$pathway]
@@ -135,12 +131,8 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   
   fgseaRes=fgseaRes[order(fgseaRes$pval),]
 
-  if(nrow(fgseaRes[which(fgseaRes$pval < 0.05),])<20 ){
-    if(nrow(fgseaRes)>20){
-      fgseaRes <- fgseaRes[c(1:20),]
-    }
-  }else{
-    fgseaRes <- fgseaRes[which(fgseaRes$padj < 0.05),]
+  if(nrow(fgseaRes)>20 ){
+    fgseaRes <- fgseaRes[c(1:20),]
   } 
   
   fgseaRes <- data.frame(fgseaRes, stringsAsFactors=FALSE)
