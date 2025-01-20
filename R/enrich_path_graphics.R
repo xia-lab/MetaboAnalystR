@@ -278,7 +278,9 @@ PlotPathSummary<-function(mSetObj=NA,
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$ora.mat);
     }
-    
+
+    mSetObj$analSet$path.ora.mat <- mSetObj$analSet$ora.mat;
+    rownames(mSetObj$analSet$path.ora.mat)<-GetORA.pathNames(mSetObj);
   } else if(mSetObj$analSet$type == "pathqea") {
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
@@ -287,7 +289,8 @@ PlotPathSummary<-function(mSetObj=NA,
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$qea.mat);
     }
-    
+    mSetObj$analSet$path.qea.mat <- mSetObj$analSet$qea.mat
+    rownames(mSetObj$analSet$path.qea.mat)<-GetQEA.pathNames(mSetObj);
   } else if (mSetObj$analSet$type == "pathinteg") { # this is integrative analysis
     
     jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
@@ -448,6 +451,9 @@ PlotPathSummary<-function(mSetObj=NA,
   }
   par(op);
   dev.off();
+
+  tbl <- CreatePathwayMemberTableRMD(mSetObj);
+  mSetObj$analSet$pathwayMemberTable <- tbl
   return(.set.mSet(mSetObj));
 }
 

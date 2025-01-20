@@ -125,7 +125,6 @@ CalculateHyperScore <- function(mSetObj=NA){
   ord.inx<-order(res.mat[,4]);
   mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx,],3);
   mSetObj$analSet$ora.hits <- hits;
-  
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   return(.set.mSet(mSetObj));
 }
@@ -732,4 +731,51 @@ GetEnrichPieHits <- function(mSetObj = NA){
 GetEnrichPieColors <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$analSet$enrich.pie.cols)
+}
+
+
+CreatePathwayMemberTableRMD<-function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+
+    if(mSetObj$analSet$type == "pathora"){
+       res <- mSetObj$analSet$ora.mat;
+       hits.query <- mSetObj$analSet$ora.hits;
+    }else{
+       res <- mSetObj$analSet$qea.mat;
+       hits.query <- mSetObj$analSet$qea.hits;
+    }
+
+    path.ids <- rownames(res);
+    hit.inx <- match(path.ids, current.kegglib$path.ids);
+    path.nms <- names(current.kegglib$path.ids)[hit.inx];  
+
+    hit.path.col <- hit.id.col <- hit.nm.col <- vector(mode = "list", length=length(path.ids));
+
+    mtable <- mSetObj$dataSet$map.table;
+
+    hit.path.ids  <- names(hits.query);
+
+    for (i in 1:length(path.ids)){
+        
+        path.id <- path.ids[i];
+        hit.path.col[i] <- path.nms[i];
+
+        phits <- unique(hits.query[[path.id]]);
+
+        # remove the prefix
+        #phits <- substr(phits, 5, nchar(phits));
+        # ID col
+        hit.id.col[i] <- paste(phits, collapse="; ");
+
+        # name col, col 5 is KEGG
+        mhits <- mtable[,5] %in% phits;
+        msybls <- mtable[mhits,2];
+
+        hit.nm.col[i] <- paste(msybls, collapse="; ");
+    }
+
+    my.table <- cbind(hit.path.col, hit.id.col, hit.nm.col);
+    colnames(my.table) <- c("Pathway", "Hit IDs", "Hit Names");
+    return(my.table);
+    
 }

@@ -691,6 +691,7 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
   mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
   return(.set.mSet(mSetObj));
 }
+
 SummarizeNormResults <- function(mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
@@ -798,9 +799,3 @@ SummarizeNormResults <- function(mSetObj = NA) {
   return(.set.mSet(mSetObj))
 }
 
-
-GetNormDeRes <- function(mSetObj=NA){
-    mSetObj <- .get.mSet(mSetObj);
-    print(unlist(mSetObj$summaryNormResults$de));
-    return(unlist(mSetObj$summaryNormResults$de));
-}

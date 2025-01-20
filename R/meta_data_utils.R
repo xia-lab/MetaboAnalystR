@@ -12,7 +12,6 @@
 ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
   
   mSetObj <- .get.mSet(mSetObj);
-  
   dat <- .readDataTable(dataName);
   if(class(dat) == "try-error" || ncol(dat) == 1){
     AddErrMsg("Data format error. Failed to read in the data!");

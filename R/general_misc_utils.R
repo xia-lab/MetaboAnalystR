@@ -92,7 +92,7 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 #' @export
 
 .readDataTable <- function(fileName, save.copy=TRUE){
-    
+
     dat <- tryCatch(
             {
                 data.table::fread(fileName, header=TRUE, check.names=FALSE, 
@@ -1470,3 +1470,29 @@ ResetMemoise <- function(){
     rm(mem.par);
 
 }
+
+GetViewData <- function(dataname){
+  mSetObj <- .get.mSet(mSetObj);
+    fileName <- paste0(dataname,".csv")
+ 
+ if (mSetObj[["analSet"]][["type"]]=="metadata") {
+  message("Detected qs format")
+  dat <- qs::qread(fileName)
+   dat <- mSetObj$dataSet$data.orig
+} else {
+  message("Detected CSV format (or at least not qs)")
+  dat <- data.table::fread(fileName, data.table = FALSE)
+}       
+        row.num <- nrow(dat);
+        col.num <- ncol(dat);
+        if(row.num > 100){
+            row.num <- 100;
+        }
+        if(col.num > 10){
+            col.num <- 10;
+        }
+        write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+ 
+}
+
+ 
