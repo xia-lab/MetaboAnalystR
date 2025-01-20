@@ -26,8 +26,8 @@ PCA.Anal <- function(mSetObj=NA){
   fast.write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
-  .set.mSet(mSetObj)
-  return(length(pca[["center"]]));
+  return(.set.mSet(mSetObj));
+  #return(length(pca[["center"]]));
 }
 
 # use a PERMANOVA to partition the euclidean distance by groups based on current score plot:
