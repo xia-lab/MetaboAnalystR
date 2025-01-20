@@ -1462,6 +1462,15 @@ AddDoseFeatureToReport <- function(mSetObj=NA, id, imgName){
     return(.set.mSet(mSetObj));
 }
 
+#reset memoise for volcano, workflow
+ResetMemoise <- function(){
+    rm(mem.tt);
+    rm(mem.aov);
+    rm(mem.univ);
+    rm(mem.par);
+
+}
+
 GetViewData <- function(dataname){
   mSetObj <- .get.mSet(mSetObj);
     fileName <- paste0(dataname,".csv")

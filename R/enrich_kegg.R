@@ -632,7 +632,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
 #'License: GNU GPL (>= 2)
 #'@export
 PrepareKeggQueryJson <- function(mSetObj=NA){
-
+    save.image("kegg.RData");
     mSetObj <- .get.mSet(mSetObj);
   
     # Map query matched KOs with the KO database
@@ -647,7 +647,7 @@ PrepareKeggQueryJson <- function(mSetObj=NA){
 
     # Perform gene enrichment
     gene.mat <- list()
-    if(length(kos) > 0){
+    if(!is.null(kos) && length(kos) > 0){
         dataSet.gene <- PerformMapping_ko01100(kos, "ko")
         if(length(dataSet.gene)==0){
             return(0);

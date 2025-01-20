@@ -349,19 +349,8 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72,
   par(op);
   dev.off();
 
-  # now calculating the significance
-  pc.mat <- cbind(pc1, pc2);
-  res <- .calculateDistSig(pc.mat, mSetObj$dataSet$cls);
-  resTab <- res[[1]][1,];
-  stat.info <- paste("[PERMANOVA] F-value: ", signif(resTab$F, 5),  "; R-squared: ", signif(resTab$R2, 5), "; p-value (based on 999 permutations): ", signif(resTab$Pr, 5), sep="");   
-  stat.info.vec <- c(signif(resTab$F, 5), signif(resTab$R2, 5), signif(resTab$Pr, 5));
-  names(stat.info.vec) <- c("F-value", "R-squared", "p-value");
-
-  pair.res <- res[[2]];
-
-  # store the item to the pca object
-  print(stat.info);
-  mSetObj$analSet$pca$permanova.res <-list(stat.info=stat.info, stat.info.vec=stat.info.vec, pair.res=pair.res);
+  permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
+  mSetObj$analSet$pca$permanova.res <-permanova_results;
   return(.set.mSet(mSetObj));
 }
 
@@ -3031,4 +3020,37 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
     pairs(mat, labels=lbls);
   }
   dev.off();
+}
+
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
+  # Combine PC1 and PC2 scores into a matrix
+  pc.mat <- cbind(pc1, pc2)
+  
+  # Calculate PERMANOVA significance
+  res <- .calculateDistSig(pc.mat, cls)
+  
+  # Extract the main results
+  resTab <- res[[1]][1, ]
+  
+  # Format and create the PERMANOVA summary statistics
+  stat.info <- paste("[PERMANOVA] F-value: ", signif(resTab$F, 5),
+                     "; R-squared: ", signif(resTab$R2, 5),
+                     "; p-value (based on ", numPermutations, " permutations): ",
+                     signif(resTab$Pr, 5), sep = "")
+  
+  # Create a named vector for the statistics
+  stat.info.vec <- c(F_value = signif(resTab$F, 5), 
+                     R_squared = signif(resTab$R2, 5), 
+                     p_value = signif(resTab$Pr, 5))
+  names(stat.info.vec) <- c("F-value", "R-squared", "p-value");
+
+  # Extract pairwise PERMANOVA results if available
+  pair.res <- res[[2]]
+  
+  # Return the results as a list
+  list(
+    stat.info = stat.info,
+    stat.info.vec = stat.info.vec,
+    pair.res = pair.res
+  )
 }

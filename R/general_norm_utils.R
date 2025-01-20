@@ -694,7 +694,7 @@ UpdateLoadingCmpd<-function(mSetObj=NA, cmpdNm){
 
 SummarizeNormResults <- function(mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
-
+  
   # Check if selectedNormOpts has been defined
   if (!exists('selectedNormOpts')) {
     AddErrMsg("Please select which normalization options to explore")
@@ -714,10 +714,10 @@ SummarizeNormResults <- function(mSetObj = NA) {
     normOpt <- selectedNormOpts[i]
 
     # 1) Load the workspace for this normOpt
-    mSetObj <- NA
+    mSetObj <- NA;
     load(paste0(normOpt, '/Rload.RData'))
 
-    mSetObj <- mSet
+    mSetObj <- mSet;
 
     # 2) Extract the number of DE features (from Volcano analysis)
     if (!is.null(mSetObj$analSet$volcano) && !is.null(mSetObj$analSet$volcano$sig.mat)) {
@@ -735,14 +735,22 @@ SummarizeNormResults <- function(mSetObj = NA) {
       R2 <- statObj$stat.info.vec["R-squared"]
 
     } else {
-      statInfo     <- "No PCA PERMANOVA results found";
-      statInfoVec  <- NULL;
-      pairwiseInfo <- NULL;
-      R2 <- 0  # Default to 0 if not available
+      LoadRscriptsOnDemand("stat");
+      PCA.Anal(mSetObj);
+      mSetObj <- .get.mSet(mSetObj)
+      PlotPCA2DScore(mSetObj, "pca_score2d_0", "png", 
+      72, NA, 1, 2, 0.95, 1, 0);
+      mSetObj <- .get.mSet(mSetObj)
 
+      statObj <- mSetObj$analSet$pca$permanova.res;
+      # For convenience, store both the string summary and numeric stats
+      statInfo     <- statObj$stat.info;      # e.g. "[PERMANOVA] F-value: 2.31; R-squared: 0.12; p-value: 0.03"
+      statInfoVec  <- statObj$stat.info.vec;  # numeric named vector of F-value, R-squared, p-value
+      pairwiseInfo <- statObj$pair.res;       # if present
+      R2 <- statObj$stat.info.vec["R-squared"]
     }
 
-    # 4) Perform Mardia's test for multivariate normality
+    # 4) Perform Royston's test for multivariate normality
     require(MVN)
     mvnRes <- mvn(as.matrix(mSetObj$dataSet$norm), mvnTest = "mardia")
     if (!is.null(mvnRes$multivariateNormality)) {
@@ -775,7 +783,7 @@ SummarizeNormResults <- function(mSetObj = NA) {
     resList[[normOpt]] <- list(
       numDE = numDE,
       pcaR2 = R2,
-      mardiaInfo = mardiaInfo,
+      normalityInfo = mardiaInfo,
       pcaPermInfo  = statInfo,
       pcaPermStats = statInfoVec,
       pcaPairRes   = pairwiseInfo,
@@ -791,8 +799,3 @@ SummarizeNormResults <- function(mSetObj = NA) {
   return(.set.mSet(mSetObj))
 }
 
-GetNormDeRes <- function(mSetObj=NA){
-    mSetObj <- .get.mSet(mSetObj);
-    print(unlist(mSetObj$summaryNormResults$de));
-    return(unlist(mSetObj$summaryNormResults$de));
-}
