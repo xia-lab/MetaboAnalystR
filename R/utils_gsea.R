@@ -618,6 +618,5 @@ plot.gs.view <-function(cmpdNm, format="png", dpi=72, width=NA){
   imgSet <- readSet(imgSet, "imgSet");
   imgSet$GSEAbarcode <- imgName;
   saveSet(imgSet);
-  print(imgSet$GSEAbarcode);
   return(imgName);
 }

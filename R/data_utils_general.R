@@ -169,11 +169,11 @@ RegisterData <- function(dataSet, output=1){
   saveSet(paramSet, "paramSet");
 
   if(paramSet$on.public.web){
-    qs::qsave(dataSet, file=dataName);
+    qs::qsave(dataSet, file=replace_extension_with_qs(dataName));
     return(output);
   }else{
     if(paramSet$api.bool){
-        qs::qsave(dataSet, file=dataName);
+        qs::qsave(dataSet, file=replace_extension_with_qs(dataName));
         return(output);
     }else{
         dataSets[[dataName]] <- dataSet;
@@ -488,4 +488,34 @@ CheckListHasFC <- function(){
   }else{
     return(1);
   }
+}
+
+replace_extension_with_qs <- function(data_name) {
+  if (is.null(data_name) || data_name == "") {
+    stop("Data name must not be null or empty")
+  }
+  
+  # Use gsub to replace .csv or .txt with .qs
+  result <- gsub("\\.csv$|\\.txt$", ".qs", data_name)
+  return(result)
+}
+
+
+RecordSysMessage <- function(msg){
+
+  if(!exists("sys.msg.vec")){
+    sys.msg.vec <<- NULL;
+  }
+
+  # add time
+  msg <- paste0("[", Sys.time(), "] ", msg); 
+  sys.msg.vec <<- c(sys.msg.vec, msg);
+  write(msg, file = "Project.log", append = TRUE);
+}
+
+GetSysMessages <- function(){
+  if(!exists("sys.msg.vec")){
+    sys.msg.vec <<- "No message available";
+  }
+  return(sys.msg.vec);
 }

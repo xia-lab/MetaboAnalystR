@@ -914,21 +914,21 @@ readSet <- function(obj=NA, set=""){
 
 load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
 
-readDataset <- function(fileName=""){
+readDataset <- function(dataName=""){
 
     if(globalConfig$anal.mode == "api"){
       if(exists('user.path')){
         path <- user.path;
-        obj <- load_qs(paste0(path, fileName));
+        obj <- load_qs(paste0(path, replace_extension_with_qs(dataName)));
       }else{
-        obj <- qs::qread(fileName);
+        obj <- qs::qread(replace_extension_with_qs(dataName));
       }
     }else{
-       #obj <- dataSets[[fileName]];
-            if(exists("dataSets") && !is.null(dataSets) && !is.null(dataSets[[fileName]])) {
-                obj <- dataSets[[fileName]]
+       #obj <- dataSets[[dataName]];
+            if(exists("dataSets") && !is.null(dataSets) && !is.null(dataSets[[dataName]])) {
+                obj <- dataSets[[dataName]]
             } else {
-                obj <- qs::qread(fileName)
+                obj <- qs::qread(replace_extension_with_qs(dataName))
             }
     }
 

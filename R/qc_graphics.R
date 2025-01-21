@@ -115,12 +115,12 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
   sampleNms <- gsub("-", ".", colnames(dataSet$data.norm))
   if(length(dataSet$meta.info) == 2){
 
-    Factor1 <- as.vector(dataSet$meta.info[,1])
+    Factor1 <- dataSet$meta.info[,1]
     factorNm1 <- colnames(dataSet$meta.info)[1]
     conv <- data.frame(ind=sampleNms, Factor1=Factor1)
     colnames(conv) <- c("ind", factorNm1);
     df1 <- merge(df, conv, by="ind")
-    Factor2 <- as.vector(dataSet$meta.info[,2])
+    Factor2 <- dataSet$meta.info[,2]
     factorNm2 <- colnames(dataSet$meta.info)[2]
     conv <- data.frame(ind=sampleNms, Factor2=Factor2)
     colnames(conv) <- c("ind", factorNm2);
@@ -136,7 +136,7 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     width <- 12
     height <- 6
   }else{
-    Conditions= as.character(dataSet$meta.info[,1]);
+    Conditions <- dataSet$meta.info[,1];
     conv <- data.frame(ind=sampleNms, Conditions=Conditions)
     df1 <- merge(df, conv, by="ind")
 
@@ -528,11 +528,8 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
     paramSet$pca.outliers <- c("NA");
   }
 
-  permanova_results <- ComputePERMANOVA(pca.res$PC1, pca.res$PC2, dataSet$meta.info[, 1], 999)
-  print(permanova_results);
-  print("res=============pca");
+  permanova_results <- ComputePERMANOVA(pca.res$PC1, pca.res$PC2, dataSet$meta.info[, 1], 999);
   analSet <- readSet(analSet, "analSet");
-  analSet
   analSet$permanova.res <-permanova_results;
   saveSet(analSet);
   saveSet(paramSet);
