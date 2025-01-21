@@ -36,6 +36,17 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   if(is.null(dataSet)){
     return(0);
   }  
+  datOrig <- dataSet$data_orig
+ 
+  row.num <- nrow(datOrig);
+  col.num <- ncol(datOrig);
+   if(row.num > 100){
+       row.num <- 100;
+   }
+   if(col.num > 10){
+        col.num <- 10;
+    }
+    write.csv(datOrig[1:row.num, 1:col.num], file="raw_dataview.csv");  
 
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
   
