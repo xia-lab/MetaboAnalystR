@@ -589,7 +589,7 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   print(topnum)
   mSetObj <- .get.mSet(mSetObj);
  
-  choices = c(inx1, inx2);
+  choices <- c(inx1, inx2);
   scores <- mSetObj$analSet$pca$x;
   lam <- mSetObj$analSet$pca$sdev[choices]
   n <- NROW(scores)
@@ -607,9 +607,9 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   mSetObj$imgSet$pca.biplot<-imgName;
 
  library(ggplot2)
-library(ggrepel)
-library(dplyr)
-library(factoextra) 
+ library(ggrepel)
+ library(dplyr)
+ library(factoextra) 
   pca <- prcomp(mSetObj$dataSet$norm, scale=F);
  
   cls <- mSetObj$dataSet$cls;
@@ -660,8 +660,8 @@ p <- ggplot() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
   labs(title = "Biplot",
-       x = paste("PC1 (", round(summary(pca)$importance[2, 1] * 100, 2), "%)", sep = ""),
-       y = paste("PC2 (", round(summary(pca)$importance[2, 2] * 100, 2), "%)", sep = "")) +
+       x = paste("PC", inx1, " (", round(summary(pca)$importance[2, inx1] * 100, 2), "%)", sep = ""),
+       y = paste("PC", inx2, " (", round(summary(pca)$importance[2, inx2] * 100, 2), "%)", sep = "")) +
   theme_minimal() +
  scale_color_manual(values = cols) +
   scale_fill_manual(values = cols) +
@@ -1196,7 +1196,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pls.biplot <- imgName;
     
-  choices = c(inx1, inx2);
+  choices <- c(inx1, inx2);
   scores <- plsr$scores;
   lam <- apply(scores[,choices], 2, sd)
   n <- NROW(scores)
@@ -1261,8 +1261,8 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
     geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
     labs(title = "Biplot",
-         x = paste("Component 1(", round(100*plsr$Xvar[inx1]/plsr$Xtotvar,1), "%)", sep = ""),
-         y = paste("Component 2(", round(100*plsr$Xvar[inx2]/plsr$Xtotvar,1), "%)", sep = "")) +
+         x = paste("Component", inx1, " (", round(100*plsr$Xvar[inx1]/plsr$Xtotvar,1), "%)", sep = ""),
+         y = paste("Component", inx2, " (", round(100*plsr$Xvar[inx2]/plsr$Xtotvar,1), "%)", sep = "")) +
     theme_minimal() +
     scale_color_manual(values = cols) +
     scale_fill_manual(values = cols) +
