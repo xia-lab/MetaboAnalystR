@@ -656,3 +656,20 @@ GetAnalysisType <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   return(paramSet$oneDataAnalType);
 }
+
+ GetViewData <- function(dataname){
+    dat <- .readDataTable(dataname);   
+        row.num <- nrow(dat);
+        col.num <- ncol(dat);
+        if(row.num > 100){
+            row.num <- 100;
+        }
+        if(col.num > 10){
+            col.num <- 10;
+        }
+        write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+ 
+}
+
+
+ 

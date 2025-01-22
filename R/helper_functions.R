@@ -274,6 +274,18 @@ GetNumOfLists <- function(){
   return(paramSet$numOfLists)
 }
 
+GetNumOfGenes <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$annonum)
+}
+
+
+GetNumOfAnnoGenes <- function(){
+  paramSet <- readSet(paramSet, "paramSet");
+  return(paramSet$genemum)
+}
+
+
 GetMetaSigGeneCount <- function(){
   analSet <- readSet(analSet, "analSet");
   return(nrow(analSet$meta.mat));
