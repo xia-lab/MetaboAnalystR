@@ -276,13 +276,14 @@ GetNumOfLists <- function(){
 
 GetNumOfGenes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
-  return(paramSet$annonum)
+print(paramSet$genenum)
+  return(paramSet$genenum)
 }
 
 
 GetNumOfAnnoGenes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
-  return(paramSet$genemum)
+  return(paramSet$annonum)
 }
 
 

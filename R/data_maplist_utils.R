@@ -113,13 +113,13 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   combined.mapping.df <- do.call(rbind, all.mapping);
   write.csv(combined.mapping.df, "mapping_results.csv", row.names=F);
 
-dat = data.frame(orig=rownames(res[[1]][[1]]),logFC=res[[1]][[1]])
+dat = data.frame(orig=rownames(dataList[[1]]),logFC=dataList[[1]])
 dat$accession <- GeneAnotDB$accession[match(dat$orig,GeneAnotDB$orig)]
 dat$gene_id <- GeneAnotDB$accession[match(dat$orig,GeneAnotDB$orig)]
 if(all(dat$LogFC)==0){
   dat$LogFC=NULL
 }
-
+rownames(dat) = NULL;
 row.num <- nrow(dat);
         col.num <- ncol(dat);
         if(row.num > 100){
