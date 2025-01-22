@@ -33,7 +33,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet$data.org <- org;
   paramSet$data.idType <- idType;
   listNms <- vector();
-  res <- .parseListInput(geneIDs, paramSet, msgSet);
+  res <- .parseListInput(geneIDs, paramSet, msgSet); 
   dataList <- res[[1]];
   paramSet <- res[[2]];
   msgSet <- res[[3]];
@@ -42,7 +42,7 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   all.prot.mat <- list(); 
   all.mapping <- list(); # Collect all mapping results
   inx <- 0;
-  print(head(dataList));
+ 
   for (i in seq_along(dataList)) {
     dataSet$name <- paste0("datalist", i);
     listNms[i] <- dataSet$name;
@@ -103,15 +103,34 @@ MapListIds <- function(listNm, geneIDs, org, idType){
     dataSet$listNum <- length(dataSet$seeds.proteins);
     #print(dataSet$listNum);
     fast.write.csv(dataSet$prot.mat, paste0(dataSet$name, ".csv"));
+
     RegisterData(dataSet);
     inx <- inx + 1;
   }
   
-  
+     
   # Save mapping results to a CSV file
   combined.mapping.df <- do.call(rbind, all.mapping);
   write.csv(combined.mapping.df, "mapping_results.csv", row.names=F);
-  
+
+dat = data.frame(orig=rownames(dataList[[1]]),logFC=dataList[[1]])
+dat$accession <- GeneAnotDB$accession[match(dat$orig,GeneAnotDB$orig)]
+dat$gene_id <- GeneAnotDB$accession[match(dat$orig,GeneAnotDB$orig)]
+if(all(dat$LogFC)==0){
+  dat$LogFC=NULL
+}
+rownames(dat) = NULL;
+row.num <- nrow(dat);
+        col.num <- ncol(dat);
+        if(row.num > 100){
+            row.num <- 100;
+        }
+        if(col.num > 10){
+            col.num <- 10;
+        }
+        write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+
+
   # Update paramSet
   paramSet$all.ent.mat <- all.prot.mat;
   rownames(all.prot.mat) <- doEntrez2SymbolMapping(rownames(all.prot.mat), paramSet$data.org, paramSet$data.idType);
@@ -129,6 +148,8 @@ MapListIds <- function(listNm, geneIDs, org, idType){
   paramSet$anal.type <- "genelist";
   paramSet$list.num <- list.num
   paramSet$combined.mapping.df <- combined.mapping.df;
+  paramSet$genenum <- nrow(dataSet$sig.mat);
+  paramSet$annonum <- nrow(dataSet$prot.mat);
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
   
@@ -184,7 +205,6 @@ MapMultiListIds <- function(listNm, org, geneIDs, type){
     dataSet$sig.mat <- gene.mat;
     dataSet$prot.mat <- prot.mat;
     dataSet$seeds.proteins <- seed.proteins;
-
     RegisterData(dataSet); 
   }
 
