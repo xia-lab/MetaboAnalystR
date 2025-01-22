@@ -12,16 +12,6 @@
 #'
 Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, threshp=0.05, analType="NA", inx=1, dpi=72, format="png"){
   #save.image('volc.RData');
-  # Print the arguments passed to the function
-  print(paste("dataName:", dataName))
-  print(paste("fileNm:", fileNm))
-  print(paste("paired:", paired))
-  print(paste("fcthresh:", fcthresh))
-  print(paste("threshp:", threshp))
-  print(paste("analType:", analType))
-  print(paste("inx:", inx))
-  print(paste("dpi:", dpi))
-  print(paste("format:", format))
 
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");

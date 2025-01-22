@@ -32,6 +32,7 @@ Set.Config <-function(anal.mode="web"){
 #'
 Init.Data <-function(onWeb=T, dataPath="data/"){
   path = "../../";
+  resource.dir <<- "../../";
   adj.vec <<- "";
   .on.public.web <<- onWeb;
   dataSet <- list(annotated=FALSE);
@@ -409,7 +410,7 @@ ReadDataForMetaInfo<-function(dataName){
 doScatterJson <- function(dataName, filenm){
     dataSet <- readDataset(dataName);
     if(!exists("my.json.scatter")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_scatter3d.Rc");    
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_scatter3d.Rc"));    
     }
     return(my.json.scatter(dataSet, filenm));
 }
@@ -518,4 +519,8 @@ GetSysMessages <- function(){
     sys.msg.vec <<- "No message available";
   }
   return(sys.msg.vec);
+}
+
+setResourceDir <- function(path){
+  resource.dir <<- paste0(path, "/");
 }

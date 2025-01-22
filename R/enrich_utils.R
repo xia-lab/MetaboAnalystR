@@ -255,7 +255,7 @@
 GetRidgePlot <- function(dataName, imgNm = "abc", dpi=72, format="png", fun.type = "kegg", ridgeType = "ora", ridgeColor = "teal", gseaRankOpt="", sigLevel = 0.05, pwNum=20, inx = 1){
     dataSet <- readDataset(dataName);
     if(!exists("compute.ridgeline")){ # public web on same user dir
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_ridgeline.Rc");    
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_ridgeline.Rc"));    
     }
     return(compute.ridgeline(dataSet, imgNm, dpi, format, fun.type, ridgeType, ridgeColor,gseaRankOpt, sigLevel, pwNum, inx));
 }
@@ -272,21 +272,25 @@ PerformUpsetORA <- function(dataName="", file.nm, fun.type, IDs){
 
 PerformGSEA<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx=1, mode = "multi",rankOpt=""){
     if(!exists("my.perform.gsea")){ 
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_gsea.Rc"));    
     }
     return(my.perform.gsea(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx, mode,rankOpt));
 }
 
 ComputeRankedVec <- function(data, opt, inx = 1){
    if(!exists("my.compute.ranked.vec")){ 
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_gsea.Rc"));    
+        
     }
    return(my.compute.ranked.vec(data, opt, inx));
 }
 
 PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
    if(!exists("plot.gs.view")){ 
-        compiler::loadcmp("../../rscripts/ExpressAnalystR/R/utils_gsea.Rc");    
+
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_gsea.Rc"));    
+        
    }
    return(plot.gs.view(cmpdNm, format, dpi, width));
 
