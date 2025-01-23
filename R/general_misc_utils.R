@@ -1472,16 +1472,17 @@ ResetMemoise <- function(){
 }
 
 GetViewData <- function(dataname){
+  print(dataname)
   mSetObj <- .get.mSet(mSetObj);
-    fileName <- paste0(dataname,".csv")
+    #fileName <- paste0(dataname,".csv")
  
  if (mSetObj[["analSet"]][["type"]]=="metadata") {
   message("Detected qs format")
-  dat <- qs::qread(fileName)
+  dat <- qs::qread(dataname)
    dat <- mSetObj$dataSet$data.orig
 } else {
   message("Detected CSV format (or at least not qs)")
-  dat <- data.table::fread(fileName, data.table = FALSE)
+  dat <- data.table::fread(dataname, data.table = FALSE)
 }       
         row.num <- nrow(dat);
         col.num <- ncol(dat);
