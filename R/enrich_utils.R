@@ -6,20 +6,20 @@
 ## Jeff Xia, jeff.xia@mcgill.ca
 ###################################################  
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
-  #dataSet <<- dataSet;
-  #file.nm <<- file.nm;
-  #fun.type <<- fun.type;
-  #ora.vec <<- ora.vec;
-  #vis.type <<- vis.type;
-  #save.image("enrich.RData");
-
+  dataSet <<- dataSet;
+  file.nm <<- file.nm;
+  fun.type <<- fun.type;
+  ora.vec <<- ora.vec;
+  vis.type <<- vis.type;
+  save.image("enrich.RData");
+  
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   require(dplyr)
   # prepare lib
   setres <- .loadEnrichLib(fun.type, paramSet)
   current.geneset <- setres$current.geneset;
-  
+  current.setids <<- setres$current.setids
   # prepare query
   ora.nms <- names(ora.vec);
   
@@ -69,10 +69,20 @@
   );
   
   qs::qsave(hits.query, "hits_query.qs");
-  
+
   names(hits.query) <- names(current.geneset);
   hit.num<-unlist(lapply(hits.query, function(x){length(unique(x))}), use.names=FALSE);
   
+  gene.vec <- current.universe;
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  gene.nms <- sym.vec;
+
+  current.geneset.symb <- lapply(current.geneset, 
+                       function(x) {
+                         gene.nms[gene.vec%in%unlist(x)];
+                       }
+  );
+
   # total unique gene number
   uniq.count <- length(current.universe);
   
@@ -87,7 +97,7 @@
   raw.pvals <- phyper(hit.num-1, set.size, uniq.count-set.size, q.size, lower.tail=F);
   # Replace NaN values with 1
   raw.pvals[is.nan(raw.pvals)] <- 1
-
+  
   res.mat[,4]<- raw.pvals;
   res.mat[,5] <- p.adjust(raw.pvals, "fdr");
   
@@ -100,7 +110,7 @@
     ord.inx<-order(res.mat[,4]);
     res.mat <- signif(res.mat[ord.inx,],3);
     hits.query <- hits.query[ord.inx];
-
+    
     res.mat.all <- as.data.frame(res.mat);
     res.mat.all$Pathway <- rownames(res.mat);
     res.mat.all$Genes <- rep("NA",nrow(res.mat))
@@ -110,7 +120,7 @@
         res.mat.all[which(res.mat.all$Pathway == name), "Genes"] <- paste(hits.query[[name]], collapse = ",")
       }
     }
-
+    
     res.mat.all <- res.mat.all[which(res.mat.all$Genes != "NA"), ];
     res.mat.all$Pathway <- NULL;
     resTable.all <- data.frame(Pathway=rownames(res.mat[which(res.mat.all$Genes != "NA"), ]), res.mat.all);
@@ -144,9 +154,8 @@
   } else {
     res.mat <- res.mat
   }
-
+  
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
-
   qs:::qsave(res.mat, "enr.mat.qs");
   msgSet$current.msg <- "Functional enrichment analysis was completed";
   
@@ -158,6 +167,7 @@
   hit.num <- resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
   
+  resTable$IDs <- fun.ids;
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
   json.res <- list(
     fun.link = setres$current.setlink[1],
@@ -189,7 +199,13 @@
   imgSet$enrTables[[vis.type]]$table <- resTable;
   imgSet$enrTables[[vis.type]]$library <- fun.type
   imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis"
-  
+  if(vis.type == "default"){
+    imgSet$enrTables[[vis.type]]$current.geneset <- current.geneset;
+    imgSet$enrTables[[vis.type]]$hits.query <- hits.query;
+    imgSet$enrTables[[vis.type]]$current.setids <- current.setids;
+    imgSet$enrTables[[vis.type]]$res.mat<- res.mat;
+    imgSet$enrTables[[vis.type]]$current.geneset.symb <- current.geneset.symb;
+  }
   saveSet(imgSet);
   saveSet(paramSet, "paramSet");
   
@@ -338,4 +354,106 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
   res$current.geneset <- current.geneset # The actual gene set data
 
   return(res)
+}
+
+PerformDefaultEnrichment <- function(dataName="", file.nm, fun.type, IDs){
+  paramSet <- readSet(paramSet, "paramSet");
+  analSet <- readSet(analSet, "analSet");
+
+  dataSet <- readDataset(dataName); #instead of function parameter
+  anal.type <- paramSet$anal.type;
+    if(anal.type=="onedata"){
+      gene.vec <- rownames(dataSet$sig.mat);
+    }else if(anal.type=="metadata"){
+      gene.vec <- rownames(analSet$meta.mat);
+    }else{
+      gene.vec <- rownames(paramSet$all.ent.mat);
+    }
+  
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  names(gene.vec) <- sym.vec;
+  res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "default");
+
+  
+  return(1);
+}
+
+GetSigSetCount <- function(type, pval=0.05){
+  pval <- as.numeric(pval);
+  imgSet <- readSet(imgSet, "imgSet");
+    
+  tbl <- imgSet$enrTables[["default"]]$table
+  count <- 0;
+  if(type == "raw"){
+   count<-sum(tbl$P.Value<pval);
+  }else{
+    count<-sum(tbl$FDR<pval);
+  }
+  return(count);
+}
+
+
+GetSetIDLinks <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  imgSet <- readSet(imgSet, "imgSet");
+  fun.type <- imgSet$enrTables[["default"]]$library;
+
+  paramSet <- readSet(paramSet, "paramSet");
+  ids <- imgSet$enrTables[["default"]]$table$IDs
+    if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
+        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
+    }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
+        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
+    }else if(fun.type == "kegg"){
+        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+    }
+  
+  return(annots);
+}
+
+GetHTMLPathSet <- function(setNm){
+  imgSet <- readSet(imgSet, "imgSet");
+  current.geneset <- imgSet$enrTables[["default"]]$current.geneset.symb;
+  hits.query <- imgSet$enrTables[["default"]]$hits.query;
+  set <- current.geneset[[setNm]]; 
+  
+  #set <- cur.setids[[setNm]];
+  
+  hits <- hits.query
+  
+  # highlighting with different colors
+  red.inx <- which(set %in% hits[[setNm]]);
+  
+  # use actual cmpd names
+  #nms <- names(set);
+  nms <- set;
+  nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
+
+  return(cbind(setNm, paste(unique(nms), collapse="; ")));
+}
+
+
+GetEnrResultMatrix <-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["default"]]$res.mat
+
+  return(signif(as.matrix(res), 5));
+}
+
+GetEnrResultColNames<-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["default"]]$res.mat
+  colnames(res);
+}
+
+GetEnrResSetIDs<-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["default"]]$table;
+  return(res$IDs);
+}
+
+GetEnrResSetNames<-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["default"]]$table;
+  return(res$Pathway);
 }

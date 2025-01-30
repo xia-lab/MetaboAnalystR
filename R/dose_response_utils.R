@@ -842,7 +842,6 @@ InitItemSelect <- function(){
 GetNumberDoses <- function(){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
-  print(dataSet$itemselect$dose);
     return(length(unique(dataSet$itemselect$dose))-1) # number of doses minus 0
 }
 

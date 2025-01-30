@@ -296,8 +296,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
     col.nm <- "gene_id";
   } else if (idType == "cds") {
     col.nm <- "accession";
-    db.nm <- "entrez";
-    db.map <- queryGeneDB(paste0("entrez_", idType), org);
+    db.nm <- "entrez_cds";
   } else {
     if (!(idType == "refseq" && org == "fcd") && !(idType == "string" && org == "cel")) {
       q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
@@ -312,7 +311,6 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   }
   
   db.map <- queryGeneDB(db.nm, org);
-  
   if (org == "smm" && idType == "symbol") {
     q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
     feature.vec <- q.mat[, 1];

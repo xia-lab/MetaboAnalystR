@@ -78,6 +78,7 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
 #' @license MIT
 #'
 PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 = NULL, nested.opt = "intonly", robustTrend=F){
+  save.image("deanal.RData");
 
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
@@ -366,7 +367,7 @@ SetupDesignMatrix<-function(dataName="", deMethod){
 #'
 PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   dataSet <- readDataset(dataName);
-  dataSet$pval <- p.lvl
+  dataSet$pval <- p.lvl;
   if(length(levels(dataSet$cls))>2){ 
     grp.nms <- strsplit(grps, " vs. ")[[1]];
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
@@ -527,7 +528,6 @@ MultiCovariateRegression <- function(fileName,
   feature_table <- feature_table[,colnames(feature_table) %in% rownames(covariates)];
   
   if(!identical(colnames(feature_table), rownames(covariates))){
- 
     msgSet$current.msg <- "Error - order of samples got mixed up between tables";
     saveSet(msgSet, "msgSet");
     return(0)
