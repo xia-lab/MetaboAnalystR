@@ -523,4 +523,9 @@ GetSysMessages <- function(){
 
 setResourceDir <- function(path){
   resource.dir <<- paste0(path, "/");
+  paramSet <- readSet(paramSet, "paramSet");
+  
+  paramSet$lib.path <- paste0(resource.dir,"data/");
+  print(paramSet$lib.path);
+  saveSet(paramSet, "paramSet");
 }

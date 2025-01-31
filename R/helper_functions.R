@@ -203,20 +203,22 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   ids <- rownames(dataSet$comp.res);
+  
   if(paramSet$data.org == "generic"){
     if(paramSet$data.idType == "ko"){
-        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>", sep="");
-    }else if(paramSet$data.idType == "s2f"){
-        annots <- paste("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>", sep="");
-    }else{
-        annots <- ids;
+      annots <- paste0("<a href='https://www.genome.jp/dbget-bin/www_bget?", ids, "' target='_blank'>KEGG</a>");
+    } else if(paramSet$data.idType == "s2f"){
+      annots <- paste0("<a href='https://www.ecoomicsdb.ca/#/query?ortho=", ids, "' target='_blank'>EODB</a>");
+    } else {
+      annots <- ids; # Keep as-is
     }
   } else if (paramSet$data.org == "custom"){
-    annots <- ids;
-  }else{
-    annots <- paste("<a href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>NCBI</a>", sep="");
+    annots <- ids; # Keep as-is
+  } else {
+    annots <- paste0("<a href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>NCBI</a>");
   }
-  return(annots);
+  
+  return(annots);  # Ensure this is a character vector, NOT a list
 }
 
 
