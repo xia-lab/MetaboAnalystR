@@ -602,15 +602,16 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
   return(json.nm)
 }
 
-plot.gs.view <-function(cmpdNm, format="png", dpi=72, width=NA){
+plot.gs.view <-function(fileName, format="png", dpi=72, width=NA){
   require("ggplot2");
   require("fgsea");
   current.geneset <- qs::qread("current_geneset.qs");
   analSet <- readSet(analSet, "analSet");
-  imgName <- gsub("\\/", "_",  cmpdNm);
+  imgName <- gsub("\\/", "_",  fileName);
   imgName <- gsub(" ", "_",  imgName);
   imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
   
+  cmpdNm <- gsub("barcode_", "",fileName);
   Cairo(file = imgName, dpi=dpi, width=340, height=300, type="png", bg="transparent");
   g <- plotEnrichment(current.geneset[[cmpdNm]], analSet$rankedVec)
   print(g)

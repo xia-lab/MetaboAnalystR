@@ -304,9 +304,7 @@ ComputeRankedVec <- function(data, opt, inx = 1){
 
 PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
    if(!exists("plot.gs.view")){ 
-
         compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_gsea.Rc"));    
-        
    }
    return(plot.gs.view(cmpdNm, format, dpi, width));
 
@@ -360,16 +358,15 @@ PerformDefaultEnrichment <- function(dataName="", file.nm, fun.type, IDs){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
-  dataSet <- readDataset(dataName); #instead of function parameter
   anal.type <- paramSet$anal.type;
     if(anal.type=="onedata"){
+      dataSet <- readDataset(dataName); #instead of function parameter
       gene.vec <- rownames(dataSet$sig.mat);
     }else if(anal.type=="metadata"){
       gene.vec <- rownames(analSet$meta.mat);
     }else{
       gene.vec <- rownames(paramSet$all.ent.mat);
     }
-  
   sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
   names(gene.vec) <- sym.vec;
   res <- .performEnrichAnalysis(dataSet, file.nm, fun.type, gene.vec, "default");
