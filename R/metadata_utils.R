@@ -8,6 +8,7 @@
 
 #####'Sanity check metadata after metadata edited 
 SanityCheckMeta <- function(fileName,init){
+  save.image("san.RData");
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   
@@ -36,7 +37,7 @@ SanityCheckMeta <- function(fileName,init){
     min.grp.size <- min(table(cls.lbl));
     cls.num <- length(levels(cls.lbl));
     if(min.grp.size<2){
-      msg <- paste0( "No replicates were detected for group  ",as.character(cls.lbl[which( table(cls.lbl)<2)])," in  ",colnames(meta)[1])
+      msg <- paste0( "No replicates were detected for group  ",names(which(table(cls.lbl) < 2))," in  ",colnames(meta)[1])
       msgSet$current.msg <- msg;
       saveSet(msgSet, "msgSet");
       return(0)
