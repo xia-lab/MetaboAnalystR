@@ -2394,26 +2394,67 @@ ComputeHighLow <- function(perf){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PrepareROCData <- function(mSetObj=NA){
-  
+PrepareROCData <- function(sel.meta="NA",factor1,factor2){
   mSetObj <- .get.mSet(mSetObj);
+   msg.vec <<- 0;
+  data.list <- list();
+  omics.vec <- vector();
+  featureNms <- vector();
+  uniqFeats <- vector();
+ 
+
+  mSetObj$dataSet$meta.info.proc <- process_metadata(mSetObj$dataSet$meta.info);  
+
+  # Merge all datasets
+  merged_data <- mSetObj$dataSet$norm
+
+   meta.info = mSetObj$dataSet$meta.info
+  if(factor2!="NA" &factor2!="all" ){
+  meta.info = mSetObj$dataSet$meta.info
+   meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]])
+    sample_include = rownames(meta.info[which(meta.info[[sel.meta]] %in% c(factor1,factor2)),])
+ merged_data <- merged_data[,sample_include]
+meta.info <- meta.info[rownames(meta.info) %in% sample_include,,drop=F]
+   meta.info[[sel.meta]] <- droplevels(meta.info[[sel.meta]])
+}
+if(factor2=="all"){
+meta.info[[sel.meta]] <- as.character(meta.info[[sel.meta]])
+idx = which(meta.info[[sel.meta]]!=factor1)
+meta.info[[sel.meta]][idx] <- "Others"
+meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]],levels=c(factor1,"Others"))
+}
+   stt <- table(meta.info[[sel.meta]])
+ 
+if(length(which(stt<10))==2){
   
-  if(is.null(mSetObj$dataSet$norm.all)){
-    mSetObj$dataSet$norm.all <- mSetObj$dataSet$norm;
-    mSetObj$dataSet$cls.all<- mSetObj$dataSet$cls;
-  }
+  msg.vec <<- paste0("errorLess than 10 samples in both groups ",names(stt)[1]," and ",names(stt)[2],". Please select other groups containing more than 10 samples for biomarker analysis.")
+  return;
+}else if(length(which(stt<10))==1){
   
+  msg.vec <<- paste0("errorLess than 10 samples in group ",names(stt)[which(stt<10)],". Please select other groups containing more than 10 samples for biomarker analysis.")
+  return;
+}else if(length(which(stt<20))==2){
+  msg.vec <<- paste0("warnBiomarker analysis require large sample size. Both groups selected have less than 20 samples.")
+  
+}else if(length(which(stt<20))==1){
+  msg.vec <<- paste0("warnBiomarker analysis require large sample size. ","Group ", names(stt)[which(stt<20)]," has less than 20 samples.")
+  
+}
+
+  # Check if there are new samples to update `norm`
   new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "";
   if(sum(new.inx) > 0){
     mSetObj$dataSet$new.samples <- TRUE;
-    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, ,drop=F];
-    mSetObj$dataSet$norm <- mSetObj$dataSet$norm.all[!new.inx, ,drop=F];
-    mSetObj$dataSet$cls <- factor(mSetObj$dataSet$cls.all[!new.inx])
+    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = F];
+    mSetObj$dataSet$norm <- merged_data;
+    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
+    mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }else{
     mSetObj$dataSet$new.samples <- FALSE;
     mSetObj$dataSet$new.data <- NULL;
-    mSetObj$dataSet$norm <- mSetObj$dataSet$norm.all;
-    mSetObj$dataSet$cls <- mSetObj$dataSet$cls.all; 
+    mSetObj$dataSet$norm <- merged_data;
+    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
+    mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }
   return(.set.mSet(mSetObj));
 }
