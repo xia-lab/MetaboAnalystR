@@ -469,12 +469,12 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     }
   }
 
-  if(anal.type == "roc"){
-    if(length(unique(cls.lbl[!empty.inx])) > 2){
-      AddErrMsg("ROC analysis is only defined for two-group comparisions!");
-      return(0);
-    }
-  }
+  #if(anal.type == "roc"){
+    #if(length(unique(cls.lbl[!empty.inx])) > 2){
+    #  AddErrMsg("ROC analysis is only defined for two-group comparisions!");
+    #  return(0);
+    #}
+  #}
   
   # check for uniqueness of dimension name
   if(length(unique(smpl.nms))!=length(smpl.nms)){
@@ -569,7 +569,14 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
-  
+
+  mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$cls);
+  rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
+  mSetObj$dataSet$meta.types <- c("disc");
+  mSetObj$dataSet$meta.status <- c("OK");
+  names(mSetObj$dataSet$meta.types) <- "Class";
+  names(mSetObj$dataSet$meta.status) <- "Class";
+
   # for the current being to support MSEA and MetPA
   if(mSetObj$dataSet$type == "conc"){
     mSetObj$dataSet$cmpd <- var.nms;
@@ -1198,4 +1205,36 @@ SetAnalType <- function(mSetObj=NA, anal.type){
     mSetObj$analSet$type <- anal.type;
     anal.type <<- anal.type;
     return(.set.mSet(mSetObj))
+}
+
+
+process_metadata <- function(df) {
+  library(caret)
+  
+  # Initialize the processed_df with the same number of rows as the input dataframe
+  processed_df <- data.frame(matrix(ncol = 0, nrow = nrow(df)))
+  
+  # Loop through each column of the data frame
+  for (col_name in colnames(df)) {
+    
+    # Check if the column is a factor or character (categorical)
+    if (is.factor(df[[col_name]]) || is.character(df[[col_name]])) {
+      # One-hot encode categorical variables
+      one_hot_encoded <- model.matrix(~ df[[col_name]] - 1, data = df)
+      colnames(one_hot_encoded) <- paste0(col_name, "_", colnames(one_hot_encoded))
+      # Append to processed dataframe
+      processed_df <- cbind(processed_df, one_hot_encoded)
+    
+    # If the column is numeric (continuous)
+    } else if (is.numeric(df[[col_name]])) {
+      # Handle missing values by imputing them with the mean
+      df[[col_name]][is.na(df[[col_name]])] <- mean(df[[col_name]], na.rm = TRUE)
+      
+      # Normalize continuous variables (Z-score normalization)
+      normalized_column <- scale(df[[col_name]])
+      processed_df[[col_name]] <- normalized_column
+    }
+  }
+  
+  return(processed_df)
 }

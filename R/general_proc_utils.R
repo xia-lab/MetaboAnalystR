@@ -640,4 +640,16 @@ ContainMissing <- function(mSetObj=NA){
   }
 }
 
+GetMetaDataCol <- function(colnm){
+  
+  mSetObj <- .get.mSet(mSetObj);
+ 
+if(colnm=="NA"){
+  cls<-levels(mSetObj$dataSet$meta.info[,1])
+}else{
+  meta <- factor(mSetObj$dataSet$meta.info[,colnm])
+  cls<-levels(meta)
+}
 
+  return(cls[cls!="NA"]);
+}
