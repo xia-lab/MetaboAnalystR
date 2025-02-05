@@ -7,11 +7,11 @@
 ###################################################  
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
   dataSet <<- dataSet;
-  file.nm <<- file.nm;
-  fun.type <<- fun.type;
-  ora.vec <<- ora.vec;
-  vis.type <<- vis.type;
-  save.image("enrich.RData");
+  #file.nm <<- file.nm;
+  #fun.type <<- fun.type;
+  #ora.vec <<- ora.vec;
+  #vis.type <<- vis.type;
+  #save.image("enrich.RData");
   
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
@@ -453,4 +453,84 @@ GetEnrResSetNames<-function(){
   imgSet <- readSet(imgSet, "imgSet");
   res <- imgSet$enrTables[["default"]]$table;
   return(res$Pathway);
+}
+
+
+GetGseaSetCount <- function(type, pval=0.05){
+  pval <- as.numeric(pval);
+  imgSet <- readSet(imgSet, "imgSet");
+    
+  tbl <- imgSet$enrTables[["gsea"]]$table
+  count <- 0;
+  if(type == "raw"){
+   count<-sum(tbl$Pval<pval);
+  }else{
+    count<-sum(tbl$Padj<pval);
+  }
+  return(count);
+}
+
+
+GetGseaIDLinks <- function(dataName=""){
+  dataSet <- readDataset(dataName);
+  imgSet <- readSet(imgSet, "imgSet");
+  fun.type <- imgSet$enrTables[["gsea"]]$library;
+
+  paramSet <- readSet(paramSet, "paramSet");
+  ids <- imgSet$enrTables[["gsea"]]$table$IDs
+    if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
+        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
+    }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
+        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
+    }else if(fun.type == "kegg"){
+        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+    }
+  
+  return(annots);
+}
+
+GetGseaHTMLPathSet <- function(setNm){
+  imgSet <- readSet(imgSet, "imgSet");
+  current.geneset <- imgSet$enrTables[["gsea"]]$current.geneset.symb;
+  hits.query <- imgSet$enrTables[["gsea"]]$hits.query;
+  set <- current.geneset[[setNm]]; 
+    
+  hits <- hits.query
+  
+  # highlighting with different colors
+  red.inx <- which(set %in% hits[[setNm]]);
+  
+  # use actual cmpd names
+  #nms <- names(set);
+  nms <- set;
+  nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
+
+  return(cbind(setNm, paste(unique(nms), collapse="; ")));
+}
+
+
+GetGseaResultMatrix <-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["gsea"]]$res.mat
+
+  return(signif(as.matrix(res), 5));
+}
+
+GetGseaResultColNames <-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["gsea"]]$res.mat
+  colnames(res);
+}
+
+GetGseaResSetIDs <-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["gsea"]]$table;
+
+  return(res$IDs);
+}
+
+GetGseaResSetNames<-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  res <- imgSet$enrTables[["gsea"]]$table;
+  return(res$Name);
 }

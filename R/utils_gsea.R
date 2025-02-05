@@ -21,6 +21,17 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   anal.type <- paramSet$anal.type;
   setres <- .loadEnrichLib(fun.type, paramSet);
   current.geneset <- setres$current.geneset;
+  current.universe <- unique(unlist(current.geneset));     
+
+  gene.vec <- current.universe;
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  gene.nms <- sym.vec;
+
+  current.geneset.symb <- lapply(current.geneset, 
+                       function(x) {
+                         gene.nms[gene.vec%in%unlist(x)];
+                       }
+  );
 
   require("fgsea");
   
@@ -92,9 +103,9 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   }
   
   fgseaRes <- fgseaRes[order(fgseaRes$pval),]
-  if(nrow(fgseaRes)>20 ){
-    fgseaRes <- fgseaRes[c(1:20),]
-  } 
+  #if(nrow(fgseaRes)>20 ){
+  #  fgseaRes <- fgseaRes[c(1:20),]
+  #} 
   
   current.mset <- current.geneset[fgseaRes$pathway]
   current.mset <- current.mset[!duplicated(names(current.mset))]
@@ -131,9 +142,9 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   
   fgseaRes=fgseaRes[order(fgseaRes$pval),]
 
-  if(nrow(fgseaRes)>20 ){
-    fgseaRes <- fgseaRes[c(1:20),]
-  } 
+  #if(nrow(fgseaRes)>20 ){
+  #  fgseaRes <- fgseaRes[c(1:20),]
+  #} 
   
   fgseaRes <- data.frame(fgseaRes, stringsAsFactors=FALSE)
   
@@ -212,7 +223,7 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
     imgSet$enrTables[["gsea"]]$table <- res.mat;
     imgSet$enrTables[["gsea"]]$library <- fun.type;
     imgSet$enrTables[["gsea"]]$algo <- "GSEA";
-
+ 
     saveSet(imgSet, "imgSet");
 
   }
@@ -234,6 +245,18 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
 
   csvDf <- data.frame(Name=fgseaRes$pathway, Total=fgseaRes$total, Hits=fgseaRes$hits, EnrichmentScore=fgseaRes$ES, Pval=fgseaRes$pval, Padj=fgseaRes$padj);
   fast.write(csvDf, file=paste0(file.nm, ".csv"));
+
+    imgSet <- readSet(imgSet, "imgSet");
+    rownames(csvDf) <- NULL;
+    csvDf$IDs <- fun.ids;
+    imgSet$enrTables[["gsea"]]$table <- csvDf;
+    imgSet$enrTables[["gsea"]]$current.geneset <- current.geneset;
+    imgSet$enrTables[["gsea"]]$hits.query <- hits.query;
+    imgSet$enrTables[["gsea"]]$current.setids <- current.setids;
+    imgSet$enrTables[["gsea"]]$res.mat<- csvDf[,-c(1,7)];
+    imgSet$enrTables[["gsea"]]$current.geneset.symb <- current.geneset.symb;
+
+  saveSet(imgSet);
       
   analSet$rankedVec <- rankedVec;
   saveSet(analSet, "analSet");

@@ -217,7 +217,7 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
   } else {
     annots <- paste0("<a href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>NCBI</a>");
   }
-  
+  print(head(annots));
   return(annots);  # Ensure this is a character vector, NOT a list
 }
 
