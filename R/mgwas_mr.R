@@ -19,7 +19,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
       err.vec <<- "";
       if(.on.public.web & (opengwas_jwt_key == "")){
-        opengwas_jwt_key <- readOpenGWASKey();
+        opengwas_jwt_key <- "" #readOpenGWASKey();
       }
       exposure.dat <- mSetObj$dataSet$exposure;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
@@ -50,8 +50,10 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       }
       captured_messages <<- "";
       require('magrittr');
-      outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-                                                   rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh, opengwas_jwt = opengwas_jwt_key)); 
+      #outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+      #                                             rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh, opengwas_jwt = opengwas_jwt_key)); 
+      # use precomputed local database query
+      outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
       last_msg <- captured_messages[length(captured_messages)];
       print(last_msg);
       
@@ -96,6 +98,32 @@ readOpenGWASKey <- function(){
         return("")
     }
 }
+
+extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
+  cat("Processing into extractGwasDB from local \n")
+  database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
+  require("DBI")
+  require("RSQLite")
+  res_list <- list()
+  # Generic step for gwas results
+  # outcomes <- "ukb-b-197"
+  # snps <- c("rs1325", "rs1327", "rs1513025", "rs2669425", "rs880985", "rs2669427", "rs1975331")
+  outcome.idx <- paste0("\'", outcomes, "\'")
+  con <- dbConnect(RSQLite::SQLite(), database_path)
+  query_stat <- paste0("SELECT * FROM ", outcome.idx)
+  res <- dbGetQuery(con, query_stat)
+  meta_res <- dbGetQuery(con, "SELECT * FROM outcome_meta_table")
+  dbDisconnect(con)
+  
+  res_dt1 <- res[res$SNP %in% snps,]
+  meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+  
+  res_outcome_dt <- cbind(res_dt1, meta_dt)
+  # Need an extra step for if proxy is ON
+  #if(ldProxies){}
+  return(res_outcome_dt)
+}
+
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
