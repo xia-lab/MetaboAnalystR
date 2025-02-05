@@ -29,7 +29,12 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   
   de <- data.frame(cbind(vcn$fc.log, vcn$p.log));
   colnames(de) <- c("fc.log", "p.log");
-  de$P.Value <- vcn$p.value;
+  #  de$P.Value <- vcn$p.value;
+  if(length(vcn$p.value) != length(de$P.Value)){
+    de$P.Value <- vcn$p.value[names(vcn$p.value) %in% names(vcn$p.log)];
+  } else {
+    de$P.Value <- vcn$p.value;
+  }
   de$Fold.Change <-vcn$fc.all
   de$Status <- "Non-SIG";
   de$Status[vcn$inx.p & vcn$inx.up] <- "UP";
