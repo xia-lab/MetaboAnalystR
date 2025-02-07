@@ -826,13 +826,11 @@ CombineFacScatter.Anal <- function(mSetObj,
   } 
 }
 
-
-
-
 prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+  save.image("contrast.RData");
   library(limma)
   library(dplyr)
-
+  
   if(!exists('adj.vec')){
     adj.bool = F;
     adj.vec= "NA"
@@ -846,7 +844,7 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
     }
   }
   mSetObj <- .get.mSet(mSetObj);
- 
+  
   if(!is.factor(mSetObj$analSet$combFac)){
     mSetObj$analSet$combFac <- factor(mSetObj$analSet$combFac)
   }
@@ -858,10 +856,15 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   clsdf =  mSetObj$analSet$combFacdf;
   mSetObj$analSet$comp.type <- anal.type;
   grp.nms <- levels(cls);
+  if (is_purely_numeric(grp.nms)) {
+    grp.nms <- make.names(as.character(paste0("Group_", grp.nms)))
+  } else {
+    grp.nms <- make.names(grp.nms)
+  }
   analysisVar <-  meta0
- 
-
-
+  
+  
+  
   if (anal.type == "inter") { 
     if(mSetObj$dataSet$meta.types[meta1]=="disc"){
       formula <- paste("~ ", meta0, "*", meta1)
@@ -877,9 +880,15 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
     }else{
       design <- design.noadj <- model.matrix(formula.noadj, data = clsdf);  
     }
-    colnames(design) <- make.names(colnames(design)); 
-    colnames(design.noadj) <- make.names(colnames(design.noadj)); 
+    if (is_purely_numeric(colnames(design))) {
+      colnames(design) <- make.names(as.character(paste0("Group_", colnames(design))))
+      colnames(design.noadj) <- make.names(as.character(paste0("Group_", colnames(design.noadj))))
+    } else {
+      colnames(design) <- make.names(colnames(design))
+      colnames(design.noadj) <- make.names(colnames(design.noadj))
+    }
   }else{
+    
     design.noadj <-   model.matrix(~ 0 + cls)
     colnames(design.noadj) <- levels(cls); 
     if(adj.bool){
@@ -891,9 +900,9 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
       design <-  design.noadj
     } 
   }
-
-
-
+  
+  
+  
   if(dataSet$meta.types[analysisVar]=="cont" |  any(grepl("(^[0-9]+).*", grp.nms))){
     if(grepl( "vs",par1)){
       par1 <- strsplit(par1, " vs. ")[[1]]
@@ -922,9 +931,9 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   mSetObj$analSet$par1 <- par1
   
   if (anal.type == "inter") {
-     kpidx <-  grepl(meta0,colnames(design)) |(grepl(meta1,colnames(design)) & meta1!="NA")
-     myargs <- as.list(colnames(design)[kpidx])  
-     filename <- paste("combine_factors_interaction", meta0,"_",meta1, sep = "");
+    kpidx <-  grepl(meta0,colnames(design)) |(grepl(meta1,colnames(design)) & meta1!="NA")
+    myargs <- as.list(colnames(design)[kpidx])  
+    filename <- paste("combine_factors_interaction", meta0,"_",meta1, sep = "");
   }else if (anal.type == "custom") {
     grp.nms <- strsplit(par1, " vs. ")[[1]]
     myargs[[1]] <- paste(grp.nms, collapse = "-")
@@ -959,12 +968,18 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   } else {
     print(paste("Not supported: ", anal.type))
   }
-    
+  
   mSetObj$analSet$combineFac_filename <- paste0(filename,".csv");
   mSetObj$analSet$contrast.type <- anal.type;
-  myargs[["levels"]] <- design;
+  if (is_purely_numeric(colnames(design))) {
+    colnames(design) <- make.names(as.character(paste0("Group_", colnames(design))))
+  }
+  myargs[["levels"]] <- design
   contrast.matrix <- do.call(makeContrasts, myargs);
   mSetObj$analSet$contrast.matrix <- contrast.matrix;
+  if (is_purely_numeric(colnames(design.noadj))) {
+    colnames(design.noadj) <- make.names(as.character(paste0("Group_", colnames(design.noadj))))
+  }
   myargs[["levels"]] <- design.noadj;
   contrast.matrix.noadj <- do.call(makeContrasts, myargs);
   mSetObj$analSet$contrast.matrix.noadj <- contrast.matrix.noadj;
@@ -972,182 +987,6 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   return(mSetObj);
 }
 
-
-
-
-
-
-
-
-
-
-GetRawCovThresh <- function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj); 
-  return(mSetObj$analSet$cov$thresh);
-}
-
-convertCovariate2Fun <- function(){
-    if(!file.exists("covariate_result.qs")){
-        return(0)
-    }
-    dt <- qs::qread("covariate_result.qs");
-    features <- rownames(dt)
-    
-    mzs <- vapply(features, function(x){
-      strsplit(x, "__")[[1]][1]
-    }, character(1L));
-    rts <- vapply(features, function(x){
-      strsplit(x, "__")[[1]][2]
-    }, character(1L));
-    if("t" %in% colnames(dt)){
-      df <- data.frame(mz = mzs, rt = rts, tscore = dt$t, pvalue = dt$adj.P.Val)
-    } else {
-      df <- data.frame(mz = mzs, rt = rts, pvalue = dt$adj.P.Val)
-    }
-    
-    write.table(df, file = "metaboanalyst_input_functional_analy.txt", quote = F, row.names = F, sep = "\t")
-    return(1)
-}
-
-PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72, interactive=F){
-  mSetObj <- .get.mSet(mSetObj); 
-  both.mat <- mSetObj$analSet$cov.mat
-  both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
-  logp_val <- mSetObj$analSet$cov$thresh
-  topFeature <- 5;
-  if(nrow(both.mat) < topFeature){
-    topFeature <- nrow(both.mat);
-  }
-  
-  mSetObj$imgSet$covAdj <- imgName;
-  
-  width <- 8;
-  height <- 8.18;
-  
- library(dplyr)
-  library(ggplot2)
-  threshold <- logp_val                
-both.mat$category <- with(both.mat, dplyr::case_when(
-  pval.no > threshold & pval.adj > threshold ~ "Significant",
-  pval.no > threshold & pval.adj <= threshold ~ "Non-sig. when adjusted",
-  pval.adj > threshold & pval.no <= threshold ~ "Sig. when adjusted",
-  TRUE ~ "Non-sig."
-))
-  
- category_counts <- both.mat %>%
-  group_by(category) %>%
-  summarise(count = n(), .groups = 'drop')
- 
-both.mat <- both.mat %>%
-  left_join(category_counts, by = "category") %>%
-  mutate(name = paste0(category, " (", count, ")"))
-
-both.mat$count = NULL
-
-
-category_properties <- data.frame(
-  category = c("Significant", "Non-sig. when adjusted", 
-               "Sig. when adjusted", "Non-sig."),
-  color = c('#6699CC', '#E2808A',  '#94C973','grey')
-)
-
-category_properties <- category_properties %>%
-  left_join(category_counts, by = "category") %>%
-  mutate(name = paste0(category, " (", count, ")"))
-category_properties = category_properties[!is.na(category_properties$count),]
-category_properties$count = category_properties$category =NULL
-
-both.mat$name = factor(both.mat$name,levels = category_properties$name)
-  p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = name, text = paste("Feature:", Row.names, 
-                                                                                               "<br>Adjusted Pval:", signif(10^(-pval.adj), 4), 
-                                                                                               "<br>Non-adjusted Pval:", signif(10^(-pval.no), 4)))) +
-    geom_point(alpha = 0.8) +
-  scale_color_manual(values = setNames(category_properties$color, category_properties$name)) +
-  labs(x = "-log10(P-value): no covariate adjustment", y = "-log10(P-value): covariate adjusted") +
-  theme_minimal() +
-  theme(legend.title = element_blank(),
-        legend.position = "top",
-        panel.grid = element_line(color = "lightgrey", size = 0.15),
-        panel.background = element_rect(fill = "white", color = "white"),
-        plot.background = element_rect(fill = "white", color = "white"))
-
-  
-  
-  if(interactive){
-    library(plotly);
-    ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
-    return(ggp_build);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);    
-    print(p)
-    dev.off()
-    return(.set.mSet(mSetObj));
-  }
-}
-
-FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName){
-
-  mSetObj <- .get.mSet(mSetObj);
-  if(!exists('cov.vec')){
-    adj.bool = F;
-    cov.vec = "NA";
-  }else{
-    if(length(cov.vec) > 0){
-      adj.bool = T;
-    }else{
-      adj.bool = F;
-      cov.vec = "NA";
-    }
-  }
-
-   covariates <- mSetObj$dataSet$meta.info
-   var.types <- mSetObj[["dataSet"]][["meta.types"]]
-   library(dplyr);
-   for(i in c(1:length(var.types))){ # ensure all columns are numeric as required by correlation analysis
-        if(var.types[i] == "disc"){
-            covariates[,i] <- covariates[,i] %>% as.numeric()-1;
-        }
-   }
-
-  input.data <- mSetObj$dataSet$norm;
-
-  if(tgtType == "featNm"){
-    # test if varName is valid
-    if(!varName %in% colnames(mSetObj$dataSet$norm)){
-        AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
-        return(0);
-    }
-    # need to exclude the target itself
-    inx <- which(colnames(input.data) == varName);
-    tgt.var <- input.data[,inx];
-    input.data <- input.data[,-inx];
-  }else{
-    tgt.var <- covariates[,varName];
-  }
-
-  if(adj.bool){
-    adj.vars <- covariates[, cov.vec];
-    require("ppcor");
-    cbtempl.results <- apply(input.data, 2, template.pmatch, tgt.var, dist.name, adj.vars);
-  }else{
-    cbtempl.results <- apply(input.data, 2, template.match, tgt.var, dist.name);
-  }
-  cor.res<-t(cbtempl.results);
-
-  fdr.col <- p.adjust(cor.res[,3], "fdr");
-  cor.res <- cbind(cor.res, fdr.col);
-  colnames(cor.res)<-c("correlation", "t-stat", "p-value", "FDR");
-  ord.inx<-order(cor.res[,3])
-  sig.mat <-signif(cor.res[ord.inx,],5);
-  
-  fileName <- "correlation_feature.csv";
-  fast.write.csv(sig.mat,file=fileName);
-  
-  mSetObj$analSet$corr$cov.vec <- cov.vec;  
-  mSetObj$analSet$corr$dist.name <- dist.name;  
-  mSetObj$analSet$corr$sig.nm <- fileName;
-  mSetObj$analSet$corr$cor.mat <- sig.mat;
-  mSetObj$analSet$corr$pattern <- varName;
-  
-  return(.set.mSet(mSetObj));
+is_purely_numeric <- function(x) {
+  all(grepl("^\\d+$", x))  # Returns TRUE if all elements are purely numeric
 }
