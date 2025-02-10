@@ -393,7 +393,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
-  
+ 
   if(nmdr){
     dat <- qs::qread("nmdr_study.qs")
   }else{
@@ -441,7 +441,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   mSetObj$dataSet$type.cls.lbl <- class(cls.lbl);
   
   msg <- c(msg, "The uploaded file is in comma separated values (.csv) format.");
-  
+
   # try to remove empty line if present
   # identified if no sample names provided
   
@@ -475,7 +475,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
     #  return(0);
     #}
   #}
-  
+ 
   # check for uniqueness of dimension name
   if(length(unique(smpl.nms))!=length(smpl.nms)){
     dup.nm <- paste(smpl.nms[duplicated(smpl.nms)], collapse=" ");
@@ -535,7 +535,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   smpl.nms <- url.smp.nms <- CleanNames(smpl.nms);
 
   names(url.smp.nms) <- smpl.nms;
-  
+
   var.nms <- gsub("\\\\", "-", var.nms);
   url.var.nms <- CleanNames(var.nms); # allow space, comma and period
   names(url.var.nms) <- var.nms;
@@ -569,19 +569,20 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
-
   mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$cls);
-  rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
-  mSetObj$dataSet$meta.types <- c("disc");
-  mSetObj$dataSet$meta.status <- c("OK");
-  names(mSetObj$dataSet$meta.types) <- "Class";
-  names(mSetObj$dataSet$meta.status) <- "Class";
+  if(mSetObj[["analSet"]][["type"]]=="roc"){
+    rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
+    mSetObj$dataSet$meta.types <- c("disc");
+    mSetObj$dataSet$meta.status <- c("OK");
+    names(mSetObj$dataSet$meta.types) <- "Class";
+    names(mSetObj$dataSet$meta.status) <- "Class";
+  }
 
   # for the current being to support MSEA and MetPA
   if(mSetObj$dataSet$type == "conc"){
     mSetObj$dataSet$cmpd <- var.nms;
   }
-  
+
   mSetObj$dataSet$mum.type <- "table";
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
