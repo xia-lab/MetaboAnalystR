@@ -69,18 +69,23 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     AddErrMsg(paste0("Your data seems like empty !"))
     return(F)
   }
-  
-    try(
+  if(all(is.infinite(commonMat2))){
+    AddErrMsg(paste0("Your data contains too many infinite values!"))
+    return(F)
+  } else if(any(is.infinite(commonMat2))){
+    commonMat2[is.infinite(commonMat2)]<- 0
+  }
+  try(
     if (Method=="auto"){
       #### QCs Independent------------
       # Correction Method 1 - Combat
-      
+ 
       if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
         print("Correcting with Combat...");
         Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
         mSetObj$dataSet$Combat_edata<-Combat_edata;
       }
-      
+
       # Correction Method 2 - WaveICA
       if(!.on.public.web){
         if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
@@ -90,6 +95,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
             mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
         }
      }
+
       # Correction Method 3 - Eigens MS
       if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
         print("Correcting with EigenMS...");
@@ -100,6 +106,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
           mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
         }
       }
+
       #### QCs (Quality Control Sample) Dependent---------
       ## Run QCs dependent methods
       if (!identical(QCs,integer(0))){
@@ -280,14 +287,11 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       
     } else if (Method=="RUV_2"){
       
-      QCms<-grep("IS",colnames(commonMat2));
-      
+      QCms<-grep("IS",colnames(commonMat2));      
       if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-
-
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -305,7 +309,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
 
-
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
         return(F)
@@ -322,7 +325,6 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
         return(F)
       }
-
 
       if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
         AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
@@ -347,13 +349,11 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       
     } else if (Method=="NOMIS"){
         
-      ISs <- grep("IS",colnames(commonMat2));
-      
+      ISs <- grep("IS",colnames(commonMat2));      
       if(any(is.na(ISs)) | is.null(ISs) | identical(ISs, integer(0))){
         AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
         return(F)
       }
-
 
       NOMIS_edata <- NOMIS(commonMat2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
@@ -365,25 +365,22 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
       
-      ISs <- grep("IS",colnames(commonMat2));
-      
+      ISs <- grep("IS",colnames(commonMat2));      
       if(any(is.na(ISs)) | is.null(ISs) | identical(ISs, integer(0))){
         AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
         return(F)
       }
 
       CCMN_edata <- CCMN2(commonMat2,class.lbl2)
-      mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;
-      
-    }
-    
+      mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;      
+    }    
     ,silent=T)
 
   if (is.null(mSetObj$dataSet$adjusted.mat) | all(is.na(mSetObj$dataSet$adjusted.mat))){
     AddErrMsg(paste0("Your data or format is not valid! Please double check!"));
     return(F);
   }
-  
+
   if (Method != "auto"){
     
     nms<-names(mSetObj$dataSet)
@@ -394,11 +391,9 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     mSetObj$dataSet$interbatch_dis <- interbatch_dis
     
   }
-  
   mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method);
   Plot.sampletrend(mSetObj,paste0(imgName,"Trend"),method=Method);
   plot_dist(mSetObj,paste0(imgName,"dist"))
-  
   best.table <- mSetObj$dataSet$adjusted.mat
   
   # save the meta-dataset

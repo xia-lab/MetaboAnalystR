@@ -649,17 +649,18 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
     w <- width;
   }
   h <- 6;
-  
+
   mSetObj$imgSet$pca.batch.overview <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mfrow=c(1,2));
-  
+  par(mfrow=c(1,2));   
   nlbls <-  mSetObj$dataSet$batch.cls;
-  pca <- prcomp(mSetObj$dataSet$table, center=T, scale=T);
+  dt <- mSetObj$dataSet$table;
+  if(any(is.infinite(dt))){
+    dt[is.infinite(dt)] <- 0
+  }
+  pca <- prcomp(dt, center=T, scale=T);
   sum.pca<-summary(pca);
   var.pca<-sum.pca$importance[2,]; # variance explained by each PC
-  
   ## plot score plot
   pc1 = pca$x[, 1];
   pc2 = pca$x[, 2];
@@ -671,7 +672,6 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
   if (all(semi.cols == "")){
     semi.cols <- "#FF000080"
   };
-  
   plot(pc1, pc2, xlab=xlabel, ylab=ylabel, pch=21, bg=semi.cols, col="gray", cex=1.6, main="Before Adjustment");
   legend("topright", legend=unique(nlbls), pch=15, col=unique(semi.cols));
   
@@ -686,7 +686,6 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
       return(x)
     } else {x}
   })
-  
   
   table<-df_tmp;
   table[is.na(table)] <- 0;
@@ -765,8 +764,12 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
   
   # centerin the adjusted data
   adjusted.data<-t(mSetObj$dataSet$adjusted.mat)
-  original.data<-t(mSetObj$dataSet$table)
   
+  dt <- mSetObj$dataSet$table;
+  if(any(is.infinite(dt))){
+    dt[is.infinite(dt)] <- 0
+  }
+  original.data<-t(dt)
   complete_all_center = t(scale(t(original.data), center = TRUE, scale = FALSE))
   toplot1 = svd(complete_all_center)
   
