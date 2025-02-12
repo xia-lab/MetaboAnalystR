@@ -10,7 +10,7 @@
 my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=72, width=NA, labelNum=5, interactive=F){
   #save.image("volc.RData");
   mSetObj <- .get.mSet(mSetObj);
-  
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){

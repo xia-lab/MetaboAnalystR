@@ -112,7 +112,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     data<-data[,-inx, drop=FALSE];
     colNames <- colNames[-inx];
   }
-  
+
   # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
   row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
   qs::qsave(row.norm, file="row_norm.qs");
