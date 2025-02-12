@@ -884,7 +884,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       cls.type = "disc";
     }else{ # factor a split within factor b
         if(meta == "NA"){
-          out.fac <- mSetObj$dataSet$meta.info[,1, drop=F;
+          out.fac <- mSetObj$dataSet$meta.info[,1]
           xlab = colnames(meta.info)[1]
         }else{
           out.fac <- mSetObj$dataSet$meta.info[,meta];
