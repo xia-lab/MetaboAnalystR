@@ -524,12 +524,12 @@ GetQEA.smpdbIDs <- function(mSetObj=NA){
 }
 
 GetOrgPathLbl <-function(mSetObj=NA){
-  org = read.csv("../../libs/orgpath.csv")
+  org = read.csv(paste0(rpath ,"libs/orgpath.csv"))
   return(org$label);
 }
 
 GetOrgPathVal <-function(mSetObj=NA){
-  org = read.csv("../../libs/orgpath.csv")
+  org = read.csv(paste0(rpath ,"libs/orgpath.csv"))
   return(org$id);
 }
 

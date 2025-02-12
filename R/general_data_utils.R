@@ -569,7 +569,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
-  mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$cls);
+    mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$orig.cls);
   if(mSetObj[["analSet"]][["type"]]=="roc"){
     rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
     mSetObj$dataSet$meta.types <- c("disc");
@@ -884,7 +884,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       cls.type = "disc";
     }else{ # factor a split within factor b
         if(meta == "NA"){
-          out.fac <- mSetObj$dataSet$meta.info[,1];
+          out.fac <- mSetObj$dataSet$meta.info[,1, drop=F;
           xlab = colnames(meta.info)[1]
         }else{
           out.fac <- mSetObj$dataSet$meta.info[,meta];

@@ -484,10 +484,10 @@ GeneratePathwayJSON<-function(pathway.nm){
 
   mSetObj <- .get.mSet(mSetObj);
   
-  smpdb.path <- paste("../../libs/smpdb/", mSetObj$org, ".qs", sep="");
+  smpdb.path <- paste(rpath ,"libs/smpdb/", mSetObj$org, ".qs", sep="");
   current.kegglib <- qs::qread(smpdb.path);
   
-  jsons.path <- paste("../../libs/smpdb/jsons/", mSetObj$org, ".qs", sep="");
+  jsons.path <- paste(rpath ,"libs/smpdb/jsons/", mSetObj$org, ".qs", sep="");
   smpdb.jsons <- qs::qread(jsons.path) # no need to be global!
   
   if(pathway.nm == "top"){

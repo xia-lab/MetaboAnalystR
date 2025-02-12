@@ -11,7 +11,7 @@
         sub.dir <- paste0(sub.dir, "/");
     }
     if(.on.public.web){
-        lib.path <- paste0("../../libs/", sub.dir, filenm);
+        lib.path <- paste0(rpath, "libs/", sub.dir, filenm);
         print(paste("loading library:", lib.path));
         return(qs::qread(lib.path));
     }
@@ -72,7 +72,7 @@
     }else if(dir.exists("/media/zzggyy/disk")){
         path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/rscripts/MetaboAnalystR/src/MetaboAnalyst.so"
     }else if(.on.public.web){
-        path = "../../rscripts/MetaboAnalystR/src/MetaboAnalyst.so";
+        path = paste0(rpath ,"rscripts/MetaboAnalystR/src/MetaboAnalyst.so");
     }
     return(path)
 }

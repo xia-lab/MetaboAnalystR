@@ -181,6 +181,9 @@ SanityCheckData <- function(mSetObj=NA){
     ord.inx <- order(mSetObj$dataSet$orig.cls);
     mSetObj$dataSet$orig.cls <- cls[ord.inx];
     mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
+    if(!is.null(mSetObj$dataSet$meta.info)){
+        mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
+    }
     orig.data <- orig.data[ord.inx, , drop=FALSE];
     qs::qsave(orig.data, file="data_orig.qs");
     if(mSetObj$dataSet$paired){

@@ -498,7 +498,7 @@ SetUserPath<-function(path){
   }else if(dir.exists("/media/zzggyy/disk/")){
     path <- "/media/zzggyy/disk/MetaboAnalyst/target/MetaboAnalyst-5.18/resources/data/"
   }else if(.on.public.web){
-    path = "../../data/";
+    path = paste0(rpath ,"data/");
   }
   return(path)
 }

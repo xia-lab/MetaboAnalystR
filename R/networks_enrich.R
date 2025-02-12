@@ -113,7 +113,7 @@ GetNetworkGeneMappingResultTable<-function(mSetObj=NA){
 .preparePhenoListSeeds <- function(mSetObj, table.nm){
   
   if(.on.public.web){
-    libs.path <<- "../../libs/";
+    libs.path <<- paste0(rpath ,"libs/");
   }else{
     libs.path <<- "https://www.metaboanalyst.ca/resources/libs/";
   }
