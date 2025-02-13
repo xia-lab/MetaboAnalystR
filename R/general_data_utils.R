@@ -39,7 +39,7 @@
 #'@import methods
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
-  
+  rpath <<- "../../";
   if(!.on.public.web){
     if(exists("mSet")){
       mSetObj <- .get.mSet(mSet);
