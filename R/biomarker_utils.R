@@ -175,7 +175,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'@export
 #'
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
-  
+  save.image("calcFeat.RData");
   mSetObj <- .get.mSet(mSetObj);
   LRConverged <<- "FALSE"; 
   
@@ -2396,11 +2396,11 @@ ComputeHighLow <- function(perf){
 #'
 PrepareROCData <- function(mSetObj=NA, sel.meta="NA",factor1="NA",factor2="NA"){
   mSetObj <- .get.mSet(mSetObj);
-
+  
   if(sel.meta == "NA"){
     return(PrepareROCData_old(mSetObj));
   }
-
+  
   msg.vec <<- 0;
   data.list <- list();
   omics.vec <- vector();
@@ -2411,14 +2411,20 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA",factor1="NA",factor2="NA"){
   mSetObj$dataSet$meta.info.proc <- process_metadata(mSetObj$dataSet$meta.info);  
   
   # Merge all datasets
+  if(is.null(mSetObj$dataSet$norm.orig)){
   merged_data <- mSetObj$dataSet$norm
+  mSetObj$dataSet$norm.orig <- mSetObj$dataSet$norm
+  }else{
+  merged_data <- mSetObj$dataSet$norm.orig
+ }
   
   meta.info = mSetObj$dataSet$meta.info
-  if(factor2!="NA" &factor2!="all" ){
+  if(factor2!="NA" & factor2!="all" ){
     meta.info = mSetObj$dataSet$meta.info
     meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]])
     sample_include = rownames(meta.info[which(meta.info[[sel.meta]] %in% c(factor1,factor2)),])
-    merged_data <- merged_data[,sample_include]
+    sample_include <- sample_include[!is.na(sample_include)]  # Remove any NA rows
+    merged_data <- merged_data[sample_include,]
     meta.info <- meta.info[rownames(meta.info) %in% sample_include,,drop=F]
     meta.info[[sel.meta]] <- droplevels(meta.info[[sel.meta]])
   }
@@ -2452,13 +2458,13 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA",factor1="NA",factor2="NA"){
     mSetObj$dataSet$new.samples <- TRUE;
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = F];
     mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta, drop=F])
+    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
     mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }else{
     mSetObj$dataSet$new.samples <- FALSE;
     mSetObj$dataSet$new.data <- NULL;
     mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta, drop=F])
+    mSetObj$dataSet$cls.orig <- as.factor(mSetObj$dataSet$meta.info[,sel.meta])
     mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }
   return(.set.mSet(mSetObj));

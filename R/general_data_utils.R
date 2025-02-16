@@ -569,7 +569,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       }
     }
   }
-    mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$orig.cls);
+  mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$orig.cls);
+
   if(mSetObj[["analSet"]][["type"]]=="roc"){
     rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
     mSetObj$dataSet$meta.types <- c("disc");
