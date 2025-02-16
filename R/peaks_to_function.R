@@ -4339,7 +4339,7 @@ sumz <-
 votep <-
   function(p, alpha = 0.5) {
     alpha <- ifelse(alpha > 1, alpha / 100, alpha) # if percent
-    stopifnot(alpha > 0, alpha < 1)
+    #stopifnot(alpha > 0, alpha < 1)
     keep <- (p >= 0) & (p <= 1)
     alp <- vector("numeric", 2)
     if(alpha <= 0.5) {

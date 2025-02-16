@@ -163,16 +163,6 @@ Query.mGWASDB <- function(db.path, q.vec, table.nm, col.nm, biofluid="all", popu
   return(res);
 }
 
-as.num <- function(x, na.strings = "NA") {
-  stopifnot(is.character(x))
-  na = x %in% na.strings
-  x[na] = 0
-  x = as.numeric(x)
-  x[na] = NA_real_
-  x
-}
-  
-
 .parse_snp2met_exposure <- function(res){
   res <- res[complete.cases(res[ , 10]),]; # beta
   res <- res[complete.cases(res[ , 19]),]; # se
@@ -244,8 +234,7 @@ clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_
 ld_clump_custom <- function (dat = NULL, clump_kb = 10000, clump_r2 = 0.001, clump_p = 0.99, 
           pop = "EUR", access_token = NULL, bfile = NULL, plink_bin = NULL) 
 {
-  stopifnot("rsid" %in% names(dat))
-  stopifnot(is.data.frame(dat))
+  #stopifnot("rsid" %in% names(dat))
   if (is.null(bfile)) {
     message("Please look at vignettes for options on running this locally if you need to run many instances of this command.")
   }
