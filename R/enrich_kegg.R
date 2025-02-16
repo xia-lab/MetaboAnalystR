@@ -215,7 +215,7 @@ OrganizeJsonforNextwork <- function(mSetObj=NA){
   if(length(fun.ids) ==1) {fun.ids <- matrix(fun.ids)};
   enrichPath$path.id <- fun.ids;
   
-  ko <- qs::qread("../../libs/ko.qs");
+  ko <- qs::qread(paste0(rpath, "libs/ko.qs"));
   cmpd.map <- .get.my.lib("compound_db.qs");
 
   #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
@@ -324,7 +324,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
   
   if(!exists("ko.edge.map")){    
     if(.on.public.web){
-      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste(rpath, "libs/network/ko_edge.csv", sep="");
       ko.edge.map <- .readDataTable(ko.edge.path);
     }else{
       ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
@@ -401,7 +401,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
     hits.query <- hits.query[-rm.ids]
   }
 
-  ko <- qs::qread("../../libs/ko.qs");
+  ko <- qs::qread(paste0(rpath ,"libs/ko.qs"));
   cmpd.map <- .get.my.lib("compound_db.qs");
 
   #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
@@ -461,7 +461,7 @@ MatchQueryOnKEGGMap <- function(query, ko.map){
 doGene2KONameMapping <- function(enIDs){
 
   if(.on.public.web){
-    ko.dic <- .readDataTable("../../libs/network/ko_dic.csv");
+    ko.dic <- .readDataTable(paste0(rpath ,"libs/network/ko_dic.csv"));
   }else{
     ko.dic <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/network/ko_dic.csv");
   }
@@ -495,7 +495,7 @@ LoadKEGGKO_lib<-function(category){
   # now need to update the msets to contain only those in ko01100 map
   if(!exists("ko.edge.map")){
     if(.on.public.web){
-      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste(rpath, "libs/network/ko_edge.csv", sep="");
       ko.edge.map <<- .readDataTable(ko.edge.path); 
     }else{
       ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
@@ -527,7 +527,7 @@ LoadKEGGKO_lib<-function(category){
 #'@param type Input the type 
 doKOFiltering <- function(ko.vec, type){
   if(.on.public.web){
-    ko.dic <- .readDataTable("../../libs/network/ko_dic.csv");
+    ko.dic <- .readDataTable(paste0(rpath ,"libs/network/ko_dic.csv"));
   }else{
     ko.dic <- .readDataTable("https://www.metaboanalyst.ca/resources/libs/network/ko_dic.csv");
   }
@@ -541,7 +541,7 @@ doKOFiltering <- function(ko.vec, type){
 MapKO2KEGGEdges<- function(kos, net="ko01100"){
   if(!exists("ko.edge.map")){
     if(.on.public.web){
-      ko.edge.path <- paste("../../libs/network/ko_edge.csv", sep="");
+      ko.edge.path <- paste(rpath ,"libs/network/ko_edge.csv", sep="");
       ko.edge.map <<- .readDataTable(ko.edge.path);     
     }else{
       ko.edge.path <- paste("https://www.metaboanalyst.ca/resources/libs/network/ko_edge.csv", sep="");
@@ -573,7 +573,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     # Read original library files for a list of pathways with assigned compounds to each
     
     if(.on.public.web){
-      pathway.lib <- qs::qread(paste("../../libs/mummichog/", lib, sep=""));
+      pathway.lib <- qs::qread(paste(rpath ,"libs/mummichog/", lib, sep=""));
     }else{
       if(!file.exists(lib)){
         path.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
@@ -593,7 +593,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     # Read pathway names and ids in the target pathway map (e.g. ko01100)
     
     if(.on.public.web){
-      ko.pathway.names <- .readDataTable(paste("../../libs/network/ko01100_compounds_ids.csv", sep=""));    
+      ko.pathway.names <- .readDataTable(paste(rpath ,"libs/network/ko01100_compounds_ids.csv", sep=""));    
     }else{
       ko.pathway.names <- .readDataTable(paste("https://www.metaboanalyst.ca/resources/libs/network/ko01100_compounds_ids.csv", sep=""));    
     }

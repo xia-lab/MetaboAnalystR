@@ -1102,7 +1102,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   }
  
   if(.on.public.web){
-    mum.url <- paste("../../libs/mummichog/", filenm, sep="");
+    mum.url <- paste(rpath ,"libs/mummichog/", filenm, sep="");
     print(paste("Adding mummichog library:", mum.url));
     mummichog.lib <- try(qs::qread(mum.url), silent = TRUE)
     if(class(mummichog.lib) == "try-error"){
@@ -3653,12 +3653,12 @@ GetTopInx <- function(vec, n, dec=T){
 }
 
 GetOrgMummichogLbl <-function(mSetObj=NA){
-  org = read.csv("../../libs/orgmummichog.csv")
+  org = read.csv(paste0(rpath ,"libs/orgmummichog.csv"))
   return(org$label);
 }
 
 GetOrgMummichogVal <-function(mSetObj=NA){
-  org = read.csv("../../libs/orgmummichog.csv")
+  org = read.csv(paste0(rpath ,"libs/orgmummichog.csv"))
   return(org$id);
 }
 

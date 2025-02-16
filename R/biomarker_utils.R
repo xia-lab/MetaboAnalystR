@@ -2452,13 +2452,13 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA",factor1="NA",factor2="NA"){
     mSetObj$dataSet$new.samples <- TRUE;
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = F];
     mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
+    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta, drop=F])
     mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }else{
     mSetObj$dataSet$new.samples <- FALSE;
     mSetObj$dataSet$new.data <- NULL;
     mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
+    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta, drop=F])
     mSetObj$dataSet$cls <- meta.info[[sel.meta]]
   }
   return(.set.mSet(mSetObj));

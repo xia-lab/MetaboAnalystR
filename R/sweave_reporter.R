@@ -69,7 +69,7 @@ PreparePDFReport<-function(mSetObj=NA, usrName){
 
 # this is for PDF report generation from bash
 SaveCurrentSession <- function(){
-  file.copy("../../rscripts/_sweave.sty", ".")
+  file.copy(paste0(rpath ,"rscripts/_sweave.sty", "."))
   save.image("SweaveImage.RData");
 }
 
