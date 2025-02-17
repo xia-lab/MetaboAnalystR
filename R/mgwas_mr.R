@@ -6,7 +6,6 @@
 
 PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, opengwas_jwt_key = ""){
       mSetObj <- .get.mSet(mSetObj);
-
       #record
       mSetObj$dataSet$snp_filter_params <- list(
       ldclumpOpt=ldclumpOpt,
@@ -50,10 +49,15 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       }
       captured_messages <<- "";
       require('magrittr');
-      #outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
-      #                                             rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh, opengwas_jwt = opengwas_jwt_key)); 
-      # use precomputed local database query
-      outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
+      if(ldProxies & ((ldThresh != 0.8) | (mafThresh != 0.3))){
+        cat("Perform remote access... \n")
+        outcome.dat <- capture_messages(TwoSampleMR::extract_outcome_data(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies),
+                                                    rsq = ldThresh, palindromes=as.numeric(as.logical(pldSNPs)), maf_threshold=mafThresh, opengwas_jwt = opengwas_jwt_key));
+      } else {
+        # use precomputed local database query
+        outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
+      }
+
       last_msg <- captured_messages[length(captured_messages)];
       print(last_msg);
       
@@ -106,8 +110,6 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   require("RSQLite")
   res_list <- list()
   # Generic step for gwas results
-  # outcomes <- "ukb-b-197"
-  # snps <- c("rs1325", "rs1327", "rs1513025", "rs2669425", "rs880985", "rs2669427", "rs1975331")
   outcome.idx <- paste0("\'", outcomes, "\'")
   con <- dbConnect(RSQLite::SQLite(), database_path)
   query_stat <- paste0("SELECT * FROM ", outcome.idx)
@@ -119,8 +121,22 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
   
   res_outcome_dt <- cbind(res_dt1, meta_dt)
-  # Need an extra step for if proxy is ON
-  #if(ldProxies){}
+  
+  if(proxies){
+    database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
+    con <- dbConnect(RSQLite::SQLite(), database_path2)
+    query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
+    res2 <- dbGetQuery(con, query_stat2)
+    dbDisconnect(con)
+    
+    res_dt2 <- res2[res2$SNP %in% snps,]
+    if(nrow(res_dt2)==0){
+      return(res_outcome_dt)
+    }
+    res_outcome_dt2 <- res_dt2[,colnames(res_outcome_dt)]
+    
+    res_outcome_dt <- rbind(res_outcome_dt, res_outcome_dt2)
+  }
   return(res_outcome_dt)
 }
 
