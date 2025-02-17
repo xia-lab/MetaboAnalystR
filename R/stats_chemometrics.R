@@ -1716,6 +1716,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
 
   my.fun <- function(){
+    rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
     }
@@ -2115,6 +2116,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
   my.fun <- function(){
+    rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
     }
@@ -2267,6 +2269,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
   my.fun <- function(){
+    rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"));
     }    
