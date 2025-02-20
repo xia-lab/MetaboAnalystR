@@ -991,7 +991,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
   
   x <- data_ori_norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
-  
+
   if(isPartial){
     if(measure == "se"){
       cutoff = cutoff;
@@ -1082,7 +1082,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
 #'License: GNU GPL (>= 2)
 #'@export
 PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, isOpt, isQuery){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -1098,7 +1098,15 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   imgName = paste("roc_boxplot_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
   
   x <- data_ori_norm[, feat.nm];
-  y <- mSetObj$dataSet$cls;
+
+  # mSetObj$dataSet$cls.orig.roc defined in PrepareROCData, only for the purpose of plotting boxplot if "Others" is selected when more than two factors.
+  if(!is.null(mSetObj$dataSet$cls.orig.roc)){ 
+    y <- mSetObj$dataSet$cls.orig.roc;
+  }else{
+    y <- mSetObj$dataSet$cls;
+  }
+
+
   scale <- dpi/72;
   w <- 200*scale;
   h <- 400*scale; 
@@ -2394,80 +2402,87 @@ ComputeHighLow <- function(perf){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PrepareROCData <- function(mSetObj=NA, sel.meta="NA",factor1="NA",factor2="NA"){
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(sel.meta == "NA"){
-    return(PrepareROCData_old(mSetObj));
+PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA") {
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (sel.meta == "NA") {
+    return(PrepareROCData_old(mSetObj))
+  }
+
+  msg.vec <<- 0
+  data.list <- list()
+  omics.vec <- vector()
+  featureNms <- vector()
+  uniqFeats <- vector()
+
+  mSetObj$dataSet$meta.info.proc <- process_metadata(mSetObj$dataSet$meta.info)  
+
+  # Check if original normalized data exists, if not, initialize it
+  if (is.null(mSetObj$dataSet$norm.orig.roc)) {
+    mSetObj$dataSet$norm.orig.roc <- mSetObj$dataSet$norm
   }
   
-  msg.vec <<- 0;
-  data.list <- list();
-  omics.vec <- vector();
-  featureNms <- vector();
-  uniqFeats <- vector();
-  
-  
-  mSetObj$dataSet$meta.info.proc <- process_metadata(mSetObj$dataSet$meta.info);  
-  
-  # Merge all datasets
-  if(is.null(mSetObj$dataSet$norm.orig)){
-  merged_data <- mSetObj$dataSet$norm
-  mSetObj$dataSet$norm.orig <- mSetObj$dataSet$norm
-  }else{
-  merged_data <- mSetObj$dataSet$norm.orig
- }
-  
-  meta.info = mSetObj$dataSet$meta.info
-  if(factor2!="NA" & factor2!="all" ){
-    meta.info = mSetObj$dataSet$meta.info
+  # Get original data and metadata
+  merged_data <- mSetObj$dataSet$norm.orig.roc;
+  meta.info <- mSetObj$dataSet$meta.info
+
+  # Filter based on selected factors
+  if (factor2 != "NA" & factor2 != "all") {
+    mSetObj$dataSet$cls.orig.roc <- NULL;
+
     meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]])
-    sample_include = rownames(meta.info[which(meta.info[[sel.meta]] %in% c(factor1,factor2)),])
+    sample_include <- rownames(meta.info[meta.info[[sel.meta]] %in% c(factor1, factor2), , drop = FALSE])
     sample_include <- sample_include[!is.na(sample_include)]  # Remove any NA rows
-    merged_data <- merged_data[sample_include,]
-    meta.info <- meta.info[rownames(meta.info) %in% sample_include,,drop=F]
+    
+    # Subset data
+    merged_data <- merged_data[sample_include, , drop = FALSE]
+    meta.info <- meta.info[sample_include, , drop = FALSE]
     meta.info[[sel.meta]] <- droplevels(meta.info[[sel.meta]])
-  }
-  if(factor2=="all"){
+
+  } else if (factor2 == "all") {
+    mSetObj$dataSet$cls.orig.roc <- meta.info[[sel.meta]];
     meta.info[[sel.meta]] <- as.character(meta.info[[sel.meta]])
-    idx = which(meta.info[[sel.meta]]!=factor1)
+    idx <- which(meta.info[[sel.meta]] != factor1)
     meta.info[[sel.meta]][idx] <- "Others"
-    meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]],levels=c(factor1,"Others"))
+    meta.info[[sel.meta]] <- factor(meta.info[[sel.meta]], levels = c(factor1, "Others"))
+    # Update merged_data accordingly
+    sample_include <- rownames(meta.info)
+    merged_data <- merged_data[sample_include, , drop = FALSE]
+
   }
+
+  # Check sample size validity
   stt <- table(meta.info[[sel.meta]])
   
-  if(length(which(stt<10))==2){
-    
-    msg.vec <<- paste0("errorLess than 10 samples in both groups ",names(stt)[1]," and ",names(stt)[2],". Please select other groups containing more than 10 samples for biomarker analysis.")
-    return;
-  }else if(length(which(stt<10))==1){
-    
-    msg.vec <<- paste0("errorLess than 10 samples in group ",names(stt)[which(stt<10)],". Please select other groups containing more than 10 samples for biomarker analysis.")
-    return;
-  }else if(length(which(stt<20))==2){
-    msg.vec <<- paste0("warnBiomarker analysis require large sample size. Both groups selected have less than 20 samples.")
-    
-  }else if(length(which(stt<20))==1){
-    msg.vec <<- paste0("warnBiomarker analysis require large sample size. ","Group ", names(stt)[which(stt<20)]," has less than 20 samples.")
-    
+  if (length(which(stt < 10)) == 2) {
+    msg.vec <<- paste0("errorLess than 10 samples in both groups ", names(stt)[1], " and ", names(stt)[2], 
+                       ". Please select other groups containing more than 10 samples for biomarker analysis.")
+    return
+  } else if (length(which(stt < 10)) == 1) {
+    msg.vec <<- paste0("errorLess than 10 samples in group ", names(stt)[which(stt < 10)], 
+                       ". Please select other groups containing more than 10 samples for biomarker analysis.")
+    return
+  } else if (length(which(stt < 20)) == 2) {
+    msg.vec <<- paste0("warnBiomarker analysis requires a large sample size. Both groups selected have less than 20 samples.")
+  } else if (length(which(stt < 20)) == 1) {
+    msg.vec <<- paste0("warnBiomarker analysis requires a large sample size. Group ", 
+                       names(stt)[which(stt < 20)], " has less than 20 samples.")
   }
-  
-  # Check if there are new samples to update `norm`
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "";
-  if(sum(new.inx) > 0){
-    mSetObj$dataSet$new.samples <- TRUE;
-    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = F];
-    mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- factor(mSetObj$dataSet$meta.info[,sel.meta])
-    mSetObj$dataSet$cls <- meta.info[[sel.meta]]
-  }else{
-    mSetObj$dataSet$new.samples <- FALSE;
-    mSetObj$dataSet$new.data <- NULL;
-    mSetObj$dataSet$norm <- merged_data;
-    mSetObj$dataSet$cls.orig <- as.factor(mSetObj$dataSet$meta.info[,sel.meta])
-    mSetObj$dataSet$cls <- meta.info[[sel.meta]]
+
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == ""
+  if (sum(new.inx) > 0) {
+    mSetObj$dataSet$new.samples <- TRUE
+    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
+  } else {
+    mSetObj$dataSet$new.samples <- FALSE
+    mSetObj$dataSet$new.data <- NULL
   }
-  return(.set.mSet(mSetObj));
+
+  mSetObj$dataSet$norm.orig <- merged_data;
+  mSetObj$dataSet$norm <- merged_data
+  mSetObj$dataSet$cls <- meta.info[[sel.meta]]
+
+  return(.set.mSet(mSetObj))
 }
 
 PrepareROCData_old <- function(mSetObj=NA){
