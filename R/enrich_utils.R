@@ -12,7 +12,7 @@
   #ora.vec <<- ora.vec;
   #vis.type <<- vis.type;
   #save.image("enrich.RData");
-  
+
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   require(dplyr)
@@ -199,13 +199,13 @@
   imgSet$enrTables[[vis.type]]$table <- resTable;
   imgSet$enrTables[[vis.type]]$library <- fun.type
   imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis"
-  if(vis.type == "default"){
+
     imgSet$enrTables[[vis.type]]$current.geneset <- current.geneset;
     imgSet$enrTables[[vis.type]]$hits.query <- hits.query;
     imgSet$enrTables[[vis.type]]$current.setids <- current.setids;
     imgSet$enrTables[[vis.type]]$res.mat<- res.mat;
     imgSet$enrTables[[vis.type]]$current.geneset.symb <- current.geneset.symb;
-  }
+  
   saveSet(imgSet);
   saveSet(paramSet, "paramSet");
   
@@ -354,13 +354,18 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
   return(res)
 }
 
-PerformDefaultEnrichment <- function(dataName="", file.nm, fun.type, IDs){
+PerformDefaultEnrichment <- function(dataName="", file.nm, fun.type){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
 
   anal.type <- paramSet$anal.type;
     if(anal.type=="onedata"){
       dataSet <- readDataset(dataName); #instead of function parameter
+      if(nrow(dataSet$sig.mat) == 0){
+        print("No DE genes were identified, can not perform ORA analysis!");
+        return(0);
+      }
+
       gene.vec <- rownames(dataSet$sig.mat);
     }else if(anal.type=="metadata"){
       gene.vec <- rownames(analSet$meta.mat);
@@ -375,11 +380,11 @@ PerformDefaultEnrichment <- function(dataName="", file.nm, fun.type, IDs){
   return(1);
 }
 
-GetSigSetCount <- function(type, pval=0.05){
+GetSigSetCount <- function(enrType, type, pval=0.05){
   pval <- as.numeric(pval);
   imgSet <- readSet(imgSet, "imgSet");
     
-  tbl <- imgSet$enrTables[["default"]]$table
+  tbl <- imgSet$enrTables[[enrType]]$table
   count <- 0;
   if(type == "raw"){
    count<-sum(tbl$P.Value<pval);
@@ -390,28 +395,29 @@ GetSigSetCount <- function(type, pval=0.05){
 }
 
 
-GetSetIDLinks <- function(dataName=""){
-  dataSet <- readDataset(dataName);
+GetSetIDLinks <- function(type=""){
   imgSet <- readSet(imgSet, "imgSet");
-  fun.type <- imgSet$enrTables[["default"]]$library;
+  fun.type <- imgSet$enrTables[[type]]$library;
 
   paramSet <- readSet(paramSet, "paramSet");
-  ids <- imgSet$enrTables[["default"]]$table$IDs
+  ids <- imgSet$enrTables[[type]]$table$IDs
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
         annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
     }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
         annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
     }else if(fun.type == "kegg"){
         annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+    }else if(fun.type == "reactome"){
+        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>Reactome</a>", sep="");
     }
   
   return(annots);
 }
 
-GetHTMLPathSet <- function(setNm){
+GetHTMLPathSet <- function(type, setNm){
   imgSet <- readSet(imgSet, "imgSet");
-  current.geneset <- imgSet$enrTables[["default"]]$current.geneset.symb;
-  hits.query <- imgSet$enrTables[["default"]]$hits.query;
+  current.geneset <- imgSet$enrTables[[type]]$current.geneset.symb;
+  hits.query <- imgSet$enrTables[[type]]$hits.query;
   set <- current.geneset[[setNm]]; 
   
   #set <- cur.setids[[setNm]];
@@ -430,28 +436,29 @@ GetHTMLPathSet <- function(setNm){
 }
 
 
-GetEnrResultMatrix <-function(){
+GetEnrResultMatrix <-function(type){
   imgSet <- readSet(imgSet, "imgSet");
-  res <- imgSet$enrTables[["default"]]$res.mat
-
+  print(names(imgSet$enrTables[[type]]));
+  res <- imgSet$enrTables[[type]]$res.mat
   return(signif(as.matrix(res), 5));
 }
 
-GetEnrResultColNames<-function(){
+GetEnrResultColNames<-function(type){
   imgSet <- readSet(imgSet, "imgSet");
-  res <- imgSet$enrTables[["default"]]$res.mat
+  res <- imgSet$enrTables[[type]]$res.mat
   colnames(res);
 }
 
-GetEnrResSetIDs<-function(){
+GetEnrResSetIDs<-function(type){
   imgSet <- readSet(imgSet, "imgSet");
-  res <- imgSet$enrTables[["default"]]$table;
+  res <- imgSet$enrTables[[type]]$table;
+  print(head(res));
   return(res$IDs);
 }
 
-GetEnrResSetNames<-function(){
+GetEnrResSetNames<-function(type){
   imgSet <- readSet(imgSet, "imgSet");
-  res <- imgSet$enrTables[["default"]]$table;
+  res <- imgSet$enrTables[[type]]$table;
   return(res$Pathway);
 }
 
@@ -478,6 +485,7 @@ GetGseaIDLinks <- function(dataName=""){
 
   paramSet <- readSet(paramSet, "paramSet");
   ids <- imgSet$enrTables[["gsea"]]$table$IDs
+
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
         annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
     }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
@@ -533,4 +541,19 @@ GetGseaResSetNames<-function(){
   imgSet <- readSet(imgSet, "imgSet");
   res <- imgSet$enrTables[["gsea"]]$table;
   return(res$Name);
+}
+
+GetEnrResTypes<-function(){
+  imgSet <- readSet(imgSet, "imgSet");
+  nms <- names(imgSet$enrTables);
+  nms <- setdiff(nms, "default");
+  nms <- setdiff(nms, "gsea")
+  return(nms);
+}
+
+GetEnrResLibrary<-function(type){
+  imgSet <- readSet(imgSet, "imgSet");
+  summary <- imgSet$enrTables[[type]];
+  res <- summary$library
+  return(res);
 }

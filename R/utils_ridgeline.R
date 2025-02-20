@@ -276,9 +276,9 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
-  imgSet$enrTables[["ridgeline"]]$table <- resTable;
-  imgSet$enrTables[["ridgeline"]]$library <- fun.type;
-  imgSet$enrTables[["gsea"]]$algo <- toupper(ridgeType);
+  #imgSet$enrTables[["ridgeline"]]$table <- resTable;
+  #imgSet$enrTables[["ridgeline"]]$library <- fun.type;
+  #imgSet$enrTables[["gsea"]]$algo <- toupper(ridgeType);
   
   imgSet$compute.ridgeline <- imageName;
   saveSet(imgSet);

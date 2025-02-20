@@ -267,6 +267,7 @@ GetExpressResultMatrix <-function(dataName="", inxt){
   if(nrow(res) > 1000){
     res <- res[1:1000,];
   }
+  print(head(signif(as.matrix(res), 5)));
   return(signif(as.matrix(res), 5));
 }
 
@@ -278,7 +279,6 @@ GetNumOfLists <- function(){
 
 GetNumOfGenes <- function(){
   paramSet <- readSet(paramSet, "paramSet");
-print(paramSet$genenum)
   return(paramSet$genenum)
 }
 
@@ -339,7 +339,6 @@ SelectDataSet <- function(){
 
 GetFeatureNum <-function(dataName){
   dataSet <- readDataset(dataName);
-  
   return(nrow(dataSet$data.norm));
 }
 

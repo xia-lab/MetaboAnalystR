@@ -12,6 +12,15 @@
 #'@export
 #'
 my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFactorInx=1, mode = "multi",rankOpt=""){
+  message("Debug Info - my.perform.gsea:")
+  message("dataName: ", dataName)
+  message("file.nm: ", file.nm)
+  message("fun.type: ", fun.type)
+  message("netNm: ", netNm)
+  message("mType: ", mType)
+  message("selectedFactorInx: ", selectedFactorInx)
+  message("mode: ", mode)
+  message("rankOpt: ", rankOpt)
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
@@ -75,7 +84,7 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std",
-                          nperm=10000)    
+                          nperm=1000)    
     }else{
       fgseaRes <- fgsea::fgsea(pathways = current.geneset, 
                           stats    = rankedVec,

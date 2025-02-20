@@ -95,68 +95,90 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   return(RegisterData(dataSet));
 }
 
-.prepare.deseq<-function(dataSet, anal.type, par1, par2, nested.opt){
-  my.fun <- function(){
-    require(DESeq2);
-    dataSet <- dat.in$data;
-    contrast.matrix <- dataSet$contrast.matrix;
-    design <- dataSet$design
-    if(length(dataSet$rmidx)>0){
-      data.anot <- dataSet$data.anot[,-dataSet$rmidx]
-    }else{
+.prepare.deseq <- function(dataSet, anal.type, par1, par2, nested.opt) {
+  my.fun <- function() {
+    require(DESeq2)
+    
+    # Extract count data
+    if(length(dataSet$rmidx) > 0) {
+      data.anot <- dataSet$data.anot[, -dataSet$rmidx]
+    } else {
       data.anot <- dataSet$data.anot
     }
-    if( any(grepl("(^[0-9]+).*", dataSet$fst.cls))){
-      fst.cls <- paste0(dataSet$analysisVar,"_",dataSet$fst.cls)
-    }else{
+    
+    # Ensure primary class labels are formatted correctly
+    if (any(grepl("(^[0-9]+).*", dataSet$fst.cls))) {
+      fst.cls <- paste0(dataSet$analysisVar, "_", dataSet$fst.cls)
+    } else {
       fst.cls <- dataSet$fst.cls
     }
     
-    if (is.null(dataSet$sec.cls) | all(dataSet$sec.cls=="NA")){
-      colData <- data.frame(fst.cls)
-      colnames(colData) <- "condition"    
-      dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
+    # Prepare metadata (colData)
+    colData <- data.frame(condition = factor(fst.cls))  # Base condition
+    
+    # Add block factor if available
+    if (!is.null(dataSet$block)) {
+      colData$block <- factor(dataSet$block)
+      design <- ~ block + condition  # Include block in design
     } else {
-      colData <- data.frame(fst.cls, dataSet$sec.cls, dataSet$cls);
-      colnames(colData) <- c("condition", "type", "condition_type");
-      dds <- DESeqDataSetFromMatrix(countData=round(data.anot), colData = colData, design=dataSet$design);
-    }   
-    
-    dds <- DESeq(dds, betaPrior=FALSE) 
-    qs::qsave(dds, "deseq.res.obj.rds");
-    
-    contrasts <- list()
-    colnames(contrast.matrix) <- sub("-", " vs ", colnames(contrast.matrix))
-    i = 1;
-    for (col in colnames(contrast.matrix)) {
-      levels <- strsplit(col, " vs ")[[1]]
-      contrasts[[col]] <- contrast.matrix[,i]
-      i = i +1;
+      design <- ~ condition
     }
     
+    # Create DESeq2 dataset
+    dds <- DESeqDataSetFromMatrix(countData = round(data.anot), colData = colData, design = design)
+    
+    dds <- DESeq(dds, betaPrior = FALSE)
+    
+    qs::qsave(dds, "deseq.res.obj.rds")
+    
+    # Extract all unique conditions
+    all_conditions <- levels(colData$condition)
+    
+    # Generate pairwise comparisons
+    contrast_list <- list()
+    for (i in 1:(length(all_conditions) - 1)) {
+      for (j in (i + 1):length(all_conditions)) {
+        contrast_name <- paste0(all_conditions[i], " vs ", all_conditions[j])
+        contrast_list[[contrast_name]] <- c("condition", all_conditions[j], all_conditions[i])  # DESeq2 contrast format
+      }
+    }
+    
+    # ---- Extract Results for Each Contrast ----
     results_list <- list()
-    for (contrast_name in names(contrasts)) {
-      vec <- contrasts[[contrast_name]]
-      res <- results(dds, contrast=vec, independentFiltering=FALSE, cooksCutoff=Inf)
-      topFeatures <- data.frame(res@listData);
-      rownames(topFeatures) <- rownames(res);
-      nms <- colnames(topFeatures);
-      nms[which(nms == "padj")] <- "adj.P.Val";
-      nms[which(nms == "pvalue")] <- "P.Value";
-      nms[which(nms == "log2FoldChange")] <- "logFC";
-      colnames(topFeatures) <- nms;
-      topFeatures <- topFeatures[c(2,1,3,4,5,6)];
-      # order the result based on raw p
-      ord.inx <- order(topFeatures$P.Value);
-      topFeatures <- topFeatures[ord.inx, ];
-      results_list[[contrast_name]]<- topFeatures;
+    print(contrast_list);
+    for (contrast_name in names(contrast_list)) {
+      contrast_vec <- contrast_list[[contrast_name]]
+      
+      res <- results(dds, contrast = contrast_vec, independentFiltering = FALSE, cooksCutoff = Inf)
+      
+      # Convert results to a dataframe
+      topFeatures <- data.frame(res@listData)
+      rownames(topFeatures) <- rownames(res)
+      
+      # Rename columns for consistency
+      colnames(topFeatures) <- sub("padj", "adj.P.Val", colnames(topFeatures))
+      colnames(topFeatures) <- sub("pvalue", "P.Value", colnames(topFeatures))
+      colnames(topFeatures) <- sub("log2FoldChange", "logFC", colnames(topFeatures))
+      
+      # Reorder columns
+      topFeatures <- topFeatures[c("logFC","baseMean","lfcSE", "stat", "P.Value", "adj.P.Val")]
+      
+      # Sort by p-value
+      topFeatures <- topFeatures[order(topFeatures$P.Value), ]
+            print(head(topFeatures));
+
+      results_list[[contrast_name]] <- topFeatures
     }
     return(results_list);
   }
-  dat.in <- list(data=dataSet, contrast.matrix = dataSet$contrast.matrix, my.fun=my.fun);
-  qs::qsave(dat.in, file="dat.in.qs");
-  return(1);
+  
+  # Save input data
+  dat.in <- list(data = dataSet, my.fun = my.fun)
+  qs::qsave(dat.in, file = "dat.in.qs")
+  
+  return(1)
 }
+
 
 .save.deseq.res <- function(dataSet){
   dat.in <- qs::qread("dat.in.qs"); 
@@ -260,6 +282,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$contrast.type <- anal.type;
   contrast.matrix <- do.call(makeContrasts, myargs);
   dataSet$contrast.matrix <- contrast.matrix;
+  RegisterData(dataSet);
   return(dataSet);
 }
 
@@ -302,25 +325,48 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   } else {
     set.seed(1) 
     require(edgeR)
-    if(length(dataSet$rmidx)>0){
-      data.anot <- dataSet$data.anot[,-dataSet$rmidx];
-    }else{
-      data.anot <- dataSet$data.anot;
+    # Remove samples with NA metadata if applicable
+    if(length(dataSet$rmidx) > 0){
+      data.anot <- dataSet$data.anot[, -dataSet$rmidx]
+    } else {
+      data.anot <- dataSet$data.anot
     }
-    y <- DGEList(counts = data.anot, group = dataSet$cls)
+    
+    group <- factor(dataSet$cls)
+    
+    if (!is.null(dataSet$block)) {
+      block <- factor(dataSet$block)  # Ensure it is a factor
+      design <- model.matrix(~ group + block)  # Add blocking factor to model
+    } else {
+      design <- model.matrix(~ group)  # No blocking factor
+    }
+    
+    y <- DGEList(counts = data.anot, group = group)
     y <- calcNormFactors(y)
+    
     y <- estimateGLMCommonDisp(y, design, verbose = FALSE)
-    y = tryCatch(
-         {estimateGLMTrendedDisp(y, design)
-       }, error=function(e){
-         msgSet$current.msg <- e
-         }, warning=function(w){
-          msgSet$current.msg <- c(msgSet$current.msg,w)
-          saveSet(msgSet, "msgSet");  
-         return(0)
-          })
+    
+    y = tryCatch({
+      estimateGLMTrendedDisp(y, design)
+    }, error = function(e) {
+      msgSet$current.msg <- e
+    }, warning = function(w) {
+      msgSet$current.msg <- c(msgSet$current.msg, w)
+      saveSet(msgSet, "msgSet")
+      return(0)
+    })
+    
     y <- estimateGLMTagwiseDisp(y, design)
     fit <- glmFit(y, design)
+    
+    coef_name <- colnames(design)[grep("^group", colnames(design))]  # Find group coefficient
+    if (length(coef_name) == 0) {
+      stop("Error: Could not find the group coefficient in the design matrix.")
+    }
+    
+    contrast.matrix <- makeContrasts(contrasts = coef_name, levels = design)
+    
+    
     lrt <- glmLRT(fit, contrast = contrast.matrix)
     topFeatures <- topTags(lrt, n = Inf)$table
   }
