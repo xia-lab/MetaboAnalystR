@@ -1118,6 +1118,11 @@ FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, var
   if(adj.bool){
     adj.vars <- covariates[, cov.vec];
     require("ppcor");
+    if(max(input.data) >= 1e8){
+     # values bigger than 1x10^8 will beyond the computational ability. Enforce an log transform here
+      input.data[input.data <= 0] <- 1
+      input.data <- log10(input.data)
+    }
     cbtempl.results <- apply(input.data, 2, template.pmatch, tgt.var, dist.name, adj.vars);
   }else{
     cbtempl.results <- apply(input.data, 2, template.match, tgt.var, dist.name);
