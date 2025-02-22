@@ -450,3 +450,9 @@ SetUniverseOpt <- function(universe.opt){
   }
   saveSet(paramSet);
 }
+
+SetInitLib <-function(library){
+  paramSet <- readSet(paramSet, "paramSet");
+  paramSet$init.lib <- library;
+  saveSet(paramSet);
+}

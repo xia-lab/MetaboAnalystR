@@ -109,12 +109,13 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   dpi <- as.numeric(dpi)
-  
-  df <- data.frame(dataSet$data.norm, stringsAsFactors = FALSE)
-  df <- stack(df)
-  sampleNms <- gsub("-", ".", colnames(dataSet$data.norm))
-  if(length(dataSet$meta.info) == 2){
 
+  ######check.names=F is important for names not following conventions (i.e. with -, starts with number)
+  df <- data.frame(dataSet$data.norm, stringsAsFactors = FALSE, check.names = FALSE)
+  df <- stack(df)
+  sampleNms <-colnames(dataSet$data.norm)
+  if(length(dataSet$meta.info) == 2){
+    
     Factor1 <- dataSet$meta.info[,1]
     factorNm1 <- colnames(dataSet$meta.info)[1]
     conv <- data.frame(ind=sampleNms, Factor1=Factor1)
@@ -127,40 +128,40 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     df1 <- merge(df1, conv, by="ind")
     df2 <- reshape::melt(df1, measure.vars=c(factorNm1,factorNm2))
     colnames(df2)[4] <- "Conditions"
-
+    
     g = ggplot(df2, aes(x=values)) + 
-        geom_line(aes(color=Conditions, group=ind), stat="density", alpha=0.6) + 
-        facet_grid(. ~ variable) +
-        theme_bw()
-
+      geom_line(aes(color=Conditions, group=ind), stat="density", alpha=0.6) + 
+      facet_grid(. ~ variable) +
+      theme_bw()
+    
     width <- 12
     height <- 6
   }else{
     Conditions <- dataSet$meta.info[,1];
-    conv <- data.frame(ind=sampleNms, Conditions=Conditions)
+    conv <- data.frame(ind=sampleNms, Conditions=Conditions, stringsAsFactors = FALSE, check.names = FALSE)
     df1 <- merge(df, conv, by="ind")
-
+    
     g = ggplot(df1, aes(x=values)) + 
-        geom_line(aes(color=Conditions, group=ind), stat="density", alpha=0.6) +
-        theme_bw()
-
+      geom_line(aes(color=Conditions, group=ind), stat="density", alpha=0.6) +
+      theme_bw()
+    
     width <- 8
     height <- 6
   }
-
+  
   if(interactive){
     library(plotly);
-        m <- list(
-                l = 50,
-                r = 50,
-                b = 20,
-                t = 20,
-                pad = 0.5
-            )
+    m <- list(
+      l = 50,
+      r = 50,
+      b = 20,
+      t = 20,
+      pad = 0.5
+    )
     if(length(dataSet$meta.info) == 2){
-    w=1000;
+      w=1000;
     }else{
-    w=800;
+      w=800;
     }
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build);

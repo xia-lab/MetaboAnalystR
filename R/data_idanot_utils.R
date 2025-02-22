@@ -282,6 +282,11 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   col.nm <- "";
   db.nm <- "";
   
+  if (org == "zhangshugang") {
+      q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
+      feature.vec <- q.mat[, 1];
+  }
+
   if (idType %in% c("s2f", "ko") || paramSet$data.idType %in% c("s2f", "ko")) {
     col.nm <- "gene_id";
     db.nm <- paste0("entrez_", idType);
