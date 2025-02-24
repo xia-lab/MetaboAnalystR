@@ -827,7 +827,6 @@ CombineFacScatter.Anal <- function(mSetObj,
 }
 
 prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
-  save.image("contrast.RData");
   library(limma)
   library(dplyr)
   

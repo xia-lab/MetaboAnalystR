@@ -1189,8 +1189,7 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 ######### biplot for PLSDA
 ########################
 PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
-  print(topnum)
-  print(imgName)
+
   mSetObj <- .get.mSet(mSetObj);
   plsr <- mSetObj$analSet$plsr
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");

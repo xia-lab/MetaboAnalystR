@@ -1,7 +1,58 @@
 
 .load.scripts.on.demand <- function(fileName=""){
-    complete.path <- paste0("../../rscripts/MetaboAnalystR/R/", fileName);
-    compiler::loadcmp(complete.path);
+    mSetObj <- .get.mSet(NA)
+  # Define the relative path that is independent of rpath
+  relPath <- paste0("rscripts/MetaboAnalystR/R/", fileName)
+  
+  # Construct the complete path using the current rpath
+  complete.path <- paste0(rpath, relPath)
+  
+  if(!file.exists(complete.path)){
+      rpath <<- "../../../"
+      complete.path <- paste0(rpath, relPath)
+  } else {
+      rpath <<- "../../"
+  }
+  
+  # Initialize the loaded.scripts list if needed
+  if(is.null(mSetObj$paramSet$loaded.scripts)){
+    mSetObj$paramSet$loaded.scripts <- list()
+  }
+  
+  # Only store the relative path (without rpath) to ensure uniqueness
+  if(!relPath %in% mSetObj$paramSet$loaded.scripts) {
+    mSetObj$paramSet$loaded.scripts <- c(mSetObj$paramSet$loaded.scripts, relPath)
+  }
+  
+  # Load the script using the complete path
+  compiler::loadcmp(complete.path)
+}
+
+Reload.scripts.on.demand <- function(){
+  mSetObj <- .get.mSet(NA)
+  
+  # Check if there are any scripts saved
+  if (is.null(mSetObj$paramSet$loaded.scripts) || length(mSetObj$paramSet$loaded.scripts) == 0) {
+    message("No scripts to reload.")
+    return(1)
+  }
+  
+  # Determine the rpath prefix based on the first script's existence
+  first_rel <- mSetObj$paramSet$loaded.scripts[[1]]
+  first_complete_path <- paste0("../../", first_rel)
+  if (!file.exists(first_complete_path)) {
+    rpath <<- "../../../"
+  } else {
+    rpath <<- "../../"
+  }
+  
+  # Reload each script using the determined rpath prefix
+  for (relPath in mSetObj$paramSet$loaded.scripts) {
+    complete_path <- paste0(rpath, relPath)
+    compiler::loadcmp(complete_path)
+  }
+  
+  return(1)
 }
 
 # note, this is usually used at the end of a function
@@ -40,6 +91,7 @@
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   rpath <<- "../../";
+print("rpathInitData=====");
   if(!.on.public.web){
     if(exists("mSet")){
       mSetObj <- .get.mSet(mSet);
@@ -1240,3 +1292,42 @@ process_metadata <- function(df) {
   
   return(processed_df)
 }
+
+
+Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
+                          lbl.type="disc", nmdr = FALSE){
+    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
+    mSetObj <- .get.mSet(mSetObj);
+
+    conc <- qs::qread(file="data_orig.qs");
+    int.mat <- conc;
+    dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
+
+    # Error check: Ensure metadata is numeric
+    if (any(is.na(dose))) {
+        AddErrMsg("Error: Metadata for dose-response analysis must be numeric. Please check the input file and ensure the dose values are properly formatted.")
+        return(0);
+    }
+
+    # Check for a minimum of 3 unique doses
+    unique_doses <- unique(dose)
+    if (length(unique_doses) < 3) {
+        AddErrMsg("Error: Dose-response analysis requires at least 3 unique doses. Please provide data with at least 3 distinct dose levels.")
+        return(0)
+    }
+
+    dose.order <- order(dose);
+    meta.reorder <- mSetObj$dataSet$cls[dose.order];
+    int.mat <- int.mat[dose.order, ];
+
+    meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
+    meta.reorder <- gsub(" ", "", meta.reorder)
+    meta.reorder <- factor(meta.reorder, levels = unique(meta.reorder))
+
+
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
+    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
+
+    qs::qsave(int.mat, file="data_orig.qs");
+    return(.set.mSet(mSetObj));
+} 

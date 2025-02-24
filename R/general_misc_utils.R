@@ -1496,4 +1496,7 @@ GetViewData <- function(dataname){
  
 }
 
- 
+setResourceDir <- function(path){
+    rpath <<- path;
+    print(paste0("rpath====", path));
+}
