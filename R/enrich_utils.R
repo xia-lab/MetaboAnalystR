@@ -150,6 +150,7 @@
   # Check for and handle duplicate row names in enr.mat
   if(any(duplicated(rownames(res.mat)))) {
     res.mat <- res.mat[!duplicated(rownames(res.mat)), ]
+    hits.query <- hits.query[match(rownames(res.mat), names(hits.query))]
     print("Duplicates in enr.mat were removed.")
   } else {
     res.mat <- res.mat
@@ -409,6 +410,8 @@ GetSetIDLinks <- function(type=""){
         annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
     }else if(fun.type == "reactome"){
         annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>Reactome</a>", sep="");
+    }else{
+        annots <- ids;
     }
   
   return(annots);
@@ -492,6 +495,10 @@ GetGseaIDLinks <- function(dataName=""){
         annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
     }else if(fun.type == "kegg"){
         annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+    }else if(fun.type == "reactome"){
+        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>Reactome</a>", sep="");
+    }else{
+        annots <- ids;
     }
   
   return(annots);

@@ -198,6 +198,8 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   # Check for and handle duplicate row names in enr.mat
   if(any(duplicated(rownames(res.mat)))) {
     res.mat <- res.mat[!duplicated(rownames(res.mat)), ]
+    hits.query <- hits.query[match(rownames(res.mat), names(hits.query))]
+
     print("Duplicates in enr.mat were removed.")
   } else {
     res.mat <- res.mat
