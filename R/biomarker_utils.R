@@ -2431,7 +2431,7 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
     mSetObj$dataSet$cls.all<- meta.info[[sel.meta]];
   }
 
-  new.inx <- is.na(meta.info[[sel.meta]]) | meta.info[[sel.meta]] == "" | meta.info[[sel.meta]] == "PRED"
+  new.inx <- is.na(meta.info[[sel.meta]]) | meta.info[[sel.meta]] == "" | meta.info[[sel.meta]] == "UNKNOWN"
   if (sum(new.inx) > 0) {
     mSetObj$dataSet$new.samples <- TRUE
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
@@ -2501,7 +2501,7 @@ PrepareROCData_old <- function(mSetObj=NA){
     mSetObj$dataSet$cls.all<- mSetObj$dataSet$cls;
   }
   
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "UNKNOWN";
   if(sum(new.inx) > 0){
     mSetObj$dataSet$new.samples <- TRUE;
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, ,drop=F];
@@ -2766,13 +2766,13 @@ GetNewSampleNames <- function(mSetObj=NA){
     mSetObj$dataSet$cls.all<- meta.info[,1];
   }
 
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "UNKNOWN";
   if (sum(new.inx) > 0) {
-    mSetObj$dataSet$new.samples <- TRUE
-    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
+    mSetObj$dataSet$new.samples <- TRUE;
+    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE];
   } else {
-    mSetObj$dataSet$new.samples <- FALSE
-    mSetObj$dataSet$new.data <- NULL
+    mSetObj$dataSet$new.samples <- FALSE;
+    mSetObj$dataSet$new.data <- NULL;
   }
 
 

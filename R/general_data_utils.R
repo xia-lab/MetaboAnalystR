@@ -516,8 +516,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       conc <- conc[!empty.inx, ];
     }else{
       # force all NA to empty string, otherwise NA will become "NA" class label
-      cls.lbl[is.na(cls.lbl)] <- "PRED";
-      cls.lbl[empty.inx] <- "PRED";
+      cls.lbl[is.na(cls.lbl)] <- "UNKNOWN";
+      cls.lbl[empty.inx] <- "UNKNOWN";
       msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
     }
   }
