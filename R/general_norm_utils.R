@@ -678,6 +678,7 @@ GetRandomSubsetIndex<-function(total, sub.num = 50){
 # if so, then microservice will be used
 RequireFastUnivTests <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+
   if(ncol(mSetObj$dataSet$norm) < 1000){
         return(FALSE);
   }else{

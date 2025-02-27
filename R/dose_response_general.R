@@ -4,44 +4,6 @@
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
 
-#Reorder dose
-Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
-                          lbl.type="disc", nmdr = FALSE){
-    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
-    mSetObj <- .get.mSet(mSetObj);
-
-    conc <- qs::qread(file="data_orig.qs");
-    int.mat <- conc;
-    dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
-
-    # Error check: Ensure metadata is numeric
-    if (any(is.na(dose))) {
-        AddErrMsg("Error: Metadata for dose-response analysis must be numeric. Please check the input file and ensure the dose values are properly formatted.")
-        return(0);
-    }
-
-    # Check for a minimum of 3 unique doses
-    unique_doses <- unique(dose)
-    if (length(unique_doses) < 3) {
-        AddErrMsg("Error: Dose-response analysis requires at least 3 unique doses. Please provide data with at least 3 distinct dose levels.")
-        return(0)
-    }
-
-    dose.order <- order(dose);
-    meta.reorder <- mSetObj$dataSet$cls[dose.order];
-    int.mat <- int.mat[dose.order, ];
-
-    meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
-    meta.reorder <- gsub(" ", "", meta.reorder)
-    meta.reorder <- factor(meta.reorder, levels = unique(meta.reorder))
-
-
-    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
-    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
-
-    qs::qsave(int.mat, file="data_orig.qs");
-    return(.set.mSet(mSetObj));
-}
 
 # Step 1: prepare data for computing
 PrepareDataForDoseResponse <- function(mSetObj=NA){

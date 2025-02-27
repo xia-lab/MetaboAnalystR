@@ -827,7 +827,6 @@ CombineFacScatter.Anal <- function(mSetObj,
 }
 
 prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
-  save.image("contrast.RData");
   library(limma)
   library(dplyr)
   
@@ -989,4 +988,160 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
 
 is_purely_numeric <- function(x) {
   all(grepl("^\\d+$", x))  # Returns TRUE if all elements are purely numeric
+}
+
+
+GetRawCovThresh <- function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj); 
+  return(mSetObj$analSet$cov$thresh);
+}
+
+convertCovariate2Fun <- function(){
+    if(!file.exists("covariate_result.qs")){
+        return(0)
+    }
+    dt <- qs::qread("covariate_result.qs");
+    features <- rownames(dt)
+    
+    mzs <- vapply(features, function(x){
+      strsplit(x, "__")[[1]][1]
+    }, character(1L));
+    rts <- vapply(features, function(x){
+      strsplit(x, "__")[[1]][2]
+    }, character(1L));
+    if("t" %in% colnames(dt)){
+      df <- data.frame(mz = mzs, rt = rts, tscore = dt$t, pvalue = dt$adj.P.Val)
+    } else {
+      df <- data.frame(mz = mzs, rt = rts, pvalue = dt$adj.P.Val)
+    }
+    
+    write.table(df, file = "metaboanalyst_input_functional_analy.txt", quote = F, row.names = F, sep = "\t")
+    return(1)
+}
+
+PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72, interactive=F){
+  mSetObj <- .get.mSet(mSetObj); 
+  both.mat <- mSetObj$analSet$cov.mat
+  both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
+  logp_val <- mSetObj$analSet$cov$thresh
+  topFeature <- 5;
+  if(nrow(both.mat) < topFeature){
+    topFeature <- nrow(both.mat);
+  }
+  
+  mSetObj$imgSet$covAdj <- imgName;
+  
+  width <- 8;
+  height <- 8.18;
+  
+  library(plotly)
+  threshold <- logp_val               
+  
+  both.mat$category <- with(both.mat, dplyr::case_when(
+    pval.no > threshold & pval.adj > threshold ~ "Significant in both",
+    pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
+    pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
+    TRUE ~ "Non-significant"
+  ))
+  
+  # Define a list or data frame mapping categories to properties
+  category_properties <- data.frame(
+    category = c("Significant in both", "Significant in pval.no only", 
+                 "Significant in pval.adj only", "Non-significant"),
+    color = c('#6699CC', '#94C973', '#E2808A', 'grey'),
+    name = c("Significant", "Non-Sig. after adjustment", 
+             "Sig. after adjustment", "Non-Significant")
+  )
+  
+  p <- ggplot(both.mat, aes(x = pval.no, y = pval.adj, color = category, text = paste("Feature:", Row.names, 
+                                                                                               "<br>Adjusted Pval:", signif(10^(-pval.adj), 4), 
+                                                                                               "<br>Non-adjusted Pval:", signif(10^(-pval.no), 4)))) +
+    geom_point(alpha = 0.5) +
+    scale_color_manual(values = setNames(category_properties$color, category_properties$category), name="") +
+    labs(x = "-log10(P-value): no covariate adjustment", y = "-log10(P-value): adjusted") +
+    theme_minimal() +
+    theme(legend.title = element_blank())
+  
+  if(interactive){
+    library(plotly);
+    ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    return(ggp_build);
+  }else{
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);    
+    print(p)
+    dev.off()
+    return(.set.mSet(mSetObj));
+  }
+}
+
+FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName){
+
+  mSetObj <- .get.mSet(mSetObj);
+  if(!exists('cov.vec')){
+    adj.bool = F;
+    cov.vec = "NA";
+  }else{
+    if(length(cov.vec) > 0){
+      adj.bool = T;
+    }else{
+      adj.bool = F;
+      cov.vec = "NA";
+    }
+  }
+
+   covariates <- mSetObj$dataSet$meta.info
+   var.types <- mSetObj[["dataSet"]][["meta.types"]]
+   library(dplyr);
+   for(i in c(1:length(var.types))){ # ensure all columns are numeric as required by correlation analysis
+        if(var.types[i] == "disc"){
+            covariates[,i] <- covariates[,i] %>% as.numeric()-1;
+        }
+   }
+
+  input.data <- mSetObj$dataSet$norm;
+
+  if(tgtType == "featNm"){
+    # test if varName is valid
+    if(!varName %in% colnames(mSetObj$dataSet$norm)){
+        AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
+        return(0);
+    }
+    # need to exclude the target itself
+    inx <- which(colnames(input.data) == varName);
+    tgt.var <- input.data[,inx];
+    input.data <- input.data[,-inx];
+  }else{
+    tgt.var <- covariates[,varName];
+  }
+
+  if(adj.bool){
+    adj.vars <- covariates[, cov.vec];
+    require("ppcor");
+    if(max(input.data) >= 1e8){
+     # values bigger than 1x10^8 will beyond the computational ability. Enforce an log transform here
+      input.data[input.data <= 0] <- 1
+      input.data <- log10(input.data)
+    }
+    cbtempl.results <- apply(input.data, 2, template.pmatch, tgt.var, dist.name, adj.vars);
+  }else{
+    cbtempl.results <- apply(input.data, 2, template.match, tgt.var, dist.name);
+  }
+  cor.res<-t(cbtempl.results);
+
+  fdr.col <- p.adjust(cor.res[,3], "fdr");
+  cor.res <- cbind(cor.res, fdr.col);
+  colnames(cor.res)<-c("correlation", "t-stat", "p-value", "FDR");
+  ord.inx<-order(cor.res[,3])
+  sig.mat <-signif(cor.res[ord.inx,],5);
+  
+  fileName <- "correlation_feature.csv";
+  fast.write.csv(sig.mat,file=fileName);
+  
+  mSetObj$analSet$corr$cov.vec <- cov.vec;  
+  mSetObj$analSet$corr$dist.name <- dist.name;  
+  mSetObj$analSet$corr$sig.nm <- fileName;
+  mSetObj$analSet$corr$cor.mat <- sig.mat;
+  mSetObj$analSet$corr$pattern <- varName;
+  
+  return(.set.mSet(mSetObj));
 }

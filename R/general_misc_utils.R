@@ -34,7 +34,7 @@ ReplaceMissingByLoD <- function(int.mat){
 #'
 RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   
-  all.nms <- rownames(data);
+  all.nms <- rownames(data); # duplicate feature names
   colnms <- colnames(data);
   dup.inx <- duplicated(all.nms);
   dim.orig  <- dim(data);
@@ -62,8 +62,10 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
         uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, median, na.rm=T);
       }else if(lvlOpt == "max"){
         uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, max, na.rm=T);
-      }else{ # sum
+      }else if(lvlOpt == "sum"){ 
         uniq.data[hit.inx.uniq, ]<- apply(data[hit.inx.all,,drop=F], 2, sum, na.rm=T);
+      }else{ 
+         # nothing
       }
     }
     AddMsg(paste("A total of ", sum(dup.inx), " of duplicates were replaced by their ", lvlOpt, ".", sep=""));
@@ -1496,4 +1498,7 @@ GetViewData <- function(dataname){
  
 }
 
- 
+setResourceDir <- function(path){
+    rpath <<- path;
+    print(paste0("rpath====", path));
+}

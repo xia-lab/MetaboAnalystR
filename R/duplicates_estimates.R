@@ -1,4 +1,4 @@
-#### This script is used to contain the R funciton of duplicates extimation option in 'Other Utility' Module
+#### This script is used to contain the R funciton of duplicates estimation option in 'Other Utility' Module
 
 Read.duplicatesDataTable <- function(mSet = NA, fileName, format){
   
@@ -36,7 +36,6 @@ performDuplicateEstimation <- function(mSet = NA, format, method, smoothed){
   
   mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$dataTable;
-  mSetObj$dataSet$fileName -> fileName;
   
   if(format == "col"){
     sampleNMs <- colnames(dat)[-1];
@@ -57,7 +56,7 @@ performDuplicateEstimation <- function(mSet = NA, format, method, smoothed){
     datRes <- cbind(colnames(dat)[-1], dt);
     colnames(datRes)[1] <- colnames(dat)[1]
   }
-  fast.write.csv(datRes, file = "MetaboAnalyst_duplicates_estimated_data.csv", row.names = F)
+  fast.write.csv(datRes, file = "MetaboAnalyst_deduplicated_data.csv", row.names = F)
   return(1);
 }
 
@@ -129,4 +128,20 @@ performDuplicateEstimation <- function(mSet = NA, format, method, smoothed){
   return(values)
 }
 
+# merge duplicate features in rows (sample in columns)
+MergeFeatureDuplicates <- function(mSet = NA, format, method){
 
+  mSetObj <- .get.mSet(mSetObj);
+  dat <- mSetObj$dataSet$dataTable;
+  
+  # only matrix allow duplicate row names
+  row.nms <- dat[,1];
+  my.dat <- data.matrix(dat[,-1]);
+  row.names(my.dat) <- row.nms;
+
+  datRes<- RemoveDuplicates(my.dat, method);
+
+  #print(datRes[1:4, 1:6]);
+  fast.write.csv(datRes, file = "MetaboAnalyst_deduplicated_data.csv", row.names = TRUE)
+  return(1);
+}
