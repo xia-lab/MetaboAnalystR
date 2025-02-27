@@ -2426,6 +2426,21 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
   merged_data <- mSetObj$dataSet$norm.orig.roc;
   meta.info <- mSetObj$dataSet$meta.info
 
+  if(is.null(mSetObj$dataSet$norm.all)){
+    mSetObj$dataSet$norm.all <- merged_data;
+    mSetObj$dataSet$cls.all<- meta.info[[sel.meta]];
+  }
+
+  new.inx <- is.na(meta.info[[sel.meta]]) | meta.info[[sel.meta]] == "" | meta.info[[sel.meta]] == "PRED"
+  if (sum(new.inx) > 0) {
+    mSetObj$dataSet$new.samples <- TRUE
+    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
+  } else {
+    mSetObj$dataSet$new.samples <- FALSE
+    mSetObj$dataSet$new.data <- NULL
+  }
+
+
   # Filter based on selected factors
   if (factor2 != "NA" & factor2 != "all") {
     mSetObj$dataSet$cls.orig.roc <- NULL;
@@ -2469,14 +2484,6 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
                        names(stt)[which(stt < 20)], " has less than 20 samples.")
   }
 
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == ""
-  if (sum(new.inx) > 0) {
-    mSetObj$dataSet$new.samples <- TRUE
-    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
-  } else {
-    mSetObj$dataSet$new.samples <- FALSE
-    mSetObj$dataSet$new.data <- NULL
-  }
 
   mSetObj$dataSet$norm.orig <- merged_data;
   mSetObj$dataSet$norm <- merged_data
@@ -2494,7 +2501,7 @@ PrepareROCData_old <- function(mSetObj=NA){
     mSetObj$dataSet$cls.all<- mSetObj$dataSet$cls;
   }
   
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "";
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
   if(sum(new.inx) > 0){
     mSetObj$dataSet$new.samples <- TRUE;
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, ,drop=F];
@@ -2749,11 +2756,33 @@ ContainNewSamples <- function(mSetObj=NA){
 #'
 GetNewSampleNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+
+  # Get original data and metadata
+  merged_data <- mSetObj$dataSet$norm.orig.roc;
+  meta.info <- mSetObj$dataSet$meta.info
+
+  if(is.null(mSetObj$dataSet$norm.all)){
+    mSetObj$dataSet$norm.all <- merged_data;
+    mSetObj$dataSet$cls.all<- meta.info[,1];
+  }
+
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
+  if (sum(new.inx) > 0) {
+    mSetObj$dataSet$new.samples <- TRUE
+    mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
+  } else {
+    mSetObj$dataSet$new.samples <- FALSE
+    mSetObj$dataSet$new.data <- NULL
+  }
+
+
   if(!is.null(mSetObj$dataSet$new.data)){
     smplInfo <- paste(rownames(mSetObj$dataSet$new.data), collapse="\n");
   }else{
     smplInfo <- "No new samples found";
   }
+
+  .set.mSet(mSetObj)
   return(smplInfo);
 }
 

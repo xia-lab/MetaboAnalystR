@@ -389,7 +389,6 @@ GetRCommandHistory <- function(mSetObj=NA){
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
@@ -455,7 +454,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   
   # try to check & remove empty lines if class label is empty
   # Added by B. Han
-  empty.inx <- is.na(cls.lbl) | cls.lbl == ""
+  empty.inx <- is.na(cls.lbl) | cls.lbl == "" | cls.lbl == " "
+
   if(sum(empty.inx) > 0){
     if(mSetObj$analSet$type != "roc"){
       msg <- c(msg, paste("<font color=\"red\">", sum(empty.inx), "empty labels</font> were detected and excluded from your data."));
@@ -464,7 +464,8 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       conc <- conc[!empty.inx, ];
     }else{
       # force all NA to empty string, otherwise NA will become "NA" class label
-      cls.lbl[is.na(cls.lbl)] <- "";
+      cls.lbl[is.na(cls.lbl)] <- "PRED";
+      cls.lbl[empty.inx] <- "PRED";
       msg <- c(msg, paste("<font color=\"orange\">", sum(empty.inx), "new samples</font> were detected from your data."));
     }
   }
