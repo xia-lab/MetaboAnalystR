@@ -311,6 +311,15 @@ PlotGSView <-function(cmpdNm, format="png", dpi=72, width=NA){
 
 }
 
+PlotGSViewNew <-function(cmpdNm, format="png", dpi=72, imgName){
+   if(!exists("plot.gs.view")){ 
+        compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_gsea.Rc"));    
+   }
+   return(plot.gs.view(cmpdNm, format, dpi, NA, imgName));
+
+}
+
+
 .loadCustomEnrichLib <- function(fun.type, paramSet){
   
   # Determine folder name based on paramSet information
@@ -402,14 +411,15 @@ GetSetIDLinks <- function(type=""){
 
   paramSet <- readSet(paramSet, "paramSet");
   ids <- imgSet$enrTables[[type]]$table$IDs
+  pathways <- imgSet$enrTables[[type]]$table$Pathway
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
-        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
+        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
-        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
+        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type == "kegg"){
-        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type == "reactome"){
-        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>Reactome</a>", sep="");
+        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else{
         annots <- ids;
     }
@@ -488,15 +498,16 @@ GetGseaIDLinks <- function(dataName=""){
 
   paramSet <- readSet(paramSet, "paramSet");
   ids <- imgSet$enrTables[["gsea"]]$table$IDs
+  pathways <- imgSet$enrTables[["gsea"]]$table$Name
 
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
-        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>Gene Ontology</a>", sep="");
+        annots <- paste("<a href='https://www.ebi.ac.uk/QuickGO/term/", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type %in% c("go_panthbp", "go_panthmf", "go_panthcc")){
-        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>Gene Ontology</a>", sep="");
+        annots <- paste("<a href='https://www.pantherdb.org/panther/categoryList.do?searchType=basic&fieldName=all&organism=all&fieldValue=", ids, "&listType=5' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type == "kegg"){
-        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>KEGG</a>", sep="");
+        annots <- paste("<a href='https://www.genome.jp/dbget-bin/www_bget?pathway+", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else if(fun.type == "reactome"){
-        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>Reactome</a>", sep="");
+        annots <- paste("<a href='https://reactome.org/content/query?q=", ids, "' target='_blank'>", pathways, "</a>", sep="");
     }else{
         annots <- ids;
     }
