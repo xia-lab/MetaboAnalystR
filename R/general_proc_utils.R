@@ -120,7 +120,6 @@ SanityCheckData <- function(mSetObj=NA){
         } else {
           cls.Clean <- cls.lbl;
         }
-        
         # allow it pass to sanity check and correct there
         if(anal.type != "network" & anal.type != "mf"){ # add exception for DSPC correlation network 
           if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
