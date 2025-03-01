@@ -302,7 +302,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
 #'
 
 PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, colors, viewOpt, fix.col, no.clst, corrCutoff=0){
- 
 
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
@@ -469,6 +468,7 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width
   }
   
   dev.off();
+  print("corretation static==============================");
 
   if(!no.clst){ # when no clustering, tree_row is NA
     new.ord <- res$tree_row$order;
@@ -624,3 +624,4 @@ ComputeDSPC <- function(mSetObj=NA){
      }
      return(PerformDSPC(mSetObj));
 }
+

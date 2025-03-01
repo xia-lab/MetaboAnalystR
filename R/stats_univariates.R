@@ -489,6 +489,22 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   fileName <- "volcano.csv";
   fast.write.csv(signif(sig.var,5), file=fileName);
   
+# Create all features table
+all.var <- cbind(fc.all, fc.log, p.value, p.log);
+
+if(pval.type == "fdr"){
+    colnames(all.var) <- c("FC", "log2(FC)", "p.adjusted", "-log10(p)");
+}else{
+    colnames(all.var) <- c("FC", "log2(FC)", "raw.pval", "-log10(p)");
+}
+
+# Order all features: first by -log10(p), then by |log2(FC)|
+ord.all <- order(all.var[,4], abs(all.var[,2]), decreasing=TRUE);  # Column 4 = -log10(p), Column 2 = log2(FC)
+all.var <- all.var[ord.all, , drop=F];
+
+# Save all results
+fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
+
   volcano <- list (
     pval.type = pval.type,
     raw.threshx = fcthresh,
@@ -504,6 +520,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
     p.log = p.log,
     inx.p = inx.p,
     sig.mat = sig.var,
+    all.mat = signif(all.var, 5),
     p.value = p.value
     
   );
@@ -1400,6 +1417,54 @@ GetVolcanoSigColNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(colnames(mSetObj$analSet$volcano$sig.mat));
 }
+
+GetVolcanoAllMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Check if all.mat exists, otherwise use sig.mat
+  if (!is.null(mSetObj$analSet$volcano$all.mat)) {
+    all.mat <- CleanNumber(mSetObj$analSet$volcano$all.mat);
+  } else {
+    all.mat <- CleanNumber(mSetObj$analSet$volcano$sig.mat);
+  }
+  
+  # Limit to top 1000 rows if more than 1000 exist
+  if (nrow(all.mat) > 1000) {
+    all.mat <- all.mat[1:1000, , drop=F];
+  }
+  
+  return(all.mat);
+}
+
+GetVolcanoAllRowNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Check if all.mat exists, otherwise use sig.mat
+  if (!is.null(mSetObj$analSet$volcano$all.mat)) {
+    all.mat <- mSetObj$analSet$volcano$all.mat;
+  } else {
+    all.mat <- mSetObj$analSet$volcano$sig.mat;
+  }
+  
+  # Limit to top 1000 rows if more than 1000 exist
+  if (nrow(all.mat) > 1000) {
+    return(rownames(all.mat)[1:1000]);
+  }
+  
+  return(rownames(all.mat));
+}
+
+GetVolcanoAllColNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # Check if all.mat exists, otherwise use sig.mat
+  if (!is.null(mSetObj$analSet$volcano$all.mat)) {
+    return(colnames(mSetObj$analSet$volcano$all.mat));
+  } else {
+    return(colnames(mSetObj$analSet$volcano$sig.mat));
+  }
+}
+
 
 ContainInfiniteVolcano <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

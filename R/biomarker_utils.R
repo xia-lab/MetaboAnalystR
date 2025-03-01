@@ -2408,7 +2408,6 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
   if (sel.meta == "NA") {
     return(PrepareROCData_old(mSetObj))
   }
-
   msg.vec <<- 0
   data.list <- list()
   omics.vec <- vector()
@@ -2469,7 +2468,7 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
                        names(stt)[which(stt < 20)], " has less than 20 samples.")
   }
 
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == ""
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
   if (sum(new.inx) > 0) {
     mSetObj$dataSet$new.samples <- TRUE
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, , drop = FALSE]
@@ -2494,7 +2493,7 @@ PrepareROCData_old <- function(mSetObj=NA){
     mSetObj$dataSet$cls.all<- mSetObj$dataSet$cls;
   }
   
-  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "";
+  new.inx <- is.na(mSetObj$dataSet$cls.all) | mSetObj$dataSet$cls.all == "" | mSetObj$dataSet$cls.all == "PRED"
   if(sum(new.inx) > 0){
     mSetObj$dataSet$new.samples <- TRUE;
     mSetObj$dataSet$new.data <- mSetObj$dataSet$norm.all[new.inx, ,drop=F];
