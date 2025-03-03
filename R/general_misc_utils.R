@@ -1508,10 +1508,8 @@ CheckDetailsTablePerformed <-function(type){
   performed <- T;
   if(grepl("volcano", type)){
     performed <- !is.null(mSetObj$analSet$volcano);
-  }else if(grepl("pls", type)){
-    performed <- !is.null(mSetObj$analSet$pls);
   }else if(startsWith(type, "pls")){
-    performed <- !is.null(mSetObj$analSet$pls);
+    performed <- !is.null(mSetObj$analSet$plsr);
   }else if(type == "template"){
     performed <- !is.null(mSetObj$analSet$corr);
   }else if(startsWith(type, "rf")){
@@ -1521,16 +1519,18 @@ CheckDetailsTablePerformed <-function(type){
   }else if(startsWith(type, "svm")){
     performed <- !is.null(mSetObj$analSet$svm);
   }else if(type == "anova"){
-    performed <- !is.null(mSetObj$analSet$aov);
+    performed <- !is.null(mSetObj$analSet$aov$sig.mat);
   }else if(type == "anova2"){
     print(mSetObj$analSet$aov2);
-    print("aov2===========mat");
     performed <- !is.null(mSetObj$analSet$aov2$sig.mat);
   }else if(type == "multirf"){
     performed <- !is.null(mSetObj$analSet$rf.sigmat.mf);
   }else if(type == "cov"){
     performed <- !is.null(mSetObj$analSet$cov);
   }
+  print(paste("checkPerformed=", type, "====",performed));
+
+return(performed)
 }
 
 CheckMetaPerformed <- function(){
