@@ -15,6 +15,8 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       pldSNPs=pldSNPs,
       mafThresh=mafThresh,
       harmonizeOpt=harmonizeOpt)
+      
+      res1 <- 0;
 
       err.vec <<- "";
       if(.on.public.web & (opengwas_jwt_key == "")){
@@ -74,8 +76,9 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
       mSetObj$dataSet$harmonized.dat <- dat;
-
-      return(.set.mSet(mSetObj));
+      .set.mSet(mSetObj)
+      save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
+      return(res1);
 }
 
 readOpenGWASKey <- function(){
