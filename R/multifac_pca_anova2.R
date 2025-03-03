@@ -63,24 +63,34 @@ aov.2way <- function(x){
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
                        p.cor="fdr", designType="time0", phenOpt="between", topN=200){
   mSetObj <- .get.mSet(mSetObj);
-
+  save.image("aov2.RData");
   if(length(meta.vec.aov) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
     meta.vec.aov <- colnames(sel.meta.df)[c(1,2)];
   }else{
-
-   if(designType %in% c("time")){
-     # make sure subject is not in the metadata of interest
+    
+    if(designType %in% c("time")){
+      # make sure subject is not in the metadata of interest
       if("subject" %in% tolower((meta.vec.aov))){
         AddErrMsg("Subject is already accounted for in the analysis.");
         return(0);
       }
-   }
-
+    }
+    
     sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.aov]
-
+    
     if(length(meta.vec.aov) == 1){
       sel.meta.df <- as.data.frame(sel.meta.df)
+    }
+    
+    if (!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))) {
+      sel.meta.df <- sel.meta.df[match(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df)), , drop=FALSE]
+      mSetObj$dataSet$meta.info<-mSetObj$dataSet$meta.info[match(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df)), , drop=FALSE]
+      # Check again if row names are aligned after reordering
+      if (!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))) {
+        AddErrMsg("Metadata and data tables not synchronized after reordering!");
+        return(0);
+      }
     }
     
     if(designType %in% c("time0", "time")){
@@ -96,11 +106,6 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     }
   }
 
-  if(!identical(rownames(mSetObj$dataSet$norm), rownames(sel.meta.df))){
-      AddErrMsg("Metadata and data tables not synchronized!"); #should have been re-ordered in Normalization()
-      return(0);
-  }  
-
   # make sure all metadata are factor variable types
   for(i in 1:ncol(sel.meta.df)){
     meta <- colnames(sel.meta.df)[i]
@@ -110,7 +115,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       return(0);
     }
   }
-
+  
   # only do for top topN (200 by default)
   if(dim(mSetObj$dataSet$norm)[2] > topN){
     metab.var <- apply(as.matrix(mSetObj$dataSet$filt), 2, function(x){
@@ -124,10 +129,10 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
   }
   
   require(rstatix);
-
+  
   # now perform ANOVA depending on experimental design
   if(designType == "time0"){
-
+    
     time.fac <<- mSetObj$dataSet$time.fac;
     mSetObj$dataSet$sbj <- as.factor(mSetObj$dataSet$exp.fac);
     aov.sbj <<- mSetObj$dataSet$sbj
@@ -144,7 +149,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       AddErrMsg("Experiment design is not balanced!");
       return(0);
     }
-
+    
     aov.mat <- apply(as.matrix(dat), 2, aov.1wayrep);
     
     if(is.null(dim(aov.mat))){ #sometimes ANOVA fails for one metabolite but throws no warnings; need to reformat
@@ -159,8 +164,8 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     
     fileName <- "oneway_anova_repeated.csv";
     rownames(aov.mat)<-colnames(dat);
-
-
+    
+    
     aov.mat <- cbind(aov.mat, p.adjust(aov.mat[,2], p.cor));
     colnames(aov.mat) <- c("F-value", "Raw P-val", "Adjusted P-val");
     p.value <- aov.mat[,3];
@@ -169,7 +174,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     vennC <- NULL;
     # default sort first by main effect: treatment, then by ...
     ord.inx <- order(aov.mat[,2], decreasing = FALSE);
-
+    
   } else {
     if(designType == "time"){
       # first check if balanced
@@ -180,7 +185,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
         AddErrMsg("Experiment design is not balanced!");
         return(0);
       }
-            
+      
       mSetObj$dataSet$sbj <- mSetObj$dataSet$meta.info[,3]
       time.fac <<- mSetObj$dataSet$time.fac;
       exp.fac <<- mSetObj$dataSet$exp.fac;
@@ -189,7 +194,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       if(.on.public.web){
         .set.mSet(mSetObj);
       }
-
+      
       # check if correct phenOpt selected
       phens <- unique(exp.fac)
       sbj.df <- data.frame(subject = aov.sbj, phenotype = exp.fac)
@@ -218,38 +223,38 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       fileName <- "anova_within_sbj.csv";
       
     } else { 
-
-        # g2 (two-factor analysis)
-        aov.facA <<- mSetObj$dataSet$facA;
-        aov.facB <<- mSetObj$dataSet$facB;
       
-        tryCatch(
-            {
-                aov.mat <- t(apply(as.matrix(dat), 2, aov.2way));
+      # g2 (two-factor analysis)
+      aov.facA <<- mSetObj$dataSet$facA;
+      aov.facB <<- mSetObj$dataSet$facB;
+      
+      tryCatch(
+        {
+          aov.mat <- t(apply(as.matrix(dat), 2, aov.2way));
         }, warning = function(w){ print('warning in aov.2way') },
-            error = function(e) {
-            if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
-                AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
-                return(0);
-            }
-            print(e$message)
+        error = function(e) {
+          if(grepl("there are aliased coefficients in the model", e$message, fixed=T)){
+            AddErrMsg("Make sure the selected metadata are not linearly dependent with each other!");
+            return(0);
+          }
+          print(e$message)
         }
-        )
-
-        rm(aov.facA, aov.facB, pos=".GlobalEnv");
+      )
       
-        fileName <- "anova_between_sbj.csv";
+      rm(aov.facA, aov.facB, pos=".GlobalEnv");
+      
+      fileName <- "anova_between_sbj.csv";
     }
     
     # make table for display/download  
     aov.mat2 <- cbind (aov.mat, p.adjust(aov.mat[,4], p.cor),
                        p.adjust(aov.mat[,5], p.cor),
                        p.adjust(aov.mat[,6], p.cor));
-
+    
     sig.facA <-(aov.mat2[,7] <= thresh);
     sig.facB <-(aov.mat2[,8] <= thresh);
     sig.intr <-(aov.mat2[,9] <= thresh);
-
+    
     all.match <- cbind(sig.facA, sig.facB, sig.intr);
     colnames(all.match) <- c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl, "Interaction");
     colnames(aov.mat2) <- c(paste(mSetObj$dataSet$facA.lbl, "(F.val)", sep = ""), 
@@ -261,17 +266,17 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
                             paste(mSetObj$dataSet$facA.lbl, "(adj.p)", sep = ""), 
                             paste(mSetObj$dataSet$facB.lbl, "(adj.p)", sep = ""), 
                             paste("Interaction", "(adj.p)", sep = ""))
-
+    
     vennC <- getVennCounts(all.match);
     p.value <- aov.mat2[,7]; 
     inx.imp <- sig.facA | sig.facB | sig.intr;
     aov.mat2 <- aov.mat2[, c(1,4,7,2,5,8,3,6,9),drop=F] 
-      
+    
     # default sort first by main effect: treatment, then by ...
     aov.mat <- aov.mat2[inx.imp, ,drop=F];
     ord.inx <- order(aov.mat[,2], aov.mat[,3], decreasing = FALSE);
   }
-
+  
   aov.mat <- signif(aov.mat[ord.inx,,drop=F], 5);
   
   if(dim(aov.mat)[1] != 0){
@@ -280,7 +285,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
       return(0)
     }
   }
-
+  
   fast.write.csv(aov.mat, file=fileName);
   names(p.value) <- colnames(dat);
   aov2<-list (
@@ -296,7 +301,6 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     selected.meta = meta.vec.aov,
     phenotype.factor= phenOpt
   );
-  
   mSetObj$analSet$aov2 <- aov2;
   return(.set.mSet(mSetObj));
 }

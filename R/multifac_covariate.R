@@ -118,6 +118,7 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
   mSetObj$analSet$rf.sigmat <- sigmat;
   mSetObj$analSet$meta.vec.rf <- meta.vec.rf;
   mSetObj$dataSet$norm.meta <- norm;
+  mSetObj$analSet$rf.sigmat.mf <- sigmat; 
   return(.set.mSet(mSetObj));
 }
 
@@ -1144,4 +1145,25 @@ FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, var
   mSetObj$analSet$corr$pattern <- varName;
   
   return(.set.mSet(mSetObj));
+}
+
+#'Random Forest Significance matrix
+#'@description Significance measure, double brackets
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+GetMultiRFSigMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(CleanNumber(mSetObj$analSet$rf.sigmat.mf))
+}
+
+GetMultiRFSigRowNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$rf.sigmat.mf);
+}
+
+GetMultiRFSigColNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  colnames(mSetObj$analSet$rf.sigmat.mf);
 }

@@ -1502,3 +1502,75 @@ setResourceDir <- function(path){
     rpath <<- path;
     print(paste0("rpath====", path));
 }
+
+CheckDetailsTablePerformed <-function(type){
+  mSetObj <- .get.mSet(NA);
+  performed <- T;
+  if(grepl("volcano", type)){
+    performed <- !is.null(mSetObj$analSet$volcano);
+  }else if(grepl("pls", type)){
+    performed <- !is.null(mSetObj$analSet$pls);
+  }else if(startsWith(type, "pls")){
+    performed <- !is.null(mSetObj$analSet$pls);
+  }else if(type == "template"){
+    performed <- !is.null(mSetObj$analSet$corr);
+  }else if(startsWith(type, "rf")){
+    performed <- !is.null(mSetObj$analSet$rf);
+  }else if(startsWith(type, "opls")){
+    performed <- !is.null(mSetObj$analSet$oplsda);
+  }else if(startsWith(type, "svm")){
+    performed <- !is.null(mSetObj$analSet$svm);
+  }else if(type == "anova"){
+    performed <- !is.null(mSetObj$analSet$aov);
+  }else if(type == "anova2"){
+    print(mSetObj$analSet$aov2);
+    print("aov2===========mat");
+    performed <- !is.null(mSetObj$analSet$aov2$sig.mat);
+  }else if(type == "multirf"){
+    performed <- !is.null(mSetObj$analSet$rf.sigmat.mf);
+  }else if(type == "cov"){
+    performed <- !is.null(mSetObj$analSet$cov);
+  }
+}
+
+CheckMetaPerformed <- function(){
+  if(!exists('meta.mat') || is.null(meta.mat)){
+    return(0);
+  }else{
+    return(1);
+  }
+}
+
+CheckMumExists <- function(mSetObj=NA, type) {
+  mSetObj <- .get.mSet(mSetObj)
+  if (type == "mum") {    
+    return(as.integer(!is.null(mSetObj$mummi.resmat)))
+  } else if (type == "gsea") {
+    return(as.integer(!is.null(mSetObj$mummi.gsea.resmat)))
+  } else {
+    return(as.integer(!is.null(mSetObj$integ.resmat)))
+  }
+}
+
+
+GetMummiResMatrixWithType <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "mum"){    
+    return(mSetObj$mummi.resmat);
+  }else if(anal.type0 == "gsea"){
+    return(mSetObj$mummi.gsea.resmat);
+  }else{
+    return(mSetObj$integ.resmat);
+  }
+}
+
+GetMummiResRowNamesWithType <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "mum"){    
+    return(rownames(mSetObj$mummi.resmat));
+  }else if(anal.type0 == "gsea"){
+    return(rownames(mSetObj$mummi.gsea.resmat));
+  }else{
+    return(rownames(mSetObj$integ.resmat));
+  }
+}

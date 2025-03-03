@@ -694,4 +694,3 @@ SetupMetaStats <- function(BHth){
   
   fast.write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
 }
-

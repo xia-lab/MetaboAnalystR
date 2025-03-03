@@ -433,6 +433,8 @@ GetMetaResultColNames <- function(){
   c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(meta.mat));
 }
 
+
+
 #'Single.type return logFC or p value for individual data analysis
 #'@param mSetObj Input name of the created mSet Object
 #'@param single.type Default is "fc"

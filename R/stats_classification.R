@@ -44,6 +44,7 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
   fast.write.csv(sigmat, file="randomforests_sigfeatures.csv");
   mSetObj$analSet$rf <- rf_out;
   mSetObj$analSet$rf.sigmat <- sigmat;
+  mSetObj$analSet$rf_stat <- mSetObj$analSet$rf; 
   return(.set.mSet(mSetObj));
 }
 

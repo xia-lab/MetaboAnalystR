@@ -3538,6 +3538,7 @@ GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
   return(cbind(msetNm, paste(unique(nms), collapse="; ")));
 }
 
+
 GetMummiResMatrix <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   anal.type0 <- mSetObj$paramSet$anal.type;
