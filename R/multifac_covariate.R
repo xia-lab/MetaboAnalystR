@@ -418,7 +418,6 @@ CovariateScatter.Anal <- function(mSetObj,
                                   thresh=0.05,
                                   pval.type="fdr",
                                   contrast.cls = "anova"){
-
   # load libraries
   library(limma)
   library(dplyr)
@@ -427,7 +426,7 @@ CovariateScatter.Anal <- function(mSetObj,
   # get inputs
   if(!exists('adj.vec')){
     adj.bool = F;
-    adj.vec= "NA"
+    adj.vec = "NA"
     vars <- analysis.var;
   }else{
     if(length(adj.vec) > 0){
@@ -440,7 +439,7 @@ CovariateScatter.Anal <- function(mSetObj,
       vars <- analysis.var;
     }
   }
-    
+  
   mSetObj <- .get.mSet(mSetObj);
   
   covariates <- mSetObj$dataSet$meta.info
@@ -449,6 +448,7 @@ CovariateScatter.Anal <- function(mSetObj,
   
   # process inputs
   ref <- make.names(ref)
+  contrast.cls <- make.names(contrast.cls)
   analysis.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
   
   # process metadata table (covariates)
@@ -478,14 +478,15 @@ CovariateScatter.Anal <- function(mSetObj,
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs <- list();
-    
-    # perform specified contrast
+
     if(contrast.cls == "anova"){
       cntr.cls <- grp.nms[grp.nms != ref];
       myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
     } else {
       myargs <- as.list(paste(contrast.cls, "-", ref, sep = ""));
     }
+    #################handle issues with factor name with space in the value
+    myargs <- lapply(myargs, function(x) gsub(" ", ".", x))  # Convert spaces to dots
     myargs[["levels"]] <- design;
     contrast.matrix <- do.call(makeContrasts, myargs);
     
@@ -529,7 +530,7 @@ CovariateScatter.Anal <- function(mSetObj,
       corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
       fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
     }
-
+    
     fit <- eBayes(fit);
     rest <- topTable(fit, number = Inf, coef = analysis.var);
     colnames(rest)[1] <- analysis.var;
@@ -565,14 +566,14 @@ CovariateScatter.Anal <- function(mSetObj,
   p.value <- rest[,"P.Value"];
   fdr.p <- rest[,"adj.P.Val"];
   names(fstat) <- names(p.value) <- names(fdr.p) <- colnames(mSetObj$dataSet$norm);
-
+  
   # sort and save a copy 
   fileName <- "covariate_result.csv";
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file=fileName);
   qs::qsave(rest, file = "covariate_result.qs");
-
+  
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
     inx.imp <- fdr.p <= thresh;
