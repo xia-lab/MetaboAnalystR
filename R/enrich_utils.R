@@ -123,7 +123,11 @@
     
     res.mat.all <- res.mat.all[which(res.mat.all$Genes != "NA"), ];
     res.mat.all$Pathway <- NULL;
-    resTable.all <- data.frame(Pathway=rownames(res.mat[which(res.mat.all$Genes != "NA"), ]), res.mat.all);
+    pws <- rownames(res.mat[which(res.mat.all$Genes != "NA"), ]) 
+    fun.ids2 <- as.vector(setres$current.setids[pws]) 
+    resTable.all <- data.frame(Pathway = pws, ID = fun.ids2, res.mat.all)
+
+
     csv.nm <- paste(file.nm, ".csv", sep="");    
     write.csv(resTable.all, file=csv.nm, row.names=F);
     
