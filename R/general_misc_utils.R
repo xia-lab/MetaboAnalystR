@@ -1574,3 +1574,10 @@ GetMummiResRowNamesWithType <- function(mSetObj=NA, type){
     return(rownames(mSetObj$integ.resmat));
   }
 }
+
+LoadRHistory <- function(){
+    load('Rload.RData');
+    if(file.exists('mSet.rda')){
+        load('mSet.rda');
+    }
+}
