@@ -263,7 +263,7 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
     imgSet$enrTables[["gsea"]]$table <- csvDf;
     imgSet$enrTables[["gsea"]]$current.geneset <- current.geneset;
     imgSet$enrTables[["gsea"]]$hits.query <- hits.query;
-    imgSet$enrTables[["gsea"]]$current.setids <- current.setids;
+    imgSet$enrTables[["gsea"]]$current.setids <- setres$current.setids;
     imgSet$enrTables[["gsea"]]$res.mat<- csvDf[,-c(1,7)];
     imgSet$enrTables[["gsea"]]$current.geneset.symb <- current.geneset.symb;
 
@@ -641,14 +641,13 @@ plot.gs.view <-function(fileName, format="png", dpi=72, width=NA, imgName=NA){
   require("fgsea");
   current.geneset <- qs::qread("current_geneset.qs");
   analSet <- readSet(analSet, "analSet");
-  print(paste(imgName, "=====imgName"))
   if(is.na(imgName)){
    imgName <- gsub("\\/", "_",  fileName);
   }else{
    imgName <- gsub("\\/", "_",  imgName);
   }
   imgName <- gsub(" ", "_",  imgName);
-  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+  imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
 
   cmpdNm <- gsub("barcode_", "",fileName);
   Cairo(file = imgName, dpi=dpi, width=340, height=300, type="png", bg="transparent");
