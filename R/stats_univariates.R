@@ -1043,7 +1043,12 @@ GetAovSigColNames <- function(mSetObj=NA){
 
 GetAovPostHocSig <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+  if(ncol(mSetObj$analSet$aov$sig.mat)>4){
   mSetObj$analSet$aov$sig.mat[,5];
+  }else{
+  rep(0, nrow(mSetObj$analSet$aov$sig.mat));
+  }
+  
 }
 
 #'Sig Table for Anova

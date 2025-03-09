@@ -1527,6 +1527,13 @@ CheckDetailsTablePerformed <-function(type){
     performed <- !is.null(mSetObj$analSet$rf.sigmat.mf);
   }else if(type == "cov"){
     performed <- !is.null(mSetObj$analSet$cov);
+  }else if(type == "dose-de"){
+    performed <- !is.null(mSetObj$dataSet$comp.res);
+  }else if(type == "ebam"){
+    performed <- !is.null(mSetObj$analSet$ebam.cmpds);
+  }else if(type == "sam"){
+    print(head(mSetObj$analSet$sam.cmpds));
+    performed <- !is.null(mSetObj$analSet$sam.cmpds);
   }
   print(paste("checkPerformed=", type, "====",performed));
 
