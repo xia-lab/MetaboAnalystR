@@ -8,7 +8,6 @@
 
 #####'Sanity check metadata after metadata edited 
 SanityCheckMeta <- function(fileName,init){
-  save.image("san.RData");
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
   

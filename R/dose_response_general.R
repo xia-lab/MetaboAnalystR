@@ -1001,7 +1001,6 @@ PerformBMDCalc <- function(ncpus = 1)
 ### Calculation of transcriptomic POD from BMDs
 sensPOD <- function(pod = c("feat.20", "feat.10th", "mode"), scale)
 {
-  save.image("sensPOD.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   pod.choices <- c("feat.20", "feat.10th", "mode")
