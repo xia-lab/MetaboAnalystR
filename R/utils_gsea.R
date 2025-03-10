@@ -254,12 +254,14 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
     ftype <- paste0("go_", fun.type);
   }
 
+
   csvDf <- data.frame(Name=fgseaRes$pathway, Total=fgseaRes$total, Hits=fgseaRes$hits, EnrichmentScore=fgseaRes$ES, Pval=fgseaRes$pval, Padj=fgseaRes$padj);
+  csvDf$IDs <- fun.ids;
+
   fast.write(csvDf, file=paste0(file.nm, ".csv"));
 
     imgSet <- readSet(imgSet, "imgSet");
     rownames(csvDf) <- NULL;
-    csvDf$IDs <- fun.ids;
     imgSet$enrTables[["gsea"]]$table <- csvDf;
     imgSet$enrTables[["gsea"]]$current.geneset <- current.geneset;
     imgSet$enrTables[["gsea"]]$hits.query <- hits.query;
