@@ -669,7 +669,7 @@ gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
   if(is.null(names(gs.rds))){ # some go lib does not give names
     names(gs.rds) <- c("link", "term", "sets");
   }
-
+  
   gs.names <- data.frame(name = gs.rds$term, id = names(gs.rds$sets))
   gs.lib <- gs.rds[["sets"]]
   
@@ -678,6 +678,8 @@ gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
   names(results.test$genes) <- as.vector(gs.names$name[match(names(results.test$genes), gs.names$id)])
   results <- as.data.frame(results.test$results)
   results$id <- rownames(results)
+  results$id <- gsub("\\.", ":", results$id);
+  
   rownames(results) <- NULL
   results <- as.data.table(merge(results, gs.names, by = "id"))
   
@@ -685,8 +687,8 @@ gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
     results <- results[order(Pvalue)]
     results <- results[1:50]
   }
-
-
+  
+  
   # filter for significance
   if(FDR){
     results <- results[Adjusted.Pvalue < pval]
@@ -706,7 +708,6 @@ gsoa.fun <- function(file, universe, hits, bmd.res, pval = 1.0, FDR = FALSE){
   results.summary[['genematches']] <- results.test$genes
   return(results.summary) 
 }
-
 
 #######################################################
 ## set of functions to init/read details of ItemSelect 

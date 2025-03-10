@@ -260,14 +260,14 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
 
   fast.write(csvDf, file=paste0(file.nm, ".csv"));
 
-    imgSet <- readSet(imgSet, "imgSet");
-    rownames(csvDf) <- NULL;
-    imgSet$enrTables[["gsea"]]$table <- csvDf;
-    imgSet$enrTables[["gsea"]]$current.geneset <- current.geneset;
-    imgSet$enrTables[["gsea"]]$hits.query <- hits.query;
-    imgSet$enrTables[["gsea"]]$current.setids <- setres$current.setids;
-    imgSet$enrTables[["gsea"]]$res.mat<- csvDf[,-c(1,7)];
-    imgSet$enrTables[["gsea"]]$current.geneset.symb <- current.geneset.symb;
+  imgSet <- readSet(imgSet, "imgSet");
+  rownames(csvDf) <- NULL;
+  imgSet$enrTables[["gsea"]]$table <- csvDf;
+  imgSet$enrTables[["gsea"]]$current.geneset <- current.geneset;
+  imgSet$enrTables[["gsea"]]$hits.query <- hits.query;
+  imgSet$enrTables[["gsea"]]$current.setids <- setres$current.setids;
+  imgSet$enrTables[["gsea"]]$res.mat<- csvDf[,-c(1,7)];
+  imgSet$enrTables[["gsea"]]$current.geneset.symb <- current.geneset.symb;
 
   saveSet(imgSet);
       
