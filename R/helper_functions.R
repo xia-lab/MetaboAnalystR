@@ -35,7 +35,7 @@ GetMetaCol<- function(dataName=""){
       inx <- match("AveExpr", colNms)
     } else if (dataSet$de.method=="deseq2"){
       inx <- match("baseMean", colNms)
-      return(colnames(dataSet$contrast.matrix));
+      return(names(dataSet$comp.res.list));
     } else {
       inx <- match("logCPM", colNms)
     }

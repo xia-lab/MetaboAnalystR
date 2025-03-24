@@ -182,7 +182,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     # Check if there are any significant genes
     if (nrow(significant_genes) > 0) {
       # Add a column to indicate the comparison
-      significant_genes$Comparison <- paste("Comparison", inx)
+      significant_genes$Comparison <- names(dataSet$comp.res.list)[[inx]]
       
       # Append the significant genes to the list
       significant_gene_table[[inx]] <- significant_genes
