@@ -12,7 +12,7 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
 }
 
 PreparePODJSON <- function(fileNm, doseScale, xMin=-Inf, xMax=Inf, geneDB, org){
-
+  save.image("preparePod.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 
