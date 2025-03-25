@@ -156,6 +156,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   significant_gene_table <- list()
 
   # Loop through each comparison again to collect significant gene details
+  print(paste("length==", length(dataSet$comp.res.list)));
   for (inx in seq_along(dataSet$comp.res.list)) {
     resTable <- dataSet$comp.res.list[[inx]]
     

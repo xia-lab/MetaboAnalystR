@@ -93,90 +93,116 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }
   return(RegisterData(dataSet));
 }
-
 .prepare.deseq <- function(dataSet, anal.type, par1, par2, nested.opt) {
   my.fun <- function() {
     require(DESeq2)
-    
-    # Extract count data
-    if(length(dataSet$rmidx) > 0) {
-      data.anot <- dataSet$data.anot[, -dataSet$rmidx]
-    } else {
-      data.anot <- dataSet$data.anot
+    print(paste("Analysis type:", anal.type))
+    print(paste("par1:", par1))
+    print(paste("par2:", par2))
+    print(paste("Nested option:", nested.opt))
+    save.image("deseq.RData")
+
+    # Helper: prefix numeric-looking group labels
+    formatLevel <- function(x) {
+      if (grepl("^[0-9]", x)) paste0(dataSet$analysisVar, "_", x) else x
     }
-    
-    # Ensure primary class labels are formatted correctly
+
+    # Helper: parse contrast string "A vs. B"
+    parse_contrast_groups <- function(cstr) {
+      comps <- strsplit(cstr, " vs\\.?\\s*")[[1]]
+      if (length(comps) != 2) stop(paste("Invalid contrast format:", cstr))
+      return(comps)
+    }
+
+    # Extract count data
+    data.anot <- if (length(dataSet$rmidx) > 0) {
+      dataSet$data.anot[, -dataSet$rmidx]
+    } else {
+      dataSet$data.anot
+    }
+
+    # Format class labels
     if (any(grepl("(^[0-9]+).*", dataSet$fst.cls))) {
       fst.cls <- paste0(dataSet$analysisVar, "_", dataSet$fst.cls)
     } else {
       fst.cls <- dataSet$fst.cls
     }
-    
-    # Prepare metadata (colData)
-    colData <- data.frame(condition = factor(fst.cls))  # Base condition
-    
-    # Add block factor if available
-    if (!is.null(dataSet$block)) {
-      colData$block <- factor(dataSet$block)
-      design <- ~ block + condition  # Include block in design
-    } else {
-      design <- ~ condition
-    }
-    
-    # Create DESeq2 dataset
-    dds <- DESeqDataSetFromMatrix(countData = round(data.anot), colData = colData, design = design)
-    
-    dds <- DESeq(dds, betaPrior = FALSE)
-    
-    qs::qsave(dds, "deseq.res.obj.rds")
-    
-    # Extract all unique conditions
-    all_conditions <- levels(colData$condition)
-    
-    # Generate pairwise comparisons
-    contrast_list <- list()
-    for (i in 1:(length(all_conditions) - 1)) {
-      for (j in (i + 1):length(all_conditions)) {
-        contrast_name <- paste0(all_conditions[i], " vs ", all_conditions[j])
-        contrast_list[[contrast_name]] <- c("condition", all_conditions[j], all_conditions[i])  # DESeq2 contrast format
-      }
-    }
-    
-    # ---- Extract Results for Each Contrast ----
-    results_list <- list()
-    print(contrast_list);
-    for (contrast_name in names(contrast_list)) {
-      contrast_vec <- contrast_list[[contrast_name]]
-      
-      res <- results(dds, contrast = contrast_vec, independentFiltering = FALSE, cooksCutoff = Inf)
-      
-      # Convert results to a dataframe
-      topFeatures <- data.frame(res@listData)
-      rownames(topFeatures) <- rownames(res)
-      
-      # Rename columns for consistency
-      colnames(topFeatures) <- sub("padj", "adj.P.Val", colnames(topFeatures))
-      colnames(topFeatures) <- sub("pvalue", "P.Value", colnames(topFeatures))
-      colnames(topFeatures) <- sub("log2FoldChange", "logFC", colnames(topFeatures))
-      
-      # Reorder columns
-      topFeatures <- topFeatures[c("logFC","baseMean","lfcSE", "stat", "P.Value", "adj.P.Val")]
-      
-      # Sort by p-value
-      topFeatures <- topFeatures[order(topFeatures$P.Value), ]
-            print(head(topFeatures));
 
-      results_list[[contrast_name]] <- topFeatures
+    all_conditions <- unique(fst.cls)
+    contrast_list <- list()
+
+      # ---- Single-factor designs ----
+      colData <- data.frame(condition = factor(fst.cls))
+
+      if (!is.null(dataSet$block)) {
+        colData$block <- factor(dataSet$block)
+        design <- ~ block + condition
+      } else {
+        design <- ~ condition
+      }
+
+      if (anal.type == "default") {
+        for (i in 1:(length(all_conditions) - 1)) {
+          for (j in (i + 1):length(all_conditions)) {
+            contrast_name <- paste0(all_conditions[i], " vs ", all_conditions[j])
+            contrast_list[[contrast_name]] <- c("condition", all_conditions[j], all_conditions[i])
+          }
+        }
+
+      } else if (anal.type == "reference") {
+        ref <- formatLevel(par1)
+        if (!(ref %in% all_conditions)) stop("Reference level not found.")
+        for (cond in setdiff(all_conditions, ref)) {
+          contrast_name <- paste0(ref, " vs ", cond)
+          contrast_list[[contrast_name]] <- c("condition", cond, ref)
+        }
+
+      } else if (anal.type == "custom") {
+        comps <- parse_contrast_groups(par1)
+        comps <- lapply(comps, formatLevel)
+        if (all(unlist(comps) %in% all_conditions)) {
+          contrast_name <- paste0(comps[[1]], " vs ", comps[[2]])
+          contrast_list[[contrast_name]] <- c("condition", comps[[1]], comps[[2]])
+        } else {
+          stop("Invalid custom contrast.")
+        }
+      }
+    
+
+    # ---- Run DESeq2 ----
+    dds <- DESeqDataSetFromMatrix(countData = round(data.anot), colData = colData, design = design)
+    dds <- DESeq(dds, betaPrior = FALSE)
+    qs::qsave(dds, "deseq.res.obj.rds")
+
+    # ---- Extract contrast results (if applicable) ----
+    results_list <- list()
+    if (length(contrast_list) > 0) {
+      for (contrast_name in names(contrast_list)) {
+        contrast_vec <- contrast_list[[contrast_name]]
+        res <- results(dds, contrast = contrast_vec, independentFiltering = FALSE, cooksCutoff = Inf)
+
+        topFeatures <- data.frame(res@listData)
+        rownames(topFeatures) <- rownames(res)
+        colnames(topFeatures) <- sub("padj", "adj.P.Val", colnames(topFeatures))
+        colnames(topFeatures) <- sub("pvalue", "P.Value", colnames(topFeatures))
+        colnames(topFeatures) <- sub("log2FoldChange", "logFC", colnames(topFeatures))
+        topFeatures <- topFeatures[c("logFC", "baseMean", "lfcSE", "stat", "P.Value", "adj.P.Val")]
+        topFeatures <- topFeatures[order(topFeatures$P.Value), ]
+
+        results_list[[contrast_name]] <- topFeatures
+      }
+    }else{
+        results_list[[1]] <- .get.interaction.results()
     }
-    return(results_list);
+
+    return(results_list)
   }
-  
-  # Save input data
+
   dat.in <- list(data = dataSet, my.fun = my.fun)
   qs::qsave(dat.in, file = "dat.in.qs")
-  
   return(1)
 }
+
 
 
 .save.deseq.res <- function(dataSet){
@@ -712,4 +738,36 @@ MultiCovariateRegression <- function(fileName,
 
   RegisterData(dataSet);
   return(dataSet);
+}
+
+parse_contrast_groups <- function(contrast_str) {
+  comps <- strsplit(contrast_str, " vs\\.?\\s*")[[1]]
+  if (length(comps) != 2) stop(paste("Invalid contrast format:", contrast_str))
+  return(comps)
+}
+
+.get.interaction.results <- function(dds.path = "deseq.res.obj.rds") {
+  dds <- qs::qread(dds.path)
+  cat("Available result names:\n")
+  print(resultsNames(dds))  # Show all model terms
+  
+  # Automatically detect the interaction term
+  interaction_name <- grep("factorA.*factorB.*", resultsNames(dds), value = TRUE)
+  if (length(interaction_name) == 0) {
+    stop("No interaction term found in model.")
+  }
+
+  cat("Extracting interaction term:", interaction_name, "\n")
+  res <- results(dds, name = interaction_name[1], independentFiltering = FALSE, cooksCutoff = Inf)
+
+  # Format results
+  topFeatures <- data.frame(res@listData)
+  rownames(topFeatures) <- rownames(res)
+  colnames(topFeatures) <- sub("padj", "adj.P.Val", colnames(topFeatures))
+  colnames(topFeatures) <- sub("pvalue", "P.Value", colnames(topFeatures))
+  colnames(topFeatures) <- sub("log2FoldChange", "logFC", colnames(topFeatures))
+  topFeatures <- topFeatures[c("logFC", "baseMean", "lfcSE", "stat", "P.Value", "adj.P.Val")]
+  topFeatures <- topFeatures[order(topFeatures$P.Value), ]
+
+  return(topFeatures)
 }
