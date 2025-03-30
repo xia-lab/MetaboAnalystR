@@ -170,7 +170,7 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
   res.all <- qs::qread("limma.sig.qs");
   fit_res <- qs::qread("limma_fit_res.qs")
   cor_res <- qs::qread(file = "limma_cor_res.qs")
-  
+  save(mSetObj, file = "mSetObj___ComputeContDoseLimmaResTable.rda")
   fdr.bool <- as.logical(fdr.bool);
   
   colNum <- ncol(res.all);
@@ -216,9 +216,13 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
   if(nrow(sig.mat) > 1000){
     sig.mat <- sig.mat[1:1000,];
   }
+
+  idx_rm <- which(colnames(res.all) == "logFC" | colnames(res.all) == "B")
+  res.all_clean <- res.all[,-idx_rm]
+  res.all_clean <- cbind(res.all_clean, Coefficient = coef_res)
   
   mSetObj$analSet$de.info <- output;
-  mSetObj$dataSet$comp.res = res.all; # 
+  mSetObj$dataSet$comp.res <- res.all_clean; # 
   mSetObj$analSet$dose <- list(
     p.thresh = p.thresh,
     coef.thresh = coef.thresh,
