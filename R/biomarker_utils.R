@@ -2407,6 +2407,10 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
 
   if (sel.meta == "NA") {
     return(PrepareROCData_old(mSetObj))
+  }else if(sel.meta == "Class"){
+    if(!sel.meta %in% colnames(mSetObj$dataSet$meta.info)){
+        sel.meta <- colnames(mSetObj$dataSet$meta.info)[1];
+    }
   }
   msg.vec <<- 0
   data.list <- list()
