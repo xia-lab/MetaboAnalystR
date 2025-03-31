@@ -1083,3 +1083,118 @@ GetFitResultModelNms <- function(){
   mSetObj <- .get.mSet(NA);
   return(as.character(mSetObj$dataSet$html.resTable[,2]))
 }
+
+
+fit_drc_modelling <- function (data, model = "ll4") 
+{
+  
+  #data <- data[data$grouping == "feature_3",]
+
+  if(model == "ll4"){
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "l4") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::L.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ll24") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL2.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ll5") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "l5") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::L.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ll25") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL2.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "l3") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::L.3(names = c("hill", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ll3") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL.3(names = c("hill", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ll23") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL2.3(names = c("hill", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "w14") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::W1.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "w24") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::W2.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "w13") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::W1.3(names = c("hill", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "w23") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::W2.3(names = c("hill", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "bc4") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::BC.4(names = c("hill", "max_value", "ec_50", "unk")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "bc5") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::BC.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "ar3") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::AR.3(names = c( "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else if(model == "mm3") {
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::MM.3(names = c( "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  } else {
+    # for unexpected model selection option
+    model <- "ll4"
+    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
+                        data = data, 
+                        fct = drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50")), 
+                        control = drc::drmc(otrace = TRUE))
+  }
+  
+  doses_vec <- res_fit[["origData"]][["r_condition"]];
+  predictions_range <- exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
+  
+  if(model %in% c("l4", "l5", "l3", "ar3", "mm3", "bc4", "bc5", "w14", "w24", "w13")){
+    predictions_range <- seq(max(doses_vec), min(doses_vec), length = 100)
+  } else {
+    predictions_range <- exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
+  }
+  
+  predictions <- suppressWarnings(stats::predict(res_fit, data.frame(predictions_range), interval = "confidence"))
+  return(list(result_fitting = res_fit,
+              prediction_interval = predictions))
+}
+

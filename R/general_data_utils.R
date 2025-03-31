@@ -441,7 +441,7 @@ GetRCommandHistory <- function(mSetObj=NA){
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-  print(paste("getwd===textdata===", getwd()));
+  
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
