@@ -298,7 +298,7 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
       {
         
         fit <- Exp4
-        
+        save(fit, kcrit, AICdigits, dset, file = "fit_line301.rda")
         # collect parameters
         AIC.i <- round(AIC(fit, k = kcrit), digits = AICdigits)
         lof.pval.i <- neill.test(fit, dset$dose, display = FALSE)
@@ -611,11 +611,142 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
   return(.set.mSet(mSetObj));
 }
 
+PerformContDRFit <- function(mSetObj=NA, ncpus=1){
+    mSetObj <- .get.mSet(mSetObj);
+
+    require(dplyr)
+    require(drc)
+    
+    ft_names <- rownames(mSetObj[["dataSet"]][["limma_dose_sig_res"]])
+    dt <- mSetObj[["dataSet"]][["norm"]]
+    dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
+
+    ft_linear_idx <- vapply(ft_names, function(x){
+      which(x == colnames(dt))
+    }, FUN.VALUE = integer(1L))
+
+    data_normalised_list <- lapply(ft_linear_idx, function(u){
+      vec_ints <-dt[,u]
+      data_normalised <- data.frame(r_file_name = rownames(dt), 
+                                    grouping = paste0("feature_", u), 
+                                    normalised_intensity_log2 = as.double(vec_ints), 
+                                    r_condition = dose_vec)
+      return(data_normalised)
+    })
+
+    res <- rep(list(list()), 17)
+    names(res) <- c("ll4","l4","ll24","ll5","l5","ll25","ll3","l3","ll23","w14","w24","w13","w23","bc4","bc5","ar3","mm3")
+
+    if(ncpus == 1){
+        # 4 params model
+        if("ll4" %in% models){
+            res_ll4 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll4");
+            res[["ll4"]] <- res_ll4
+            print("=== model ll4 completed!")
+        }
+        if("l4" %in% models){
+            res_l4 <- lapply(data_normalised_list, fit_drc_modelling, model = "l4");
+            res[["l4"]] <- res_l4
+            print("=== model l4 completed!")
+        }
+        if("ll24" %in% models){
+            res_ll24 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll24");
+            res[["ll24"]] <- res_ll24
+            print("=== model ll24 completed!")
+        }
+        # 5 params model
+        if("ll5" %in% models){
+            res_ll5 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll5");
+            res[["ll5"]] <- res_ll5
+            print("=== model ll5 completed!")
+        }
+        if("l5" %in% models){
+            res_l5 <- lapply(data_normalised_list, fit_drc_modelling, model = "l5");
+            res[["l5"]] <- res_l5
+            print("=== model l5 completed!")
+        }
+        if("ll25" %in% models){
+            res_ll25 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll25");
+            res[["ll25"]] <- res_ll25
+            print("=== model ll25 completed!")
+        }
+        # 3 params model
+        if("ll3" %in% models){
+            res_ll3 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll3");
+            res[["ll3"]] <- res_ll3
+            print("=== model ll3 completed!")
+        }
+        if("l3" %in% models){
+            res_l3 <- lapply(data_normalised_list, fit_drc_modelling, model = "l3");
+            res[["l3"]] <- res_l3
+            print("=== model l3 completed!")
+        }
+        if("ll23" %in% models){
+            res_ll23 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll23");
+            res[["ll23"]] <- res_ll23
+            print("=== model ll23 completed!")
+        }
+        # Weibull model
+        if("w14" %in% models){
+            res_w14 <- lapply(data_normalised_list, fit_drc_modelling, model = "w14");
+            res[["w14"]] <- res_w14
+            print("=== model w14 completed!")
+        }
+        if("w24" %in% models){
+            res_w24 <- lapply(data_normalised_list, fit_drc_modelling, model = "w24");
+            res[["w24"]] <- res_w24
+            print("=== model w24 completed!")
+        }
+        if("w13" %in% models){
+            res_w13 <- lapply(data_normalised_list, fit_drc_modelling, model = "w13");
+            res[["w13"]] <- res_w13
+            print("=== model w13 completed!")
+        }
+        if("w23" %in% models){
+            res_w23 <- lapply(data_normalised_list, fit_drc_modelling, model = "w23");
+            res[["w23"]] <- res_w23
+            print("=== model w23 completed!")
+        }
+        # Brain-Cousens hormesis model
+        if("bc4" %in% models){
+            res_bc4 <- lapply(data_normalised_list, fit_drc_modelling, model = "bc4");
+            res[["bc4"]] <- res_bc4
+            print("=== model bc4 completed!")
+        }
+        if("bc5" %in% models){
+            res_bc5 <- lapply(data_normalised_list, fit_drc_modelling, model = "bc5");
+            res[["bc5"]] <- res_bc5
+            print("=== model bc5 completed!")
+        }
+        # Asymptotic regression model
+        if("ar3" %in% models){
+            res_ar3 <- lapply(data_normalised_list, fit_drc_modelling, model = "ar3");
+            res[["ar3"]] <- res_ar3
+            print("=== model ar3 completed!")
+        }
+        # Michaelis-Menten model
+        if("mm3" %in% models){
+            res_mm3 <- lapply(data_normalised_list, fit_drc_modelling, model = "mm3");
+            res[["mm3"]] <- res_mm3
+            print("=== model mm3 completed!")
+        }
+    } else {
+
+    }
+    res <- res[!vapply(res, function(x){length(x)==0}, logical(1L))]
+    nms <- names(res)
+
+    
+    qs::qsave(res, file = "curve_fitting_res.qs")    
+    print("Completed PerformContDRFit!");
+    return(.set.mSet(mSetObj));
+}
+
 FilterDRFit <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   f.drc <- mSetObj$dataSet$drcfit.obj;
-  
+  save(mSetObj, file = "mSetObj___PerformContDRFit.rda")
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
 
@@ -654,6 +785,14 @@ FilterDRFit <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+FilterContDRFit <- function(mSetObj=NA){
+
+    mSetObj <- .get.mSet(mSetObj);
+    lof.pval <- as.numeric(lof.pval);
+
+    print("Completed FilterDRFit!");
+    return(.set.mSet(mSetObj));
+}
 
 
 #4_bmdcalc.R
@@ -1192,9 +1331,16 @@ fit_drc_modelling <- function (data, model = "ll4")
   } else {
     predictions_range <- exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
   }
+    
+  lof.pval.i <- neill.test(res_fit, res_fit[["data"]][["r_condition"]], display = FALSE)
+  AIC.i <- round(AIC(res_fit, k = 2), digits = 2)
+  SDres <- sigma(res_fit)
   
   predictions <- suppressWarnings(stats::predict(res_fit, data.frame(predictions_range), interval = "confidence"))
-  return(list(result_fitting = res_fit,
+  return(list(result_coefficients = res_fit$coefficients,
+              lof.pval.i = lof.pval.i,
+              AIC.i = AIC.i,
+              SDres = SDres,
               prediction_interval = predictions))
 }
 
