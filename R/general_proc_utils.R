@@ -645,7 +645,16 @@ ContainMissing <- function(mSetObj=NA){
 GetMetaDataCol <- function(colnm){
   
   mSetObj <- .get.mSet(mSetObj);
- 
+  save.image("test.RData");
+      print("GetMetaDataCol000");
+      print(mSet$dataSet$meta.info);
+
+      if(!is.null(mSetObj$dataSet$meta.info)){
+      print("getmetadatacol");
+    print(head(mSetObj$dataSet$meta.info))
+      print("colnm");
+      print(colnm);
+    }
 if(colnm=="NA"){
   cls<-levels(mSetObj$dataSet$meta.info[,1])
 }else{

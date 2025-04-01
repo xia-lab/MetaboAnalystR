@@ -1503,6 +1503,7 @@ setResourceDir <- function(path){
     print(paste0("rpath====", path));
 }
 
+
 CheckDetailsTablePerformed <-function(type){
   mSetObj <- .get.mSet(NA);
   performed <- T;
@@ -1532,9 +1533,15 @@ CheckDetailsTablePerformed <-function(type){
   }else if(type == "ebam"){
     performed <- !is.null(mSetObj$analSet$ebam.cmpds);
   }else if(type == "sam"){
-    print(head(mSetObj$analSet$sam.cmpds));
     performed <- !is.null(mSetObj$analSet$sam.cmpds);
+  }else if(type == "pca"){
+    performed <- !is.null(mSetObj$analSet$pca$imp.loads);
+  }else if(type == "spls.loadings"){
+    performed <- !is.null(mSetObj$analSet$splsr$loadings);
+  }else if(type %in% c("mr_results_merge", "exposure", "harmonized.dat", "outcome.dat")){
+    performed <- !is.null(mSetObj$dataSet[type]);
   }
+
   print(paste("checkPerformed=", type, "====",performed));
 
 return(performed)
@@ -1584,7 +1591,8 @@ GetMummiResRowNamesWithType <- function(mSetObj=NA, type){
 
 LoadRHistory <- function(){
     load('Rload.RData');
-    if(file.exists('mSet.rda')){
-        load('mSet.rda');
-    }
+    mSet <<- mSet;
+    #if(file.exists('mSet.rda')){
+    #   load('mSet.rda');
+    #}
 }

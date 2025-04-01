@@ -26,7 +26,6 @@ my.save.data <- function(mSetObj=NA){
       orig.data<- qs::qread("data_orig.qs");
 
       tsFormat <- substring(mSetObj$dataSet$format,4,5)=="mf";
-
       # combine for single factor, while keep separate for metadata 
       if(!tsFormat){
         lbls <- cbind("Label"= as.character(mSetObj$dataSet$orig.cls));

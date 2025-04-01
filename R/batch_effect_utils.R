@@ -4312,6 +4312,8 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
 .set.mSet <- function(mSetObj=NA){
   if(.on.public.web){
     mSet <<- mSetObj;
+    print("mmmmsssettt");
+    print(mSet$dataSet$meta.info);
     return (1);
   }
   return(mSetObj);
