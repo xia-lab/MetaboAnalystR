@@ -277,11 +277,14 @@ names(rankedVec) <- doEntrez2SymbolMapping(names(rankedVec), paramSet$data.org, 
                    dat.opt = paramSet$selDataNm,
                    naviString="ridge");
 
-  if(ridgeType != "ORA"){
+  if(ridgeType == "gsea"){
   csv.nm <- paste0(imgNm, ".csv");
-
   fast.write(resTable, file=csv.nm);
   }
+
+  print("ridge");
+  print(csv.nm);
+
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
   
