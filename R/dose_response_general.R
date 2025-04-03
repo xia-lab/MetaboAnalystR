@@ -963,6 +963,10 @@ PerformBMDCalc <- function(ncpus = 1)
     disp.res <- cbind(disp.res, dres_filtered[, c("bmr", "bmd", "bmdl", "bmdu")])
 
   dnld.file <- merge(dataSet$drcfit.obj$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
+
+  paramSet <- readSet(paramSet, "paramSet");
+  symbols <- doEntrez2SymbolMapping(dnld.file$gene.id, paramSet$data.org,  paramSet$data.idType);
+  dnld.file <- data.frame(Name=symbols, dnld.file);
   data.table::fwrite(as.data.frame(dnld.file), quote = FALSE, row.names = FALSE, sep = "\t", file="bmd.txt");
 
   # collect results to return
