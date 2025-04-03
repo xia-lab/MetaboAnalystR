@@ -90,7 +90,10 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   }
   
   if(ridgeType == "ora"){
-    .performEnrichAnalysis(dataSet, imgNm, fun.type, rownames(sigmat), "ridgeline")
+    gene.vec <- rownames(sigmat);
+    sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+    names(gene.vec) <- sym.vec;
+    .performEnrichAnalysis(dataSet, imgNm, fun.type, gene.vec, "ridgeline")
     res <- qs::qread("enr.mat.qs");
     colnames(res) <- c("size", "expected", "overlap", "pval", "padj");
     
@@ -102,21 +105,37 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
 
     rankedVec<- ComputeRankedVec(dataSet, rankOpt, paramSet$selectedFactorInx);
    
+  
+  gene.vec <- universe;
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  gene.nms <- sym.vec;
+
+  current.geneset.symb <- lapply(current.geneset, 
+                       function(x) {
+                         gene.nms[gene.vec%in%unlist(x)];
+  }
+  );
+
+names(rankedVec) <- doEntrez2SymbolMapping(names(rankedVec), paramSet$data.org, paramSet$data.idType);
+
+
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
-      res <- fgsea::fgsea(pathways = current.geneset, 
+      res <- fgsea::fgsea(pathways = current.geneset.symb, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std",
                           nperm=10000)    
     }else{
-      res <- fgsea::fgsea(pathways = current.geneset, 
+      res <- fgsea::fgsea(pathways = current.geneset.symb, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std")   
       
     }
+
+
   }
   res <- .signif_df(res, 4);
   res <- res[order(res$pval),];
@@ -257,10 +276,12 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                    enrRes = enr.res,
                    dat.opt = paramSet$selDataNm,
                    naviString="ridge");
+
+  if(ridgeType != "ORA"){
   csv.nm <- paste0(imgNm, ".csv");
-  
+
   fast.write(resTable, file=csv.nm);
-  
+  }
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
   
@@ -276,9 +297,6 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
-  #imgSet$enrTables[["ridgeline"]]$table <- resTable;
-  #imgSet$enrTables[["ridgeline"]]$library <- fun.type;
-  #imgSet$enrTables[["gsea"]]$algo <- toupper(ridgeType);
   
   imgSet$compute.ridgeline <- imageName;
   saveSet(imgSet);

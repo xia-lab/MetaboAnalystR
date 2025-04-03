@@ -80,7 +80,7 @@
   current.geneset.symb <- lapply(current.geneset, 
                        function(x) {
                          gene.nms[gene.vec%in%unlist(x)];
-                       }
+  }
   );
 
   # total unique gene number
@@ -127,8 +127,8 @@
     fun.ids2 <- as.vector(setres$current.setids[pws]) 
     resTable.all <- data.frame(Pathway = pws, ID = fun.ids2, res.mat.all)
 
-
     csv.nm <- paste(file.nm, ".csv", sep="");    
+    print(paste(csv.nm, "=====", "enrichAnalysis"));
     write.csv(resTable.all, file=csv.nm, row.names=F);
     
     imp.inx <- res.mat[,4] <= 0.05;
@@ -194,7 +194,8 @@
   fun.hits <<- hits.query;
   fun.pval <<- resTable[,5];
   hit.num <<- resTable[,4];
-  #csv.nm <- paste(file.nm, ".csv", sep="");    
+  #csv.nm <- paste(file.nm, ".csv", sep="");  
+  #print(csv.nm)  
   #fast.write(resTable, file=csv.nm, row.names=F);
   paramSet$partialToBeSaved <- c(paramSet$partialToBeSaved, c(json.nm))
   
