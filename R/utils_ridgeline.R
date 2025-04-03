@@ -105,21 +105,37 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
 
     rankedVec<- ComputeRankedVec(dataSet, rankOpt, paramSet$selectedFactorInx);
    
+  
+  gene.vec <- universe;
+  sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+  gene.nms <- sym.vec;
+
+  current.geneset.symb <- lapply(current.geneset, 
+                       function(x) {
+                         gene.nms[gene.vec%in%unlist(x)];
+  }
+  );
+
+names(rankedVec) <- doEntrez2SymbolMapping(names(rankedVec), paramSet$data.org, paramSet$data.idType);
+
+
     if(fun.type %in% c("go_bp", "go_mf", "go_cc")){
-      res <- fgsea::fgsea(pathways = current.geneset, 
+      res <- fgsea::fgsea(pathways = current.geneset.symb, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std",
                           nperm=10000)    
     }else{
-      res <- fgsea::fgsea(pathways = current.geneset, 
+      res <- fgsea::fgsea(pathways = current.geneset.symb, 
                           stats    = rankedVec,
                           minSize  = 5,
                           maxSize = 500,
                           scoreType = "std")   
       
     }
+
+
   }
   res <- .signif_df(res, 4);
   res <- res[order(res$pval),];
@@ -260,13 +276,12 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                    enrRes = enr.res,
                    dat.opt = paramSet$selDataNm,
                    naviString="ridge");
-  #csv.nm <- paste0(imgNm, ".csv");
-  
-  #resTable$ID <- fun.ids;
-  #resTable$ID <- fun.ids;
 
-  #fast.write(resTable, file=csv.nm);
-  
+  if(ridgeType != "ORA"){
+  csv.nm <- paste0(imgNm, ".csv");
+
+  fast.write(resTable, file=csv.nm);
+  }
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
   
