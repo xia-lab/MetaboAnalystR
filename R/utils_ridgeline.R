@@ -282,9 +282,6 @@ names(rankedVec) <- doEntrez2SymbolMapping(names(rankedVec), paramSet$data.org, 
   fast.write(resTable, file=csv.nm);
   }
 
-  print("ridge");
-  print(csv.nm);
-
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
   
