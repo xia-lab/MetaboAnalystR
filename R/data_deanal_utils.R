@@ -749,7 +749,6 @@ parse_contrast_groups <- function(contrast_str) {
 .get.interaction.results <- function(dds.path = "deseq.res.obj.rds") {
   dds <- qs::qread(dds.path)
   cat("Available result names:\n")
-  print(resultsNames(dds))  # Show all model terms
   
   # Automatically detect the interaction term
   interaction_name <- grep("factorA.*factorB.*", resultsNames(dds), value = TRUE)

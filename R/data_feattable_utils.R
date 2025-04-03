@@ -156,7 +156,6 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   significant_gene_table <- list()
 
   # Loop through each comparison again to collect significant gene details
-  print(paste("length==", length(dataSet$comp.res.list)));
   for (inx in seq_along(dataSet$comp.res.list)) {
     resTable <- dataSet$comp.res.list[[inx]]
     
@@ -204,18 +203,15 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   output_file <- "Significant_Genes.csv"
   if (nrow(final_table) > 0) {
     write.csv(final_table, file = output_file, row.names = TRUE)
+  all_significant_genes <- unique(rownames(final_table))
+  de.Num.total <- length(all_significant_genes)
     message(paste("Significant genes table has been successfully exported to:", output_file))
   } else {
+  de.Num.total <- 0
     message("No significant genes identified to export.")
   }
 
-  # Get the number of unique significant genes across all comparisons
-  if (length(significant_gene_table) > 0) {
-    all_significant_genes <- unique(unlist(lapply(significant_gene_table, rownames)))
-    de.Num.total <- length(all_significant_genes)
-  } else {
-    de.Num.total <- 0
-  }
+
 
   if (de.Num.total == 0) {
     msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")

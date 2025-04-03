@@ -469,7 +469,6 @@ GetEnrResultColNames<-function(type){
 GetEnrResSetIDs<-function(type){
   imgSet <- readSet(imgSet, "imgSet");
   res <- imgSet$enrTables[[type]]$table;
-  print(head(res));
   return(res$IDs);
 }
 
