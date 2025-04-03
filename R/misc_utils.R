@@ -1188,3 +1188,19 @@ insertMetaInfo <- function(str){
    sink()
    return(1)
 }
+
+
+
+CheckDetailsTablePerformed <-function(type){
+  paramSet <- readSet(paramSet, "paramSet");
+  dataSet <- readDataset(paramSet$dataName);
+
+  performed <- T;
+  if(grepl("bmd", type)){
+    performed <- !is.null(dataSet$html.resTable);
+  }
+
+  print(paste("checkPerformed=", type, "====",performed));
+
+return(performed)
+}

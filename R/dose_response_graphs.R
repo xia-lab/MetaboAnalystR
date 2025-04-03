@@ -246,16 +246,20 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
   }
 
   if(scale == "log2"){
-    if(model.nm == "Exp3" | model.nm == "Exp5"){
+    if(model.nm %in% c("Exp3", "Exp5")){
       p <- p + scale_x_continuous(trans='pseudo_log')
     } else {
-      p <- p + scale_x_continuous(trans='log2', breaks = unique(exposure), labels = labels)
+      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
+      labelMap <- c("0", sort(unique(labels[labels != 0])))
+      p <- p + scale_x_continuous(trans='log2', breaks = breaks, labels = labelMap)
     }
   } else if(scale == "log10"){
-    if(model.nm == "Exp3" | model.nm == "Exp5"){
+    if(model.nm %in% c("Exp3", "Exp5")){
       p <- p + scale_x_continuous(trans='pseudo_log')
     } else {
-      p <- p + scale_x_continuous(trans='log10', breaks = unique(exposure), labels = labels)
+      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
+      labelMap <- c("0", sort(unique(labels[labels != 0])))
+      p <- p + scale_x_continuous(trans='log10', breaks = breaks, labels = labelMap)
     }
   }
   
