@@ -90,7 +90,10 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   }
   
   if(ridgeType == "ora"){
-    .performEnrichAnalysis(dataSet, imgNm, fun.type, rownames(sigmat), "ridgeline")
+    gene.vec <- rownames(sigmat);
+    sym.vec <- doEntrez2SymbolMapping(gene.vec, paramSet$data.org, paramSet$data.idType);
+    names(gene.vec) <- sym.vec;
+    .performEnrichAnalysis(dataSet, imgNm, fun.type, gene.vec, "ridgeline")
     res <- qs::qread("enr.mat.qs");
     colnames(res) <- c("size", "expected", "overlap", "pval", "padj");
     
@@ -257,9 +260,12 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
                    enrRes = enr.res,
                    dat.opt = paramSet$selDataNm,
                    naviString="ridge");
-  csv.nm <- paste0(imgNm, ".csv");
+  #csv.nm <- paste0(imgNm, ".csv");
   
-  fast.write(resTable, file=csv.nm);
+  #resTable$ID <- fun.ids;
+  #resTable$ID <- fun.ids;
+
+  #fast.write(resTable, file=csv.nm);
   
   analSet$ridgeline <- res.list;
   saveSet(analSet, "analSet");
@@ -276,9 +282,6 @@ compute.ridgeline <- function(dataSet, imgNm = "abc", dpi=72, format="png", fun.
   
   imgSet <- readSet(imgSet, "imgSet");
   rownames(resTable) <- NULL;
-  #imgSet$enrTables[["ridgeline"]]$table <- resTable;
-  #imgSet$enrTables[["ridgeline"]]$library <- fun.type;
-  #imgSet$enrTables[["gsea"]]$algo <- toupper(ridgeType);
   
   imgSet$compute.ridgeline <- imageName;
   saveSet(imgSet);
