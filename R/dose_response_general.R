@@ -126,7 +126,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
     res$all.pass[is.na(res$all.pass)] <- FALSE
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
-}
+  }
 
   if(sum(res$all.pass) == 0){
     return(0);
@@ -733,11 +733,44 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     } else {
 
     }
+    
     res <- res[!vapply(res, function(x){length(x)==0}, logical(1L))]
     nms <- names(res)
+    fitting_res0 <- res;
 
+    resxs <- lapply(1:length(res), function(i){
+      res0 <- res[[i]]
+      rex <- lapply(1:length(res0), function(j){
+        y <- res0[[j]]
+        if(length(y$SDres)==0){
+          y$SDres <- 0
+        }
+        data.frame(b = y[["result_coefficients"]][["hill:(Intercept)"]],
+                   c = y[["result_coefficients"]][["min_value:(Intercept)"]],
+                   d = y[["result_coefficients"]][["max_value:(Intercept)"]],
+                   e = y[["result_coefficients"]][["ec_50:(Intercept)"]],
+                   lof.p = y[["lof.pval.i"]], 
+                   AIC.model = y[["AIC.i"]], 
+                   SDres = y[["SDres"]], 
+                   bmd = y[["bmds_results"]][1],
+                   bmdl = y[["bmds_results"]][2],
+                   bmdu = y[["bmds_results"]][3],
+                   item.ind = j)
+
+      })
+      rex_df <- do.call(rbind, rex)
+      res_df <- cbind(feature.id = names(res0), mode.name = names(res)[i], rex_df)
+      rownames(res_df) <- NULL
+      return(res_df)
+    })
+    resxs_df <- do.call(rbind, resxs)
+    resxs_df <- resxs_df[order(resxs_df$item.ind), ]
     
-    qs::qsave(res, file = "curve_fitting_res.qs")    
+    drcfit.obj <- list()
+    drcfit.obj$fitres.all <- resxs_df
+    mSetObj$dataSet$drcfit.obj <- drcfit.obj
+    
+    qs::qsave(fitting_res0, file = "curve_fitting_res.qs")    
     print("Completed PerformContDRFit!");
     return(.set.mSet(mSetObj));
 }
@@ -746,7 +779,7 @@ FilterDRFit <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   f.drc <- mSetObj$dataSet$drcfit.obj;
-  save(mSetObj, file = "mSetObj___PerformContDRFit.rda")
+  save(mSetObj, file = "mSetObj___FilterDRFit.rda")
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
 
@@ -781,17 +814,51 @@ FilterDRFit <- function(mSetObj=NA){
   
   mSetObj$dataSet$drcfit.obj <- f.drc;
   print("Completed FilterDRFit!");
-
+  save(mSetObj, file = "mSetObj___FilterDRFit2.rda")
   return(.set.mSet(mSetObj));
 }
 
-FilterContDRFit <- function(mSetObj=NA){
-
-    mSetObj <- .get.mSet(mSetObj);
-    lof.pval <- as.numeric(lof.pval);
-
-    print("Completed FilterDRFit!");
-    return(.set.mSet(mSetObj));
+FilterDRFit2 <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  f.drc <- mSetObj$dataSet$drcfit.obj;
+  save(mSetObj, file = "mSetObj___FilterDRFit3.rda")
+  require(data.table)
+  lof.pval <- as.numeric(lof.pval)
+  
+  # get results
+  fitres.all <- as.data.table(f.drc$fitres.all)
+  fitres.filt <-fitres.all
+  
+  # get best fit for each feature based on selected criteria
+  fitres.filt$AIC.model <- as.numeric(as.vector(fitres.filt$AIC.model))
+  fitres.filt$lof.p <- as.numeric(as.vector(fitres.filt$lof.p))
+  if(fit.select == "AIC"){
+    fitres.filt <- fitres.filt[fitres.filt[ , AIC.model == min(AIC.model), by = item.ind]$V1]
+  }else if(fit.select == "pvalue"){
+    # filter based on pvalue cutoff
+    fitres.filt <- fitres.filt[fitres.filt[ , lof.p == min(lof.p), by = item.ind]$V1]
+  }else if(fit.select == "both"){
+    fitres.filt <- fitres.filt[as.numeric(fitres.filt$lof.p) > lof.pval]
+    fitres.filt <- fitres.filt[fitres.filt[ , .I[which.min(AIC.model)], by = item.ind]$V1]
+  }
+  
+  # remove rows that had no signficant fits
+  idx <- as.numeric(fitres.filt$item.ind)
+  data <- f.drc$data[idx, ]
+  data.mean <- f.drc$data.mean[idx, ]
+  item <- f.drc$item[idx]
+  
+  # update drcfit object
+  f.drc$fitres.filt <- as.data.frame(fitres.filt);
+  f.drc$data <- data;
+  f.drc$data.mean <- data.mean;
+  f.drc$item <- item;
+  
+  mSetObj$dataSet$drcfit.obj <- f.drc;
+  print("Completed FilterDRFit!");
+  save(mSetObj, file = "mSetObj___FilterDRFit4.rda")
+  return(.set.mSet(mSetObj));
 }
 
 
@@ -800,6 +867,7 @@ FilterContDRFit <- function(mSetObj=NA){
 PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   mSetObj <- .get.mSet(mSetObj);
+  save(mSetObj, file = "mSetObj___PerformBMDCalc.rda")
 
   #save.image("TestDose44.RData");
 
@@ -1062,6 +1130,129 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
     return(2)
   }
 
+}
+
+
+PerformContBMDCalc <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  #save.image("TestDose44.RData");
+  
+  dataSet <- mSetObj$dataSet;
+  f.drc <- dataSet$drcfit.obj;
+  f.its <- dataSet$itemselect;
+  
+  num.sds <- as.numeric(num.sds);
+  
+  require(data.table)
+  require(dplyr)
+  
+  dfitall <- f.drc$fitres.filt # filter this based on constant model
+  nselect <- nrow(dfitall)
+  
+  # get necessary data for fitting
+  dose <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]])) #f.drc$dose
+  
+  data <- f.its$data
+  data.mean <- f.its$data.mean
+  
+  # get only correct rows
+  inx.bmd <- rownames(data) %in% as.character(dfitall$gene.id)
+  data <- as.data.frame(data) # this keeps correct shape in case of only 1 row
+  data <- data[inx.bmd, ] %>% as.matrix()
+  
+  data.mean <- as.data.frame(data.mean)
+  data.mean <- data.mean[inx.bmd, ] %>% as.matrix()
+  
+  item <- dataSet$drcfit.obj$fitres.filt[,1]
+  fitres.bmd <- f.drc$fitres.filt
+  
+  if(ctrl.mode == "sampleMean"){
+    bmr.mode <- "ctrl.mean"
+  } else {
+    bmr.mode <- "ctrl.mod"
+  }
+  
+  # change class of columns
+  dres <- mSetObj[["dataSet"]][["drcfit.obj"]][["fitres.filt"]]
+  dres <- as.data.frame(dres)
+  # change order of columns
+  dres <- dres[, c("feature.id", "mode.name", "bmd", "bmdl", "bmdu")]
+  
+  # does bmdcalc converge for bmd, bmdl, and bmdu?
+  dres$conv.pass <- rowSums(is.na(dres)) == 0
+  
+  # is the bmd < highest dose?
+  dres$hd.pass <- dres$bmd < max(dose)
+  
+  # is the CI of the bmd narrow enough?
+  dres$CI.pass <- dres$bmdu/dres$bmdl < 40
+  
+  # is the bmd < lowest dose/10?
+  low.dose <- sort(unique(dose))[2]
+  dres$ld.pass <- dres$bmdl > (low.dose/100)
+  
+  # aggregate all filters
+  # flag genes that don't pass low dose condition by keeping the column, but do 
+  # not use for the final filtering
+  dres$all.pass <- (dres$conv.pass & dres$hd.pass & dres$CI.pass)
+  
+  # update the data
+  item <- item[dres$all.pass]
+  
+  # make combined object
+  fitres.bmd <- fitres.bmd[dres$all.pass, ]
+  
+  # make results to display
+  disp.res <- data.frame(item = item)
+  disp.res <- cbind(disp.res, fitres.bmd[,c("mode.name", "SDres", "lof.p")])
+  disp.res <- cbind(disp.res, dres[dres$all.pass, c("bmd", "bmdl", "bmdu")])
+  
+  #dnld.file <- merge(f.drc$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
+  data.table::fwrite(as.data.frame(disp.res), quote = FALSE, row.names = FALSE, sep = "\t", file="bmd.txt");
+  
+  # collect results to return
+  reslist <- list(bmdcalc.res = dres, fitres.bmd = fitres.bmd, 
+                  disp.res = disp.res,
+                  data.mean = data.mean, dose = dose, item = item)
+  
+  # return results
+  dataSet$bmdcalc.obj <- structure(reslist, class = "bmdcalc")
+  
+  # make table for html display
+  if(dim(disp.res)[1] > 0) {
+    res <- disp.res#[,c(1,2,4,7,6,8)];
+    res.mods <- f.drc$fitres.filt[,c(1, 3:6, 8, 13)];
+    res <- merge(res, res.mods, by.y = "feature.id", by.x = "item");
+    res[,c(4:11)] <- apply(res[,c(4:11)], 2, function(x) as.numeric(as.character(x)));
+    res[,c(4:11)] <- apply(res[,c(4:11)], 2, function(x) signif(x, digits = 2));
+    rownames(res) <- as.character(res$item);
+    colnames(res) <- c("feature.id","mod.name","SDres","lof.p","bmd","bmdl","bmdu","b","c","d","e", "AIC.model", "item.ind");
+    res <- res[order(res$bmd), ];
+    dataSet$html.resTable <- res;
+    dataSet$drcfit.obj <- f.drc;
+    
+    mSetObj$dataSet <- dataSet;
+    .set.mSet(mSetObj);
+    fast.write.csv(res, "curvefit_detailed_table.csv");
+    print("Completed PerformBMDCalc");
+    
+    if(!.on.public.web){
+      return(.set.mSet(mSetObj))
+    }
+    if(dim(disp.res)[1] == 1){
+      return(3);
+    } else {
+      return(1)
+    }
+  } else {    
+    if(!.on.public.web){
+      return(.set.mSet(mSetObj))
+    }
+    return(2)
+  }
+  
 }
 
 #5a_sensPOD.R
@@ -1335,12 +1526,16 @@ fit_drc_modelling <- function (data, model = "ll4")
   lof.pval.i <- neill.test(res_fit, res_fit[["data"]][["r_condition"]], display = FALSE)
   AIC.i <- round(AIC(res_fit, k = 2), digits = 2)
   SDres <- sigma(res_fit)
+  bmds <- bmdContres(res_fit)
+  names(bmds) <- c("bmd", "bmdl", "bmdu")
   
   predictions <- suppressWarnings(stats::predict(res_fit, data.frame(predictions_range), interval = "confidence"))
   return(list(result_coefficients = res_fit$coefficients,
               lof.pval.i = lof.pval.i,
               AIC.i = AIC.i,
               SDres = SDres,
-              prediction_interval = predictions))
+              prediction_interval = predictions,
+              bmds_results = bmds,
+              fitting_model = res_fit))
 }
 

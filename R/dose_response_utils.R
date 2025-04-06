@@ -208,6 +208,14 @@ bmdres <- function(fit){
   
 }
 
+bmdContres <- function(fit){
+  
+  bmd.ci <- suppressMessages(confint(fit, "ec_50"))
+  bmd.mean <- coef(fit)[4] # get bmd estimate from fit
+  c(bmd.mean, bmd.ci)
+  
+}
+
 #### function for bootstrapping the median
 fun.boot <- function(x, i) {
   median(x[i])
