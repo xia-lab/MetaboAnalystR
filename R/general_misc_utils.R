@@ -1540,6 +1540,10 @@ CheckDetailsTablePerformed <-function(type){
     performed <- !is.null(mSetObj$analSet$splsr$loadings);
   }else if(type %in% c("mr_results_merge", "exposure", "harmonized.dat", "outcome.dat")){
     performed <- !is.null(mSetObj$dataSet[type]);
+  }else if(type == "qea"){
+    performed <- !is.null(mSetObj$analSet$qea.mat);
+  }else if(type == "ora"){
+    performed <- !is.null(mSetObj$analSet$ora.mat);
   }
 
   print(paste("checkPerformed=", type, "====",performed));
