@@ -181,7 +181,9 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     
     # Check if there are any significant genes
     if (nrow(significant_genes) > 0) {
-      # Add a column to indicate the comparison
+      res.anot <- doEntrezIDAnot(rownames(significant_genes), paramSet$data.org,  paramSet$data.idType);
+      significant_genes$Symbol <- res.anot$symbol;
+      significant_genes$Name <- res.anot$name;
       significant_genes$Comparison <- names(dataSet$comp.res.list)[[inx]]
       
       # Append the significant genes to the list
@@ -200,7 +202,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   }
 
   # Export the final table as a CSV file if it's not empty
-  output_file <- "Significant_Genes.csv"
+  output_file <- paste0(dataName, "_logFC_",fc.lvl , "_Significant_Genes.csv");
   if (nrow(final_table) > 0) {
     write.csv(final_table, file = output_file, row.names = TRUE)
   all_significant_genes <- unique(rownames(final_table))
