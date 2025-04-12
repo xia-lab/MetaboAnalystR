@@ -768,6 +768,7 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     
     drcfit.obj <- list()
     drcfit.obj$fitres.all <- resxs_df
+    drcfit.obj$dose <- dose_vec;
     mSetObj$dataSet$drcfit.obj <- drcfit.obj
     
     qs::qsave(fitting_res0, file = "curve_fitting_res.qs")    
