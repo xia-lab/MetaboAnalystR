@@ -85,6 +85,8 @@ readOpenGWASKey <- function(){
     if(.on.public.web){
         if(file.exists("/home/zgy/opengwas_api_keys.csv")){
             df <- read.csv("/home/zgy/opengwas_api_keys.csv");
+        }else if(file.exists("/Users/lzy/sqlite/opengwas_api_keys.csv")){
+            df <- read.csv("/Users/lzy/sqlite/opengwas_api_keys.csv");
         }else{
             df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
         }
@@ -108,7 +110,12 @@ readOpenGWASKey <- function(){
 
 extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
   cat("Processing into extractGwasDB from local \n")
+  if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
+    database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite"
+   }else{
   database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
+  }
+
   require("DBI")
   require("RSQLite")
   res_list <- list()
@@ -126,7 +133,11 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   res_outcome_dt <- cbind(res_dt1, meta_dt)
   
   if(proxies){
+    if(file.exists("/Users/lzy/sqlite/openGWAS_withProxy.sqlite")){
+    database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
+   }else{
     database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
+}
     con <- dbConnect(RSQLite::SQLite(), database_path2)
     query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
     res2 <- dbGetQuery(con, query_stat2)
