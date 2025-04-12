@@ -104,38 +104,65 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
   }
 }
 
-PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi, format){
-  mSetObj <- .get.mSet(mSetObj);  
-  dataSet <- mSetObj$dataSet;
+PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
+  mSetObj <- .get.mSet(mSetObj)
+  dataSet <- mSetObj$dataSet
+  cls.type <- dataSet$cls.type
 
-  # Ensure all models are represented in the dataset
-  existing_models <- unique(dataSet$bmdcalc.obj$bmdcalc.res$mod.name)
+  bmd.res <- dataSet$bmdcalc.obj$bmdcalc.res
+
+  # Determine column structure and fill in missing models accordingly
+  existing_models <- unique(bmd.res$mod.name)
   missing_models <- setdiff(models, existing_models)
 
-  # Add rows for missing models (with default or NA values)
   for (model in missing_models) {
-    missing_row <- data.frame(id = paste0(model, "Sample"),
-                              mod.name = model, 
-                              bmd = NA, bmdl = NA, bmdu = NA, bmr = NA,
-                              conv.pass = FALSE, hd.pass = FALSE, 
-                              CI.pass = FALSE, ld.pass = FALSE, 
-                              all.pass = FALSE)
-    dataSet$bmdcalc.obj$bmdcalc.res <- rbind(dataSet$bmdcalc.obj$bmdcalc.res, missing_row)
+    if (cls.type == "cont") {
+      # Continuous version: no 'bmr' column
+      missing_row <- data.frame(
+        feature.id = paste0(model, "_placeholder"),
+        mod.name = model,
+        bmd = NA, bmdl = NA, bmdu = NA,
+        conv.pass = FALSE, hd.pass = FALSE,
+        CI.pass = FALSE, ld.pass = FALSE,
+        all.pass = FALSE
+      )
+    } else {
+      # Discrete version: includes 'bmr'
+      missing_row <- data.frame(
+        id = paste0(model, "Sample"),
+        mod.name = model,
+        bmd = NA, bmdl = NA, bmdu = NA, bmr = NA,
+        conv.pass = FALSE, hd.pass = FALSE,
+        CI.pass = FALSE, ld.pass = FALSE,
+        all.pass = FALSE
+      )
+    }
+    bmd.res <- rbind(bmd.res, missing_row)
   }
 
+  # Generate the plot
   require(ggplot2)
-  p <- ggplot(dataSet$bmdcalc.obj$bmdcalc.res, aes(x = mod.name, fill = as.character(all.pass))) + geom_bar(position = "stack") + 
-        scale_fill_manual(values = c("#3d3c3b","#0099FF"), labels = c("No","Yes"), name = "BMD convergence?") + theme_bw()
-  p <- p + xlab("Best fit model") + ylab("Count") + theme(axis.text.x = element_text(face="bold"), legend.position = "bottom")
-  
-  imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=dpi, type=format, bg="white");
-  print(p)
-  dev.off();
+  p <- ggplot(bmd.res, aes(x = mod.name, fill = as.character(all.pass))) +
+       geom_bar(position = "stack") +
+       scale_fill_manual(values = c("#3d3c3b", "#0099FF"),
+                         labels = c("No", "Yes"),
+                         name = "BMD convergence?") +
+       theme_bw() +
+       xlab("Best fit model") +
+       ylab("Count") +
+       theme(axis.text.x = element_text(face = "bold"),
+             legend.position = "bottom")
 
-  mSetObj$imgSet$PlotDRModelBars <- imgNm;
-  return(.set.mSet(mSetObj));
+  # Output image
+  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep = "")
+  Cairo::Cairo(file = imgNm, width = 8, height = 6, unit = "in", dpi = dpi, type = format, bg = "white")
+  print(p)
+  dev.off()
+
+  mSetObj$imgSet$PlotDRModelBars <- imgNm
+  return(.set.mSet(mSetObj))
 }
+
 
 PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
   mSetObj <- .get.mSet(mSetObj);  

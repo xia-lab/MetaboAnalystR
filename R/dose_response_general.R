@@ -759,7 +759,7 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
 
       })
       rex_df <- do.call(rbind, rex)
-      res_df <- cbind(feature.id = names(res0), mode.name = names(res)[i], rex_df)
+      res_df <- cbind(feature.id = names(res0), mod.name = names(res)[i], rex_df)
       rownames(res_df) <- NULL
       return(res_df)
     })
@@ -1136,9 +1136,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 PerformContBMDCalc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  #save.image("TestDose44.RData");
-  
+    
   dataSet <- mSetObj$dataSet;
   f.drc <- dataSet$drcfit.obj;
   f.its <- dataSet$itemselect;
@@ -1178,7 +1176,7 @@ PerformContBMDCalc <- function(mSetObj=NA){
   dres <- mSetObj[["dataSet"]][["drcfit.obj"]][["fitres.filt"]]
   dres <- as.data.frame(dres)
   # change order of columns
-  dres <- dres[, c("feature.id", "mode.name", "bmd", "bmdl", "bmdu")]
+  dres <- dres[, c("feature.id", "mod.name", "bmd", "bmdl", "bmdu")]
   
   # does bmdcalc converge for bmd, bmdl, and bmdu?
   dres$conv.pass <- rowSums(is.na(dres)) == 0
@@ -1206,7 +1204,7 @@ PerformContBMDCalc <- function(mSetObj=NA){
   
   # make results to display
   disp.res <- data.frame(item = item)
-  disp.res <- cbind(disp.res, fitres.bmd[,c("mode.name", "SDres", "lof.p")])
+  disp.res <- cbind(disp.res, fitres.bmd[,c("mod.name", "SDres", "lof.p")])
   disp.res <- cbind(disp.res, dres[dres$all.pass, c("bmd", "bmdl", "bmdu")])
   
   #dnld.file <- merge(f.drc$fitres.filt[,-12], dres[,-2], by.x = "gene.id", by.y = "id");
@@ -1385,39 +1383,59 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   return(trans.pod)
 }
 
-
 GetFitResultMatrix <- function(){
   mSetObj <- .get.mSet(NA);
-  res <- mSetObj$dataSet$html.resTable[,-c(1,2)];
-  # turn off scientific notation (Java cannot recognize it)
-  options(scipen=999);
-  res <- signif(as.matrix(res), 5)
-  res[is.nan(res)] <- 0;
-  colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  print(head(res))
 
-  return(res);
+  # turn off scientific notation
+  options(scipen=999)
+
+  if (mSetObj$dataSet$cls.type == "cont") {
+    res <- mSetObj$dataSet$html.resTable
+    res <- res[, c("lof.p", "bmdl", "bmd", "bmdu", "b", "c", "d", "e", "SDres", "AIC.model")]
+    res <- signif(as.matrix(res), 5)
+    res[is.nan(res)] <- 0
+    colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e", "SDres", "AIC")
+  } else {
+    res <- mSetObj$dataSet$html.resTable[,-c(1,2)]
+    res <- signif(as.matrix(res), 5)
+    res[is.nan(res)] <- 0
+    colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")
+  }
+
+  print(head(res))
+  return(res)
 }
 
-GetFitResultColNames <-function(){
-  names <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  return(names);
+GetFitResultColNames <- function(){
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e", "SDres", "AIC"))
+  } else {
+    return(c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e"))
+  }
 }
 
 GetFitResultFeatureIDs <- function(){
-  mSetObj <- .get.mSet(NA);
-  return(as.character(mSetObj$dataSet$html.resTable[,1]))
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(as.character(mSetObj$dataSet$html.resTable$feature.id))
+  } else {
+    return(as.character(mSetObj$dataSet$html.resTable[,1]))
+  }
 }
 
 GetFitResultModelNms <- function(){
-  mSetObj <- .get.mSet(NA);
-  return(as.character(mSetObj$dataSet$html.resTable[,2]))
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(as.character(mSetObj$dataSet$html.resTable$mod.name))
+  } else {
+    return(as.character(mSetObj$dataSet$html.resTable[,2]))
+  }
 }
 
 
 fit_drc_modelling <- function (data, model = "ll4") 
 {
-  
   #data <- data[data$grouping == "feature_3",]
 
   if(model == "ll4"){
