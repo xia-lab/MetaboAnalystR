@@ -53,7 +53,7 @@ my.json.scatter <- function(filenm, containsLoading=F){
     col[i] = col.s[meta.vec.num[i]];
   }
 
-  legendData <- list(label=levels(metadf),color=col.s)
+  legendData <- list(label=levels(metadf),color=col.s, type = res$color_legend_type)
   #for IPCA in multifactor
 
   print("legendData:")

@@ -801,6 +801,7 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 #'
 
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
+
   mSetObj <- .get.mSet(mSetObj);
 
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
@@ -995,12 +996,28 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
         p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
         p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
         p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
-    }else{
-        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=facA, colour=facA, shape=facA, group=facA)) + geom_point(size=2) + theme_bw()  + geom_smooth(aes(fill=facA),method=lm,se=T)     
-        p.time <- p.time + theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")
-        p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance") +xlab(meta)
-        p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-        p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+    } else { # cls.type == "cont"
+        in.vals <- as.numeric(as.character(alldata$name))
+        q.low <- quantile(in.vals, 0.02, na.rm = TRUE)
+        q.high <- quantile(in.vals, 0.98, na.rm = TRUE)
+        in.vals.clamped <- pmin(pmax(in.vals, q.low), q.high)
+        norm.vals <- (in.vals.clamped - q.low) / (q.high - q.low)
+        alldata$in.norm <- norm.vals
+
+        p.time <- ggplot2::ggplot(alldata, aes(x = in.vals, y = value, color = in.norm)) +
+                  geom_point(size = 2, alpha = 0.8) +
+                  scale_color_gradient(low = "blue", high = "red") +
+                  facet_wrap(~facA, nrow = row.num) +
+                  theme_bw() +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+                        legend.position = "right") +
+                  ggtitle(cmpdNm) +
+                  theme(plot.title = element_text(size = 11, hjust = 0.5, face = "bold")) +
+                  ylab("Abundance") + xlab(xlab) +
+                  theme(panel.grid.minor = element_blank(),
+                        panel.grid.major = element_blank(),
+                        plot.margin = margin(t = 0.15, r = 0.25, b = 0.15, l = 0.25, "cm"),
+                        axis.text = element_text(size = 10))
     }
     
     print(p.time)
