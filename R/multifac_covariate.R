@@ -1033,7 +1033,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   
   mSetObj$imgSet$covAdj <- imgName;
   
-  width <- 8;
+  width <- 11;
   height <- 8.18;
   
   library(plotly)

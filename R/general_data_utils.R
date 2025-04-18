@@ -91,7 +91,6 @@ Reload.scripts.on.demand <- function(){
 
 InitDataObjects <- function(data.type, anal.type, paired=FALSE){
   rpath <<- "../../";
-print("rpathInitData=====");
   if(!.on.public.web){
     if(exists("mSet")){
       mSetObj <- .get.mSet(mSet);
@@ -625,7 +624,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   }
   mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$orig.cls);
 
-  if(mSetObj[["analSet"]][["type"]]=="roc"){
+  if(mSetObj[["analSet"]][["type"]] %in% c("roc")){
     rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
     mSetObj$dataSet$meta.types <- c("disc");
     mSetObj$dataSet$meta.status <- c("OK");
@@ -799,15 +798,14 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
-
+save.image("plot.RData");
   mSetObj <- .get.mSet(mSetObj);
-
+  
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
   }
-
+  
   plotType <- mSetObj$paramSet$cmpdSummaryType
   #print(paste("plottype==", plotType))
   if(.on.public.web){
@@ -819,18 +817,22 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   
   if(meta == "NA"){
     if(mSetObj$dataSet$design.type == "multi"){
-        sel.cls <- meta.info[,2]
-        cls.type <- unname(mSetObj$dataSet$meta.types[2])
+      sel.cls <- meta.info[,1]
+      cls.type <- unname(mSetObj$dataSet$meta.types[1])
     }else{
-        sel.cls <- mSetObj$dataSet$cls
-        cls.type <- mSetObj$dataSet$cls.type
+      sel.cls <- mSetObj$dataSet$cls
+      cls.type <- mSetObj$dataSet$cls.type
     }
   }else{
     if(meta2 == "NA"){
-        meta2 <- 2;
+      inx <- 2;
+    }else{
+      inx <- meta2;
     }
-    sel.cls <- meta.info[,meta2]
-    cls.type <- unname(mSetObj$dataSet$meta.types[meta2])
+    sel.cls <- meta.info[,meta]
+    
+    cls.type <- unname(mSetObj$dataSet$meta.types[meta])
+    cls.type2 <- unname(mSetObj$dataSet$meta.types[inx])
   }
   
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
@@ -841,104 +843,231 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     imgName <- paste(imgName, "_", count, "_summary_dpi", dpi, ".", format, sep="");
   }
   
-    w <- 7.5;
-
-
+  w <- 7.5;
+  
+  
   mSetObj$imgSet$cmpdSum <- imgName;
-
-  if(!mSetObj$dataSet$design.type %in% c("time", "time0", "multi")){
-
-    proc.data <- qs::qread("data_proc.qs");
+  
+  if(!mSetObj$dataSet$design.type %in% c("time", "time0", "multi") || meta2 == "NA"){
+    ## Load processed data and align to normalized samples
+    proc.data <- qs::qread("data_proc.qs")
+    smpl.nms  <- rownames(mSetObj$dataSet$norm)
+    proc.data <- proc.data[smpl.nms, , drop = FALSE]
     
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height= w*0.65, type=format, bg="white");
+    ## Open Cairo device
+    Cairo::Cairo(
+      file   = imgName,
+      unit   = "in",
+      dpi    = dpi,
+      width  = w,
+      height = w * 0.65,
+      type   = format,
+      bg     = "white"
+    )
     
-    # need to consider norm data were edited, different from proc
-    smpl.nms <- rownames(mSetObj$dataSet$norm);
-    proc.data <- proc.data[smpl.nms, ];
+    ## Precompute color scheme for discrete cases
+    col <- unique(GetColorSchema(sel.cls))
+    
+    ## If grouping is discrete
+    if (cls.type == "disc") {
+      # ORIGINAL concentrations
+      df.orig <- data.frame(value = proc.data[, cmpdNm], group = factor(sel.cls))
+      p.orig <- ggplot(df.orig, aes(x = group, y = value, fill = group)) +
+        (if (plotType == "violin") geom_violin(trim = FALSE)
+         else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
+        geom_jitter(size = 1) +
+        stat_summary(fun = mean, colour = "yellow", geom = "point", shape = 18, size = 3, show.legend = FALSE) +
+        scale_fill_manual(values = col) +
+        labs(title = "Original Conc.", x = NULL, y = NULL) +
+        theme_bw() +
+        theme(
+          plot.title   = element_text(size = 11, hjust = 0.5, face = "bold"),
+          axis.text.x  = element_text(angle = 90, hjust = 1),
+          panel.grid   = element_blank(),
+          plot.margin  = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+          axis.text    = element_text(size = 10),
+          legend.position = "none"
+        )
+      
+      # NORMALIZED concentrations
+      df.norm <- data.frame(value = mSetObj$dataSet$norm[, cmpdNm], group = factor(sel.cls))
+      p.norm <- ggplot(df.norm, aes(x = group, y = value, fill = group)) +
+        (if (plotType == "violin") geom_violin(trim = FALSE)
+         else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
+        geom_jitter(size = 1) +
+        stat_summary(fun = mean, colour = "yellow", geom = "point", shape = 18, size = 3, show.legend = FALSE) +
+        scale_fill_manual(values = col) +
+        labs(title = "Normalized Conc.", x = NULL, y = NULL) +
+        theme_bw() +
+        theme(
+          plot.title   = element_text(size = 11, hjust = 0.5, face = "bold"),
+          axis.text.x  = element_text(angle = 90, hjust = 1),
+          panel.grid   = element_blank(),
+          plot.margin  = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+          axis.text    = element_text(size = 10),
+          legend.position = "none"
+        )
+      
+    } else {
+      ## cls.type == "cont": continuous grouping for sel.cls → use as color gradient
+      ## Continuous grouping: use sel.cls as color gradient
+      xvar        <- as.numeric(as.character(sel.cls))
+      color.range <- range(xvar, na.rm = TRUE)
+      
+      df.orig <- data.frame(x = xvar, y = proc.data[, cmpdNm])
+      
+      p.orig <- ggplot(df.orig, aes(x = x, y = y, color = x)) +
+        geom_point(size = 1.8) +
+        geom_smooth(method = "lm", se = TRUE, color = "black") +
+        scale_color_gradient(low = "blue", high = "red", limits = color.range) +
+        labs(title = "Original Conc.", x = NULL, y = NULL) +
+        theme_bw() +
+        theme(
+          plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+          axis.text.x     = element_text(angle = 90, hjust = 1),
+          panel.grid      = element_blank(),
+          plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+          axis.text       = element_text(size = 10),
+          legend.position = "none"
+        )
+      
+      df.norm <- data.frame(x = xvar, y = mSetObj$dataSet$norm[, cmpdNm])
 
-    # ggplot alternative
-    col <- unique(GetColorSchema(sel.cls));
-    
- ## plot orignal and normalize side by side
-    if(cls.type == "disc"){
-      df.orig <- data.frame(value=proc.data[, cmpdNm], name = sel.cls)
-      p.orig <- ggplot2::ggplot(df.orig, aes(x=name, y=value, fill=name))  
-      # Conditional plotting based on the cmpdSummaryType
-        if(plotType == "violin"){
-          p.orig <- p.orig + geom_violin(trim=FALSE) 
-        } else {
-          p.orig <- p.orig + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA)
-        }
-      p.orig <- p.orig + theme_bw() + geom_jitter(size=1)
-      p.orig <- p.orig + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-      p.orig <- p.orig + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
-      p.orig <- p.orig + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.orig <- p.orig + ggtitle("Original Conc.") + theme(plot.title = element_text(size = 11, hjust=0.5)) 
-      p.orig <- p.orig + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      p.orig <- p.orig + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
-    }else{
-      df.orig <- data.frame(value=proc.data[, cmpdNm], name = as.numeric(as.character(sel.cls)))
-      p.orig <- ggplot2::ggplot(df.orig, aes(x=name, y=value)) 
-      p.orig <- p.orig + geom_point(aes(col = -value), size = 1.5) + theme_bw() 
-      p.orig <- p.orig + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-      p.orig <- p.orig + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.orig <- p.orig + ggtitle("Normalized Conc.") + theme(plot.title = element_text(size = 11, hjust=0.5)) 
-      p.orig <- p.orig + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      p.orig <- p.orig + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
+      
+      p.norm <- ggplot(df.norm, aes(x = x, y = y, color = x)) +
+        geom_point(size = 1.8) +
+        geom_smooth(method = "lm", se = TRUE, color = "black") +
+        scale_color_gradient(low = "blue", high = "red", limits = color.range) +
+        labs(title = "Normalized Conc.", x = NULL, y = NULL) +
+        theme_bw() +
+        theme(
+          plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+          axis.text.x     = element_text(angle = 90, hjust = 1),
+          panel.grid      = element_blank(),
+          plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+          axis.text       = element_text(size = 10),
+          legend.position = "none"
+        )
     }
-##   
-
-
-    if(cls.type == "disc"){
-      df.norm <- data.frame(value=mSetObj$dataSet$norm[, cmpdNm], name = sel.cls)
-      p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value, fill=name))  
-        if(plotType == "violin"){
-          p.norm <- p.norm + geom_violin(trim=FALSE) 
-        } else {
-          p.norm <- p.norm + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) 
-        }
-      p.norm <- p.norm + theme_bw() + geom_jitter(size=1)
-      p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-      p.norm <- p.norm + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
-      p.norm <- p.norm + scale_fill_manual(values=col) + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.norm <- p.norm + ggtitle("Normalized Conc.") + theme(plot.title = element_text(size = 11, hjust=0.5)) 
-      p.norm <- p.norm + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      p.norm <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
-    }else{
-      df.norm <- data.frame(value=mSetObj$dataSet$norm[, cmpdNm], name = as.numeric(as.character(sel.cls)))
-      p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value)) 
-      p.norm <- p.norm + geom_point(aes(col = -value), size = 1.5) + theme_bw() 
-      p.norm <- p.norm + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
-      p.norm <- p.norm + ggtitle(cmpdNm) + theme(axis.text.x = element_text(angle=90, hjust=1))
-      p.norm <- p.norm + ggtitle("Normalized Conc.") + theme(plot.title = element_text(size = 11, hjust=0.5)) 
-      p.norm <- p.norm + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
-      p.norm <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
-    }
-
-    gridExtra::grid.arrange(p.orig, p.norm, ncol=2, top = grid::textGrob(paste(cmpdNm), gp=grid::gpar(fontsize=14, fontface="bold")))
     
-    dev.off();
+    ## Arrange and save both panels
+    gridExtra::grid.arrange(
+      p.orig, p.norm,
+      ncol = 2,
+      top  = grid::textGrob(paste(cmpdNm),
+                            gp = grid::gpar(fontsize = 14, fontface = "bold"))
+    )
     
+    dev.off()
   }else if(mSetObj$dataSet$design.type =="time0"){
     # trend with subject
-
+    
     #sel.meta.df <- mSetObj$dataSet$meta.info[, meta.vec.mb]
     sel.meta.df <- mSetObj$dataSet$meta.info;
     mSetObj$dataSet$exp.fac <- sel.meta.df[,-(which(tolower(colnames(sel.meta.df)) == "time"))]
     mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
     .set.mSet(mSetObj);
-
+    
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
     plotProfile(mSetObj, cmpdNm);
     dev.off();
     
   }else{
-    if(mSetObj$dataSet$design.type =="time"){ # time trend within phenotype
-      out.fac <- mSetObj$dataSet$exp.fac;
-      in.fac <- mSetObj$dataSet$time.fac;
-      xlab = "Time";
-      cls.type = "disc";
-    }else{ # factor a split within factor b
+    
+    ####primary is cont
+    if(cls.type == "cont"){
+    ## x-axis variable
+    if (meta == "NA") {
+      xvar <- mSetObj$dataSet$meta.info[, 1]
+      xlab <- colnames(mSetObj$dataSet$meta.info)[1]
+    } else {
+      xvar <- mSetObj$dataSet$meta.info[, meta]
+      xlab <- meta
+    }
+    xvar <- as.numeric(as.character(xvar))
+    
+    ## y-axis = compound abundance
+    yvar <- mSetObj$dataSet$norm[, cmpdNm]
+    
+    ## secondary variable (color, shape, etc.)
+    group.var <- mSetObj$dataSet$meta.info[, meta2]
+    
+    if (cls.type2 == "disc") {
+      group <- as.factor(group.var)
+      cols  <- unique(GetColorSchema(group))
+      df.orig <- data.frame(x = xvar, y = yvar, group = group)
+      
+      p.time <- ggplot(df.orig, aes(x = x, y = y, color = group)) +
+        geom_point(size = 2) +
+        geom_smooth(method = "lm", se = TRUE, aes(fill = group)) +
+        scale_color_manual(name = meta2, values = cols) +
+        scale_fill_manual(name = meta2, values = cols) +
+        theme_bw()
+      
+    } else {
+      ## cls.type2 == "cont"
+      group <- as.numeric(as.character(group.var))
+      df.orig <- data.frame(x = xvar, y = yvar, color_val = group)
+      
+      ## choose gradient based on sign of values
+      rg <- range(df.orig$color_val, na.rm = TRUE)
+      if (rg[1] < 0 && rg[2] > 0) {
+        grad_scale <- scale_color_gradient2(
+          name     = meta2,
+          low      = "blue",
+          mid      = "white",
+          high     = "red",
+          midpoint = 0
+        )
+      } else if (rg[1] >= 0) {
+        grad_scale <- scale_color_gradient(
+          name = meta2,
+          low  = "grey",
+          high = "blue"
+        )
+      } else {
+        grad_scale <- scale_color_gradient(
+          name = meta2,
+          low  = "blue",
+          high = "cyan"
+        )
+      }
+      
+      p.time <- ggplot(df.orig, aes(x = x, y = y, color = color_val)) +
+        geom_point(size = 2) +
+        geom_smooth(method = "lm", se = TRUE, color = "black") +
+        grad_scale +
+        theme_bw()
+    }
+    
+    p.time <- p.time +
+      labs(title = cmpdNm, x = xlab, y = "Abundance") +
+      theme(
+        plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text        = element_text(size = 10),
+        axis.text.x      = element_text(angle = 90, hjust = 1),
+        legend.position  = "right"
+      )
+    
+    ## render & save
+    h <- 6.5
+    Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+                 width = w, height = h, type = format, bg = "white")
+    print(p.time)
+    dev.off()
+
+}else{
+####primary is disc
+############
+
+      if(mSetObj$dataSet$design.type =="time"){ # time trend within phenotype
+        out.fac <- mSetObj$dataSet$exp.fac;
+        in.fac <- mSetObj$dataSet$time.fac;
+        xlab = "Time";
+        cls.type2 = "disc";
+      }else{ # factor a split within factor b
         if(meta == "NA"){
           out.fac <- mSetObj$dataSet$meta.info[,1]
           xlab = colnames(meta.info)[1]
@@ -946,49 +1075,49 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
           out.fac <- mSetObj$dataSet$meta.info[,meta];
           xlab = meta
         }
-        in.fac <- sel.cls;
+        in.fac <- mSetObj$dataSet$meta.info[,meta2];
         cls.type = cls.type; 
-    }
-    
-    # two images per row
-    img.num <- length(levels(out.fac));
-    row.num <- ceiling(img.num/2)
-    
-    if(row.num == 1){
-      h <- w*5/9;
-    }else{
-      h <- w*0.5*row.num;
-    }
-
-    if(cls.type == "cont"){
-        h <- h +1;
-    }
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    
-    col <- unique(GetColorSchema(in.fac));
-    
-    p_all <- list()
-    
-    for(lv in levels(out.fac)){
-      #print(lv)
-      inx <- out.fac == lv;
-      if(cls.type == "disc"){
-      df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = in.fac[inx])
-      }else{
-      df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = as.numeric(as.character(in.fac[inx])))
       }
-      p_all[[lv]] <- df.orig
-    }
-
-    alldata <- do.call(rbind, p_all)
-    alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
-
-    if(cls.type == "disc"){
+      
+      # two images per row
+      img.num <- length(levels(out.fac));
+      row.num <- ceiling(img.num/2)
+      
+      if(row.num == 1){
+        h <- w*5/9;
+      }else{
+        h <- w*0.5*row.num;
+      }
+      
+      if(cls.type2 == "cont"){
+        h <- h +1;
+      }
+      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+      
+      col <- unique(GetColorSchema(in.fac));
+      
+      p_all <- list()
+      
+      for(lv in levels(out.fac)){
+        #print(lv)
+        inx <- out.fac == lv;
+        if(cls.type2 == "disc"){
+          df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = in.fac[inx])
+        }else{
+          df.orig <- data.frame(facA = lv, value = mSetObj$dataSet$norm[inx, cmpdNm], name = as.numeric(as.character(in.fac[inx])))
+        }
+        p_all[[lv]] <- df.orig
+      }
+      
+      alldata <- do.call(rbind, p_all)
+      alldata$facA <- factor(as.character(alldata$facA), levels=levels(out.fac))
+      
+      if(cls.type2 == "disc"){
         p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=name)) 
         if(plotType == "boxplot"){
-        p.time <- p.time + geom_boxplot(outlier.shape = NA, outlier.colour=NA) 
+          p.time <- p.time + geom_boxplot(outlier.shape = NA, outlier.colour=NA) 
         }else{
-        p.time <- p.time + geom_violin(trim=FALSE) 
+          p.time <- p.time + geom_violin(trim=FALSE) 
         }
         p.time <- p.time + theme_bw() + geom_jitter(size=1) 
         p.time <- p.time + facet_wrap(~facA, nrow = row.num) + theme(axis.title.x = element_blank(), legend.position = "none")
@@ -996,32 +1125,17 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
         p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance")
         p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
         p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
-    } else { # cls.type == "cont"
-        in.vals <- as.numeric(as.character(alldata$name))
-        q.low <- quantile(in.vals, 0.02, na.rm = TRUE)
-        q.high <- quantile(in.vals, 0.98, na.rm = TRUE)
-        in.vals.clamped <- pmin(pmax(in.vals, q.low), q.high)
-        norm.vals <- (in.vals.clamped - q.low) / (q.high - q.low)
-        alldata$in.norm <- norm.vals
-
-        p.time <- ggplot2::ggplot(alldata, aes(x = in.vals, y = value, color = in.norm)) +
-                  geom_point(size = 2, alpha = 0.8) +
-                  scale_color_gradient(low = "blue", high = "red") +
-                  facet_wrap(~facA, nrow = row.num) +
-                  theme_bw() +
-                  theme(axis.text.x = element_text(angle = 90, hjust = 1),
-                        legend.position = "right") +
-                  ggtitle(cmpdNm) +
-                  theme(plot.title = element_text(size = 11, hjust = 0.5, face = "bold")) +
-                  ylab("Abundance") + xlab(xlab) +
-                  theme(panel.grid.minor = element_blank(),
-                        panel.grid.major = element_blank(),
-                        plot.margin = margin(t = 0.15, r = 0.25, b = 0.15, l = 0.25, "cm"),
-                        axis.text = element_text(size = 10))
+      }else{
+        p.time <- ggplot2::ggplot(alldata, aes(x=name, y=value, fill=facA, colour=facA, shape=facA, group=facA)) + geom_point(size=2) + theme_bw()  + geom_smooth(aes(fill=facA),method=lm,se=T)     
+        p.time <- p.time + theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")
+        p.time <- p.time + ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) + ylab("Abundance") +xlab(meta2)
+        p.time <- p.time + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) # remove gridlines
+        p.time <- p.time + theme(plot.margin = margin(t=0.15, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10)) 
+      }
+      
+      print(p.time)
+      dev.off()
     }
-    
-    print(p.time)
-    dev.off()
   }
   
   if(.on.public.web){
@@ -1350,3 +1464,44 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
     qs::qsave(int.mat, file="data_orig.qs");
     return(.set.mSet(mSetObj));
 } 
+
+Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="rowu", 
+                          lbl.type="disc", nmdr = FALSE){
+    mSetObj <- Read.TextDataTs(mSetObj, filePath, format);
+    mSetObj <- .get.mSet(mSet);
+
+    mSetObj <- ReadMetaData(mSetObj, metaPath);
+    mSetObj <- .get.mSet(mSet);
+
+    conc <- qs::qread(file="data_orig.qs");
+    int.mat <- conc;
+    dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
+
+    # Error check: Ensure metadata is numeric
+    if (any(is.na(dose))) {
+        AddErrMsg("Error: Metadata for dose-response analysis must be numeric. Please check the input file and ensure the dose values are properly formatted.")
+        return(0);
+    }
+
+    # Check for a minimum of 3 unique doses
+    unique_doses <- unique(dose)
+    if (length(unique_doses) < 3) {
+        AddErrMsg("Error: Dose-response analysis requires at least 3 unique doses. Please provide data with at least 3 distinct dose levels.")
+        return(0)
+    }
+
+    dose.order <- order(dose);
+    meta.reorder <- mSetObj$dataSet$cls[dose.order];
+    int.mat <- int.mat[dose.order, ];
+
+    meta.reorder <- format(as.numeric(as.character(meta.reorder)), scientific = FALSE) # remove scientific notation
+    meta.reorder <- gsub(" ", "", meta.reorder)
+    meta.reorder <- factor(meta.reorder, levels = unique(meta.reorder))
+
+
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
+    mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
+    mSetObj[["dataSet"]][["cls.type"]] <- lbl.type;
+    qs::qsave(int.mat, file="data_orig.qs");
+    return(.set.mSet(mSetObj));
+}

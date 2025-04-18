@@ -18,7 +18,6 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
 }
 
 PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
-  save.image("PlotMetaboliteDRCurve.RData");
   mSetObj <- .get.mSet(mSetObj)
   dataSet <- mSetObj$dataSet
   cls.type <- dataSet$cls.type
@@ -46,7 +45,7 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
              axis.text.x = element_text(angle = 90)) +
        xlab("Dose") +
        ylab("Expression") +
-       geom_rect(aes(xmin = bmdl, xmax = bmdu, ymin = -Inf, ymax = Inf), fill = "red3", alpha = 0.05) +
+       geom_rect(aes(xmin = bmdl, xmax = bmdu, ymin = -Inf, ymax = Inf), fill = "red3", alpha = 0.015) +
        geom_vline(xintercept = bmdl, linetype = "dashed", color = "red3") +
        geom_vline(xintercept = bmd, color = "red3") +
        geom_vline(xintercept = bmdu, linetype = "dashed", color = "red3")
