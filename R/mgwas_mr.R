@@ -366,6 +366,7 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
     geom_abline(data = mrres_exposure, aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
     scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
     labs(colour = "MR Test", x = paste("SNP effect on", exposure), y = "Outcome effect") +
+theme_minimal() +
     theme(legend.position = "right", legend.direction = "vertical") +
     guides(colour = guide_legend(ncol = 2))
   
@@ -559,6 +560,7 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
                                    "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
                                    "#ffff99", "#b15928")) +
     labs(y = expression(1 / SE[IV]), x = expression(beta[IV]), colour = "MR Method") +
+    theme_minimal(base_size = 14) +
     theme(legend.position = "right", legend.direction = "vertical", text = element_text(size = 14))
   
   return(p)
