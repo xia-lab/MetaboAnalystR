@@ -613,7 +613,6 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
 
 PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     mSetObj <- .get.mSet(mSetObj);
-    #save.image("PerformContDRFit.RData");
     require(dplyr)
     require(drc)
     

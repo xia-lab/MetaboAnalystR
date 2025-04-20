@@ -4,108 +4,91 @@
 # NO need to manually specify all pairwise comparisons between conditions. Just use one "reference" condition (zero dose)
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
-
-
 PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
-  #save.image("PerformDoseDEAnal.RData");
-  # Determine which covariates (if any) to adjust
+  
+  # Determine covariates
   if (!exists("adj.vec") || length(adj.vec) == 0) {
-    covariates <- c();
+    covariates <- c()
   } else {
     covariates <- adj.vec
   }
-
-  # Get everything from mSetObj
-  mSetObj      <- .get.mSet(mSetObj)
-  expr_matrix  <- t(mSetObj$dataSet$norm)
-  if(meta1 == "NA"){
-  cls          <- mSetObj$dataSet$cls
-  }else{
-  cls          <- mSetObj$dataSet$meta.info[,meta1]
-  }
-  meta         <- mSetObj$dataSet$meta.info
-  meta.types   <- mSetObj$dataSet$meta.types  # named vector: "cont" or "disc"
   
-  # Continuous‐dose branch
-  if (mSetObj$dataSet$cls.type == "cont") {
-    require(limma)
-    require(Hmisc)
-    
-    # 1) Build the basic metadata with your continuous variable
-    metadata <- data.frame(
-      Sample = colnames(expr_matrix),
-      var    = as.numeric(as.character(cls)),
-      row.names = colnames(expr_matrix),
-      stringsAsFactors = FALSE
-    )
-    
-    # 2) If you have additional covariates, pull them in and
-    #    convert only the "cont" ones to numeric
-    if (length(covariates) > 0) {
-      covar.data <- meta[colnames(expr_matrix), covariates, drop = FALSE]
-      covar.data <- as.data.frame(mapply(
-        function(col, nm) {
-          if (meta.types[nm] == "cont") {
-            as.numeric(as.character(col))
-          } else {
-            factor(col, levels = unique(col))
-          }
-        },
-        covar.data, names(covar.data),
-        SIMPLIFY = FALSE,
-        USE.NAMES = TRUE
-      ))
-      metadata <- cbind(metadata, covar.data)
-    }
-    
-    # 3) Build your design
-    if (length(covariates) > 0) {
-      fmla  <- as.formula(paste("~ var +", paste(covariates, collapse = " + ")))
+  mSetObj     <- .get.mSet(mSetObj)
+  expr_matrix <- t(mSetObj$dataSet$norm)
+  meta        <- mSetObj$dataSet$meta.info
+  meta.types  <- mSetObj$dataSet$meta.types
+  
+  if (meta1 == "NA") {
+    main.var <- colnames(meta)[1]
+  } else {
+    main.var <- meta1
+  }
+  metadata <- meta[colnames(expr_matrix), , drop = FALSE]
+  
+  # Process types for all columns
+  for (nm in colnames(metadata)) {
+    if (meta.types[nm] == "cont") {
+      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
     } else {
-      fmla  <- ~ var
+      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
     }
+  }
+  
+  # Keep only variables of interest
+  all.vars <- unique(c(main.var, covariates))
+  metadata <- metadata[, all.vars, drop = FALSE]
+  
+  # Decide type: continuous or categorical
+  cls.type <- mSetObj$dataSet$cls.type
+  
+  require(limma)
+  require(Hmisc)
+  
+  if (cls.type == "cont") {
+    # Continuous metadata (linear regression)
+    fmla <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
     
-    # 4) Fit the model
+    print("Design matrix (continuous)")
+    print(head(design))
+    
     fit <- lmFit(expr_matrix, design)
-    if (!"var" %in% colnames(fit$coefficients)) {
-      warning("Variable 'var' not estimable (collinearity or insufficient data).")
+    if (!main.var %in% colnames(fit$coefficients)) {
+      warning(paste("Variable", main.var, "not estimable (collinearity or insufficient data)."))
       return(0)
     }
     fit      <- eBayes(fit)
-    resTable <- topTable(fit, coef = "var", number = Inf, adjust.method = "BH")
+    resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
-    # 5) Spearman correlation
+    # Correlation calculation
     cor_res <- apply(expr_matrix, 1, function(x) {
-      rcorr(x, metadata$var, type = "spearman")$r[1,2]
+      rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
     qs::qsave(cor_res, file = "limma_cor_res.qs")
     qs::qsave(fit,     file = "limma_fit_res.qs")
     
-    print(head(resTable))
-    
   } else {
-    # Categorical‐dose branch (unchanged)
-    grp.nms      <- paste0("grp_", levels(cls))
-    levels(cls)  <- grp.nms
-    require(limma)
+    # Categorical metadata (group comparison)
+    cls <- factor(metadata[[main.var]])
+    grp.nms <- paste0("grp_", levels(cls))
+    levels(cls) <- grp.nms
     
     base_design <- model.matrix(~ 0 + cls)
     colnames(base_design) <- grp.nms
     rownames(base_design) <- names(cls)
     
     if (length(covariates) > 0) {
-      covar.data  <- meta[rownames(base_design), covariates, drop = FALSE]
-      covar.data  <- as.data.frame(lapply(covar.data, function(x) as.numeric(as.character(x))))
+      covar.data <- metadata[, covariates, drop = FALSE]
+      covar.data <- as.data.frame(lapply(covar.data, function(x) as.numeric(as.character(x))))
       covar_design <- model.matrix(~ ., data = covar.data)[, -1, drop = FALSE]
-      design       <- cbind(base_design, covar_design)
+      design <- cbind(base_design, covar_design)
     } else {
       design <- base_design
     }
     
-    ref            <- grp.nms[1]
-    contrasts      <- grp.nms[grp.nms != ref]
-    contrast_args  <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
+    ref <- grp.nms[1]
+    contrasts <- grp.nms[grp.nms != ref]
+    contrast_args <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
     contrast_args$levels <- design
     contrast.matrix <- do.call(makeContrasts, contrast_args)
     
@@ -115,18 +98,18 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
       print(current.msg)
       return(0)
     }
-    fit      <- contrasts.fit(fit, contrast.matrix)
-    fit      <- eBayes(fit)
+    fit <- contrasts.fit(fit, contrast.matrix)
+    fit <- eBayes(fit)
     resTable <- topTable(fit, number = Inf, adjust.method = "BH")
   }
   
   # Save and return
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
+  mSetObj$dataSet$cls <-metadata[[main.var]];
+
   return(.set.mSet(mSetObj))
 }
-
-
 
 
 

@@ -183,51 +183,53 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
   return(.set.mSet(mSetObj))
 }
 
-
-PlotDRHistogram <- function(mSetObj=NA,imgNm, dpi, format, units, scale){
+PlotDRHistogram <- function(mSetObj=NA, imgNm, dpi, format, units, scale) {
   mSetObj <- .get.mSet(mSetObj);  
   dataSet <- mSetObj$dataSet;
 
   require(ggplot2)
   s.pods <- sensPOD(mSetObj, pod = c("feat.20", "feat.10th", "mode"), scale)
-  
-  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass,]
 
-  if(scale == "log10"){
-    dens <- density(log10(bmd.hist$bmd));
-    xTitle <- "log10(Feature-level BMD)";
-  } else if(scale == "log2"){
-    dens <- density(log2(bmd.hist$bmd));
-    xTitle <- "log2(Feature-level BMD)";
+  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass, ]
+
+  # Apply scale to BMD values
+  bmd.vals <- bmd.hist$bmd
+  if (scale == "log10") {
+    bmd.vals <- log10(bmd.vals)
+    xTitle <- "log10(Feature-level BMD)"
+    s.pods <- log10(s.pods)
+  } else if (scale == "log2") {
+    bmd.vals <- log2(bmd.vals)
+    xTitle <- "log2(Feature-level BMD)"
+    s.pods <- log2(s.pods)
   } else {
-    dens <- density(bmd.hist$bmd);
-    xTitle <- "Feature-level BMD";
+    xTitle <- "Feature-level BMD"
   }
-  
-  dens <- data.frame(x = dens$x, y = dens$y)
-  
-  require(ggplot2)
-  p <- ggplot(aes(x = x, y = y), data = dens) + 
-    geom_area() +
+
+  bmd.df <- data.frame(bmd = bmd.vals)
+
+  p <- ggplot(bmd.df, aes(x = bmd)) +
+    geom_histogram(aes(y = ..density..), bins = 30, fill = "lightblue", color = "black", alpha = 0.8) +
     geom_vline(aes(xintercept = s.pods[2], colour = "percentile10th"), size = 1) +
     geom_vline(aes(xintercept = s.pods[3], colour = "mode"), size = 1) +
     geom_vline(aes(xintercept = s.pods[1], colour = "gene20"), size = 1) +
-    scale_color_manual(name = "mPOD", 
+    scale_color_manual(name = "mPOD",
                        values = c(gene20 = "#A7414A", percentile10th = "#6A8A82", mode = "#CC9B31"),
-                       labels = c(paste0("20th feature: ", signif(s.pods[1],2)), 
-                                  paste0("Max 1st peak: ", signif(s.pods[3],2)),
-                                  paste0("10th percentile: ", signif(s.pods[2],2)))) + 
-    theme_bw()
-  p <- p + xlab(xTitle) + ylab("Density function") + 
-    theme(axis.text.x = element_text(face="bold"), legend.position = c(.95, .95),
+                       labels = c(paste0("20th feature: ", signif(s.pods[1], 2)),
+                                  paste0("Max 1st peak: ", signif(s.pods[3], 2)),
+                                  paste0("10th percentile: ", signif(s.pods[2], 2)))) +
+    theme_bw() +
+    xlab(xTitle) + ylab("Density") +
+    theme(axis.text.x = element_text(face = "bold"),
+          legend.position = c(.95, .95),
           legend.justification = c("right", "top"),
           legend.box.just = "right")
 
-  imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo::Cairo(file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  imgNm = paste0(imgNm, "dpi", dpi, ".", format)
+  Cairo::Cairo(file = imgNm, width = 8, height = 6, unit = "in", dpi = dpi, type = format, bg = "white")
   print(p)
-  dev.off();
+  dev.off()
 
-  mSetObj$imgSet$PlotDRHistogram <- imgNm;
-  return(.set.mSet(mSetObj));
+  mSetObj$imgSet$PlotDRHistogram <- imgNm
+  return(.set.mSet(mSetObj))
 }
