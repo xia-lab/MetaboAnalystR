@@ -915,39 +915,36 @@ save.image("plot.RData");
       color.range <- range(xvar, na.rm = TRUE)
       
       df.orig <- data.frame(x = xvar, y = proc.data[, cmpdNm])
-      
-      p.orig <- ggplot(df.orig, aes(x = x, y = y, color = x)) +
-        geom_point(size = 1.8) +
-        geom_smooth(method = "lm", se = TRUE, color = "black") +
-        scale_color_gradient(low = "blue", high = "red", limits = color.range) +
-        labs(title = "Original Conc.", x = NULL, y = NULL) +
-        theme_bw() +
-        theme(
-          plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
-          axis.text.x     = element_text(angle = 90, hjust = 1),
-          panel.grid      = element_blank(),
-          plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
-          axis.text       = element_text(size = 10),
-          legend.position = "none"
-        )
-      
+
+p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
+  geom_point(size = 1.8, color = "black") +        # points are black
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +  # line is blue
+  labs(title = "Original Conc.", x = NULL, y = NULL) +
+  theme_bw() +
+  theme(
+    plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+    axis.text.x     = element_text(angle = 90, hjust = 1),
+    panel.grid      = element_blank(),
+    plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+    axis.text       = element_text(size = 10),
+    legend.position = "none"
+  )
+
       df.norm <- data.frame(x = xvar, y = mSetObj$dataSet$norm[, cmpdNm])
 
-      
-      p.norm <- ggplot(df.norm, aes(x = x, y = y, color = x)) +
-        geom_point(size = 1.8) +
-        geom_smooth(method = "lm", se = TRUE, color = "black") +
-        scale_color_gradient(low = "blue", high = "red", limits = color.range) +
-        labs(title = "Normalized Conc.", x = NULL, y = NULL) +
-        theme_bw() +
-        theme(
-          plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
-          axis.text.x     = element_text(angle = 90, hjust = 1),
-          panel.grid      = element_blank(),
-          plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
-          axis.text       = element_text(size = 10),
-          legend.position = "none"
-        )
+      p.norm <- ggplot(df.norm, aes(x = x, y = y)) +
+  geom_point(size = 1.8, color = "black") +  # points are now all black
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Normalized Conc.", x = NULL, y = NULL) +
+  theme_bw() +
+  theme(
+    plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+    axis.text.x     = element_text(angle = 90, hjust = 1),
+    panel.grid      = element_blank(),
+    plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+    axis.text       = element_text(size = 10),
+    legend.position = "none"
+  )
     }
     
     ## Arrange and save both panels
