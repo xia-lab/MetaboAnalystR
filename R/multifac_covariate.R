@@ -945,7 +945,7 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
     ref <- par1;
     cntr.cls <- grp.nms[grp.nms != ref]
     myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
-    mSetObj$analSet$ref <- ref; 
+    mSetObj$analSet$ref <- ref;    
     filename <- paste("combine_factors_reference_", ref, sep = "");
   } else if (anal.type == "nested") {
     grp.nms1 <- strsplit(par1, " vs. ")[[1]]

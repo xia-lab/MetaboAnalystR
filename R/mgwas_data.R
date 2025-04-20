@@ -88,7 +88,6 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
-         
     if(.on.public.web){
         return(.set.mSet(mSetObj));
     }else{
@@ -97,7 +96,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
 }
 
 QueryOutcome <- function(itemVec){
-
+     
     if (file.exists("dis_snp_restable.csv")) {
         return(1);
     }
@@ -116,7 +115,6 @@ QueryOutcome <- function(itemVec){
 
     mSetObj$dataSet$outcome <- ieugwas.res;
     fast.write.csv(ieugwas.res, file="dis_snp_restable.csv");
-
     if(.on.public.web){
         return(.set.mSet(mSetObj));
     }else{
@@ -266,7 +264,7 @@ GetResCol <- function(netType, colInx){
 
 # "ID", "Accession","Gene", "PMID"
 GetResColByName <- function(netType, name){
-
+   print(c(netType, name))
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
