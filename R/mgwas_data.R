@@ -27,6 +27,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     tableName <- "exposure";
     idType <- "name";
     mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
+    
     hit.num <- nrow(mir.dic);
     if (hit.num == 0) {
         current.msg <<- "No hits found in the database. Please make sure to select a metabolite from the drop-down list.";
@@ -36,8 +37,15 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
 
     res <- mir.dic[ , c("metabolite_orig","hmdb","kegg","snp_orig", "chr", "pos_hg19","note", "name","ratio_single","beta","p_value","metabolite_id","ea","nea","pmid",
                       "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid")];
+  
     res <- .parse_snp2met_exposure(res); # remove NA
     # update col names
+  res <- res %>%
+  group_by(across(-p_value)) %>%
+  slice_min(p_value, with_ties = FALSE) %>%
+  ungroup()# remove duplicates introduce by mistake notes
+  res = as.data.frame(res)
+ 
     colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
                      "Consequence", "EAF","URL", "SE", "pop_code", "biofluid");
     fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  

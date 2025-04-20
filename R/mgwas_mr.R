@@ -75,8 +75,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+       dat$ifCheck = !grepl(", ",dat$metabolites)
+       dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
       mSetObj$dataSet$harmonized.dat <- dat;
       .set.mSet(mSetObj)
+        
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
       return(length(which(!dat$mr_keep)));
 }
@@ -166,7 +169,9 @@ PerformMRAnalysis <- function(mSetObj=NA){
   #rownames(mr.res) <- mr.res$method;
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
+saveRDS(dat,"/Users/lzy/Documents/OmicsAnalystR/dat.rds")
   mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
+saveRDS(mr_heterogeneity.res,"/Users/lzy/Documents/OmicsAnalystR/mr_heterogeneity.res.rds")
   #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
   fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
   #"Q"           "Q_df"        "Q_pval"
