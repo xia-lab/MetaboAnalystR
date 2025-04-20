@@ -75,8 +75,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+       dat$ifCheck = !grepl(", ",dat$metabolites)
+       dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
       mSetObj$dataSet$harmonized.dat <- dat;
       .set.mSet(mSetObj)
+        
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
       return(length(which(!dat$mr_keep)));
 }
