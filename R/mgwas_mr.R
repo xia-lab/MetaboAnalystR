@@ -169,9 +169,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   #rownames(mr.res) <- mr.res$method;
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
-saveRDS(dat,"/Users/lzy/Documents/OmicsAnalystR/dat.rds")
   mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
-saveRDS(mr_heterogeneity.res,"/Users/lzy/Documents/OmicsAnalystR/mr_heterogeneity.res.rds")
   #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
   fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
   #"Q"           "Q_df"        "Q_pval"
