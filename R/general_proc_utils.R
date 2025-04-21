@@ -121,7 +121,7 @@ SanityCheckData <- function(mSetObj=NA){
           cls.Clean <- cls.lbl;
         }
         # allow it pass to sanity check and correct there
-        if(anal.type != "network" & anal.type != "mf"){ # add exception for DSPC correlation network 
+        if(anal.type != "network" & anal.type != "mf" & anal.type != "dose"){ # add exception for DSPC correlation network 
           if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
             AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
             AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
@@ -431,10 +431,10 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       fast.write.csv(cbind(RSD=rsd, t(int.mat)), file="data_prefilter_qc_rsd.csv");
 
       int.mat <- int.mat[,gd.inx];
-      if(mSetObj$analSet$type == "mummichog"){
-        msg <- paste("Removed ", sum(!gd.inx), " features based on QC RSD values. QC samples are excluded from downstream functional analysis.");
+      if(mSetObj$analSet$type %in% c("mummichog")){
+        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are excluded from downstream functional analysis.");
       }else{
-        msg <- paste("Removed ", sum(!gd.inx), " features based on QC RSD values. QC samples are still kept. You can remove them later.");
+        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are still kept. You can remove them later.");
       }
     }else if(sum(qc.hits) > 0){
       AddErrMsg("RSD requires at least 2 QC samples, and only non-QC based filtering can be applied.");
@@ -451,13 +451,13 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   }
 
   if(var.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type);
+     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
      int.mat <- filt.res$data;
      msg <- c(msg, filt.res$msg);
   }
 
   if(int.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type);
+     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
      int.mat <- filt.res$data;
      msg <- c(msg, filt.res$msg);
   }
