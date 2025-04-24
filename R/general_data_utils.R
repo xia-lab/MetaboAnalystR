@@ -348,6 +348,10 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   }else if(file.exists("/home/zgy/sqlite/")){
     url.pre <<-"/home/zgy/sqlite/"; #zgy local)
     plink.path <<- "/home/zgy/plink/";
+  }else if(file.exists("/Users/lzy/sqlite/")){
+   url.pre <<- "";
+   # url.pre <<-"/Users/lzy/sqlite/"; #lzy local
+    plink.path <<- "/Users/lzy/sqlite/plink/";
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
   }else{

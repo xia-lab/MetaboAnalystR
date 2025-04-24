@@ -78,10 +78,10 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
       mSetObj$dataSet$harmonized.dat <- dat;
-      .set.mSet(mSetObj)
+     .set.mSet(mSetObj)
         
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
-      return(length(which(!dat$mr_keep)));
+      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$exposure)-nrow(dat)));
 }
 
 readOpenGWASKey <- function(){

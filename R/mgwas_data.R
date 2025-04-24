@@ -26,8 +26,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
 
     tableName <- "exposure";
     idType <- "name";
-    mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");
-    
+    mir.dic <- Query.mGWASDB(paste(url.pre, "mgwas_202201", sep=""), itemVec, tableName, idType, "all", "all");   
     hit.num <- nrow(mir.dic);
     if (hit.num == 0) {
         current.msg <<- "No hits found in the database. Please make sure to select a metabolite from the drop-down list.";
