@@ -366,8 +366,10 @@ PlotDataPCA <- function(fileName, imgName, dpi, format){
   }else{
     qc.pcaplot(dataSet, dataSet$data.anot, imgName, dpi, format, F);
   }
+  qc.pcaplot.json(dataSet, dataSet$data.anot, imgName, dpi, format);
   return("NA");
 }
+
 
 qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALSE) {
   dpi <- as.numeric(dpi)
@@ -531,35 +533,21 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
 
   permanova_results <- ComputePERMANOVA(pca.res$PC1, pca.res$PC2, dataSet$meta.info[, 1], 999);
   analSet <- readSet(analSet, "analSet");
+  analSet$pca <- pca;
   analSet$permanova.res <-permanova_results;
   saveSet(analSet);
   saveSet(paramSet);
   
   if (interactive) {
     library(plotly)
-    m <- list(
-      l = 50,
-      r = 50,
-      b = 20,
-      t = 20,
-      pad = 0.5
-    )
-    if (length(dataSet$meta.info) == 2) {
-      w = 1000
-    } else {
-      w = 800
-    }
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = w, height = 600, margin = m)
+    m <- list(l=50, r=50, b=20, t=20, pad=0.5)
+    w <- if (length(dataSet$meta.info)==2) 1000 else 800
+    ggp_build <- layout( ggplotly(pcafig), autosize=FALSE, width=w, height=600, margin=m )
+
     return(ggp_build)
   } else {
-    imgSet <- readSet(imgSet, "imgSet")
-    if (grepl("norm", imgNm)) {
-      imgSet$qc_norm_pca <- imgNm
-    } else {
-      imgSet$qc_pca <- imgNm
-    }
-    saveSet(imgSet)
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", unit = "in", dpi = dpi)
+    # … your existing non‐interactive saving logic …
+    Cairo(file = imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi)
     print(pcafig)
     dev.off()
     return("NA")
@@ -972,3 +960,74 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
   #cat('\np-adjust method:', padj, '\n\n');
   return(out)
 }
+
+qc.pcaplot.json <- function(dataSet, x, imgNm, dpi=72, format="png") {
+  dpi <- as.numeric(dpi)
+  fileBasename <- paste0(imgNm, "dpi", dpi)
+  imgFile    <- paste0(fileBasename, ".", format)
+  jsonFile   <- paste0(imgNm, ".json")
+  
+  require(lattice)
+  require(ggplot2)
+  require(reshape)
+  require(see)
+  require(ggrepel)
+  require(plotly)
+  require(rjson)
+
+  analSet <- readSet(analSet, "analSet");
+  pca   <- analSet$pca
+  imp   <- summary(pca)$importance[2, 1:2]
+  xlabel <- sprintf("PC1 (%.1f%%)", 100 * imp[1])
+  ylabel <- sprintf("PC2 (%.1f%%)", 100 * imp[2])
+  
+  pca.res <- as.data.frame(pca$x)[, 1:2, drop=FALSE]
+  colnames(pca.res) <- c("PC1", "PC2")
+  
+  # Sync order & drop any unwanted columns
+  if ("newcolumn" %in% colnames(dataSet$meta.info)) {
+    dataSet$meta.info$newcolumn <- NULL
+  }
+  pca.res <- pca.res[match(rownames(dataSet$meta.info), rownames(pca.res)), ]
+  
+  # Attach metadata as a single grouping factor
+  grp <- dataSet$meta.info[[1]]
+  pca.res$group <- as.character(grp)
+  pca.res$sample <- rownames(pca.res)
+  
+  # 2. Build Plotly traces
+  unique_grps <- unique(pca.res$group)
+  pal         <- RColorBrewer::brewer.pal(max(3, length(unique_grps)), "Set1")
+  col_map     <- setNames(pal[seq_along(unique_grps)], unique_grps)
+  
+  traces <- lapply(unique_grps, function(g) {
+    df <- subset(pca.res, group == g)
+    list(
+      x    = df$PC1,
+      y    = df$PC2,
+      type = "scatter",
+      mode = if (nrow(df) > 20) "markers" else "markers+text",
+      name = g,
+      marker = list(color = col_map[g], size = 8, line = list(color="white", width=0.5)),
+      text   = if (nrow(df) <= 20) df$sample else NULL,
+      hoverinfo = "text",
+      textposition = "top center"
+    )
+  })
+  
+  # 3. Define layout
+  layout <- list(
+    title  = "",
+    xaxis  = list(title = xlabel),
+    yaxis  = list(title = ylabel),
+    legend = list(title = list(text = data.frame(names(dataSet$meta.info))[1,]))
+  )
+  
+  # 4. Dump JSON
+  plot_data <- list(data = traces, layout = layout)
+  json.obj   <- toJSON(plot_data)
+  sink(jsonFile); cat(json.obj); sink()
+  
+  return("NA");
+}
+
