@@ -144,6 +144,12 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   param_list$db_opt <- gsub("\\[", "c('", param_list$db_opt);
   param_list$db_opt <- gsub("]", "')", param_list$db_opt);
   param_list$db_opt <- gsub(",", "','", param_list$db_opt);
+
+  if(param_list$omics_type == "exposomics"){
+    write.table("exposomics", file = "omics_type.txt", quote = F, sep = "", col.names = F, row.names = F)
+  } else {
+    write.table("metabolomics", file = "omics_type.txt", quote = F, sep = "", col.names = F, row.names = F)
+  }
   
   if(mode == "dda"){
     # import feature list
@@ -308,6 +314,12 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
                                   topN = 10L, ncores = 4L)";
   str <- paste0(str, ";\n", cmd_export)
+
+  if(param_list$omics_type == "exposomics"){
+    cmd_exposome <- "mSet <- OptiLCMS:::PerformExpsomeClassify(mSet, path_repo =\'/home/glassfish/projects/exposome_lib/complte_exposome_categories_lib.qs\')"
+    str <- paste0(str, ";\n", cmd_exposome)
+  }
+
   # progress 190
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
@@ -3097,6 +3109,59 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   }
   
   return(.set.mSet(mSetObj));
+}
+
+retrieveOmicsType <- function(){
+    if(!file.exists("omics_type.txt")){return("metabolomics")}
+    omicstype <- readLines("omics_type.txt")
+    return(omicstype)
+}
+
+getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
+
+    mSetObj <- .get.mSet(mSetObj);
+
+    if(is.null(mSetObj[["analSet"]][["ms2res"]])){
+      mSet_raw <- qs::qread("msn_mset_result.qs")
+      mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
+      if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
+        peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
+        peak_mtx <- do.call(rbind, peak_list)
+        colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+        peak_mtx <- peak_mtx[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+      } else {
+        peak_mtx <- mSet_raw@MSnData[["peak_mtx"]][mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+      }
+
+      DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
+       res <- x[[1]][[1]]
+       if(length(res) == 0) {
+         return(NULL)
+       } else {
+         x[[1]]
+       }
+      })
+      mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
+      mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+    } else {
+      mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
+      mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+    }
+  save(featurelabel,peak_mtx, DBAnnoteRes, mSetObj, file = "getExposomeInfo.rda")
+    fl <- gsub("mz|sec|min", "", featurelabel)
+    fl <- strsplit(fl,"@")[[1]]
+    mz <- as.double(fl[1])
+    rt <- as.double(fl[2])
+    peak_mtx <- as.data.frame(peak_mtx)
+    idx <- which((peak_mtx$mzmin-0.00005 <= mz) & (peak_mtx$mzmax+0.00005 >= mz) & (peak_mtx$rtmin-0.5 <= rt) & (peak_mtx$rtmax+0.5 >= rt))
+    ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
+    uidx <- vapply(ucmpds, function(x){
+      which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
+    }, FUN.VALUE = integer(1L))
+
+    cls_res <- mSetObj[["analSet"]][["ms2res"]][["ExposomeRes"]][[idx]][[uidx[subidx]]]
+
+    return(paste0(cls_res, collapse = "; "))
 }
 
 
