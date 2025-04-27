@@ -87,8 +87,11 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     .prepare.deseq(dataSet, anal.type, par1, par2 , nested.opt);
     .perform.computing();
     dataSet <- .save.deseq.res(dataSet);
-  }else{
+  }else if (dataSet$de.method == "limma"){
     dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- .perform_limma_edger(dataSet, robustTrend);
+  }else{
+    dataSet <- prepareEdgeRContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
@@ -311,7 +314,6 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   return(dataSet);
 }
 
-
 .perform_limma_edger <- function(dataSet, robustTrend = F){
   require(limma);
   design <- dataSet$design;
@@ -319,11 +321,11 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   contrast.matrix <- dataSet$contrast.matrix;
   msgSet <- readSet(msgSet, "msgSet");
   if(length(dataSet$rmidx)>0){
-       data.norm <- dataSet$data.norm[,-dataSet$rmidx]
-    }else{
-       data.norm <- dataSet$data.norm
-    }
-
+    data.norm <- dataSet$data.norm[,-dataSet$rmidx]
+  }else{
+    data.norm <- dataSet$data.norm
+  }
+  
   if (dataSet$de.method == "limma") {
     if (is.null(dataSet$block)) {
       fit <- lmFit(data.norm, design)
@@ -337,7 +339,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
       saveSet(msgSet, "msgSet");  
       return(0)
     }
-   
+    
     df.residual <- fit$df.residual
     if (all(df.residual == 0)) {
       msgSet$current.msg <- "All residuals equal 0. There is not enough replicates in each group (no residual degrees of freedom)!";
@@ -385,6 +387,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     fit <- glmFit(y, design)
     
     coef_name <- colnames(design)[grep("^group", colnames(design))]  # Find group coefficient
+    print(colnames(design))
     if (length(coef_name) == 0) {
       stop("Error: Could not find the group coefficient in the design matrix.")
     }
@@ -395,16 +398,15 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     lrt <- glmLRT(fit, contrast = contrast.matrix)
     topFeatures <- topTags(lrt, n = Inf)$table
   }
-
+  
   nms <- colnames(topFeatures)
   nms[which(nms == "FDR")] <- "adj.P.Val";
   nms[which(nms == "PValue")] <- "P.Value";
- 
+  
   colnames(topFeatures) <- nms  
   dataSet$comp.res <- topFeatures;
   return(dataSet);
 }
-
 
 SetupDesignMatrix<-function(dataName="", deMethod){
   dataSet <- readDataset(dataName);
@@ -769,4 +771,83 @@ parse_contrast_groups <- function(contrast_str) {
   topFeatures <- topFeatures[order(topFeatures$P.Value), ]
 
   return(topFeatures)
+}
+
+prepareEdgeRContrast <- function(dataSet,
+                                 anal.type   = "reference",
+                                 par1        = NULL,
+                                 par2        = NULL,
+                                 nested.opt  = "intonly"){
+  msgSet <- readSet(msgSet, "msgSet")
+  set.seed(1337)
+  cls <- factor(dataSet$cls)
+  levels(cls) <- make.names(levels(cls))
+  dataSet$cls <- cls
+  grp.nms <- levels(cls)
+  dataSet$comp.type <- anal.type
+  dataSet$par1 <- par1
+  
+  if (anal.type == "reference") {
+    ref <- par1
+    if (!ref %in% grp.nms) stop("Reference level not found in factor levels!")
+    cls <- relevel(cls, ref = ref)
+    dataSet$cls <- cls
+    design <- model.matrix(~ cls)
+    others <- setdiff(levels(cls), ref)
+    conts <- setNames(
+      lapply(others, function(g) paste(g, "-", ref)),
+      paste0(others, "_vs_", ref)
+    )
+  } else {
+    design <- model.matrix(~ 0 + cls)
+    if (anal.type == "default") {
+      combs <- combn(levels(cls), 2, simplify = FALSE)
+      conts <- setNames(
+        lapply(combs, function(x) paste(x[1], "-", x[2])),
+        sapply(combs, function(x) paste0(x[1], "_vs_", x[2]))
+      )
+    } else if (anal.type == "time") {
+      tm <- levels(cls)
+      conts <- setNames(
+        lapply(seq_len(length(tm) - 1), function(i) paste(tm[i + 1], "-", tm[i])),
+        paste0(tm[-1], "_vs_", tm[-length(tm)])
+      )
+    } else if (anal.type == "custom") {
+      grp <- strsplit(par1, " vs. ")[[1]]
+      if (length(grp) != 2) stop("`par1` must be 'A vs. B'")
+      conts <- setNames(
+        list(paste(grp[2], "-", grp[1])),
+        paste0(grp[2], "_vs_", grp[1])
+      )
+    } else if (anal.type == "nested") {
+      g1 <- strsplit(par1, " vs. ")[[1]]
+      g2 <- strsplit(par2, " vs. ")[[1]]
+      if (nested.opt == "intonly") {
+        expr <- paste0("(", g1[1], "-", g1[2], ")-(", g2[1], "-", g2[2], ")")
+        nm <- paste0(g1[1], g1[2], "_vs_", g2[1], g2[2], "_interaction")
+        conts <- setNames(list(expr), nm)
+      } else {
+        expr1 <- paste0(g1[2], "-", g1[1])
+        expr2 <- paste0(g2[2], "-", g2[1])
+        expr3 <- paste0("(", g1[2], "-", g1[1], ")-(", g2[2], "-", g2[1], ")")
+        conts <- c(
+          setNames(list(expr1), paste0(g1[2], "_vs_", g1[1])),
+          setNames(list(expr2), paste0(g2[2], "_vs_", g2[1])),
+          setNames(list(expr3), paste0("int_", g1[2], g1[1], "_vs_", g2[2], g2[1]))
+        )
+      }
+    } else {
+      stop("Unsupported `anal.type`: ", anal.type)
+    }
+  }
+  
+  require(limma)
+  #contrast.matrix <- do.call(makeContrasts, c(conts, list(levels = design)))
+  dataSet$design <- design
+  dataSet$contrast.matrix <- "";
+  dataSet$contrast.type <- anal.type
+  dataSet$grp.nms <- levels(dataSet$cls)
+  dataSet$filename <- paste0("edgeR_", anal.type, "_", dataSet$de.method)
+  RegisterData(dataSet)
+  return(dataSet)
 }

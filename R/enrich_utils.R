@@ -170,7 +170,7 @@
   fun.pval <- resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
   fun.padj <- resTable[,6]; if(length(fun.padj) ==1) { fun.padj <- matrix(fun.padj) };
   hit.num <- resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
-  fun.ids <- as.vector(setres$current.setids[names(fun.anot)]); 
+  fun.ids <- as.vector(setres$current.setids[resTable$Pathway]); 
   
   resTable$IDs <- fun.ids;
   if(length(fun.ids) ==1) { fun.ids <- matrix(fun.ids) };
