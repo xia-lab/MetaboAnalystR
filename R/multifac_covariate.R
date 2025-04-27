@@ -391,12 +391,6 @@ GetCovSigColNames<-function(mSetObj=NA){
   colnames(mSetObj$analSet$cov$sig.mat);
 }
 
-GetPrimaryType <- function(analysis.var){
-    mSetObj <- .get.mSet(mSetObj);
-    primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
-    return(primary.type);
-}
-
 
 #' CovariateScatter.Anal
 #' @param mSetObj mSetObj object

@@ -4,7 +4,7 @@
 # NO need to manually specify all pairwise comparisons between conditions. Just use one "reference" condition (zero dose)
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
-PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
+PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   
   # Determine covariates
   if (!exists("adj.vec") || length(adj.vec) == 0) {
@@ -18,14 +18,29 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
   meta        <- mSetObj$dataSet$meta.info
   meta.types  <- mSetObj$dataSet$meta.types
   
-  if (meta1 == "NA") {
+  if (meta1 == "NA" || meta1 == "") {
     main.var <- colnames(meta)[1]
   } else {
     main.var <- meta1
   }
   metadata <- meta[colnames(expr_matrix), , drop = FALSE]
   
-  # Process types for all columns
+  
+  # Keep only variables of interest
+  all.vars <- unique(c(main.var, covariates))
+  metadata <- metadata[, all.vars, drop = FALSE]
+  
+  # Determine continuous vs categorical
+  cls.type <- unname(meta.types[main.var])
+  print("meta.types==")
+  print(meta.types)
+  print("main.var")
+  print(main.var);
+  require(limma)
+  require(Hmisc)
+  
+  if (cls.type == "cont") {
+  # Coerce each column to the right type
   for (nm in colnames(metadata)) {
     if (meta.types[nm] == "cont") {
       metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
@@ -33,18 +48,6 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
       metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
     }
   }
-  
-  # Keep only variables of interest
-  all.vars <- unique(c(main.var, covariates))
-  metadata <- metadata[, all.vars, drop = FALSE]
-  
-  # Decide type: continuous or categorical
-  cls.type <- mSetObj$dataSet$cls.type
-  
-  require(limma)
-  require(Hmisc)
-  
-  if (cls.type == "cont") {
     # Continuous metadata (linear regression)
     fmla <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
@@ -68,10 +71,56 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
     
   } else {
-    # Categorical metadata (group comparison)
     cls <- factor(metadata[[main.var]])
-    grp.nms <- paste0("grp_", levels(cls))
+    mSetObj$dataSet$cls.type <- "disc";
+    # ---- check that main.var really contains only numbers ----
+    tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    if (any(is.na(tmp_main))) {
+      current.msg <- paste("Main variable", main.var,
+                            "must be numeric; non-numeric values detected.")
+      print(current.msg)
+
+      AddErrMsg(current.msg);                     
+      return(0)
+    }
+    # 1) Check number of doses ≥ 3
+    dose.levels <- levels(cls)
+    if (length(dose.levels) < 3) {
+      current.msg <- paste0("Dose response requires at least 3 distinct doses; only found ", 
+                             length(dose.levels), ".")
+      AddErrMsg(current.msg);                     
+
+      print(current.msg)
+      return(0)
+    }
+    
+    # 2) Check at least 3 replicates per dose
+    dose.counts <- table(cls)
+    low.reps <- dose.counts[dose.counts < 3]
+    if (length(low.reps) > 0) {
+      msg <- paste0("Dose(s) ", 
+                    paste(names(low.reps), collapse = ", "), 
+                    " have fewer than 3 replicates (found ", 
+                    paste(low.reps, collapse = ", "), ").")
+      AddErrMsg(msg);                     
+
+      print(current.msg)
+      return(0)
+    }
+
+  # Coerce each column to the right type
+  for (nm in colnames(metadata)) {
+    if (meta.types[nm] == "cont") {
+      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
+    } else {
+      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
+    }
+  }
+    
+    # Proceed with design
+    grp.nms <- paste0("grp_", dose.levels)
     levels(cls) <- grp.nms
+    rownames(metadata) <- colnames(expr_matrix)
     
     base_design <- model.matrix(~ 0 + cls)
     colnames(base_design) <- grp.nms
@@ -101,16 +150,25 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1="NA") {
     fit <- contrasts.fit(fit, contrast.matrix)
     fit <- eBayes(fit)
     resTable <- topTable(fit, number = Inf, adjust.method = "BH")
+    # Correlation calculation
+    cor_res <- apply(expr_matrix, 1, function(x) {
+      rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
+    })
+    qs::qsave(cor_res, file = "limma_cor_res.qs")
+    qs::qsave(fit,     file = "limma_fit_res.qs")
   }
   
-  # Save and return
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
-  mSetObj$dataSet$cls <-metadata[[main.var]];
-
+  mSetObj$dataSet$cls <- metadata[[main.var]]
+  
   return(.set.mSet(mSetObj))
 }
 
+GetUpdatedClsType <- function(){
+    mSetObj <- .get.mSet(mSetObj); 
+    return(mSetObj$dataSet$cls.type);
+}
 
 
 # get result based on threshold (p.value and average FC) for categorical dose
@@ -129,7 +187,8 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
     }
 
     fc.mat <- res.all[,1:(colNum-4)];
-    ave.fc <- apply(fc.mat, 1, mean);
+########################not average value anymore, use the max value.
+    ave.fc <- apply(fc.mat, 1, function(x) x[which.max(abs(x))]) 
 
     names(p.value) <- names(ave.fc) <- rownames(res.all);
 

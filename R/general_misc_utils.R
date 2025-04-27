@@ -1596,3 +1596,10 @@ LoadRHistory <- function(){
     #   load('mSet.rda');
     #}
 }
+
+
+GetPrimaryType <- function(analysis.var){
+    mSetObj <- .get.mSet(mSetObj);
+    primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
+    return(primary.type);
+}

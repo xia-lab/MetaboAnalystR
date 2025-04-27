@@ -624,7 +624,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   }
   mSetObj$dataSet$meta.info <- data.frame(Class=mSetObj$dataSet$orig.cls);
 
-  if(mSetObj[["analSet"]][["type"]] %in% c("roc")){
+  if(mSetObj[["analSet"]][["type"]] %in% c("roc", "dose")){
     rownames(mSetObj$dataSet$meta.info) <- smpl.nms;
     mSetObj$dataSet$meta.types <- c("disc");
     mSetObj$dataSet$meta.status <- c("OK");
