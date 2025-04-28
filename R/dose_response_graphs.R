@@ -292,54 +292,152 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   saveSet(imgSet);
 }
 
-PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
+PlotDRHistogram <- function(imgNm, dpi, format, units, scale, width=NA) {
+  save.image("dr.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 
   require(ggplot2)
+  require(Cairo)
+
+  # compute P.O.D.s
   s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
-  
-  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass,]
 
-  if(scale == "log10"){
-    dens <- density(log10(bmd.hist$bmd));
-    xTitle <- paste0("log10(Gene-level BMD) (", units, ")")
-  } else if(scale == "log2"){
-    dens <- density(log2(bmd.hist$bmd));
-    xTitle <- paste0("log2(Gene-level BMD) (", units, ")")
+  # get sorted breakpoints
+  pod_vals <- sort(s.pods)
+  pod_min  <- pod_vals[1]
+  pod_max  <- pod_vals[length(pod_vals)]
+
+  # filter passed features
+  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res
+  bmd.hist <- bmd.hist[bmd.hist$all.pass, ]
+
+  # transform BMD values
+  bmd.vals <- bmd.hist$bmd
+  if (scale == "log10") {
+    bmd.vals <- log10(bmd.vals);        xTitle <- "log10(Feature-level BMD)"
+    s.pods   <- log10(s.pods)
+  } else if (scale == "log2") {
+    bmd.vals <- log2(bmd.vals);        xTitle <- "log2(Feature-level BMD)"
+    s.pods   <- log2(s.pods)
   } else {
-    dens <- density(bmd.hist$bmd);
-    xTitle <- paste0("Gene-level BMD (", units, ")")
+    xTitle <- "Feature-level BMD"
   }
-  
-  dens <- data.frame(x = dens$x, y = dens$y)
-  
-  require(ggplot2)
-  p <- ggplot(aes(x = x, y = y), data = dens) + 
-    geom_area() +
-    geom_vline(aes(xintercept = s.pods[2], colour = "percentile10th"), size = 1) +
-    geom_vline(aes(xintercept = s.pods[3], colour = "mode"), size = 1) +
-    geom_vline(aes(xintercept = s.pods[1], colour = "gene20"), size = 1) +
-    scale_color_manual(name = "tPOD", 
-                       values = c(gene20 = "#A7414A", percentile10th = "#6A8A82", mode = "#CC9B31"),
-                       labels = c(paste0("20th gene: ", signif(s.pods[1],2)), 
-                                  paste0("Max 1st peak: ", signif(s.pods[3],2)),
-                                  paste0("10th percentile: ", signif(s.pods[2],2)))) + 
-    theme_bw()
-  p <- p + xlab(xTitle) + ylab("Density function") + 
-    theme(axis.text.x = element_text(face="bold"), legend.position = c(.95, .95),
-          legend.justification = c("right", "top"),
-          legend.box.just = "right")
 
-  imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
-  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  bmd.df <- data.frame(bmd = bmd.vals)
+
+  baseSize <- 11 * 1.3
+
+  p <- ggplot(bmd.df, aes(x = bmd)) +
+    # 1) very subtle background regions
+    annotate(
+      "rect",
+      xmin       = -Inf, xmax = pod_min,
+      ymin       = -Inf, ymax = Inf,
+      fill       = "#DFF0D8",   # pale green
+      alpha      = 0.10,
+      inherit.aes = FALSE
+    ) +
+    annotate(
+      "rect",
+      xmin       = pod_min, xmax = pod_max,
+      ymin       = -Inf, ymax = Inf,
+      fill       = "#FCF8E3",   # pale yellow
+      alpha      = 0.10,
+      inherit.aes = FALSE
+    ) +
+    annotate(
+      "rect",
+      xmin       = pod_max, xmax = Inf,
+      ymin       = -Inf, ymax = Inf,
+      fill       = "#F2DEDE",   # pale red
+      alpha      = 0.10,
+      inherit.aes = FALSE
+    ) +
+    # 2) histogram
+    geom_histogram(
+      aes(y = ..density..),
+      bins   = 30,
+      fill   = "lightblue",
+      color  = "black",
+      alpha  = 0.8
+    ) +
+    # 3) vertical lines (tPODs)
+    geom_vline(
+      aes(xintercept = s.pods["feat.20"], colour = "gene20"),
+      size = 1
+    ) +
+    geom_vline(
+      aes(xintercept = s.pods["mode"], colour = "mode"),
+      size = 1
+    ) +
+    geom_vline(
+      aes(xintercept = s.pods["feat.10th"], colour = "percentile10th"),
+      size = 1
+    ) +
+    scale_color_manual(
+      name   = "tPOD",
+      values = c(
+        gene20         = "#A7414A",
+        percentile10th = "#6A8A82",
+        mode           = "#CC9B31"
+      ),
+      labels = c(
+        paste0("20th feature: ", signif(s.pods["feat.20"], 2)),
+        paste0("Max 1st peak: ",   signif(s.pods["mode"], 2)),
+        paste0("10th percentile: ", signif(s.pods["feat.10th"], 2))
+      )
+    ) +
+    guides(
+      colour = guide_legend(
+        override.aes = list(size = 2, linetype = 1)
+      )
+    ) +
+    # 4) transparent panel & plot background
+    theme_bw(base_size = baseSize) +
+    theme(
+      panel.background    = element_rect(fill = "transparent", color = NA),
+      plot.background     = element_rect(fill = "transparent", color = NA),
+      axis.text           = element_text(size = rel(1)),
+      axis.title          = element_text(size = rel(1)),
+      legend.text         = element_text(size = rel(1)),
+      legend.title        = element_text(size = rel(1)),
+      axis.text.x         = element_text(face = "bold"),
+      legend.position     = c(.95, .95),
+      legend.justification= c("right", "top"),
+      legend.box.just     = "right"
+    ) +
+    xlab(xTitle) +
+    ylab("Density")
+
+  # set width/height
+  if (is.na(width) || width == 0) {
+    w <- 12; h <- 9
+  } else {
+    w <- width; h <- width * 0.75
+  }
+
+  imgFile <- paste0(imgNm, "dpi", dpi, ".", format)
+
+  # write with transparent background
+  Cairo(
+    file   = imgFile,
+    width  = w,
+    height = h,
+    unit   = "in",
+    dpi    = 72,
+    type   = format,
+    bg     = "transparent"
+  )
   print(p)
-  dev.off();
+  dev.off()
 
   imgSet <- readSet(imgSet, "imgSet");
   imgSet$PlotDRHistogram <- imgNm;
   saveSet(imgSet);
 }
+
+
 
 PlotPWHeatmap <- function(pathway, pwcount, units){
   paramSet <- readSet(paramSet, "paramSet");
@@ -418,3 +516,54 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
     saveSet(imgSet);
 }
 
+###################
+###################
+
+PlotDRHistogramOld <- function(imgNm, dpi, format, units, scale){
+  paramSet <- readSet(paramSet, "paramSet");
+  dataSet <- readDataset(paramSet$dataName);
+
+  require(ggplot2)
+  s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
+  
+  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res[dataSet$bmdcalc.obj$bmdcalc.res$all.pass,]
+
+  if(scale == "log10"){
+    dens <- density(log10(bmd.hist$bmd));
+    xTitle <- paste0("log10(Gene-level BMD) (", units, ")")
+  } else if(scale == "log2"){
+    dens <- density(log2(bmd.hist$bmd));
+    xTitle <- paste0("log2(Gene-level BMD) (", units, ")")
+  } else {
+    dens <- density(bmd.hist$bmd);
+    xTitle <- paste0("Gene-level BMD (", units, ")")
+  }
+  
+  dens <- data.frame(x = dens$x, y = dens$y)
+  
+  require(ggplot2)
+  p <- ggplot(aes(x = x, y = y), data = dens) + 
+    geom_area() +
+    geom_vline(aes(xintercept = s.pods[2], colour = "percentile10th"), size = 1) +
+    geom_vline(aes(xintercept = s.pods[3], colour = "mode"), size = 1) +
+    geom_vline(aes(xintercept = s.pods[1], colour = "gene20"), size = 1) +
+    scale_color_manual(name = "tPOD", 
+                       values = c(gene20 = "#A7414A", percentile10th = "#6A8A82", mode = "#CC9B31"),
+                       labels = c(paste0("20th gene: ", signif(s.pods[1],2)), 
+                                  paste0("Max 1st peak: ", signif(s.pods[3],2)),
+                                  paste0("10th percentile: ", signif(s.pods[2],2)))) + 
+    theme_bw()
+  p <- p + xlab(xTitle) + ylab("Density function") + 
+    theme(axis.text.x = element_text(face="bold"), legend.position = c(.95, .95),
+          legend.justification = c("right", "top"),
+          legend.box.just = "right")
+
+  imgNm = paste(imgNm, "dpi", dpi, ".", format, sep="");
+  Cairo (file=imgNm, width=8, height=6, unit="in",dpi=300, type=format, bg="white");
+  print(p)
+  dev.off();
+
+  imgSet <- readSet(imgSet, "imgSet");
+  imgSet$PlotDRHistogram <- imgNm;
+  saveSet(imgSet);
+}

@@ -302,7 +302,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   } else {
     print(paste("Not supported: ", anal.type))
   }
-
+    
   dataSet$filename <- paste0(filename, "_", dataSet$de.method);
   require(limma);
   design <- dataSet$design;
@@ -441,6 +441,8 @@ SetupDesignMatrix<-function(dataName="", deMethod){
 PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   dataSet <- readDataset(dataName);
   dataSet$pval <- p.lvl;
+    dataSet$fc.lvl <- 0;
+
   if(length(levels(dataSet$cls))>2){ 
     grp.nms <- strsplit(grps, " vs. ")[[1]];
     sel.inx <- as.character(dataSet$cls) %in% grp.nms;
@@ -456,8 +458,12 @@ PerformLimmaDE<-function(dataName="", grps, p.lvl, fc.lvl=NULL){
   
   if(!is.null(fc.lvl)){
     hit.inx <- abs(res.all$logFC)>= fc.lvl & res.all$adj.P.Val <= p.lvl
+    dataSet$fc.lvl <- fc.lvl;
+
   }else{
     hit.inx <- res.all$adj.P.Val <= p.lvl
+    dataSet$fc.lvl <- 0;
+
   }
   if(sum(hit.inx) == 0){
     return (c(1, 0, nrow(res.all)));

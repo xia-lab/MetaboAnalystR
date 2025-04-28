@@ -32,7 +32,10 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   total <- nrow(dataSet$comp.res);
   resTable <- dataSet$comp.res;
   filename <- dataSet$filename;
-  filename <- paste(filename, "_", res.nm, ".csv", sep="");
+  if(is.null(dataSet$fc.lvl)){
+      dataSet$fc.lvl <- 0;
+  }
+  filename <- paste(filename, "_", res.nm, "_fc_" , dataSet$fc.lvl, ".csv", sep="");
   current.msg <- "";
   
   if (is.null(resTable) || nrow(resTable) == 0){
