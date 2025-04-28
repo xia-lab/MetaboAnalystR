@@ -5,10 +5,9 @@
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
 PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
-  
   # Determine covariates
   if (!exists("adj.vec") || length(adj.vec) == 0) {
-    covariates <- c()
+    covariates <- character(0)
   } else {
     covariates <- adj.vec
   }
@@ -18,6 +17,7 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   meta        <- mSetObj$dataSet$meta.info
   meta.types  <- mSetObj$dataSet$meta.types
   
+  # pick main variable
   if (meta1 == "NA" || meta1 == "") {
     main.var <- colnames(meta)[1]
   } else {
@@ -25,22 +25,12 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   }
   metadata <- meta[colnames(expr_matrix), , drop = FALSE]
   
-  
-  # Keep only variables of interest
-  all.vars <- unique(c(main.var, covariates))
-  metadata <- metadata[, all.vars, drop = FALSE]
-  
-  # Determine continuous vs categorical
+  # determine continuous vs categorical
   cls.type <- unname(meta.types[main.var])
-  print("meta.types==")
-  print(meta.types)
-  print("main.var")
-  print(main.var);
   require(limma)
   require(Hmisc)
   
-  if (cls.type == "cont") {
-  # Coerce each column to the right type
+  # coerce each column to appropriate type
   for (nm in colnames(metadata)) {
     if (meta.types[nm] == "cont") {
       metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
@@ -48,22 +38,25 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
       metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
     }
   }
-    # Continuous metadata (linear regression)
-    fmla <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
+  
+  # keep only main.var + covariates
+  all.vars <- unique(c(main.var, covariates))
+  metadata <- metadata[, all.vars, drop = FALSE]
+  
+  if (cls.type == "cont") {
+    # ---------------- Continuous branch ----------------
+    fmla   <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
     
-    print("Design matrix (continuous)")
-    print(head(design))
-    
-    fit <- lmFit(expr_matrix, design)
+    fit      <- lmFit(expr_matrix, design)
     if (!main.var %in% colnames(fit$coefficients)) {
-      warning(paste("Variable", main.var, "not estimable (collinearity or insufficient data)."))
+      warning(paste("Variable", main.var, "not estimable."))
       return(0)
     }
     fit      <- eBayes(fit)
     resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
-    # Correlation calculation
+    # save correlation + fit
     cor_res <- apply(expr_matrix, 1, function(x) {
       rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
@@ -71,86 +64,55 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
     
   } else {
+    # ---------------- Discrete branch ----------------
     cls <- factor(metadata[[main.var]])
-    mSetObj$dataSet$cls.type <- "disc";
-    # ---- check that main.var really contains only numbers ----
+    
+    # validate numeric doses
     tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
     if (any(is.na(tmp_main))) {
-      current.msg <- paste("Main variable", main.var,
-                            "must be numeric; non-numeric values detected.")
-      print(current.msg)
-
-      AddErrMsg(current.msg);                     
+      AddErrMsg(paste("Main variable", main.var, "must be numeric."))
       return(0)
     }
-    # 1) Check number of doses ≥ 3
+    
+    # require ≥ 3 doses and ≥ 3 reps each
     dose.levels <- levels(cls)
     if (length(dose.levels) < 3) {
-      current.msg <- paste0("Dose response requires at least 3 distinct doses; only found ", 
-                             length(dose.levels), ".")
-      AddErrMsg(current.msg);                     
-
-      print(current.msg)
+      AddErrMsg("Need ≥ 3 distinct doses.")
+      return(0)
+    }
+    if (any(table(cls) < 3)) {
+      AddErrMsg("Each dose must have ≥ 3 replicates.")
       return(0)
     }
     
-    # 2) Check at least 3 replicates per dose
-    dose.counts <- table(cls)
-    low.reps <- dose.counts[dose.counts < 3]
-    if (length(low.reps) > 0) {
-      msg <- paste0("Dose(s) ", 
-                    paste(names(low.reps), collapse = ", "), 
-                    " have fewer than 3 replicates (found ", 
-                    paste(low.reps, collapse = ", "), ").")
-      AddErrMsg(msg);                     
-
-      print(current.msg)
-      return(0)
-    }
-
-  # Coerce each column to the right type
-  for (nm in colnames(metadata)) {
-    if (meta.types[nm] == "cont") {
-      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
-    } else {
-      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
-    }
-  }
-    
-    # Proceed with design
-    grp.nms <- paste0("grp_", dose.levels)
-    levels(cls) <- grp.nms
-    rownames(metadata) <- colnames(expr_matrix)
-    
-    base_design <- model.matrix(~ 0 + cls)
-    colnames(base_design) <- grp.nms
-    rownames(base_design) <- names(cls)
-    
+    # build a formula with factor(main.var) + covariates
+    metadata$cls <- cls
+    # formula: ~0 + cls + cov1 + cov2 + ...
     if (length(covariates) > 0) {
-      covar.data <- metadata[, covariates, drop = FALSE]
-      covar.data <- as.data.frame(lapply(covar.data, function(x) as.numeric(as.character(x))))
-      covar_design <- model.matrix(~ ., data = covar.data)[, -1, drop = FALSE]
-      design <- cbind(base_design, covar_design)
+      fmla   <- as.formula(paste("~ 0 + cls +", paste(covariates, collapse = " + ")))
     } else {
-      design <- base_design
+      fmla   <- as.formula("~ 0 + cls")
     }
+    design <- model.matrix(fmla, data = metadata)
     
-    ref <- grp.nms[1]
-    contrasts <- grp.nms[grp.nms != ref]
-    contrast_args <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
-    contrast_args$levels <- design
-    contrast.matrix <- do.call(makeContrasts, contrast_args)
+    # set up contrasts against the first level
+    ref        <- levels(cls)[1]
+    contrasts  <- setdiff(levels(cls), ref)
+    contrastArgs <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
+    contrastArgs$levels <- design
+    contrast.matrix <- do.call(makeContrasts, contrastArgs)
     
+    # fit + contrasts
     fit <- lmFit(expr_matrix, design)
     if (all(fit$df.residual == 0)) {
-      current.msg <<- "No residual degrees of freedom (insufficient replicates)!"
-      print(current.msg)
+      AddErrMsg("No residual degrees of freedom.")
       return(0)
     }
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit)
+    fit      <- contrasts.fit(fit, contrast.matrix)
+    fit      <- eBayes(fit)
     resTable <- topTable(fit, number = Inf, adjust.method = "BH")
-    # Correlation calculation
+    
+    # save correlation + fit
     cor_res <- apply(expr_matrix, 1, function(x) {
       rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
@@ -158,12 +120,13 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
   }
   
+  # write results
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
-  
   return(.set.mSet(mSetObj))
 }
+
 
 GetUpdatedClsType <- function(){
     mSetObj <- .get.mSet(mSetObj); 
