@@ -216,12 +216,7 @@ PlotDRHistogram <- function(mSetObj=NA, imgNm, dpi, format, units, scale, width=
   baseSize <- 11 * 1.3
 
   p <- ggplot(bmd.df, aes(x = bmd)) +
-    geom_histogram(
-      aes(y = ..density.., fill = ..density..),
-      bins  = 30,
-      color = "black",
-      alpha = 0.8
-    ) +
+    geom_histogram(aes(y = ..density..), bins = 30, fill = "lightblue", color = "black", alpha = 0.8) +
     scale_fill_gradient(
       low   = "lightblue",
       high  = "darkblue",
