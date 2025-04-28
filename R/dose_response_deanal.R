@@ -25,17 +25,13 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   }
   metadata <- meta[colnames(expr_matrix), , drop = FALSE]
   
-  
   # Keep only variables of interest
   all.vars <- unique(c(main.var, covariates))
   metadata <- metadata[, all.vars, drop = FALSE]
   
   # Determine continuous vs categorical
   cls.type <- unname(meta.types[main.var])
-  print("meta.types==")
-  print(meta.types)
-  print("main.var")
-  print(main.var);
+
   require(limma)
   require(Hmisc)
   
@@ -52,15 +48,14 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     fmla <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
     
-    print("Design matrix (continuous)")
-    print(head(design))
-    
+    #print("Design matrix (continuous)")
+
     fit <- lmFit(expr_matrix, design)
     if (!main.var %in% colnames(fit$coefficients)) {
       warning(paste("Variable", main.var, "not estimable (collinearity or insufficient data)."))
       return(0)
     }
-    fit      <- eBayes(fit)
+    fit <- eBayes(fit);
     resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
     # Correlation calculation
