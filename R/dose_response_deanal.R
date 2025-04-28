@@ -45,15 +45,15 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   
   if (cls.type == "cont") {
     # ---------------- Continuous branch ----------------
-    fmla   <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
+    fmla  <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
     
-    fit      <- lmFit(expr_matrix, design)
+    fit <- lmFit(expr_matrix, design)
     if (!main.var %in% colnames(fit$coefficients)) {
       warning(paste("Variable", main.var, "not estimable."))
       return(0)
     }
-    fit      <- eBayes(fit)
+    fit <- eBayes(fit);
     resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
     # save correlation + fit
