@@ -71,7 +71,7 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
     
   } else {
-    # ---------------- Discrete branch ----------------
+
     cls <- factor(metadata[[main.var]])
     
     # validate numeric doses
@@ -97,34 +97,49 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
         return(0)
     }
     
-    # build a formula with factor(main.var) + covariates
-    metadata$cls <- cls
-    # formula: ~0 + cls + cov1 + cov2 + ...
-    if (length(covariates) > 0) {
-      fmla   <- as.formula(paste("~ 0 + cls +", paste(covariates, collapse = " + ")))
+  # Coerce each column to the right type
+  for (nm in colnames(metadata)) {
+    if (meta.types[nm] == "cont") {
+      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
     } else {
-      fmla   <- as.formula("~ 0 + cls")
+      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
     }
-    design <- model.matrix(fmla, data = metadata)
+  }
     
-    # set up contrasts against the first level
-    ref        <- levels(cls)[1]
-    contrasts  <- setdiff(levels(cls), ref)
-    contrastArgs <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
-    contrastArgs$levels <- design
-    contrast.matrix <- do.call(makeContrasts, contrastArgs)
+    # Proceed with design
+    grp.nms <- paste0("grp_", dose.levels)
+    levels(cls) <- grp.nms
+    rownames(metadata) <- colnames(expr_matrix)
     
-    # fit + contrasts
+    base_design <- model.matrix(~ 0 + cls)
+    colnames(base_design) <- grp.nms
+    rownames(base_design) <- names(cls)
+    
+    if (length(covariates) > 0) {
+      covar.data <- metadata[, covariates, drop = FALSE]
+      covar.data <- as.data.frame(lapply(covar.data, function(x) as.numeric(as.character(x))))
+      covar_design <- model.matrix(~ ., data = covar.data)[, -1, drop = FALSE]
+      design <- cbind(base_design, covar_design)
+    } else {
+      design <- base_design
+    }
+    
+    ref <- grp.nms[1]
+    contrasts <- grp.nms[grp.nms != ref]
+    contrast_args <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
+    contrast_args$levels <- design
+    contrast.matrix <- do.call(makeContrasts, contrast_args)
+    
     fit <- lmFit(expr_matrix, design)
     if (all(fit$df.residual == 0)) {
-      AddErrMsg("No residual degrees of freedom.")
+      current.msg <<- "No residual degrees of freedom (insufficient replicates)!"
+      print(current.msg)
       return(0)
     }
-    fit      <- contrasts.fit(fit, contrast.matrix)
-    fit      <- eBayes(fit)
+    fit <- contrasts.fit(fit, contrast.matrix)
+    fit <- eBayes(fit)
     resTable <- topTable(fit, number = Inf, adjust.method = "BH")
-    
-    # save correlation + fit
+    # Correlation calculation
     cor_res <- apply(expr_matrix, 1, function(x) {
       rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
@@ -148,7 +163,7 @@ GetUpdatedClsType <- function(){
 
 # get result based on threshold (p.value and average FC) for categorical dose
 ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.bool=T){
-
+    save.image("dose.RData");
     mSetObj <- .get.mSet(mSetObj); 
     res.all <- qs::qread("limma.sig.qs");
 
