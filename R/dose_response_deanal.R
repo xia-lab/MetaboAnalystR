@@ -44,6 +44,13 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   metadata <- metadata[, all.vars, drop = FALSE]
   
   if (cls.type == "cont") {
+
+    tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    if (any(is.na(tmp_main))) {
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      return(0)
+    }
+
     # ---------------- Continuous branch ----------------
     fmla  <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
@@ -69,20 +76,25 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     
     # validate numeric doses
     tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    success <- 1;
     if (any(is.na(tmp_main))) {
-      AddErrMsg(paste("Main variable", main.var, "must be numeric."))
-      return(0)
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      success <-0;
     }
     
     # require ≥ 3 doses and ≥ 3 reps each
     dose.levels <- levels(cls)
     if (length(dose.levels) < 3) {
-      AddErrMsg("Need ≥ 3 distinct doses.")
-      return(0)
+      AddErrMsg(paste("Main variable", main.var, "needs ≥ 3 distinct doses."))
+      success <-0;
     }
     if (any(table(cls) < 3)) {
-      AddErrMsg("Each dose must have ≥ 3 replicates.")
-      return(0)
+      AddErrMsg(paste("Main variable", main.var, ": each dose must have ≥ 3 replicates."))
+      success <-0;
+    }
+
+    if(success == 0){
+        return(0)
     }
     
     # build a formula with factor(main.var) + covariates
