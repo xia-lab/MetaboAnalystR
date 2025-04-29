@@ -89,6 +89,9 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
     imgSet$qc_boxplot <- imgNm;
   }
   saveSet(imgSet);
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
   print(bp);
   dev.off();
@@ -169,6 +172,9 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     imgSet <- readSet(imgSet, "imgSet");
     imgSet$qc.density_norm <- imgNm;
     saveSet(imgSet);
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
     print(g)
     dev.off();
@@ -260,8 +266,9 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
     height <- 6
     
   }
-  
- 
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
   print(g);
   dev.off();
@@ -289,6 +296,9 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   #print(format)
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=8, height=6, type=format, bg="white", dpi=dpi, unit="in");
   plot <- meanSdPlot(dat, ranks=FALSE) 
   dev.off();
@@ -550,6 +560,9 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
     return(ggp_build)
   } else {
     # … your existing non‐interactive saving logic …
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi)
     print(pcafig)
     dev.off()
@@ -633,6 +646,9 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build)
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
@@ -711,6 +727,9 @@ qc.nsig <- function(dataSet, x, imgNm="NSig80_plot", dpi=72, format="png", inter
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build)
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
@@ -769,6 +788,9 @@ qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot"
   if (interactive) {
     stop("Interactive mode is not supported with base R plotting.")
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     
     # Plot the dendrogram with base R
