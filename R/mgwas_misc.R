@@ -6,9 +6,12 @@
 Query.mGWASDB <- function(db.path, q.vec, table.nm, col.nm, biofluid="all", population="all", db.opt="kegg"){
   require('RSQLite');
   db.path <- paste0(db.path, ".sqlite");
- 
   if(.on.public.web){
+   if(file.exists("/Users/lzy/sqlite/mgwas_202201.sqlite")){
+      mir.db <- dbConnect(SQLite(), paste0("/Users/lzy/sqlite/",db.path));
+   }else{
     mir.db <- dbConnect(SQLite(), db.path);
+    }
   }else{
     msg <- paste("Downloading", db.path);
     db.name <- gsub(sqlite.path, "", db.path);

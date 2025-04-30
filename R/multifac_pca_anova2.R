@@ -374,16 +374,13 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'
-iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
+iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
   mSetObj <- .get.mSet(mSetObj);
   
   metadata <- mSetObj$dataSet$meta.info
   data.types <- mSetObj$dataSet$meta.types
   
-  # RhpcBLASctl::blas_set_num_threads(1);
-  # RhpcBLASctl::omp_set_num_threads(1);
-  
-  pca <- prcomp(mSetObj$dataSet$norm, center=T, scale=F);
+  pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=FALSE);
   imp.pca <- summary(pca)$importance;
   
   pca3d <- list();
@@ -401,53 +398,84 @@ iPCA.Anal<-function(mSetObj=NA, fileNm, metaCol, metaShape){
   for(i in 1:ncol(metadata)){
     if(data.types[colnames(metadata)[i]] == "disc"){
       metadata.list[[ colnames(metadata)[i] ]] <- levels(metadata[, i])
-    }else{
+    } else {
       metadata.list[[ colnames(metadata)[i] ]] <- unique(metadata[, i])
     }
   }
   
-  facB <- metadata[, metaShape];
-  facB <- as.character(facB);
-  
+  if (!is.null(metaShape) && metaShape != "NA" && metaShape %in% colnames(metadata)) {
+    facB <- as.character(metadata[, metaShape]);
+    pca3d$score$facB <- facB;
+  }
+
   pca3d$score$metadata_list <- metadata.list
   pca3d$score$metadata <- metadata
   pca3d$score$metadata_type <- mSetObj$dataSet$meta.types
-  
-  
-  pca3d$score$facB <- facB;
-  
+
   pca3d$loadings$axis <- paste("Loadings", 1:3);
-  coords0 <- coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
-  colnames(coords) <- NULL; 
-  pca3d$loadings$xyz <- coords;
+  coords0 <- data.frame(t(signif(pca$rotation[,1:3], 5)));
+  colnames(coords0) <- NULL; 
+  pca3d$loadings$xyz <- coords0;
   pca3d$loadings$name <- colnames(mSetObj$dataSet$norm);
   
   dists <- GetDist3D(coords0);
   colset <- GetRGBColorGradient(dists);
   pca3d$loadings$cols <- colset;
-  
-  
-  # now set color for each group
+
+if (pca3d$score$metadata_type[metaCol] != "disc") {
+  vals <- metadata[, metaCol]
+
+  # Avoid log(0) or negative values
+  if (any(vals <= 0, na.rm = TRUE)) {
+    offset <- abs(min(vals, na.rm = TRUE)) + 1e-6
+    vals <- vals + offset
+  }
+
+  # Apply log10 transformation
+  vals.log <- log10(vals)
+
+  # Trim outliers using 2nd to 98th percentiles
+  q_low <- quantile(vals.log, 0.02, na.rm = TRUE)
+  q_high <- quantile(vals.log, 0.98, na.rm = TRUE)
+
+  # Clamp extreme values
+  vals.trimmed <- pmin(pmax(vals.log, q_low), q_high)
+
+  # Normalize within the trimmed range
+  vals.norm <- (vals.trimmed - q_low) / (q_high - q_low)
+  vals.norm[is.na(vals.norm)] <- 0.5  # fallback for missing values
+
+  # Map to color gradient
+  col.fun <- colorRampPalette(c("blue", "red"))
+  col.vec <- col.fun(100)[floor(vals.norm * 99) + 1]
+
+  # Set for use in JSON export
+  pca3d$score$colors <- my.col2rgb(col.vec)
+  pca3d$score$color_legend_vals <- vals.log
+  pca3d$score$color_legend_trimmed <- c(q_low, q_high)
+  pca3d$score$color_legend_type <- "gradient"
+} else {
   cols <- unique(GetColorSchema(pca3d$score$facA)); 
   pca3d$score$colors <- my.col2rgb(cols);
-  
+  pca3d$score$color_legend_type <- "discrete"
+}
+
   json.obj <- rjson::toJSON(pca3d);
   sink(fileNm);
   cat(json.obj);
   sink();
-  
+
   qs::qsave(pca3d$score, "score3d.qs");
-  qs::qsave(pca3d$loading, "loading3d.qs");
-  
-  #mbSetObj$pca3d
-  
+  qs::qsave(pca3d$loadings, "loading3d.qs");
+
   if(!exists("my.json.scatter")){
     .load.scripts.on.demand("util_scatter3d.Rc");    
   }
-  
-  my.json.scatter(fileNm, T);
+
+  my.json.scatter(fileNm, TRUE);
   return(.set.mSet(mSetObj));
 }
+
 
 
 # Plot Venn diagram

@@ -38,6 +38,7 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
 # PrepareSigDRItems(mSet, 0.2,0.0,TRUE,FALSE,
 # Step 2: select significantly responsive items 
 PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "yes", ncpus = 4){
+  save.image("sig.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   #get data
@@ -126,7 +127,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
     res$all.pass[is.na(res$all.pass)] <- FALSE
   } else {
     res$all.pass <- (res$deg.pass & res$lfc.pass)
-}
+  }
 
   if(sum(res$all.pass) == 0){
     return(0);
@@ -298,7 +299,7 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
       {
         
         fit <- Exp4
-        
+        save(fit, kcrit, AICdigits, dset, file = "fit_line301.rda")
         # collect parameters
         AIC.i <- round(AIC(fit, k = kcrit), digits = AICdigits)
         lof.pval.i <- neill.test(fit, dset$dose, display = FALSE)
@@ -611,11 +612,191 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
   return(.set.mSet(mSetObj));
 }
 
+PerformContDRFit <- function(mSetObj=NA, ncpus=1){
+    mSetObj <- .get.mSet(mSetObj);
+    require(dplyr)
+    require(drc)
+    
+    ft_names <- rownames(mSetObj[["dataSet"]][["limma_dose_sig_res"]])
+    dt <- mSetObj[["dataSet"]][["norm"]]
+    dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
+
+    ft_linear_idx <- vapply(ft_names, function(x){
+      which(x == colnames(dt))
+    }, FUN.VALUE = integer(1L))
+
+    data_normalised_list <- lapply(ft_linear_idx, function(u){
+      vec_ints <-dt[,u]
+      data_normalised <- data.frame(r_file_name = rownames(dt), 
+                                    grouping = paste0("feature_", u), 
+                                    normalised_intensity_log2 = as.double(vec_ints), 
+                                    r_condition = dose_vec)
+      return(data_normalised)
+    })
+
+    res <- rep(list(list()), 17)
+    names(res) <- c("ll4","l4","ll24","ll5","l5","ll25","ll3","l3","ll23","w14","w24","w13","w23","bc4","bc5","ar3","mm3")
+
+    if(ncpus == 1){
+        # 4 params model
+        if("ll4" %in% models){
+            res_ll4 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll4");
+            res[["ll4"]] <- res_ll4
+            print("=== model ll4 completed!")
+        }
+        if("l4" %in% models){
+            res_l4 <- lapply(data_normalised_list, fit_drc_modelling, model = "l4");
+            res[["l4"]] <- res_l4
+            print("=== model l4 completed!")
+        }
+        if("ll24" %in% models){
+            res_ll24 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll24");
+            res[["ll24"]] <- res_ll24
+            print("=== model ll24 completed!")
+        }
+        # 5 params model
+        if("ll5" %in% models){
+            res_ll5 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll5");
+            res[["ll5"]] <- res_ll5
+            print("=== model ll5 completed!")
+        }
+        if("l5" %in% models){
+            res_l5 <- lapply(data_normalised_list, fit_drc_modelling, model = "l5");
+            res[["l5"]] <- res_l5
+            print("=== model l5 completed!")
+        }
+        if("ll25" %in% models){
+            res_ll25 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll25");
+            res[["ll25"]] <- res_ll25
+            print("=== model ll25 completed!")
+        }
+        # 3 params model
+        if("ll3" %in% models){
+            res_ll3 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll3");
+            res[["ll3"]] <- res_ll3
+            print("=== model ll3 completed!")
+        }
+        if("l3" %in% models){
+            res_l3 <- lapply(data_normalised_list, fit_drc_modelling, model = "l3");
+            res[["l3"]] <- res_l3
+            print("=== model l3 completed!")
+        }
+        if("ll23" %in% models){
+            res_ll23 <- lapply(data_normalised_list, fit_drc_modelling, model = "ll23");
+            res[["ll23"]] <- res_ll23
+            print("=== model ll23 completed!")
+        }
+        # Weibull model
+        if("w14" %in% models){
+            res_w14 <- lapply(data_normalised_list, fit_drc_modelling, model = "w14");
+            res[["w14"]] <- res_w14
+            print("=== model w14 completed!")
+        }
+        if("w24" %in% models){
+            res_w24 <- lapply(data_normalised_list, fit_drc_modelling, model = "w24");
+            res[["w24"]] <- res_w24
+            print("=== model w24 completed!")
+        }
+        if("w13" %in% models){
+            res_w13 <- lapply(data_normalised_list, fit_drc_modelling, model = "w13");
+            res[["w13"]] <- res_w13
+            print("=== model w13 completed!")
+        }
+        if("w23" %in% models){
+            res_w23 <- lapply(data_normalised_list, fit_drc_modelling, model = "w23");
+            res[["w23"]] <- res_w23
+            print("=== model w23 completed!")
+        }
+        # Brain-Cousens hormesis model
+        if("bc4" %in% models){
+            res_bc4 <- lapply(data_normalised_list, fit_drc_modelling, model = "bc4");
+            res[["bc4"]] <- res_bc4
+            print("=== model bc4 completed!")
+        }
+        if("bc5" %in% models){
+            res_bc5 <- lapply(data_normalised_list, fit_drc_modelling, model = "bc5");
+            res[["bc5"]] <- res_bc5
+            print("=== model bc5 completed!")
+        }
+        # Asymptotic regression model
+        if("ar3" %in% models){
+            res_ar3 <- lapply(data_normalised_list, fit_drc_modelling, model = "ar3");
+            res[["ar3"]] <- res_ar3
+            print("=== model ar3 completed!")
+        }
+        # Michaelis-Menten model
+        if("mm3" %in% models){
+            res_mm3 <- lapply(data_normalised_list, fit_drc_modelling, model = "mm3");
+            res[["mm3"]] <- res_mm3
+            print("=== model mm3 completed!")
+        }
+    } else {
+
+    }
+    
+    res <- res[!vapply(res, function(x){length(x)==0}, logical(1L))]
+    nms <- names(res)
+    fitting_res0 <- res;
+resxs <- lapply(1:length(res), function(i){
+  res0 <- res[[i]]
+  res_model_name <- names(res)[i]
+
+  # Get model-level feature names
+  feature_names <- names(res0)
+
+  rex <- lapply(seq_along(res0), function(j){
+    y <- res0[[j]]
+    if (is.null(y$result_coefficients)) {
+      return(NULL)
+    }
+
+    if (length(y$SDres) == 0) {
+      y$SDres <- 0
+    }
+
+    coef_vec <- y$result_coefficients
+    get_val <- function(name) if (name %in% names(coef_vec)) coef_vec[[name]] else NA
+
+    data.frame(
+      feature.id = feature_names[j],
+      mod.name = res_model_name,
+      b = get_val("hill:(Intercept)"),
+      c = get_val("min_value:(Intercept)"),
+      d = get_val("max_value:(Intercept)"),
+      e = get_val("ec_50:(Intercept)"),
+      lof.p = y[["lof.pval.i"]],
+      AIC.model = y[["AIC.i"]],
+      SDres = y[["SDres"]],
+      bmd = y[["bmds_results"]][1],
+      bmdl = y[["bmds_results"]][2],
+      bmdu = y[["bmds_results"]][3],
+      item.ind = j
+    )
+  })
+
+  rex_df <- do.call(rbind, rex[!vapply(rex, is.null, logical(1))])
+  rownames(rex_df) <- NULL
+  return(rex_df)
+})
+
+    resxs_df <- do.call(rbind, resxs)
+    resxs_df <- resxs_df[order(resxs_df$item.ind), ]
+    
+    drcfit.obj <- list()
+    drcfit.obj$fitres.all <- resxs_df
+    drcfit.obj$dose <- dose_vec;
+    mSetObj$dataSet$drcfit.obj <- drcfit.obj
+    
+    qs::qsave(fitting_res0, file = "curve_fitting_res.qs")    
+    print("Completed PerformContDRFit!");
+    return(.set.mSet(mSetObj));
+}
+
 FilterDRFit <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   f.drc <- mSetObj$dataSet$drcfit.obj;
-  
+  save(mSetObj, file = "mSetObj___FilterDRFit.rda")
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
 
@@ -650,10 +831,51 @@ FilterDRFit <- function(mSetObj=NA){
   
   mSetObj$dataSet$drcfit.obj <- f.drc;
   print("Completed FilterDRFit!");
-
+  save(mSetObj, file = "mSetObj___FilterDRFit2.rda")
   return(.set.mSet(mSetObj));
 }
 
+FilterDRFitCont <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  f.drc <- mSetObj$dataSet$drcfit.obj;
+  save(mSetObj, file = "mSetObj___FilterDRFit3.rda")
+  require(data.table)
+  lof.pval <- as.numeric(lof.pval)
+  
+  # get results
+  fitres.all <- as.data.table(f.drc$fitres.all)
+  fitres.filt <-fitres.all
+  # get best fit for each feature based on selected criteria
+  fitres.filt$AIC.model <- as.numeric(as.vector(fitres.filt$AIC.model))
+  fitres.filt$lof.p <- as.numeric(as.vector(fitres.filt$lof.p))
+  if(fit.select == "AIC"){
+    fitres.filt <- fitres.filt[fitres.filt[ , AIC.model == min(AIC.model), by = item.ind]$V1]
+  }else if(fit.select == "pvalue"){
+    # filter based on pvalue cutoff
+    fitres.filt <- fitres.filt[fitres.filt[ , lof.p == min(lof.p), by = item.ind]$V1]
+  }else if(fit.select == "both"){
+    fitres.filt <- fitres.filt[as.numeric(fitres.filt$lof.p) > lof.pval]
+    fitres.filt <- fitres.filt[fitres.filt[ , .I[which.min(AIC.model)], by = item.ind]$V1]
+  }
+  
+  # remove rows that had no signficant fits
+  idx <- as.numeric(fitres.filt$item.ind)
+  data <- f.drc$data[idx, ]
+  data.mean <- f.drc$data.mean[idx, ]
+  item <- f.drc$item[idx]
+  
+  # update drcfit object
+  f.drc$fitres.filt <- as.data.frame(fitres.filt);
+  f.drc$data <- data;
+  f.drc$data.mean <- data.mean;
+  f.drc$item <- item;
+  
+  mSetObj$dataSet$drcfit.obj <- f.drc;
+  print("Completed FilterDRFit!");
+  save(mSetObj, file = "mSetObj___FilterDRFit4.rda")
+  return(.set.mSet(mSetObj));
+}
 
 
 #4_bmdcalc.R
@@ -661,6 +883,7 @@ FilterDRFit <- function(mSetObj=NA){
 PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   mSetObj <- .get.mSet(mSetObj);
+  save(mSetObj, file = "mSetObj___PerformBMDCalc.rda")
 
   #save.image("TestDose44.RData");
 
@@ -864,7 +1087,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   # aggregate all filters
   # flag genes that don't pass low dose condition by keeping the column, but do 
   # not use for the final filtering
-  dres$all.pass <- (dres$conv.pass & dres$hd.pass & dres$CI.pass)
+  dres$all.pass <- (dres$conv.pass & dres$hd.pass & dres$CI.pass & dres$ld.pass)
   
   # update the data
   data.select <- data[dres$all.pass, ]
@@ -892,31 +1115,39 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   # make table for html display
   if(dim(disp.res)[1] > 0) {
-    res <- disp.res[,c(1,2,4,7,6,8)];
-    res.mods <- f.drc$fitres.filt[,c(1,3,4,5,6)];
-    res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
-    res[,c(3:10)] <- apply(res[,c(3:10)], 2, function(x) as.numeric(as.character(x)));
-    res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) signif(x, digits = 2));
-    rownames(res) <- as.character(res$item);
-    colnames(res) <- c("gene.id","mod.name","lof.p","bmdl","bmd","bmdu","b","c","d","e");
-    res <- res[order(res$bmd), ];
-    dataSet$html.resTable <- res;
-    dataSet$drcfit.obj <- f.drc;
+  res <- disp.res[,c(1,2,4,7,6,8)];
+  res.mods <- f.drc$fitres.filt[,c(1,3,4,5,6)];
+  res <- merge(res, res.mods, by.y = "gene.id", by.x = "item");
+  
+  res[,c(3:10)] <- apply(res[,c(3:10)], 2, function(x) as.numeric(as.character(x)));
+  res[,c(3:6)] <- apply(res[,c(3:6)], 2, function(x) signif(x, digits = 2));
 
-    mSetObj$dataSet <- dataSet;
-    .set.mSet(mSetObj);
-    fast.write.csv(res, "curvefit_detailed_table.csv");
-    print("Completed PerformBMDCalc");
-    
-    if(!.on.public.web){
-        return(.set.mSet(mSetObj))
-    }
-    if(dim(disp.res)[1] == 1){
-      return(3);
-    } else {
-      return(1)
-    }
-  } else {    
+  rownames(res) <- as.character(res$item);
+  colnames(res) <- c("gene.id","mod.name","lof.p","bmdl","bmd","bmdu","b","c","d","e");
+
+  res <- res[order(res$bmd), ];
+  dataSet$html.resTable <- res;
+  dataSet$drcfit.obj <- f.drc;
+
+  mSetObj$dataSet <- dataSet;
+  .set.mSet(mSetObj);
+
+  # Add ld.pass only for the download CSV
+  #ld.pass.df <- dres[dres$all.pass, c("id", "ld.pass")]
+  #csv.res <- merge(res, ld.pass.df, by.x = "item", by.y = "id")
+
+  fast.write.csv(res, "curvefit_detailed_table.csv");
+  print("Completed PerformBMDCalc");
+  
+  if(!.on.public.web){
+      return(.set.mSet(mSetObj))
+  }
+  if(dim(disp.res)[1] == 1){
+    return(3);
+  } else {
+    return(1)
+  }
+}else {    
     if(!.on.public.web){
         return(.set.mSet(mSetObj))
     }
@@ -924,6 +1155,114 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   }
 
 }
+
+PerformContBMDCalc <- function(mSetObj = NA) {
+  # retrieve and initialize
+  mSetObj   <- .get.mSet(mSetObj)
+  dataSet   <- mSetObj$dataSet
+  f.drc     <- dataSet$drcfit.obj
+  f.its     <- dataSet$itemselect
+  
+  require(data.table)
+  require(dplyr)
+  
+  # raw fit results
+  dfitall <- f.drc$fitres.filt
+  
+  # dose vector
+  dose <- as.numeric(as.character(dataSet$cls))
+  
+  # subset your feature data (unchanged)
+  data.mat      <- as.data.frame(f.its$data)
+  data.mean.mat <- as.data.frame(f.its$data.mean)
+  inx.bmd       <- rownames(data.mat) %in% as.character(dfitall$gene.id)
+  data.mat      <- as.matrix(data.mat[inx.bmd, ])
+  data.mean.mat <- as.matrix(data.mean.mat[inx.bmd, ])
+  
+  item       <- dfitall[, 1]
+  fitres.bmd <- dfitall
+  
+  dres <- as.data.frame(dfitall)[, c("feature.id", "mod.name", "bmd", "bmdl", "bmdu")]
+  dres <- dres %>%
+    mutate(
+      # conv.pass = no NAs in bmd, bmdl, bmdu
+      conv.pass = rowSums(is.na(across(all_of(c("bmd","bmdl","bmdu"))))) == 0,
+      hd.pass   = bmd < max(dose),
+      CI.pass   = bmdu / bmdl < 40,
+      ld.pass   = bmdl > (sort(unique(dose))[2] / 100),
+      all.pass  = conv.pass & hd.pass & CI.pass & ld.pass
+    )
+  
+  # keep only passing features
+  item       <- item[dres$all.pass]
+  fitres.bmd <- fitres.bmd[dres$all.pass, ]
+  
+  # prepare the simplified output table
+  disp.res <- data.frame(
+    item     = item,
+    mod.name = fitres.bmd$mod.name,
+    lof.p    = fitres.bmd$lof.p,
+    bmd      = dres$bmd[dres$all.pass],
+    bmdl     = dres$bmdl[dres$all.pass],
+    bmdu     = dres$bmdu[dres$all.pass],
+    stringsAsFactors = FALSE
+  )
+  data.table::fwrite(disp.res, "bmd.txt", sep = "\t", quote = FALSE)
+  
+  # store raw results in your mSetObj
+  reslist <- list(
+    bmdcalc.res = dres,
+    fitres.bmd  = fitres.bmd,
+    disp.res    = disp.res,
+    data.mean   = data.mean.mat,
+    dose        = dose,
+    item        = item
+  )
+  dataSet$bmdcalc.obj <- structure(reslist, class = "bmdcalc")
+  
+  # if we have something to show, merge in full parameters and format
+  if (nrow(disp.res) > 0) {
+    res <- disp.res
+    res.mods <- fitres.bmd[, c("feature.id","b","c","d","e","AIC.model","item.ind"), drop=FALSE]
+    res <- merge(res, res.mods, by.x="item", by.y="feature.id", all.x=TRUE)
+    
+    # debug
+    print("=== Column names in `res` before formatting:")
+    print(colnames(res))
+    
+    # format numeric columns
+    num.cols     <- c("lof.p","bmd","bmdl","bmdu","b","c","d","e")
+    missing.cols <- setdiff(num.cols, colnames(res))
+    if (length(missing.cols) > 0) {
+      stop("Missing required columns in res: ", paste(missing.cols, collapse=", "))
+    }
+    res[, num.cols] <- lapply(res[, num.cols], function(x) {
+      signif(as.numeric(as.character(x)), 2)
+    })
+    
+    # finalize names & order
+    rownames(res) <- as.character(res$item)
+    colnames(res) <- c("feature.id","mod.name", num.cols, "AIC.model","item.ind")
+    res <- res[order(res$bmd), ]
+    
+    # save back to mSetObj
+    dataSet$html.resTable <- res
+    dataSet$drcfit.obj   <- f.drc
+    mSetObj$dataSet      <- dataSet
+    .set.mSet(mSetObj)
+    fast.write.csv(res, "curvefit_detailed_table.csv")
+    
+    print("Completed PerformBMDCalc")
+    if (!.on.public.web) return(.set.mSet(mSetObj))
+    return(if (nrow(disp.res) == 1) 3 else 1)
+    
+  } else {
+    if (!.on.public.web) return(.set.mSet(mSetObj))
+    return(2)
+  }
+}
+
+
 
 #5a_sensPOD.R
 ### Calculation of metabolomic POD from BMDs
@@ -1055,146 +1394,159 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   return(trans.pod)
 }
 
-
 GetFitResultMatrix <- function(){
   mSetObj <- .get.mSet(NA);
-  res <- mSetObj$dataSet$html.resTable[,-c(1,2)];
-  # turn off scientific notation (Java cannot recognize it)
-  options(scipen=999);
-  res <- signif(as.matrix(res), 5)
-  res[is.nan(res)] <- 0;
-  colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  print(head(res))
 
-  return(res);
+  # turn off scientific notation
+  options(scipen=999)
+
+  if (mSetObj$dataSet$cls.type == "cont") {
+    res <- mSetObj$dataSet$html.resTable
+    res <- res[, c("lof.p", "bmdl", "bmd", "bmdu", "b", "c", "d", "e", "AIC.model")]
+    res <- signif(as.matrix(res), 5)
+    res[is.nan(res)] <- 0
+    colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e", "AIC")
+  } else {
+    res <- mSetObj$dataSet$html.resTable[,-c(1,2)]
+    res <- signif(as.matrix(res), 5)
+    res[is.nan(res)] <- 0
+    colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")
+  }
+
+  print(head(res))
+  return(res)
 }
 
-GetFitResultColNames <-function(){
-  names <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e");
-  return(names);
+GetFitResultColNames <- function(){
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e", "AIC"))
+  } else {
+    return(c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e"))
+  }
 }
 
 GetFitResultFeatureIDs <- function(){
-  mSetObj <- .get.mSet(NA);
-  return(as.character(mSetObj$dataSet$html.resTable[,1]))
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(as.character(mSetObj$dataSet$html.resTable$feature.id))
+  } else {
+    return(as.character(mSetObj$dataSet$html.resTable[,1]))
+  }
 }
 
 GetFitResultModelNms <- function(){
-  mSetObj <- .get.mSet(NA);
-  return(as.character(mSetObj$dataSet$html.resTable[,2]))
-}
-
-
-fit_drc_modelling <- function (data, model = "ll4") 
-{
-  
-  #data <- data[data$grouping == "feature_3",]
-
-  if(model == "ll4"){
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "l4") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::L.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ll24") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL2.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ll5") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "l5") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::L.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ll25") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL2.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "l3") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::L.3(names = c("hill", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ll3") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL.3(names = c("hill", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ll23") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL2.3(names = c("hill", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "w14") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::W1.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "w24") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::W2.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "w13") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::W1.3(names = c("hill", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "w23") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::W2.3(names = c("hill", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "bc4") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::BC.4(names = c("hill", "max_value", "ec_50", "unk")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "bc5") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::BC.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "ar3") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::AR.3(names = c( "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
-  } else if(model == "mm3") {
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::MM.3(names = c( "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
+  mSetObj <- .get.mSet(NA)
+  if (mSetObj$dataSet$cls.type == "cont") {
+    return(as.character(mSetObj$dataSet$html.resTable$mod.name))
   } else {
-    # for unexpected model selection option
-    model <- "ll4"
-    res_fit <- drc::drm(stats::as.formula("normalised_intensity_log2 ~ r_condition"), 
-                        data = data, 
-                        fct = drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50")), 
-                        control = drc::drmc(otrace = TRUE))
+    return(as.character(mSetObj$dataSet$html.resTable[,2]))
   }
-  
-  doses_vec <- res_fit[["origData"]][["r_condition"]];
-  predictions_range <- exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
-  
-  if(model %in% c("l4", "l5", "l3", "ar3", "mm3", "bc4", "bc5", "w14", "w24", "w13")){
-    predictions_range <- seq(max(doses_vec), min(doses_vec), length = 100)
-  } else {
-    predictions_range <- exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
-  }
-  
-  predictions <- suppressWarnings(stats::predict(res_fit, data.frame(predictions_range), interval = "confidence"))
-  return(list(result_fitting = res_fit,
-              prediction_interval = predictions))
 }
+fit_drc_modelling <- function(data, model = "ll4") {
+  # Determine the minimum non-zero dose for ec_50 constraint
+  min_dose <- min(data$r_condition[data$r_condition > 0], na.rm = TRUE)
+  bmd_min <- min_dose / 10
 
+  # Define model structure (no constraints inside fct_obj!)
+  fct_obj <- switch(model,
+    "ll4"  = drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50")),
+    "l4"   = drc::L.4(names = c("hill", "min_value", "max_value", "ec_50")),
+    "ll24" = drc::LL2.4(names = c("hill", "min_value", "max_value", "ec_50")),
+    "ll5"  = drc::LL.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")),
+    "l5"   = drc::L.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")),
+    "ll25" = drc::LL2.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")),
+    "bc5"  = drc::BC.5(names = c("hill", "min_value", "max_value", "ec_50", "unk")),
+    "w14"  = drc::W1.4(names = c("hill", "min_value", "max_value", "ec_50")),
+    "w24"  = drc::W2.4(names = c("hill", "min_value", "max_value", "ec_50")),
+    "ar3"  = drc::AR.3(names = c("min_value", "max_value", "ec_50")),
+    "mm3"  = drc::MM.3(names = c("min_value", "max_value", "ec_50")),
+    "l3"   = drc::L.3(names = c("hill", "max_value", "ec_50")),
+    "ll3"  = drc::LL.3(names = c("hill", "max_value", "ec_50")),
+    "ll23" = drc::LL2.3(names = c("hill", "max_value", "ec_50")),
+    "w13"  = drc::W1.3(names = c("hill", "max_value", "ec_50")),
+    "w23"  = drc::W2.3(names = c("hill", "max_value", "ec_50")),
+    "bc4"  = drc::BC.4(names = c("hill", "max_value", "ec_50", "unk")),
+    # fallback
+    drc::LL.4(names = c("hill", "min_value", "max_value", "ec_50"))
+  )
+
+  # Estimate the number of parameters
+  test_fit <- suppressWarnings(
+    try(drc::drm(normalised_intensity_log2 ~ r_condition, data = data[1:5, ], fct = fct_obj, control = drc::drmc(noMessage = TRUE)), silent = TRUE)
+  )
+
+  if (inherits(test_fit, "try-error")) {
+    return(list(error = paste0("Initial test fit failed for '", model, "'")))
+  }
+
+  model_length <- length(coef(test_fit))
+  #lower_vec <- rep(-Inf, model_length)
+  #lower_vec[model_length] <- 0
+
+  # Fit model with lower constraint
+  res_fit <- tryCatch({
+    drc::drm(
+      normalised_intensity_log2 ~ r_condition,
+      data = data,
+      fct = fct_obj,
+      control = drc::drmc(otrace = TRUE)
+      #,lowerl = lower_vec
+    )
+  }, error = function(e) {
+    message("❌ Model fitting failed for model '", model, "': ", conditionMessage(e))
+    return(NULL)
+  })
+
+  if (is.null(res_fit)) {
+    return(list(error = paste0("Model fitting failed for '", model, "'")))
+  }
+
+  # Generate prediction range
+  doses_vec <- res_fit[["origData"]][["r_condition"]]
+  predictions_range <- if (model %in% c("l4", "l5", "l3", "ar3", "mm3", "bc4", "bc5", "w14", "w24", "w13")) {
+    seq(max(doses_vec), min(doses_vec), length = 100)
+  } else {
+    exp(seq(log(max(doses_vec)), log(min(doses_vec)), length = 100))
+  }
+
+  grouping <- res_fit[["data"]][["r_condition"]]
+
+  # Perform lack-of-fit test with fallback
+  lof.pval.i <- tryCatch({
+    neill.test(res_fit, grouping, display = FALSE)
+  }, error = function(e) {
+    message("neill.test failed; retrying with quantile-binned groups...")
+    binned_grouping <- tryCatch({
+      cut(grouping, breaks = quantile(grouping, probs = seq(0, 1, 0.25), na.rm = TRUE),
+          include.lowest = TRUE)
+    }, error = function(e) return(NA))
+
+    if (!all(is.na(binned_grouping))) {
+      tryCatch({
+        neill.test(res_fit, binned_grouping, display = FALSE)
+      }, error = function(e) NA)
+    } else {
+      NA
+    }
+  })
+
+  AIC.i <- round(AIC(res_fit, k = 2), digits = 2)
+  SDres <- sigma(res_fit)
+  bmds <- bmdContres(res_fit)
+  names(bmds) <- c("bmd", "bmdl", "bmdu")
+
+  predictions <- suppressWarnings(
+    stats::predict(res_fit, data.frame(predictions_range), interval = "confidence")
+  )
+
+  return(list(
+    result_coefficients = res_fit$coefficients,
+    lof.pval.i = lof.pval.i,
+    AIC.i = AIC.i,
+    SDres = SDres,
+    prediction_interval = predictions,
+    bmds_results = bmds,
+    fitting_model = res_fit
+  ))
+}

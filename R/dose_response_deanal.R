@@ -4,96 +4,166 @@
 # NO need to manually specify all pairwise comparisons between conditions. Just use one "reference" condition (zero dose)
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
-
-PerformDoseDEAnal<-function(mSetObj=NA){
-
-  # check if already performed. No parameter required
-  # remove this file if performs normalization again
-  if(file.exists("limma.sig.qs")){
-    return(1);
+PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
+  # Determine covariates
+  if (!exists("adj.vec") || length(adj.vec) == 0) {
+    covariates <- character(0)
+  } else {
+    covariates <- adj.vec
   }
-
-  mSetObj <- .get.mSet(mSetObj);  
-  data <- t(mSetObj$dataSet$norm);
-  cls <- mSetObj$dataSet$cls;
-
   
-  if(mSetObj[["dataSet"]][["cls.type"]] == "cont"){
-    # this is for contineous variable/dose
-    require(limma);
-    expr_matrix <- data
-    # create metadata with continuous variable (e.g., var)
-    metadata <- data.frame(
-      Sample = colnames(expr_matrix),
-      var = as.numeric(as.character(cls))  # Continuous variable
-    )
+  mSetObj     <- .get.mSet(mSetObj)
+  expr_matrix <- t(mSetObj$dataSet$norm)
+  meta        <- mSetObj$dataSet$meta.info
+  meta.types  <- mSetObj$dataSet$meta.types
+  
+  # pick main variable
+  if (meta1 == "NA" || meta1 == "") {
+    main.var <- colnames(meta)[1]
+  } else {
+    main.var <- meta1
+  }
+  metadata <- meta[colnames(expr_matrix), , drop = FALSE]
+  
+  # determine continuous vs categorical
+  cls.type <- unname(meta.types[main.var])
+  require(limma)
+  require(Hmisc)
+  
+  # coerce each column to appropriate type
+  for (nm in colnames(metadata)) {
+    if (meta.types[nm] == "cont") {
+      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
+    } else {
+      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
+    }
+  }
+  
+  # keep only main.var + covariates
+  all.vars <- unique(c(main.var, covariates))
+  metadata <- metadata[, all.vars, drop = FALSE]
+  
+  if (cls.type == "cont") {
+
+    tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    if (any(is.na(tmp_main))) {
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      return(0)
+    }
+
+    # ---------------- Continuous branch ----------------
+    fmla  <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
+    design <- model.matrix(fmla, data = metadata)
     
-    # Create design matrix for linear regression (include intercept)
-    design <- model.matrix(~ var, data = metadata)
-    
-    # Fit linear model using limma
     fit <- lmFit(expr_matrix, design)
+    if (!main.var %in% colnames(fit$coefficients)) {
+      warning(paste("Variable", main.var, "not estimable."))
+      return(0)
+    }
+    fit <- eBayes(fit);
+    resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
-    # Apply empirical Bayes moderation
-    fit <- eBayes(fit)
-    
-    # Get results for the continuous variable (var)
-    resTable <- topTable(fit, coef = "var", number = Inf, adjust.method="BH")
-  
-    # calculate correlation coefficients
-    require(Hmisc);
+    # save correlation + fit
     cor_res <- apply(expr_matrix, 1, function(x) {
-      rs1 <- rcorr(x, metadata$var, "spearman")
-      return(rs1[["r"]][1,2])
+      rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
     qs::qsave(cor_res, file = "limma_cor_res.qs")
-    qs::qsave(fit, file = "limma_fit_res.qs")    
+    qs::qsave(fit,     file = "limma_fit_res.qs")
     
   } else {
-    # this is for categorical variable/dose
-    # note, use numeric will lead to error in limma
-    grp.nms <- paste0("grp_", levels(cls));
-    levels(cls) <- grp.nms;
+
+    cls <- factor(metadata[[main.var]])
     
-    require(limma);
-    design <- model.matrix(formula(~ 0 + cls));
-    colnames(design)[1:length(grp.nms)] <- grp.nms;
-    
-    myargs <- list();
-    ref <- levels(cls)[1]; # reference dose
-    contrasts <- grp.nms[grp.nms != ref];
-    myargs <- as.list(paste(contrasts, "-", ref, sep = "")); 
-    myargs[["levels"]] <- design;
-    
-    contrast.matrix <- do.call(makeContrasts, myargs);
-    fit <- lmFit(data, design);
-    
-    #sanity check
-    df.residual <- fit$df.residual;
-    if (all(df.residual == 0)) {
-      current.msg <<- "All residuals equal 0. There is not enough replicates in each group (no residual degrees of freedom)!";  
-      print(current.msg);
-      return(0);
+    # validate numeric doses
+    tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    success <- 1;
+    if (any(is.na(tmp_main))) {
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      success <-0;
     }
     
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit);
-    resTable <- topTable(fit, number=Inf, adjust.method="BH");
+    # require ≥ 3 doses and ≥ 3 reps each
+    dose.levels <- levels(cls)
+    if (length(dose.levels) < 3) {
+      AddErrMsg(paste("Main variable", main.var, "needs ≥ 3 distinct doses."))
+      success <-0;
+    }
+    if (any(table(cls) < 3)) {
+      AddErrMsg(paste("Main variable", main.var, ": each dose must have ≥ 3 replicates."))
+      success <-0;
+    }
+
+    if(success == 0){
+        return(0)
+    }
     
+  # Coerce each column to the right type
+  for (nm in colnames(metadata)) {
+    if (meta.types[nm] == "cont") {
+      metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
+    } else {
+      metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
+    }
+  }
+    
+    # Proceed with design
+    grp.nms <- paste0("grp_", dose.levels)
+    levels(cls) <- grp.nms
+    rownames(metadata) <- colnames(expr_matrix)
+    
+    base_design <- model.matrix(~ 0 + cls)
+    colnames(base_design) <- grp.nms
+    rownames(base_design) <- names(cls)
+    
+    if (length(covariates) > 0) {
+      covar.data <- metadata[, covariates, drop = FALSE]
+      covar.data <- as.data.frame(lapply(covar.data, function(x) as.numeric(as.character(x))))
+      covar_design <- model.matrix(~ ., data = covar.data)[, -1, drop = FALSE]
+      design <- cbind(base_design, covar_design)
+    } else {
+      design <- base_design
+    }
+    
+    ref <- grp.nms[1]
+    contrasts <- grp.nms[grp.nms != ref]
+    contrast_args <- setNames(as.list(paste0(contrasts, "-", ref)), contrasts)
+    contrast_args$levels <- design
+    contrast.matrix <- do.call(makeContrasts, contrast_args)
+    
+    fit <- lmFit(expr_matrix, design)
+    if (all(fit$df.residual == 0)) {
+      current.msg <<- "No residual degrees of freedom (insufficient replicates)!"
+      print(current.msg)
+      return(0)
+    }
+    fit <- contrasts.fit(fit, contrast.matrix)
+    fit <- eBayes(fit)
+    resTable <- topTable(fit, number = Inf, adjust.method = "BH")
+    # Correlation calculation
+    cor_res <- apply(expr_matrix, 1, function(x) {
+      rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
+    })
+    qs::qsave(cor_res, file = "limma_cor_res.qs")
+    qs::qsave(fit,     file = "limma_fit_res.qs")
   }
   
-  fast.write.csv(resTable, file="dose_response_limma_all.csv", row.names=TRUE);
+  # write results
+  fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
+  qs::qsave(resTable, "limma.sig.qs")
+  mSetObj$dataSet$cls <- metadata[[main.var]]
+  return(.set.mSet(mSetObj))
+}
 
-  # save a qs file for update
-  qs::qsave(resTable, "limma.sig.qs");
 
-  return(.set.mSet(mSetObj));
+GetUpdatedClsType <- function(){
+    mSetObj <- .get.mSet(mSetObj); 
+    return(mSetObj$dataSet$cls.type);
 }
 
 
 # get result based on threshold (p.value and average FC) for categorical dose
 ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.bool=T){
-
+    save.image("dose.RData");
     mSetObj <- .get.mSet(mSetObj); 
     res.all <- qs::qread("limma.sig.qs");
 
@@ -107,7 +177,8 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
     }
 
     fc.mat <- res.all[,1:(colNum-4)];
-    ave.fc <- apply(fc.mat, 1, mean);
+########################not average value anymore, use the max value.
+    ave.fc <- apply(fc.mat, 1, function(x) x[which.max(abs(x))]) 
 
     names(p.value) <- names(ave.fc) <- rownames(res.all);
 
@@ -121,7 +192,7 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
 
         res.all2 <- cbind(res.all,  "AveFC"=ave.fc);
         hit.inx <- which(!inx.unsig);
-        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
+        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);        
         fast.write.csv(sig.res, file="limma_sig_features.csv");
  
         # only store avarage FC + last 5 columns from the general information from limma - AveExpr, F, P.Value, adj.P.Val, AveFC 
@@ -198,6 +269,7 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
     res.all2 <- cbind(res.all,  "Coefficient"=coef_res);
     hit.inx <- which(!inx.unsig);
     sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
+    mSetObj[["dataSet"]][["limma_dose_sig_res"]] <- sig.res;
     fast.write.csv(sig.res, file="limma_sig_features.csv");
     
     # only store avarage FC + last 5 columns from the general information from limma - AveExpr, F, P.Value, adj.P.Val, AveFC 

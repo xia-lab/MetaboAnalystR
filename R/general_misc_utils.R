@@ -1324,10 +1324,10 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 ##
 ## perform unsupervised data filter based on common measures
 ##
-PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
+PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg = ""){
 
     nm <- NULL;
-    msg <- "";
+    
 
     # first compute rank based on filter selected
     if (filter == "rsd"){
@@ -1599,4 +1599,11 @@ LoadRHistory <- function(){
     #if(file.exists('mSet.rda')){
     #   load('mSet.rda');
     #}
+}
+
+
+GetPrimaryType <- function(analysis.var){
+    mSetObj <- .get.mSet(mSetObj);
+    primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
+    return(primary.type);
 }

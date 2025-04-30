@@ -75,16 +75,21 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+       dat$ifCheck = !grepl(", ",dat$metabolites)
+       dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
       mSetObj$dataSet$harmonized.dat <- dat;
-      .set.mSet(mSetObj)
+     .set.mSet(mSetObj)
+        
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
-      return(res1);
+      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$exposure)-nrow(dat)));
 }
 
 readOpenGWASKey <- function(){
     if(.on.public.web){
         if(file.exists("/home/zgy/opengwas_api_keys.csv")){
             df <- read.csv("/home/zgy/opengwas_api_keys.csv");
+        }else if(file.exists("/Users/lzy/sqlite/opengwas_api_keys.csv")){
+            df <- read.csv("/Users/lzy/sqlite/opengwas_api_keys.csv");
         }else{
             df <- read.csv("/home/glassfish/opengwas_api_keys.csv");
         }
@@ -108,7 +113,12 @@ readOpenGWASKey <- function(){
 
 extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
   cat("Processing into extractGwasDB from local \n")
+  if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
+    database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite"
+   }else{
   database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
+  }
+
   require("DBI")
   require("RSQLite")
   res_list <- list()
@@ -126,7 +136,11 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   res_outcome_dt <- cbind(res_dt1, meta_dt)
   
   if(proxies){
+    if(file.exists("/Users/lzy/sqlite/openGWAS_withProxy.sqlite")){
+    database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
+   }else{
     database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
+}
     con <- dbConnect(RSQLite::SQLite(), database_path2)
     query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
     res2 <- dbGetQuery(con, query_stat2)
@@ -355,6 +369,7 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
     geom_abline(data = mrres_exposure, aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
     scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
     labs(colour = "MR Test", x = paste("SNP effect on", exposure), y = "Outcome effect") +
+theme_minimal() +
     theme(legend.position = "right", legend.direction = "vertical") +
     guides(colour = guide_legend(ncol = 2))
   
@@ -548,6 +563,7 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
                                    "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
                                    "#ffff99", "#b15928")) +
     labs(y = expression(1 / SE[IV]), x = expression(beta[IV]), colour = "MR Method") +
+    theme_minimal(base_size = 14) +
     theme(legend.position = "right", legend.direction = "vertical", text = element_text(size = 14))
   
   return(p)

@@ -391,12 +391,6 @@ GetCovSigColNames<-function(mSetObj=NA){
   colnames(mSetObj$analSet$cov$sig.mat);
 }
 
-GetPrimaryType <- function(analysis.var){
-    mSetObj <- .get.mSet(mSetObj);
-    primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
-    return(primary.type);
-}
-
 
 #' CovariateScatter.Anal
 #' @param mSetObj mSetObj object
@@ -422,6 +416,15 @@ CovariateScatter.Anal <- function(mSetObj,
   library(limma)
   library(dplyr)
   
+  imgName <<- imgName;
+  format<- "png";
+  analysis.var<<- analysis.var; 
+  ref <<- ref;
+  block <<- block;
+  thresh<<- thresh;
+  pval.type<<- pval.type;
+  contrast.cls <<- contrast.cls;
+  save.image("cov.RData");
   cov.vec <- "NA";
   # get inputs
   if(!exists('adj.vec')){
@@ -478,7 +481,7 @@ CovariateScatter.Anal <- function(mSetObj,
     design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs <- list();
-
+    
     if(contrast.cls == "anova"){
       cntr.cls <- grp.nms[grp.nms != ref];
       myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
@@ -524,6 +527,8 @@ CovariateScatter.Anal <- function(mSetObj,
     
     # recent update: enable blocking factor for continuous primary metadata
     if (block == "NA") {
+      print(head(design));
+      
       fit <- lmFit(feature_table, design)
     } else {
       block.vec <- covariates[,block];
@@ -945,7 +950,7 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
     ref <- par1;
     cntr.cls <- grp.nms[grp.nms != ref]
     myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
-    mSetObj$analSet$ref <- ref; 
+    mSetObj$analSet$ref <- ref;    
     filename <- paste("combine_factors_reference_", ref, sep = "");
   } else if (anal.type == "nested") {
     grp.nms1 <- strsplit(par1, " vs. ")[[1]]
@@ -1033,7 +1038,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   
   mSetObj$imgSet$covAdj <- imgName;
   
-  width <- 8;
+  width <- 11;
   height <- 8.18;
   
   library(plotly)
