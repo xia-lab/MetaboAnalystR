@@ -19,7 +19,6 @@
 #'License: GNU GPL (>= 2)
 #'@export
 UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ",vis.type=""){
-
   mSetObj <- .get.mSet(mSetObj);
   # make sure this is annotated   
   if(is.null(mSetObj$org)){
@@ -193,6 +192,8 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 
   mSetObj$imgSet$enrTables[[vis.type]] <- list();
   mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+  mSetObj$imgSet$enrTables[[vis.type]]$res.mat <- res.mat;
+
   mSetObj$imgSet$enrTables[[vis.type]]$library <- libOpt;
   mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
   .set.mSet(mSetObj);

@@ -17,6 +17,7 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs, vis.type=""
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec, vis.type=""){
+    save.image("enr.RData");
     if(fun.type %in% c("keggc", "smpdb")){
         .load.enrich.compound.lib(org.code, fun.type);
     }else{
@@ -138,7 +139,14 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
     }
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$res.mat <- res.mat;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.set <- current.geneset;
+    mSetObj$imgSet$enrTables[[vis.type]]$hits.query <- hits.query;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.setids <- current.setids;
+
     mSetObj$imgSet$enrTables[[vis.type]]$library <- fun.type;
+    print(paste0("funType=",fun.type));
+    print(paste0("vis.type=", vis.type));
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
     .set.mSet(mSetObj);
     return(1);
