@@ -151,6 +151,8 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
+  mSetObj$dataSet$main.var <- main.var;
+  print(mSetObj$dataSet$cls)
   return(.set.mSet(mSetObj))
 }
 
@@ -163,7 +165,7 @@ GetUpdatedClsType <- function(){
 
 # get result based on threshold (p.value and average FC) for categorical dose
 ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.bool=T){
-    save.image("dose.RData");
+
     mSetObj <- .get.mSet(mSetObj); 
     res.all <- qs::qread("limma.sig.qs");
 
@@ -305,7 +307,7 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
     inx.down = inx.down,
     sig.mat = sig.mat
   );
-  
+
   fast.write.csv(res.all, "limma_restable.csv");
   
   if(!.on.public.web){
@@ -415,4 +417,66 @@ SetDoseType <- function(mSetObj=NA, type = "disc"){
     #disc
 
     return(.set.mSet(mSetObj));
+}
+
+PlotDoseVolcano <- function(mSetObj = NA,
+                            imgNm,
+                            dpi    = 72,
+                            format = "png") {
+
+  mSetObj <- .get.mSet(mSetObj)
+  doseRes <- mSetObj$analSet$dose
+
+  if (is.null(doseRes))
+    stop("analSet$dose is missing – run the LIMMA-result function first.")
+
+doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
+                         length(doseRes$fc.thresh) == 0) 0
+                     else as.numeric(doseRes$fc.thresh)
+
+  df <- data.frame(
+    logFC   = doseRes$fc.log,
+    negLogP = doseRes$p.log,
+    category = ifelse(doseRes$inx.up,   "Sig_Up",
+               ifelse(doseRes$inx.down, "Sig_Down", "Unsig.")),
+    stringsAsFactors = FALSE
+  )
+
+  ## ---------- 1. Legend counts & colours ---------------------------------
+  counts  <- table(df$category)[c("Sig_Down","Sig_Up","Unsig.")]        # fixed order
+  labels  <- paste0(c("Sig_Down","Sig_Up","Unsig."), " [", counts, "]")
+  colours <- c("Sig_Down" = "#0080ff", "Sig_Up" = "#ff3333", "Unsig." = "#c0c0c0")
+
+  ## ---------- 2. Build plot ------------------------------------------------
+  cls.type <- mSetObj$dataSet$cls.type   # "cont" or "disc"
+  xlab     <- ifelse(cls.type == "cont", "log10(FC)", "AveFC (max |Δ|)")
+
+  require(ggplot2)
+  p <- ggplot(df, aes(x = logFC, y = negLogP, colour = category)) +
+       geom_point(alpha = 0.9, size = 1.5) +
+       geom_hline(yintercept = -log10(doseRes$p.thresh),  linetype = "dashed") +
+       geom_vline(xintercept = c(-doseRes$fc.thresh, doseRes$fc.thresh),
+                  linetype = "dashed") +
+       scale_colour_manual(values = colours,
+                           breaks = names(colours),
+                           labels = labels,
+                           name   = NULL) +
+       labs(x = xlab, y = "-log10(P)") +
+       theme_bw(base_size = 11) +
+       theme(legend.position = "top",
+             axis.title      = element_text(face = "bold"),
+             axis.text       = element_text(colour = "black"))
+
+  ## ---------- 3. Cairo output ---------------------------------------------
+  outFile <- paste0(imgNm, "_dpi72" , ".", format)
+  Cairo::Cairo(file   = outFile,
+               width  = 8, height = 6,
+               unit   = "in", dpi = dpi,
+               type   = format, bg  = "white")
+  print(p)
+  dev.off()
+
+  ## ---------- 4. Book-keeping ---------------------------------------------
+  mSetObj$imgSet$dose_volcano_filename <- outFile
+  return(.set.mSet(mSetObj))
 }
