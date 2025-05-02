@@ -57,7 +57,7 @@
   set.size<-length(current.geneset);
   res.mat<-matrix(0, nrow=set.size, ncol=5);
   rownames(res.mat)<-names(current.geneset);
-  colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "FDR");
+  colnames(res.mat)<-c("Total", "Expected", "Hits", "Pval", "FDR");
   
   q.size<-length(ora.vec);
   
@@ -128,7 +128,7 @@
     resTable.all <- data.frame(Pathway = pws, ID = fun.ids2, res.mat.all)
 
     csv.nm <- paste(file.nm, ".csv", sep="");    
-    print(paste(csv.nm, "=====", "enrichAnalysis"));
+    #print(paste(csv.nm, "=====", "enrichAnalysis"));
     write.csv(resTable.all, file=csv.nm, row.names=F);
     
     imp.inx <- res.mat[,4] <= 0.05;
@@ -166,10 +166,10 @@
   
   # write json
   fun.anot <- hits.query; 
-  total <- resTable[,2]; if(length(total) ==1) { total <- matrix(total) };
-  fun.pval <- resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
-  fun.padj <- resTable[,6]; if(length(fun.padj) ==1) { fun.padj <- matrix(fun.padj) };
-  hit.num <- resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
+  total <- resTable$Total; if(length(total) ==1) { total <- matrix(total) };
+  fun.pval <- resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
+  fun.padj <- resTable$FDR; if(length(fun.padj) ==1) { fun.padj <- matrix(fun.padj) };
+  hit.num <- paste0(resTable$Hits,"/",resTable$Total); if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   fun.ids <- as.vector(setres$current.setids[resTable$Pathway]); 
   
   resTable$IDs <- fun.ids;
@@ -192,8 +192,8 @@
   
   # write csv
   fun.hits <<- hits.query;
-  fun.pval <<- resTable[,5];
-  hit.num <<- resTable[,4];
+  fun.pval <<- fun.pval;
+  hit.num <<- resTable$Hits;
   #csv.nm <- paste(file.nm, ".csv", sep="");  
   #print(csv.nm)  
   #fast.write(resTable, file=csv.nm, row.names=F);
