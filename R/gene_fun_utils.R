@@ -17,6 +17,7 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs, vis.type=""
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec, vis.type=""){
+    save.image("enr.RData");
     if(fun.type %in% c("keggc", "smpdb")){
         .load.enrich.compound.lib(org.code, fun.type);
     }else{
@@ -31,7 +32,7 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
     set.size<-length(current.geneset);
     res.mat<-matrix(0, nrow=set.size, ncol=5);
     rownames(res.mat)<-names(current.geneset);
-    colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "FDR");
+    colnames(res.mat)<-c("Total", "Expected", "Hits", "Pval", "FDR");
 
     # need to cut to the universe covered by the pathways, not all genes 
     hits.inx <- ora.vec %in% current.universe;
@@ -102,8 +103,8 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
 
     # write json
     fun.anot = hits.query; 
-    fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
-    hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
+    fun.pval = resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
+    hit.num = paste0(resTable$Hits,"/",resTable$Total); if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
     if(fun.type %in% c("keggc", "smpdb")){
         fun.ids <- as.vector(current.setids[which(current.setids %in% names(fun.anot))]); 
         names(fun.anot) = as.vector(names(current.setids[which(current.setids %in% names(fun.anot))]));
@@ -128,8 +129,8 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
 
     # write csv
     fun.hits <<- hits.query;
-    fun.pval <<- resTable[,5];
-    hit.num <<- resTable[,4];
+    fun.pval <<- fun.pval;
+    hit.num <<- resTable$Hits;
     csv.nm <- paste(file.nm, ".csv", sep="");
     fast.write.csv(resTable, file=csv.nm, row.names=F);
     mSetObj <- .get.mSet(mSetObj);
@@ -138,7 +139,14 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
     }
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
+    mSetObj$imgSet$enrTables[[vis.type]]$res.mat <- res.mat;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.set <- current.geneset;
+    mSetObj$imgSet$enrTables[[vis.type]]$hits.query <- hits.query;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.setids <- current.setids;
+
     mSetObj$imgSet$enrTables[[vis.type]]$library <- fun.type;
+    print(paste0("funType=",fun.type));
+    print(paste0("vis.type=", vis.type));
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
     .set.mSet(mSetObj);
     return(1);

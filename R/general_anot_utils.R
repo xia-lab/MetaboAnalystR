@@ -390,7 +390,7 @@ Setup.BiofluidType<-function(mSetObj=NA, type){
 SetOrganism <- function(mSetObj=NA, org){
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$org <- org;
-  return(.set.mSet(mSetObj))
+  return(.set.mSet(mSetObj));
 }
 
 GetKEGG.PathNames<-function(mSetObj=NA){
