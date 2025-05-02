@@ -402,7 +402,7 @@ GetSigSetCount <- function(enrType, type, pval=0.05){
   tbl <- imgSet$enrTables[[enrType]]$table
   count <- 0;
   if(type == "raw"){
-   count<-sum(tbl$P.Value<pval);
+   count<-sum(tbl$Pval<pval);
   }else{
     count<-sum(tbl$FDR<pval);
   }
