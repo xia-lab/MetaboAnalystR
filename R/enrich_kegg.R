@@ -439,7 +439,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
   # write csv
   fun.hits <<- hits.query;
   fun.pval <<- resTable[,5];
-  hit.num <<- resTable[,4];
+  hit.num <<- resTable$Hits;
   csv.nm <- paste(file.nm, ".csv", sep="");
   fast.write.csv(resTable, file=csv.nm, row.names=F);
   return(mSetObj);

@@ -43,7 +43,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   # prepare for the result table
   res.mat<-matrix(0, nrow=set.size, ncol=7);
   rownames(res.mat)<-names(current.kegglib$path.ids);
-  colnames(res.mat)<-c("Total", "Expected", "Hits", "P.Value", "Topology", "PVal.Z",  "Topo.Z");
+  colnames(res.mat)<-c("Total", "Expected", "Hits", "Pval", "Topology", "PVal.Z",  "Topo.Z");
 
   mSetObj$dataSet$pathinteg.method <- libOpt;
   mSetObj$dataSet$path.mat <- NULL;
@@ -161,8 +161,8 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   resTable <- data.frame(Pathway=rownames(res.mat), res.mat);
 
   fun.anot = hits.names; names(fun.anot) <- resTable[,1];
-  fun.pval = resTable[,5]; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
-  hit.num = resTable[,4]; if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
+  fun.pval = resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
+  hit.num = paste0(resTable$Hits,"/",resTable$Total); if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   current.setlink <- "http://www.genome.jp/kegg-bin/show_pathway?";
 
   json.res <- list(
@@ -181,8 +181,8 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 
   # write csv
   fun.hits <<- hits.query;
-  fun.pval <<- resTable[,5];
-  hit.num <<- resTable[,4];
+  fun.pval <<- fun.pval;
+  hit.num <<- resTable$Hits;
   csv.nm <- paste(file.nm, ".csv", sep="");
 
   if(is.null(mSetObj$imgSet$enrTables)){
