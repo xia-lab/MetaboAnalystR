@@ -5,10 +5,9 @@
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
 PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
-  
   # Determine covariates
   if (!exists("adj.vec") || length(adj.vec) == 0) {
-    covariates <- c()
+    covariates <- character(0)
   } else {
     covariates <- adj.vec
   }
@@ -18,6 +17,7 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   meta        <- mSetObj$dataSet$meta.info
   meta.types  <- mSetObj$dataSet$meta.types
   
+  # pick main variable
   if (meta1 == "NA" || meta1 == "") {
     main.var <- colnames(meta)[1]
   } else {
@@ -25,18 +25,12 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   }
   metadata <- meta[colnames(expr_matrix), , drop = FALSE]
   
-  # Keep only variables of interest
-  all.vars <- unique(c(main.var, covariates))
-  metadata <- metadata[, all.vars, drop = FALSE]
-  
-  # Determine continuous vs categorical
+  # determine continuous vs categorical
   cls.type <- unname(meta.types[main.var])
-
   require(limma)
   require(Hmisc)
   
-  if (cls.type == "cont") {
-  # Coerce each column to the right type
+  # coerce each column to appropriate type
   for (nm in colnames(metadata)) {
     if (meta.types[nm] == "cont") {
       metadata[, nm] <- as.numeric(as.character(metadata[, nm]))
@@ -44,21 +38,32 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
       metadata[, nm] <- factor(metadata[, nm], levels = unique(metadata[, nm]))
     }
   }
-    # Continuous metadata (linear regression)
-    fmla <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
+  
+  # keep only main.var + covariates
+  all.vars <- unique(c(main.var, covariates))
+  metadata <- metadata[, all.vars, drop = FALSE]
+  
+  if (cls.type == "cont") {
+
+    tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    if (any(is.na(tmp_main))) {
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      return(0)
+    }
+
+    # ---------------- Continuous branch ----------------
+    fmla  <- as.formula(paste("~ 0 +", paste(all.vars, collapse = " + ")))
     design <- model.matrix(fmla, data = metadata)
     
-    #print("Design matrix (continuous)")
-
     fit <- lmFit(expr_matrix, design)
     if (!main.var %in% colnames(fit$coefficients)) {
-      warning(paste("Variable", main.var, "not estimable (collinearity or insufficient data)."))
+      warning(paste("Variable", main.var, "not estimable."))
       return(0)
     }
     fit <- eBayes(fit);
     resTable <- topTable(fit, coef = main.var, number = Inf, adjust.method = "BH")
     
-    # Correlation calculation
+    # save correlation + fit
     cor_res <- apply(expr_matrix, 1, function(x) {
       rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
@@ -66,43 +71,32 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
     
   } else {
+
     cls <- factor(metadata[[main.var]])
-    mSetObj$dataSet$cls.type <- "disc";
-    # ---- check that main.var really contains only numbers ----
+    
+    # validate numeric doses
     tmp_main <- suppressWarnings(as.numeric(as.character(metadata[[main.var]])))
+    success <- 1;
     if (any(is.na(tmp_main))) {
-      current.msg <- paste("Main variable", main.var,
-                            "must be numeric; non-numeric values detected.")
-      print(current.msg)
-
-      AddErrMsg(current.msg);                     
-      return(0)
-    }
-    # 1) Check number of doses ≥ 3
-    dose.levels <- levels(cls)
-    if (length(dose.levels) < 3) {
-      current.msg <- paste0("Dose response requires at least 3 distinct doses; only found ", 
-                             length(dose.levels), ".")
-      AddErrMsg(current.msg);                     
-
-      print(current.msg)
-      return(0)
+      AddErrMsg(paste("Main variable", main.var, "must be numeric for dose response analysis."))
+      success <-0;
     }
     
-    # 2) Check at least 3 replicates per dose
-    dose.counts <- table(cls)
-    low.reps <- dose.counts[dose.counts < 3]
-    if (length(low.reps) > 0) {
-      msg <- paste0("Dose(s) ", 
-                    paste(names(low.reps), collapse = ", "), 
-                    " have fewer than 3 replicates (found ", 
-                    paste(low.reps, collapse = ", "), ").")
-      AddErrMsg(msg);                     
-
-      print(current.msg)
-      return(0)
+    # require ≥ 3 doses and ≥ 3 reps each
+    dose.levels <- levels(cls)
+    if (length(dose.levels) < 3) {
+      AddErrMsg(paste("Main variable", main.var, "needs ≥ 3 distinct doses."))
+      success <-0;
+    }
+    if (any(table(cls) < 3)) {
+      AddErrMsg(paste("Main variable", main.var, ": each dose must have ≥ 3 replicates."))
+      success <-0;
     }
 
+    if(success == 0){
+        return(0)
+    }
+    
   # Coerce each column to the right type
   for (nm in colnames(metadata)) {
     if (meta.types[nm] == "cont") {
@@ -153,12 +147,15 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     qs::qsave(fit,     file = "limma_fit_res.qs")
   }
   
+  # write results
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
-  
+  mSetObj$dataSet$main.var <- main.var;
+  print(mSetObj$dataSet$cls)
   return(.set.mSet(mSetObj))
 }
+
 
 GetUpdatedClsType <- function(){
     mSetObj <- .get.mSet(mSetObj); 
@@ -310,7 +307,7 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
     inx.down = inx.down,
     sig.mat = sig.mat
   );
-  
+
   fast.write.csv(res.all, "limma_restable.csv");
   
   if(!.on.public.web){
@@ -420,4 +417,66 @@ SetDoseType <- function(mSetObj=NA, type = "disc"){
     #disc
 
     return(.set.mSet(mSetObj));
+}
+
+PlotDoseVolcano <- function(mSetObj = NA,
+                            imgNm,
+                            dpi    = 72,
+                            format = "png") {
+
+  mSetObj <- .get.mSet(mSetObj)
+  doseRes <- mSetObj$analSet$dose
+
+  if (is.null(doseRes))
+    stop("analSet$dose is missing – run the LIMMA-result function first.")
+
+doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
+                         length(doseRes$fc.thresh) == 0) 0
+                     else as.numeric(doseRes$fc.thresh)
+
+  df <- data.frame(
+    logFC   = doseRes$fc.log,
+    negLogP = doseRes$p.log,
+    category = ifelse(doseRes$inx.up,   "Sig_Up",
+               ifelse(doseRes$inx.down, "Sig_Down", "Unsig.")),
+    stringsAsFactors = FALSE
+  )
+
+  ## ---------- 1. Legend counts & colours ---------------------------------
+  counts  <- table(df$category)[c("Sig_Down","Sig_Up","Unsig.")]        # fixed order
+  labels  <- paste0(c("Sig_Down","Sig_Up","Unsig."), " [", counts, "]")
+  colours <- c("Sig_Down" = "#0080ff", "Sig_Up" = "#ff3333", "Unsig." = "#c0c0c0")
+
+  ## ---------- 2. Build plot ------------------------------------------------
+  cls.type <- mSetObj$dataSet$cls.type   # "cont" or "disc"
+  xlab     <- ifelse(cls.type == "cont", "log10(FC)", "AveFC (max |Δ|)")
+
+  require(ggplot2)
+  p <- ggplot(df, aes(x = logFC, y = negLogP, colour = category)) +
+       geom_point(alpha = 0.9, size = 1.5) +
+       geom_hline(yintercept = -log10(doseRes$p.thresh),  linetype = "dashed") +
+       geom_vline(xintercept = c(-doseRes$fc.thresh, doseRes$fc.thresh),
+                  linetype = "dashed") +
+       scale_colour_manual(values = colours,
+                           breaks = names(colours),
+                           labels = labels,
+                           name   = NULL) +
+       labs(x = xlab, y = "-log10(P)") +
+       theme_bw(base_size = 11) +
+       theme(legend.position = "top",
+             axis.title      = element_text(face = "bold"),
+             axis.text       = element_text(colour = "black"))
+
+  ## ---------- 3. Cairo output ---------------------------------------------
+  outFile <- paste0(imgNm, "_dpi72" , ".", format)
+  Cairo::Cairo(file   = outFile,
+               width  = 8, height = 6,
+               unit   = "in", dpi = dpi,
+               type   = format, bg  = "white")
+  print(p)
+  dev.off()
+
+  ## ---------- 4. Book-keeping ---------------------------------------------
+  mSetObj$imgSet$dose_volcano_filename <- outFile
+  return(.set.mSet(mSetObj))
 }

@@ -601,6 +601,10 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
     hits <- mSetObj$analSet$qea.hits;
   }
   
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
   # highlighting with different colors
   # this is meaningless for very large (>200) metabolite sets (i.e. chemical class)
   mset <- current.msetlib$member[[msetNm]];

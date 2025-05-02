@@ -38,6 +38,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@param file.nm Input the file name 
 #'@param mSetObj mSetObj object
 PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
+  save.image("list.RData");
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;
   } else if(idtype == "gene&cmpd"){
@@ -147,8 +148,28 @@ if(length(cidx)>0){
     res.mat <- as.data.frame(res.mat);
     res.mat$Name <- rownames(res.mat);
     res.mat <- res.mat[c("Name", setdiff(names(res.mat), "Name"))]
+
+  gene.vec <- current.universe;
+  sym.vec <- doAllGeneIDMapping(gene.vec, mSetObj$org, "entrez");
+  gene.nms <- sym.vec;
+
+  current.geneset.symb <- lapply(current.geneset, 
+                       function(x) {
+                         gene.nms[gene.vec%in%unlist(x)];
+  }
+  );
+
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- res.mat;
+    mSetObj$imgSet$enrTables[[vis.type]]$res.mat <- res.mat;
+
+    mSetObj$imgSet$enrTables[[vis.type]]$current.geneset <- current.set;
+    mSetObj$imgSet$enrTables[[vis.type]]$hits.query <- hits.query;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.setids <- current.setids;
+    mSetObj$imgSet$enrTables[[vis.type]]$current.geneset.symb <- current.geneset.symb;
+
+
+
     mSetObj$imgSet$enrTables[[vis.type]]$library <- "KEGG";
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
     .set.mSet(mSetObj);
@@ -439,7 +460,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
   # write csv
   fun.hits <<- hits.query;
   fun.pval <<- resTable[,5];
-  hit.num <<- resTable[,4];
+  hit.num <<- resTable$Hits;
   csv.nm <- paste(file.nm, ".csv", sep="");
   fast.write.csv(resTable, file=csv.nm, row.names=F);
   return(mSetObj);

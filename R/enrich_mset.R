@@ -90,6 +90,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
   }
 
   current.msetlib <<- current.msetlib;
+  qs::qsave(current.msetlib, "current.msetlib.qs");
   return(.set.mSet(mSetObj));
 }
 
@@ -394,6 +395,8 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
     sub.dir <- "kegg/metpa";
     destfile <- paste0(libNm, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
   }
   
@@ -419,6 +422,8 @@ SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
 
     destfile <- paste0(libNm, ".qs");
     current.kegglib <<- .get.my.lib(destfile, "smpdb");
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
 
     mSetObj$pathwaylibtype <- "SMPDB"
