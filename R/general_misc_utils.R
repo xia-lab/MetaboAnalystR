@@ -1540,6 +1540,13 @@ CheckDetailsTablePerformed <-function(type){
     performed <- !is.null(mSetObj$analSet$splsr$loadings);
   }else if(type %in% c("mr_results_merge", "exposure", "harmonized.dat", "outcome.dat")){
     performed <- !is.null(mSetObj$dataSet[type]);
+  }else if(type == "qea"){
+    performed <- !is.null(mSetObj$analSet$qea.mat);
+  }else if(type == "ora"){
+    performed <- !is.null(mSetObj$analSet$ora.mat);
+  }else if(endsWith(type, "_enr")){
+    type_cleaned <- gsub("_enr", "", type);
+    performed <- !is.null(mSetObj$imgSet$enrTables[[type_cleaned]]);
   }
 
   print(paste("checkPerformed=", type, "====",performed));
@@ -1602,4 +1609,58 @@ GetPrimaryType <- function(analysis.var){
     mSetObj <- .get.mSet(mSetObj);
     primary.type <- unname(mSetObj$dataSet$meta.types[analysis.var]);
     return(primary.type);
+}
+
+
+GetEnrResultMatrix <-function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+  res <- imgSet$enrTables[[type]]$res.mat
+  res <- suppressWarnings(apply(res, 2, as.numeric)); # force to be all numeric
+  return(signif(as.matrix(res), 5));
+}
+
+GetEnrResultColNames<-function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+  res <- imgSet$enrTables[[type]]$res.mat
+  colnames(res);
+}
+
+GetEnrResSetIDs<-function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+  res <- imgSet$enrTables[[type]]$table;
+  return(res$IDs);
+}
+
+GetEnrResSetNames<-function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+ res <- imgSet$enrTables[[type]]$table;
+  if("Pathway" %in% colnames(res)){
+  return(res$Pathway);
+  }else if("Name" %in% colnames(res)){
+  return(res$Name);
+  }else{
+    return(res[,1]);
+  }
+
+}
+
+GetEnrFunType <- function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+    print(type);
+    res <- imgSet$enrTables[[type]]$library
+    print(res);
+
+    return(res);
+}
+
+GetEnrQueryType <- function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+    res <- imgSet$enrTables[[type]]$library
+    return(res);
 }

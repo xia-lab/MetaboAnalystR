@@ -448,6 +448,11 @@ SetupKEGGLinks <- function(smpdb.ids){
 #'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   mSetObj <- .get.mSet(mSetObj);
+
+  if(!exists('current.kegglib')){
+    current.kegglib <<- qs::qread("current.kegglib.qs");
+  }
+
   pathid <- current.kegglib$path.ids[msetNm]; 
   mset <- current.kegglib$mset.list[[pathid]];
   

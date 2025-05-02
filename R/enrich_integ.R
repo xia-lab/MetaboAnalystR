@@ -140,6 +140,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     sub.dir <- paste0("kegg/jointpa/",libOpt);
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
   }
   
@@ -577,6 +579,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     }
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
   }
   
