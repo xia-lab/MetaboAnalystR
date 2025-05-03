@@ -97,6 +97,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   return(RegisterData(dataSet));
 }
 .prepare.deseq <- function(dataSet, anal.type, par1, par2, nested.opt) {
+
   my.fun <- function() {
     require(DESeq2)
     print(paste("Analysis type:", anal.type))
@@ -130,77 +131,83 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     } else {
       fst.cls <- dataSet$fst.cls
     }
+    fst.cls <- as.character(fst.cls)                   # <<< NEW
 
     all_conditions <- unique(fst.cls)
     contrast_list <- list()
 
-      # ---- Single-factor designs ----
-      colData <- data.frame(condition = factor(fst.cls))
+    # ---- Single-factor designs ----
+    colData <- data.frame(condition = factor(fst.cls,     # <<< REPLACED
+                                             levels = all_conditions))
 
-      if (!is.null(dataSet$block)) {
-        colData$block <- factor(dataSet$block)
-        design <- ~ block + condition
-      } else {
-        design <- ~ condition
+    if (!is.null(dataSet$block)) {
+      colData$block <- factor(dataSet$block)
+      design <- ~ block + condition
+    } else {
+      design <- ~ condition
+    }
+
+    if (anal.type == "default") {
+      for (i in 1:(length(all_conditions) - 1))
+        for (j in (i + 1):length(all_conditions)) {
+          contrast_name <- paste0(all_conditions[i], " vs ", all_conditions[j])
+          contrast_list[[contrast_name]] <-
+            c("condition",
+              all_conditions[j],   # NUMERATOR = second term
+              all_conditions[i])   # DENOMINATOR = first term
+        }
+
+    } else if (anal.type == "reference") {
+      ref <- formatLevel(par1)
+      if (!(ref %in% all_conditions))
+        stop("Reference level not found: ", ref)
+
+      for (cond in setdiff(all_conditions, ref)) {
+        contrast_name <- paste0(ref, " vs ", cond)
+        contrast_list[[contrast_name]] <-
+          c("condition", cond, ref)   # numerator = second term
       }
 
-      if (anal.type == "default") {
-        for (i in 1:(length(all_conditions) - 1)) {
-          for (j in (i + 1):length(all_conditions)) {
-            contrast_name <- paste0(all_conditions[i], " vs ", all_conditions[j])
-            contrast_list[[contrast_name]] <- c("condition", all_conditions[j], all_conditions[i])
-          }
-        }
+    } else if (anal.type == "custom") {
+      comps <- parse_contrast_groups(par1)
+      comps <- vapply(comps, formatLevel, "")
+      if (!all(comps %in% all_conditions))
+        stop("Invalid custom contrast: ", par1)
 
-      } else if (anal.type == "reference") {
-        ref <- par1
-        if (!ref %in% grp.nms) {
-          stop(paste0("Reference level '", ref, "' not found in factor levels: ", paste(grp.nms, collapse = ", ")))
-        }
-        cls <- relevel(cls, ref = ref)
-        dataSet$cls <- cls
-        design <- model.matrix(~ cls)
-        others <- setdiff(levels(cls), ref)
-        conts <- setNames(
-          lapply(others, function(g) paste0("cls", g, " - cls", ref)),
-          sapply(others, function(g) paste0(g, "_vs_", ref))
-        )
-      } else if (anal.type == "custom") {
-        comps <- parse_contrast_groups(par1)
-        comps <- lapply(comps, formatLevel)
-        if (all(unlist(comps) %in% all_conditions)) {
-          contrast_name <- paste0(comps[[1]], " vs ", comps[[2]])
-          contrast_list[[contrast_name]] <- c("condition", comps[[1]], comps[[2]])
-        } else {
-          stop("Invalid custom contrast.")
-        }
-      }
-    
+      contrast_name <- paste0(comps[1], " vs ", comps[2])
+      contrast_list[[contrast_name]] <-
+        c("condition", comps[2], comps[1]) # numerator = second term
+    }
 
     # ---- Run DESeq2 ----
-    dds <- DESeqDataSetFromMatrix(countData = round(data.anot), colData = colData, design = design)
+    dds <- DESeqDataSetFromMatrix(countData = round(data.anot),
+                                  colData   = colData,
+                                  design    = design)
     dds <- DESeq(dds, betaPrior = FALSE)
     qs::qsave(dds, "deseq.res.obj.rds")
 
-    # ---- Extract contrast results (if applicable) ----
+    # ---- Extract contrast results ----
     results_list <- list()
     if (length(contrast_list) > 0) {
       for (contrast_name in names(contrast_list)) {
-        contrast_vec <- contrast_list[[contrast_name]]
-        res <- results(dds, contrast = contrast_vec, independentFiltering = FALSE, cooksCutoff = Inf)
+        res <- results(dds,
+                       contrast            = contrast_list[[contrast_name]],
+                       independentFiltering = FALSE,
+                       cooksCutoff          = Inf)
 
         topFeatures <- data.frame(res@listData)
         rownames(topFeatures) <- rownames(res)
-        colnames(topFeatures) <- sub("padj", "adj.P.Val", colnames(topFeatures))
-        colnames(topFeatures) <- sub("pvalue", "P.Value", colnames(topFeatures))
-        colnames(topFeatures) <- sub("log2FoldChange", "logFC", colnames(topFeatures))
-        topFeatures <- topFeatures[c("logFC", "baseMean", "lfcSE", "stat", "P.Value", "adj.P.Val")]
+        colnames(topFeatures) <- sub("padj", "adj.P.Val",  colnames(topFeatures))
+        colnames(topFeatures) <- sub("pvalue", "P.Value",  colnames(topFeatures))
+        colnames(topFeatures) <- sub("log2FoldChange","logFC",colnames(topFeatures))
+        topFeatures <- topFeatures[c("logFC","baseMean","lfcSE",
+                                     "stat","P.Value","adj.P.Val")]
         topFeatures <- topFeatures[order(topFeatures$P.Value), ]
 
         results_list[[contrast_name]] <- topFeatures
       }
-    }else{
-        results_list[[1]] <- .get.interaction.results()
+    } else {
+      results_list[[1]] <- .get.interaction.results()
     }
 
     return(results_list)
@@ -210,6 +217,7 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   qs::qsave(dat.in, file = "dat.in.qs")
   return(1)
 }
+
 
 
 

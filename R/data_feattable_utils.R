@@ -74,7 +74,12 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
     hit.inx.fc <- fc.vec >= fc.lvl;
     resTable <- resTable[hit.inx.fc,];
-  } else {
+  } else if (dataSet$de.method=="deseq2"){
+    pos.mat <- abs(logfc.mat);
+    fc.vec <- pos.mat[,1];
+    hit.inx.fc <- fc.vec >= fc.lvl;
+    resTable <- resTable[hit.inx.fc,];
+  }else {
     pos.mat <- abs(logfc.mat[,inx]);
     fc.vec <- pos.mat;
     hit.inx.fc <- fc.vec >= fc.lvl;

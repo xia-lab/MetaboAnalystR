@@ -188,10 +188,10 @@ my.perform.gsea<- function(dataName, file.nm, fun.type, netNm, mType, selectedFa
   );
 
     res.mat<-matrix(0, nrow=length(fun.pval), ncol=4);
-    colnames(res.mat)<-c("Total","Hits", "P.Value", "FDR");
+    colnames(res.mat)<-c("Total","Hits", "Pval", "FDR");
     res.mat[,"Total"] <- fgseaRes[,"total"];
     res.mat[,"Hits"] <- fgseaRes[,"hits"];
-    res.mat[,"P.Value"] <- fgseaRes[,"pval"];
+    res.mat[,"Pval"] <- fgseaRes[,"pval"];
     res.mat[,"FDR"] <- fgseaRes[,"padj"];
     res.mat <- data.matrix(data.frame(res.mat, stringsAsFactors=FALSE));
     rownames(res.mat) <- fgseaRes[,"pathway"];
@@ -595,6 +595,8 @@ PlotGShm <-function(dataName="", cmpdNm="", IDs){
     res.tbl$id <- doIdMappingGeneric(rownames(res.tbl), gene.map, "gene_id", "symbol");
     if("P.Value" %in% colnames(res.tbl)){
       res.tbl <- res.tbl[order(res.tbl$P.Value),];
+    }else if("Pval" %in% colnames(res.tbl)){
+      res.tbl <- res.tbl[order(res.tbl$Pval),];
     }else{
       res.tbl <- res.tbl[order(res.tbl$PValue),];
     }
