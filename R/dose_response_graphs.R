@@ -175,6 +175,9 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
 
   # Output image
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep = "")
+  if(dpi == 72){
+    dpi = 96;
+  }
   Cairo::Cairo(file = imgNm, width = 8, height = 6, unit = "in", dpi = dpi, type = format, bg = "white")
   print(p)
   dev.off()
@@ -184,7 +187,6 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
 }
 
 PlotDRHistogram <- function(mSetObj=NA, imgNm, dpi, format, units, scale, width=NA) {
-  save.image("plotDR.RData");
   mSetObj <- .get.mSet(mSetObj)  
   dataSet <- mSetObj$dataSet
 

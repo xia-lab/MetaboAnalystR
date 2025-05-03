@@ -161,6 +161,7 @@ if(length(cidx)>0){
 
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- res.mat;
+    res.mat$Name <- NULL;
     mSetObj$imgSet$enrTables[[vis.type]]$res.mat <- res.mat;
 
     mSetObj$imgSet$enrTables[[vis.type]]$current.geneset <- current.set;
