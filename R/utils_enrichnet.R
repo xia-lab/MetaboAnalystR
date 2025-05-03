@@ -2,7 +2,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
   enr.mat <- qs:::qread("enr.mat.qs");
 
   hits <-  enr.mat[,"Hits"];
-  pvals <- enr.mat[,"P.Value"];
+  pvals <- enr.mat[,"Pval"];
   
   pvalue <- pvals;
   id <- names(pvalue);
@@ -220,7 +220,7 @@ my.enrich.net<-function(dataSet, netNm="abc", type="list", overlapType="mixed", 
                   genelist=initsbls, 
                   analType=anal.type, 
                   org=paramSet$data.org, 
-                  backgroundColor=list("#514F6A", "#222222"),
+                  backgroundColor=list("#f5f5f5", "#0066CC"),
                   dat.opt = paramSet$selDataNm,
                   naviString = "Enrichment Network");
   

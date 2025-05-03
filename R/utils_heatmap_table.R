@@ -23,6 +23,8 @@ my.prepare.heatmap.json <- function(dataSet, displayOpt="sig"){
   sig.ids <- rownames(dataSet$sig.mat);
   if("P.Value" %in% colnames(res.tbl)){
     stat.pvals <- res.tbl$P.Value; 
+ }else if("Pval" %in% colnames(res.tbl)){
+    stat.pvals <- res.tbl$Pval; 
   }else{
     stat.pvals <- res.tbl$PValue; 
   }

@@ -89,6 +89,9 @@ qc.boxplot <- function(dat, imgNm, dpi=72, format="png", interactive=F){
     imgSet$qc_boxplot <- imgNm;
   }
   saveSet(imgSet);
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=600*dpi/72, height=height*dpi/72, unit="px",dpi=dpi, type=format, bg="white");
   print(bp);
   dev.off();
@@ -169,6 +172,9 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
     imgSet <- readSet(imgSet, "imgSet");
     imgSet$qc.density_norm <- imgNm;
     saveSet(imgSet);
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file=imgNm, width=width, height=height, type=format, bg="white", dpi=dpi, unit="in");
     print(g)
     dev.off();
@@ -260,8 +266,9 @@ PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
     height <- 6
     
   }
-  
- 
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi);
   print(g);
   dev.off();
@@ -289,6 +296,9 @@ qc.meanstd <- function(dat, imgNm,dpi=72, format="png"){
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
   #print(format)
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
   Cairo(file=imgNm, width=8, height=6, type=format, bg="white", dpi=dpi, unit="in");
   plot <- meanSdPlot(dat, ranks=FALSE) 
   dev.off();
@@ -363,11 +373,16 @@ PlotDataPCA <- function(fileName, imgName, dpi, format){
   dataSet <- readDataset(fileName);
   if(grepl("_norm", imgName)){
     qc.pcaplot(dataSet, dataSet$data.norm, imgName, dpi, format, F);
+  qc.pcaplot.json(dataSet, dataSet$data.norm, imgName);
+
   }else{
     qc.pcaplot(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+  qc.pcaplot.json(dataSet, dataSet$data.anot, imgName);
+
   }
   return("NA");
 }
+
 
 qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALSE) {
   dpi <- as.numeric(dpi)
@@ -531,35 +546,24 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
 
   permanova_results <- ComputePERMANOVA(pca.res$PC1, pca.res$PC2, dataSet$meta.info[, 1], 999);
   analSet <- readSet(analSet, "analSet");
+  analSet$pca <- pca;
   analSet$permanova.res <-permanova_results;
   saveSet(analSet);
   saveSet(paramSet);
   
   if (interactive) {
     library(plotly)
-    m <- list(
-      l = 50,
-      r = 50,
-      b = 20,
-      t = 20,
-      pad = 0.5
-    )
-    if (length(dataSet$meta.info) == 2) {
-      w = 1000
-    } else {
-      w = 800
-    }
-    ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = w, height = 600, margin = m)
+    m <- list(l=50, r=50, b=20, t=20, pad=0.5)
+    w <- if (length(dataSet$meta.info)==2) 1000 else 800
+    ggp_build <- layout( ggplotly(pcafig), autosize=FALSE, width=w, height=600, margin=m )
+
     return(ggp_build)
   } else {
-    imgSet <- readSet(imgSet, "imgSet")
-    if (grepl("norm", imgNm)) {
-      imgSet$qc_norm_pca <- imgNm
-    } else {
-      imgSet$qc_pca <- imgNm
-    }
-    saveSet(imgSet)
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", unit = "in", dpi = dpi)
+    # … your existing non‐interactive saving logic …
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
+    Cairo(file = imgNm, width=width, height=height, type=format, bg="white", unit="in", dpi=dpi)
     print(pcafig)
     dev.off()
     return("NA")
@@ -642,6 +646,9 @@ qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", inter
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build)
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
@@ -720,6 +727,9 @@ qc.nsig <- function(dataSet, x, imgNm="NSig80_plot", dpi=72, format="png", inter
     ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
     return(ggp_build)
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
@@ -778,6 +788,9 @@ qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot"
   if (interactive) {
     stop("Interactive mode is not supported with base R plotting.")
   } else {
+  if(dpi == 72){
+  dpi <- dpi *1.34
+  }
     Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
     
     # Plot the dendrogram with base R
@@ -971,4 +984,127 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
   #attr(out, 'p.adjust.method') <- padj
   #cat('\np-adjust method:', padj, '\n\n');
   return(out)
+}
+qc.pcaplot.json <- function(dataSet, x, imgNm) {
+  jsonFile <- paste0(imgNm, ".json")
+  
+  require(lattice)
+  require(ggplot2)
+  require(reshape)
+  require(see)
+  require(ggrepel)
+  require(plotly)
+  require(rjson)
+
+  # load PCA & metadata
+  analSet <- readSet(analSet, "analSet")
+  pca     <- analSet$pca
+  imp     <- summary(pca)$importance[2, 1:2]
+  xlabel  <- sprintf("PC1 (%.1f%%)", 100 * imp[1])
+  ylabel  <- sprintf("PC2 (%.1f%%)", 100 * imp[2])
+  
+  pca.res <- as.data.frame(pca$x)[, 1:2, drop = FALSE]
+  colnames(pca.res) <- c("PC1", "PC2")
+  pca.res <- pca.res[match(rownames(dataSet$meta.info), rownames(pca.res)), ]
+  
+  # metadata1 → color
+  pca.res$group  <- as.character(dataSet$meta.info[[1]])
+  pca.res$sample <- rownames(pca.res)
+  
+  # detect 2nd metadata for shapes
+  doShape <- FALSE
+  if (ncol(dataSet$meta.info) >= 2) {
+    second <- dataSet$meta.info[[2]]
+    isDisc  <- !is.numeric(second)
+    levs    <- unique(as.character(second))
+    if (isDisc && length(levs) <= 6) {
+      doShape      <- TRUE
+      pca.res$shape <- as.character(second)
+      symbols      <- c("circle","square","diamond",
+                        "cross","x","triangle-up",
+                        "triangle-down","star")
+      shape.map    <- setNames(symbols[seq_along(levs)], levs)
+      shape.levels <- levs
+    }
+  }
+  
+  # ——— COLOR MAPPING exactly as in qc.pcaplot() ————————————
+  # read paramSet for dose check
+  paramSet <- readSet(paramSet, "paramSet")
+  unique_grps <- unique(pca.res$group)
+  
+  if (grepl("norm", imgNm) &&
+      !is.null(paramSet$oneDataAnalType) &&
+      paramSet$oneDataAnalType == "dose") {
+    
+    # blue→orange ramp for dose
+    pal <- colorRampPalette(c("#2196F3", "#DE690D"))(length(unique_grps))
+    
+  } else {
+    # Okabe–Ito discrete palette
+    okabe <- c("#E69F00","#56B4E9","#009E73",
+               "#F0E442","#0072B2","#D55E00","#CC79A7")
+    pal <- rep(okabe, length.out = length(unique_grps))
+  }
+  col.map <- setNames(pal, unique_grps)
+  # ——————————————————————————————————————————————————————————
+
+  # build traces
+  traces <- lapply(unique_grps, function(g) {
+    df  <- subset(pca.res, group == g)
+    mkr <- list(color = col.map[g], size = 8,
+                line  = list(color = "white", width = 0.5))
+    if (doShape) {
+      mkr$symbol <- unname(shape.map[df$shape])
+    }
+    list(
+      x            = df$PC1,
+      y            = df$PC2,
+      type         = "scatter",
+      mode         = if (nrow(df) > 20) "markers" else "markers+text",
+      name         = g,
+      marker       = mkr,
+      text         = if (nrow(df) <= 20) df$sample else NULL,
+      hoverinfo    = "text",
+      textposition = "top center"
+    )
+  })
+
+  # append dummy shape‐legend traces
+  if (doShape) {
+    for (sh in shape.levels) {
+      traces <- c(traces, list(
+        list(
+          x          = c(NA), y = c(NA),
+          type       = "scatter", mode = "markers",
+          name       = sh,
+          showlegend = TRUE,
+          marker     = list(symbol = shape.map[[sh]],
+                            color  = "black",
+                            size   = 8)
+        )
+      ))
+    }
+  }
+
+  # layout with legend on right
+  layout <- list(
+    title = "",
+    xaxis = list(title = xlabel),
+    yaxis = list(title = ylabel),
+    legend = list(
+      orientation = "v",
+      x           = 1.02,
+      y           = 1,
+      xanchor     = "left",
+      yanchor     = "top"
+    )
+  )
+
+  # dump JSON
+  plot_data <- list(data = traces, layout = layout)
+  json.obj   <- toJSON(plot_data)
+  sink(jsonFile); cat(json.obj); sink()
+  
+  return("NA")
 }
