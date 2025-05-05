@@ -293,7 +293,7 @@ PlotDRModelBars <- function(imgNm, dpi, format){
 }
 
 PlotDRHistogram <- function(imgNm, dpi, format, units, scale, width=NA) {
-  save.image("dr.RData");
+  #save.image("dr.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 

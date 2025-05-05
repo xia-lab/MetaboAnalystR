@@ -100,11 +100,11 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
 
   my.fun <- function() {
     require(DESeq2)
-    print(paste("Analysis type:", anal.type))
-    print(paste("par1:", par1))
-    print(paste("par2:", par2))
-    print(paste("Nested option:", nested.opt))
-    save.image("deseq.RData")
+    #print(paste("Analysis type:", anal.type))
+    #print(paste("par1:", par1))
+    #print(paste("par2:", par2))
+    #print(paste("Nested option:", nested.opt))
+    #save.image("deseq.RData")
 
     # Helper: prefix numeric-looking group labels
     formatLevel <- function(x) {
