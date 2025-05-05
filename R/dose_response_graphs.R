@@ -184,7 +184,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
 }
 
 PlotDRHistogram <- function(mSetObj=NA, imgNm, dpi, format, units, scale, width=NA) {
-  save.image("plotDR.RData");
+  #save.image("plotDR.RData");
   mSetObj <- .get.mSet(mSetObj)  
   dataSet <- mSetObj$dataSet
 

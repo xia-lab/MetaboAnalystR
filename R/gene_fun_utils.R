@@ -17,7 +17,7 @@ PerformNetEnrichment <- function(mSetObj=NA, file.nm, fun.type, IDs, vis.type=""
 # note: hit.query, resTable must synchronize
 # ora.vec should contains entrez ids, named by their gene symbols
 PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec, vis.type=""){
-    save.image("enr.RData");
+    #save.image("enr.RData");
     if(fun.type %in% c("keggc", "smpdb")){
         .load.enrich.compound.lib(org.code, fun.type);
     }else{

@@ -43,7 +43,7 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
 # PrepareSigDRItems(mSet, 0.2,0.0,TRUE,FALSE,
 # Step 2: select significantly responsive items 
 PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "yes", ncpus = 4){
-  save.image("sig.RData");
+  #save.image("sig.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   #get data

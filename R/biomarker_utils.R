@@ -175,7 +175,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'@export
 #'
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
-  save.image("calcFeat.RData");
+  #save.image("calcFeat.RData");
   mSetObj <- .get.mSet(mSetObj);
   LRConverged <<- "FALSE"; 
   
