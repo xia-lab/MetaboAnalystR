@@ -7,18 +7,23 @@
 
 # Step 1: prepare data for computing
 PrepareDataForDoseResponse <- function(mSetObj=NA){
-
   mSetObj <- .get.mSet(mSetObj);
-
+  
   #important to order by rownames, otherwise code doesn't work!!!!!!!!
   mSetObj$dataSet$comp.res <- mSetObj$dataSet$comp.res[order(rownames(mSetObj$dataSet$comp.res)), ]
-
+  
   data <- t(mSetObj$dataSet$norm);
   data <- data[order(rownames(data)), ]
+  
+  meta <- mSetObj$dataSet$meta.info
+  meta <- meta[match(rownames(mSetObj$dataSet$norm), rownames(meta)), , drop = FALSE]
+  mSetObj$dataSet$meta.info <- meta;
+  
+  dose <- as.numeric(as.character(mSetObj$dataSet$meta.info[,mSetObj$dataSet$main.var]));
+  mSetObj$dataSet$cls <- dose;
 
-  dose <- as.numeric(as.character(mSetObj$dataSet$cls));
   fdose <- as.factor(dose);
-
+  
   # control of the design
   design <- table(dose, dnn = "");
   tdata <- t(data)
@@ -33,12 +38,12 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
   mSetObj$dataSet$itemselect <- structure(list(dose = dose, item = item, design = design, data.mean = data.mean), class="omicdata");
   print("PrepareDataForDoseResponse === OK");
   return(.set.mSet(mSetObj));
-}
+} 
 
 # PrepareSigDRItems(mSet, 0.2,0.0,TRUE,FALSE,
 # Step 2: select significantly responsive items 
 PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, wtt.pval = 0.05, parallel = "yes", ncpus = 4){
-  save.image("sig.RData");
+  #save.image("sig.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   #get data
@@ -619,7 +624,9 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     
     ft_names <- rownames(mSetObj[["dataSet"]][["limma_dose_sig_res"]])
     dt <- mSetObj[["dataSet"]][["norm"]]
+    print(rownames(dt));
     dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
+    print(dose_vec);
 
     ft_linear_idx <- vapply(ft_names, function(x){
       which(x == colnames(dt))
@@ -1170,7 +1177,7 @@ PerformContBMDCalc <- function(mSetObj = NA) {
   dfitall <- f.drc$fitres.filt
   
   # dose vector
-  dose <- as.numeric(as.character(dataSet$cls))
+  dose <- as.numeric(as.character(mSetObj$dataSet$meta.info[,mSetObj$dataSet$main.var]))
   
   # subset your feature data (unchanged)
   data.mat      <- as.data.frame(f.its$data)

@@ -140,6 +140,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     sub.dir <- paste0("kegg/jointpa/",libOpt);
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
   }
   
@@ -577,6 +579,8 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     }
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
+    qs::qsave(current.kegglib, "current.kegglib.qs");
+
     load_igraph();
   }
   
@@ -737,6 +741,11 @@ GetIntegResultPathIDs<-function(mSetObj=NA){
 
 GetIntegResultPathNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+  if(!exists('current.kegglib')){
+    if(file.exists("current.kegglib.qs")){
+        current.kegglib <<- qs::qread("current.kegglib.qs");
+    }
+  }
   return(names(current.kegglib$path.ids)[match(rownames(mSetObj$dataSet$path.mat),current.kegglib$path.ids)]);
 }
 
@@ -1398,7 +1407,7 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
   rownames(res) <- names(current.kegglib$path.ids)[match(match_paths, current.kegglib$path.ids)] 
   colnames(res) <- "matched_features";
   fast.write.csv(res, "jointpa_matched_features.csv", row.names = T)
-
+  mSetObj$analSet$integ.match.tbl <- CreateIntegratedPathwayMemberTableRMD();
   if(!.on.public.web){
     return(mSetObj)
   }else{
@@ -1411,4 +1420,39 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
     zp <- (qnorm(p, lower.tail = FALSE) %*% weights)/sqrt(sum(weights^2));
     res <- list(z = zp, p = pnorm(zp, lower.tail = FALSE));
     res;
+}
+
+CreateIntegratedPathwayMemberTableRMD<-function(){
+
+    my.table <- read.csv("jointpa_matched_features.csv", header=TRUE);
+    hit.paths <- hit.genes <- hit.cmpds <- vector(mode = "list", length=nrow(my.table));
+
+    for (i in 1:nrow(my.table)){
+        
+        hit.paths[i] <- my.table[i,1];
+        phits <- strsplit(my.table[i,2], "; ")[[1]];
+        cpd.inx <- grepl("cpd:",phits);
+        if(sum(cpd.inx)>0){
+            cmpd.hits <- phits[cpd.inx];
+            # remove the prefix
+            cmpd.hits <- substr(cmpd.hits, 5, nchar(cmpd.hits));
+            hit.cmpds[i] <- paste(cmpd.hits, collapse="; ");
+        }else{
+            hit.cmpds[i] <- ""; 
+        }
+
+        if(sum(!cpd.inx)>0){
+            gene.hits <- phits[!cpd.inx];
+            # remove the prefix
+            gene.hits <- substr(gene.hits, 5, nchar(gene.hits));
+            hit.genes[i] <- paste(gene.hits, collapse="; ");
+        }else{
+            hit.genes[i] <- "";
+        }
+    }
+
+    new.table <- cbind(hit.paths, hit.genes, hit.cmpds);
+    colnames(new.table) <- c("Pathway", "Hit Genes (Entrez ID)", "Hit Compounds (KEGG ID)");
+    return(new.table);
+    
 }

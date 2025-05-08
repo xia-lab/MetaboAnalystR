@@ -803,7 +803,7 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 #'@export
 #'
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
-save.image("plot.RData");
+  #save.image("plot.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){

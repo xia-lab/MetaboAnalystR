@@ -9,91 +9,95 @@
 #'@import qs
 #'@export
 CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
-    mSetObj <- .get.mSet(mSetObj);
-    print("metaconsistency========+");
-    msg <- c()  # Initialize the message variable
-
-    msg <- c(msg, "Starting the meta-analysis process...")
-
-    if (length(mdata.all) == 0) {
-        AddErrMsg("Please upload your data or try our example datasets!")
-        return(0)  # Early return for error
+  
+  save.image("consist.RData");
+  mSetObj <- .get.mSet(mSetObj);
+  
+  msg <- c()  # Initialize the message variable
+  
+  msg <- c(msg, "Starting the meta-analysis process...")
+  
+  if (length(mdata.all) == 0) {
+    AddErrMsg("Please upload your data or try our example datasets!")
+    return(0)  # Early return for error
+  }
+  
+  include.inx <- mdata.all == 1
+  if (sum(include.inx) < 2) {
+    AddErrMsg("At least two datasets are required for meta-analysis!")
+    return(0)  # Early return for error
+  }
+  
+  sel.nms <- names(mdata.all)[include.inx]
+  msg <- c(msg, paste("Number of datasets selected for analysis:", length(sel.nms)))
+  
+  # Check for consistent class labels
+  msg <- c(msg, "Checking group labels for consistency across datasets...")
+  dataSet <- qs::qread(sel.nms[1])
+  lvls <- levels(dataSet$cls)
+  id.type <- dataSet$id.type
+  shared.nms <- colnames(dataSet$data)
+  
+  for (i in 2:length(sel.nms)) {
+    dataSet <- qs::qread(sel.nms[i])
+    
+    # Check if class labels are consistent
+    if (!all(levels(dataSet$cls) == lvls)) {
+      AddErrMsg(paste(sel.nms[i], "has different group labels", 
+                      paste(levels(dataSet$cls), collapse=":"), 
+                      "from", sel.nms[1], 
+                      paste(lvls, collapse=":")))
+      return(0)  # Early return for error
     }
-
-    include.inx <- mdata.all == 1
-    if (sum(include.inx) < 2) {
-        AddErrMsg("At least two datasets are required for meta-analysis!")
-        return(0)  # Early return for error
+    
+    # Check for shared features
+    #msg <- c(msg, paste("Identifying shared features among the datasets..."))
+    shared.nms <- intersect(shared.nms, colnames(dataSet$data))
+    if (length(shared.nms) < ncol(dataSet$data) / 4) {
+      AddErrMsg(paste(sel.nms[i], "has less than 25% common features from the previous datasets"))
+      return(0)  # Early return for error
     }
-
-    sel.nms <- names(mdata.all)[include.inx]
-    msg <- c(msg, paste("Number of datasets selected for analysis:", length(sel.nms)))
-
-    # Check for consistent class labels
-    msg <- c(msg, "Checking group labels for consistency across datasets...")
-    dataSet <- qs::qread(sel.nms[1])
-    lvls <- levels(dataSet$cls)
-    id.type <- dataSet$id.type
-    shared.nms <- colnames(dataSet$data)
-
-    for (i in 2:length(sel.nms)) {
-        dataSet <- qs::qread(sel.nms[i])
-        
-        # Check if class labels are consistent
-        if (!all(levels(dataSet$cls) == lvls)) {
-            AddErrMsg(paste(sel.nms[i], "has different group labels", 
-                            paste(levels(dataSet$cls), collapse=":"), 
-                            "from", sel.nms[1], 
-                            paste(lvls, collapse=":")))
-            return(0)  # Early return for error
-        }
-
-        # Check for shared features
-        #msg <- c(msg, paste("Identifying shared features among the datasets..."))
-        shared.nms <- intersect(shared.nms, colnames(dataSet$data))
-        if (length(shared.nms) < ncol(dataSet$data) / 4) {
-            AddErrMsg(paste(sel.nms[i], "has less than 25% common features from the previous datasets"))
-            return(0)  # Early return for error
-        }
-    }
-
-    AddMsg("Passed experimental condition check!")
-    msg <- c(msg, "Passed experimental condition check!")
-
-    msg <- c(msg, paste("Constructing the common matrix using", length(shared.nms), "shared features across datasets."))
-    # Construct a common matrix
-    common.matrix <- dataSet$data[, shared.nms]
-    data.lbl <- rep(sel.nms[1], nrow(common.matrix))
-    cls.lbl <- dataSet$cls
-
-    for (i in 2:length(sel.nms)) {
-        dataSet <- qs::qread(sel.nms[i])
-        ndat <- dataSet$data[, shared.nms]
-        rownames(ndat) <- paste(rownames(ndat), "_", i, sep="")
-        common.matrix <- rbind(common.matrix, ndat)
-        data.lbl <- c(data.lbl, rep(sel.nms[i], nrow(dataSet$data[,])))
-        cls.lbl <- c(cls.lbl, dataSet$cls)
-    }
-
-    AddMsg("Constructed the common matrix!")
-    msg <- c(msg, "Constructed the common matrix!")
-
-    if (nrow(common.matrix) > 5000) {
-        AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 5000!)"))
-        return(0)  # Early return for error
-    }
-
-    common.matrix <- t(common.matrix)
-
-    if (combat) {
-        msg <- c(msg, "Applying ComBat adjustment for batch effect correction...")
-        pheno <- data.frame(cls.lbl, data.lbl)
-        modcombat <- model.matrix(~1, data=pheno)
-        batch <- data.lbl
-        combat_edata <- sva::ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
-        common.matrix <- combat_edata
-    }
-
+  }
+  
+  AddMsg("Passed experimental condition check!")
+  msg <- c(msg, "Passed experimental condition check!")
+  
+  msg <- c(msg, paste("Constructing the common matrix using", length(shared.nms), "shared features across datasets."))
+  # Construct a common matrix
+  common.matrix <- dataSet$data[, shared.nms]
+  data.lbl <- rep(sel.nms[1], nrow(common.matrix))
+  cls.lbl <- dataSet$cls
+  
+  for (i in 2:length(sel.nms)) {
+    dataSet <- qs::qread(sel.nms[i])
+    ndat <- dataSet$data[, shared.nms]
+    rownames(ndat) <- paste(rownames(ndat), "_", i, sep="")
+    common.matrix <- rbind(common.matrix, ndat)
+    data.lbl <- c(data.lbl, rep(sel.nms[i], nrow(dataSet$data[,])))
+    cls.lbl <- c(cls.lbl, dataSet$cls)
+  }
+  
+  AddMsg("Constructed the common matrix!")
+  msg <- c(msg, "Constructed the common matrix!")
+  
+  if (nrow(common.matrix) > 5000) {
+    AddErrMsg(paste("Total combined sample #:", nrow(common.matrix), "(exceed the limit: 5000!)"))
+    return(0)  # Early return for error
+  }
+  
+  common.matrix <- t(common.matrix)
+  
+  
+  if (combat) {
+    msg <- c(msg, "Applying ComBat adjustment for batch effect correction...")
+    pheno <- data.frame(cls.lbl, data.lbl)
+    modcombat <- model.matrix(~1, data=pheno)
+    batch <- data.lbl
+    combat_edata <- sva::ComBat(dat=common.matrix, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
+    common.matrix <- combat_edata
+    write.table(common.matrix, file="combatadjusted.csv", col.names=T, quote=FALSE);
+  }
+  
   # save the meta-dataset
   res <- data.frame(colnames(common.matrix), cls.lbl, data.lbl, t(common.matrix));
   colnames(res) <- c('Samples', 'Conditions', 'Datasets', rownames(common.matrix));
@@ -125,28 +129,47 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   # setup common stats gene number, smpl number, grp info
   studyinfo <- paste("Sample #:", ncol(metastat.meta$data), "Common ID #:", nrow(metastat.meta$data), "Condition:", paste(levels(metastat.meta$cls.lbl), collapse=" vs. "));
   
-
-
-    msg <- c(msg, "Generating and saving the merged dataset file: MetaboAnalyst_merged_data.csv")
-    studyinfo <- paste("Sample #:", ncol(common.matrix), 
-                       "Common ID #:", nrow(common.matrix), 
-                       "Condition:", paste(levels(factor(cls.lbl)), collapse=" vs. "))
-    AddMsg(studyinfo)
-    msg <- c(msg, studyinfo)
-
-    mSetObj$dataSet$studyinfo <- studyinfo
-    mSetObj$msgSet$check.msg <- msg;
-    if (.on.public.web) {
-        if (length(sel.nms) == 1) {
-            .set.mSet(mSetObj)
-            return(2);
-        } else {
-            .set.mSet(mSetObj)
-            return(1);
-        }
+  
+  
+  msg <- c(msg, "Generating and saving the merged dataset file: MetaboAnalyst_merged_data.csv")
+  studyinfo <- paste("Sample #:", ncol(common.matrix), 
+                     "Common ID #:", nrow(common.matrix), 
+                     "Condition:", paste(levels(factor(cls.lbl)), collapse=" vs. "))
+  AddMsg(studyinfo)
+  msg <- c(msg, studyinfo)
+  
+  
+  group.nms <- paste(levels(factor(cls.lbl)), collapse="; ")
+  ds.names <- paste(sel.nms, collapse="; ")
+  summary.txt <- paste0(
+    "<ul>",
+    "<li><b>Data type:</b> Statistical meta-analysis</li>",
+    "<li><b>Matched feature number:</b> ", nrow(common.matrix), "</li>",
+    "<li><b>Total number of samples:</b> ", ncol(common.matrix), "</li>",
+    "<li><b>Group names:</b> ", group.nms, "</li>",
+    "<li><b>Individual datasets:</b> ", ds.names, "</li>",
+    "</ul>"
+  )
+  mSetObj$dataSet$summary.text <- summary.txt
+  
+  
+  mSetObj$msgSet$check.msg <- msg;
+  if (.on.public.web) {
+    if (length(sel.nms) == 1) {
+      .set.mSet(mSetObj)
+      return(2);
     } else {
-        return(.set.mSet(mSetObj));
+      .set.mSet(mSetObj)
+      return(1);
     }
+  } else {
+    return(.set.mSet(mSetObj));
+  }
+}
+
+GetMetaProcMsg <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    return(mSetObj$dataSet$summary.text);
 }
 
 
@@ -662,5 +685,112 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
   sink();
   
   return(.set.mSet(mSetObj)); 
+}
+
+PlotMetaPCA <- function(mSetObj = NA, imgNm, dpi, format, interactive = FALSE) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  require(ggplot2)
+  require(Cairo)
+  require(plotly)
+
+  x <- metastat.meta$data
+  cls.lbl <- metastat.meta$cls.lbl
+  data.lbl <- metastat.meta$data.lbl
+
+  x[!is.finite(x)] <- NA
+
+  # Perform PCA
+  pca <- prcomp(t(na.omit(x)))
+  imp.pca <- summary(pca)$importance
+  xlabel <- paste0("PC1 (", round(100 * imp.pca[2, 1], 1), "%)")
+  ylabel <- paste0("PC2 (", round(100 * imp.pca[2, 2], 1), "%)")
+
+  pca.res <- as.data.frame(pca$x)
+  Conditions <- factor(cls.lbl)
+  Datasets <- factor(data.lbl)
+
+  xlim <- GetExtendRange(pca.res$PC1)
+  ylim <- GetExtendRange(pca.res$PC2)
+
+  pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions, shape = Datasets)) +
+    geom_point(size = 4, alpha = 0.6) +
+    scale_color_discrete(name = "Conditions") +
+    scale_shape_discrete(name = "Datasets") +
+    xlab(xlabel) + ylab(ylabel) +
+    xlim(xlim) + ylim(ylim) +
+    theme_bw()
+
+  # Save static image
+  img.path <- paste0(imgNm, "dpi", dpi, ".", format)
+  plotlyNm <- paste0(imgNm, ".rda")
+  dpi <- as.numeric(dpi)
+
+  Cairo(file = img.path, width = 8, height = 6, type = format, bg = "white", units = "in", dpi = dpi)
+  print(pcafig)
+  dev.off()
+
+  # Save image path and plotly name
+  mSetObj$imgSet$qc_meta_pca <- img.path
+  mSetObj$imgSet$qc_meta_pca_plotly <- plotlyNm
+
+  # Save to mSetObj
+  mSetObj$dataSet$qc_meta_pca_plotly <- plotlyNm
+
+  # Save interactive plotly object
+  m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+  ggp_build <- layout(ggplotly(pcafig), autosize = FALSE, width = 800, height = 600, margin = m)
+  save(ggp_build, file = plotlyNm)
+
+  return(.set.mSet(mSetObj))
+}
+
+
+PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = 72, format, interactive = FALSE) {
+
+  mSetObj <- .get.mSet(mSetObj);
+  require(ggplot2)
+  require(Cairo)
+  require(plotly)
+
+  # Use metastat.meta from memory
+  dat <- metastat.meta$data
+  data.lbl <- metastat.meta$data.lbl
+
+  img.path <- paste0(imgNm, "dpi", dpi, ".", format)
+  plotlyNm <- paste0(imgNm, ".rda")
+  dpi <- as.numeric(dpi)
+
+  # Prepare data
+  df <- data.frame(dat, stringsAsFactors = FALSE)
+  df <- stack(df)
+
+  conv <- data.frame(ind = colnames(dat), class = data.lbl)
+  conv$ind <- gsub("-", ".", conv$ind)
+  df1 <- merge(df, conv, by = "ind")
+
+  g <- ggplot(df1, aes(x = values)) +
+    geom_line(aes(color = class, group = ind), stat = "density", alpha = 0.3) +
+    geom_line(aes(color = class), stat = "density", alpha = 0.6, size = 1.5) +
+    theme_bw()
+
+  # Save static image
+  Cairo(file = img.path, width = 10, height = 6, type = format, bg = "white", dpi = dpi, unit = "in")
+  print(g)
+  dev.off()
+
+  # Save image and plotly metadata
+  mSetObj$imgSet$qc_meta_density <- img.path
+  mSetObj$imgSet$qc_meta_density_plotly <- plotlyNm
+
+  # Save to mSetObj$dataSet
+  mSetObj$dataSet$qc_meta_density_plotly <- plotlyNm
+
+  # Save plotly object
+  m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+  ggp_build <- layout(ggplotly(g), autosize = FALSE, width = 800, height = 600, margin = m)
+  save(ggp_build, file = plotlyNm)
+
+  return(.set.mSet(mSetObj));
 }
 

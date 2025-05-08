@@ -157,7 +157,9 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
 
     if(param_list[["targets_opt"]] == "sigs") {
       str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
-      str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}");
+      str <- paste0(str, ";\n", "if(length(idx)>0){ft<- ft[idx,]}");      
+    } else {
+      str <- paste0(str, ";\n", "idx <- NA");
     }
     
     #str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
@@ -215,6 +217,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     ", useEntropy = ", param_list$useentropy, ")");
     }
 
+    str <- paste0(str, ";\n", "mSet@MSnData[[\'peak_mtx_idx\']] <- idx");
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),ecol = \'\',progress = 140)";
@@ -226,7 +229,9 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: Starting importing MS/MS data... \n\'),ecol = \'\',progress = 102)";
     str <- paste0(str, ";\n", cmd_prgs)
     if(param_list[["targets_opt"]] == "sigs") {
-      str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");
+      str <- paste0(str, ";\n", "idx <- OptiLCMS:::generatePvals_SigFeatures(mSet@dataSet)");      
+    } else {
+      str <- paste0(str, ";\n", "idx <- NA");
     }
     
     # import data
@@ -264,6 +269,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     filtering = ", param_list$filtering, ",
                                     ncores = 4L)");
     str <- paste0(str, ";\n", cmd_deco)
+    str <- paste0(str, ";\n", "mSet@MSnData[[\'peak_mtx_idx\']] <- idx");
     # progress 140
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),ecol = \'\',progress = 140)";
     str <- paste0(str, ";\n", cmd_prgs)
@@ -326,7 +332,8 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   
   # FormatMSnAnnotation
   cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
-  str <- paste0(str, ";\n", cmd_annotation)
+  str <- paste0(str, ";\n", cmd_annotation);
+  str <- paste0(str, ";\n", "mSet@MSnResults[[\'ResTable\']] <- dtx");
   
   cmd_write <- "write.csv(dtx, file = \'compound_msn_results.csv\', row.names = F, col.names = F)";
   str <- paste0(str, ";\n", cmd_write)
@@ -341,7 +348,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   str <- paste0(str, ";\n", cmd_prgs)
   
   # progress 200 
-  cmd_prgs <- "OptiLCMS:::jobFinished()";
+  cmd_prgs <- "OptiLCMS:::jobFinished(mSet)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   
