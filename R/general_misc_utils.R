@@ -1544,6 +1544,9 @@ CheckDetailsTablePerformed <-function(type){
     performed <- !is.null(mSetObj$analSet$qea.mat);
   }else if(type == "ora"){
     performed <- !is.null(mSetObj$analSet$ora.mat);
+  }else if(type == "match_integ"){
+    print(head(mSetObj$analSet$integ.match.tbl));
+    performed <- !is.null(mSetObj$analSet$integ.match.tbl);
   }else if(endsWith(type, "_enr")){
     type_cleaned <- gsub("_enr", "", type);
     performed <- !is.null(mSetObj$imgSet$enrTables[[type_cleaned]]);
@@ -1663,4 +1666,25 @@ GetEnrQueryType <- function(type){
     imgSet <- mSetObj$imgSet;
     res <- imgSet$enrTables[[type]]$library
     return(res);
+}
+
+GetMatchIntegNames<-function(){
+    mSetObj <- .get.mSet(mSetObj);
+    tbl <- as.data.frame(mSetObj$analSet$integ.match.tbl);
+
+    return(unlist(tbl[,1]));
+}
+
+GetMatchIntegSetIDs <-function(inx){
+    mSetObj <- .get.mSet(mSetObj);
+    tbl <- as.data.frame(mSetObj$analSet$integ.match.tbl);
+    print(head(unlist(tbl[,inx])))
+    print("matchInteg2");
+    return(unlist(tbl[,inx]));
+}
+
+GetMatchIntegColNames <-function(){
+    mSetObj <- .get.mSet(mSetObj);
+    tbl <- as.data.frame(mSetObj$analSet$integ.match.tbl);
+    return(colnames(tbl)[-1]);
 }
