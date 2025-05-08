@@ -424,7 +424,7 @@ CovariateScatter.Anal <- function(mSetObj,
   thresh<<- thresh;
   pval.type<<- pval.type;
   contrast.cls <<- contrast.cls;
-  save.image("cov.RData");
+  #save.image("cov.RData");
   cov.vec <- "NA";
   # get inputs
   if(!exists('adj.vec')){

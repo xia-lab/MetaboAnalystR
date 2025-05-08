@@ -63,7 +63,7 @@ aov.2way <- function(x){
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
                        p.cor="fdr", designType="time0", phenOpt="between", topN=200){
   mSetObj <- .get.mSet(mSetObj);
-  save.image("aov2.RData");
+  #save.image("aov2.RData");
   if(length(meta.vec.aov) == 0){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
     meta.vec.aov <- colnames(sel.meta.df)[c(1,2)];

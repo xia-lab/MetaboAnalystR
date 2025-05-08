@@ -38,7 +38,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@param file.nm Input the file name 
 #'@param mSetObj mSetObj object
 PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
-  save.image("list.RData");
+  #save.image("list.RData");
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;
   } else if(idtype == "gene&cmpd"){
@@ -654,7 +654,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
 #'License: GNU GPL (>= 2)
 #'@export
 PrepareKeggQueryJson <- function(mSetObj=NA){
-    save.image("kegg.RData");
+    #save.image("kegg.RData");
     mSetObj <- .get.mSet(mSetObj);
   
     # Map query matched KOs with the KO database

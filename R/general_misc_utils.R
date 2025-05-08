@@ -1626,8 +1626,8 @@ GetEnrResultMatrix <-function(type){
 GetEnrResultColNames<-function(type){
     mSetObj <- .get.mSet(mSetObj);
     imgSet <- mSetObj$imgSet;
-  res <- imgSet$enrTables[[type]]$res.mat
-  colnames(res);
+    res <- imgSet$enrTables[[type]]$res.mat;
+    colnames(res);
 }
 
 GetEnrResSetIDs<-function(type){
