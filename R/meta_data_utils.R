@@ -57,6 +57,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
   qs::qsave(dataSet, file=dataName);
   dataSet <<- dataSet; # redundant? have mSetObj$dataSet = 2 copies
   mdata.all[[dataName]] <<- 1;
+ mSetObj$mdata.all <- mdata.all;
   return(1);
 }
 
@@ -333,7 +334,7 @@ SelectMultiData <- function(mSetObj=NA){
   }
   
   rm('nm.vec', envir = .GlobalEnv);
-  
+  mSetObj$mdata.all <- mdata.all;
   return(.set.mSet(mSetObj));
   
 }
@@ -514,7 +515,9 @@ GetLimmaResTable<-function(fit.obj){
 #'License: GNU GPL (>= 2)
 #'@export
 PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
-  
+  if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
   imgName <- paste("meta_ft_", gene.id, ".", format, sep="");
@@ -635,8 +638,12 @@ GlobalCutOff = list(
 # as well as to prepare for GO analysis
 # no return, as set global 
 
-SetupMetaStats <- function(BHth){
-  
+SetupMetaStats <- function(mSetObj, BHth){
+  mdata.all <- mSetObj$mdata.all
+  if(!exists('metastat.meta')){
+    metastat.meta <<- qs::qread("metastat.meta.qs");
+    metastat.ind <<- qs::qread("metastat.ind.qs");
+  }
   GlobalCutOff$BHth <<- BHth;
   #all common genes
   gene.ids <- rownames(metastat.meta$data);
@@ -650,15 +657,13 @@ SetupMetaStats <- function(BHth){
   pval.mat <- fc.mat <- matrix(nrow=nrow(meta.mat), ncol=sum(mdata.all==1));
   for(i in 1:length(metastat.ind)){
     de.res <- metastat.ind[[i]];
-    
     hit.inx <- de.res[,2] <= BHth;
     hit.inx <- which(hit.inx); # need to get around NA
     metastat.de[[i]] <- rownames(de.res)[hit.inx];
     
     # only choose the genes that are also meta sig genes from in
     # individual analysis for display
-    de.res <- de.res[metade.genes,];
-    
+    de.res  <- de.res[metade.genes,];
     fc.mat[,i] <- de.res[,1];
     pval.mat[,i] <- de.res[,2];
   }
@@ -689,8 +694,15 @@ SetupMetaStats <- function(BHth){
   metastat.de <<- metastat.de;
   meta.stat <<- meta.stat;
   
+  
+  mSetObj$analSet$fc.mat <- fc.mat;
+  mSetObj$analSet$pval.mat <- pval.mat;
+  mSetObj$analSet$metastat.de <- metastat.de;
+  mSetObj$analSet$meta.stat <- meta.stat;
+  
   # save the result
   res <- cbind(ID=metade.genes, meta.mat);
-  
+  metastat.method <- mSetObj$dataSet$metastat.method 
   fast.write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
+  return(mSetObj);
 }

@@ -12,7 +12,7 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   
   save.image("consist.RData");
   mSetObj <- .get.mSet(mSetObj);
-  
+  mdata.all  <- mSetObj$mdata.all;
   msg <- c()  # Initialize the message variable
   
   msg <- c(msg, "Starting the meta-analysis process...")
@@ -123,7 +123,7 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
                          gene.symbls = symbols,
                          cls.lbl=factor(cls.lbl),
                          data.lbl=data.lbl);
-  
+  qs::qsave(metastat.meta, "metastat.meta.qs");
   PerformEachDEAnal(mSetObj);
   
   # setup common stats gene number, smpl number, grp info
@@ -188,8 +188,11 @@ GetMetaProcMsg <- function(mSetObj=NA){
 PerformEachDEAnal <- function(mSetObj=NA){
   
   metastat.ind <- list();
+  mdata.all <- mSetObj$mdata.all
   sel.nms <- names(mdata.all)[mdata.all==1];
-  
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   for(i in 1:length(sel.nms)){
     dataName <- sel.nms[i];
     sel.inx <- metastat.meta$data.lbl == dataName;
@@ -219,7 +222,11 @@ PerformEachDEAnal <- function(mSetObj=NA){
     rm(dataSet, res.all);
     gc();
   } 
+   print(head(metastat.ind));
+   print("metastat.ind===");
   metastat.ind <<- metastat.ind;
+  qs::qsave(metastat.ind, "metastat.ind.qs");
+
 }
 
 #'Meta-Analysis Method: Combining p-values
@@ -235,12 +242,18 @@ PerformEachDEAnal <- function(mSetObj=NA){
 #'@export
 
 PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
-  
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.ind <<- qs::qread("metastat.ind.qs");
+}
   mSetObj <- .get.mSet(mSetObj);
+  mdata.all <- mSetObj$mdata.all
+
   mSetObj$dataSet$pvalmethod <- method
   mSetObj$dataSet$pvalcutoff <- BHth
-  
+
   metastat.method <<- "metap";
+  mSetObj$dataSet$metastat.method <-  metastat.method
   meta.mat <<- meta.stat <<- NULL;
   sel.nms <- names(mdata.all)[mdata.all==1];
   
@@ -287,9 +300,12 @@ PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
   pc.mat<-signif(pc.mat[ord.inx,],5);
   sig.inx <- which(pc.mat[, "CombinedPval"]<=BHth);
   
-  meta.mat <<- pc.mat[sig.inx, ];
-  SetupMetaStats(BHth);
-  
+  #meta.mat <<- pc.mat[sig.inx, ];
+  meta.mat <<- pc.mat;
+  qs::qsave(meta.mat, "meta.mat.qs");
+  mSetObj <- SetupMetaStats(mSetObj, BHth);
+  mSetObj$analSet$metap.mat <- meta.mat;
+
   if(.on.public.web){
     .set.mSet(mSetObj)
     return(length(sig.inx));
@@ -312,12 +328,18 @@ PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
 #'@export
 
 PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
-  
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.ind <<- qs::qread("metastat.ind.qs");
+}
   mSetObj <- .get.mSet(mSetObj);
+  mdata.all <- mSetObj$mdata.all
+
   mSetObj$dataSet$vote <- minVote
   mSetObj$dataSet$pvalcutoff <- BHth
   
   metastat.method <<- "votecount";
+  mSetObj$dataSet$metastat.method <-  metastat.method
   DE.vec <<- NULL; # store entrez id from meta-analysis for GO
   meta.mat <<- meta.stat <<- NULL;
   sel.nms <- names(mdata.all)[mdata.all==1];
@@ -360,9 +382,11 @@ PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
   vc.mat <- vc.mat[ord.inx, "VoteCounts", drop=F];
   
   sig.inx <- abs(vc.mat[,"VoteCounts"]) >= minVote;
-  meta.mat <<- vc.mat[sig.inx, ,drop=F];
-  SetupMetaStats(BHth);
-  
+  #meta.mat <<- vc.mat[sig.inx, ,drop=F];
+  meta.mat <<- vc.mat;
+  qs::qsave(meta.mat, "meta.mat.qs");
+  mSetObj <- SetupMetaStats(mSetObj, BHth);
+  mSetObj$analSet$votecount.mat <- meta.mat;
   if(.on.public.web){
     .set.mSet(mSetObj)
     return(sum(sig.inx));
@@ -386,12 +410,18 @@ PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
 #'@export
 
 PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
-  
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.ind <<- qs::qread("metastat.ind.qs");
+
+}
   mSetObj <- .get.mSet(mSetObj);
-  
+  mdata.all <- mSetObj$mdata.all
+
   mSetObj$dataSet$pvalcutoff <- BHth
   
   metastat.method <<- "merge";
+  mSetObj$dataSet$metastat.method <-  metastat.method
   meta.mat <<- meta.stat <<- NULL;
   
   # prepare for meta-stats
@@ -407,9 +437,13 @@ PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
   
   sig.inx <- which(dm.mat[,"Pval"] <= BHth);
   
-  meta.mat <<- dm.mat[sig.inx,];
-  SetupMetaStats(BHth);
-  
+  #meta.mat <<- dm.mat[sig.inx,];
+  meta.mat <<- dm.mat;
+  qs::qsave(meta.mat, "meta.mat.qs");
+
+  mSetObj <- SetupMetaStats(mSetObj, BHth);
+    mSetObj$analSet$merge.mat <- meta.mat;
+
   if(.on.public.web){
     .set.mSet(mSetObj)
     return(length(sig.inx));
@@ -425,16 +459,27 @@ PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
 ##############################################
 
 GetMetaGeneIDType<-function(){
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   return(metastat.meta$id.type);
 }
 
 GetMetaResultGeneIDs<-function(){
+
+if(!exists('meta.mat')){
+  meta.mat <<- qs::qread("meta.mat.qs");
+}
   return(rownames(meta.mat));
 }
 
 # note, due to limitation of get/post
 # maximum gene symb for list is top 5000
 GetMetaResultGeneSymbols<-function(){
+
+if(!exists('meta.mat')){
+  meta.mat <<- qs::qread("meta.mat.qs");
+}
   ids <- rownames(meta.mat);
   if(length(ids) > 5000){
     ids <- ids[1:5000];
@@ -444,6 +489,9 @@ GetMetaResultGeneSymbols<-function(){
 
 GetMetaResultGeneIDLinks <- function(){
   ids <- rownames(meta.mat);
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   symbs <- metastat.meta$gene.symbls[ids];
   # set up links to genbank
   annots <- paste("<a href='http://www.ncbi.nlm.nih.gov/gene?term=", ids,
@@ -452,6 +500,13 @@ GetMetaResultGeneIDLinks <- function(){
 }
 
 GetMetaResultColNames <- function(){
+
+if(!exists('meta.mat')){
+  meta.mat <<- qs::qread("meta.mat.qs");
+}
+  mSetObj <- .get.mSet(mSetObj);
+  mdata.all <- mSetObj$mdata.all
+
   sel.nms <- names(mdata.all)[mdata.all==1];
   c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(meta.mat));
 }
@@ -463,18 +518,29 @@ GetMetaResultColNames <- function(){
 #'@param single.type Default is "fc"
 #'@export
 GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
-  
+  save.image("metares.RData");
   mSetObj <- .get.mSet(mSetObj);
+
+  if(!exists('meta.mat')){
+    meta.mat <<- qs::qread("meta.mat.qs");
+  }
+  mSetObj <- SetupMetaStats(mSetObj, mSetObj$dataSet$pvalcutoff);
   
+  fc.mat <- mSetObj$analSet$fc.mat;
+  pval.mat <- mSetObj$analSet$pval.mat;
+  metastat.de <- mSetObj$analSet$metastat.de;
+  meta.stat <- mSetObj$analSet$metastat;
+
   colnms <- GetMetaResultColNames();
   if(single.type == "fc"){
     meta.mat <- cbind(fc.mat, meta.mat);
   }else{
     meta.mat <- cbind(pval.mat, meta.mat);
   }
+  print(head(meta.mat));
+  print("getting metares");
   meta.mat <- signif(as.matrix(meta.mat), 5);
   colnames(meta.mat) <- colnms;
-
   mSetObj$analSet$meta.mat <- meta.mat;
   
   if(.on.public.web == TRUE){  
@@ -486,10 +552,14 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
 }
 
 GetMetaStat <- function(){
+  mSetObj <- .get.mSet(mSetObj);
+  meta.stat <- mSetObj$analSet$metastat;
   return (meta.stat$stat);
 }
 
 GetMetaStatNames <- function(){
+  mSetObj <- .get.mSet(mSetObj);
+  meta.stat <- mSetObj$analSet$metastat;
   return (names(meta.stat$stat));
 }
 
@@ -631,7 +701,9 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
 PrepareUpsetData <- function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+  metastat.de <- mSetObj$analSet$metastat.de;
+  meta.stat <- mSetObj$analSet$metastat;
+  mdata.all <- mSetObj$mdata.all;
   newDat <- list();
   hit.inx <- mdata.all==1;
   sel.nms <- names(mdata.all)[hit.inx];
@@ -689,7 +761,9 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
 
 PlotMetaPCA <- function(mSetObj = NA, imgNm, dpi, format, interactive = FALSE) {
   mSetObj <- .get.mSet(mSetObj)
-
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   require(ggplot2)
   require(Cairo)
   require(plotly)
@@ -747,7 +821,9 @@ PlotMetaPCA <- function(mSetObj = NA, imgNm, dpi, format, interactive = FALSE) {
 
 
 PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = 72, format, interactive = FALSE) {
-
+if(!exists('metastat.meta')){
+  metastat.meta <<- qs::qread("metastat.meta.qs");
+}
   mSetObj <- .get.mSet(mSetObj);
   require(ggplot2)
   require(Cairo)
@@ -794,3 +870,17 @@ PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = 72, format, interactive = F
   return(.set.mSet(mSetObj));
 }
 
+ToggleMetaRes <- function(mSetObj=NA, type) {
+    mSetObj <- .get.mSet(mSetObj)
+    if(type == "metap"){
+      meta.mat <<- mSetObj$analSet$metap.mat
+    }else if(type == "votecount"){
+      meta.mat <<- mSetObj$analSet$votecount.mat
+    }else{
+      meta.mat <<- mSetObj$analSet$merge.mat
+    }
+    print(head(meta.mat));
+    print("metamat====");
+    mSetObj <- SetupMetaStats(mSetObj, mSetObj$dataSet$pvalcutoff);
+    .set.mSet(mSetObj)
+}
