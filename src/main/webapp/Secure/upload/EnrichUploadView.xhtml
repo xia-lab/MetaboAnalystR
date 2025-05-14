@@ -1,0 +1,295 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('enrich')}"/>         
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/EnrichUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">       
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Data Upload</h2>
+            <p:tabView id="ac" style="width: 880px; border:none;">
+                <p:tab title="Over Representation Analysis" rendered="#{msetBean.oratabswitch}">
+                    <h:form id="form1">
+                        <h:panelGrid style="padding-left: 150px; padding-top: 2px; padding-bottom: 10px; width: 100%">
+                            <h:panelGrid style="height: 100%; padding-bottom: 5px; width: 100%">
+                                <p:outputLabel style="font-size: 14px; font-weight: bold" value="Please enter a one-column compound list: "/>
+                            </h:panelGrid>
+                            <h:panelGrid id="msetArea" style="padding-left:20px;">
+                                <p:inputTextarea  autoResize="false" value="#{enrichLoader.msetOraList}" rows="16" cols="36" />
+                            </h:panelGrid>
+                            <h:panelGrid id="parPane" columns="2" style="height: 100%; padding-top: 5px;">
+                                <h:panelGroup layout="block" style="width: 110px">
+                                    <p:outputLabel style="font-weight: bold" value="Input Type: "/>
+                                </h:panelGroup>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                    <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Feature Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.featType}">
+                                    <f:selectItems value="#{optBean.featOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Try Example:"/>
+                                <p:selectOneRadio value="#{enrichLoader.exampleType}">
+                                    <f:selectItem itemLabel="None" itemValue="none"/>
+                                    <f:selectItem itemLabel="List 1 (metabolites)" itemValue="met"/>
+                                    <f:selectItem itemLabel="List 2 (lipids)" itemValue="lipid"/>
+                                    <p:ajax update=":ac:form1" event="change" listener="#{enrichLoader.updateOraArea()}"/>
+                                </p:selectOneRadio>
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left: 160px; padding-top: 10px; padding-bottom: 5px;">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"                
+                                                 action="#{enrichLoader.handleOraListUpload}"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+                <p:tab title="Single Sample Profiling" rendered="#{msetBean.ssptabswitch}">
+                    <h:form id="form2">
+                        <h:panelGrid style="padding-left: 150px; padding-top: 2px; padding-bottom: 10px; width: 720px">
+                            <h:panelGrid style="height: 100%; padding-bottom: 5px; width: 100%">
+                                <p:outputLabel style="font-size: 14px; font-weight: bold" value="Enter your data below (two-column data): "/>
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left:20px;">
+                                <p:inputTextarea id="sspArea" autoResize="false" value="#{enrichLoader.msetSspData}" rows="16" cols="36" />
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="padding-top: 5px;">
+
+                                <p:outputLabel style="font-weight: bold" value="Input Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                    <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Feature Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.featType}">
+                                    <f:selectItems value="#{optBean.featOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Biofluid (unit): "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:200px" value="#{enrichLoader.biofluidType}">
+                                    <f:selectItem itemValue="urine" itemLabel="Urine (umol/mmol_creatinine)"/>
+                                    <f:selectItem itemValue="blood" itemLabel="Blood (umol)"/>
+                                    <f:selectItem itemValue="csf" itemLabel="CSF (umol)"/>
+                                    <f:selectItem itemValue="saliva" itemLabel="Saliva (uM)"/>
+                                    <f:selectItem itemValue="amniotic fluid" itemLabel="Amniotic fluid (uM)"/>
+                                    <f:selectItem itemValue="bile" itemLabel="Bile (uM)"/>
+                                    <f:selectItem itemValue="breast milk" itemLabel="Breast Milk (uM)"/>
+                                    <f:selectItem itemValue="cellular cytoplasm" itemLabel="Cytoplasm (uM)"/>
+                                    <f:selectItem itemValue="feces1" itemLabel="Feces (uM)"/>
+                                    <f:selectItem itemValue="feces" itemLabel="Feces (nmol/g)"/>
+                                </p:selectOneMenu>
+
+                            </h:panelGrid>
+                            <h:panelGrid columns="2">
+                                <p:selectBooleanCheckbox value="#{enrichLoader.useMsetSspExample}" style="line-height: 18px">
+                                    <p:ajax update=":ac:form2" event="change" listener="#{enrichLoader.updateSspArea()}"/>
+                                </p:selectBooleanCheckbox> 
+                                <h:panelGrid>
+                                    <p:outputLabel style="font-weight: bold" value="Use the example data"/>  
+                                    <p:outputLabel value="- urine sample (umol/mmol_creatinine)"/>  
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <h:panelGrid style="height: 100%; padding-top: 10px; padding-bottom: 5px; text-align: center; width:360px">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.handleSspDataUpload()}"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+                <p:tab title="Quantitative Enrichment Analysis"  rendered="#{msetBean.qeatabswitch}">
+                    <h:form id="form3" enctype="multipart/form-data">
+                        <h:panelGrid style="padding:10px; width: 100%; line-height: 25px;">  
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Upload your concentration data (.csv or .txt) "/> 
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px; text-align: right" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding:10px 20px 20px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width: 180px">
+                                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Group Label: "/>
+                                    </h:panelGroup>
+                                    <p:selectOneRadio value="#{enrichLoader.qeaClsOpt}">
+                                        <f:selectItems value="#{optBean.clsOpts}" />
+                                    </p:selectOneRadio>  
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                        <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Feature Type: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.featType}">
+                                        <f:selectItems value="#{optBean.featOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Format: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.dataFormat}">
+                                        <f:selectItems value="#{optBean.tableFormatOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File: "/>
+                                    <p:fileUpload value="#{enrichLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                    <!--
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata File (optional):"/>
+                                    <p:fileUpload value="#{enrichLoader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+                                    -->
+
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.handleQeaDataUpload}"/>  
+                            </h:panelGrid>
+
+                            <br/>
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Download from Metabolomics Workbench"/>
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px; text-align: right" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding: 10px 20px 10px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width: 180px">
+                                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Study ID:"/> 
+                                        <p:spacer width="5px"/>
+                                        <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>
+                                    <p:inputText style="width:180px" value="#{enrichLoader.nmdrStudyId}"/> 
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"                                         
+                                                 action="#{enrichLoader.enrichQea_workbench()}"/> 
+                            </h:panelGrid>
+                            <p:tooltip for="formatIcon2" styleClass="helpTip">
+                                <p>
+                                    MetaboAnalyst now permits users to directly perform analyses on published datasets from the Metabolomics Workbench.
+                                    Users must enter a valid Study ID to upload the preferred dataset. Browse here (https://www.metabolomicsworkbench.org/data/browse.php)
+                                    to view all studies from the Metabolomics Workbench. Note that only studies with a named metabolite dataset such as study ST000017 
+                                    will be able to be uploaded.
+                                </p>    
+                            </p:tooltip>
+                            <br/>
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="An XLSX file from Metabolon"/>
+                            <h:panelGrid columns="2" style="width:780px; text-align: right; padding-right: 40px;" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding: 10px 10px 10px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width:180px">
+                                        <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
+                                        <p:spacer width="5px"/>
+                                        <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>                        
+                                    <p:fileUpload value="#{enrichLoader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false"
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.handleMetabolonQEA()}"/>                         
+                            </h:panelGrid>
+                            <p:tooltip for="formatIcon3" styleClass="helpTip">
+                                <p>
+                                    Please upload the original XLSX datasheets from Metabolon directly without any editing or conversion.
+                                    Note that there are three sheets (<b>Chemical Annotation</b>, <b>Sample Meta Data</b> and <b>Peak Area Data</b>) required to proceed.                         
+                                </p>    
+                            </p:tooltip>                            
+                            <br/>
+                            <hr class="style-one"/>
+                            <p:selectOneRadio id="qeaTestRadio" value="#{enrichLoader.qeaTestDataOpt}" layout="custom">  
+                                <f:selectItem itemValue="msetDis" itemLabel="Data 1"/>
+                                <f:selectItem itemValue="conReq" itemLabel="Data 2"/> 
+                                <f:selectItem itemValue="lipidQea" itemLabel="Data 3"/> 
+                            </p:selectOneRadio>  
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Try our test data: "/>
+                            <h:panelGrid columns="5" style="padding:20px; line-height: 23px; width: 780px" class="surface-card shadow-1 p-4 text-800">
+                                <p:spacer style="width: 24px"/>
+                                <h:panelGroup layout="block" style="width:50px">
+                                    <p:outputLabel style="font-weight: bold" value="Data"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block"  style="width:100px">
+                                    <p:outputLabel style="font-weight: bold" value="ID Type"/> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block"  style="width:100px">
+                                    <p:outputLabel style="font-weight: bold" value="Group Label"/> 
+                                </h:panelGroup>   
+                                <p:outputLabel style="font-weight: bold" value="Description"/>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="0"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Data 1</a>
+                                <p:outputLabel value="Common name"/>
+                                <p:outputLabel value="Discrete"/>
+                                <h:panelGrid>
+                                    Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. 
+                                    Phenotype: <b>N</b> - cachexic; <b>Y</b> - control
+                                </h:panelGrid>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="1"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/cachexia_continuous.csv">Data 2</a>
+                                <p:outputLabel value="PubChem CID"/>
+                                <p:outputLabel value="Continuous"/>
+                                <h:panelGrid>
+                                    Urinary metabolite concentrations from 97 cancer patients measured by 1H NMR. 
+                                    Phenotype: <b>muscle gain</b> (percentage within 100 days, negative values indicate muscle loss)
+                                </h:panelGrid>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="2"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/multiple_sclerosis_test.csv">Data 3</a>
+                                <p:outputLabel value="Common name"/>
+                                <p:outputLabel value="Discrete"/>
+                                <h:panelGrid>
+                                    Lipidomic biomarkers in serum samples from patients with benign and secondary progressive MS
+                                    obtained from the Metabolomics Workbench (ST000688).
+                                </h:panelGrid>
+
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 100%; padding-top: 5px; padding-bottom: 5px; text-align: center">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.msetQeaTestBn_action()}"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+
+
+                    <p:dialog modal="true" widgetVar="metabolondata" header="Metabolon datasets"
+                              appendTo="@(body)" style="line-height: 23px;"
+                              draggable="false" closable="true" resizable="true">            
+                        <div style="font-size:14px; font-weight: bold;">Please select one metadata factor and compound identifier:</div>
+                        <h:panelGrid style="padding: 20px">
+                            <h:form id="form1x">
+                                <h:panelGrid columns="2" style="padding: 10px 30px 20px 20px; line-height: 23px; width:500px" class="surface-card shadow-1 p-4 text-800">                        
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata Factor: "/>
+                                    <p:selectOneMenu id="mf" value="#{enrichLoader.defaultMetafactor}">                            
+                                        <f:selectItems value="#{enrichLoader.metaboloneMetaOpts}"/>
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Compound ID: "/>
+                                    <p:selectOneMenu id="cID" value="#{enrichLoader.defaultchemid}">
+                                        <f:selectItem itemLabel="HMDB" itemValue="HMDB"/>
+                                        <f:selectItems value="#{enrichLoader.metaboloneChemIDOpts}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGrid>
+
+                                <h:panelGrid columns="2" style="width:500px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+                                    <p:commandButton value="Confirm" ajax="false" style="width: 100px"
+                                                     onclick="PF('statusDialog').show()"
+                                                     action="#{enrichLoader.processMetabolonData}"
+                                                     oncomplete="PF('statusDialog').hide();"/>   
+                                    <p:commandButton value="Cancel" ajax="false" style="width: 100px"
+                                                     onclick="PF('metabolondata').hide();" 
+                                                     oncomplete="PF('statusDialog').hide();" />   
+                                </h:panelGrid> 
+                            </h:form>
+                        </h:panelGrid>            
+                    </p:dialog>
+
+
+                </p:tab>            
+            </p:tabView>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

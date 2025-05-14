@@ -1,0 +1,267 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Metadata check', '/Secure/process/MetaDataCheck.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="metaForm">
+            <h:panelGrid id="metaView" styleClass="my-content-panel">
+                <h2>Metadata check</h2>
+                <ol>
+                    <li>
+                        Infer the type (categorical or continuous) for each metadata column;
+                        Primary (default first column) metadata should be categorical.
+                    </li>
+                    <li>
+                        For categorical metadata, at least two groups and three replicates per groups are required;
+                    </li>
+                    <li>
+                        For continuous metadata, all values must be numerical;
+                    </li>
+                    <li>
+                        Missing values are <b style="color:orange">NOT allowed</b> - you can manually add those missing values, or exclude the metadata from further analysis                
+                    </li>
+                </ol>
+                <h:panelGrid style="width:780px; border: 1px dashed grey; padding: 20px; margin-bottom: 10px;" class="surface-card shadow-1 p-4 text-800">
+                    <h:outputText value="#{mprocBean.msgTextMeta}" escape="false"/>
+                </h:panelGrid>
+
+                <h3>Update your metadata using the table below</h3>
+                <ul>
+                    <li>
+                        Update metadata type: categorical option for experimental groups (i.e. control vs diseased), continuous for numerical measures (i.e. age);
+                    </li>                    
+                    <li>
+                        Edit metadata content: click <u>Edit</u> to modify underlying groups to address those that do not meet requirements.
+                    </li>
+                    <li>
+                        Modify metadata name: click on corresponding cell on the main table to modify name
+                    </li>
+                    <li>
+                        Specify group order of categorical metadata: click <u>Edit</u> and go to <u>Order</u> tab to specify the order which the underlying metadata groups are (i.e low, medium, high). By default, they are ordered by alphabetical order.
+                    </li>
+                    <li>
+                        Exclude metadata that do not pass sanity check.
+                    </li>
+                </ul>
+                <p:dataTable style="width:700px;" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
+                             class="surface-card shadow-1 p-0 text-800" 
+                             value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
+                             disabledSelection="#{multifacBean.disableMetaSelection}"  editMode="cell" editable="true">  
+                    <p:ajax event="cellEdit" listener="#{multifacBean.onCellEdit}"/>
+
+                    <p:column headerText="Name">  
+                        <p:cellEditor>
+                            <f:facet name="output"><h:outputText value="#{meta.name}" /></f:facet>
+                            <f:facet name="input"><p:inputText id="modelInput" value="#{meta.name}" style="width:95%"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Status">  
+                        <h:outputText escape='false' value="#{meta.status}"/>  
+                    </p:column>  
+                    <p:column headerText="Type">  
+                        <p:selectOneMenu value="#{meta.param}"  disabled="#{meta.disabled}">
+                            <f:selectItems value="#{optBean.clsShortenedOpts}" />
+                            <p:ajax listener="#{meta.updateMetaType()}" event="valueChange" />
+                        </p:selectOneMenu>  
+                    </p:column>  
+                    <p:column headerText="Edit">  
+                        <p:commandLink value="Edit" disabled="#{meta.disabled}" action="#{multifacBean.editMeta(meta)}" update=":metaForm :smplGrpForm" oncomplete="PF('smplGrpDialog').show()"/>
+                    </p:column>  
+                    <p:column headerText="Remove">  
+                        <p:commandLink oncomplete="PF('rmDialog').show()"
+                                       disabled="#{meta.disabled}"
+                                       actionListener="#{multifacBean.setSelectedMetaDataBean(meta)}"
+                                       update=":metaForm :rmForm">
+                            <span style="color: tomato;">
+                                <i class="pi pi-trash"  style="color: tomato !important; font-size: 18px"/>
+                            </span>
+                        </p:commandLink>
+                    </p:column>  
+                </p:dataTable>
+                <h:panelGrid columns="2" style="width:780px; font-size: 14px; text-align: center; padding-top: 20px;">
+
+                    <p:commandButton value="Skip to analysis" 
+                                     ajax="false" 
+                                     onclick="PF('statusDialog').show()"
+                                     style="width:150px;"
+                                     disabled="#{!sessionBean1.dataNormed}"
+                                     icon="pi pi-caret-right"
+                                     action="Multi-factors"/>
+                    <p:commandButton value="Proceed" 
+                                     ajax="false" 
+                                     onclick="PF('statusDialog').show()"
+                                     style="width:120px;"
+                                     icon="pi pi-caret-right"
+                                     rendered="#{!sessionBean1.isMetaBatchProject}"
+                                     action="#{mprocBean.metacheck_proceed()}"/>
+                    <p:commandButton value="Proceed"
+                                     style="width:120px;"
+                                     icon="pi pi-caret-right"
+                                     rendered="#{sessionBean1.isMetaBatchProject}"
+                                     onclick="PF('fireBatchSaveDialog').show()"
+                                     action="#{mprocBean.metacheck_proceed4batch()}"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+
+        <p:dialog modal="true" widgetVar="fireBatchSaveDialog" 
+                  style="width: 400px; " 
+                  dynamic="true"
+                  appendTo="@(body)" 
+                  draggable="false" closable="true" resizable="false"> 
+            <h:form id="formFireDocx">
+                <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px">
+                    <h1 style="font-size: 25px;"> 
+                        <i class="pi pi-save" style="font-size: 2.0rem;"></i>
+                        Create your batch project
+                    </h1>    
+                    <p style="font-size: 14px">Resume later through your "Analysis Launchpad"</p>
+                    <h:panelGrid columns="2" style="width:360px;">
+                        <h4 style="color:#000000;">Title</h4>
+                        <p:inputText id="float-input" value="#{fireBaseController.fireDocName}"/>
+                        <h4 style="color:#000000;">Description</h4>
+                        <p:inputTextarea rows="6" cols="33" value="#{fireBaseController.fireDocDescription}"/>
+                    </h:panelGrid>
+                    <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
+                        <p:commandButton value="Save"
+                                         actionListener="#{batchprocess.exeBatchProcessing()}"
+                                         oncomplete="PF('fireBatchSaveDialog').hide();"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="smplGrpDialog" header="Edit metadata" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                  hideEffect="explode" resizable="true">
+            <h:form id="smplGrpForm">
+                <p:tabView widgetVar="tabWidget" style="width:95%; border:none" activeIndex="0">
+                    <p:tab title ="Edit (sample-level)">
+                        <h:panelGrid id="smplGrpView" style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
+                            <p:dataTable style="width:100%; font-size: 12px" var="smpl" rowIndexVar="rowInx" 
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         value="#{sessionBean1.sampleBeans}">  
+                                <p:column headerText="Sample ID">  
+                                    <h:outputText value="#{smpl.name}"/>  
+                                </p:column>   
+                                <p:column headerText="Group Label">  
+                                    <h:inputText value="#{smpl.group}"/>
+                                </p:column>   
+                            </p:dataTable>
+                            <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                                <p:commandButton value="Update" 
+                                                 actionListener="#{mprocBean.updateMetaPerSample()}" 
+                                                 update=":metaForm"
+                                                 onclick="PF('smplGrpDialog').hide()"/>
+                                <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                            </h:panelGrid> 
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title ="Order (factor-level)" rendered="#{multifacBean.selectedMetaDataBean.param eq 'disc'}">
+
+                        <h:panelGrid style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
+                            <p:orderList value="#{multifacBean.uniqueMetaList}" var="meta" controlsLocation="left" itemLabel="#{meta}" itemValue="#{meta}">
+                                <f:facet name="caption">Available</f:facet>
+
+                            </p:orderList>
+                            <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                                <p:commandButton value="Update" 
+                                                 actionListener="#{multifacBean.updateMetaOrder()}" 
+                                                 update=":metaForm"
+                                                 onclick="PF('smplGrpDialog').hide()"/>
+                                <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                            </h:panelGrid> 
+
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title ="Edit (factor-level)" rendered="#{multifacBean.selectedMetaDataBean.param eq 'disc'}">
+                        <h:panelGrid id="smplGrpView2" style="padding:10px 20px 10px 30px; font-size: 12px; width:480px;">
+                            <p style="font-size:13px; line-height: 21px">
+                                Since this change will affect many samples and is potentially dangerous, 
+                                the updated metadata will show as <u><b>a new metadata</b> at the bottom of metadata table. 
+                                    with the default name #####.1</u>. You can <b>click the name</b> to modify it.
+                            </p>
+                            <p:dataTable style="width:100%; font-size: 12px" var="smpl" rowIndexVar="rowInx" 
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         value="#{multifacBean.uniqueMetaNames}">  
+                                <p:column headerText="Original Name">  
+                                    <h:outputText value="#{smpl.name}"/>  
+                                </p:column>   
+                                <p:column headerText="New Name">  
+                                    <h:inputText value="#{smpl.group}"/>
+                                </p:column>   
+                            </p:dataTable>
+                            <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                                <p:commandButton value="Update" 
+                                                 actionListener="#{mprocBean.updateMetaPerFactor()}" 
+                                                 update=":metaForm"
+                                                 onclick="PF('smplGrpDialog').hide()"/>
+                                <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                            </h:panelGrid> 
+                        </h:panelGrid>
+                    </p:tab>
+                </p:tabView>
+            </h:form>         
+        </p:dialog>
+       
+
+        <p:dialog widgetVar="rmDialog" dynamic="true" modal="true" appendTo="@(body)" header="Delete Metadata" position="center center"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:480px; text-align: center">
+                <h:form id="rmForm">
+                    <p>
+                        Are you sure to remove the current data: <b>#{multifacBean.selectedMetaDataBean.name}</b>?
+                    </p>
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; padding-bottom: 20px">
+                        <p:commandButton value="Confirm"
+                                         oncomplete="PF('rmDialog').hide()"
+                                         actionListener="#{multifacBean.removeMeta()}"
+                                         update=":metaForm"/>
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('rmDialog').hide()"
+                                         update=":metaForm"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog> 
+        <p:dialog widgetVar="confDialog" dynamic="true" modal="true" appendTo="@(body)" header="Are you sure to proceed?" position="center center"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:480px; line-height: 23px; font-size: 14px; padding: 10px 20px 20px 30px">
+                <div>
+                    Metadata classes with the following statuses will be removed:
+                    <ol>
+                        <li>
+                            <font color="red">Missing values</font>
+                        </li>
+                        <li>
+                            <font color="red">Not all numeric</font> (for continuous metadata)
+                        </li>
+                        <li>
+                            <font color="red">Too many low replicates</font> (for discrete metadata)
+                        </li>
+                    </ol>
+
+                    Metadata classes with <font color="darkorange">Low replicates</font> will be retained but may cause errors in downstream data analysis.
+                </div>
+                <h:form id="confForm">
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Confirm"
+                                         oncomplete="PF('confForm').hide()"
+                                         ajax="false"
+                                         action="#{mprocBean.metacheck_confirm_proceed()}"/>
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('confForm').hide()"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog> 
+
+    </ui:define>
+</ui:composition>

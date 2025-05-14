@@ -1,0 +1,260 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Path library', '/Secure/pathinteg/IntegLibraryView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="formW">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Pathway Libraries</h2>
+                <p>
+                    Since the gene are mostly species-specific. Users should specify the corresponding species before proceeding. 
+                    The KEGG pathway was updated in December, 2024 using KEGG API. A total of 130 species, including common model 
+                    species and non-model species (e.g. pathogens).
+                </p>
+                <p:selectOneRadio id="customRadio" value="#{integProcesser.integOrg}" layout="custom">                    
+                    <f:selectItems value="#{integProcesser.pathLibOpt}" />
+                </p:selectOneRadio>
+                <p:panelGrid columns="2" layout="tabular" style="margin-left: 40px; padding-top: 10px">
+                    <h:panelGroup layout="block" style="width: 200px">
+                        <p:outputLabel style="font-size: 14px" value="Mammals [17]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 180px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='0'/><p:outputLabel value='Homo sapiens'/>
+                            <p:radioButton for='customRadio' itemIndex='1'/><p:outputLabel value='Mus musculus (house mouse)'/>
+                            <p:radioButton for='customRadio' itemIndex='2'/><p:outputLabel value='Rattus norvegicus (rat)'/>
+                            <p:radioButton for='customRadio' itemIndex='3'/><p:outputLabel value='Pan troglodytes (chimpanzee)'/>
+                            <p:radioButton for='customRadio' itemIndex='4'/><p:outputLabel value='Macaca mulatta (rhesus monkey)'/>
+                            <p:radioButton for='customRadio' itemIndex='5'/><p:outputLabel value='Macaca fascicularis (crab-eating macaque)'/>
+                            <p:radioButton for='customRadio' itemIndex='6'/><p:outputLabel value='Oryctolagus cuniculus (rabbit)'/>
+                            <p:radioButton for='customRadio' itemIndex='7'/><p:outputLabel value='Canis lupus familiaris (dog)'/>
+                            <p:radioButton for='customRadio' itemIndex='8'/><p:outputLabel value='Felis catus (domestic cat)'/>
+                            <p:radioButton for='customRadio' itemIndex='9'/><p:outputLabel value='Bos taurus (cow)'/>
+                            <p:radioButton for='customRadio' itemIndex='10'/><p:outputLabel value='Bos indicus (zebu cattle)'/>
+                            <p:radioButton for='customRadio' itemIndex='11'/><p:outputLabel value='Capra hircus (goat)'/>
+                            <p:radioButton for='customRadio' itemIndex='12'/><p:outputLabel value='Ovis aries (sheep)'/>
+                            <p:radioButton for='customRadio' itemIndex='13'/><p:outputLabel value='Sus scrofa (pig)'/>
+                            <p:radioButton for='customRadio' itemIndex='14'/><p:outputLabel value='Equus caballus (horse)'/>
+                            <p:radioButton for='customRadio' itemIndex='15'/><p:outputLabel value='Equus asinus (ass)'/>
+                            <p:radioButton for='customRadio' itemIndex='16'/><p:outputLabel value='Hipposideros armiger (great roundleaf bat)'/>
+                            <p:radioButton for='customRadio' itemIndex='17'/><p:outputLabel value='Desmodus rotundus (common vampire bat)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Birds [2]"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='18'/><p:outputLabel value='Gallus gallus (chicken)'/>
+                            <p:radioButton for='customRadio' itemIndex='19'/><p:outputLabel value='Taeniopygia guttata (zebra finch)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Fish [2]"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:panelGrid columns="2" style="font-size: 12px">
+                            <p:radioButton for='customRadio' itemIndex='20'/><p:outputLabel value='Danio rerio (zebrafish)'/>
+                            <p:radioButton for='customRadio' itemIndex='21'/><p:outputLabel value='Nothobranchius furzeri (turquoise killifish)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Flatworms [2]"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:panelGrid columns="2" style="font-size: 12px">
+                            <p:radioButton for='customRadio' itemIndex='22'/><p:outputLabel value='Schistosoma mansoni'/>
+                            <p:radioButton for='customRadio' itemIndex='23'/><p:outputLabel value='Schistosoma haematobium (urinary blood fluke)'/>
+
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Fungi [11]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 120px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='24'/><p:outputLabel value='Saccharomyces cerevisiae (budding yeast)'/>
+                            <p:radioButton for='customRadio' itemIndex='25'/><p:outputLabel value='Nakaseomyces glabratus'/>
+                            <p:radioButton for='customRadio' itemIndex='26'/><p:outputLabel value='Komagataella phaffii'/>
+                            <p:radioButton for='customRadio' itemIndex='27'/><p:outputLabel value='Candida albicans'/>
+                            <p:radioButton for='customRadio' itemIndex='28'/><p:outputLabel value='Pichia kudriavzevii'/>
+                            <p:radioButton for='customRadio' itemIndex='29'/><p:outputLabel value='Aspergillus clavatus'/>
+                            <p:radioButton for='customRadio' itemIndex='30'/><p:outputLabel value='Aspergillus niger (black aspergilli)'/>
+                            <p:radioButton for='customRadio' itemIndex='31'/><p:outputLabel value='Aspergillus flavus'/>
+                            <p:radioButton for='customRadio' itemIndex='32'/><p:outputLabel value='Coccidioides immitis'/>
+                            <p:radioButton for='customRadio' itemIndex='33'/><p:outputLabel value='Cryptococcus neoformans var. neoformans JEC21'/>
+                            <p:radioButton for='customRadio' itemIndex='34'/><p:outputLabel value='Cryptococcus gattii'/>
+
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Insects [9]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 120px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='35'/><p:outputLabel value='Drosophila melanogaster (fruit fly)'/>
+                            <p:radioButton for='customRadio' itemIndex='36'/><p:outputLabel value='Drosophila serrata'/>
+                            <p:radioButton for='customRadio' itemIndex='37'/><p:outputLabel value='Drosophila persimilis'/>
+                            <p:radioButton for='customRadio' itemIndex='38'/><p:outputLabel value='Anopheles arabiensis'/>
+                            <p:radioButton for='customRadio' itemIndex='39'/><p:outputLabel value='Aedes aegypti (yellow fever mosquito)'/>
+                            <p:radioButton for='customRadio' itemIndex='40'/><p:outputLabel value='Apis mellifera (honey bee)'/>
+                            <p:radioButton for='customRadio' itemIndex='41'/><p:outputLabel value='Bombyx mori (domestic silkworm)'/>
+                            <p:radioButton for='customRadio' itemIndex='42'/><p:outputLabel value='Acyrthosiphon pisum (pea aphid)'/>
+                            <p:radioButton for='customRadio' itemIndex='43'/><p:outputLabel value='Galleria mellonella (greater wax moth)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Nematodes [2]"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='44'/><p:outputLabel value='Caenorhabditis elegans (nematode)'/>
+                            <p:radioButton for='customRadio' itemIndex='45'/><p:outputLabel value='Brugia malayi (filaria)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Plants [11]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 140px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='46'/><p:outputLabel value='Arabidopsis thaliana (thale cress)'/>
+                            <p:radioButton for='customRadio' itemIndex='47'/><p:outputLabel value='Gossypium hirsutum (upland cotton)'/>
+                            <p:radioButton for='customRadio' itemIndex='48'/><p:outputLabel value='Arachis hypogaea (peanut)'/>
+                            <p:radioButton for='customRadio' itemIndex='49'/><p:outputLabel value='Hevea brasiliensis (rubber tree)'/>
+                            <p:radioButton for='customRadio' itemIndex='50'/><p:outputLabel value='Oryza sativa japonica (Japanese rice) (RefSeq)'/>
+                            <p:radioButton for='customRadio' itemIndex='51'/><p:outputLabel value='Triticum aestivum (bread wheat)'/>
+                            <p:radioButton for='customRadio' itemIndex='52'/><p:outputLabel value='Zea mays (maize)'/>
+                            <p:radioButton for='customRadio' itemIndex='53'/><p:outputLabel value='Chlamydomonas reinhardtii'/>
+                            <p:radioButton for='customRadio' itemIndex='54'/><p:outputLabel value='Chlorella variabilis'/>
+                            <p:radioButton for='customRadio' itemIndex='55'/><p:outputLabel value='Cyanidioschyzon merolae'/>
+                            <p:radioButton for='customRadio' itemIndex='56'/><p:outputLabel value='Glycine max (soybean)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Prokaryotes [54]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 240px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='57'/><p:outputLabel value='Escherichia coli K-12 MG1655'/>
+                            <p:radioButton for='customRadio' itemIndex='58'/><p:outputLabel value='Salmonella enterica subsp. enterica serovar Typhi CT18'/>
+                            <p:radioButton for='customRadio' itemIndex='59'/><p:outputLabel value='Shigella dysenteriae Sd197'/>
+                            <p:radioButton for='customRadio' itemIndex='60'/><p:outputLabel value='Klebsiella pneumoniae subsp. pneumoniae MGH 78578 (serotype K52)'/>
+                            <p:radioButton for='customRadio' itemIndex='61'/><p:outputLabel value='Klebsiella variicola At-22'/>
+                            <p:radioButton for='customRadio' itemIndex='62'/><p:outputLabel value='Yersinia pestis CO92 (biovar Orientalis)'/>
+                            <p:radioButton for='customRadio' itemIndex='63'/><p:outputLabel value='Serratia marcescens SM39'/>
+                            <p:radioButton for='customRadio' itemIndex='64'/><p:outputLabel value='Haemophilus influenzae Rd KW20 (serotype d)'/>
+                            <p:radioButton for='customRadio' itemIndex='65'/><p:outputLabel value='Vibrio cholerae O1 El Tor N16961'/>
+                            <p:radioButton for='customRadio' itemIndex='66'/><p:outputLabel value='Vibrio cholerae O1 El Tor FJ147'/>
+                            <p:radioButton for='customRadio' itemIndex='67'/><p:outputLabel value='Vibrio parahaemolyticus RIMD 2210633'/>
+                            <p:radioButton for='customRadio' itemIndex='68'/><p:outputLabel value='Pseudomonas aeruginosa PAO1'/>
+                            <p:radioButton for='customRadio' itemIndex='69'/><p:outputLabel value='Pseudomonas putida KT2440'/>
+                            <p:radioButton for='customRadio' itemIndex='70'/><p:outputLabel value='Legionella pneumophila subsp. pneumophila Philadelphia 1 (serogroup 1)'/>
+                            <p:radioButton for='customRadio' itemIndex='71'/><p:outputLabel value='Legionella hackeliae'/>
+                            <p:radioButton for='customRadio' itemIndex='72'/><p:outputLabel value='Francisella tularensis subsp. tularensis SCHU S4'/>
+                            <p:radioButton for='customRadio' itemIndex='73'/><p:outputLabel value='Francisella persica'/>
+                            <p:radioButton for='customRadio' itemIndex='74'/><p:outputLabel value='Neisseria meningitidis MC58 (serogroup B)'/>
+                            <p:radioButton for='customRadio' itemIndex='75'/><p:outputLabel value='Neisseria gonorrhoeae FA 1090'/>
+                            <p:radioButton for='customRadio' itemIndex='76'/><p:outputLabel value='Burkholderia mallei ATCC 23344'/>
+                            <p:radioButton for='customRadio' itemIndex='77'/><p:outputLabel value='Bordetella pertussis Tohama I'/>
+                            <p:radioButton for='customRadio' itemIndex='78'/><p:outputLabel value='Mesorhizobium japonicum MAFF 303099'/>
+                            <p:radioButton for='customRadio' itemIndex='79'/><p:outputLabel value='Rhizobium johnstonii'/>
+                            <p:radioButton for='customRadio' itemIndex='80'/><p:outputLabel value='Brucella abortus 2308'/>
+                            <p:radioButton for='customRadio' itemIndex='81'/><p:outputLabel value='Brucella ovis'/>
+                            <p:radioButton for='customRadio' itemIndex='82'/><p:outputLabel value='Acetobacter aceti'/>
+                            <p:radioButton for='customRadio' itemIndex='83'/><p:outputLabel value='Helicobacter pylori 26695'/>
+                            <p:radioButton for='customRadio' itemIndex='84'/><p:outputLabel value='Helicobacter bizzozeronii'/>
+                            <p:radioButton for='customRadio' itemIndex='85'/><p:outputLabel value='Bacillus subtilis subsp. subtilis 168'/>
+                            <p:radioButton for='customRadio' itemIndex='86'/><p:outputLabel value='Bacillus anthracis Ames'/>
+                            <p:radioButton for='customRadio' itemIndex='87'/><p:outputLabel value='Staphylococcus aureus subsp. aureus N315 (MRSA/VSSA)'/>
+                            <p:radioButton for='customRadio' itemIndex='88'/><p:outputLabel value='Staphylococcus haemolyticus JCSC1435'/>
+                            <p:radioButton for='customRadio' itemIndex='89'/><p:outputLabel value='Listeria monocytogenes EGD-e (serotype 1/2a)'/>
+                            <p:radioButton for='customRadio' itemIndex='90'/><p:outputLabel value='Listeria ivanovii subsp. ivanovii PAM 55'/>
+                            <p:radioButton for='customRadio' itemIndex='91'/><p:outputLabel value='Streptococcus pyogenes M1 476 (serotype M1)'/>
+                            <p:radioButton for='customRadio' itemIndex='92'/><p:outputLabel value='Streptococcus pneumoniae TIGR4 (virulent serotype 4)'/>
+                            <p:radioButton for='customRadio' itemIndex='93'/><p:outputLabel value='Clostridium tetani E88'/>
+                            <p:radioButton for='customRadio' itemIndex='94'/><p:outputLabel value='Mycobacterium tuberculosis H37Rv'/>
+                            <p:radioButton for='customRadio' itemIndex='95'/><p:outputLabel value='Mycobacterium leprae TN'/>
+                            <p:radioButton for='customRadio' itemIndex='96'/><p:outputLabel value='Nocardia otitidiscaviarum'/>
+                            <p:radioButton for='customRadio' itemIndex='97'/><p:outputLabel value='Nocardia asteroides'/>
+                            <p:radioButton for='customRadio' itemIndex='98'/><p:outputLabel value='Streptomyces albus'/>
+                            <p:radioButton for='customRadio' itemIndex='99'/><p:outputLabel value='Bifidobacterium longum NCC2705'/>
+                            <p:radioButton for='customRadio' itemIndex='100'/><p:outputLabel value='Synechococcus elongatus PCC7942'/>
+                            <p:radioButton for='customRadio' itemIndex='101'/><p:outputLabel value='Prochlorococcus marinus subsp. marinus CCMP1375'/>
+                            <p:radioButton for='customRadio' itemIndex='102'/><p:outputLabel value='Thermotoga maritima MSB8'/>
+                            <p:radioButton for='customRadio' itemIndex='103'/><p:outputLabel value='Lactiplantibacillus paraplantarum L-ZS9'/>
+                            <p:radioButton for='customRadio' itemIndex='104'/><p:outputLabel value='Weissella paramesenteroides FDAARGOS_414'/>
+                            <p:radioButton for='customRadio' itemIndex='105'/><p:outputLabel value='Weissella cibaria CH2'/>
+                            <p:radioButton for='customRadio' itemIndex='106'/><p:outputLabel value='Lactiplantibacillus plantarum WCFS1'/>
+                            <p:radioButton for='customRadio' itemIndex='107'/><p:outputLabel value='Latilactobacillus sakei subsp. sakei 23K'/>
+                            <p:radioButton for='customRadio' itemIndex='108'/><p:outputLabel value='Lactococcus lactis subsp. lactis Il1403'/>
+                            <p:radioButton for='customRadio' itemIndex='109'/><p:outputLabel value='Lacticaseibacillus rhamnosus GG'/>
+                            <p:radioButton for='customRadio' itemIndex='110'/><p:outputLabel value='Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Protists [16]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 540px; height: 160px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='111'/><p:outputLabel value='Plasmodium falciparum 3D7'/>
+                            <p:radioButton for='customRadio' itemIndex='112'/><p:outputLabel value='Plasmodium falciparum Dd2'/>
+                            <p:radioButton for='customRadio' itemIndex='113'/><p:outputLabel value='Plasmodium falciparum HB3'/>
+                            <p:radioButton for='customRadio' itemIndex='114'/><p:outputLabel value='Plasmodium reichenowi'/>
+                            <p:radioButton for='customRadio' itemIndex='115'/><p:outputLabel value='Plasmodium yoelii'/>
+                            <p:radioButton for='customRadio' itemIndex='116'/><p:outputLabel value='Plasmodium berghei'/>
+                            <p:radioButton for='customRadio' itemIndex='117'/><p:outputLabel value='Plasmodium knowlesi'/>
+                            <p:radioButton for='customRadio' itemIndex='118'/><p:outputLabel value='Plasmodium vivax'/>
+                            <p:radioButton for='customRadio' itemIndex='119'/><p:outputLabel value='Plasmodium cynomolgi'/>
+                            <p:radioButton for='customRadio' itemIndex='120'/><p:outputLabel value='Toxoplasma gondii'/>
+                            <p:radioButton for='customRadio' itemIndex='121'/><p:outputLabel value='Paramecium tetraurelia'/>
+                            <p:radioButton for='customRadio' itemIndex='122'/><p:outputLabel value='Trypanosoma brucei brucei'/>
+                            <p:radioButton for='customRadio' itemIndex='123'/><p:outputLabel value='Trypanosoma cruzi'/>
+                            <p:radioButton for='customRadio' itemIndex='124'/><p:outputLabel value='Leishmania major'/>
+                            <p:radioButton for='customRadio' itemIndex='125'/><p:outputLabel value='Trichomonas vaginalis'/>
+                            <p:radioButton for='customRadio' itemIndex='126'/><p:outputLabel value='Giardia lamblia'/>
+
+                        </h:panelGrid>
+                    </h:panelGroup>                 
+
+                    <h:panelGroup>
+                        <p:outputLabel style="font-size: 14px" value="Other animals [3]"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:panelGrid columns="2" style="font-size: 12px;">
+                            <p:radioButton for='customRadio' itemIndex='127'/><p:outputLabel value='Thamnophis sirtalis (common garter snake)'/>
+                            <p:radioButton for='customRadio' itemIndex='128'/><p:outputLabel value='Strongylocentrotus purpuratus (purple sea urchin)'/>
+                            <p:radioButton for='customRadio' itemIndex='129'/><p:outputLabel value='Daphnia pulex (common water flea)'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                </p:panelGrid>
+
+                <h:panelGrid style="width: 70%; text-align: center; padding-top: 10px;">
+                    <p:commandButton value="Proceed"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     icon="pi pi-caret-right" 
+                                     action="#{integProcesser.jointSubmit()}"/> 
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
+

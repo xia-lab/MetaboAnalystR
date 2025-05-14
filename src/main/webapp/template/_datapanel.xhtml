@@ -1,0 +1,198 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <!-- Dialog for Editing Group -->
+    <p:dialog widgetVar="smplPanelDialog" 
+              header="Edit Group"
+              dynamic="true" modal="true" appendTo="@(body)" height="460"
+              hideEffect="explode" resizable="true">
+        <h:form id="smplPanelForm">
+            <h:panelGrid id="smplGrpView" style="padding:10px; font-size: 12px; width:480px;">
+                <p:dataTable style="width:100%; font-size: 12px" var="smpl" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{sessionBean1.sampleBeans}">
+                    <p:column headerText="Sample ID">  
+                        <h:outputText value="#{smpl.name}"/>  
+                    </p:column>   
+                    <p:column headerText="Group Label">  
+                        <h:inputText value="#{smpl.group}"/>
+                    </p:column>   
+                </p:dataTable>
+                <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                    <p:commandButton value="Update" 
+                                     actionListener="#{procBean.updateSmplGroup()}" 
+                                     update=":dataListForm"
+                                     onclick="PF('smplPanelDialog').hide()"/>
+                    <p:commandButton value="Cancel" onclick="PF('smplPanelDialog').hide()"/>
+                </h:panelGrid> 
+            </h:panelGrid>
+        </h:form>         
+    </p:dialog>
+
+    <!-- Dialog for Editing Metadata -->
+    <p:dialog widgetVar="multiMetaDialog" header="Edit metadata" dynamic="true" modal="true" appendTo="@(body)" height="460"
+              hideEffect="explode" resizable="true">
+        <h:form id="multiMetaForm">
+            <p:dataTable style="width:700px;" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
+                         class="surface-card shadow-1 p-0 text-800" 
+                         value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
+                         disabledSelection="#{multifacBean.disableMetaSelection}"  editMode="cell" editable="true">
+                <p:ajax event="cellEdit" listener="#{multifacBean.onCellEdit}"/>
+
+                <p:column headerText="Name">  
+                    <p:cellEditor>
+                        <f:facet name="output"><h:outputText value="#{meta.name}" /></f:facet>
+                        <f:facet name="input"><p:inputText id="modelInput" value="#{meta.name}" style="width:95%"/></f:facet>
+                    </p:cellEditor>
+                </p:column>
+                <p:column headerText="Status">  
+                    <h:outputText escape='false' value="#{meta.status}"/>  
+                </p:column>  
+                <p:column headerText="Type">  
+                    <p:selectOneMenu value="#{meta.param}"  disabled="#{meta.disabled}">
+                        <f:selectItems value="#{optBean.clsShortenedOpts}" />
+                        <p:ajax listener="#{meta.updateMetaType()}" event="valueChange" />
+                    </p:selectOneMenu>  
+                </p:column>  
+                <p:column headerText="Edit">  
+                    <p:commandLink value="Edit" disabled="#{meta.disabled}" action="#{multifacBean.editMeta(meta)}" update=":dataListForm :smplGrpForm2" oncomplete="PF('smplGrpDialog2').show()"/>
+                </p:column>  
+                <p:column headerText="Remove">  
+                    <p:commandLink oncomplete="PF('rmDialog2').show()"
+                                   disabled="#{meta.disabled}"
+                                   actionListener="#{multifacBean.setSelectedMetaDataBean(meta)}"
+                                   update=":dataListForm :rmForm2">
+                        <span style="color: tomato;">
+                            <i class="pi pi-trash" style="color: tomato !important; font-size: 18px"/>
+                        </span>
+                    </p:commandLink>
+                </p:column>  
+            </p:dataTable>
+        </h:form>
+    </p:dialog>
+
+    <!-- Dialog for Confirming Metadata Removal -->
+    <p:dialog widgetVar="rmDialog2" dynamic="true" modal="true" appendTo="@(body)" header="Delete Metadata" position="center center"
+              hideEffect="explode" resizable="true"> 
+        <h:panelGrid style="width:480px; text-align: center">
+            <h:form id="rmForm2">
+                <p>
+                    Are you sure to remove the current data: <b>#{multifacBean.selectedMetaDataBean.name}</b>?
+                </p>
+                <h:panelGrid columns="2" style="width:100%; padding-top: 10px; padding-bottom: 20px">
+                    <p:commandButton value="Confirm"
+                                     oncomplete="PF('rmDialog2').hide()"
+                                     actionListener="#{multifacBean.removeMeta()}"
+                                     update=":multiMetaForm"/>
+                    <p:commandButton value="Cancel"
+                                     onclick="PF('rmDialog2').hide()"
+                                     update=":multiMetaForm"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid> 
+    </p:dialog>
+
+    <p:dialog widgetVar="smplGrpDialog2" header="Edit metadata" dynamic="true" modal="true" appendTo="@(body)" height="460"
+              hideEffect="explode" resizable="true">
+        <h:form id="smplGrpForm2">
+            <p:tabView widgetVar="tabWidget" style="width:95%; border:none" activeIndex="0">
+                <p:tab title ="Edit (sample-level)">
+                    <h:panelGrid id="smplGrpView" style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
+                        <p:dataTable style="width:100%; font-size: 12px" var="smpl" rowIndexVar="rowInx" 
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     value="#{sessionBean1.sampleBeans}">  
+                            <p:column headerText="Sample ID">  
+                                <h:outputText value="#{smpl.name}"/>  
+                            </p:column>   
+                            <p:column headerText="Group Label">  
+                                <h:inputText value="#{smpl.group}"/>
+                            </p:column>   
+                        </p:dataTable>
+                        <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                            <p:commandButton value="Update" 
+                                             actionListener="#{mprocBean.updateMetaPerSample()}" 
+                                             update=":multiMetaForm"
+                                             onclick="PF('smplGrpDialog').hide()"/>
+                            <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                        </h:panelGrid> 
+                    </h:panelGrid>
+                </p:tab>
+                <p:tab title ="Order (factor-level)" rendered="#{multifacBean.selectedMetaDataBean.param eq 'disc'}">
+
+                    <h:panelGrid style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
+                        <p:orderList value="#{multifacBean.uniqueMetaList}" var="meta" controlsLocation="left" itemLabel="#{meta}" itemValue="#{meta}">
+                            <f:facet name="caption">Available</f:facet>
+
+                        </p:orderList>
+                        <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                            <p:commandButton value="Update" 
+                                             actionListener="#{multifacBean.updateMetaOrder()}" 
+                                             update=":multiMetaForm"
+                                             onclick="PF('smplGrpDialog').hide()"/>
+                            <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                        </h:panelGrid> 
+
+                    </h:panelGrid>
+                </p:tab>
+                <p:tab title ="Edit (factor-level)" rendered="#{multifacBean.selectedMetaDataBean.param eq 'disc'}">
+                    <h:panelGrid id="smplGrpView2" style="padding:10px 20px 10px 30px; font-size: 12px; width:480px;">
+                        <p style="font-size:13px; line-height: 21px">
+                            Since this change will affect many samples and is potentially dangerous, 
+                            the updated metadata will show as <u><b>a new metadata</b> at the bottom of metadata table. 
+                                with the default name #####.1</u>. You can <b>click the name</b> to modify it.
+                        </p>
+                        <p:dataTable style="width:100%; font-size: 12px" var="smpl" rowIndexVar="rowInx" 
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     value="#{multifacBean.uniqueMetaNames}">  
+                            <p:column headerText="Original Name">  
+                                <h:outputText value="#{smpl.name}"/>  
+                            </p:column>   
+                            <p:column headerText="New Name">  
+                                <h:inputText value="#{smpl.group}"/>
+                            </p:column>   
+                        </p:dataTable>
+                        <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                            <p:commandButton value="Update" 
+                                             actionListener="#{mprocBean.updateMetaPerFactor()}" 
+                                             update=":multiMetaForm"
+                                             onclick="PF('smplGrpDialog').hide()"/>
+                            <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                        </h:panelGrid> 
+                    </h:panelGrid>
+                </p:tab>
+            </p:tabView>
+        </h:form>         
+    </p:dialog>
+
+    <p:dialog widgetVar="listMapDialog" 
+              header="Query and name mapping"
+              dynamic="true" modal="true" appendTo="@(body)" height="460"  width="800px"
+              hideEffect="explode" resizable="true">
+
+        <p:dataTable id="listMapTbl" style="width:100%; font-size: 12px" var="map" 
+                     class="surface-card shadow-1 p-0 text-800"
+                     rowIndexVar="rowInx" value="#{procBean.nameMaps}">  
+            <p:column headerText="Query">  
+                <h:outputText escape="false" value="#{map.query}"/>
+            </p:column>  
+            <p:column headerText="Hit">  
+                <h:outputText escape="false" value="#{map.hit}"/>
+            </p:column>  
+            <p:column headerText="HMDB">  
+                <h:outputText escape="false" value="#{map.hmdb_id}"/>
+            </p:column>  
+            <p:column headerText="PubChem">
+                <h:outputText escape="false" value="#{map.pubchem_id}"/>
+            </p:column>  
+            <p:column headerText="KEGG">  
+                <h:outputText escape="false" value="#{map.kegg_id}"/>
+            </p:column>    
+        </p:dataTable>
+
+
+
+    </p:dialog>
+</ui:composition>

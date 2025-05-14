@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('View result', '/Secure/pathinteg/IntegResultView.xhtml')}"/>        
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript">
+            function renderPath(pathname) {
+                document.getElementById('pathFrame').contentWindow.renderImage(pathname);
+            }
+        </script>
+    </ui:define> 
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Result View</h2>
+            <p>The <b>overview</b> on the left shows all matched pathways according to the 
+                p values from the pathway enrichment analysis and pathway impact values from the pathway topology 
+                analysis. Placing your <u>mouse over</u> each pathway node will reveal its pathway name.
+                <u>Clicking each node</u> will launch the <b>pathway view</b> on the right panel.
+            </p>
+            <p>
+                The pathway can be launched either by clicking the corresponding node on the left image or by clicking the 
+                pathway name from the table below. Please note, each node is clickable. 
+                You can <u>zoom in and out</u> using the control buttons below, and then <u>drag</u> the 
+                image to the locations of interest.  Placing the <u>mouse over</u> each node will reveal 
+                its common name. <u>Clicking the node</u> will trigger the <b>details view</b>.   
+            </p> 
+        </h:panelGrid>
+        <h:form>
+            <h:panelGrid columns="2" style="text-align: right; padding-right:20px; width:1080px;">
+                <h:panelGrid columns="2" style="text-align: right; padding-right:30px; width:980px;">
+                    <h:panelGrid columns="2" style="text-align: right; padding-right:30px; width:500px;">
+                        <h:panelGrid columns="3" style="text-align: left; padding-left:30px; width:280px;">
+                            <p:selectBooleanCheckbox value ="#{integResBean.showGrid}" style="line-height: 18px"/>
+                            <h:outputLabel style="font-weight: bold" value="Show gridline"/>
+                            <p:commandButton value="Update" actionListener="#{integResBean.updatePathView()}" update=":myBox"/>
+                        </h:panelGrid>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('path_view')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pathway')}" 
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customize the graphics output">
+                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                    </p:commandLink>
+                </h:panelGrid> 
+                <a href="../viewer/_path_viewer_v1.8.html" target="_blank">
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/expand.png" border="0" style="width: 26px; background:white"/>
+                </a> 
+            </h:panelGrid>
+        </h:form>
+
+        <h:panelGrid style="width: 1200px; height:580px; margin: 0; padding-left: 30px; " id="myBox">
+            <iframe frameborder="0" id="pathFrame" 
+                    src="../viewer/_path_viewer_v1.8.html?userID=#{sessionBean1.currentUser.name}" style="border-width: 0px; height: 570px; width: 1180px"></iframe>
+        </h:panelGrid>
+
+        <hr class="style-one"/>
+
+        <h:form style="padding:10px 20px 10px 20px;">
+            <div>
+                Click the corresponding <b>Pathway Name</b> to view its graphical presentation; 
+                click <b>Match Status</b> to view the pathway members (with matched ones highlighted). 
+            </div>
+            <h:panelGrid columns="3" style="width:95%; text-align: center; padding: 10px 10px 20px 40px; text-align: center">
+                <p:commandButton value="Results Table" ajax="false" 
+                                 onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                 icon="pi pi-download">  
+                    <p:fileDownload value="#{integResBean.downloadPathwayFile}"/>  
+                </p:commandButton> 
+
+                <p:commandButton value="Matched Features" ajax="false" 
+                                 onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                 icon="pi pi-download">  
+                    <p:fileDownload value="#{integResBean.downloadPathwayMatchingFile}"/>  
+                </p:commandButton>
+
+                <p:commandButton value="Network Explorer"
+                                 onclick="PF('netlib').show();"
+                                 icon="pi pi-caret-right"
+                                 rendered = "#{integProcesser.datatype ne 'peak'}">
+                </p:commandButton>
+
+            </h:panelGrid>
+            <p:dataTable rows="20" paginator="true" id="resTbl" paginatorPosition="bottom"
+                         class="surface-card shadow-1 p-0 text-800"
+                         style="width:95%; font-size: 12px" var="pab" value="#{integResBean.paBeans}">
+                <p:column headerText="Pathway Name" width="320px">
+                    <p:commandLink value="#{pab.setName}" onclick="renderPath('#{pab.setName}')" update=":hisTab:cmdPane"/>
+                </p:column>
+                <p:column headerText="#{integResBean.hitsHeader}"> 
+                    <p:commandLink value="#{pab.match}" update=":detailView" oncomplete="PF('msetDialog').show()">  
+                        <f:setPropertyActionListener value="#{pab.setName}" target="#{sessionBean1.currentPathName}"/>
+                    </p:commandLink>
+                </p:column>
+                <p:column rendered="#{integProcesser.datatype eq 'peak'}"
+                          headerText="p compound">  
+                    <h:outputText escape="false" value="#{pab.pcmpd}"/>
+                </p:column>
+                <p:column rendered="#{integProcesser.datatype eq 'peak'}"
+                          headerText="p gene/protein">  
+                    <h:outputText escape="false" value="#{pab.pgene}"/>
+                </p:column>
+                <p:column rendered="#{integProcesser.datatype eq 'peak'}"
+                          headerText="p merged">  
+                    <h:outputText escape="false" value="#{pab.PVal}"/>
+                </p:column>
+                <p:column rendered="#{integProcesser.datatype ne 'peak'}"
+                          headerText="p value">  
+                    <h:outputText escape="false" value="#{pab.PVal}"/>
+                </p:column>
+                <p:column headerText="-log(p)">  
+                    <h:outputText escape="false" value="#{pab.logP}"/>
+                </p:column>  
+                <p:column headerText="Holm p">  
+                    <h:outputText escape="false" value="#{pab.holmPval}"/>
+                </p:column>  
+                <p:column headerText="FDR">  
+                    <h:outputText escape="false" value="#{pab.fdrPval}"/>
+                </p:column>  
+                <p:column rendered="#{integProcesser.datatype ne 'peak'}" 
+                          headerText="Impact">  
+                    <h:outputText escape="false" value="#{pab.impVal}"/>
+                </p:column> 
+                <p:column headerText="Link">  
+                    <h:outputText escape="false" value="#{pab.details}"/>
+                </p:column>   
+            </p:dataTable>    
+            <h:panelGrid style="width:95%; padding-bottom: 20px; text-align: center">
+                <p:commandButton value="Proceed" ajax="false" style="font-size: 14px"
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"                              
+                                 action="Download"/>
+            </h:panelGrid> 
+        </h:form>
+        <p:dialog widgetVar="msetDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  width="650px" height="500px"
+                  hideEffect="explode" resizable="true" header="Matched Features"> 
+            <h:form id="detailView">
+                <p:dataTable style="width:100%; font-size: 12px" var="set" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{integResBean.currentPathSet}">
+                    <p:column headerText="Current Selection:">  
+                        <h:outputText escape="false" value="#{set.name}"/>
+                        <hr/>
+                        <h:outputText escape="false" value="#{set.members}"/>
+                    </p:column>  
+                </p:dataTable> 
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="netlib" dynamic="true" modal="true" appendTo="@(body)" header="Network Options"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:480px; text-align: left">
+                <h:form id="netlibform">
+                    <p style="font-size: 16px">
+                        <b>Select a library for network enrichment analysis</b>
+                    </p>
+                    <p style="font-size: 12px">
+                        Note: the default option (All Complete Pathways) is based on all complete pathway libraries, while the Filtered Pathways will enrich the result 
+                        into the KEGG global pathway (<a href="https://www.genome.jp/pathway/map01100" target="_blank">map01100</a>). Some Genes or compounds may be missing
+                        to display for second option.
+                    </p>
+
+                    <p:selectOneRadio style ="margin:auto; padding-top: 10px; padding-bottom: 15px" value="#{integResBean.netLibOpt}">
+                        <f:selectItem itemLabel="All Complete Pathways" itemValue="allp"/>
+                        <f:selectItem itemLabel="Filtered Pathways" itemValue="global"/>                        
+                    </p:selectOneRadio>
+
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; padding-bottom: 20px; text-align: center">
+                        <p:commandButton value="Confirm"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('netlib').hide();PF('statusDialog').hide()"
+                                         action="#{integResBean.doTargetIntegNetwAna()}"/>
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('netlib').hide()"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+
+    </ui:define>
+</ui:composition>

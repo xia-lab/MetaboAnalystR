@@ -1,0 +1,114 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <ol>
+            <li>
+                Spectral Format - only mzML, mzXML, mzData and netCDF formats are currently supported;
+            </li>
+            <li>
+                MS Mode - only spectra in <b>centroid mode</b> are supported in the online platform. Click <b>Convert</b> to centroid your profile data online. 
+                <u>This conversion process will take some time, please be patient .... </u>
+            </li>                    
+            <li>
+                If a meta data file is provided;
+                <ul>
+                    <li>
+                        The first column (spectral names) must match the sample names in the meta-data file;
+                    </li>                        
+                    <li>
+                        The second column (group labels) must contain at least two groups (not including QC), each containing over 3 replicates.
+                    </li>
+                </ul>
+            </li> 
+        </ol>
+
+        <h:form id="formx">
+            <p:dataTable id="netTb" style="font-size: 12px; padding: 10px 20px 20px 20px"
+                         var="data" rows="20" rowsPerPageTemplate="20,50,100" 
+                         class="surface-card shadow-1 p-0 text-800"
+                         paginator="true" paginatorPosition="bottom" 
+                         value="#{spectraProcessor.specBeans}" 
+                         selection="#{spectraProcessor.selectedData}" 
+                         rowKey="#{data.name}"> 
+                <p:column headerText="Spectra" style="width:300px;;">
+                    #{data.name}  
+                </p:column>  
+                <p:column headerText="#{spectraProcessor.centroidColName}" style="width:120px;">  
+                    <p:outputLabel escape="false" value="#{data.format}" /> 
+                </p:column>
+                <p:column headerText="Size (MB)" style="width:150px;">  
+                    #{data.size}  
+                </p:column>
+                <p:column headerText="MS Level" style="width:100px;" rendered="#{spectraProcessor.isms2}">  
+                    #{data.MS_level}  
+                </p:column>  
+                <p:column headerText="Group" style="width:170px;">
+                    #{data.group} 
+                </p:column>
+                <p:column headerText="Include" style="width:40px; text-align: center">  
+                    <p:selectBooleanCheckbox value="#{data.include}" disabled="#{data.disabled}" style="line-height: 18px">
+                        <p:ajax event="change" listener="#{spectraProcessor.includeMessage(data.include, data.name)}"/>
+                    </p:selectBooleanCheckbox>  
+                </p:column> 
+            </p:dataTable>
+        </h:form>
+    </h:panelGrid>
+
+    <p:dialog modal="true" widgetVar="fireBatchSaveDialog" 
+              style="width: 400px; " 
+              dynamic="true"
+              appendTo="@(body)" 
+              draggable="false" closable="true" resizable="false"> 
+        <h:form id="formFireDocx">
+            <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px">
+                <h1 style="font-size: 25px;"> 
+                    <i class="pi pi-save" style="font-size: 2.0rem;"></i>
+                    Create your batch project
+                </h1>    
+                <p style="font-size: 14px">Resume later through your "Analysis Launchpad"</p>
+                <h:panelGrid columns="2" style="width:360px;">
+                    <h4 style="color:#000000;">Title</h4>
+                    <p:inputText id="float-input" value="#{fireBaseController.fireDocName}"/>
+                    <h4 style="color:#000000;">Description</h4>
+                    <p:inputTextarea rows="6" cols="33" value="#{fireBaseController.fireDocDescription}"/>
+                </h:panelGrid>
+                <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
+                    <p:commandButton value="Save"
+                                     actionListener="#{batchprocess.exeBatchProcessing()}"
+                                     oncomplete="PF('fireBatchSaveDialog').hide();"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog widgetVar="smplGrpDialog" 
+              header="Edit Group"
+              dynamic="true" modal="true" appendTo="@(body)" height="460"
+              hideEffect="explode" resizable="true">
+        <h:form id="smplGrpForm">
+            <h:panelGrid id="smplGrpView" style="padding:10px; font-size: 12px; width:480px;">
+                <p:dataTable style="width:100%; font-size: 12px" var="smpl" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{sessionBean1.sampleBeans}">  
+                    <p:column headerText="Sample ID">  
+                        <h:outputText value="#{smpl.name}"/>  
+                    </p:column>   
+                    <p:column headerText="Group Label">  
+                        <h:inputText value="#{smpl.group}"/>
+                    </p:column>   
+                </p:dataTable>
+                <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                    <p:commandButton value="Update" 
+                                     actionListener="#{procBean.updateSmplGroup()}" 
+                                     update=":formCheck"
+                                     onclick="PF('smplGrpDialog').hide()"/>
+                    <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                </h:panelGrid> 
+            </h:panelGrid>
+        </h:form>         
+    </p:dialog>
+</ui:composition>

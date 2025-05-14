@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Set parameter', '/Secure/pathinteg/IntegPeakParam.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{peakcBean.customButton_action()}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="formW">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Parameter Settings</h2>
+                <p>
+                    For untargeted (global) metabolomics with peaks as input, the <i style="color: darksalmon">mummichog</i> algorithm 
+                    (<a href="https://doi.org/10.1371/journal.pcbi.1003123" target="_blank">Li et al</a>) will be used for
+                    pathway activity prediction. The resulting pathway p-values will be integrate with pathway
+                    p values from <i style="color: darksalmon">Hypergeometric Test</i> based on significant gene list (see the image below).  
+                    For advanced users, you can adjust p value cutoff (for selecting significant peaks for mummichog) and/or 
+                    edit currency metabolites and potential adducts (for peak annotation). 
+                </p>
+                <p:graphicImage id="integimg" style="width: 760px; padding: 10px 10px 10px 30px" value="/resources/images/path_integ_method.png"/>
+
+                <h:panelGrid columns="2" cellpadding="5" style="width:780px; padding: 10px 10px 10px 30px">
+                    <h:panelGroup layout="block" style="width: 180px;">
+                        <p:outputLabel style="font-weight: bold;" value="Pathway library"/>
+                    </h:panelGroup>
+                    <p:selectOneRadio value="#{integResBean.pathDBOpt}">  
+                        <f:selectItem itemLabel="Metabolic Pathways&ensp;&nbsp;" itemValue="mgenetic"/>
+                        <f:selectItem itemLabel="All Pathways" itemValue="genetic"/>
+                    </p:selectOneRadio>
+
+                    <p:outputLabel style="font-weight: bold" value="View option"/>
+                    <p:selectOneRadio value="#{integResBean.viewOpt}">   
+                        <f:selectItem itemLabel="Pathway view&emsp;&emsp;&emsp;&ensp;" itemValue="path"/>
+                        <f:selectItem itemLabel="Network view" itemValue="netw"/>
+                    </p:selectOneRadio>
+
+                    <p:outputLabel style="font-weight: bold" value="Pathway p-value integration"/>
+                    <p:selectOneMenu value="#{integResBean.pvalmethod}" style="width:200px">
+                        <f:selectItem itemLabel="Fisher's method" itemValue="fisher"/>
+                        <f:selectItem itemLabel="Stouffer's method" itemValue="stouffer"/>
+                    </p:selectOneMenu>
+
+                    <h:panelGroup layout="block" style="width: 160px;">
+                        <p:outputLabel style="font-weight: bold" value="Advanced options"/>
+                        <br/>
+                        <p:outputLabel style="font-style: italic; color: grey" value="(for mummichog only)"/>
+                    </h:panelGroup>
+                    <h:panelGrid columns="2">
+                        <h:panelGroup layout="block" style="width: 120px;">
+                            <p:outputLabel value="Peak annotation:"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block">
+                            <p:commandLink value="Currency Compounds" onclick="PF('currDialog').show()" 
+                                           title="Currency metabolites, like water, C02 are encouraged to be excluded."/>
+                            <p:spacer style="width: 20px"/>
+                            <p:commandLink value="Adduct List" onclick="PF('addDialog').show()"
+                                           title="Users are encourged to define the adducts. All adducts will be used by default."/>
+                        </h:panelGroup>
+
+                        <p:outputLabel value="Sig. peaks cutoff:" title="cut-off of sig. peaks for mummichog."/>
+                        <h:panelGroup layout="block">
+                            <h:inputText style="width: 80px;" value="#{integProcesser.pvalCutoff}" disabled="#{integProcesser.disabledMumPval}"/>
+                            <p:outputLabel style="color: gray; padding-right: 30px;" value=" (default select top 10% peaks)"/>
+                        </h:panelGroup>
+                    </h:panelGrid>  
+                </h:panelGrid>
+                <h:panelGrid style="width: 800px; text-align: center; padding-top: 20px;">
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     icon="pi pi-caret-right" 
+                                     action="#{integResBean.doIntegPathwayAnalysis()}"/> 
+                </h:panelGrid>
+
+            </h:panelGrid>
+        </h:form>
+
+        <p:dialog header="Currency Metabolite Customization"
+                  widgetVar="currDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid style="padding: 10px; padding-left: 35px; width:550px; font-size: 13px; line-height: 23px"> 
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Use the panels below to select metabolites to include as currency:"/>
+                    <p:pickList value="#{peakcBean.currItems}"
+                                var ="curr" 
+                                itemValue="#{curr}" 
+                                itemLabel="#{curr}"
+                                showSourceFilter="true" 
+                                showTargetFilter="true">
+                        <f:facet name="sourceCaption">Available</f:facet>
+                        <f:facet name="targetCaption">Include</f:facet>
+                        <p:ajax event="transfer" 
+                                listener="#{peakcBean.doTransfer(event)}"/>
+                    </p:pickList>
+
+                    <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Submit" 
+                                         style="width:80px" 
+                                         ajax="false"
+                                         oncomplete ="PF('currDialog').hide()"
+                                         action="#{peakcBean.editCurrencyvoid()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Adduct Customization"
+                  widgetVar="addDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid style="padding: 10px; padding-left: 35px; width:550px; font-size: 13px; line-height: 23px"> 
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Use the panels below to select adducts to consider:"/>
+                    <p:pickList id="adductPane" value="#{peakcBean.adductItems}"
+                                var ="add" itemValue="#{add}" itemLabel="#{add}"
+                                showSourceFilter="true" showTargetFilter="true">
+                        <f:facet name="sourceCaption">Available</f:facet>
+                        <f:facet name="targetCaption">Include</f:facet>
+                        <p:ajax event="transfer" listener="#{peakcBean.doTransfer}"/>
+                    </p:pickList>
+
+                    <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Submit" style="width:80px" ajax="false" 
+                                         oncomplete ="PF('addDialog').hide()"
+                                         action="#{peakcBean.editAdductsvoid()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+        <p:dialog widgetVar="netlib" dynamic="true" modal="true" appendTo="@(body)" header="Network Options" position="center center"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:480px; text-align: left">
+                <h:form id="confForm">
+                    <p style="font-size: 16px">
+                        <b>Select a library for network enrichment analysis</b>
+                    </p>
+                    <p style="font-size: 12px">
+                        Note: the default option (All Complete Pathways) is based on all complete pathway libraries, while the Filtered Pathways will enrich the result 
+                        into the KEGG global pathway (<a href="https://www.genome.jp/pathway/map01100" target="_blank">map01100</a>). Some Genes or compounds may be missing
+                        to display for second option.                     
+                    </p>
+
+                    <p:selectOneRadio style ="margin:auto; padding-top: 10px; padding-bottom: 15px" value="#{integResBean.netLibOpt}">
+                        <f:selectItem itemLabel="All Complete Pathways" itemValue="allp"/>
+                        <f:selectItem itemLabel="Filtered Pathways" itemValue="global"/>                        
+                    </p:selectOneRadio>
+
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; padding-bottom: 20px; text-align: center">
+                        <p:commandButton value="Confirm"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('netlib').hide();PF('statusDialog').hide()"
+                                         action="#{integResBean.doIntegNetworkAnalysis()}"/>
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('netlib').hide()"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog> 
+
+    </ui:define>
+</ui:composition>
+
+

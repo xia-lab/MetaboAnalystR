@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('View result','/Secure/utils/PowerCurveView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <script type="text/javascript">
+            function extender() {
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Predicted Power'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Sample Size (per group)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            ;
+        </script>
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Sample Size and Power Analysis Result</h2>
+                <p>
+                    Statistical power depends on three main factors:
+                    <ol>
+                        <li>
+                            The magnitude of the effect of interest in the population (effect size);
+                        </li>
+                        <li>
+                            The sample size used to detect the effect;
+                        </li>
+                        <li>
+                            The statistical significance criterion used in the test;
+                        </li>
+                    </ol>
+                    The first factor (effect size) is estimated from your pilot data. The second factor (sample size) is your interest 
+                    (i.e. you want to investigate the sample size vs. statistic power to guide your next study design). The algorithm allows you to  
+                    explore a range of sample sizes from 3 to 1000 samples per group. You need to specify the third factor - a significance 
+                    criterion or alpha level. For a single biomarker, this is usually a p value. For high-dimensional metabolomic data, 
+                    the common choice is false discovery rate or FDR.     
+                </p>
+                <p>
+                    Please note, FDR-level should be smaller than the proportion of non-differentially expressed genes. 
+                    In cases where the pilot data shows very strong effect size, if you choose a very lenient FDR value,
+                    then most features will be significant, which will leads to invalid models. The system will automatically 
+                    re-adjust the FDR level to get meaningful results.
+                </p>
+                <h:panelGrid columns="3" style="margin-left: 20px">      
+                    <h:panelGrid columns="2">
+                        <h:outputLabel style="font-weight: bold" value="Please specify a false discovery rate (FDR): "/>
+                        <p:inputText id="fdrLvl" style="width: 120px" value="#{powerAnalBean.fdr}" required="true"
+                                     requiredMessage="Must set a FDR level"/>
+                        <h:outputLabel style="font-weight: bold" value="Maximum sample size per group [60, 1000]: "/>
+                        <p:inputText style="width: 120px" value="#{powerAnalBean.smplSize}" required="true"
+                                     requiredMessage="Must set a sample size"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit"  
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"  
+                                     update=":form1:chart :form1:fdrLvl  :hisTab:cmdPane"
+                                     actionListener="#{powerAnalBean.updateModel()}"/>
+                </h:panelGrid> 
+                <h:panelGrid style="padding-top: 10px; text-align: center; width: 95%; max-width: 1200px">
+                    <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('power_profile')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Regular PNG Image">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+                    <p:lineChart id="chart" model="#{powerAnalBean.lineModel}" style="width: 100%; height: 500px;"/>
+
+                    <h:panelGrid style="width: 100%; text-align: center; padding-top: 20px">
+                        <p:commandButton value="Proceed" ajax="false" 
+                                         style="width:100px; height: 32px"
+                                         icon="pi pi-caret-right" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="Download"/>
+                    </h:panelGrid> 
+                </h:panelGrid>  
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

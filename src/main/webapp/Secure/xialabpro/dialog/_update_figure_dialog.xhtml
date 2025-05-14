@@ -1,0 +1,53 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <script>
+        function startNavigation(pagesToVisit) {
+            localStorage.setItem('pagesToVisit', JSON.stringify(pagesToVisit));
+            console.log("pagesToVisit = " + pagesToVisit);
+
+            PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Execution Finished! Now fetching result images... Please be patient."}]);
+
+            setTimeout(function () {
+                window.location.href = pagesToVisit[0];
+            }, 1500); // Navigate to the first page
+
+        }
+    </script>
+    <p:dialog header="Update your figures"
+              widgetVar="updateFigDialog"
+              showEffect="fade"
+              hideEffect="fade"
+              modal="true"
+              width="600"
+              height="200"
+              closable="true"
+              draggable="false"
+              resizable="false"
+              appendTo="@(body)">
+        <h:form>
+            <h:panelGrid columns="1" style="width:100%; line-height: 1.5; padding: 10px; font-size: 14px;" columnClasses="align-left">
+                <div style="display: flex; align-items: flex-start; margin-top: 30px;">
+                    <span class="pi pi-info-circle" style="font-size: 20px; margin-right: 10px; color: #f39c12;"></span>
+                    <div>You are about to update the demo figures, this process will take a few minutes.</div>
+                </div>
+            </h:panelGrid>
+
+            <div style="text-align: center; margin-top: 50px;">
+                <p:commandButton value="Cancel" 
+                                 style="width:120px; font-size: 14px; margin-right: 10px;" 
+                                 onclick="PF('updateFigDialog').hide();" />
+
+                <p:commandButton value="Confirm" 
+                                 style="width:120px; font-size: 14px;" 
+                                 actionListener="#{diagramView.checkPagesToVisit()}" 
+                                 onclick="PF('updateFigDialog').hide();
+                                         PF('statusDialog').show();" 
+                                 />
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:composition>
+

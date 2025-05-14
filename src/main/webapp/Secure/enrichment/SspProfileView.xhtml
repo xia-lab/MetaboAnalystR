@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Conc. check', '/Secure/enrichment/SspProfileView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Comparison with Reference Concentrations</h2>
+                <p>
+                    ﻿Note: <i>reference concentrations</i> are in the form of <b>mean(min - max)</b> format. In cases where the ranges were not 
+                    reported in the original literature, the min and max were calculated using the 95% confidence intervals. In the 
+                    <i>Comparison</i> column, <b>H, M, L</b> means <b>higher, medium (within range), lower</b> compared to the reference concentrations.
+                    Click the <b>Image Icon</b> link to see a graphical summary for the comparisons.  
+                </p> 
+                <p:dataTable id="resTbl" style="width:100%; font-size: 12px" var="cb" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{mapBean.cmpdBeans}">  
+                    <p:column headerText="Compound" width="180px">  
+                        ﻿ <h:outputText escape="false" value="#{cb.name}"/> 
+                    </p:column>  
+                    <p:column headerText="Concentration" width="100px">  
+                        <h:outputText escape="false" value="#{cb.conc}"/> 
+                    </p:column>  
+                    <p:column headerText="Reference concentrations" style="font-size: 12px">  
+                        <h:outputText escape="false" value="#{cb.refConcs}"/>
+                    </p:column>  
+                    <p:column headerText="Comparison" width="80px" style="text-align: center">  
+                        <h:outputText escape="false" value="#{cb.state}"/>
+                    </p:column>  
+                    <p:column headerText="Detail" width="80px">  
+                        <p:commandLink value="View" update=":detailView :hisTab:cmdPane" oncomplete="PF('detailDialog').show()">  
+                            <f:setPropertyActionListener value="#{cb.name}" target="#{mapBean.currentCmpd}" /> 
+                        </p:commandLink> 
+                    </p:column>  
+                    <p:column headerText="Include" width="60px">  
+                        <p:selectBooleanCheckbox value="#{cb.include}" style="line-height: 18px"/>
+                    </p:column>   
+                </p:dataTable>         
+                <h:panelGrid style="width: 95%; text-align: center">
+                    <p:commandButton value="Next" ajax="false" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"                              
+                                     action="#{mapBean.sspNextBn_action()}"/>
+                </h:panelGrid> 
+            </h:panelGrid>
+        </h:form>
+        <p:dialog widgetVar="detailDialog" dynamic="true" modal="false" draggable="true"
+                  appendTo="@(body)" hideEffect="explode" resizable="true"> 
+            <p:panel style="width:560px; height:500px; border: none">
+                <h:panelGrid id="detailView" style="padding:5px; font-size: 11px; width: 550px; height:500px;">
+                    <h:panelGrid id="imgPane" style="text-align: center; width: 100%;">
+                        <img onerror='this.style.display="none"' src="#{mapBean.sspImg}" alt="SSPImage"/>
+                    </h:panelGrid> 
+                    <h:outputText escape="false" value="#{mapBean.sspDetailTxt}"/>
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="OK" onclick="PF('detailDialog').hide()"/>
+                    </h:panelGrid>
+                </h:panelGrid> 
+            </p:panel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

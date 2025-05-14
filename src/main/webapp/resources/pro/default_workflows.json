@@ -1,0 +1,118 @@
+[    
+    {
+        "id": 1,
+        "name": "Statistics (one factor)",
+        "description": "Statistical analysis of generic data table",
+        "input": "Feature table",
+        "analysisGoal": "Significance analysis and pattern discovery",
+        "analysisMethods": "Statistics (fold change, t-tests/ANOVA, volcano plot), chemometrics (PCA, PLS-DA, OPLS-DA, sPLS-DA), clustering (k-means, SOM), and machine learning methods (SVM, random forests)",
+        "output": "Significant features and patterns together with graphical outputs such as heatmaps, volcano plots, VIP plots, scores and loadings.",
+        "other": "NA",
+        "module": "stat",
+        "type": "default",
+        "image": "stat.png"
+    }
+    ,
+    {
+        "id": 2,
+        "name": "Statistics (multifactor)",
+        "description": "Statistical analysis of multifactor data",
+        "input": "Feature table and a metadata table",
+        "analysisGoal": "Explore your metadata, relationship between your features and metadata, multivariate analysis",
+        "analysisMethods": "Metadata visualization, interactive PCA Visualization, heatmap clustering, linear modeling, correlation analysis, multi-factor ANOVA, ASCA, Random Forest",
+        "output": "Various graphical outputs, statistical analysis result tables.",
+        "other": "NA",
+        "module": "mf",
+        "type": "default",
+        "image": "mf.png"
+    },
+    {
+        "id": 3,
+        "name": "Biomarker Analysis",
+        "description": "Biomarker analysis based on univariate or multivariate ROC curves",
+        "input": "Feature abundance table with binary response",
+        "analysisGoal": "Identify and validate potential biomarkers associated with specific phenotypes or conditions",
+        "analysisMethods": "Univariate ROC analysis, multivariate ROC based on PLS-DA, SVM and random forests, manual biomarker selection.",
+        "output": "Ranked biomarker tables, ROC curve plots, various performance measures.",
+        "other": "NA",
+        "module": "roc",
+        "type": "default",
+        "image": "roc.png"
+    },
+    {
+        "id": 4,
+        "name": "Dose Response Analysis",
+        "description": "Compute Benchmark doses using dose-response curves",
+        "input": "Feature abundance table include a control group (dose = 0) and at least three different dose groups",
+        "analysisGoal": "Model and evaluate dose-response relationships to determine key parameters such as metabolomics point of departure",
+        "analysisMethods": "Evaluating 10 statistical models (Exp2, Exp3, Exp4, Exp5, Linear, Poly2, Poly3, Poly4, Hill, Power) to model the concentration changes of each compound. The best fitting model is chosen based on AIC.",
+        "output": "Benchmark doses (BMD) based on the best fitting dose-response curves",
+        "other": "NA",
+        "module": "dose",
+        "type": "default",
+        "image": "dose.png"
+    },
+    {
+        "id": 5,
+        "name": "Functional Analysis",
+        "description": "Detect enriched or perturbed functions (metabolite sets or pathways) from LC-MS peaks (untargeted metabolomics).",
+        "input": "LC-MS peaks with m/z values, retention times, and optional statistics (e.g., p-values, fold changes).",
+        "analysisGoal": "Discover and interpret metabolic pathways and networks associated with the provided metabolomic features.",
+        "analysisMethods": "Mummichog or GSEA. Users can select different databases such as HMDB, KEGG, and LipidMaps.",
+        "output": "Significant pathways and network visualizations including pathway impact maps and enrichment heatmaps.",
+        "other": "Optimized for high-resolution mass spectrometry data.",
+        "module": "mummichog",
+        "type": "default",
+        "image": "mummichog.png"
+    },
+    {
+        "id": 6,
+        "name": "Enrichment Analysis",
+        "description": "Detect enriched or perturbed functions (metabolite sets or pathways) from metabolite concentration data (targeted metabolomics).",
+        "input": "Compound list with associated statistics (e.g., p-values, fold changes) or compound concentration table (Quantitative Enrichment Analysis)",
+        "analysisGoal": "Identify enriched pathways, processes, or ontological categories related to the input features.",
+        "analysisMethods": "Over-representation analysis and single sample profiling is based on Fisher's exact test or hypergeometric test; Quantitative Enrichment Analysis is based on GlobalTest or GlobalAncova.",
+        "output": "Enriched pathways and visualizations including pathway bar plots, dot plots, and enrichment maps.",
+        "other": "Supporting multiple metabolite set libraries based on pathways, disease signatures, chemical structures as well as self-defined metabolite sets.",
+        "module": "mset",
+        "type": "default",
+        "image": "mset.png"
+    }
+    , {
+        "id": 7,
+        "name": "Pathway Analysis",
+        "description": "Detect enriched or perturbed metabolic pathways from metabolite concentration data (targeted metabolomics)",
+        "input": "Compound list with associated statistics (e.g., p-values, fold changes) or compound concentration table.",
+        "analysisGoal": "Detect and interpret enriched pathways or ontological categories associated with the input features.",
+        "analysisMethods": "Over-representation analysis, gene set enrichment analysis (GSEA).",
+        "output": "Enriched pathway tables and associated pathway graphics.",
+        "other": "Supports multiple enrichment databases and provides tools for both exploratory and hypothesis-driven analyses.",
+        "module": "path",
+        "type": "default",
+        "image": "path.png"
+    }, {
+        "id": 8,
+        "name": "Network Analysis",
+        "description": "Joint analysis of genes and metabolites within biological pathways and networks.",
+        "input": "Metabolite list and gene list",
+        "analysisGoal": "Understand key functions and relationships from a given list of genes and metabolites.",
+        "analysisMethods": "Using knowledge-based networks including KEGG metabolic network, metabolite-disease network, gene-metabolite network, metabolite-metabolite network, metabolite-gene-disease network, Debiased Sparse Partial Correlation (DSPC) Network",
+        "output": "Subnetworks and modules based on input genes and metabolites, and enriched functions.",
+        "other": "NA",
+        "module": "network",
+        "type": "default",
+        "image": "network.png"
+    }, {
+        "id": 9,
+        "name": "Spectra Processing Workflow",
+        "description": "Preprocess LC-MS and MS/MS spectra.",
+        "input": "Raw or centroided LC-MS/MS data in standard formats (e.g., mzML, mzXML, CDF).",
+        "analysisGoal": "Perform LC-MS peak detection, alignment, and annotation",
+        "analysisMethods": "XCMS, asari, and MetaboAnalystR",
+        "output": "LC-MS peak intensity table, MS2 annotation table, and quality control reports.",
+        "other": "Supports flexible parameter settings for peak detection and alignment, and advanced options for noise filtering and adduct annotation.",
+        "module": "spec",
+        "type": "default"
+    }
+
+]

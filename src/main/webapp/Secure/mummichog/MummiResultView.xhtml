@@ -1,0 +1,251 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Mummi. result', '/Secure/mummichog/MummiResultView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chart.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/rainbowvis.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>        
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/mummichog_graphics_report.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.0.js"></script>
+    </ui:define>
+    <ui:define name="content">
+        <h:inputHidden id="mydir" value="#{sessionBean1.currentUser.relativeDir}" />
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Pathway Activity Profile</h2>
+            <p>
+                <u>Mouseover</u> any circle to view its name; <u>click</u> a circle to view compound matches. Click the <u>Network Explorer</u> to view
+                results in the KEGG global metabolic network. <u>Scroll down</u> to view the detailed the result table. 
+            </p>
+
+            <h:form id="imgForm">
+                <p:remoteCommand name="myRemote" partialSubmit="true" process="@this" update="summaryForm" action="#{mummiAnalBean.showPathDialog()}"/>
+
+                <h:panelGrid id="imgPane" style="text-align: right; padding-left: 200px">
+                    <h:panelGrid columns="4" style="margin-left: 540px; width: 200px">
+
+                        <p:commandLink onclick="reset()" title="Reset">
+                            <i class="pi pi-replay" style="font-size: 1.2rem"/>
+                        </p:commandLink>
+
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('peaks_to_paths')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+
+                        <p:commandLink onclick="exportToPng()"
+                                       title="PNG download">
+
+                        </p:commandLink>
+
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+
+                    </h:panelGrid>
+                    <p:tooltip for="helpIcon" styleClass="helpTip">
+                        <p>
+                            The Enrichment Factor of a pathway is the ratio between the number of significant pathway hits
+                            from the user uploaded data and the expected number of hits within that pathway.
+                        </p>
+                    </p:tooltip>
+                    <h:panelGrid class="surface-card shadow-1 p-4 text-800">
+
+                        <canvas id='canvas1' width='580px' height='540px'/>
+                         
+                    </h:panelGrid>  
+                </h:panelGrid>  
+
+            </h:form>  
+            <hr class="style-one"/> 
+            <h:form id="resTblForm">       
+                <h3>
+                    Detailed result table
+                </h3>
+                <h:panelGroup>
+                    Mouse over the <b>Help</b> icon to find more information on each columns
+                    <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png"  alt="help"/>
+                </h:panelGroup>
+
+                <p:tooltip for="helpIcon2" styleClass="helpTip">
+
+                    <h:panelGroup rendered="#{mummiAnalBean.mumVersion eq 'v2'}">
+                        <p>
+                            <b>Pathway total:</b> The total number of empirical compounds in the pathway.
+                        </p>
+
+                        <p>
+                            <b>Hits (all):</b> The total number of empirical compound hits from the user’s data.     
+                        </p>
+
+                        <p>
+                            <b>Hits (sig):</b> The minimum between either the total number of empirical compound hits
+                            or the number of m/z hits that are considered significant based on the user-provided p-value cutoff.    
+                        </p>
+
+                        <p>
+                            <b>Expected:</b> The expected number of empirical compound hits in the pathway.      
+                        </p>
+
+                        <p>
+                            <b>P(Fisher):</b>  The Fisher’s Exact Test p-value for the pathway. Multiple testing adjusted P values can be found in the download table.
+                        </p>
+                        <p>
+                            <b>P(EASE):</b> (Only in downloaded table) The EASE score is offered as a conservative adjustment to the Fisher exact probability that weights significance in favor of themes supported by more hits. 
+                            Multiple testing adjusted P values can be found in the download table. 
+                        </p>
+                        <p>
+                            <b>P(Gamma):</b> P-values derived from Gamma distribution based on permutation tests for the pathway. Multiple testing adjusted P values can be found in the download table.
+                        </p>
+
+                        <p>
+                            <b>Emp. Hits:</b> (Only in downloaded table) The number of times the permutation p-values per pathway was less than the p-values obtained using the “significant” m/z hits. 
+                        </p>
+
+                        <p>
+                            <b>Empirical P:</b> (Only in downloaded table) Empirical p-value for the pathway, calculated as the number of empirical hits divided by the number of permutations. 
+                        </p>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{mummiAnalBean.mumVersion eq 'v1'}">
+                        <p>
+                            <b>Pathway total:</b> The total number of metabolites in the pathway.
+                        </p>
+
+                        <p>
+                            <b>Hits (all):</b> The total number of compound hits from the user’s data.     
+                        </p>
+
+                        <p>
+                            <b>Hits (sig):</b> The minimum between either the total number of compound hits
+                            or the number of m/z hits that are considered significant based on the user-provided p-value cutoff.    
+                        </p>
+
+                        <p>
+                            <b>Expected:</b> The expected number of metabolite hits in the pathway.      
+                        </p>
+
+                        <p>
+                            <b>P(Fisher):</b>  The Fisher’s Exact Test p-values for the pathway. 
+                            Multiple testing adjusted P values can be found in the download table. 
+                        </p>
+                        <p>
+                            <b>P(EASE):</b> (Only in downloaded table) The EASE score is offered as a conservative adjustment to the Fisher exact probability that weights significance in favor of themes supported by more hits. 
+                            Multiple testing adjusted P values can be found in the download table. 
+                        </p>
+                        <p>
+                            <b>P(Gamma):</b> P-values derived from Gamma distribution based on permutation tests for the pathway. 
+                            Multiple testing adjusted P values can be found in the download table.
+                        </p>
+
+                        <p>
+                            <b>Emp. Hits:</b> (Only in downloaded table) The number of times the permutation p-values per pathway was less than the p-values obtained using the “significant” m/z hits. 
+                        </p>
+
+                        <p>
+                            <b>Empirical P:</b> (Only in downloaded table) Empirical p-value for the pathway, calculated as the number of empirical hits divided by the number of permutations. 
+                        </p>
+                    </h:panelGroup>
+
+                </p:tooltip>
+                <p:dataTable rows="20" resizableColumns="true" showGridlines="true" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom" 
+                             id="resTbl" var="mb" value="#{mummiAnalBean.mummiBeans}">  
+                    <p:column headerText="Pathway Name" width="320px">  
+                        <p:outputLabel value="#{mb.setName}"/>
+                    </p:column>  
+                    <p:column headerText="Total" sortBy="#{mb.setNum}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.setNum}"/>
+                    </p:column> 
+                    <p:column headerText="Hits (all)" sortBy="#{mb.refNum}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.refNum}"/>
+                    </p:column> 
+                    <p:column headerText="Hits (sig.)" sortBy="#{mb.hitNum}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.hitNum}"/>
+                    </p:column> 
+                    <p:column headerText="Expected" sortBy="#{mb.expect}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.expect}"/>
+                    </p:column>  
+                    <p:column headerText="P(Fisher)" sortBy="#{mb.fisherP}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.fisherP}"/>
+                    </p:column>  
+                    <p:column headerText="P(Gamma)" sortBy="#{mb.gammaP}" width="100px">  
+                        <h:outputText escape="false" value="#{mb.gammaP}"/>
+                    </p:column>   
+                    <p:column headerText="Details" width="100px">  
+                        <p:commandLink value="View" update=":detailView" oncomplete="PF('msetDialog').show()">  
+                            <f:setPropertyActionListener value="#{mb.setName}" target="#{sessionBean1.currentPathName}" />  
+                        </p:commandLink>
+                    </p:column>  
+                </p:dataTable> 
+
+            </h:form>
+        </h:panelGrid> 
+        <p:dialog header="Match Details" widgetVar="msetDialog" dynamic="true" modal="true" 
+                  appendTo="@(body)" hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="detailView" style="width:540px; font-size: 12px; padding: 10px" class="surface-card shadow-1 p-4 text-800">  
+                <p>
+                    The colored compounds indicate potential matches from the user's input, 
+                    with red colors indicating significant hits and blue colors indicating non-significant hits. 
+                    Note for users running V2, the number of hits listed in the results table will be lower
+                    than the number of compounds shown below. This is because the analysis is performed in the 
+                    Empirical Compound space, and for the sake of interpretability, we show which compounds
+                    were matched instead. Please search OmicsForum using "empirical compound #metaboanalyst".
+                </p>
+                <h:form id="summaryForm">
+                    <p:dataTable var="set" value="#{mummiAnalBean.currentPathSet}"
+                                 class="surface-card shadow-1 p-0 text-800">
+                        <p:column headerText="Pathway">  
+                            <h:outputText escape="false" value="#{set.name}"/>  
+                        </p:column>  
+                        <p:column headerText="Metabolites">  
+                            <h:outputText escape="false" value="#{set.members}"/>
+                        </p:column>   
+                    </p:dataTable> 
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+        <script type="text/javascript">
+            showMummichog();
+
+        </script>
+    </ui:define>
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Pathway Hits" ajax="false" 
+                                 style="width: 160px;"
+                                 onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                 icon="pi pi-download">  
+                    <p:fileDownload value="#{mummiAnalBean.pathEnrichFile}" />  
+                </p:commandButton>  
+
+                <p:commandButton value="Compound Hits" ajax="false" 
+                                 style="width: 170px;"
+                                 onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                 icon="pi pi-download">  
+                    <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
+                </p:commandButton>
+
+                <p:commandButton value="Network Explorer" 
+                                 disabled="#{!mummiAnalBean.showMumNetwork}"
+                                 ajax="false" 
+                                 style="width: 180px"
+                                 icon="pi pi-caret-right" 
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"                              
+                                 action="#{mummiAnalBean.proceed2Net()}"/> 
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

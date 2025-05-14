@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Statistics', '/Secure/analysis/AnalysisView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Select an analysis path to explore :</h2>
+                <h:panelGrid cellpadding="4" style="border: lightgray thin solid; width: 720px; margin-left: 36px;
+                             padding: 15px 20px 10px 25px; font-size: 13px;" class="surface-card shadow-1 p-4 text-800">
+                    <h:outputLabel style="font-weight: bold" value="Univariate Analysis"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        <h:panelGrid columns="5">
+                            <h:commandLink action="Fold change" disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="Fold Change Analysis"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink action="T-test" disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="T-tests"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink action="Volcano plot" disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="Volcano plot"/>
+                        </h:panelGrid>
+                        <h:commandLink action="ANOVA" disabled="#{not sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="One-way Analysis of Variance (ANOVA)"/>
+
+                        <h:panelGrid columns="5">
+                            <h:commandLink action="Correlations" onclick="PF('statusDialog').show()" value="Correlation Heatmaps"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink action="PatternHunter" onclick="PF('statusDialog').show()" value="Pattern Search"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink onclick="PF('statusDialog').show()" value="Correlation Networks (DSPC)"
+                                           action="#{sessionBean1.computeDspcNet()}"/>  
+                        </h:panelGrid>
+                    </h:panelGrid>
+                    <h:outputLabel style="font-weight: bold" value="Advanced Significance Analysis"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        <h:commandLink action="SAM" onclick="PF('statusDialog').show()" value="Significance Analysis of Microarray (and Metabolites) (SAM)"/>
+                        <h:commandLink action="EBAM" disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="Empirical Bayesian Analysis of Microarray (and Metabolites) (EBAM)"/>
+                    </h:panelGrid>  
+
+                    <h:outputLabel style="font-weight: bold" value="Chemometrics Analysis"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        <h:commandLink action="PCA" onclick="PF('statusDialog').show()" value="Principal Component Analysis (PCA) "/>
+                        <h:commandLink action="PLSDA" onclick="PF('statusDialog').show()" value="Partial Least Squares - Discriminant Analysis (PLS-DA)"/>
+                        <h:commandLink action="sPLSDA" onclick="PF('statusDialog').show()" value="Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)"/>
+                        <h:commandLink action="OrthoPLSDA" disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="Orthogonal Partial Least Squares - Discriminant Analysis (orthoPLS-DA)"/>
+                        <h:panelGroup layout="block" rendered="#{sessionBean1.multiGroup}" class="ui-message-info" style="line-height: 20px; padding: 10px 20px 10px 20px; font-size: 12px;">
+                            This is mainly designed for better interpretation in comparison of two groups (control vs treatment). 
+                            For multi-group design, the recommended approach is to compare each treatment group with the control group.  You can use 
+                            <b>Data Editor</b> => <b>Edit Groups</b> to achieve this.
+                        </h:panelGroup>
+                    </h:panelGrid>                  
+                    <h:outputLabel style="font-weight: bold" value="Cluster Analysis"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        <h:panelGrid columns="5">
+                            <h:outputLabel value="Hierarchical Clustering:"/>
+                            <p:spacer style="width: 2px"/>
+                            <h:commandLink action="Dendrogram" onclick="PF('statusDialog').show()" value="Dendrogram"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink action="Heatmap" onclick="PF('statusDialog').show()" value="Heatmaps"/>
+                        </h:panelGrid>    
+                        <h:panelGrid columns="5">
+                            <h:outputLabel value="Partitional Clustering:"/>
+                            <p:spacer style="width: 2px"/>
+                            <h:commandLink action="K-means" onclick="PF('statusDialog').show()" value="K-means"/>
+                            <p:spacer style="width: 4px"/>
+                            <h:commandLink action="SOM" onclick="PF('statusDialog').show()" value="Self Organizing Map (SOM)"/>
+                        </h:panelGrid>
+                    </h:panelGrid>                    
+                    <h:outputLabel style="font-weight: bold" value="Classification &amp; Feature Selection"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        <h:commandLink action="RandomForest" onclick="PF('statusDialog').show()" value="Random Forest"/>
+                        <h:commandLink action="SVM"  disabled="#{sessionBean1.multiGroup}" onclick="PF('statusDialog').show()" value="Support Vector Machine (SVM)"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,25 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Data Processing", "label": "Data Processing", "size": "10", "color": "#666666" }, "position": { "x": 1, "y": 0 } },
+      { "data": { "id": "Method Selection", "label": "Method Selection", "size": "10", "color": "#666666" }, "position": { "x": 2, "y": 0 } },
+      { "data": { "id": "Analysis Steps", "label": "Analysis Steps", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": 0 } },
+      { "data": { "id": "Combine P-values", "label": "Combine P-values", "size": "10", "color": "#666666", "parent": "Analysis Steps" }, "position": { "x": 4, "y": 1 } },
+      { "data": { "id": "Vote Counting", "label": "Vote Counting", "size": "10", "color": "#666666", "parent": "Analysis Steps" }, "position": { "x": 4, "y": 2 } },
+      { "data": { "id": "Direct Merging", "label": "Direct Merging", "size": "10", "color": "#666666", "parent": "Analysis Steps" }, "position": { "x": 4, "y": 3 } },
+      { "data": { "id": "Upset Diagram", "label": "Upset Diagram", "size": "10", "color": "#666666", "parent": "Analysis Steps" }, "position": { "x": 5, "y": 2 } },
+      { "data": { "id": "Analysis Steps", "label": "", "color": "#cccccc" } }
+    ],
+    "edges": [
+      { "data": { "id": "e1", "source": "Start", "target": "Data Processing" } },
+      { "data": { "id": "e2", "source": "Data Processing", "target": "Method Selection" } },
+      { "data": { "id": "e3", "source": "Method Selection", "target": "Combine P-values" } },
+      { "data": { "id": "e4", "source": "Method Selection", "target": "Vote Counting" } },
+      { "data": { "id": "e5", "source": "Method Selection", "target": "Direct Merging" } },
+      { "data": { "id": "e6", "source": "Combine P-values", "target": "Upset Diagram" } },
+      { "data": { "id": "e7", "source": "Vote Counting", "target": "Upset Diagram" } },
+      { "data": { "id": "e8", "source": "Direct Merging", "target": "Upset Diagram" } }
+    ]
+  }
+}

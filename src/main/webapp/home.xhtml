@@ -1,0 +1,191 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"  
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+
+    <h:head>
+        <f:facet name="first">
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+            <title>MetaboAnalyst-Pro</title>
+        </f:facet>
+        <f:metadata>
+            <f:event type="preRenderView" listener="#{sessionBean1.doLogout(0)}"/>
+        </f:metadata>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var growlMessage = "#{flash.growlMessage}";
+                var growlMessageType = "#{flash.growlMessageType}";
+
+                if (growlMessage) {
+                    // Show the growl message using PrimeFaces growl component
+                    if (growlMessageType === "error") {
+                        PF('growlWidget2').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
+                    } else {
+                        PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
+                    }
+                }
+            });
+            function handleDialogOpen() {
+                setTimeout(function () {
+                    window.location.href = "#{facesContext.externalContext.requestContextPath}/users/LoginView.xhtml"; // Adjust the URL as needed
+                }, 2000); // 2-second delay
+            }
+        </script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            @keyframes blink {
+                50% {
+                    color: transparent
+                }
+            }
+            .loader__dot {
+                font-size: 36px;
+                animation: 1s blink infinite
+            }
+            .loader__dot:nth-child(2) {
+                animation-delay: 250ms
+            }
+            .loader__dot:nth-child(3) {
+                animation-delay: 500ms
+            }
+            .ui-menuitem-text{
+                color:white !important;
+                text-shadow: 3px 3px 5px #000 !important;
+            }
+
+            .ui-menuitem-icon{
+                color:white !important;
+                text-shadow: 3px 3px 5px #000 !important;
+            }
+
+            .ui-icon{
+                color:white !important;
+                text-shadow: 3px 3px 5px #000 !important;
+            }
+
+            .btnBckg2 {
+                width: 200px;
+                height: 42px;
+                font-size:16px !important;
+                color:white !important;
+                font-weight: bold;
+                background-color: #304562 !important;
+                text-shadow: none !important;
+                box-shadow: none !important;
+                border:solid thin  #304562 !important;
+                background-image: none !important;
+            }
+
+            .btnBckg2:hover {
+                background-color: #D28670 !important;
+            }
+
+        </style>
+        <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
+    </h:head>
+    <h:body>
+        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+            <p:autoUpdate/>
+        </p:growl> 
+        <p:growl id="growl2" widgetVar="growlWidget2" severity="error" showDetail="true" globalOnly="false" escape="false" sticky="true">
+            <p:autoUpdate/>
+        </p:growl> 
+        <div id="header" style="clear: both; margin: 0; padding: 0; height: 100vh; background-color: #304562; position: relative"  
+             class="ui-widget ui-widget-header ui-corner-all">
+            <ui:include src="/template/_menubar.xhtml" />
+            <div style="position: absolute; padding: 20px">
+                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/metabolites.svg" style="padding:0; margin:0"
+                     height="600px"/>
+            </div>
+            <div style="margin-top: 47vh; position: absolute; display: flex; justify-content: flex-end; width:93%">
+                <span style="font-size: 50px; font-weight: bold; text-shadow: 3px 3px 5px black; color: white; ">MetaboAnalyst Pro</span>
+            </div>
+            <div style="margin-top: 57vh; position: absolute; display: flex; justify-content: flex-end; width:93%">
+                <span style="font-size: 24px; color: white; text-shadow: 3px 3px 5px black;">-- a unified platform for metabolomics data analysis</span>
+            </div> 
+            <div style="margin-top: 65vh; position: absolute; display: flex; justify-content: flex-end; width:93%">
+                <a href="https://www.xialab.ca/translation.xhtml" target="_blank">
+                    <img style="width: 130px;" src="#{facesContext.externalContext.requestContextPath}/resources/images/xialab_logo.png" 
+                         title="XiaLab Analytics"/>
+                </a>
+            </div>
+            <div style="width:100%; text-align: center; padding-top: 20px; padding-bottom: 20px; background-color: whitesmoke; position: absolute; bottom: 0px">
+                <p:commandButton value="Click here to start" 
+                                 rendered="#{applicationBean1.dockerAuthed}"
+                                 styleClass ="btnBckg2"
+                                 style="font-size:14px !important"
+                                 onclick=" PF('notLoginDialog').show();"
+                                 />
+                <p:commandButton value="Click to Authenticate" 
+                                 rendered="#{!applicationBean1.dockerAuthed}"
+                                 styleClass ="btnBckg2"
+                                 style="font-size:14px !important"
+                                 onclick="PF('authenDialog').show();"
+                                 />
+                <h:outputLabel value="MetaboAnalyst-Pro-2025-1" style="color:black; font-size: 12px; position: absolute; bottom: 34px; left: 25px;"/>
+                <div style="width: 320px; margin: auto; text-align: center; font-size: 12px; position: absolute; bottom: 34px; right: 20px;">
+                    <a href="https://www.xialab.ca/Terms.xhtml" target="_blank" style="color:#394056">Terms of Service</a>
+                    &nbsp;&nbsp;
+                    <a href="https://www.xialab.ca/Cookies.xhtml"  target="_blank" style="color:#394056">Cookie Policy</a>
+                    &nbsp;&nbsp;
+                    <a href="https://www.xialab.ca/Privacy.xhtml"  target="_blank" style="color:#394056">Privacy Policy</a>
+                </div>
+            </div>               
+        </div>    
+
+        <p:dialog widgetVar="notLoginDialog" showEffect="fade" hideEffect="fade" closable="false"
+                  responsive="true" width="450" header="Sign in" onShow="handleDialogOpen()">
+            <h:panelGrid style="width: 100%; text-align: center">
+                <img style="width: 100px;" src="#{facesContext.externalContext.requestContextPath}/resources/images/xialab_logo.png" alt="XiaLab Analytics"/>
+                <br/>
+                <span class="loader__dot">...</span><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span>
+                <br/>
+                <p style="padding-top:20px">
+                    You will be redirected to the sign-in page shortly.
+                </p>
+            </h:panelGrid>
+        </p:dialog>
+
+
+        <p:dialog widgetVar="authenDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="fade" resizable="true">
+            <h:form>
+                <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 14px">
+                    <h:panelGrid style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            Please input your Authentication Key from XiaLab Analytics Inc.
+                        </h:panelGroup>
+                        <p:inputText value="#{fireProjectBean.authenticationKey}" style="width: 300px"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="text-align: center; width:100%;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('authenDialog').hide()"/>   
+                        <p:commandButton value="Confirm" style="width:120px;"
+                                         id="cnfmBn"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{fireProjectBean.authenticateDocker()}"
+                                         ajax="false"
+                                         oncomplete ="PF('statusDialog').hide(); PF('authenDialog').hide()"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog modal="true" widgetVar="partialErrorDialog" 
+                  appendTo="@(body)" header="Error"
+                  draggable="false" closable="true" resizable="true">
+            <h:panelGrid style="width:320px; padding: 20px 30px 30px 30px; font-size: 15px; line-height: 26px">
+                This shared link <b><u>does not exist</u></b>. Please make sure the link ID is correct and is not expired (i.e. within 2 weeks after creation). Thanks.             
+            </h:panelGrid>
+        </p:dialog>   
+    </h:body>
+</html>
+

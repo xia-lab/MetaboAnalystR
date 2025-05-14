@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <h:panelGrid>
+        <h:outputText escape="false" value="#{downloadBean.generateSummaryLM()}"/>
+    </h:panelGrid>
+    <h:panelGrid columns="2">
+        <div style="color:orange">
+            To update a name suitable for graphical display, <b>click the name</b> to edit and then click the next column to save.
+        </div>
+
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
+            <p:fileDownload value="#{detailsBean.detailFileLM}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable  id="detailTblLM" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                      rows="10" rowsPerPageTemplate="10,20,50" 
+                      class="surface-card shadow-1 p-0 text-800" 
+                      editable="true" editMode="cell" widgetVar="cellDetailsLM" paginatorPosition="bottom"
+                      rowIndexVar="rowIndex" 
+                      rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                      var="fb" value="#{detailsBean.listModelLM}" resizableColumns="true">  
+            <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
+            <p:column headerText="Name" 
+                      style="width:200px"
+                      sortBy="#{fb.name}" filterBy="#{fb.name}">
+                <p:cellEditor>
+                    <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                    <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
+                </p:cellEditor>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(0)}" sortBy="#{fb.val1}" rendered="#{detailsBean.isColVisibleLM(0)}">
+                      <h:outputText escape="false" value="#{fb.val1}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(1)}" sortBy="#{fb.val2}" rendered="#{detailsBean.isColVisibleLM(1)}">
+                      <h:outputText escape="false" value="#{fb.val2}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(2)}" sortBy="#{fb.val3}" rendered="#{detailsBean.isColVisibleLM(2)}">
+                      <h:outputText escape="false" value="#{fb.val3}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(3)}" sortBy="#{fb.val4}" rendered="#{detailsBean.isColVisibleLM(3)}">
+                      <h:outputText escape="false" value="#{fb.val4}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(4)}" sortBy="#{fb.val5}" rendered="#{detailsBean.isColVisibleLM(4)}">
+                      <h:outputText escape="false" value="#{fb.val5}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(5)}" sortBy="#{fb.val6}" rendered="#{detailsBean.isColVisibleLM(5)}">
+                      <h:outputText escape="false" value="#{fb.val6}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(6)}" sortBy="#{fb.val7}" rendered="#{detailsBean.isColVisibleLM(6)}">
+                      <h:outputText escape="false" value="#{fb.val7}"/>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderLM(7)}" sortBy="#{fb.val8}" rendered="#{detailsBean.isColVisibleLM(7)}">
+                      <h:outputText escape="false" value="#{fb.val8}"/>
+            </p:column>
+            <p:column headerText="Detail">
+                <p:commandLink value="View" actionListener="#{sessionBean1.viewCmpdSummary(fb.name)}" oncomplete="PF('FeatureView').show();"/>
+            </p:column>
+        </p:dataTable> 
+    </div>
+    <p:contextMenu for="detailTblLM" widgetVar="cMenu">   
+        <p:menuitem value="Edit Cell" icon="pi pi-search" onclick="PF('cellDetails').showCellEditor();return false;"/>  
+        <p:menuitem value="Hide Menu" icon="pi pi-times" onclick="PF('cMenu').hide()"/>  
+    </p:contextMenu> 
+
+</ui:composition>
+

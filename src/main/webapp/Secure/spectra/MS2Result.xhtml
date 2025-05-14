@@ -1,0 +1,391 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{tandemMS.initResults()}"/>
+        <f:event type="preRenderView" listener="#{tandemMS.reloadResults()}"/>
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('MS2 Result', '/Secure/spectra/MS2Result.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-2.27.0.min.js"></script>
+    </ui:define>
+    <ui:define name="content">
+        <style type="text/css">
+            .myPanel.ui-panel .ui-panel-content{
+                border: none !important;
+            }
+            .ui-datatable tbody td {
+                border: none !important;
+            }
+        </style>
+           
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                MS/MS Annotation Results
+            </h2>
+            <p>
+                Tandem MS spectrum annotation results are displayed below: 
+                <ul>
+                    <li>The matching score and similarity score are used to evaluate the confidence of results (<a href="https://omicsforum.ca/t/how-are-the-ms-ms-matching-score-and-similarity-score-calculated/3315">read more</a>).</li>
+                    <li>All annotation compounds are sorted based on the matching score (0-100: 100, perfect match; 0, not match);</li>
+                    <li>User could click the <b>View</b> link to view the matching pattern of tandem spectrum to reference library.</li>
+                </ul>                
+            </p>
+
+            <h:form id="formr">
+
+                <h:panelGrid style="padding: 0px; width: 600px" rendered="false">
+                    <p>Please select different precursor m/z to view the searching results. </p>
+                    <h:panelGrid style="padding: 0px; width: 360px" columns="2" >
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Precursor m/z:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{tandemMS.prec_idx}">
+                            <f:selectItems value="#{tandemMS.precmzs}" />
+                            <p:ajax listener="#{tandemMS.updateSearchResult()}" 
+                                    update="ms2TB"/>
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:inputHidden id='resNumSrc' value="#{tandemMS.resNum}"/>
+                <p:dataTable id="ms2TB" widgetVar="ms2tbsingle"
+                             class="surface-card shadow-1 p-0 text-800"
+                             style="width:98%; text-align: left; font-size: 12px; font-weight: normal !important; padding: 10px"
+                             var="data" paginator="true" rows="20" rowsPerPageTemplate="20,50,100"  paginatorPosition="bottom" rowIndexVar="rowIndex"
+                             value="#{tandemMS.MS2FeatureBean}" rendered="#{tandemMS.isSingle}" rowKey="#{data.featureNo}" expandedRow="false">
+
+                    <p:ajax event="rowToggle" listener="#{tandemMS.onRowToggle}" update=":formr:resNumSrc" oncomplete="plotintmirror()"/>
+
+                    <p:column id="togglerID123" style="width:5%"> 
+                        <p:rowToggler id="rowtogger111"/>
+                    </p:column>
+
+                    <p:column headerText="Precursor m/z" sortBy="#{data.precMz}" style="width:14%;">
+                        #{data.precMz}
+                    </p:column>
+                    <p:column headerText="Compounds" filterMatchMode="startsWith" style="width:12%;">
+                        #{data.compounds}
+                    </p:column>
+
+                    <p:column headerText="Matching Score" sortBy="#{data.similarity_score}" style="width:12%;">
+                        #{data.similarity_score}
+                    </p:column>
+                    <p:column headerText="Similarity Score" sortBy="#{data.dot_score}" style="width:12%;">
+                        #{data.dot_score}
+                    </p:column>
+
+                    <p:column headerText="PubChem" style="width:10%;">
+                        <a href="https://pubchem.ncbi.nlm.nih.gov/#query=#{data.inchiKeys}" target="_blank">Details</a>
+                    </p:column>
+
+
+                    <p:column headerText="View"  style="width:12%; text-align: center" rendered="false">
+                        <p:commandButton
+                            style="margin-left: 5px; height:20px; width:30px;"
+                            action="#{tandemMS.plotMirrorMatching()}"
+                            onclick="PF('statusDialog').show()"
+                            oncomplete ="PF('statusDialog').hide(); toggleRow(#{rowIndex})"
+                            update=":formr:mp0"
+                            icon="pi pi-image">
+                            <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>                            
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:rowExpansion>
+                        <h:inputHidden id="myid" value="#{tandemMS.jsonDir}"/>
+                        <h:panelGrid style="border: none; margin-left: 10%;" id='mirrorGrid'>
+                            <div id="#{tandemMS.mirrorwidget}" style="width:100%;" class="html-widget"></div>
+                            <h:panelGrid style="border: none; width: 60%; margin-left: 10%"  columns="5">
+                                <p:commandButton value="SVG" title="Click to download SVG image"
+                                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                         
+                                                 onclick="export_image('svg', '#{data.featureNo}')"  
+                                                 icon="pi pi-download"/>  
+
+                                <p:commandButton value="PNG" title="Click to download png image"
+                                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                            
+                                                 onclick="export_image('png', '#{data.featureNo}')"
+                                                 icon="pi pi-download"/>  
+
+                                <p:commandButton value="Spectrum" title="Click to download refence spectrum (mz + intensity)"
+                                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                           
+                                                 onclick="PrimeFaces.monitorDownload(start, stop);"
+                                                 icon="pi pi-download">
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>  
+                                    <p:fileDownload value="#{tandemMS.refSpecTxt}"/>
+                                </p:commandButton>
+
+                                <p:commandButton value="Compound" title="Click to download compound information"
+                                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                           
+                                                 onclick="PrimeFaces.monitorDownload(start, stop);"                                                 
+                                                 icon="pi pi-download">
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>  
+                                    <p:fileDownload value="#{tandemMS.cmpdInfoTxt}"/>
+                                </p:commandButton>                                
+
+                                <p:commandButton value="Reset" title="Click to reset axes of the interactive image"
+                                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                           
+                                                 onclick="resetAxis('#{data.featureNo}')"
+                                                 icon="pi pi-replay"/>
+
+                            </h:panelGrid>
+                            <hr class="style-one"/>
+                        </h:panelGrid>
+                    </p:rowExpansion>
+                </p:dataTable>
+
+                <p:panel styleClass="myPanel" style="width:100%; padding-bottom: 20px; margin-bottom:20px;" rendered="#{!tandemMS.isSingle}">
+                    <p:dataTable id="ms2TBrows" var="data" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{tandemMS.MS2FeatureBean}" sortBy="#{data.precMz}" 
+                                 rendered="#{!tandemMS.isSingle}">
+                        <p:headerRow expandable="true" field="groupPrecMz" expanded="#{data.groupPrecMz == tandemMS.firstPrecMZ}">
+                            <p:column colspan="6">
+                                <h:outputText value="#{data.featurelabel}" />
+                            </p:column>
+                        </p:headerRow>
+                        <p:column headerText="Precursor m/z" style="width:15%;" filterBy="#{data.precMz}" filterMatchMode="startsWith">
+                            #{data.precMz}
+                        </p:column>
+                        <p:column headerText="Compounds" filterMatchMode="startsWith" style="width:25%;">
+                            #{data.compounds}
+                        </p:column>
+
+                        <p:column headerText="Matching Score" sortBy="#{data.similarity_score}" style="width:12%;">
+                            #{data.similarity_score}
+                        </p:column>
+                        <p:column headerText="Similarity Score" sortBy="#{data.dot_score}" style="width:12%;">
+                            #{data.dot_score}
+                        </p:column>
+
+                        <p:column headerText="PubChem" style="width:8%;">
+                            <a href="https://pubchem.ncbi.nlm.nih.gov/#query=#{data.inchiKeys}" target="_blank">Details</a>
+                        </p:column>
+
+                        <p:column headerText="View"  style="width:8%; text-align: center">
+                            <p:commandButton
+                                style="margin-left: 5px; height:20px; width:30px;"
+                                action="#{tandemMS.plotMirrorMatching()}"
+                                onclick="PF('statusDialog').show(); updateDialog(); PF('mirrorDialog').show()"
+                                oncomplete ="PF('statusDialog').hide(); plotintmirror2()"
+                                update=":formr:resNumSrc :formr:mp"
+                                icon="pi pi-image">
+                                <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>
+                                <f:setPropertyActionListener value="#{data.featurelabel}" target="#{tandemMS.current_precgrp}"/>
+                                <f:setPropertyActionListener value="#{data.groupPrecMz}" target="#{tandemMS.precMZ}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:panel>
+
+                <script>
+                    var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                    var graphDiv;
+                    var config = {displaylogo: false, displayModeBar: false, scrollZoom: true, responsive: true};
+                    var layout;
+                    var xaxis_range1, xaxis_range2;
+                    function plotintmirror() {
+
+                        var ID = document.getElementById("formr:resNumSrc").value;
+                        var elemID = 'myid';// + ID;
+                        var mirrorwidgetID = 'mirrorwidget' + ID;
+
+                        $.getJSON('/MetaboAnalyst' + document.getElementById('formr:ms2TB:' + ID + ':' + elemID).value,
+                                function (scriptData) {
+                                    if (scriptData) {
+                                        var data = scriptData.x;
+
+                                        graphDiv = document.getElementById(mirrorwidgetID);
+                                        data.layout.autosize = true;
+                                        layout = JSON.parse(JSON.stringify(data.layout));
+                                        var range = data.layout.xaxis.range;
+                                        xaxis_range1 = range[0];
+                                        xaxis_range2 = range[1];
+
+                                        if (light !== "light") {
+
+                                            data.layout.paper_bgcolor = '#071426';
+                                            data.layout.plot_bgcolor = '#071426';
+                                            data.layout.font.color = 'white';
+                                            data.layout.title.font.color = 'white';
+
+                                            data.layout.yaxis.tickfont.color = '#ffffff';
+                                            data.layout.yaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.yaxis.gridwidth = 0.1;
+                                            data.layout.yaxis.title.font.color = 'white';
+
+                                            data.layout.xaxis.tickfont.color = '#ffffff';
+                                            data.layout.xaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.xaxis.gridwidth = 0.1;
+                                            data.layout.xaxis.title.font.color = 'white';
+
+                                        }
+                                        Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                        PF('statusDialog').hide();
+                                    }
+                                });
+                    }
+
+                    function plotintmirror2() {
+
+                        var ID = document.getElementById("formr:resNumSrc").value;
+
+                        var elemID = 'myid';// + ID;
+                        var mirrorwidgetID = 'mirrorwidget';
+                        //
+                        $.getJSON('/MetaboAnalyst' + document.getElementById('formr:' + elemID).value,
+                                function (scriptData) {
+
+                                    if (scriptData) {
+                                        var data = scriptData.x;
+                                        graphDiv = document.getElementById(mirrorwidgetID);
+                                        data.layout.autosize = true;
+                                        layout = JSON.parse(JSON.stringify(data.layout));
+
+                                        var range = data.layout.xaxis.range;
+                                        xaxis_range1 = range[0];
+                                        xaxis_range2 = range[1];
+
+                                        if (light !== "true") {
+
+                                            data.layout.paper_bgcolor = '#071426';
+                                            data.layout.plot_bgcolor = '#071426';
+                                            data.layout.font.color = 'white';
+                                            data.layout.title.font.color = 'white';
+
+
+                                            data.layout.yaxis.tickfont.color = '#ffffff';
+                                            data.layout.yaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.yaxis.gridwidth = 0.1;
+                                            data.layout.yaxis.title.font.color = 'white';
+
+                                            data.layout.xaxis.tickfont.color = '#ffffff';
+                                            data.layout.xaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.xaxis.gridwidth = 0.1;
+                                            data.layout.xaxis.title.font.color = 'white';
+                                        }
+
+                                        Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                        PF('statusDialog').hide();
+                                    }
+                                });
+                    }
+
+                    function resetAxis(num) {
+                        var ID = num;
+                        var mirrorwidgetID = 'mirrorwidget' + ID;
+                        Plotly.relayout(mirrorwidgetID, {
+                            'xaxis.range': [xaxis_range1, xaxis_range2],
+                            'yaxis.range': [-100, 100]
+                        });
+                    }
+
+                    function resetAxis2() {
+                        var mirrorwidgetID = 'mirrorwidget';
+                        Plotly.relayout(mirrorwidgetID, {
+                            'xaxis.range': [xaxis_range1, xaxis_range2],
+                            'yaxis.range': [-100, 100]
+                        });
+                    }
+
+                    function export_image(tp, num) {
+                        var ID = num;
+                        var mirrorwidgetID = 'mirrorwidget' + ID;
+                        var divGraph = document.getElementById(mirrorwidgetID);
+                        Plotly.downloadImage(divGraph, {format: tp, width: 600, height: 400, scale: 3});
+                    }
+
+                    function setupTheme() {
+                        light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                        var newlayout = JSON.parse(JSON.stringify(layout));
+
+                        if (light !== "light") {
+
+                            newlayout.paper_bgcolor = '#071426';
+                            newlayout.plot_bgcolor = '#071426';
+                            newlayout.font_color = '#FFFFFF';
+                            newlayout.title.font.color = '#FFFFFF';
+
+
+                            newlayout.yaxis.tickfont.color = '#ffffff';
+                            newlayout.yaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                            newlayout.yaxis.gridwidth = 0.5;
+                            newlayout.yaxis.title.font.color = 'white';
+
+                            newlayout.xaxis.tickfont.color = '#ffffff';
+                            newlayout.xaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                            newlayout.xaxis.gridwidth = 0.5;
+                            newlayout.xaxis.title.font.color = 'white';
+
+                        } else {
+                            newlayout.paper_bgcolor = 'white';
+                            newlayout.plot_bgcolor = 'white';
+                        }
+                        Plotly.update(graphDiv, {}, newlayout);
+
+                    }
+
+                </script>
+
+                <p:remoteCommand name="updateDialog" update="mpdialog"/>
+                <p:dialog header="Matching Mirror Plot" 
+                          widgetVar="mirrorDialog" dynamic="true"
+                          modal="true" appendTo="@(body)"                   
+                          onShow="updateDialog" cache="false"
+                          width="920" height="500"
+                          hideEffect="explode" resizable="true"
+                          id="mpdialog">
+                    <h:panelGrid id="mp" style="font-size: 12px;">
+                        <h:inputHidden id="myid" value="#{tandemMS.jsonDir}"/>                         
+                        <h:panelGrid id="itPane" style="border: none">                            
+                            <div id="mirrorwidget" style="width:100%;" class="html-widget"></div>
+                        </h:panelGrid>
+                        <h:panelGrid style="border: none; width: 45%; margin-left: 25%" columns="5">
+                            <p:commandButton value="SVG" title="Click to download SVG image"
+                                             class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                   
+                                             onclick="export_image('svg', '')"  
+                                             icon="pi pi-download"/>
+
+                            <p:commandButton value="PNG" title="Click to download png image"
+                                             class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                  
+                                             onclick="export_image('png', '')"
+                                             icon="pi pi-download"/>
+
+                            <p:commandButton value="Spectrum" title="Click to download refence spectrum (mz + intensity)"
+                                             class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"                                                                           
+                                             onclick="PrimeFaces.monitorDownload(start, stop);"
+                                             icon="pi pi-download">
+                                <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>  
+                                <p:fileDownload value="#{tandemMS.refSpecTxt}"/>
+                            </p:commandButton>
+
+                            <p:commandButton value="Compound" title="Click to download compound information"
+                                             class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"   
+                                             onclick="PrimeFaces.monitorDownload(start, stop);"                                                 
+                                             icon="pi pi-download">
+                                <f:setPropertyActionListener value="#{data.featureNo}" target="#{tandemMS.resNum}"/>  
+                                <p:fileDownload value="#{tandemMS.cmpdInfoTxt}"/>
+                            </p:commandButton>                                
+
+                            <p:commandButton value="Reset" title="Click to reset axes of the interactive image"
+                                             class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"   
+                                             onclick="resetAxis2('#{data.featureNo}')"
+                                             icon="pi pi-replay"/>
+                        </h:panelGrid>
+                    </h:panelGrid>         
+                </p:dialog>
+
+                <h:panelGroup layout="block" style="width: 90%; text-align: center; padding-top: 10px">
+                    <p:commandButton value="Download Page" ajax="false" 
+                                     onclick="PF('statusDialog').show()"
+                                     icon="pi pi-chevron-right"
+                                     action="Download"/>
+                </h:panelGroup>
+            </h:form>
+        </h:panelGrid>
+
+    </ui:define>
+</ui:composition>

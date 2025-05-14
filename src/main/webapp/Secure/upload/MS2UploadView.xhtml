@@ -1,0 +1,296 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('tandemms')}"/>         
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/ModuleView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="rightpaneout"/>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <style>
+            .inputOnDataTable input
+            {
+                width: 175px !important;
+            }
+            .specific-input .ui-selectcheckboxmenu-token-icon {
+                display: none !important;
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Please enter your data below</h2>
+
+            <p:tabView id="upt" style="width: 820px; border:none;">
+                <p:tab title="Single Tandem Spectrum">
+                    <p>
+                        This module is designed to provide an easy tandem MS spectrum annotation functionalities for single MS2 spectrum.
+                        <ul>
+                            <li>The input data should be a two-column list, containing m/z and intensity of MS/MS spectrum;</li>
+                            <li>Two columns should be separated with tab. Each row represents a fragment (e.g. 157.9023 3415);</li>
+                            <li>m/z of the precursor ion is required;</li>
+                            <li>Specify the ion mode for the MS/MS spectrum is optional but highly-recommended to improve the accuracy;</li>
+                        </ul>
+                    </p>
+                    <h:form id="form1">
+                        <h:panelGrid style="padding: 20px 20px 20px 30px; width: 820px;" columns="2" >
+
+                            <p:inputTextarea id="specArea" autoResize="false" value="#{tandemMS.tandemMSList}" rows="22" cols="36" />
+
+                            <h:panelGrid id="parPane" columns="2" cellpadding="3" style="padding-left: 20px">
+                                <h:panelGroup layout="block" style="width: 200px">
+                                    <p:outputLabel style="font-weight: bold" value="Precursor Ion Mass (Da): "/>
+                                </h:panelGroup>
+                                <p:inputNumber style="width: 150px !important;" value="#{tandemMS.precMZ}" 
+                                               minValue="0" maxValue="2000" decimalPlaces="4"
+                                               styleClass="inputOnDataTable"/>
+
+                                <p:outputLabel style="font-weight: bold" value="Precursor Mass Tolerance: "/>
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:inputText style="width:85px; margin-right: 20px" value="#{tandemMS.ppm_val1}" type="number"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:70px" value="#{tandemMS.unit1}">
+                                        <f:selectItems value="#{optBean.unitsOpts}" />
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+
+                                <p:outputLabel style="font-weight: bold" value="Fragment Mass Tolerance: "/>
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:inputText style="width:85px; margin-right: 20px" value="#{tandemMS.ppm_val2}" type="number"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:70px" value="#{tandemMS.unit2}">
+                                        <f:selectItems value="#{optBean.unitsOpts}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:outputLabel style="font-weight: bold" value="MS/MS Database: "/>
+                                    <p:graphicImage id="DatabaseIcon0" url="/resources/images/ui-help.png" alt="help"/>
+                                </h:panelGroup>  
+                                <p:selectCheckboxMenu
+                                    id='dbopts'
+                                    styleClass="specific-input"
+                                    showHeader="false" 
+                                    multiple="true"  
+                                    panelStyleClass="panel" 
+                                    style="width:175px"
+                                    value="#{tandemMS.msmsDBOpt_multi}">
+                                    <f:selectItems value="#{optBean.MSMSDBOpts}"/>
+                                    <p:ajax update=":upt:form1:dbopts" event="change" listener="#{tandemMS.updateMSmsDBSelection()}"/>
+                                </p:selectCheckboxMenu>
+
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:outputLabel style="font-weight: bold" value="Use Neutral Loss "/>
+                                    <p:graphicImage id="useNL0" url="/resources/images/ui-help.png" alt="help"/>
+                                </h:panelGroup>   
+                                <p:selectBooleanCheckbox style="width:75px; line-height: 18px" value="#{tandemMS.useNeutralLoss}"/>
+
+                                <p:outputLabel style="font-weight: bold" value="Ion Mode: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:175px" value="#{tandemMS.ionMode}">
+                                    <f:selectItems value="#{optBean.ionsOpts}"/>
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Similarity Method: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:175px" value="#{tandemMS.simlarity_meth}">
+                                    <f:selectItems value="#{optBean.simMethodOpts}"/>
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Try Our Example:"/>
+                                <p:selectBooleanCheckbox value="#{tandemMS.exampleType}" style="line-height: 18px">
+                                    <p:ajax update=":upt:form1:specArea :upt:form1:parPane" event="change" listener="#{tandemMS.updateExampleArea()}"/>
+                                </p:selectBooleanCheckbox>  
+                            </h:panelGrid>
+
+                        </h:panelGrid>
+                        <h:panelGrid style="width: 820px; text-align: center; padding-top: 20px">
+                            <p:commandButton value="Submit" ajax="false" 
+                                             style="font-size: 14px; width: 100px"
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"                
+                                             action="#{tandemMS.processMSMSupload}"/>  
+                        </h:panelGrid>
+                        <p:tooltip for="DatabaseIcon0" styleClass="helpTip" style="width: 700px">
+                            <p>
+                                It is allowed to customize the database options beased on your needs. You could select one or multiple database for MS/MS searching. It is noted that
+                                if you selected "All Database", the searching may take a quite long time based on your MS/MS spectrum and server loading. Here is a summary on all database option:
+                            </p>
+                            <pre>
+Database              Total Records     Unique Compounds    Version/Date
+HMDB Experimental     64711             4049                v5 (Sep 4th 2022)
+HMDB Predicted        1786690           204969              v5 (Sep 4th 2022)
+GNPS                  80802             11852               Aug 30th 2022
+MoNA                  1545053           614391              Aug 15th 2022
+MassBank              90190             16879               Sep 4th 2022
+MINEs                 3009477           537799              Feb 2nd 2023
+LipidBlast            1832594           778501              Feb 7th 2023
+RIKEN                 12771             1231                Sep 7th 2022
+ReSpect               4310              691                 Sep 7th 2022
+VaniyaNP              39937             2681                Sep 4th 2022
+MSDIAL                1726174           606878              v4.8 (Sep 11th 2022)
+BMDMS                 227307            2739                Aug 20th 2022
+                            </pre>
+                        </p:tooltip>
+                        <p:tooltip for="useNL0" styleClass="helpTip" style="width: 550px">
+                            <p>
+                                Users are allowed to use Neutral Loss (NL) database to discover the chemical identity based on MS/MS spectrum. 
+                                Please fully understand that NL database option is mainly designed to characterize "unknown" compounds. 
+                                The database is curated based on the algorithm from 
+                                <a href="https://pubs.acs.org/doi/10.1021/jasms.1c00343" target="_blank">METLIN-NL</a>.
+                                This option should be cautiously selected.
+                                If you want to use it, please choose to change the button to "Yes".
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                </p:tab>
+                <p:tab title="Multiple Tandem Spectra">
+                    <p>
+                        This module is designed to provide an easy tandem MS spectrum annotation functionalities for multiple MS2 spectra.
+                        <ul>
+                            <li>The input data should be a standard mgf file or msp file generated by <a href="http://prime.psc.riken.jp/compms/msdial/main.html" target="_blank">MS-DIAL</a></li>
+                            <li>The maximum msp/mgf file size allowed is <b>5MB</b></li>
+                            <li>To ensure the searching can be finished in time, database searching of over 20 tandem spectra will be executed with scheduler;</li>
+                            <li>Any empty tandem MS spectrum will be excluded;</li>
+                        </ul>
+                    </p>
+                    <h:form id="form2" enctype="multipart/form-data">
+                        <h:panelGrid style="padding: 20px 20px 20px 30px; width: 820px;" columns="2" >
+
+                            <h:panelGrid style="padding: 0px; width: 600px" columns="2" >
+                                <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Format"/>
+                                <p:selectOneRadio id="datasrc" value="#{tandemMS.mspFotmat}">  
+                                    <f:selectItems value="#{optBean.dataSrcOpts}" />
+                                </p:selectOneRadio>  
+
+                                <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                                <p:fileUpload value="#{tandemMS.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+
+                                <p:outputLabel style="font-weight: bold" value="Precursor Mass Tolerance: "/>
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:inputText style="width:85px; margin-right: 20px" value="#{tandemMS.ppm_val1}" type="number"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:70px" value="#{tandemMS.unit1}">
+                                        <f:selectItems value="#{optBean.unitsOpts}" />
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+
+                                <p:outputLabel style="font-weight: bold" value="Fragment Mass Tolerance: "/>
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:inputText style="width:85px; margin-right: 20px" value="#{tandemMS.ppm_val2}" type="number"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:70px" value="#{tandemMS.unit2}">
+                                        <f:selectItems value="#{optBean.unitsOpts}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:outputLabel style="font-weight: bold" value="MS/MS Database: "/>
+                                    <p:graphicImage id="DatabaseIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                </h:panelGroup>                                
+                                <p:selectCheckboxMenu
+                                    id="dbopts2"
+                                    styleClass="specific-input"
+                                    showHeader="false" 
+                                    multiple="true"  
+                                    panelStyleClass="panel" 
+                                    style="width: 175px"
+                                    value="#{tandemMS.msmsDBOpt_multi2}">
+                                    <f:selectItems value="#{optBean.MSMSDBOpts}"/>
+                                    <p:ajax update=":upt:form2:dbopts2" event="change" listener="#{tandemMS.updateMSmsDBSelection2()}"/>
+                                </p:selectCheckboxMenu>
+
+                                <h:panelGroup layout="block" style="width: 175px">
+                                    <p:outputLabel style="font-weight: bold" value="Use Neutral Loss "/>
+                                    <p:graphicImage id="useNL" url="/resources/images/ui-help.png" alt="help"/>
+                                </h:panelGroup>   
+                                <p:selectBooleanCheckbox style="width:75px; line-height: 18px" value="#{tandemMS.useNeutralLoss}"/>
+
+                                <p:outputLabel style="font-weight: bold" value="Ion Mode: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width: 175px" value="#{tandemMS.ionMode}">
+                                    <f:selectItems value="#{optBean.ionsOpts}"/>
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Similarity Method: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width: 175px" value="#{tandemMS.simlarity_meth}">
+                                    <f:selectItems value="#{optBean.simMethodOpts}"/>
+                                </p:selectOneMenu>
+
+                            </h:panelGrid>
+                            <p:commandButton value="Submit" ajax="false" 
+                                             style="font-size: 14px; width: 100px"
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"                
+                                             action="#{tandemMS.processMSPFileupload()}"/>  
+                        </h:panelGrid>
+                        <hr class="style-one"/>
+                        <h2 style="margin-top: 20px; margin-bottom: 4px"> Try our test data</h2>
+                        <h:panelGrid style="width: 820px; text-align: left; padding-top: 20px">
+                            <p:selectOneRadio id="customRadio" value="#{tandemMS.testOpt}" layout="custom">  
+                                <f:selectItem itemValue="msp_wb" itemLabel="Whole blood"/>
+                                <f:selectItem itemValue="mgf_wb" itemLabel="DDA dataset"/>
+                            </p:selectOneRadio>  
+                            <h:panelGrid columns="3" style="padding: 10px 30px 20px 20px; line-height: 23px; width:800px">
+                                <p:spacer style="width: 30px"/>
+                                <h:panelGrid style="width:150px; padding-left: 4px; padding-right: 4px">
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Type"/>   
+                                </h:panelGrid>
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Description"/>
+
+                                <p:radioButton for="customRadio" itemIndex="0"/>
+                                <a target="_blank" style="font-size:12px; font-weight: bold" href="#{applicationBean1.apiResourcePath}QCDDA_SCAN1_02.msp">Whole blood</a>
+                                <h:panelGrid>
+                                    This is an example dataset from whole blood dataset. This msp file is generated by MS-DIAL.                                      
+                                </h:panelGrid>
+
+                                <p:radioButton for="customRadio" itemIndex="1"/>                    
+                                <a target="_blank" style="font-size:12px; font-weight: bold" href="#{applicationBean1.apiResourcePath}mgf_samll_dda.mgf">DDA dataset</a>                    
+                                <h:panelGrid>
+                                    This dataset is a standard MGF file. The original dataset are generated with data dependant acquisition (DDA) mode.
+                                </h:panelGrid>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <h:panelGrid style="width: 820px; text-align: center; padding-top: 10px">
+                            <p:commandButton value="Submit" ajax="false" 
+                                             style="font-size: 14px; width: 100px"
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"                
+                                             action="#{tandemMS.processMSPtest()}"/>  
+                        </h:panelGrid>
+
+                        <p:tooltip for="DatabaseIcon" styleClass="helpTip" style="width: 700px">
+                            <p>
+                                It is allowed to customize the database options beased on your needs. You could select one or multiple database for MS/MS searching. It is noted that
+                                if you selected "All Database", the searching may take a quite long time based on your MS/MS spectrum and server loading. Here is a summary on all database option:
+                            </p>
+                            <pre>
+Database              Total Records     Unique Compounds    Version/Date
+HMDB Experimental     64711             4049                v5 (Sep 4th 2022)
+HMDB Predicted        1786690           204969              v5 (Sep 4th 2022)
+GNPS                  80802             11852               Aug 30th 2022
+MoNA                  1545053           614391              Aug 15th 2022
+MassBank              90190             16879               Sep 4th 2022
+MINEs                 3009477           537799              Feb 2nd 2023
+LipidBlast            1832594           778501              Feb 7th 2023
+RIKEN                 12771             1231                Sep 7th 2022
+ReSpect               4310              691                 Sep 7th 2022
+VaniyaNP              39937             2681                Sep 4th 2022
+MSDIAL                1726174           606878              v4.8 (Sep 11th 2022)
+BMDMS                 227307            2739                Aug 20th 2022
+                            </pre>
+                        </p:tooltip>
+                        <p:tooltip for="useNL" styleClass="helpTip" style="width: 550px">
+                            <p>
+                                Users are allowed to use Neutral Loss (NL) database to discover the chemical identity based on MS/MS spectrum. 
+                                Please fully understand that NL database option is mainly designed to characterize "unknown" compounds. 
+                                The database is curated based on the algorithm from 
+                                <a href="https://pubs.acs.org/doi/10.1021/jasms.1c00343" target="_blank">METLIN-NL</a>.
+                                This option should be cautiously selected.
+                                If you want to use it, please choose to change the button to "Yes".
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                </p:tab>
+            </p:tabView>
+
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

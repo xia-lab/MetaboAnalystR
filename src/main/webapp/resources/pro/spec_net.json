@@ -1,0 +1,17 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Spectra Parameters Settings", "label": "Parameters Setting", "size": "10", "color": "#666666" }, "position": { "x": 200, "y": 0 } },
+      { "data": { "id": "Spectra Processing", "label": "Spectra Processing", "size": "10", "color": "#666666" }, "position": { "x": 300, "y": 0 } },
+      { "data": { "id": "Spectra View Result", "label": "View Result", "size": "10", "color": "#666666" }, "position": { "x": 400, "y": 0 } }
+    ],
+    "edges": [
+      { "data": { "id": "e0", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e2", "source": "Start", "target": "Spectra Parameters Settings" } },
+      { "data": { "id": "e3", "source": "Spectra Parameters Settings", "target": "Spectra Processing" } },
+      { "data": { "id": "e4", "source": "Spectra Processing", "target": "Spectra View Result" } }
+    ]
+  }
+}

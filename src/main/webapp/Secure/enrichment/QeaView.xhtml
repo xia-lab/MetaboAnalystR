@@ -1,0 +1,224 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('View result', '/Secure/enrichment/QeaView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.parsers.json.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.plugins.dragNodes.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.layout.noverlap.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.plugins.animate.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.renderers.snapshot.min.js"></script> 
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.svg.edges.curve.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.svg.edges.def.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.svg.labels.def.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.svg.nodes.def.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.exporters.svg.js"></script> 
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/sigma/sigma.utils.js"></script> 
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/enrich_net.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/enrnet_report.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="mydir" value="#{sessionBean1.currentUser.relativeDir}" />
+        <style type="text/css">
+            #sigma-parent {
+                float: left;
+                width: 900px;
+                height: 600px;
+                padding-right: 30px;
+                position: relative;
+                background-color: white;
+                border: none;
+            }
+            #sigma-example {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+        <script type="text/javascript">
+            function extender() {
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Metabolite Sets'
+                                },
+                                gridLines: {
+                                    drawOnChartArea: false
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Enrichment Ratio'
+                                },
+                                gridLines: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            ;
+        </script>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Enrichment Analysis Results
+            </h2>
+            <ul>
+                <li>
+                    Graphical summaries on the top, detailed result Table on the bottom 
+                </li>
+                <li>
+                    <b>Enrichment Ratio</b> is computed by Hits / Expected, where hits = observed hits; expected = expected hits based on the null distribution of your selected model  
+                </li>
+            </ul>
+            <h:form>
+                <p:panel styleClass="myPanel" header="Bar Chart" style="width:90%;margin-bottom:20px;">
+                    <h:panelGrid style="width:100%; padding-left: 75%">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qea')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+                    <p:barChart model="#{msetBean.barModel}"  style="width: 100%; height: 600px" widgetVar="chart" />
+                </p:panel>
+            </h:form>
+
+            <h:form>
+                <p:panel styleClass="myPanel" header="Network View" style="width:90%; margin-bottom:20px;">
+                    <h:panelGrid columns="3" style="width: 800px; padding-left: 600px">
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help" />
+                        <p:commandLink value="SIF" ajax="false" style="background:none; border:none;"
+                                       onclick="PrimeFaces.monitorDownload(start, stop);">  
+                            <p:fileDownload value="#{msetBean.getSifFile()}" />  
+                        </p:commandLink> 
+                        <p:commandLink value="SVG" style="background:none; border:none;" onclick="export2SVG()"/>  
+                    </h:panelGrid>
+                    <p:tooltip for="helpIcon" styleClass="helpTip">
+                        <p>
+                            Each node represents a metabolite set with its color based on its <u>p value</u>, and its size is based on 
+                            <u>number of hits</u> to your query. Two metabolite sets are connected by an edge if the number of their 
+                            shared metabolites is over 25% of the total number of their combined metabolite sets. You can 
+                            directly interact with the network use your mouse: 
+                            <ul>
+                                <li><b>Mouse over</b> mouse on a node to view its label (if not shown); </li>
+                                <li><b>Drag</b> a node to re-arrange its position to avoid overlaps; </li>
+                                <li><b>Double click</b> a node to view the matched metabolite set; </li>
+                                <li><b>Scroll</b> to zoom in and out.</li>
+                            </ul> 
+                        </p>
+                    </p:tooltip>
+                    <h:panelGrid id="mycontainer" style="width:900px; height: 700px; padding-left: 30px">
+                        <div id="sigma-parent">
+                            <div id="sigma-example">
+                            </div>
+                        </div>
+                        <img id="downloadimage"/>  
+                    </h:panelGrid>
+                </p:panel>
+            </h:form>
+            <h:form id="qea_dotForm">
+                <p:panel styleClass="myPanel" header="Dot Plot" style="width:90%; margin-bottom:20px">
+                    <h:panelGrid id="imgPane3" style="text-align: center; width: 100%;">
+                        <h:panelGrid style="width:100%; padding-left: 75%">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qea_dot')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('qea_dot')}" alt="QeaDotImage"/>
+                    </h:panelGrid>
+                </p:panel>
+            </h:form>              
+            <h:form styleClass="myPanel" rendered="#{msetBean.showPie}">
+                <p:panel header="Pie Chart" style="width:90%;">
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qea_pie')}" 
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   style="width: 800px; margin-left: 720px"
+                                   title="Customize the graphics output">
+                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                    </p:commandLink>
+                    <h:panelGrid style="width: 780px; padding-left: 40px">
+                        <p:pieChart model="#{msetBean.pieModel}" widgetVar="piechart" />
+                    </h:panelGrid>
+                </p:panel>
+            </h:form>              
+            <h:form id="resTblForm">
+                <p:dataTable id="resTbl" style="min-width:1000px; width:90%; font-size: 12px" var="qb" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{msetBean.qeaBeans}">  
+                    <p:column headerText="" width="10" style="#{qb.style}">  
+                        ﻿ <h:outputText value=""/> 
+                    </p:column>  
+                    <p:column headerText="Metabolite Set" style="width:320px">  
+                        <h:outputText escape="false" value="#{qb.setName}"/> 
+                    </p:column>  
+                    <p:column headerText="Total">  
+                        <h:outputText escape="false" value="#{qb.setNum}"/>
+                    </p:column>  
+                    <p:column headerText="Hits">  
+                        <h:outputText escape="false" value="#{qb.hitNum}"/>
+                    </p:column>  
+                    <p:column headerText="Statistic">  
+                        <h:outputText escape="false" value="#{qb.statQ}"/>
+                    </p:column>                     
+                    <p:column headerText="Expected">  
+                        <h:outputText escape="false" value="#{qb.expQ}"/>
+                    </p:column>  
+                    <p:column headerText="P value">  
+                        <h:outputText escape="false" value="#{qb.PVal}"/>
+                    </p:column>  
+                    <p:column headerText="Holm P">  
+                        <h:outputText escape="false" value="#{qb.bonPval}"/>
+                    </p:column>  
+                    <p:column headerText="FDR">  
+                        <h:outputText escape="false" value="#{qb.fdrPval}"/>
+                    </p:column> 
+                    <p:column headerText="Details">  
+                        <p:commandLink value="View" update=":detailView :hisTab:cmdPane" oncomplete="PF('msetDialog').show()">  
+                            <f:setPropertyActionListener value="#{qb.setName}" target="#{msetBean.msetNm}" /> 
+                        </p:commandLink>
+                    </p:column>   
+                </p:dataTable>     
+                <p:remoteCommand name="updateMset" process="@this" update=":detailView" oncomplete="PF('msetDialog').show()"/>
+                <h:panelGrid style="width: 95%; text-align: center; padding: 10px">
+                    <p:commandButton value="Proceed" ajax="false" 
+                                     icon="pi pi-angle-double-right" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"                              
+                                     action="Download"/>
+                </h:panelGrid> 
+            </h:form>
+        </h:panelGrid>
+        <ui:include src="/Secure/xialabpro/dialog/_msetDialog.xhtml" />
+
+        <script type="text/javascript">
+            showSigmaNetwork();
+        </script>
+    </ui:define>
+</ui:composition>

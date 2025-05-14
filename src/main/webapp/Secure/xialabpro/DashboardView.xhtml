@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{downloader.setupDownloadTableWrapper()}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Dashboard', '/Secure/xialabpro/DashboardView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="toptrack">
+        <ui:include src="/template/_menubar_workflow.xhtml" />
+    </ui:define>
+    <ui:define name="leftpane">
+
+        <h:form id="treeForm">
+            <h:panelGrid style="text-align: center" class="cyan-100 text-800">
+                    <p:tree style="width: 200px; font-size: 13px; border:none; border: teal thin solid" 
+                            value="#{sessionBean1.naviTree}" 
+                            var="node"
+                            class="cyan-100 text-800 shadow-3"
+                            selectionMode="single">
+                        <p:ajax update=":treeForm" 
+                                onstart="PF('statusDialog').show()"  
+                                onerror="PF('statusDialog').hide()"
+                                event="select" 
+                                listener="#{ctl.onNodeSelect}" />  
+                        <p:treeNode>
+                            <h:outputText value="#{node}" 
+                                          style="#{sessionBean1.naviTrackStatus[node] == false ? 'color:red;' : 'color:inherit;'}" />
+                        </p:treeNode>
+                    </p:tree>
+                <p:commandButton id="startBn" title="Update Analysis" 
+                                 icon="pi pi-refresh"
+                                 value="Update"
+                                 styleClass="rounded-button ui-button-success"
+                                 style="font-weight: bold; font-size:1.1rem; width: 100px; height: 40px; margin-top: 20px"
+                                 actionListener="#{diagramView.submitWorkflowJob}" 
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide();" />
+            </h:panelGrid>
+        </h:form>
+    </ui:define> 
+    <ui:define name="content">             
+        <script type="text/javascript">
+            function start() {
+                PF('statusDialog').show();
+            }
+            function stop() {
+                PF('statusDialog').hide();
+            }
+        </script> 
+        <h:panelGroup rendered="#{workflowBean.resultPageDisplay eq 'default'}">
+            <ui:include src="./_DefaultResult.xhtml" />
+        </h:panelGroup>
+        <h:panelGroup rendered="#{workflowBean.resultPageDisplay ne 'default'}">
+            <ui:include src="./_MultiResult.xhtml" />
+        </h:panelGroup>
+        <h:panelGroup>
+            <ui:include src="/template/_feature_dialog.xhtml" />
+
+            <ui:include src="./dialog/_msetDialog.xhtml" />
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

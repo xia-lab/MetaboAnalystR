@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <h:panelGrid>
+        <p>Table combining results from Fold Change (FC) Analysis and T-tests, allowing users to intuitively select 
+            significant features based on either biological significance, statistical significance, or both. </p>
+    </h:panelGrid>
+    <h:panelGrid columns="2">
+        <div style="color:orange">
+            Click on "Details" to see matched putative compounds.
+        </div>
+
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="float:left;margin-left: 60px">
+            <p:fileDownload value="#{mummiAnalBean.gseaPathEnrichFile}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable paginator="true" paginatorPosition="bottom"
+                     rows="10" rowsPerPageTemplate="10,20,50"
+                     class="surface-card shadow-1 p-0 text-800"
+                     rowIndexVar="rowIndex" 
+                      rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     style="width:100%;" var="gb" value="#{mummiAnalBean.gseaBeans}">  
+            <p:column headerText="Pathway Name" width="300px">  
+                <p:outputLabel value="#{gb.setName}"/>
+            </p:column>  
+            <p:column headerText="Total" sortBy="#{gb.setNum}" width="95px">  
+                <h:outputText escape="false" value="#{gb.setNum}"/>
+            </p:column> 
+            <p:column headerText="Hits" sortBy="#{gb.hitNum}" width="95px">  
+                <h:outputText escape="false" value="#{gb.hitNum}"/>
+            </p:column> 
+            <p:column headerText="Raw P" sortBy="#{gb.rawP}" width="95px">  
+                <h:outputText escape="false" value="#{gb.rawP}"/>
+            </p:column>  
+            <p:column headerText="Adj P" sortBy="#{gb.adjP}" width="95px">  
+                <h:outputText escape="false" value="#{gb.adjP}"/>
+            </p:column>    
+            <p:column headerText="NES" sortBy="#{gb.nesScore}" width="95px">  
+                <h:outputText escape="false" value="#{gb.nesScore}"/>
+            </p:column>  
+            <p:column headerText="Details" width="95px">  
+                <p:commandLink value="View" process="@this" oncomplete="PF('msetMumDialog').show()">  
+                    <f:setPropertyActionListener value="#{gb.setName}" target="#{sessionBean1.currentPathName}" />  
+                </p:commandLink>
+            </p:column>  
+        </p:dataTable>    
+    </div>
+
+</ui:composition>
+

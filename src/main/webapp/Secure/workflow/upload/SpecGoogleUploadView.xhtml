@@ -1,0 +1,340 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/workflow/upload/SpecGoogleUploadView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{workflowBean.loadDefaultWorkflows()}"></f:event> 
+    </ui:define>  
+    <ui:define name="content">
+        <style>
+            /* Ensure the file upload button remains consistent in size */
+            .file-upload-custom .ui-fileupload-button {
+                width: 120px; /* Set a fixed width for the button */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Control the filename display to avoid shrinking */
+            .file-upload-custom .ui-fileupload-filename {
+                display: inline-block;
+                /* Limit the filename display */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                padding-left: 10px; /* Add space between the button and the filename */
+            }
+
+            /* Style to adjust the overall file upload container */
+            .file-upload-custom .ui-fileupload {
+                display: inline-block;
+                width: auto;
+                vertical-align: middle;
+            }
+
+            /* Ensure the file upload input remains consistent */
+            .file-upload-custom .ui-fileupload-choose {
+                width: 200px; /* Same width for the button */
+                height: 30px; /* Adjust the height if necessary */
+            }
+
+            .ui-inputtextarea:disabled {
+                color: white !important; /* Set font color to white */
+                background-color: #333333; /* Optionally, set a dark background for contrast */
+                opacity: 1 !important; /* Remove dimming effect on the text */
+            }
+
+            .ui-tabs-nav li.ui-state-disabled {
+                opacity: 1 !important;     /* Removes the dimmed appearance */
+                pointer-events: none;      /* Ensures the tab remains unclickable */
+                color: inherit;            /* Maintains original text color */
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+
+            <p:tabView id="tabId" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+                <p:tab id="personal" title="Upload" disabled="true">
+
+                </p:tab>            
+
+                <p:tab id="datacheck" title="Integrity Check" disabled="true">
+
+                </p:tab>
+
+                <p:tab id="swathcheck" title="SWATH Design" disabled="true">
+
+                </p:tab>
+
+                <p:tab id="design" title="Key Parameters" disabled="true">
+
+                </p:tab>
+
+
+            </p:tabView>
+
+            <h:panelGroup id="mainId">
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}">
+
+                    <h:form id="form1" enctype="multipart/form-data">
+                        <p>
+                            MetaboAnalyst currently supports <u>mzML, mzXML, CDF or mzData formats in <b>centroid mode</b></u>. 
+                            Quality control (QC) spectra are not required but recommended. 
+                            QC should start with <b>"QC_"</b> or marked as "QC" in meta data. BLANK should be marked as "BLANK" in meta data for subtraction. 
+                            For MS2 data, spectra should be acquired in either <b>DDA</b> or <b>SWATH-DIA</b> mode for each job. Mixed mode is not supported. 
+                        </p>
+                        <ul>
+                            <li>
+                                Please make sure the dataset you are sharing with us are open to the public or open to the <b>support@xialab.ca</b> with access as <b>Editor</b>.
+                            </li>
+                            <li>
+                                All mzML/mzXML/mzData/CDF files must <b>NOT</b> be zipped. Metadata file must be exactly named as "metadata.txt", other files are automatically filtered. 
+                            </li>
+                            <li>
+                                Include all spectra files directly in one folder. Using multiple-level sub-folders won't be identified.
+                            </li>
+                            <li>
+                                The maximum size of raw spectra files for each job is 15.0GB. MS2 spectra file should not exceed 50. There is no limitation on the total number of files.
+                            </li>
+                            <li>
+                                The sharing URL must be formatted like: <b>https://drive.google.com/drive/folders/somekeys?usp=drive_link</b>. Here is an <a href="https://drive.google.com/drive/folders/1kqvUQjPEiCEkGF297wlj2Tzeqmpg58wu?usp=drive_link" target="_blank">example</a> .Single file sharing (like https://drive.google.com/file/d/SOMEKEys/view?usp=drive_link) is not accepted.
+                            </li>
+                        </ul>
+                        <h:panelGrid style="padding-right: 100px; width:1050px; font-size: 13px">
+                            <h:panelGrid style="width: 750px; padding-top: 10px">
+                                <p:outputLabel for="url" value="Google Drive URL: " style="font-size: 14px" />
+                                <p:inputText id="url" value="#{specLoader.googledriveURL}" style="width: 750px; height: 40px"/>
+                            </h:panelGrid>
+
+                            <h:panelGrid style="width:520px; text-align:left; padding-top: 0px; padding-bottom: 5px;" columns="2">
+                                <p:outputLabel style="font-weight: bold" value="Data Mode:"/>
+                                <p:selectOneRadio value="#{spectraProcessor.ms2DataOpt}" id="msOpt2">
+                                    <f:selectItem itemLabel="MS1 Only" itemValue="ms1"/>
+                                    <f:selectItem itemLabel="MS1+DDA" itemValue="dda"/>
+                                    <f:selectItem itemLabel="MS1+SWATH-DIA" itemValue="swath"/>
+                                    <p:ajax event="change" listener="#{specLoader.updateMS2status()}" update=":form1:procBn2 :form1:msOpt2"/>
+                                </p:selectOneRadio>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <h:panelGrid style="width:720px; padding: 10px; text-align: center; margin-left: 13px" columns="2">
+                            <p:commandButton value="Submit" 
+                                             style="width:100px; height: 35px;"
+                                             id="signinBn"
+                                             onclick="PF('statusDialog').show();"
+                                             action="#{specLoader.confirmSeqURL()}"
+                                             update="procBn2" 
+                                             disabled="#{specLoader.allowGoogleDriveContinue}"
+                                             icon="pi pi-sign-in"
+                                             oncomplete ="PF('statusDialog').hide();"/>
+                            <p:commandButton value="Confirm" id="procBn2"
+                                             style="width:100px"
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             ajax="false" 
+                                             disabled="#{!specLoader.allowGoogleDriveContinue}"
+                                             action="#{wfUploadBean.processSpecDataUpload()}"/>  
+                        </h:panelGrid>
+                    </h:form> 
+                    <hr class="style-one"/>
+                    <h:outputLabel style="font-size: 16px; font-weight: bold; color: var(--surface-800)" value="Try our example datasets"/>
+                    <h:form>
+                        <p:selectOneRadio id="customRadio" value="#{specLoader.selectedExample}" layout="custom">  
+                            <f:selectItem itemValue="malaria"/>
+                            <f:selectItem itemValue="dda_example"/>
+                            <f:selectItem itemValue="dia_example"/>
+
+                            <!--
+                            <f:selectItem itemValue="fastdata"/>
+                            <f:selectItem itemValue="dda_example"/>                            
+                            -->
+                        </p:selectOneRadio> 
+
+                        <h:panelGrid columns="4" style="width: 860px; padding-left: 20px" cellspacing="4">
+                            <p:spacer style="width: 30px; height:5px"/>
+                            <h:panelGroup  layout="block" style="width: 80px; padding-left:10px">
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Type"/> 
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Description"/> 
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Download"/> 
+                            </h:panelGroup>
+
+
+                            <p:radioButton for="customRadio" itemIndex="0"/>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                Malaria Data (MS1)
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                An experimental Malaria metabolomics dataset (UPLC-Q/E-ESI<sup>+</sup>, HILIC) between two immune status (Native vs. Semi-immune) from 
+                                <a href="https://dx.doi.org/10.1016%2Fj.redox.2018.04.011" target="_blank">Li et al.</a> 15 samples (12 Samples and 3 QCs)
+                                are included.
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                <a href="https://www.dropbox.com/s/ift0zrkh0rx3v80/malaria_raw.zip?dl=0" target="_blank">Dropbox</a> <br/> 
+                                <a href="http://gofile.me/4esAc/wMN4FNeTg" target="_blank">GoFile</a>
+                            </h:panelGroup>
+
+                            <p:radioButton for="customRadio" itemIndex="1"/>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                Blood Samples (MS1+DDA)
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                An whole blood metabolomics dataset (UPLC-Q/E-ESI<sup>+</sup>, HILIC) among three blood types. DDA MS/MS file included. 
+                                A total of 30 samples (serum, plasma and whole blood samples (n=6 for each), 6 QCs and 6 DDA MS/MS samples) are included.
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                <a href="https://www.dropbox.com/scl/fi/2opls296pzffz5hbvjhun/blood_samples.zip?rlkey=tknlc3iik5yhlm2gmkk423c7m" target="_blank">Dropbox</a> <br/> 
+                                <a href="http://gofile.me/4esAc/5pRSK7I0o" target="_blank">GoFile</a>
+                            </h:panelGroup>
+
+                            <p:radioButton for="customRadio" itemIndex="2"/>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                COVID-19 dataset (MS1+SWATH-DIA)
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                An clinical metabolomics dataset (UPLC-TripleTOF 5600+, AB Sciex, ESI<sup>-</sup>, Acquity XSelect HSS T3 column) between control and COVID patients from 
+                                <a href="https://doi.org/10.1038%2Fs41598-023-28816-5" target="_blank">Mahmoud S. et al.</a> 16 samples (12 MS1 Samples and 4 SWATH-DIA files)
+                                are included.
+                            </h:panelGroup>
+                            <h:panelGroup  layout="block" style="padding-left:10px">
+                                <a href="https://www.dropbox.com/scl/fi/l9a1naq2v3bo1r31dvbhy/swath_dia_covid.zip?rlkey=yh2vli2whmiv859uvj1sj2h1l" target="_blank">Dropbox</a> <br/> 
+                                <a href="http://gofile.me/4esAc/UAL63xImT" target="_blank">GoFile</a>
+                            </h:panelGroup>
+
+
+                            <!--
+                                                        <p:radioButton for="customRadio" itemIndex="1"/>
+                                                        <h:panelGroup  layout="block" style="padding-left:10px">
+                                                            Quick Demo (MS1)
+                                                        </h:panelGroup>
+                                                        <h:panelGroup  layout="block" style="padding-left:10px">
+                                                            A small example dataset for demo purposes, containing 10 spectra (UPLC-Q/E-ESI<sup>-</sup>, C18) organized into three groups 
+                                                            (Healthy, Crohn's Disease and QC) from <a href="https://www.nature.com/articles/s41586-019-1237-9" target="_blank">Lloyd-Price et al.</a>                                
+                                                        </h:panelGroup>
+                                                        <h:panelGroup  layout="block" style="padding-left:10px">
+                                                            <a href="https://www.dropbox.com/s/lh4ema8fn0f12hz/IBD_small.zip?dl=0" target="_blank">Dropbox</a> <br/>  
+                                                            <a href="http://gofile.me/4esAc/Za1mugeEP" target="_blank">GoFile</a>
+                                                        </h:panelGroup>
+                            
+
+                            
+                            -->
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width:720px; padding: 10px; text-align: center; margin-left: 13px">
+                            <p:commandButton value="Submit" 
+                                             style="width:100px"
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"
+                                             ajax="false" 
+                                             disabled="#{specLoader.allowGoogleDriveContinue}"
+                                             action="#{wfUploadBean.processSpecExampleUpload()}" />
+                        </h:panelGrid>
+                    </h:form>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">
+                    <ui:include src="../process/_SpectSanityCheck.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 2 and spectraProcessor.isms2DIA}">
+                    <ui:include src="../process/_SpecSWATHCheck.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 3 and !spectraProcessor.isms2}">
+                    <ui:include src="../process/_SpecParamsView.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 3 and spectraProcessor.isms2}">
+                    <ui:include src="../process/_SpecMSnParamsView.xhtml" />
+                </h:panelGroup>
+
+            </h:panelGroup>
+
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <!-- Button set for "Upload" tab -->
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 0}">
+                <h:panelGrid style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton id="proc1" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     disabled="#{not wfUploadBean.fileUploaded}"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     update="southform tabId mainId"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 1}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(0)}"
+                                     oncomplete="PF('tabWidget').select(0);"/>
+
+                    <p:commandButton value="Next" ajax="false" 
+                                     rendered="#{!spectraProcessor.isms2DIA}" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId mainId"
+                                     actionListener="#{wfUploadBean.skipButton_action_spec(3)}"
+                                     oncomplete="PF('tabWidget').select(3);"
+                                     disabled="#{spectraProcessor.bnDisabled}"/>
+                    
+                    <p:commandButton value="Proceed" ajax="false" 
+                                     rendered="#{spectraProcessor.isms2DIA}" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId mainId"
+                                     actionListener="#{wfUploadBean.skipButton_action_spec(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"
+                                     disabled="#{spectraProcessor.bnDisabled}"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 2}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+
+                    <p:commandButton value="Proceed" ajax="false" 
+                                     rendered="#{spectraProcessor.isms2DIA}" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId mainId"
+                                     actionListener="#{wfUploadBean.skipButton_action_spec(3)}"
+                                     oncomplete="PF('tabWidget').select(3);"
+                                     disabled="#{spectraProcessor.bnDisabled}"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                    <p:commandButton value="Finish"
+                                     id="runAnalysisBn" style="width:160px"
+                                     icon="pi pi-cog"       
+                                     action="#{workflowBean.finishMultiPreparation('LC-MS Spectra')}"
+                                     update="southform tabId mainId"
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

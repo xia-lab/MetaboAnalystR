@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+        <style>
+
+            body .ui-datatable .ui-datatable-data > tr.ui-datatable-even.highlight1 {
+                background-color: var(--cyan-100) !important; /*#6CE26C !important;*/
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            body .ui-datatable .ui-datatable-data > tr.ui-datatable-odd.highlight1 {
+                background-color: var(--cyan-100) !important; /*#6CE26C !important;*/
+                background-image: none !important;
+                color: #000000 !important;
+            }
+
+        </style>
+
+    <p:panel styleClass="myPanel myDashboard" header="Statistical Meta-Analysis" toggleable="true" toggleSpeed="500"  
+             class="surface-card text-800"
+             rendered="#{not empty metaResBean.resBeans}">
+        <h:outputText escape="false" value="#{downloadBean.generateMetaAnalysisSummary()}"/>
+
+        <div class="card">
+
+            <p:tabView id="metaTabView"
+                       value="#{metaResBean.resBeanMap.entrySet()}"
+                       var="entry"
+                       dynamic="true" cache="true"
+                       styleClass="custom-tabs"
+                       rendered="#{not empty metaResBean.resBeanMap}">
+                <p:ajax event="tabChange"
+                        listener="#{metaResBean.onTabChange}"
+                        update=":form1:metaTabView"/>
+                <p:tab title="#{metaResBean.getTableName(entry.key)}">
+                    <h:panelGrid columns="2" style="width: 100%; padding-bottom: 10px">
+                        <h:panelGrid cellpadding="3" columns="10" style="padding-right: 40px">
+                            <p:outputLabel value="Data summary:"/>  
+                            <p:selectOneMenu value="#{metaResBean.indField}" id="indFieldId">
+                                <f:selectItem itemLabel="Log fold change" itemValue="fc"/> 
+                                <f:selectItem itemLabel="Adjusted p-values" itemValue="pval"/> 
+                            </p:selectOneMenu>  
+                            <p:spacer width="8px"/>
+                            <p:outputLabel  value="Sort by:"/>   
+                            <p:selectOneMenu value="#{metaResBean.sortField}" id="sortFieldId">
+                                <f:selectItems  value="#{metaResBean.tableFields}"/> 
+                            </p:selectOneMenu> 
+                            <p:spacer width="8px"/>
+                            <p:outputLabel value="Order:"/>  
+                            <p:selectOneMenu value="#{metaResBean.sortOrder}" id="sortOrderId">
+                                <f:selectItem itemLabel="Ascending" itemValue="asc"/> 
+                                <f:selectItem itemLabel="Descending" itemValue="dsc"/> 
+                            </p:selectOneMenu>  
+                            <p:spacer width="8px"/>
+                            <p:commandButton value="Update" update=":form1:metaTabView"
+                                             actionListener="#{metaResBean.updateTable()}"/>
+                        </h:panelGrid>
+
+                        <p:outputPanel style="text-align: right;">
+                            <p:commandButton value="Download" ajax="false" 
+                                             onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                             icon="pi pi-download">  
+                                <p:fileDownload value="#{loadBean.metaResFile}" />  
+                            </p:commandButton> 
+                        </p:outputPanel>
+                    </h:panelGrid>
+                    <p:dataTable id="resultTableMeta_#{entry.key}"
+                                 var="resBean"
+                                 value="#{metaResBean.resBeans}"
+                                 widgetVar="resTable_#{entry.key}"
+                                 emptyMessage="No record found"
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 paginator="true"
+                                 rows="10" rowsPerPageTemplate="10,20,50"
+                                 paginatorPosition="bottom"
+                                 rowIndexVar="rowIndex"
+                                 rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+                        <p:columns value="#{metaResBean.columns}" var="column">
+                            <f:facet name="header">#{column.header}</f:facet>
+                            <h:outputText escape="false" value="#{resBean.getValue(column.property)}"/>
+                        </p:columns>
+
+                        <p:column exportable="false" style="width:60px">
+                            <f:facet name="header">View</f:facet>
+                            <p:commandButton value="View"
+                                             update=":hisTab:cmdPane"
+                                             onclick="PF('statusDialog').show()"
+                                             icon="pi pi-image"
+                                             oncomplete="PF('statusDialog').hide(); PF('visDialog').show()">
+                                <f:setPropertyActionListener value="#{resBean}"
+                                                             target="#{metaResBean.selectedFeature}" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+            </p:tabView>
+
+
+        </div>
+    </p:panel>
+
+    <p:dialog widgetVar="visDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="updateDialog()"
+              header="Feature View"
+              hideEffect="explode" resizable="true" position="center top"> 
+        <h:panelGrid id="metaVisView" style="width:500px; text-align: center; padding: 10px">
+            <p:graphicImage value="#{metaResBean.currentFeatureImg}" /> 
+            Values were scaled to facilitate cross-study comparisons.
+        </h:panelGrid>
+    </p:dialog> 
+    <p:remoteCommand name="updateDialog" update="metaVisView"/>
+
+</ui:composition>
+

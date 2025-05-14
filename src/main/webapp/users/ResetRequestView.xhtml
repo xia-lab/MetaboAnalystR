@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+
+    <ui:define name="content"> 
+        <div class="flex flex-wrap align-items-center justify-content-center" style="padding-top: 7%">
+            <div class="surface-card shadow-1 p-4 border-round" style="text-align: center; padding-top: 20px; line-height: 24px">
+                 <h3>
+                    Reset Password
+                </h3>
+                <p>
+                    Please enter your login email to receive the instructions.
+                </p>
+                <h:form id="form">
+                    <p:focus context="form"/>
+                    <h:panelGrid style="margin-left: 30px;">
+                        <h:panelGrid columns="2" style="width: 400px">
+                            <p:outputLabel for="email" value="Email:"  style="font-weight: bold;"/>
+                            <p:inputText id="email" value="#{fireUserBean.email}" required="true" placeholder="Enter your email address" style="width: 320px"/>
+                        </h:panelGrid>
+                        <h:panelGrid style="width: 400px; text-align: center; padding-top: 10px">
+                            <!--<p:captcha label="Captcha" />-->
+                            <p:commandButton value="Submit" style="width:120px;"
+                                             id="resetReqBn"
+                                             ajax="false" 
+                                             onclick="PF('statusDialog').show();"
+                                             action="#{fireUserBean.doSendEmail()}"
+                                             icon="pi pi-send"
+                                             oncomplete ="PF('statusDialog').hide();"
+                                             />
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

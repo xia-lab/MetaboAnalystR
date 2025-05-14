@@ -1,0 +1,36 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },            
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "List", "label": "Peak List", "size": "10", "color": "#666666" }, "position": { "x": 0, "y": 0 } },
+      { "data": { "id": "Sanity Check Peak", "label": "Sanity Check", "size": "10", "color": "#666666" }, "position": { "x": 1, "y": 0 } },
+
+      { "data": { "id": "Functional Annotation", "label": "Functional Annotation", "size": "10", "color": "#666666" }, "position": { "x": 2, "y": 0 } },
+      { "data": { "id": "Scatter", "label": "Pathway Profile", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": 0 } },
+      { "data": { "id": "Network", "label": "Network View", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": 1 } },
+      { "data": { "id": "Heatmap_mum", "label": "Heatmap View", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": 2 } },
+
+      { "data": { "id": "Table", "label": "Intensity Table", "size": "10", "color": "#666666" }, "position": { "x": 0, "y": -3 } },
+      { "data": { "id": "Sanity Check Intensity", "label": "Sanity Check", "size": "10", "color": "#666666" }, "position": { "x": 1, "y": -3 } },
+      { "data": { "id": "Filtering Intensity", "label": "Filtering", "size": "10", "color": "#666666" }, "position": { "x": 2, "y": -3 } },
+      { "data": { "id": "Normalization Intensity", "label": "Normalization", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": -3 } }
+    ],
+    "edges": [
+      { "data": { "id": "e01", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e0", "source": "Start", "target": "List" } },
+      { "data": { "id": "e12", "source": "Start", "target": "Table" } },
+      { "data": { "id": "e1", "source": "List", "target": "Sanity Check Peak" } },
+      { "data": { "id": "e2", "source": "Sanity Check Peak", "target": "Functional Annotation" } },
+
+      { "data": { "id": "e3", "source": "Table", "target": "Sanity Check Intensity" } },
+      { "data": { "id": "e4", "source": "Sanity Check Intensity", "target": "Filtering Intensity" } },
+      { "data": { "id": "e5", "source": "Filtering Intensity", "target": "Normalization Intensity" } },
+      { "data": { "id": "e6", "source": "Normalization Intensity", "target": "Functional Annotation" } },
+
+      { "data": { "id": "e7", "source": "Functional Annotation", "target": "Scatter" } },
+      { "data": { "id": "e8", "source": "Functional Annotation", "target": "Network" } },
+      { "data": { "id": "e9", "source": "Functional Annotation", "target": "Heatmap_mum" } }
+    ]
+  }
+}

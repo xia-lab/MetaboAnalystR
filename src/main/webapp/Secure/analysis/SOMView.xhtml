@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('SOM')}"/> 
+                <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('SOM', '/Secure/analysis/SOMView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Self-organizing Map (SOM)</h2>
+            <p>
+                Please note: only cluster members will be calculated  if the total  cluster number (xdim*ydim) &gt; 20. 
+                The Sample Overview shows the sample cluster membership using a PCA score plot based on the normalized data.
+                The Feature Overview shows feature abundance profiles in each cluster. The darker lines represent the median intensities of each cluster. 
+            </p>
+            <h:form>
+                <h:panelGrid columns="2">
+                    <h:panelGrid columns="2" cellpadding="5" style="padding: 2px 40px 10px 20px; width: 480px">
+                        <h:outputLabel style="font-weight: bold" value="X dimension:"/>
+                        <p:inputText style="width:50px" value="#{clusterBean.somXdim}"/>
+                        <h:outputLabel style="font-weight: bold" value="Y dimension:"/>
+                        <p:inputText style="width:50px" value="#{clusterBean.somYdim}"/>
+                        <h:outputLabel style="font-weight: bold" value="Initialization:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel"  value="#{clusterBean.somInitOpt}">
+                            <f:selectItem itemLabel="Linear" itemValue="linear" /> 
+                            <f:selectItem itemLabel="Random" itemValue="random" /> 
+                            <f:selectItem itemLabel="Sample" itemValue="sample" />                                 
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Neighbourhood:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel"  value="#{clusterBean.somNbOpt}">
+                            <f:selectItem itemLabel="Gaussian" itemValue="gaussian" /> 
+                            <f:selectItem itemLabel="Bubble" itemValue="bubble" />                               
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Color palette:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{clusterBean.somColPal}">
+                            <f:selectItem itemLabel="Default" itemValue="default" /> 
+                            <f:selectItem itemLabel="Color-blind friendly" itemValue="colblind" /> 
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Layout (Feature Overview):"/>                       
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{clusterBean.somFacet}">
+                            <f:selectItem itemLabel="Separate" itemValue="separate" />                             
+                            <f:selectItem itemLabel="Overlay" itemValue="overlay" /> 
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Show names (Sample Overview):"/>
+                        <p:selectBooleanCheckbox value ="#{clusterBean.somLabel}" style="line-height: 18px"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" 
+                                     update=":hisTab:cmdPane" 
+                                     ajax="false"
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     actionListener="#{clusterBean.somButton_action()}"/>   
+                </h:panelGrid>
+            </h:form>
+
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:100%; border: none; font-size: 13px;">            
+                <p:tab title ="Sample Overview">
+                    <h:form id="form2">
+                        <h:panelGrid id="somPCAPane" style="width: 100%; padding-left: 10%">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('som_pca')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('som_pca')}" alt="SOM-PCA"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Feature Overview">
+                    <h:form id="form1">
+                        <h:panelGrid id="somPane" style="width: 100%; padding-left: 10%">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('som')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('som')}" alt="SOM-profile"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+            </p:tabView>
+        </h:panelGrid> 
+        <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" appendTo="@(body)" width="540"
+                   header="Cluster Membership"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="detailView" style="width:500px; padding: 20px; font-size: 12px">
+                <h:outputText escape="false" value="#{clusterBean.somTxt}"/>
+            </h:panelGrid> 
+        </p:dialog>
+    </ui:define>
+</ui:composition>

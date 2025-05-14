@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('utils')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/LipidAnalysis.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form1" enctype="multipart/form-data">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Calculate the upper limit and most probable concentrations for lipomics data:</h2>
+
+                <p>
+                    Upload your lipid concentration file:
+                    <ul>
+                        <li>The file must be in comma separated format (.csv);</li>
+                        <li>The first column is the sample name;</li>
+                        <li>The second column is lipid class names. Currently, only the following lipid classes are supported:
+                            <ul>
+                                <li>DG: Diacylglycerol</li>
+                                <li>PC: Phosphatidylcholine</li>
+                                <li>PE: Phosphatidylethanolamine</li>
+                                <li>TG: Triacylglycerol</li>
+                            </ul>
+                        </li>
+                        <li>The first row are free fatty acid names;</li>
+                        <li>No missing values are allowed (please replace by 0);</li>
+                    </ul>
+                    Please see below for screenshot instructions and example data
+                </p>
+                <h:panelGrid columns="2" style="width:630px; padding: 20px 20px 20px 30px" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" style="width: 720px; padding-right: 60px">
+                        <h:panelGroup layout="block" style="width:200px">
+                            <h:outputLabel style="font-size:13px; font-weight: bold" value="Data file:"/>
+                        </h:panelGroup>
+                        <p:fileUpload value="#{utilBean.lipidFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+
+                        <h:outputLabel style="font-size:13px; font-weight: bold" value="Option for isomers:"/>
+                        <p:selectOneRadio label="Options:" value="#{utilBean.isomerOpt}">
+                            <f:selectItem itemLabel="Isomers merged as [iso #]" itemValue="y" />
+                            <f:selectItem itemLabel="Isomers listed individually" itemValue="n" />
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     action="#{utilBean.performLipidAnalysis()}"/>  
+
+                </h:panelGrid>
+                <h:panelGrid style="width: 100%; padding: 20px; font-size: 12px">
+                    <h:outputText escape="false" value="#{utilBean.resultInfo}"/> 
+                </h:panelGrid>
+
+                <p:fieldset legend="File Format" style="width: 90%; border:silver dashed thin">
+
+                    A screenshot of sample data is shown below:
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/lip_format.png"></img>
+                    <br/>The complete sample data can be downloaded <a href="https://www.xialab.ca/api/download/metaboanalyst/lipomics.zip">here</a>
+                </p:fieldset>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Spectra Check', '/Secure/spectra/MS2Check.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>MSP Spectra Integrity Check:</h2>
+                <ol>
+                    <li>
+                        MetaboAnalyst-Pro only supports tandem spectra searching on level 2. Other levels will be excluded.
+                    </li>
+                    <li>
+                        Compared to public version, MetaboAnalyst-Pro supports unlimited spectra in an individual search.
+                    </li>
+                    <li>
+                        User could manually edit the precursor ion inclusion list for MS/MS annotation, unless the total number of MS/MS spectra in your msp file is &lt; 20.
+                    </li>
+                    <li>
+                        Searching &lt; 20 MS/MS will be processed immediately. The searching job (of over 20) will be scheduled to be performed once you click <b>Submit</b> and <b>Confirm</b> button.
+                    </li>
+                </ol>
+                <h:panelGrid style="border: 1px dashed grey; margin-left: 20px; padding: 20px; width: 800px">
+                    <h:outputLabel value="#{tandemMS.sanityMsg}" escape="false"/>
+                </h:panelGrid>
+                <h:panelGrid id="btnPane" columns="2" style="width: 800px; text-align: center; padding-left: 60px; padding-top: 10px; padding-right: 40px">
+                    <p:commandButton value="Edit Data" ajax="false" style="width:120px;" 
+                                     action="mspdataeditor"/>
+                    <p:commandButton value="Proceed" style="width:120px;"
+                                     ajax="false"
+                                     rendered="#{!tandemMS.useScheduler}"
+                                     onclick="PF('statusDialog').show()"
+                                     icon="pi pi-caret-right"
+                                     action="#{tandemMS.performMSPdataSearch()}"/>
+                    <p:commandButton value="Submit" style="width:120px;"
+                                     rendered="#{tandemMS.useScheduler}"
+                                     onclick="PF('confirmVar').show()"
+                                     icon="pi pi-caret-right"/>
+                </h:panelGrid> 
+            </h:panelGrid> 
+        </h:form>
+
+
+        <p:dialog header="Confirmation"
+                  widgetVar="confirmVar" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
+
+                    Your searching have included over 20 spectra. The searching job will be submitted and scheduled. Click <b>Confirm</b> to submit your job.. 
+                    A project will be <b>saved</b> when the job starts, optionally, you can specify a name and description.
+                    <h:panelGrid columns="2" style="width:100%">
+                        <h:outputLabel value="Title"/>
+                        <p:inputText id="float-input" style="width:100%" value="#{fireBaseController.fireDocName}"/>
+                        <h:outputLabel value="Description"/>
+                        <p:inputTextarea rows="10" cols="36" value="#{fireBaseController.fireDocDescription}"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style=" width: 100%; text-align:center; padding-top: 20px">
+                        <p:button href="#" onclick="PF('confirmVar').hide();" value="Cancel"></p:button> 
+                        <p:commandButton value="Confirm"
+                                         onclick="PF('statusDialog').show()"
+                                         ajax="false"
+                                         action="#{tandemMS.submitBatchJob()}" />
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

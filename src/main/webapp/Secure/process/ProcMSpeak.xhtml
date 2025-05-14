@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Pre-process', '/Secure/process/ProcMSpeak.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Processing MS peak list data :</h2>
+                <p>
+                    Peaks need to be matched across samples in order to be compared. For two-column format (mass and intensities), 
+                    peaks are grouped by their m/z values. For three column data (mass, retention time, and intensities), the program 
+                    will further group peaks based on their retention time. Users need to supply tolerance values in order to proceed. 
+                    Here are some suggested values: mass tolerance - 0.25 (m/z); retention time - 30 (seconds) for LC-MS peak, 
+                    and 5 (seconds) for GC-MS peaks. Please note, If a sample has more than one peak in a group, they will be replaced 
+                    by their sum; some groups will be excluded if none of the classes has at least half its samples represented.  
+                    Finally, the program create a peak intensity table in which each sample occupies a row and each column represents 
+                    a peak group identified by the median values of its position (m/z and/or retention time).                                    
+                </p>
+                <h:panelGrid columns ="2" style="width: 800px">
+                    <h:panelGrid columns ="2" style="width: 600px; padding-left: 30px; padding-right: 50px">
+                        <h:outputLabel style="font-weight: bold" value="Mass tolerance (m/z):"/>
+                        <p:inputText style="width:120px" value="#{procBean.mzThresh}"/> 
+                        <h:outputLabel style="font-weight: bold" value="Retention time tolerance:"/>
+                        <p:inputText style="width:120px" value="#{procBean.rtThresh}"/> 
+                    </h:panelGrid> 
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     update="form1:nextPane  :hisTab:cmdPane" 
+                                     actionListener="#{procBean.msPeakAlignBn_action()}" />   
+                </h:panelGrid>
+
+                <hr class="myhr"/>
+
+                <h:panelGrid  id="nextPane" style="width: 800px; text-align: center; padding-top: 10px">
+                    <h:panelGrid style="text-align: left; margin-left: 20px; margin-bottom: 20px; padding: 20px; width: 800px"
+                                 class="surface-card shadow-1 p-4 text-800"
+                                 rendered="#{sessionBean1.msPeakAligned}">
+                        <h:outputLabel value="#{procBean.msPeakText}" escape="false"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Proceed"
+                                     ajax="false" 
+                                     icon="pi pi-caret-right"
+                                     rendered="#{sessionBean1.msPeakAligned}" 
+                                     action="#{procBean.msPeakNextBn_action()}"/>       
+                </h:panelGrid> 
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

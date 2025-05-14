@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{tandemMS.prepareDataEditor()}"/>
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="../../resources/jscripts/jquery.ui.pfextensions.js"></script>
+    </ui:define>
+    <ui:define name="content">
+        <style>
+            .ui-picklist .ui-picklist-list{
+                height:300px;
+                width: 280px
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>MS/MS Spectral Inclusion List Editor</h2>
+            <p>
+                You can use the panels below to <b>exclude</b> particular MS/MS spectra. Note, 
+                <font style="color: orange">you must click the <b>Submit</b> button to complete data editing</font>. 
+                You could only include all spectra for searching once at a time, but it may take a long time to complete.
+                Data need to be re-calibrated after this step. you will be redirected to the <b>Sanity Check</b> page 
+                when you click the <b>Submit</b> button. 
+            </p>
+            <h:form>
+                <p:tabView style="width:95%; border:none; line-height: 18px;">
+                    <p:tab title ="Edit Inclusion List">
+                        <h:panelGrid style="padding-left:80px; padding-top: 10px">
+                            <p:pickList value="#{tandemMS.precIncluItems}" 
+                                        var="sample" itemValue="#{sample}" itemLabel="#{sample}"
+                                        showSourceFilter="true" showTargetFilter="true">
+                                <f:facet name="sourceCaption">Include</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{tandemMS.doTransfer}"/>
+                            </p:pickList> 
+                            <h:panelGrid style="width:100%; font-size: 14px; text-align: center; padding-top: 20px">
+                                <p:commandButton value="Submit" ajax="false"                                               
+                                                 action="#{tandemMS.editData()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>                 
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,165 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('View result', '/Secure/pathway/PathResultView.xhtml')}"/>       
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript">
+            function renderPath(pathname) {
+                document.getElementById('pathFrame').contentWindow.renderImage(pathname);
+            }
+        </script>
+    </ui:define> 
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Result View:</h2>
+            <p>The <b>metabolome view</b> on the left shows all matched pathways according to the 
+                p values from the pathway enrichment analysis and pathway impact values from the pathway topology 
+                analysis. Placing your <u>mouse over</u> each pathway node will reveal its pathway name.
+                <u>Clicking each node</u> will launch the <b>pathway view</b> on the right panel.
+            </p>
+            <p>
+                The pathway can be launched either by clicking the corresponding node on the left image or by clicking the 
+                pathway name from the table below. Please note, each node (compound) is clickable. 
+                You can <u>zoom in and out</u> using the control buttons below, and then <u>drag</u> the 
+                image to the locations of interest.  Placing the <u>mouse over</u> each metabolite node will reveal 
+                its common name. <u>Clicking the node</u> will trigger the <b>compound view</b> of the selected compound.   
+            </p> 
+            <p>
+                About compound colors within the pathway - <u>light blue</u> means those metabolites are not in your data and are 
+                used as background for enrichment analysis; <u>grey</u> means the metabolite is not in your data and is also 
+                excluded from enrichment analysis (only applicable if you have uploaded a custom metabolome profile);  
+                other colors (varying from yellow to red) means the metabolites are in the data with different levels of significance. 
+            </p>
+
+
+            <h:form>
+                <h:panelGrid columns="2" style="text-align: right; padding-right:20px; width:1080px;">
+                    <h:panelGrid columns="2" style="text-align: right; padding-right:30px; width:980px;">
+                        <h:panelGrid columns="2" style="text-align: right; padding-right:10px; width:500px;">
+                            <h:panelGrid columns="5" style="text-align: left; padding-left:30px; padding-right: 30px; width:100%;">
+                                <p:selectBooleanCheckbox value ="#{pathBean.showGrid}" style="line-height: 18px"/>
+                                <h:outputLabel style="font-weight: bold" value="Show gridline"/>
+                                <p:commandLink onclick="PF('plotparam').show()" value="More options" style="padding-left: 2px; padding-right: 2px"/>
+                                <p:spacer style="width:40px"/>
+                                <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
+                            </h:panelGrid>
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('path_view')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pathway')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid> 
+                    <a href="../viewer/_path_viewer_v1.8.html" target="_blank">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/expand.png" border="0" style="width: 26px; background:white"/>
+                    </a> 
+                </h:panelGrid>
+            </h:form>
+
+            <h:panelGrid style="width: 1200px; height:580px; margin: 0; padding-left: 30px" id="myBox">
+                <iframe frameborder="0" id="pathFrame" 
+                        src="../viewer/_path_viewer_v1.8.html?userID=#{sessionBean1.currentUser.name}" style="border-width: 0px; height: 560px; width: 1200px"></iframe>
+            </h:panelGrid>
+
+            <hr class="style-one"/>
+            <h:form id="resTblForm" style="padding:10px 20px 10px 40px;">
+                <p>
+                    Click the corresponding <b>Pathway Name</b> to view its graphical presentation; 
+                    click <b>Match Status</b> to view the pathway compounds (with matched ones highlighted). 
+                </p>
+                <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             id="resTbl" style="width:95%; font-size: 12px" var="pab" value="#{pathBean.paBeans}">  
+                    <p:column headerText="Pathway Name" style="width:320px; font-size: 12px">  
+                        <p:commandLink value="#{pab.setName}" onclick="renderPath('#{pab.setName}')" update=":hisTab:cmdPane" /> 
+                    </p:column>  
+                    <p:column headerText="Match Status" style="text-align: center">  
+                        <p:commandLink value="#{pab.match}" update=":detailView" oncomplete="PF('msetDialog').show()">  
+                            <f:setPropertyActionListener value="#{pab.setName}" target="#{sessionBean1.currentPathName}" />  
+                        </p:commandLink>
+                    </p:column>  
+                    <p:column headerText="p">  
+                        <h:outputText escape="false" value="#{pab.PVal}"/>
+                    </p:column>                     
+                    <p:column headerText="-log(p)">  
+                        <h:outputText escape="false" value="#{pab.logP}"/>
+                    </p:column>  
+                    <p:column headerText="Holm p">  
+                        <h:outputText escape="false" value="#{pab.holmPval}"/>
+                    </p:column>  
+                    <p:column headerText="FDR">  
+                        <h:outputText escape="false" value="#{pab.fdrPval}"/>
+                    </p:column>  
+                    <p:column headerText="Impact">  
+                        <h:outputText escape="false" value="#{pab.impVal}"/>
+                    </p:column> 
+                    <p:column headerText="Details">  
+                        <h:outputText escape="false" value="#{pab.details}"/>
+                    </p:column>   
+                </p:dataTable>   
+
+                <h:outputText escape="false" value="#{pathBean.downloadMsg}"/>
+                <h:panelGrid style="width: 100%; padding-bottom: 20px; text-align: center">
+                    <p:commandButton value="Submit" ajax="false" style="font-size: 14px"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"                              
+                                     action="Download"/>
+                </h:panelGrid> 
+            </h:form>
+        </h:panelGrid>
+        <p:dialog widgetVar="msetDialog" 
+                  header="Pathway Details"
+                  dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="detailView" style="width:500px; font-size: 13px; padding: 20px">
+                <h:outputText escape="false" value="Matched metabolites: "/>
+                <h:form id="summaryForm">
+                    <p:dataTable style="width:100%; font-size: 12px" var="set" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{pathBean.currentPathSet}">
+                        <p:column headerText="Pathway">  
+                            <h:outputText escape="false" value="#{set.name}"/>  
+                        </p:column>  
+                        <p:column headerText="Metabolites">  
+                            <h:outputText escape="false" value="#{set.members}"/>
+                        </p:column>   
+                    </p:dataTable> 
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="OK" onclick="PF('msetDialog').hide()"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+        <p:dialog widgetVar="plotparam" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true" header="Limit of x and y axises">
+            <h:form id="paramForm">
+                <h:panelGrid columns="2" id="paramView" style="width:225px; font-size: 13px; padding: 20px;">
+                    <h:outputLabel value="Limit of x axis:" title="Set the upper limit of x-axis"/> 
+                    <p:inputText style="width:70px" value="#{pathBean.xlim}" type="number"/>
+
+                    <h:outputLabel value="Limit of y axis:" title="Set the upper limit of y-axis"/> 
+                    <p:inputText style="width:70px" value="#{pathBean.ylim}" type="number"/>
+                </h:panelGrid>
+                <p:commandButton value="Update" style = "margin-left: 85px" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,35 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog modal="true" widgetVar="doseExampleDialog" 
+              style="line-height: 21px;" 
+              height="500"
+              appendTo="@(body)" header="Example Datasets"
+              draggable="false" closable="true" resizable="true">
+        <h:form>
+            <h:panelGrid columns="2" cellpadding="4" style="width: 720px; padding: 20px" class="surface-card shadow-1 p-4 text-800">
+                <h:panelGrid style="width:80px">
+                    <p:outputLabel style="font-weight: bold" value="Data"/>
+                </h:panelGrid>       
+                <p:outputLabel style="font-weight: bold" value="Description"/>
+                <a href="#{facesContext.externalContext.requestContextPath}/resources/data/dose_example.csv">Dataset</a>
+                <h:panelGrid>
+                    Test example data to study dose-response effect using LC-MS untargeted metabolomics. 
+                    BT549 breast cancer cells were treated with etomoxir concentrations that spanned 10-200 μM
+                    Doses: 0, 10, 50, and 200 uM with three replicates at each dose 
+                    (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7354698/" target="_blank">details</a>). 
+                </h:panelGrid>
+            </h:panelGrid>
+            <h:panelGrid style="width:720px; padding-top: 10px; padding-bottom: 10px; text-align: center">
+                <p:commandButton value="Submit" ajax="false"
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"
+                                 action="#{wfUploadBean.handleDoseTestFileUpload()}"/>  
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+</ui:composition>
+

@@ -1,0 +1,21 @@
+#compound	logFC
+Citric Acid	-0.69
+Cis-Aconitic Acid	-0.585
+Fumaric Acid	-0.433
+Stearic acid	-0.602
+Tryptophan	-0.828
+Malic Acid	-0.331
+2-Ketoisocaproic acid	-0.496
+1,2-Propanediol	-0.352
+Salicylic acid	-1.889
+3-Hydroxybutyric acid	-0.717
+Trans-Aconitic Acid	-0.412
+Inositol	-0.725
+Propanoic acid	-0.327
+Uric acid	-0.859
+Palmitic Acid	-0.535
+3-hydroxyisovaleric acid	0.659
+Pyruvic acid	-0.248
+L-Pyroglutamic acid	-0.373
+L-Isoleucine	0.455
+

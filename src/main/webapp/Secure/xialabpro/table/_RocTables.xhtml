@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+
+    <p:panel styleClass="myPanel myDashboard" header="Univariate ROC Analysis" toggleable="true" toggleSpeed="500"  
+             class="surface-card text-800"
+             rendered="#{not empty rocAnalBean.featureBeans}">
+        <p>
+            The features displayed in the table below are ranked based on area under ROC curve (AUROC), 
+            T-statistics or Log2 fold change (FC). Click a header to sort the table accordingly. 
+            Click "View" in the last column to visualize its ROC curve and performance details. 
+            Note, the 95% confidence interval is calculated using 500 bootstrappings.
+        </p>
+        <div class="card">
+
+            <p:dataTable  style="font-size: 12px; line-height: 21px;" paginator="true" 
+                          rows="10" rowsPerPageTemplate="10,20,50"
+                          class="surface-card shadow-1 p-0 text-800"
+                          rowIndexVar="rowIndex" 
+                          rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                          paginatorPosition="bottom" id="featTable" var="set" value="#{rocAnalBean.featureBeans}">
+                <p:column headerText="Name" sortBy="#{set.name}">  
+                    <h:outputText escape="false" value="#{set.name}"/>  
+                </p:column> 
+                <p:column headerText="AUC" sortBy="#{set.val1}">  
+                    <h:outputText escape="false" value="#{set.val1}"/>  
+                </p:column> 
+                <p:column headerText="T-tests" sortBy="#{set.val2}">  
+                    <h:outputText escape="false" value="#{set.val2}"/>  
+                </p:column> 
+                <p:column headerText="Log2 FC" sortBy="#{set.val3}">  
+                    <h:outputText escape="false" value="#{set.val3}"/>  
+                </p:column> 
+                <p:column headerText="ROC Curve" width="100">  
+                    <p:commandLink ajax="true" value="View" rendered="#{workflowBean.resultPageDisplay eq 'default'}"
+                                   action="#{rocAnalBean.plotUnivROCSummary(set.name)}"
+                                   onclick="PF('statusDialog').show()" 
+                                   oncomplete="PF('statusDialog').hide(); PF('rocFeatureDialog').show()"  
+                                   update=":form1:imgPane :hisTab:cmdPane"/> 
+
+                    <p:commandLink ajax="true" value="View" rendered="#{workflowBean.resultPageDisplay ne 'default'}"
+                                   action="#{rocAnalBean.plotUnivROCSummary(set.name)}"
+                                   onclick="PF('statusDialog').show()" 
+                                   oncomplete="PF('statusDialog').hide(); PF('rocFeatureDialog').show()"  
+                                   update=":form2:imgPane :hisTab:cmdPane"/> 
+                </p:column> 
+            </p:dataTable>
+        </div>
+    </p:panel>
+    <p:dialog header="Feature View" widgetVar="rocFeatureDialog" dynamic="true" modal="true" appendTo="@(body)"  
+              position="center top"
+              hideEffect="explode" resizable="true">
+        <h:panelGrid id="imgPane" style="width:720px;">
+            <h:panelGrid columns="3" style="margin-left:480px; width:200px;">
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.univ')}" 
+                               update=":myGraphPane"
+                               oncomplete="PF('graphDialog').show()"
+                               title="Customize the graphics output">
+                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                </p:commandLink>
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.boxplot')}" 
+                               update=":myGraphPane"
+                               oncomplete="PF('graphDialog').show()"
+                               title="Customize the graphics output">  
+                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                </p:commandLink>
+                <p:graphicImage id="helpIconRocFeat" url="/resources/images/ui-help.png"  alt="help"/>
+            </h:panelGrid>
+            <p:tooltip for="helpIconRocFeat" styleClass="helpTip">
+                <p>
+                    Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                    represent the concentrations of the selected feature from all samples. The notch indicates
+                    the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                    The notch can be used to evaluate differences between groups; if the notches 
+                    do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                    with a red diamond. If "Show optimal cutoff using:" was selected, it is indicated with a horizontal 
+                    red line on the boxplot.
+                </p>
+            </p:tooltip>
+            <h:panelGrid columns="2" style="text-align: center; width: 720px;">
+                <img onerror='this.style.display="none"' src="#{rocAnalBean.rocUnivImg}" alt="rocImg"/>
+                <img onerror='this.style.display="none"' src="#{rocAnalBean.rocUnivBPImg}" alt="rocbpImg" />
+            </h:panelGrid>                   
+        </h:panelGrid>  
+    </p:dialog>
+</ui:composition>
+

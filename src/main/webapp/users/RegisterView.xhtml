@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+
+    <ui:define name="content"> 
+        <div class="flex flex-wrap align-items-center justify-content-center" style="padding-top: 5%">
+            <div class="surface-card shadow-1 p-4 border-round" style="text-align: center; padding-top: 20px; line-height: 24px">
+                <h3>
+                    Account Creation
+                </h3>
+                <p>
+                    Please use the same email that you provided for subscription
+                </p>
+                <h:form id="form">
+                    <p:focus context="form"/>
+                    <h:panelGrid style="margin-left: 20px; text-align:left; width:480px">
+                        <h:panelGrid columns="2" style="width: 100%">
+                            <h:panelGroup>
+                                <p:outputLabel for="email" value="Email:" style="font-weight: bold;" />
+                                <p:graphicImage id="idicon" library="pi" name="pi-info-circle" style="margin-left: 5px; vertical-align: middle;" />
+                                <p:tooltip for="idicon" styleClass="helpTip">
+                                    <p>
+                                        The email will be used as the ID for accessing the system, password recovery, and communications with us.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGroup>
+                            <p:inputText id="email" value="#{fireUserBean.email}" required="true" requiredMessage="Please enter your email!" style="width: 250px"/>
+
+                            <p:outputLabel for="pwd1" value="Password:" style="font-weight: bold;"/>
+                            <p:password id="pwd1" value="#{fireUserBean.password}" match="pwd2" requiredMessage="Please enter your password!" label="Password 1" required="true" style="width: 250px" placeholder="Password"/>
+                            <p:spacer/>
+                            <p:password id="pwd2" value="#{fireUserBean.password2}" label="Password 2" required="true" requiredMessage="Please confirm your password!"  style="width: 250px" placeholder="Confirm password"/>
+
+                            <p:outputLabel for="fname" value="Name:" style="font-weight: bold;" />
+
+                            <h:panelGroup layout="block" style="width: 94%;">
+                                <p:inputText id="fname" value="#{fireUserBean.fname}"
+                                             style="width: 46%; display: inline-block;" placeholder="First name" />
+                                <p:inputText id="lname" value="#{fireUserBean.lname}"
+                                             style="width: 46%; display: inline-block; margin-left: 4%;" placeholder="Last name" />
+                            </h:panelGroup>
+
+
+                            <p:outputLabel for="institution" value="Institution:" style="font-weight: bold;" />
+                            <p:inputText id="institution" value="#{fireUserBean.institution}" style="width: 250px;"
+                                         placeholder="University, company, etc." />
+
+                        </h:panelGrid>
+                        <p style='text-align:left; width:100%; padding-top: 8px; color: orange'>
+                            <b>Note:</b> you must have <a href="https://www.xialab.ca/translation.xhtml" target="_blank">subscribed to this pro tool</a> to create an account.
+                        </p>
+                        <h:panelGrid style="padding-top: 10px; text-align: center; width: 100%">
+                            <p:commandButton value="Create Account" style="width:180px;"
+                                             id="procBn"
+                                             onclick="PF('statusDialog').show();"
+                                             action="#{fireUserBean.doRegister()}"
+                                             disabled="false"
+                                             icon="pi pi-user-plus"
+                                             update="form"
+                                             oncomplete ="PF('statusDialog').hide();"
+                                             />
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,1938 @@
+	x
+1	1-Methylhistidine
+2	2-Hydroxybutyric acid
+3	4-Pyridoxic acid
+4	alpha-Ketoisovaleric acid
+5	(S)-3-Hydroxyisobutyric acid
+6	Ureidopropionic acid
+7	Taurocholic acid
+8	Acetic acid
+9	Betaine
+10	Argininosuccinic acid
+11	Bilirubin
+12	Acetoacetic acid
+13	L-Carnitine
+14	Creatine
+15	Cholesterol
+16	Pipecolic acid
+17	cis-Aconitic acid
+18	Dihydrothymine
+19	Dimethylamine
+20	Dimethylglycine
+21	Citric acid
+22	Cytidine monophosphate
+23	Choline
+24	D-Xylose
+25	L-Cystathionine
+26	Ethanol
+27	gamma-Aminobutyric acid
+28	Glycolic acid
+29	D-Glucose
+30	Glycine
+31	Guanidoacetic acid
+32	Guanosine
+33	Fumaric acid
+34	Glycocholic acid
+35	Formic acid
+36	D-Galactose
+37	L-Glutamic acid
+38	Ethanolamine
+39	Malic acid
+40	Hypoxanthine
+41	L-Tyrosine
+42	L-Phenylalanine
+43	L-Alanine
+44	L-Proline
+45	Methylamine
+46	L-Threonine
+47	L-Asparagine
+48	D-Mannose
+49	L-Isoleucine
+50	Maleic acid
+51	L-Histidine
+52	L-Lysine
+53	L-Serine
+54	L-Lactic acid
+55	L-Aspartic acid
+56	Inosine
+57	Indoleacetic acid
+58	L-Acetylcarnitine
+59	Methylmalonic acid
+60	Phenylpyruvic acid
+61	N6-Acetyl-L-lysine
+62	Oleic acid
+63	Oxoglutaric acid
+64	Phenylacetic acid
+65	Pantothenic acid
+66	myo-Inositol
+67	Ornithine
+68	N-Acetyl-D-glucosamine
+69	Palmitic acid
+70	Palmitoylcarnitine
+71	O-Phosphoethanolamine
+72	Orotic acid
+73	N-Acetylneuraminic acid
+74	Quinolinic acid
+75	Pyruvic acid
+76	Sorbitol
+77	Taurine
+78	Succinic acid
+79	Sucrose
+80	Pyroglutamic acid
+81	Uric acid
+82	Vanillylmandelic acid
+83	Urea
+84	Uridine
+85	Xanthosine
+86	Uracil
+87	Urocanic acid
+88	Vitamin A
+89	2-Hydroxy-3-methylpentanoic acid
+90	2-Hydroxyadipic acid
+91	(S)-3,4-Dihydroxybutyric acid
+92	3-Hydroxysebacic acid
+93	Epiandrosterone
+94	2-Methylbutyroylcarnitine
+95	2-Isopropylmalic acid
+96	2-Hydroxy-3-methylbutyric acid
+97	2-Furoylglycine
+98	Adipic acid
+99	L-alpha-Aminobutyric acid
+100	5-Hydroxy-L-tryptophan
+101	3-Methylhistidine
+102	Caprylic acid
+103	3-Methyl-2-oxovaleric acid
+104	5alpha-Androstane-3beta,17beta-diol
+105	Ribitol
+106	Capric acid
+107	N-Acetyl-L-phenylalanine
+108	L-Arginine
+109	Chenodeoxycholic acid
+110	5-Hydroxyhexanoic acid
+111	5Z-Dodecenoic acid
+112	Acetylglycine
+113	Caproic acid
+114	Arabinonic acid
+115	3-Methylglutarylcarnitine
+116	Goshuyic acid
+117	Creatinine
+118	PC(16:0/16:0)
+119	Galactonic acid
+120	PC(18:1(9Z)/18:1(9Z))
+121	gamma-Glutamylphenylalanine
+122	D-2-Hydroxyglutaric acid
+123	CE(18:2(9Z,12Z))
+124	Erythronic acid
+125	Ethylmalonic acid
+126	Dodecanedioic acid
+127	Gluconic acid
+128	Deoxycholic acid
+129	Chenodeoxycholic acid glycine conjugate
+130	Dodecanoic acid
+131	Levoglucosan
+132	L-Glutamine
+133	D-alpha-Aminobutyric acid
+134	Decanoylcarnitine
+135	Cysteineglutathione disulfide
+136	CE(16:1(9Z))
+137	Heptanoic acid
+138	ortho-Hydroxyphenylacetic acid
+139	Indolelactic acid
+140	Hexadecanedioic acid
+141	Linoleic acid
+142	Homocitrulline
+143	Indoxyl sulfate
+144	L-Kynurenine
+145	L-Leucine
+146	Isovalerylcarnitine
+147	Malonic acid
+148	Ketoleucine
+149	L-Methionine
+150	1-Methylnicotinamide
+151	Hexanoylglycine
+152	Aspartylphenylalanine
+153	Glycoursodeoxycholic acid
+154	Hydroxyoctanoic acid
+155	Hippuric acid
+156	Kynurenic acid
+157	Isovaleric acid
+158	Levulinic acid
+159	4-Hydroxyproline
+160	alpha-Hydroxyisobutyric acid
+161	Isobutyryl-L-carnitine
+162	3-Hydroxymandelic acid
+163	3-Hydroxyisovaleric acid
+164	Hydroxyphenyllactic acid
+165	5-Hydroxyindoleacetic acid
+166	Hydrocinnamic acid
+167	Mannitol
+168	N-Acetyl-L-alanine
+169	Pseudouridine
+170	Nonadecanoic acid
+171	Pregnenolone sulfate
+172	Phenyllactic acid
+173	Octadecanedioic acid
+174	Octanoylcarnitine
+175	Myristic acid
+176	N-Butyrylglycine
+177	N-Acetyl-L-aspartic acid
+178	Propionylcarnitine
+179	Pentadecanoic acid
+180	Stearic acid
+181	Stearoylcarnitine
+182	N-alpha-Acetyl-L-citrulline
+183	Isopropyl alcohol
+184	Ribonic acid
+185	Tetradecanedioic acid
+186	Trigonelline
+187	Xanthurenic acid
+188	L-Valine
+189	Ribothymidine
+190	CE(16:0)
+191	Undecanedioic acid
+192	Suberic acid
+193	7-Methylguanine
+194	Citrulline
+195	Trimethylamine
+196	CE(18:1(9Z))
+197	Trimethylamine N-oxide
+198	L-Tryptophan
+199	Tartaric acid
+200	trans-Aconitic acid
+201	DL-2-Aminooctanoic acid
+202	3-Sulfinoalanine
+203	Biliverdin
+204	Dehydroepiandrosterone sulfate
+205	Arachidonic acid
+206	N-Acetylaspartylglutamic acid
+207	2-Aminobenzoic acid
+208	N-Acetyl-L-glutamic acid
+209	4-Trimethylammoniobutanoic acid
+210	5'-Methylthioadenosine
+211	D-Alanine
+212	N6,N6,N6-Trimethyl-L-lysine
+213	SM(d18:1/18:0)
+214	alpha-Linolenic acid
+215	Niacinamide
+216	Estrone sulfate
+217	3-Methoxytyrosine
+218	gamma-Tocopherol
+219	Acetylphosphate
+220	Asymmetric dimethylarginine
+221	Phosphorylcholine
+222	Acetone
+223	Methylsuccinic acid
+224	Caffeine
+225	L-Arabitol
+226	1,3-Dimethyluric acid
+227	Paraxanthine
+228	Methanol
+229	Propylene glycol
+230	3-Methylxanthine
+231	Theophylline
+232	Ibuprofen
+233	gamma-CEHC
+234	Docosapentaenoic acid (22n-6)
+235	7-Methylxanthine
+236	Eicosapentaenoic acid
+237	Myristoleic acid
+238	Methionine sulfoxide
+239	Butyrylcarnitine
+240	cis-5-Tetradecenoylcarnitine
+241	Imidazoleacetic acid
+242	Ureidoisobutyric acid
+243	N(6)-Methyllysine
+244	Oleoylethanolamide
+245	Methylcysteine
+246	1,3,7-Trimethyluric acid
+247	Docosahexaenoic acid
+248	3-Hydroxycapric acid
+249	Arachidic acid
+250	Adrenic acid
+251	11Z-Eicosenoic acid
+252	Dodecanoylcarnitine
+253	Heptadecanoic acid
+254	Imidazolepropionic acid
+255	Indole-3-propionic acid
+256	Imidazolelactic acid
+257	Oxalic acid
+258	Imidazoleacetic acid riboside
+259	Taurolithocholic acid 3-sulfate
+260	Sulfolithocholylglycine
+261	1,5-Anhydrosorbitol
+262	Androsterone sulfate
+263	Cortisone
+264	LysoPC(18:1(9Z)/0:0)
+265	Methylimidazoleacetic acid
+266	Dihomo-gamma-linolenic acid
+267	N-Acetylserine
+268	Erythritol
+269	Ergothioneine
+270	gamma-Linolenic acid
+271	1-Methyluric acid
+272	Palmitoleic acid
+273	1-Methyladenosine
+274	N2-Acetylornithine
+275	4-Guanidinobutanoic acid
+276	4-Acetamidobutanoic acid
+277	5-Androstenediol
+278	3-Aminoisobutanoic acid
+279	Pregnanediol
+280	21-Hydroxypregnenolone
+281	22b-Hydroxycholesterol
+282	Formylanthranilic acid
+283	N1-Methyl-4-pyridone-3-carboxamide
+284	Bradykinin
+285	5-Acetylamino-6-amino-3-methyluracil
+286	Etiocholanolone glucuronide
+287	N-a-Acetyl-L-arginine
+288	MG(0:0/20:4(5Z,8Z,11Z,14Z)/0:0)
+289	13-HODE
+290	N2,N2-Dimethylguanosine
+291	Proline betaine
+292	Cer(d18:1/16:0)
+293	Cer(d18:1/18:0)
+294	Cer(d18:1/22:0)
+295	Cer(d18:1/24:1(15Z))
+296	Cer(d18:1/24:0)
+297	GlcCer(d18:1/12:0)
+298	GlcCer(d18:1/16:0)
+299	GlcCer(d18:1/24:1(15Z))
+300	Eicosadienoic acid
+301	Oleoylcarnitine
+302	Tetradecanoylcarnitine
+303	TG(16:0/16:1(9Z)/16:1(9Z))
+304	TG(16:0/18:2(9Z,12Z)/18:2(9Z,12Z))
+305	TG(18:0/18:1(9Z)/18:1(9Z))
+306	TG(16:1(9Z)/16:1(9Z)/16:1(9Z))
+307	TG(16:1(9Z)/16:1(9Z)/18:1(9Z))
+308	TG(16:1(9Z)/16:1(9Z)/18:2(9Z,12Z))
+309	TG(16:1(9Z)/18:1(9Z)/18:1(9Z))
+310	TG(16:1(9Z)/18:2(9Z,12Z)/20:0)
+311	TG(16:1(9Z)/18:2(9Z,12Z)/18:2(9Z,12Z))
+312	TG(18:1(9Z)/18:1(9Z)/20:1(11Z))
+313	TG(18:1(9Z)/18:1(9Z)/18:2(9Z,12Z))
+314	TG(18:1(9Z)/18:2(9Z,12Z)/18:2(9Z,12Z))
+315	TG(18:1(9Z)/18:2(9Z,12Z)/20:4(5Z,8Z,11Z,14Z))
+316	TG(18:1(9Z)/20:4(5Z,8Z,11Z,14Z)/20:4(5Z,8Z,11Z,14Z))
+317	PE(P-18:0/20:4(5Z,8Z,11Z,14Z))
+318	PE(P-16:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+319	N-Acetylasparagine
+320	N-Acetylglutamine
+321	scyllo-Inositol
+322	12-HETE
+323	Linoelaidic acid
+324	Phenylacetylglutamine
+325	Linoleyl carnitine
+326	D-Aspartic acid
+327	Docosapentaenoic acid (22n-3)
+328	Stearidonic acid
+329	Prolylhydroxyproline
+330	CE(14:0)
+331	CE(20:4(5Z,8Z,11Z,14Z))
+332	CE(20:5(5Z,8Z,11Z,14Z,17Z))
+333	CE(22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+334	CE(20:3(8Z,11Z,14Z))
+335	LacCer(d18:1/16:0)
+336	DG(14:0/20:0/0:0)
+337	DG(16:0/18:2(9Z,12Z)/0:0)
+338	DG(16:1(9Z)/18:1(9Z)/0:0)
+339	DG(18:0/18:1(9Z)/0:0)
+340	DG(18:1(11Z)/18:2(9Z,12Z)/0:0)
+341	DG(18:1(9Z)/18:1(9Z)/0:0)
+342	PC(14:0/16:0)
+343	PC(14:0/18:2(9Z,12Z))
+344	PC(14:0/20:0)
+345	PC(14:0/20:1(11Z))
+346	PC(14:0/20:2(11Z,14Z))
+347	PC(14:0/20:3(5Z,8Z,11Z))
+348	PC(14:0/22:0)
+349	PC(14:0/22:1(13Z))
+350	PC(14:0/22:5(4Z,7Z,10Z,13Z,16Z))
+351	PC(14:0/22:5(7Z,10Z,13Z,16Z,19Z))
+352	PC(14:1(9Z)/14:0)
+353	PC(14:1(9Z)/22:2(13Z,16Z))
+354	PC(14:1(9Z)/24:1(15Z))
+355	PC(15:0/18:2(9Z,12Z))
+356	PC(15:0/20:4(5Z,8Z,11Z,14Z))
+357	PC(16:0/16:1(9Z))
+358	PC(16:0/18:2(9Z,12Z))
+359	PC(16:0/18:3(6Z,9Z,12Z))
+360	PC(16:0/20:3(8Z,11Z,14Z))
+361	PC(16:0/20:4(5Z,8Z,11Z,14Z))
+362	PC(16:0/20:4(8Z,11Z,14Z,17Z))
+363	PC(16:0/20:5(5Z,8Z,11Z,14Z,17Z))
+364	PC(16:0/22:4(7Z,10Z,13Z,16Z))
+365	PC(16:0/22:5(4Z,7Z,10Z,13Z,16Z))
+366	PC(16:0/22:5(7Z,10Z,13Z,16Z,19Z))
+367	PC(16:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+368	PC(16:1(9Z)/16:1(9Z))
+369	PC(16:1(9Z)/18:2(9Z,12Z))
+370	PC(16:1(9Z)/22:2(13Z,16Z))
+371	PC(16:1(9Z)/22:4(7Z,10Z,13Z,16Z))
+372	PC(16:1(9Z)/P-18:1(11Z))
+373	PC(18:0/20:3(5Z,8Z,11Z))
+374	PC(18:0/20:4(5Z,8Z,11Z,14Z))
+375	PC(18:0/22:4(7Z,10Z,13Z,16Z))
+376	PC(18:0/22:5(4Z,7Z,10Z,13Z,16Z))
+377	PC(18:0/22:5(7Z,10Z,13Z,16Z,19Z))
+378	PC(18:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+379	PC(18:1(11Z)/14:1(9Z))
+380	PC(18:1(11Z)/18:0)
+381	PC(18:1(11Z)/18:1(11Z))
+382	PC(18:1(11Z)/18:1(9Z))
+383	PC(18:1(11Z)/20:5(5Z,8Z,11Z,14Z,17Z))
+384	PC(18:1(11Z)/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+385	PC(18:1(9Z)/18:2(9Z,12Z))
+386	PC(18:1(9Z)/20:3(5Z,8Z,11Z))
+387	PC(18:2(9Z,12Z)/14:1(9Z))
+388	PC(18:2(9Z,12Z)/15:0)
+389	PC(18:2(9Z,12Z)/18:0)
+390	PC(18:2(9Z,12Z)/18:2(9Z,12Z))
+391	PC(18:2(9Z,12Z)/20:4(5Z,8Z,11Z,14Z))
+392	PC(18:3(6Z,9Z,12Z)/24:1(15Z))
+393	PC(18:3(6Z,9Z,12Z)/P-16:0)
+394	PC(18:4(6Z,9Z,12Z,15Z)/15:0)
+395	PC(18:4(6Z,9Z,12Z,15Z)/16:0)
+396	PC(20:0/18:3(6Z,9Z,12Z))
+397	PC(20:1(11Z)/20:1(11Z))
+398	PC(20:1(11Z)/20:2(11Z,14Z))
+399	PC(20:2(11Z,14Z)/15:0)
+400	PC(20:2(11Z,14Z)/20:4(5Z,8Z,11Z,14Z))
+401	PC(20:3(5Z,8Z,11Z)/16:1(9Z))
+402	PC(20:3(5Z,8Z,11Z)/20:3(8Z,11Z,14Z))
+403	PC(20:3(8Z,11Z,14Z)/15:0)
+404	PC(20:4(5Z,8Z,11Z,14Z)/18:1(11Z))
+405	PC(20:4(5Z,8Z,11Z,14Z)/24:1(15Z))
+406	PC(20:4(8Z,11Z,14Z,17Z)/14:0)
+407	PC(20:4(8Z,11Z,14Z,17Z)/15:0)
+408	PC(20:5(5Z,8Z,11Z,14Z,17Z)/15:0)
+409	PC(20:5(5Z,8Z,11Z,14Z,17Z)/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+410	PC(20:5(5Z,8Z,11Z,14Z,17Z)/P-18:0)
+411	PC(22:0/18:4(6Z,9Z,12Z,15Z))
+412	PC(22:0/20:0)
+413	PC(22:0/20:1(11Z))
+414	PC(22:0/20:2(11Z,14Z))
+415	PC(22:0/20:4(8Z,11Z,14Z,17Z))
+416	PC(22:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+417	PC(22:1(13Z)/18:3(6Z,9Z,12Z))
+418	PC(22:2(13Z,16Z)/20:3(8Z,11Z,14Z))
+419	PC(22:2(13Z,16Z)/20:4(5Z,8Z,11Z,14Z))
+420	PC(22:4(7Z,10Z,13Z,16Z)/15:0)
+421	PC(22:5(4Z,7Z,10Z,13Z,16Z)/14:1(9Z))
+422	PC(22:5(7Z,10Z,13Z,16Z,19Z)/15:0)
+423	PC(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/15:0)
+424	PC(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/P-16:0)
+425	PC(24:0/18:0)
+426	PE(14:0/20:0)
+427	PE(14:0/20:1(11Z))
+428	PE(14:0/20:2(11Z,14Z))
+429	PE(14:0/22:2(13Z,16Z))
+430	PE(14:0/22:4(7Z,10Z,13Z,16Z))
+431	PE(14:1(9Z)/22:2(13Z,16Z))
+432	PE(14:1(9Z)/24:1(15Z))
+433	PE(16:0/18:2(9Z,12Z))
+434	PE(16:0/22:5(4Z,7Z,10Z,13Z,16Z))
+435	PE(16:1(9Z)/22:2(13Z,16Z))
+436	PE(18:0/18:1(9Z))
+437	PE(18:0/20:4(5Z,8Z,11Z,14Z))
+438	PE(18:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+439	PE(20:2(11Z,14Z)/15:0)
+440	PE(20:4(8Z,11Z,14Z,17Z)/18:0)
+441	PE(22:2(13Z,16Z)/15:0)
+442	PE(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+443	PI(16:0/18:1(9Z))
+444	PI(16:0/18:2(9Z,12Z))
+445	PI(18:0/16:0)
+446	PI(18:0/18:2(9Z,12Z))
+447	PI(18:0/20:4(5Z,8Z,11Z,14Z))
+448	PI(18:1(9Z)/16:0)
+449	PI(18:2(9Z,12Z)/16:0)
+450	PI(20:2(11Z,14Z)/16:0)
+451	PI(20:3(8Z,11Z,14Z)/16:0)
+452	PI(20:4(8Z,11Z,14Z,17Z)/16:0)
+453	PI(22:4(7Z,10Z,13Z,16Z)/16:0)
+454	PI(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/18:0)
+455	SM(d18:0/16:0)
+456	SM(d18:1/16:0)
+457	Acetaminophen glucuronide
+458	Pregnanediol 3-O-glucuronide
+459	CE(18:0)
+460	CE(18:3(6Z,9Z,12Z))
+461	CE(18:3(9Z,12Z,15Z))
+462	CE(20:3(5Z,8Z,11Z))
+463	CE(22:5(4Z,7Z,10Z,13Z,16Z))
+464	LysoPC(16:0/0:0)
+465	LysoPC(16:1(9Z)/0:0)
+466	LysoPC(18:0/0:0)
+467	LysoPC(18:2(9Z,12Z)/0:0)
+468	LysoPC(20:0/0:0)
+469	LysoPC(20:2(11Z,14Z)/0:0)
+470	LysoPC(20:3(5Z,8Z,11Z)/0:0)
+471	LysoPC(20:3(8Z,11Z,14Z)/0:0)
+472	LysoPC(20:4(5Z,8Z,11Z,14Z)/0:0)
+473	LysoPC(20:4(8Z,11Z,14Z,17Z)/0:0)
+474	LysoPC(20:5(5Z,8Z,11Z,14Z,17Z)/0:0)
+475	LysoPC(22:5(4Z,7Z,10Z,13Z,16Z)/0:0)
+476	LysoPC(22:5(7Z,10Z,13Z,16Z,19Z)/0:0)
+477	LysoPC(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/0:0)
+478	TG(16:1(9Z)/14:0/18:2(9Z,12Z))
+479	TG(18:1(9Z)/18:1(9Z)/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+480	TG(18:2(9Z,12Z)/18:2(9Z,12Z)/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+481	TG(18:3(9Z,12Z,15Z)/18:3(9Z,12Z,15Z)/22:5(7Z,10Z,13Z,16Z,19Z))
+482	TG(18:3(9Z,12Z,15Z)/20:4(5Z,8Z,11Z,14Z)/18:3(9Z,12Z,15Z))
+483	PG(16:0/18:0)
+484	PG(18:0/18:0)
+485	1-Methylxanthine
+486	1,7-Dimethyluric acid
+487	LysoPE(0:0/18:0)
+488	LysoPE(18:0/0:0)
+489	MG(18:0/0:0/0:0)
+490	5-HETE
+491	PC(O-16:0/18:2(9Z,12Z))
+492	PA(O-20:4(5Z,8Z,11Z,14Z)/2:0)
+493	gamma-Glutamylisoleucine
+494	gamma-Glutamylleucine
+495	gamma-Glutamylvaline
+496	Prolylproline
+497	PC(P-16:0/18:1(9Z))
+498	PC(P-16:0/18:2(9Z,12Z))
+499	PC(P-16:0/18:3(9Z,12Z,15Z))
+500	PC(P-16:0/20:3(5Z,8Z,11Z))
+501	PC(P-16:0/20:4(5Z,8Z,11Z,14Z))
+502	PC(P-16:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+503	PC(P-16:0/P-18:1(11Z))
+504	PC(P-18:0/18:1(9Z))
+505	PC(P-18:0/20:4(5Z,8Z,11Z,14Z))
+506	PC(P-18:0/22:5(4Z,7Z,10Z,13Z,16Z))
+507	PC(P-18:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+508	PE(P-16:0/18:1(9Z))
+509	PE(P-16:0/18:2(9Z,12Z))
+510	PE(P-16:0/20:4(5Z,8Z,11Z,14Z))
+511	PE(P-18:0/18:2(9Z,12Z))
+512	PE(P-18:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+513	LysoPE(0:0/16:0)
+514	LysoPE(0:0/18:2(9Z,12Z))
+515	LysoPE(0:0/20:0)
+516	LysoPE(0:0/20:2(11Z,14Z))
+517	LysoPE(0:0/20:4(5Z,8Z,11Z,14Z))
+518	LysoPE(0:0/22:4(7Z,10Z,13Z,16Z))
+519	LysoPE(0:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+520	LysoPE(16:0/0:0)
+521	LysoPE(18:1(9Z)/0:0)
+522	LysoPE(18:2(9Z,12Z)/0:0)
+523	LysoPE(20:4(5Z,8Z,11Z,14Z)/0:0)
+524	MG(18:1(9Z)/0:0/0:0)
+525	MG(18:2(9Z,12Z)/0:0/0:0)
+526	MG(18:3(6Z,9Z,12Z)/0:0/0:0)
+527	MG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/0:0/0:0)
+528	p-Cresol sulfate
+529	SM(d18:1/24:0)
+530	SM(d18:1/26:0)
+531	Glycyl-glycine
+532	N2-gamma-Glutamylglutamine
+533	gamma-Glutamyltyrosine
+534	N-Acetyl-L-methionine
+535	2-Piperidinone
+536	N-Acetylleucine
+537	N-Acetylvaline
+538	Cer(d18:0/23:0)
+539	SM(d18:0/14:0)
+540	SM(d18:0/18:0)
+541	SM(d18:1/14:0)
+542	SM(d18:1/18:1(11Z))
+543	SM(d18:1/18:1(9Z))
+544	SM(d18:1/20:0)
+545	SM(d18:1/22:0)
+546	SM(d18:1/22:1(13Z))
+547	SM(d18:1/24:1(15Z))
+548	LysoPC(17:0/0:0)
+549	3-Dehydrocarnitine
+550	Acetylcarnosine
+551	Valerylcarnitine
+552	Glutarylcarnitine
+553	Methylmalonylcarnitine
+554	9-Decenoylcarnitine
+555	Indoleacetyl glutamine
+556	Leucylphenylalanine
+557	Ne,Ne dimethyllysine
+558	Nonanoylcarnitine
+559	2-Octenoylcarnitine
+560	PC(O-14:0/16:1(9Z))
+561	PC(O-16:0/16:1(9Z))
+562	PC(O-16:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+563	PC(O-16:1(9Z)/16:1(9Z))
+564	PC(O-16:1(9Z)/18:0)
+565	PC(O-16:1(9Z)/18:2(9Z,12Z))
+566	PC(O-16:1(9Z)/20:0)
+567	PC(O-16:1(9Z)/20:4(8Z,11Z,14Z,17Z))
+568	PC(O-18:0/18:0)
+569	PC(O-18:0/18:2(9Z,12Z))
+570	PC(O-18:0/20:0)
+571	PC(O-18:0/20:4(8Z,11Z,14Z,17Z))
+572	PC(O-18:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+573	PC(O-18:1(9Z)/16:0)
+574	PC(O-18:1(9Z)/18:2(9Z,12Z))
+575	PC(O-18:1(9Z)/20:0)
+576	PC(O-18:1(9Z)/20:1(11Z))
+577	PC(O-18:1(9Z)/20:4(8Z,11Z,14Z,17Z))
+578	PC(O-18:1(9Z)/22:0)
+579	PC(O-18:1(9Z)/24:0)
+580	PC(O-18:2(9Z,12Z)/18:2(9Z,12Z))
+581	PC(O-18:2(9Z,12Z)/22:0)
+582	PC(O-18:2(9Z,12Z)/24:0)
+583	PC(O-20:0/18:3(6Z,9Z,12Z))
+584	PC(O-20:0/20:4(8Z,11Z,14Z,17Z))
+585	PC(O-20:1(11Z)/20:4(8Z,11Z,14Z,17Z))
+586	PC(O-22:0/22:3(10Z,13Z,16Z))
+587	PC(O-22:1(13Z)/20:4(8Z,11Z,14Z,17Z))
+588	PC(O-22:1(13Z)/22:3(10Z,13Z,16Z))
+589	PC(O-22:2(13Z,16Z)/22:3(10Z,13Z,16Z))
+590	PC(O-22:3(10Z,13Z,16Z)/22:3(10Z,13Z,16Z))
+591	SM(d18:1/26:1(17Z))
+592	SM(d18:0/14:1(9Z)(OH))
+593	SM(d18:0/16:1(9Z)(OH))
+594	SM(d18:0/22:1(13Z)(OH))
+595	SM(d18:0/24:1(15Z)(OH))
+596	10Z-Nonadecenoic acid
+597	Phenylbutazone
+598	Glutamylglycine
+599	Glutamyltyrosine
+600	Glycyl-Phenylalanine
+601	Histidyltryptophan
+602	Isoleucyl-Valine
+603	Leucylalanine
+604	Leucyl-Glutamine
+605	Phenylalanylserine
+606	Serylalanine
+607	Valylarginine
+608	gamma-Glutamylhistidine
+609	LysoPC(28:0/0:0)
+610	SM C16:1
+611	LysoPC(28:1(5Z)/0:0)
+612	L-Targinine
+613	Methyl 10-undecenoate
+614	Methyl beta-D-glucopyranoside
+615	2-Hydroxyhexadecanoic acid
+616	Methyl nonanoate
+617	N-Acetylhistidine
+618	9-O-Methylcoumestrol
+619	Undecylenic acid
+620	Eudesmic acid
+621	L,L-Cyclo(leucylprolyl)
+622	N-(1-Deoxy-1-fructosyl)tryptophan
+623	Pyro-L-glutaminyl-L-glutamine
+624	N6-Carbamoyl-L-threonyladenosine
+625	gamma-Carboxyglutamic acid
+626	TG(14:1(9Z)/15:0/18:3(9Z,12Z,15Z))
+627	TG(14:1(9Z)/18:2(9Z,12Z)/14:1(9Z))
+628	TG(14:1(9Z)/18:3(9Z,12Z,15Z)/14:1(9Z))
+629	TG(16:1(9Z)/15:0/18:2(9Z,12Z))
+630	TG(16:1(9Z)/15:0/18:3(9Z,12Z,15Z))
+631	TG(16:1(9Z)/15:0/18:4(6Z,9Z,12Z,15Z))
+632	TG(16:1(9Z)/14:1(9Z)/18:1(9Z))
+633	TG(16:1(9Z)/14:1(9Z)/18:2(9Z,12Z))
+634	TG(20:1(11Z)/14:0/O-18:0)
+635	TG(18:2(9Z,12Z)/14:0/O-18:0)
+636	TG(18:2(9Z,12Z)/15:0/O-18:0)
+637	TG(20:2n6/14:0/O-18:0)
+638	TG(20:3n6/15:0/O-18:0)
+639	TG(18:3(9Z,12Z,15Z)/14:0/O-18:0)
+640	TG(18:3(9Z,12Z,15Z)/15:0/O-18:0)
+641	TG(18:3(9Z,12Z,15Z)/16:0/O-18:0)
+642	TG(18:3(9Z,12Z,15Z)/18:0/O-18:0)
+643	TG(18:4(6Z,9Z,12Z,15Z)/14:0/O-18:0)
+644	TG(18:4(6Z,9Z,12Z,15Z)/15:0/O-18:0)
+645	TG(18:4(6Z,9Z,12Z,15Z)/14:1(9Z)/O-18:0)
+646	TG(20:4(8Z,11Z,14Z,17Z)/14:0/O-18:0)
+647	TG(20:4(8Z,11Z,14Z,17Z)/15:0/O-18:0)
+648	TG(20:4(8Z,11Z,14Z,17Z)/16:0/O-18:0)
+649	TG(20:4(8Z,11Z,14Z,17Z)/18:0/O-18:0)
+650	TG(20:5(5Z,8Z,11Z,14Z,17Z)/14:0/O-18:0)
+651	TG(20:5(5Z,8Z,11Z,14Z,17Z)/15:0/O-18:0)
+652	TG(20:5(5Z,8Z,11Z,14Z,17Z)/14:1(9Z)/O-18:0)
+653	TG(20:5(5Z,8Z,11Z,14Z,17Z)/18:3(9Z,12Z,15Z)/O-18:0)
+654	TG(22:5(7Z,10Z,13Z,16Z,19Z)/14:0/O-18:0)
+655	TG(22:5(7Z,10Z,13Z,16Z,19Z)/16:0/O-18:0)
+656	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/16:0/O-18:0)
+657	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/14:1(9Z)/O-18:0)
+658	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/16:1(9Z)/O-18:0)
+659	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/18:1(9Z)/O-18:0)
+660	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/18:2(9Z,12Z)/O-18:0)
+661	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/18:3(9Z,12Z,15Z)/O-18:0)
+662	TG(22:6(4Z,7Z,10Z,13Z,16Z,19Z)/18:4(6Z,9Z,12Z,15Z)/O-18:0)
+663	DG(15:0/0:0/18:1n9)
+664	DG(20:0/0:0/14:1n5)
+665	DG(22:0/0:0/14:1n5)
+666	DG(16:1n7/0:0/16:1n7)
+667	DG(16:1n7/0:0/18:1n9)
+668	DG(16:1n7/0:0/18:2n6)
+669	DG(18:1n9/0:0/18:1n9)
+670	DG(18:1n9/0:0/18:2n6)
+671	DG(20:1n9/0:0/18:2n6)
+672	DG(18:2n6/0:0/18:2n6)
+673	DG(18:2n6/0:0/20:2n6)
+674	DG(18:2n6/0:0/18:3n3)
+675	DG(20:2n6/0:0/18:3n3)
+676	DG(20:3n6/0:0/18:3n3)
+677	DG(22:2n6/0:0/22:4n6)
+678	DG(22:2n6/0:0/20:5n3)
+679	DG(22:2n6/0:0/22:5n3)
+680	N-Acetylaminooctanoic acid
+681	Phenol sulphate
+682	CE(15:0)
+683	CE(17:0)
+684	CE(17:1)
+685	4-Hydroxyphenyl acetate
+686	3-Carboxy-4-methyl-5-propyl-2-furanpropionic acid
+687	Lenticin
+688	3-Hydroxyisovalerylcarnitine
+689	N-(3-acetamidopropyl)pyrrolidin-2-one
+690	N-Acetylisoleucine
+691	LysoPI(20:4(5Z,8Z,11Z,14Z)/0:0)
+692	LysoPI(16:0/0:0)
+693	LysoPC(0:0/20:4(5Z,8Z,11Z,14Z))
+694	LysoPC(0:0/18:2(9Z,12Z))
+695	6-Oxopiperidine-2-carboxylic acid
+696	Succinylcarnitine
+697	N-Acetyl-beta-alanine
+698	2-Hydroxyacetaminophen sulfate
+699	2-Hydroxystearic acid
+700	2-Methoxyacetaminophen sulfate
+701	hydroxyisovaleroyl carnitine
+702	N-Acetylthreonine
+703	Pyroglutamine
+704	Epiandrosterone sulfate
+705	TG(17:0/18:1(9Z)/18:1(9Z))
+706	Thymol Sulfate
+707	4-Vinylphenol sulfate
+708	2-Aminoheptanoate
+709	5alpha-Pregnan-3beta,20alpha-diol disulfate
+710	Octadecenoylcarnitine
+711	N-Methyl-L-proline
+712	PS(22:2(13Z,16Z)/18:1(9Z))
+713	PA(20:2(11Z,14Z)/14:0)
+714	PS(22:1(13Z)/18:4(6Z,9Z,12Z,15Z))
+715	3-(Cystein-S-yl)acetaminophen
+716	cis-Vaccenic acid
+717	N-Acetyltaurine
+718	Tryptophan 2-C-mannoside
+719	4-Androsten-3beta,17beta-diol disulfate
+720	2'-O-Methyluridine
+721	N-Acetyl-1-methylhistidine
+722	2-Hydroxyisovalerylcarnitine
+723	4-Androsten-3beta,17beta-diol 17-sulfate
+724	4-Methylcatechol 1-sulfate
+725	5alpha-Pregnan-3beta,20beta-diol 3-sulfate
+726	cis-4-Decenoylcarnitine
+727	N5-Acetylornithine
+728	SM(d18:1/15:0)
+729	SM(d18:1/20:1(11Z))
+730	SM(d18:1/16:1(9Z))
+731	SM(d18:1/23:1(9Z))
+732	SM(d18:1/24:2(5Z,9Z))
+733	SM(d18:2(4E,14Z)/16:0)
+734	3-Hydroxypyridine sulfate
+735	3-Methylcatechol 1-sulfate
+736	2'-O-Methylcytidine
+737	2-Hydroxyisobutyrate
+738	4-Methylcatechol sulfate
+739	Glycocholenate sulfate
+740	Hexanoylglutamine
+741	Eicosa-11,14,17-trienoic acid
+742	Decenoylcarnitine
+743	Hexadecenoylcarnitine
+744	Octadecadienylcarnitine
+745	S-N-Methylcysteine
+746	acetoacetate
+747	Glucose
+748	D(-)-beta-hydroxy butyric acid
+749	Hexanoylcarnitine
+750	PE(16:0/18:1(9Z))
+751	PE(16:0/22:6(4Z,7Z,10Z,13Z,16Z,19Z))
+752	11Z-Octadecenylcarnitine
+753	gamma-Glutamylmethionine
+754	O-(2-tetradecenoyl)carnitine
+755	Eugenol sulfate
+756	Albumin
+757	1-eicosatrienoylglycerophosphocholine
+758	4-acetylphenol sulfate
+759	4-androsten-3alpha,17alpha-diol monosulfate (2)
+760	4-methylhexanoylglutamine
+761	4-methylhexanoylglycine
+762	5alpha-androstan-3alpha,17beta-diol monosulfate (1)
+763	5alpha-pregnan-3beta,20alpha-diol monosulfate (2)
+764	ADpSGEGDFXAEGGGVR
+765	ADSGEGDFXAEGGGVR
+766	ApoA1
+767	Apolipoprotein A1
+768	ApoB
+769	Apolipoprotein B
+770	BA(DCA)_[M-H]1-
+771	BCAAs
+772	beta-guanidinopropanoate
+773	514.2839_1.516229
+774	498.2847_2.001083
+775	C16:0Mol%
+776	CE(20:4)_[M+NH4]1+
+777	Cer Saturated
+778	Cer Unsaturated
+779	Cer(40:0)_[M-H]1-
+780	Cer_40:1_[M-H]1-
+781	Cer(40:1)_[M-H]1-
+782	Cer(40:2)_[M-H]1-
+783	Cer(41:0)_[M-H]1-
+784	Cer_41:1_[M-H]1-
+785	Cer(41:1)_[M-H]1-
+786	Cer(41:2)_[M-H]1-
+787	Cer(42:0)_[M-H]1-
+788	Cer_42:1_[M+H-H2O]1+
+789	Cer_42:2_[M-H]1-
+790	Cer_42:2_[M+H-H2O]1+
+791	Cer20:0Mol%
+792	Ceramide phosphoethanolamine 38:2 (CerPE 38:2)
+793	CH2 groups of mobile lipids (MobCH2)
+794	CH3 groups of mobile lipids (MobCH3)
+795	Total cholines
+796	circulating 17:0
+797	circulating 19:0
+798	citraconate/glutaconate
+799	Clinical LDL cholesterol
+800	Concentration of chylomicrons (ultra-low density lipoprotein) and largest VLDL particles (CM-LAR-VLDL-P)
+801	Concentration of medium HDL particles
+802	Degree of unsaturation
+803	Dihydroxy docosatrienoic acid
+804	361.2394_3.814083
+805	343.2273_5.3095
+806	519.2493_2.479
+807	329.2496_6.459583
+808	329.2487_6.505833
+809	Double bond protons of mobile lipids (MobCH)
+810	DSGEGDFXAEGGGVR
+890	Esterified cholesterol
+891	FA(16:1)_[M-H]1-
+892	FA(18:4)_[M-H]1-
+893	FA(20:3)_[M-H]1-
+894	FA(20:4)_[M-H]1-
+895	FA(22:4)_[M-H]1-
+896	FA(22:5)_[M-H]1-
+897	FA(22:6)_[M-H]1-
+898	631.4707_6.413333
+899	583.4711_6.459583
+900	607.4786_6.441083
+901	633.4904_6.4565
+902	FALen
+903	FAw6
+904	FAw67
+905	FAw79S
+906	FAw9S
+919	FR
+920	Free cholesterol
+921	GluCer16:0Mol%
+922	GluCer24:1Mol%
+923	GluCerMol%
+924	Glycoprotein acetyls
+925	glycochenodeoxycholate glucuronide (1)
+926	glycodeoxycholate sulfate
+927	Glycoprotein acetyls (Gp)
+928	HDL
+929	HDL cholesterol
+930	Cholesteryl esters in HDL
+931	Free cholesterol in HDL
+932	Total lipids in HDL
+933	Concentration of HDL particles
+934	Phospholipids in HDL
+935	Average diameter for HDL particles
+936	Triglycerides in HDL
+937	HDL2-C
+938	HDL3-C
+939	HDL-C
+940	HDL-D
+941	heptanoylglutamine
+942	HWESASXX
+943	HWESASXX*
+944	Cholesterol in IDL
+945	Cholesteryl esters in IDL
+946	Free cholesterol in IDL
+947	Total lipids in IDL
+948	Concentration of IDL particles
+949	Phospholipids in IDL
+950	Triglycerides in IDL
+951	IDL-C
+952	IDL-FC
+953	IDL-L
+954	IDL-P
+955	IDL-PL
+956	IDL-TG
+957	isocaproylglutamine
+958	isocaproylglycine
+959	Cholesterol in large HDL
+960	Cholesteryl esters in large HDL
+961	Free cholesterol in large HDL
+962	Total lipids in large HDL
+963	Concentration of large HDL particles
+964	Phospholipids in large HDL
+965	Triglycerides in large HDL
+966	Cholesterol in large LDL
+967	Cholesteryl esters in large LDL
+968	Free cholesterol in large LDL
+969	Total lipids in large LDL
+970	Concentration of large LDL particles
+971	Phospholipids in large LDL
+972	Triglycerides in large LDL
+973	Cholesterol in large VLDL
+974	Cholesteryl esters in large VLDL
+975	Free cholesterol in large VLDL
+976	Total lipids in large VLDL
+977	Concentration of large VLDL particles
+978	Phospholipids in large VLDL
+979	Triglycerides in large VLDL
+980	LDL
+981	LDL cholesterol
+982	Cholesteryl esters in LDL
+983	Free cholesterol in LDL
+984	Total lipids in LDL
+985	Concentration of LDL particles
+986	Phospholipids in LDL
+987	Average diameter for LDL particles
+988	Triglycerides in LDL
+989	LDL-C
+990	LDL-D
+991	L-HDL-C
+992	L-HDL-CE
+993	L-HDL-FC
+994	L-HDL-L
+995	L-HDL-P
+996	L-HDL-PL
+997	L-LDL-C
+998	L-LDL-CE
+999	L-LDL-FC
+1000	L-LDL-L
+1001	L-LDL-P
+1002	L-LDL-PL
+1003	LPC20:3LPC20:0
+1004	LPC-2O_18:0_[M+H]1+
+1005	LPE-O_18:1_[M-H]1- / LPE-P_18:0_[M-H]1-
+1006	LPE-P_20:0_[M-H]1-
+1007	L-VLDL-C
+1008	L-VLDL-CE
+1009	L-VLDL-FC
+1010	L-VLDL-L
+1011	L-VLDL-P
+1012	L-VLDL-PL
+1013	L-VLDL-TG
+1014	Cholesterol in medium HDL
+1015	Cholesteryl esters in medium HDL
+1016	Free cholesterol in medium HDL
+1017	Total lipids in medium HDL
+1018	Phospholipids in medium HDL
+1019	Triglycerides in medium HDL
+1020	Cholesterol in medium LDL
+1021	Cholesteryl esters in medium LDL
+1022	Free cholesterol in medium LDL
+1023	Total lipids in medium LDL
+1024	Concentration of medium LDL particles
+1025	Phospholipids in medium LDL
+1026	Triglycerides in medium LDL
+1027	Cholesterol in medium VLDL
+1028	Cholesteryl esters in medium VLDL
+1029	Free cholesterol in medium VLDL
+1030	Total lipids in medium VLDL
+1031	Concentration of medium VLDL particles
+1032	Phospholipids in medium VLDL
+1033	Triglycerides in medium VLDL
+1034	M-HDL-C
+1035	M-HDL-CE
+1036	M-HDL-FC
+1037	M-HDL-L
+1038	M-HDL-P
+1039	M-HDL-PL
+1040	M-LDL-C
+1041	M-LDL-CE
+1042	M-LDL-L
+1043	M-LDL-P
+1044	M-LDL-PL
+1045	MUFA
+1046	Monounsaturated fatty acids
+1047	M-VLDL-C
+1048	M-VLDL-CE
+1049	M-VLDL-FC
+1050	M-VLDL-L
+1051	M-VLDL-P
+1052	M-VLDL-PL
+1053	M-VLDL-TG
+3212	N-acetylated compounds (N-Acu)
+3213	N-methylpipecolate
+3214	N-octanoylglutamine
+3215	Total cholesterol minus HDL-C
+3216	335.1456_3.804833
+3217	345.2437_5.303333
+3218	347.2597_5.297167
+3219	347.2598_5.620916
+3220	351.2544_5.371167
+3221	351.2545_5.247833
+3222	365.2698_5.6795
+3223	299.223_4.279667
+3224	323.223_4.3105
+3225	325.2386_4.921
+3226	Omega-3 fatty acids
+3227	Omega-6 fatty acids
+3228	Omega-3 fatty acids (FAw3)
+3229	otPUFA
+3230	PA(39:0)_[M+H]1+
+3231	PA(39:1)_[M+H]1+
+3232	PA(40:5)_[M+OAc]1- / PG(39:5)_[M-H]1-
+3233	PA(41:2)_[M+H]1+
+3234	PA(43:4)_[M-H]1-
+3235	PA(43:6)_[M-H]1-
+3236	PA(44:6)_[M+OAc]1- / PG(43:6)_[M-H]1-
+3237	PA(45:6)_[M-H]1-
+3238	PC_31:2_[M+H]1+ / PE_34:2_[M+H]1+ / PA_36:3_[M+NH4]1+
+3239	PC(33:3)_[M+H]1+ / PE(36:3)_[M+H]1+ / PA(38:4)_[M+NH4]1+
+3240	PC(35:1)_[M+H]1+ / PE(38:1)_[M+H]1+ / PA(40:2)_[M+NH4]1+
+3241	PC_35:6_[M+H]1+ / PE_38:6_[M+H]1+ / PA_40:7_[M+NH4]1+
+3242	PC(36:4)_[M+H]1+ / PE(39:4)_[M+H]1+ / PA(41:5)_[M+NH4]1+
+3243	PC_37:3_[M+OAc]1- / PS_41:2_[M-H]1-
+3244	PC(38:4)_[M+H]1+ / PE(41:4)_[M+H]1+
+3245	PC(38:4)_[M+OAc]1- / PS(42:3)_[M-H]1-
+3246	PC_39:6_[M+OAc]1-
+3247	PC(39:6)_[M+OAc]1- / PS(43:5)_[M-H]1-
+3248	PC(40:8)_[M+H]1+
+3249	PC(45:0)_[M-H]1-
+3250	PC_52:4_[M+OAc]1-
+3251	PC-2O_32:0_[M+H]1+
+3252	PC-O_31:0_[M+H]1+ / PE-O_34:0_[M+H]1+
+3253	PC-O(32:0)_[M+H]1+ / PE-O(35:0)_[M+H]1+
+3254	PC-O_33:3_[M+H]1+ / PC-P_33:2_[M+H]1+ / PE-O_36:3_[M+H]1+
+3255	PC-O_35:4_[M+OAc]1- / PC-P_35:3_[M+OAc]1-
+3256	PC-O(36:5)_[M+H]1+ / PC-P(36:4)_[M+H]1+
+3257	PC-O(39:1)_[M+H]1+ / PE-P(39:0)_[M+H]1+
+3258	PC-O_42:6_[M+OAc]1- / PC-P_42:5_[M+OAc]1-
+3259	PE_25:0_[M-H]1-
+3260	PE_37:3_[M-H]1-
+3261	PE_39:4_[M-H]1-
+3262	PE(40:2)_[M-H]1-
+3263	PE(40:7)_[M-H]1-
+3264	PE-O_34:1_[M-H]1- / PE-P_34:0_[M-H]1-
+3265	PE-O_34:3_[M-H]1- / PE-P_34:2_[M-H]1-
+3266	PE-O_36:3_[M-H]1- / PE-P_36:2_[M-H]1-
+3267	PE-O_36:4_[M-H]1- / PE-P_36:3_[M-H]1-
+3268	PE-O_36:5_[M-H]1- / PE-P_36:4_[M-H]1-
+3269	PE-O_38:3_[M-H]1- / PE-P_38:2_[M-H]1-
+3270	PE-O(38:4)_[M-H]1- / PC-O(35:4)_[M-H]1- / PC-P(35:3)_[M-H]1-
+3271	PE-O_38:5_[M-H]1- / PE-P_38:4_[M-H]1-
+3272	PE-O_38:6_[M-H]1- / PE-P_38:5_[M-H]1-
+3273	PE-O(38:6)_[M+H]1+ / PC-P(35:5)_[M+H]1+
+3274	PE-O_40:4_[M-H]1- / PE-P_40:3_[M-H]1-
+3275	PE-O_40:5_[M-H]1- / PE-P_40:4_[M-H]1-
+3276	PE-O_40:6_[M-H]1- / PE-P_40:5_[M-H]1-
+3277	PG(32:1)_[M+OAc]1-
+3278	PG_35:3_[M-H]1-
+3279	PG(35:3)_[M-H]1-
+3280	PG-O_34:0_[M-H]1-
+3281	PG-O_38:0_[M-H]1-
+3282	PG-O_40:0_[M-H]1-
+3283	PG-O_42:0_[M-H]1-
+3284	Phosphoglycerides
+3285	Phospholipids in chylomicrons (ultra-low density lipoproteins) and largest VLDL(CM-LAR-VLDL-PL)
+3286	PI(32:1)_[M-H]1-
+3287	PI_35:0_[M-H]1-
+3288	PI_35:2_[M-H]1-
+3289	PI(35:2)_[M-H]1-
+3290	PI(36:0)_[M+OAc]1-
+3291	PI(36:1)_[M+OAc]1-
+3292	PI_38:0_[M-H]1-
+3293	PI(38:6)_[M-H]1-
+3294	PI(40:5)_[M-H]1-
+3295	PI-O(33:0)_[M-H]1-
+3296	PI-O_36:0_[M-H]1-
+3297	PI-O(36:0)_[M-H]1- / PG(37:0)_[M+OAc]1-
+3298	PI-O_36:1_[M+H]1+
+3311	pregn.steroid.monosulfate.
+3312	PS(35:2) _[M+OAc]1-
+3313	PS(42:5)_[M+OAc]1-
+3314	PS(42:7)_[M+OAc]1-
+3315	PS(44:6)_[M+OAc]1-
+3316	PS-O_42:6_[M+H]1+
+3317	PS-P_42:1_[M+H]1+ / PG-P_42:6_[M+NH4]1+
+3318	Polyunsaturated fatty acids
+3355	Remnant cholesterol (non-HDL, non-LDL -cholesterol)
+3356	Cholesterol in small HDL
+3357	Cholesteryl esters in small HDL
+3358	Free cholesterol in small HDL
+3359	Total lipids in small HDL
+3360	Concentration of small HDL particles
+3361	Phospholipids in small HDL
+3362	Triglycerides in small HDL
+3363	Cholesterol in small LDL
+3364	Cholesteryl esters in small LDL
+3365	Free cholesterol in small LDL
+3366	Total lipids in small LDL
+3367	Concentration of small LDL particles
+3368	Phospholipids in small LDL
+3369	Triglycerides in small LDL
+3370	Cholesterol in small VLDL
+3371	Cholesteryl esters in small VLDL
+3372	Free cholesterol in small VLDL
+3373	Total lipids in small VLDL
+3374	Concentration of small VLDL particles
+3375	Phospholipids in small VLDL
+3376	Triglycerides in small VLDL
+3377	Serum total triglycerides (Serum-TG)
+3378	Serum-C
+3379	Saturated fatty acids
+3380	S-HDL-L
+3381	S-HDL-P
+3382	S-HDL-TG
+3383	S-LDL-C
+3384	S-LDL-L
+3385	S-LDL-P
+3386	SM 14:0Mol%
+3387	SM 15:0
+3388	SM 15:0Mol%
+3389	SM 16:1Mol%
+3390	SM 17:0
+3391	SM 17:0Mol%
+3392	SM 20:0Mol%
+3393	SM 22:1Mol%
+3394	SM 23:0Mol%
+3395	SM 24:0Mol%
+3396	SM 24:1Mol%
+3397	SM dih 16:0Mol%
+3398	SM_34:0_[M+H]1+
+3399	SM(34:0)_[M-CH3]1-
+3400	SM(34:0)_[M+H]1+
+3401	SM_34:1_[M+H]1+
+3402	SM(34:1)_[M-CH3]1-
+3403	SM(34:1)_[M+H]1+
+3404	SM_35:1_[M+H]1+
+3405	SM_36:0_[M+H]1+
+3406	SM(36:0)_[M-CH3]1-
+3407	SM(36:0)_[M+H]1+
+3408	SM_36:1_[M+H]1+
+3409	SM(36:1)_[M-CH3]1-
+3410	SM(36:1)_[M+H]1+
+3411	SM_36:2_[M+H]1+
+3412	SM(36:2)_[M+H]1+
+3413	SM_37:1_[M+H]1+
+3414	SM(37:1)_[M+H]1+
+3415	SM(37:1)_[M-CH3]1-
+3416	SM(38:0)_[M+H]1+
+3417	SM_38:1_[M+H]1+
+3418	SM(38:1)_[M+H]1+
+3419	SM(38:1)_[M+CH3]1-
+3420	SM_38:2_[M+H]1+
+3421	SM_39:1_[M+H]1+
+3422	SM(39:1)_[M+H]1+
+3423	SM(39:1)_[M-CH3]1-
+3424	SM_39:2_[M+H]1+
+3425	SM_40:0_[M+H]1+
+3426	SM(40:0)_[M+OAc]1-
+3427	SM_40:1_[M+H]1+
+3428	SM(40:1)_[M-CH3]1-
+3429	SM_40:2_[M+H]1+
+3430	SM(40:2)_[M-CH3]1-
+3431	SM_40:3_[M+H]1+
+3432	SM_41:0_[M+H]1+
+3433	SM(41:1)_[M+H]1+
+3434	SM(42:0)_[M+OAc]1-
+3435	SM_42:1_[M+H]1+
+3436	SM_42:2_[M+OAc]1-
+3437	SM_42:2_[M+H]1+
+3438	SM(42:2)_[M+OAc]1-
+3439	SM(42:4)_[M+H]1+
+3440	SM_43_2_[M+H]1+
+3441	SM(43:2)_[M-CH3]1-
+3442	SM(44:9)_[M+H]1-
+3443	sphingomyelin (d18:1/21:0, d17:1/22:0, d16:1/23:0)
+3444	389.2303_2.660917
+3445	S-VLDL-C
+3446	S-VLDL-FC
+3447	S-VLDL-L
+3448	S-VLDL-P
+3449	S-VLDL-PL
+3450	S-VLDL-TG
+3451	TG_45:4_[M+NH4]1+
+3452	TG(54:2)_[M+NH4]1+
+3453	TGoxid(53:3)_[M+NH4]1+
+3454	TG-PG
+3455	Acylcarnitine total
+3456	Carnitine free
+3457	Total fatty acids
+3458	Total concentration of branched-chain amino acids (leucine + isoleucine + valine)
+3459	Total cholesterol
+3460	Total esterified cholesterol
+3461	Total free cholesterol
+3462	Total lipids in lipoprotein particles
+3463	Total concentration of lipoprotein particles
+3464	Total phospholipids in lipoprotein particles
+3465	Total triglycerides
+3466	Tot-C
+3467	TotPG
+3468	Triglycerides in chylomicrons (ultra-low density lipoprotein) and largest VLDL (CM-LAR-VLDL-TG)
+3469	VLDL cholesterol
+3470	Cholesteryl esters in VLDL
+3471	Free cholesterol in VLDL
+3472	Total lipids in VLDL
+3473	Concentration of VLDL particles
+3474	Phospholipids in VLDL
+3475	Average diameter for VLDL particles
+3476	Triglycerides in VLDL
+3477	VLDL-D
+3478	VLDL-TG
+3483	X-01911
+3484	X-02249
+3485	X-02269
+3486	X-03094
+3487	X-04498
+3488	X-06246
+3489	X-06307
+3490	X-07765
+3491	X-08402
+3492	X-08988
+3493	X-09789
+3494	X1..1.enyl.oleoyl..GPE..P.18.1..
+3495	X-10358
+3496	X-10395
+3497	X-10429
+3498	X-10510
+3499	X-11204
+3500	X-11244
+3501	X-11247
+3502	X-11255
+3503	X-11261
+3504	X-11299
+3505	X-11305
+3506	X-11315
+3507	X-11317
+3508	X-11327
+3509	X-11334
+3510	X-11381
+3511	X-11412
+3512	X-11421
+3513	X-11423--O-sulfo-L-tyrosine
+3514	X-11429
+3515	X-11438
+3516	X-11440
+3517	X-11441
+3518	X-11442
+3519	X-11444
+3520	X-11452
+3521	X-11469
+3522	X-11470
+3523	X-11478
+3524	X-11483
+3525	X-11491
+3526	X-11521
+3527	X-11522
+3528	X-11529
+3529	X-11530
+3530	X-11537
+3531	X-11538
+3532	X-11550
+3533	X-11564
+3534	X-11593--O-methylascorbate*
+3535	X-11787
+3536	X-11792
+3537	X-11793--oxidized bilirubin*
+3538	X-11799
+3539	X-11818
+3540	X-11820
+3541	X-11858
+3542	X-11880
+3543	X-11905
+3544	X-12007
+3545	X-12013
+3546	X-12038
+3547	X-12040
+3548	X-12063
+3549	X-12092
+3550	X-12093
+3551	X-12094
+3552	X-12101
+3553	X-12188
+3554	X-12189
+3555	X-12206
+3556	X-12231
+3557	X-12411
+3558	X-12435
+3559	X-12450
+3560	X-12456
+3561	X-12472
+3562	X-12524
+3563	X-12556
+3564	X-12627
+3565	X-12644
+3566	X-12681
+3567	X-12688
+3568	X-12696
+3569	X-12704
+3570	X-12712
+3571	X-12728
+3572	X-12729
+3573	X-12740
+3574	X-12748
+3575	X-12749
+3576	X-12798
+3577	X-12816
+3578	X-12822
+3579	X-12844
+3580	X-12846
+3581	X-12850
+3582	X-12855
+3583	X-13069
+3584	X-13215
+3585	X-13429
+3586	X-13435
+3587	X-13477
+3588	X-13496
+3589	X-13548
+3590	X-13658
+3591	X-13671
+3592	X-13741
+3593	X-13859
+3594	X-14056
+3595	X-14086
+3596	X-14473
+3597	X-14568
+3598	X-14625
+3599	X-14626
+3600	X-14632
+3601	X-14662
+3602	X-14838
+3603	X-14939
+3604	X-15245
+3605	X-15486
+3606	X-15492
+3607	X-15497
+3608	X-16123
+3609	X-16580
+3610	X-16944
+3611	X-16946
+3612	X-17010
+3613	X-17167
+3614	X-17178
+3615	X-17189
+3616	X-17299
+3617	X-17327
+3618	X-17337
+3619	X-18249
+3620	X-18601
+3621	X-18899
+3622	X-18914
+3623	X-19141
+3624	X-21319
+3625	X-21339
+3626	X-21343
+3627	X-21365
+3628	X-21411
+3629	X-21441
+3630	X-21448
+3631	X-21628
+3632	X-21849
+3633	X-22162
+3634	X-22379
+3635	X-22764
+3636	X-22816
+3637	X-22822
+3638	X-23026
+3639	X-23293
+3640	X-23314
+3641	X-23639
+3642	X-23705
+3643	X-23782
+3644	X-23788
+3645	X-23997
+3646	X-24061
+3647	X-24065
+3648	X-24071
+3649	X-24125
+3650	X-24241
+3651	X-24278
+3652	X-24293
+3653	X-24309
+3654	X-24425
+3655	X-24435
+3656	X5alpha.androstan.3beta.17beta.diol.disulfate
+3657	Cholesterol in very large HDL
+3658	Cholesteryl esters in very large HDL
+3659	Free cholesterol in very large HDL
+3660	Total lipids in very large HDL
+3661	Concentration of very large HDL particles
+3662	Phospholipids in very large HDL
+3663	Triglycerides in very large HDL
+3664	Cholesterol in very large VLDL
+3665	Cholesteryl esters in very large VLDL
+3666	Free cholesterol in very large VLDL
+3667	Total lipids in very large VLDL
+3668	Concentration of very large VLDL particles
+3669	Phospholipids in very large VLDL
+3670	Triglycerides in very large VLDL
+3671	XL-HDL-C
+3672	XL-HDL-CE
+3673	XL-HDL-FC
+3674	XL-HDL-L
+3675	XL-HDL-P
+3676	XL-HDL-PL
+3677	XL-HDL-TG
+3678	XL-VLDL-L
+3679	XL-VLDL-P
+3680	XL-VLDL-PL
+3681	XL-VLDL-TG
+3682	Cholesterol in very small VLDL
+3683	Cholesteryl esters in very small VLDL
+3684	Free cholesterol in very small VLDL
+3685	Total lipids in very small VLDL
+3686	Concentration of very small VLDL particles
+3687	Phospholipids in very small VLDL
+3688	Triglycerides in very small VLDL
+3689	XS-VLDL-L
+3690	XS-VLDL-P
+3691	XS-VLDL-PL
+3692	XS-VLDL-TG
+3693	Cholesterol in chylomicrons and extremely large VLDL
+3694	Cholesteryl esters in chylomicrons and extremely large VLDL
+3695	Free cholesterol in chylomicrons and extremely large VLDL
+3696	Total lipids in chylomicrons and extremely large VLDL
+3697	Concentration of chylomicrons and extremely large VLDL particles
+3698	Phospholipids in chylomicrons and extremely large VLDL
+3699	Triglycerides in chylomicrons and extremely large VLDL
+3700	XXL-VLDL-L
+3701	XXL-VLDL-P
+3702	XXL-VLDL-PL
+3703	XXL-VLDL-TG
+3704	X-10457
+3705	X-12398
+3706	X-12410
+3707	X-16480
+3708	X-17340
+3709	X-17357
+3710	X-18921
+3711	X-19823
+3712	X-21358
+3713	X-21364
+3714	X-21467
+3715	X-21471
+3716	X-21607
+3717	X-21785
+3718	X-21792
+3719	X-22145
+3720	X-23654
+3721	X-23756
+3722	X-24054
+3723	X-24263
+3724	X-24348
+3725	X-24438
+3726	X-24439
+3727	X-24455
+3728	X-24472
+3729	X-24801
+3730	X-24807
+3731	X-11793
+3732	X-12442
+3733	X-14153
+3734	X-16089
+3735	X-16934
+3736	X-18929
+3737	(Palmitoylcarnitine + Octadecenoylcarnitine)/Acetylcarnitine
+3738	(Valine + Leucine|Isoleucine)/(Phenylalanine + Tyrosine)
+3739	10-undecenoate (11:1n1)_X-11438
+3740	1-margaroyl-2-linoleoyl-GPC (17:0/18:2)
+3741	1-margaroyl-2-oleoyl-GPC (17:0/18:1)
+3742	2-Hydroxyisovalerylcarnitine/Leucine|Isoleucine
+3743	3-(4-hydroxyphenyl)lactate_alpha-hydroxyisovalerate
+3744	3-(4-hydroxyphenyl)lactate_X-11799
+3745	3-Indolepropionic acid/(S)-(-)-2-HYDROXYISOCAPROIC ACID
+3746	3-Indolepropionic acid/1,4-dihydro-1-Methyl-4-oxo-3-pyridinecarboxamide
+3747	3-Indolepropionic acid/2-（dimethylamino）guanosine
+3748	3-Indolepropionic acid/2-Hydroxyisocaproic Acid
+3749	3-Indolepropionic acid/2-Methylsuccinic acid
+3750	3-Indolepropionic acid/2-Picolinic acid
+3751	3-Indolepropionic acid/3,3',5-Triiodo-L-thyronine
+3752	3-Indolepropionic acid/3-Hydroxybutyrate
+3753	3-Indolepropionic acid/4-Guanidinobutyric acid
+3754	3-Indolepropionic acid/4-Hydroxybenzaldehyde
+3755	3-Indolepropionic acid/4-Nitrophenol
+3756	3-Indolepropionic acid/4-Pyridoxic acid
+3757	3-Indolepropionic acid/5-oxoproline
+3758	3-Indolepropionic acid/Adenine
+3759	3-Indolepropionic acid/Azelaic Acid
+3760	3-Indolepropionic acid/Choline
+3761	3-Indolepropionic acid/cis-5,8,11,14,17-Eicosapentaenoic Acid（C20:5n3）
+3762	3-Indolepropionic acid/Creatine
+3763	3-Indolepropionic acid/Creatinine
+3764	3-Indolepropionic acid/Cyclic AMP
+3765	3-Indolepropionic acid/D-2-Aminobutyric acid
+3766	3-Indolepropionic acid/D-Fructose
+3767	3-Indolepropionic acid/Dodecanedioic aicd
+3768	3-Indolepropionic acid/Hippuric acid
+3769	3-Indolepropionic acid/Homovanillic acid
+3770	3-Indolepropionic acid/Hypoxanthine
+3771	3-Indolepropionic acid/Indole-5-carboxylic acid (98%)
+3772	3-Indolepropionic acid/Isonicotinamide
+3773	3-Indolepropionic acid/Kinurenine
+3774	3-Indolepropionic acid/Kynurenic acid
+3775	3-Indolepropionic acid/L-2-Aminobutyric acid
+3776	3-Indolepropionic acid/L-Arginine
+3777	3-Indolepropionic acid/Lauric Acid/Dodecanoic acid（C12:0）
+3778	3-Indolepropionic acid/L-Carnitine
+3779	3-Indolepropionic acid/L-Lysine
+3780	3-Indolepropionic acid/L-Methionine
+3781	3-Indolepropionic acid/L-Ornithine
+3782	3-Indolepropionic acid/L-Pipecolic acid
+3783	3-Indolepropionic acid/L-Saccharopine
+3784	3-Indolepropionic acid/L-Tyrosine
+3785	3-Indolepropionic acid/L-Valine
+3786	3-Indolepropionic acid/LysoPC 14:0
+3787	3-Indolepropionic acid/LysoPC 16:0
+3788	3-Indolepropionic acid/LysoPC 16:1
+3789	3-Indolepropionic acid/LysoPC 18:0
+3790	3-Indolepropionic acid/LysoPC 18:1
+3791	3-Indolepropionic acid/LysoPC 20:0
+3792	3-Indolepropionic acid/LysoPC 20:1
+3793	3-Indolepropionic acid/LysoPC 20:2
+3794	3-Indolepropionic acid/Maltose
+3795	3-Indolepropionic acid/Methylmalonic acid
+3796	3-Indolepropionic acid/Myoinositol
+3797	3-Indolepropionic acid/N,N-Dimethylglycine
+3798	3-Indolepropionic acid/N6-Acetyl-L-lysine
+3799	3-Indolepropionic acid/N-acetylglycine
+3800	3-Indolepropionic acid/N-Acetyl-L-tyrosine
+3801	3-Indolepropionic acid/Phenylpyruvic acid
+3802	3-Indolepropionic acid/Pipecolinic acid
+3803	3-Indolepropionic acid/S-(5-Adenosy)-L-homocysteine
+3804	3-Indolepropionic acid/Sarcosine
+3805	3-Indolepropionic acid/S-Sulfo-L-cysteine
+3806	3-Indolepropionic acid/SubericAcid
+3807	3-Indolepropionic acid/Taurocholic acid sodium salt hydrate
+3808	3-Indolepropionic acid/Trimethylamine N-oxide
+3809	3-Indolepropionic acid/Uric acid
+3810	3-Indolepropionic acid/Uridine
+3811	3-Indolepropionic acid/UROCANIC ACID(RG)
+3812	3-Indolepropionic acid/α-Linolenic Acid（C18:3n3）
+3813	3-Indolepropionic acid/β-Pseudouridine
+3814	3-Indolepropionic acid/γ-Linolenic Acid（C18:3n6）
+3815	3-methyl-2-oxovalerate_2-aminobutyrate
+3816	4-acetamidobutanoate_N1-methyladenosine
+3817	4-acetamidobutanoate_X-03056--N-[3-(2-Oxopyrrolidin-1-yl)propyl]acetamide
+3818	5-Methyluridine/3-Indolepropionic acid
+3819	5-oxoproline_N1-methyladenosine
+3820	AA_DGLA
+3821	acetylcarnitine_hexanoylcarnitine
+3822	ADpSGEGDFXAEGGGVR*_X-14304--leucylalanine
+3823	ADSGEGDFXAEGGGVR*_ADpSGEGDFXAEGGGVR*
+3824	Ala/Glc
+3825	Ala/Gln
+3826	Ala/Gly
+3827	Ala/His
+3828	Ala/Ile
+3829	Ala/Leu
+3830	Ala/Phe
+3831	Ala/Tyr
+3832	Ala/Val
+3833	Alanine/Acetylcarnitine
+3834	Alanine/Aspartic acid
+3835	androsterone sulfate_4-androsten-3beta,17beta-diol disulfate 2*
+3836	androsterone sulfate_epiandrosterone sulfate
+3837	ApoB/ApoA1
+3838	Ratio of apolipoprotein B to apolipoprotein A1
+3839	arachidonate (20:4n6)_1-arachidonoylglycerophosphoinositol*
+3840	arachidonate (20:4n6)_1-palmitoylglycerophosphoethanolamine
+3841	arachidonate (20:4n6)_dihomo-linolenate (20:3n3 or n6)
+3842	Arginine/Citrulline
+3843	Arginine/Glycine
+3844	Arginine/Ornithine
+3845	Aspartic acid/Acetylcarnitine
+3846	Aspartic acid/Citrulline
+3847	aspartylphenylalanine_X-14450--phenylalanylleucine
+3848	Asp-phe/3-Indolepropionic acid
+3849	betaine_glycine
+3850	betaine_phenylalanine
+3851	betaine_pyroglutamine*
+3852	Bis/DB
+3853	Bis/FA
+3854	Carnitine free/Acylcarnitine total
+3855	Carnitine free/Palmitoylcarnitine + Stearoylcarnitine
+3856	carnitine_X-12798
+3857	C-glycosyltryptophan*_hydroxyisovaleroyl carnitine
+3858	C-glycosyltryptophan*_succinylcarnitine
+3859	CH2/DB
+3860	CH2/FA
+3861	Cis/trans-18:2
+3862	cis-5,8,11,14,17-Eicosapentaenoic Acid（C20:5n3）/LysoPC 20:2
+3863	D5D_C20
+3864	D6D_C18
+3865	D9D_16_18
+3866	D9D_C18
+3867	D-Arabinose/3-Indolepropionic acid
+3868	DB/FA
+3869	dehydroisoandrosterone sulfate (DHEA-S)_4-androsten-3beta,17beta-diol disulfate 2*
+3870	DGLA_GLA
+3871	DGLA_LA
+3872	DHA/PUFA
+3873	DHA_DPAN3
+3874	Ratio of docosahexaenoic acid to total fatty acids
+3875	D-Malic acid/3-Indolepropionic acid
+3876	docosapentaenoate (n3 DPA, 22:5n3)_X-12627
+3877	DPAN3_EPA_DTA_AA
+3878	DPAN6_AA
+3879	DSGEGDFXAEGGGVR*_ADpSGEGDFXAEGGGVR*
+3880	D-Sucrose/3-Indolepropionic acid
+3881	DTA_AA
+3882	D-Trehalose/3-Indolepropionic acid
+3883	Dulcitol/3-Indolepropionic acid
+3884	ELONG2_N6
+3885	ELONG5_N6
+3886	FA(16:1)_FA(18:2)
+3887	FAw3/FA
+3888	FAw3/FAw67
+3889	FAw3/FAw9S
+3890	Free-C/Est-C
+3891	GLA_LA
+3892	Glc/Pyr
+3893	Gln/Glc
+3894	Gln/Gly
+3895	Gln/His
+3896	Gln/Ile
+3897	Gln/Leu
+3898	Gln/Phe
+3899	Gln/Pyr
+3900	Gln/Tyr
+3901	Gln/Val
+3902	glucose_mannose
+3903	Glutamic acid/Ornithine
+3904	glutamine_histidine
+3905	Gly/His
+3906	Gly/Ile
+3907	Gly/Leu
+3908	Gly/Phe
+3909	Gly/Tyr
+3910	Gly/Val
+3911	Gp/Serum-TG
+3912	Gp/Tot-C
+3913	hexanoylcarnitine_octanoylcarnitine
+3914	His/Ile
+3915	His/Leu
+3916	His/Phe
+3917	His/Tyr
+3918	His/Val
+3919	homocitrulline_1-eicosatrienoylglycerophosphocholine*
+3920	Cholesterol to total lipids ratio in IDL
+3921	Cholesteryl esters to total lipids ratio in IDL
+3922	Free cholesterol to total lipids ratio in IDL
+3923	Phospholipids to total lipids ratio in IDL
+3924	Triglycerides to total lipids ratio in IDL
+3925	Ile/Glc
+3926	Ile/Leu
+3927	Ile/Phe
+3928	Ile/Serum-C
+3929	Ile/Serum-TG
+3930	Ile/Tyr
+3931	Ile/Val
+3932	indole_3_propionate
+3933	indoleacetate_N2,N2-dimethylguanosine
+3934	indolelactate_X-09789
+3935	isoleucine_butyrylcarnitine
+3936	isoleucine_X-11529
+3937	Isovalerylcarnitine/Butyrylcarnitine
+3938	kynurenine_glutaroyl carnitine
+3939	kynurenine_tryptophan
+3940	Cholesterol to total lipids ratio in large HDL
+3941	Cholesteryl esters to total lipids ratio in large HDL
+3942	Free cholesterol to total lipids ratio in large HDL
+3943	Phospholipids to total lipids ratio in large HDL
+3944	Triglycerides to total lipids ratio in large HDL
+3945	Cholesterol to total lipids ratio in large LDL
+3946	Cholesteryl esters to total lipids ratio in large LDL
+3947	Free cholesterol to total lipids ratio in large LDL
+3948	Phospholipids to total lipids ratio in large LDL
+3949	Triglycerides to total lipids ratio in large LDL
+3950	Cholesterol to total lipids ratio in large VLDL
+3951	Cholesteryl esters to total lipids ratio in large VLDL
+3952	Free cholesterol to total lipids ratio in large VLDL
+3953	Phospholipids to total lipids ratio in large VLDL
+3954	Triglycerides to total lipids ratio in large VLDL
+3955	LA/DHA
+3956	LA/FAw67
+3957	LA/PUFA
+3958	Ratio of linoleic acid to total fatty acids
+3959	Lac/Ala
+3960	Lac/Cit
+3961	Lac/Glc
+3962	Lac/Gln
+3963	Lac/Pyr
+3964	L-Asparagine Anhydrous/3-Indolepropionic acid
+3965	L-Aspartic Acid/3-Indolepropionic acid
+3966	L-Citrulline/3-Indolepropionic acid
+3967	L-Cystine/3-Indolepropionic acid
+3968	Leu/Glc
+3969	Leu/Phe
+3970	Leu/Serum-TG
+3971	Leu/Tyr
+3972	Leu/Val
+3973	Leucine|Isoleucine/Propionylcarnitine
+3974	L-Glutamic Acid/3-Indolepropionic acid
+3975	L-Glutamine/3-Indolepropionic acid
+3976	L-HDL-C/L-HDL-PL
+3977	L-HDL-L/M-HDL-L
+3978	L-HDL-L/S-HDL-L
+3979	L-Histidine/3-Indolepropionic acid
+3980	L-Histidine/Uric acid
+3981	linoleate (18:2n6)_dihomo-linolenate (20:3n3 or n6)
+3982	linoleate (18:2n6)_X-12092
+3983	linoleate (18:2n6)_X-12442--5,8-tetradecadienoate
+3984	LPC(18:2)_PC(34:2)
+3985	LPC16:0/LPC18:0
+3986	LPC16:1/LPC16:0
+3987	LPC16:1/LPC18:1
+3988	LPC16:1/LPC18:2
+3989	LPC16:1/LPC20:3
+3990	LPC16:1/LPC20:4
+3991	LPC16:1/LPC22:5
+3992	LPC20:3/LPC15:0
+3993	LPC20:3/LPC16:0
+3994	LPC20:3/LPC16:1
+3995	LPC20:3/LPC18:0
+3996	LPC20:3/LPC18:1
+3997	LPC20:3/LPC18:2
+3998	LPC20:3/LPC18:3
+3999	LPC20:3/LPC20:0
+4000	LPC20:3/LPC22:5
+4001	L-Phenylalanine/3-Indolepropionic acid
+4002	L-Proline/3-Indolepropionic acid
+4003	L-Pyroglutamic Acid/3-Indolepropionic acid
+4004	L-Serine/3-Indolepropionic acid
+4005	L-Threonine/3-Indolepropionic acid
+4006	L-Thyroxine/3-Indolepropionic acid
+4007	L-Tryptophan/3-Indolepropionic acid
+4008	Lysine/Pipecolic acid
+4009	lysine_glutaroyl carnitine
+4010	Cholesterol to total lipids ratio in medium HDL
+4011	Cholesteryl esters to total lipids ratio in medium HDL
+4012	Free cholesterol to total lipids ratio in medium HDL
+4013	Phospholipids to total lipids ratio in medium HDL
+4014	Triglycerides to total lipids ratio in medium HDL
+4015	Cholesterol to total lipids ratio in medium LDL
+4016	Cholesteryl esters to total lipids ratio in medium LDL
+4017	Free cholesterol to total lipids ratio in medium LDL
+4018	Phospholipids to total lipids ratio in medium LDL
+4019	Triglycerides to total lipids ratio in medium LDL
+4020	Cholesterol to total lipids ratio in medium VLDL
+4021	Cholesteryl esters to total lipids ratio in medium VLDL
+4022	Free cholesterol to total lipids ratio in medium VLDL
+4023	Phospholipids to total lipids ratio in medium VLDL
+4024	Triglycerides to total lipids ratio in medium VLDL
+4025	Methylmalonylcarnitine/Propionylcarnitine
+4026	M-HDL-C/M-HDL-PL
+4027	M-HDL-L/S-HDL-L
+4028	M-LDL-C/M-LDL-PL
+4029	Ratio of monounsaturated fatty acids to total fatty acids
+4030	myristate (14:0)_myristoleate (14:1n5)
+4031	N1-methyladenosine_glutaroyl carnitine
+4032	N-acetylalanine_X-12244--N-acetylcarnosine
+4033	N-acetyl-l-leucine/3-Indolepropionic acid
+4034	N-acetylornithine_myo-inositol
+4035	OA_POA
+4036	OA_SA
+4037	octanoylcarnitine_X-13435
+4038	Ratio of omega-3 fatty acids to total fatty acids
+4039	Ratio of omega-6 fatty acids to omega-3 fatty acids
+4040	Ratio of omega-6 fatty acids to total fatty acids
+4041	OXD_N3
+4042	OXD_N3_N6
+4043	OXD_N6
+4044	Pantothenate/3-Indolepropionic acid
+4045	PC(32:0)_TG(52:3)
+4046	PC(32:1)_TG(52:3)
+4047	PC(34:3)_PC(38:4)
+4048	PC(36:2)_PC(34:2)
+4049	PC(36:4)_LPC(16:0)
+4050	PC(36:4)_PC(34:2)
+4051	PC(38:5)_PC(34:2)
+4052	PC(38:6)_PC(34:2)
+4053	PC26:0/PC32:1
+4054	PC26:0/PC34:1
+4055	PC26:0/PC36:1
+4056	PC26:0/PC36:5
+4057	PC26:0/PC38:3
+4058	PC26:0/PC38:4
+4059	PC26:0/PC38:5
+4060	PC26:0/PC38:6
+4061	PC26:0/PC40:5
+4062	PC26:0/PC40:6
+4063	PC26:0/PC40:7
+4064	PC32:0/PC34:1
+4065	PC32:1/PC32:2
+4066	PC32:1/PC34:2
+4067	PC32:1/PC36:2
+4068	PC32:1/PC36:3
+4069	PC32:1/PCO32:0
+4070	PC32:1/PCO34:0
+4071	PC32:1/PCO34:1
+4072	PC32:1/PCO34:2
+4073	PC32:1/PCO36:1
+4074	PC32:1/PCO36:2
+4075	PC32:1/PCO36:3
+4076	PC32:1/PCO38:4
+4077	PC32:1/PCO40:4
+4078	PC32:1/PCO40:6
+4079	PC32:2/PC36:2
+4080	PC32:2/PC36:3
+4081	PC32:2/PC38:3
+4082	PC34:2/PC36:3
+4083	PC34:2/PC38:3
+4084	PC34:2/PCO38:3
+4085	PC36:1/PC34:1
+4086	PC36:1/PC34:2
+4087	PC36:1/PC34:3
+4088	PC36:1/PC36:3
+4089	PC36:3/PC34:2
+4090	PC36:3/PC34:3
+4091	PC36:3/PC36:2
+4092	PC36:3/PCO34:2
+4093	PC36:3/PCO36:2
+4094	PC38:3/PC32:0
+4095	PC38:3/PC32:2
+4096	PC38:3/PC34:1
+4097	PC38:3/PC34:2
+4098	PC38:3/PC34:3
+4099	PC38:3/PC36:1
+4100	PC38:3/PC36:2
+4101	PC38:3/PC36:3
+4102	PC38:3/PC36:4
+4103	PC38:3/PC38:5
+4104	PC38:3/PC40:5
+4105	PC38:3/PC40:7
+4106	PC38:3/PCO32:0
+4107	PC38:3/PCO34:1
+4108	PC38:3/PCO34:2
+4109	PC38:3/PCO34:3
+4110	PC38:3/PCO36:1
+4111	PC38:3/PCO36:2
+4112	PC38:3/PCO36:3
+4113	PC40:3/PC40:4
+4114	PC40:3/PC40:5
+4115	PE(34:2)_CE(20:4)
+4116	PE34:1/PE34:2
+4117	PE34:1/PE34:3
+4118	PE34:1/PE36:2
+4119	PE34:1/PE36:3
+4120	PE34:1/PE36:4
+4121	PE34:1/PE36:5
+4122	PE34:1/PE38:3
+4123	PE34:1/PE38:4
+4124	PE34:1/PE38:5
+4125	PE34:1/PE38:6
+4126	PE34:1/PE40:5
+4127	PE34:1/PEO40:3
+4128	PE36:1/PE34:2
+4129	PE36:1/PE34:3
+4130	PE36:1/PE36:2
+4131	PE36:1/PE36:3
+4132	PE36:1/PE36:4
+4133	PE36:1/PE36:5
+4134	PE36:1/PE38:3
+4135	PE36:1/PE38:4
+4136	PE36:1/PE38:5
+4137	PE36:1/PEO40:3
+4138	PE38:3/PE34:2
+4139	PE38:3/PE34:3
+4140	PE38:3/PE36:2
+4141	PE38:3/PE36:3
+4142	Phe/Tyr
+4143	Phe/Val
+4144	phenyllactate (PLA)_phenylalanine
+4145	phosphate_1,5-anhydroglucitol (1,5-AG)
+4146	phosphate_erythronate*
+4147	POA_PA
+4148	POA_PA_GLA_LA
+4149	propionylcarnitine_isovalerylcarnitine
+4150	pseudouridine_X-12244--N-acetylcarnosine
+4151	Ratio of polyunsaturated fatty acids to monounsaturated fatty acids
+4152	Ratio of polyunsaturated fatty acids to total fatty acids
+4153	Riboflavin/3-Indolepropionic acid
+4154	Cholesterol to total lipids ratio in small HDL
+4155	Cholesteryl esters to total lipids ratio in small HDL
+4156	Free cholesterol to total lipids ratio in small HDL
+4157	Phospholipids to total lipids ratio in small HDL
+4158	Triglycerides to total lipids ratio in small HDL
+4159	Cholesterol to total lipids ratio in small LDL
+4160	Cholesteryl esters to total lipids ratio in small LDL
+4161	Free cholesterol to total lipids ratio in small LDL
+4162	Phospholipids to total lipids ratio in small LDL
+4163	Triglycerides to total lipids ratio in small LDL
+4164	Cholesterol to total lipids ratio in small VLDL
+4165	Cholesteryl esters to total lipids ratio in small VLDL
+4166	Free cholesterol to total lipids ratio in small VLDL
+4167	Phospholipids to total lipids ratio in small VLDL
+4168	Triglycerides to total lipids ratio in small VLDL
+4169	Sarcosine/Glycine
+4170	scyllo-inositol_erythronate*
+4171	serine_asparagine
+4172	Serum-TG/Glc
+4173	Ratio of saturated fatty acids to total fatty acids
+4174	SM (d18:2/18:1)
+4175	SM(32:1)_SM(39:1)
+4176	SM(42:1)_TG(48:2)
+4177	sphingomyelin (d18:1/15:0, d16:1/17:0)
+4178	SPM22:0/sphingomyelin 16:1 (SM 16:1)
+4179	SPM22:0/SPM24:2
+4180	SPM23:0/sphingomyelin 16:1 (SM 16:1)
+4181	SPM23:0/SPM16:0
+4182	SPM24:0/sphingomyelin 16:1 (SM 16:1)
+4183	SPM24:0/SPM24:2
+4184	stearate (18:0)_biliverdin
+4185	TG(48:1)_TG(54:5)
+4186	TG(52:5)_TG(52:4)
+4187	TG(54:3)_TG(52:3)
+4188	TG(54:5)_CE(18:2)
+4189	TG/PG
+4190	Ratio of triglycerides to phosphoglycerides
+4191	Tot-C/Est-C
+4192	Trans/trans-18:2
+4193	Tyr/Val
+4194	urate_histidine
+4195	urate_X-11593--O-methylascorbate*
+4196	Val/Serum-TG
+4197	valine_isovalerylcarnitine
+4198	valine_proline
+4199	valine_X-12556
+4200	X-03094_bradykinin, des-arg(9)
+4201	X-04495_2-aminobutyrate
+4202	X-04499--3,4-dihydroxybutyrate_C-glycosyltryptophan*
+4203	X-08402_cholesterol
+4204	X-10510_palmitoyl sphingomyelin
+4205	X-11315_pyroglutamine*
+4206	X-11423--O-sulfo-L-tyrosine_creatinine
+4207	X-11440_4-androsten-3beta,17beta-diol disulfate 2*
+4208	X-11444_X-11470
+4209	X-11444_X-12844
+4210	X-11478_X-11521
+4211	X-11820_cholesterol
+4212	X-12038_bradykinin, des-arg(9)
+4213	X-12095--N1-methyl-3-pyridone-4-carboxamide_X-12844
+4214	X-12798_phenylalanine
+4215	X-13215_X-13671
+4216	Cholesterol to total lipids ratio in very large HDL
+4217	Cholesteryl esters to total lipids ratio in very large HDL
+4218	Free cholesterol to total lipids ratio in very large HDL
+4219	Phospholipids to total lipids ratio in very large HDL
+4220	Triglycerides to total lipids ratio in very large HDL
+4221	Cholesterol to total lipids ratio in very large VLDL
+4222	Cholesteryl esters to total lipids ratio in very large VLDL
+4223	Free cholesterol to total lipids ratio in very large VLDL
+4224	Phospholipids to total lipids ratio in very large VLDL
+4225	Triglycerides to total lipids ratio in very large VLDL
+4226	XL-HDL-L/L-HDL-L
+4227	XL-HDL-L/M-HDL-L
+4228	XL-HDL-L/S-HDL-L
+4229	Cholesterol to total lipids ratio in very small VLDL
+4230	Cholesteryl esters to total lipids ratio in very small VLDL
+4231	Free cholesterol to total lipids ratio in very small VLDL
+4232	Phospholipids to total lipids ratio in very small VLDL
+4233	Triglycerides to total lipids ratio in very small VLDL
+4234	Cholesterol to total lipids ratio in chylomicrons and extremely large VLDL
+4235	Cholesteryl esters to total lipids ratio in chylomicrons and extremely large VLDL
+4236	Free cholesterol to total lipids ratio in chylomicrons and extremely large VLDL
+4237	Phospholipids to total lipids ratio in chylomicrons and extremely large VLDL
+4238	Triglycerides to total lipids ratio in chylomicrons and extremely large VLDL

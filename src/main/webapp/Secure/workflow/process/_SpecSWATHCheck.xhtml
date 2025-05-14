@@ -1,0 +1,31 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <h2>SWATH-DIA Design Integrity Check</h2>
+        <p>
+            MetaboAnalyst will detect the design of SWATH-DIA spectral acquisition automatically. However, some spectral data may not 
+            contain the related information in the data itself. In this case (the table below is all 0.0), user must manually specify design.
+        </p>
+
+        <h:form id="formsx">
+
+            <p:dataTable style="width:46%; font-size: 10px;" var="data" rowIndexVar="rowInx" value="#{spectraProcessor.swathBeans}"> 
+                <p:column headerText="Index" style="width:40px; text-align: center;">  
+                    <h:outputLabel value="#{data.idx}"/>
+                </p:column>   
+                <p:column headerText="Lower M/Z" style="width:40px">  
+                    <p:inputNumber value="#{data.lomz}"/>
+                </p:column>   
+                <p:column headerText="Upper M/Z" style="width:40px">                        
+                    <p:inputNumber value="#{data.upmz}"/>
+                </p:column>   
+            </p:dataTable>
+
+        </h:form>
+    </h:panelGrid>
+
+</ui:composition>

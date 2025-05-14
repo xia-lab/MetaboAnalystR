@@ -1,0 +1,32 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+    <h:form>
+        <style>
+            .mymenu .ui-menuitem-text{
+                color:white !important;
+                text-shadow: 3px 3px 5px #000 !important;
+            }
+
+            .mymenu .ui-menuitem-icon{
+                color:white !important;
+                text-shadow: 3px 3px 5px #000 !important;
+            }
+        </style>
+        <p:menubar style="border: 0; box-shadow: 0; background: transparent; font-size: 16px; position:absolute; top:30px; right:5%;" styleClass="mymenu">
+            <p:menuitem value="Home" style="padding-right: 20px; font-size: 16px;" url="/MetaboAnalyst/home.xhtml" 
+                        icon="pi pi-home"/> 
+            <p:menuitem url='/MetaboAnalyst/docs/Format.xhtml' icon="pi pi-star" value="Format"
+                        style="padding-right: 20px; font-size: 16px"/>
+            <p:menuitem style="padding-right: 20px; font-size: 16px" url='/MetaboAnalyst/docs/Tutorials.xhtml'  
+                        icon="pi pi-compass" value="Tutorials" />  
+            <p:menuitem style="padding-right: 20px; font-size: 16px" url='/MetaboAnalyst/docs/Publications.xhtml'  
+                        icon="pi pi-file" value="Publications" /> 
+            <p:menuitem style="padding-right: 20px;font-size: 16px" url='https://omicsforum.ca/c/metaboanalyst/5' target="_blank"   
+                        icon="pi pi-question-circle" value="Forum" styleClass="homeMenu"/> 
+        </p:menubar>
+    </h:form>
+
+</ui:composition>
+

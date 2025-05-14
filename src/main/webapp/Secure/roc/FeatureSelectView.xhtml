@@ -1,0 +1,190 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo"> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Builder', '/Secure/roc/FeatureSelectView.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{rocAnalBean.setupFeatureTable(true)}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Manually select a subset of features/samples for ROC analysis
+            </h2>
+            <h:form id="summaryForm">
+                <h:panelGrid columns="2" style="padding: 20px">
+
+                    <h:panelGrid columns="2" style="text-align: left; width:100%; margin-right: 30px">
+                        <h:panelGroup layout="block" style="width:200px">
+                            <h:outputLabel for="meta1" style="font-weight: bold;margin-top: 10px;" value="Selected metadata:"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu id="meta1" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.selMeta}">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                            <p:ajax listener="#{rocAnalBean.analysisMetaChangeListener()}" event="change" update="summaryForm"/> 
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold;" value="Target group:"/>
+                        <p:selectOneMenu style="width:140px" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.factor1}">
+                            <f:selectItems value="#{multifacBean.uniqueMetaList}" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold;" value="Reference group:"/>
+                        <p:selectOneMenu style="width:140px" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.factor2}">
+                            <f:selectItem itemLabel="ALL others" itemValue="all" />
+                            <f:selectItems value="#{multifacBean.uniqueMetaList}" /> 
+                        </p:selectOneMenu>
+                    </h:panelGrid> 
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     style="margin-left:20px"
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     action="#{rocAnalBean.setupFeatureTable(false)}"/>  
+
+                </h:panelGrid>
+                <p>
+                    The list boxes below show all the available features and samples. You can manually select the features 
+                    you want to use to build a classifier or you can select a subset of samples as hold-out data for 
+                    validation purposes. Note, <b>multiple selections</b> are allowed.
+                </p>
+                <p:tabView id="ac" widgetVar="tabWidget"  style="width:100%;border:none">
+                    <p:tab title ="Variable Selection">
+                        <p>
+                            You should select features based on <b>your own judgement or prior knowledge</b>. If you 
+                            select features based on their overall ranks (AUC, T-statistic or fold changes), there will be 
+                            an increase risk of overfitting - they may be the best biomarkers for <u>this</u> particular 
+                            data, but not the case for new samples! The performance evaluation will likely to be 
+                            over-optimistic. <b>Use with caution!</b>. You can use K-means (KM) clustering to detect 
+                            features with similar behaviour to help reduce the redundancy in biomarkers 
+                            (i.e. features in the same cluster behave more similar). 
+                        </p>
+                        <p>
+                            Note, directly <b>click on the checkbox</b> in the 1st column for multiple selection. 
+                            Do not click on other places of the row.
+                        </p>
+                        <h:panelGrid style="padding:10px; font-size: 12px; line-height: 23px; width:100%">
+                            <h:panelGrid columns="2" style="text-align: left; width:100%">
+                                <h:panelGrid columns="4" style="padding-left: 30px; width: 420px">
+                                    <h:outputLabel style="font-weight: bold" value="Specify the cluster number:"/>
+                                    <p:inputText style="width:50px" value="#{rocAnalBean.kmClustNm}"/>
+                                    <p:spacer style="width: 20px"/>
+                                    <p:commandButton value="Update" update=":summaryForm:ac" 
+                                                     actionListener="#{rocAnalBean.updateKmeans}"
+                                                     onclick="PF('statusDialog').show()"
+                                                     oncomplete="PF('statusDialog').hide();"
+                                                     />  
+                                </h:panelGrid>
+                                <h:panelGrid style="text-align: right; width:100%">
+                                    <p:commandLink value="LASSO Frequency" 
+                                                   actionListener="#{rocAnalBean.computeFeatureBeans}"
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":diagForm"
+                                                   oncomplete="PF('statusDialog').hide(); PF('additionalInfoDialog').show()"/>
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <p:dataTable paginator="true" paginatorPosition="bottom"
+                                         rows="20" rowsPerPageTemplate="20,50,100"
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         value="#{rocAnalBean.featureBeans}"
+                                         var="set" rowKey="#{set.uniqID}" id="featTable"
+                                         selection="#{rocAnalBean.selectedFeatureBeans}">
+
+                                <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+
+                                <p:column headerText="Name" sortBy="#{set.name}" filterBy="#{set.name}">  
+                                    <h:outputText escape="false" value="#{set.name}"/>  
+                                </p:column> 
+                                <p:column headerText="AUC" sortBy="#{set.val1}">  
+                                    <h:outputText escape="false" value="#{set.val1}"/>  
+                                </p:column> 
+                                <p:column headerText="T-tests" sortBy="#{set.val2}">  
+                                    <h:outputText escape="false" value="#{set.val2}"/>  
+                                </p:column> 
+                                <p:column headerText="Log2 FC" sortBy="#{set.val3}">  
+                                    <h:outputText escape="false" value="#{set.val3}"/>  
+                                </p:column> 
+                                <p:column headerText="KM Cluster" sortBy="#{set.val4}">  
+                                    <h:outputText escape="false" value="#{set.val4}">
+                                        <f:convertNumber type="number"
+                                                         maxIntegerDigits="3"
+                                                         maxFractionDigits="0"
+                                                         groupingUsed="false"/>
+                                    </h:outputText>
+                                </p:column> 
+                            </p:dataTable>
+                        </h:panelGrid> 
+                    </p:tab>
+                    <p:tab title ="Sample Holdout">
+                        Note, in order to get a decent ROC curve for the validation, we recommend that the hold-out 
+                        data set contains a balanced number of samples from both groups, and the number of hold-out 
+                        samples should be at least 8 (i.e. 4 from each group)  
+
+                        <h:panelGrid>
+                            <h:outputLabel style="font-weight: bold" value="Samples from group 1"/>
+                            <p:pickList value="#{rocAnalBean.sampleItems1}" 
+                                        var="sample1" itemValue="#{sample1}" itemLabel="#{sample1}"
+                                        showSourceFilter="true" showTargetFilter="true">
+                                <f:facet name="sourceCaption">Available</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{rocAnalBean.doTransfer}"/>
+                            </p:pickList> 
+
+                            <h:outputLabel style="font-weight: bold" value="Samples from group 2"/>
+                            <p:pickList value="#{rocAnalBean.sampleItems2}" 
+                                        var="sample2" itemValue="#{sample2}" itemLabel="#{sample2}"
+                                        showSourceFilter="true" showTargetFilter="true">
+                                <f:facet name="sourceCaption">Available</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{rocAnalBean.doTransfer}"/>
+                            </p:pickList> 
+                        </h:panelGrid>
+                    </p:tab>
+
+                    <p:tab title ="New Samples">
+                        If your data contains new samples (samples without group labels), they will be listed below:
+                        <h:panelGrid style="padding-left: 40px; line-height: 21px;">
+                            <h:outputLabel style="font-weight: bold" value="New samples"/>
+                            <p:inputTextarea id="smplArea" cols="40" rows="20" autoResize="false" readonly="true"
+                                             value="#{rocAnalBean.newSampleNames}"/>
+                        </h:panelGrid>
+                    </p:tab>
+                </p:tabView>
+                <h:panelGrid style="width:100%; text-align: center; font-size: 13px">
+                    <p:commandButton process=":summaryForm:ac:featTable :summaryForm:ac:smplPane" 
+                                     value="Next" style="width:100px" ajax="false"  
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     action="#{rocAnalBean.prepareTesterData()}"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid>
+        <p:dialog widgetVar="additionalInfoDialog" dynamic="false" modal="true" height="460"
+                  hideEffect="explode" resizable="true" appendTo="@(body)">
+            <h:form id="diagForm">
+                <h:panelGrid style="padding:10px; font-size: 13px; width:480px;">
+                    <p>
+                        The table below shows frequencies of selected variables using LASSO modeling. Note, when all values are zeros - it means 
+                        either there are unknown errors occured, or too many features (over 500 with small sample size) to compute lasso. 
+                    </p>
+                    <p:dataTable style="width:100%; font-size: 12px" var="set"
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{rocAnalBean.lassoFeatureBeans}">  
+                        <p:column headerText="Name">  
+                            <h:outputText value="#{set.name}"/>  
+                        </p:column>   
+                        <p:column headerText="Lasso Freq (%)">  
+                            <h:outputText value="#{set.val1}"/>
+                        </p:column>   
+                    </p:dataTable>
+                    <h:panelGrid columns="1" style="width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton style="width:100px" onclick="PF('additionalInfoDialog').hide()" value="Close"/>
+                    </h:panelGrid> 
+                </h:panelGrid>
+            </h:form>         
+        </p:dialog>
+    </ui:define>
+</ui:composition>

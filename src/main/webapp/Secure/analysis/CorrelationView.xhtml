@@ -1,0 +1,226 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('Correlations')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Correlations', '/Secure/analysis/CorrelationView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-2.27.0.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+
+            <h2>Correlation Heatmaps</h2>
+            <p>
+                Note the heatmaps will only show correlations for a maximum of 1000 features. For larger datasets, 
+                only the top 1000 features will be selected based on their interquantile range (IQR). When the 
+                color distribution is fixed, you can potentially compare the correlation patterns among different data sets. 
+                In this case, you can choose "do not perform clustering" for the entire data set, or only to perform clustering on a 
+                single reference data set, then manually re-arrange other data sets according to the clustering pattern of the 
+                reference data set.                
+            </p>
+            <h:form id="form1">
+                <h:panelGrid columns="2">
+                    <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 25px; width:475px">
+                        <h:outputLabel style="font-weight: bold" value="Choose a dimension:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.corDirection}">
+                            <f:selectItem itemLabel="Features" itemValue="col" /> 
+                            <f:selectItem itemLabel="Samples" itemValue="row" /> 
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Distance measure:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.hmDistMeasure}">
+                            <f:selectItems value="#{optBean.distMeasureOpts}" />
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Fix color distribution [-1, 1]:"/>
+                        <p:selectBooleanCheckbox value ="#{univBean.fixRange}" style="line-height: 18px"/>                               
+                        <h:outputLabel style="font-weight: bold" value="Color contrasts:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.colContrast}">
+                            <f:selectItems value="#{optBean.colorContrastOpts}" />
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Do not perform clustering:"/>
+                        <p:selectBooleanCheckbox value ="#{univBean.noClust}" style="line-height: 18px"/> 
+                        <h:outputLabel style="font-weight: bold" value="Font size:"/>
+                        <h:panelGrid columns="2">
+                            <p:inputText id="txt0" value="#{univBean.fontSize}" style="width:60px"/>
+                            <p:slider for="txt0" minValue="1" step="1"  maxValue="15" style="width:100px" />
+                        </h:panelGrid>
+                        <h:outputLabel style="font-weight: bold" value="Unit size:"/>
+                        <h:panelGrid columns="2">
+                            <p:inputText id="txt1" value="#{univBean.unit}" style="width:60px"/>
+                            <p:slider for="txt1" minValue="0" step="1"  maxValue="50" style="width:100px" />
+                        </h:panelGrid>
+                        <h:panelGrid columns="2">
+                            <h:outputLabel style="font-weight: bold" value="Correlation cutoff:"/>
+                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        </h:panelGrid>  
+                        <h:panelGrid columns="2">
+                            <p:inputText id="txt2" value="#{univBean.corrThresh}" style="width:60px"/>
+                            <p:slider for="txt2" minValue="0" step="0.01"  maxValue="1" style="width:100px" />
+                        </h:panelGrid>
+                    </h:panelGrid>                   
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()"
+                                     update=":form1 :corrPane :hisTab:cmdPane" 
+                                     actionListener="#{univBean.corrBtn_action()}"/>   
+                </h:panelGrid>
+                <p:tooltip for="helpIcon" styleClass="helpTip">
+                    <p>
+                        Pair-wise correlations that do not meet the correlation cutoff will be set to 0.
+                    </p>
+                </p:tooltip>
+                <p:remoteCommand name="triggerdownloadcorr" autoRun="false" onstart="PrimeFaces.monitorDownload(start, stop)">
+                    <p:fileDownload value="#{univBean.corrValFile}" />
+                </p:remoteCommand>
+                <p:remoteCommand name="triggerdownloadpval" autoRun="false" onstart="PrimeFaces.monitorDownload(start, stop)">
+                    <p:fileDownload value="#{univBean.corrPvalFile}" />
+                </p:remoteCommand>
+            </h:form>
+
+            <hr class="style-one"/>
+            <h:panelGrid id="corrPane" style="width: 120%; padding-left: 5%">
+                <h:inputHidden id="mydir3" value="#{sessionBean1.getJsonDir('corr')}" />  
+                  
+                <p>
+                    <b>Mouse over</b> to see the labels; <b>click and drag</b> to zoom-in and <b>double-click</b> to zoom-out completely
+                </p>
+                <script>
+                    var savedState = {};
+                    var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                    var graphDiv;
+                    var mode = 0;
+                    var config = {displaylogo: false, displayModeBar: false, scrollZoom: false, responsive: true};
+
+
+                    $.getJSON('/MetaboAnalyst' + document.getElementById("mydir3").value,
+                            function (scriptData) {
+
+                                if (scriptData) {
+                                    var data = scriptData.x;
+                                    graphDiv = document.getElementById("htmlwidget3");
+                                    mode = 1;
+                                    data.layout.autosize = false;
+                                    data.layout.margin.t = 10;
+                                    data.layout.margin.l = 20;
+                                    data.layout.margin.r = 20;
+                                    if (light === "light") {
+                                        data.layout.paper_bgcolor = '#ffffff';
+                                        data.layout.plot_bgcolor = '#ffffff';
+                                        data.layout.font = {color: '#000000'};
+
+                                    } else {
+                                        data.layout.paper_bgcolor = '#071426';
+                                        data.layout.plot_bgcolor = '#071426';
+                                        data.layout.font = {color: '#FFFFFF'};
+                                    }
+                                    Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                    PF('statusDialog').hide();
+                                    handleSaveEvent(false);
+                                }
+                            });
+
+                    function setupTheme() {
+                        light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                        if (mode === 1) {
+                            if (light === "light") {
+
+                                newBgColor = '#ffffff';
+                                newFontColor = '#000000';
+
+                            } else {
+                                console.log("here")
+
+                                newBgColor = '#071426';
+                                newFontColor = '#FFFFFF';
+                            }
+                            console.log(graphDiv)
+                            Plotly.update(graphDiv, {}, {
+                                'paper_bgcolor': newBgColor,
+                                'plot_bgcolor': newBgColor,
+                                'font.color': newFontColor
+                            });
+
+                        }
+                    }
+                    ;
+
+                    function resetAxis() {
+                        var con = document.getElementById("htmlwidget3");
+                        Plotly.relayout(con, {
+                            'xaxis.autorange': true,
+                            'yaxis.autorange': true
+                        });
+                    }
+
+
+                    function handleSaveEvent(sendJsonFlag) {
+                        let vismode = "heatmap_correlation";
+                        Plotly.toImage(divGraph, {format: 'png'}).then(function (dataURI) {
+                            sendImageToServer(dataURI, vismode);
+
+                        }).catch(function (error) {
+                            console.error('Error:', error);
+                        });
+                        savedState.init = true;
+                        //savedState.sigInstGraphEdges = sigInst.graph.edges();
+                        let dataStr = JSON.stringify(savedState);
+                        sendJsonToServer(dataStr, vismode, sendJsonFlag);
+                    }
+
+                    function export_image(tp) {
+                        PF('statusDialog').show();
+                        setTimeout(function () {
+                            Plotly.downloadImage(graphDiv, {format: tp, width: 1000, height: 1200, scale: 3})
+                                    .then(function () {
+                                        PF('statusDialog').hide()
+                                    })
+                                    .catch(function (error) {
+                                        hideStatusDialog();
+                                        console.error("Error downloading image:", error);
+                                    });
+                        }, 100); // Small delay to ensure dialog is shown
+                    }
+
+
+                </script>
+
+                <h:panelGrid columns="5" cellspacing="5" style="text-align: right; margin-left: 420px;">
+                    <p:commandButton value="Correlations" ajax="false" 
+                                     onclick="triggerdownloadcorr()"   
+                                     class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                     icon="pi pi-download"/>
+                    <p:commandButton value="P-values" ajax="false" 
+                                     class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                     onclick="triggerdownloadpval()"   
+                                     oncomplete="PF('statusDialog').hide()"
+                                     icon="pi pi-download"/>
+                    <p:commandButton value="SVG" 
+                                     class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                     onclick="export_image('svg')"                                  
+                                     icon="pi pi-download"/>  
+
+                    <p:commandButton value="PNG" 
+                                     class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                     onclick="export_image('png')" 
+                                     icon="pi pi-download"/>  
+
+                    <p:commandButton value="Reset" 
+                                     class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                     onclick="resetAxis()"
+                                     icon="pi pi-replay"/>  
+                </h:panelGrid>
+
+                <div id="htmlwidget3" style="width:100%;" class="iheatmapr html-widget"></div>
+
+
+            </h:panelGrid>        
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

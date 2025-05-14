@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+
+    <ui:define name="content">
+        <script type="text/javascript">
+            window.onload = loadpartialLink;
+
+            function loadpartialLink() {
+                $.ajax({
+                    beforeSend: function () {
+                    },
+                    dataType: "html",
+                    type: "POST",
+                    url: '/MetaboAnalyst/faces/AjaxCall',
+                    data: {function: 'loadpartialLink'},
+                    async: false,
+                    success: function (result) {
+                        if (result !== "null") {
+                            window.location = result;
+                        }
+                    }
+                });
+            }
+        </script>
+        <style>
+            .center {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                -ms-transform: translate(-50%, -50%); /* for IE 9 */
+                -webkit-transform: translate(-50%, -50%); /* for Safari */
+
+                /* optional size in px or %: */
+                width: 560px;
+                height: 120px;
+            }
+        </style>
+        <div class="center" style="text-align: center; line-height: 32px">
+            <h:outputLabel style="font-size: 26px;" escape="false" value="#{sessionBean1.partialLinkCheckingRes}"/>
+            <br/><br/>
+            <p:graphicImage value="/resources/images/processing.gif" rendered="#{sessionBean1.partialLinkValide}"/>
+        </div>
+    </ui:define>
+</ui:composition>

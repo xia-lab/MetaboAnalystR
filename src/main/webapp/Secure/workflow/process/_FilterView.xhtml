@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:panelGrid columns="3" layout="tabular" style="width: 700px" class="surface-card shadow-1 p-4 text-800">
+        <h:outputText style="font-weight: bold" value="Reliability filter:"/>
+        <h:panelGrid columns="5" style="padding: 10px;">
+            <p:selectBooleanCheckbox value="#{procBean.doQCFiltering}" style="line-height: 18px"/> 
+            <h:outputLabel value="Filtering features based on technical repeatability QC samples"/> 
+        </h:panelGrid>
+        <h:panelGrid columns="2" style="padding: 20px;">
+            <h:outputText value="RSDs greater than:"/>
+            <h:inputHidden id="txt2" value="#{procBean.qcCutoff}"/> 
+            <p:slider for="txt2" minValue="10" maxValue="60" display="output" 
+                      style="width:100px; margin-left: 4px; margin-right: 6px" 
+                      displayTemplate="{value}%"/>
+            <h:outputText id="output" value="#{procBean.qcCutoff}%"/>
+        </h:panelGrid>
+
+        <h:outputText style="font-weight: bold" value="Variance filter:"/>
+        <p:selectOneRadio layout="pageDirection" value="#{procBean.varFilterOpt}" style="font:Arial,sans-serif; font-size: 13px" styleClass="hideDisabled">
+            <f:selectItem itemLabel="Interquantile range (IQR)" itemValue="iqr" /> 
+            <f:selectItem itemLabel="Standard deviation (SD)" itemValue="sd" /> 
+            <f:selectItem itemLabel="Median absolute deviation (MAD)" itemValue="mad" /> 
+            <f:selectItem itemLabel="Relative standard deviation (RSD = SD/mean)" itemValue="rsd" /> 
+            <f:selectItem itemLabel="Non-parametric relative standard deviation (MAD/median)" itemValue="nrsd" /> 
+        </p:selectOneRadio>
+        <h:panelGrid columns="2" style="padding: 20px;">
+            <h:outputText value="Percentage to filter out:"/>
+            <h:inputHidden id="txt3" value="#{procBean.filterCutoff}"/>
+            <p:slider for="txt3" display="output1" style="width: 160px" 
+                      minValue="#{sessionBean1.filterMin}"
+                      displayTemplate="{value}%"/>
+            <h:outputText id="output1" value="#{procBean.filterCutoff}%"/>
+        </h:panelGrid>
+
+        <h:outputText style="font-weight: bold" value="Abundance filter:"/>
+        <p:selectOneRadio layout="pageDirection" value="#{procBean.intFilterOpt}" style="font:Arial,sans-serif; font-size: 13px" styleClass="hideDisabled">
+            <f:selectItem itemLabel="Mean intensity value" itemValue="mean" /> 
+            <f:selectItem itemLabel="Median intensity value" itemValue="median" /> 
+        </p:selectOneRadio>
+        <h:panelGrid columns="2" style="padding: 20px;">
+            <h:outputText value="Percentage to filter out:"/>
+            <h:inputHidden id="txt4" value="#{procBean.intFilterCutoff}"/>
+            <p:slider for="txt4" display="output2" style="width: 160px" 
+                      minValue="0"
+                      displayTemplate="{value}%"/>
+            <h:outputText id="output2" value="#{procBean.intFilterCutoff}%"/>
+        </h:panelGrid>
+    </p:panelGrid>
+
+</ui:composition>

@@ -1,0 +1,337 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/workflow/upload/QeaUploadView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{workflowBean.loadDefaultWorkflows()}"></f:event> 
+    </ui:define>  
+    <ui:define name="content">
+        <style>
+            /* Ensure the file upload button remains consistent in size */
+            .file-upload-custom .ui-fileupload-button {
+                width: 120px; /* Set a fixed width for the button */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Control the filename display to avoid shrinking */
+            .file-upload-custom .ui-fileupload-filename {
+                display: inline-block;
+                /* Limit the filename display */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                padding-left: 10px; /* Add space between the button and the filename */
+            }
+
+            /* Style to adjust the overall file upload container */
+            .file-upload-custom .ui-fileupload {
+                display: inline-block;
+                width: auto;
+                vertical-align: middle;
+            }
+
+            /* Ensure the file upload input remains consistent */
+            .file-upload-custom .ui-fileupload-choose {
+                width: 200px; /* Same width for the button */
+                height: 30px; /* Adjust the height if necessary */
+            }
+
+            .ui-inputtextarea:disabled {
+                color: white !important; /* Set font color to white */
+                background-color: #333333; /* Optionally, set a dark background for contrast */
+                opacity: 1 !important; /* Remove dimming effect on the text */
+            }
+
+            .ui-tabs-nav li.ui-state-disabled {
+                opacity: 1 !important;     /* Removes the dimmed appearance */
+                pointer-events: none;      /* Ensures the tab remains unclickable */
+                color: inherit;            /* Maintains original text color */
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+
+            <h:panelGroup id="tabId">
+                <p:tabView id="tabSsp" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+                    <p:tab id="personal" title="Upload" disabled="true">
+
+                    </p:tab>   
+
+                    <p:tab id="integritycheck" title="Integrity Check" disabled="true">
+
+                    </p:tab>
+
+                    <p:tab id="namecheck" title="Name Check" disabled="true">
+
+                    </p:tab>
+
+                    <!--
+                    <p:tab id="design" title="Workflow" disabled="true">
+    
+                    </p:tab>
+                    -->
+
+                </p:tabView>
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}">
+
+                    <h:form id="form1" enctype="multipart/form-data">
+                        <h:panelGrid style="padding:10px; width: 100%; line-height: 25px;">  
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Upload your concentration data (.csv or .txt) "/> 
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px; text-align: right" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding:10px 20px 20px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width: 180px">
+                                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Group Label: "/>
+                                    </h:panelGroup>
+                                    <p:selectOneRadio value="#{enrichLoader.qeaClsOpt}">
+                                        <f:selectItems value="#{optBean.clsOpts}" />
+                                    </p:selectOneRadio>  
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                        <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Feature Type: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.featType}">
+                                        <f:selectItems value="#{optBean.featOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Format: "/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.dataFormat}">
+                                        <f:selectItems value="#{optBean.tableFormatOpts}" />
+                                    </p:selectOneMenu>
+
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File: "/>
+                                    <p:fileUpload value="#{enrichLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+
+                                    <!--
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata File (optional):"/>
+                                    <p:fileUpload value="#{enrichLoader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+                                    -->
+
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.handleQeaDataUpload}"/>  
+                            </h:panelGrid>
+
+                            <br/>
+                            <!--
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Download from Metabolomics Workbench"/>
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px; text-align: right" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding: 10px 20px 10px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width: 180px">
+                                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Study ID:"/> 
+                                        <p:spacer width="5px"/>
+                                        <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>
+                                    <p:inputText style="width:180px" value="#{enrichLoader.nmdrStudyId}"/> 
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"                                         
+                                                 action="#{enrichLoader.enrichQea_workbench()}"/> 
+                            </h:panelGrid>
+                            <p:tooltip for="formatIcon2" styleClass="helpTip">
+                                <p>
+                                    MetaboAnalyst now permits users to directly perform analyses on published datasets from the Metabolomics Workbench.
+                                    Users must enter a valid Study ID to upload the preferred dataset. Browse here (https://www.metabolomicsworkbench.org/data/browse.php)
+                                    to view all studies from the Metabolomics Workbench. Note that only studies with a named metabolite dataset such as study ST000017 
+                                    will be able to be uploaded.
+                                </p>    
+                            </p:tooltip>
+                            
+                            <br/>
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="An XLSX file from Metabolon"/>
+                            <h:panelGrid columns="2" style="width:780px; text-align: right; padding-right: 40px;" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="padding: 10px 10px 10px 30px; text-align: left">
+                                    <h:panelGroup layout="block" style="width:180px">
+                                        <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
+                                        <p:spacer width="5px"/>
+                                        <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>                        
+                                    <p:fileUpload value="#{enrichLoader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false"
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{enrichLoader.handleMetabolonQEA()}"/>                         
+                            </h:panelGrid>
+                            <p:tooltip for="formatIcon3" styleClass="helpTip">
+                                <p>
+                                    Please upload the original XLSX datasheets from Metabolon directly without any editing or conversion.
+                                    Note that there are three sheets (<b>Chemical Annotation</b>, <b>Sample Meta Data</b> and <b>Peak Area Data</b>) required to proceed.                         
+                                </p>    
+                            </p:tooltip>                            
+                            <br/>
+                            -->
+                            <hr class="style-one"/>
+                            <p:selectOneRadio id="qeaTestRadio" value="#{enrichLoader.qeaTestDataOpt}" layout="custom">  
+                                <f:selectItem itemValue="msetDis" itemLabel="Data 1"/>
+                                <f:selectItem itemValue="conReq" itemLabel="Data 2"/> 
+                                <f:selectItem itemValue="lipidQea" itemLabel="Data 3"/> 
+                            </p:selectOneRadio>  
+                            <p:outputLabel style="font-size:14px; font-weight: bold" value="Try our test data: "/>
+                            <h:panelGrid columns="5" style="padding:20px; line-height: 23px; width: 780px" class="surface-card shadow-1 p-4 text-800">
+                                <p:spacer style="width: 24px"/>
+                                <h:panelGroup layout="block" style="width:50px">
+                                    <p:outputLabel style="font-weight: bold" value="Data"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block"  style="width:100px">
+                                    <p:outputLabel style="font-weight: bold" value="ID Type"/> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block"  style="width:100px">
+                                    <p:outputLabel style="font-weight: bold" value="Group Label"/> 
+                                </h:panelGroup>   
+                                <p:outputLabel style="font-weight: bold" value="Description"/>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="0"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Data 1</a>
+                                <p:outputLabel value="Common name"/>
+                                <p:outputLabel value="Discrete"/>
+                                <h:panelGrid>
+                                    Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. 
+                                    Phenotype: <b>N</b> - cachexic; <b>Y</b> - control
+                                </h:panelGrid>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="1"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/cachexia_continuous.csv">Data 2</a>
+                                <p:outputLabel value="PubChem CID"/>
+                                <p:outputLabel value="Continuous"/>
+                                <h:panelGrid>
+                                    Urinary metabolite concentrations from 97 cancer patients measured by 1H NMR. 
+                                    Phenotype: <b>muscle gain</b> (percentage within 100 days, negative values indicate muscle loss)
+                                </h:panelGrid>
+
+                                <p:radioButton for="qeaTestRadio" itemIndex="2"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/multiple_sclerosis_test.csv">Data 3</a>
+                                <p:outputLabel value="Common name"/>
+                                <p:outputLabel value="Discrete"/>
+                                <h:panelGrid>
+                                    Lipidomic biomarkers in serum samples from patients with benign and secondary progressive MS
+                                    obtained from the Metabolomics Workbench (ST000688).
+                                </h:panelGrid>
+
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 100%; padding-top: 5px; padding-bottom: 5px; text-align: center">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{wfUploadBean.msetQeaTestBn_action()}"/>  
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 880px; padding-top: 30px; padding-left: 30px">
+                                <p:outputLabel id="uploadInfo" escape="false"
+                                               style="font-size: 16px !important; color: darksalmon"
+                                               value="#{wfUploadBean.uploadInfo}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">
+                    <ui:include src="../process/_SanityCheck.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 2}">
+                    <ui:include src="../process/_NameMapView.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 3}">
+                    <ui:include src="../process/_WorkflowSelection.xhtml" />
+                </h:panelGroup>
+            </h:panelGroup>
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <!-- Button set for "Upload" tab -->
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 0}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Try Examples"
+                                     id="testBn" style="width:160px"
+                                     icon="pi pi-star"            
+                                     rendered="#{sessionBean1.naviType eq 'stat'}"
+                                     onclick="PF('testDataDialog').show();"
+                                     />
+
+                    <p:commandButton id="proc1" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     disabled="#{not wfUploadBean.fileUploaded}"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     update="southform tabId"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 1}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(0)}"
+                                     oncomplete="PF('tabWidget').select(0);"/>
+                    <p:commandButton id="proc2" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId"
+                                     actionListener="#{wfUploadBean.skipButton_action_default(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 2}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                    <p:commandButton id="proc3" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(3)}"
+                                     oncomplete="PF('tabWidget').select(3);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <p:commandButton value="Finish"
+                                     id="runAnalysisBn" style="width:160px"
+                                     icon="pi pi-cog"       
+                                     action="#{workflowBean.finishPreparation()}"
+                                     update="southform tabId"
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+            <!--
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId:form2"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <p:commandButton value="Finish"
+                                     id="selectionFinish" style="width:160px"
+                                     icon="pi pi-cog"          
+                                     action="WorkflowView"/>
+
+                </h:panelGrid>
+            </p:outputPanel>
+            -->
+        </h:form>
+
+    </ui:define>
+</ui:composition>

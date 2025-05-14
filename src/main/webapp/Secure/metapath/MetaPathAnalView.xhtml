@@ -1,0 +1,171 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Set parameter', '/Secure/metapath/MetaPathAnalView.xhtml')}"></f:event>
+        <f:event type="preRenderView" listener="#{pMetaStatBean.setResOK(false)}"/>
+        <f:event type="preRenderView" listener="#{pMetaStatBean.setResOK2(false)}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Parameter Settings</h2>
+            <p:fieldset legend ="Pathway-level Integration" style="margin-bottom: 20px;" class="surface-card shadow-1 p-4 text-800">
+                <h:panelGrid style="padding: 0px 30px 10px 30px">
+                    <p>
+                        For pathway-level integration, each individual study undergoes the steps of calculating m/z level statistics and 
+                        putative metabolite annotation, followed by pathway activity prediction. All pathway results are combined to create a unified 
+                        matrix of pathway-level results (keeping only pathways found across all-studies). 
+                        Pathway activity scores are then combined using one of several p-value integration methods.
+                    </p>
+                    <p>
+                        <b>Tip</b>: use this method when <font style="color: darkorange"> studies are independent of each other, but interrogate (more or less) the same pathways </font>.  
+                        The use of pathway analysis improves the biological consistency across studies.
+                    </p>
+                    <h:form>
+                        <h:panelGrid columns="2" style="padding: 10px">
+                            <h:panelGrid columns="2" style="width: 540px; padding-left: 20px; padding-right: 80px">
+                                <h:outputLabel value="Algorithm:"/>
+                                <p:selectOneRadio id="customCheck" value="#{pMetaStatBean.pathAlgOpt}">
+                                    <f:selectItem itemLabel="Mummichog" itemValue="mummichog"/>
+                                    <f:selectItem itemLabel="GSEA" itemValue="gsea"/> 
+                                </p:selectOneRadio>
+
+                                <h:panelGroup layout="block">
+                                    <h:outputLabel value="Version:"/>
+                                    <p:graphicImage id="helpIcon01" url="/resources/images/ui-help.png"  alt="help"/>     
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{pMetaStatBean.pathAlgVersion}">
+                                    <f:selectItem itemLabel="Version 1" itemValue="v1"/>
+                                    <f:selectItem itemLabel="Version 2" itemValue="v2"/> 
+                                </p:selectOneMenu>
+
+                                <h:panelGroup layout="block">
+                                    <h:outputLabel value="P-value Integration:"/>
+                                    <p:graphicImage id="helpIcon0" url="/resources/images/ui-help.png"  alt="help"/>     
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{pMetaStatBean.pvalmethod}">
+                                    <f:selectItem itemLabel="Fisher" itemValue="fisher"/>
+                                    <f:selectItem itemLabel="Edgington" itemValue="edgington"/>                                         
+                                    <f:selectItem itemLabel="Stouffer" itemValue="stouffer"/>                                         
+                                    <f:selectItem itemLabel="Min" itemValue="min"/>                                         
+                                    <f:selectItem itemLabel="Max" itemValue="max"/> 
+                                    <f:selectItem itemLabel="Vote-counting" itemValue="vote"/> 
+                                </p:selectOneMenu>
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <h:outputLabel value="Pathway library: "/>    
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{pMetaStatBean.lib}" style="width:225px">
+                                    <f:selectItems value="#{mummiAnalBean.pathLibOpt}"/>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+
+                            <h:panelGrid style = "padding-right: 25px;">
+                                <p:commandButton id="pBn" value="Submit" 
+                                                 style="width: 80px;"
+                                                 ajax="false"
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 update =':hisTab:cmdPane'
+                                                 action="#{pMetaStatBean.performMetaPathAnalysis()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <p:tooltip for="helpIcon0" styleClass="helpTip">
+                            <p>
+                                In <b>P-value Integration</b>, users can select from many options to integrate the pathway p-values across all studies. 
+                                The choice of statistical method depends on the goal of the meta-analysis as well as the data structure itself. 
+                                Briefly, Fisher's statistic, the Minimum P-value or Maximum P-value are traditionally used methods for combining p-values.
+                            </p>
+                        </p:tooltip>
+                        <p:tooltip for="helpIcon01" styleClass="helpTip">
+                            <p>
+                                The major difference between Version 1 and Version 2 of the mummichog algorithm is the incorporation of 
+                                retention time when grouping isotopes/adducts. Therefore, use Version 1 if your samples are <b>heterogeneous</b>  
+                                (i.e. different labs, different sample preparation) or use Version 2 if your samples are <b>homogeneous</b>, for instance
+                                they are the same samples (positive/negative mode) or are batches from the same lab. 
+                                Please search OmicsForum using "mummichog #metaboanalyst" to find more information.
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                </h:panelGrid>
+            </p:fieldset>
+
+            <p:fieldset legend ="Pooling Peaks" class="surface-card shadow-1 p-4 text-800">
+                <h:panelGrid style="padding: 0px 30px 10px 30px">
+                    <p>
+                        The pooling peaks method aims to <font style="color: darkorange">improve the metabolome coverage by combining complementary measurements </font>. 
+                        In this case, all uploaded peaks are merged into a single input for putative compound annotation (with consideration for different mass tolerances) followed by pathway activity prediction. 
+                    </p>  
+                    <p>
+                        <b>Tip</b>: use this method when the <font style="color: darkorange">same set of samples were obtained using the same (or very similar) MS instrument
+                            under different experimental conditions</font>, for instance using different columns, extraction methods or ion modes. 
+                    </p>
+                    <h:form>
+                        <h:panelGrid columns="2" style="padding: 10px">
+                            <h:panelGrid columns="2" style="width: 540px; padding-left: 20px; padding-right: 80px">
+                                <h:outputLabel value="Algorithm:"/>
+                                <p:selectOneRadio value="#{pMetaStatBean.poolAlgOpt}" required="true">
+                                    <f:selectItem itemLabel="Mummichog" itemValue="mummichog"/>
+                                    <f:selectItem itemLabel="GSEA" itemValue="gsea"/> 
+                                </p:selectOneRadio>
+
+                                <h:panelGroup layout="block">
+                                    <h:outputLabel value="Version:"/>
+                                    <p:graphicImage id="helpIcon01" url="/resources/images/ui-help.png"  alt="help"/>     
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{pMetaStatBean.poolAlgVersion}">
+                                    <f:selectItem itemLabel="Version 1" itemValue="v1"/>
+                                    <f:selectItem itemLabel="Version 2" itemValue="v2"/> 
+                                </p:selectOneMenu>
+
+                                <h:panelGroup layout="block">
+                                    <p:outputLabel value="P-value cutoff:"/>
+                                    <p:graphicImage id="helpIcon02" url="/resources/images/ui-help.png"  alt="help"/>     
+                                </h:panelGroup>
+                                <p:inputText value="#{pMetaStatBean.pvalCutoff}"/>
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <h:outputLabel value="Pathway library: "/>    
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{pMetaStatBean.lib}" style="width:225px">
+                                    <f:selectItems value="#{mummiAnalBean.pathLibOpt}"/>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <h:panelGrid style = "padding-right: 25px;">
+                                <p:commandButton id="pBn1" value="Submit" 
+                                                 style="width: 80px;"
+                                                 ajax="false"
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 update =':hisTab:cmdPane'
+                                                 action="#{pMetaStatBean.performMetaPoolAnalysis()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <p:tooltip for="helpIcon01" styleClass="helpTip">
+                            <p>
+                                The major difference between Version 1 and Version 2 of the mummichog algorithm is the incorporation of 
+                                retention time when grouping isotopes/adducts. Therefore, use Version 1 if your samples are <b>heterogeneous</b>  
+                                (i.e. different labs, different sample preparation) or use Version 2 if your samples are <b>homogeneous</b>, for instance
+                                they are the same samples (positive/negative mode) or are batches from the same lab. 
+                                Please search OmicsForum using "mummichog #metaboanalyst" to find more information.
+                            </p>
+                        </p:tooltip>
+                        <p:tooltip for="helpIcon02" styleClass="helpTip">
+                            <p>
+                                The p-value cutoff here is used to delineate between the significant versus non-significant peaks.
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                </h:panelGrid>
+            </p:fieldset>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>
+
+

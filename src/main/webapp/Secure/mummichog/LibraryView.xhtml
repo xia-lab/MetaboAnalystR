@@ -1,0 +1,601 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Set parameter', '/Secure/mummichog/LibraryView.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{peakcBean.customButton_action()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <style>
+            .ui-picklist .ui-picklist-list{
+                height:400px;
+                width: 280px
+            }
+        </style>
+        <h:form>
+            <h:panelGrid style="padding: 20px 30px 20px 30px; font-size: 13px; width: 780px">
+                <p:selectManyCheckbox id="customCheck" value="#{mummiAnalBean.algOpts}" layout="custom">
+                    <f:selectItem itemLabel="Mummichog" itemValue="mum" /> 
+                    <f:selectItem itemLabel="GSEA" itemValue="gsea"/> 
+                </p:selectManyCheckbox> 
+                <p:selectOneRadio id="customCheck2" value="#{mummiAnalBean.filterOpt}" layout="custom">
+                    <f:selectItem itemLabel="Filtered Peaks" itemValue="filtered"/> 
+                    <f:selectItem itemLabel="All peaks" itemValue="all" /> 
+                </p:selectOneRadio> 
+                <p:selectOneRadio id="customCheck3" value="#{mummiAnalBean.analOption}" layout="custom">
+                    <f:selectItem itemLabel="Scatter Plot" itemValue="scatter"/> 
+                    <f:selectItem itemLabel="Heatmaps" itemValue="heatmap" /> 
+                </p:selectOneRadio>
+                <h:panelGrid>
+                    <p:outputLabel style="font-size: 15px; font-weight: bold" value="Specify analysis parameters:"/>
+                </h:panelGrid>
+
+                <p:tooltip for="helpIcon2" styleClass="helpTip">
+                    <p>
+                        The major difference between Version 1 and Version 2 of the MS Peaks to Paths module is the incorporation of 
+                        retention time when grouping isotopes/adducts. Please search OmicsForum using "mummichog #metaboanalyst" to find more information.
+                    </p>
+                </p:tooltip>
+                <p:panelGrid columns="2" layout="tabular" style="width: 720px; font-family: 'Arial','Helvetica',sans-serif; margin-left: 30px; padding-top: 10px"
+                             class="surface-card shadow-1 p-0 text-800">
+
+                    <h:panelGroup layout="block" style="width: 180px;" rendered = "#{mummiAnalBean.moduleSwitch}">
+                        <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px" 
+                                       value="Basics"/>
+                    </h:panelGroup>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px; width: 380px" rendered = "#{mummiAnalBean.moduleSwitch}">
+                        <h:panelGroup  style="width:185px" layout="block">
+                            <p:outputLabel value="Molecular weight tolerance (ppm):"/>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <p:selectOneMenu value="#{mummiAnalBean.instrumentOpt}" editable="true" style="width:63px">
+                                <f:selectItem itemLabel="10" itemValue="10" />
+                                <f:selectItem itemLabel="5" itemValue="5" />
+                                <f:selectItem itemLabel="3" itemValue="3" />
+                                <f:selectItem itemLabel="1" itemValue="1" />
+                            </p:selectOneMenu> 
+                            <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGroup layout="block" style="width: 180px;">
+                        <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px" 
+                                       value="Algorithms"/>
+                    </h:panelGroup>
+                    <h:panelGrid columns="3" style="font-size: 12px; padding-left: 20px; width: 540px">
+                        <p:checkbox for="customCheck" itemIndex="0" disabled="#{mummiAnalBean.disabledMum}"/>
+                        <p:outputLabel value="Mummichog"/>
+                        <h:panelGrid>
+                            <h:panelGroup style="padding-left: 20px">
+                                <p:outputLabel value="P-value cutoff:"/>
+                                <p:spacer style="width: 10px"/>
+                                <h:inputText style="width: 80px" value="#{mummiAnalBean.pvalCutoff}" disabled="#{mummiAnalBean.disabledMumPval}"/>
+                                <p:outputLabel style="color: gray" value=" (default top 10% peaks)"/>
+                            </h:panelGroup>
+                            <h:panelGrid rendered="#{mummiAnalBean.disabledV2}" style="padding-left: 16px" columns="3">
+                                <p:outputLabel  value="Which version:"/>
+                                <p:selectOneRadio value="#{mummiAnalBean.mumVersion}">
+                                    <f:selectItem itemLabel="2.0" itemValue="v2"/>
+                                    <f:selectItem itemLabel="1.0" itemValue="v1"/>
+                                </p:selectOneRadio>
+                                <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png"  alt="help"/>     
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <p:checkbox for="customCheck" itemIndex="1" disabled="#{mummiAnalBean.disabledGsea}"/>
+                        <!--<p:checkbox for="customCheck" itemIndex="1" disabled="#{mummiAnalBean.disabledGsea or sessionBean1.dataType eq 'mass_table'}"/>-->
+                        <p:outputLabel value="GSEA"/>
+                        <h:panelGroup style="padding-left: 20px">
+                            <p:outputLabel style="color: gray" value="(using the overall rank based on t.score)" rendered="#{!mummiAnalBean.multigroups}"/>
+                            <p:outputLabel style="color: gray" value="(Not available for data table with over two groups)" rendered="#{mummiAnalBean.multigroups}"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px" 
+                                   value="Visual analytics:"/>
+
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px; width: 540px">
+                        <p:radioButton for="customCheck3" itemIndex="0"/>
+                        <h:panelGroup>
+                            <p:outputLabel value="Scatter plot "/>
+                            <p:outputLabel style="color: gray" value="- test significant peaks"/>
+                        </h:panelGroup>
+                        <p:radioButton for="customCheck3" itemIndex="1" disabled="#{sessionBean1.dataType ne 'mass_table'}"/>
+                        <h:panelGroup>
+                            <p:outputLabel value="Heatmaps "/>
+                            <p:outputLabel style="color: gray" value=" - test peaks in a visual pattern (good for multiple groups)"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block"  style="width: 180px">
+                        <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px" 
+                                       value="Advanced options"/> &nbsp;
+                        <p:graphicImage id="custIcon" url="/resources/images/ui-help.png"  alt="help"/>  
+                    </h:panelGroup>
+                    <h:panelGrid style="font-size: 12px; height: 60px; padding-left: 20px; width: 540px; padding-top: 6px; padding-bottom: 4px">
+                        <p:commandLink value="Edit Currency Metabolites" onclick="PF('currDialog').show()"/>
+                        <p:commandLink value="Edit Adducts" onclick="PF('addDialog').show()"/>
+                    </h:panelGrid>
+                </p:panelGrid>
+
+                <h:panelGrid columns="2" style="padding-top: 20px">
+                    <p:outputLabel style="font-size: 16px; font-weight: bold" value="Select a pathway library:"/>
+                    <p:outputLabel style="font-size: 13px; font-style: italic; color: darkgray" value="(KEGG pathway info were obtained in Dec. 2024. Scroll down to find more option in each panel.)"/>
+                </h:panelGrid>
+                <p:selectOneRadio id="customRadio" value="#{mummiAnalBean.pathDBOpt}" layout="custom">    
+                    <f:selectItems value="#{mummiAnalBean.pathLibOpt}"/>
+                    <f:selectItem itemValue="main_lipid_class_mset" itemLabel="Lipids - Main Chemical Class"/>
+                    <f:selectItem itemValue="sub_lipid_class_mset" itemLabel="Lipids - Sub Chemical Class"/>
+                    <f:selectItem itemValue="main_nolipid_class_mset" itemLabel="Non-lipids - Main Chemical Class"/>
+                    <f:selectItem itemValue="sub_nolipid_class_mset" itemLabel="Non-lipids - Sub Chemical Class"/>                   
+                    <f:selectItem itemValue="blood_mset" itemLabel="Disease-associated Metabolite Sets (Blood)"/>
+                    <f:selectItem itemValue="csf_mset" itemLabel="Disease-associated Metabolite Sets (CSF)"/>
+                    <f:selectItem itemValue="urine_mset" itemLabel="Disease-associated Metabolite Sets (Urine)"/>
+                    <f:selectItem itemValue="snp_mset" itemLabel="SNP-related Metabolite Sets"/>
+                    <f:selectItem itemValue="location_mset" itemLabel="Location-based Metabolite Sets"/>
+                    <f:selectItem itemValue="predicted_mset" itemLabel="Predicted Metabolite Sets"/>
+                </p:selectOneRadio>
+
+                <p:panelGrid columns="2" layout="tabular" style="width: 780px; font-family: 'Arial','Helvetica',sans-serif; margin-left: 30px"
+                             class="surface-card shadow-1 p-0 text-800">
+
+                    <h:panelGroup layout="block" style="width: 180px">
+                        <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Mammals [22]"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="height: 140px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">   
+
+                            <!--
+                            <p:radioButton for="customRadio" itemIndex="0"/>
+                            <h:panelGrid columns="2">
+                                <p:outputLabel value="Homo sapiens (human) [Human1]"/>
+                                <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                            </h:panelGrid>
+                            -->
+                            <p:radioButton for="customRadio" itemIndex="1"/>
+                            <h:panelGroup>
+                                <p:outputLabel value="Homo sapiens (human) [MFN]"/>
+                                <p:spacer style="width:5px"/>
+                                <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            </h:panelGroup>                        
+                            <p:radioButton for="customRadio" itemIndex="2"/><p:outputLabel value="Homo sapiens (human) [BioCyc]"/>
+                            <p:radioButton for='customRadio' itemIndex='3'/><p:outputLabel value='Homo sapiens (human) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='4'/><p:outputLabel value='Pan troglodytes (chimpanzee) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='5'/><p:outputLabel value='Macaca mulatta (rhesus monkey) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='6'/><p:outputLabel value='Macaca fascicularis (crab-eating macaque) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='7'/><p:outputLabel value='Mus musculus (house mouse) [BioCyc]'/>
+                            <p:radioButton for='customRadio' itemIndex='8'/><p:outputLabel value='Mus musculus (house mouse) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='9'/><p:outputLabel value='Rattus norvegicus (rat) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='10'/><p:outputLabel value='Oryctolagus cuniculus (rabbit) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='11'/><p:outputLabel value='Canis lupus familiaris (dog) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='12'/><p:outputLabel value='Felis catus (domestic cat) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='13'/><p:outputLabel value='Bos taurus (cow) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='14'/><p:outputLabel value='Bos indicus (zebu cattle) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='15'/><p:outputLabel value='Capra hircus (goat) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='16'/><p:outputLabel value='Ovis aries (sheep) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='17'/><p:outputLabel value='Sus scrofa (pig) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='18'/><p:outputLabel value='Equus caballus (horse) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='19'/><p:outputLabel value='Equus asinus (ass) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='20'/><p:outputLabel value='Hipposideros armiger (great roundleaf bat) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='21'/><p:outputLabel value='Desmodus rotundus (common vampire bat) [KEGG]'/>
+
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Birds [2]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for='customRadio' itemIndex='22'/><p:outputLabel value='Gallus gallus (chicken) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='23'/><p:outputLabel value='Taeniopygia guttata (zebra finch) [KEGG]'/>
+
+                    </h:panelGrid>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Fish [2]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for="customRadio" itemIndex="24"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Danio rerio (zebrafish) [MTF]"/>
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+                        <p:radioButton for='customRadio' itemIndex='25'/><p:outputLabel value='Danio rerio (zebrafish) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='26'/><p:outputLabel value='Nothobranchius furzeri (turquoise killifish) [KEGG]'/>
+
+                    </h:panelGrid>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Flatworms [2]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for='customRadio' itemIndex='27'/><p:outputLabel value='Schistosoma mansoni [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='28'/><p:outputLabel value='Schistosoma haematobium (urinary blood fluke) [KEGG]'/>
+                    </h:panelGrid>
+
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Fungi [12]"/>
+                    <h:panelGroup layout="block" style="height: 120px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                            <p:radioButton for='customRadio' itemIndex='29'/><p:outputLabel value='Saccharomyces cerevisiae (budding yeast) [BioCyc]'/>
+                            <p:radioButton for='customRadio' itemIndex='30'/><p:outputLabel value='Saccharomyces cerevisiae (budding yeast) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='31'/><p:outputLabel value='Nakaseomyces glabratus [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='32'/><p:outputLabel value='Komagataella phaffii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='33'/><p:outputLabel value='Candida albicans [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='34'/><p:outputLabel value='Pichia kudriavzevii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='35'/><p:outputLabel value='Aspergillus clavatus [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='36'/><p:outputLabel value='Aspergillus niger (black aspergilli) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='37'/><p:outputLabel value='Aspergillus flavus [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='38'/><p:outputLabel value='Coccidioides immitis [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='39'/><p:outputLabel value='Cryptococcus neoformans var. neoformans JEC21 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='40'/><p:outputLabel value='Cryptococcus gattii [KEGG]'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Insects [9]"/>
+                    <h:panelGroup layout="block" style="height: 120px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                            <p:radioButton for='customRadio' itemIndex='41'/><p:outputLabel value='Drosophila melanogaster (fruit fly) [BioCyc]'/>
+                            <p:radioButton for='customRadio' itemIndex='42'/><p:outputLabel value='Drosophila melanogaster (fruit fly) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='43'/><p:outputLabel value='Drosophila serrata [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='44'/><p:outputLabel value='Drosophila persimilis [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='45'/><p:outputLabel value='Anopheles arabiensis [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='46'/><p:outputLabel value='Aedes aegypti (yellow fever mosquito) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='47'/><p:outputLabel value='Apis mellifera (honey bee) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='48'/><p:outputLabel value='Bombyx mori (domestic silkworm) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='49'/><p:outputLabel value='Acyrthosiphon pisum (pea aphid) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='133'/><p:outputLabel value='Galleria mellonella (greater wax moth) [KEGG]'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Nematodes [2]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for='customRadio' itemIndex='50'/><p:outputLabel value='Caenorhabditis elegans (nematode) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='51'/><p:outputLabel value='Brugia malayi (filaria) [KEGG]'/>
+                    </h:panelGrid>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Plants [11]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for='customRadio' itemIndex='52'/><p:outputLabel value='Arabidopsis thaliana (thale cress) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='53'/><p:outputLabel value='Gossypium hirsutum (upland cotton) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='54'/><p:outputLabel value='Arachis hypogaea (peanut) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='55'/><p:outputLabel value='Hevea brasiliensis (rubber tree) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='56'/><p:outputLabel value='Oryza sativa japonica (Japanese rice) (RefSeq) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='57'/><p:outputLabel value='Triticum aestivum (bread wheat) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='58'/><p:outputLabel value='Zea mays (maize) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='59'/><p:outputLabel value='Chlamydomonas reinhardtii [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='60'/><p:outputLabel value='Chlorella variabilis [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='61'/><p:outputLabel value='Cyanidioschyzon merolae [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='134'/><p:outputLabel value='Glycine max (soybean) [KEGG]'/>
+                    </h:panelGrid>            
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Prokaryotes [54]"/>
+                    <h:panelGroup layout="block" style="height: 200px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                            <p:radioButton for='customRadio' itemIndex='62'/><p:outputLabel value='Escherichia coli K-12 MG1655 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='63'/><p:outputLabel value='Salmonella enterica subsp. enterica serovar Typhi CT18 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='64'/><p:outputLabel value='Shigella dysenteriae Sd197 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='65'/><p:outputLabel value='Klebsiella pneumoniae subsp. pneumoniae MGH 78578 (serotype K52) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='66'/><p:outputLabel value='Klebsiella variicola At-22 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='67'/><p:outputLabel value='Yersinia pestis CO92 (biovar Orientalis) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='68'/><p:outputLabel value='Serratia marcescens SM39 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='69'/><p:outputLabel value='Haemophilus influenzae Rd KW20 (serotype d) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='70'/><p:outputLabel value='Vibrio cholerae O1 El Tor N16961 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='71'/><p:outputLabel value='Vibrio cholerae O1 El Tor FJ147 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='72'/><p:outputLabel value='Vibrio parahaemolyticus RIMD 2210633 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='73'/><p:outputLabel value='Pseudomonas aeruginosa PAO1 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='74'/><p:outputLabel value='Pseudomonas putida KT2440 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='75'/><p:outputLabel value='Legionella pneumophila subsp. pneumophila Philadelphia 1 (serogroup 1) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='76'/><p:outputLabel value='Legionella hackeliae [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='77'/><p:outputLabel value='Francisella tularensis subsp. tularensis SCHU S4 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='78'/><p:outputLabel value='Francisella persica [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='79'/><p:outputLabel value='Neisseria meningitidis MC58 (serogroup B) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='80'/><p:outputLabel value='Neisseria gonorrhoeae FA 1090 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='81'/><p:outputLabel value='Burkholderia mallei ATCC 23344 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='82'/><p:outputLabel value='Bordetella pertussis Tohama I [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='83'/><p:outputLabel value='Mesorhizobium japonicum MAFF 303099 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='84'/><p:outputLabel value='Rhizobium johnstonii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='85'/><p:outputLabel value='Brucella abortus 2308 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='86'/><p:outputLabel value='Brucella ovis [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='87'/><p:outputLabel value='Acetobacter aceti [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='88'/><p:outputLabel value='Helicobacter pylori 26695 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='89'/><p:outputLabel value='Helicobacter bizzozeronii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='90'/><p:outputLabel value='Bacillus subtilis subsp. subtilis 168 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='91'/><p:outputLabel value='Bacillus anthracis Ames [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='92'/><p:outputLabel value='Staphylococcus aureus subsp. aureus N315 (MRSA/VSSA) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='93'/><p:outputLabel value='Staphylococcus haemolyticus JCSC1435 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='94'/><p:outputLabel value='Listeria monocytogenes EGD-e (serotype 1/2a) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='95'/><p:outputLabel value='Listeria ivanovii subsp. ivanovii PAM 55 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='96'/><p:outputLabel value='Streptococcus pyogenes M1 476 (serotype M1) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='97'/><p:outputLabel value='Streptococcus pneumoniae TIGR4 (virulent serotype 4) [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='98'/><p:outputLabel value='Clostridium tetani E88 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='99'/><p:outputLabel value='Mycobacterium tuberculosis H37Rv [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='100'/><p:outputLabel value='Mycobacterium leprae TN [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='101'/><p:outputLabel value='Nocardia otitidiscaviarum [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='102'/><p:outputLabel value='Nocardia asteroides [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='103'/><p:outputLabel value='Streptomyces albus [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='104'/><p:outputLabel value='Bifidobacterium longum NCC2705 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='105'/><p:outputLabel value='Synechococcus elongatus PCC7942 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='106'/><p:outputLabel value='Prochlorococcus marinus subsp. marinus CCMP1375 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='107'/><p:outputLabel value='Thermotoga maritima MSB8 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='127'/><p:outputLabel value='Lactiplantibacillus paraplantarum L-ZS9 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='128'/><p:outputLabel value='Weissella paramesenteroides FDAARGOS_414 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='129'/><p:outputLabel value='Weissella cibaria CH2 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='130'/><p:outputLabel value='Lactiplantibacillus plantarum WCFS1 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='131'/><p:outputLabel value='Latilactobacillus sakei subsp. sakei 23K [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='132'/><p:outputLabel value='Lactococcus lactis subsp. lactis Il1403 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='135'/><p:outputLabel value='Lacticaseibacillus rhamnosus GG [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='136'/><p:outputLabel value='Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA) [KEGG]'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Protists [16]"/>
+                    <h:panelGroup layout="block" style="height: 130px; overflow: scroll;">
+                        <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                            <p:radioButton for='customRadio' itemIndex='108'/><p:outputLabel value='Plasmodium falciparum 3D7 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='109'/><p:outputLabel value='Plasmodium falciparum Dd2 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='110'/><p:outputLabel value='Plasmodium falciparum HB3 [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='111'/><p:outputLabel value='Plasmodium reichenowi [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='112'/><p:outputLabel value='Plasmodium yoelii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='113'/><p:outputLabel value='Plasmodium berghei [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='114'/><p:outputLabel value='Plasmodium knowlesi [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='115'/><p:outputLabel value='Plasmodium vivax [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='116'/><p:outputLabel value='Plasmodium cynomolgi [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='117'/><p:outputLabel value='Toxoplasma gondii [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='118'/><p:outputLabel value='Paramecium tetraurelia [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='119'/><p:outputLabel value='Trypanosoma brucei brucei [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='120'/><p:outputLabel value='Trypanosoma cruzi [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='121'/><p:outputLabel value='Leishmania major [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='122'/><p:outputLabel value='Trichomonas vaginalis [KEGG]'/>
+                            <p:radioButton for='customRadio' itemIndex='123'/><p:outputLabel value='Giardia lamblia [KEGG]'/>
+                        </h:panelGrid>
+                    </h:panelGroup>
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Other animals [3]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+                        <p:radioButton for='customRadio' itemIndex='124'/><p:outputLabel value='Thamnophis sirtalis (common garter snake) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='125'/><p:outputLabel value='Strongylocentrotus purpuratus (purple sea urchin) [KEGG]'/>
+                        <p:radioButton for='customRadio' itemIndex='126'/><p:outputLabel value='Daphnia pulex (common water flea) [KEGG]'/>
+
+                    </h:panelGrid>
+
+
+                    <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px;" value="Metabolite Sets [10]"/>
+                    <h:panelGrid columns="2" style="font-size: 12px; padding-left: 20px;">
+
+                        <p:radioButton for="customRadio" itemIndex="137"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Lipids - Main Chemical Class"/>
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="mainLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="138"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Lipids - Sub Chemical Class"/>
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="subLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="139"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Non-Lipids - Main Chemical Class"/>
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="mainNonLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="140"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Non-Lipids - Sub Chemical Class"/>   
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="subNonLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="141"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Disease-associated Metabolite Sets (Blood)"/>  
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="bloodIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="142"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Disease-associated Metabolite Sets (CSF)"/> 
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="csfIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="143"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Disease-associated Metabolite Sets (Urine)"/>  
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="urineIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="144"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="SNP-associated Metabolite Sets"/>  
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="snpIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="customRadio" itemIndex="145"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Location-based Metabolite Sets"/>  
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="locIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>      
+
+                        <p:radioButton for="customRadio" itemIndex="146"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel value="Predicted Metabolite Sets"/> 
+                            <p:spacer style="width:5px"/>
+                            <p:graphicImage id="predIcon" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>    
+                    </h:panelGrid>
+                </p:panelGrid>
+                <h:panelGrid style="padding: 10px 0px 10px 30px;" columns="3">
+                    <p:selectBooleanCheckbox value="#{mummiAnalBean.doMumFilter}" style="line-height: 18px"/>
+                    <p:outputLabel value="Only use pathways / metabolite sets containing at least"/>
+                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mummiAnalBean.minMsetNum}">
+                        <f:selectItem itemLabel="2 entries" itemValue="2" />
+                        <f:selectItem itemLabel="3 entries" itemValue="3" />
+                        <f:selectItem itemLabel="4 entries" itemValue="4" />
+                        <f:selectItem itemLabel="5 entries" itemValue="5" />
+                    </p:selectOneMenu>
+                </h:panelGrid>
+
+                <p:tooltip for="custIcon" styleClass="helpTip">
+                    <h2>Currency Metabolites and Adducts Customization:</h2>
+                    <p>
+                        Currency metabolites are abundant substances such as water and carbon dioxide known to occur in normal functioning cells and participate in a 
+                        large number of metabolic reactions (<a href="https://www.ncbi.nlm.nih.gov/pubmed/17907676" style="color:white">Huss and Holme, 2007</a>). 
+                        Because of their ubiquitous nature, removing them can greatly improve pathway analysis and visualization.
+                    </p>
+                    <p>
+                        Raw MS peaks contain a significant amount of adducts specific to their MS instrument and analytical mode. A comprehensive adduct list 
+                        is shown below in the "Available" panel. Use this to customize the adduct list used by the Mummichog/GSEA
+                        algorithms to match m/z peaks to potential compounds hits. 
+                        Please search OmicsForum using "Adduct #metaboanalyst" to find more information.
+                    </p>
+                </p:tooltip>
+
+                <h:panelGrid style="width: 100%; text-align: center">
+                    <p:commandButton value="Proceed" ajax="false" style="width:110px;"
+                                     icon="pi pi-caret-right"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"                              
+                                     action="#{mummiAnalBean.performPeaks2Fun()}"/>
+                </h:panelGrid> 
+            </h:panelGrid>
+            <p:tooltip for="formatIcon" styleClass="helpTip">
+                <p>
+                    MFN is a human genome-scale metabolic model from the original mummichog python package. 
+                    It is manually curated and originates from a number of sources (KEGG, BiGG, and Edinburgh Model).
+                </p>
+            </p:tooltip>
+            <p:tooltip for="formatIcon2" styleClass="helpTip">
+                <p>
+                    MTF is a genome-scale metabolic model of <i>Danio rerio</i> from the original mummichog python package. It is manually 
+                    curated using the KEGG zebrafish model, as well as the human BiGG and Edinburgh Models.
+                </p>
+            </p:tooltip>
+            <!--<p:tooltip for="formatIcon3" styleClass="helpTip">
+                <p>
+                    Human1 is a human genome-scale metabolic model obtained from the Metabolic Atlas.
+                    It is an extensively curated and unified GEM of HMR2, iHsa, and Recon3D models. 
+                </p>
+            </p:tooltip>-->
+            <p:tooltip for="mainLipidIcon" styleClass="helpTip">
+                <p>
+                    This library contains 77 main lipid chemical class metabolite sets from RefMet.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="subLipidIcon" styleClass="helpTip">
+                <p>
+                    This library contains 302 main lipid chemical class metabolite sets from RefMet.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="mainNonLipidIcon" styleClass="helpTip">
+                <p>
+                    This library contains 393 main non-lipid chemical class metabolite sets from RefMet.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="subNonLipidIcon" styleClass="helpTip">
+                <p>
+                    This library contains 778 main non-lipid chemical class metabolite sets from RefMet.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="bloodIcon" styleClass="helpTip">
+                <p>
+                    This library contains 344 metabolite sets reported in human blood.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="csfIcon" styleClass="helpTip">
+                <p>
+                    This library contains 166 metabolite sets reported in human cerebral spinal fluid (CSF).
+                </p>
+            </p:tooltip>
+            <p:tooltip for="urineIcon" styleClass="helpTip">
+                <p>
+                    This library contains 384 metabolite sets reported in human urine.
+                </p>
+            </p:tooltip>
+            <p:tooltip for="snpIcon" styleClass="helpTip">
+                <p>
+                    This library contains 4,598 metabolite sets based on their associations with detected single 
+                    nucleotide polymorphisms (SNPs) loci (human).
+                </p>
+            </p:tooltip>
+            <p:tooltip for="locIcon" styleClass="helpTip">
+                <p>
+                    This library contains 73 metabolite sets based on organ, tissue, and subcellular localizations (human).
+                </p>
+            </p:tooltip>
+            <p:tooltip for="predIcon" styleClass="helpTip">
+                <p>
+                    This library contains 912 metabolic sets that are predicted to be changed in the case of dysfunctional 
+                    enzymes using a genome-scale network model of human metabolism.
+                </p>
+            </p:tooltip>
+        </h:form>
+
+        <p:dialog header="Currency Metabolite Customization"
+                  widgetVar="currDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid style="padding: 10px; padding-left: 35px; width:700px; font-size: 13px; line-height: 23px"> 
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Use the panels below to select metabolites to include as currency:"/>
+
+                    <p:pickList value="#{peakcBean.currItems}"
+                                var ="curr" itemValue="#{curr}" itemLabel="#{curr}"
+                                showSourceFilter="true" showTargetFilter="true">
+                        <f:facet name="sourceCaption">Available</f:facet>
+                        <f:facet name="targetCaption">Include</f:facet>
+                        <p:ajax event="transfer" listener="#{peakcBean.doTransfer(event)}"/>
+                    </p:pickList>
+
+                    <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Submit" style="width:80px" ajax="false"                                               
+                                         action="#{peakcBean.editCurrency()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Adduct Customization"
+                  widgetVar="addDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid style="padding: 10px; padding-left: 35px; width:700px; font-size: 13px; line-height: 23px"> 
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Use the panels below to select adducts to consider:"/>
+                    <p:pickList id="adductPane" value="#{peakcBean.adductItems}"
+                                var ="add" itemValue="#{add}" itemLabel="#{add}"
+                                showSourceFilter="true" showTargetFilter="true">
+                        <f:facet name="sourceCaption">Available</f:facet>
+                        <f:facet name="targetCaption">Include</f:facet>
+                        <p:ajax event="transfer" listener="#{peakcBean.doTransfer}"/>
+                    </p:pickList>
+
+                    <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Submit" style="width:80px" ajax="false"                                               
+                                         action="#{peakcBean.editAdducts()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

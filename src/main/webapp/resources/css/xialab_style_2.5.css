@@ -1,0 +1,559 @@
+flex {
+    display: flex;
+    align-items:stretch;
+    overflow: auto;
+}
+
+flex-item > flex {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+flex.h {
+    -ms-flex-direction: row;
+    flex-direction: row;
+}
+
+flex.v {
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+flex-item {
+    display: flex;
+    position: relative;
+    overflow: auto;
+}
+
+flex > flex-resizer {
+    -ms-flex: 0 0 3px;
+    flex: 0 0 3px;
+    background: orange;
+}
+
+flex.h > flex-resizer {
+    cursor: ew-resize;
+}
+
+flex.v > flex-resizer {
+    cursor: ns-resize;
+}
+
+body {
+    margin: 0px;
+    padding: 0;
+    font-size: 13px;
+    font-family: Arial, Helvetica, Geneva;
+    background: var(--surface-ground);
+}
+
+.ui-growl {
+    top: auto !important;
+    bottom: 50px !important;
+}
+
+.layout-content {
+    padding: 0 !important;
+    flex: none;
+}
+
+.layout-menu .menu-separator {
+    margin: 0.8rem 0 !important;
+}
+
+.layout-footer{
+    height: 3rem;
+}
+
+.my-content-panel {
+    padding: 40px 20px 20px 50px;
+    line-height: 23px;
+    width:95%;
+}
+
+.myDashboard {
+    margin-top:10px;
+    margin-bottom:20px;
+    width: 95%;
+    min-width: 1000px;
+    margin-left: 2%;
+}
+
+body .ui-panelgrid .ui-panelgrid-cell {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+.myPanelGrid{
+    padding: 5px;
+    font-size: 13px;
+    text-align: left;
+    line-height: 23px;
+}
+
+body .ui-datatable thead th{
+    background:inherit !important;
+    border:1px solid var(--surface-400) !important;
+    color:inherit !important;
+}
+
+body .ui-datatable .ui-datatable-scrollable-header, body .ui-datatable .ui-datatable-scrollable-footer{
+    background:inherit !important;
+    border:1px solid var(--surface-400) !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-paginator{
+    background:inherit !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-datatable .ui-paginator.ui-paginator-bottom {
+    background:inherit !important;
+    color:var(--surface-800) !important;
+    border:1px solid var(--surface-400) !important;
+    border-width: 0 1px 1px 1px;
+}
+
+body .ui-datatable .ui-datatable-data>tr{
+    background:inherit !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-datatable .ui-datatable-data>tr>td{
+    border:1px solid var(--surface-400) !important;
+}
+
+body .ui-datatable .ui-datatable-data > tr > td {
+    padding: 0.5rem 0.5rem  !important;
+}
+
+body .ui-datatable .ui-datatable-footer {
+    background:inherit !important;
+    color:var(--surface-800) !important;
+    border:1px solid var(--surface-400) !important;
+    border-width: 0 1px 1px 1px;
+}
+
+
+body .ui-tabs .ui-tabs-nav{
+    background:inherit !important;
+}
+
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header{
+    background:inherit !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-tabs .ui-tabs-panels{
+    background:inherit !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active a {
+    color:var(--surface-900) !important;
+}
+
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a {
+    color:var(--surface-500) !important;
+}
+
+body .ui-panel .ui-panel-titlebar {
+    background:var(--surface-200);
+    color:inherit;
+}
+
+body .ui-panel .ui-panel-content {
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-datatable .ui-datatable-header {
+    background:inherit;
+    color:inherit;
+}
+
+.old {
+    background-color: #fca752 !important; /*#6CE26C !important;*/
+    background-image: none !important;
+    color: #000000 !important;
+}
+
+.noBorders tr, .noBorders td {
+    background-color: #fafafa !important;
+    border: none !important;
+}
+
+.btnCirc {
+    border-radius: 50% !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    border-color: lightgray !important;
+    width: 116px;
+    height: 116px;
+}
+
+.btnCirc:hover {
+    background: salmon !important;
+}
+
+.btnCirc:focus {
+    outline:none;
+}
+
+.btnCircSm {
+    border-radius: 50% !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    border-color: lightgray !important;
+    font-weight: bold;
+    width: 72px;
+    height: 72px;
+}
+
+.btnCircSm:hover {
+    background: salmon !important;
+}
+
+.btnCircSm:focus {
+    outline:none;
+}
+
+.ui-menu .ui-menu-parent .ui-menu-child {
+    margin-left:4px;
+    margin-right: 20px;
+}
+
+.ui-picklist .ui-picklist-list{
+    height:330px;
+    width: 360px;
+    line-height:16px;
+}
+
+.ui-widget {
+    font-size: 13px !important;
+}
+
+.panelColumns td {
+    vertical-align: top;
+}
+
+.panelColumns2 td {
+    vertical-align: bottom;
+    padding-right: 5px;
+}
+
+.helpTip{
+    width: 600px;
+    line-height: 1.6em;
+    background: #ffe7bd;
+    padding-left: 10px
+}
+
+.btnBckg {
+    border-radius: 50% !important;
+    width: 160px;
+    height: 160px;
+    font-size: 18px;
+    color: #2779aa !important;
+    font-weight: bold;
+    border:solid thin #95B8E7;
+}
+
+.btnBckg:hover {
+    color: darkblue !important;
+    border:solid medium salmon !important;
+}
+
+.btnBckg:focus {
+    outline:none;
+}
+
+.btnBckg1 {
+    border-radius: 50% !important;
+    width: 222px;
+    height: 222px;
+    background: rgba(255,255,255,0.25) !important;
+    border:solid transparent !important;
+}
+
+.btnBckg1:hover {
+    border:solid medium salmon !important;
+}
+.btnBckg1:focus {
+    outline:none !important;
+}
+
+.ui-inputfield{
+    font-size: 13px !important;
+}
+
+.ui-menuitem .ui-menuitem-link{
+    padding:  0.5rem 0.8rem !important;
+}
+
+hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #4472c4;
+    background-image: -webkit-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -moz-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -ms-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -o-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+hr.myhr {
+    border: 0;
+    height: 1px;
+    background: #4472c4;
+    background-image: -webkit-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -moz-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -ms-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    background-image: -o-linear-gradient(left, #EDF0F5, #ADB9D3, #4472c4, #ADB9D3,#EDF0F5);
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.reportBn {
+    height:36px;
+    width:100px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.styleGreen .ui-state-default {
+    background-color: transparent!important;
+    background: transparent!important;
+    border: transparent!important;
+    color: tomato !important;
+    margin-bottom:5px !important;
+    font-size: 25px;
+}
+.styleGreen .ui-state-default .ui-icon {
+    background: orange; /** insert your background image **/
+    font-size: 25px;
+}
+
+body .ui-accordion .ui-accordion-content{
+    background:inherit !important;
+    color:var(--surface-800) !important;
+}
+
+body .ui-dialog .ui-dialog-titlebar {
+    background: var(--surface-50);
+    color:var(--surface-800) !important;
+    border:1px solid var(--surface-400) !important;
+    border-width: 1px;
+}
+
+body .ui-dialog .ui-dialog-content {
+    background: var(--surface-100);
+    color:var(--surface-900) !important;
+    border:1px solid var(--surface-400) !important;
+    border-width: 0 1px 1px 1px;
+}
+
+/* unvisited link */
+a:link {
+    color: var(--primary-color);
+}
+
+/* visited link */
+a:visited {
+    color: darksalmon;
+}
+
+/*
+* position overlay on current page
+*/
+.my-float-btn{
+    position: fixed;
+    width: 50px !important;
+    height: 50px !important;
+    background: none;
+    border-width: 0 !important;
+    font-size: 2.0em !important;
+    bottom: 60px;
+    right: 40px;
+    z-index: 9999;
+}
+
+.my-float-bot{
+    position: fixed;
+    bottom: 60px;
+    right: 30px;
+    z-index: 9999;
+}
+
+.my-float-btn .pi{
+    font-size: 1.8em !important;
+}
+
+body .ui-fileupload .ui-fileupload-buttonbar {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-fileupload .ui-fileupload-content{
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-inputfield {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-selectonemenu {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-selectcheckboxmenu {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-selectcheckboxmenu .ui-selectcheckboxmenu-multiple-container .ui-selectcheckboxmenu-token {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-selectcheckboxmenu-panel {
+    background: var(--surface-100);
+    color:inherit;
+}
+
+body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-items .ui-selectcheckboxmenu-item {
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-picklist .ui-picklist-caption {
+    background:inherit !important;
+    color:inherit !important;
+}
+
+body .ui-picklist .ui-picklist-list {
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-picklist .ui-picklist-list .ui-picklist-item {
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-picklist .ui-picklist-list .ui-picklist-item.ui-state-highlight {
+    background: #e3f2fd;
+    color: #495057;
+}
+
+body .ui-selectonemenu-panel {
+    background: var(--surface-100);
+    color:var(--surface-800) !important;
+}
+
+body .ui-selectonemenu-panel .ui-selectonemenu-items .ui-selectonemenu-item{
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-header{
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-scrollpanel {
+    background:inherit;
+    color:inherit;
+}
+
+body .ui-orderlist .ui-orderlist-list {
+    background: var(--surface-card);
+}
+
+body .ui-orderlist .ui-orderlist-list .ui-orderlist-item {
+    color:var(--primary-color);
+}
+
+.speeddial-circle-demo .ui-speeddial-circle {
+    top: calc(50% - 2rem);
+    left: calc(50% - 2rem);
+}
+
+body .ui-fieldset .ui-fieldset-legend {
+    background: var(--surface-100);
+    color:inherit;
+}
+
+body .ui-selectonelistbox .ui-selectlistbox-listcontainer .ui-selectlistbox-list .ui-selectlistbox-item {
+    color:inherit !important;
+}
+
+body .ui-terminal .ui-terminal-prompt {
+    font-size: 15px; /* Change the font size */
+    font-weight: bold; /* Make the prompt text bold */
+}
+
+body .ui-terminal .content {
+    font-size: 14px;
+}
+
+
+/* Custom styles for the terminal component */
+body .ui-terminal .ui-terminal-command {
+    font-size: 14px; /* Change the font size */
+    color: darksalmon; /* Green text for output/answers */
+}
+
+body .ui-terminal-content {
+    white-space: pre-line; /* This ensures that HTML line breaks are correctly rendered */
+}
+
+body .ui-accordion .ui-accordion-header{
+    background: var(--surface-50);
+    color:var(--surface-500) !important;
+}
+
+body .ui-accordion .ui-accordion-header.ui-state-active{
+    background: var(--surface-100);
+}
+
+body .ui-accordion .ui-accordion-header.ui-state-hover{
+    background: var(--surface-200) !important;
+    color:var(--surface-800) !important;
+}
+
+.glow {
+    text-shadow: 2px 2px 4px #000000;
+}
+
+#cover {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top:0;
+    left: 0;
+    background: #ebecf0;
+    z-index:9999;
+}
+
+.ui-fileupload-content {
+    min-height: 100px;
+}
+
+.layout-topbar{
+    padding: 0 1rem;
+}
+
+.transparent-row {
+
+}
+
+body .ui-datatable .ui-datatable-data>tr.grey-row {
+    background: var(--surface-100) !important;
+}

@@ -1,0 +1,35 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "List", "label": "List", "size": "10", "color": "#666666" }, "position": { "x": -5, "y": -2 } },
+      { "data": { "id": "Annotation_List", "label": "Annotation", "size": "10", "color": "#666666", "parent": "container_processing_list" }, "position": { "x": -4, "y": -2 } },
+      { "data": { "id": "paBn_proceed_ora", "label": "ORA", "size": "10", "color": "#666666"}, "position": { "x": -2, "y": -2 } },
+      { "data": { "id": "Results_List", "label": "Results", "size": "10", "color": "#666666"}, "position": { "x": -1, "y": -2 } },
+      { "data": { "id": "Table", "label": "Table", "size": "10", "color": "#666666" }, "position": { "x": -5, "y": 0 } },
+      { "data": { "id": "Sanity Check_Table", "label": "Sanity Check", "size": "10", "color": "#666666", "parent": "container_processing_table" }, "position": { "x": -4, "y": 0 } },
+      { "data": { "id": "Annotation_Table", "label": "Annotation", "size": "10", "color": "#666666", "parent": "container_processing_table" }, "position": { "x": -3, "y": 0 } },
+      { "data": { "id": "Filtering", "label": "Filtering", "size": "10", "color": "#666666", "parent": "container_processing_table" }, "position": { "x": -2, "y": 0 } },
+      { "data": { "id": "Normalization", "label": "Normalization", "size": "10", "color": "#666666", "parent": "container_processing_table" }, "position": { "x": -1, "y": 0 } },
+      { "data": { "id": "paBn_proceed_qea", "label": "QEA", "size": "10", "color": "#666666" }, "position": { "x": 0, "y": 0 } },
+      { "data": { "id": "Results_Table", "label": "Results", "size": "10", "color": "#666666" }, "position": { "x": 1, "y": 0 } },
+      { "data": { "id": "container_processing_list", "label": "Processing List Container", "color": "#cccccc" } },
+      { "data": { "id": "container_processing_table", "label": "Processing Table Container", "color": "#cccccc" } }
+    ],
+    "edges": [
+      { "data": { "id": "e01", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e0", "source": "Start", "target": "List" } },
+      { "data": { "id": "e1", "source": "Start", "target": "Table" } },
+      { "data": { "id": "e2", "source": "List", "target": "Annotation_List" } },
+      { "data": { "id": "e3", "source": "Annotation_List", "target": "paBn_proceed_ora" } },
+      { "data": { "id": "e5", "source": "paBn_proceed_ora", "target": "Results_List" } },
+      { "data": { "id": "e7", "source": "Table", "target": "Sanity Check_Table" } },
+      { "data": { "id": "e8", "source": "Sanity Check_Table", "target": "Annotation_Table" } },
+      { "data": { "id": "e9", "source": "Annotation_Table", "target": "Filtering" } },
+      { "data": { "id": "e10", "source": "Filtering", "target": "Normalization" } },
+      { "data": { "id": "e11", "source": "Normalization", "target": "paBn_proceed_qea" } },
+      { "data": { "id": "e12", "source": "paBn_proceed_qea", "target": "Results_Table" } }
+    ]
+  }
+}

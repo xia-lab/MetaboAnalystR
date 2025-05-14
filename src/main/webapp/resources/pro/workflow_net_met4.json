@@ -1,0 +1,1195 @@
+{
+    "nodes": [{
+            "id": "LC-MS Spectra",
+            "label": "LC-MS Spectra",
+            "x": "-7",
+            "y": " 15.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Spectra Processing",
+            "label": "Spectra Processing",
+            "x": "-6",
+            "y": " 15.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity check",
+            "label": "Sanity check",
+            "x": "-5",
+            "y": " 15.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Parameters",
+            "label": "Parameters",
+            "x": "-4",
+            "y": " 15.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "MS Peaks",
+            "label": "MS Peaks",
+            "x": "-7",
+            "y": " 12.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Peak Annotation",
+            "label": "Peak Annotation",
+            "x": "-6",
+            "y": " 14.2006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Functional Analysis",
+            "label": "Functional Analysis",
+            "x": "-6",
+            "y": " 12.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " 12.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Functional Annotation",
+            "label": "Functional Annotation",
+            "x": "-4",
+            "y": " 12.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Functional Meta-Analysis",
+            "label": "Functional Meta-Analysis",
+            "x": "-6",
+            "y": " 11.2006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_2",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " 11.2006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Generic Format",
+            "label": "Generic Format",
+            "x": "-7",
+            "y": " -3.1693333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Statistical Analysis",
+            "label": "Statistical Analysis",
+            "x": "-6",
+            "y": "  9.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_3",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": "  9.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering",
+            "label": "Filtering",
+            "x": "-4",
+            "y": "  9.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization",
+            "label": "Normalization",
+            "x": "-3",
+            "y": "  9.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Visual Analytics",
+            "label": "Visual Analytics",
+            "x": "-2",
+            "y": "  9.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Univariate Analysis",
+            "label": "Univariate Analysis",
+            "x": "-1",
+            "y": " 17.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Advanced Significance Analysis",
+            "label": "Advanced Significance Analysis",
+            "x": "-1",
+            "y": " 12.8006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Chemometrics Analysis",
+            "label": "Chemometrics Analysis",
+            "x": "-1",
+            "y": "  9.8006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Cluster Analysis",
+            "label": "Cluster Analysis",
+            "x": "-1",
+            "y": "  5.8006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Classification and Feature Selection",
+            "label": "Classification and Feature Selection",
+            "x": "-1",
+            "y": "  2.8006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multifactor Statistical Analysis",
+            "label": "Multifactor Statistical Analysis",
+            "x": "-6",
+            "y": " -3.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_4",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " -3.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering_2",
+            "label": "Filtering",
+            "x": "-4",
+            "y": " -3.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization_2",
+            "label": "Normalization",
+            "x": "-3",
+            "y": " -3.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Visual Analytics_2",
+            "label": "Visual Analytics",
+            "x": "-2",
+            "y": " -3.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Data Overview",
+            "label": "Data Overview",
+            "x": "-1",
+            "y": "  0.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Univariate Analysis_2",
+            "label": "Univariate Analysis",
+            "x": "-1",
+            "y": " -2.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multivariate Analysis",
+            "label": "Multivariate Analysis",
+            "x": "-1",
+            "y": " -5.1993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Supervise Classification",
+            "label": "Supervise Classification",
+            "x": "-1",
+            "y": " -6.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Biomarker Analysis",
+            "label": "Biomarker Analysis",
+            "x": "-6",
+            "y": " -5.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_5",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " -5.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering_3",
+            "label": "Filtering",
+            "x": "-4",
+            "y": " -5.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization_3",
+            "label": "Normalization",
+            "x": "-3",
+            "y": " -5.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Statistical Meta-analysis",
+            "label": "Statistical Meta-analysis",
+            "x": "-6",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_6",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering_4",
+            "label": "Filtering",
+            "x": "-4",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization_4",
+            "label": "Normalization",
+            "x": "-3",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Combining results",
+            "label": "Combining results",
+            "x": "-2",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Dose Response Analysis",
+            "label": "Dose Response Analysis",
+            "x": "-6",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_7",
+            "label": "Sanity Check",
+            "x": "-5",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering_5",
+            "label": "Filtering",
+            "x": "-4",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization_5",
+            "label": "Normalization",
+            "x": "-3",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Annotated Features",
+            "label": "Annotated Features",
+            "x": "-7",
+            "y": "-11.5326667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Enrichment Analysis",
+            "label": "Enrichment Analysis",
+            "x": "-6",
+            "y": "-10.1993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Table",
+            "label": "Table",
+            "x": "-5",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Annotation",
+            "label": "Annotation",
+            "x": "-4",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_8",
+            "label": "Sanity Check",
+            "x": "-3",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering_6",
+            "label": "Filtering",
+            "x": "-2",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization_6",
+            "label": "Normalization",
+            "x": "-1",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "List",
+            "label": "List",
+            "x": "-5",
+            "y": "-10.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Annotation_2",
+            "label": "Annotation",
+            "x": "-4",
+            "y": "-10.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pathway Analysis",
+            "label": "Pathway Analysis",
+            "x": "-6",
+            "y": "-11.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Annotation_3",
+            "label": "Annotation",
+            "x": "-5",
+            "y": "-11.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Sanity Check_9",
+            "label": "Sanity Check",
+            "x": "-4",
+            "y": "-11.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Parameters_2",
+            "label": "Parameters",
+            "x": "-3",
+            "y": "-11.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Network Analysis",
+            "label": "Network Analysis",
+            "x": "-6",
+            "y": "-12.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Annotation_4",
+            "label": "Annotation",
+            "x": "-5",
+            "y": "-12.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Link to Genomics & Phenotypes",
+            "label": "Link to Genomics & Phenotypes",
+            "x": "-7",
+            "y": "-13.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Causal Analysis",
+            "label": "Causal Analysis",
+            "x": "-6",
+            "y": "-13.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SNP identification",
+            "label": "SNP identification",
+            "x": "-5",
+            "y": "-13.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SNP filtering",
+            "label": "SNP filtering",
+            "x": "-4",
+            "y": "-13.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Results",
+            "label": "Results",
+            "x": "-3",
+            "y": " 15.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Single Tandem Spectrum",
+            "label": "Single Tandem Spectrum",
+            "x": "-5",
+            "y": " 14.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multiple Tandem Spectrum",
+            "label": "Multiple Tandem Spectrum",
+            "x": "-5",
+            "y": " 13.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Heatmaps",
+            "label": "Heatmaps",
+            "x": "-3",
+            "y": " 13.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Scatter plot",
+            "label": "Scatter plot",
+            "x": "-3",
+            "y": " 12.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Network",
+            "label": "Network",
+            "x": "-3",
+            "y": " 11.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pathway-level integration",
+            "label": "Pathway-level integration",
+            "x": "-4",
+            "y": " 11.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pooling peaks",
+            "label": "Pooling peaks",
+            "x": "-4",
+            "y": " 10.7006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Fold Change",
+            "label": "Fold Change",
+            "x": " 0",
+            "y": " 20.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "T-test",
+            "label": "T-test",
+            "x": " 0",
+            "y": " 19.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Volcano",
+            "label": "Volcano",
+            "x": " 0",
+            "y": " 18.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "ANOVA",
+            "label": "ANOVA",
+            "x": " 0",
+            "y": " 17.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Correlation Heatmaps",
+            "label": "Correlation Heatmaps",
+            "x": " 0",
+            "y": " 16.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pattern Search",
+            "label": "Pattern Search",
+            "x": " 0",
+            "y": " 15.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Correlation Networks (DSPC)",
+            "label": "Correlation Networks (DSPC)",
+            "x": " 0",
+            "y": " 14.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SAM",
+            "label": "SAM",
+            "x": " 0",
+            "y": " 13.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "EBAM",
+            "label": "EBAM",
+            "x": " 0",
+            "y": " 12.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "PCA",
+            "label": "PCA",
+            "x": " 0",
+            "y": " 11.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "PLSDA",
+            "label": "PLSDA",
+            "x": " 0",
+            "y": " 10.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "sPLSDA",
+            "label": "sPLSDA",
+            "x": " 0",
+            "y": "  9.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "OrthoPLSDA",
+            "label": "OrthoPLSDA",
+            "x": " 0",
+            "y": "  8.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Dendrogram",
+            "label": "Dendrogram",
+            "x": " 0",
+            "y": "  7.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Heatmaps_2",
+            "label": "Heatmaps",
+            "x": " 0",
+            "y": "  6.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "K-means",
+            "label": "K-means",
+            "x": " 0",
+            "y": "  5.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SOM",
+            "label": "SOM",
+            "x": " 0",
+            "y": "  4.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Random Forest",
+            "label": "Random Forest",
+            "x": " 0",
+            "y": "  3.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SVM",
+            "label": "SVM",
+            "x": " 0",
+            "y": "  2.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Metadata Heatmap",
+            "label": "Metadata Heatmap",
+            "x": " 0",
+            "y": "  1.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "PCA_2",
+            "label": "PCA",
+            "x": " 0",
+            "y": "  0.3006667",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Clustering heatmap",
+            "label": "Clustering heatmap",
+            "x": " 0",
+            "y": " -0.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Linear Models",
+            "label": "Linear Models",
+            "x": " 0",
+            "y": " -1.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Correlation Analysis",
+            "label": "Correlation Analysis",
+            "x": " 0",
+            "y": " -2.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multi-factor anova",
+            "label": "Multi-factor anova",
+            "x": " 0",
+            "y": " -3.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "ASCA",
+            "label": "ASCA",
+            "x": " 0",
+            "y": " -4.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "MEBA",
+            "label": "MEBA",
+            "x": " 0",
+            "y": " -5.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Random Forest2",
+            "label": "Random Forest",
+            "x": " 0",
+            "y": " -6.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Univariate ROC",
+            "label": "Univariate ROC",
+            "x": "-2",
+            "y": " -4.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multivariate ROC",
+            "label": "Multivariate ROC",
+            "x": "-2",
+            "y": " -5.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Model-based ROC",
+            "label": "Model-based ROC",
+            "x": "-2",
+            "y": " -6.5743333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Upset Diagram",
+            "label": "Upset Diagram",
+            "x": "-1",
+            "y": " -7.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Curve Fitting",
+            "label": "Curve Fitting",
+            "x": "-2",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        },{
+            "id": "DE Analysis",
+            "label": "DE Analysis",
+            "x": "-1",
+            "y": " -8.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "QEA",
+            "label": "QEA",
+            "x": " 0",
+            "y": " -9.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "ORA",
+            "label": "ORA",
+            "x": "-3",
+            "y": "-10.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pathway analysis results",
+            "label": "Pathway analysis results",
+            "x": "-2",
+            "y": "-11.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "KEGG network",
+            "label": "KEGG network",
+            "x": "-4",
+            "y": "-12.6993333",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "MR analysis",
+            "label": "MR analysis",
+            "x": "-3",
+            "y": "-13.6993333",
+            "size": "10",
+            "color": "#666666"
+        }],
+    "edges": [{
+            "id": "e1",
+            "source": "LC-MS Spectra",
+            "target": "Spectra Processing"
+        }, {
+            "id": "e2",
+            "source": "Spectra Processing",
+            "target": "Sanity check"
+        }, {
+            "id": "e3",
+            "source": "Sanity check",
+            "target": "Parameters"
+        }, {
+            "id": "e4",
+            "source": "Parameters",
+            "target": "Results"
+        }, {
+            "id": "e5",
+            "source": "MS Peaks",
+            "target": "Peak Annotation"
+        }, {
+            "id": "e6",
+            "source": "Peak Annotation",
+            "target": "Single Tandem Spectrum"
+        }, {
+            "id": "e7",
+            "source": "Peak Annotation",
+            "target": "Multiple Tandem Spectrum"
+        }, {
+            "id": "e8",
+            "source": "MS Peaks",
+            "target": "Functional Analysis"
+        }, {
+            "id": "e9",
+            "source": "Functional Analysis",
+            "target": "Sanity Check"
+        }, {
+            "id": "e10",
+            "source": "Sanity Check",
+            "target": "Functional Annotation"
+        }, {
+            "id": "e11",
+            "source": "Functional Annotation",
+            "target": "Heatmaps"
+        }, {
+            "id": "e12",
+            "source": "Functional Annotation",
+            "target": "Scatter plot"
+        }, {
+            "id": "e13",
+            "source": "Functional Annotation",
+            "target": "Network"
+        }, {
+            "id": "e14",
+            "source": "MS Peaks",
+            "target": "Functional Meta-Analysis"
+        }, {
+            "id": "e15",
+            "source": "Functional Meta-Analysis",
+            "target": "Sanity Check_2"
+        }, {
+            "id": "e16",
+            "source": "Sanity Check_2",
+            "target": "Pathway-level integration"
+        }, {
+            "id": "e17",
+            "source": "Sanity Check_2",
+            "target": "Pooling peaks"
+        }, {
+            "id": "e18",
+            "source": "Generic Format",
+            "target": "Statistical Analysis"
+        }, {
+            "id": "e19",
+            "source": "Statistical Analysis",
+            "target": "Sanity Check_3"
+        }, {
+            "id": "e20",
+            "source": "Sanity Check_3",
+            "target": "Filtering"
+        }, {
+            "id": "e21",
+            "source": "Filtering",
+            "target": "Normalization"
+        }, {
+            "id": "e22",
+            "source": "Normalization",
+            "target": "Visual Analytics"
+        }, {
+            "id": "e23",
+            "source": "Visual Analytics",
+            "target": "Univariate Analysis"
+        }, {
+            "id": "e24",
+            "source": "Univariate Analysis",
+            "target": "Fold Change"
+        }, {
+            "id": "e25",
+            "source": "Univariate Analysis",
+            "target": "T-test"
+        }, {
+            "id": "e26",
+            "source": "Univariate Analysis",
+            "target": "Volcano"
+        }, {
+            "id": "e27",
+            "source": "Univariate Analysis",
+            "target": "ANOVA"
+        }, {
+            "id": "e28",
+            "source": "Univariate Analysis",
+            "target": "Correlation Heatmaps"
+        }, {
+            "id": "e29",
+            "source": "Univariate Analysis",
+            "target": "Pattern Search"
+        }, {
+            "id": "e30",
+            "source": "Univariate Analysis",
+            "target": "Correlation Networks (DSPC)"
+        }, {
+            "id": "e31",
+            "source": "Visual Analytics",
+            "target": "Advanced Significance Analysis"
+        }, {
+            "id": "e32",
+            "source": "Advanced Significance Analysis",
+            "target": "SAM"
+        }, {
+            "id": "e33",
+            "source": "Advanced Significance Analysis",
+            "target": "EBAM"
+        }, {
+            "id": "e34",
+            "source": "Visual Analytics",
+            "target": "Chemometrics Analysis"
+        }, {
+            "id": "e35",
+            "source": "Chemometrics Analysis",
+            "target": "PCA"
+        }, {
+            "id": "e36",
+            "source": "Chemometrics Analysis",
+            "target": "PLSDA"
+        }, {
+            "id": "e37",
+            "source": "Chemometrics Analysis",
+            "target": "sPLSDA"
+        }, {
+            "id": "e38",
+            "source": "Chemometrics Analysis",
+            "target": "OrthoPLSDA"
+        }, {
+            "id": "e39",
+            "source": "Visual Analytics",
+            "target": "Cluster Analysis"
+        }, {
+            "id": "e40",
+            "source": "Cluster Analysis",
+            "target": "Dendrogram"
+        }, {
+            "id": "e41",
+            "source": "Cluster Analysis",
+            "target": "Heatmaps_2"
+        }, {
+            "id": "e42",
+            "source": "Cluster Analysis",
+            "target": "K-means"
+        }, {
+            "id": "e43",
+            "source": "Cluster Analysis",
+            "target": "SOM"
+        }, {
+            "id": "e44",
+            "source": "Visual Analytics",
+            "target": "Classification and Feature Selection"
+        }, {
+            "id": "e45",
+            "source": "Classification and Feature Selection",
+            "target": "Random Forest"
+        }, {
+            "id": "e46",
+            "source": "Classification and Feature Selection",
+            "target": "SVM"
+        }, {
+            "id": "e47",
+            "source": "Generic Format",
+            "target": "Multifactor Statistical Analysis"
+        }, {
+            "id": "e48",
+            "source": "Multifactor Statistical Analysis",
+            "target": "Sanity Check_4"
+        }, {
+            "id": "e49",
+            "source": "Sanity Check_4",
+            "target": "Filtering_2"
+        }, {
+            "id": "e50",
+            "source": "Filtering_2",
+            "target": "Normalization_2"
+        }, {
+            "id": "e51",
+            "source": "Normalization_2",
+            "target": "Visual Analytics_2"
+        }, {
+            "id": "e52",
+            "source": "Visual Analytics_2",
+            "target": "Data Overview"
+        }, {
+            "id": "e53",
+            "source": "Data Overview",
+            "target": "Metadata Heatmap"
+        }, {
+            "id": "e54",
+            "source": "Data Overview",
+            "target": "PCA_2"
+        }, {
+            "id": "e55",
+            "source": "Data Overview",
+            "target": "Clustering heatmap"
+        }, {
+            "id": "e56",
+            "source": "Visual Analytics_2",
+            "target": "Univariate Analysis_2"
+        }, {
+            "id": "e57",
+            "source": "Univariate Analysis_2",
+            "target": "Linear Models"
+        }, {
+            "id": "e58",
+            "source": "Univariate Analysis_2",
+            "target": "Correlation Analysis"
+        }, {
+            "id": "e59",
+            "source": "Univariate Analysis_2",
+            "target": "Multi-factor anova"
+        }, {
+            "id": "e60",
+            "source": "Visual Analytics_2",
+            "target": "Multivariate Analysis"
+        }, {
+            "id": "e61",
+            "source": "Multivariate Analysis",
+            "target": "ASCA"
+        }, {
+            "id": "e62",
+            "source": "Multivariate Analysis",
+            "target": "MEBA"
+        }, {
+            "id": "e63",
+            "source": "Visual Analytics_2",
+            "target": "Supervise Classification"
+        }, {
+            "id": "e64",
+            "source": "Supervise Classification",
+            "target": "Random Forest2"
+        }, {
+            "id": "e65",
+            "source": "Generic Format",
+            "target": "Biomarker Analysis"
+        }, {
+            "id": "e66",
+            "source": "Biomarker Analysis",
+            "target": "Sanity Check_5"
+        }, {
+            "id": "e67",
+            "source": "Sanity Check_5",
+            "target": "Filtering_3"
+        }, {
+            "id": "e68",
+            "source": "Filtering_3",
+            "target": "Normalization_3"
+        }, {
+            "id": "e69",
+            "source": "Normalization_3",
+            "target": "Univariate ROC"
+        }, {
+            "id": "e70",
+            "source": "Normalization_3",
+            "target": "Multivariate ROC"
+        }, {
+            "id": "e71",
+            "source": "Normalization_3",
+            "target": "Model-based ROC"
+        }, {
+            "id": "e72",
+            "source": "Generic Format",
+            "target": "Statistical Meta-analysis"
+        }, {
+            "id": "e73",
+            "source": "Statistical Meta-analysis",
+            "target": "Sanity Check_6"
+        }, {
+            "id": "e74",
+            "source": "Sanity Check_6",
+            "target": "Filtering_4"
+        }, {
+            "id": "e75",
+            "source": "Filtering_4",
+            "target": "Normalization_4"
+        }, {
+            "id": "e76",
+            "source": "Normalization_4",
+            "target": "Combining results"
+        }, {
+            "id": "e77",
+            "source": "Combining results",
+            "target": "Upset Diagram"
+        }, {
+            "id": "e78",
+            "source": "Generic Format",
+            "target": "Dose Response Analysis"
+        }, {
+            "id": "e79",
+            "source": "Dose Response Analysis",
+            "target": "Sanity Check_7"
+        }, {
+            "id": "e80",
+            "source": "Sanity Check_7",
+            "target": "Filtering_5"
+        }, {
+            "id": "e81",
+            "source": "Filtering_5",
+            "target": "Normalization_5"
+        }, {
+            "id": "e82",
+            "source": "Normalization_5",
+            "target": "DE Analysis"
+        }, {
+            "id": "e82b",
+            "source": "DE Analysis",
+            "target": "Curve Fitting"
+        },
+        {
+            "id": "e83",
+            "source": "Annotated Features",
+            "target": "Enrichment Analysis"
+        }, {
+            "id": "e84",
+            "source": "Enrichment Analysis",
+            "target": "Table"
+        }, {
+            "id": "e85",
+            "source": "Table",
+            "target": "Annotation"
+        }, {
+            "id": "e86",
+            "source": "Annotation",
+            "target": "Sanity Check_8"
+        }, {
+            "id": "e87",
+            "source": "Sanity Check_8",
+            "target": "Filtering_6"
+        }, {
+            "id": "e88",
+            "source": "Filtering_6",
+            "target": "Normalization_6"
+        }, {
+            "id": "e89",
+            "source": "Normalization_6",
+            "target": "QEA"
+        }, {
+            "id": "e90",
+            "source": "Enrichment Analysis",
+            "target": "List"
+        }, {
+            "id": "e91",
+            "source": "List",
+            "target": "Annotation_2"
+        }, {
+            "id": "e92",
+            "source": "Annotation_2",
+            "target": "ORA"
+        }, {
+            "id": "e93",
+            "source": "Annotated Features",
+            "target": "Pathway Analysis"
+        }, {
+            "id": "e94",
+            "source": "Pathway Analysis",
+            "target": "Annotation_3"
+        }, {
+            "id": "e95",
+            "source": "Annotation_3",
+            "target": "Sanity Check_9"
+        }, {
+            "id": "e96",
+            "source": "Sanity Check_9",
+            "target": "Parameters_2"
+        }, {
+            "id": "e97",
+            "source": "Parameters_2",
+            "target": "Pathway analysis results"
+        }, {
+            "id": "e98",
+            "source": "Annotated Features",
+            "target": "Network Analysis"
+        }, {
+            "id": "e99",
+            "source": "Network Analysis",
+            "target": "Annotation_4"
+        }, {
+            "id": "e100",
+            "source": "Annotation_4",
+            "target": "KEGG network"
+        }, {
+            "id": "e101",
+            "source": "Link to Genomics & Phenotypes",
+            "target": "Causal Analysis"
+        }, {
+            "id": "e102",
+            "source": "Causal Analysis",
+            "target": "SNP identification"
+        }, {
+            "id": "e103",
+            "source": "SNP identification",
+            "target": "SNP filtering"
+        }, {
+            "id": "e104",
+            "source": "SNP filtering",
+            "target": "MR analysis"
+        }]
+}

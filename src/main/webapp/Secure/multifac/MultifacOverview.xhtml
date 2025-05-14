@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Analysis', '/Secure/multifac/MultifacOverview.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Select an analysis path to explore :</h2>
+                <h:panelGrid style="border: lightgray thin solid; width: 840px; margin-left: 30px; padding: 20px 30px 10px 30px;
+                             font-size: 13px;" class="surface-card shadow-1 p-4 text-800">
+
+                    <h:outputLabel style="font-size: 14px; font-weight: bold" value="Data and Metadata Overview"/>
+                    <h:panelGrid style="padding-left: 10px; padding-bottom: 4px">
+                        <h:commandLink action="Metadata" 
+                                       onclick="PF('statusDialog').show()"
+                                       value="Metadata Visualization"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            Users can explore the metadata patterns and correlations through intuitive graphics.  
+                            It is very useful for users to identify highly dependent metadata and quickly assess the overall patterns of the metadata.
+                        </h:panelGrid>
+
+                        <h:commandLink action="iPCA" 
+                                       onclick="PF('statusDialog').show()"
+                                       value="Interactive PCA Visualization"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            Users can visualize data using different colors or shapes based on selected metadata in an 2D and 3D (interactive) PCA plots. 
+                            It is very useful to detect overall patterns of data with regard to different metadata.
+                        </h:panelGrid>
+
+                        <h:commandLink action="Heatmap2"
+                                       onclick="PF('statusDialog').show()"
+                                       value="Hierarchical Clustering and Heatmap Visualization"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This method displays data and metadata in the form of colored cells. It provides direct visualization 
+                            of feature abundances across different samples and metadata.
+                        </h:panelGrid>
+                    </h:panelGrid>
+
+                    <h:outputLabel style="font-size: 14px;  font-weight: bold" value="Univariate Analysis"/>
+                    <h:panelGrid style="padding-left: 10px; padding-bottom: 4px">
+                        <h:commandLink action="Linear Model" 
+                                       onclick="PF('statusDialog').show()" 
+                                       value="Linear Models with Covariate Adjustment"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This approach uses linear models (limma or lm) to perform significance testing with covariate adjustments. 
+                            Users can choose different metadata to be included in the analysis.
+                        </h:panelGrid>
+
+                        <h:commandLink action="CorrelationTest"
+                                       onclick="PF('statusDialog').show()" 
+                                       value="Correlation and Partial Correlation Analysis"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This approach allows users to explore the correlations or partial correlations (with covariate adjustments) 
+                            between metabolomics features and different metadata of interest.
+                        </h:panelGrid>
+
+                        <h:commandLink action="ANOVA2"
+                                       onclick="PF('statusDialog').show()"
+                                       value="Multi-factor ANOVA"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            Depending on experimental design, either two-way ANOVA (multiple factors/covariates), two-way repeated ANOVA or 
+                            two-way mixed ANOVA (Time-series + one factor; depends whether factor is within or between subjects), or one-way repeated ANOVA (Time-series only).
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+
+                    <h:outputLabel style="font-size: 14px;  font-weight: bold" value="Multivariate Analysis"/>
+                    <h:panelGrid style="padding-left: 10px; padding-bottom: 4px">
+                        <h:commandLink action="ASCA" disabled="#{sessionBean1.timeOnly}" 
+                                       onclick="PF('statusDialog').show()"
+                                       value="ANOVA Simultaneous Component Analysis (ASCA)"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This approach is designed to identify major patterns with regard to the 
+                            two given factors and their interaction. The implementation was based on the 
+                            algorithm described by <a href="http://dx.doi.org/10.1093/bioinformatics/bti476" target="_blank">AK Smildle, et al.</a> 
+                            with additional improvements on feature selection and model validation.
+                        </h:panelGrid>
+
+                        <h:commandLink action="MEBA"
+                                       onclick="PF('statusDialog').show()"
+                                       value="Multivariate Empirical Bayes Analysis of Variance (MEBA) for Time Series" disabled="#{!sessionBean1.containsTime}"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This approach is designed to compare temporal profiles across different biological conditions. It is based 
+                            on the timecourse method described by <a href="http://dx.doi.org/10.1214/009053606000000759" target="_blank">YC Tai. et al.</a>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                    <h:outputLabel style="font-size: 14px;  font-weight: bold" value="Supervised Classification"/>
+                    <h:panelGrid style="padding-left: 10px; padding-bottom: 4px">
+                        <h:commandLink action="RandomForest2" 
+                                       onclick="PF('statusDialog').show()"
+                                       value="Random Forest"/>
+                        <h:panelGrid style="padding-bottom: 4px">
+                            This machine learning approach is designed to perform classification and feature selection analysis. Users can also test contribution of meta-data to class prediction.
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

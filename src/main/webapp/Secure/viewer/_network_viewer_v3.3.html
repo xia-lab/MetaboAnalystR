@@ -1,0 +1,422 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>   
+    <head>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <title>MetaboAnalyst</title>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"/>   
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"/>        
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.helpers.graph.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.snapshot.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.svg.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/shape-library.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.customShapes.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.curve.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.labels.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.nodes.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.exporters.svg.js"></script> 
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.dragNodes.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.keyboard.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.activeState.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.select.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.lasso.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.animate.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/spectrum.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.layout.forceAtlas2.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.layout.noverlap.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/network_analyst_v3.2.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/network_utils_v3.2.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/changedpi.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/network_report.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+    </head>
+    <body class="easyui-layout">
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px; background-color:transparent">
+                Processing..... please wait ....
+            </h2>
+        </div>
+        <div id="loader" style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px; background-color:transparent">
+        </div>
+        <div data-options="region:'north'" style="height:36px; padding-top: 6px; padding-bottom: 2px">
+            <div id="options"> 
+                <label for="networkOpt">Network:</label>
+                <select id="networkOpt">
+                </select> &nbsp;
+                <label for="backgroundOpt">Background:</label>
+                <select id="backgroundOpt">
+                    <option value="blueLight">Gradient (light)</option>
+                    <option value="#222222">Black</option>                    
+                    <option value="#ffffff">White</option>
+                    <option value="blueDark">Gradient (dark)</option>
+                </select> &nbsp;
+                <label for="highlightOpt">View:</label>
+                <select id="highlightOpt">
+                    <option value="topo">Topology</option>
+                    <option value="expr">Expression</option>
+                    <option value="zero">Plain</option>
+                </select> &nbsp;             
+                <label for="layoutOpt">Layout:</label>
+                <select id="layoutOpt">
+                    <option value="na">-- Specify --</option>
+                    <option value="Default">Auto Layout</option>   
+                    <option value="FrR">Fruchterman-Reingold</option>
+                    <option value="ForceAtlas">Force Atlas</option>
+                    <option value="circle">Circular layout</option>
+                    <option value="gopt">Graphopt Layout</option>                    
+                    <option value="lgl">Large Graph Layout</option>
+                    <option value="random">Random Layout</option>
+                    <option value="noverlap">Reduce Overlap</option> 
+                </select> &nbsp;
+                <label for="selectOpt">Scope:</label>
+                <select id="selectOpt">
+                    <option value="na">-- Specify --</option>
+                    <option value="single">Single node</option>  
+                    <option value="neighbour">Node-neighbours</option> 
+                    <option value="highlight">All highlights</option>   
+                    <option value="function">Current function</option>     
+                </select> &nbsp;
+                <label for="exportOpt">Download:</label>
+                <select id="exportOpt">
+                    <option value="na">-- Specify --</option>
+                    <option value="png">PNG Image</option>
+                    <option value="svg">SVG Format</option>
+                    <option value="graphml">GraphML</option>
+                </select> &nbsp;
+                <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="$('#viewdlg').dialog('open')">More Options</a>
+                &nbsp;&nbsp;
+                <a href="#" class="easyui-tooltip" data-options="
+                   content: $('<div></div>'),
+                   position: 'bottom',
+                   onUpdate: function(cc){
+                   cc.panel({
+                   width: 400,
+                   height: 'auto',
+                   border: false,
+                   href: 'tooltip/_help_networkview.html'
+                   });
+                   }
+                   ">
+                    <img src="../../resources/images/ui-help.png" alt="Help Info"/>
+                </a>
+               
+                <a href="#" id="reportBn" class="easyui-linkbutton" style="margin-left: 20px">Update Report</a>
+            </div>
+            <div id="viewdlg" class="easyui-dialog" title="Advanced View Options" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  style="width:400px;height:220px;padding:10px">
+                <div id="tt" class="easyui-tabs" data-options="border:false">
+                    <div title="Node" style="padding:8px 4px 4px 10px;"> 
+                        <div style="margin-bottom:10px">
+                            <label>Node scope: </label>
+                            <select id="nodeOpt">
+                                <option value="all">All nodes</option>
+                                <option value="highlighted">Highlighted nodes</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:10px">
+                            <label>Node size: </label>
+                            <select id="sizeOpt">
+                                <option value='increase'>Increase ++ </option>
+                                <option value='decrease'>Decrease -- </option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:10px; padding-left: 80px">
+                            <a href="#" class="easyui-linkbutton" onclick="updateNodeSize()">Submit</a>
+                        </div>
+                        <label>Tip: You can keep clicking on a node to increase its size</label>
+                    </div>
+                    <div title="Edge" style="padding:8px 4px 10px 10px;"> 
+                        <div style="margin-bottom:10px">
+                            <label>Edge shape: </label>
+                            <select id="shapeOpt">
+                                <option value="line">Line</option>
+                                <option value="curve">Curve</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:10px">
+                            <label>Edge color: </label>
+                            <select id="eColOpt">
+                                <option value="off">Off</option>                                
+                                <option value="on">On</option>
+                            </select>
+                        </div>
+                        <div id = "edgeSizeDiv" style="margin-bottom:10px">
+                            <label>Edge width: </label>
+                            <select id="widthOpt">
+                                <option value='increase'>Increase ++ </option>
+                                <option value='decrease'>Decrease -- </option>
+                            </select>
+                        </div>
+                        <div style="padding-left: 80px">
+                            <a href="#" class="easyui-linkbutton" onclick="updateEdgeView()">Submit</a>
+                        </div>
+                    </div>
+                    <div title="Highlight" style="padding:8px 4px 10px 10px; line-height: 20px">   
+                        <div style="margin-bottom:10px">
+                            <label>Node scope: </label>
+                            <select id="colorOpt">
+                                <option value="all">All nodes</option>  
+                                <option value="up">Upregulated nodes</option>  
+                                <option value="down">Downregulated nodes</option>  
+                            </select> 
+                        </div>
+                        <div style="margin-bottom:10px">
+                            <label>Other nodes: </label>
+                            <select id="visOpt">
+                                <option value="show">Keep same</option>
+                                <option value="dim">Dim down</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:10px; padding-left: 80px">
+                            <a href="#" class="easyui-linkbutton" onclick="updateHighlightColor()">Submit</a>
+                        </div>
+                        <label>Tip: double clicking a node to highlight</label>
+                    </div>  
+                </div>
+            </div>
+        </div> 
+        <div data-options="region:'west',split:true, collapsible:false" style="width:300px;">
+            <div id="westregion" class="easyui-layout" data-options="fit:true">                
+                <div data-options="region:'center',split:false, title:'Node Explorer', collapsible:false">
+                    <table id="dg" class="easyui-datagrid" toolbar="#tb" idField="ID" 
+                           pagination="true" data-options="border:false,fit:true,checkOnSelect:true,selectOnCheck:true,
+                           fitColumns:true, pageSize:30">  
+                        <thead>  
+                            <tr>  
+                                <th field="ck" checkbox="true"></th>
+                                <th data-options="field:'ID',width:65,sortable: true">ID</th> 
+                                <th data-options="field:'Label',width:72,sortable: true">Name</th>
+                                <th data-options="field:'Degree',width:55,sortable: true">Degree</th> 
+                                <th data-options="field:'Betweenness',width:88,sortable: true">Betweeness</th>
+                                <th data-options="field:'Status',width:50,sortable: true">Expr.</th>
+                            </tr>  
+                        </thead>  
+                    </table> 
+                    <div id="tb" style="padding-left: 4px">
+                        <input id="nodeid" style="line-height:12px; width:90px; border:1px solid #ccc"/>
+                        <a href="#" class="easyui-linkbutton" iconCls="icon-search-s" plain="true" onclick="searchNodeTable()">Search</a> &nbsp;
+                        <a href="#" class="easyui-linkbutton" iconCls="icon-delete" plain="true" onclick="deleteNodes()">Delete</a>&nbsp;
+                        <a href="#" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="exportResultTable('ndtb')"></a>
+                    </div>
+                </div>
+                <div data-options="region:'south',split:false,title:'Current Selections', border:false, collapsible:false" style="height:100px;">
+                    <ul id="stats">
+
+                    </ul>
+                </div>
+            </div>
+        </div>    
+        <div id="networkspace" data-options="region:'center', split: false, collapsible:false" style="background: #222">
+            <div id="network-parent" class="sigma-parent">
+                <div class="sigma-container" id="networkview">
+                    <canvas id="sigma_edges_1" class="sigma_edges_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_nodes_1" class="sigma_nodes_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_labels_1" class="sigma_labels_canvas" style="position: absolute;"></canvas>
+                    <canvas id="sigma_hover_1" class="sigma_hover_canvas" style="position: absolute;"></canvas>
+                    <div id="sigma_monitor_1" class="sigma_monitor_div"  style="position: absolute;"></div>
+                    <canvas id="sigma_mouse_1" class="sigma_mouse_canvas"  style="position: absolute;"></canvas>
+                </div>
+                <div class="control-panel" style="height: 380px; width: 36px; padding-left: 2px; background: rgba(211,211,211,0.5)">
+                    <table border="0px">
+                        <tr> <td style="height:28px;"> 
+                                <a href="#" id="colorBn" class="easyui-tooltip" style="position: absolute; top: 0;left: 0;"
+                                   data-options="position: 'right', content: $('<span>Set highlight color for next selection</span>')">
+                                    <input type='text' id="custom" style="width:30px"/>
+                                </a>
+                            </td></tr>
+                        <tr> <td style="height:25px; padding-left: 5px;">
+                                <a href="#" id="resetBn" class="easyui-tooltip"
+                                   data-options="position: 'right', content: $('<div>Reset to default view</div>')">
+                                    <img style="width: 22px; height:21px" border="0" src="../../resources/images/reset-64.png" alt="Reset"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="autofitBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Auto fit</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/fit.png" alt="Autofit"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomInBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Zoom in</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomin.png" alt="Zoom in"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomOutBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Zoom out</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomout.png" alt="Zoom out"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveUpBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move up</div>')">
+                                    <img style="width: 20px; height:20px" border="0" src="../../resources/images/arrow_up.png" alt="Up"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveDownBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move down</div>')">
+                                    <img style="width: 20px; height:22px" border="0" src="../../resources/images/arrow_down.png" alt="Down"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveLeftBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move left</div>')">
+                                    <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_left.png" alt="Left"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveRightBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move right</div>')">
+                                    <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_right.png" alt="Right"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="selectBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Manually select and drag multiple nodes</div>')">
+                                    <img style="width:22px; height:22px" border="0" src="../../resources/images/lasso.png" alt="Batch selection"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="extractBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Extract current highlighted modules</div>')">
+                                    <img style="width:21px; height:16px" border="0" src="../../resources/images/extract.png" alt="Extract"/></a></td></tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div data-options="region:'east',split:true, collapsible:false" style="width:300px;">
+            <div class="easyui-layout" data-options="fit:true">
+                <div data-options="region:'center',split:false, border:false, collapsible:false" style="height:200px; width:300px;">
+                    <div class="easyui-accordion" data-options="fit:true">
+                        <div title="Function Explorer" data-options="tools:'#funtip'"> 
+                            <table id="dg2" class="easyui-datagrid" toolbar="#tb1"
+                                   data-options="border:false,fit:true,checkOnSelect:true,selectOnCheck:true, fitColumns:true">  
+                                <thead>  
+                                    <tr>  
+                                        <th field="ck" checkbox="true"></th>
+                                        <th data-options="field:'pathname',width:150">Name</th>  
+                                        <th data-options="field:'hit',width:40">Hits</th>  
+                                        <th data-options="field:'pval',width:55">P-value</th> 
+                                        <th data-options="field:'color',width:35">Color</th> 
+                                    </tr>  
+                                </thead>  
+                            </table> 
+                            <div id="tb1">
+                                <label for="queryView" style="width: 10px">Query:</label>
+                                <select id="queryView"> 
+                                    <option value="all">All nodes</option>  
+                                    <option value="up">Upregulated nodes</option>  
+                                    <option value="down">Downregulated nodes</option>  
+                                    <option value="highlight">Highlighted nodes</option>
+                                </select><br/>
+                                <label for="enrichdb" style="width: 10px">Database:</label>
+                                <select id="enrichdb">   
+                                    <option value="kegg">KEGG</option>
+                                    <option value="reactome">Reactome</option>
+                                    <option value="bp">GO:BP</option>
+                                    <option value="mf">GO:MF</option>
+                                    <option value="cc">GO:CC</option>
+                                    <option value="motif">Motif</option>
+                                </select>                         
+                                <a href="#" class="easyui-linkbutton" plain="true" onclick="testEnrichment()">Submit</a>
+                                <a href="#" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="exportResultTable('funtb');">Save</a>
+                            </div>
+                            <div id="funtip">
+                                <a href="#" class="easyui-tooltip" data-options="
+                                   content: $('<div></div>'),
+                                   position: 'left',
+                                   onUpdate: function(cc){
+                                   cc.panel({
+                                   width: 460,
+                                   height: 'auto',
+                                   border: false,
+                                   href: 'tooltip/_help_funtipview.html'
+                                   });
+                                   }
+                                   ">
+                                    <img src="../../resources/images/ui-help.png"/>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div title="Path Explorer"  style="padding:5px" data-options="tools:'#pathtip'">  
+                            <label>From <input id="source" style="line-height:12px; width:60px; border:1px solid #ccc"/></label>
+                            <label>To <input id="target" style="line-height:12px; width:60px; border:1px solid #ccc"/></label>
+                            <a href="#" class="easyui-linkbutton" plain="true" onclick="computeShortestPath();">Submit</a>
+                            <ol id="pathLnks" style="margin: 2px 0px 2px 20px; padding: 0">
+
+                            </ol>
+                            <div id="pathtip">
+                                <a href="#" class="easyui-tooltip" data-options="
+                                   content: $('<div></div>'),
+                                   position: 'left',
+                                   onShow: function(){
+                                   $(this).tooltip('arrow').css('right', 20);
+                                   $(this).tooltip('tip').css('right', $(this).offset().right);
+                                   },
+                                   onUpdate: function(cc){
+                                   cc.panel({
+                                   width: 460,
+                                   height: 'auto',
+                                   border: false,
+                                   href: 'tooltip/_help_pathview.html'
+                                   });
+                                   }
+                                   ">
+                                    <img src="../../resources/images/ui-help.png"/>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div title="Batch Selection" style="padding:10px 20px 10px 20px;">
+                            <label for="signature">Enter a list of node IDs or Names (one per row):</label>
+                            <textarea id="signature" style="height:180px; width: 240px"></textarea>
+                            <div align="center" style="width: 240px; padding-top: 10px">
+                                <a href="#" class="easyui-linkbutton" onclick="highlightMyNodes()">Submit</a>
+                            </div>
+                            <br/>
+                            <label>
+                                Tip: set a different color to see the effect. You can also use mouse 
+                                to perform batch <b>Manual selection</b> for dragging purpose only
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <canvas id="canvas2image">
+            Your browser does not support the canvas element.
+        </canvas>
+        <div id="pngdialogold" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:630px;height:400px;padding:5px">  
+            Right click the PNG image to save as your preferred name
+            <image id="downloadimage"></image>  
+        </div> 
+        <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+            <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+            </ul>
+        </div>
+        <div id="download" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:300px;height:120px;padding:20px; font-size: 13px">  
+            <div id="download-content"></div>
+        </div> 
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:$('#queryhighlighter').dialog('close')">OK</a>
+        </div>
+        <div id="faqdialog" class="easyui-dialog" title="FAQs" data-options="resizable:true, closed:true, modal:false" 
+             style="width:800px;height:600px;padding:5px">   
+        </div> 
+        <div id="tutdialog" class="easyui-dialog" title="Tutorials" data-options="resizable:true, closed:true, modal:false"  
+             style="width:800px;height:600px;padding:5px">   
+        </div>  
+        <div id="pngdialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:360px;height:180px;padding:5px">  
+            <div align="left" style="width: 320px; padding-left: 20px">
+                <p>
+                    <b style="color: red">Use with caution</b> - for large networks, scaling to 3X can freeze your browse! 
+                </p>
+
+                <label for="pngRes">Scaling factor:</label>
+                <select id="pngRes">   
+                    <option value="1">1X</option>
+                    <option value="2">2X</option>
+                    <option value="3">3X</option>
+                </select>
+            </div>
+            <div align="center" style="width: 280px; padding-top: 10px">
+                <a href="#" onclick="exportingPng();" class="easyui-linkbutton">Save</a> &nbsp;&nbsp;
+                <a href="#" class="easyui-linkbutton" onclick="$('#pngdialog').dialog('close')">Cancel</a>
+            </div>
+        </div> 
+        <script type="text/javascript">
+            $(document).ready(function () {
+                initNetwork();
+                $(window).bind('resize', function () {
+                    setTimeout(resizeNetwork(), 300);
+                });
+                updateTheme();
+                initThemeSwitch();
+            });
+        </script>
+    </body>
+</html>

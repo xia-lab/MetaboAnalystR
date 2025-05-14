@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Meta analysis', '/Secure/metastat/MetaAnalView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript">
+            function delayShow() {
+                setTimeout("PF('statusDialog').show()", 100);
+            }
+
+            function delayHide() {
+                setTimeout("PF('statusDialog').hide()", 100);
+            }
+        </script>
+    </ui:define>
+    <ui:define name="content"> 
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>
+                    Choose a meta-analysis approach to proceed
+                </h2>
+                <p:fieldset legend="Combining P Values"  style="margin-bottom: 20px; margin-top: 10px" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid cellpadding="10"> 
+                        There are two widely used methods to combine p values from multiple studies for information integration
+                        - the Fisher's method (-2*&#8721;Log(p)) and the Stouffer's method (based on inverse normal transformation). 
+                        Stouffer's method incorporates weight (i.e. based on sample sizes) into the calculation; while Fisher's 
+                        method is known as a 'weight-free' method. They usually have very similar performance. However, 
+                        in metabolomic meta-analysis, larger sample sizes do not warrant larger weights as the quality of 
+                        each study can vary. Users should choose to apply Stouffer’s method only when all studies are 
+                        of similar qualities (i.e. same analytical platforms with similar levels of missing values).
+                        <h:panelGrid columns="2" >
+                            <h:panelGrid columns="2" style="width: 400px">
+                                <h:outputLabel value="Select a method"/>
+                                <p:selectOneMenu style="width: 160px" value="#{metaStatBean.metapMethod}">
+                                    <f:selectItem itemLabel="Fisher's method" itemValue="fisher"/>                                         
+                                    <f:selectItem itemLabel="Stouffer's method" itemValue="stouffer"/>                                         
+                                </p:selectOneMenu>                                      
+                                <h:outputLabel value="Set a significance level"/>
+                                <p:inputText  style="width: 150px" value="#{metaStatBean.metpSigLvl}" required="true"
+                                              requiredMessage="Must set a significance level"/>
+                            </h:panelGrid>
+                            <p:commandButton id="pBn" value="Submit" onclick="delayShow()" 
+                                             oncomplete="delayHide()" 
+                                             update =':southform:pdBn :hisTab:cmdPane'
+                                             disabled="#{loadBean.singleMode}"
+                                             actionListener="#{metaStatBean.performPvalCombination()}"/>
+                        </h:panelGrid>                       
+                    </h:panelGrid>
+                </p:fieldset>
+
+                <p:fieldset legend="Vote Counting" style="margin-bottom: 20px" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid cellpadding="10"> 
+                        <h:panelGroup>
+                            This is the simplest method to perform meta-analysis. Differentially expressed metabolites are first selected 
+                            based on a threshold to obtain a list of significant features from each study. The vote for each feature can 
+                            then be calculated as the total number of times it appears as significant in all features lists. The final significant features 
+                            can be selected based on the <b>minimal number of votes</b> set by the user. 
+                        </h:panelGroup>
+                        <h:panelGrid columns="2" >
+                            <h:panelGrid columns="2" style="width: 400px"> 
+                                <h:outputLabel value="Set a significance level"/>
+                                <p:inputText  style="width: 150px" value="#{metaStatBean.vcSigLvl}" required="true"
+                                              requiredMessage="Must set a significance level"/>                      
+                                <h:outputLabel value="Set the minimal number of votes"/>
+                                <p:inputText  style="width: 150px" value="#{metaStatBean.minVote}" required="true"
+                                              requiredMessage="Must set a significance level"/>
+                            </h:panelGrid>
+                            <p:commandButton id="vcBn" value="Submit" onclick="delayShow()" 
+                                             oncomplete="delayHide()" 
+                                             update =':southform:pdBn :hisTab:cmdPane'
+                                             disabled="#{loadBean.singleMode}"
+                                             actionListener="#{metaStatBean.performVoteCounting()}"/>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </p:fieldset>
+                
+                <p:fieldset legend="Direct Merging" style="margin-bottom: 20px" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid cellpadding="10"> 
+                        <h:outputText value="This approach directly merges all datasets into a mega-dataset and then analyzes it 
+                                      as a single dataset. It should only be used when all datasets are very similar 
+                                      (i.e. collected by the same lab using the same analytical platforms)"/>
+
+                        <h:panelGrid columns="2" >
+                            <h:panelGrid columns="2" style="width: 400px"> 
+                                <h:outputLabel value="Set a significance level"/>
+                                <p:inputText  style="width: 150px" value="#{metaStatBean.dmSigLvl}" required="true"
+                                              requiredMessage="Must set a significance level"/>                      
+                            </h:panelGrid>
+                            <p:commandButton id="dmBn" value="Submit" onclick="delayShow()" 
+                                             update =':southform:pdBn :hisTab:cmdPane'
+                                             oncomplete="delayHide()" 
+                                             actionListener="#{metaStatBean.performDirectMerging()}"/>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </p:fieldset>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous"
+                                 id="testBn" style="width:150px"
+                                 icon="pi pi-caret-left"  ajax="false"
+                                 action="/Secure/upload/MetaLoadView.xhtml"/>
+
+                <p:commandButton id='pdBn' value="Proceed" style="width:120px" 
+                                 onclick="PF('statusDialog').show()"
+                                 ajax="false"
+                                 disabled="#{!metaStatBean.resOK}"
+                                 action="Result table"                                         
+                                 icon="pi pi-caret-right"/>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
+

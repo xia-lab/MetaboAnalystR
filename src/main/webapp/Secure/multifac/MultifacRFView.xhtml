@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{mrfBean.doDefaultRf()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Random Forest</h2>
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:100%; border: none; font-size: 13px;">
+                <p:tab title ="Classification">
+                    <h:form id="form1">  
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 23px; ">
+                            <h:panelGrid columns="2" style="width: 600px">
+                                <h:outputLabel style="font-weight: bold" value="Primary metadata:"/>
+
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfMeta}">
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Include metadata for prediction:"/>
+                                <p:selectCheckboxMenu  
+                                    label="&nbsp; -- None Selected -- &nbsp;" 
+                                    styleClass="menu" 
+                                    showHeader="false" 
+                                    multiple="true"  
+                                    panelStyleClass="panel" 
+                                    value="#{mrfBean.predictedMeta}">
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                                </p:selectCheckboxMenu > 
+                                <h:outputLabel style="font-weight: bold" value="Randomness:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfRandom}">
+                                    <f:selectItem itemLabel="On" itemValue="1" />
+                                    <f:selectItem itemLabel="Fix current random seed" itemValue="0" /> 
+                                    <f:selectItem itemLabel="Use a constant (123456)" itemValue="-1" />
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update=":ac:form1:sumPane  :hisTab:cmdPane :ac:impPane :ac:outPane" 
+                                             actionListener="#{mrfBean.rfBn_action_time()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid columns="2" id="sumPane" style="padding-top: 20px">
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
+                            <h:outputText escape="false" value="#{mrfBean.confText}"/>
+                        </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Var. Importance">
+                    <h:panelGrid id="impPane" style="padding:20px; text-align: center; width: 1000px;">
+                        <p>
+                            Features ranked by their contributions to classification accuracy (Mean Decrease Accuracy)
+                        </p>
+                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                            <p:commandLink action="#{sessionBean1.detailsLnk_action('rf')}" title="View the detailed data table">
+                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('rf_imp')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_imp')}" alt="RFImp"/>
+                    </h:panelGrid> 
+                </p:tab>
+                <p:tab title ="Outlier Detection">
+                    <h:panelGrid id="outPane" style="padding:20px; text-align: center; width: 1000px;">
+                        <p>
+                            Only top 5 potential outliers are labeled
+                        </p>
+                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_outlier')}" alt="RFoutlier"/>
+                    </h:panelGrid> 
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

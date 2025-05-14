@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">    
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('ID map', '/Secure/pathinteg/IntegMapView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>ID Mapping</h2>
+            <p>
+                The system requires all the IDs (except common compound names) to be matched exactly.
+                The table below shows the matched genes and compounds from the underlying databases. 
+                For common compound names, users can further perform <u>approximate match</u> by clicking 
+                the <b>View</b> link in the Details column. To <b>remove</b> a gene or compound from further 
+                analysis, use the <b>Delete</b> link in the last column. 
+            </p>
+            <p:tabView widgetVar="tabWidget" id="ac" style="font-size: 13px; width:100%" >
+                <p:tab title ="#{integProcesser.cmpTabTitle}">
+                    <h:form id="form1">
+                        <h:panelGrid style="padding-top:10px; padding-left: 20px; font-size: 13px; line-height: 23px; width:100%">
+                            <h:panelGrid  rendered="#{integProcesser.datatype eq 'peak'}" style = "width:750px">
+                                <div style = "font-weight:bold; font-size: 13px">Peak Data Integrity Check:</div>
+                                <h:outputLabel value="#{procBean.msgText}" escape="false"/>
+                            </h:panelGrid>
+                            <p:dataTable id="mapTbl1" rendered="#{integProcesser.datatype ne 'peak'}"
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         paginator="true" rows="20" rowsPerPageTemplate="20,50,100" paginatorPosition="bottom" 
+                                         var="map" value="#{jointMapBean.cmpdNameMapResult}"
+                                         rowIndexVar="rowInx"
+                                         style="width:100%; font-size: 12px">  
+                                <p:column headerText="Query">  
+                                    <h:outputText escape="false" value="#{map.query}"/>  
+                                </p:column>  
+                                <p:column headerText="Hit">  
+                                    <h:outputText escape="false" value="#{map.hit}"/>  
+                                </p:column>  
+                                <p:column headerText="HMDB">  
+                                    <h:outputText escape="false" value="#{map.hmdb_id}"/>
+                                </p:column>  
+                                <p:column headerText="KEGG">  
+                                    <h:outputText escape="false" value="#{map.kegg_id}"/>
+                                </p:column>  
+                                <p:column headerText="Details">  
+                                    <p:commandLink value="#{map.details}" 
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":summaryForm:detailView :hisTab:cmdPane"
+                                                   oncomplete="PF('cmpdDetailDialog').show()">  
+
+                                        <f:setPropertyActionListener value="#{rowInx}" target="#{jointMapBean.currentCmpdRowInx}" /> 
+                                    </p:commandLink>  
+                                </p:column> 
+                                <p:column headerText="">  
+                                    <p:commandLink value="Delete" 
+                                                   actionListener="#{jointMapBean.deleteCmpd(rowInx)}"
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":ac:form1:mapTbl1"
+                                                   oncomplete="PF('statusDialog').hide()"/>  
+                                </p:column> 
+                            </p:dataTable>
+                            <h:outputText escape="false" value="#{jointMapBean.cmpdDownloadMsg}"/>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Gene Name Mapping">
+                    <h:form id="form2">
+                        <h:panelGrid style="padding-top:10px; padding-left: 20px; font-size: 12px; width:100%">
+                            <p:dataTable id="mapTbl2" paginator="true" rows="20" rowsPerPageTemplate="20,50,100" paginatorPosition="bottom" 
+                                         var="map" value="#{jointMapBean.geneNameMaps}"
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         rowIndexVar="rowInx"     
+                                         style="width:100%; font-size: 12px">  
+                                <p:column headerText="Query" width="140">  
+                                    <h:outputText escape="false" value="#{map.query}"/>  
+                                </p:column>  
+                                <p:column headerText="Hit" width="100">  
+                                    <h:outputText escape="false" value="#{map.hit}"/>  
+                                </p:column>  
+                                <p:column headerText="Symbol" width="100">  
+                                    <h:outputText escape="false" value="#{map.symbol}"/>
+                                </p:column>  
+                                <p:column headerText="Name" width="40%">  
+                                    <h:outputText escape="false" value="#{map.name}"/>
+                                </p:column>  
+                                <p:column headerText="">
+                                    <p:commandLink value="Delete" 
+                                                   actionListener="#{jointMapBean.deleteGene(rowInx)}"
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":ac:form2:mapTbl2"
+                                                   oncomplete="PF('statusDialog').hide()"/>  
+                                </p:column>
+                            </p:dataTable>
+                            <h:outputText escape="false" value="#{jointMapBean.geneDownloadMsg}"/>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+            </p:tabView>
+            <h:form id="form3">
+                <h:panelGrid style="width: 90%; text-align:center; padding-bottom: 20px;">
+                    <p:commandButton value="Proceed"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     icon="pi pi-caret-right" 
+                                     action="#{jointMapBean.prepareData()}"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid>
+
+        <p:dialog widgetVar="cmpdDetailDialog" header="Name match" dynamic="true" modal="true" height="500"
+                  appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:form id="summaryForm">
+                <h:panelGrid id="detailView" style="width:500px; padding:10px 20px 10px 20px;">
+                    <h:outputText escape="false" style="font-size: 13px" value="Query name: #{jointMapBean.targetCmpd}"/>
+                    <p:dataTable style="width:100%; font-size: 12px; padding: 6px" var="can" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{jointMapBean.cmpdCandidateMaps}">
+                        <p:column>
+                            <p:selectBooleanCheckbox value="#{can.selected}" style="line-height: 18px"/>
+                        </p:column>
+                        <p:column headerText="Matched Name">  
+                            <h:outputText escape="false" value="#{can.hit}"/>  
+                        </p:column>  
+                        <p:column headerText="HMDB">  
+                            <h:outputText escape="false" value="#{can.hmdb_id}"/>
+                        </p:column>  
+                        <p:column headerText="KEGG">  
+                            <h:outputText escape="false" value="#{can.kegg_id}"/>
+                        </p:column> 
+                    </p:dataTable> 
+                    <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="OK" update=":ac:form1:mapTbl1  :hisTab:cmdPane" 
+                                         actionListener="#{jointMapBean.selectCmpdCandidate()}"  
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide(); PF('cmpdDetailDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('cmpdDetailDialog').hide()"/>
+                    </h:panelGrid>
+                </h:panelGrid> 
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

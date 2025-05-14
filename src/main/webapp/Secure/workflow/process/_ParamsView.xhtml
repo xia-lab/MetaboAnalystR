@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <p>
+            You can run up to three parallel workflows to identify optimal parameters based on simple metrics below:  
+            <ul> 
+                <li> 
+                    <b>Group Separation Patterns:</b> better group separation on PCA usually indicates better parameter settings
+                </li> 
+                <li> 
+                    <b>Number of Significant Features:</b> more DE genes usually indicate better parameters. 
+                    MetaboAnalyst currently offers <b>Fold Changes</b> (2 fold change) and <b>Moderated T-tests</b> (raw p-values 0.05 based on limma) on the <b><u>main comparison of interest</u></b>
+                </li> 
+            </ul> 
+        </p>                  
+        <h:form id="formParam">
+
+            <!-- Main Comparison Selection -->
+            <h:panelGrid columns="5" styleClass="nopadding" style="align-items: center;">
+                <h:outputLabel value="Main comparison of interest:" style="font-weight: bold; font-size:1.1em; margin-right: 10px;" />
+
+                <p:selectOneMenu styleClass="menu" value="#{workflowBean.selectedGrp1}">
+                    <f:selectItems value="#{multifacBean.uniqueMetaList}"/>
+                </p:selectOneMenu>  
+
+                <h:outputLabel value="versus" style="margin: 0 10px;" />                 
+
+                <p:selectOneMenu styleClass="menu" value="#{workflowBean.selectedGrp2}">
+                    <f:selectItems value="#{multifacBean.uniqueMetaList}"/>
+                </p:selectOneMenu>  
+
+            </h:panelGrid> 
+            <hr class="style-one"/>
+            <h:panelGrid columns="3">            
+
+                <p:accordionPanel >
+                    <p:tab title="Missing Value">
+                        <ui:include src="/Secure/workflow/process/_MissingView.xhtml" />
+                    </p:tab>
+                    <p:tab title="Filtering">
+                        <ui:include src="/Secure/workflow/process/_FilterView.xhtml" />
+                    </p:tab>
+                    <p:tab title="Normalization">
+                        <ui:include src="/Secure/workflow/process/_NormalizationView.xhtml" />
+                    </p:tab>
+                </p:accordionPanel>              
+
+                <h:panelGrid style="margin-left: 40px; margin-right: 40px">
+                    <p:commandButton style="width: 100px;" value="Add >>" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     update=":ac :formParam :hisTab:cmdPane"
+                                     actionListener="#{workflowBean.addParamOpts()}" />
+
+                    <p:spacer style="height: 40px"/>
+
+                    <p:commandButton style="width: 100px;" value="Reset" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     update=":ac :formParam :hisTab:cmdPane"
+                                     actionListener="#{workflowBean.resetWorkflowOptions()}" />
+                </h:panelGrid>
+
+
+                <h:panelGrid style="flex: 1; margin-top:0; align-self: flex-start;">
+                    <h:outputText value="Added Workflow Options:" style="font-size:16px; font-weight:bold; margin-bottom:10px;" />
+                    <p:spacer style="height: 20px"/>
+                    <p:dataTable id="workflowOptionsTable"
+                                 var="option"
+                                 value="#{workflowBean.workflowOptions}"
+                                 styleClass="options-table"
+                                 style="width:100%;"
+                                 class="surface-card p-0 text-800">
+                        <p:column headerText="Name" width="120px">
+                            <h:outputText value="#{option.folderName}" />
+                        </p:column>
+
+                        <p:column headerText="Parameters" width="300px">
+                            <h:outputText 
+                                value="#{option.detailText}" />
+                        </p:column>
+
+                        <p:column headerText="Delete" style="width:50px; text-align:center;">
+                            <p:commandButton icon="pi pi-trash" 
+                                             styleClass="p-button-rounded p-button-danger p-mr-2"
+                                             action="#{workflowBean.deleteOption(option)}"
+                                             update="workflowOptionsTable" />
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGrid>
+
+            </h:panelGrid>
+        </h:form>
+        <p:dialog widgetVar="smplNormDialog" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                  hideEffect="explode" resizable="true">
+            <h:form>
+                <h:panelGrid id="smplNormView" style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
+                    <p>
+                        Tip: normalization factors can be included directly as a <b>feature</b> in your data; and then apply
+                        <b>normalization by a reference feature</b> function to achieve the same effect
+                    </p>
+                    <p:dataTable style="width:100%; font-size: 12px" var="smpl" rowIndexVar="rowInx" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{normBean.sampleBeans}">  
+                        <p:column headerText="Sample ID">  
+                            <h:outputText value="#{smpl.name}"/>  
+                        </p:column>   
+                        <p:column headerText="Normalization factor">  
+                            <h:inputText value="#{smpl.adjust}"/>
+                        </p:column>   
+                    </p:dataTable>
+                    <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="OK" 
+                                         actionListener="#{normBean.setSmplSpecNorm()}" 
+                                         update=":formParam  :hisTab:cmdPane"
+                                         onclick="PF('smplNormDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('smplNormDialog').hide()"/>
+                    </h:panelGrid> 
+                </h:panelGrid>
+            </h:form>         
+        </p:dialog>
+        <p:dialog widgetVar="normResDialog" dynamic="true" modal="false" 
+                  header="Normalization Result"
+                  appendTo="@(body)" height="650"
+                  hideEffect="explode" resizable="true">
+            <h:panelGrid style="padding:20px; width:100%">
+                <p>
+                    Please note: the boxplots show at most 50 features/samples due to space limitation; the density plots are based on all data 
+                </p>
+                <p:tabView id="ac" widgetVar="tabWidget"  style="width:100%; border: none;">
+                    <p:tab title ="Feature View">
+                        <h:panelGrid style="text-align: center; width: 100%;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('norm')}" 
+                                           update=":myGraphPane"
+                                           style="margin-left: 700px"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                            <img src="#{sessionBean1.getCurrentImageURL('norm')}" alt="Normalization"/>
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title ="Sample View">
+                        <h:panelGrid style="text-align: center; width: 100%;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('snorm')}" 
+                                           update=":myGraphPane"
+                                           style="margin-left: 700px"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                            <img src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
+                        </h:panelGrid>
+                    </p:tab>
+                </p:tabView>
+            </h:panelGrid> 
+        </p:dialog>
+        <p:dialog header="Sample Selection" widgetVar="refSmplDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true">
+            <h:form>
+                <h:panelGrid style="padding:10px; font-size: 13px; width:480px; line-height: 21px">
+                    <div>
+                        Please choose a sample for Probability Quotient Normalization (PQN) normalization. This method is 
+                        good for adjust overall dilution effect such as in urine samples (<a href="https://doi.org/10.1021/ac051632c" target="_blank">details</a>)
+                    </div>
+                    <h:panelGrid columns="2">
+                        <p:outputLabel value="Set a reference sample: "/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{normBean.refSmpl}">
+                            <f:selectItems value="#{normBean.smplNmOpts}" />
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="Submit" 
+                                         update=":formParam  :hisTab:cmdPane"
+                                         onclick="PF('refSmplDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('refSmplDialog').hide()"/>
+                    </h:panelGrid> 
+                </h:panelGrid>
+            </h:form>         
+        </p:dialog>
+
+        <p:dialog header="Group Selection" widgetVar="refGrpDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true">
+            <h:form>
+                <h:panelGrid style="padding:10px; font-size: 13px; width:480px; line-height: 21px">
+                    <div>
+                        This is an extension of the Probability Quotient Normalization (PQN) normalization (<a href="https://doi.org/10.1021/ac051632c" target="_blank">details</a>).
+                        The difference is that the reference sample will be computed as the average values of features in a group (i.e. control). 
+                    </div>
+                    <h:panelGrid columns="2">
+                        <p:outputLabel value="Set a reference group: "/>
+                        <p:selectOneMenu styleClass="menu"  disabled="#{sessionBean1.regresion}" 
+                                         panelStyleClass="panel" value="#{normBean.refGrp}">
+                            <f:selectItems value="#{normBean.grpNmOpts}" />
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="Submit" 
+                                         update=":formParam  :hisTab:cmdPane"
+                                         onclick="PF('refGrpDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('refGrpDialog').hide()"/>
+                    </h:panelGrid> 
+                </h:panelGrid>
+            </h:form>         
+        </p:dialog>
+
+        <p:dialog header="Feature Selection" widgetVar="refVarDialog" dynamic="true" modal="true" appendTo="@(body)"
+                  hideEffect="explode" resizable="true">
+            <h:form>
+                <h:panelGrid style="padding:10px; font-size: 13px; width:400px;">
+                    <h:panelGrid columns="2">
+                        <p:outputLabel value="Set a reference feature: "/>
+                        <p:selectOneMenu rendered="#{not sessionBean1.bigFeature}"
+                                         styleClass="menu"  panelStyleClass="panel" value="#{normBean.refVar}">
+                            <f:selectItems value="#{normBean.varNmOpts}" />
+                        </p:selectOneMenu>
+                        <p:inputText style="width:180px" value="#{normBean.refVar}" rendered="#{sessionBean1.bigFeature}"/> 
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="Submit" 
+                                         update=":formParam  :hisTab:cmdPane"
+                                         onclick="PF('refVarDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('refVarDialog').hide()"/>
+                    </h:panelGrid> 
+                </h:panelGrid>
+            </h:form>         
+        </p:dialog>
+    </h:panelGrid> 
+</ui:composition>

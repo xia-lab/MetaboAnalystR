@@ -1,0 +1,358 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('metadata')}"/>
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/MetaLoadView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="leftpaneout"/> 
+    <ui:define name="content">       
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Please upload and process your data</h2>
+            <p>
+                Use the panel below to prepare each individual data. Click the individual cells to activate each process. Click <b>Add New</b> to add a new data set. 
+                The maximum total number of samples allowed is <b>1000</b>. When all data sets have been processed, 
+                Click <b>Proceed</b> to proceed. Click the <b>Try Examples</b> button to try our example datasets.  
+            </p>
+            <h:form id="form" enctype="multipart/form-data"> 
+                <p:dataTable id="navipane" var="data" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{loadBean.dataSets}">  
+                    <p:column headerText="Data Upload">  
+                        <p:commandButton  update=":uploadView"
+                                          value="#{data.name}"
+                                          icon="#{data.uploadIcon}"
+                                          oncomplete="PF('uploader').show()">
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.selectedData}" />    
+                        </p:commandButton>  
+                    </p:column>
+
+                    <p:column headerText="Integrity Check">  
+                        <p:commandButton  update=":expView"
+                                          value="Process" 
+                                          disabled="#{!data.uploaded}"
+                                          icon="#{data.processIcon}"
+                                          oncomplete="PF('procDialog').show()">   
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.selectedData}" /> 
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:column headerText="Visualization">  
+                        <p:commandButton  update=":dataOverView"
+                                          value="View" 
+                                          onclick="PF('statusDialog').show()"
+                                          disabled="#{!data.processed}"                                              
+                                          icon="pi pi-image"   
+                                          oncomplete="PF('statusDialog').hide(); PF('visDialog').show()">  
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.data4Vis}" /> 
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:column headerText="Normalization">  
+                        <p:commandButton update=":normView"                                              
+                                         value="Normalize" 
+                                         disabled="#{!data.processed}"                                              
+                                         icon="#{data.normIcon}"
+                                         oncomplete="PF('normDialog').show()">
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.selectedData}" /> 
+                        </p:commandButton>                                 
+                    </p:column>  
+
+                    <p:column headerText="Analysis">  
+                        <p:commandButton update=":analView"                                                
+                                         value="Analyze" 
+                                         disabled="#{!data.normed}"  
+                                         icon="#{data.analIcon}"      
+                                         oncomplete="PF('analDialog').show()">
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.selectedData}" /> 
+                        </p:commandButton>                                 
+                    </p:column> 
+
+                    <p:column headerText="Data Summary">  
+                        <p:commandButton  update=":summaryView"                                                
+                                          value="Detail" 
+                                          disabled="#{!data.analDone}"  
+                                          icon="#{data.summaryIcon}"   
+                                          actionListener="#{loadBean.selectedData.setAllDone()}"
+                                          oncomplete="PF('summaryDialog').show()">
+                            <f:setPropertyActionListener value="#{data}" target="#{loadBean.selectedData}" /> 
+                        </p:commandButton>                                 
+                    </p:column>  
+                    <p:column headerText="Include" style="width:60px; text-align: center">  
+                        <p:selectBooleanCheckbox value="#{data.include}" style="line-height: 18px">
+                            <p:ajax event="change"/>
+                        </p:selectBooleanCheckbox>  
+                    </p:column>                            
+                    <f:facet name="footer">  
+                        <p:outputPanel style="width:100%; text-align: right;">   
+                            <p:commandButton value="Add New" 
+                                             icon="pi pi-plus-circle"
+                                             style="width:120px; margin-left: 20px;"
+                                             update=":form:navipane"
+                                             actionListener="#{loadBean.addData}"/>
+                        </p:outputPanel>  
+                    </f:facet>  
+                </p:dataTable> 
+            </h:form>  
+        </h:panelGrid>
+
+        <p:dialog widgetVar="uploader" header="Data Upload" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="uploadView" style="width:540px; padding:2px 20px 20px 20px; line-height: 21px">
+                <p>
+                    Please make sure you have read <a href="/MetaboAnalyst/faces/docs/Format.xhtml" target="_blank">these instructions</a>
+                    on how to format your data before you start. The maximum file size per upload is <b>50M</b>. Data should be uploaded as a comma separated values (.csv) file. 
+                </p>
+                <h:form id="uploadForm" enctype="multipart/form-data">  
+                    <h:panelGrid columns="2" style="width:100%">
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Format:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{loadBean.dataFormat}">
+                            <f:selectItem itemLabel="Samples in columns" itemValue="colu"/> 
+                            <f:selectItem itemLabel="Samples in rows" itemValue="rowu"/> 
+                        </p:selectOneMenu>
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                        <p:fileUpload value="#{loadBean.file}" mode="simple"  skinSimple="true" style="line-height: 18px"/>  
+                    </h:panelGrid>
+
+                    <h:panelGrid style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Submit" ajax="false"
+                                         style ="margin-left: 20px"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         actionListener="#{loadBean.handleFileUpload()}"/>  
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog widgetVar="procDialog" dynamic="true" modal="true" appendTo="@(body)" header="Integrity Check"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="expView" style="width:500px; height: 320px; padding: 10px">
+                <h:panelGrid style="border: 1px dashed black; padding: 10px; width: 100%" class="surface-card shadow-1 p-4 text-800">
+                    <h:outputLabel value="#{loadBean.selectedData.msgText}" escape="false"/>
+                </h:panelGrid>
+            </h:panelGrid>
+            <h:panelGrid style="width:100%; text-align: center">
+                <p:commandButton value="Done"
+                                 oncomplete="PF('procDialog').hide()"
+                                 update=":form:navipane"/>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Overview" widgetVar="visDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true" position="center top"> 
+            <h:panelGrid id="dataOverView" style="width:480px">
+                <h:form id="mVisForm">
+                    <h:panelGrid cellpadding="10">  
+                        <h:outputText value="Boxplots showing value distribution within your samples (max 100)"/>  
+                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('qc_boxplot')}" />   
+                    </h:panelGrid> 
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="Done"
+                                         oncomplete="PF('visDialog').hide()"
+                                         update=":form:navipane"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+        <p:dialog header="Data Normalization" widgetVar="normDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="normView" style="width:560px; padding: 0px 20px 10px 20px; line-height: 21px">
+                <p>
+                    We suggest all datasets to be compared at log scales with similar distribution.
+                    You can use <b>boxplots</b> (available in the previous step - data visualization plots) 
+                    to help you determine if the data is already on the log scale. 
+                </p>
+                <h:form id="normForm">
+                    <p:panelGrid columns="2" style="width:100%">
+                        <p:outputLabel value="Normalization procedure"/>  
+                        <h:panelGrid styleClass="noBorders">
+                            <p:selectOneMenu id="normRB" value="#{loadBean.selectedData.normOpt}">  
+                                <f:selectItem itemLabel="None" itemValue="none"/> 
+                                <f:selectItem itemLabel="Log2 transformation" itemValue="log"/> 
+                            </p:selectOneMenu> 
+                            <h:panelGrid columns="2">
+                                <p:selectBooleanCheckbox value="#{loadBean.selectedData.autoscaleOpt}" style="line-height: 18px"/>
+                                <h:outputText value="Perform auto-scaling" />
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <p:spacer/>
+                        <p:commandButton value="Submit"
+                                         actionListener="#{loadBean.selectedData.performNormalization}"
+                                         onclick="PF('normDialog').hide();
+                                                 PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         update=":form:navipane"/>
+                    </p:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>  
+
+        <p:dialog header="Analysis" widgetVar="analDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="analView" style="width:560px; padding: 0px 20px 10px 20px; line-height: 21px">
+                <p>
+                    You can perform differential analysis using linear models (limma). Note, this is for current exploratory analysis. 
+                    It will be re-computed using the p-value cutoff as specified in the meta-analysis (next page) and for 
+                    the Venn Diagram comparison. 
+                </p>
+                <h:form id="analForm">
+                    <p:panelGrid columns="2" style="width:420px; margin-left: 20px" styleClass="noBorders">
+                        <h:outputLabel value="Set p value (FDR) cutoff"/>
+                        <p:inputText  value="#{loadBean.selectedData.sigLevel}" required="true"
+                                      requiredMessage="Must set a significance level"/>
+                        <h:outputLabel value="Set fold change (FC) cutoff"/>
+                        <p:inputText  value="#{loadBean.selectedData.fcLevel}" required="true"
+                                      requiredMessage="Must set a fold change level"/>
+                    </p:panelGrid>
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="Submit"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         actionListener="#{loadBean.selectedData.performDEAnalysis()}"
+                                         update=":form:navipane :analForm:padding"/>
+                    </h:panelGrid>
+                    <h:panelGrid id="padding" style="padding-left: 60px; text-align: center;">
+                        <p:pieChart id="pie" rendered ="#{loadBean.selectedData.analDone}"
+                                    model="#{loadBean.selectedData.pieModel}" 
+                                    style="width:320px;height:180px" />
+                        <p:commandButton value="Done"
+                                         id="analBn"
+                                         rendered ="#{loadBean.selectedData.analDone}"
+                                         oncomplete="PF('analDialog').hide()"
+                                         update=":form:navipane"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+        <p:dialog header="Data Summary" widgetVar="summaryDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="summaryView" style="width:500px">
+                <h:form id="summaryForm">
+                    <p:panelGrid columns="2" style="width:100%;" styleClass="noBorders">
+                        <h:outputLabel value="Data name:"/>
+                        <h:outputLabel value="#{loadBean.selectedData.name}"/>                       
+                        <h:outputLabel value="Number of features:"/>
+                        <h:outputLabel value="#{loadBean.selectedData.geneNum}"/>
+                        <h:outputLabel value="Number of samples:"/>    
+                        <h:outputLabel value="#{loadBean.selectedData.smplNum}"/>
+                        <h:outputLabel value="Group labels:"/>    
+                        <h:outputLabel value="#{loadBean.selectedData.groupInfo}"/>                                 
+                        <h:outputLabel value="Normalization procedures used:"/>    
+                        <h:outputLabel value="#{loadBean.selectedData.normInfo}"/>                               
+                        <h:outputLabel value="Number of signficant hits:"/> 
+                        <h:outputLabel value="#{loadBean.selectedData.deNum}"/>                                
+                    </p:panelGrid>
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="Done" id="okBn"
+                                         oncomplete="PF('summaryDialog').hide()"
+                                         update=":form:navipane"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+        <p:dialog widgetVar="checkDialog" header="Compatibility checking" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="checkView" style="width:500px; padding: 20px">
+
+                <p>
+                    <h:outputText escape="false" value="#{loadBean.integCheckMsg}"/>
+                </p>
+
+                <h:form id="checkForm">
+                    <h:panelGrid columns="2" style="padding: 10px 10px 10px 30px; width: 400px;" class="surface-card shadow-1 p-4 text-800">
+                        <!--
+                        <h:outputText value="Adjust batch effect (ComBat):"/>
+                        <p:selectBooleanCheckbox value="#{loadBean.adjustBatch}" style="line-height: 18px">
+                            <p:ajax event="change"/>
+                        </p:selectBooleanCheckbox>  
+                        -->
+                        <h:outputText value="Download the merged data: "/>
+                        <p:commandButton value="Download" ajax="false" 
+                                         icon="pi pi-download"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);">  
+                            <p:fileDownload value="#{loadBean.mergedFile}" />  
+                        </p:commandButton> 
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('checkDialog').hide()"/>                                
+                        <p:commandButton value="Next" id="nextBn"
+                                         disabled="#{!loadBean.allDataConsistent}"
+                                         action="MetaQCView"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog> 
+    </ui:define>
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Try Examples"
+                                 id="testBn" style="width:150px;"
+                                 icon="pi pi-chevron-right"
+                                 onclick="PF('testDataDialog').show()"/>
+
+                <p:commandButton  style="width:150px;" 
+                                  value="Proceed" 
+                                  icon="pi pi-chevron-circle-right"
+                                  onclick="PF('statusDialog').show()"
+                                  actionListener="#{loadBean.performMetaIntegrityCheck()}"
+                                  update=":checkView"
+                                  oncomplete="PF('checkDialog').show()"  
+                                  />
+            </h:panelGrid>
+        </h:form>
+        <p:dialog modal="true" widgetVar="testDataDialog" 
+                  style="line-height: 23px;" dynamic="true"
+                  appendTo="@(body)" header="Example Datasets"
+                  draggable="false" closable="false" resizable="true"> 
+            <h:form>
+                <p:panelGrid columns="3" layout="tabular" styleClass="myPanelGrid" class="surface-card shadow-1 p-4 text-800">  
+
+                    <h:panelGroup><b>Datasets</b></h:panelGroup> 
+                    <h:panelGroup><b>Description</b></h:panelGroup>  
+                    <h:panelGroup><b>Phenotype</b></h:panelGroup>  
+
+                    <h:panelGrid style="padding-left: 10px; width:100px;">
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/data1.csv" target="_blank">data1</a><br/>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/data2.csv" target="_blank">data2</a><br/>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/data3.csv" target="_blank">data3</a><br/>     
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/data4.csv" target="_blank">data4</a>     
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block" style="width:180px">
+                        Four test datasets from a subset of data from a study investigating biomarkers of adenocarcinoma in blood 
+                        (<a href="https://doi.org/10.21228/M85P57">more details</a>)
+                    </h:panelGroup>  
+                    <h:panelGroup layout="block" style="width:120px">
+                        Control vs. Adenocarcinoma
+                    </h:panelGroup>  
+
+                </p:panelGrid>
+                <h:panelGrid columns="2" style="width:100%; text-align: center; padding-top: 10px">
+                    <p:commandButton value="Upload" 
+                                     style="width: 80px"
+                                     onclick="PF('testDataDialog').hide();
+                                             PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     update=":form:navipane"
+                                     actionListener="#{loadBean.doDefaultMetaAnalysis()}"/>  
+                    <p:commandButton value="Cancel" 
+                                     style="width: 80px"
+                                     onclick="PF('testDataDialog').hide()" type="button" />
+                </h:panelGrid> 
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

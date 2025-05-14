@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Integrity Check', '/Secure/metastat/MetaQCView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript">
+            function delayShow() {
+                setTimeout("PF('statusDialog').show()", 100);
+            }
+
+            function delayHide() {
+                setTimeout("PF('statusDialog').hide()", 100);
+            }
+        </script>
+    </ui:define>
+    <ui:define name="content"> 
+        <h:panelGrid styleClass="my-content-panel">
+
+            <h2>
+                Data integrity check
+            </h2>
+            <p:fieldset legend ="Data Overview" style="margin-top: 20px; margin-bottom: 20px;" class="surface-card shadow-1 p-4 text-800">
+                <h:panelGrid style="padding: 0px 30px 10px 30px; width: 100%">
+                    <p>
+                        The uploaded data tables are summarized below, together with a PCA diagram used for quality check. 
+                        Batch effect correction can be performed using the <code>ComBat</code> method from the <a href="https://bioconductor.org/packages/release/bioc/html/sva.html" target="_blank">sva</a> package. Each dataset will be treated as a separate batch, and an intercept-only model (<code>~1</code>) was used to preserve biological group differences while correcting for technical variation.
+                    </p>
+                    <p>
+                        <p><b>Note:</b> The PCA plot may appear similar before and after ComBat adjustment. In these cases, the primary sources of variation captured by PCA are driven by biological conditions rather than batch effects. If batch effects are relatively minor, their removal may not significantly shift the top principal components.</p>
+                    </p>
+                    <h:panelGrid id="procMsg"  style="border:1px solid #ddd;width:1000px; font-size: 13px; padding: 10px 20px 10px 30px; vertical-align: bottom;">        
+                        <h:outputLabel value="#{loadBean.procMsg}" escape="false" style="width:530px"/>
+                    </h:panelGrid>
+
+
+                    <h:form>
+                        <h:panelGrid columns="2" style="margin-right:0px">
+                            <h:panelGrid columns="2">
+                                <h:outputLabel value="Adjust study batch effect (Combat)" style="font-weight:bold" for="batch"/>
+                                <p:selectBooleanCheckbox id="batch" style="line-height: 18px; padding-left:10px; padding-top:5px" value="#{loadBean.adjustBatch}"/>
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left:50px">
+                                <p:commandButton value="Update"
+                                                 style="width:80px; font-size: 14px;"
+                                                 onclick="PF('statusDialog').show(); localStorage.clear()"
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 update=":ac :southform:visBn"
+                                                 actionListener="#{loadBean.performBatchCorrection()}"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+
+                    <hr class="myhr"/>
+
+                    <p:tabView widgetVar="tabWidget" id="ac" style="border:none; width:1000px; text-align: center; padding: 10px 20px 10px 40px">
+                        <p:tab>
+                            <f:facet name="title">
+                                <div  style="width:100px; text-align: center">
+                                    <h:outputText value="PCA plot"/>
+                                </div>
+                            </f:facet>
+                            <h:form>
+                                <h:panelGrid style="width:100%; text-align:right; position: relative; top:15px; right:20px">
+                                    <p:commandLink   id="img3" 
+                                                     actionListener="#{sessionBean1.graphicsLnk_action('qc_meta_pca')}"
+                                                     oncomplete="PF('graphDialog').show()">
+                                        <i class="pi pi-download"/>
+                                    </p:commandLink>
+                                    <p:graphicImage id="pcaIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <p:tooltip for="pcaIcon" styleClass="helpTip">
+                                        <p>
+                                            Principal Component Analysis (PCA) is a popular technique to project high-dimensional data into lower dimensions to visually identify patterns. It highlights similarities and differences between the different samples using linear transformation.
+                                        </p>
+                                    </p:tooltip>
+                                </h:panelGrid>
+                            </h:form>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('qc_meta_pca')}" alt="OPLSScore2DImage"/>
+
+                        </p:tab>
+                        <p:tab rendered="false">
+                            <f:facet name="title">
+                                <div  style="width:100px; text-align: center">
+                                    <h:outputText value="Density plot"/>
+                                </div>
+                            </f:facet>
+                            <h:form>
+                                <h:panelGrid id="density" style="width:100%; text-align:right; position: relative; top:15px; right:20px">
+                                    <p:commandLink   id="img4" 
+                                                     actionListener="#{sessionBean1.graphicsLnk_action('qc_meta_density')}"
+                                                     oncomplete="PF('graphDialog').show()">
+                                        <i class="pi pi-download"/>
+                                    </p:commandLink>
+                                    <p:graphicImage id="denIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <p:tooltip for="denIcon" styleClass="helpTip">
+                                        <p>
+                                            Plot of density against log2 of read counts. It displays the relative distribution of different counts in each group.
+                                        </p>
+                                    </p:tooltip>
+                                </h:panelGrid>
+                            </h:form>
+                            <p:graphicImage value="#{sessionBean1.getCurrentImageURL('qc_meta_density')}" cache="false"/>  
+                        </p:tab>
+                    </p:tabView>
+
+                </h:panelGrid>
+            </p:fieldset>
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous"
+                                 id="testBn" style="width:120px"
+                                 icon="pi pi-angle-double-left"   
+                                 styleClass="prevBn"
+                                 action="metadata"/>
+
+                <p:commandButton id="visBn" value="Proceed" style="width:120px"
+                                 icon="pi pi-angle-double-right"  
+                                 styleClass="procBn"
+                                 action="Meta analysis"/> 
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
+

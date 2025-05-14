@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>       
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>Scatter 3D Viewer</title>    
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"/>        
+        <script src="../../resources/jscripts/scatter/jquery.min.js"></script>
+        <script src="../../resources/jscripts/scatter/jquery.easyui.min.js"></script> 
+        <script src="../../resources/jscripts/scatter/tween.min.js"></script>
+        <script src="../../resources/jscripts/scatter/spectrum_attr.js"></script>
+        <script src="../../resources/jscripts/scatter/vkbeautify.js"></script>
+        <script src="../../resources/jscripts/scatter/string_to_color.min.js"></script>    
+        <script src="../../resources/jscripts/scatter/colour_utils.js"></script>
+        <script src="../../resources/jscripts/html2canvas.min.js"></script>
+
+        <script type="module" src="../../resources/jscripts/scatter/scatter.module.js"></script> 
+        <script src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+
+        <script type="x-shader/x-vertex" id="vertexshader">
+            attribute float size;
+            attribute vec3 customColor;
+            varying vec3 vColor;
+            void main() {
+            vColor = customColor;
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            gl_PointSize = size * ( 300.0 / -mvPosition.z );
+            gl_Position = projectionMatrix * mvPosition;
+            }
+        </script>
+
+        <script type="x-shader/x-fragment" id="fragmentshader">
+            uniform vec3 color;
+            uniform sampler2D pointTexture;
+            varying vec3 vColor;
+            void main() {
+            gl_FragColor = vec4( color * vColor, 1.0 );
+            gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+            if ( gl_FragColor.a < ALPHATEST ) discard;
+            }
+        </script>
+
+        <style type="text/css">
+            .legend {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 2;
+                font-size: 12px;
+                border-width:2px;
+            }
+
+            .legend .color {
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                margin-right: 5px;
+            }
+            .legend .shape {
+                font-weight: bold;
+                margin-right: 5px;
+            }
+
+            .panel-header .panel-header-noborder .window-header{
+                width:auto !important;
+            }
+
+            .overlay{
+                opacity:1;
+                background-color:#222222;
+                position:fixed;
+                width:100%;
+                height:100%;
+                top:0px;
+                left:0px;
+                z-index:999999999;
+            }
+
+            .overlay2{
+                background-color:rgba(0,0,0,0.3);
+                width:100%;
+                height:100%;
+                top:50%;
+                left:50%;
+                z-index:1000;
+            }
+
+
+            .overlay_loading{
+                position:fixed;
+                top:50%;
+                left:50%;
+                width:50px;
+                height:50px;
+            }
+
+            @-webkit-keyframes spin {
+                0% {
+                    -webkit-transform: rotate(0deg);
+                }
+                100% {
+                    -webkit-transform: rotate(360deg);
+                }
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            #loader {
+                border: 16px solid #f3f3f3; /* Light grey */
+                border-top: 16px solid #3498db; /* Blue */
+                border-radius: 50%;
+                width: 120px;
+                height: 120px;
+                z-index: 9999;
+                animation: spin 2s linear infinite;
+            }
+
+            @keyframes pulse {
+                50% {
+                    background: white;
+                }
+            }
+
+            .scene-tooltip {
+                color: black;
+            }
+
+        </style>
+    </head>
+    <body id="layoutMain" class="easyui-layout">
+        <select id="metaopt" style="display:none"> </select> 
+        <div id="loader" class="overlay2">
+            <div class="overlay_loading">  
+            </div>    
+        </div>
+        <div id="loader_init" class="overlay">
+            <div class="overlay_loading">  
+                <div class="loading">  
+                </div> 
+            </div> 
+        </div>
+        <div data-options="region:'north'" style="height:42px; padding-top: 2px; padding-bottom: 2px; display:none">
+            <div id="options" style="padding-top:7px">
+                <label for="viewFocusOpt">View Type:</label>
+                <select id="viewFocusOpt">
+                    <option value="joint">Joint view</option>
+                    <option value="score">Score plot (samples)</option>
+                    <option value="loading">Loading plot (features)</option>
+
+                    <!--<option value="biplot">Biplot (merged view)</option>-->
+                </select> &nbsp; 
+                <label for="bgColorOptions">Background:</label>
+                <select id="bgColorOptions">
+                    <optgroup label="Main">
+                        <option value="main-#000000">Black</option>
+                        <option value="main-#ffffff">White</option>
+                    </optgroup>
+                    <optgroup label="Inset">
+                        <option value="inset-#ffffff">White</option>
+                        <option value="inset-#000000">Black</option>
+                    </optgroup>
+                </select>
+
+                <label for="styleOpt">Node display:</label>
+                <select id="styleOpt">
+                    <option value="na">-- Specify --</option>
+                    <optgroup label="Style">
+                        <option value="size">Size</option>
+                        <option value="opacity">Opacity</option> 
+                    </optgroup>
+                    <optgroup label="Display">
+                        <option value="default">Default</option>
+                        <option value="text">Text (Name)</option>
+                        <option value="textMeta">Text (Primary factor)</option>
+                        <option value="textMeta2">Text (Secondary factor)</option>
+                    </optgroup>
+                </select>
+
+                <label for="tickDisplayOpt">Ticks:</label>
+                <select id="tickDisplayOpt">
+                    <option value="yes">Show</option>
+                    <option value="no">Hide</option>
+                </select> &nbsp;
+
+            </div>
+            <div style="float: right; padding-right: 10px;">
+                <table border="0px" style="text-align: center;">
+                    <tr style="height:32px; padding: 5px"> 
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="rotateMoveBn" title="Rotate move mode">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/rotatemove.png" alt="Reset"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="planeMoveBn" title="Plane move mode">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/arrowcross.png" alt="Reset"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="switchBn" title="Switch between inset and main view">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/switch.png" alt="Reset"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="collapseBn" title="Hide/show inset view">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/collapse.png" alt="Reset"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="encasingBn" title="Apply meta-data overlay">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/ellipse.png" alt="Encasing"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#"  id="dldBn" title="Download">
+                                <img style="width: 24px; height:24px;padding-left:3px" border="0" src="../../resources/images/download.png" alt="Download"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="reportBn" title="Update Image in Report">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/thumb-pin.png" alt="Update Report"/>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div> 
+        </div>
+        <div id="network" data-options="region:'center', split: false, collapsible:false" style="overflow:hidden">
+            <div id="myLegend" class="legend">
+                <p id="legendTitle" style="padding-left:10px;font-size:bold">Legend</p>
+            </div>
+
+            <div id="3d-graph" style="width:1100px;background: #fff">
+
+            </div>
+
+            <div id="labels" style="hyphens:none"></div>
+        </div>
+
+        <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+            <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+            </ul>
+        </div>
+
+        <div id="optdlg" class="easyui-dialog" title="Advanced Options" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true" 
+             style="width:560px;height:390px;padding:10px">
+            <div id="tt2" class="easyui-tabs" data-options="border:false" style="margin:auto; background:rgba(0,0,0,0)">
+
+
+                <div title="Background" style="padding-left: 20px; margin-bottom:10px; padding-top:10px; background:rgba(0,0,0,0)">
+                    <label>Type: </label>
+                    <select id="bgColType">
+                        <option value="plain">Plain</option>
+                        <option value="gradient_dark">Gradient (dark-top)</option>
+                        <option value="gradient_light">Gradient (light-top)</option>
+                        <option value="gradient_dark_bottom">Gradient (dark-bottom)</option>
+                        <option value="gradient_light_bottom">Gradient (light-bottom)</option>
+                    </select>
+                    <br />
+                    <input type='text' id="customBgg" style="width:30px"/>
+                </div>
+                <div title="Text Display" style="padding:10px 20px 10px 20px; background:rgba(0,0,0,0)">
+                    <p>
+                        You can hide all labels The "current" option will show current labels only, without showing new labels on camera movement.
+                    </p>
+                    <div style="width:280px;">
+                        <label>Display option: </label>
+                        <select id="labelOpt">
+                            <option value="show">Show</option>
+                            <option value="hide">Hide</option>
+                        </select> &nbsp;&nbsp;&nbsp;&nbsp;
+                    </div> 
+                    <div style="margin:auto;text-align: center;padding-top:15px">
+                        <a href="#" class="easyui-linkbutton" id="nodeLabelBn">Submit</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="biplotdlg1" class="easyui-dialog" title="Biplot in Score Space" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true" 
+                 style="width:460px;height:420px;padding:10px;">
+
+                <div title="Batch Selection" style="padding:10px 20px 10px 20px; background: transparent">
+                    <p>This feature aims at overlaying significant features in the form of feature vectors on top of the sample space to help
+                        visualize patterns of sample separation.
+                    </p>
+                    <ul>
+                        <li>
+                            Rank-based: display top features based on differential expression analysis performed on data upload page. 
+                        </li>
+                        <li>
+                            Custom: enter a list of features (up to 50) of interest.
+                        </li>
+                    </ul>
+
+                    <table style="width:400px">
+                        <tr>
+                            <td>
+                                <label>Arrow color</label>
+                            </td>
+                            <td>
+                                <input type='text' id="customBiplotArrow" style="width:30px"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>Arrow label</label>
+                            </td>
+                            <td>
+                                <select id="biplotTextDisplayOpt">
+                                    <option value="display">Show</option>
+                                    <option value="none">Hide</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>Feature selection</label>
+                            </td>
+                            <td>
+                                <select id="viewSelOpt">
+                                    <option value="auto">Rank-based</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr id="biplotRank1">
+                            <td>
+                                <label>Omics type</label>
+                            </td>
+                            <td>
+                                <select id="biplotOmicsOpt">
+                                    <option value="all">Joint</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr id="biplotRank2">
+                            <td>
+                                <label>Features</label>
+                            </td>
+                            <td>
+                                <input id="biplotSliderScore" type="range" min="5" max="20" value="0" step="1" style="width:40%;">
+                                <input type="text" id="textInputBiplot" value="5" style="width:30px;">
+                            </td>
+                        </tr>
+
+                        <tr id="biplotBatch" style="display:none">
+                            <td>
+                                <label for="batchBiplot">Feature IDs/names <br/> (one per row):</label>
+                            </td>
+                            <td>
+                                <textarea id="batchBiplot" style="height:180px; width: 180px"></textarea>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div align="center" style="width: 320px; padding-top: 10px">
+                        <div align="left" style="padding-top: 10px; padding-left:50px; display:inline-block">
+                            <a id="resetBiplotBn" href="#" class="easyui-linkbutton">Reset</a> 
+                        </div>
+                        <div align="right" style="padding-top: 10px; padding-left:70px;display:inline-block">
+                            <a href="#" id="biplotBn" class="easyui-linkbutton">Submit</a> 
+                        </div>
+                    </div>
+
+                    <br/>
+                </div>
+            </div>
+
+            <div id="biplotdlg2" class="easyui-dialog" title="Visual Options" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true" 
+                 style="width:460px;height:390px;padding:10px">
+                <div title="Batch Selection" style="padding:10px 20px 10px 20px;">
+                    <p>
+                        This function overlays confidence ellipsoids or density contours on top of feature space to help detect associations 
+                        of feature subsets with the meta-data groups.
+                    </p>
+                    <table style="width:400px">
+                        <tr>
+                            <td>
+                                <label>Visual method</label>
+                            </td>
+                            <td>
+                                <select id="biplotEncasingType">
+                                    <option value="ellipse">Ellipse</option>
+                                    <option value="contour">Contour</option>
+                                </select> 
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>Selected meta-data</label>
+                            </td>
+                            <td>
+                                <select id="biplotMetaOpt">
+                                    <option value="all">Meta</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>Confidence level</label>
+                            </td>
+                            <td>
+                                <input id="biplotSliderConf" type="range" min="0.1" max="1" value="0.8" step="0.05" style="width:40%;" >
+                                <input type="text" id="biplotSliderConfText" value="0.8" style="width:40px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>Opacity</label>
+                            </td>
+                            <td>
+                                <input id="biplotAlpha" type="range" min="0.1" max="1" value="0.5" step="0.05" style="width:40%;">
+                                <input type="text" id="biplotAlphaText" value="0.5" style="width:40px;">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div align="center" style="width: 360px; padding-top: 5px">
+                    <div align="left" style="padding-top: 10px; padding-left:50px; display:inline-block">
+                        <a id="resetBiplotBn2" href="#" class="easyui-linkbutton">Remove</a> 
+                    </div>
+                    <div align="right" style="padding-top: 10px; padding-left:70px;display:inline-block">
+                        <a id="biplotBn2" href="#" class="easyui-linkbutton">Submit</a> 
+                    </div>
+                </div>
+                <div align="center" style="width: 320px; padding-top: 20px">
+                    <label>Note: using contour method may take a few minutes</label>
+                </div>
+            </div>
+
+
+            <div id="encasingdlg" class="easyui-dialog" title="Visual Options" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true" 
+                 style="width:460px;height:390px;padding:10px">
+                <div style="padding:10px 20px 10px 20px;">
+                    <p>
+                        This function overlays meta-data confidence ellipsoids or density contours on top of the sample space to help
+                        visualize patterns of sample separation.
+                    </p>
+
+                    <fieldset id="myTableFieldSet" style='border: 0; width:400px'>
+                        <table style="width:400px" id='scoreTbl' >
+                            <tr>
+                                <td>
+                                    <label>Visual method</label>
+                                </td>
+                                <td>
+                                    <select id="scoreEncasingType">
+                                        <option value="ellipse">Ellipse</option>
+                                        <option value="contour">Contour</option>
+                                    </select> 
+                                </td>
+                            </tr>
+                            <tr style="display:none">
+                                <td>
+                                    <label>Selected meta-data</label>
+                                </td>
+                                <td>
+                                    <select id="encasingMetaOpt">
+                                        <option value="all">Meta</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label>Confidence level</label>
+                                </td>
+                                <td>
+                                    <input id="encasingSliderConf" type="range" min="0.1" max="1" value="0.5" step="0.1" style="width:40%;">
+                                    <input type="text" id="encasingSliderConfText" value="0.5" style="width:40px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label>Opacity</label>
+                                </td>
+                                <td>
+                                    <input id="encasingAlpha" type="range" min="0.1" max="1" value="0.5" step="0.05" style="width:40%;">
+                                    <input type="text" id="encasingAlphaText" value="0.5" style="width:40px;">
+                                </td>
+                            </tr>
+                        </table>
+                    </fieldset>
+                </div>
+                <div align="center" style="width: 450px; padding-top: 5px">
+
+                    <div align="left" style="padding-top: 10px; display:inline-block">
+                        <a id="resetBiplotBn3" href="#" class="easyui-linkbutton">Remove</a> 
+                    </div>
+                    <div align="right" style="padding-top: 10px; padding-left:70px;display:inline-block">
+                        <a id="switchToScoreBn" href="#" class="easyui-linkbutton">Submit</a> 
+                    </div>
+                    <div align="center" style="width: 320px; padding: 10px">
+                        <label>Note: using contour method may take a few minutes</label>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="sharelinkdlg" class="easyui-dialog" title="Sharable Link" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:220px;padding:5px">  
+                <ul id="shareLink" style="padding: 10px; margin: 0">
+
+                </ul>
+                <div align="center" style="width: 280px; padding-top: 10px">
+                    <a href="#" id="copyShareLinkBn" class="easyui-linkbutton">Copy to clipboard</a> &nbsp;&nbsp;
+                    <a href="#" class="easyui-linkbutton" onclick="$('#sharelinkdlg').dialog('close')">Cancel</a>
+                </div>
+            </div>
+
+            <div id="pngdialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:630px;height:400px;padding:5px">  
+                Right click the PNG image to save as your preferred name
+                <image id="downloadimage"/> 
+            </div> 
+
+            <div id="shadingdlg" class="easyui-dialog" title="Node shading" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+                 style="width:400px;height:280px;padding:10px">
+                <div title="Select node type" style="padding:0px 4px 4px 10px;"> 
+                    <p>
+                        Select the desired shading effect to be applied on nodes
+                    </p>
+                    <div style="margin-bottom:10px">
+                        <label>Shading:</label>
+                        <select id="shadeOpt">
+                            <option value="na"> -- Specify --</option> 
+                            <option value="balltl">Standard</option>
+                            <option value="balltr">Dark</option>
+                            <option value="disc">Plain</option>
+                        </select> &nbsp;
+                    </div>
+                    <div align="center" style="width: 320px;">
+                        <a href="#" id="setShadingBn" class="easyui-linkbutton">Submit</a> 
+                    </div>
+                </div>
+            </div>
+
+            <div id="nodestyledlg" class="easyui-dialog" title="Node Style" data-options="iconCls:'icon-close',cache: false,resizable:true, closed:true, modal:true"  
+                 style="width:400px !important; height:250px !important;overflow:hidden !important">
+                <div id="ttNode" class="easyui-tabs" style="background:rgba(0,0,0,0);width:400px;height:230px;">
+                    <div title="Size" style="padding:8px 4px 4px 10px;"> 
+                        <br />
+                        <!--
+                        <div style="margin-bottom:10px">
+                            <label>Node scope: </label>
+                            <select id="nodeOpt">
+                                <option value="all">All nodes</option>
+                                <option value="main">Main only</option>
+                                <option value="inset">Inset only</option>
+                            </select>
+                        </div>
+                        -->
+                        <div style="margin-bottom:10px">
+                            <label>Node size: </label>
+                            <select id="sizeOpt">
+                                <option value="increase">Increase ++ </option>
+                                <option value="decrease">Decrease -- </option>
+                            </select>
+                            <div align="center" style="width: 320px; padding-top:20px">
+                                <a href="#" class="easyui-linkbutton" id="nodeSizeBn">Submit</a>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div title="Opacity" style="padding:10px 20px 10px 20px;">          
+                        <div style="margin-bottom:10px; padding-top: 25px">
+                            <label>Opacity</label>
+                            <input id="nodeSliderOpa" type="range" min="0" max="1" value="0.5" step="0.1" style="width:40%;">
+                            <input type="text" id="nodeSliderOpaText" value="0.5" style="width:30px;">
+                        </div>
+                        <div align="center" style="width: 240px; padding-top: 10px; padding-bottom: 20px">
+                            <a id="updateNodeOpacity" href="#" class="easyui-linkbutton">Submit</a>
+                        </div>
+
+                        <label>Tip: consider reducing opacity value for larger number of samples to improve viewing experience</label>
+                    </div>
+                </div>
+            </div>
+            <!--
+            <div title="Shape" style="padding:8px 4px 4px 10px;"> 
+
+                <table id="dgShape" class="easyui-datagrid"
+                       data-options="border:false,fit:false,checkOnSelect:true,selectOnCheck:true, fitColumns:true">  
+                    <thead>  
+                        <tr>  
+                            <th data-options="field:'name',width:100">Type</th>  
+                            <th data-options="field:'shape',width:100">Shape</th>  
+                        </tr>  
+                    </thead>  
+
+                </table> 
+                <div align="center" style="width: 240px; padding-top: 10px; padding-bottom: 20px">
+                    <a id="updateNodeShapeBn" href="#" class="easyui-linkbutton">Submit</a>
+                </div>
+            </div>
+            -->
+
+            <div id="initdialog" class="easyui-dialog" title="Tips" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:560px;">  
+                <div style="text-align:left;padding:10px; font-size: 13px !important">
+                    <ol style="margin-left: 0; padding-left: 20px">
+                        <li>
+                            From the top menu bar:
+                            <ul style="margin-left: 0;">
+                                <li>
+                                    <b>Omics Space</b>: to control which analysis results to use:
+                                    <ul>
+                                        <li>
+                                            Multi-omics: the view contains data from all omics types (some methods may not support this);
+                                        </li>
+                                        <li>
+                                            Multi-omics (specific omics type): the view contains the specified omics type (some methods may not support this);
+                                        </li>                
+                                        <li>
+                                            PCA (specific omics type): the view contains single omics analysis on the specified omics type (based on PCA)
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <b>View Type</b>: for the selected omics space, what to display - scores (samples), loadings (features) or  biplot (merged view);
+                                </li>
+
+                                <li>
+                                    <b>Advanced Options</b>: various functions such as batch selection, customizing loading sphere, setting gradient color background, hide text display.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            From the central scatter plot area:
+                            <ul style="margin-left: 0;">
+                                <li>
+                                    To navigate in the 3D space, click-and-drag to rotate the current view. mouse wheel forward and backward to zoom and unzoom.
+                                </li>
+                                <li>
+                                    To view both sample and loading view simultaneously, click on <img style="width: 22px; height:21px" border="0" src="../../resources/images/collapse.png" /> icon located in the vertical tool bar located on top left side of the main view.
+                                </li>
+                                <li>
+                                    To apply meta-data overlay, click on <img style="width: 22px; height:21px" border="0" src="../../resources/images/ellipse.png" /> icon.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            From the left panel:
+                            <ul style="margin-left: 0;">
+                                <li>
+                                    <b>Settings</b>: customize overall viewing environment.
+                                </li>
+                                <li>
+                                    <b>Overview</b>: display and customize sample points based on meta-data groups.
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            From the right panel;
+                            <ul style="margin-left: 0;">
+                                <li>
+                                    <b>Comparison Test</b>: perform comparison analysis between selected meta-data groups from "Overview" tab.
+                                </li>
+                                <li>
+                                    <b>Enrichment Analysis</b>: perform over-representation analysis on the results obtained from "Comparison Test" tab.
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ol>
+                </div>
+                <div style="width:480; text-align: center; padding-bottom: 10px">
+                    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick='$("#initdialog").dialog("close")'>Ok</a>
+                </div>
+            </div>
+            <div id="shapedlg" class="easyui-dialog" title="Node Shape" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  style="width:360px;min-height:250px;padding:10px">
+                <table id="dgShape" class="easyui-datagrid"
+                       data-options="border:false,fit:true,checkOnSelect:true,selectOnCheck:true, fitColumns:true">  
+                    <thead>  
+                        <tr>  
+                            <th data-options="field:'name',width:100">Type</th>  
+                            <th data-options="field:'shape',width:100">Shape</th>  
+                        </tr>  
+                    </thead>  
+
+                </table> 
+
+            </div>
+
+    </body>
+</html>

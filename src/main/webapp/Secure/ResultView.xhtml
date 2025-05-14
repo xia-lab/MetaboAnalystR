@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{downloader.setupDownloadTableWrapper()}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Results', '/Secure/ResultView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">             
+        <script type="text/javascript">
+            function start() {
+                PF('statusDialog').show();
+            }
+            function stop() {
+                PF('statusDialog').hide();
+            }
+        </script> 
+
+        <h:panelGroup>
+            <ui:include src="./xialabpro/_DefaultResult.xhtml" />
+
+            <h:panelGroup>
+                <ui:include src="./xialabpro/dialog/_msetDialog.xhtml" />
+            </h:panelGroup>
+            <ui:include src="/template/_feature_dialog.xhtml" />
+
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

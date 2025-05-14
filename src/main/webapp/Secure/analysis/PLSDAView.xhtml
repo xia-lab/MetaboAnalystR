@@ -1,0 +1,547 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('PLSDA')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('PLSDA', '/Secure/analysis/PLSDAView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/report_generation.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
+        <script type="text/javascript">
+            var light;
+            var textColor;
+            var gridColor;
+            var pcaLoadX = "Loading " + "#{plsBean.plsLoadX}";
+            var pcaLoadY = "Loading " + "#{plsBean.plsLoadY}";
+            var pointMap;
+            var usr = "#{sessionBean1.getUserDir()}";
+            usr = usr.replace(/\/\//g, '/');
+
+            loadLabel = function (raw) {
+                pointMap = raw;
+            };
+
+            function extender() {
+                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+
+                if (light === "light") {
+                    textColor = "grey";
+                    gridColor = 'lightgrey';
+                } else {
+                    textColor = "white";
+                    gridColor = 'rgb(200, 200, 200,0.2)';
+                }
+                $.getJSON(usr + "/pointMap2.json", loadLabel);
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    color: textColor,
+                                    text: pcaLoadY
+                                },
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    color: textColor,
+                                    text: pcaLoadX
+                                },
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    }, pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+                $.extend(true, this.cfg.config, options);
+            }
+            function setupTheme() {
+                var button = $("button[id$='toggleTm']");
+
+                button.each(function () {
+                    this.click(); // Trigger the click event
+                });
+            }
+            ;
+        </script>
+        <style>
+            .vertical-text {
+                display:inline-block;
+                white-space: nowrap;
+                filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+                -webkit-transform: rotate(270deg);
+                -ms-transform: rotate(270deg);
+                transform: rotate(270deg);
+            }
+        </style>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="mydir" value="#{sessionBean1.getJsonDir('pls_score3d')}" />
+        <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('pls_loading3d')}" />
+          
+
+
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Partial Least Squares Discriminant Analysis (PLS-DA)
+            </h2>
+            <h:panelGrid id="multigrp" rendered="#{sessionBean1.multiGroup}" style="width:100%; padding-left: 20px">
+
+                <h:form id="form11">
+                    <h:panelGrid columns="4">
+                        <h:panelGrid columns="2" style="padding-right: 40px">
+                            <p:selectBooleanCheckbox value ="#{sessionBean1.keepClsOrder}" style="line-height: 18px"/>
+                            <p:outputLabel style="font-size: 13px" value="Group order matters (i.e. implying time points, disease severity, etc.)"/>
+                        </h:panelGrid>
+                        <p:commandButton value="Update" 
+                                         update=":ac"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         actionListener="#{plsBean.updatePLSDA()}"/>  
+
+                        <p:spacer style="width: 36px"/>
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help" />
+                    </h:panelGrid>
+                    <p:tooltip for="helpIcon" styleClass="helpTip">
+                        <p>
+                            PLS-DA is calculated by maximizing the co-variance between the data matrix (X) and the class labels (Y). 
+                            By default, the program will first convert the class labels into rankings based on their numerical or alphabetic orders 
+                            (i.e. group labels “A, B, C, D” will be 1, 2, 3, 4; while group labels “low, medium, high” will be 2, 3, 1), and then 
+                            perform PLS regression between the data matrix and numerical Y. 
+                        </p>
+                        <p>
+                            For two-group data, this procedure will not affect the visualization pattern, as it will always be between 1 vs. 2. 
+                            For multi-groups, this default approach is meaningful when the group labels correspond to time series, disease severity, 
+                            or treatment dosages. However, when group labels do not reflect quantitative differences, users should 
+                            <u>uncheck the option “<b>Class order matters</b>”</u>. In this case, PLS-DA will be performed using a general 
+                            linear model in which group labels will be coded using the model matrix rather than numerical values, so that 
+                            the result pattern will not be sensitve to the class labels. 
+                        </p>
+                    </p:tooltip>
+                </h:form>
+            </h:panelGrid>
+            <p:tabView id="ac" widgetVar="tabWidgetVar" style="width:100%; border: none; font-size: 13px;" activeIndex="#{plsBean.activeTab}">
+
+                <p:tab title ="Overview">
+                    <h:form id="form1">
+                        <h:panelGrid columns="2" style="width: 70%">
+                            <h:panelGroup>
+                                <h:outputLabel style="font-weight: bold" value="Display pairwise score plot for top "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{plsBean.plsPairNum}">
+                                    <f:selectItems value="#{plsBean.plsPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value=" components"/>
+                            </h:panelGroup>
+                            <p:commandButton value="Update" update=":ac:form1:pairPane  :hisTab:cmdPane" actionListener="#{plsBean.plsPairBtn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="pairPane" style="width: 100%; padding-left: 10%">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_pair')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_pair')}" alt="PLSPairImage"/>
+                        </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+                <p:tab title ="2D Scores Plot">
+                    <h:form id="form3">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-left: 20px; padding-right: 30px">
+                                <h:panelGroup layout="block" style="width:220px">
+                                    <h:outputLabel style="font-weight: bold" value="Select component for X-axis:"/>
+                                </h:panelGroup>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsScore2dX}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Select component for Y-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsScore2dY}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Update font/label size"/>
+                                <p:selectOneMenu value="#{plsBean.cexOpt}">
+                                    <f:selectItem itemLabel="Default (reset)" itemValue="na" />
+                                    <f:selectItem itemLabel="Increase (++)" itemValue="increase" />
+                                    <f:selectItem itemLabel="Decrease (--)" itemValue="decrease" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Display 95% confidence region:"/>
+                                <p:selectBooleanCheckbox value ="#{plsBean.displayConfs}" style="line-height: 18px"/>       
+                                <h:outputLabel style="font-weight: bold" value="Display sample names:"/>
+                                <p:selectBooleanCheckbox value ="#{plsBean.displayNames}" style="line-height: 18px"/>
+                                <h:outputLabel style="font-weight: bold" value="Use grey-scale colors:"/>
+                                <p:selectBooleanCheckbox value ="#{plsBean.greyScale}" style="line-height: 18px"/>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form3:score2dPane  :hisTab:cmdPane" actionListener="#{plsBean.plsScore2dBtn_action()}" partialSubmit="true"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="score2dPane" style="width: 100%; padding-left: 10%; padding-top: 10px">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_score2d')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_score2d')}" alt="PLSScore2DImage"/>
+                            <h:panelGrid style="text-align: left">
+                                Note, PLS-DA maximizes the <b>covariance</b> between X (data) and Y (group). The variance displayed in the plot above 
+                                is the <b>explained variance for X</b>. Covariance and x-variance may not agree with each other in some cases. For instance, 
+                                the 1st component may not explain more X-variance than the 2nd component. 
+                            </h:panelGrid>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Loadings Plot">
+                    <h:panelGrid columns="2" style="width:100%">
+                        <h:form id="form5">
+                            <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                                <h:panelGrid columns="2" cellpadding="5" style="width:500px; padding-left: 20px">
+                                    <h:panelGroup layout="block" style="width: 180px">
+                                        <h:outputLabel style="font-weight: bold" value="X-axis component:"/>
+                                    </h:panelGroup>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsLoadX}">
+                                        <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                    </p:selectOneMenu>
+
+                                    <h:outputLabel style="font-weight: bold" value="Y-axis component:"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsLoadY}">
+                                        <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                    </p:selectOneMenu>
+                                    <h:panelGroup layout="block">
+                                        <h:outputLabel style="font-weight: bold" value="Set annotations:"/> <br/>
+                                        <h:outputText style="color:grey" value="(for download image only)"/>
+                                    </h:panelGroup>
+                                    <p:selectOneRadio layout="pageDirection" value="#{plsBean.loadOpt}">
+                                        <f:selectItem itemLabel="Label all varaibles" itemValue="all" /> 
+                                        <f:selectItem itemLabel="Do not label variables" itemValue="none" /> 
+                                        <f:selectItem itemLabel="Label only variables of interest" itemValue="custom" /> 
+                                    </p:selectOneRadio>
+                                </h:panelGrid>
+                                <h:panelGrid style="text-align: center; padding-left: 50px">
+                                    <p:commandButton value="Update" 
+                                                     update=":ac:loadPane  :hisTab:cmdPane" 
+                                                     actionListener="#{plsBean.plsLoadBtn_action()}" 
+                                                     partialSubmit="true"/>   
+                                </h:panelGrid>
+                            </h:panelGrid>
+                        </h:form>
+                    </h:panelGrid>                 
+                    <h:panelGrid columns="2" style="width: 1100px; text-align: center; padding-top: 10px">
+                        <h:panelGrid style="width: 480px; text-align: left">
+                            <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                        </h:panelGrid>
+                        <h:panelGrid columns="4" style="width:200px; padding-left: 20px">
+                            <p:commandLink action="#{sessionBean1.detailsLnk_action('pls.loadings')}" title="View the detailed data table">
+                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_loading')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                            <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                                <i class="pi pi-undo"></i>
+                            </p:commandLink>
+                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        </h:panelGrid>
+                        <p:tooltip for="helpIcon" styleClass="helpTip">
+                            <p>
+                                Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                                represent the concentrations of the selected feature from all samples. The notch indicates
+                                the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                                The notch can be used to evaluate differences between groups; if the notches 
+                                do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                                with a yellow diamond.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGrid>  
+                    <h:panelGrid id="loadPane" style="text-align: center;" class="surface-card shadow-1 p-4 text-800">
+                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel1('pls')}"  
+                                        style="height:670px; width:720px">
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                        </p:scatterChart>
+                    </h:panelGrid>
+                    <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('pls')}" update="chart" />
+
+                </p:tab>
+                <p:tab title ="Imp. Features">
+                    <h:form id="form6">
+                        <p>
+                            There are two importance measures in PLS-DA : one is variable importance in projection (VIP) and the other is 
+                            the weighted sum of absolute regression coefficients (coef.).  The colored boxes on the right indicate the relative 
+                            concentrations of the corresponding metabolite in each group under study. 
+                        </p>
+                        <p:selectOneRadio id="impRadio" value="#{plsBean.impOpt}" layout="custom">  
+                            <f:selectItem itemValue="vip" itemLabel="VIP score"/>
+                            <f:selectItem itemValue="coef" itemLabel="Coefficient score"/>
+                        </p:selectOneRadio>
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width: 500px">
+                                <h:outputLabel style="font-weight: bold" value="Importance measure:"/>
+                                <h:panelGrid columns="3" style="width:320px;">
+                                    <p:radioButton for="impRadio" itemIndex="0"/>
+                                    <h:outputLabel style="font-weight: bold" value="VIP score"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{plsBean.vipOpt}">
+                                        <f:selectItems value="#{plsBean.vipItems}" />
+                                    </p:selectOneMenu>
+                                    <p:radioButton for="impRadio" itemIndex="1"/>
+                                    <h:outputLabel style="font-weight: bold" value="Coefficient score"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{plsBean.coefOpt}">
+                                        <f:selectItems value="#{plsBean.coefItems}" />
+                                    </p:selectOneMenu>  
+                                </h:panelGrid>
+                                <h:outputLabel style="font-weight: bold" value="Show top feature number:"/>
+                                <p:inputText style="width:50px" value="#{plsBean.impFeatNum}"/> 
+                                <h:outputLabel style="font-weight: bold" value="Use grey scale color:"/>
+                                <p:selectBooleanCheckbox value ="#{plsBean.grayScale}" style="line-height: 18px"/>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form6:impPane  :hisTab:cmdPane" actionListener="#{plsBean.plsImpBtn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="impPane" style="width: 100%; padding-left: 10%; padding-top: 10px">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink action="#{plsBean.impDetailsLnk_action()}" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_imp')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_imp')}" alt="PLSImpImage"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Synchronized 3D Plots">
+                    <h:form id="form4">
+                        <h:panelGrid style="width: 1100px" columns="2">
+                            <p>
+                                <u>Dragging</u> to rotate the view around the axis; <u>Double clicking</u> a data point on loading plot to view a summary 
+                                of the metabolite; <u>Scrolling</u> to zoom in and out. <br/> Click <u>Update</u> if you have updated color schema in the 2D score view. 
+                            </p>
+                            <p:commandButton update="mydir2 :ac:form4" actionListener="#{plsBean.plsScore3dBtn_action()}" value="Update" partialSubmit="true"/>
+                        </h:panelGrid>
+                        <!--
+                        
+                            <h:panelGrid style="width: 1000px; text-align: right; padding-top: 10px">
+                                <h:panelGrid columns="4" style="width: 420px;">
+                                    <h:outputLabel style="font-weight: bold" value="SVG Export:"/>
+                                    <p:commandButton onclick="export_image('score')" value="Score"/>
+                                    <p:commandButton onclick="export_image('loading')" value="Loading"/>
+                                    <p:commandButton ajax="false" actionListener="#{plsBean.plsScore3dBtn_action()}" value="Update"/>
+                                </h:panelGrid> 
+                            </h:panelGrid>
+                        </h:form>
+                        -->
+                        <h:panelGrid id="syn3d" style="width: 1100px">
+                            <iframe id="frameId"  style="width: 1100px; height: 840px; margin: 0; padding: 0;" frameborder="0" loading="lazy"
+                                    src="../viewer/_scatter3D_viewer.html"/>
+                        </h:panelGrid>
+                    </h:form>
+
+                </p:tab>
+                <p:tab title ="Cross Validation">
+                    <h:form id="form2">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width: 480px; padding-right: 20px">
+                                <h:outputLabel style="font-weight: bold" value="Maximum components to search:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.searchCompNum}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Cross validation (CV) method:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:100px" value="#{plsBean.cvOpt}">
+                                    <f:selectItem itemValue="5" itemLabel="5-fold CV"/>
+                                    <f:selectItem itemValue="10" itemLabel="10-fold CV"/>
+                                    <f:selectItem itemValue="loo" itemLabel="LOOCV"/> 
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Performance measure:"/>
+
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:80px" value="#{plsBean.perfMeasure}">         
+                                    <f:selectItem itemValue="Q2" itemLabel="Q2"/>
+                                    <f:selectItem itemValue="Accuracy" itemLabel="Accuracy"/>
+                                    <f:selectItem itemValue="R2" itemLabel="R2"/>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form2 :ac:form6 :hisTab:cmdPane"
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             actionListener="#{plsBean.plsCVBtn_action()}"/> 
+
+                        </h:panelGrid>
+                        <h:panelGrid id="cvPane" style="width: 100%; padding-top: 20px; text-align: center">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_cv')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{plsBean.plsCVImg}" alt="PCACVImage"/>
+                            <h:panelGrid style="text-align: left">
+                                <p>
+                                    Q2 is an estimate of the predictive ability of the model, and is calculated via cross-validation (CV). 
+                                    In each CV, the predicted data are compared with the original data, and the sum of squared errors is
+                                    calculated. The prediction error is then summed over all samples (Predicted Residual Sum of Squares or PRESS). 
+                                    For convenience, the PRESS is divided by the initial sum of squares and subtracted from 1 to resemble the scale of the R2. 
+                                    Good predictions will have low PRESS or high Q2. It is possible to have <b>negative Q2</b>, which means that
+                                    your model is not at all predictive or is overfitted. For more details, refer to an excellent paper by 
+                                    (<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3337399/">Szymańska, et al</a>). 
+                                </p>
+                            </h:panelGrid>
+                            <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" appendTo="@(body)" width="500px" height="240px"
+                                      hideEffect="explode" resizable="true"> 
+                                <h:panelGrid id="detailView" style="width:480px; padding: 20px; font-size: 12px">
+                                    <h:outputText escape="false" value="#{plsBean.perfTxt}"/>
+                                </h:panelGrid> 
+                            </p:dialog>
+                        </h:panelGrid>     
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Permutation">
+                    <p>
+                        Permutation test is a technique for testing a hypothesis of no effect, when the distribution of the test statistic 
+                        is unknown. <u>A relative large sample size is required in order to reliably estimate the empirical p values</u>.
+                        When your sample size is small, it is better to use unsupervised methods (such as PCA) and simple but more robust statistical 
+                        tests (such as t-tests or ANOVA), as supervised methods (such as PLS-DA) will be more suceptible to overfitting.  
+                    </p>
+                    <p>
+                        Permutation is a computationally intensive procedure. For large dataset, the actual number of permutations may be 
+                        adjusted automatically in order to complete within a reasonable time 
+                    </p>
+                    <h:form id="form7">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" style="width: 540px; padding-right: 40px">
+                                <h:outputLabel style="font-weight: bold" value="Test statistic:"/>
+                                <p:selectOneRadio layout="pageDirection" value="#{plsBean.permStat}">
+                                    <f:selectItem itemLabel="Prediction accuracy in training" itemValue="accu" /> 
+                                    <f:selectItem itemLabel="Separation distance (B/W)" itemValue="bw" /> 
+                                </p:selectOneRadio>
+                                <h:outputLabel style="font-weight: bold" value="Permutation numbers:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{plsBean.permNum}">
+                                    <f:selectItem itemLabel="--Not set--" itemValue="0"/>
+                                    <f:selectItem itemLabel="20" itemValue="20"/> 
+                                    <f:selectItem itemLabel="100" itemValue="100"/> 
+                                    <f:selectItem itemLabel="1000" itemValue="1000"/> 
+                                    <f:selectItem itemLabel="2000" itemValue="2000"/> 
+                                </p:selectOneMenu>  
+                            </h:panelGrid>
+                            <p:commandButton value="Submit" update=":ac:form7:permPane  :hisTab:cmdPane" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"                              
+                                             actionListener="#{plsBean.plsPermBtn_action()}"/>   
+                        </h:panelGrid>
+
+                        <h:panelGrid id="permPane" style="width: 100%; padding-left: 10%; padding-top: 20px">
+                            <h:outputLabel style="font-weight: bold" value="#{plsBean.permMsg}"/>
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_perm')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_perm')}" alt="PLSPermutationImage"/>
+                        </h:panelGrid> 
+                    </h:form>
+                </p:tab>
+                 <p:tab title ="Biplot">
+                    <h:form id="form8">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-right: 60px">
+                                <h:outputLabel style="font-weight: bold" value="Select PC for X-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotX}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Select PC for Y-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotY}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>  
+                                <h:outputLabel style="font-weight: bold" value="Number of top features:"/>
+                                <h:panelGroup>
+                                    <p:inputText id="topFeat" value="#{plsBean.plsBiplotFeat}" style="width: 50px" required="true" requiredMessage="Must set the number of top features!"/>
+                                    <p:slider for="topFeat" minValue="1" maxValue="#{sessionBean1.featureNumber}" step="1" style="width: 50px" />
+                                </h:panelGroup>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form8:biplotPane  :hisTab:cmdPane" actionListener="#{plsBean.plsBiplotBtn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="biplotPane" style="text-align: center; width: 1000px; padding-top: 20px">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_biplot')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_biplot')}" alt="PLSBiplotImage"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid>
+        <p:dialog modal="true" widgetVar="exportDialog" style="width:600px; height: 580px" appendTo="@(body)">  
+            <h:outputLabel style="font-size: 13px; font-weight: bold" value="Right click the PNG image to save as your preferred name:"/><br/>
+            <image id="downloadimage"></image>  
+        </p:dialog>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,23 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Data_Processing", "label": "Data Processing", "size": "10", "color": "#666666" }, "position": { "x": 100, "y": 0 } },
+      { "data": { "id": "Method Selection", "label": "Method Selection", "size": "10", "color": "#666666" }, "position": { "x": 200, "y": 0 } },
+      { "data": { "id": "Pathway-level integration", "label": "Pathway-level integration", "size": "10", "color": "#666666" }, "position": { "x": 300, "y": 0 } },
+      { "data": { "id": "metapaths Network Explorer path", "label": "Network Explorer", "size": "10", "color": "#666666" }, "position": { "x": 400, "y": 100 } },
+      { "data": { "id": "metapaths Upset Diagram path", "label": "Upset Diagram", "size": "10", "color": "#666666" }, "position": { "x": 400, "y": 150 } },
+      { "data": { "id": "Pooling peaks", "label": "Pooling peaks", "size": "10", "color": "#666666" }, "position": { "x": 200, "y": 100 } },
+      { "data": { "id": "metapaths Network Explorer pool", "label": "Network Explorer", "size": "10", "color": "#666666" }, "position": { "x": 400, "y": 300 } }
+    ],
+    "edges": [
+      { "data": { "id": "e1", "source": "Start", "target": "Data_Processing" } },
+      { "data": { "id": "e2", "source": "Data_Processing", "target": "Method Selection" } },
+      { "data": { "id": "e3", "source": "Method Selection", "target": "Pathway-level integration" } },
+      { "data": { "id": "e4", "source": "Pathway-level integration", "target": "metapaths Network Explorer path" } },
+      { "data": { "id": "e5", "source": "Pathway-level integration", "target": "metapaths Upset Diagram path" } },
+      { "data": { "id": "e6", "source": "Method Selection", "target": "Pooling peaks" } },
+      { "data": { "id": "e7", "source": "Pooling peaks", "target": "metapaths Network Explorer pool" } }
+    ]
+  }
+}

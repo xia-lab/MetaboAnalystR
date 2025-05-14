@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Pre-process', '/Secure/process/ProcNMRpeak.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{procBean.performNMRPeakAlignment()}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid id="normPane" styleClass="my-content-panel">
+                <h2>Processing NMR peak list data :</h2>
+                <p>
+                    <ul>
+                        <li>
+                            Each NMR peak list file should contain two columns of numeric values - the first column must be chemical shift (ppm), and the second must be the intensity of the peak.  
+                        </li>
+                        <li>
+                            The first line of the file should be column labels (i.e. ppm, int).   
+                        </li>
+                        <li>
+                            This program groups peaks based on their ppm values using a moving window of 0.03 ppm and a step of 0.015 ppm. 
+                            Peaks within the same peak group will be aligned to their median ppm.
+                        </li>
+                        <li>
+                            For each peak group, if more than one peak is detected from the same sample, they will be replaced by their sum. 
+                        </li>
+                        <li>
+                            If a peak group contains peaks from less than half of the samples of both classes, it will be excluded from alignment.
+                        </li>
+                    </ul>
+                </p>
+                <h:panelGrid style="border: 1px dashed black; margin-left: 20px; padding: 20px; width: 800px" class="surface-card shadow-1 p-4 text-800">
+                    <h:outputLabel value="#{procBean.nmrAlignText}" escape="false"/>
+                </h:panelGrid>
+                <h:panelGrid style="width: 800px; text-align: center; padding-top: 10px">
+                    <p:commandButton value="Proceed" ajax="false" 
+                                     icon="pi pi-caret-right"
+                                     action="#{procBean.nmrNextBn_action()}"/>       
+                </h:panelGrid> 
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

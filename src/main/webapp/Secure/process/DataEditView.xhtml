@@ -1,0 +1,196 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Data editor', '/Secure/process/DataEditView.xhtml')}"/>   
+        <f:event type="preRenderView" listener="#{editBean.prepareDataEditor()}"/>         
+    </ui:define>
+    <ui:define name="myscript">
+        <!--
+        This is to overwrite the default jquery-ui which contains a performance bug for dulalistmodel
+        https://bugs.jqueryui.com/ticket/15097
+        -->
+        <script type="text/javascript" src="../../resources/jscripts/jquery.ui.pfextensions.js"></script>
+    </ui:define>
+    <ui:define name="content">
+        <style>
+            .ui-picklist .ui-picklist-list{
+                height:300px;
+                width: 280px
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Data Editor</h2>
+            <p>
+                You can use the panels below to <b>exclude</b> particular feature(s), sample(s) and/or group(s). Note, 
+                <font style="color: orange">you must click the <b>Submit</b> button to complete data editing</font>. 
+                Data need to be re-calibrated after this step. you will be redirected to the <b>Data normalization</b> page 
+                when you click the <b>Submit</b> button. 
+            </p>
+            <h:form>
+                <p:tabView widgetVar="tabWidget" style="width:95%; border:none; line-height: 18px;">
+                    <p:tab title ="Edit Samples">
+                        <h:panelGrid style="padding-left:80px; padding-top: 10px">
+                            <p:pickList value="#{editBean.sampleItems}" 
+                                        var="sample" itemValue="#{sample}" itemLabel="#{sample}"
+                                        showSourceFilter="true" showTargetFilter="true">
+                                <f:facet name="sourceCaption">Available</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{editBean.doTransfer}"/>
+                            </p:pickList> 
+                            <h:panelGrid style="width:100%; font-size: 14px; text-align: center; padding-top: 20px">
+                                <p:commandButton value="Submit" ajax="false"                                               
+                                                 action="#{editBean.editData()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>                 
+                    </p:tab>
+                    <p:tab title ="Edit Groups" rendered="#{sessionBean1.analType ne 'mf'}">                        
+                        <h:panelGrid style="padding-left:80px; padding-top: 10px">
+                            <p:pickList value="#{editBean.groupItems}" var="group" itemValue="#{group}" itemLabel="#{group}" 
+                                        showSourceControls="true"
+                                        showSourceFilter="true" 
+                                        showTargetFilter="true">
+                                <f:facet name="sourceCaption">Available</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{editBean.doTransfer}"/>
+                            </p:pickList>
+                            <h:panelGrid columns="2" style="padding-left: 50px">
+                                <p:selectBooleanCheckbox value ="#{sessionBean1.keepClsOrder}" style="line-height: 18px"/>
+                                <p:outputLabel style="font-size: 13px" value="Group order matters (i.e. implying time points, severity, etc.)"/>
+                            </h:panelGrid>
+                            <h:panelGrid style="width:100%; font-size: 14px; text-align: center; padding-top: 20px">
+                                <p:commandButton value="Submit" ajax="false"                                               
+                                                 action="#{editBean.editData()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>   
+                    </p:tab> 
+                    <p:tab title ="Edit Features">
+                        <h:panelGrid style="padding-left:80px; padding-top: 10px">
+                            <p:pickList value="#{editBean.featureItems}" rendered="#{not sessionBean1.bigFeature}"
+                                        var="var" itemValue="#{var}" itemLabel="#{var}" 
+                                        showSourceFilter="true" 
+                                        showTargetFilter="true">
+                                <f:facet name="sourceCaption">Available</f:facet>
+                                <f:facet name="targetCaption">Exclude</f:facet>
+                                <p:ajax event="transfer" listener="#{editBean.doTransfer}"/>
+                            </p:pickList> 
+                            <h:panelGrid style="padding-left:140px;" rendered="#{sessionBean1.bigFeature}">
+                                <div style="font-size:13px; padding-bottom: 4px">
+                                    Enter the feature names (one per row) below to exclude. 
+                                    Leave it empty will retain / restore all features. 
+                                </div>
+                                <p:inputTextarea autoResize="false" value="#{editBean.bigFeatureList}" rows="25" cols="50" />
+                            </h:panelGrid>
+                            <h:panelGrid style="width:100%; font-size: 14px; text-align: center; padding-top: 20px">
+                                <p:commandButton value="Submit" ajax="false"                                               
+                                                 action="#{editBean.editData()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title ="View Metadata" rendered="#{sessionBean1.analType eq 'mf'}">  
+                        <p>
+                            This table is used to visualize the metadata uploaded. if more than eight were uploaded, only the first eight metadata is displayed. 
+                            To edit metadata, please go back to <b>"Metadata check"</b> page or edit locally using a Spreadsheet program before uploading to MetaboAnalyst.
+                        </p>
+                        <h:panelGrid style="padding-left:80px; padding-top: 10px">
+                            <p:dataTable  id="detailTbl" paginator="true" style="font-size: 12px; min-width: 540px" 
+                                          class="surface-card shadow-1 p-0 text-800"
+                                          editable="true"  widgetVar="cellDetails" 
+                                          var="fb" value="#{detailsBean.listMetaModel}"  
+                                          rows="20" rowsPerPageTemplate="20,50,100"
+                                          paginatorPosition="bottom" rowKey="#{fb.name}">
+                                <p:column>
+                                    <f:facet name="header">
+                                        <h:outputText value="Sample Name"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(0)}" rendered="#{detailsBean.isColVisible(0)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(0)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val1}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput1" value="#{fb.val1}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(1)}" rendered="#{detailsBean.isColVisible(1)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(1)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val2}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput2" value="#{fb.val2}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(2)}" rendered="#{detailsBean.isColVisible(2)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(2)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val3}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput3" value="#{fb.val3}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(3)}" rendered="#{detailsBean.isColVisible(3)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(3)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val4}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput4" value="#{fb.val4}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>                    </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(4)}" rendered="#{detailsBean.isColVisible(4)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(4)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val5}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput5" value="#{fb.val5}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>                        </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(5)}" rendered="#{detailsBean.isColVisible(5)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(5)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val6}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput6" value="#{fb.val6}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>                
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(6)}" rendered="#{detailsBean.isColVisible(6)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(6)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val7}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput7" value="#{fb.val7}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>                
+                                </p:column>
+                                <p:column headerText="#{detailsBean.getColHeader(7)}" rendered="#{detailsBean.isColVisible(7)}">
+                                    <f:facet name="header">
+                                        <h:outputText value="#{detailsBean.getColHeader(7)}"/>
+                                    </f:facet>
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{fb.val8}" /></f:facet>
+                                        <f:facet name="input"><p:inputText id="modelInput8" value="#{fb.val8}" style="width:95%"/></f:facet>
+                                    </p:cellEditor>                
+                                </p:column>
+                            </p:dataTable>
+                            <h:panelGrid style="width:100%; font-size: 14px; text-align: center; padding-top: 20px">
+                                <p:commandButton value="Submit" action="#{multifacBean.updateMetaData()}"/>
+                            </h:panelGrid>  
+                        </h:panelGrid>              
+                    </p:tab> 
+                </p:tabView>
+            </h:form>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

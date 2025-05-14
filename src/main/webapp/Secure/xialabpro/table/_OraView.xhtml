@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <ul>
+        <li>
+            <b>Enrichment Ratio</b> is computed by Hits / Expected, where hits = observed hits; expected = expected hits based on the null distribution of your selected model  
+        </li>
+    </ul>
+
+        <p:dataTable style="min-width:800px; font-size: 12px" 
+                     class="surface-card shadow-1 p-0 text-800"
+                     rows="10" rowsPerPageTemplate="10,25,50" paginatorPosition="bottom" 
+                     rowIndexVar="rowIndex" 
+                     rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     var="ob" value="#{msetBean.oraBeans}">  
+            <p:column headerText="" width="10" style="#{ob.style}">  
+                ﻿ <h:outputText value=""/> 
+            </p:column>  
+            <p:column headerText="Metabolite Set" style="width:320px">  
+                <h:outputText escape="false" value="#{ob.setName}"/> 
+            </p:column>  
+            <p:column headerText="Total">  
+                <h:outputText escape="false" value="#{ob.setNum}"/>
+            </p:column>  
+            <p:column headerText="Hits">  
+                <h:outputText escape="false" value="#{ob.hitNum}"/>
+            </p:column>  
+            <p:column headerText="Expect">  
+                <h:outputText escape="false" value="#{ob.expNum}"/>
+            </p:column>  
+            <p:column headerText="P value">  
+                <h:outputText escape="false" value="#{ob.PVal}"/>
+            </p:column>  
+            <p:column headerText="Holm P">  
+                <h:outputText escape="false" value="#{ob.bonPval}"/>
+            </p:column>  
+            <p:column headerText="FDR">  
+                <h:outputText escape="false" value="#{ob.fdrPval}"/>
+            </p:column> 
+            <p:column headerText="Details">  
+                <p:commandLink value="View" process="@this" oncomplete="PF('msetDialog').show()">  
+                    <f:setPropertyActionListener value="#{ob.setName}" target="#{msetBean.msetNm}" />  
+                </p:commandLink>
+            </p:column>      
+        </p:dataTable>   
+
+</ui:composition>
+

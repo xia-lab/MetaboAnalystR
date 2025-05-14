@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('dose')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/DoseUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="form1" enctype="multipart/form-data">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Please upload your data (.csv or .txt) </h2>
+                <p>
+                    Dose-response analysis was developed by the field of toxicology to identify the concentration at which a biological 
+                    assay responds to chemical exposure. 
+
+                    Dose response analysis require doses or exposure levels span a wide range to perform curve fitting. Two dose types are currently accepted:
+                    <ol>
+                        <li>
+                            <b>Repeated Dosing</b>: this experimental design includes a control group (dose = 0) 
+                            and <u>at least three different dose groups, typically with the same number of replicates in each group</u>. 
+                        </li>
+                        <li>
+                            <b>Continuous Exposure</b>: this data is usually from observational exposomics studies with doses/exposures measured from individuals with 
+                            different exposure levels;
+                        </li>
+                    </ol>
+                </p>
+                <h:panelGrid columns="2" cellpadding="4" style="width:720px; padding:20px;" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" style="width:580px">
+
+                        <p:outputLabel style="font-weight: bold" value="Data Type:"/>
+                        <p:selectOneRadio value="#{uploader.dataType}">
+                            <f:selectItems value="#{optBean.tableTypeOpts}"/>
+                        </p:selectOneRadio>
+
+                        <p:outputLabel style="font-weight: bold; padding-right: 20px" value="Dose Type: "/>
+                        <p:selectOneRadio value="#{uploader.dataClsOpt}">
+                            <f:selectItems value="#{optBean.doseOpts}" />
+                        </p:selectOneRadio>
+                        
+                        <p:outputLabel style="font-weight: bold" value="Format:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{uploader.dataFormat}">
+                            <f:selectItems value="#{optBean.csvFormatOpts}" />
+                        </p:selectOneMenu>
+                        <p:outputLabel style="font-weight: bold" value="Data File:"/>
+                        <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                        <p:outputLabel style="font-weight: bold; padding-right: 20px" value="Metadata (Optional):"/>
+                        <p:fileUpload value="#{uploader.metaFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     action="#{uploader.uploadDoseData()}"/>  
+                </h:panelGrid>
+
+                <hr class="style-one"/>
+
+                <p:selectOneRadio id="customRadio" value="#{uploader.testDoseOpt}" layout="custom">  
+                    <f:selectItem itemValue="dist" itemLabel="Discrete"/>
+                    <f:selectItem itemValue="cont" itemLabel="Continuous"/>
+                    <f:selectItem itemValue="tce" itemLabel="Continuous"/>
+
+                </p:selectOneRadio>
+                <h:panelGrid style="padding-top: 10px">
+                    <p:outputLabel style="font-size:15px; font-weight: bold; padding-top: 6px" value="Try our example data"/>
+                </h:panelGrid>  
+                <h:panelGrid>
+                    <h:panelGrid columns="3" cellpadding="4" style="width: 840px; padding: 20px" class="surface-card shadow-1 p-4 text-800">
+                        <p:spacer style="width: 30px"/>
+                        <h:panelGrid style="width:80px">
+                            <p:outputLabel style="font-weight: bold" value="Data"/>
+                        </h:panelGrid>       
+                        <p:outputLabel style="font-weight: bold" value="Description"/>
+
+                        <p:radioButton for="customRadio" itemIndex="0"/>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/dose_example.csv">Discrete</a>
+                        <h:panelGrid>
+                            An example data to study dose-response effect using metabolomics. 
+                            BT549 breast cancer cells were treated with etomoxir discrete concentrations that spanned 10-200 μM
+                            Doses: 0, 10, 50, and 200 uM with three replicates at each dose 
+                            (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7354698/" target="_blank">details</a>). 
+                        </h:panelGrid>
+
+                        <p:radioButton for="customRadio" itemIndex="1"/>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/ewaste_data.csv">E-waste</a>
+                        <a href="#{applicationBean1.apiResourcePath}ewaste_metadata_dose.csv">Metadata</a>                        
+
+                        <h:panelGrid>
+                            An exposomics example data to study dose-response effect of exposome with heavy metals in e-waste workers. 
+                            The dataset was generated with UPLC-Q/Exactive (C18 ESI<sup>-</sup>).
+                            The heavy metal (Lanthanum) is considered as a continuous exposure dose.(<a href="https://pubmed.ncbi.nlm.nih.gov/39728452/" target="_blank">details</a>). 
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                    <h:panelGrid style="width:840px; text-align: center;">
+                        <p:commandButton value="Submit" ajax="false"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"
+                                         action="#{uploader.uploadDoseDataExample()}"/>  
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

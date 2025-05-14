@@ -1,0 +1,43 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+    <style>
+        .mymenu .ui-menuitem-text{
+            font-size: 14px;
+        }
+    </style>
+    <p:menubar style="border: 0; box-shadow: 0; background: transparent;" styleClass="mymenu">
+        <p:menuitem value="Home" 
+                    title="Log out and return to home page"
+                    onclick="document.getElementById('safeLogoutBtn').click()"
+                    icon="pi pi-fw pi-home"/> 
+
+        <p:menuitem icon="pi pi-fw pi-sitemap" 
+                    value="Modules"
+                    onclick="document.getElementById('safeLogoutBtnModule').click()"
+                    title="Go to module view"/>
+
+        <p:menuitem icon="pi pi-fw pi-database" 
+                    value="Projects"
+                    action = "ProjectView"
+                    title="View/resume/create projects"/>
+
+        <p:menuitem icon="pi pi-fw pi-sync" 
+                    value="Workflow"
+                    action ="WorkflowView"
+                    title="Create/Run workflow"/>
+
+        <p:menuitem icon="pi pi-fw pi-check-square" 
+                    value="Data Prep"
+                    onclick="document.getElementById('checkWorkflowInput').click()"
+                    title="Prepare data for workflow"/>
+
+        <p:menuitem icon="pi pi-fw pi-chart-line" 
+                    value="Dashboard"
+                    title="View/download results in current project folder"
+                    action="#{sessionBean1.goToResultPage()}"/>
+    </p:menubar>
+
+</ui:composition>
+

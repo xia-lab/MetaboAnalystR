@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{livePcaBean.initPCA3D()}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/report_generation.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/3d_scatter_tab_change.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('ipca_3d')}" />
+
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Principal Component Analysis (PCA)</h2>
+            <h:form id="form11">
+                <h:panelGrid columns="2" style="margin-left: 40px; padding-bottom: 10px" >
+
+                    <h:panelGrid columns="2" style="padding-right: 40px">
+                        <h:panelGroup layout="block" style="width: 160px">
+                            <p:outputLabel style="font-weight: bold;" value="Color based on: "/>
+                        </h:panelGroup>
+                        <p:selectOneMenu value="#{livePcaBean.colOpt}" widgetVar="colorOptWidget">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectOneMenu> 
+
+                        <p:outputLabel style="font-weight: bold;" value="Shape based on: "/>
+                        <p:selectOneMenu  value="#{livePcaBean.shapeOpt}" widgetVar="shapeOptWidget">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                        </p:selectOneMenu> 
+                    </h:panelGrid>
+                    <p:commandButton id="updatePcaBn" action="#{livePcaBean.updatePCA3D()}" 
+                                     onclick="PF('statusDialog').show();" 
+                                     value="Update"
+                                     oncomplete="PF('statusDialog').hide();"
+                                     ajax="false"
+                                     />
+                    <!-- update=":ac:form1:pairPane  :hisTab:cmdPane :syn3d" -->
+
+                </h:panelGrid>
+            </h:form>
+            <p:tabView id="ac" widgetVar="tabWidgetVar" style="min-width: 900px; max-width: 1200px; border: none; font-size: 13px;">
+                <p:tab title ="Pairwise Score Plots">
+                    <h:form id="form1">
+                        <h:panelGrid columns="3" style="padding-top: 10px; padding-left: 40px">
+                            <h:outputLabel value="Display score plots for top "/>
+                            <h:panelGroup layout="block" style="padding-left: 10px; padding-right: 30px">                                    
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{livePcaBean.pcaPairNum}">
+                                    <f:selectItems value="#{pcaBean.pcaPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel value=" PCs"/>
+                            </h:panelGroup>
+                            <p:commandButton value="Update" 
+                                             update=":ac:form1:pairPane  :hisTab:cmdPane" 
+                                             onclick="PF('statusDialog').show();"
+                                             oncomplete="PF('statusDialog').hide();"
+                                             actionListener="#{livePcaBean.pcaPairBtn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="pairPane" style="text-align: center; width: 1000px;">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_pair_meta')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_pair_meta')}" alt="PCAPairImage" width="100%"/>
+                        </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Synchronized 3D Plots">
+
+                    <h:panelGrid style="width: 1200px;">
+                        <b>Drag</b> to rotate the view around the axis;<b>Right Click Press + Drag</b> to pan the camera view.<b>Scroll</b> to zoom in and out; 
+                        <b>Double click</b> on any point on loading plot to view a summary of the feature;
+                        <!--
+                        <h:panelGrid style="width: 100%" columns="2">
+                            <h:panelGroup>
+                                <canvas id='canvas1' width='560px' height='500px'></canvas>
+                            </h:panelGroup>
+                            <h:panelGroup>
+                                <canvas id='canvas2' width='560px' height='500px'></canvas>
+                            </h:panelGroup>
+                        </h:panelGrid>
+                        -->
+                        <h:panelGrid id="syn3d" style="width: 1100px">
+                            <iframe id="frameId" loading="lazy"  style="width: 1100px; height:840px; margin: 0; padding: 0;" frameborder="0"
+                                    src="../viewer/_scatter3D_viewer.html"/>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid> 
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

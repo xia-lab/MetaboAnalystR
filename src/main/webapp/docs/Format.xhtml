@@ -1,0 +1,511 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+    <ui:define name="content">
+
+        <h:panelGrid style="padding: 30px 50px 20px 40px; line-height: 23px; font-family: Arial, Helvetica, Geneva; width: 96%">
+            <h2>Data Formats:</h2>
+            <style type="text/css">
+                th, tr {
+                    border-bottom: 1px dashed lightgray;
+                }
+            </style>
+            <div>
+                Various example datasets available for different analysis purposes. You can download to inspect their formats, or scroll down for more detailed instructions.
+            </div>
+            <table style="width:100%; margin: 10px 10px 20px 20px; border-top: 1.5px solid lightgray; border-collapse: collapse;" cellpadding="2" cellspacing="0px 5px 0px 5px">
+                <tr>
+                    <th style="min-width:200px;">
+                        Analysis Path
+                    </th> 
+                    <th style="min-width:240px;">
+                        Title
+                    </th>
+                    <th style="width:280px;">
+                        Download
+                    </th>
+                    <th style="padding-left: 20px; min-width: 400px">
+                        Description
+                    </th>
+                </tr>
+                <tr>
+                    <td rowspan="2">From LC-MS Spectra to <br/> Feature Table</td>                    
+                    <td>
+                        Small test spectra (mzML)
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/IBD_small.zip" target="_blank">IBD_small.zip</a> 
+                    </td>
+                    <td style="padding-left:20px;">A trimmed small dataset (10 samples)</td>  
+                </tr>
+                <tr>                    
+                    <td>
+                        Malaria raw spectra (mzML)
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/malaria_raw.zip" target="_blank">malaria_raw.zip</a>
+                    </td>
+                    <td style="padding-left:20px">An experimental raw spectra dataset (15 samples)</td>  
+                </tr>
+
+                <tr>
+                    <td rowspan="5">From MS Peaks to <br/>Functions</td>                    
+                    <td>
+                        MS peak table 
+                    </td> 
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/malaria_feature_table.csv" target="_blank">malaria_feature_table.csv</a></td>
+                    <td style="padding-left:20px">Peak table of Malaria (MTBLS665) study</td> 
+                </tr>
+                <tr>                    
+                    <td>
+                        MS peak list
+                    </td>
+                    <td><a href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_ibd.txt" target="_blank">mummichog_ibd.txt</a></td>
+                    <td style="padding-left:20px">A MS peak list (3 columns: m/z, p value, and t-score) for functional analysis</td>  
+                </tr>
+                <tr>                    
+                    <td rowspan="3">
+                        Multiple peak tables 
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/A1_pos.csv" target="_blank">A1_pos.csv</a>
+                    </td>
+                    <td rowspan="3" style="padding-left:20px">3 MS peak tables from a COVID-19 study for functional meta-analysis</td>  
+                </tr>
+                <tr>                    
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/B1_pos.csv" target="_blank">B1_pos.csv</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/C1_pos.csv" target="_blank">C1_pos.csv</a>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td rowspan="8">Statistics [one factor] <br/> and <br/>Biomarker Analysis</td>
+                    <td>
+                        Concentration table 
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/cow_diet.csv" target="_blank">cow_diet.csv</a>
+                    </td>
+                    <td style="padding-left:20px">A metabolite concentration table from cow rumen samples with four groups</td>  
+                </tr>
+                <tr>                    
+                    <td>
+                        Concentration table 
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv" target="_blank">human_cachexia.csv</a>
+                    </td>
+                    <td style="padding-left:20px">A metabolite concentration table from human urine samples with two groups</td>  
+                </tr>
+                <tr>                    
+                    <td>
+                        Peak Intensity table 
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/lcms_table.csv" target="_blank">lcms_table.csv</a>
+                    </td>
+                    <td style="padding-left:20px">A peak intensity table from mice spinal cord samples with two groups</td>  
+                </tr>
+                <tr>                    
+                    <td>
+                        NMR/MS spectra data 
+                    </td>
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/nmr_bins.csv">nmr_bins.csv</a></td>
+                    <td style="padding-left:20px">A binned spectra data for statistical analysis</td>  
+                </tr>
+                <tr>                    
+                    <td>
+                        mzTab 2.0-M 
+                    </td>
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/MouseLiver_negative.mzTab">MouseLiver_negative.mzTab</a></td>
+                    <td style="padding-left:20px">mzTab 2.0-M file example data </td>  
+                </tr>
+                <tr>                    
+                    <td rowspan="3">
+                        Zipped files 
+                    </td>
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/nmr_peaks.zip">nmr_peaks.zip</a></td>
+                    <td style="padding-left:20px">NMR data with 2 columns (chemical shift and intensity)</td>  
+                </tr>
+                <tr>
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/lcms_peaks_2col.zip">lcms_peaks_2col.zip</a></td>
+                    <td style="padding-left:20px">MS data with 2 columns (mass and intensity)</td>  
+                </tr>
+                <tr>
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/lcms_peaks_3col.zip">lcms_peaks_3col.zip</a></td>
+                    <td style="padding-left:20px">MS data with 3 columns (mass, retention time, and intensity)</td>  
+                </tr>
+                <tr> 
+                    <td rowspan="4">Statistics [metadata table] <br/>and<br/> Covariate Analysis</td>
+                    <td rowspan="2">
+                        Time-series data
+                    </td>
+
+                    <td><a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time.csv">cress_time.csv</a></td>
+
+                    <td style="padding-left:20px" rowspan="2">Peak table of a time-series study across two conditions</td>  
+                    <tr>
+                        <td><a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time_meta.csv">cress_time_meta.csv</a></td>
+                    </tr>
+                </tr>
+                <tr>                    
+                    <td rowspan="2">
+                        Data and metadata 
+                    </td>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/TCE_feature_table.csv" target="_blank">TCE_feature_table.csv</a>
+                    </td>
+                    <td rowspan="2" style="padding-left:20px">A peak intensity table from a trichloroethylene (TCE) exposure study for covariate analysis. Two files included (a peak table + metadata).</td>  
+                </tr>
+                <tr>
+                    <td>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/TCE_metadata.csv" target="_blank">TCE_metadata.csv</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td rowspan="6">Multi-omics Integration &nbsp;&nbsp;&nbsp;</td>
+                    <td rowspan="2">
+                        Gene and compound lists 
+                    </td>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_1.txt" target="_blank">integ_genes_1.txt</a>
+                    </td>
+                    <td rowspan="2" style="padding-left:20px">Integration analysis of a transcriptomics and metabolomics data (compound) from a study of COVID-19.</td>  
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_cmpds.txt" target="_blank">integ_cmpds.txt</a>
+                    </td>
+                </tr>
+                <tr>                    
+                    <td rowspan="2">
+                        Gene and peak lists 
+                    </td>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_2.txt" target="_blank">integ_genes_2.txt</a>
+                    </td>
+                    <td rowspan="2" style="padding-left:20px">Integration analysis of a transcriptomics and metabolomics data (untargeted, peaks) from a study of Malaria.</td>  
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_peaks.txt" target="_blank">integ_peaks.txt</a>
+                    </td>
+                </tr>
+                <tr>                    
+                    <td rowspan="2">
+                        Protein and compound lists &nbsp;&nbsp;&nbsp;
+                    </td>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_3.txt" target="_blank">integ_genes_3.txt</a>
+                    </td>
+                    <td rowspan="2" style="padding-left:20px">Integration analysis of a proteomics and metabolomics data (compounds, HMDB) from a study of COVID-19.</td>  
+                </tr>
+                <tr>
+                    <td>
+                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_cmpds_3.txt" target="_blank">integ_cmpds_3.txt</a>
+                    </td>
+                </tr>
+
+            </table>
+
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:95%; border: none; font-size: 13px; line-height: 23px"> 
+                <p:tab title ="General">
+                    <h3>Comma Separated Values (.csv) or Tab Delimited Text (.txt): </h3>
+                    These two formats are used for <U>concentration data</U>, <U>peak intensity table</U>, and 
+                    <U>MS/NMR spectral bins</U>. Samples can be in either rows or columns. Note, 
+                    <OL>
+                        <li> 
+                            Both sample or feature names must be unique and consist of a combination of common English letters, underscores 
+                            and numbers for naming purpose. <b>Latin/Greek letters are not supported.</b>
+                        </li>
+                        <li> 
+                            Statistical Analysis [one factor] module: for statistical analysis with one factor (two or multiple groups), class labels must immediately follow sample names; 
+                            Statistical Analysis [metadata table] module: for statistical analysis with multiple factors (including time series), users need to upload a separate metadata table;
+                        </li>
+                        <li> 
+                            For time-series data, the time-point group must be named as <b>Time</b>. In addition, the samples collected from the same subjects at different time points should be consecutive; 
+                            For more details, please see the screenshots demo for "Metadata / Time-series"). 
+                        </li>
+                        <li>
+                            Data values (concentrations, bins, peak intensities) should contain only numeric and positive values (<u>using empty or NA for 
+                                missing values</u>). In addition, there should not be spaces between numbers. For instance, 1 600 should be formatted as 1600, if not 
+                            the value will get read as 1. 
+                        </li>
+                    </OL>
+
+                    <h3>mzTab 2.0-M files (.mzTab)</h3>
+                    <p>
+                        MetaboAnalyst now supports the upload of <a href="https://pubs.acs.org/doi/10.1021/acs.analchem.8b04310" target="_blank">mzTab files</a> in the Statistical Analysis module.
+                        MetaboAnalyst parses both the Metadata Table (MTD) and the Small Molecule Table (SML) to a MetaboAnalyst ready data table format. From the SML, users 
+                        can either choose to have their features named using the "chemical_name" or "theoretical_neutral_mass". If too many of these are missing however,
+                        the features will be named with the "SML_ID". Further, if there are duplicate names, the "SML_ID" will be appended to the end of the selected feature identifier. 
+                        From the MTD, "study_variable" labeled "Blank" will be excluded from the final data table. 
+                        Note that MetaboAnalyst supports only mzTab-M 2.0 files that have been validated to ensure that the files can be read by our software.
+                    </p>
+
+                    <h3>Zipped files (.zip)</h3>
+                    <p>
+                        For <U>NMR/MS peak list files</U> and <U>GC/LC-MS spectra</U> data, users need to upload a
+                        zipped folder containing data files from different groups under study (<b>one file per spectrum and one 
+                            sub-folder for each group </b>). For paired comparison, users need to upload a separate text file 
+                        specifying the paired information.  
+                    </p>
+                    <p>
+                        GC/LC-MS spectra must be in either <U>NetCDF</U>, <U>mzXML</U>, or <U>mzDATA</U> format. The spectra 
+                        should be stored in two separate folders according to their class labels then compressed into zip files. <b>Please note, the program 
+                            is not compatible with the most recent WinZip (v12.0) with default option. Make sure to select <U> the Legacy compression 
+                                (Zip 2.0 compatible) for compressing files</U></b>. No space is allowed in either the folder names or the spectra names. The size 
+                        limit for each uploaded zip file is <U> 50M</U>. Please contact the author if you wish to upload a bigger data size. 
+                    </p>
+                    <p>
+                        The peak list data is composed of peak list files organized into separate folders named by their class labels.  
+                        For example, if your data contains three groups, the peak list files should be organized into three folders accordingly.
+                        Compress these folders into a single zip file then upload them to MetaboAnalyst. 
+                    </p>
+                    <p>
+                        NMR peak list files should contain two comma separated columns with the 1st column for peak 
+                        positions (ppm) and the 2nd column for peak intensities; MS peak list files can be in either two-column (mass and intensities) 
+                        or three-column format (mass, retention time and intensities), but not a mixture of both. The first line of each peak list file is reserved for 
+                        column labels. The file must be saved in comma separated values (.csv) format.
+                    </p>
+
+                </p:tab>
+                <p:tab  title="One-factor / Paired">  
+                    <h3>Samples in rows (unpaired)</h3>
+                    <p>
+                        Each row represents data from a sample. The class label is in the second column. 
+                        For unpaired comparisons, the class label can either be numeric (i.e. 0/1) or character (i.e. Healthy/Disease). 
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/conc_row.png"/>
+                    <h3>Samples in rows (paired)</h3>
+                    <p>
+                        For paired comparison, there must be an even (2n) number of samples. 
+                        The class labels are required to be the numeric integers between -1 and -n/2 
+                        and between 1 and n/2. Samples with class labels of the same absolute values are considered to be pairs. 
+                        In the example below, <i>Patient1_d0</i> and <i>Patient1_d3</i> are a pair.
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/conc_paired.png"/>
+                    <h3>Samples in columns (unpaired)</h3>
+                    <p>
+                        Samples can also be in columns and where each row represents a measured variable. The class label must be in the 
+                        second row. The requirements for class label is the same as that for samples in rows for both paired and unpaired 
+                        comparisons. The screenshot below shows the unpaired case. 
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/conc_col.png"/>
+                    <h3>Samples in columns (paired)</h3>
+                    <p>
+                        The screenshot below shows a subset of binned NMR spectra data (bin width 0.04 ppm). In
+                        this table, the samples from controls (e.g. Contr_1) are paired with the samples from the 
+                        subjects in disease (Disease_1) based on some criteria (i.e. age, weight, gender). Each sample 
+                        occupies a column and the second row is used for sample labels.
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/nmrbin_pair.png"/>
+                    <h3>Peak intensity table</h3>
+                    <p>
+                        The screenshot below is a LC-MS peak intensity table. Each column represents peaks from a sample. These peaks 
+                        are grouped and identified by their retention time and mass. The class labels are in the second row 
+                        immediately following the sample names.    
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/peakint_table.png"/>
+                </p:tab>
+                <p:tab title="Metadata / Time-series">
+                    <h3>Metadata table containing multiple factors and covariates</h3>
+                    <p>
+                        This is a general table containing various descriptors for the data to be analyzed
+                        <ul>
+                            <li>
+                                The sample IDs must be identical to the metabolomics data; 
+                            </li>
+                            <li>
+                                The column after sample IDs should be the primary metadata of interest;
+                            </li>
+                            <li>
+                                The metadata can contain either categorical (<u>with at least three replicates per group</u>) or continuous values (covariates); 
+                            </li>
+                            <li>
+                                Missing values are not allowed - you will be asked to manually "fix" the missing values if detected
+                            </li>
+                        </ul>
+                        A screenshot of a metadata table is shown below.  
+                    </p>
+                    <img style="width:540px" src="#{facesContext.externalContext.requestContextPath}/resources/images/general_meta.png"/>
+
+                    <h3>Time-series data only</h3>
+                    <p>
+                        This design requires two factors: the time points column must be labeled as <b>Time</b>;
+                        the other label is <b>Subject</b> containing subject IDs across different time points.
+                        Samples should be balanced (i.e. no missing time points for any subject). 
+                        A screenshot of an example data with samples in rows is shown below.  
+                    </p>
+                    <img style="width:220px" src="#{facesContext.externalContext.requestContextPath}/resources/images/time_0_meta.png"/>
+                    <h3>Time-series + one experimental factor</h3>
+                    <p>
+                        This design requires three factors: the experimental factor must be labeled as <b>Phenotype</b>;
+                        the time points column must be labeled as <b>Time</b>; 
+                        the other label is <b>Subject</b> containing subject IDs across different time points. 
+                        The screenshot illustrates the appropriate structure of a time-series data table.
+                        The data shown contains 24 samples measured at three time points from 6 subjects under two conditions (MT and WT)
+                    </p>
+                    <img style="width:280px" src="#{facesContext.externalContext.requestContextPath}/resources/images/time_1_meta.png"/>
+                </p:tab>
+                <p:tab title="Peak lists">
+                    <p>
+                        For <U>NMR/MS peak list files</U> data, users need to upload a zipped folder containing data files from 
+                        different groups under study (<b>one file per spectrum and one sub-folder for each group </b>). 
+                        For paired comparison, users need to upload a separate text file specifying the paired information.  
+                    </p>
+                    <p>
+                        The peak list data is composed of peak list files organized into separate folders named by their class labels.  
+                        For example, if your data contains three groups, the peak list files should be organized into three folders accordingly.
+                        Compress these folders into a single zip file and then upload it to MetaboAnalyst. 
+                    </p>
+                    <p>
+                        NMR peak list files should contain two comma separated columns with the 1st column for peak 
+                        positions (ppm) and the 2nd column for peak intensities; MS peak list files can be in either two-column (mass and intensities) 
+                        or three-column format (mass, retention time and intensities), but not a mixture of both. The first line of each peak list file is reserved for 
+                        column labels. The file must be saved in comma separated values (.csv) format.
+                    </p>
+                    <p>
+                        The paired sample information is encoded by using both sample names (<i>without suffix</i>) separated by a colon "<b>:</b>"
+                        with one pair per line, and uploaded as a text file (.txt). The screen shot below illustrates the data 
+                        structure for peak list data as well as the specifications of paired samples:
+                    </p>    
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/peaklist_data.png"/>
+                </p:tab>
+                <p:tab title="MS spectra">
+                    <h3>Raw Spectra Data for Processing</h3>
+                    <ol>
+                        <li>
+                            LC-MS spectra must be in <U>mzML</U>, <U>mzXML</U>, or <U>mzDATA</U> format. 
+                            <a href="http://proteowizard.sourceforge.net/" target="_blank">ProteoWizard</a> - msconvert function can handle most common vendor formats.          
+                        </li>
+                        <li>
+                            Centroiding the MS data is required for online processing. This can be done during format conversion using ProteoWizard except NetCDF files.<br/> 
+                            To facilitate the process, we have developed <b>CentroidMSData()</b> function 
+                            (available in <a href="https://github.com/xia-lab/MetaboAnalystR" target="_blank">MetaboAnalystR</a>) to centroid all common formats (<b>including netCDF</b>).   
+                        </li>
+                        <li>
+                            Only standard mzXML (<a href="#{facesContext.externalContext.requestContextPath}/resources/images/mzXML_format.png">example</a>) 
+                            or mzML (<a href="#{facesContext.externalContext.requestContextPath}/resources/images/mzML_format.png">example</a>) can be accepted. Other non-standard mzXML or mzML will cause exceptions.
+                        </li>
+                        <li>
+                            The size limit for each zip file is <U>200M</U> for online processing. Use <a href="https://github.com/xia-lab/MetaboAnalystR" target="_blank">MetaboAnalystR</a> for processing larger spectral files. 
+                        </li>
+                        <li>
+                            No spaces are allowed in spectra names. Use underscores instead (i.e. my_spectrum1.mzML)
+                        </li>
+                    </ol>
+                    <h3>(Optional) Meta-data for raw spectra processing</h3>
+                    <p>
+                        A 2-columns metadata table (.txt only) is mandatory. The 1st column is the filenames of the spectra compressed above. 2nd column is the class/groups of all sample. No space is allowed in filenames or classes. 
+                        Please use "control_1" to replace "Control 1". For QC samples, the class/group name has to be "QC". At lease 3 samples for all groups are required except for QC. As for QC, it is strongly recommended to provide 
+                        at least 2 samples. Otherwise, 2 sample files with largest file size will be used for optimization.
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/metadata_format.png" style="width: 360px"/>
+
+                </p:tab>
+
+                <p:tab  title="Biomarker">  
+                    <h3>Exploratory biomarker analysis</h3>
+                    <p>
+                        The data format is same as the one-factor data with samples in rows or columns, followed immediately by class labels. 
+                        Please note, ROC curve-based biomarker analysis is only defined for two-group analysis. If your data contains 
+                        multiple groups, you need to specify which two groups you want to investigate. 
+                    </p>
+                    <h3>Creating biomarker models to predict new samples</h3>
+                    <p>
+                        You can create biomarker models to predict new samples (with unknown class) using the 
+                        <b>ROC Tester</b>. To do this, you need to upload a data that contains both the samples with class labels  
+                        and the samples whose class label need to be predicted (their class labels should be <b>empty</b>). A screenshot is shown below.
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/biomarker_data.png" width="900px"/>
+
+                </p:tab>
+                <p:tab  title="Meta-analysis">  
+                    <p>
+                        The data format is the same as the one-factor data with samples in rows or columns, followed immediately by class labels. 
+                        Before uploading your data to the module, please make sure that the names of your features (compound names, spectral bins, peaks) 
+                        are consistent between the individual studies. At least 25% of the features must match between the studies. Also make sure that 
+                        the group labels are also consistent between the studies, i.e. Cancer and Healthy. Finally, all uploaded sample identifiers must 
+                        be unique. 
+                    </p>
+                    <p>
+                        A screenshot example is shown below:
+                    </p>
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/biomarker_metaanal_data.png"/>
+                </p:tab>
+                <p:tab  title="Peaks to path">  
+
+                    <h3>Peak list data format</h3>
+
+                    <p>
+                        <b>Version 1 Peak Lists:</b> The MS Peaks to Pathways module accepts either a three column table 
+                        containing the m/z features, p-values, and statistical scores,
+                        a two-column table containing m/z features and either p-values or t-scores, or a one-column table ranked by either
+                        p-values or t-scores. All inputted files must be in .txt format. If the input is a three column table, both the mummichog
+                        and GSEA algorithms (and their combination) can be applied. If only p-values (or ranked by p-values) are provided, 
+                        then only the mummichog algorithm 
+                        will be applied. If only t-scores (or ranked by t-scores) are provided, then only the GSEA algorithm will be applied.
+                    </p>
+                    <p>
+                        <b>Version 2 Peak Lists:</b> With Version 2 of the MS Peaks to Pathways module, 
+                        retention time can be included as a new column with the "rt" or "r.t" heading. 
+                        The maximum number of columns that can be uploaded is now 5: "m.z", "r.t", "p.value", "t.score" and "mode".
+                    </p>
+                    <p>
+                        If p-values have not yet been calculated for their data, users can use the exploratory statistical analysis module
+                        to upload their raw peak tables, process the data, perform t-tests or fold-change analysis, and then upload these 
+                        results into the module. An example dataset is shown below:
+                    </p>
+
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/mspeaks_data.png"/>
+
+                    <h3>Peak table format</h3>
+
+                    <p>
+                        Upload your data in either a tab-deliminted (.txt) or comma-separated (.csv) format. The MS Peaks to Pathways module accepts
+                        either a generic peak table or the MZmine formatted peak table. For <b>Version 2</b>, retention times can be included in the 
+                        generic peak table and should be formatted so that the peak and retention time are separated by two underscores. An example of the 
+                        generic peak table with retention time is shown below:
+                    </p>
+
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/mspeaks_rt.png"/>
+
+                </p:tab>
+                <p:tab  title="Network">  
+                    <h3>Data format overview</h3>
+                    <p>
+                        Metabolite or gene list data: a list of metabolite or gene IDs with optional fold-changes. Each feature should be in 
+                        in a row. Please refer to the example data for further details. 
+                    </p>    
+                    <h3>Metabolite/Gene list labels</h3>
+                    <p>
+                        It is critical for your data to be properly labeled so they can be uploaded into the Joint Pathway Analysis or Network Explorer module. 
+                        The following common metabolite and gene IDs are supported:
+                        <OL>
+                            <li>
+                                Metabolite list: Common compound names, HMDB IDs, or KEGG compound IDs as metabolite identifiers. 
+                            </li>
+                            <li> 
+                                Genelist: Entrez IDs, Ensembl Gene IDs, official gene symbols, or KEGG orthologs (KOs) are currently supported. 
+                            </li>
+                        </OL>
+                    </p>    
+                    <p> 
+                        An example of what your data should look like in any text editor (WordPad, TextEdit) is shown in the screenshot below.     
+                    </p>    
+                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/network_data.png"/>
+                </p:tab>
+            </p:tabView>  
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

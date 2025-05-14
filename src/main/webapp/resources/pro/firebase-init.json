@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "omicsquare-dashboard-2282c",
+  "private_key_id": "094070d951bc5a8622ec18ccc621150471bfbbb6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0pWQ67oBMSKpJ\n1GTc8lgZ73ORRivKTJieo6wILRNU87BArFZSMJ8NhvFYbD2wLEwtHTLRfqnW+nv/\nM/VA3VI3PesiGsxYaCZaUNY/Cbw7WDtM4j642P0PythRgQk5hpdy+ObPwyAp1ASw\nlckmINqeeZEXG0+EHnOwwFdCSEQII+07XnNRrxjYZ8i+LP7f7ow/3JzbeaWuylkV\nZbGzbwg7zV1cbBBI5qxYLDahDvU/BcINbhe6Qg3DwIwZOafcUDH5Wf8luznlQh6h\n7bBq/jLO5DBJ5xXVyTv2boI18NYu4iY9r3kZO36GneCO/S08/vKv86NgwhiR8N9I\nevYhWA5RAgMBAAECggEAHGaKSQeZLSUZfK0DRIdnWYB/c14MYWxEbGCAGfL4QJll\nYu2VTqutPeOyyvuNgUadnVQjWrNmwVE1MGy7SLzjAaNe9cgvy1BogzeFT3jY2p2n\nCRHi2Y3nz1VNSBcY263w3pcKNqzPQDRAnoCWFMQCivrC2FanXDaraqT6swWIiJzV\nOYZjX7h3pHcpt3z5uXUx/AVbiSIUsRNe9QSM5C3KjfhAePxr/4BYospyqZ3CdLHo\nXvDdDhpg+IxiWDgF/Thgq37NBOnebf5Zh29rVO6HpnxdDzfLpkMcqZ0zqvZvtWdf\nng7pZ1JQBQ9SBbJHo8/9hogR2Fnntpc2lYBUY1XaiQKBgQDzf03dHZ93HubeNSgv\na3KjJ9buSEUF7yKYEdIBiVyJZkq9OpCqWpBbQBZaXkXW/f0XssfOLoB/9rykbUF4\n+2D9M3/yBNi65RI95EFMh5X0PteR7EWBRk47ZTbMQx84YtDDMAVTiqY+R9HBi/uA\n0wt8xJEU1FSKTmVyErcFrs0E7QKBgQC96+17YSXfS2QqNipPXQ5qfG2yr+/eBWVw\neon88ep5rAjoIT0OM7LNZRSxnHs5cvPkgn8hVWhBfQcDbA59VgYtzoYSWmsT+vZi\nRKAVttylQCHMc/JIfkSnU9bRKcNTYzdQTw7ylGqbW8WMH0k/CjELlz3ssRT3SaVp\nPeRkCfxGdQKBgCXjy2P69hN9NYOiVex7Fc2Zp3JQwJzZx1JOg5VFoKaoyjyD3nsD\nuK7aXCAXx1pbD4UehsToq4o+BMC5V5TR2RfNab1pT6hVeO80k4yrFIR7OuQ0FeS1\n4fqQF2TVlQgbKE0XLd0AGDpcxqENfUdgj8sMc18AY19aL6L+kohJ2RFJAoGAWxfw\nPj9odOOqVXzJamuN4JFx5ETy3iDkeMCtsr8t4dIcK4rVyBwP5OhYtqABkpqKVM4q\nwAhBCzg2xvNrN76tFAd80wy/U0QKLTQRPJkK19Ac5f2u9gpqT3+tB4Hqh/KMs15Y\nIw4A3Cd2ZzESZsQypgaS0xZUog+W4RWomDsZ34kCgYEA7cZWwQi7d+M1wXp1emJE\n1CKfxbIXT/iqokMiTTHDY7F2cYdg013sdGEfiZNNLxx1z6yCtxHtypKGGrhN6WKn\niYPPIKYxf5rH/kBNvh8Z6v5ksoGBAIaBUesnBNOMYErSFB4987mtstjywRM63uy3\nkvsB7OIQ/LR8ioL1HUWjrVM=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-79r9w@omicsquare-dashboard-2282c.iam.gserviceaccount.com",
+  "client_id": "116491958446459018804",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-79r9w%40omicsquare-dashboard-2282c.iam.gserviceaccount.com"
+}

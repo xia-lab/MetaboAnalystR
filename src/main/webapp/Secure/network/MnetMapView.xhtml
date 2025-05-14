@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Name check', '/Secure/network/MnetMapView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>ID Mapping</h2>
+            <p>
+                The tables below show ID mapping results based on our databases. To <b>remove</b> an item from 
+                analysis, use the <b>Delete</b> link in the last column.
+            </p>
+            <p:tabView widgetVar="tabWidget" id="ac" style="width:100%; border: none;">
+                <p:tab title ="Compound Name Mapping">
+                    <h:form id="form1">
+                        <h:panelGrid style="padding:2px 10px 0px 18px; line-height: 20px; font-size: 12px; width:100%;">
+                            For common compound names, users can further perform <u>approximate match</u> by clicking 
+                            the <b>View</b> link in the Details column. 
+                            <p:dataTable id="mapTbl1" paginator="true" 
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         rows="20" rowsPerPageTemplate="20,50,100"
+                                         paginatorPosition="bottom" 
+                                         var="map" value="#{mnetMapBean.cmpdNameMapResult}"
+                                         rowIndexVar="rowInx"
+                                         style="width:100%; font-size: 12px">  
+                                <p:column headerText="Query">  
+                                    <h:outputText escape="false" value="#{map.query}"/>  
+                                </p:column>  
+                                <p:column headerText="Hit">  
+                                    <h:outputText escape="false" value="#{map.hit}"/>  
+                                </p:column>  
+                                <p:column headerText="HMDB">  
+                                    <h:outputText escape="false" value="#{map.hmdb_id}"/>
+                                </p:column>  
+                                <p:column headerText="KEGG">  
+                                    <h:outputText escape="false" value="#{map.kegg_id}"/>
+                                </p:column>  
+                                <p:column headerText="Details">  
+                                    <p:commandLink value="#{map.details}" 
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":summaryForm:detailView"
+                                                   oncomplete="PF('cmpdDetailDialog').show()">  
+                                        <f:setPropertyActionListener value="#{rowInx}" target="#{mnetMapBean.currentCmpdRowInx}" /> 
+                                    </p:commandLink>  
+                                </p:column> 
+                                <p:column headerText="">  
+                                    <p:commandLink value="Delete" 
+                                                   actionListener="#{mnetMapBean.deleteCmpd(rowInx)}"
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":ac:form1:mapTbl1"
+                                                   oncomplete="PF('statusDialog').hide()"/>  
+                                </p:column> 
+                            </p:dataTable>
+                            <h:outputText escape="false" value="#{mnetMapBean.cmpdDownloadMsg}"/>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Gene Name Mapping">
+                    <h:form id="form2">
+                        <h:panelGrid style="padding:2px 10px 0px 18px; line-height: 20px; font-size: 12px; width:100%;">
+                            Items with<b> lightgrey </b>indicates cases where some information
+                            is missing, while<b> red </b>indicates no matches.
+                            <p:dataTable id="mapTbl2" paginator="true" 
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         rows="20" rowsPerPageTemplate="20,50,100" paginatorPosition="bottom" 
+                                         var="map" value="#{mnetMapBean.geneNameMaps}"
+                                         rowIndexVar="rowInx"     
+                                         style="width:100%; font-size: 12px">  
+                                <p:column headerText="Query">  
+                                    <h:outputText escape="false" value="#{map.query}"/>  
+                                </p:column>  
+                                <p:column headerText="Hit">  
+                                    <h:outputText escape="false" value="#{map.hit}"/>  
+                                </p:column>  
+                                <p:column headerText="Symbol">  
+                                    <h:outputText escape="false" value="#{map.symbol}"/>
+                                </p:column>  
+                                <p:column headerText="KEGG Ortholog (KO)">  
+                                    <h:outputText escape="false" value="#{map.ko}"/>
+                                </p:column>  
+                                <p:column headerText="Name" style="width:300px">  
+                                    <h:outputText escape="false" value="#{map.name}"/>
+                                </p:column>  
+                                <p:column headerText="">
+                                    <p:commandLink value="Delete" 
+                                                   actionListener="#{mnetMapBean.deleteGene(rowInx)}"
+                                                   onclick="PF('statusDialog').show()"
+                                                   update=":ac:form2:mapTbl2"
+                                                   oncomplete="PF('statusDialog').hide()"/>  
+                                </p:column>
+                            </p:dataTable>
+                            <h:outputText escape="false" value="#{mnetMapBean.geneDownloadMsg}"/>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+            </p:tabView>
+            <h:form id="form3">
+                <h:panelGrid style="width: 100%; text-align:center">
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     action="#{mnetMapBean.prepareNetworkData()}"/>  
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid>
+        <p:dialog widgetVar="cmpdDetailDialog" dynamic="true" modal="true" onShow="PF('statusDialog').hide()"
+                  appendTo="@(body)" hideEffect="explode"> 
+            <h:form id="summaryForm">
+                <h:panelGrid id="detailView" style="width:500px; padding: 20px">
+                    <h:outputText escape="false" style="font-size: 13px" value="Query name: #{mnetMapBean.targetCmpd}"/>
+                    <p:dataTable style="width:100%; font-size: 12px; padding: 6px" var="can" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{mnetMapBean.cmpdCandidateMaps}">
+                        <p:column>
+                            <p:selectBooleanCheckbox value="#{can.selected}" style="line-height: 18px"/>
+                        </p:column>
+                        <p:column headerText="Matched Name">  
+                            <h:outputText escape="false" value="#{can.hit}"/>  
+                        </p:column>  
+                        <p:column headerText="HMDB">  
+                            <h:outputText escape="false" value="#{can.hmdb_id}"/>
+                        </p:column>  
+                        <p:column headerText="KEGG">  
+                            <h:outputText escape="false" value="#{can.kegg_id}"/>
+                        </p:column>   
+                    </p:dataTable> 
+                    <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="OK" update=":ac:form1:mapTbl1  :hisTab:cmdPane" 
+                                         actionListener="#{mnetMapBean.selectCmpdCandidate()}" 
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide(); PF('cmpdDetailDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('cmpdDetailDialog').hide()"/>
+                    </h:panelGrid>
+                </h:panelGrid> 
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('SWATH check', '/Secure/spectra/SWATHDesignCheck.xhtml')}"/>
+    </ui:define>
+    <ui:define name="content">
+        <style>
+            .ui-inputfield {
+                padding:2px !important;
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>SWATH-DIA Design Integrity Check</h2>
+            <p>
+                MetaboAnalyst will detect the design of SWATH-DIA spectral acquisition automatically. However, some spectral data may not 
+                contain the related information in the data itself. In this case (the table below is all 0.0), user must manually specify design.
+            </p>
+
+            <h:form id="form1">                   
+                <p:dataTable style="width:46%; font-size: 10px;" var="data" rowIndexVar="rowInx" value="#{spectraProcessor.swathBeans}"> 
+                    <p:column headerText="Index" style="width:40px; text-align: center;">  
+                        <h:outputLabel value="#{data.idx}"/>
+                    </p:column>   
+                    <p:column headerText="Lower M/Z" style="width:40px">  
+                        <p:inputNumber value="#{data.lomz}"/>
+                    </p:column>   
+                    <p:column headerText="Upper M/Z" style="width:40px">                        
+                        <p:inputNumber value="#{data.upmz}"/>
+                    </p:column>   
+                </p:dataTable>
+
+                <h:panelGrid id= "pBn" style="width: 50%; text-align: center; margin-top: 10px">
+                    <p:commandButton value="Confirm" ajax="false"
+                                     onclick="PF('statusDialog').show()"
+                                     disabled="#{spectraProcessor.bnDisabled}"
+                                     action="#{spectraProcessor.prepareDIASpecProc()}"/>
+                </h:panelGrid> 
+            </h:form>
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

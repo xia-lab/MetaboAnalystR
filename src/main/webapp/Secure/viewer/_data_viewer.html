@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.csv.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script> 
+        <style>
+
+
+            table {
+                table-layout: fixed;
+            }
+
+            table tr td {
+                max-width: 100%;
+                overflow-x: auto;
+            }
+            table#customers th {
+                padding-top: 12px;
+                padding-bottom: 12px;
+                text-align: left;
+                background-color: #374785;
+                color: white;
+            }
+            table#customers {
+                font-family: Arial, Helvetica, sans-serif;
+                width: 100%;
+                border-collapse: collapse;
+                background-color: #ffffff; /* Light background for the table */
+                color: #000000; /* Dark text color for table content */
+            }
+
+            table#customers th, table#customers td {
+                border: 1px solid #ddd; /* Border color */
+                padding: 8px;
+            }
+
+            table#customers tr:nth-child(even) {
+                background-color: #f9f9f9; /* Alternating row color */
+            }
+
+            .dark-mode table#customers {
+                background-color: #061425; /* Dark background for the table */
+                color: #ffffff; /* Light text color for table content */
+            }
+
+            .dark-mode table#customers th {
+                background-color: #1d2530;
+                color: white;
+                border: 1px solid #f9f9f9;
+            }
+
+            .dark-mode table#customers td {
+                border: 1px solid #555; /* Border color */
+            }
+            .dark-mode table#customers tr:nth-child(even) {
+                background-color:#051930; /* Alternating row color */
+            }
+
+        </style>
+    </head>
+    <body>
+        <div style="width: 100%; font-family: Helvetica,Arial,sans-serif; font-size: 13px">
+            <div id="csv-display">
+                <h3 style="color:salmon">No data detected</h3>
+            </div>
+            <input type="hidden" id="themeHt"></input>
+            <button id="toggleTm" onclick="setupTheme()"  style="display:none;" ></button>
+        </div>
+    </body>
+</html>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        rebindIframe();
+        var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+        usr_dir = $.ajax({
+            type: "GET",
+            url: '/MetaboAnalyst/faces/AjaxCall?function=getusrdir&ignoreMe=' + new Date().getTime(),
+            async: false
+        }).responseText;
+        if (usr_dir === null) {
+            $('#csv-display').append('<b>Please upload your data first</b>');
+            return;
+        }
+        var data;
+        var url = usr_dir + "raw_dataview.csv";
+         //alert(url);
+        $.ajax({
+            type: "GET",
+            url: url,
+            dataType: "text",
+            success: function (response)
+            {
+                data = $.csv.toArrays(response);
+                generateHtmlTable(data);
+            }
+        });
+
+        function generateHtmlTable(data) {
+            console.log(data)
+            $('#csv-display').html('');
+            var html = '<table id="customers">';
+
+            if (typeof (data[0]) === 'undefined') {
+                $('#csv-display').html('<b style="color: red">No data detected. This feature is designed for table format, and cannot be used for list or other formats.</b>');
+            } else {
+                $.each(data, function (index, row) {
+                    //bind header
+                    if (index === 0) {
+                        html += '<thead>';
+                        html += '<tr>';
+                        $.each(row, function (index, colData) {
+                            html += '<th>';
+                            html += colData;
+                            html += '</th>';
+                        });
+                        html += '</tr>';
+                        html += '</thead>';
+                        html += '<tbody>';
+                    } else {
+                        html += '<tr>';
+                        $.each(row, function (index, colData) {
+                            html += '<td>';
+                            html += colData;
+                            html += '</td>';
+                        });
+                        html += '</tr>';
+                    }
+                });
+                html += '</tbody>';
+                html += '</table>';
+                //alert(html);
+                console.log(light);
+                if (light === "light") {
+                    document.body.style.backgroundColor = '#eff3f8';
+                    document.body.classList.remove('dark-mode');
+                } else {
+                    document.body.style.backgroundColor = '#040d19';
+                    document.body.classList.add('dark-mode');
+                }
+
+                $('#csv-display').html(html);
+            }
+
+        }
+
+
+    });
+
+    function setupTheme() {
+        light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+        if (light === "light") {
+            document.body.style.backgroundColor = '#eff3f8'; // Light mode background
+            document.body.classList.remove('dark-mode'); // Ensure dark-mode is removed
+        } else {
+            document.body.style.backgroundColor = light === "dim" ? '#2f394d' : '#040d19'; // Dim or Dark background
+            document.body.classList.add('dark-mode'); // Apply dark-mode for both dim and dark
+        }
+    }
+
+
+</script>

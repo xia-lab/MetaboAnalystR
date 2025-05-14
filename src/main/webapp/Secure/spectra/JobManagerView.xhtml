@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('specManager')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Job Manager', '/Secure/spectra/JobManagerView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{JobManagerBean.JobStatusRead}"/>   
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Job Manager</h2>
+                <h:panelGrid style="padding:0px 40px 20px 50px; font-size: 13px; line-height: 23px; text-align: center;">
+
+                    <p:dataTable var="job" 
+                                 id="tb0"
+                                 value="#{JobManagerBean.rawJobsBean}" 
+                                 widgetVar="jobsTable1" 
+                                 style="width:1100px" 
+                                 emptyMessage="No jobs found with given criteria"                              
+                                 reflow="true" 
+                                 rows="25" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 paginator="true"
+                                 editable="true" 
+                                 editMode="cell">
+
+                        <f:facet name="header">
+                            <p:outputPanel style="text-align: left;">
+                                <h:outputText value="Search all fields:" />
+                                <p:inputText id="globalFilter" onkeyup="PF('jobsTable1').filter()" style="width:150px; margin-left: 8px;" placeholder="Enter keyword"/>
+                                <p:commandButton value="Kill All Jobs" action="#{JobManagerBean.killAllJobs()}" style="margin-right:0px; margin-left: 700px;" 
+                                                 ajax="false" title="Kill All Jobs Immediately"/>
+                            </p:outputPanel> 
+                        </f:facet>
+
+                        <p:column filterBy="#{job.id}" 
+                                  style="width:60px" 
+                                  headerText="Job Id" 
+                                  footerText="Job Id" 
+                                  filterMatchMode="contains"
+                                  sortBy="#{job.id}"> 
+                            <h:outputText value="#{job.id}" title="#{job.jobFolder}"/>                        
+                        </p:column>
+
+                        <p:column filterBy="#{job.type}" 
+                                  style="width:60px" 
+                                  headerText="Type" 
+                                  footerText="Type" 
+                                  filterMatchMode="exact">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('jobsTable1').filter()" styleClass="custom-filter" style="width:70px" >
+                                    <f:selectItem itemLabel="All Job Types" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{JobManagerBean.types}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{job.type}" style="width:90px" />
+                        </p:column>
+
+                        <p:column filterBy="#{job.time}" 
+                                  style="width:140px" 
+                                  headerText="Submit Time" 
+                                  sortBy="#{job.time}" 
+                                  footerText="Submit Time" 
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{job.time}" />
+                        </p:column>
+
+                        <p:column filterBy="#{job.num}" 
+                                  style="width:60px" 
+                                  headerText="Num" 
+                                  footerText="Num" 
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{job.num}" />
+                        </p:column>
+
+                        <p:column filterBy="#{job.status}" 
+                                  style="width:80px" 
+                                  headerText="Status" 
+                                  footerText="Status" 
+                                  filterMatchMode="exact">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('jobsTable1').filter()" styleClass="custom-filter" style="width:85px">
+                                    <f:selectItem itemLabel="All Job Statuses" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{JobManagerBean.statuses}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{job.status}" />
+                        </p:column>
+
+                        <p:column headerText="Progress" 
+                                  style="width:75px"
+                                  id="c0"
+                                  footerText="Progress" 
+                                  filterMatchMode="contains">
+                            <p:progressBar widgetVar="pbAjax1" ajax="true" value="#{job.progress}" 
+                                           labelTemplate="{value}%" styleClass="animated" global="false"
+                                           style="border-radius: 8px;height:18px; width: 75px" >
+                                <p:ajax event="complete" 
+                                        update="c0" 
+                                        oncomplete=";location.reload();"
+                                        />
+                            </p:progressBar>
+                        </p:column>
+
+                        <p:column filterBy="#{job.node}" 
+                                  style="width:75px" 
+                                  sortBy="#{job.node}"
+                                  headerText="Server Nodes"
+                                  footerText="Server Nodes"
+                                  filterMatchMode="exact"> 
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('jobsTable1').filter()" styleClass="custom-filter" style="width:65px">
+                                    <f:selectItem itemLabel="Nodes" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{JobManagerBean.nodes}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{job.node}" />                      
+                        </p:column>                    
+
+                        <p:column id = "c1" headerText="Priority" style="width:75px">
+                            <h:selectOneMenu value="#{job.priority}" style="width:75px">
+                                <f:selectItems value="#{JobManagerBean.prioritys}"/>
+                                <p:ajax listener= "#{JobManagerBean.changePriority(job)}" event="change" update="c1"/>
+                            </h:selectOneMenu>
+                        </p:column>                   
+                    </p:dataTable>
+                </h:panelGrid>
+            </h:panelGrid>   
+        </h:form>
+    </ui:define>
+</ui:composition>

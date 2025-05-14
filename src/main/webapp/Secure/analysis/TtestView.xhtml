@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('T-test')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('T-test', '/Secure/analysis/TtestView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h:inputHidden id="maxX" value="#{sessionBean1.featureNumber}" />
+            <h2>Two-sample t-tests &amp; Wilcoxon rank-sum tests</h2>
+            <p>
+                For large data set (> 1000 variables), both the paired information and the group variance will be ignored, 
+                and the default parameters will be used for t-tests to save computational time.  If you choose non-parametric 
+                tests (Wilcoxon rank-sum test), the group variance will be ignored. 
+            </p>  
+            <h:panelGrid columns="2">
+                <h:form id="form2">
+                    <h:panelGrid columns="2" style="text-align: left; width: 630px">
+                        <h:panelGrid columns="2" cellpadding="5" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid style="width: 200px">
+                                <h:outputLabel style="font-weight: bold" value="Analysis type:"/>
+                            </h:panelGrid>
+                            <p:selectOneMenu disabled="#{!sessionBean1.paired}" styleClass="menu" panelStyleClass="panel" value="#{univBean.pairedTtAnal}">
+                                <f:selectItems value="#{optBean.pairAnalOpts}" />
+                            </p:selectOneMenu>
+                            <h:outputLabel style="font-weight: bold" value="Group variance:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.equalVar}">
+                                <f:selectItems value="#{optBean.equalVarOpts}" />
+                            </p:selectOneMenu>
+                            <h:outputLabel style="font-weight: bold" value="Non-parametric tests:"/>
+                            <p:selectBooleanCheckbox value ="#{univBean.nonParTt}" style="line-height: 18px"/>
+                            <h:outputLabel style="font-weight: bold" value="P-value threshold:"/>
+                            <h:panelGrid columns="2" style="width:280px">
+                                <p:inputText style="width:50px" value="#{univBean.ttPThresh}"/>    
+                                <p:selectOneRadio value="#{univBean.ttPvalType}">
+                                    <f:selectItem itemLabel="Raw" itemValue="raw" />
+                                    <f:selectItem itemLabel="FDR" itemValue="fdr" />
+                                </p:selectOneRadio>
+                            </h:panelGrid>                              
+                        </h:panelGrid>
+                        <h:panelGrid style="padding-left: 20px">
+                            <p:commandButton value="Submit" update=":ttPane  :hisTab:cmdPane" 
+                                             onclick="PF('statusDialog').show(); extender()"
+                                             oncomplete="PF('statusDialog').hide();"
+                                             actionListener="#{univBean.ttButton_action()}" />  
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+
+            <hr class="style-one"/>
+
+            <h:panelGrid id="ttPane" style="text-align: center; width: 95%;">
+                <h:panelGrid columns="2" style="width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="5" style="width:200px; text-align: right;">
+                        <p:commandLink disabled="#{not sessionBean1.ttSig}" action="#{sessionBean1.detailsLnk_action('tt')}" title="View the detailed data table">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('tt')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>                        
+                        <p:commandLink  actionListener="#{univBean.generateUnivReport()}" onclick="PF('statusDialog').show();"
+                                        oncomplete="PF('statusDialog').hide(); PF('UniReportDialog').show()">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/report.png"/>
+                        </p:commandLink> 
+                        <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                            <i class="pi pi-undo"></i>
+                        </p:commandLink>
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                    </h:panelGrid>                
+                </h:panelGrid>
+                <p:tooltip for="helpIcon" styleClass="helpTip">
+                    <p>
+                        Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                        represent the concentrations of the selected feature from all samples. The notch indicates
+                        the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                        The notch can be used to evaluate differences between groups; if the notches 
+                        do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                        with a yellow diamond. 
+                    </p>
+                </p:tooltip>
+                <h:panelGrid style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
+                    <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel2('tt')}"  
+                                    style="height:420px; width: 100%">
+                        <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                    </p:scatterChart>
+                    <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('tt')}" update="chart" />
+                      
+
+                </h:panelGrid>
+            </h:panelGrid>        
+        </h:panelGrid> 
+        <p:dialog widgetVar="UniReportDialog" dynamic="true" modal="true" appendTo="@(body)" height="160"
+                  hideEffect="explode" resizable="true">
+            <h:panelGrid style="padding:20px 40px 20px 40px; font-size: 14px;">
+                <a href="#{univBean.getCurrentUserRelativeDir('univAnalReport.csv')}" target="_blank">Download the univariate analysis report</a>
+            </h:panelGrid>     
+        </p:dialog>
+        <script type="text/javascript">
+                            var light;
+                            var textColor;
+                            var gridColor;
+                            function extender() {
+                                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                                if (light === "light") {
+                                    textColor = "grey";
+                                    gridColor = 'lightgrey';
+                                } else {
+                                    textColor = "white";
+                                    gridColor = 'rgb(200, 200, 200,0.2)';
+                                }
+
+                                var pointMap = #{detailsBean.pointMapJson};
+                                var maxX = document.getElementById('maxX').value;
+                                var step = maxX / 10;
+                                if (step > 1000) {
+                                    step = 1000;
+                                } else if (step > 500) {
+                                    step = 500;
+                                } else if (step > 200) {
+                                    step = 200;
+                                } else if (step > 100) {
+                                    step = 100;
+                                } else if (step > 50) {
+                                    step = 50;
+                                } else if (step > 20) {
+                                    step = 20;
+                                } else if (step > 10) {
+                                    step = 10;
+                                } else if (step > 2) {
+                                    step = 5;
+                                } else {
+                                    step = 1;
+                                }
+                                var options = {
+                                    options: {
+                                        scales: {
+                                            y: {
+                                                title: {
+                                                    display: true,
+                                                    text: '-log10(raw P-value)',
+                                                    color: textColor
+                                                },
+                                                ticks: {
+                                                    color: textColor
+                                                },
+                                                grid: {
+                                                    color: gridColor
+                                                }
+                                            },
+                                            x: {
+                                                title: {
+                                                    display: true,
+                                                    text: 'Features',
+                                                    color: textColor
+                                                },
+                                                ticks: {
+                                                    stepSize: step,
+                                                    color: textColor
+                                                },
+
+                                                grid: {
+                                                    color: gridColor
+                                                }
+                                            }
+                                        }, plugins: {
+                                            zoom: {
+                                                zoom: {
+                                                    drag: {
+                                                        enabled: true,
+                                                        borderColor: 'rgb(54, 162, 235)',
+                                                        borderWidth: 1,
+                                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                                    },
+                                                    pinch: {
+                                                        enabled: true
+                                                    },
+                                                    mode: 'xy'
+                                                }
+                                            }, // Adding tooltip configuration
+                                            tooltip: {
+                                                enabled: true,
+                                                callbacks: {
+                                                    label: function (tooltipItem, data) {
+                                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                                        return id;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                };
+                                $.extend(true, this.cfg.config, options);
+                            }
+                            function setupTheme() {
+                                document.getElementById('toggleTm').click();
+                            }
+                            ;
+        </script>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

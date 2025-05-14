@@ -1,0 +1,88 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <h:form id="form2">
+        <style>
+            /* Narrow column */
+            .narrow-column {
+                width: 35px; /* Adjust width as needed */
+                text-align: right;
+            }
+
+            /* Wide column */
+            .wide-column {
+                text-align: left;
+            }
+
+        </style>
+        <h4>
+            Please select your workflow. 
+        </h4>
+        <p>
+            You can try our default workflow or load a previously saved workflow. Note that you can click on "Description" column to view and edit detailed descriptions.
+        </p>
+        <h:panelGrid columns="2">
+            <p>
+                Current workflow:
+            </p>
+            <h:outputText value="#{workflowBean.currentWorkflow}" />
+        </h:panelGrid>
+
+        <p:dataTable id="workflowTable" 
+                     var="workflow" 
+                     value="#{workflowBean.workflowList}" 
+                     rowKey="#{workflow['id']}"
+                     rows="10" paginator="true" paginatorPosition="bottom" 
+                     rowsPerPageTemplate="5,10,20"
+                     editable="true">
+
+            <p:column headerText="Selection" style="text-align:left; width:200px">  
+                <p:panelGrid columns="2" style="width: 100%;" columnClasses="narrow-column,wide-column">
+                    <!-- Narrow Column for SelectOneRadio -->
+                    <p:selectOneRadio 
+                        value="#{workflowBean.selectedWorkflow}" 
+                        converter="mapConverter"
+                        style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <f:selectItem itemValue="#{workflow}" />
+                        <p:ajax 
+                            update=":form2" 
+                            listener="#{workflowBean.loadWorkflow}" 
+                            onstart="PF('statusDialog').show();" 
+                            oncomplete="PF('statusDialog').hide();" />
+                    </p:selectOneRadio>
+
+                    <!-- Wide Column for CommandLink and GraphicImage -->
+                    <p:commandLink id="pathview" actionListener="#{workflowBean.viewWorkflow(workflow)}" style="width:200px" update=":form2" >
+                        <p:graphicImage 
+                            id="pathway" 
+                            title="#{workflow['module']}" 
+                            value="#{workflowBean.getImagePath(workflow['module'])}"
+                            width="160" height="100" />
+                    </p:commandLink>
+                </p:panelGrid>
+            </p:column>
+
+            <p:column headerText="Name" style="text-align:center;">
+                <h:outputText value="#{workflow['name']}" />
+            </p:column>
+
+            <p:column headerText="Description" style="text-align:left; width:50%">
+                <h:outputText value="#{workflow['description']}" />
+            </p:column>
+
+            <p:column headerText="Module" style="text-align:center;">
+                <h:outputText value="#{workflow['module']}" />
+            </p:column>
+
+            <p:column headerText="Delete" style="text-align:center;"> 
+                <p:commandLink value="" id="delActBn" onstart="PF('statusDialog').show()" oncomplete="PF('statusDialog').hide();PF('workflowDelDialog').show();">
+                    <i class="pi pi-trash" style="font-size: 1.4rem; color: orangered"></i>
+                    <f:setPropertyActionListener value="#{workflow}" target="#{workflowBean.selectedWorkflow}" />
+                </p:commandLink>
+            </p:column>
+        </p:dataTable>
+    </h:form>
+    <ui:include src="/Secure/workflow/dialog/_description.xhtml" />
+</ui:composition>

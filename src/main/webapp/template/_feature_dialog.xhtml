@@ -1,0 +1,95 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/graphics_1.00.js"></script>
+
+    <p:dialog header="Feature View" widgetVar="FeatureView" dynamic="true" modal="true" appendTo="@(body)" height="450" width="650" 
+              hideEffect="explode" resizable="true" onShow="updateDialog()">
+        <h:panelGrid id="visView" style="width:100%; padding: 10px;">
+            <h:form id="visForm">
+                <h:panelGrid rendered="#{not sessionBean1.showMultiBoxView()}">
+                    <h:panelGrid columns="4">
+                        <h:outputLabel value="Select plot type:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{sessionBean1.cmpdSummaryType}">
+                            <f:selectItem itemLabel="Violin" itemValue="violin" /> 
+                            <f:selectItem itemLabel="Box" itemValue="boxplot" /> 
+                        </p:selectOneMenu>
+                        <p:commandButton value="Update" update="visView"    
+                                         style="margin-left:30px"
+                                         onclick="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         actionListener="#{sessionBean1.viewCmpdSummary(sessionBean1.currentCmpdName)}"/>   
+                        <h:panelGrid columns="3" style="text-align: center; float:right; margin-top:15px; margin-left:150px">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cmpd')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.4rem"></i>
+                            </p:commandLink>
+                            <p:spacer style="width: 20px"/>
+                            <p:commandLink id="addToReport" 
+                                           actionListener="#{fireBaseController.addFeatureToReport()}" 
+                                           title="Add to report">
+                                <i class="pi pi-file" style="font-size: 1.4rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                    </h:panelGrid>
+
+                    <h:panelGrid style="width:100%; padding: 10px; text-align: center">
+                        <img id="boximage" onerror='this.style.display="none"' src="#{sessionBean1.cmpdSummaryImg}" alt="FeatureImage"/>
+                    </h:panelGrid>
+                </h:panelGrid> 
+                <h:panelGrid rendered="#{sessionBean1.showMultiBoxView()}">
+                    <h:panelGrid columns="2">
+                        <h:panelGrid columns="2">
+                            <h:outputLabel value="Select plot type:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{sessionBean1.cmpdSummaryType}">
+                                <f:selectItem itemLabel="Violin" itemValue="violin" /> 
+                                <f:selectItem itemLabel="Box" itemValue="boxplot" /> 
+                            </p:selectOneMenu>
+                            <h:outputLabel value="Select primary factor:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{multifacBean.boxMeta}">
+                                <f:selectItems value="#{multifacBean.boxMetaOpts}" />
+                            </p:selectOneMenu>
+                            <h:outputLabel value="Select secondary factor:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{multifacBean.boxMeta2}">
+                                <f:selectItems value="#{multifacBean.boxMetaOpts}" />
+                            </p:selectOneMenu>
+                        </h:panelGrid>
+                        <p:commandButton value="Update" update="visView"     
+                                         style="margin-left:30px"
+                                         onclick="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide(); "
+                                         actionListener="#{multifacBean.updateBoxplotMeta()}"/>   
+                    </h:panelGrid>
+
+                    <h:panelGrid style="width:100%; padding: 10px; text-align: center">
+                        <h:panelGrid columns="3" style="text-align: center; float:right; margin-top:15px; margin-right:50px">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cmpd')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.4rem"></i>
+                            </p:commandLink>
+                            <p:spacer style="width: 20px"/>
+                            <p:commandLink id="addToReport2" 
+                                           actionListener="#{fireBaseController.addFeatureToReport()}" 
+                                           rendered="#{sessionBean1.analType ne 'dose'}"
+                                           title="Add to report">
+                                <i class="pi pi-file" style="font-size: 1.4rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>  
+                        <img id="boximage" onerror='this.style.display="none"' src="#{sessionBean1.boxplotUrl}" alt="FeatureImage"/>
+                    </h:panelGrid>  
+                </h:panelGrid> 
+            </h:form>
+        </h:panelGrid>          
+    </p:dialog>
+
+    <h:inputHidden id="userDir" value="#{sessionBean1.userDir}" />
+    <p:remoteCommand name="updateDialog" update="visView"/>
+</ui:composition>
+

@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <p:dialog widgetVar="msetDialog" dynamic="true" modal="true" 
+              header="Metabolite Set View"
+              appendTo="@(body)" 
+              onShow="updateMset()"
+              hideEffect="explode" resizable="true"> 
+        <h:panelGrid id="detailView" style="width:540px; font-size: 13px; padding: 10px">
+            <h:outputText escape="false" value="Current metabolite set: "/>
+            <h:form id="summaryForm">
+                <p:dataTable style="width:100%; font-size: 12px" var="set" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{msetBean.currentMsetLib}">
+                    <p:column headerText="Set Name" style="width:100px">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column>  
+                    <p:column headerText="Metabolites" style="width:320px">  
+                        <h:outputText escape="false" value="#{set.members}"/>
+                    </p:column>  
+                    <p:column headerText="References" style="width:100px">  
+                        <h:outputText escape="false" value="#{set.refs}"/>
+                    </p:column>  
+                </p:dataTable> 
+                <h:panelGrid style="width:100%; text-align: center">
+                    <p:commandButton value="OK" onclick="PF('msetDialog').hide()"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid> 
+    </p:dialog>
+    <p:remoteCommand name="updateMset" process="@this" update=":summaryForm"/>
+
+    <p:dialog widgetVar="msetPathDialog" dynamic="true" modal="true" appendTo="@(body)" 
+              onShow="updatePathMset()"
+              hideEffect="explode" resizable="true"> 
+        <h:panelGrid id="detailViewPath" style="width:500px; font-size: 13px; padding: 20px">
+            <h:outputText escape="false" value="Matched metabolites: "/>
+            <h:form id="summaryFormPath">
+                <p:dataTable style="width:100%; font-size: 12px" var="set" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{pathBean.currentPathSet}">
+                    <p:column headerText="Pathway">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column>  
+                    <p:column headerText="Metabolites">  
+                        <h:outputText escape="false" value="#{set.members}"/>
+                    </p:column>   
+                </p:dataTable> 
+                <h:panelGrid style="width:100%; text-align: center">
+                    <p:commandButton value="OK" onclick="PF('msetPathDialog').hide()"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid> 
+    </p:dialog>
+    <p:remoteCommand name="updateMsetPath" process="@this" update=":detailViewPath"/>
+
+    <p:dialog header="Match Details" widgetVar="msetMumDialog" dynamic="true" modal="true" appendTo="@(body)" 
+              onShow="updateMsetMum()" hideEffect="explode" resizable="true"> 
+        <h:panelGrid id="detailViewMum" style="width:540px; font-size: 12px; padding: 10px" class="surface-card shadow-1 p-4 text-800">  
+            <p>
+                The colored compounds indicate potential matches from the user's input, 
+                with red colors indicating significant hits and blue colors indicating non-significant hits. 
+                Note for users running V2, the number of hits listed in the results table will be lower
+                than the number of compounds shown below. This is because the analysis is performed in the 
+                Empirical Compound space, and for the sake of interpretability, we show which compounds
+                were matched instead. Please search OmicsForum using "empirical compound #metaboanalyst".
+            </p>
+            <h:form id="summaryFormMum">
+                <p:dataTable var="set" value="#{mummiAnalBean.currentPathSet}"
+                             class="surface-card shadow-1 p-0 text-800">
+                    <p:column headerText="Pathway">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column>  
+                    <p:column headerText="Metabolites">  
+                        <h:outputText escape="false" value="#{set.members}"/>
+                    </p:column>   
+                </p:dataTable> 
+            </h:form>
+        </h:panelGrid> 
+    </p:dialog>
+    <p:remoteCommand name="updateMsetMum" process="@this" update=":detailViewMum"/>
+
+</ui:composition>
+

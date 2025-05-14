@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{mebaBean.doDefaultMEBA()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Time-course profiles:</h2>
+                <p>
+                    The table below shows all the features ranked by the corresponding statistics. You can click any 
+                    feature name to view its corresponding time-course profile.
+                    <ul>
+                        <li>
+                            For time-course only data, we are interested in features which <b>change</b> over time.
+                        </li>
+                        <li>
+                            For time-course + one experimental factor data, we are interested in features which <b>respond differently in different experimental conditions</b> over time.
+                        </li>
+                        <li>
+                            For time-course + one experimental factor data, the statistics will be Hotelling-T2 if there are only 2 biological conditions or MB-Statistics if
+                            there are more than 2 biological conditions.
+                        </li>
+                    </ul>
+                </p>
+                <h:panelGrid columns="4">
+                    <h:outputLabel style="font-weight: bold" value="Specify metadata:"/>
+                    <p:selectCheckboxMenu  styleClass="menu" 
+                                           label="&nbsp; -- None Selected -- &nbsp;" 
+                                           showHeader="false" 
+                                           multiple="true" 
+                                           panelStyleClass="panel" 
+                                           value="#{mebaBean.mebaMetas}">
+                        <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                    </p:selectCheckboxMenu >
+                    <p:spacer style="width: 30px"/>
+                    <p:commandButton value="Update" update="dataPane :hisTab:cmdPane" 
+                                     onclick="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     actionListener="#{mebaBean.mbButton_action()}"/> 
+                </h:panelGrid>
+                <hr class="style-one"/>
+                <h:panelGrid columns="2" style="width:100%; font-size: 12px; line-height: 18px;">
+                    <h:panelGrid id="dataPane">
+                        <p:dataTable style="width:420px" paginator="true" paginatorPosition="bottom" 
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     rows="20" rowsPerPageTemplate="20,50,100" 
+                                     var="fb" value="#{mebaBean.featureListModel}">  
+                            <p:column headerText="Name">  
+                                <p:commandLink value="#{fb.name}" action="#{multifacBean.cmpdLnk_action()}" 
+                                               update=":form1:imgPane :hisTab:cmdPane">  
+                                    <f:setPropertyActionListener value="#{fb.name}" target="#{sessionBean1.currentCmpdName}" /> 
+                                </p:commandLink>  
+                            </p:column>  
+                            <p:column headerText="#{mebaBean.MEBAStatName}"
+                                       sortBy="#{fb.val1}">  
+                                <h:outputText value="#{fb.val1}"/>  
+                            </p:column>
+                        </p:dataTable>
+                        <p:outputLabel escape="false" value="#{mebaBean.downloadTxt}"/> 
+                    </h:panelGrid>
+                    <h:panelGrid id="imgPane">
+                        <h:panelGrid style="text-align: right; width: 90%;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('mb')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"  
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' src="#{multifacBean.MEBACmpdImg}" alt="MEBAimage"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

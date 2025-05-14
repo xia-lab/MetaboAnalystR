@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+
+    <p:panel styleClass="myPanel myDashboard" header="Metabolite-SNP Mappings" toggleable="true" toggleSpeed="500"  
+             class="surface-card text-800"
+             rendered="#{not empty mgwasBean.resTable}">
+        <ui:include src="./mgwas/_HarmonizedTable.xhtml" />
+    </p:panel>
+
+    <p:panel styleClass="myPanel" header="Mendelian Randomization Results" toggleable="true" toggleSpeed="500" 
+             class="surface-card text-800"
+             rendered="#{not empty mgwasBean.compoundDataModels}">
+        <ui:include src="./mgwas/_MRResults.xhtml" />
+    </p:panel>
+    
+</ui:composition>
+

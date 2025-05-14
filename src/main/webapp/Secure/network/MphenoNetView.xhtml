@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Network viewer', '/Secure/network/MphenoNetView.xhtml')}"/>
+    </ui:define>
+   <ui:define name="allcontent">
+        <iframe id="iframeId" style="position: absolute; width: calc(100% - 6rem); height:calc(100% - 4rem); top:4rem; left: 6rem; padding: 0" frameborder="0"
+                src="../viewer/_network_viewer_v3.3.html?userID=#{sessionBean1.currentUser.name}"/>
+    </ui:define>
+</ui:composition>
+
+
+
