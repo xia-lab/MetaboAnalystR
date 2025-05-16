@@ -419,6 +419,7 @@ iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
   pca3d$loadings$name <- colnames(mSetObj$dataSet$norm);
   
   dists <- GetDist3D(coords0);
+  names(dists) <- rownames(pca$rotation)
   colset <- GetRGBColorGradient(dists);
   pca3d$loadings$cols <- colset;
 
@@ -475,6 +476,7 @@ if (pca3d$score$metadata_type[metaCol] != "disc") {
   my.json.scatter(fileNm, TRUE);
   return(.set.mSet(mSetObj));
 }
+
 
 
 

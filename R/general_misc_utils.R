@@ -1557,12 +1557,19 @@ CheckDetailsTablePerformed <-function(type){
 return(performed)
 }
 
-CheckMetaPerformed <- function(){
-  if(!exists('meta.mat') || is.null(meta.mat)){
-    return(0);
-  }else{
-    return(1);
+CheckMetaPerformed <- function(type){
+  mSetObj <- .get.mSet(NA);
+
+  if(type == "metap"){
+    performed <- !is.null(mSetObj$analSet$metap.mat);
+  }else if(type == "votecount"){
+    performed <- !is.null(mSetObj$analSet$votecount.mat);
+
+  }else if(type == "merge"){
+    performed <- !is.null(mSetObj$analSet$merge.mat);
+
   }
+return(performed);
 }
 
 CheckMumExists <- function(mSetObj=NA, type) {
