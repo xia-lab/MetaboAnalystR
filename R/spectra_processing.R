@@ -647,7 +647,7 @@ updateSpectra3DPCA <- function(featureNM = 100){
   mypos <- t(coords);
   meanpos <- apply(abs(mypos),1, function(x){weighted.mean(x, weights)})
   
-  df.idx <- data.frame(pos = meanpos, inx = seq.int(1,length(meanpos)))
+  df.idx <- data.frame(pos = meanpos, inx = seq.int(1,length(meanpos))) 
   df.idx <- df.idx[order(-df.idx$pos),]
 
   selectRow_idx <- df.idx[c(1:featureNM), 2]

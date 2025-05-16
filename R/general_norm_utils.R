@@ -345,7 +345,6 @@ RangeNorm<-function(x){
 PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
