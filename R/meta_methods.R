@@ -899,7 +899,7 @@ DoMetaSigUpdate <- function(BHth=0.05,fc.val=0){
         significant <- (abs(meta.mat.all$AverageFc) >= fc.val & (meta.mat.all[,ncol(meta.mat.all)] >= minCount))
         
     }else{
-    significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
+        significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
     }
     meta.mat.all <- meta.mat.all[order(-significant, meta.mat.all[,ncol(meta.mat.all)]), ]
     meta.mat <- meta.mat.all[significant,];

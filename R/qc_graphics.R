@@ -985,6 +985,7 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
   #cat('\np-adjust method:', padj, '\n\n');
   return(out)
 }
+
 qc.pcaplot.json <- function(dataSet, x, imgNm) {
   jsonFile <- paste0(imgNm, ".json")
   

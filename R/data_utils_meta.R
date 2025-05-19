@@ -193,7 +193,7 @@ ReadMergedExpressTable <- function(dataName){
 # function to set up results combining individual data analysis
 # as well as to prepare for GO analysis
 # no return, as set global 
-SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
+SetupMetaStats <- function(BHth=0.05, paramSet, analSet){
   meta.mat <- analSet$meta.mat.all;
   paramSet$BHth <- BHth;
 
@@ -228,7 +228,6 @@ SetupMetaStats <- function(BHth=0.05, paramSet,analSet){
     }
   }
 
- 
   dataNms <- names(analSet$inmex.ind);
   newNms <- substring(dataNms,0, nchar(dataNms)-4);
   colnames(fc.mat) <- paste0(newNms, "_FC");

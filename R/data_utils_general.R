@@ -46,7 +46,8 @@ Init.Data <-function(onWeb=T, dataPath="data/"){
   paramSet$on.public.web <- onWeb;
 
   if(paramSet$on.public.web){
-  anal.mode <- "web";
+   anal.mode <- "web";
+   #anal.mode <- "api";
   }else{
   anal.mode <- "local";
   }

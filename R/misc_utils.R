@@ -887,17 +887,14 @@ saveSet <- function(obj=NA, set="", output=1){
       }else if(set == "imgSet"){
         imgSet <<- obj;
       }else if(set == "paramSet"){
-        head(paramSet);
         paramSet <<- obj;
       }else if(set == "msgSet"){
         msgSet <<- obj;
       }else if(set == "cmdSet"){
         cmdSet <<- obj;
       }
-
     }
       return(output);
-
 }
 
 readSet <- function(obj=NA, set=""){
