@@ -17,7 +17,8 @@ GetSigGeneCountTotal <- function(){
 
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);
-  data <- dataSet$data.anot;
+  #data <- dataSet$data.anot;
+  data <- get.annotated.data();
   if(sum(data > 100) > 100){ # now we think it is raw counts
     return(0);
   }else{
@@ -238,35 +239,31 @@ GetExpressGeneIDType<-function(dataName=""){
 }
 
 GetExpressResultMatrix <-function(dataName="", inxt){
-  dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");
-  inxt <- as.numeric(inxt)
-  if (dataSet$de.method=="deseq2"){
-    inx <- match("baseMean", colnames(dataSet$comp.res))
-    res <- dataSet$comp.res.list[[inxt]];
-
-
-  }else{
-    
-    if (dataSet$de.method=="limma"){
-    inx <- match("AveExpr", colnames(dataSet$comp.res))
-  } else {
-    inx <- match("logCPM", colnames(dataSet$comp.res))
-  }
-    res <- dataSet$comp.res;
-
-    res <- res[,-(1:inx-1)]
-    res <- cbind(dataSet$comp.res[,inxt], res);
-    colnames(res)[1] <- colnames(dataSet$comp.res)[inxt];
-}
+    dataSet <- readDataset(dataName);
+    paramSet <- readSet(paramSet, "paramSet");
+    inxt <- as.numeric(inxt)
+    if (dataSet$de.method=="deseq2"){
+        inx <- match("baseMean", colnames(dataSet$comp.res))
+        res <- dataSet$comp.res.list[[inxt]];
+    }else{
+        if (dataSet$de.method=="limma"){
+            inx <- match("AveExpr", colnames(dataSet$comp.res))
+        } else {
+            inx <- match("logCPM", colnames(dataSet$comp.res))
+        }
+        res <- dataSet$comp.res;
+        res <- res[,-(1:inx-1)];
+        res <- cbind(dataSet$comp.res[,inxt], res);
+        colnames(res)[1] <- colnames(dataSet$comp.res)[inxt];
+    }
 
     dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
     dataSet$comp.res <- dataSet$comp.res[which(!rownames(dataSet$comp.res) %in% rownames(dataSet$sig.mat)),]
     dataSet$comp.res <- rbind(dataSet$sig.mat, dataSet$comp.res);
     dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ];
     RegisterData(dataSet);
-    print("comp.res=========")
-    print(head(dataSet$comp.res));
+    #print("comp.res=========")
+    #print(head(dataSet$comp.res));
     qs::qsave(res, "express.de.res.qs");
   
   # max 1000 sig for display

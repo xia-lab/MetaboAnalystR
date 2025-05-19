@@ -185,19 +185,19 @@ qc.density<- function(dataSet, imgNm="abc", dpi=72, format, interactive){
 
 PlotLibSizeView<-function(fileName, imgNm,dpi=72, format="png"){
   library("ggrepel");
+  require("ggplot2");
+
   dataSet <- readDataset(fileName);
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep="");
   imgNm <- paste0(fileNm, format, sep="");
-  dpi <- as.numeric(dpi)
-  data_bef<-data.matrix(dataSet$data.anot);
+  dpi <- as.numeric(dpi);
+
+  data.anot <- .get.annotated.data();
+  data_bef<-data.matrix(data.anot);
   
   smpl.sums <- colSums(data_bef);
   
-  require("ggplot2")
-  data_bef<-data.matrix(dataSet$data.anot);
-  smpl.sums <- colSums(data_bef);
-  names(smpl.sums) <- colnames(data_bef);
-  sampleNms <- names(smpl.sums)
+  names(smpl.sums) <- sampleNms <- colnames(data_bef);
   df <- data.frame(count=smpl.sums,ind=colnames(data_bef))
   
   if(length(dataSet$meta.info) == 2){
@@ -286,7 +286,8 @@ PlotDataMeanStd <- function(fileName, imgName, dpi,format){
   if(grepl("_norm", imgName)){
     res <- qc.meanstd(dataSet$data.norm, imgName, dpi, format);
   }else{
-    res <- qc.meanstd(dataSet$data.anot, imgName, dpi, format);
+    data.anot <- .get.annotated.data();
+    res <- qc.meanstd(data.anot, imgName, dpi, format);
   }
   return(res);
 }
@@ -373,11 +374,12 @@ PlotDataPCA <- function(fileName, imgName, dpi, format){
   dataSet <- readDataset(fileName);
   if(grepl("_norm", imgName)){
     qc.pcaplot(dataSet, dataSet$data.norm, imgName, dpi, format, F);
-  qc.pcaplot.json(dataSet, dataSet$data.norm, imgName);
+    qc.pcaplot.json(dataSet, dataSet$data.norm, imgName);
 
   }else{
-    qc.pcaplot(dataSet, dataSet$data.anot, imgName, dpi, format, F);
-  qc.pcaplot.json(dataSet, dataSet$data.anot, imgName);
+    data.anot <- .get.annotated.data();
+    qc.pcaplot(dataSet, data.anot, imgName, dpi, format, F);
+    qc.pcaplot.json(dataSet, data.anot, imgName);
 
   }
   return("NA");
@@ -546,6 +548,10 @@ qc.pcaplot <- function(dataSet, x, imgNm, dpi=72, format="png", interactive=FALS
 
   permanova_results <- ComputePERMANOVA(pca.res$PC1, pca.res$PC2, dataSet$meta.info[, 1], 999);
   analSet <- readSet(analSet, "analSet");
+
+  # only save those required for json
+  # never use more than top 3. Update this if you require more PCs
+  pca$x <- pca$x[,1:3]; # 
   analSet$pca <- pca;
   analSet$permanova.res <-permanova_results;
   saveSet(analSet);
@@ -580,7 +586,8 @@ PlotDataNcov5 <- function(fileName, imgName, dpi, format){
   if(grepl("_norm", imgName)){
     qc.ncov5(dataSet, dataSet$data.norm, imgName, dpi, format, F);
   }else{
-    qc.ncov5(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+    data.anot <- .get.annotated.data();
+    qc.ncov5(dataSet, data.anot, imgName, dpi, format, F);
   }
   return("NA");
 }
@@ -661,7 +668,8 @@ PlotDataNsig <- function(fileName, imgName, dpi, format){
   if(grepl("_norm", imgName)){
     qc.nsig(dataSet, dataSet$data.norm, imgName, dpi, format, F);
   }else{
-    qc.nsig(dataSet, dataSet$data.anot, imgName, dpi, format, F);
+    data.anot <- .get.annotated.data();
+    qc.nsig(dataSet, data.anot, imgName, dpi, format, F);
   }
   return("NA");
 }
@@ -744,7 +752,8 @@ PlotDataDendrogram <- function(fileName, imgName,threshold, dpi, format){
   if(grepl("_norm", imgName)){
     qc.dendrogram(dataSet, dataSet$data.norm, threshold, imgName, dpi, format, F);
   }else{
-    qc.dendrogram(dataSet, dataSet$data.anot, threshold, imgName, dpi, format, F);
+    data.anot <- .get.annotated.data();
+    qc.dendrogram(dataSet, data.anot, threshold, imgName, dpi, format, F);
   }
   return("NA");
 }
@@ -827,7 +836,7 @@ SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", thresho
   if (grepl("_norm", imgNameBase)) {
     data <- dataSet$data.norm
   } else {
-    data <- dataSet$data.anot
+    data <- .get.annotated.data();
   }
   
   HighCoverageGeneCount <- colSums(data > 5)
@@ -985,6 +994,7 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
   #cat('\np-adjust method:', padj, '\n\n');
   return(out)
 }
+
 qc.pcaplot.json <- function(dataSet, x, imgNm) {
   jsonFile <- paste0(imgNm, ".json")
   

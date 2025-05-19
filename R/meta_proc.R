@@ -394,7 +394,7 @@ ImputeMissingVar <- function(dataName="", method="min"){
   rownames(data.missed) <- row.nms;
   saveDataQs(data.missed, "data.missed.qs", paramSet$anal.type, dataName);
   if(paramSet$anal.type=="onedata"){
-  dataSet$data.norm <- dataSet$data.anot <- data.missed
+    dataSet$data.norm <- data.missed
   }
   RegisterData(dataSet);
 }

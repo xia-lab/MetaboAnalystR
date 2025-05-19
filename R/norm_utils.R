@@ -27,7 +27,9 @@ PerformNormalization <- function(dataName, norm.opt, var.thresh, count.thresh, f
   msg <- ""; 
   #Filter data
   data <- PerformFiltering(dataSet, var.thresh, count.thresh, filterUnmapped, countOpt);
-  dataSet$data.anot <- data;
+  #dataSet$data.anot <- data;
+  .save.annotated.data(data);
+
   msg <- paste(filt.msg, msg);
   
   if(dataSet$type=="prot"){

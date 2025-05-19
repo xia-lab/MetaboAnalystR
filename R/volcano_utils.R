@@ -405,7 +405,8 @@ PerformVolcanoBatchEnrichment <- function(dataName="", file.nm, fun.type, IDs, i
   }else{
     # cut to the universe to uploaded genes
     if(paramSet$anal.type == "onedata"){
-      current.universe <- rownames(dataSet$data.anot); 
+      data.anot <- .get.annotated.data();
+      current.universe <- rownames(data.anot); 
     }else if(paramSet$anal.type == "metadata"){
       inmex <- qs::qread("inmex_meta.qs");
       current.universe <- rownames(inmex$data); 

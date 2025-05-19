@@ -148,7 +148,8 @@ ResetMetaTab <- function(dataName=""){
     }else{
        data.anot <- qs::qread("orig.data.anot.qs");
     }
-    dataSet$data.norm <- dataSet$data.anot <- data.anot;
+    dataSet$data.norm <- data.anot;
+    .save.annotated.data(data.anot);
   }else{
     paramSet <- readSet(paramSet, "paramSet")
     sel.nms <- names(paramSet$mdata.all);
@@ -350,8 +351,11 @@ UpdateSampInfo <-  function(dataName="",rowNm,colNm,cell){
     if(rowNm != cell){
       rownames(meta)[ridx]=cell
       colnames(dataSet$data.norm)[which(colnames(dataSet$data.norm)==rowNm)] <- cell 
-      if(exists("dataSet$data.anot")){
-        colnames(dataSet$data.anot)[which(colnames(dataSet$data.anot)==rowNm)] <- cell 
+      #if(exists("dataSet$data.anot")){
+       if(file.exists("data.anot.qs")){
+        data.anot <- .get.annotated.data();
+        colnames(data.anot)[which(colnames(data.anot)==rowNm)] <- cell;
+        .save.annotated.data(data.anot);
       }
     }
   }else{  

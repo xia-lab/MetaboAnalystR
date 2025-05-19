@@ -29,12 +29,7 @@
 #'@export
 #'
 PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="entrez", lvlOpt="mean"){
-  #dataName <<- dataName;
-  #org <<- org;
-  #dataType <<- dataType;
-  #idType <<- idType;
-  #lvlOpt <<- lvlOpt;
-  #save.image("dataannot.RData");
+
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
   msgSet <- readSet(msgSet, "msgSet");
@@ -55,8 +50,8 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   }else{
     data.proc <- qs::qread("data.raw.qs");
   }
-  dataSet$data.anot <- data.proc;
-  
+  data.anot <- data.proc;
+
   if (org != 'NA' & idType != 'NA'){
     feature.vec <- rownames(data.proc);
     
@@ -92,7 +87,7 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
         current.msg <- paste(current.msg, "Data is now transformed to gene-level (Entrez) expression.");
         paramSet$lvl.opt <- lvlOpt;
         res <- RemoveDuplicates(data.anot, lvlOpt, quiet=F, paramSet, msgSet);
-        dataSet$data.anot <- res[[1]];
+        data.anot <- res[[1]];
         msgSet <- res[[2]];
         dataSet$id.current <- "entrez";
         dataSet$annotated <- T; 
@@ -112,15 +107,15 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
   # need to save the ids (mixed gene annotation and original id) 
   # in case, users needs to keep unannotated features
   # this need to be updated to gether with data from now on
-  dataSet$data.norm <- dataSet$data.anot;
+  dataSet$data.norm <- data.anot;
   
-  qs::qsave(dataSet$data.anot, file="orig.data.anot.qs"); # keep original copy, not in mem
-  
-  totalCount <-  sum(colSums(dataSet$data.anot));
-  avgCount <- sum(colSums(dataSet$data.anot))/ ncol(dataSet$data.anot);
-  minCount <- min(colSums(dataSet$data.anot))
-  maxCount <- max(colSums(dataSet$data.anot))
-  lvls = ""
+  qs::qsave(data.anot, file="orig.data.anot.qs"); # keep original copy, not in mem
+  col.sum <- colSums(dataSet$data.norm);
+  totalCount <-  sum(col.sum);
+  avgCount <- totalCount / ncol(dataSet$data.norm);
+  minCount <- min(col.sum);
+  maxCount <- max(col.sum);
+  lvls = "";
   if(any(dataSet$disc.inx.orig)){
     disc = paste(names(dataSet$disc.inx.orig)[which(dataSet$disc.inx.orig)],collapse = ", ")
     lvls = paste0(lvls,length(which(dataSet$disc.inx.orig))," discrete factors: ",disc,"; ")
@@ -129,17 +124,18 @@ PerformDataAnnot <- function(dataName="", org="hsa", dataType="array", idType="e
     cont = paste(names(dataSet$cont.inx.orig)[which(dataSet$cont.inx.orig)],collapse = ", ")
     lvls = paste0(lvls,length(which(dataSet$cont.inx.orig))," continuous factors: ",cont,".")
   }
-  missNum = which(is.na(dataSet$data.anot)|dataSet$data.anot=="NA"|dataSet$data.anot=="")
+  missNum = which(is.na(dataSet$data.norm)|dataSet$data.norm=="NA"|dataSet$data.norm=="")
   msgSet$current.msg <- current.msg;
-  msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.anot), ncol(dataSet$meta.info), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls,length(missNum))  
+  msgSet$summaryVec <- c(matched.len, perct, length(anot.id), sum(!hit.inx), ncol(dataSet$data.norm), ncol(dataSet$meta.info), sprintf("%4.2e", signif(totalCount ,3)), sprintf("%4.2e",signif(avgCount, 3)), sprintf("%4.2e",signif(minCount, 3)), sprintf("%4.2e",signif(maxCount,3)), lvls,length(missNum))  
   if(length(missNum)>0){
     RemoveMissingPercent(dataSet$name, 0.5)
     ImputeMissingVar(dataSet$name, method="min")
   }else{
-    qs::qsave(dataSet$data.anot, file="data.missed.qs");
+    qs::qsave(data.anot, file="data.missed.qs");
   }
 
-  fast.write(dataSet$data.anot, file="data_annotated.csv");
+  fast.write(data.anot, file="data_annotated.csv");
+  .save.annotated.data(data.anot);
 
   saveSet(paramSet, "paramSet");
   saveSet(msgSet, "msgSet");
