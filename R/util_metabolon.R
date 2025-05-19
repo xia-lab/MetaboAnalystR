@@ -109,7 +109,7 @@ my.validate.metabolon.data <- function(file_path = NULL) {
   }
 }
 
-extractMetaFactors <- function(mSetObj = NA, file_path = NULL){
+my.extract.metabolon.metafactors <- function(mSetObj = NA, file_path = NULL){
   dt <- read_excel(file_path, sheet = "Sample Meta Data")
   colNM_num <- apply(dt, 2, FUN = function(x){
     length(unique(x))
@@ -129,7 +129,7 @@ extractMetaFactors <- function(mSetObj = NA, file_path = NULL){
   }
 }
 
-extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
+my.extract.metabolon.compounds <- function(mSetObj = NA, file_path = NULL){
   dt <- read_excel(file_path, sheet = "Chemical Annotation")
   idx <- vapply(colnames(dt), FUN = function(x){
     x %in% c("HMDB", "KEGG", "INCHIKEY","SMILES", "PUBCHEM", "CHEMICAL_NAME")
@@ -145,26 +145,6 @@ extractCompoundIDs <- function(mSetObj = NA, file_path = NULL){
   }
 }
 
-getMetabolonMetaFactor <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$metafactors -> metafactors;
-  if(.on.public.web){
-    return(metafactors)
-  } else {
-    return(mSetObj)
-  }
-}
-
-getMetabolonCMPDIDs <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$cmpdIDs -> cmpdIDs;
-  if(is.null(cmpdIDs)){cmpdIDs <- "NULL"}
-  if(.on.public.web){
-    return(cmpdIDs)
-  } else {
-    return(mSetObj)
-  }
-}
 
 ReadXLSXsheetsInfo <- function(file_path){
   sheetsnms <- "";

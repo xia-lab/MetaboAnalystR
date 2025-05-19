@@ -1335,28 +1335,52 @@ GetNameCheckMsgs <- function(mSetObj=NA){
   return(mSet$msgSet$nmcheck.msg);
 }
 
-
 ValidateMetabolonData <- function(file_path = NULL) {
-  if(.on.public.web){
-    # make this lazy load
     if(!exists("my.validate.metabolon.data")){ # public web on same user dir
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.validate.metabolon.data(file_path));
-  }else{
-    return(my.validate.metabolon.data(file_path));
-  }
 }
 
 ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
-  if(.on.public.web){
-    # make this lazy load
     if(!exists("my.read.metabolon.sheets")){ # public web on same user dir
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
-  }else{
-    return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
+}
+
+ExtractMetabolonCompoundIDs  <- function(mSetObj = NA, file_path = NULL){
+    if(!exists("my.extract.metabolon.compounds")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.extract.metabolon.compounds(mSetObj, file_path));
+}
+
+ExtractMetabolonMetaFactors <- function(mSetObj = NA, file_path = NULL){
+    if(!exists("my.extract.metabolon.metafactors")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.extract.metabolon.metafactors(mSetObj, file_path));
+}
+
+GetMetabolonMetaFactor <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$metafactors -> metafactors;
+  if(.on.public.web){
+    return(metafactors)
+  } else {
+    return(mSetObj)
+  }
+}
+
+GetMetabolonCMPDIDs <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$cmpdIDs -> cmpdIDs;
+  if(is.null(cmpdIDs)){cmpdIDs <- "NULL"}
+  if(.on.public.web){
+    return(cmpdIDs)
+  } else {
+    return(mSetObj)
   }
 }
 
