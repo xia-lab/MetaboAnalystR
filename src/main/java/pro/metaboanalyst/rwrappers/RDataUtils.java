@@ -3055,7 +3055,7 @@ public class RDataUtils {
     public static boolean readTextDataDoseWithMeta(RConnection RC, String filePath, String metaPath, String format, String lblType) {
         try {
             String rCommand = "Read.TextDataDoseWithMeta(NA, \"" + filePath + "\", \"" + metaPath + "\", \"" + format + "\", \"" + lblType + "\");";
-            String rCommand2 = "Read.TextDataDoseWithMeta(NA, \"" + "Replacing_with_your_file_path" + "\", \"" + "Replacing_with_your_metadata_file_path" + "\"\"" + format + "\", \"" + lblType + "\");";
+            String rCommand2 = "Read.TextDataDoseWithMeta(NA, \"" + "Replacing_with_your_file_path" + "\", \"" + "Replacing_with_your_metadata_file_path" + "\", \"" + format + "\", \"" + lblType + "\");";
             RCenter.recordRCommand(RC, rCommand2);
             return (RC.eval(rCommand).asInteger() == 1);
         } catch (Exception rse) {
