@@ -152,17 +152,17 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       myplot <- p.norm + theme(plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.5, "cm"), axis.text = element_text(size=10))
     }else{
       # calculate layout
-      h=500;
+      h=420;
       if(num <= 3){
-        w=600;
+        w=630;
       }else{
-        w=num*150
+        w=num*170
       }
       
       width = w*dpi/72
       height = h*dpi/72
-      print(w)
-      print(h)
+      #print(w)
+      #print(h)
       Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi=dpi);
       data.lbl <- as.character(inmex.meta$data.lbl);
       data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
