@@ -437,6 +437,14 @@ doScatterJson <- function(dataName, filenm){
   }
 }
 
+# some utility functions to save memory for large data object
+.save.annotated.data <- function(my.dat){
+  qs::qsave(my.dat, "data.anot.qs"); 
+}
+
+.get.annotated.data <- function(){
+   return(qs::qread("data.anot.qs"));
+}
 
 #'Record R Commands
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
