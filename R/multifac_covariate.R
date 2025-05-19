@@ -676,7 +676,7 @@ CombineFacScatter.Anal <- function(mSetObj,
                                   thresh=0.05,
                                   pval.type="fdr"){
 
- mSetObj <- prepareContrast(meta0,meta1,anal.type ,par1,par2,nested.opt);
+ mSetObj <- prepareLimmaContrast(meta0,meta1,anal.type ,par1,par2,nested.opt);
  
  if(!is.list(mSetObj)){
     return(-1);
@@ -833,7 +833,7 @@ CombineFacScatter.Anal <- function(mSetObj,
   } 
 }
 
-prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
+prepareLimmaContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   library(limma)
   library(dplyr)
   
@@ -867,9 +867,7 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
   } else {
     grp.nms <- make.names(grp.nms)
   }
-  analysisVar <-  meta0
-  
-  
+  analysisVar <-  meta0;
   
   if (anal.type == "inter") { 
     if(mSetObj$dataSet$meta.types[meta1]=="disc"){
@@ -906,8 +904,6 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
       design <-  design.noadj
     } 
   }
-  
-  
   
   if(dataSet$meta.types[analysisVar]=="cont" |  any(grepl("(^[0-9]+).*", grp.nms))){
     if(grepl( "vs",par1)){
@@ -996,7 +992,6 @@ prepareContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL,
 is_purely_numeric <- function(x) {
   all(grepl("^\\d+$", x))  # Returns TRUE if all elements are purely numeric
 }
-
 
 GetRawCovThresh <- function(mSetObj){
   mSetObj <- .get.mSet(mSetObj); 
