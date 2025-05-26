@@ -173,6 +173,11 @@
             <artifactId>jakarta.websocket-client-api</artifactId>
             <version>2.1.0</version> 
         </dependency>
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>0.8.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

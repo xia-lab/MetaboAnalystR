@@ -220,6 +220,23 @@
                 background: #ebecf0;
                 z-index:9999;
             }
+            .styleCell           {
+                text-align:center;
+                padding:6px 4px;
+            }
+            .style-icon          {
+                border:2px solid transparent;
+                border-radius:8px;
+                cursor:pointer;
+            }
+            .style-icon:hover    {
+                border-color:#808080;
+            }
+            .style-icon-selected {
+                border:2px solid #007ad9;
+                border-radius:8px;
+                box-shadow:0 0 6px rgba(0,0,0,.35);
+            }
         </style>
         <ui:insert name="mystyle"> 
         </ui:insert>
@@ -358,13 +375,20 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog> 
-        <p:dialog modal="true" widgetVar="graphDialog" header="Graphics Center"
+        <p:dialog modal="true" id="graphDialogId" widgetVar="graphDialog" header="Graphics Center"
                   style="width: 420px; height:420px;" 
                   appendTo="@(body)"
                   dynamic="true"
                   draggable="true" closable="true" resizable="true"> 
             <h:panelGrid style="padding: 10px;font-size: 13px;">
                 <p:tabView id="myGraphPane" style="width:100%; border: none;">
+                    <p:ajax event="tabChange"
+                            update=":myGraphPane"
+                            oncomplete="PF('graphDialog').jq.position({
+                            my: 'center center',
+                            at: 'center center',
+                            of: window
+                            });"/>
                     <p:tab title ="Hi-res Images">
                         <h:form id="formgraph">
                             <h:panelGrid columns="2" style="width:380px;" class="surface-card">
@@ -458,6 +482,128 @@
                             </h:panelGrid>
                         </h:form>
                     </p:tab>
+                    <!-- ─────────────── Styling TAB ─────────────── -->
+                    <p:tab title="Styling">
+                        <h:form id="styleForm">
+
+                            <!-- palette grid -->
+                            <p:panelGrid id="styleGrid"
+                                         columns="4"
+                                         styleClass="ui-noborder ui-grid-responsive"
+                                         columnClasses="styleCell">
+
+                                <!-- repeat 4 presets -->
+                                <ui:repeat value="#{graphStyleBean.styleList}" var="st">
+                                    <p:commandLink update="styleForm"
+                                                   action="#{graphStyleBean.selectStyle(st.code)}"
+                                                   styleClass="#{graphStyleBean.selectedStyle eq st.code
+                                                                 ? 'style-icon-selected'
+                                                                 : 'style-icon'}">
+                                        <p:graphicImage value="#{st.icon}"
+                                                        width="60" height="60"
+                                                        title="#{st.label}"/>
+                                    </p:commandLink>
+                                </ui:repeat>
+
+                            </p:panelGrid>
+
+                            <!-- live preview -->
+                            <p:outputLabel value="Preview:" style="font-weight:bold; display:block; margin-top:8px"/>
+                            <p:outputPanel id="previewPanel" style="text-align:center">
+                                <p:graphicImage value="#{graphStyleBean.previewImage}"
+                                                width="240" height="160"
+                                                styleClass="shadow-2 surface-border"/>
+                            </p:outputPanel>
+
+                            <!-- apply -->
+                            <p:commandButton value="Apply"
+                                             icon="pi pi-check"
+                                             actionListener="#{graphStyleBean.applyStyle}"
+                                             update=":myGraphPane"
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide(); PF('graphDialog').jq.position({my:'center center',at:'center center',of:window});"
+                                             style="margin-top:10px"/>
+                        </h:form>
+                    </p:tab>
+
+                    <p:tab title ="Customization 1">
+                        <h:form id="rPlotCustomizationForm">
+                            <p:panelGrid columns="1"  style="width:440px;">
+                                <!-- Customization Instructions -->
+                                <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
+                                <p:inputTextarea id="customizationPrompt" 
+                                                 value="#{rPlotCustomizationBean.prompt}"
+                                                 rows="5" 
+                                                 style="width:100%"
+                                                 placeholder="Describe how you want to customize the plot. For example:
+                                                 - Change colors (e.g., 'Use a blue color scheme')
+                                                 - Adjust text size (e.g., 'Make labels larger')
+                                                 - Modify layout (e.g., 'Increase spacing between plots')
+                                                 - Change dimensions (e.g., 'Make the plot wider')
+                                                 - Add features (e.g., 'Add a grid to the background')" />
+
+                                <p:outputLabel for="aiResponse" value="AI Response:" style="font-weight:bold"/>
+                                <p:inputTextarea id="aiResponse" 
+                                                 value="#{rPlotCustomizationBean.aiResponse}"
+                                                 rows="5" 
+                                                 style="width:100%"
+                                                 readonly="true" />
+                            </p:panelGrid>
+                            <p:panelGrid columns="2" style="width:100%;text-align:center">
+                                <p:commandButton value="Submit" 
+                                                 action="#{rPlotCustomizationBean.applyCustomization}"
+                                                 update=":myGraphPane:rPlotCustomizationForm"/>
+                                <p:commandButton value="Cancel" 
+                                                 onclick="PF('rPlotCustomizationDialog').hide();" 
+                                                 type="button" />
+                            </p:panelGrid>
+
+                        </h:form>
+                    </p:tab>
+                    <p:tab title ="Customization 2">
+                        <h:form id="formChat">
+                            <h:panelGroup layout="block" style="text-align: right; padding-right: 10px;">
+                                <p:commandButton value="Reset" 
+                                                 icon="pi pi-refresh"
+                                                 actionListener="#{myBot.initAssistant()}" style="margin-right: 10px;" 
+                                                 styleClass="mt-3" update="formChat"/>
+                            </h:panelGroup>
+
+                            <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 480px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">
+                                <p:dataView var="message" value="#{rPlotCustomizationBean.messages}" 
+                                            style="padding-bottom:10px;width:100%;" rows="12" paginator="false" 
+                                            emptyMessage="#{rPlotCustomizationBean.welcomeMsg}" layout="list">
+                                    <p:dataViewListItem> 
+                                        <div class="chat-message #{message.user eq 'User' ? 'user-message' : 'assistant-message'}" style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">
+                                            <div class="message-content">
+                                                <p:outputLabel value="#{message.user}" escape="false" style="font-weight:bold; color: salmon"/>:
+                                                <p:outputLabel value="#{message.content}" escape="false"/>
+                                            </div>
+                                        </div>
+                                    </p:dataViewListItem>
+                                </p:dataView>
+                            </p:scrollPanel>
+                            <div id="progressBar" style="display:none;" class="indeterminate-progress-bar">
+                                <div class="indeterminate-progress-bar__progress"></div>
+                            </div>
+                            <h:panelGrid columns="2" style="padding-top: 4px; width: 90%">
+                                <p:inputText id="chatInput" value="#{myBot.promptMsg}" 
+                                             style="width:80%; min-width: 560px" 
+                                             class="surface-100"
+                                             placeholder="Enter your query here ..."/>
+
+                                <p:commandButton id="sendButton" value="Send" 
+                                                 icon="pi pi-send"
+                                                 actionListener="#{myBot.sendMsg}" 
+                                                 onstart="$('#progressBar').show();"
+                                                 oncomplete="scrollToBottom();$('#progressBar').hide();" 
+                                                 update="formChat" />
+
+                                <p:defaultCommand target="sendButton" />
+                            </h:panelGrid>
+                        </h:form>
+                    </p:tab>
+
                 </p:tabView> 
             </h:panelGrid>
         </p:dialog>

@@ -25,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rosuda.REngine.REXP;
 import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.rwrappers.RPlotAICustomizer;
 
 /**
  * Create a dataSet list object mSet$dataSet$cls : class information
@@ -1183,6 +1184,81 @@ public class RDataUtils {
         } catch (Exception e) {
             LOGGER.error("plotNormSummaryGraph", e);
         }
+    }
+
+    /**
+     * AI-enhanced version of plotNormSummaryGraph that uses Google AI to
+     * optimize plot parameters. This function analyzes the data context and
+     * suggests optimal visualization parameters.
+     */
+    public static void plotNormSummaryGraphAI(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // 1) Build the dataContext & ask your AI customizer for R code:
+            String dataContext = getDataContext(RC);
+            RPlotAICustomizer aiCustomizer = new RPlotAICustomizer();
+            String customParams = aiCustomizer.customizeNormSummaryPlot(dataContext).trim();
+
+            // 2) Always quote and escape any internal double-quotes in customParams
+            if (!customParams.isEmpty()) {
+                customParams = customParams.replace("\"", "\\\"");
+            }
+
+            // 3) Construct the R command
+            String rCommand;
+            if (customParams.isEmpty()) {
+                rCommand = String.format(
+                        "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA)",
+                        imgName, format, dpi
+                );
+            } else {
+                rCommand = String.format(
+                        "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA, customParams=\"%s\")",
+                        imgName, format, dpi, customParams
+                );
+            }
+
+            // 4) Record & dispatch
+            System.out.println("[R CMD] " + rCommand);
+            RCenter.recordRCommand(RC, rCommand);
+            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
+            sb.addGraphicsCMD("norm", rCommand);
+            sb.addGraphicsMapLink("norm", "/Secure/process/NormalizationView.xhtml");
+
+            // 5) Fire off the R call
+            RC.voidEval(rCommand);
+        } catch (Exception e) {
+            LOGGER.error("plotNormSummaryGraphAI", e);
+        }
+    }
+
+    /**
+     * Gets relevant data context for AI customization. This includes
+     * information about the data being plotted.
+     */
+    private static String getDataContext(RConnection RC) throws Exception {
+        StringBuilder context = new StringBuilder();
+
+        // Get number of compounds
+        RC.voidEval("numCompounds <- length(rownames(mSet$dataSet$norm))");
+        String numCompounds = RC.eval("numCompounds").asString();
+        context.append("Number of compounds: ").append(numCompounds).append("\n");
+
+        // Get data range
+        RC.voidEval("dataRange <- range(mSet$dataSet$norm, na.rm=TRUE)");
+        String range = RC.eval("paste(dataRange[1], dataRange[2], sep=' to ')").asString();
+        context.append("Data range: ").append(range).append("\n");
+
+        // Get number of samples
+        RC.voidEval("numSamples <- ncol(mSet$dataSet$norm)");
+        String numSamples = RC.eval("numSamples").asString();
+        context.append("Number of samples: ").append(numSamples).append("\n");
+
+        return context.toString();
     }
 
     //plot a boxplot and density for each compound
@@ -3222,7 +3298,7 @@ public class RDataUtils {
         }
         return null;
     }
-    
+
     public static void toggleMetaRes(RConnection RC, String type) {
         try {
             String rCommand = "ToggleMetaRes(NA,\"" + type + "\");";
