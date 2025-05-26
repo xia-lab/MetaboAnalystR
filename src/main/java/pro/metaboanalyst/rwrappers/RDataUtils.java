@@ -602,12 +602,12 @@ public class RDataUtils {
     public static String[] getMetabolonMetaFactors(RConnection RC, String filePath) {
         String[] res = {};
         try {
-            String rCommand = "extractMetaFactors(NA, \"" + filePath + "\");";
-            String rCommand2 = "extractMetaFactors(\"" + "Replacing_with_your_file_path" + "\");";
+            String rCommand = "ExtractMetabolonMetaFactors(NA, \"" + filePath + "\");";
+            String rCommand2 = "ExtractMetabolonMetaFactors(\"" + "Replacing_with_your_file_path" + "\");";
             RCenter.recordRCommand(RC, rCommand);
             return (RC.eval(rCommand).asStrings());
         } catch (Exception rse) {
-            LOGGER.error("extractMetaFactors", rse);
+            LOGGER.error("ExtractMetabolonMetaFactors", rse);
             return res;
         }
     }
@@ -615,12 +615,12 @@ public class RDataUtils {
     public static String[] getMetabolonCMPDIDs(RConnection RC, String filePath) {
         String[] res = {};
         try {
-            String rCommand = "extractCompoundIDs(NA, \"" + filePath + "\");";
-            String rCommand2 = "extractCompoundIDs(\"" + "Replacing_with_your_file_path" + "\");";
+            String rCommand = "ExtractMetabolonCompoundIDs(NA, \"" + filePath + "\");";
+            String rCommand2 = "ExtractMetabolonCompoundIDs(\"" + "Replacing_with_your_file_path" + "\");";
             RCenter.recordRCommand(RC, rCommand);
             return (RC.eval(rCommand).asStrings());
         } catch (Exception rse) {
-            LOGGER.error("extractCompoundIDs", rse);
+            LOGGER.error("ExtractMetabolonCompoundIDs", rse);
             return res;
         }
     }
@@ -628,11 +628,11 @@ public class RDataUtils {
     public static String[] getquickMetabolonMetaFactors(RConnection RC) {
         String[] res = {};
         try {
-            String rCommand = "getMetabolonMetaFactor(NA);";
+            String rCommand = "GetMetabolonMetaFactor(NA);";
             RCenter.recordRCommand(RC, rCommand);
             return (RC.eval(rCommand).asStrings());
         } catch (Exception rse) {
-            LOGGER.error("getMetabolonMetaFactor", rse);
+            LOGGER.error("GetMetabolonMetaFactor", rse);
             return res;
         }
     }
@@ -640,11 +640,11 @@ public class RDataUtils {
     public static String[] getquickMetabolonCMPDIDs(RConnection RC) {
         String[] res = {};
         try {
-            String rCommand = "getMetabolonCMPDIDs(NA);";
+            String rCommand = "GetMetabolonCMPDIDs(NA);";
             RCenter.recordRCommand(RC, rCommand);
             return (RC.eval(rCommand).asStrings());
         } catch (Exception rse) {
-            LOGGER.error("getMetabolonCMPDIDs", rse);
+            LOGGER.error("GetMetabolonCMPDIDs", rse);
             return res;
         }
     }
@@ -3131,7 +3131,7 @@ public class RDataUtils {
     public static boolean readTextDataDoseWithMeta(RConnection RC, String filePath, String metaPath, String format, String lblType) {
         try {
             String rCommand = "Read.TextDataDoseWithMeta(NA, \"" + filePath + "\", \"" + metaPath + "\", \"" + format + "\", \"" + lblType + "\");";
-            String rCommand2 = "Read.TextDataDoseWithMeta(NA, \"" + "Replacing_with_your_file_path" + "\", \"" + "Replacing_with_your_metadata_file_path" + "\"\"" + format + "\", \"" + lblType + "\");";
+            String rCommand2 = "Read.TextDataDoseWithMeta(NA, \"" + "Replacing_with_your_file_path" + "\", \"" + "Replacing_with_your_metadata_file_path" + "\", \"" + format + "\", \"" + lblType + "\");";
             RCenter.recordRCommand(RC, rCommand2);
             return (RC.eval(rCommand).asInteger() == 1);
         } catch (Exception rse) {

@@ -535,7 +535,7 @@ public class RDoseUtils {
             //System.out.println("DE22==============");
             //String robustTrend = robustTrendBool ? "T" : "F";
             RC.assign("adj.vec", adjustedVar);
-            RCenter.recordRCommand(RC, "adj.vec <<- " + Arrays.toString(adjustedVar));
+            RCenter.recordRCommand(RC, "adj.vec <- " + DataUtils.convertArrayToVecInR(adjustedVar));
             String rCommand = "PerformDoseDEAnal(NA,\"" + analysisMeta + "\");";
             RCenter.recordRCommand(RC, rCommand);
 

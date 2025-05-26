@@ -2,19 +2,19 @@
 # based on the modules user selected
 .on.public.web <<- TRUE;
 rpath <<- "../../";
-print("rpathscriptloader=====");
+#print("rpathscriptloader=====");
 
-general_files <- c("general_data_utils","general_misc_utils","general_lib_utils","generic_c_utils","depends_refs", "multifac_covariate");
+general_files <- c("general_data_utils","general_misc_utils","general_lib_utils","generic_c_utils","depends_refs", "../../XiaLabPro/R/util_misc");
 general_stat_files <- c("general_norm_utils","general_proc_utils","multifac_metadata");
 general_anot_files <- "general_anot_utils";
-stats_files <- c("stats_chemometrics","stats_classification","stats_clustering","stats_correlations","stats_sigfeatures","stats_univariates", "stats_peaks","util_metabolon");
-enrich_files <- c("enrich_graphics","enrich_mset","enrich_name_match","enrich_stats","util_metabolon");
-pathway_files <- c("enrich_mset","enrich_stats","enrich_name_match","enrich_path_graphics","enrich_path_stats", "gene_fun_utils","util_metabolon")
+stats_files <- c("stats_chemometrics","stats_classification","stats_clustering","stats_correlations","stats_sigfeatures","stats_univariates", "stats_peaks");
+enrich_files <- c("enrich_graphics","enrich_mset","enrich_name_match","enrich_stats");
+pathway_files <- c("enrich_mset","enrich_stats","enrich_name_match","enrich_path_graphics","enrich_path_stats", "gene_fun_utils")
 integmex_files <- c("enrich_integ","enrich_stats","enrich_name_match", "enrich_path_graphics", "enrich_kegg")
-biomarker_files <- c("biomarker_utils","util_metabolon", "multifac_metadata");
+biomarker_files <- c("biomarker_utils", "multifac_metadata");
 power_files <- c("util_sspa", "power_utils");
 dose_files <- c("dose_response_general", "dose_response_graphs", "dose_response_utils", "dose_response_deanal");
-multifac_files <-c("multifac_metadata", "multifac_asca_heatmap2","multifac_pca_anova2", "multifac_mb","multifac_covariate", "stats_classification", "stats_chemometrics","stats_univariates", "stats_correlations", "util_metabolon");
+multifac_files <-c("multifac_metadata", "multifac_asca_heatmap2","multifac_pca_anova2", "multifac_mb","multifac_covariate", "stats_classification", "stats_chemometrics","stats_univariates", "stats_correlations");
 mummichog_files <- c("peaks_to_function", "enrich_kegg", "peaks_ms2fun");
 metaanal_files <- c("meta_methods", "meta_data_utils");
 network_files <- c("networks_enrich", "networks_view", "enrich_kegg", "enrich_integ", "enrich_name_match", "gene_fun_utils");
