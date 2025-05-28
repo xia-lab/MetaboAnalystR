@@ -98,10 +98,11 @@
                     </p>
                 </p:tooltip>
                 <h:panelGrid style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
-                    <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel2('tt')}"  
-                                    style="height:420px; width: 100%">
+                    <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('tt')}"  
+                                    style="height:420px; width: 100%"
+                                    extender="extender">
                         <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                    </p:scatterChart>
+                    </p:chart>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('tt')}" update="chart" />
                       
 

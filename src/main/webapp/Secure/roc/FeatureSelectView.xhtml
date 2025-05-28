@@ -90,10 +90,11 @@
                                          rows="20" rowsPerPageTemplate="20,50,100"
                                          class="surface-card shadow-1 p-0 text-800"
                                          value="#{rocAnalBean.featureBeans}"
+                                         selectionMode="multiple"
                                          var="set" rowKey="#{set.uniqID}" id="featTable"
                                          selection="#{rocAnalBean.selectedFeatureBeans}">
 
-                                <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                                <p:column selectionBox="true" style="width:16px;text-align:center"/>
 
                                 <p:column headerText="Name" sortBy="#{set.name}" filterBy="#{set.name}">  
                                     <h:outputText escape="false" value="#{set.name}"/>  

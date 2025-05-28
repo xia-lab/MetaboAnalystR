@@ -154,10 +154,11 @@
                         </p>
                     </p:tooltip>
                     <h:panelGrid style="text-align: center; width: 90%">
-                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel3('dose-de')}"  
-                                        style="height:420px; min-width:880px; width: 90%">
+                        <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('dose-de')}"  
+                                        style="height:420px; min-width:880px; width: 90%"
+                                        extender="extender2">
                             <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:scatterChart>
+                        </p:chart>
                     </h:panelGrid>
                 </h:form>
             </h:panelGrid>  

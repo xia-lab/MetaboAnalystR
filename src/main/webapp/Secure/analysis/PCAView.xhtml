@@ -107,9 +107,9 @@
 
             function setupTheme() {
                 var button = $("button[id$='toggleTm']");
-                console.log(button)
+                //console.log(button)
                 button.each(function () {
-                    console.log("Clicking button: ", this); // Log the button element to be clicked
+                    //console.log("Clicking button: ", this); // Log the button element to be clicked
                     this.click(); // Trigger the click event
                 });
 
@@ -126,13 +126,18 @@
                 -ms-transform: rotate(270deg);
                 transform: rotate(270deg);
             }
+
+            .custom-chart canvas {
+                width: 720px !important; /* The width you want */
+                height: 670px !important; /* The height you want */
+            }
         </style>
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
         <h:inputHidden id="mydir" value="#{sessionBean1.getJsonDir('pca_score3d')}" />
         <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('pca_loading3d')}" />
-          
+
 
 
         <h:panelGrid styleClass="my-content-panel">
@@ -332,11 +337,12 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>
-                    <h:panelGrid id="loadPane" style="text-align: center;" class="surface-card shadow-1 p-4 text-800">
-                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel1('pca')}"  
-                                        style="height:670px; width:720px">
+                    <h:panelGrid id="loadPane" style="text-align: center; width:100%" class="card">
+                        <p:chart id="chart" value="#{detailsBean.getModel1('pca')}"  
+                                 style="height:670px; width:95%; margin-top: 50px"
+                                 extender="extender">
                             <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:scatterChart> 
+                        </p:chart> 
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('pca')}" update="chart" />
                 </p:tab>

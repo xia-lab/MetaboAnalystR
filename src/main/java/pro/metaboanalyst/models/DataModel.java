@@ -9,18 +9,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.utils.DataUtils;
 import pro.metaboanalyst.rwrappers.RMetaUtils;
-
 import java.beans.ConstructorProperties;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
+import software.xdev.chartjs.model.charts.PieChart;
+import software.xdev.chartjs.model.color.RGBAColor;
+import software.xdev.chartjs.model.data.PieData;
+import software.xdev.chartjs.model.dataset.PieDataset;
+import java.math.BigDecimal;
 import pro.metaboanalyst.rwrappers.RDataUtils;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.pie.PieChartDataSet;
-import org.primefaces.model.charts.pie.PieChartModel;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +56,7 @@ public class DataModel implements Serializable {
     private String normOpt = "none";
     private String msgText;
     @JsonIgnore
-    private PieChartModel pieModel;
+    private String pieModel;
     private String primaryMeta;
     //number of significant features in individual analysis
     private int deNum;
@@ -377,7 +375,7 @@ public class DataModel implements Serializable {
         this.sigLevel = sigLevel;
     }
 
-    public PieChartModel getPieModel() {
+    public String getPieModel() {
         return pieModel;
     }
 
@@ -425,30 +423,15 @@ public class DataModel implements Serializable {
     }
 
     private void updatePieModel(int count1, int count2) {
-        if (pieModel == null) {
-            pieModel = new PieChartModel();
-        }
-
-        ChartData data = new ChartData();
-
-        PieChartDataSet dataSet = new PieChartDataSet();
-        List<Number> values = new ArrayList<>();
-        values.add(count1);
-        values.add(count2);
-        dataSet.setData(values);
-
-        List<String> bgColors = new ArrayList<>();
-        bgColors.add("rgb(255, 99, 132)");
-        bgColors.add("rgb(54, 162, 235)");
-        dataSet.setBackgroundColor(bgColors);
-
-        data.addChartDataSet(dataSet);
-        List<String> labels = new ArrayList<>();
-        labels.add("Sig [" + count1 + "]");
-        labels.add("Unsig [" + count2 + "]");
-        data.setLabels(labels);
-
-        pieModel.setData(data);
+        pieModel = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(BigDecimal.valueOf(count1), BigDecimal.valueOf(count2))
+                                //.setLabel("My First Dataset")
+                                .addBackgroundColors(new RGBAColor(255, 99, 132), new RGBAColor(54, 162, 235))
+                        )
+                        .setLabels("Sig [" + count1 + "]", "Unsig [" + count2 + "]"))
+                .toJson();
     }
 
 }

@@ -220,11 +220,12 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>  
-                    <h:panelGrid style="text-align: center; padding-left: 10%" class="surface-card shadow-1 p-4 text-800">
-                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel1('opls')}"  
-                                        style="height:670px; width:720px">
+                    <h:panelGrid style="text-align: center; padding-left: 10%; width:100%" class="surface-card shadow-1 p-4 text-800">
+                        <p:chart id="chart"  value="#{detailsBean.getModel1('opls')}"  
+                                        style="height:670px; width:95%; margin-top: 50px"
+                                        extender="extender">
                             <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:scatterChart>
+                        </p:chart>
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('opls')}" update="chart" />
                 </p:tab>

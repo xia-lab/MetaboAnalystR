@@ -289,8 +289,8 @@
                                                      update=":form:navipane :analForm:padding"/>
                                 </h:panelGrid>
                                 <h:panelGrid id="padding" style="padding-left: 60px; text-align: center;">
-                                    <p:pieChart id="pie" rendered ="#{loadBean.selectedData.analDone}"
-                                                model="#{loadBean.selectedData.pieModel}" 
+                                    <p:chart id="pie" rendered ="#{loadBean.selectedData.analDone}"
+                                                value="#{loadBean.selectedData.pieModel}" 
                                                 style="width:320px;height:180px" />
                                     <p:commandButton value="Done"
                                                      id="analBn"

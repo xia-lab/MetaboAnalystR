@@ -16,7 +16,6 @@ import java.util.List;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
-
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetSetBean;
@@ -26,24 +25,23 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.REnrichUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.DefaultStreamedContent;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.axes.cartesian.CartesianScales;
-import org.primefaces.model.charts.axes.cartesian.linear.CartesianLinearAxes;
-import org.primefaces.model.charts.axes.cartesian.linear.CartesianLinearTicks;
-import org.primefaces.model.charts.bar.BarChartOptions;
-import org.primefaces.model.charts.hbar.HorizontalBarChartDataSet;
-import org.primefaces.model.charts.hbar.HorizontalBarChartModel;
-import org.primefaces.model.charts.optionconfig.title.Title;
-import org.primefaces.model.charts.pie.PieChartDataSet;
-import org.primefaces.model.charts.pie.PieChartModel;
+import software.xdev.chartjs.model.charts.PieChart;
+import software.xdev.chartjs.model.charts.BarChart;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.primefaces.model.charts.optionconfig.legend.Legend;
-import org.primefaces.model.charts.pie.PieChartOptions;
 import pro.metaboanalyst.utils.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
+import software.xdev.chartjs.model.data.BarData;
+import software.xdev.chartjs.model.data.PieData;
+import software.xdev.chartjs.model.dataset.BarDataset;
+import software.xdev.chartjs.model.dataset.PieDataset;
+import software.xdev.chartjs.model.enums.IndexAxis;
+import software.xdev.chartjs.model.options.BarOptions;
+import software.xdev.chartjs.model.options.scale.Scales;
+import software.xdev.chartjs.model.options.scale.cartesian.CartesianScaleOptions;
+import software.xdev.chartjs.model.options.scale.cartesian.CartesianTickOptions;
 
 /**
  * @author jianguox
@@ -77,9 +75,9 @@ public class MsetBean implements Serializable {
     private String msetNm;
     private String imgOpt = "net";
     @JsonIgnore
-    private HorizontalBarChartModel barModel;
+    private String barModel;
     @JsonIgnore
-    private PieChartModel pieModel;
+    private String pieModel;
     private boolean oratabswitch = true;
     private boolean ssptabswitch = true;
     private boolean qeatabswitch = true;
@@ -358,9 +356,9 @@ public class MsetBean implements Serializable {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/metaboanalyst_enrich_sif.zip");
     }
 
-    public HorizontalBarChartModel getBarModel() {
+    public String getBarModel() {
         if (barModel == null) {
-            System.out.println(sb.getAnalType() + "====analtype");
+            //System.out.println(sb.getAnalType() + "====analtype");
             if (sb.getAnalType().equals("msetqea")) {
                 doGlobalTest();
             } else {
@@ -371,11 +369,6 @@ public class MsetBean implements Serializable {
     }
 
     public void createBarModel(String[] myLabels, String[] myColor, double[][] mat) {
-        barModel = new HorizontalBarChartModel();
-        ChartData data = new ChartData();
-
-        HorizontalBarChartDataSet hbarDataSet = new HorizontalBarChartDataSet();
-        //hbarDataSet.setLabel("Overview of Enriched Metabolite Sets");
 
         List<String> labels = new ArrayList<>();
         List<Number> values = new ArrayList<>();
@@ -410,34 +403,28 @@ public class MsetBean implements Serializable {
             }
         }
 
-        hbarDataSet.setData(values);
-        hbarDataSet.setBackgroundColor(bgColor);
-        hbarDataSet.setBorderColor(borderColor);
-        hbarDataSet.setBorderWidth(1);
-
-        data.addChartDataSet(hbarDataSet);
-        data.setLabels(labels);
-        barModel.setData(data);
-
-        BarChartOptions options = new BarChartOptions();
-        CartesianScales cScales = new CartesianScales();
-        CartesianLinearAxes linearAxes = new CartesianLinearAxes();
-        linearAxes.setBeginAtZero(true);
-        CartesianLinearTicks ticks = new CartesianLinearTicks();
-        linearAxes.setTicks(ticks);
-        cScales.addXAxesData(linearAxes);
-        options.setScales(cScales);
-
-        Title title = new Title();
-        title.setDisplay(true);
-        title.setText("Overview of Enriched Metabolite Sets (Top 25)");
-        options.setTitle(title);
-        options.setTitle(title);
-        barModel.setOptions(options);
-        barModel.setExtender("extender");
+        barModel = new BarChart()
+                .setData(new BarData()
+                        .addDataset(new BarDataset()
+                                .setData(values)
+                                .setBackgroundColor(bgColor)
+                                .setBorderColor(borderColor)
+                                .setBorderWidth(1))
+                        .setLabels(labels))
+                .setOptions(new BarOptions()
+                        .setResponsive(true)
+                        .setMaintainAspectRatio(false)
+                        .setIndexAxis(IndexAxis.X)
+                        .setScales(new Scales().addScale(Scales.ScaleAxis.Y, new CartesianScaleOptions()
+                                .setStacked(false)
+                                .setTicks(new CartesianTickOptions()
+                                        .setAutoSkip(true)
+                                        .setMirror(true)))
+                        )
+                ).toJson();
     }
 
-    public PieChartModel getPieModel() {
+    public String getPieModel() {
         if (pieModel == null) {
             preparePieChart(sb.getRConnection());
         }
@@ -445,14 +432,6 @@ public class MsetBean implements Serializable {
     }
 
     private void createPieModel(double[][] myHits, String[] myLabels, String[] myColor) {
-
-        if (pieModel == null) {
-            pieModel = new PieChartModel();
-        }
-
-        ChartData piedata = new ChartData();
-
-        PieChartDataSet piedDataSet = new PieChartDataSet();
 
         List<String> labels = new ArrayList<>();
         List<Number> values = new ArrayList<>();
@@ -474,21 +453,17 @@ public class MsetBean implements Serializable {
             bgColor.add(myCol);
         }
 
-        piedDataSet.setData(values);
-        piedDataSet.setBackgroundColor(bgColor);
-        piedDataSet.setBorderColor(borderColor);
-        //dataSet.setBorderWidth(1);
+        pieModel = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(values)
+                                //.setLabel("My First Dataset")
+                                .addBackgroundColors(bgColor)
+                                .addBorderColors(borderColor)
+                        )
+                        .setLabels(labels))
+                .toJson();
 
-        piedata.addChartDataSet(piedDataSet);
-        piedata.setLabels(labels);
-
-        PieChartOptions options = new PieChartOptions();
-        Legend lgd = new Legend();
-        lgd.setPosition("right");
-        options.setLegend(lgd);
-
-        pieModel.setOptions(options);
-        pieModel.setData(piedata);
     }
 
     public boolean isOratabswitch() {
@@ -516,7 +491,7 @@ public class MsetBean implements Serializable {
     }
 
     public void populateQeaBean() {
-        System.out.println("==populateQeaBean==");
+        //System.out.println("==populateQeaBean==");
         RConnection RC = sb.getRConnection();
         if (!RDataUtils.checkDetailsTablePerformed(sb.getRConnection(), "qea")) {
             return;

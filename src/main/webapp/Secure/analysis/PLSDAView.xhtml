@@ -127,7 +127,7 @@
     <ui:define name="content">
         <h:inputHidden id="mydir" value="#{sessionBean1.getJsonDir('pls_score3d')}" />
         <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('pls_loading3d')}" />
-          
+
 
 
         <h:panelGrid styleClass="my-content-panel">
@@ -308,11 +308,12 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>  
-                    <h:panelGrid id="loadPane" style="text-align: center;" class="surface-card shadow-1 p-4 text-800">
-                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel1('pls')}"  
-                                        style="height:670px; width:720px">
+                    <h:panelGrid id="loadPane" style="text-align: center;; width:100%" class="surface-card shadow-1 p-4 text-800">
+                        <p:chart id="chart" value="#{detailsBean.getModel1('pls')}"  
+                                 style="height:670px; width:95%; margin-top: 50px"
+                                 extender="extender">
                             <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:scatterChart>
+                        </p:chart>
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('pls')}" update="chart" />
 
@@ -503,7 +504,7 @@
                         </h:panelGrid> 
                     </h:form>
                 </p:tab>
-                 <p:tab title ="Biplot">
+                <p:tab title ="Biplot">
                     <h:form id="form8">
                         <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
                             <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-right: 60px">

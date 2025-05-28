@@ -34,9 +34,6 @@ import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.Visibility;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.pie.PieChartDataSet;
-import org.primefaces.model.charts.pie.PieChartModel;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -47,6 +44,9 @@ import pro.metaboanalyst.project.SchedulerUtils;
 import pro.metaboanalyst.rwrappers.RSpectraUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import static pro.metaboanalyst.utils.DataUtils.processExec;
+import software.xdev.chartjs.model.charts.PieChart;
+import software.xdev.chartjs.model.data.PieData;
+import software.xdev.chartjs.model.dataset.PieDataset;
 
 /**
  * @author qiang
@@ -103,7 +103,7 @@ public class TandemMSBean implements Serializable {
     @JsonIgnore
     private DualListModel<String> precIncluItems;
     @JsonIgnore
-    private PieChartModel pieModel;
+    private String pieModel;
     private boolean resultinited = false;
     private int[] expandedRows = {};
     private boolean currentcmdstatus = false;
@@ -994,11 +994,11 @@ public class TandemMSBean implements Serializable {
         return null;
     }
 
-    public PieChartModel getPieModel() {
+    public String getPieModel() {
         return pieModel;
     }
 
-    public void setPieModel(PieChartModel pieModel1) {
+    public void setPieModel(String pieModel1) {
         this.pieModel = pieModel1;
     }
 
@@ -1006,38 +1006,42 @@ public class TandemMSBean implements Serializable {
 
     }
 
-    public void initResults() {
+    public void initSummaryChart() {
         if (!isIsSingle() & !resultinited) {
 
-            PieChartModel pieModel1 = new PieChartModel();
-            ChartData data = new ChartData();
-            PieChartDataSet dataSet = new PieChartDataSet();
-
-            List<String> bgColors = new ArrayList<>();
-            List<Number> values = new ArrayList<>();
-            List<String> labels = new ArrayList<>();
-
-            int[] portions_ints = RSpectraUtils.SummarizeCMPDResults(sb.getRConnection(), high_cutoff, low_cutoff);
-            String[] nodeIDs = {"High", "Middle", "Low"};
-            String[] cols = {"#009E73", "#E69F00", "#999999"};
-            for (int i = 0; i < portions_ints.length; i++) {
-                bgColors.add(cols[i]);
-                values.add(portions_ints[i]);
-                labels.add(nodeIDs[i]);
-            }
-            dataSet.setBackgroundColor(bgColors);
-            dataSet.setData(values);
-
-            data.addChartDataSet(dataSet);
-            data.setLabels(labels);
-            pieModel1.setData(data);
-            pieModel = pieModel1;
+            updatePieChart();
             resultinited = true;
         }
         if (isIsSingle() & !resultinited) {
             resultinited = true;
             //currentcmdstatus = sb.isShowRcmdPane();
         }
+    }
+
+    private void updatePieChart() {
+        List<String> bgColors = new ArrayList<>();
+        List<Number> values = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+        int[] portions_ints = RSpectraUtils.SummarizeCMPDResults(sb.getRConnection(), high_cutoff, low_cutoff);
+        String[] nodeIDs = {"High", "Middle", "Low"};
+        String[] cols = {"#009E73", "#E69F00", "#999999"};
+        for (int i = 0; i < portions_ints.length; i++) {
+            bgColors.add(cols[i]);
+            values.add(portions_ints[i]);
+            labels.add(nodeIDs[i]);
+        }
+
+        pieModel = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(values)
+                                //.setLabel("My First Dataset")
+                                .addBackgroundColors(bgColors)
+                        )
+                        .setLabels(labels))
+                .toJson();
+
     }
 
     public double getLow_cutoff() {
@@ -1056,6 +1060,7 @@ public class TandemMSBean implements Serializable {
         this.high_cutoff = high_cutoff;
     }
 
+    /*
     public void updatePieChart() {
 
         PieChartModel pieModel1 = new PieChartModel();
@@ -1081,7 +1086,7 @@ public class TandemMSBean implements Serializable {
         data.setLabels(labels);
         pieModel1.setData(data);
         pieModel = pieModel1;
-    }
+    }*/
 
     public void onRowToggle(org.primefaces.event.ToggleEvent event) {
         MS2FeatureBean sel = (MS2FeatureBean) event.getData();

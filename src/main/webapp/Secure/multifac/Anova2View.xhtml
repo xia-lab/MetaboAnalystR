@@ -177,10 +177,11 @@
                         <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
                     </h:panelGrid>
                     <h:panelGrid style="text-align:center; width: 90%" class="surface-card shadow-1 p-4 text-800">
-                        <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel2('aov2')}"  
-                                        style="height:480px; width:800px">
+                        <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('aov2')}"  
+                                        style="height:480px; width:800px"
+                                        extender="extender">
                             <p:ajax event="itemSelect" listener="#{detailsBean.itemSelectMeta}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:scatterChart>
+                        </p:chart>
                         <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('aov2')}" update="chart" />
                                    
                     </h:panelGrid>

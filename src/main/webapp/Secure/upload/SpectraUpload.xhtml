@@ -63,11 +63,11 @@
                                           mode="advanced" 
                                           style="width:780px; margin-top: 5px; margin-bottom:5px"
                                           multiple="true" 
-                                          sizeLimit="#{applicationBean1.MAX_SPEC_SIZE}" 
+                                          oncomplete="sanityCheckMeta();">
+                                    <p:validateFile sizeLimit="#{applicationBean1.MAX_SPEC_SIZE}" 
                                           fileLimit="#{applicationBean1.MAX_SPEC_NUM}" 
-                                          allowTypes="/(\.|\/)(csv|txt|zip)$/" 
-                                          oncomplete="sanityCheckMeta();"
-                                          />
+                                          allowTypes="/(\.|\/)(csv|txt|zip)$/"/>
+                            </p:fileUpload>
                             <p:remoteCommand name="rc"  actionListener="#{specLoader.addNumOfUploadFiles}" />
                             <p:remoteCommand name="showMetaErrorRC" actionListener="#{specLoader.showMetaError}"/>
                             <p:remoteCommand name="moreThanOneMetaRC" actionListener="#{specLoader.moreThanOneMeta}"/>
