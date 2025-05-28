@@ -115,6 +115,10 @@ public class SessionBean1 implements Serializable {
     private HashMap<String, String> reportImgMap = new HashMap<>();
     private HashMap<String, String> reportJsonMap = new HashMap<>();
 
+    public String getImgSource() {
+        return imgSource;
+    }
+
     private int fileCount = 0;
     private String currentPageID = "";
     private String cmpdIDType = "na";

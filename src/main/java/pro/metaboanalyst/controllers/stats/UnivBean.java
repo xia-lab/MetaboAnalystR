@@ -609,10 +609,11 @@ public class UnivBean implements Serializable {
     }
 
     public void setupVolcano() throws Exception {
-
-        sb.addNaviTrack("Volcano", "/Secure/analysis/VolcanoView.xhtml");
-        UniVarTests.performVolcano(sb, "FALSE", 2, 0, "F", 0.1, "TRUE", "raw");
-        UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 72, -1);
+        if (!sb.isAnalInit("Volcano plot")) {
+            sb.addNaviTrack("Volcano", "/Secure/analysis/VolcanoView.xhtml");
+            UniVarTests.performVolcano(sb, "FALSE", 2, 0, "F", 0.1, "TRUE", "raw");
+            UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 72, -1);
+        }
 
         wb.getCalledWorkflows().add("Volcano");
         DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
@@ -637,6 +638,6 @@ public class UnivBean implements Serializable {
 
     public void doDefaultStaticCorrelation() {
 
-        UniVarTests.plotStaticCorrHeatMap(sb, sb.getCurrentImage("corr_heatmap"), "png", 72, "col", "pearson", "bwm","overview", "F","F",0.0);
+        UniVarTests.plotStaticCorrHeatMap(sb, sb.getCurrentImage("corr_heatmap"), "png", 72, "col", "pearson", "bwm", "overview", "F", "F", 0.0);
     }
 }

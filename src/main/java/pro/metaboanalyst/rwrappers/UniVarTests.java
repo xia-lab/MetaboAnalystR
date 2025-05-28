@@ -405,7 +405,7 @@ public class UniVarTests {
         }
         return null;
     }
-    
+
     public static double[][] getVolcanoAllMat(SessionBean1 sb) {
         try {
             String rCommand = "GetVolcanoAllMat(NA)";
@@ -982,6 +982,22 @@ public class UniVarTests {
             System.out.println("rCommand");
             RC.voidEval(rCommand);
         } catch (Exception rse) {
+            System.out.println(rse);
+        }
+    }
+
+    public static void plotVolcanoCustom(SessionBean1 sb, String imgName, int plotLbl, int plotTheme, String format, int dpi, int labelNum, int plotStyle) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "PlotVolcanoCustom(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + "," + plotStyle + ")";
+            RCenter.recordRCommand(RC, rCommand);
+            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Volcano");
+
+            sb.addGraphicsCMD("volcano", rCommand);
+            sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
+
+            RC.voidEval(rCommand);
+        } catch (RserveException rse) {
             System.out.println(rse);
         }
     }

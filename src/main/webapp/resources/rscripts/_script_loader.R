@@ -4,7 +4,7 @@
 rpath <<- "../../";
 #print("rpathscriptloader=====");
 
-general_files <- c("general_data_utils","general_misc_utils","general_lib_utils","generic_c_utils","depends_refs", "../../XiaLabPro/R/util_misc");
+general_files <- c("general_data_utils","general_misc_utils","general_lib_utils","generic_c_utils","depends_refs", "../../XiaLabPro/R/util_misc", "../../XiaLabPro/R/plotting");
 general_stat_files <- c("general_norm_utils","general_proc_utils","multifac_metadata");
 general_anot_files <- "general_anot_utils";
 stats_files <- c("stats_chemometrics","stats_classification","stats_clustering","stats_correlations","stats_sigfeatures","stats_univariates", "stats_peaks");
