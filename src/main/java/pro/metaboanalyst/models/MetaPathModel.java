@@ -8,27 +8,25 @@ package pro.metaboanalyst.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.pie.PieChartDataSet;
-import org.primefaces.model.charts.pie.PieChartModel;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
 import pro.metaboanalyst.utils.DataUtils;
-
 import java.beans.ConstructorProperties;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import software.xdev.chartjs.model.charts.PieChart;
+import software.xdev.chartjs.model.color.RGBAColor;
+import software.xdev.chartjs.model.data.PieData;
+import software.xdev.chartjs.model.dataset.PieDataset;
 
 /**
  * @author qiang
@@ -80,7 +78,7 @@ public class MetaPathModel {
     private String normOpt = "logMed";
     private String msgText;
     @JsonIgnore
-    private PieChartModel pieModel;
+    private String pieModel;
 
     // Section IV --------> adducts customization <--------
     private DualListModel<String> adductItems = new DualListModel(Arrays.asList("Unknown"), Arrays.asList("Unknowns"));
@@ -414,7 +412,7 @@ public class MetaPathModel {
         this.sigLevel = sigLevel;
     }
 
-    public PieChartModel getPieModel() {
+    public String getPieModel() {
         return pieModel;
     }
 
@@ -491,9 +489,12 @@ public class MetaPathModel {
             res = RMetaPathUtils.performMetaPathNormalization(RC, "NULL", "NULL", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
         } else {
             res = switch (normOpt) {
-                case "logMed" -> RMetaPathUtils.performMetaPathNormalization(RC, "MedianNorm", "LogNorm", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
-                case "log" -> RMetaPathUtils.performMetaPathNormalization(RC, "NULL", "LogNorm", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
-                default -> RMetaPathUtils.performMetaPathNormalization(RC, "NULL", "NULL", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
+                case "logMed" ->
+                    RMetaPathUtils.performMetaPathNormalization(RC, "MedianNorm", "LogNorm", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
+                case "log" ->
+                    RMetaPathUtils.performMetaPathNormalization(RC, "NULL", "LogNorm", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
+                default ->
+                    RMetaPathUtils.performMetaPathNormalization(RC, "NULL", "NULL", (autoscaleOpt) ? "\"AutoNorm\"" : "\"NULL\"", name, name2);
             };
         }
 
@@ -507,6 +508,19 @@ public class MetaPathModel {
         getAdductItems();
     }
 
+    private void updatePieModel(int count1, int count2) {
+        pieModel = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(BigDecimal.valueOf(count1), BigDecimal.valueOf(count2))
+                                //.setLabel("My First Dataset")
+                                .addBackgroundColors(new RGBAColor(255, 99, 132), new RGBAColor(54, 162, 235))
+                        )
+                        .setLabels("Sig [" + count1 + "]", "Unsig [" + count2 + "]"))
+                .toJson();
+    }
+
+    /*
     private void updatePieModel(int count1, int count2) {
         if (pieModel == null) {
             pieModel = new PieChartModel();
@@ -533,7 +547,7 @@ public class MetaPathModel {
 
         pieModel.setData(data);
     }
-
+     */
     public void performPathAnalysis() {
         MetaPathLoadBean mplb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
 

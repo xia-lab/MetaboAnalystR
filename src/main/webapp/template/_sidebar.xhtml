@@ -414,8 +414,9 @@
                     <h:inputText value="#{fireDocBean.name}" style="width: 220px; height: 36px"/>
                     <h:outputLabel value="Message"/>
                     <h:panelGrid>
-                        <p:inputTextarea id="myMsg" style="font-size: 13px" autoResize="false" value="#{fireDocBean.description}" rows="12" cols="30" />
-                        <p:watermark for="myMsg" value="Specific informaiton to help understand the situation" id="watermark" />
+                        <p:inputTextarea id="myMsg" style="font-size: 13px" autoResize="false" value="#{fireDocBean.description}" 
+                                         rows="12" cols="30"
+                                         placeholder="Specific informaiton to help understand the situation"/>
                     </h:panelGrid>
                 </h:panelGrid>
                 <p:commandButton value="Submit"  

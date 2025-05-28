@@ -17,11 +17,10 @@ import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.PowerUtils;
 import pro.metaboanalyst.rwrappers.RDataUtils;
-import pro.metaboanalyst.utils.DataUtils;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.data.NumericPoint;
-import org.primefaces.model.charts.line.LineChartDataSet;
-import org.primefaces.model.charts.scatter.ScatterChartModel;
+import software.xdev.chartjs.model.charts.ScatterChart;
+import software.xdev.chartjs.model.data.ScatterData;
+import software.xdev.chartjs.model.datapoint.ScatterDataPoint;
+import software.xdev.chartjs.model.dataset.ScatterDataset;
 
 /**
  *
@@ -31,20 +30,21 @@ import org.primefaces.model.charts.scatter.ScatterChartModel;
 @Named("powerAnalBean")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PowerAnalBean implements Serializable {
+
     @JsonIgnore
     @Inject
     SessionBean1 sb;
-    private ScatterChartModel lineModel;
+    private String lineModel;
     private double fdr = 0.1;
     private int smplSize = 200;
     private String selectedContrast = "NA";
     private SelectItem[] grpContrasts;
 
-    public ScatterChartModel getLineModel() {
+    public String getLineModel() {
         return lineModel;
     }
 
-    public void setLineModel(ScatterChartModel lineModel) {
+    public void setLineModel(String lineModel) {
         this.lineModel = lineModel;
     }
 
@@ -110,6 +110,41 @@ public class PowerAnalBean implements Serializable {
         return "powerview";
     }
 
+    private void updateModel() {
+        double fdrOld = fdr;
+        fdr = PowerUtils.performPowerProfile(sb.getRConnection(), fdr, smplSize);
+        if (fdrOld > fdr) {
+            sb.addMessage("Warn", "FDR level has been re-adjusted in order to get meaningful result.");
+        }
+        
+        double[] pwrs = PowerUtils.plotPowerProfile(sb, fdr, smplSize, sb.getNewImage("power_profile"), "png", 72);
+        int[] smplNum = PowerUtils.getPowerValueX(sb.getRConnection()); //must be called after plotPowerProile
+
+        List<ScatterDataPoint> myValues = new ArrayList<>();
+
+        for (int i = 0; i < pwrs.length; i++) {
+            myValues.add(new ScatterDataPoint(smplNum[i], pwrs[i]));
+        }
+
+        ScatterDataset scatterDataset = new ScatterDataset()
+                .setData(myValues)
+                .setBackgroundColor("rgba(153,102,255,0.2)")
+                .setBorderColor("rgb(153, 102, 255)")
+                .setShowLine(true);
+
+        ScatterChart scatterChart = new ScatterChart();
+        ScatterData scatterData = new ScatterData();
+        scatterChart.setData(scatterData);
+        
+        scatterChart.getData().addDataset(scatterDataset);
+
+        // Optionally, set other options or customize the chart as needed
+        //scatterChart.setOptions(/* Configure Options here */);
+        // Assuming rendering method or conversion to a JSON/string representation for further use
+        lineModel = scatterChart.toJson();
+    }
+
+    /*
     public void updateModel() {
         double fdrOld = fdr;
         fdr = PowerUtils.performPowerProfile(sb.getRConnection(), fdr, smplSize);
@@ -134,5 +169,5 @@ public class PowerAnalBean implements Serializable {
         data.addChartDataSet(myDataSet);
         lineModel.setData(data);
         lineModel.setExtender("extender");
-    }
+    }*/
 }

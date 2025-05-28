@@ -33,13 +33,14 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.event.CellEditEvent;
 import org.primefaces.event.ItemSelectEvent;
 import org.primefaces.model.StreamedContent;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.data.NumericPoint;
-import org.primefaces.model.charts.line.LineChartDataSet;
-import org.primefaces.model.charts.scatter.ScatterChartModel;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.models.MetSetBean;
 import pro.metaboanalyst.rwrappers.RDoseUtils;
+import software.xdev.chartjs.model.datapoint.ScatterDataPoint;
+import software.xdev.chartjs.model.charts.ScatterChart;
+import software.xdev.chartjs.model.dataset.ScatterDataset;
+import software.xdev.chartjs.model.data.ScatterData;
+
 
 /**
  *
@@ -1187,11 +1188,11 @@ public class DetailsBean implements Serializable {
     }
 
     //Scatterplot models containing one, two or three datasets 
-    private ScatterChartModel model1, model2, model3;
+    private String model1, model2, model3;
     private String mdl1Type = "pca";
     private String curType;
 
-    public ScatterChartModel getModel1(String type) {
+    public String getModel1(String type) {
         if (model1 == null || !type.equals(mdl1Type)) {
             update1CompModel(type);
             mdl1Type = type;
@@ -1201,51 +1202,92 @@ public class DetailsBean implements Serializable {
     }
 
     public void update1CompModel(String type) {
-        model1 = new ScatterChartModel();
+
+        //model1 = new ScatterChartModel();
         pointMap = new LinkedHashMap<>();
 
         RConnection RC = sb.getRConnection();
         double[][] myMat;
         String[] myIDs;
         switch (type) {
-            case "opls":
+            case "opls" -> {
                 myMat = ChemoMetrics.getOPLSSigMat(RC, "splot");
                 myIDs = ChemoMetrics.getOPLSSigCmpds(RC, "splot");
-                break;
-            case "pls":
+            }
+            case "pls" -> {
                 myMat = ChemoMetrics.getPLSLoadMat(RC);
                 myIDs = ChemoMetrics.getPLSLoadCmpds(RC);
-                break;
-            default:
+            }
+            default -> {
                 //pca
                 myMat = ChemoMetrics.getPCALoadMat(RC);
                 myIDs = ChemoMetrics.getPCALoadCmpds(RC);
-                break;
+            }
         }
 
-        ChartData data = new ChartData();
-        LineChartDataSet myDataSet = new LineChartDataSet();
-        List<Object> myValues = new ArrayList<>();
+        //ChartData data = new ChartData();
+        //LineChartDataSet myDataSet = new LineChartDataSet();
+        List<ScatterDataPoint> myValues = new ArrayList<>();
         int dataInx = 0;
         int itemInx = 0;
         for (double[] row : myMat) {
-            myValues.add(new NumericPoint(row[0], row[1]));
+            myValues.add(new ScatterDataPoint(row[0], row[1]));
             pointMap.put(dataInx + ":" + itemInx, myIDs[itemInx]);
             itemInx += 1;
         }
-        myDataSet.setData(myValues);
-        myDataSet.setBackgroundColor("rgba(153, 102, 255, 0.2)");
-        myDataSet.setBorderColor("rgb(153, 102, 255)");
-        myDataSet.setShowLine(false);
+        /**
+         * myDataSet.setData(myValues); myDataSet.setBackgroundColor("rgba(153,
+         * 102, 255, 0.2)"); myDataSet.setBorderColor("rgb(153, 102, 255)");
+         * myDataSet.setShowLine(false);
+         *
+         * data.addChartDataSet(myDataSet); model1.setData(data);
+         * model1.setExtender("extender");
+         */
 
-        data.addChartDataSet(myDataSet);
-        model1.setData(data);
-        model1.setExtender("extender");
+        ScatterDataset scatterDataset = new ScatterDataset()
+                .setData(myValues)
+                .setBackgroundColor("rgba(153,102,255,0.2)")
+                .setBorderColor("rgb(153, 102, 255)")
+                .setShowLine(false);
+
+        // Create Scatter Chart
+        ScatterChart scatterChart = new ScatterChart();
+        ScatterData scatterData = new ScatterData();
+        scatterChart.setData(scatterData);
+
+        scatterChart.getData().addDataset(scatterDataset);
+
+        // Optionally, set other options or customize the chart as needed
+        //scatterChart.setOptions(/* Configure Options here */);
+        // Assuming rendering method or conversion to a JSON/string representation for further use
+        model1 = scatterChart.toJson();
+        /*
+                       model1 = new ScatterChart()
+                .setData(myValues)
+
+                        .setLabel("Red Dataset")
+                        .setBorderColor(new RColor(249, 24, 24))
+                        .setShowLine(Boolean.FALSE)
+                        .setFill(new Fill<Boolean>(true)))
+                )
+                .setOptions(new LineOptions()
+                        .setResponsive(true)
+                        .setShowLine(Boolean.FALSE)
+                        .setScales(new Scales()
+                                .addScale(Scales.ScaleAxis.X, new LinearScale().setPosition(ScalesPosition.BOTTOM)))
+                        .setPlugins(new Plugins()
+                                .setTitle(new Title()
+                                        .setDisplay(true)
+                                        .setText("Scatter Chart")))
+                ).toJson();
+                
+         */
+
     }
 
     private String mdl2Type = "aov";
 
-    public ScatterChartModel getModel2(String type) {
+    public String getModel2(String type) {
         if (model2 == null || !type.equals(mdl2Type)) {
             update2CompModel(type);
             mdl2Type = type;
@@ -1258,14 +1300,6 @@ public class DetailsBean implements Serializable {
         RConnection RC = sb.getRConnection();
         double[][] upMat, dnMat;
         String[] upIDs, dnIDs;
-
-        model2 = new ScatterChartModel();
-        pointMap = new LinkedHashMap<>();
-        ChartData data = new ChartData();
-        LineChartDataSet upDataSet = new LineChartDataSet();
-        List<Object> upValues = new ArrayList<>();
-        LineChartDataSet dnDataSet = new LineChartDataSet();
-        List<Object> dnValues = new ArrayList<>();
 
         switch (type) {
             case "aov" -> {
@@ -1294,11 +1328,27 @@ public class DetailsBean implements Serializable {
             }
         }
 
+        // Optionally, set other options or customize the chart as needed
+        //scatterChart.setOptions(/* Configure Options here */);
+        // Assuming rendering method or conversion to a JSON/string representation for further use
+        //model2 = new ScatterChartModel();
+        pointMap = new LinkedHashMap<>();
+        // ChartData data = new ChartData();
+        ScatterDataset upDataSet = new ScatterDataset();
+        List<ScatterDataPoint> upValues = new ArrayList<>();
+        ScatterDataset dnDataSet = new ScatterDataset();
+        List<ScatterDataPoint> dnValues = new ArrayList<>();
+
+        // Create Scatter Chart
+        ScatterChart scatterChart = new ScatterChart();
+        ScatterData scatterData = new ScatterData();
+        scatterChart.setData(scatterData);
+
         int dataInx = 0;
         if (upMat[0][0] != -1) {
             int itemInx = 0;
             for (double[] row : upMat) {
-                upValues.add(new NumericPoint(row[0], row[1]));
+                upValues.add(new ScatterDataPoint(row[0], row[1]));
                 pointMap.put(dataInx + ":" + itemInx, upIDs[itemInx]);
                 itemInx += 1;
             }
@@ -1307,15 +1357,15 @@ public class DetailsBean implements Serializable {
             upDataSet.setBorderColor("rgb(153, 102, 255)");
             upDataSet.setShowLine(false);
             upDataSet.setLabel("Significant" + " [" + upValues.size() + "]");
-
-            data.addChartDataSet(upDataSet);
+            //System.out.println("========called 2========" + upValues.size());
+            scatterChart.getData().addDataset(upDataSet);
             dataInx += 1;
         }
 
         if (dnMat[0][0] != -1) {
             int itemInx = 0;
             for (double[] row : dnMat) {
-                dnValues.add(new NumericPoint(row[0], row[1]));
+                dnValues.add(new ScatterDataPoint(row[0], row[1]));
                 pointMap.put(dataInx + ":" + itemInx, dnIDs[itemInx]);
                 itemInx += 1;
             }
@@ -1324,16 +1374,18 @@ public class DetailsBean implements Serializable {
             dnDataSet.setBorderColor("rgb(201, 203, 207)");
             dnDataSet.setLabel("Unsignificant" + " [" + dnValues.size() + "]");
             dnDataSet.setShowLine(false);
-            data.addChartDataSet(dnDataSet);
+            //System.out.println("========called 3========" + dnValues.size());
+            scatterChart.getData().addDataset(dnDataSet);
         }
+
         pointMapJson = new Gson().toJson(pointMap);
-        model2.setData(data);
-        model2.setExtender("extender");
+        model2 = scatterChart.toJson();
+        //System.out.println("========called 4========" + model2);
     }
 
     private String mdl3Type = "fc";
 
-    public ScatterChartModel getModel3(String type) {
+    public String getModel3(String type) {
         if (model3 == null || !type.equals(mdl3Type)) {
             update3CompModel(type);
             mdl3Type = type;
@@ -1359,15 +1411,18 @@ public class DetailsBean implements Serializable {
 
     public void update3CompModel(String type) {
         RConnection RC = sb.getRConnection();
-        model3 = new ScatterChartModel();
+
         pointMap = new LinkedHashMap<>();
-        ChartData data = new ChartData();
-        LineChartDataSet sigLftDataSet = new LineChartDataSet();
-        List<Object> sigLftValues = new ArrayList<>();
-        LineChartDataSet sigRgtDataSet = new LineChartDataSet();
-        List<Object> sigRgtValues = new ArrayList<>();
-        LineChartDataSet unsigDataSet = new LineChartDataSet();
-        List<Object> unsigValues = new ArrayList<>();
+        ScatterChart scatterChart = new ScatterChart();
+        ScatterData scatterData = new ScatterData();
+        scatterChart.setData(scatterData);
+
+        ScatterDataset sigLftDataSet = new ScatterDataset();
+        List<ScatterDataPoint> sigLftValues = new ArrayList<>();
+        ScatterDataset sigRgtDataSet = new ScatterDataset();
+        List<ScatterDataPoint> sigRgtValues = new ArrayList<>();
+        ScatterDataset unsigDataSet = new ScatterDataset();
+        List<ScatterDataPoint> unsigValues = new ArrayList<>();
 
         double[][] sigDnMat, sigUpMat, unsigMat;
         String[] sigDnIDs, sigUpIDs, unsigIDs;
@@ -1406,7 +1461,7 @@ public class DetailsBean implements Serializable {
         if (sigDnMat != null && sigDnMat[0][0] != -1) {
             int itemInx = 0;
             for (double[] row : sigDnMat) {
-                sigLftValues.add(new NumericPoint(row[0], row[1]));
+                sigLftValues.add(new ScatterDataPoint(row[0], row[1]));
                 pointMap.put(dataInx + ":" + itemInx, sigDnIDs[itemInx]);
                 itemInx += 1;
             }
@@ -1416,14 +1471,14 @@ public class DetailsBean implements Serializable {
             sigLftDataSet.setShowLine(false);
             sigLftDataSet.setLabel("Sig.Down" + " [" + sigLftValues.size() + "]");
 
-            data.addChartDataSet(sigLftDataSet);
+            scatterChart.getData().addDataset(sigLftDataSet);
             dataInx += 1;
         }
 
         if (sigUpMat != null && sigUpMat[0][0] != -1) {
             int itemInx = 0;
             for (double[] row : sigUpMat) {
-                sigRgtValues.add(new NumericPoint(row[0], row[1]));
+                sigRgtValues.add(new ScatterDataPoint(row[0], row[1]));
                 pointMap.put(dataInx + ":" + itemInx, sigUpIDs[itemInx]);
                 itemInx += 1;
             }
@@ -1433,14 +1488,14 @@ public class DetailsBean implements Serializable {
             sigRgtDataSet.setShowLine(false);
             sigRgtDataSet.setLabel("Sig.Up" + " [" + sigRgtValues.size() + "]");
 
-            data.addChartDataSet(sigRgtDataSet);
+            scatterChart.getData().addDataset(sigRgtDataSet);
             dataInx += 1;
         }
 
         if (unsigMat != null && unsigMat[0][0] != -1) {
             int itemInx = 0;
             for (double[] row : unsigMat) {
-                unsigValues.add(new NumericPoint(row[0], row[1]));
+                unsigValues.add(new ScatterDataPoint(row[0], row[1]));
                 pointMap.put(dataInx + ":" + itemInx, unsigIDs[itemInx]);
                 itemInx += 1;
             }
@@ -1448,15 +1503,15 @@ public class DetailsBean implements Serializable {
             unsigDataSet.setBackgroundColor("rgba(201, 203, 207, 0.2)");
             unsigDataSet.setBorderColor("rgb(201, 203, 207)");
             unsigDataSet.setShowLine(false);
-            unsigDataSet.setPointHoverRadius(0);
+            unsigDataSet.setPointHoverRadius(List.of(0));
 
             unsigDataSet.setLabel("Unsig." + " [" + unsigValues.size() + "]");
 
-            data.addChartDataSet(unsigDataSet);
+            scatterChart.getData().addDataset(unsigDataSet);
         }
+
         pointMapJson = new Gson().toJson(pointMap);
-        model3.setData(data);
-        model3.setExtender("extender");
+        model3 = scatterChart.toJson();
     }
 
     private String pointMapJson = new Gson().toJson("");

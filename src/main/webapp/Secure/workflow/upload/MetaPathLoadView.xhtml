@@ -327,8 +327,8 @@
                                     <p:inputText  value="#{pLoadBean.selectedData.sigLevel}" required="true" rendered = "false"/>
                                 </h:panelGrid>
                                 <h:panelGrid id="padding" style="padding-left: 90px; text-align: center;">
-                                    <p:pieChart id="pie" rendered ="#{pLoadBean.selectedData.analDone}"
-                                                model="#{pLoadBean.selectedData.pieModel}"
+                                    <p:chart id="pie" rendered ="#{pLoadBean.selectedData.analDone}"
+                                                value="#{pLoadBean.selectedData.pieModel}"
                                                 style="width:300px;height:160px"/> 
                                 </h:panelGrid>
 

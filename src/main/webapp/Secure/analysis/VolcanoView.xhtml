@@ -177,8 +177,7 @@
 
                     <h:panelGrid style="padding-left: 20px">
                         <p:commandButton value="Submit" update=":vcPane :hisTab:cmdPane" 
-                                         onclick="PF('statusDialog').show();
-                                                 extender()"
+                                         onclick="PF('statusDialog').show(); extender()"
                                          oncomplete="PF('statusDialog').hide();"
                                          actionListener="#{univBean.vcButton_action()}" />  
                     </h:panelGrid>
@@ -218,10 +217,11 @@
                     </p:tooltip>
                 </h:panelGrid>
                 <h:panelGrid style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
-                    <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel3('volcano')}"  
-                                    style="height:630px; min-width:880px; width: 100%">
+                    <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('volcano')}"  
+                                    style="height:630px; min-width:880px; width: 100%"
+                                    extender="extender">
                         <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                    </p:scatterChart>
+                    </p:chart>
                 </h:panelGrid>
                 <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('volcano')}" update="chart" />
                   

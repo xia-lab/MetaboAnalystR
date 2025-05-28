@@ -95,10 +95,11 @@
                 </h:panelGrid>
             </h:panelGrid>
             <h:panelGrid id="fcPane" style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
-                <p:scatterChart id="chart" widgetVar="chart" model="#{detailsBean.getModel3('fc')}"  
-                                style="height:420px; min-width:880px; width: 100%">
+                <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('fc')}"  
+                                style="height:420px; min-width:880px; width: 100%"
+                                extender="extender">
                     <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                </p:scatterChart>
+                </p:chart>
             </h:panelGrid>
             <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('fc')}" update="chart" />
 

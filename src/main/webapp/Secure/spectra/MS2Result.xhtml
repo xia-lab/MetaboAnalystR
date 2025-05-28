@@ -7,7 +7,7 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
-        <f:event type="preRenderView" listener="#{tandemMS.initResults()}"/>
+        <f:event type="preRenderView" listener="#{tandemMS.initSummaryChart()}"/>
         <f:event type="preRenderView" listener="#{tandemMS.reloadResults()}"/>
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('MS2 Result', '/Secure/spectra/MS2Result.xhtml')}"/> 
     </ui:define>

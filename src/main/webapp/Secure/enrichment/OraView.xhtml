@@ -140,7 +140,7 @@
                             <i class="pi pi-palette" style="font-size: 1.1rem"/>
                         </p:commandLink>
                     </h:panelGrid>
-                    <p:barChart model="#{msetBean.barModel}"  style="width: 100%; height: 630px;" widgetVar="chart" />
+                    <p:chart value="#{msetBean.barModel}"  style="width: 100%; height: 630px;" widgetVar="chart" extender="extender"/>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{msetBean.getBarModel()}" update="chart" />
                 </p:panel> 
             </h:form>
@@ -208,7 +208,7 @@
                         <i class="pi pi-palette" style="font-size: 1.1rem"/>
                     </p:commandLink>
                     <h:panelGrid style="width: 780px; padding-left: 40px">
-                        <p:pieChart id="mypie" model="#{msetBean.pieModel}" widgetVar="piechart"/>
+                        <p:chart id="mypie" value="#{msetBean.pieModel}" widgetVar="piechart"/>
                     </h:panelGrid>
                 </p:panel> 
             </h:form>           
