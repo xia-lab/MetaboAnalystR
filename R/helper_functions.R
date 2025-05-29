@@ -32,7 +32,7 @@ GetMetaCol<- function(dataName=""){
   anal.type <- paramSet$anal.type;
   if(anal.type == "onedata"){
     colNms <- colnames(dataSet$comp.res);
-    if (dataSet$de.method=="limma"){
+    if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
       inx <- match("AveExpr", colNms)
     } else if (dataSet$de.method=="deseq2"){
       inx <- match("baseMean", colNms)
@@ -83,7 +83,7 @@ GetMetaColLength<- function(dataName=""){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
 
-  if (dataSet$de.method=="limma"){
+  if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
   } else if (dataSet$de.method=="deseq2"){
     return(length(dataSet$comp.res.list));
@@ -246,7 +246,7 @@ GetExpressResultMatrix <-function(dataName="", inxt){
         inx <- match("baseMean", colnames(dataSet$comp.res))
         res <- dataSet$comp.res.list[[inxt]];
     }else{
-        if (dataSet$de.method=="limma"){
+        if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
             inx <- match("AveExpr", colnames(dataSet$comp.res))
         } else {
             inx <- match("logCPM", colnames(dataSet$comp.res))

@@ -90,9 +90,12 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }else if (dataSet$de.method == "limma"){
     dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
-  }else{
+  }else if (dataSet$de.method == "edger"){
     dataSet <- prepareEdgeRContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
+  }else{
+    dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- .perform_williams_trend(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
 }
@@ -415,6 +418,60 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$comp.res <- topFeatures;
   return(dataSet);
 }
+
+.perform_williams_trend <- function(dataSet, robustTrend = FALSE) {
+  require(limma)
+  require(multcomp)
+  
+  ## ── 1. Expression matrix & group factor (honour rmidx) ──────────
+  if (length(dataSet$rmidx) > 0) {
+    expr <- dataSet$data.norm[, -dataSet$rmidx]
+    grp  <- factor(dataSet$cls[-dataSet$rmidx],
+                   levels = unique(dataSet$cls), ordered = TRUE)
+  } else {
+    expr <- dataSet$data.norm
+    grp  <- factor(dataSet$cls,
+                   levels = unique(dataSet$cls), ordered = TRUE)
+  }
+  
+  if (nlevels(grp) < 3)
+    stop("Williams trend test requires at least three ordered doses.")
+  
+  ## group-means (no intercept) design
+  design <- model.matrix(~ 0 + grp)
+  colnames(design) <- levels(grp)           # e.g. "0.00","0.03",…
+  
+  ## ── 2. Williams contrast matrix in limma orientation ────────────
+  will.mat         <- multcomp::contrMat(table(grp), type = "Williams")
+    contrast.matrix  <- t(will.mat)                     # groups × contrasts
+    rownames(contrast.matrix) <- colnames(design)
+
+    ## >>> rename contrasts so they survive unchanged <<<
+    colnames(contrast.matrix) <- paste0("C", seq_len(ncol(contrast.matrix)))
+  
+  ## ── 3. Fit + empirical Bayes  ───────────────────────────────────
+  fit  <- lmFit(expr, design)
+  fit2 <- contrasts.fit(fit, contrast.matrix)
+  fit2 <- eBayes(fit2, trend = robustTrend, robust = robustTrend)
+  
+  ## ── 4. Moderated F-test across *all* Williams contrasts ─────────
+  topFeatures <- topTable(fit2,
+                          coef   = 1:ncol(contrast.matrix),   # every contrast
+                          number = Inf,
+                          sort.by = "F",
+                          adjust.method = "fdr")
+  
+  ## ── 5. Column-name harmonisation for downstream code ────────────
+  nms <- colnames(topFeatures)
+  nms[nms == "FDR"]    <- "adj.P.Val"
+  nms[nms == "PValue"] <- "P.Value"
+  colnames(topFeatures) <- nms
+  
+  ## ── 6. Store and return like other DE functions ─────────────────
+  dataSet$comp.res <- topFeatures
+  return(dataSet)
+}
+
 
 SetupDesignMatrix<-function(dataName="", deMethod){
   dataSet <- readDataset(dataName);
