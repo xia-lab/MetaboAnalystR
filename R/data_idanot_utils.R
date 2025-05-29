@@ -282,7 +282,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   col.nm <- "";
   db.nm <- "";
   
-  if (org == "zhangshugang") {
+  if (org == "zhangshugang" || org == "cro") {
       q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
       feature.vec <- q.mat[, 1];
   }
