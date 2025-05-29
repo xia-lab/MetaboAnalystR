@@ -332,6 +332,11 @@ PerformMetaDeAnal <- function(paramSet){
 PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
+  paramSet$meta.method <- "effectsize";
+
+  paramSet$effectsize.bhth <- BHth;
+  paramSet$effectsize.fc <- 0;
+  paramSet$effectsize.sigTotal <- 0;
 
   mdata.all <- paramSet$mdata.all;
 
@@ -405,8 +410,10 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
   sig.inx <- which(es.mat[,"Pval"]<=BHth);
   analSet$meta.mat <- es.mat[sig.inx, ];
   analSet$meta.mat.all <- es.mat;
-
+  analSet$effectsize.mat <- es.mat;
+  print(head(analSet$effectsize.mat));
   res <- SetupMetaStats(BHth, paramSet, analSet);
+
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
 
@@ -423,6 +430,10 @@ PerformMetaEffectSize<- function(method="rem", BHth=0.05){
 #'
 PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
+  paramSet$meta.method <- "metap";
+
+  paramSet$metap.bhth <- BHth;
+
   mdata.all <- paramSet$mdata.all;
   analSet <- readSet(analSet, "analSet");
 
@@ -492,7 +503,11 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
   sig.inx <- which(pc.mat[, "CombinedPval"]<=BHth);
   analSet$meta.mat <- pc.mat[sig.inx, ];
   analSet$meta.mat.all <- pc.mat;
+  analSet$metap.mat <- pc.mat;
+
   res <- SetupMetaStats(BHth, paramSet, analSet);
+
+
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
 
@@ -509,6 +524,8 @@ PerformPvalCombination <- function(method="stouffer", BHth=0.05){
 #'
 PerformVoteCounting <- function(BHth = 0.05, minVote){
   paramSet <- readSet(paramSet, "paramSet");
+  paramSet$meta.method <- "votecount";
+  paramSet$votecount.bhth <- BHth;
   paramSet$minVote <- minVote;
   mdata.all <- paramSet$mdata.all;
   analSet <- readSet(analSet, "analSet");
@@ -566,8 +583,10 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
   analSet$meta.mat <- df;
   analSet$meta.mat.all <- vc.mat;
   saveSet(paramSet, "paramSet");
+  analSet$votecount.mat <- vc.mat;
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
+
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
   return(saveSet(res[[2]], "analSet", length(sig.inx)));
@@ -586,6 +605,9 @@ PerformVoteCounting <- function(BHth = 0.05, minVote){
 PerformMetaMerge<-function(BHth=0.05){
   paramSet <- readSet(paramSet, "paramSet");
   analSet <- readSet(analSet, "analSet");
+  paramSet$meta.method <- "merge";
+
+  paramSet$merge.bhth <- BHth;
   if(!paramSet$performedDE){
     analSet <- PerformMetaDeAnal(paramSet);
     paramSet <- readSet(paramSet, "paramSet");
@@ -610,8 +632,10 @@ PerformMetaMerge<-function(BHth=0.05){
   analSet$meta.mat.all <- dm.mat;
   #saveSet(analSet, "analSet");
   saveSet(paramSet, "paramSet");
+  analSet$merge.mat <- dm.mat;
 
   res <- SetupMetaStats(BHth, paramSet, analSet);
+
   saveSet(res[[1]], "paramSet");
   saveSet(res[[2]], "analSet");
 
@@ -899,12 +923,99 @@ DoMetaSigUpdate <- function(BHth=0.05,fc.val=0){
         significant <- (abs(meta.mat.all$AverageFc) >= fc.val & (meta.mat.all[,ncol(meta.mat.all)] >= minCount))
         
     }else{
-    significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
+        significant <- (abs(meta.mat.all$AverageFc) >= fc.val) & (meta.mat.all[,ncol(meta.mat.all)] <= BHth)
     }
     meta.mat.all <- meta.mat.all[order(-significant, meta.mat.all[,ncol(meta.mat.all)]), ]
     meta.mat <- meta.mat.all[significant,];
     analSet$meta.mat.all <- meta.mat.all;
     analSet$meta.mat <- meta.mat;
+
+    if(paramSet$meta.method == "metap"){
+        paramSet$metap.bhth <- BHth;
+        paramSet$metap.fc <- fc.val;
+        paramSet$metap.sigTotal <- nrow(analSet$meta.mat);
+    }else if(paramSet$meta.method == "effectsize"){
+        paramSet$effectsize.bhth <- BHth;
+        paramSet$effectsize.fc <- fc.val;
+        paramSet$effectsize.sigTotal <- nrow(analSet$meta.mat);
+
+    }else if(paramSet$meta.method == "votecount"){
+        paramSet$votecount.bhth <- BHth;
+        paramSet$votecount.fc <- fc.val;
+        paramSet$votecount.sigTotal <- nrow(analSet$meta.mat);
+
+    }else {
+        paramSet$merge.bhth <- BHth;
+        paramSet$merge.fc <- fc.val;
+        paramSet$merge.sigTotal <- nrow(analSet$meta.mat);
+
+
+    }
+
     saveSet(analSet, "analSet");
+    saveSet(paramSet, "paramSet");
+
+
     return(nrow(analSet$meta.mat));
+}
+
+
+CheckMetaPerformed <- function(type){
+  analSet <- readSet(analSet, "analSet");
+
+  if(type == "metap"){
+    performed <- !is.null(analSet$metap.mat);
+  }else if(type == "effectsize"){
+    performed <- !is.null(analSet$effectsize.mat);
+  }else if(type == "votecount"){
+    performed <- !is.null(analSet$votecount.mat);
+  }else if(type == "merge"){
+    performed <- !is.null(analSet$merge.mat);
+
+  }
+return(performed);
+}
+
+
+ToggleMetaRes <- function( type) {
+  analSet <- readSet(analSet, "analSet");
+
+    if(type == "metap"){
+      meta.mat <<- analSet$metap.mat
+    }else if(type == "effectsize"){
+      meta.mat <<- analSet$effectsize.mat
+    }else if(type == "votecount"){
+      meta.mat <<- analSet$votecount.mat
+    }else{
+      meta.mat <<- analSet$merge.mat
+    }
+
+    mSetObj <- SetupMetaStats(paramSet$BHth, paramSet,analSet);
+    .set.mSet(mSetObj)
+}
+
+GetMetaParams <- function(type="metap"){
+  paramSet <- readSet(paramSet, "paramSet");
+    if(type == "metap"){
+      fc <- paramSet$metap.fc
+      pval <- paramSet$metap.bhth
+      total <- paramSet$metap.sigTotal;
+    }else if(type == "effectsize"){
+      fc <- paramSet$effectsize.fc
+      pval <- paramSet$effectsize.bhth  
+      total <- paramSet$effectsize.sigTotal;
+    }else if(type == "votecount"){
+      fc <- paramSet$votecount.fc
+      pval <- paramSet$votecount.bhth
+      total <- paramSet$votecount.sigTotal;
+
+    }else{
+      fc <- paramSet$merge.fc
+      pval <- paramSet$merge.bhth
+      total <- paramSet$merge.sigTotal;
+
+    }  
+print("getmetaparams");
+print(c(pval, fc, total));
+    return(c(pval, fc, total));
 }

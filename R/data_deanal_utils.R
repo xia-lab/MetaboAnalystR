@@ -96,15 +96,11 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }
   return(RegisterData(dataSet));
 }
+
 .prepare.deseq <- function(dataSet, anal.type, par1, par2, nested.opt) {
 
   my.fun <- function() {
     require(DESeq2)
-    print(paste("Analysis type:", anal.type))
-    print(paste("par1:", par1))
-    print(paste("par2:", par2))
-    print(paste("Nested option:", nested.opt))
-    save.image("deseq.RData")
 
     # Helper: prefix numeric-looking group labels
     formatLevel <- function(x) {
@@ -119,11 +115,10 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
     }
 
     # Extract count data
-    data.anot <- if (length(dataSet$rmidx) > 0) {
-      dataSet$data.anot[, -dataSet$rmidx]
-    } else {
-      dataSet$data.anot
-    }
+    data.anot <- .get.annotated.data();
+    if (length(dataSet$rmidx) > 0) {
+      data.anot <- data.anot[, -dataSet$rmidx]
+    } 
 
     # Format class labels
     if (any(grepl("(^[0-9]+).*", dataSet$fst.cls))) {
@@ -365,11 +360,11 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   } else {
     set.seed(1) 
     require(edgeR)
+
+    data.anot <- .get.annotated.data();
     # Remove samples with NA metadata if applicable
     if(length(dataSet$rmidx) > 0){
-      data.anot <- dataSet$data.anot[, -dataSet$rmidx]
-    } else {
-      data.anot <- dataSet$data.anot
+      data.anot <- data.anot[, -dataSet$rmidx]
     }
     
     group <- factor(dataSet$cls)

@@ -36,8 +36,8 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   if(is.null(dataSet)){
     return(0);
   }  
-  datOrig <- dataSet$data_orig
- 
+  datOrig <- dataSet$data_orig;
+
   row.num <- nrow(datOrig);
   col.num <- ncol(datOrig);
    if(row.num > 100){
@@ -45,8 +45,9 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
    }
    if(col.num > 10){
         col.num <- 10;
-    }
-    write.csv(datOrig[1:row.num, 1:col.num], file="raw_dataview.csv");  
+   }
+
+   write.csv(datOrig[1:row.num, 1:col.num], file="raw_dataview.csv");  
 
   meta.info <- .readMetaData(metafileName,dataSet$data_orig,metaContain);
   
@@ -78,6 +79,9 @@ ReadTabExpressData <- function(fileName, metafileName="",metaContain="true",oneD
   paramSet$isMetaContain <- metaContain
   paramSet$oneDataAnalType <- oneDataAnalType;
   
+  # clean memory
+  dataSet$data_orig <- NULL; 
+
   # rename data to data.orig
   int.mat <- dataSet$data;
   int.mat <- int.mat[,which(colnames(int.mat) %in% rownames(meta.info$meta.info))]
@@ -509,7 +513,7 @@ ReadMetaData <- function(metafilename){
 
 ####read meta file
 #### return a list
-.readMetaData <- function(metafileName,datOrig,metaContain) {
+.readMetaData <- function(metafileName, datOrig, metaContain) {
   msgSet <- readSet(msgSet, "msgSet");
   na.msg <- ""
   if(is.null(msgSet$current.msg)){

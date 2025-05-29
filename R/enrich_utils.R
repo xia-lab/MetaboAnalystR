@@ -7,11 +7,6 @@
 ###################################################  
 .performEnrichAnalysis <- function(dataSet, file.nm, fun.type, ora.vec, vis.type){
   dataSet <<- dataSet;
-  #file.nm <<- file.nm;
-  #fun.type <<- fun.type;
-  #ora.vec <<- ora.vec;
-  #vis.type <<- vis.type;
-  #save.image("enrich.RData");
 
   msgSet <- readSet(msgSet, "msgSet");
   paramSet <- readSet(paramSet, "paramSet");
@@ -33,7 +28,8 @@
   }else{
     # cut to the universe to uploaded genes
     if(paramSet$anal.type == "onedata"){
-      current.universe <- rownames(dataSet$data.anot); 
+      data.anot <- .get.annotated.data();
+      current.universe <- rownames(data.anot); 
     }else if(paramSet$anal.type == "metadata"){
       inmex <- qs::qread("inmex_meta.qs");
       current.universe <- rownames(inmex$data); 
@@ -47,7 +43,8 @@
   }
   
   # also make sure pathways only contain genes measured in experiment
-  if(!is.null(dataSet$data.anot)){
+  #if(!is.null(dataSet$data.anot)){
+   if(file.exists("data.anot.qs")){
     current.geneset <- lapply(current.geneset, function(x){x[x %in% current.universe]})
     inds <- lapply(current.geneset, length) > 0
     current.geneset <- current.geneset[inds]
@@ -169,6 +166,7 @@
   total <- resTable$Total; if(length(total) ==1) { total <- matrix(total) };
   fun.pval <- resTable$Pval; if(length(fun.pval) ==1) { fun.pval <- matrix(fun.pval) };
   fun.padj <- resTable$FDR; if(length(fun.padj) ==1) { fun.padj <- matrix(fun.padj) };
+  print(resTable$Hits);
   hit.num <- paste0(resTable$Hits,"/",resTable$Total); if(length(hit.num) ==1) { hit.num <- matrix(hit.num) };
   fun.ids <- as.vector(setres$current.setids[resTable$Pathway]); 
   
