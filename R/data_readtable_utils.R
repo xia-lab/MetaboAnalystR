@@ -595,6 +595,16 @@ ReadMetaData <- function(metafilename){
       saveSet(msgSet, "msgSet");
       return(NULL);
     }
+
+    empt <- remove_empty_cols(mydata)
+    mydata <- empt$cleaned
+    if (length(empt$droppedNames)) {
+      match.msg <- paste0(
+        match.msg, "Columns ",
+        paste(empt$droppedNames, collapse = ", "),
+        " were completely empty and removed from metadata file.   "
+      )
+    }
     
     # covert to factor
     mydata <-data.frame(lapply(1:ncol(mydata),function(x){
@@ -655,6 +665,16 @@ ReadMetaData <- function(metafilename){
   saveSet(msgSet, "msgSet");  
   return(list(meta.info=meta.info,disc.inx=disc.inx,cont.inx=cont.inx))
 }
+
+  remove_empty_cols <- function(df) {
+    keep <- vapply(df, function(col) {
+      any(nzchar(trimws(col)) & !is.na(col))
+    }, logical(1))
+    list(
+      cleaned = df[ , keep, drop = FALSE],
+      droppedNames = names(keep)[!keep]
+    )
+  }
 
 GetAnalysisType <- function(){
   paramSet <- readSet(paramSet, "paramSet");
