@@ -90,9 +90,12 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }else if (dataSet$de.method == "limma"){
     dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
-  }else{
+  }else if (dataSet$de.method == "edger"){
     dataSet <- prepareEdgeRContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
+  }else{
+    dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- .perform_williams_trend(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
 }
@@ -415,6 +418,60 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$comp.res <- topFeatures;
   return(dataSet);
 }
+
+.perform_williams_trend <- function(dataSet, robustTrend = FALSE) {
+  require(limma)
+  require(multcomp)
+  
+  ## ── 1. Expression matrix & group factor (honour rmidx) ──────────
+  if (length(dataSet$rmidx) > 0) {
+    expr <- dataSet$data.norm[, -dataSet$rmidx]
+    grp  <- factor(dataSet$cls[-dataSet$rmidx],
+                   levels = unique(dataSet$cls), ordered = TRUE)
+  } else {
+    expr <- dataSet$data.norm
+    grp  <- factor(dataSet$cls,
+                   levels = unique(dataSet$cls), ordered = TRUE)
+  }
+  
+  if (nlevels(grp) < 3)
+    stop("Williams trend test requires at least three ordered doses.")
+  
+  ## group-means (no intercept) design
+  design <- model.matrix(~ 0 + grp)
+  colnames(design) <- levels(grp)           # e.g. "0.00","0.03",…
+  
+  ## ── 2. Williams contrast matrix in limma orientation ────────────
+  will.mat         <- multcomp::contrMat(table(grp), type = "Williams")
+    contrast.matrix  <- t(will.mat)                     # groups × contrasts
+    rownames(contrast.matrix) <- colnames(design)
+
+    ## >>> rename contrasts so they survive unchanged <<<
+    colnames(contrast.matrix) <- paste0("C", seq_len(ncol(contrast.matrix)))
+  
+  ## ── 3. Fit + empirical Bayes  ───────────────────────────────────
+  fit  <- lmFit(expr, design)
+  fit2 <- contrasts.fit(fit, contrast.matrix)
+  fit2 <- eBayes(fit2, trend = robustTrend, robust = robustTrend)
+  
+  ## ── 4. Moderated F-test across *all* Williams contrasts ─────────
+  topFeatures <- topTable(fit2,
+                          coef   = 1:ncol(contrast.matrix),   # every contrast
+                          number = Inf,
+                          sort.by = "F",
+                          adjust.method = "fdr")
+  
+  ## ── 5. Column-name harmonisation for downstream code ────────────
+  nms <- colnames(topFeatures)
+  nms[nms == "FDR"]    <- "adj.P.Val"
+  nms[nms == "PValue"] <- "P.Value"
+  colnames(topFeatures) <- nms
+  
+  ## ── 6. Store and return like other DE functions ─────────────────
+  dataSet$comp.res <- topFeatures
+  return(dataSet)
+}
+
 
 SetupDesignMatrix<-function(dataName="", deMethod){
   dataSet <- readDataset(dataName);
@@ -786,24 +843,29 @@ parse_contrast_groups <- function(contrast_str) {
 
   return(topFeatures)
 }
-
 prepareEdgeRContrast <- function(dataSet,
                                  anal.type   = "reference",
                                  par1        = NULL,
                                  par2        = NULL,
-                                 nested.opt  = "intonly"){
+                                 nested.opt  = "intonly") {
+  save.image("cont.RData")
   msgSet <- readSet(msgSet, "msgSet")
   set.seed(1337)
+
+  # Ensure cls is a proper factor and levels are syntactically valid
   cls <- factor(dataSet$cls)
-  levels(cls) <- make.names(levels(cls))
+  levels(cls) <- make.names(levels(cls))  # Apply to levels only
   dataSet$cls <- cls
   grp.nms <- levels(cls)
+
   dataSet$comp.type <- anal.type
   dataSet$par1 <- par1
-  
+
   if (anal.type == "reference") {
-    ref <- par1
-    if (!ref %in% grp.nms) stop("Reference level not found in factor levels!")
+    ref <- make.names(par1)
+    if (!ref %in% grp.nms) {
+      stop(paste0("Reference level '", par1, "' (converted to '", ref, "') not found in factor levels: ", paste(grp.nms, collapse = ", ")))
+    }
     cls <- relevel(cls, ref = ref)
     dataSet$cls <- cls
     design <- model.matrix(~ cls)
@@ -812,30 +874,48 @@ prepareEdgeRContrast <- function(dataSet,
       lapply(others, function(g) paste(g, "-", ref)),
       paste0(others, "_vs_", ref)
     )
+
   } else {
     design <- model.matrix(~ 0 + cls)
+
     if (anal.type == "default") {
       combs <- combn(levels(cls), 2, simplify = FALSE)
       conts <- setNames(
         lapply(combs, function(x) paste(x[1], "-", x[2])),
         sapply(combs, function(x) paste0(x[1], "_vs_", x[2]))
       )
+
     } else if (anal.type == "time") {
       tm <- levels(cls)
       conts <- setNames(
         lapply(seq_len(length(tm) - 1), function(i) paste(tm[i + 1], "-", tm[i])),
         paste0(tm[-1], "_vs_", tm[-length(tm)])
       )
+
     } else if (anal.type == "custom") {
       grp <- strsplit(par1, " vs. ")[[1]]
-      if (length(grp) != 2) stop("`par1` must be 'A vs. B'")
+      if (length(grp) != 2) stop("`par1` must be in the format 'A vs. B'")
+      grp <- make.names(grp)
+      if (!all(grp %in% grp.nms)) {
+        stop("Custom groups not found in factor levels: ", paste(grp, collapse = ", "))
+      }
       conts <- setNames(
         list(paste(grp[2], "-", grp[1])),
         paste0(grp[2], "_vs_", grp[1])
       )
+
     } else if (anal.type == "nested") {
       g1 <- strsplit(par1, " vs. ")[[1]]
       g2 <- strsplit(par2, " vs. ")[[1]]
+      if (length(g1) != 2 || length(g2) != 2) {
+        stop("For nested design, `par1` and `par2` must both be in 'A vs. B' format.")
+      }
+      g1 <- make.names(g1)
+      g2 <- make.names(g2)
+      if (!all(c(g1, g2) %in% grp.nms)) {
+        stop("Nested groups not found in factor levels: ", paste(c(g1, g2), collapse = ", "))
+      }
+
       if (nested.opt == "intonly") {
         expr <- paste0("(", g1[1], "-", g1[2], ")-(", g2[1], "-", g2[2], ")")
         nm <- paste0(g1[1], g1[2], "_vs_", g2[1], g2[2], "_interaction")
@@ -850,15 +930,16 @@ prepareEdgeRContrast <- function(dataSet,
           setNames(list(expr3), paste0("int_", g1[2], g1[1], "_vs_", g2[2], g2[1]))
         )
       }
+
     } else {
       stop("Unsupported `anal.type`: ", anal.type)
     }
   }
-  
+
+  # Prepare design and placeholder for contrast matrix
   require(limma)
-  #contrast.matrix <- do.call(makeContrasts, c(conts, list(levels = design)))
   dataSet$design <- design
-  dataSet$contrast.matrix <- "";
+  dataSet$contrast.matrix <- ""  # You can later evaluate with makeContrasts
   dataSet$contrast.type <- anal.type
   dataSet$grp.nms <- levels(dataSet$cls)
   dataSet$filename <- paste0("edgeR_", anal.type, "_", dataSet$de.method)
