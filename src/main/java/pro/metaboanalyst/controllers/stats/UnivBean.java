@@ -321,6 +321,8 @@ public class UnivBean implements Serializable {
                     + "Direction of Comparison to indicate what is considered up and down");
             return null;
         }
+                    System.out.println("vcButton_action=====");
+
         UniVarTests.performVolcano(sb, pairedVC, vcFcThresh, cmpType, nonpar, vcPThresh, equalVar, vcPvalType);
         //if (pairedVC.equals("FALSE")) {
         DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
@@ -609,7 +611,8 @@ public class UnivBean implements Serializable {
     }
 
     public void setupVolcano() throws Exception {
-        if (!sb.isAnalInit("Volcano plot")) {
+        if (!sb.isAnalInit("Volcano")) {
+            System.out.println("setupVolcano=====");
             sb.addNaviTrack("Volcano", "/Secure/analysis/VolcanoView.xhtml");
             UniVarTests.performVolcano(sb, "FALSE", 2, 0, "F", 0.1, "TRUE", "raw");
             UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 72, -1);

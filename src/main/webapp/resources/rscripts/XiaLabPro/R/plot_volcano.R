@@ -10,7 +10,6 @@ my.plot.volcano.custom <- function(mSetObj=NA,
                             plotStyle = 0, # 0=default, 1=grey, 2=minimal, 3=classic
                             interactive= FALSE){
 
-  save.image("volc.RData");
   # wrapper bookkeeping ---------------------------------------------------
   mSetObj <- .get.mSet(mSetObj)
   imgName <- paste0(imgName,"dpi",dpi,".",format)
@@ -23,11 +22,21 @@ my.plot.volcano.custom <- function(mSetObj=NA,
   if(plotStyle == 1){
   p    <- ..plotVolcano1(prep, plotLbl, plotTheme)
   }else if(plotStyle == 2){
-  p    <- ..plotVolcano1(prep, plotLbl, plotTheme)
+  p    <- ..plotVolcano2(prep, plotLbl, plotTheme)
  }else if(plotStyle == 3){
-  p    <- ..plotVolcano1(prep, plotLbl, plotTheme)
+  p    <- ..plotVolcano3(prep, plotLbl, plotTheme)
+ }else{
+
  }
-  #p    <- ..applyStylePreset(p, plotStyle)
+
+
+  ## optional overall theme preset
+  p <- switch(as.character(plotTheme),
+              `0` = p + theme_bw(),
+              `1` = p + theme_grey(),
+              `2` = p + theme_minimal(),
+              `3` = p + theme_classic(),
+              p)
 
 
   # ---------- output -----------------------------------------------------
@@ -50,48 +59,141 @@ my.plot.volcano.custom <- function(mSetObj=NA,
 }
 
 # ---------- 1. DATA PREPARATION ---------------------------------------
-  ..prepVolcanoData <- function(mSetObj, labelNum, interactive){
-      vcn <- mSetObj$analSet$volcano
+ ..prepVolcanoData <- function(mSetObj, labelNum, interactive){
 
-      imp.inx <- (vcn$inx.up | vcn$inx.down) & vcn$inx.p
-      df <- data.frame(logFC   = vcn$fc.log,
-                       negLogP = vcn$p.log,
-                       pValue  = vcn$p.value[names(vcn$p.value) %in% names(vcn$p.log)],
-                       FCraw   = vcn$fc.all,
-                       Status  = factor("Not sig",
-                                        levels = c("Down regulated","Not sig","Up regulated")))
-      df$Status[vcn$inx.p & vcn$inx.up]   <- "Up regulated"
-      df$Status[vcn$inx.p & vcn$inx.down] <- "Down regulated"
+  vcn <- mSetObj$analSet$volcano
 
-      # ranking for smart labelling ------------------------------------------------
-      df$p.rank  <- rank(df$negLogP)/nrow(df)*100
-      df$fc.rank <- rank(abs(df$logFC))/nrow(df)*100
-      df$combinedRank <- pmax(df$p.rank, df$fc.rank)
-      df <- df[order(-df$combinedRank), ]
+  ## ------------------------------------------------------------------ ##
+  ##  Build data frame
+  ## ------------------------------------------------------------------ ##
+  df <- data.frame(
+    logFC   = vcn$fc.log,
+    negLogP = vcn$p.log,
+    pValue  = vcn$p.value[names(vcn$p.value) %in% names(vcn$p.log)],
+    FCraw   = vcn$fc.all,
+    Status  = factor("Not sig",
+                     levels = c("Down regulated","Not sig","Up regulated"))
+  )
 
-      # choose labels
-      df$label <- NA
-      if(interactive){
-          df$label <- rownames(df)
-      }else if(labelNum != 0){
-          if(labelNum < 0 || labelNum > nrow(df)){
-              df$label[imp.inx] <- rownames(df)[imp.inx]
-          }else{
-              df$label[seq_len(labelNum)] <- rownames(df)[seq_len(labelNum)]
-          }
+  # flag significant up / down
+  sig.up   <- vcn$inx.p & vcn$inx.up
+  sig.down <- vcn$inx.p & vcn$inx.down
+
+  df$Status[sig.up]   <- "Up regulated"
+  df$Status[sig.down] <- "Down regulated"
+
+  ## ------------------------------------------------------------------ ##
+  ##  Ranking for smart labelling
+  ## ------------------------------------------------------------------ ##
+  df$p.rank       <- rank(df$negLogP)          / nrow(df) * 100
+  df$fc.rank      <- rank(abs(df$logFC))       / nrow(df) * 100
+  df$combinedRank <- pmax(df$p.rank, df$fc.rank)
+
+  # order by combined rank (highest first)
+  ord <- order(-df$combinedRank)
+  df  <- df[ord, ]
+
+  ## ------------------------------------------------------------------ ##
+  ##  Choose labels  – only for significant (blue/red) points
+  ## ------------------------------------------------------------------ ##
+  df$label <- NA
+
+  if (interactive) {                         # show all labels in Plotly view
+    df$label <- rownames(df)
+  } else if (labelNum != 0) {
+
+    sig_idx <- which(df$Status != "Not sig")   # blue + red after re-ordering
+
+    if (length(sig_idx) > 0) {
+
+      if (labelNum < 0 || labelNum >= length(sig_idx)) {
+        lab_idx <- sig_idx                                    # label them all
+      } else {
+        lab_idx <- sig_idx[seq_len(labelNum)]                 # top N by rank
       }
+      df$label[lab_idx] <- rownames(df)[lab_idx]
+    }
+  }
 
-      list(
-        df        = df,
-        thresh.x  = c(vcn$min.xthresh, vcn$max.xthresh),
-        thresh.y  = vcn$thresh.y,
-        counts    = table(df$Status),
-        compName  = vcn$comparison   # stored by upstream code; fallback handled below
+  ## ------------------------------------------------------------------ ##
+  ##  Return components for downstream plotting
+  ## ------------------------------------------------------------------ ##
+  list(
+    df        = df,
+    thresh.x  = c(vcn$min.xthresh, vcn$max.xthresh),
+    thresh.y  = vcn$thresh.y,
+    counts    = table(df$Status),
+    compName  = vcn$comparison
+  )
+}
+
+
+..plotVolcano1 <- function(prep, plotLbl = TRUE, plotTheme = 0) {
+  suppressPackageStartupMessages({
+    library(ggplot2)
+    library(ggrepel)
+    library(scales)
+  })
+
+  df <- prep$df
+
+  ## colour palette (blue ↓, grey = non-sig, red ↑)
+  cols <- c(
+    "Down regulated" = "#1f77b4",   # blue
+    "Not sig"        = "#bfbfbf",   # grey
+    "Up regulated"   = "#d62728"    # red
+  )
+
+  ## legend labels with counts, e.g.  “Up regulated (123)”
+  leg.labs <- sprintf(
+    "%s (%s)",
+    names(prep$counts),
+    format(prep$counts, big.mark = "")
+  )
+
+  names(cols) <- leg.labs
+  df$Status   <- factor(
+    df$Status,
+    levels = names(prep$counts),
+    labels = leg.labs
+  )
+
+  ## axis label (multi-line if comparison name present)
+  xLab <- bquote(log[2]*"(Fold Change)"~.(prep$compName %||% ""))
+
+  p <- ggplot(df, aes(logFC, negLogP)) +
+       geom_point(aes(colour = Status), size = 2.2, alpha = 0.9) +
+       scale_colour_manual(values = cols, name = NULL) +
+       labs(
+         x = xLab,
+         y = expression(-log[10](P[value]))
+       ) +
+       guides(colour = guide_legend(override.aes = list(size = 4))) +
+       theme(
+         legend.position      = "right",   # <- right-side legend
+         legend.direction     = "vertical",
+         legend.text          = element_text(size = 10, margin = margin(r = 4)),
+         axis.text            = element_text(size = 11),
+         axis.title           = element_text(size = 13, face = "bold")
+       )
+
+  ## optional data labels
+  if (plotLbl) {
+    p <- p +
+      geom_text_repel(
+        aes(label = label),
+        size          = 3.5,
+        colour        = "red",
+        max.overlaps  = Inf,
+        box.padding   = 0.4
       )
   }
 
-  # ---------- 2. PLOTTING ------------------------------------------------
-  ..plotVolcano1 <- function(prep, plotLbl, plotTheme){
+
+  return(p)
+}
+
+  ..plotVolcano2 <- function(prep, plotLbl, plotTheme){
       library(ggplot2); library(ggrepel); library(scales)
 
       df <- prep$df
@@ -136,5 +238,77 @@ my.plot.volcano.custom <- function(mSetObj=NA,
                                             max.overlaps = Inf,
                                             box.padding = .4)
       }
+return(p)
   }
+
+..plotVolcano3 <- function(prep, plotLbl = TRUE, plotTheme = 0) {
+
+  suppressPackageStartupMessages({
+    library(ggplot2)
+    library(ggrepel)
+    library(scales)
+  })
+
+  df <- prep$df
+
+  cols <- c(
+    "Down regulated" = "#1f77b4",  # blue
+    "Not sig"        = "#bfbfbf",  # grey
+    "Up regulated"   = "#d62728"   # red
+  )
+
+  ## legend labels with counts, e.g. “Up regulated (123)”
+  leg.labs <- sprintf(
+    "%s (%s)",
+    names(prep$counts),
+    format(prep$counts, big.mark = "")
+  )
+
+  names(cols) <- leg.labs
+  df$Status   <- factor(
+    df$Status,
+    levels = names(prep$counts),
+    labels = leg.labs
+  )
+
+  ## axis label
+  xLab <- bquote(log[2]*"(Fold Change)"~.(prep$compName %||% ""))
+
+  p <- ggplot(df, aes(logFC, negLogP)) +
+       geom_point(aes(colour = Status),
+                  size  = 2.2,
+                  alpha = 0.9) +
+       scale_colour_manual(values = cols, name = NULL) +
+       labs(
+         x = xLab,
+         y = expression(-log[10](P[value]))
+       ) +
+       guides(colour = guide_legend(override.aes = list(size = 4))) +
+       theme(
+         legend.position  = "right",
+         legend.direction = "vertical",
+         legend.text      = element_text(size = 10, margin = margin(r = 4)),
+         axis.text        = element_text(size = 11),
+         axis.title       = element_text(size = 13, face = "bold"),
+
+         ## remove background grid completely
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank()
+       )
+
+  ## optional gene labels
+  if (plotLbl) {
+    p <- p +
+      geom_text_repel(
+        aes(label = label),
+        size         = 3.5,
+        colour       = "black",
+        max.overlaps = Inf,
+        box.padding  = 0.4
+      )
+  }
+
+  return(p)
+}
+
   

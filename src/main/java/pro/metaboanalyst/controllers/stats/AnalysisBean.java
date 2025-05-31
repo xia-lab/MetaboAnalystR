@@ -151,6 +151,8 @@ public class AnalysisBean implements Serializable {
     }
 
     public void doDefaultVC() {
+                            System.out.println("doDefaultVC=====");
+
         UniVarTests.performVolcano(sb, "FALSE", 2, 0, "F", 0.1, "TRUE", "raw");
         UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 72, -1);
 

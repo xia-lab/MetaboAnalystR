@@ -76,7 +76,21 @@ public class GraphStyleBean implements Serializable {
         System.out.println("plotSource==" + plotSource);
         if (plotSource.equals("volcano")) {
             UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-            UniVarTests.plotVolcanoCustom(sb, sb.getNewImage("volcano"), ub.getPlotLbl(), ub.getPlotTheme(), "png", 72, -1, Integer.parseInt(selectedStyle));
+
+            if (Integer.parseInt(selectedStyle) == 0) {
+                if (ub.getLabelOpt().equals("all")) {
+                    UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), ub.getPlotLbl(), ub.getPlotTheme(), "png", 72, -1);
+                } else {
+                    UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), ub.getPlotLbl(), ub.getPlotTheme(), "png", 72, sb.getVolcanoLabelNum());
+                }
+            } else {
+                if (ub.getLabelOpt().equals("all")) {
+                    UniVarTests.plotVolcanoCustom(sb, sb.getNewImage("volcano"), ub.getPlotLbl(), ub.getPlotTheme(), "png", 72, -1, Integer.parseInt(selectedStyle));
+                } else {
+                    UniVarTests.plotVolcanoCustom(sb, sb.getNewImage("volcano"), ub.getPlotLbl(), ub.getPlotTheme(), "png", 72, sb.getVolcanoLabelNum(), Integer.parseInt(selectedStyle));
+                }
+
+            }
         }
         //sb.setStyleOpt(selectedStyle);  // or however you store it
         //graphBean.regenerateCurrentFigure();      // wrap your existing logic
