@@ -9,8 +9,11 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
 import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.rwrappers.UniVarTests;
 import pro.metaboanalyst.utils.DataUtils;
@@ -50,6 +53,7 @@ public class GraphStyleBean implements Serializable {
      */
     public void selectStyle(String code) {
         selectedStyle = code;
+        applyStyle();
     }
 
     public String iconPath(String code) {
@@ -66,6 +70,11 @@ public class GraphStyleBean implements Serializable {
     public String getPreviewImage() {
         String plotSource = sb.getImgSource();
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png";
+    }
+
+    public DefaultStreamedContent getPreviewContent() {
+        String plotSource = sb.getImgSource();
+        return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png");
     }
 
     /**

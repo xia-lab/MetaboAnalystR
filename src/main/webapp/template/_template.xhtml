@@ -536,8 +536,16 @@
                                      width="240" height="160"
                                      class="shadow-2 surface-border" alt="Preview"/>
                             </p:outputPanel>
+                            <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
+
+                                <p:commandLink ajax="false" styleClass="shadow-2 surface-border">
+                                    Download
+                                    <p:fileDownload value="#{graphStyleBean.previewContent}" />
+                                </p:commandLink>
+                            </h:panelGroup>
 
                             <!-- centred Apply button -->
+                            <!--
                             <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
                                 <p:commandButton value="Apply"
                                                  icon="pi pi-check"
@@ -548,7 +556,11 @@
                                                  PF('graphDialog').jq.position({my:'center center',
                                                  at:'center center',
                                                  of:window});"/>
+
                             </h:panelGroup>
+                            -->
+                            <!-- centred Apply button -->
+
 
                         </h:form>
                     </p:tab>

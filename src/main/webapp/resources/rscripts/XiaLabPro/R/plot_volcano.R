@@ -240,75 +240,92 @@ my.plot.volcano.custom <- function(mSetObj=NA,
       }
 return(p)
   }
-
+## --------------------------------------------------------------------
+## Volcano scatter – four significance classes, dashed cut-offs,
+## nicer legend text, grid retained (theme_bw)
+## --------------------------------------------------------------------
 ..plotVolcano3 <- function(prep, plotLbl = TRUE, plotTheme = 0) {
 
   suppressPackageStartupMessages({
     library(ggplot2)
     library(ggrepel)
-    library(scales)
   })
 
-  df <- prep$df
+  # -------------------------------------------------------------------
+  # 1. Four-class status column
+  # -------------------------------------------------------------------
+  df     <- prep$df
+  fc.th  <- abs(prep$thresh.x[2])         # |log2FC| threshold
+  p.th   <- prep$thresh.y                 # –log10(p) threshold
 
-  cols <- c(
-    "Down regulated" = "#1f77b4",  # blue
-    "Not sig"        = "#bfbfbf",  # grey
-    "Up regulated"   = "#d62728"   # red
+  df$SigClass <- "Not Sig."
+  df$SigClass[ abs(df$logFC) > fc.th                    ] <- "FoldChange"
+  df$SigClass[               df$negLogP > p.th          ] <- "P-val"
+  df$SigClass[ abs(df$logFC) > fc.th & df$negLogP > p.th] <- "P-val & FoldChange"
+
+  # enforce level order for plotting & legend
+  cls.order <- c("Not Sig.", "FoldChange", "P-val", "P-val & FoldChange")
+  df$SigClass <- factor(df$SigClass, levels = cls.order)
+
+  # -------------------------------------------------------------------
+  # 2. Legend labels with counts
+  # -------------------------------------------------------------------
+  counts   <- table(df$SigClass)
+  leg.labs <- sprintf("%s (%s)", cls.order,
+                      format(counts[cls.order], big.mark = ""))
+  names(leg.labs) <- cls.order
+  df$SigClass <- factor(df$SigClass, labels = leg.labs)
+
+  # -------------------------------------------------------------------
+  # 3. Colour palette (grey / green / blue / red)
+  # -------------------------------------------------------------------
+  pal <- c(
+    "Not Sig."              = "#666666",
+    "FoldChange"            = "forestgreen",
+    "P-val"                 = "#3182bd",
+    "P-val & FoldChange"    = "#de2d26"
   )
+  names(pal) <- leg.labs                       # sync with dynamic labels
 
-  ## legend labels with counts, e.g. “Up regulated (123)”
-  leg.labs <- sprintf(
-    "%s (%s)",
-    names(prep$counts),
-    format(prep$counts, big.mark = "")
-  )
+  # -------------------------------------------------------------------
+  # 4. Axis label
+  # -------------------------------------------------------------------
+  xLab <- bquote(log[2]*"(Fold Change)" ~ .(prep$compName %||% ""))
 
-  names(cols) <- leg.labs
-  df$Status   <- factor(
-    df$Status,
-    levels = names(prep$counts),
-    labels = leg.labs
-  )
-
-  ## axis label
-  xLab <- bquote(log[2]*"(Fold Change)"~.(prep$compName %||% ""))
-
+  # -------------------------------------------------------------------
+  # 5. Build plot
+  # -------------------------------------------------------------------
   p <- ggplot(df, aes(logFC, negLogP)) +
-       geom_point(aes(colour = Status),
-                  size  = 2.2,
+       geom_point(aes(colour = SigClass),
+                  size  = 1.6,
                   alpha = 0.9) +
-       scale_colour_manual(values = cols, name = NULL) +
-       labs(
-         x = xLab,
-         y = expression(-log[10](P[value]))
-       ) +
-       guides(colour = guide_legend(override.aes = list(size = 4))) +
+       scale_colour_manual(values = pal, name = NULL) +
+       geom_vline(xintercept = prep$thresh.x, linetype = "dashed") +
+       geom_hline(yintercept = p.th,           linetype = "dashed") +
+       labs(x = xLab,
+            y = expression(-log[10](padj))) +
+       guides(colour = guide_legend(override.aes = list(size = 3))) +
+       theme_bw(base_size = 12) +
        theme(
          legend.position  = "right",
          legend.direction = "vertical",
-         legend.text      = element_text(size = 10, margin = margin(r = 4)),
-         axis.text        = element_text(size = 11),
-         axis.title       = element_text(size = 13, face = "bold"),
-
-         ## remove background grid completely
-         panel.grid.major = element_blank(),
-         panel.grid.minor = element_blank()
+         legend.text      = element_text(size = 9, margin = margin(r = 4)),
+         axis.title       = element_text(face = "bold")
        )
 
-  ## optional gene labels
+  # -------------------------------------------------------------------
+  # 6. Optional gene labels
+  # -------------------------------------------------------------------
   if (plotLbl) {
     p <- p +
       geom_text_repel(
-        aes(label = label),
-        size         = 3.5,
-        colour       = "black",
+        data         = subset(df, !is.na(label)),
+        aes(label    = label),
+        size         = 3,
         max.overlaps = Inf,
-        box.padding  = 0.4
+        box.padding  = 0.3
       )
   }
 
   return(p)
 }
-
-  
