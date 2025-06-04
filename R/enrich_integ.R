@@ -128,7 +128,6 @@ PrepareIntegData <- function(mSetObj=NA){
 PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper", 
                                         libOpt="integ", integOpt="query"){
 
-
   mSetObj <- .get.mSet(mSetObj);  
 
   # make sure this is annotated   
