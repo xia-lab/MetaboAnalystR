@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -75,15 +76,15 @@ public class ApplicationBean1 implements Serializable {
     private String projectsHome = "/data/glassfish/projects/metaboanalyst/";
 
     public ApplicationBean1() {
-        initDirectories();
+        //initDirectories();
     }
 
     public String getAppName() {
         return appName;
     }
-
-    private void initDirectories() {
-        String domain_url = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRe‌​quest()).getRequestURL().toString();
+    @PostConstruct
+    public void initDirectories() {
+        String domain_url = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getRequestURL().toString();
         //System.out.println("here 1: domain_url====" + domain_url + "==========");
 
         ServletContext context = (ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext();

@@ -218,9 +218,6 @@ public class NormBean implements Serializable {
             WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
             wb.getCalledWorkflows().add("Normalization");
 
-            //TESTING//
-            RDataUtils.plotNormSummaryGraphAI(sb, sb.getNewImage("test"), "png", 72);
-
 
         } else {
             sb.addMessage("Error", "Unknown error happened during data normalization process!");

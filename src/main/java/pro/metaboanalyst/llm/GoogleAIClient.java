@@ -2,10 +2,6 @@ package pro.metaboanalyst.llm;
 
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.Content;
-import com.google.genai.types.Part;
-import java.io.IOException;
 
 /**
  * A client class for interacting with Google's Generative AI API.

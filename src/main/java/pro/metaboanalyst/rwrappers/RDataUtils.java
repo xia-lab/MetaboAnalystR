@@ -25,7 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rosuda.REngine.REXP;
 import pro.metaboanalyst.utils.JavaRecord;
-import pro.metaboanalyst.rwrappers.RPlotAICustomizer;
 
 /**
  * Create a dataSet list object mSet$dataSet$cls : class information
@@ -1186,56 +1185,43 @@ public class RDataUtils {
         }
     }
 
-    /**
-     * AI-enhanced version of plotNormSummaryGraph that uses Google AI to
-     * optimize plot parameters. This function analyzes the data context and
-     * suggests optimal visualization parameters.
-     */
+
     public static void plotNormSummaryGraphAI(SessionBean1 sb,
             String imgName,
             String format,
-            int dpi) {
+            int dpi,
+            String userRequest) {
         try {
             RConnection RC = sb.getRConnection();
 
-            // 1) Build the dataContext & ask your AI customizer for R code:
-            String dataContext = getDataContext(RC);
-            RPlotAICustomizer aiCustomizer = new RPlotAICustomizer();
-            String customParams = aiCustomizer.customizeNormSummaryPlot(dataContext).trim();
+            // 1) Get the AI customizer and customize the plot based on user request
+            //RPlotCustomizationAgent aiCustomizer = new RPlotCustomizationAgent();
+            //String customizedFunction = aiCustomizer.customizePlot("PlotNormSummary", userRequest);
 
-            // 2) Always quote and escape any internal double-quotes in customParams
-            if (!customParams.isEmpty()) {
-                customParams = customParams.replace("\"", "\\\"");
-            }
+            // 2) Write the customized function to a temporary file
+            String tempFile = "PlotNormSummaryAI.R";
+            String rCommand = String.format(
+                "source('%s')", tempFile
+            );
 
-            // 3) Construct the R command
-            String rCommand;
-            if (customParams.isEmpty()) {
-                rCommand = String.format(
-                        "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA)",
-                        imgName, format, dpi
-                );
-            } else {
-                rCommand = String.format(
-                        "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA, customParams=\"%s\")",
-                        imgName, format, dpi, customParams
-                );
-            }
-
-            // 4) Record & dispatch
+            // 3) Record & dispatch
             System.out.println("[R CMD] " + rCommand);
             RCenter.recordRCommand(RC, rCommand);
             JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
             sb.addGraphicsCMD("norm", rCommand);
             sb.addGraphicsMapLink("norm", "/Secure/process/NormalizationView.xhtml");
 
-            // 5) Fire off the R call
-            RC.voidEval(rCommand);
+            // 4) Execute the plot with the customized function
+            String plotCommand = String.format(
+                "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA)",
+                imgName, format, dpi
+            );
+            RC.voidEval(plotCommand);
+
         } catch (Exception e) {
             LOGGER.error("plotNormSummaryGraphAI", e);
         }
     }
-
     /**
      * Gets relevant data context for AI customization. This includes
      * information about the data being plotted.
@@ -3310,4 +3296,6 @@ public class RDataUtils {
         return;
 
     }
+    
+    
 }

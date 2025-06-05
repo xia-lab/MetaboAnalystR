@@ -5,7 +5,6 @@
 package pro.metaboanalyst.lts;
 
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
@@ -95,7 +94,7 @@ public class FireBase implements Serializable {
     }
 
     public void initFirebase() {
-
+        /*
         GoogleCredentials credentials;
 
         try (FileInputStream serviceAccountStream = new FileInputStream(ab.getFirebaseInitFile())) {
@@ -115,7 +114,7 @@ public class FireBase implements Serializable {
         } catch (IOException ex) {
             Logger.getLogger(FireBase.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        */
     }
 
     public FirebaseApp getFireApp() {
