@@ -275,6 +275,9 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
     enIDs <- doGeneIDMapping(gene.vec, org, idType);
   }
 
+  # For some org, KEGG_Entry contains "CAALFM_C202970CA  CDS", the " CDS" should be trimmed to match pathway
+  enIDs <- sub("  CDS$", "", enIDs);
+
   if(idType == "kos"){
     kos <- gene.vec;
     mSetObj$dataSet$kos.name.map <- kos
