@@ -130,7 +130,7 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 10;
+    w <- 9;
   }else if(width == 0){
     w <- 7.2;
   }
@@ -322,9 +322,9 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   # note, this is now a remote call and only used for other formats by users
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- h <- 7;
+    w <- h <- 8;
   }else if(width == 0){
-    w <- h <- 7;
+    w <- h <- 8;
     mSetObj$imgSet$ebam.cmpd <-imgName;
   }else{
     w <- h <- width;

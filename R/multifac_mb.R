@@ -108,7 +108,7 @@ PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72,
   }else{
     w <- width;
   }
-  h <- min(5.4, w);
+  h <- 5.4;
   mSetObj$imgSet$mb <- imgName;
   Cairo::Cairo(file = imgName,  unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plotProfile(mSetObj, cmpdNm);

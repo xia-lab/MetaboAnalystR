@@ -1214,8 +1214,11 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
       x[] <- as.numeric(x)
 
   #cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
-   cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
-
+   if(require(XiaLabCppLib)){
+        cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
+   }else{
+        cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm, PACKAGE="genefilter")
+  }
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,
                    row.names = dimnames(x)[[which]])

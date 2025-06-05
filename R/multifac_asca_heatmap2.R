@@ -1269,7 +1269,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 9;
+    w <- 8;
   }else if(width == 0){
     w <- 7;
   }else{
@@ -1419,7 +1419,7 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, color
   
   mSetObj$imgSet$asca.modelAB <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=9, type=format, bg="white");
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   lmat<-matrix(1:(4*pcNum), nrow=4, byrow=F);
   lwid<-rep(4.0, pcNum);
   lhei<-rep(c(4.0, 0.4), 2);
@@ -1619,9 +1619,9 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, widt
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 9;
+    w <- 8;
   }else if(width == 0){
-    w <- 9;
+    w <- 7;
     
   }else{
     w <- width;
