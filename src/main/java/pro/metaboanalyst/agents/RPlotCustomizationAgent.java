@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -60,13 +61,27 @@ public class RPlotCustomizationAgent implements Serializable {
             return err("R script directory not initialised");
         }
 
-        // 1) Read original .R file
-        String original = readFunctionCode(functionName).orElse(null);
-        if (original == null) {
-            return err("Function '" + functionName + "' not found");
+        // Resolve alias if needed and ensure function is loaded in R
+        String resolvedFuncName = functionName;
+        if (FUNCTION_MAPPINGS.containsKey(functionName)) {
+            FunctionMapping mapping = FUNCTION_MAPPINGS.get(functionName);
+            resolvedFuncName = mapping.rFuncName;
+            try {
+                String lazyLoader = ".load.scripts.on.demand('" + mapping.rScriptFile + "')";
+                RConnection RC = sb.getRConnection();
+                RC.eval("if (!exists('" + resolvedFuncName + "')) " + lazyLoader);
+            } catch (Exception ex) {
+                LOG.log(Level.WARNING, "Lazy loading failed", ex);
+            }
         }
 
-        // 2) Build chat history + SYSTEM_PROMPT + original + userRequest
+        // Fetch R function code
+        String original = readFunctionCode(resolvedFuncName).orElse(null);
+        if (original == null) {
+            return err("Function '" + resolvedFuncName + "' not found");
+        }
+
+        // Assemble chat prompt
         StringBuilder historyBuilder = new StringBuilder();
         for (ChatMessage msg : chatHistory) {
             historyBuilder.append("[").append(msg.role).append("]\n")
@@ -75,37 +90,36 @@ public class RPlotCustomizationAgent implements Serializable {
 
         String prompt = historyBuilder.toString()
                 + SYSTEM_PROMPT + "\n\nHere is the original R function:\n\n"
-                + original
-                + "\n\nUser request: " + userRequest;
+                + original + "\n\nUser request: " + userRequest;
 
-        // 3) Record user message in history, call AI
         chatHistory.add(new ChatMessage("user", userRequest));
         String modifiedRFunction = aiClient.generateText(prompt);
         chatHistory.add(new ChatMessage("model", modifiedRFunction));
 
-        // 4) Strip any ``` fences
+        // Remove code fences and rename function
         modifiedRFunction = modifiedRFunction
                 .replaceAll("^```[a-zA-Z]*\\s*", "")
                 .replaceAll("\\s*```$", "");
 
-        // 5) **New**: Rename the top‐level function definition to functionName + "AI" **
-        //    We look for:    functionName <- function
-        //    and replace it with:   functionNameAI <- function
         String aiFuncName = functionName + "AI";
-        // Regex: \bfunctionName\s*<-\s*function
-        String pattern = "\\b" + functionName + "\\s*<-\\s*function";
-        modifiedRFunction = modifiedRFunction.replaceFirst(pattern, aiFuncName + " <- function");
 
-        // 6) Send to R
-        RConnection mainConn = sb.getRConnection();
+        // Case 1: Try to rename existing assignment
+        String pattern = "\\b" + functionName + "\\s*<-\\s*function";
+        if (modifiedRFunction.matches("(?s).*" + pattern + ".*")) {
+            modifiedRFunction = modifiedRFunction.replaceFirst(pattern, aiFuncName + " <- function");
+        } else if (modifiedRFunction.trim().startsWith("function")) {
+            // Case 2: AI returned anonymous function, we prepend assignment
+            modifiedRFunction = aiFuncName + " <- " + modifiedRFunction;
+        }
+
+        // Evaluate modified function in R
         try {
-            mainConn.eval(modifiedRFunction);
+            sb.getRConnection().eval(modifiedRFunction);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "R evaluation failed", ex);
         }
 
-        // 7) (Optional) If your downstream code expects to call plotVolcanoAI or whatever,
-        //    you can still trigger the AI‐named function here. Otherwise, just return the code.
+        // Trigger re-plotting
         if (ub.getLabelOpt().equals("all")) {
             UniVarTests.plotVolcanoAI(
                     sb,
@@ -128,35 +142,22 @@ public class RPlotCustomizationAgent implements Serializable {
             );
         }
 
-        // 8) Return the actual R code string that defined functionNameAI()
         return modifiedRFunction;
     }
 
-    private Optional<String> readFunctionCode(String functionName) {
-        String fileName = Character.toUpperCase(functionName.charAt(0)) + functionName.substring(1) + ".R";
-        Path file = Path.of(RSCRIPT_DIR, fileName);
-        if (!Files.exists(file)) {
-            return Optional.empty();
-        }
+    private static final Map<String, FunctionMapping> FUNCTION_MAPPINGS = Map.of(
+            "PlotVolcano", new FunctionMapping("my.plot.volcano", "util_volcano.Rc"),
+            "plotVennDiagram", new FunctionMapping("my.plot.venn", "util_venn.Rc"),
+            "Plot3D", new FunctionMapping("my.plot.scatter3d", "util_3dscatter.Rc")
+    );
+
+    private Optional<String> readFunctionCode(String rFuncName) {
         try {
-            String content = Files.readString(file);
-            int start = content.indexOf(functionName + " <- function");
-            if (start < 0) {
-                return Optional.empty();
-            }
-            int depth = 0, end = start;
-            for (int i = start; i < content.length(); i++) {
-                char c = content.charAt(i);
-                if (c == '{') {
-                    depth++;
-                } else if (c == '}' && --depth == 0) {
-                    end = i + 1;
-                    break;
-                }
-            }
-            return Optional.of(content.substring(start, end));
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Failed to read R function", ex);
+            String rCmd = "paste(deparse(" + rFuncName + "), collapse='\\n')";
+            String code = sb.getRConnection().eval(rCmd).asString();
+            return Optional.of(code);
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, "Failed to fetch R function from RConnection", ex);
             return Optional.empty();
         }
     }
@@ -166,7 +167,6 @@ public class RPlotCustomizationAgent implements Serializable {
     }
 
     private static class ChatMessage {
-
         private final String role;
         private final String content;
 
@@ -183,4 +183,14 @@ public class RPlotCustomizationAgent implements Serializable {
             return content;
         }
     }
-}
+
+    private static class FunctionMapping {
+        final String rFuncName;
+        final String rScriptFile;
+
+        FunctionMapping(String rFuncName, String rScriptFile) {
+            this.rFuncName = rFuncName;
+            this.rScriptFile = rScriptFile;
+        }
+    }
+} 
