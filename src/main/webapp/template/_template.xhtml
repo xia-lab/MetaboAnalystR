@@ -573,7 +573,7 @@
                                 <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
                                 <p:inputTextarea id="customizationPrompt" 
                                                  value="#{rPlotCustomizationBean.prompt}"
-                                                 rows="5" 
+                                                 rows="7" 
                                                  style="width:100%"
                                                  placeholder="Describe how you want to customize the plot. For example:
                                                  - Change colors (e.g., 'Use a blue color scheme')
@@ -603,16 +603,17 @@
                                                  onclick="PF('rPlotCustomizationDialog').hide();" 
                                                  type="button" />
                             </p:panelGrid>
-                            <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
-                                 class="indeterminate-progress-bar">
-                                <div class="indeterminate-progress-bar__progress"></div>
-                            </div>
+
 
                         </h:form>
                     </p:tab>
 
 
                 </p:tabView> 
+                <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
+                     class="indeterminate-progress-bar">
+                    <div class="indeterminate-progress-bar__progress"></div>
+                </div>
             </h:panelGrid>
         </p:dialog>
     </h:body>

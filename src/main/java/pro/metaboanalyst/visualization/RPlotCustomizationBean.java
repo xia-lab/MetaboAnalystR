@@ -92,7 +92,6 @@ public class RPlotCustomizationBean implements Serializable {
 
             String response = aiCustomizer.customizePlot(plotType, prompt);
             aiResponse = response;
-            System.out.println("AIRESPONSE:" + aiResponse);
         } catch (Exception e) {
             sb.addMessage("error", "Error applying customization: " + e.getMessage());
         }
