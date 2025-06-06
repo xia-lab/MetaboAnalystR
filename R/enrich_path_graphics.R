@@ -383,9 +383,9 @@ PlotPathSummary<-function(mSetObj=NA,
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 7;
+    w <- 6;
   }else if(width == 0){
-    w <- 7;
+    w <- 6;
   }else{
     w <- width;
   }
@@ -445,10 +445,10 @@ PlotPathSummary<-function(mSetObj=NA,
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
   # convert to pixel positions, only for web interaction dpi=72
-  if(dpi == 72){
-    width.px <- height.px <- w*dpi;
+  #if(dpi == 72){
+    width.px <- height.px <- w*100;
     mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, path.nms);
-  }
+  #}
   par(op);
   dev.off();
 

@@ -185,6 +185,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
   mSetObj$imgSet$PlotDRModelBars <- imgNm
   return(.set.mSet(mSetObj))
 }
+
 PlotDRHistogram <- function(mSetObj = NA,
                             imgNm,
                             dpi    = 72,
@@ -219,14 +220,14 @@ PlotDRHistogram <- function(mSetObj = NA,
   pod.cols <- c(
     gene20         = "#D62728",
     percentile10th = "#2CA02C",
-    mode           = "#FF7F0E"
+    mode           = "#0D00FF"
   )
 
     p <- ggplot(bmd.df, aes(x = bmd)) +
     geom_histogram(aes(y = after_stat(count)),
                    bins   = 30,
-                   fill   = "lightblue",
-                   colour = "black",
+                   fill   = "#D3D3D3",
+                   colour = "white",
                    alpha  = 0.85) +
     {if (is.finite(s.pods["feat.20"]))
         geom_vline(aes(xintercept = s.pods["feat.20"], colour = "gene20"), size = 1)} +
@@ -255,13 +256,16 @@ PlotDRHistogram <- function(mSetObj = NA,
       legend.box.margin = margin(t = 6, l = 8),   # ★ add top gap for legend
       plot.margin       = margin(t = 10, r = 8, b = 5, l = 8),  # ↑ top padding for whole plot
       legend.title      = element_text(size = rel(1)),
-      legend.text       = element_text(size = rel(0.9))
+      legend.text       = element_text(size = rel(0.9)),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
     )
 
 
   if (is.na(width) || width <= 0) {
-    w <- 9      # ★ wider (previously 7)
-    h <- 5.25
+    w <- 10      # ★ wider (previously 7)
+    h <- 5
   } else {
     w <- width
     h <- width * 0.75

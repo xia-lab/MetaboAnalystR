@@ -1101,7 +1101,7 @@ PlotInmexGraph <- function(mSetObj, pathName,
     }
     w <- h <- width;
 
-    Cairo::Cairo(file = imgName, dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     par(mai=rep(0,4));
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     dev.off();

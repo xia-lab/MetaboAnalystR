@@ -541,24 +541,26 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
   }
   num <- sum(mdata.all == 1);
   # calculate width based on the dataset number
+
+  my.w <- 3.2;
+  my.h <- 4;
   if(num == 1){
-    Cairo::Cairo(file = imgName, width=280, height=320, type=format, bg="white", dpi = dpi);
+    Cairo::Cairo(file = imgName, unit="in", width=my.w, height=my.h, type=format, bg="white", dpi = dpi);
     myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
                      xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
   }else{
     # calculate layout
     if(num < 6){
       layout <- c(num, 1);
-      height=320;
-      width=160*num;
+      my.w <- 2*my.w;
     }else{
       rn <- round(num/2);
       layout <- c(rn, 2);
-      height=500;
-      width=160*rn;
+      my.h <- 7;
+      my.w <- 2*rn;
     }
     
-    Cairo::Cairo(file = imgName, width=width, height=height, type=format, bg="white", dpi = dpi);
+    Cairo::Cairo(file = imgName, unit="in", width=my.w, height=my.h, type=format, bg="white", dpi = dpi);
     data.lbl <- as.character(metastat.meta$data.lbl);
     data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
     
@@ -581,6 +583,10 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
   
   print(myplot); 
   dev.off();
+
+  mSetObj$paramSet$cmpd.img.name <-  imgName;
+  mSetObj$paramSet$cmpd.img.size <- paste0("width:", my.w, "in; height:", my.h, "in;"); 
+
   return(.set.mSet(mSetObj));
 }
 
