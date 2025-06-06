@@ -15,8 +15,9 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
         <script type="text/javascript">
 
-            function extender() {
+            function extender2() {
                 var pointMap = #{detailsBean.pointMapJson};
+                console.log(pointMap);
                 var options = {
                     options: {
                         scales: {
@@ -64,7 +65,58 @@
                 };
                 $.extend(true, this.cfg.config, options);
             }
-            ;
+
+            function extender() {
+                var pointMap = #{detailsBean.pointMapJson};
+                console.log(pointMap);
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(p)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'log10(FC)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            // Adding tooltip configuration
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+
         </script>
     </ui:define>
     <ui:define name="footerout"/>
@@ -203,10 +255,10 @@
                     </p>
                 </p:tooltip>
                 <p:chart id="chart" widgetVar="chart" 
-                         rendered ="#{doseResponseBean.dePerformed}"
+                         rendered="#{doseResponseBean.dePerformed}"
                          value="#{detailsBean.getModel3('dose-de')}"  
                          style="height:500px; min-width:880px; width: 90%; margin-left: 5%; padding: 20px"
-                         extender="extender">
+                         extender="#{detailsBean.doseExtender}">
                     <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
                             update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
                 </p:chart>

@@ -43,7 +43,6 @@ import software.xdev.chartjs.model.charts.ScatterChart;
 import software.xdev.chartjs.model.dataset.ScatterDataset;
 import software.xdev.chartjs.model.data.ScatterData;
 
-
 /**
  *
  * @author jianguox
@@ -59,11 +58,11 @@ public class DetailsBean implements Serializable {
     @JsonIgnore
     @Inject
     private SessionBean1 sb;
-    
+
     @JsonIgnore
     @Inject
     private MultifacBean mfb;
-            
+
     private String[] colnames = null;
     private String[] rownames = null;
     private String[] stringCol = null;
@@ -1499,6 +1498,13 @@ public class DetailsBean implements Serializable {
         model3 = scatterChart.toJson();
     }
 
+    public String getDoseExtender() {
+        if (curType.equals("dose-de")) {
+            return "extender";
+        } else {
+            return "extender2";
+        }
+    }
     private String pointMapJson = new Gson().toJson("");
 
     public String getPointMapJson() {
