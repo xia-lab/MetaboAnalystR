@@ -1,0 +1,93 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <UL> 
+            <LI>
+                For enrichment analysis, only well-annotated HMDB compounds (i.e. those in our pathway libraries &amp; metabolite sets) will be mapped. 
+                For general-purpose name mapping, use <b>Compound ID Conversion</b> tool in <b>Other Utilities</b> module;
+            </LI>
+            <LI>Greek alphabets are not recognized, they should be replaced by English names (i.e. alpha, beta); </LI>
+            <LI>Query names in normal white indicate exact match - marked by "1" in the download file;</LI>
+            <LI>Query names in highlighted background indicate <b>no exact or unique match</b> - marked by "0" in the downloaded file;</LI>
+            <LI>For <b>compound name</b>, you should click the <b>View</b> link to perform <b>approximate search</b> and manually select the correct match if found;</LI>
+            <LI>For <b>KEGG ID</b>, it is possible to have multiple hits, you should click the <b>View</b> link to manually select the correct match if found;</LI>
+        </UL>  
+        <h:form id="formName">
+            <p:dataTable id="mapTbl" style="width:100%; font-size: 12px" var="map" 
+                         class="surface-card shadow-1 p-0 text-800"
+                         rowIndexVar="rowInx" value="#{mapBean.nameMapResult}">  
+                <p:column headerText="Query">  
+                    <h:outputText escape="false" value="#{map.query}"/>
+                </p:column>  
+                <p:column headerText="Hit">  
+                    <h:outputText escape="false" value="#{map.hit}"/>
+                </p:column>  
+                <p:column headerText="HMDB">  
+                    <h:outputText escape="false" value="#{map.hmdb_id}"/>
+                </p:column>  
+                <p:column headerText="PubChem">
+                    <h:outputText escape="false" value="#{map.pubchem_id}"/>
+                </p:column>  
+                <p:column headerText="KEGG">  
+                    <h:outputText escape="false" value="#{map.kegg_id}"/>
+                </p:column>  
+                <p:column headerText="Details">  
+                    <p:commandLink value="#{map.details}" 
+                                   onclick="PF('statusDialog').show()"
+                                   update=":summaryForm:detailView :hisTab:cmdPane"
+                                   oncomplete="PF('detailDialog').show();">  
+                        <f:setPropertyActionListener value="#{map.query}" target="#{mapBean.currentCmpd}" /> 
+                    </p:commandLink>  
+                </p:column>   
+            </p:dataTable>
+            <h:outputText escape="false" value="#{mapBean.downloadMsg}"/>
+            <h:panelGrid style="width: 90%; text-align: center" rendered="false">
+                <p:commandButton value="Proceed" ajax="false" 
+                                 icon="pi pi-caret-right"
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide();"
+                                 action="#{mapBean.nextBn_action()}"/>
+            </h:panelGrid>
+        </h:form>
+    </h:panelGrid>
+
+    <p:dialog widgetVar="detailDialog" header="Name match" dynamic="true" modal="true" height="500"
+              appendTo="@(body)" onShow="PF('statusDialog').hide()"
+              hideEffect="explode" resizable="true"> 
+        <h:form id="summaryForm">
+            <h:panelGrid id="detailView" style="width:500px; padding:10px 20px 10px 20px;">
+                <h:outputText escape="false" style="font-size: 13px" value="Query name: #{mapBean.target}"/>
+                <p:dataTable style="width:100%; font-size: 12px; padding: 6px" var="can" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{mapBean.candidateMaps}">
+                    <p:column width="10">
+                        <p:selectBooleanCheckbox value="#{can.selected}" style="line-height: 18px"/>
+                    </p:column>
+                    <p:column headerText="Matched Name" style="width: 200px">  
+                        <h:outputText escape="false" value="#{can.hit}"/>  
+                    </p:column>  
+                    <p:column headerText="HMDB" style="width: 100px">  
+                        <h:outputText escape="false" value="#{can.hmdb_id}"/>
+                    </p:column>  
+                    <p:column headerText="PubChem" style="width: 90px">  
+                        <h:outputText escape="false" value="#{can.pubchem_id}"/>
+                    </p:column>  
+                    <p:column headerText="KEGG" style="width: 80px">  
+                        <h:outputText escape="false" value="#{can.kegg_id}"/>
+                    </p:column> 
+                </p:dataTable> 
+                <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                    <p:commandButton value="OK" update=":form:mapTbl :hisTab:cmdPane" 
+                                     actionListener="#{mapBean.selectCandidate()}" 
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide(); PF('detailDialog').hide()"/>
+                    <p:commandButton value="Cancel" onclick="PF('detailDialog').hide()"/>
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </p:dialog>
+</ui:composition>

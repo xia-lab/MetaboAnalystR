@@ -1,0 +1,80 @@
+{
+      "elements": {
+
+        "nodes": [
+            { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+            { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+            { "data": { "id": "Sanity Check", "label": "Sanity Check", "color": "#666666", "category": "processing", "size": "10", "parent": "category_processing" }, "position": { "x": -5, "y": 0.0 } },
+            { "data": { "id": "Filtering", "label": "Filtering", "color": "#666666", "category": "processing", "size": "10", "parent": "category_processing" }, "position": { "x": -4, "y": 0.0 } },
+            { "data": { "id": "Normalization", "label": "Normalization", "color": "#666666", "category": "processing", "size": "10", "parent": "category_processing" }, "position": { "x": -3, "y": 0.0 } },
+            { "data": { "id": "category_all", "label": "", "color": "#d3d3d3" } },
+            { "data": { "id": "category_processing", "label": "", "color": "#d3d3d3"} },
+            { "data": { "id": "category_Univariate", "label": "Univariate", "color": "#e6194b" } },
+            { "data": { "id": "category_Advanced Significance", "label": "Advanced Significance", "color": "#3cb44b" } },
+            { "data": { "id": "category_Chemometrics", "label": "Chemometrics", "color": "#ffe119" } },
+            { "data": { "id": "category_Clustering", "label": "Clustering", "color": "#4363d8" } },
+            { "data": { "id": "category_Classification", "label": "Classification", "color": "#f58231" } },
+        
+        
+            { "data": { "label": "Visual Analytics", "id": "Visual Analytics", "color": "#666666", "category": "analysis", "size": "10", "background-opacity":0.5}, "position": { "x": -2, "y": 0.0 } },
+            { "data": { "label": "Univariate", "id": "Univariate", "color": "#e6194b", "category": "analysis", "size": "10", "background-opacity":0.5, "parent": "category_Univariate"}, "position": { "x": -1, "y": 7.6 } },
+            { "data": { "label": "Advanced Significance", "id": "Advanced Significance", "color": "#3cb44b", "category": "analysis", "size": "10", "background-opacity":0.5 , "parent": "category_Advanced Significance"}, "position": { "x": -1, "y": 3.1 } },
+            { "data": { "label": "Chemometrics", "id": "Chemometrics", "color": "#ffe119", "category": "analysis", "size": "10", "background-opacity":0.5, "parent": "category_Chemometrics"}, "position": { "x": -1, "y": 0.1 } },
+            { "data": { "label": "Clustering", "id": "Clustering", "color": "#4363d8", "category": "analysis", "size": "10", "background-opacity":0.5 , "parent": "category_Clustering"}, "position": { "x": -1, "y": -3.9 } },
+            { "data": { "label": "Classification", "id": "Classification", "color": "#f58231", "category": "analysis", "size": "10", "background-opacity":0.5 , "parent": "category_Classification"}, "position": { "x": -1, "y": -6.9 } },
+            
+        {"data": {"id": "Fold Change", "label": "Fold Change", "x": "0", "y": "10.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "T-test", "label": "T-test", "x": "0", "y": "9.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "Volcano", "label": "Volcano", "x": "0", "y": "8.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "ANOVA", "label": "ANOVA", "x": "0", "y": "7.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "Correlation Heatmap", "label": "Corr. Heatmap", "x": "0", "y": "6.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "Pattern Search", "label": "Pattern Search", "x": "0", "y": "5.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "Correlation Networks (DSPC)", "label": "DSPC Networks", "x": "0", "y": "4.6", "size": "10", "color": "#666666", "category": "Univariate", "parent": "category_Univariate"}},
+        {"data": {"id": "SAM", "label": "SAM", "x": "0", "y": "3.6", "size": "10", "color": "#666666", "category": "Advanced Significance", "parent": "category_Advanced Significance"}},
+        {"data": {"id": "EBAM", "label": "EBAM", "x": "0", "y": "2.6", "size": "10", "color": "#666666", "category": "Advanced Significance", "parent": "category_Advanced Significance"}},
+        {"data": {"id": "PCA", "label": "PCA", "x": "0", "y": "1.6", "size": "10", "color": "#666666", "category": "Chemometrics", "parent": "category_Chemometrics"}},
+        {"data": {"id": "PLSDA", "label": "PLSDA", "x": "0", "y": "0.6", "size": "10", "color": "#666666", "category": "Chemometrics", "parent": "category_Chemometrics"}},
+        {"data": {"id": "sPLSDA", "label": "sPLSDA", "x": "0", "y": "-0.4", "size": "10", "color": "#666666", "category": "Chemometrics", "parent": "category_Chemometrics"}},
+        {"data": {"id": "OrthoPLSDA", "label": "OrthoPLSDA", "x": "0", "y": "-1.4", "size": "10", "color": "#666666", "category": "Chemometrics", "parent": "category_Chemometrics"}},
+        {"data": {"id": "Dendrogram", "label": "Dendrogram", "x": "0", "y": "-2.4", "size": "10", "color": "#666666", "category": "Clustering", "parent": "category_Clustering"}},
+        {"data": {"id": "Heatmap", "label": "Heatmap", "x": "0", "y": "-3.4", "size": "10", "color": "#666666", "category": "Clustering", "parent": "category_Clustering"}},
+        {"data": {"id": "K-means", "label": "K-means", "x": "0", "y": "-4.4", "size": "10", "color": "#666666", "category": "Clustering", "parent": "category_Clustering"}},
+        {"data": {"id": "SOM", "label": "SOM", "x": "0", "y": "-5.4", "size": "10", "color": "#666666", "category": "Clustering", "parent": "category_Clustering"}},
+        {"data": {"id": "Random Forest", "label": "Random Forest", "x": "0", "y": "-6.4", "size": "10", "color": "#666666", "category": "Classification", "parent": "category_Classification"}},
+        {"data": {"id": "SVM", "label": "SVM", "x": "0", "y": "-7.4", "size": "10", "color": "#666666", "category": "Classification", "parent": "category_Classification"}}
+        
+
+    ],
+        "edges": [
+      { "data": { "id": "e0", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e1", "source": "Start", "target": "Sanity Check" } },
+      { "data": { "id": "e2", "source": "Sanity Check", "target": "Filtering" } },
+      { "data": { "id": "e3", "source": "Filtering", "target": "Normalization" } },
+      { "data": { "id": "e4", "source": "Normalization", "target": "Visual Analytics" } },
+      { "data": { "id": "e5", "source": "Visual Analytics", "target": "Univariate" } },
+      { "data": { "id": "e6", "source": "Univariate", "target": "Fold Change" } },
+      { "data": { "id": "e7", "source": "Univariate", "target": "T-test" } },
+      { "data": { "id": "e8", "source": "Univariate", "target": "Volcano" } },
+      { "data": { "id": "e9", "source": "Univariate", "target": "ANOVA" } },
+      { "data": { "id": "e10", "source": "Univariate", "target": "Correlation Heatmap" } },
+      { "data": { "id": "e11", "source": "Univariate", "target": "Pattern Search" } },
+      { "data": { "id": "e12", "source": "Univariate", "target": "Correlation Networks (DSPC)" } },
+      { "data": { "id": "e13", "source": "Visual Analytics", "target": "Advanced Significance" } },
+      { "data": { "id": "e14", "source": "Advanced Significance", "target": "SAM" } },
+      { "data": { "id": "e15", "source": "Advanced Significance", "target": "EBAM" } },
+      { "data": { "id": "e16", "source": "Visual Analytics", "target": "Chemometrics" } },
+      { "data": { "id": "e17", "source": "Chemometrics", "target": "PCA" } },
+      { "data": { "id": "e18", "source": "Chemometrics", "target": "PLSDA" } },
+      { "data": { "id": "e19", "source": "Chemometrics", "target": "sPLSDA" } },
+      { "data": { "id": "e20", "source": "Chemometrics", "target": "OrthoPLSDA" } },
+      { "data": { "id": "e21", "source": "Visual Analytics", "target": "Clustering" } },
+      { "data": { "id": "e22", "source": "Clustering", "target": "Dendrogram" } },
+      { "data": { "id": "e23", "source": "Clustering", "target": "Heatmap" } },
+      { "data": { "id": "e24", "source": "Clustering", "target": "K-means" } },
+      { "data": { "id": "e25", "source": "Clustering", "target": "SOM" } },
+      { "data": { "id": "e26", "source": "Visual Analytics", "target": "Classification" } },
+      { "data": { "id": "e27", "source": "Classification", "target": "Random Forest" } },
+      { "data": { "id": "e28", "source": "Classification", "target": "SVM" } }
+    ]
+    }
+}

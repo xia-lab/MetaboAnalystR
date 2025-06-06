@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid columns="2">
+        <div style="color:orange">
+            Click on "Details" to see matched putative compounds.
+        </div>
+
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
+            <p:fileDownload value="#{mummiAnalBean.integPathEnrichFile}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable rows="10" rowsPerPageTemplate="10,20,50" paginator="true" 
+                     class="surface-card shadow-1 p-0 text-800"
+                     rowIndexVar="rowIndex" 
+                      rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     paginatorPosition="bottom" id="resTblInteg" style="width:100%;" var="ib" value="#{mummiAnalBean.integBeans}">  
+            <p:column headerText="Pathway Name" width="300px">  
+                <p:outputLabel value="#{ib.setName}"/>
+            </p:column>  
+            <p:column headerText="Total" sortBy="#{ib.setNum}" width="95px">  
+                <h:outputText escape="false" value="#{ib.setNum}"/>
+            </p:column> 
+            <p:column headerText="All Hits" sortBy="#{ib.refNum}" width="95px">  
+                <h:outputText escape="false" value="#{ib.refNum}"/>
+            </p:column> 
+            <p:column headerText="Sig Hits" sortBy="#{ib.hitNum}" width="95px">  
+                <h:outputText escape="false" value="#{ib.hitNum}"/>
+            </p:column> 
+            <p:column headerText="Mummichog P" sortBy="#{ib.mummiP}" width="95px">  
+                <h:outputText escape="false" value="#{ib.mummiP}"/>
+            </p:column>  
+            <p:column headerText="GSEA P" sortBy="#{ib.gseaP}" width="95px">  
+                <h:outputText escape="false" value="#{ib.gseaP}"/>
+            </p:column>    
+            <p:column headerText="Meta P" sortBy="#{ib.comboP}" width="95px">  
+                <h:outputText escape="false" value="#{ib.comboP}"/>
+            </p:column>  
+            <p:column headerText="Details" width="95px">  
+                <p:commandLink value="View" process="@this" oncomplete="PF('msetPathDialog').show()">  
+                    <f:setPropertyActionListener value="#{ib.setName}" target="#{sessionBean1.currentPathName}" />  
+                </p:commandLink>
+            </p:column>  
+        </p:dataTable> 
+    </div>
+
+</ui:composition>
+

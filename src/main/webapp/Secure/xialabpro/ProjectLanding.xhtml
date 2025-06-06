@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+  <ui:define name="toptrack"/>
+    <ui:define name="content">
+        <div class="card">
+            <h:panelGrid style="padding: 10px 20px 10px 40px; width:95%; text-align: center; line-height: 23px; font-size: 13px; font-family: Arial, Helvetica, Geneva">
+                <h:panelGrid style="width:95%; padding: 60px 20px 10px 125px">
+                    <h2 style="font-size: 23px">Selected Project</h2>
+                    <h:form id="selectForm">
+                        <div class="surface-section" style="text-align: left; ">
+                            <ul class="list-none p-0 m-0">
+                                <li class="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap">
+                                    <div class="text-500 w-6 md:w-2 font-medium">Title</div>
+                                    <div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">
+                                        <h:outputLabel value="#{fireProjectBean.selectedProject.title}"/>
+                                    </div>
+                                </li>
+                                <li class="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap">
+                                    <div class="text-500 w-6 md:w-2 font-medium">Analysis module</div>
+                                    <div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">
+                                        <h:outputLabel value="#{fireProjectBean.selectedProject.readableType}"/>
+                                    </div>
+                                </li>
+                                <!--
+                                <li class="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap">
+                                    <div class="text-500 w-6 md:w-2 font-medium">Organism</div>
+                                    <div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">                                        
+                                        <h:outputLabel value="#{fireProjectBean.selectedProject.readableOrg}"/>
+                                    </div>
+                                </li>
+                                -->
+                                <li class="flex align-items-center py-3 px-2 border-top-1 border-bottom-1 surface-border flex-wrap">
+                                    <div class="text-500 w-6 md:w-2 font-medium">Description</div>
+                                    <div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1 line-height-3">
+                                        <h:outputLabel value="#{fireProjectBean.selectedProject.description}"/>
+                                    </div>
+                                </li>
+                                <li class="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap">
+                                    <div class="text-500 w-6 md:w-2 font-medium">Creation date</div>
+                                    <div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">
+                                        <h:outputLabel value="#{fireProjectBean.selectedProject.creationDate}"/>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <h:panelGrid columns="1" style="padding-top: 4px; padding-bottom: 2px; width:100%; text-align: center; border-top: thin #495057 solid;">
+                            <p:commandButton id="visBn" value="Proceed" style="width:120px"
+                                             onclick="PF('statusDialog').show();"
+                                             icon="pi pi-angle-double-right" 
+                                             action="#{fireBaseController.navToProject}"
+                                             styleClass="procBn"
+                                             /> 
+                        </h:panelGrid>
+                    </h:form>
+
+                </h:panelGrid>
+            </h:panelGrid>
+        </div>
+    </ui:define>
+</ui:composition>

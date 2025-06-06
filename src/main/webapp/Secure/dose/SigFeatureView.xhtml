@@ -1,0 +1,217 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Sig. analysis', '/Secure/dose/SigFeatureView.xhtml')}"></f:event> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
+        <script type="text/javascript">
+
+            function extender() {
+                var pointMap = #{detailsBean.pointMapJson};
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(p)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Correlation Coefficient (r)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            // Adding tooltip configuration
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            ;
+        </script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="maxX" value="#{sessionBean1.featureNumber}" />
+        <h:panelGrid style="width:95%; padding: 30px 20px 20px 40px; font-family: Arial, Helvetica, Geneva; line-height: 23px;" rendered="true">
+            <h2 style="color: #2196F3">
+                Identification of potential features associated with exposure levels
+            </h2>
+            <p>
+                Two general approaches are implemented. The downstream curve fitting step will be performed on those significant features in the next step
+                <ul>
+                    <li>
+                        <b>Differential analysis</b>: to identify features that have shown significant differences / variations in <b>ANY</b> of the dose treatment with respective the control (dose 0). 
+                        This is based on a general ANOVA-like tests using limma (repeated dosing data). 
+                    </li>
+                    <li>
+                        <b>Regression analysis</b>: to identify features that have shown significant association with the dose levels. This is based on logistic (two groups) or 
+                        linear regression (continuous exposure data)
+                    </li>
+                </ul> 
+            </p>
+            <h:form id="form1">
+                <h:panelGrid  columns="2" style="padding: 10px 20px 10px 40px; width:90%;">
+                    <h:panelGrid cellpadding="5" columns="2" style="padding-right: 30px;">
+                        <h:panelGroup style="width:180px" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Primary metadata:"/>           
+                        </h:panelGroup>
+                        <p:selectOneMenu id="primaryOpts" styleClass="menu" panelStyleClass="panel" value="#{doseResponseBean.analysisMeta}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                            <p:ajax listener="#{doseResponseBean.analysisMetaChangeListener()}" event="valueChange" update=":form1" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Covariates (control for):"/>
+                        <p:selectCheckboxMenu  id="covOpts"
+                                               styleClass="menu" 
+                                               label="&nbsp; -- None selected -- &nbsp;" 
+                                               showHeader="false" 
+                                               multiple="true"  
+                                               panelStyleClass="panel" 
+                                               value="#{doseResponseBean.adjustedMeta}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectCheckboxMenu>
+                        <h:outputLabel value="P-value:" style="font-weight: bold"/>     
+                        <h:panelGrid columns="2">
+                            <p:inputText  value="#{doseResponseBean.sigLevel}" style="width:80px"/>
+                            <p:selectBooleanCheckbox style="line-height: 18px" value="#{doseResponseBean.FDR}" itemLabel="Adjusted p-value (FDR)"/>
+                        </h:panelGrid>
+                        <h:outputLabel value="Correlation coefficient (|r|):" style="font-weight: bold" rendered="#{doseResponseBean.contineousDoes}"/>     
+                        <h:panelGrid rendered="#{doseResponseBean.contineousDoes}">
+                            <p:inputText  value="#{doseResponseBean.ceffLevel}" style="width:80px"/>                            
+                        </h:panelGrid>
+                        <h:outputLabel value="Fold change:" style="font-weight: bold" rendered="#{!doseResponseBean.contineousDoes}"/>       
+                        <p:inputText  value="#{doseResponseBean.fcLevel}" style="width:80px" rendered="#{!doseResponseBean.contineousDoes}"/> 
+                    </h:panelGrid>
+                    <h:panelGroup rendered="#{!doseResponseBean.contineousDoes}">
+
+                        <div class="ui-message-info" style="margin-left: 50px; padding: 20px 30px 20px 30px; width: 480px; line-height: 23px">
+                            <span class="ui-message-info-icon"/>
+                            <span class="ui-message-info-detail"><b>Did you know?</b></span>
+                            <p> For dose response analysis, this step is to select features that are more likely to have a dose-dependent behavior 
+                                using fold-change and/or p-values. Since these features will be subject to additional filters during the curve-fitting step, 
+                                you can use relaxed thresholds. However, if there is a strong effect, we recommend increasing the threshold values such that fewer 
+                                than <b>1000 features</b> pass this step for computational reasons. <br/><br/> Please note: a feature will be selected if its fold-change 
+                                exceeds the threshold in <b>any</b> of the pairwise comparisons. 
+                            </p>
+                        </div>  
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{doseResponseBean.contineousDoes}">
+
+                        <div class="ui-message-info" style="margin-left: 50px; padding: 20px 30px 10px 30px; width: 480px; line-height: 23px">
+                            <span class="ui-message-info-icon"/>
+                            <span class="ui-message-info-detail"><b>Did you know?</b></span>
+                            <p>
+                                For dose response analysis, this step is to select features that are more likely to have a dose dependent behavior using correlation coefficient (r) and/or 
+                                p-values. Since these features will be subject to additional filters during the curve-fitting step, you can use relaxed thresholds. However, 
+                                if there is a strong effect, we recommend increasing the threshold values such that less than <b>1000 features</b> pass this step for computational 
+                                reasons.
+                            </p>
+                        </div>
+
+                    </h:panelGroup>
+
+                    <h:panelGrid style="width:100%; text-align: center; padding-top: 20px">
+                        <p:commandButton value="Submit"
+                                         style="width:120px; font-size: 14px !important;"
+                                         icon="pi pi-cog"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         update=":form1:visBn :resForm"
+                                         actionListener="#{doseResponseBean.updateDoseDEAnalysis()}"/>       
+                    </h:panelGrid>
+
+                    <h:panelGrid style="width:100%; text-align: center; padding-top: 20px">
+                        <p:commandButton id="visBn" value="Proceed" style="width:130px;"
+                                         onclick="PF('statusDialog').show();
+                                                 extender()"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         icon="pi pi-angle-double-right" 
+                                         disabled="#{not doseResponseBean.sigOK}"
+                                         action="modelfit"
+                                         styleClass="procBn"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+
+            <hr class="style-one"/>
+
+            <h:form id="resForm" >
+                <h:panelGrid columns="2" style="width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="3" style="width:200px; text-align: right;">
+                        <p:commandLink action="#{sessionBean1.detailsLnk_action('dose-de')}" 
+                                       title="View the detailed data table">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+
+                        <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                            <i class="pi pi-undo"></i>
+                        </p:commandLink>
+
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+                <p:tooltip for="helpIcon" styleClass="helpTip">
+                    <p>
+                        Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                        represent the concentrations of the selected feature from all samples. The notch indicates
+                        the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                        The notch can be used to evaluate differences between groups; if the notches 
+                        do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                        with a yellow diamond.
+                    </p>
+                </p:tooltip>
+                <p:chart id="chart" widgetVar="chart" 
+                         rendered ="#{doseResponseBean.dePerformed}"
+                         value="#{detailsBean.getModel3('dose-de')}"  
+                         style="height:500px; min-width:880px; width: 90%; margin-left: 5%; padding: 20px"
+                         extender="extender">
+                    <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                            update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                </p:chart>
+            </h:form>
+        </h:panelGrid>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

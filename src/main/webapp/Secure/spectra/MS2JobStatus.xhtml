@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('MS2 Job status', '/Secure/spectra/MS2JobStatus.xhtml')}"/>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Job Status View</h2>
+                <p style="margin: 0px; padding: 0px">
+                    Depending on the current server load and the size of your data, it can take a few hours up to several days to complete your job. 
+                    <ul>
+                        <li>
+                            At any time during data analysis, <u>keep only <b>one</b> active web page open</u> (except static web pages), 
+                            as multiple tabs/windows will interfere with each other, leading to unpredictable results. 
+                        </li>
+                    </ul>
+                </p>
+                <h:panelGrid id="jobPanel">
+                    <p:fieldset legend="Job Status" style="width: 780px; padding: 20px 30px 20px 30px; font-size: 13px; text-align: center; border: thick orange solid"  
+                                class="surface-card shadow-1 p-4 text-800">
+                        <h:panelGrid  columns="2" style="width:auto; text-align: left; line-height: 24px">
+                            <h:outputLabel style="font-weight: bold" value="Job ID:"/>
+                            <h:outputLabel value="#{tandemMS.jobID}"/>
+
+                            <h:panelGroup style="width: 160px;" layout="block">
+                                <h:outputLabel style="font-weight: bold" value="Current Status:"/>
+                            </h:panelGroup>
+                            <h:outputLabel value="#{tandemMS.jobStatus}"/>
+
+                            <h:outputLabel style="font-weight: bold" value="Job Progress:"/>
+                            <p:progressBar widgetVar="pbAjax1" value="#{tandemMS.jobProgress}" 
+                                           labelTemplate="{value}%" global="false" 
+                                           style="width: 630px"/>
+
+                            <h:outputLabel style="font-weight: bold" value="Text Output:"/>
+                            <p:scrollPanel id="msgPane"
+                                           style="width:632px; height:345px; padding:10px 20px 10px 20px; text-align: left;">
+                                <p:outputLabel escape="false" value="#{tandemMS.jobStatusText}"/>
+                            </p:scrollPanel>
+
+                            <h:outputLabel style="font-weight: bold" value="Output File:"/>
+                            <h:panelGrid  columns="2">    
+                                <p:commandLink style="font-size: 13px;"  ajax="false" value="Status Text">
+                                    <p:fileDownload value="#{tandemMS.textOutputFile}"/>
+                                </p:commandLink>
+                                <h:outputLabel style="font-size: 11.5px; margin-left: 50px; color: grey" escape="false" value="#{tandemMS.timeStamp()}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <h:panelGrid  columns="3" style="width: 100%; text-align: center; padding-top: 20px">     
+                            <p:commandButton value="Refresh Status"
+                                             action="#{tandemMS.refreshJob()}" 
+                                             update="form1"
+                                             disabled="#{!tandemMS.jobSubmitted}"/>   
+                            <p:commandButton value="Cancel Job"
+                                             onclick="PF('pbAjax1').cancel()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update="form1"
+                                             disabled="#{!tandemMS.jobSubmitted}"
+                                             action="#{tandemMS.cancelJob()}"/>     
+                            <p:commandButton id='pdBn' value="Proceed" style="width:120px" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             icon="pi pi-caret-right"
+                                             disabled="#{!tandemMS.jobCompleted}"
+                                             action="#{tandemMS.finishProgress()}"/>
+                        </h:panelGrid>
+                    </p:fieldset> 
+                    <p:poll interval="3" listener="#{tandemMS.checkStatus()}" stop="#{tandemMS.stopStatusCheck}" update="form1:jobPanel"/>
+                </h:panelGrid>
+
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

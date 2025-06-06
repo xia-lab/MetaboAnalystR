@@ -1,0 +1,265 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Network stats', '/Secure/network/MnetStats.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid id="mainpane" styleClass="my-content-panel">
+            <h2>Network Overview</h2>
+
+            <h:panelGroup rendered="#{not sessionBean1.dspcNet}">
+                To generate knowledge-based networks, the input metabolites and genes (seeds) are mapped to the selected interaction network to create 
+                subnetworks containing these seeds and their direct neighbours (i.e. first-order subnetworks). 
+                The procedure often produces one big subnetwork ("continent") with several smaller ones ("islands").
+            </h:panelGroup> 
+            <h:panelGroup rendered="#{sessionBean1.dspcNet}">
+                In the Debiased Sparse Partial Correlation (DSPC) network (<a href="https://doi.org/10.1093/bioinformatics/btx012" target="_blank">Basu et al. 2017</a>), 
+                the nodes are input metabolites, while the edges represent the association measures. Please note:
+                <ul>
+                    <li>
+                        DSPC works best when data is log or cubic root transformed in the data normalization step. If not, log transformation will 
+                        be applied to the data generated after row normalization before computing the network;
+                    </li>
+                    <li>
+                        DSPC is computational intensive and was mainly for targeted metabolomics. If data contains over 1000 features, a filter 
+                        (based on interquantile range or IQR) will be applied to reduce the total feature to 1000;
+                    </li>
+                    <li>
+                        For better visualization, the default DSPC network only shows the top correlations (edges) based on their p-value rankings 
+                        (top 20% when the total number of edges is less than 1000 or the top 100 edges when the total number of edges greater than 1000).          
+                    </li>
+                </ul>
+            </h:panelGroup> 
+            <div>
+                Subnetworks with <u>at least 3 nodes</u> are listed below. You can visually explore them in the next step. 
+                These subnetworks can be downloaded as SIF (simple interaction format) files to be explored in other tools (i.e. Cytoscape). 
+                When the networks are too big or complex for visualization, you can use the <b>Network Tools</b> at the bottom to reduce the network size. 
+            </div>
+            <h:form id="form1">
+                <h:panelGrid columns="2">
+                    <p:dataTable id="netTb" style="width:720px; text-align: left; padding: 20px 30px 20px 40px" 
+                                 var="net" class="surface-card shadow-1 p-0 text-800" value="#{mnetResBean.netsDataModel}"> 
+                        <p:column headerText="Networks" style="width:22%">  
+                            #{net.name}  
+                        </p:column>  
+                        <p:column headerText="Nodes" style="width:16%">  
+                            #{net.nodeNum}  
+                        </p:column>  
+                        <p:column headerText="Edges" style="width:16%">  
+                            #{net.edgeNum}  
+                        </p:column>  
+                        <p:column headerText="Seeds" style="width:16%">  
+                            #{net.queryNum} 
+                        </p:column>  
+                        <p:column headerText="Interactions" style="width:30%">  
+                            <p:commandButton ajax="false" 
+                                             icon="pi pi-download"
+                                             onclick="PrimeFaces.monitorDownload(start, stop);">  
+                                <p:fileDownload value="#{mnetResBean.getSifFile(net.name)}" />  
+                            </p:commandButton> 
+                        </p:column>  
+                    </p:dataTable>
+
+                    <p:commandButton id="nextBn" style="width:120px; vertical-align: top" 
+                                     value="Proceed" 
+                                     icon="pi pi-caret-right"
+                                     onclick="PF('statusDialog').show(); remoteCall()"
+                                     oncomplete="PF('statusDialog').hide();"
+                                     action="#{mnetResBean.proceedToViewer()}"
+                                     />
+                </h:panelGrid>
+                <p:remoteCommand name="remoteCall" actionListener="#{mnetResBean.prepareNetworks()}"/>
+            </h:form>
+
+   
+            <h:panelGrid columns ="2" style="padding-top: 30px;">
+                <b style="font-size: 1.1em;">Network Tools:</b> 
+                <p:graphicImage id="toolIcon" url="/resources/images/ui-help.png" alt="help"/>
+            </h:panelGrid>
+
+            <h:form id='form3'>
+                <h:panelGrid columns="6" style="width:820px; padding-top: 10px; padding-left: 40px; padding-bottom: 20px"> 
+                    <p:commandButton 
+                        value='Reset Network'
+                        title="Reset the network to default"
+                        onclick="PF('statusDialog').show();"
+                        oncomplete="PF('statusDialog').hide();"
+                        actionListener="#{mnetResBean.resetNetwork()}" 
+                        update=":form1 :hisTab:cmdPane"
+                        styleClass="btnCirc"/>                                   
+                    <p:commandButton 
+                        value='Degree Filter'
+                        title="Filter nodes based on degree"
+                        onclick="PF('dgrPpiDialog').show();"
+                        oncomplete="PF('statusDialog').hide();"
+                        styleClass="btnCirc"/>    
+                    <p:commandButton 
+                        value='Betweenness Filter'
+                        title ="Filter nodes based on betweenness"
+                        onclick="PF('btwPpiDialog').show();"
+                        oncomplete="PF('statusDialog').hide();"
+                        styleClass="btnCirc"/>   
+                    <p:commandButton 
+                        value='Minimum Network'
+                        title="Trim current network to minimum connected network"
+                        onclick="PF('statusDialog').show();"
+                        oncomplete="PF('statusDialog').hide();"
+                        update=":form1 :hisTab:cmdPane"
+                        disabled="#{sessionBean1.dspcNet}"
+                        actionListener="#{mnetResBean.shrinkNetwork()}"                           
+                        styleClass="btnCirc">    
+                    </p:commandButton>                    
+                    <p:commandButton 
+                        value='Correlation Filter'
+                        title ="Filter edges based on edge weight"
+                        onclick="PF('corDialog').show();"
+                        oncomplete="PF('statusDialog').hide();"
+                        disabled="#{not sessionBean1.dspcNet}"
+                        styleClass="btnCirc"/>      
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid>
+
+        <p:tooltip for="toolIcon" styleClass="helpTip">
+            <p>
+                Large and dense networks can lead to "hairball" effect which are difficult to navigate or interpret. 
+                You can simplify the network by reducing less important nodes or edges based on several measures
+                - <b>degree</b>, <b>betweenness</b>, and <b>shortest paths</b>. 
+                <ul>
+                    <li>
+                        <b>Degree</b>: the degree of a node is the number of connections it has to other nodes. 
+                        Nodes with higher degree act as important "hubs" in a network.
+                    </li>
+                    <li>
+                        <b>Betweenness</b>: the betweenness measures the number of shortest paths going through the node. 
+                        Nodes with higher betweenness act as important "bottlenecks" in a network.
+                    </li>
+                    <li>
+                        <b>Minimum network</b>: the number of edges within the network can be reduced significantly by keeping only one 
+                        shortest path between hub nodes (seeds). That is, if there are multiple paths connecting 
+                        two nodes, only one shortest path will remain to keep only essential connection patterns. 
+                    </li>
+                </ul>
+            </p>
+        </p:tooltip>
+
+        <p:dialog widgetVar="corDialog" dynamic="true" modal="true" appendTo="@(body)" closable="true"
+                  header="Correlation Filter"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:480px; padding: 10px" id="corView1">
+                <h:form> 
+                    <h:outputLabel style="font-weight: bold" value="Specify significance cutoff for correlation"/>
+                    <h:panelGrid columns="2" style="width:100%;">
+                        <h:panelGrid columns="2" style="width:380px; padding: 10px 20px 20px 20px;">
+                            <h:outputLabel value="P-value cutoff:"/>
+                            <p:inputNumber id="txt1" style="width:72px" value="#{mnetResBean.minCor}" decimalPlaces="6"/>
+                            <h:outputLabel value="Based on:"/>
+                            <p:selectOneRadio value="#{mnetResBean.corFilteringOpt}">
+                                <f:selectItem itemLabel="Raw p-val" itemValue="pval"/>
+                                <f:selectItem itemLabel="Adj. p-val" itemValue="qval"/>  
+                            </p:selectOneRadio>  
+                        </h:panelGrid>
+                        <p:commandButton value="Submit" onclick="PF('statusDialog').show()"
+                                         actionListener="#{mnetResBean.filterNetByCor()}"
+                                         oncomplete="PF('corDialog').hide(); PF('statusDialog').hide()"
+                                         update=":form1 :hisTab:cmdPane"
+                                         />  
+                    </h:panelGrid>
+
+                    <h:outputLabel style="font-weight: bold" value="Specify ranges for correlation coefficients"/>
+                    <h:panelGrid columns="2" style="width:100%;">
+                        <h:panelGrid columns="2" style="width:380px; padding: 10px 20px 20px 20px;">
+
+                            <h:outputLabel value="Negative [-1, 0]:"/>
+                            <p:slider for="txt4,txt5" minValue="-1" maxValue="0" step="0.0000000000000001" display="displayRange1" style="width: 200px" range="true" displayTemplate="Between {min} and {max}"/>
+                            <p:spacer/>
+                            <h:outputText id="displayRange1" value="Between #{mnetResBean.negCoeff1} and #{mnetResBean.negCoeff2}" />
+                            <h:inputHidden id="txt4" value="#{mnetResBean.negCoeff1}"/>
+                            <h:inputHidden id="txt5" value="#{mnetResBean.negCoeff2}"/>
+
+                            <h:outputLabel value="Positive [0, 1]:"/>
+                            <p:slider for="txt6,txt7" minValue="0" maxValue="1" step="0.0000000000000001" display="displayRange2" style="width: 200px" range="true" displayTemplate="Between {min} and {max}"/>
+                            <p:spacer/>
+                            <h:outputText id="displayRange2" value="Between #{mnetResBean.posCoeff1} and #{mnetResBean.posCoeff2}" />
+                            <h:inputHidden id="txt6" value="#{mnetResBean.posCoeff1}"/>
+                            <h:inputHidden id="txt7" value="#{mnetResBean.posCoeff2}"/>
+                        </h:panelGrid>
+                        <p:commandButton value="Submit" onclick="PF('statusDialog').show()"
+                                         actionListener="#{mnetResBean.filterNetByCoeff()}"
+                                         oncomplete="PF('corDialog').hide(); PF('statusDialog').hide()"
+                                         update=":form1 :hisTab:cmdPane"
+                                         />  
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:100%; padding-left: 190px ">
+                        <p:commandButton value="Submit" onclick="PF('statusDialog').show()"
+                                         actionListener="#{mnetResBean.filterNetByCorBoth()}"
+                                         oncomplete="PF('corDialog').hide(); PF('statusDialog').hide()"
+                                         update=":form1 :hisTab:cmdPane"
+                                         />  
+                        <h:panelGrid style="padding-right: 188px"> 
+                            <p:graphicImage id="toolIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                    <p:tooltip for="toolIcon2" styleClass="helpTip">
+                        <p>
+                            To apply both p values and correlation coefficients to control network size.
+                        </p>
+                    </p:tooltip>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+
+        <p:dialog widgetVar="dgrPpiDialog" dynamic="true" modal="true" appendTo="@(body)" closable="true"
+                  header="Filter nodes based on degree"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:400px; padding: 10px">
+                <h:form> 
+                    <h:panelGrid columns="2">
+                        <h:panelGrid style="width:120px;">
+                            <h:outputLabel value="Degree cutoff:"/>
+                        </h:panelGrid>
+                        <h:inputText style="width:72px" value="#{mnetResBean.minDgr}"/>
+                    </h:panelGrid>
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="Submit" onclick="PF('statusDialog').show()"
+                                         actionListener="#{mnetResBean.filterPpiNetByDgr()}"
+                                         oncomplete="PF('dgrPpiDialog').hide(); PF('statusDialog').hide()"
+                                         update=":form1 :hisTab:cmdPane"
+                                         />  
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+        <p:dialog widgetVar="btwPpiDialog" dynamic="true" modal="true" appendTo="@(body)" closable="true"
+                  header="Filter nodes based on betweenness"
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid style="width:400px; padding: 10px">
+                <h:form> 
+                    <h:panelGrid columns="2">
+                        <h:panelGrid style="width:120px;">
+                            <h:outputLabel value="Betweenness cutoff:"/>
+                        </h:panelGrid>
+                        <h:inputText style="width:72px" value="#{mnetResBean.minBtw}"/>
+                    </h:panelGrid>
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="Submit" onclick="PF('statusDialog').show()"
+                                         actionListener="#{mnetResBean.filterPpiNetByBtw()}"
+                                         oncomplete="PF('btwPpiDialog').hide(); PF('statusDialog').hide()"
+                                         update=":form1 :hisTab:cmdPane"
+                                         />  
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+    </ui:define>
+</ui:composition>
+
+
+

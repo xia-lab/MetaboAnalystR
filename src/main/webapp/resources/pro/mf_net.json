@@ -1,0 +1,50 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Sanity Check", "label": "Sanity Check", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -5, "y": 0.000 } },
+      { "data": { "id": "Filtering", "label": "Filtering", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -4, "y": 0.000 } },
+      { "data": { "id": "Normalization", "label": "Normalization", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -3, "y": 0.000 } },
+      { "data": { "id": "Visual Analytics", "label": "Visual Analytics", "size": "10", "color": "#666666" }, "position": { "x": -2, "y": 0.000 } },
+      { "data": { "id": "Data Overview", "label": "Data Overview", "size": "10", "color": "#666666", "parent": "container_Data_Overview" }, "position": { "x": -1, "y": 3.875 } },
+      { "data": { "id": "Univariate Analysis", "label": "Univariate Analysis", "size": "10", "color": "#666666", "parent": "container_Univariate_Analysis" }, "position": { "x": -1, "y": 0.875 } },
+      { "data": { "id": "Multivariate Analysis", "label": "Multivariate Analysis", "size": "10", "color": "#666666", "parent": "container_Multivariate_Analysis" }, "position": { "x": -1, "y": -1.625 } },
+      { "data": { "id": "Supervise Classification", "label": "Supervise Classification", "size": "10", "color": "#666666", "parent": "container_Supervise_Classification" }, "position": { "x": -1, "y": -3.125 } },
+      { "data": { "id": "Metadata Heatmap", "label": "Metadata Heatmap", "size": "10", "color": "#666666", "parent": "container_Data_Overview" }, "position": { "x": 0, "y": 4.875 } },
+      { "data": { "id": "iPCA", "label": "PCA", "size": "10", "color": "#666666", "parent": "container_Data_Overview" }, "position": { "x": 0, "y": 3.875 } },
+      { "data": { "id": "Clustering heatmap", "label": "Clustering heatmap", "size": "10", "color": "#666666", "parent": "container_Data_Overview" }, "position": { "x": 0, "y": 2.875 } },
+      { "data": { "id": "Linear Models", "label": "Linear Models", "size": "10", "color": "#666666", "parent": "container_Univariate_Analysis" }, "position": { "x": 0, "y": 1.875 } },
+      { "data": { "id": "Correlation Analysis", "label": "Correlation Analysis", "size": "10", "color": "#666666", "parent": "container_Univariate_Analysis" }, "position": { "x": 0, "y": 0.875 } },
+      { "data": { "id": "Multifactor anova", "label": "Multi-factor anova", "size": "10", "color": "#666666", "parent": "container_Univariate_Analysis" }, "position": { "x": 0, "y": -0.125 } },
+      { "data": { "id": "ASCA", "label": "ASCA", "size": "10", "color": "#666666", "parent": "container_Multivariate_Analysis" }, "position": { "x": 0, "y": -1.125 } },
+      { "data": { "id": "MEBA", "label": "MEBA", "size": "10", "color": "#666666", "parent": "container_Multivariate_Analysis" }, "position": { "x": 0, "y": -2.125 } },
+      { "data": { "id": "Random Forest2", "label": "Random Forest", "size": "10", "color": "#666666", "parent": "container_Supervise_Classification" }, "position": { "x": 0, "y": -3.125 } },
+      { "data": { "id": "container_Data_Overview", "label": "Data Overview Container", "size": "10", "color": "#e6194b" } },
+      { "data": { "id": "container_Univariate_Analysis", "label": "Univariate Analysis Container", "size": "10", "color": "#FFA500" } },
+      { "data": { "id": "container_Multivariate_Analysis", "label": "Multivariate Analysis Container", "size": "10", "color": "#00FFFF" } },
+      { "data": { "id": "container_Supervise_Classification", "label": "Supervise Classification Container", "size": "10", "color": "#FF00FF" } },
+      { "data": { "id": "container_processing", "label": "Processing Container", "size": "10", "color": "#CCCCCC" } }
+    ],
+    "edges": [
+      { "data": { "id": "e0", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e1", "source": "Start", "target": "Sanity Check" } },
+      { "data": { "id": "e2", "source": "Sanity Check", "target": "Filtering" } },
+      { "data": { "id": "e3", "source": "Filtering", "target": "Normalization" } },
+      { "data": { "id": "e4", "source": "Normalization", "target": "Visual Analytics" } },
+      { "data": { "id": "e5", "source": "Visual Analytics", "target": "Data Overview" } },
+      { "data": { "id": "e6", "source": "Data Overview", "target": "Metadata Heatmap" } },
+      { "data": { "id": "e7", "source": "Data Overview", "target": "iPCA" } },
+      { "data": { "id": "e8", "source": "Data Overview", "target": "Clustering heatmap" } },
+      { "data": { "id": "e9", "source": "Visual Analytics", "target": "Univariate Analysis" } },
+      { "data": { "id": "e10", "source": "Univariate Analysis", "target": "Linear Models" } },
+      { "data": { "id": "e11", "source": "Univariate Analysis", "target": "Correlation Analysis" } },
+      { "data": { "id": "e12", "source": "Univariate Analysis", "target": "Multifactor anova" } },
+      { "data": { "id": "e13", "source": "Visual Analytics", "target": "Multivariate Analysis" } },
+      { "data": { "id": "e14", "source": "Multivariate Analysis", "target": "ASCA" } },
+      { "data": { "id": "e15", "source": "Multivariate Analysis", "target": "MEBA" } },
+      { "data": { "id": "e16", "source": "Visual Analytics", "target": "Supervise Classification" } },
+      { "data": { "id": "e17", "source": "Supervise Classification", "target": "Random Forest2" } }
+    ]
+  }
+}

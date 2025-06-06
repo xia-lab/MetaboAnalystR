@@ -1,0 +1,24 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Sanity Check", "label": "Sanity Check", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -5, "y": 0 } },
+      { "data": { "id": "Filtering", "label": "Filtering", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -4, "y": 0 } },
+      { "data": { "id": "Normalization", "label": "Normalization", "size": "10", "color": "#666666", "parent": "container_processing" }, "position": { "x": -3, "y": 0 } },
+      { "data": { "id": "DE Analysis", "label": "DE Analysis", "size": "10", "color": "#666666" }, "position": { "x": -2, "y": 0 } },
+      { "data": { "id": "Curve Fitting", "label": "Curve Fitting", "size": "10", "color": "#666666" }, "position": { "x": -1, "y": 0 } },
+      { "data": { "id": "Result", "label": "Result", "size": "10", "color": "#000000" }, "position": { "x": 0, "y": 0 } },
+      { "data": { "id": "container_processing", "label": "Processing Container", "color": "#cccccc" } }
+    ],
+    "edges": [
+      { "data": { "id": "e0", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e1", "source": "Start", "target": "Sanity Check" } },
+      { "data": { "id": "e2", "source": "Sanity Check", "target": "Filtering" } },
+      { "data": { "id": "e3", "source": "Filtering", "target": "Normalization" } },
+      { "data": { "id": "e4", "source": "Normalization", "target": "DE Analysis" } },
+      { "data": { "id": "e5", "source": "DE Analysis", "target": "Curve Fitting" } },
+      { "data": { "id": "e6", "source": "Curve Fitting", "target": "Result" } }
+    ]
+  }
+}

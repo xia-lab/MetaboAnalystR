@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      lang="en">
+
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="mobile-web-app-capable" content="yes"/>
+            <link rel="shortcut icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico"
+                  type="image/x-icon"/>
+            <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
+        </f:facet>
+        <title>MetaboAnalyst Pro</title>
+        <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/xialab_style_2.5.css" />
+
+        <!-- Google tag (gtag.js) -->
+        <script async='async' src="https://www.googletagmanager.com/gtag/js?id=G-WNPNCNH1RT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+
+            gtag('config', 'G-WNPNCNH1RT');
+        </script>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                // Function to get URL parameters
+                //<![CDATA[
+                function getURLParameter(name) {
+                    return decodeURIComponent(
+                            (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')
+                            ) || null;
+                }
+                //]]>
+                // Check if the showDialog parameter is set to 'true'
+                if (getURLParameter('OpenDialog') === 'ok') {
+                    PF(getURLParameter('cmd')).show();
+                }
+
+                if (getURLParameter('activeTab') !== null) {
+                    if (PF(getURLParameter('tabWidgetId'))) {
+                        PF(getURLParameter('tabWidgetId')).select(getURLParameter('activeTab'));
+                    }
+                }
+
+
+                if (getURLParameter('growlMsg') !== null) {
+                    PF('growlWidget').show([{severity: "info", summary: "INFO", detail: getURLParameter('growlMsg')}]);
+                }
+
+                if (getURLParameter('growlWarning') !== null) {
+                    PF('growlWidget').show([{severity: "warning", summary: "WARNING", detail: getURLParameter('growlMsg')}]);
+                }
+
+                if (getURLParameter('scrollTo') !== null) {
+                    var element = document.getElementById(getURLParameter('scrollTo'));
+                    if (element) {
+                        element.scrollIntoView({behavior: 'smooth', block: 'top'});
+                    }
+                }
+
+
+            });
+
+            function delayShow() {
+                setTimeout("PF('statusDialog').show()", 100);
+            }
+
+            function delayHide() {
+                setTimeout("PF('statusDialog').hide()", 100);
+            }
+
+            var startFrom = 1800;//#{session.maxInactiveInterval};  // Total session time out setting eg 10 sec, Real implementation assign from session
+            var loopTill = 20;//#{systemController.getSessionTimeoutAlertDuration()};  //Count down degins from 6 sec and starts after 4 sec ie 10-6
+            var reduce = 1;
+            var handleDialog = null;
+            var redirectPage = "#{facesContext.externalContext.requestContextPath}/home.xhtml";
+            var countDownDiv = "dialog-countdown";
+
+            function resetPageTimer() {
+                PF('timeoutDialog').hide();
+                startPageTimer(startFrom, loopTill);
+                clearInterval(handleDialog);
+            }
+
+            function startDialogTimer(wCounter, timeOutPage) {
+                var e = null;
+                if (!e)
+                    e = document.getElementById(countDownDiv);
+                e.innerHTML = wCounter;
+                handleDialog = setInterval(function () {
+                    if (wCounter === 0) {
+                        clearInterval(handleDialog);
+                        window.location.href = timeOutPage;
+                    } else {
+                        wCounter -= reduce;
+                        e.innerHTML = wCounter;
+                    }
+                }, reduce * 1000);
+            }
+
+            function start() {
+                PF('statusDialog').show();
+            }
+
+            function stop() {
+                PF('statusDialog').hide();
+            }
+
+            function mystop() {
+                PF('statusDialog').hide();
+            }
+
+            function ext() {
+                this.cfg.axes.xaxis.tickOptions = {
+                    formatString: '%d'
+                };
+            }
+
+            function startPageTimer(wFrom, wReach) {
+                var handle = null;
+                handle = setInterval(function () {
+                    if (wFrom === wReach) {
+                        clearInterval(handle);
+                        PF('timeoutDialog').show();
+                        startDialogTimer(loopTill, redirectPage);
+                    } else {
+                        wFrom -= reduce;
+                    }
+                }, reduce * 1000);
+            }
+            startPageTimer(startFrom, loopTill);
+
+            $(window).on('load', function () {
+                //$("#cover").hide();
+                $("#cover").fadeOut(200);
+            });
+            // This JavaScript block will be executed after the page is redirected
+            $(document).ready(function () {
+                var growlMessage = "#{flash.growlMessage}";
+                var growlMessageType = "#{flash.growlMessageType}";
+
+                if (growlMessage) {
+                    // Show the growl message using PrimeFaces growl component
+                    if (growlMessageType === "error") {
+                        PF('growlWidget2').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
+                    } else {
+                        PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
+                    }
+                }
+            });
+
+
+            function updateIframeTheme() {
+                // Get the iframe element
+                const iframe = document.getElementById("iframeId");
+
+                // Check if the iframe and function are accessible
+                var myflag = false;
+                if (iframe) {
+                    if (iframe.contentWindow) {
+                        if (typeof iframe.contentWindow.updateTheme === "function") {
+                            myflag = true;
+                        }
+                    }
+                }
+
+                var myTheme = $("#formHidden\\:selectedTheme").val();
+                if (myflag) {
+
+                    iframe.contentWindow.updateTheme(myTheme);
+
+                    //update individual graph
+                    if (typeof iframe.contentWindow.setupTheme === "function") {
+                        iframe.contentWindow.setupTheme();
+                    }
+                } else {
+
+                    if (typeof updateTheme === "function") {
+                        updateTheme();
+                    }
+                    if (typeof setupTheme === "function") {
+                        setupTheme();
+                    } else {
+                        console.log("iframeFunction is not accessible in the iframe.");
+                    }
+                }
+            }
+
+        </script>
+        <h:outputScript name="js/layout.js" library="diamond-layout"/>
+        <h:outputScript name="js/prism.js" library="diamond-layout"/>
+        <f:metadata> 
+            <ui:insert name="metaInfo"> 
+            </ui:insert>
+        </f:metadata> 
+        <style>
+            .glow {
+                text-shadow: 2px 2px 4px #000000;
+            }
+
+            .login .ui-dialog-titlebar{
+                padding: 0px !important;
+            }
+
+            #cover {
+                position: fixed;
+                height: 100%;
+                width: 100%;
+                top:0;
+                left: 0;
+                background: #ebecf0;
+                z-index:9999;
+            }
+        </style>
+        <ui:insert name="mystyle"> 
+        </ui:insert>
+        <ui:insert name="myscript"> 
+        </ui:insert>
+    </h:head>
+
+    <h:body styleClass="#{guestPreferences.inputStyleClass}">
+        <h:form id="formHidden">
+            <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
+
+        </h:form>
+        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+            <p:autoUpdate/>
+        </p:growl> 
+
+
+        <div class="layout-wrapper #{guestPreferences.layoutClass} #{guestPreferences.sidebarThemeClass}"
+             data-theme="#{guestPreferences.menuTheme}">
+
+            <ui:include src="/template/_sidebar.xhtml"/>
+            <div class="layout-content-wrapper">
+                <ui:include src="/template/_topbar.xhtml" />
+                <div class="layout-content">
+                    <ui:insert name="allcontent">
+                        <flex class="h">
+                            <ui:insert name="leftpaneout"> 
+                                <flex-item style="flex: 2; margin: 40px 0px 40px 40px; width:200px; max-width: 200px; min-height: 72vh;">
+                                    <ui:insert name="leftpane">
+                                        <h:form id="treeForm">
+                                            <p:tree style="width: 200px; font-size: 13px; border:none; border: teal thin solid" 
+                                                    value="#{sessionBean1.naviTree}" 
+                                                    var="node"
+                                                    class="cyan-100 text-800 shadow-3"
+                                                    selectionMode="single">
+                                                <p:ajax update=":treeForm" 
+                                                        onstart="PF('statusDialog').show()"  
+                                                        onerror="PF('statusDialog').hide()"
+                                                        event="select" 
+                                                        listener="#{ctl.onNodeSelect}" />  
+                                                <p:treeNode>
+                                                    <h:outputText value="#{node}" 
+                                                                  style="#{sessionBean1.naviTrackStatus[node] == false ? 'color:red;' : 'color:inherit;'}" />
+                                                </p:treeNode>
+                                            </p:tree>
+                                        </h:form>
+                                    </ui:insert> 
+                                </flex-item>
+                            </ui:insert>
+                            <flex-item style="flex: 1;">
+                                <div style="width: 100%; flex-direction: column; min-height: 85vh;">
+                                    <p:messages id="errMessage" widgetVar="growlWidget2" severity="error" 
+                                                style="width:100%; padding-left: 20px; padding-right: 20px"
+                                                showDetail="true" closable="true"
+                                                globalOnly="true" escape="false">
+                                        <p:autoUpdate/>
+                                    </p:messages>
+                                    <ui:insert name="content"/> 
+                                </div>
+                            </flex-item>
+                        </flex>
+                    </ui:insert> 
+                    <ui:insert name="myfooter">
+                        <div class="layout-footer">
+                            <div class="footer-logo-container">
+                                <p:graphicImage id="footer-logo" library="diamond-layout"
+                                                name="images/xialab_logo_s.png"/>
+                                <span styleClass="copyright" style="margin-left:10px">MetaboAnalyst Pro</span>
+                            </div>
+                            <h:outputText styleClass="copyright" value="&#169; XiaLab Analytics - 2025"/>
+                        </div>
+                    </ui:insert>
+                </div>
+            </div>
+
+            <div class="layout-mask modal-in"></div>
+        </div>
+
+        <h:outputStylesheet name="css/primeicons.css" library="diamond-layout"/>
+        <h:outputStylesheet name="css/primeflex.min.css" library="diamond-layout"/>
+        <h:outputStylesheet id="layout-scheme" name="css/layout-#{guestPreferences.scheme}.css" library="diamond-layout"/>
+
+        <p:dialog modal="true" widgetVar="statusDialog" 
+                  style="width: 200px; height:100px;" 
+                  appendTo="@(body)" header="Processing .... "
+                  draggable="false" closable="true" resizable="false"> 
+            <h:panelGrid style="width: 100%; text-align: center; padding-top:20px;">
+                <h:outputLabel value="This may take a while to complete, please be patient...."/>
+                <p:spacer/>
+                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog id="workflowProgressDialogId" modal="true" widgetVar="workflowProgressDialog" 
+                  style="width: 200px; height:100px;" 
+                  appendTo="@(body)" header="Processing .... "
+                  draggable="false" closable="true" resizable="false"> 
+            <div style="width: 100%; text-align: center;  padding:20px;">
+                <p>
+                    Workflow is still running, please be patient ....
+                </p>
+                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+            </div>
+        </p:dialog>
+
+        <p:dialog id="rawWorkflowProgressDialogId" modal="true" widgetVar="workflowProgressDialog" 
+                  style="width: 200px; height:100px;" 
+                  appendTo="@(body)" header="Processing .... "
+                  draggable="false" closable="true" resizable="false"> 
+            <div style="width: 100%; text-align: center;  padding:20px;">
+                <p>
+                    Spectra processing has finished, now executing the rest of the workflow, please be patient ....
+                </p>
+                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+            </div>
+        </p:dialog>
+
+        <p:dialog header="Your session is about to expire!"
+                  widgetVar="timeoutDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  width="420"
+                  height="160"
+                  closable="false"
+                  draggable="false"
+                  resizable="false"   
+                  appendTo="@(body)">              
+            <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 13px">
+                <p>
+                    <span class="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                    <div>You will be logged off in <span id="dialog-countdown" style="font-weight:bold"></span> seconds.</div>
+                </p>
+                <p>Do you want to continue your session?</p>   
+            </h:panelGrid>
+            <h:form>
+                <h:panelGrid columns="2" style="width: 100%; text-align: center">
+                    <p:commandButton style="width:180px; font-size: 14px" value="Yes, keep working" oncomplete="resetPageTimer()"/>
+                    <p:commandButton style="width:160px; font-size: 14px" value="No, log off" onclick="PF('timeoutDialog').hide()" action="#{navi.doExit()}"/>   
+                </h:panelGrid>
+            </h:form>
+        </p:dialog> 
+        <p:dialog modal="true" widgetVar="graphDialog" header="Graphics Center"
+                  style="width: 420px; height:420px;" 
+                  appendTo="@(body)"
+                  dynamic="true"
+                  draggable="true" closable="true" resizable="true"> 
+            <h:panelGrid style="padding: 10px;font-size: 13px;">
+                <p:tabView id="myGraphPane" style="width:100%; border: none;">
+                    <p:tab title ="Hi-res Images">
+                        <h:form id="formgraph">
+                            <h:panelGrid columns="2" style="width:380px;" class="surface-card">
+                                <h:panelGrid columns="2" style="padding-top: 10px; padding-left: 20px">
+                                    <h:outputLabel value="Theme:" rendered="#{sessionBean1.imageSource eq 'covariate_plot'}"/>
+                                    <p:selectOneMenu id="themeOpts" styleClass="menu" panelStyleClass="panel" value="#{multifacBean.covStyleOpt}" rendered="#{sessionBean1.imageSource eq 'covariate_plot'}">
+                                        <f:selectItem itemValue="default" itemLabel="Default"/>
+                                        <f:selectItem itemValue="ggplot" itemLabel="ggplot"/>
+                                    </p:selectOneMenu>
+                                    <h:outputLabel value="Format:"/>
+                                    <p:selectOneMenu value="#{sessionBean1.formatOpt}">
+                                        <f:selectItem itemLabel="PNG" itemValue="png"/> 
+                                        <f:selectItem itemLabel="TIFF" itemValue="tiff"/> 
+                                        <f:selectItem itemLabel="PDF" itemValue="pdf"/> 
+                                        <f:selectItem itemLabel="SVG" itemValue="svg"/> 
+                                        <f:selectItem itemLabel="PostScript" itemValue="ps"/> 
+                                    </p:selectOneMenu> 
+                                    <h:outputLabel value="Resolution:"/>
+                                    <p:selectOneMenu value="#{sessionBean1.dpiOpt}">
+                                        <f:selectItem itemLabel="96 DPI" itemValue="96"/>  
+                                        <f:selectItem itemLabel="150 DPI" itemValue="150"/>  
+                                        <f:selectItem itemLabel="300 DPI" itemValue="300"/>  
+                                    </p:selectOneMenu> 
+                                    <h:outputLabel value="Size:"/>
+                                    <p:selectOneMenu value="#{sessionBean1.sizeOpt}">
+                                        <f:selectItem itemLabel="Default" itemValue="NA"/>  
+                                        <f:selectItem itemLabel="7 inches" itemValue="7"/>  
+                                        <f:selectItem itemLabel="12 inches" itemValue="12"/>  
+                                    </p:selectOneMenu>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" 
+                                                 update=":myGraphPane:formgraph:glink"
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 actionListener="#{graphBean.graphBn_action()}"/>
+                            </h:panelGrid>
+                            <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+                                <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
+                            </h:panelGrid>
+                        </h:form>
+                    </p:tab>
+                    <p:tab title ="Colors &amp; Shapes" rendered="#{graphBean.renderStatus}">
+                        <h:form>
+                            <h:panelGrid columns="2" rendered="#{sessionBean1.analType eq 'mf'}">
+                                <h:outputLabel value="Experimental Factor:"/>
+                                <p:selectOneMenu value="#{sessionBean1.expFac}">  
+                                    <f:selectItems value="#{multifacBean.boxMetaOpts}"/>  
+                                    <p:ajax event="change" update=":myGraphPane" />
+                                </p:selectOneMenu>  
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="width:380px;">
+                                <p:dataTable id="colTbl" style="padding-top: 8px; padding-right: 20px;" 
+                                             class="surface-card shadow-1 p-0 text-800"
+                                             var="colorBean" value="#{sessionBean1.colorBeanLists}">  
+                                    <p:column headerText="Group" style="width:200px">  
+                                        <h:outputLabel value="#{colorBean.grpName}" />  
+                                    </p:column>  
+                                    <p:column headerText="Set Color" style="width:120px">  
+                                        <p:colorPicker value="#{colorBean.colorPopup}"/>
+                                    </p:column>  
+                                    <p:column headerText="Set Shape*" style="width:120px">  
+                                        <p:inputText style="width:60px" value="#{colorBean.shapeType}"/>
+                                    </p:column> 
+                                </p:dataTable>
+                                <p:commandButton value="Submit" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 actionListener="#{graphBean.updateColorScheme()}"/>    
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="text-align: left">
+                                <h:panelGrid style="width: 200px; line-height: 22px">
+                                    <h3>Note: </h3>   
+                                    <ul style="margin-left: 0; padding-left: 0">
+                                        <li>
+                                            This setting only affects those graphics with group-specific color scheme
+                                        </li>
+                                        <li>
+                                            The <b>shape</b> option currently only affects <u>scores plots</u> in PCA and PLS-DA. 
+                                        </li>
+                                        <li>
+                                            Use shape code <b>0</b> will set it to default shapes. 
+                                        </li>
+                                    </ul>
+                                </h:panelGrid>
+                                <h:panelGrid style="padding-left: 20px">
+                                    <h3>*Shape Code: </h3>
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/symbols.png" 
+                                         style="width: 200px"
+                                         alt="Symbols"/>
+                                </h:panelGrid>
+                            </h:panelGrid>
+                        </h:form>
+                    </p:tab>
+                </p:tabView> 
+            </h:panelGrid>
+        </p:dialog>
+    </h:body>
+</html>

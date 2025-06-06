@@ -1,0 +1,385 @@
+map00281	Geraniol degradation
+map00470	D-Amino acid metabolism
+map00945	Stilbenoid, diarylheptanoid and gingerol biosynthesis
+map00965	Betalain biosynthesis
+map00970	Aminoacyl-tRNA biosynthesis
+map01010	Overview of biosynthetic pathways
+map01052	Type I polyketide structures
+map01054	Nonribosomal peptide structures
+map01060	Biosynthesis of plant secondary metabolites
+map01061	Biosynthesis of phenylpropanoids
+map01062	Biosynthesis of terpenoids and steroids
+map01063	Biosynthesis of alkaloids derived from shikimate pathway
+map01064	Biosynthesis of alkaloids derived from ornithine, lysine and nicotinic acid
+map01065	Biosynthesis of alkaloids derived from histidine and purine
+map01066	Biosynthesis of alkaloids derived from terpenoid and polyketide
+map01070	Biosynthesis of plant hormones
+map01100	Metabolic pathways
+map01110	Biosynthesis of secondary metabolites
+map01120	Microbial metabolism in diverse environments
+map01200	Carbon metabolism
+map01210	2-Oxocarboxylic acid metabolism
+map01212	Fatty acid metabolism
+map01220	Degradation of aromatic compounds
+map01230	Biosynthesis of amino acids
+map01240	Biosynthesis of cofactors
+map01501	beta-Lactam resistance
+map01502	Vancomycin resistance
+map01503	Cationic antimicrobial peptide (CAMP) resistance
+map01521	EGFR tyrosine kinase inhibitor resistance
+map01522	Endocrine resistance
+map01523	Antifolate resistance
+map01524	Platinum drug resistance
+map02010	ABC transporters
+map02020	Two-component system
+map02024	Quorum sensing
+map02025	Biofilm formation - Pseudomonas aeruginosa
+map02026	Biofilm formation - Escherichia coli
+map02030	Bacterial chemotaxis
+map02040	Flagellar assembly
+map02060	Phosphotransferase system (PTS)
+map03008	Ribosome biogenesis in eukaryotes
+map03010	Ribosome
+map03013	Nucleocytoplasmic transport
+map03015	mRNA surveillance pathway
+map03018	RNA degradation
+map03020	RNA polymerase
+map03022	Basal transcription factors
+map03030	DNA replication
+map03040	Spliceosome
+map03050	Proteasome
+map03060	Protein export
+map03070	Bacterial secretion system
+map03230	Viral genome structure
+map03320	PPAR signaling pathway
+map03410	Base excision repair
+map03420	Nucleotide excision repair
+map03430	Mismatch repair
+map03440	Homologous recombination
+map03450	Non-homologous end-joining
+map03460	Fanconi anemia pathway
+map04010	MAPK signaling pathway
+map04011	MAPK signaling pathway - yeast
+map04012	ErbB signaling pathway
+map04013	MAPK signaling pathway - fly
+map04014	Ras signaling pathway
+map04015	Rap1 signaling pathway
+map04016	MAPK signaling pathway - plant
+map04020	Calcium signaling pathway
+map04022	cGMP-PKG signaling pathway
+map04024	cAMP signaling pathway
+map04060	Cytokine-cytokine receptor interaction
+map04061	Viral protein interaction with cytokine and cytokine receptor
+map04062	Chemokine signaling pathway
+map04064	NF-kappa B signaling pathway
+map04066	HIF-1 signaling pathway
+map04068	FoxO signaling pathway
+map04070	Phosphatidylinositol signaling system
+map04071	Sphingolipid signaling pathway
+map04072	Phospholipase D signaling pathway
+map04075	Plant hormone signal transduction
+map04080	Neuroactive ligand-receptor interaction
+map04110	Cell cycle
+map04111	Cell cycle - yeast
+map04112	Cell cycle - Caulobacter
+map04113	Meiosis - yeast
+map04114	Oocyte meiosis
+map04115	p53 signaling pathway
+map04120	Ubiquitin mediated proteolysis
+map04122	Sulfur relay system
+map04130	SNARE interactions in vesicular transport
+map04136	Autophagy - other
+map04137	Mitophagy - animal
+map04138	Autophagy - yeast
+map04139	Mitophagy - yeast
+map04140	Autophagy - animal
+map04141	Protein processing in endoplasmic reticulum
+map04142	Lysosome
+map04144	Endocytosis
+map04145	Phagosome
+map04146	Peroxisome
+map04150	mTOR signaling pathway
+map04151	PI3K-Akt signaling pathway
+map04152	AMPK signaling pathway
+map04210	Apoptosis
+map04211	Longevity regulating pathway
+map04212	Longevity regulating pathway - worm
+map04213	Longevity regulating pathway - multiple species
+map04214	Apoptosis - fly
+map04215	Apoptosis - multiple species
+map04216	Ferroptosis
+map04217	Necroptosis
+map04218	Cellular senescence
+map04260	Cardiac muscle contraction
+map04261	Adrenergic signaling in cardiomyocytes
+map04270	Vascular smooth muscle contraction
+map04310	Wnt signaling pathway
+map04320	Dorso-ventral axis formation
+map04330	Notch signaling pathway
+map04340	Hedgehog signaling pathway
+map04341	Hedgehog signaling pathway - fly
+map04350	TGF-beta signaling pathway
+map04360	Axon guidance
+map04361	Axon regeneration
+map04370	VEGF signaling pathway
+map04371	Apelin signaling pathway
+map04380	Osteoclast differentiation
+map04390	Hippo signaling pathway
+map04391	Hippo signaling pathway - fly
+map04392	Hippo signaling pathway - multiple species
+map04510	Focal adhesion
+map04512	ECM-receptor interaction
+map04514	Cell adhesion molecules
+map04520	Adherens junction
+map04530	Tight junction
+map04540	Gap junction
+map04550	Signaling pathways regulating pluripotency of stem cells
+map04610	Complement and coagulation cascades
+map04611	Platelet activation
+map04612	Antigen processing and presentation
+map04613	Neutrophil extracellular trap formation
+map04614	Renin-angiotensin system
+map04620	Toll-like receptor signaling pathway
+map04621	NOD-like receptor signaling pathway
+map04622	RIG-I-like receptor signaling pathway
+map04623	Cytosolic DNA-sensing pathway
+map04624	Toll and Imd signaling pathway
+map04625	C-type lectin receptor signaling pathway
+map04626	Plant-pathogen interaction
+map04630	JAK-STAT signaling pathway
+map04640	Hematopoietic cell lineage
+map04650	Natural killer cell mediated cytotoxicity
+map04657	IL-17 signaling pathway
+map04658	Th1 and Th2 cell differentiation
+map04659	Th17 cell differentiation
+map04660	T cell receptor signaling pathway
+map04662	B cell receptor signaling pathway
+map04664	Fc epsilon RI signaling pathway
+map04666	Fc gamma R-mediated phagocytosis
+map04668	TNF signaling pathway
+map04670	Leukocyte transendothelial migration
+map04672	Intestinal immune network for IgA production
+map04710	Circadian rhythm
+map04711	Circadian rhythm - fly
+map04712	Circadian rhythm - plant
+map04713	Circadian entrainment
+map04714	Thermogenesis
+map04720	Long-term potentiation
+map04721	Synaptic vesicle cycle
+map04722	Neurotrophin signaling pathway
+map04723	Retrograde endocannabinoid signaling
+map04724	Glutamatergic synapse
+map04725	Cholinergic synapse
+map04726	Serotonergic synapse
+map04727	GABAergic synapse
+map04728	Dopaminergic synapse
+map04730	Long-term depression
+map04740	Olfactory transduction
+map04742	Taste transduction
+map04744	Phototransduction
+map04745	Phototransduction - fly
+map04750	Inflammatory mediator regulation of TRP channels
+map04810	Regulation of actin cytoskeleton
+map04910	Insulin signaling pathway
+map04911	Insulin secretion
+map04912	GnRH signaling pathway
+map04913	Ovarian steroidogenesis
+map04914	Progesterone-mediated oocyte maturation
+map04915	Estrogen signaling pathway
+map04916	Melanogenesis
+map04917	Prolactin signaling pathway
+map04918	Thyroid hormone synthesis
+map04919	Thyroid hormone signaling pathway
+map04920	Adipocytokine signaling pathway
+map04921	Oxytocin signaling pathway
+map04922	Glucagon signaling pathway
+map04923	Regulation of lipolysis in adipocytes
+map04924	Renin secretion
+map04925	Aldosterone synthesis and secretion
+map04926	Relaxin signaling pathway
+map04927	Cortisol synthesis and secretion
+map04928	Parathyroid hormone synthesis, secretion and action
+map04929	GnRH secretion
+map04930	Type II diabetes mellitus
+map04931	Insulin resistance
+map04932	Non-alcoholic fatty liver disease
+map04933	AGE-RAGE signaling pathway in diabetic complications
+map04934	Cushing syndrome
+map04935	Growth hormone synthesis, secretion and action
+map04940	Type I diabetes mellitus
+map04950	Maturity onset diabetes of the young
+map04960	Aldosterone-regulated sodium reabsorption
+map04961	Endocrine and other factor-regulated calcium reabsorption
+map04962	Vasopressin-regulated water reabsorption
+map04964	Proximal tubule bicarbonate reclamation
+map04966	Collecting duct acid secretion
+map04970	Salivary secretion
+map04971	Gastric acid secretion
+map04972	Pancreatic secretion
+map04973	Carbohydrate digestion and absorption
+map04974	Protein digestion and absorption
+map04975	Fat digestion and absorption
+map04976	Bile secretion
+map04977	Vitamin digestion and absorption
+map04978	Mineral absorption
+map04979	Cholesterol metabolism
+map05010	Alzheimer disease
+map05012	Parkinson disease
+map05014	Amyotrophic lateral sclerosis
+map05016	Huntington disease
+map05017	Spinocerebellar ataxia
+map05020	Prion disease
+map05022	Pathways of neurodegeneration - multiple diseases
+map05030	Cocaine addiction
+map05031	Amphetamine addiction
+map05032	Morphine addiction
+map05033	Nicotine addiction
+map05034	Alcoholism
+map05100	Bacterial invasion of epithelial cells
+map05110	Vibrio cholerae infection
+map05111	Biofilm formation - Vibrio cholerae
+map05120	Epithelial cell signaling in Helicobacter pylori infection
+map05130	Pathogenic Escherichia coli infection
+map05131	Shigellosis
+map05132	Salmonella infection
+map05133	Pertussis
+map05134	Legionellosis
+map05135	Yersinia infection
+map05140	Leishmaniasis
+map05142	Chagas disease
+map05143	African trypanosomiasis
+map05144	Malaria
+map05145	Toxoplasmosis
+map05146	Amoebiasis
+map05150	Staphylococcus aureus infection
+map05152	Tuberculosis
+map05160	Hepatitis C
+map05161	Hepatitis B
+map05162	Measles
+map05163	Human cytomegalovirus infection
+map05164	Influenza A
+map05165	Human papillomavirus infection
+map05166	Human T-cell leukemia virus 1 infection
+map05167	Kaposi sarcoma-associated herpesvirus infection
+map05168	Herpes simplex virus 1 infection
+map05169	Epstein-Barr virus infection
+map05170	Human immunodeficiency virus 1 infection
+map05171	Coronavirus disease - COVID-19
+map05200	Pathways in cancer
+map05202	Transcriptional misregulation in cancer
+map05203	Viral carcinogenesis
+map05204	Chemical carcinogenesis - DNA adducts
+map05205	Proteoglycans in cancer
+map05206	MicroRNAs in cancer
+map05207	Chemical carcinogenesis - receptor activation
+map05208	Chemical carcinogenesis - reactive oxygen species
+map05210	Colorectal cancer
+map05211	Renal cell carcinoma
+map05212	Pancreatic cancer
+map05213	Endometrial cancer
+map05214	Glioma
+map05215	Prostate cancer
+map05216	Thyroid cancer
+map05217	Basal cell carcinoma
+map05218	Melanoma
+map05219	Bladder cancer
+map05220	Chronic myeloid leukemia
+map05221	Acute myeloid leukemia
+map05222	Small cell lung cancer
+map05223	Non-small cell lung cancer
+map05224	Breast cancer
+map05225	Hepatocellular carcinoma
+map05226	Gastric cancer
+map05230	Central carbon metabolism in cancer
+map05231	Choline metabolism in cancer
+map05235	PD-L1 expression and PD-1 checkpoint pathway in cancer
+map05310	Asthma
+map05320	Autoimmune thyroid disease
+map05321	Inflammatory bowel disease
+map05322	Systemic lupus erythematosus
+map05323	Rheumatoid arthritis
+map05330	Allograft rejection
+map05332	Graft-versus-host disease
+map05340	Primary immunodeficiency
+map05410	Hypertrophic cardiomyopathy
+map05412	Arrhythmogenic right ventricular cardiomyopathy
+map05414	Dilated cardiomyopathy
+map05415	Diabetic cardiomyopathy
+map05416	Viral myocarditis
+map05417	Lipid and atherosclerosis
+map05418	Fluid shear stress and atherosclerosis
+map07011	Penicillins
+map07012	Cephalosporins - parenteral agents
+map07013	Cephalosporins - oral agents
+map07014	Quinolones
+map07015	Local analgesics
+map07016	Sulfonamide derivatives - sulfa drugs
+map07017	Sulfonamide derivatives - diuretics
+map07018	Sulfonamide derivatives - hypoglycemic agents
+map07019	Tetracyclines
+map07020	Macrolides and ketolides
+map07021	Aminoglycosides
+map07023	Rifamycins
+map07024	HMG-CoA reductase inhibitors
+map07025	Quinolines
+map07026	Antifungal agents
+map07027	Antidepressants
+map07028	Antipsychotics
+map07029	Antipsychotics - phenothiazines
+map07030	Anxiolytics
+map07031	Antipsychotics - butyrophenones
+map07032	Hypnotics
+map07033	Anticonvulsants
+map07034	Eicosanoids
+map07035	Prostaglandins
+map07036	Calcium channel blocking drugs
+map07037	Antiarrhythmic drugs
+map07038	Antiulcer drugs
+map07039	Opioid analgesics
+map07040	Antineoplastics - alkylating agents
+map07041	Antineoplastics - antimetabolic agents
+map07042	Antineoplastics - agents from natural products
+map07043	Antineoplastics - hormones
+map07044	Antiviral agents
+map07045	Antineoplastics - protein kinase inhibitors
+map07046	Immunosuppressive agents
+map07047	Osteoporosis drugs
+map07048	Antimigraines
+map07049	Antithrombosis agents
+map07050	Antirheumatics - DMARDs and biological agents
+map07051	Antidiabetics
+map07052	Antidyslipidemic agents
+map07053	Anti-HIV agents
+map07054	Antiglaucoma agents
+map07055	Sulfonamide derivatives - overview
+map07056	Agents for Alzheimer-type dementia
+map07057	Antiparkinsonian agents
+map07110	Benzoic acid family
+map07112	1,2-Diphenyl substitution family
+map07114	Naphthalene family
+map07117	Benzodiazepine family
+map07211	Serotonin receptor agonists/antagonists
+map07212	Histamine H1 receptor antagonists
+map07213	Dopamine receptor agonists/antagonists
+map07214	beta-Adrenergic receptor agonists/antagonists
+map07215	alpha-Adrenergic receptor agonists/antagonists
+map07216	Catecholamine transferase inhibitors
+map07217	Renin-angiotensin system inhibitors
+map07218	HIV protease inhibitors
+map07219	Cyclooxygenase inhibitors
+map07220	Cholinergic and anticholinergic drugs
+map07221	Nicotinic cholinergic receptor antagonists
+map07222	Peroxisome proliferator-activated receptor (PPAR) agonists
+map07223	Retinoic acid receptor (RAR) and retinoid X receptor (RXR) agonists/antagonists
+map07224	Opioid receptor agonists/antagonists
+map07225	Glucocorticoid and mineralocorticoid receptor agonists/antagonists
+map07226	Progesterone, androgen and estrogen receptor agonists/antagonists
+map07227	Histamine H2/H3 receptor agonists/antagonists
+map07228	Eicosanoid receptor agonists/antagonists
+map07229	Angiotensin receptor and endothelin receptor antagonists
+map07230	GABA-A receptor agonists/antagonists
+map07231	Sodium channel blocking drugs
+map07232	Potassium channel blocking and opening drugs
+map07233	Ion transporter inhibitors
+map07234	Neurotransmitter transporter inhibitors
+map07235	N-Methyl-D-aspartic acid (NMDA) receptor antagonists

@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+
+    <p:panel styleClass="myPanel myDashboard" header="Statistical Meta-Analysis" toggleable="true" toggleSpeed="500" 
+             class="surface-card text-800"
+             rendered="#{not empty pMetaStatBean.resBeans}">
+        <p>
+            <u>Mean_Enrich</u> describes the percentage of the potential compound hits to the potential hits to the whole pathway (not shown for GSEA under version 2).
+            <u>Meta.P</u> are the integrated p-values. Other columns are the raw p-values for each individual data.
+        </p>
+        <p:dataTable id ="resultTableMetaPaths"
+                     style="font-size: 12px; width: 95%" 
+                     var="resBean" 
+                     value="#{pMetaStatBean.resBeans}"  
+                     widgetVar="resTable"  
+                     class="surface-card shadow-1 p-0 text-800"
+                     emptyMessage="No record found with given criteria"
+                     paginator="true"
+                     rowIndexVar="rowIndex" 
+                     paginatorPosition="bottom" rows="10" rowsPerPageTemplate="10,20,50"  
+                     rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">                             
+            <p:columns value="#{pMetaStatBean.columns}" var="column">  
+                <f:facet name="header">  
+                    #{column.header}  
+                </f:facet>  
+                <h:outputText escape="false" style = "" value="#{resBean.getValue(column.property)}"/>
+            </p:columns>
+        </p:dataTable>
+    </p:panel>
+
+</ui:composition>
+

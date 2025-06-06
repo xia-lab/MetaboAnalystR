@@ -1,0 +1,211 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('Fold change')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Fold change', '/Secure/analysis/FoldChangeView.xhtml')}"/> 
+    </ui:define>    
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h:inputHidden id="maxX" value="#{sessionBean1.featureNumber}" />
+            <h2>Fold Change (FC) Analysis</h2>
+            <p>
+                The goal of fold change analysis is to compare the absolute values of change between two group means. 
+                Since column-wise normalization (i.e. log transformation and various scaling) will significantly change absolute values, 
+                <u>FC calculation are using data <b>before</b> the column-wise normalization was applied (i.e. at the original scale)</u>.
+                The significant features are those features whose FCs are beyond the given FC threshold (either up or down).
+                For unpaired analysis, FCs are calculated as the ratios between two <b>group means (M1/M2)</b>. For paired analysis, FCs are calculated 
+                by computing the ratio between paired samples (i.e. one FC per pair), and then compute their means (i.e. <b>pair means</b>). 
+            </p>  
+            <table style="width: 650px; margin-left: 80px">
+                <thead style="font-weight: bold">
+                    <td>Sig. threshold</td>
+                    <td>Parameter</td>   
+                    <td>Formula</td>  
+                </thead>
+                <tr>
+                    <td>At least 2 fold difference</td> 
+                    <td>FC = 2 or FC = 0.5</td>
+                    <td>M1/M2 &gt; 2 or M1/M2 &lt; 1/2</td>
+                </tr>
+                <tr>
+                    <td>At least 5 fold difference</td> 
+                    <td>FC = 5 or FC = 0.2</td>
+                    <td>M1/M2 &gt; 5 or M1/M2 &lt; 1/5</td>
+                </tr>
+                <tr>
+                    <td>Any difference between two groups </td>
+                    <td>FC = 1.0</td>
+                    <td>M1/M2 &gt; 1 or M1/M2 &lt; 1</td>
+                </tr>
+            </table>
+            <h:form id="form1">
+                <h:panelGrid columns="2"  style="padding-top: 20px">
+                    <h:panelGrid cellpadding="5" columns="2" style="padding: 2px 20px 10px 20px; padding-right: 60px">
+                        <h:panelGroup layout="block" style="width: 240px">
+                            <h:outputLabel style="font-weight: bold" value="Analysis type:"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu disabled ="#{!sessionBean1.paired}" styleClass="menu" panelStyleClass="panel" value="#{univBean.pairedFcAnal}">
+                            <f:selectItems value="#{optBean.pairAnalOpts}" />
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Fold change threshold:"/>
+                        <p:inputText style="width:50px" value="#{univBean.fcThresh}"/>                                 
+                        <h:outputLabel style="font-weight: bold" value="Direction of comparison:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.cmpType}">
+                            <f:selectItems value="#{univBean.cmpOpts}" />
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" 
+                                     update=":chart :hisTab:cmdPane" 
+                                     onclick="PF('statusDialog').show(); extender()"
+                                     oncomplete="PF('statusDialog').hide();"
+                                     actionListener="#{univBean.fcButton_action()}"/>   
+                </h:panelGrid>
+            </h:form>
+
+            <hr class="style-one"/>
+
+            <h:panelGrid columns="2" style="width: 95%;">
+                <h:panelGrid style="width: 700px; text-align: left">
+                    <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                </h:panelGrid>
+                <h:panelGrid columns="3" style="text-align: right; width: 120px;">
+                    <p:commandLink action="#{sessionBean1.detailsLnk_action('fc')}" title="View the detailed data table">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                    </p:commandLink>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('fc')}" 
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customize the graphics output">
+                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                    </p:commandLink>
+                    <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                        <i class="pi pi-undo"></i>
+                    </p:commandLink>
+                </h:panelGrid>
+            </h:panelGrid>
+            <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('fc')}"  
+                     style="height:480px; min-width:880px; width: 95%; text-align: center"
+                     extender="extender">
+                <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+            </p:chart>
+            <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('fc')}" update="chart" />
+
+        </h:panelGrid> 
+        <ui:include src="/template/_feature_dialog.xhtml" />
+        <script type="text/javascript">
+                        var light;
+                        var textColor;
+                        var gridColor;
+
+                        function extender() {
+                            light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                            console.log(light)
+                            if (light === "light") {
+                                textColor = "grey";
+                                gridColor = "lightgrey";
+                            } else {
+                                textColor = "white";
+                                gridColor = 'rgb(200, 200, 200,0.2)';
+                            }
+                            console.log(textColor)
+                            var pointMap = #{detailsBean.pointMapJson};
+                            var maxX = document.getElementById('maxX').value;
+                            var step = maxX / 10;
+                            if (step > 1000) {
+                                step = 1000;
+                            } else if (step > 500) {
+                                step = 500;
+                            } else if (step > 200) {
+                                step = 200;
+                            } else if (step > 100) {
+                                step = 100;
+                            } else if (step > 50) {
+                                step = 50;
+                            } else if (step > 20) {
+                                step = 20;
+                            } else if (step > 10) {
+                                step = 10;
+                            } else if (step > 2) {
+                                step = 5;
+                            } else {
+                                step = 1;
+                            }
+                            //alert(maxX)
+                            var options = {
+                                options: {
+                                    scales: {
+                                        y: {
+                                            title: {
+                                                display: true,
+                                                text: 'Log2(FC)',
+                                                color: textColor
+                                            },
+                                            ticks: {
+                                                color: textColor
+                                            },
+                                            grid: {
+                                                color: gridColor
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Features',
+                                                color: textColor
+                                            },
+                                            ticks: {
+                                                stepSize: step,
+                                                color: textColor
+                                            },
+                                            grid: {
+                                                color: gridColor
+                                            }
+                                        }
+                                    }, plugins: {
+                                        zoom: {
+                                            zoom: {
+                                                drag: {
+                                                    enabled: true,
+                                                    borderColor: 'rgb(54, 162, 235)',
+                                                    borderWidth: 1,
+                                                    backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                                }, pinch: {
+                                                    enabled: true
+                                                },
+                                                mode: 'xy'
+                                            }
+                                        }, // Adding tooltip configuration
+                                        tooltip: {
+                                            enabled: true,
+                                            callbacks: {
+                                                label: function (tooltipItem, data) {
+                                                    var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                                    var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                                    return id;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                            $.extend(true, this.cfg.config, options);
+                        }
+                        function setupTheme() {
+
+                            document.getElementById('toggleTm').click();
+                        }
+        </script>
+
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,198 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{aov2Bean.doDefaultAov2()}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <script type="text/javascript">
+            var light;
+            var textColor;
+            var gridColor;
+            function extender() {
+                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                //console.log(light)
+                if (light === "light") {
+                    textColor = "grey";
+                    gridColor = 'lightgrey';
+                } else {
+                    textColor = "white";
+                    gridColor = 'rgb(200, 200, 200,0.2)';
+                }
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(raw P-value)',
+                                    color: textColor
+                                },
+
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Features',
+                                    color: textColor
+                                },
+
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+                function setupTheme() {
+                                document.getElementById('toggleTm').click();
+                            };
+        </script>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>ANOVA Overview:</h2>
+            <ul>
+                <li>
+                    For multi-factor/covariates: Two-way ANOVA
+                </li>
+                <li>For time-series only: One-way repeated (within subjects) ANOVA</li>  
+                <ul>
+                    <li>
+                        The data must have a balanced design (equal sample sizes) 
+                    </li>
+                </ul>
+                <li>For time-series + one experimental factor: Two-way repeated or mixed ANOVA. 
+                    <ul>
+                        <li>
+                            Two-way ANOVA if experimental factor is within subjects (ie. CTRL and TRT to same subjects)
+                        </li> 
+                        <li>
+                            Mixed ANOVA if experimental factor is between subjects (ie. CTRL and TRT are different subjects)
+                        </li>
+                        <li>
+                            The data must have a balanced design (equal sample sizes) 
+                        </li>
+                    </ul>
+                </li>  
+            </ul>
+            <p>
+                All ANOVA tests conducted with the <a target="_blank" href="https://rpkgs.datanovia.com/rstatix/">RStatix R package</a>, which automatically determines whether Type I, II, or III errors 
+                are appropriate. Due to computational limitations, only <b>top 500 features</b> (based on variance) will be tested. For analysis 
+                of all features or for unbalanced designs, we suggest to use our <b>Linear Models</b> with Covariate Adjustment approach.
+            </p>
+            <h:form id="form1">
+                <h:panelGrid columns="2" style="padding: 0px 20px 20px 40px; line-height: 25px">
+                    <h:panelGrid columns="2" style="padding: 10px; width:630px; padding-right: 40px">
+                        <h:outputLabel style="font-weight: bold" value="Select two metadata:"/>
+                        <p:selectCheckboxMenu  styleClass="menu" label="&nbsp; -- None Selected -- &nbsp;" 
+                                               showHeader="false" 
+                                               multiple="true" 
+                                               panelStyleClass="panel" 
+                                               value="#{aov2Bean.selectedMetasAnova}">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                        </p:selectCheckboxMenu >
+
+                        <h:outputLabel style="font-weight: bold" value="Adjusted p-value cutoff:"/>
+                        <p:inputText style="width:60px" value="#{aov2Bean.pthresh}"/>
+
+                        <h:outputLabel style="font-weight: bold" value="Phenotype factor:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{aov2Bean.phenOpt}" disabled="#{!(sessionBean1.tsDesign eq 'time')}">
+                            <f:selectItem itemLabel="Between subjects" itemValue="between" /> 
+                            <f:selectItem itemLabel="Within subjects" itemValue="within" /> 
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Multiple testing correction:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{aov2Bean.pvalOpt}">
+                            <f:selectItem itemLabel="False discovery rate" itemValue="fdr" /> 
+                            <f:selectItem itemLabel="Bonferroni" itemValue="bonferroni" /> 
+                            <f:selectItem itemLabel="Bonferroni step-down (Holm)" itemValue="holm"/> 
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" update=":aov2Pane  :hisTab:cmdPane" 
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"                                      
+                                     actionListener="#{aov2Bean.aov2Bn_action()}"/>
+                </h:panelGrid> 
+            </h:form>
+            <hr class="style-one"/>
+            <h:panelGrid id="aov2Pane" style="text-align: center; width: 100%;">
+                <h:panelGrid style="width: 540px; text-align: left">
+                    <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.aov2Performed}"/>
+                </h:panelGrid>
+                <h:panelGrid columns="5" style="padding-left:630px; text-align: right; width: 240px;">
+                    <p:commandLink action="#{sessionBean1.detailsLnk_action('anova2')}" title="View the detailed data table" disabled="#{!multifacBean.aov2Performed}">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                    </p:commandLink>
+                    <p:spacer style="width: 20px"/>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('aov2')}" 
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customize the graphics output">
+                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                    </p:commandLink>
+                    <p:spacer style="width: 20px"/>
+                    <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                        <i class="pi pi-undo"></i>
+                    </p:commandLink>
+                </h:panelGrid>
+                <h:panelGrid  rendered="#{sessionBean1.timeOnly and multifacBean.aov2Performed}">
+                    <h:panelGrid rendered="#{sessionBean1.timeOnly and multifacBean.aov2Performed}" style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                    </h:panelGrid>
+                    <h:panelGrid style="text-align:center; width: 90%" class="surface-card shadow-1 p-4 text-800">
+                        <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('aov2')}"  
+                                        style="height:480px; width:800px"
+                                        extender="extender">
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelectMeta}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                        </p:chart>
+                        <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('aov2')}" update="chart" />
+                                   
+                    </h:panelGrid>
+                </h:panelGrid>
+                <h:panelGrid rendered="#{not sessionBean1.timeOnly}" style="width:100%; text-align: center">
+                    <img onerror='this.style.display="none"'
+                          style="width:9in;"
+                         src="#{sessionBean1.getCurrentImageURL('aov2')}" alt="ANOVA2image"/>
+                </h:panelGrid>
+            </h:panelGrid>  
+        </h:panelGrid>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

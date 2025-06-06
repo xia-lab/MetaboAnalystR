@@ -1,0 +1,214 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{mhmBean.doDefaultMetaHeatmap()}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-2.27.0.min.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="mydir4" value="#{sessionBean1.getJsonDir('metaHeatmap')}" />  
+           
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Metadata Overview</h2>
+            <p>
+                The metadata heatmaps show patterns and correlations between different meta-data. Pay attention to those metadata 
+                that are highly correlated (i.e. collinear) or redundant metadata, as they may lead to unexpected issues in statistical analysis. 
+                It is advised to keep only one of the correlated meta-data, as more variables will lead to reduced statistical power and 
+                difficulties in interpretations. 
+            </p>
+
+            <h:form id="form1">
+                <h:panelGrid columns="2" style="padding-left: 20px;">
+                    <h:panelGrid columns="2" style="padding: 10px; width:540px; padding-right: 40px">
+                        <h:panelGroup layout="block" style="width: 180px">
+                            <h:outputLabel style="font-weight: bold" value="Metadata Correlation:"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mhmBean.corOpt}">
+                            <f:selectItems value="#{optBean.distMeasureOpts}" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Distance Measure:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel"  value="#{mhmBean.metaDistOpt}">
+                            <f:selectItem itemLabel="Euclidean" itemValue="euclidean"/> 
+                            <f:selectItem itemLabel="Pearson" itemValue="correlation"/> 
+                            <f:selectItem itemLabel="Minkowski" itemValue="minkowski"/>                         
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Clustering Options"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mhmBean.metaClusterSelOpt}">
+                            <f:selectItem itemLabel="None" itemValue="none"/> 
+                            <f:selectItem itemLabel="Both" itemValue="both"/> 
+                            <f:selectItem itemLabel="Row only" itemValue="row"/>    
+                            <f:selectItem itemLabel="Column only" itemValue="col"/>         
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Clustering Methods"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mhmBean.metaClusterOpt}">
+                            <f:selectItems value="#{optBean.clustMethodOpts}" />
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Color Contrast:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mhmBean.metaColorOpt}">
+                            <f:selectItems value="#{optBean.colorContrastOpts}" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Show row names"/>
+                        <p:selectBooleanCheckbox value="#{mhmBean.includeRowNamesMeta}" style="line-height: 18px"/> 
+                        <!--
+                        <p:outputLabel style="font-weight: bold" value="View mode &lt;br/&gt; (only for download)" escape="false"/>                 
+                        <p:selectOneRadio value="#{mhmBean.metaViewOpt}">
+                            <f:selectItem itemLabel="Overview" itemValue="overview" /> 
+                            <f:selectItem itemLabel="Detail View" itemValue="detail" /> 
+                        </p:selectOneRadio>
+                        -->
+                    </h:panelGrid>
+                    <p:commandButton value="Update" 
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"                                      
+                                     ajax="false"
+                                     actionListener="#{mhmBean.metaOverviewBn_action()}"/>  
+                </h:panelGrid>
+            </h:form>
+            <hr class="style-one"/>
+            <h:panelGrid id="hmPane" style="width: 100%;" >
+                <h3 style="font-size:1.2em">Metadata Correlation Heatmap</h3>
+                <h:form>
+                    <h:panelGrid style="text-align: right; margin-left: 80%;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('metaCorrHeatmap')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+                </h:form>
+                <img onerror='this.style.display="none"'  
+                      style="width:10in;"
+                     src="#{sessionBean1.getCurrentImageURL('metaCorrHeatmap')}" alt="Meta-data correlation"/>
+
+                <br/><br/>
+                <h3 style="font-size:1.2em">Metadata Heatmap</h3>
+                <p>
+                    <b>Mouse over</b> to see the labels; <b>click and drag</b> to zoom-in and <b>double-click</b> to zoom-out completely
+                </p>
+                <h:form>
+                    <h:panelGrid columns="4" cellspacing="5" style="text-align: right; margin-left: 360px; width: 400px">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('metaHeatmap')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:commandButton value="SVG" 
+                                         class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                         onclick="export_image('svg')"  
+                                         icon="pi pi-download"/>  
+                        <p:commandButton value="PNG" 
+                                         class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                         onclick="export_image('png')"
+                                         icon="pi pi-download"/>  
+                        <p:commandButton value="Reset" 
+                                         class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                         onclick="resetAxis()"
+                                         icon="pi pi-replay"/> 
+
+                    </h:panelGrid>   
+                </h:form>
+                <script>
+    
+                    var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                    var graphDiv;
+                    var mode = 0;
+                    var config = {displaylogo: false, displayModeBar: false, scrollZoom: false, responsive: true};
+
+
+                    $.getJSON('/MetaboAnalyst' + document.getElementById("mydir4").value,
+                            function (scriptData) {
+
+                                if (scriptData) {
+                                    mode = 1;
+                                    var data = scriptData.x;
+                                    graphDiv = document.getElementById("htmlwidget4");
+
+                                    data.layout.autosize = false;
+                                    data.layout.margin.t = 10;
+                                    data.layout.margin.l = 80;
+                                    data.layout.margin.r = 20;
+                                    if (light === "light") {
+                                        data.layout.paper_bgcolor = '#ffffff';
+                                        data.layout.plot_bgcolor = '#ffffff';
+                                        data.layout.font.color = '#000000';
+
+                                    } else {
+                                        console.log("here")
+                                        data.layout.paper_bgcolor = '#071426';
+                                        data.layout.plot_bgcolor = '#071426';
+                                        data.layout.font.color = '#FFFFFF';
+                                    }
+
+                                    Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                    //  Plotly.offline.plot({"data": data.data, "layout": data.layout, filename = "heatmapoffline", image = 'png', auto_open = False})
+                                    PF('statusDialog').hide();
+                                }
+                            });
+
+                    function resetAxis() {
+                        var con = document.getElementById("htmlwidget4");
+                        Plotly.relayout(con, {
+                            'xaxis.autorange': true,
+                            'yaxis.autorange': true
+                        });
+                    }
+
+
+                    function setupTheme() {
+                        light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                        if (mode === 1) {
+                            if (light === "light") {
+
+                                newBgColor = '#ffffff';
+                                newFontColor = '#000000';
+
+                            } else {
+                                console.log("here")
+
+                                newBgColor = '#071426';
+                                newFontColor = '#FFFFFF';
+                            }
+                            Plotly.update(graphDiv, {}, {
+                                'paper_bgcolor': newBgColor,
+                                'plot_bgcolor': newBgColor,
+                                'font.color': newFontColor
+                            });
+
+                        }
+                    }
+
+                    function export_image(tp) {
+                        PF('statusDialog').show();
+                        setTimeout(function () {
+                            Plotly.downloadImage(graphDiv, {format: tp, width: 1000, height: 1200, scale: 3})
+                                    .then(function () {
+                                        PF('statusDialog').hide()
+                                    })
+                                    .catch(function (error) {
+                                        hideStatusDialog();
+                                        console.error("Error downloading image:", error);
+                                    });
+                        }, 100);
+                    }
+
+                </script>
+                <div id="htmlwidget4" style="width:100%;" class="iheatmapr html-widget"></div>
+            </h:panelGrid> 
+
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>
+

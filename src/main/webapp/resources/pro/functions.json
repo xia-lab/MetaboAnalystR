@@ -1,0 +1,58 @@
+{
+    "workflow": [
+        {
+            "name": "DifferentialExpression",
+            "description": "Identify features that are differentially expressed between two or more conditions in metabolomics data. This analysis is crucial for understanding the underlying molecular mechanisms associated with different biological states, such as disease progression, drug treatment effects, or environmental perturbations.",
+            "functions": ["TableProcessing", "Volcano", "Heatmap"]
+        },
+        {
+            "name": "Clustering",
+            "description": "Identify sample clustering from uploaded data table",
+            "functions": ["TableProcessing", "RandomForest", "Heatmap"]
+        }
+    ],
+    "processing": [
+        {
+            "name": "TableProcessing",
+            "description": "Data processing steps for concentration table, peak table, mzTab table upload",
+            "functions": ["filtering", "normalization", "missing data"]
+        },
+        {
+            "name": "ListProcessing",
+            "description": "Data processing steps for annotated metabolite feature upload",
+            "functions": ["name mapping"]
+        },
+        {
+            "name": "JointListProcessing",
+            "description": "Data processing steps for both annotated metabolite features and genes",
+            "functions": ["name mapping", "gene name mapping"]
+        },
+        {
+            "name": "RawSpectraPrcessing",
+            "description": "Data processing steps 0mic$quaReto process raw spectra data",
+            "functions": ["sanity check", "peak picking"]
+        }
+    ],
+    "visual analytics": [
+        {
+            "name": "PCA",
+            "description": "Perform principal component analysis",
+            "functions": ["pca"]
+        },
+        {
+            "name": "Volcano",
+            "description": "Perform volcano analysis",
+            "functions": ["volcano"]
+        },
+        {
+            "name": "Heatmap",
+            "description": "Perform heatmap clustering analysis",
+            "functions": ["heatmap"]
+        },
+        {
+            "name": "RandomForest",
+            "description": "Perform random forest analysis",
+            "functions": ["random_forest"]
+        }
+    ]
+}

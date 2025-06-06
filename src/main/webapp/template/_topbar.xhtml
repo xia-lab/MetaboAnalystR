@@ -1,0 +1,222 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+    <script type="text/javascript">
+        function scrollToBottom() {
+            $('#formChat\\:scrollPanel').scrollTop($('#formChat\\:scrollPanel')[0].scrollHeight);
+        }
+
+        function copyShareLink() {
+            var shareLink = document.getElementById('formShareLink:shareLink');
+            console.log(shareLink)
+            if (shareLink) {
+                var fullLink = shareLink.href; // Get the full URL from the href attribute
+
+                if (!fullLink || fullLink === "undefined") {
+                    console.error("Full link not found.");
+                    return;
+                }
+
+                var tempInput = document.createElement("input");
+                tempInput.style.position = "absolute";
+                tempInput.style.left = "-9999px";
+                tempInput.value = fullLink; // Copy the full link
+
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+
+                // Show confirmation message (optional)
+                PF('partialLinkDialog').hide();
+                alert("Shareable link copied to clipboard!");
+            } else {
+                console.error("Share link element not found.");
+            }
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .indeterminate-progress-bar {
+            /* Color */
+            z-index:100000000;
+            background-color: #d1d5db;
+            border-radius: 9999px;
+            height: 6px;
+            top:0px;
+            width:100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .indeterminate-progress-bar__progress {
+            /* Color */
+            background-color: #f6523b;
+
+            /* Absolute position */
+            padding-top:7px;
+            position: absolute;
+            bottom: 0;
+            top: 0;
+            width: 100%;
+
+            /* Move the bar infinitely */
+            animation-duration: 2s;
+            animation-iteration-count: infinite;
+            animation-name: indeterminate-progress-bar;
+
+            animation-timing-function: ease-in-out;
+        }
+
+        @keyframes indeterminate-progress-bar {
+            from {
+                left: -50%;
+            }
+            to {
+                left: 100%;
+            }
+        }
+
+        /* General message styling */
+        .chat-message {
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+
+        /* User messages background (white) */
+        .user-message {
+            background:var(--surface-100);
+            color: inherit !important;
+        }
+
+
+        /* Assistant messages background (grey) */
+        .assistant-message {
+            background: inherit !important;
+            color: inherit !important;
+        }
+    </style>
+    <div class="layout-topbar">
+        <div class="topbar-left">
+            <h:form id="formTrace">
+                <ui:insert name="toptrack">
+                    <p:breadCrumb id="traceNavi" style="border:none" model="#{ctl.simpleMenuModel}"/>
+                </ui:insert>
+            </h:form>
+        </div>
+        <div class="topbar-right">
+            <ul class="topbar-menu">
+                <li>
+                    <h:form id="formColor">
+                        <p:selectOneRadio id="colorSel" value="#{guestPreferences.scheme}">
+                            <f:selectItem itemLabel="Dim" itemValue="dim"/>
+                            <f:selectItem itemLabel="Light" itemValue="light"/>
+                            <f:selectItem itemLabel="Dark" itemValue="dark"/>
+                            <p:ajax onstart="PrimeFaces.DiamondConfigurator.beforeResourceChange()" update="formHidden:selectedTheme" 
+                                    oncomplete="updateIframeTheme()"
+                                    listener="#{guestPreferences.onSchemeChange}"/>
+                        </p:selectOneRadio>  
+                    </h:form>
+                </li>
+                <li>                    
+                    <h:form id="formBell">
+                        <p:badge severity="danger" value="#{sessionBean1.noticeSize}" visible="#{sessionBean1.noticeSize gt 0}">
+                            <p:commandLink onclick="PF('noticeDialog').show()" actionListener="#{diagramView.setShowNotif(false)}" update=":formNotice :formBell">
+                                <i class="pi pi-bell" style="color: tomato !important; font-size: 1.8rem;"/>
+                            </p:commandLink>
+                        </p:badge>
+                    </h:form>
+                </li>
+                <li>
+                    <p:commandLink id="botlnk" title="Ask OmicsBot questions" onclick="PF('OmicsBotDialog').show()">
+                        <i class="pi pi-comments" style="color: tomato !important; font-size: 1.8rem;"/>
+                    </p:commandLink>
+                </li>
+                <li class="right-sidebar-item">
+                    <a tabindex="0">
+                        <i class="pi pi-align-right"></i>
+                    </a>
+                </li>
+            </ul>
+            <p:commandButton id="sideCloseBtn" style="display: none" />
+            <p:commandButton id="safeLogoutBtn" action="#{fireBaseController.checkLogout()}" style="display: none"/>
+            <p:commandButton id="safeLogoutBtnModule" action="#{fireBaseController.checkLogoutModule()}" style="display: none"/>
+            <p:commandButton id="checkWorkflowInput" action="#{workflowBean.checkWorkflowInput()}" style="display: none"/>
+        </div>
+    </div>
+    <p:dialog modal="false" widgetVar="OmicsBotDialog" 
+              style="height:630px;width:720px;display: flex;flex-direction: column;" 
+              dynamic="true"
+              appendTo="@(body)" header="Omics Assistant (beta)" 
+              draggable="true" closable="true" resizable="true"> 
+        <h:form id="formChat">
+            <h:panelGroup layout="block" style="text-align: right; padding-right: 10px;">
+                <p:commandButton value="Reset" 
+                                 icon="pi pi-refresh"
+                                 actionListener="#{myBot.initAssistant()}" style="margin-right: 10px;" 
+                                 styleClass="mt-3" update="formChat"/>
+                <p:commandButton value="#{myBot.modelName}"  style="margin-right: 10px;" 
+                                 actionListener="#{myBot.modifyModel()}" styleClass="mt-3"    
+                                 update="formChat"/>
+
+                <i class="pi pi-question-circle" alt="help" style="font-size: 1.5rem; padding-top: 2px"
+                   title="OmicsBot runs on GPT-4o mini enhanced with our specialized knowledge base. If you experience any issues, you can Reset or switch to GPT-3.5-turbo"/>
+            </h:panelGroup>
+
+            <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 700px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">
+                <p:dataView var="message" value="#{myBot.messages}" 
+                            style="padding-bottom:10px;width:100%;" rows="12" paginator="false" 
+                            emptyMessage="#{myBot.welcomeMsg}" layout="list">
+                    <p:dataViewListItem> 
+                        <div class="chat-message #{message.user eq 'User' ? 'user-message' : 'assistant-message'}" style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">
+                            <div class="message-content">
+                                <p:outputLabel value="#{message.user}" escape="false" style="font-weight:bold; color: salmon"/>:
+                                <p:outputLabel value="#{message.content}" escape="false"/>
+                            </div>
+                        </div>
+                    </p:dataViewListItem>
+                </p:dataView>
+            </p:scrollPanel>
+            <div id="progressBar" style="display:none;" class="indeterminate-progress-bar">
+                <div class="indeterminate-progress-bar__progress"></div>
+            </div>
+            <h:panelGrid columns="2" style="padding-top: 4px; width: 90%">
+                <p:inputText id="chatInput" value="#{myBot.promptMsg}" 
+                             style="width:80%; min-width: 560px" 
+                             class="surface-100"
+                             placeholder="Enter your query here ..."/>
+
+                <p:commandButton id="sendButton" value="Send" 
+                                 icon="pi pi-send"
+                                 actionListener="#{myBot.sendMsg}" 
+                                 onstart="$('#progressBar').show();"
+                                 oncomplete="scrollToBottom();$('#progressBar').hide();" 
+                                 update="formChat" />
+
+                <p:defaultCommand target="sendButton" />
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+    <p:dialog modal="true" widgetVar="noticeDialog" 
+              width="500" 
+              dynamic="true"
+              appendTo="@(body)" header="System Messages" 
+              draggable="false" closable="true" resizable="false"> 
+
+        <p:scrollPanel id="formNotice" mode="native" style="width: 100%; padding: 10px; height:480px; text-align: left; margin-top:20px" 
+                       class="surface-card">
+            <h:dataTable id="msgPane" var="msg" value="#{sessionBean1.notice}" style="font-size: 13px;">
+                <h:column>
+                    <h:outputText escape="false" style="width:100%;" value="#{msg}"/>        
+                </h:column>
+            </h:dataTable>
+        </p:scrollPanel>
+    </p:dialog>
+
+</ui:composition>

@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Spectra check', '/Secure/spectra/SpectraCheck.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{spectraProcessor.reloadRawSpecBean()}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Data Integrity Check</h2>
+            <ol>
+                <li>
+                    Spectral Format - only mzML, mzXML, mzData and netCDF formats are currently supported;
+                </li>
+                <li>
+                    MS Mode - only spectra in <b>centroid mode</b> are supported in the online platform. Click <b>Convert</b> to centroid your profile data online. 
+                    <u>This conversion process will take some time, please be patient .... </u>
+                </li>                    
+                <li>
+                    If a meta data file is provided;
+                    <ul>
+                        <li>
+                            The first column (spectral names) must match the sample names in the meta-data file;
+                        </li>                        
+                        <li>
+                            The second column (group labels) must contain at least two groups (not including QC), each containing &ge; 3 replicates.
+                        </li>
+                    </ul>
+                </li> 
+            </ol>
+
+            <h:form id="form1">
+                <p:dataTable id="netTb" style="font-size: 12px; padding: 10px 20px 20px 20px"
+                             var="data" rows="20" rowsPerPageTemplate="20,50,100" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             paginator="true" paginatorPosition="bottom" 
+                             value="#{spectraProcessor.specBeans}" 
+                             selection="#{spectraProcessor.selectedData}" 
+                             rowKey="#{data.name}"> 
+                    <p:column headerText="Spectra" style="width:300px;;">
+                        #{data.name}  
+                    </p:column>  
+                    <p:column headerText="#{spectraProcessor.centroidColName}" style="width:120px;">  
+                        <p:outputLabel escape="false" value="#{data.format}" /> 
+                    </p:column>
+                    <p:column headerText="Size (MB)" style="width:150px;">  
+                        #{data.size}  
+                    </p:column>
+                    <p:column headerText="MS Level" style="width:100px;" rendered="#{spectraProcessor.isms2}">  
+                        #{data.MS_level}  
+                    </p:column>  
+                    <p:column headerText="Group" style="width:170px;">
+                        #{data.group} 
+                    </p:column>
+
+                    <p:column headerText="Convert" style="width:40px; text-align: center" rendered="#{!spectraProcessor.fromGoogleDrive}">
+                        <p:commandButton 
+                            actionListener="#{specLoader.doCentroidMSdata(data.name, data.group)}"
+                            disabled="#{data.format eq 'True'}"
+                            onclick ="PF('statusDialog').show()" 
+                            oncomplete="PF('statusDialog').hide()"
+                            update=":form1:netTb :form1:pBn"
+                            icon="pi pi-caret-right"
+                            title="Centroid this spectra" />
+                    </p:column>
+
+                    <p:column headerText="Include" style="width:40px; text-align: center">  
+                        <p:selectBooleanCheckbox value="#{data.include}" disabled="#{data.disabled}" style="line-height: 18px">
+                            <p:ajax event="change" listener="#{spectraProcessor.includeMessage(data.include, data.name)}"/>
+                        </p:selectBooleanCheckbox>  
+                    </p:column> 
+                </p:dataTable>
+                
+                <h:panelGrid id= "pBn" style="width: 100%; text-align: center;">
+                    <p:commandButton value="Next" ajax="false" 
+                                     rendered="#{!spectraProcessor.isms2DIA}"
+                                     onclick="PF('statusDialog').show()"
+                                     disabled="#{spectraProcessor.bnDisabled}"
+                                     action="#{spectraProcessor.prepareSpecProc()}"/>
+                    <p:commandButton value="Next" ajax="false" 
+                                     rendered="#{spectraProcessor.isms2DIA}"
+                                     onclick="PF('statusDialog').show()"
+                                     disabled="#{spectraProcessor.bnDisabled}"
+                                     action="#{spectraProcessor.prepareDIASpec()}"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

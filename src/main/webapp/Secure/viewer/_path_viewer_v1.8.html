@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <title></title>
+        <style type="text/css">
+            /*<![CDATA[*/
+            body {margin: 0px; overflow:hidden;}
+            div.leftview {float:left; text-align:center; overflow:hidden;}
+            div.centerview {float:left; text-align:center; overflow:hidden;}
+            div.centertbl {text-align:center; overflow:auto;}
+            div.controls {z-index:500;position:relative;top:4px; left:0px ; text-align:center; overflow:auto;}
+            table.tableclass {z-index:600;line-height:100%;margin-left:auto;margin-right:auto; padding:0;margin-top:0;margin-bottom:auto;text-align:left; overflow:hidden;}
+            div.viewer {z-index:700;margin: 0 auto;position:relative; border:1px solid black; background:gray; top:2px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; clip:rect(0px, 10px, 10px, 0px);}
+            div.top {z-index:900;position:absolute; border:0px solid transparent; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; filter:alpha(opacity=100); opacity:1; color:#FFFFCC;}
+            div.imagepanel {z-index:800;position:absolute; border:0px solid black; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden;}
+            div.fgimagepanel {z-index:850;position:absolute; border:0px solid black; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; filter:alpha(opacity=50); opacity:0.5;}
+            div.overdiv {position:absolute; visibility:hidden; z-index:1000;}
+            /*]]>*/
+        </style>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/overlibmws.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/pathviewer.v1.05.js"></script>
+    </head>
+    <body id="thebody">
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px; background-color:transparent">
+                Processing..... please wait ....
+            </h2>
+        </div>
+        <div>
+            <div id="leftviewer" class="leftview" style="background:white; padding:4px; height: 600px">
+                <div id="lefttitle">Overview of Pathway Analysis</div>
+                <div id="overview" onclick="dragPress2(event);" onmousemove="panelMouseMove2(event);"></div>
+            </div>
+            <div id="centviewer" class="centerview" style="background:white; padding:4px; height: 600px">
+                <div id="title">Pathway Viewer</div>
+                <div id="viewer" class="viewer">
+                    <div id="imagepanel" class="imagepanel"></div>
+                    <div id="fgimagepanel" class="fgimagepanel"></div>
+                    <div id="top" 
+                         class="top" 
+                         onmousedown="dragPress(event);" 
+                         onmousemove="panelMouseMove(event);" 
+                         onmouseout="if(!isClick) {nd();};isClick = false;">
+                    </div>
+                </div>
+                <div id="controls" class="controls">
+                    <div id="centertble" class="centertbl">
+                        <table align="center" class="tableclass" width="205px" border="0px"
+                               cellpadding="0px" cellspacing="0px" hspace="0px" vspace="0px" summary="Zoom/Pan Controls">
+                            <tr>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="Javascript:setimage('IMzoomin', 'zoomin-over');" onmouseup=
+                                       "JavaScript:startZoomer = 0;setimage('IMzoomin', 'zoomin-over')" onmouseout="JavaScript:startZoomer = 0;
+                                               setimage('IMzoomin', 'zoomin-up')" onmousedown=
+                                       "JavaScript: setimage('IMzoomin', 'zoomin-pressed');
+                                               startZoomer = 1;
+                                               zoomInit();
+                                               return(0);">
+                                        <img id="IMzoomin" border="0" width="41px" height="41px" src="../../resources/images/zoomin-up.gif" alt="zoom-in"/></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="Javascript:setimage('IMzoomout', 'zoomout-over');" onmouseup=
+                                       "JavaScript:startZoomer = 0;setimage('IMzoomout', 'zoomout-over');" onmouseout="JavaScript:startZoomer = 0;
+                                               setimage('IMzoomout', 'zoomout-up');" onmousedown=
+                                       "JavaScript: setimage('IMzoomout', 'zoomout-pressed');
+                                               startZoomer = -1;
+                                               zoomInit();
+                                               return(0);">
+                                        <img id="IMzoomout" border="0" width="41px" height="41px" src="../../resources/images/zoomout-up.gif" alt="zoom-out"/></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmousedown=
+                                       "JavaScript:setimage('IMzoomfit', 'fit-pressed');
+                                               zoomfit();
+                                               return(false);" onmouseover='JavaScript:setimage("IMzoomfit", "fit-over");' onmouseup='JavaScript:setimage("IMzoomfit", "fit-over");' onmouseout='JavaScript:setimage("IMzoomfit", "fit-up");'>
+                                        <img id="IMzoomfit" border="0" width="41px" height="41px" src="../../resources/images/fit-up.gif" alt="fit" /></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="Javscript:setimage('au', 'up-over');" onmouseup=
+                                       "JavaScript:pannerX = 0;pannerY = 0;setimage('au', 'up-over')" onmouseout="JavaScript:pannerX = 0;
+                                               pannerY = 0;
+                                               setimage('au', 'up-up')"
+                                       onmousedown="JavaScript: setimage('au', 'up-pressed');
+                                               pannerX = 0;
+                                               pannerY = -1;
+                                               panner();
+                                               return(0);">
+                                        <img id="au" border="0" width="41px" height="41px" src="../../resources/images/up-up.gif" alt="up" /></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="Javascript:setimage('ad', 'down-over');" onmouseup=
+                                       "JavaScript:pannerX = 0;
+                                               pannerY = 0;
+                                               setimage('ad', 'down-over');" onmouseout="JavaScript:pannerX = 0;
+                                                       pannerY = 0;
+                                                       setimage('ad', 'down-up');"
+                                       onmousedown="JavaScript: setimage('ad', 'down-pressed');
+                                               pannerX = 0;
+                                               pannerY = 1;
+                                               panner();
+                                               return(0);">
+                                        <img id="ad" border="0" width="41px" height="41px" src="../../resources/images/down-up.gif" alt="down"/></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="Javascript:setimage('al', 'left-over');" onmouseup=
+                                       "JavaScript:pannerX = 0;
+                                               pannerY = 0;
+                                               setimage('al', 'left-over');" onmouseout="JavaScript:pannerX = 0;pannerY = 0;
+                                                       setimage('al', 'left-up');"
+                                       onmousedown="JavaScript: setimage('al', 'left-pressed');
+                                               pannerX = -1;
+                                               pannerY = 0;
+                                               panner();
+                                               return(0);">
+                                        <img id="al" border="0" width="41px" height="41px" src="../../resources/images/left-up.gif" alt="left" /></a></td>
+                                <td><a href="javascript:void(0);" border="0" onclick="return(false);" onmouseover="JavaScript:setimage('ar', 'right-over');" onmouseup=
+                                       "JavaScript:pannerX = 0;
+                                               pannerY = 0;
+                                               setimage('ar', 'right-over');" onmouseout="JavaScript:pannerX = 0;
+                                                       pannerY = 0;
+                                                       setimage('ar', 'right-up');"
+                                       onmousedown="JavaScript: setimage('ar', 'right-pressed');
+                                               pannerX = 1;
+                                               pannerY = 0;
+                                               panner();
+                                               return(0);">
+                                        <img id="ar" border="0" width="41px" height="41px" src="../../resources/images/right-up.gif" alt="right"/></a></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                initPathwayViewer();
+            });
+        </script>
+    </body>
+</html>

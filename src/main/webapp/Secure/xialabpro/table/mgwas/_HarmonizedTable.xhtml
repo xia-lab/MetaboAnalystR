@@ -1,0 +1,84 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid columns="2">
+        <p>
+            The table contains the processed summary statistics after harmonizing genetic variants between the exposure and outcome datasets. This ensures that allele orientation, naming conventions, and effect direction are correctly aligned for downstream analys
+        </p>
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="float:left;margin-left: 60px">
+            <p:fileDownload value="#{mummiAnalBean.gseaPathEnrichFile}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable id="resultTable1"
+                     class="surface-card shadow-1 p-0 text-800"
+                     resizableColumns="true" emptyMessage="No metabolite(s) have been selected!"
+                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                     style="font-size: 10px; width: 100%; padding-top:20px" var="rb" value="#{mgwasBean.resTable}" rowKey="#{rb.get('rowID')}">  
+
+            <p:headerRow field="col1"
+                         expandable="true"
+                         expanded="#{rb.get('expanded')}">
+
+                <p:column colspan="8">
+                    <!-- Custom content for the header row, can be adjusted as needed -->
+                    <h:outputText escape="false" value="#{rb.get('col1')} (#{mgwasBean.getGroupCount(rb.get('col1'))})"/>
+                </p:column>
+            </p:headerRow>
+            <p:column headerText="#{ mgwasTableBean.getColHeader(1)}" sortBy="#{rb.get('col2')}" 
+                      width="6">
+                <h:outputText escape="false" value="#{rb.get('col2')}" />
+            </p:column>
+            <p:column headerText="Associated Metabolites" sortBy="#{rb.get('col11')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('col11')}"/>   
+            </p:column>
+            <p:column headerText="Nearest Gene" sortBy="#{rb.get('col12')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('col12')}"/>   
+            </p:column>
+
+            <p:column headerText="P-value" sortBy="#{rb.get('pval')}" width="40"                             
+                      >
+                <h:outputText escape="false" value="#{rb.get('pval')}"/>   
+            </p:column>
+
+            <!--
+            <p:column headerText="P-value Outcome" sortBy="#{rb.get('pvaloutcome')}" rendered="#{ mgwasResBean.tableType eq 'harmonized.dat' }" width="40"                             
+                      >
+                <h:outputText escape="false" value="#{rb.get('pvaloutcome')}"/>   
+            </p:column>
+            -->
+            <p:column headerText="Biofluid" sortBy="#{rb.get('biofluid')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('biofluid')}"/>   
+            </p:column>
+
+            <p:column headerText="Population" sortBy="#{rb.get('pop')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('pop')}"/>   
+            </p:column>
+
+            <p:column headerText="Study" sortBy="#{rb.get('study')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('study')}"/>   
+            </p:column>
+            <!--
+            <p:column headerText="#{ mgwasTableBean.getColHeader(9)}" sortBy="#{rb.get('col10')}" 
+                      width="40">
+                <h:outputText escape="false" value="#{rb.get('col10')}"/>   
+                </p:column> -->
+            <p:column headerText="Include" width="5">
+                <p:selectBooleanCheckbox value="#{rb['selected']}">
+                    <p:ajax listener="#{mgwasBean.handleSelect(rb)}"/>
+                </p:selectBooleanCheckbox>
+            </p:column>
+        </p:dataTable>
+    </div>
+</ui:composition>
+

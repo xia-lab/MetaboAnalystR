@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Result table', '/Secure/metastat/MetaResultView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="mystyle"> 
+        <style>
+
+            body .ui-datatable .ui-datatable-data > tr.ui-datatable-even.highlight1 {
+                background-color: var(--cyan-100) !important; /*#6CE26C !important;*/
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            body .ui-datatable .ui-datatable-data > tr.ui-datatable-odd.highlight1 {
+                background-color: var(--cyan-100) !important; /*#6CE26C !important;*/
+                background-image: none !important;
+                color: #000000 !important;
+            }
+
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <h:panelGrid styleClass="my-content-panel"> 
+            <h2>Meta-analysis Result</h2>
+            <h:form id="form3">
+                <h:panelGrid columns="2" style="width: 100%; padding-bottom: 10px">
+                    <h:panelGrid cellpadding="3" columns="10" style="padding-right: 40px">
+                        <p:outputLabel value="Data summary:"/>  
+                        <p:selectOneMenu value="#{metaResBean.indField}">
+                            <f:selectItem itemLabel="Log fold change" itemValue="fc"/> 
+                            <f:selectItem itemLabel="Adjusted p-values" itemValue="pval"/> 
+                        </p:selectOneMenu>  
+                        <p:spacer width="8px"/>
+                        <p:outputLabel  value="Sort by:"/>   
+                        <p:selectOneMenu value="#{metaResBean.sortField}">
+                            <f:selectItems  value="#{metaResBean.tableFields}"/> 
+                        </p:selectOneMenu> 
+                        <p:spacer width="8px"/>
+                        <p:outputLabel value="Order:"/>  
+                        <p:selectOneMenu value="#{metaResBean.sortOrder}">
+                            <f:selectItem itemLabel="Ascending" itemValue="asc"/> 
+                            <f:selectItem itemLabel="Descending" itemValue="dsc"/> 
+                        </p:selectOneMenu>  
+                        <p:spacer width="8px"/>
+                        <p:commandButton value="Update" update=":form3:resultTable"
+                                         actionListener="#{metaResBean.updateTable()}"/>
+                    </h:panelGrid>
+
+                    <p:outputPanel style="text-align: right;">
+                        <p:commandButton value="Download" ajax="false" 
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{loadBean.metaResFile}" />  
+                        </p:commandButton> 
+                    </p:outputPanel>
+                </h:panelGrid>
+                <p:dataTable id="resultTable" style="font-size: 12px; width: 100%" var="resBean" value="#{metaResBean.resBeans}"  
+                             widgetVar="resTable"  emptyMessage="No record found with given criteria"
+                             class="surface-card shadow-1 p-0 text-800"
+                             paginator="true" rows="20" rowsPerPageTemplate="20,50,100"  paginatorPosition="bottom"    
+                             rowStyleClass="#{resBean.significant ? 'highlight1' : null}" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">                             
+                    <p:columns value="#{metaResBean.columns}" var="column">  
+                        <f:facet name="header">  
+                            #{column.header}  
+                        </f:facet>  
+                        <h:outputText escape="false" value="#{resBean.getValue(column.property)}"/>
+                    </p:columns>  
+
+                    <p:column exportable="false" style="width:60px">  
+                        <f:facet name="header">  
+                            <h:outputText  escape="false" value="View" /> 
+                        </f:facet> 
+                        <p:commandButton value="View" 
+                                         update=":metaVisView :hisTab:cmdPane"
+                                         onclick="PF('statusDialog').show()"
+                                         icon ="pi pi-image"
+                                         oncomplete="PF('statusDialog').hide(); PF('visDialog').show()"
+                                         >  
+                            <f:setPropertyActionListener value="#{resBean}" target="#{metaResBean.selectedFeature}" /> 
+                        </p:commandButton>  
+                    </p:column> 
+                </p:dataTable>
+            </h:form>
+        </h:panelGrid>
+
+        <p:dialog widgetVar="visDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  header="Feature View"
+                  hideEffect="explode" resizable="true" position="center top"> 
+            <h:panelGrid id="metaVisView" style="width:500px; text-align: center; padding: 10px">
+                <p:graphicImage value="#{metaResBean.currentFeatureImg}" /> 
+                Values were scaled to facilitate cross-study comparisons.
+            </h:panelGrid>
+        </p:dialog> 
+
+    </ui:define>
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous"
+                                 id="testBn" style="width:150px"
+                                 icon="pi pi-caret-left"  ajax="false"
+                                 action="/Secure/metastat/MetaAnalView.xhtml"/>
+
+                <p:commandButton value="Proceed" 
+                                 style="width:150px;"
+                                 onclick="PF('mcompDialog').show()"                                       
+                                 icon="pi pi-caret-right"/>
+            </h:panelGrid>
+        </h:form>
+
+        <p:dialog widgetVar="mcompDialog" header="Upset Diagram" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true" style="width: 420px"> 
+            <h:panelGrid style="width:400px; padding: 10px; line-height: 21px" class="surface-card shadow-1 p-4 text-800">
+                Datasets without significant hits will be excluded. 
+                <h:form>
+                    <p:dataTable style="padding-top: 8px; text-align: center; font-size: 11px; width:100%;" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 var="dm" value="#{loadBean.metaDataSets}">  
+                        <p:column headerText="Name" style="width:200px"> 
+                            <h:outputLabel value="#{dm.name}" />  
+                        </p:column> 
+                        <p:column headerText="DE #" style="width:100px"> 
+                            <h:outputLabel value="#{dm.deNum}" />  
+                        </p:column> 
+                        <p:column headerText="Include" style="width:40px">  
+                            <p:selectBooleanCheckbox value="#{dm.vennInclude}" style="line-height: 18px">
+                                <p:ajax event="change"/>
+                            </p:selectBooleanCheckbox> 
+                        </p:column> 
+                    </p:dataTable>  
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('mcompDialog').hide()"/>                                
+                        <p:commandButton value="Submit" id="nextBn"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('mcompDialog').hide(); PF('statusDialog').hide()"
+                                         action="#{loadBean.prepareUpsetView()}"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog> 
+    </ui:define>
+</ui:composition>
+
+

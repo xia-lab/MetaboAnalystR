@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <ul>
+        <li>
+            <b>Enrichment Ratio</b> is computed by Hits / Expected, where hits = observed hits; expected = expected hits based on the null distribution of your selected model  
+        </li>
+    </ul>
+
+        <p:dataTable style="min-width:800px; font-size: 13px; line-height: 18px" var="qb" 
+                     class="surface-card shadow-1 p-0 text-800"
+                     rows="10" rowsPerPageTemplate="10,25,50" paginatorPosition="bottom" 
+                     rowStyleClass="#{rowInx mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     rowIndexVar="rowInx" value="#{msetBean.qeaBeans}">  
+            <p:column headerText="" width="10" style="#{qb.style}">  
+                ﻿ <h:outputText value=""/> 
+            </p:column>  
+            <p:column headerText="Metabolite Set" style="width:320px">  
+                <h:outputText escape="false" value="#{qb.setName}"/> 
+            </p:column>  
+            <p:column headerText="Total">  
+                <h:outputText escape="false" value="#{qb.setNum}"/>
+            </p:column>  
+            <p:column headerText="Hits">  
+                <h:outputText escape="false" value="#{qb.hitNum}"/>
+            </p:column>  
+            <p:column headerText="Statistic">  
+                <h:outputText escape="false" value="#{qb.statQ}"/>
+            </p:column>                     
+            <p:column headerText="Expected">  
+                <h:outputText escape="false" value="#{qb.expQ}"/>
+            </p:column>  
+            <p:column headerText="P value">  
+                <h:outputText escape="false" value="#{qb.PVal}"/>
+            </p:column>  
+            <p:column headerText="Holm P">  
+                <h:outputText escape="false" value="#{qb.bonPval}"/>
+            </p:column>  
+            <p:column headerText="FDR">  
+                <h:outputText escape="false" value="#{qb.fdrPval}"/>
+            </p:column> 
+            <p:column headerText="Details">  
+                <p:commandLink value="View" update=":detailView :hisTab:cmdPane" oncomplete="PF('msetDialog').show()">  
+                    <f:setPropertyActionListener value="#{qb.setName}" target="#{msetBean.msetNm}" /> 
+                </p:commandLink>
+            </p:column>   
+        </p:dataTable>     
+        <p:remoteCommand name="updateMset" process="@this" update=":detailView" oncomplete="PF('msetDialog').show()"/>
+
+</ui:composition>
+

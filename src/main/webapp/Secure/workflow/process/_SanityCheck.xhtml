@@ -1,0 +1,113 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <ul>
+            <li>
+                Checking sample names - spaces will replaced with underscore, and special characters will be removed;
+            </li>
+            <li>
+                Checking the class labels - at least three replicates are required in each class.
+            </li>
+            <li>
+                The data (except class labels) must not contain non-numeric values.
+            </li>
+            <li>
+                If the samples are paired, the pair labels must conform to the specified format.
+            </li>
+            <li>
+                The presence of missing values or features with constant values (i.e. all zeros).                
+            </li>
+        </ul>
+
+        <h:form id="formCheck">
+            <h:panelGrid columns="2">
+                <h:panelGrid style="padding-right: 20px">
+                    <h:panelGrid style="margin-left: 20px; border: solid gray thin; padding: 20px; width: 780px" class="surface-card surface-border shadow-1 p-4 text-800">
+                        <h:outputLabel value="#{procBean.msgText}" escape="false"/>
+                    </h:panelGrid>
+                    <h:panelGrid id="btnPane" columns="5" style="width: 780px; text-align: center; padding-left: 60px; padding-top: 20px; padding-right: 40px" rendered="#{workflowBean.procButtonsRendered}">        
+                         <p:commandButton value="View Data"  style="width:140px;" 
+                                                    icon="pi pi-external-link"
+                                             onclick="PF('viewDataDialog').show()"/>
+
+                        <p:commandButton value="Edit Groups" style="width:120px;" 
+                                         onclick="PF('smplGrpDialog').show()"
+                                         disabled="#{procBean.editBnDisabled}"
+                                         update="smplGrpForm"/>
+
+                        <p:commandButton value="Proceed" style="width:120px;"
+                                         ajax="false"
+                                         rendered="false"
+                                         onclick="PF('statusDialog').show()"
+                                         disabled="#{procBean.proceedBnDisabled}"
+                                         icon="pi pi-caret-right"
+                                         action="#{procBean.skipButton_action_default()}"/>
+    
+                    </h:panelGrid> 
+                </h:panelGrid>
+                <p:commandButton styleClass="btnCirc ui-button-help"
+                                 rendered="false"
+                                 action="WorkflowView"
+                                 style="margin-left: 80px; font-weight: bold; font-size: 15px"
+                                 value="Workflow"/>
+
+            </h:panelGrid>
+        </h:form>
+    </h:panelGrid>
+
+
+
+    <p:dialog widgetVar="smplGrpDialog" 
+              header="Edit Group"
+              dynamic="true" modal="true" appendTo="@(body)" height="460"
+              hideEffect="explode" resizable="true">
+        <h:form id="smplGrpForm">
+            <h:panelGrid id="smplGrpView" style="padding:10px; font-size: 12px; width:480px;">
+                <p:dataTable style="width:100%; font-size: 12px" var="smpl" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{sessionBean1.sampleBeans}">  
+                    <p:column headerText="Sample ID">  
+                        <h:outputText value="#{smpl.name}"/>  
+                    </p:column>   
+                    <p:column headerText="Group Label">  
+                        <h:inputText value="#{smpl.group}"/>
+                    </p:column>   
+                </p:dataTable>
+                <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                    <p:commandButton value="Update" 
+                                     actionListener="#{procBean.updateSmplGroup()}" 
+                                     update=":formCheck"
+                                     onclick="PF('smplGrpDialog').hide()"/>
+                    <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
+                </h:panelGrid> 
+            </h:panelGrid>
+        </h:form>  
+    </p:dialog>
+     
+           <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                      width="800px" hideEffect="explode" resizable="true">
+                <p>
+                    Your uploaded (raw) data are shown below for manual inspection. It represents the computer's view of your data. 
+                    The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
+                    <ul>
+                    <li>
+                        If this is in tabular format, make sure that you correctly specify samples in rows or samples in columns 
+                    </li>
+                    <li>
+                        If this is in tabular format, make sure that the group labels are correctly entered with unique sample IDs and unique feature IDs
+                    </li>
+                    <li>
+                        If this is <b>NOT</b> in tabular format, please spend some time to 
+                        understand how to save your data to CSV (UTF-8) file. For instance, 
+                        <a href="https://www.ablebits.com/office-addins-blog/convert-excel-csv/" target="_blank">this link may be helpful</a>. 
+                    </li>
+                </ul>
+                </p>
+                <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
+
+            </p:dialog>
+</ui:composition>

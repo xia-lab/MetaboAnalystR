@@ -1,0 +1,261 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Evaluator', '/Secure/roc/RocTestView.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{rocAnalBean.performDefaultTestAnalysis(false)}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>ROC analysis on selected features</h2>
+            <h:form id="summaryForm">
+                <h:panelGrid columns="2" style="padding-bottom: 10px">
+                    <h:panelGrid columns="2" style="margin-left: 20px"  class="surface-card shadow-1 p-4 text-800">
+                        <h:panelGroup layout="block" style="width: 200px">
+                            <h:outputLabel style="font-weight: bold" value="Your selected features:"/>
+                        </h:panelGroup>
+                        <h:outputLabel value="#{rocAnalBean.featText}" escape="false"/>
+
+                        <h:outputLabel style="font-weight: bold" value="Select an algorithm:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.clsMethodOpt}">
+                            <f:selectItem itemLabel= "Linear SVM" itemValue="svm" />
+                            <f:selectItem itemLabel="PLS-DA" itemValue="pls" />
+                            <f:selectItem itemLabel="Random Forests" itemValue="rf" />
+                            <f:selectItem itemLabel="Logistic Regression" itemValue="lr" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Number of latent variables"/>
+                        <h:panelGroup>
+                            <p:inputText style="width: 50px" value="#{rocAnalBean.lvNum}" required="true"
+                                         requiredMessage="Must set component"/>     
+                            <h:outputLabel value=" (PLSDA only)"/>
+                        </h:panelGroup>                      
+                    </h:panelGrid>
+
+                    <p:commandButton value="Submit" ajax="false"
+                                     style="margin-left: 20px"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     action="#{rocAnalBean.performTestAnalysis()}"/>  
+
+                </h:panelGrid>
+            </h:form>
+
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:100%; border: none; font-size: 13px;">
+                <p:tab title ="ROC View">
+                    <h:form id="form1">
+                        <p>
+                            In order to produce a smooth ROC curve, 100 cross validations (CV) were performed and the results were 
+                            averaged to generate the plot. Note, when the model performance are very poor, this process may not work.
+                        </p>
+                        <h:panelGrid columns="2" style="width: 90%">
+
+                            <h:panelGrid columns="2">
+                                <h:outputLabel style="font-weight: bold" value="Compute 95% confidence band"/>
+                                <p:selectBooleanCheckbox value ="#{rocAnalBean.showConf}" style="line-height: 18px"/> 
+                                <h:outputLabel style="font-weight: bold" value="Show ROC curve for holdout data"/>
+                                <p:selectBooleanCheckbox value ="#{rocAnalBean.showHoldOut}" disabled="#{!rocAnalBean.smplHoldOut}" style="line-height: 18px"/>
+                            </h:panelGrid>
+
+                            <p:commandButton value="Update" update=":ac:form1:rocPane  :hisTab:cmdPane" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()" 
+                                             actionListener="#{rocAnalBean.updateTestRoc()}"/>  
+                        </h:panelGrid>
+                        <h:panelGrid id="rocPane" style="text-align: center; width: 100%;">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_test_roc')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' style="height:8in;"
+                                 src="#{sessionBean1.getCurrentImageURL('cls_test_roc')}" alt="ROCTestImage"/>
+                        </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+
+                <p:tab title ="Prob. View">
+                    <p>
+                        The image below shows the average of predicted class probabilities of each sample 
+                        across the 100 cross-validations. Please note, as the algorithm uses a balanced sub-sampling approach, 
+                        the classification boundary is located at the center (x = 0.5, the dotted line). 
+                        The <b>confusion matrix</b> is provided below the image.
+                    </p>
+                    <h:form id="form2">
+                        <h:panelGrid columns="2" style="width: 90%">
+                            <h:panelGrid columns="2">
+                                <p:selectBooleanCheckbox value ="#{rocAnalBean.showMisCls}" style="line-height: 18px"/>
+                                <h:outputLabel style="font-weight: bold" value="Label samples classified to the wrong groups" />
+                                <p:selectBooleanCheckbox value ="#{rocAnalBean.showPredCls}" disabled="#{!rocAnalBean.smplHoldOut}" style="line-height: 18px"/>
+                                <h:outputLabel style="font-weight: bold" value="Show predicted scores for holdout samples (if applicable)"/>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form2:screePane  :hisTab:cmdPane" actionListener="#{rocAnalBean.updateTestProbView()}"/>   
+
+                        </h:panelGrid>
+                        <h:panelGrid id="screePane" style="width: 100%;">
+                            <h:panelGrid style="text-align: right; padding-left: 650px; width: 760px;">
+                                <h:panelGrid columns="2" style="width:120px; text-align: right;">
+                                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_test_prob')}" 
+                                                   oncomplete="PF('graphDialog').show()"
+                                                   title="Customize the graphics output">
+                                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                    </p:commandLink>
+                                    <h:outputText escape="false" value="#{rocAnalBean.probDownloadLink2}"/>
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <h:panelGrid columns="2">
+                                <img onerror='this.style.display="none"' style="height:8in;"
+                                     src="#{sessionBean1.getCurrentImageURL('cls_test_prob')}" alt="ProbTestImage"/>
+                                <h:outputLabel style="font-weight: bold" escape="fasle" value="#{rocAnalBean.testConfMat}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>     
+                    </h:form>
+                </p:tab>
+
+                <p:tab title ="CV Prediction">
+                    <h:outputLabel style="font-weight: bold" value="#{rocAnalBean.accuText}"/>
+                    <h:panelGrid id="score2dPane" style="text-align: center; width: 100%;">
+                        <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_test_accu')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' style="width:9in;"
+                             src="#{sessionBean1.getCurrentImageURL('cls_test_accu')}" alt="PredTestImage"/>
+                    </h:panelGrid>  
+                </p:tab>
+
+                <p:tab title ="Permutation">
+                    <h:form id="form4">
+                        <h:panelGrid columns="2" style="width:100%;">
+                            <h:panelGrid columns="2" style="padding-bottom: 10px">
+                                <h:outputLabel style="font-weight: bold" value="Performance Measure "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.perfMeasure}">
+                                    <f:selectItem itemLabel="Area under ROC curve" itemValue="auroc" />
+                                    <f:selectItem itemLabel="Predicative Accuracy" itemValue="accu" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Permutation Times:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.permNum}">
+                                    <f:selectItem itemLabel="--Not set--" itemValue="0" />
+                                    <f:selectItem itemLabel="100" itemValue="100" />
+                                    <f:selectItem itemLabel="500" itemValue="500" />
+                                    <f:selectItem itemLabel="1000" itemValue="1000" />
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form4:impPane  :hisTab:cmdPane" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()" 
+                                             actionListener="#{rocAnalBean.performROCpermutation()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="impPane" style="text-align: center; width: 100%;">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc_perm')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' style="width:9in;"
+                                 src="#{sessionBean1.getCurrentImageURL('roc_perm')}" alt="ROCPermImage"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="New Sample Prediction">
+                    <h:panelGrid style="padding:10px; font-size: 12px; line-height: 23px; width:100%">
+                        <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom"
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     value="#{rocAnalBean.smplPredBeans}"
+                                     var="set" rowKey="#{set.name}">
+                            <p:column headerText="Name">  
+                                <h:outputText escape="false" value="#{set.name}"/>  
+                            </p:column> 
+                            <p:column headerText="Probability">  
+                                <h:outputText escape="false" value="#{set.prob}"/>  
+                            </p:column> 
+                            <p:column headerText="Class">  
+                                <h:outputText escape="false" value="#{set.cls}"/>  
+                            </p:column> 
+                        </p:dataTable>
+                    </h:panelGrid> 
+                </p:tab>
+                <p:tab title ="LR Model (10-Fold CV)" disabled="#{rocAnalBean.getShowLRTap()}">
+                    <p>
+                        This tab includes the additional analysis for the logistic regression method. Especially, the 10-fold Coss Validation 
+                        was used to generate a logistic regression model and calculate the performance instead of using the MCCV (100 fold CV). 
+                        (Note. More than 10 samples for each group is required. If a model with selected variables fails, 
+                        then stepwise variable selection will be applied).
+                    </p>
+
+                    <h:outputLabel style="font-weight: bold" value="Logistic Regression Model with Selected Compounds:"/>
+                    <h:panelGrid columns="1" border="1" rendered="#{!rocAnalBean.LRConvergence}"> 
+                        <h:panelGrid columns="1">
+                            <h:outputLabel style="font-weight: bold; color: red" value="Warning: Model was not converged. Please select other metabolites or use different methods"/>
+                        </h:panelGrid>
+                    </h:panelGrid>    
+                    <h:panelGrid columns="1" border="0" rendered="#{rocAnalBean.LRConvergence}"> 
+                        <h:panelGrid columns="1" border="1">
+                            <h:panelGrid style="text-align: left; padding-left: 10px; width: 750px;">
+                                <h:outputLabel style="font-weight: bold" value="&nbsp;&nbsp; logit(P) = log(P / (1 - P)) = #{rocAnalBean.LREquation}"/>
+                                <h:outputLabel value="Where P is Pr(y=1|x). The best threshold (or Cutoff) for the predicted P is #{rocAnalBean.LRthreshold}."/>
+                                <h:outputLabel style="font-style: italic; color: sienna"
+                                               value="Original Label: #{rocAnalBean.LRclsLabel} --> Labels in Logistic Regression: #{rocAnalBean.LRclsLabelNew}"/>
+                                <h:outputLabel style="font-style: italic"
+                                               value="Note) The class/response value is recommended as (Case:1 and Control:0)"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <br></br>
+                        <h:panelGrid columns="1">
+                            <h:outputLabel style="font-weight: bold" value="Logistic Regression Model - Summary of Each Feature:"/>
+                            <h:outputLabel escape="fasle" value="#{rocAnalBean.LRmodelTable}"/>
+                        </h:panelGrid>
+
+                        <br></br>
+                        <h:outputLabel style="font-weight: bold" value="Performance of Logistic Regression Model:"/>
+                        <h:panelGrid columns="1">
+                            <h:outputLabel escape="fasle" value="#{rocAnalBean.LRperformTable}"/>
+                        </h:panelGrid>
+
+                        <br></br>
+                        <!-- show a new window for the 10-fold CV with option Confidence Interval -->
+                        <h:outputLabel style="font-weight: bold" value="ROC plot with 10-fold Cross-Validation:"/>
+                        <h:form id="formLR">
+                            <h:panelGrid columns="2" style="width: 90%">
+                                <h:panelGrid columns="2">
+                                    <h:outputLabel style="font-weight: bold" value="- Show with 95% confidence band (Caution: it will take longer time)"/>
+                                    <p:selectBooleanCheckbox value ="#{rocAnalBean.showConfLR}" style="line-height: 18px"/>
+                                </h:panelGrid>
+
+                                <p:commandButton value="Show" update=":ac:formLR:rocLRpanel :hisTab:cmdPane"
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 actionListener="#{rocAnalBean.updateROCLRplot()}"/>
+                            </h:panelGrid>
+
+                            <!-- ROC Plot with CV test set -->
+                            <h:panelGrid id="rocLRpanel" columns="1" >
+                                <img onerror='this.style.display="none"' 
+                                     style="width:8in;"
+                                     src="#{sessionBean1.getCurrentImageURL('cls_roc_lr')}" alt="ROCLRImage"/>
+                            </h:panelGrid>
+                        </h:form>
+                    </h:panelGrid>
+                </p:tab>                    
+            </p:tabView> 
+
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

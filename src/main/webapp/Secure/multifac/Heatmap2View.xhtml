@@ -1,0 +1,322 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{hm2Bean.doDefaultHeatmap2()}"/>
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Heatmap2', '/Secure/multifac/Heatmap2View.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-2.27.0.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid style="padding:30px 30px 20px 40px; font-size: 13px; line-height: 23px; width:100%">
+                <h2>Interactive Heatmaps</h2>
+                <p>
+                    A heatmap provides intuitive visualization of a data table. Each colored cell on the map corresponds to 
+                    a concentration value in your data table, with samples in rows and features/compounds in columns. 
+                    You can use a heatmap to identify samples/features that are unusually high/low. 
+                    The maximum number of features can be displayed is <b>5000</b> features (selected based on IQR by default). 
+                    You can use <b>Select features</b> for better control
+                </p>
+                <h:panelGrid columns="2" style="width:1000px;">
+                    <h:panelGrid columns="2" cellpadding="3" style="padding: 20px 20px 40px 30px; width:720px;">
+                        <h:panelGroup layout="block" style="width: 180px">
+                            <h:outputLabel style="font-weight: bold;" value="Metadata in annotation:"/> 
+                        </h:panelGroup>
+                        <p:selectCheckboxMenu  styleClass="menu"  label="&nbsp; -- None Selected -- &nbsp;" multiple="true" panelStyleClass="panel" value="#{hm2Bean.selectedMetas}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectCheckboxMenu >
+
+                        <h:outputLabel style="font-weight: bold" value="Data source:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.dataOpt}">
+                            <f:selectItem itemLabel="Normalized data" itemValue="norm"/> 
+                            <f:selectItem itemLabel="Original data" itemValue="raw"/> 
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Data scaling:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.scaleOpt}">
+                            <f:selectItem itemLabel="Autoscale features" itemValue="row"/> 
+                            <f:selectItem itemLabel="Autoscale samples" itemValue="column"/> 
+                            <f:selectItem itemLabel="None" itemValue="none"/> 
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Distance measure:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.distOpt}">
+                            <f:selectItem itemLabel="Euclidean" itemValue="euclidean"/> 
+                            <f:selectItem itemLabel="Pearson" itemValue="correlation"/> 
+                            <f:selectItem itemLabel="Minkowski" itemValue="minkowski"/>                         
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Clustering algorithm:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.clusterOpt}">
+                            <f:selectItems value="#{optBean.clustMethodOpts}" />
+                        </p:selectOneMenu>
+                        <h:outputLabel style="font-weight: bold" value="Color contrast:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.colorOpt}">
+                            <f:selectItems value="#{optBean.colorContrastOpts}" />
+                        </p:selectOneMenu>
+                        <p:outputLabel style="font-weight: bold" value="Column option"/>
+                        <h:panelGrid >
+                            <h:panelGrid columns="6">
+                                <p:outputLabel value="Width:&nbsp;&nbsp;"/>
+                                <h:panelGroup>
+                                    <p:inputText id="unitCol" value="#{hm2Bean.unitCol}" style="width: 50px" required="true" requiredMessage="Must set the size of annotation bar!"/>
+                                    <p:slider for="unitCol" minValue="5" maxValue="50" step="1" style="width: 50px" />
+                                </h:panelGroup>
+                                <p:selectBooleanCheckbox id="colname" value="#{hm2Bean.showColnm}" style="line-height: 18px" itemLabel="&nbsp;Show names"/>
+                                <p:outputLabel value="Font size:&nbsp;&nbsp;"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.fontSizeCol}">
+                                    <f:selectItem itemLabel="5" itemValue="5" /> 
+                                    <f:selectItem itemLabel="6" itemValue="6" /> 
+                                    <f:selectItem itemLabel="7" itemValue="7" /> 
+                                    <f:selectItem itemLabel="8" itemValue="8" />  
+                                    <f:selectItem itemLabel="9" itemValue="9" /> 
+                                    <f:selectItem itemLabel="10" itemValue="10" /> 
+                                    <f:selectItem itemLabel="11" itemValue="11" />  
+                                    <f:selectItem itemLabel="12" itemValue="12" /> 
+                                </p:selectOneMenu>
+
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <p:outputLabel style="font-weight: bold" value="Row option"/>
+                        <h:panelGrid >
+                            <h:panelGrid columns="6">
+                                <p:outputLabel value="Height:&nbsp;&nbsp;"/>
+                                <h:panelGroup>
+                                    <p:inputText id="unitRow" value="#{hm2Bean.unitRow}" style="width: 50px" required="true" requiredMessage="Must set the size of annotation bar!"/>
+                                    <p:slider for="unitRow" minValue="0" maxValue="50" step="1" style="width: 50px" />
+                                </h:panelGroup>
+                                <p:selectBooleanCheckbox id="rowname" value="#{hm2Bean.showRownm}" style="line-height: 18px" itemLabel="&nbsp;Show names"/>
+                                <p:outputLabel value="Font size:&nbsp;&nbsp;"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.fontSizeRow}">
+                                    <f:selectItem itemLabel="5" itemValue="5" /> 
+                                    <f:selectItem itemLabel="6" itemValue="6" /> 
+                                    <f:selectItem itemLabel="7" itemValue="7" /> 
+                                    <f:selectItem itemLabel="8" itemValue="8" />  
+                                    <f:selectItem itemLabel="9" itemValue="9" /> 
+                                    <f:selectItem itemLabel="10" itemValue="10" /> 
+                                    <f:selectItem itemLabel="11" itemValue="11" />  
+                                    <f:selectItem itemLabel="12" itemValue="12" /> 
+                                </p:selectOneMenu>
+
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <p:outputLabel style="font-weight: bold" value="Annotation bar"/>
+                        <h:panelGrid >
+                            <h:panelGrid columns="6">
+                                <p:outputLabel value="Height:"/>
+                                <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png"  alt="help" />
+                                <h:panelGroup>
+                                    <p:inputText id="annoHeight" value="#{hm2Bean.annoHeight}" style="width: 60px" required="true" requiredMessage="Must set the size of annotation bar!"/>
+                                    <p:slider for="annoHeight" minValue="0.013" maxValue="0.1" step="0.001" style="width: 60px" />
+                                </h:panelGroup>
+                                <p:outputLabel value="%&nbsp;&nbsp;"/>
+
+                                <p:outputLabel value="&nbsp;Font size:&nbsp;&nbsp;"/>
+                                <p:inputText id="annoFz" style="width: 60px; " value="#{hm2Bean.annoFz}" required="true" requiredMessage="Must set the fontsize of annotation bar!"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <h:outputLabel style="font-weight: bold" value="Sample arrangement:"/>
+                        <p:selectCheckboxMenu  styleClass="menu"  label="&nbsp; -- None Selected -- &nbsp;" multiple="true" panelStyleClass="panel" value="#{hm2Bean.smplSortOpt}" valueChangeListener="#{hm2Bean.changeListener}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                            <f:ajax />
+                        </p:selectCheckboxMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="Feature selection:"/>
+                        <h:panelGrid columns="5" id="sliderDiv">
+                            <p:selectBooleanCheckbox  id="topFeatCheck" value ="#{hm2Bean.useTopFeature}" style="line-height: 18px"/>
+                            <h:outputLabel value="Display top"/>
+                            <p:inputText id="txt2" style="width:50px;" value="#{hm2Bean.topThresh}"/>
+                            <h:outputLabel value="based on"/>
+                            <p:selectOneMenu id="selOpts" styleClass="menu" panelStyleClass="panel"  value="#{hm2Bean.selectMethodOpt}">
+                                <f:selectItem itemLabel="Average" itemValue="mean" />   
+                                <f:selectItem itemLabel="Variance (IQR)" itemValue="iqr" /> 
+                                <f:selectItem itemLabel="ANOVA2" itemValue="aov2" /> 
+                                <f:selectItem itemLabel="Linear Model" itemValue="lm" /> 
+                                <f:selectItem itemLabel="Random Forests" itemValue="rf" />
+                            </p:selectOneMenu>
+                        </h:panelGrid> 
+                        <h:outputLabel style="font-weight: bold" value="Group annotations"/>
+                        <p:selectBooleanCheckbox value="#{hm2Bean.showAnnotLegend}" style="line-height: 18px"/> 
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()"
+                                     update=":hmPane :hisTab:cmdPane" 
+                                     actionListener="#{hm2Bean.hm2Bn_action()}"/>  
+                </h:panelGrid> 
+
+                <p:tooltip for="formatIcon" styleClass="helpTip">
+                    <p>
+                        The annotation bar height was defined by its height percentage against the main figure. Generally, it ranges from 0.0125% to 0.1%. 
+                    </p>    
+                </p:tooltip>
+            </h:panelGrid>
+        </h:form>
+        <hr class="style-one"/>
+        <h:panelGrid id="hmPane" style="width: 95%; padding-left: 5%">
+            <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('heatmap2')}"/>  
+               
+            <p>
+                <b>Mouse over</b> to see the labels; <b>click and drag</b> to zoom-in and <b>double-click</b> to zoom-out completely
+            </p>
+            <script>
+
+                var savedState = {};
+                var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                var graphDiv;
+                var mode = 0;
+                var config = {displaylogo: false, displayModeBar: false, scrollZoom: false, responsive: true};
+
+                $.getJSON('/MetaboAnalyst' + document.getElementById("mydir2").value,
+                        function (scriptData) {
+                            if (localStorage.getItem('pagesToVisit')) {
+                                PF("workflowProgressDialog").show();
+                            }
+                            if (scriptData) {
+                                mode = 1;
+                                var data = scriptData.x;
+                                graphDiv = document.getElementById("htmlwidget2");
+
+                                data.layout.autosize = false;
+                                data.layout.margin.t = 10;
+                                data.layout.margin.l = 80;
+                                data.layout.margin.r = 20;
+                                if (light === "light") {
+                                    data.layout.paper_bgcolor = '#ffffff';
+                                    data.layout.plot_bgcolor = '#ffffff';
+                                    data.layout.font.color = '#000000';
+
+                                } else {
+                                    console.log("here")
+                                    data.layout.paper_bgcolor = '#071426';
+                                    data.layout.plot_bgcolor = '#071426';
+                                    data.layout.font.color = '#FFFFFF';
+                                }
+                                Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                //  Plotly.offline.plot({"data": data.data, "layout": data.layout, filename = "heatmapoffline", image = 'png', auto_open = False})
+                                PF('statusDialog').hide();
+                                handleSaveEvent(false);
+                            }
+                        });
+
+                function setupTheme() {
+                    light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                    if (mode === 1) {
+                        if (light === "light") {
+
+                            newBgColor = '#ffffff';
+                            newFontColor = '#000000';
+
+                        } else {
+                            console.log("here")
+
+                            newBgColor = '#071426';
+                            newFontColor = '#FFFFFF';
+                        }
+                        Plotly.update(graphDiv, {}, {
+                            'paper_bgcolor': newBgColor,
+                            'plot_bgcolor': newBgColor,
+                            'font.color': newFontColor
+                        });
+
+                    }
+                }
+
+
+                function resetAxis() {
+                    var con = document.getElementById("htmlwidget2");
+                    Plotly.relayout(con, {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
+                    });
+                }
+
+
+                function handleSaveEvent(sendJsonFlag) {
+                    vismode = "heatmap_multifac";
+                    var divGraph = document.getElementById("htmlwidget2");
+                    if (localStorage.getItem('pagesToVisit')) {
+                        var pagesToVisit = JSON.parse(localStorage.getItem('pagesToVisit'));
+                        pagesToVisit.shift();
+                        localStorage.setItem('pagesToVisit', JSON.stringify(pagesToVisit));
+                        setTimeout(function () {
+
+                            Plotly.toImage(divGraph, {format: 'png'}).then(function (dataURI) {
+                                sendImageToServer(dataURI, vismode, "png", function () {
+                                    if (pagesToVisit.length > 0) {
+                                        window.parent.location.href = pagesToVisit[0];
+                                    } else {
+                                        localStorage.setItem('reportEndBool', true);
+                                        window.parent.location.href = "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml";
+                                    }
+                                });
+
+                            }).catch(function (error) {
+                                console.error('Error:', error);
+                            });
+                        }, 3000)
+                    } else {
+                        Plotly.toImage(divGraph, {format: 'png'}).then(function (dataURI) {
+                            sendImageToServer(dataURI, vismode);
+
+                        }).catch(function (error) {
+                            console.error('Error:', error);
+                        });
+                    }
+                    savedState.init = true;
+                    //savedState.sigInstGraphEdges = sigInst.graph.edges();
+                    let dataStr = JSON.stringify(savedState);
+                    sendJsonToServer(dataStr, vismode, sendJsonFlag);
+                }
+
+
+                function export_image(tp) {
+                    PF('statusDialog').show();
+                    setTimeout(function () {
+                        Plotly.downloadImage(graphDiv, {format: tp, width: 1000, height: 1200, scale: 3})
+                                .then(function () {
+                                    PF('statusDialog').hide()
+                                })
+                                .catch(function (error) {
+                                    hideStatusDialog();
+                                    console.error("Error downloading image:", error);
+                                });
+                    }, 100);
+                }
+            </script>
+
+            <h:panelGrid columns="3" cellspacing="5" style="text-align: right; margin-left: 540px;">
+                <p:commandButton value="SVG" 
+                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                 onclick="export_image('svg')"  
+                                 icon="pi pi-download"/>  
+
+                <p:commandButton value="PNG" 
+                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                 onclick="export_image('png')"
+                                 icon="pi pi-download"/>  
+
+                <p:commandButton value="Reset" 
+                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
+                                 onclick="resetAxis()"
+                                 icon="pi pi-replay"/> 
+            </h:panelGrid>
+
+             <!--   <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('heatmap')}" alt="HeatMapimage"/>-->
+
+            <div id="htmlwidget2" style="width:100%;" class="iheatmapr html-widget"></div>
+
+
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

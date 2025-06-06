@@ -1,0 +1,407 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"></link>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"></link>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"></link>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/spectrum_attr.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/underscore.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/keggConv.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/heatmap_utils_1.06.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/heatmap_report.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>  
+    </head>
+    <body class="easyui-layout">  
+        <style>
+            .datagrid-header-check input{
+                display: none;
+            }
+        </style>
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px;">
+                Loading your data.... please wait ....
+            </h2>
+        </div>
+        <div data-options="region:'north'" style="height:40px; vertical-align: middle; padding-top: 6px">
+            <div id="options">  
+                <label for="resolution">Resolution:</label>
+                <select id="resolution">
+                    <option value="4">Low</option>
+                    <option value="8"  selected="selected">Medium</option>
+                    <option value="12">High</option>
+                </select>
+                &nbsp;&nbsp;&nbsp;
+                <label for="color">Colors:</label>
+                <select id="color">
+                    <option value="nwf30">navy-white-firebrick</option>
+                    <option value="gbr30">green-black-red</option>    
+                    <option value="byr30">blue-yellow-darkred</option>  
+                </select>
+                &nbsp;&nbsp;&nbsp;
+                <label for="color">Border:</label>
+                <select id="border">
+                    <option value="default">Default</option>
+                    <option value="none">None</option>    
+                </select>
+                &nbsp;&nbsp;&nbsp;
+                <label for="peak-cluster">Cluster peaks:</label>
+                <select id="peak-cluster">
+                    <option value="pval">P value</option> 
+                    <option value="ward">Ward's method </option>
+                    <option value="average">Average linkage</option>    
+                    <option value="single">Single linkage</option>   
+                    <option value="complete">Complete linkage</option>  
+                </select>  
+                &nbsp;&nbsp;&nbsp;
+                <label for="advanced">Download:</label>
+                <select id="advanced">
+                    <option value="NA">--Please Select--</option>                
+                    <option value="heatmap">Focusview PNG</option> 
+                    <option value="overview">Overview PNG</option>
+                    <option value="results">Customview PNG</option>
+                    <option value="download">Result table</option>
+                </select>  
+                &nbsp;&nbsp;
+                <a id="builder" href="#" plain="true" class="easyui-linkbutton" data-options="iconCls:'icon-builder'">Builder</a>
+                &nbsp;&nbsp;&nbsp;
+            </div>
+        </div>  
+        <div data-options="region:'east', split:true" style="width:400px;">
+            <div class="easyui-layout" data-options="fit:true">
+                <div data-options="region:'center',split:false,border:true" style="height:500px" title="Enrichment Analysis">
+                    <table id="dg2" class="easyui-datagrid" toolbar="#tb" style="width:400px;padding-right: 8px"
+                           data-options="border:false,singleSelect:false,checkOnSelect:true,selectOnCheck:true,fit:true,fitColumns:true">  
+                        <thead>  
+                            <tr>
+                                <th field="ck" checkbox="true"></th>
+                                <th data-options="field:'pathname',width:120">Name</th>  
+                                <th data-options="field:'hit',width:40">Hits</th>  
+                                <th data-options="field:'sig',width:40">Sigs</th>  
+                                <th data-options="field:'pval',width:50">Gamma-p</th> 
+                                <th data-options="field:'color',width:40">Color</th> 
+                            </tr>  
+                        </thead>  
+                    </table> 
+
+                    <div id="tb" style="padding:5px;line-height:21px;height:auto">
+                        <div>
+                            <div id="peakViewOpt">
+                                <label for="viewOpt" style="width: 10px">Operation Mode:</label>
+                                <input type="radio" id="viewCurrent" name="viewRadio" value="male" checked="checked"/>
+                                <label for="male">Annotate</label>
+                                <input type="radio" id="viewOverall" name="viewRadio" value="female"/>           
+                                <label for="female">Extract</label>
+                                <br />
+                                <label for="enrichdb" style="width: 10px">Database:</label>
+                                <select id="enrichdb">    
+                                    <option value="kegg">KEGG</option>
+                                    <option value="reactome">Reactome</option>
+                                    <option value="biocyc">Biocyc</option>
+                                    <option value="lipid_class_mset">Lipid</option>
+                                    <option value="nolipid_class_mset">Non-Lipid</option>
+                                    <option value="mfn">MFN</option>
+                                </select>                        
+                                <a href="#" class="easyui-linkbutton" plain="true" onclick="doEnrichmentTest()">Submit</a>
+                                <a href="#" id="resetFocusBn2" class="easyui-linkbutton" plain="true">Reset</a>
+                                <a id="downloadBn" href="#" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="exportResultTable('funtb');">Save</a>
+
+                                <div style="padding-left:7px; font-size: 10px">
+                                    Tip: &nbsp; <i>click a row to view corresponding annotations or to extract</i>
+                                </div>
+                            </div>
+                        </div> 
+                    </div> 
+                </div> 
+                <div data-options="region:'south',split:false,border:true" style="height:100px;">
+                    <ul id="stats" style="padding:5px; margin: 10px">
+                        <p style="color:darkslategray">
+                            Click a row (an enriched pathway) from the result table above to show peak annotations (indicated by color squares next to the heatmap),  
+                            then <u>click a colored square</u> to show that feature's <b>annotation details</b> here. 
+                        </p>
+                    </ul>
+                </div>
+            </div>  
+        </div>  
+        <div data-options="region:'west', title:'Overview', collapsible:false, tools:'#sel'" style="width:220px;">
+            <div id="sel">
+                <a href="#" id="selBn" style="font-size: 11px; width:60px; padding-top: 2px">Select all</a>
+            </div>
+            <div class="easyui-layout" data-options="fit:true">
+                <div data-options="region:'north',split:false,border:false" style="height:40px;">
+                    <div id="overmeta-wrap" class="heatmap-wrap">
+                        <canvas id="overmetabar" class="heatmap" height="10" width="200"></canvas>
+                        <canvas id="overmetahover" class="hover" height="10" width="200"></canvas>
+                    </div>
+                </div>
+                <div data-options="region:'center',border:false">
+                    <div id="overview-wrap" class="heatmap-wrap">
+                        <canvas id="overview" class="heatmap2" height="600" width="200"></canvas>
+                        <canvas id="overhover" class="hover2" height="600" width="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>  
+        <div data-options="region:'center', title:'Focus View', collapsible:false">
+            <div style="float: right; z-index:1000; padding-right: 20px; padding-top: 7px; padding-bottom: 1px">
+                <a href="#" class="easyui-tooltip" data-options="
+                   content: $('<div></div>'),
+                   position: 'bottom',
+                   onUpdate: function(cc){
+                   cc.panel({
+                   width: 400,
+                   height: 'auto',
+                   border: false,
+                   href: './tooltip/_help_clust_mummichog.html'
+                   });
+                   }
+                   ">
+                    <img src="../../resources/images/ui-help.png" alt="Help Info"/>
+                </a>
+            </div>
+            <div id="main-map" class="easyui-layout" data-options="fit:true">  
+                <div id="mainnorth" data-options="region:'north',split:true,border:false" style="padding-bottom:5px;">
+                    <div id="meta-wrap" class="heatmap-wrap">
+                        <canvas id="metabar" class="heatmap" height="12" width="800"></canvas>
+                        <canvas id="metahover" class="hover" height="12" width="800"></canvas>
+                    </div>
+                </div>  
+                <div data-options="region:'center',border:false">
+                    <div id="mainview" class="easyui-layout" data-options="fit:true">
+                        <div id="maincenter" data-options="region:'center',border:false">
+                            <div id="heatmap-wrap" class="heatmap-wrap">
+                                <canvas id="heatmap" class="heatmap" height="600" width="800"></canvas>
+                                <canvas id="hover" class="hover" height="600" width="800"></canvas>
+                            </div>
+                        </div> 
+                    </div>
+                </div> 
+                <div id="mainsouth" data-options="region:'south',split:true,border:false" style="padding-bottom:5px;">
+                    <div id="samples-wrap" class="heatmap-wrap">
+                        <canvas id="smpls" class="heatmap" height="80" width="800"></canvas>
+                    </div>
+                </div>  
+            </div>
+        </div> 
+        <div id="modulecolordlg" class="easyui-dialog" title="Annotation Color" 
+             data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:350px;padding:10px; display: none">
+            <input type='text' id="custom" style="width:30px"/>
+        </div>
+        <canvas id="canvas2image" style="display:none">
+            Your browser does not support the canvas element.
+        </canvas>
+        <div id="dialog" class="easyui-dialog" title="Export Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:600px;height:600px;padding:5px">  
+            Right click the PNG image below to save <br/>
+            <image id="downloadimage"></image>  
+        </div>  
+        <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+            <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+            </ul>
+        </div>
+        <div id="initdialog" class="easyui-dialog" title="Tip" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:480px;padding:5px">  
+            <div style="text-align:left;padding:10px; line-height: 18px; size: 15px !important">
+                By default, peaks are ordered by p-value (t-tests or ANOVA). To perform functional analysis on a peak cluster: 
+                <ol style="margin-left: 0; padding-left: 20px">
+                    <li>
+                        From the top menu bar, select a method under <b>Cluster peaks</b>;
+                    </li>
+                    <li>
+                        From the left panel, <b>drag-and-select</b> a region of interest;
+                    </li>
+                    <li>
+                        From the right panel, set a database and click the Submit button;
+                    </li>
+                    <li>
+                        From the result table, <b>click a row</b> to show pathway annotations (color squares);
+                    </li>
+                    <li>
+                        From the heatmap, <b>click a color square</b> to show matching details (bottom right)
+                    </li>
+                </ol>
+            </div>
+            <div style="width:480px; text-align: center; padding-bottom: 10px">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick='$("#initdialog").dialog("close")'>Ok</a>
+            </div>
+        </div>
+        <script>
+            function mypopup(url) {
+                mywindow = window.open(url, "mywindow", "location=1,status=1,scrollbars=1, width=1000,height=600");
+                mywindow.moveTo(0, 0);
+            }
+
+            //initiate global var and default options
+            var doc = document;
+            doc.onselectstart = function () {
+                return false;
+            }
+
+            //selection box on overview
+            var select_boxheight = select_boxend = 60;
+            var options = {};
+
+            //default display
+            var resolution = 8;
+            var border = "default";
+            //color scheme 
+            var colors_nwf30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#0F0F87", 2: "#202090", 3: "#313198", 4: "#4242A1", 5: "#5353A9", 6: "#6464B2", 7: "#7575BA", 8: "#8686C3", 9: "#9797CB", 10: "#A8A8D4", 11: "#B9B9DC", 12: "#CACAE5", 13: "#DCDCED", 14: "#EDEDF6", 15: "#FEFEFE", 16: "#FEFEFE", 17: "#FBEFEF", 18: "#F8E1E1", 19: "#F4D2D2", 20: "#F1C4C4", 21: "#EEB5B5", 22: "#EAA7A7", 23: "#E79898", 24: "#E48A8A", 25: "#E07B7B", 26: "#DD6D6D", 27: "#DA5E5E", 28: "#D65050", 29: "#D34141", 30: "#D03333", 31: "#D3D3D3", 32: "#4c4cff", hidden: "#ffffff"
+                        //1: "#10457F", 2: "#1D5EA1", 3: "#2B74B3", 4: "#3A88BD", 5: "#549DC8", 6: "#77B4D5", 7: "#99C8E0", 8: "#B6D7E8", 9: "#D2E4EE", 10: "#E6E0DC", 11: "#E7DFDA", 12: "#FBDBC8", 13: "#F9C3A9", 14: "#F5AB8A", 15: "#EA8E70", 16: "#DC6E58", 17: "#CD4E44", 18: "#BD2E35", 19: "#A71429", 20: "#850923"
+            };
+            var hoverColors_nwf30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#000080", 2: "#111188", 3: "#222290", 4: "#333399", 5: "#4444A1", 6: "#5555AA", 7: "#6666B2", 8: "#7777BB", 9: "#8888C3", 10: "#9999CC", 11: "#AAAAD4", 12: "#BBBBDD", 13: "#CCCCE5", 14: "#DDDDEE", 15: "#EEEEF6", 16: "#FBF1F1", 17: "#F8E2E2", 18: "#F5D4D4", 19: "#F1C5C5", 20: "#EEB7B7", 21: "#EBA8A8", 22: "#E79A9A", 23: "#E48B8B", 24: "#E17D7D", 25: "#DD6E6E", 26: "#DA6060", 27: "#D75151", 28: "#D34343", 29: "#D03434", 30: "#CD2626", 31: "#CDCDCD", 32: "#6666ff", hidden: "#ffffff"
+                        // 1: "#053061", 2: "#114882", 3: "#1E60A4", 4: "#2D76B4", 5: "#3C8ABE", 6: "#57A0CA", 7: "#7BB6D6", 8: "#9CCAE0", 9: "#B8D8E9", 10: "#D4E4ED", 11: "#F9DBC9", 12: "#F9C6AC", 13: "#F5AD8D", 14: "#EB9172", 15: "#DD725A", 16: "#CF5246", 17: "#BE3137", 18: "#AA1529", 19: "#880A24", 20: "#67001F"
+            };
+
+            var colors_gbr30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#00EF00", 2: "#00DE00", 3: "#00CD00", 4: "#00BC00", 5: "#00AB00", 6: "#009A00", 7: "#008900", 8: "#007800", 9: "#006700", 10: "#005600", 11: "#004500", 12: "#003400", 13: "#002200", 14: "#001100", 15: "#000000", 16: "#000000", 17: "#110000", 18: "#220000", 19: "#340000", 20: "#450000", 21: "#560000", 22: "#670000", 23: "#780000", 24: "#890000", 25: "#9A0000", 26: "#AB0000", 27: "#BC0000", 28: "#CD0000", 29: "#DE0000", 30: "#EF0000", 31: "#D3D3D3", 32: "#4c4cff", hidden: "#ffffff"
+                        //1: "#17178B", 2: "#303098", 3: "#4A4AA5", 4: "#6363B1", 5: "#7D7DBE", 6: "#9797CB", 7: "#B0B0D8", 8: "#CACAE4", 9: "#E4E4F1", 10: "#FDFDFE", 11: "#FEFDFD", 12: "#F9E8E8", 13: "#F4D2D2", 14: "#EFBCBC", 15: "#EAA6A6", 16: "#E59090", 17: "#E07B7B", 18: "#DB6565", 19: "#D64F4F", 20: "#D13939"
+            }
+
+            var hoverColors_gbr30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#00FF00", 2: "#00ED00", 3: "#00DC00", 4: "#00CB00", 5: "#00BA00", 6: "#00A900", 7: "#009800", 8: "#008700", 9: "#007600", 10: "#006500", 11: "#005400", 12: "#004300", 13: "#003200", 14: "#002100", 15: "#001000", 16: "#100000", 17: "#210000", 18: "#320000", 19: "#430000", 20: "#540000", 21: "#650000", 22: "#760000", 23: "#870000", 24: "#980000", 25: "#A90000", 26: "#BA0000", 27: "#CB0000", 28: "#DC0000", 29: "#ED0000", 30: "#FF0000", 31: "#CDCDCD", 32: "#6666ff", hidden: "#ffffff"
+                        //1: "#000080", 2: "#19198C", 3: "#333399", 4: "#4C4CA6", 5: "#6666B3", 6: "#8080BF", 7: "#9999CC", 8: "#B3B3D9", 9: "#CDCDE6", 10: "#E6E6F2", 11: "#FAEAEA", 12: "#F5D4D4", 13: "#F0BEBE", 14: "#EBA8A8", 15: "#E69393", 16: "#E17D7D", 17: "#DC6767", 18: "#D75151", 19: "#D23B3B", 20: "#CD2626"
+            };
+
+            var colors_cb = {
+                null: '#333',
+                undefined: '#333',
+                1: "#25050d", 2: "#2a0e15", 3: "#30141b", 4: "#371a20", 5: "#3e2026", 6: "#45262d", 7: "#4c2c33", 8: "#533339", 9: "#5a3940", 10: "#614046", 11: "#68474d", 12: "#6f4d54", 13: "#77545b", 14: "#7e5b62", 15: "#866269", 16: "#8d6a70", 17: "#957177", 18: "#9d787f", 19: "#a57f86", 20: "#ad878e", 21: "#b58f95", 22: "#bd969d", 23: "#c59ea5", 24: "#cda6ac", 25: "#d5adb4", 26: "#ddb5bc", 27: "#e5bdc4", 28: "#eec5cc", 29: "#f6cdd4", 30: "#fdd6dd", 31: "#ffe0e7", 32: "#ffebf2", hidden: "#ffffff"
+                        //1: "#17178B", 2: "#303098", 3: "#4A4AA5", 4: "#6363B1", 5: "#7D7DBE", 6: "#9797CB", 7: "#B0B0D8", 8: "#CACAE4", 9: "#E4E4F1", 10: "#FDFDFE", 11: "#FEFDFD", 12: "#F9E8E8", 13: "#F4D2D2", 14: "#EFBCBC", 15: "#EAA6A6", 16: "#E59090", 17: "#E07B7B", 18: "#DB6565", 19: "#D64F4F", 20: "#D13939"
+            };
+
+            var hoverColors_cb = {
+                null: '#333',
+                undefined: '#333',
+                1: "#25050d", 2: "#2a0e15", 3: "#30141b", 4: "#371a20", 5: "#3e2026", 6: "#45262d", 7: "#4c2c33", 8: "#533339", 9: "#5a3940", 10: "#614046", 11: "#68474d", 12: "#6f4d54", 13: "#77545b", 14: "#7e5b62", 15: "#866269", 16: "#8d6a70", 17: "#957177", 18: "#9d787f", 19: "#a57f86", 20: "#ad878e", 21: "#b58f95", 22: "#bd969d", 23: "#c59ea5", 24: "#cda6ac", 25: "#d5adb4", 26: "#ddb5bc", 27: "#e5bdc4", 28: "#eec5cc", 29: "#f6cdd4", 30: "#fdd6dd", 31: "#ffe0e7", 32: "#ffebf2", hidden: "#ffffff"
+                        //1: "#000080", 2: "#19198C", 3: "#333399", 4: "#4C4CA6", 5: "#6666B3", 6: "#8080BF", 7: "#9999CC", 8: "#B3B3D9", 9: "#CDCDE6", 10: "#E6E6F2", 11: "#FAEAEA", 12: "#F5D4D4", 13: "#F0BEBE", 14: "#EBA8A8", 15: "#E69393", 16: "#E17D7D", 17: "#DC6767", 18: "#D75151", 19: "#D23B3B", 20: "#CD2626"
+            };
+
+
+            var colors_byr30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#37489E", 2: "#3D5EA8", 3: "#4473B3", 4: "#5386BC", 5: "#6398C6", 6: "#72ABD0", 7: "#84BAD8", 8: "#97C9E0", 9: "#A9D7E8", 10: "#BBE1ED", 11: "#CDE9F2", 12: "#DEF2F7", 13: "#E9F6E6", 14: "#F4FAD3", 15: "#FEFEBF", 16: "#FEFEBE", 17: "#FEF4AE", 18: "#FEE99E", 19: "#FDDE8F", 20: "#FDCE7F", 21: "#FDBD6F", 22: "#FCAC60", 23: "#F99656", 24: "#F6804C", 25: "#F36B42", 26: "#E95638", 27: "#DF422F", 28: "#D52E26", 29: "#C41E26", 30: "#B40E26", 31: "#D3D3D3", 32: "#4c4cff", hidden: "#ffffff"
+                        //1: "#00EF00", 2: "#00DE00", 3: "#00CD00", 4: "#00BC00", 5: "#00AB00", 6: "#009A00", 7: "#008900", 8: "#007800", 9: "#006700", 10: "#005600", 11: "#004500", 12: "#003400", 13: "#002200", 14: "#001100", 15: "#000000", 16: "#000000", 17: "#110000", 18: "#220000", 19: "#340000", 20: "#450000", 21: "#560000", 22: "#670000", 23: "#780000", 24: "#890000", 25: "#9A0000", 26: "#AB0000", 27: "#BC0000", 28: "#CD0000", 29: "#DE0000", 30: "#EF0000"
+                        // 1: "#00E700", 2: "#00CE00", 3: "#00B400", 4: "#009B00", 5: "#008100", 6: "#006700", 7: "#004E00", 8: "#003400", 9: "#001A00", 10: "#000100", 11: "#010000", 12: "#1A0000", 13: "#340000", 14: "#4E0000", 15: "#670000", 16: "#810000", 17: "#9B0000", 18: "#B40000", 19: "#CE0000", 20: "#E70000"
+            };
+
+            var hoverColors_byr30 = {
+                null: '#333',
+                undefined: '#333',
+                1: "#313695", 2: "#374B9F", 3: "#3E60A9", 4: "#4575B4", 5: "#5487BD", 6: "#649AC7", 7: "#74ADD1", 8: "#86BCD9", 9: "#99CAE1", 10: "#ABD9E9", 11: "#BDE1EE", 12: "#CEEAF3", 13: "#E0F3F7", 14: "#EAF7E4", 15: "#F5FBD1", 16: "#FEF5B0", 17: "#FEEAA0", 18: "#FEE090", 19: "#FDCF80", 20: "#FDBF71", 21: "#FDAE61", 22: "#FA9857", 23: "#F7834D", 24: "#F46D43", 25: "#EA5939", 26: "#E04430", 27: "#D73027", 28: "#C62026", 29: "#B51026", 30: "#A50026", 31: "#CDCDCD", 32: "#6666ff", hidden: "#ffffff"
+                        // 1: "#00FF00", 2: "#00ED00", 3: "#00DC00", 4: "#00CB00", 5: "#00BA00", 6: "#00A900", 7: "#009800", 8: "#008700", 9: "#007600", 10: "#006500", 11: "#005400", 12: "#004300", 13: "#003200", 14: "#002100", 15: "#001000", 16: "#100000", 17: "#210000", 18: "#320000", 19: "#430000", 20: "#540000", 21: "#650000", 22: "#760000", 23: "#870000", 24: "#980000", 25: "#A90000", 26: "#BA0000", 27: "#CB0000", 28: "#DC0000", 29: "#ED0000", 30: "#FF0000"
+                        // 1: "#00FF00", 2: "#00E500", 3: "#00CB00", 4: "#00B200", 5: "#009800", 6: "#007E00", 7: "#006500", 8: "#004B00", 9: "#003100", 10: "#001800", 11: "#180000", 12: "#310000", 13: "#4B0000", 14: "#650000", 15: "#7E0000", 16: "#980000", 17: "#B20000", 18: "#CB0000", 19: "#E50000", 20: "#FF0000"
+            };
+
+            var contrastColors = {
+                null: '#333',
+                undefined: '#333',
+                100: "#E41A1C", 101: "#377EB8", 102: "#4DAF4A", 103: "#984EA3", 104: "#FF7F00", 105: "#FFFF33", 106: "#A65628", 107: "#F781BF", 108: "#1B9E77", 109: "#D95F02", 110: "#7570B3", 111: "#E7298A", 112: "#66A61E", 113: "#E6AB02", 114: "#A6761D", 115: "#796A4F", 116: "#8E772F", 117: "#A4675E", 118: "#A651A1", 119: "#BA5464", 120: "#87A716", 121: "#DAA106", 122: "#A07423", 123: "#666666", 124: "#1B9E77"
+                        // 100: "#1B9E77", 101: "#C8640C", 102: "#866D94", 103: "#C93B94", 104: "#927A43", 105: "#AEA80E", 106: "#C7910E", 107: "#8C6F39", 108: "#548A53", 109: "#C36228", 110: "#8366AD", 111: "#E12E85", 112: "#6BA022", 113: "#D5AA05", 114: "#B38117", 115: "#796A4F", 116: "#8E772F", 117: "#A4675E", 118: "#A651A1", 119: "#BA5464", 120: "#87A716", 121: "#DAA106", 122: "#A07423", 123: "#666666", 124: "#1B9E77"
+            }
+
+            //add default values, functions to options{}
+            options.colors = {
+                display: colors_nwf30,
+                hover: hoverColors_nwf30,
+                contrast: contrastColors
+            }
+
+            options.size = {
+                dotwidth: function () {
+                    return resolution
+                },
+                dotheight: function () {
+                    return resolution
+                },
+                gutsize: function () {
+                    if (border === "default") {
+                        if (resolution < 4) {
+                            return 0.00001;
+                        } else if (resolution <= 12) {
+                            return 1;
+                        } else {
+                            return 2;
+                        }
+                    } else {
+                        return 0.00001;
+                    }
+                },
+                totwidth: function () {
+                    return options.size.dotwidth() + options.size.gutsize()
+                },
+                totheight: function () {
+                    return options.size.dotheight() + options.size.gutsize()
+                }
+            };
+
+            // synchronize scrolling of the focus view
+            //var skip = false; need to consider vertical scrollbar 
+            //taking 20px off when hit left end
+            $("#mainnorth").scroll(function () {
+                var nleft = $("#mainnorth").scrollLeft();
+                $("#maincenter").scrollLeft(nleft);
+                $("#mainsouth").scrollLeft(nleft);
+                var cleft = $("#maincenter").scrollLeft();
+                var sleft = $("#mainsouth").scrollLeft();
+                var eleft = nleft;
+                var minleft = Math.min(cleft, sleft, eleft);
+                $("#mainnorth").scrollLeft(minleft);
+                $("#maincenter").scrollLeft(minleft);
+                $("#mainsouth").scrollLeft(minleft);
+            });
+            $("#maincenter").scroll(function () {
+                //syncFocusViewPanels();
+                var cleft = $("#maincenter").scrollLeft();
+                $("#mainnorth").scrollLeft(cleft);
+                $("#mainsouth").scrollLeft(cleft);
+                var nleft = $("#mainnorth").scrollLeft();
+                var sleft = $("#mainsouth").scrollLeft();
+                var eleft = cleft;
+
+                var minleft = Math.min(nleft, sleft, eleft);
+                $("#mainnorth").scrollLeft(minleft);
+                $("#maincenter").scrollLeft(minleft);
+                $("#mainsouth").scrollLeft(minleft);
+            });
+
+            $("#mainsouth").scroll(function () {
+                //syncFocusViewPanels();
+                var sleft = $("#mainsouth").scrollLeft();
+                $("#maincenter").scrollLeft(sleft);
+                $("#mainnorth").scrollLeft(sleft);
+                var nleft = $("#mainnorth").scrollLeft();
+                var cleft = $("#maincenter").scrollLeft();
+                var eleft = sleft;
+                var minleft = Math.min(nleft, cleft, eleft);
+                $("#mainnorth").scrollLeft(minleft);
+                $("#maincenter").scrollLeft(minleft);
+                $("#mainsouth").scrollLeft(minleft);
+            });
+
+            $(document).ready(function () {
+                rebindIframe();
+                initHeatMap();
+                updateTheme();
+                initThemeSwitch();
+
+            });
+
+        </script>
+        <h:inputHidden id="themeHt" value="false"></h:inputHidden>
+        <button id="toggleTm" onclick="setupTheme()"   style="display:none;" ></button>
+    </body>  
+</html>

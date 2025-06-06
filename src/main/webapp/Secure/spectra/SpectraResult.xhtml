@@ -1,0 +1,746 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Spectra result', '/Secure/spectra/SpectraResult.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{spectraProcessor.checkTablePopulated()}"/>
+        <f:event type="preRenderView" listener="#{spectraProcessor.checkResultsInternalized()}"/>
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/report_generation.js"></script>
+        <link rel="stylesheet" type="text/css" href="#{facesContext.externalContext.requestContextPath}/resources/css/easyui.min.css"></link>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/graphics_1.00.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/svg-pan-zoom.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/svg_spectra.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-2.27.0.min.js"></script>
+    </ui:define>
+    <ui:define name="content">
+        <style>
+            .tip-content {
+                position:absolute;
+                top:10px;
+                right:-999px;
+                width:-999px;
+                margin-right:-220px;
+                padding:10px;
+                color:#fff;
+                background:#333;
+                -webkit-box-shadow:2px 2px 5px #aaa;
+                -moz-box-shadow:2px 2px 5px #aaa;
+                box-shadow:2px 2px 5px #aaa;
+                opacity:0;
+                -webkit-transition:opacity 250ms ease-out;
+                -moz-transition:opacity 250ms ease-out;
+                -ms-transition:opacity 250ms ease-out;
+                -o-transition:opacity 250ms ease-out;
+                transition:opacity 250ms ease-out;
+            }
+
+            .tip-content:before {
+                content:' ';
+                position:absolute;
+                top:50%;
+                left:-16px;
+                width:0;
+                height:0;
+                margin-top:-8px;
+                border:8px solid transparent;
+                border-right-color:#333;
+            }
+        </style>
+        <script type="text/javascript">
+            function extender() {
+                var options = {
+                    options: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            ;
+        </script>
+
+        <h:inputHidden id="mydir" value="#{spectraProcessor.scoreJson}"/>
+        <h:inputHidden id="mydir2" value="#{spectraProcessor.loadingJson}"/>
+        <h:inputHidden id="userDir" value="#{sessionBean1.rawUserDir}" />
+
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Processing Results</h2>
+
+            <h:form id="form1">
+                <script>
+                    var graphDiv;
+                    var config = {displaylogo: false, displayModeBar: false, scrollZoom: true, responsive: true};
+                    var layout;
+                    var xaxis_range1, xaxis_range2;
+                    function plotintmirror2() {
+
+                        var elemID = 'myid';// + ID;
+                        var mirrorwidgetID = 'mirrorwidget';
+                        var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+
+                        $.getJSON('/MetaboAnalyst' + document.getElementById('form1:' + elemID).value,
+                                function (scriptData) {
+
+                                    if (scriptData) {
+                                        var data = scriptData.x;
+                                        graphDiv = document.getElementById(mirrorwidgetID);
+
+                                        data.layout.autosize = true;
+                                        layout = JSON.parse(JSON.stringify(data.layout));
+                                        var range = data.layout.xaxis.range;
+                                        xaxis_range1 = range[0];
+                                        xaxis_range2 = range[1];
+
+                                        if (light !== "light") {
+
+                                            data.layout.paper_bgcolor = 'rgb(7, 20, 38,0.5)';
+                                            data.layout.plot_bgcolor = '#071426';
+                                            data.layout.font.color = 'white';
+                                            data.layout.title.font.color = 'white';
+
+                                            data.layout.yaxis.tickfont.color = '#ffffff';
+                                            data.layout.yaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.yaxis.gridwidth = 0.1;
+                                            data.layout.yaxis.title.font.color = 'white';
+
+                                            data.layout.xaxis.tickfont.color = '#ffffff';
+                                            data.layout.xaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                                            data.layout.xaxis.gridwidth = 0.1;
+                                            data.layout.xaxis.title.font.color = 'white';
+
+                                        }
+                                        Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                        PF('statusDialog').hide();
+                                    }
+                                });
+                    }
+
+                    function resetAxis() {
+                        var mirrorwidgetID = 'mirrorwidget';
+                        var con = document.getElementById(mirrorwidgetID);
+                        Plotly.relayout(con, {
+                            'xaxis.range': [xaxis_range1, xaxis_range2],
+                            'yaxis.range': [-100, 100]
+                        });
+                    }
+
+                    function export_image(tp) {
+                        var mirrorwidgetID = 'mirrorwidget';
+                        var divGraph = document.getElementById(mirrorwidgetID);
+                        Plotly.downloadImage(divGraph, {format: tp, width: 600, height: 400, scale: 3});
+                    }
+
+                    function setupTheme() {
+                        var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                        var newlayout = JSON.parse(JSON.stringify(layout));
+
+                        if (light !== "true") {
+
+                            newlayout.paper_bgcolor = '#071426';
+                            newlayout.plot_bgcolor = '#071426';
+                            newlayout.font_color = '#FFFFFF';
+                            newlayout.title.font.color = '#FFFFFF';
+
+
+                            newlayout.yaxis.tickfont.color = '#ffffff';
+                            newlayout.yaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                            newlayout.yaxis.gridwidth = 0.5;
+                            newlayout.yaxis.title.font.color = 'white';
+
+                            newlayout.xaxis.tickfont.color = '#ffffff';
+                            newlayout.xaxis.gridcolor = 'rgb(50, 50, 50,0.1)';
+                            newlayout.xaxis.gridwidth = 0.5;
+                            newlayout.xaxis.title.font.color = 'white';
+
+                        } else {
+                            newlayout.paper_bgcolor = 'white';
+                            newlayout.plot_bgcolor = 'white';
+                        }
+                        Plotly.update(graphDiv, {}, newlayout);
+
+                    }
+                </script>
+                <h:inputHidden id='resNumSrc' value="#{spectraProcessor.resNum}"/>
+
+                <h:panelGrid style="width:100%; padding: 10px 20px 10px 40px">
+                    <p:tabView id="ac" widgetVar="tabWidget"  style="border:none; width:100%; font-size: 14px;" cache="false">
+
+                        <p:tab title="PCA Visualization">
+                            <h:panelGrid style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:graphicImage id="boxIcon0" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon0"  style="width: 360px" styleClass="helpTip">
+                                    <p>
+                                        Principal Component Analysis Score plot of all samples (Double-click the sample nodes to show the <b>TIC</b>). 
+                                        Loading plot of peak features (Double-click the peak features to show the <b>EIC</b>).
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+
+                            <h:panelGrid id="syn3d" style="width: 1050px; height: 540px; text-align: left">
+                                <label for="pcaDisplay">PCA Scores:</label>
+                                <select id="pcaDisplay" style="width:175px"> 
+                                    <option value="all">Based on all peaks</option> 
+                                    <option value="loading">Based on peaks in loading plot</option> 
+                                </select> 
+                                &nbsp;
+                                <label for="methods">PCA Loadings:</label>
+                                <div style="padding-top: 5px; display: inline;"> 
+                                    <input id="loadingSlider" type="range" min="10" max="#{spectraProcessor.rawFeatureBean.rowCount}" 
+                                           value="#{spectraProcessor.rawFeatureBean.rowCount}" style="width:100px;" 
+                                           onchange="updateTextInput(this.value);"/>
+                                </div>
+                                <input type="number" id="textInput" 
+                                       value="#{spectraProcessor.rawFeatureBean.rowCount}" 
+                                       style="width:65px" onchange="updateloadingslider(this.value)"
+                                       title="value must be within 20 and #{spectraProcessor.rawFeatureBean.rowCount}"
+                                       min="20"
+                                       max="#{spectraProcessor.rawFeatureBean.rowCount}"/>
+                                <div align="center" style="display:inline-block; padding-left:10px; padding-bottom:5px">
+                                    <a id="updateLoading" href="#" style="border-radius: 6px; text-align: center; border: 0.5px solid #C8C8C8; padding: 2px 5px 2px 5px;
+                                       background-color: #F8F8F8; color: #202020; text-decoration: none; display: inline-block; font-size: 12px;">Update</a>
+                                </div>
+                                &nbsp;
+                                <!--
+                                <label for="download">Download:</label>
+                                <select id="download" style="width:150px">
+                                    <option value="NA">-Not Selected-</option>
+                                    <option value="pcas">PCA Scores SVG</option> 
+                                    <option value="loads">PCA Loadings SVG</option> 
+                                    <option value="pcap">PCA Scores PNG</option>
+                                    <option value="loadp">PCA Loadings PNG</option>
+                                </select>
+                                -->
+                                <h:panelGrid style="width: 950px;text-align: center; padding-top: 10px; color: darkorange">
+                                    <u>Mouse-drag</u> to rotate, <u>double-clicking</u> a node to view its summary. 
+                                    Use the tables below to <u>search and view</u> specific peaks or samples
+                                </h:panelGrid>
+                                <!--
+                                <canvas id='canvas1' width='500px' height='500px'/>
+                                <canvas id='canvas2' width='500px' height='500px'/>
+                                -->
+                                <h:panelGrid style="width: 1100px">
+                                    <iframe id="iframeId" style="width: 1100px; height: 840px; margin: 0; padding: 0;" frameborder="0"
+                                            src="../viewer/_scatter3D_viewer.html"/>
+                                </h:panelGrid>
+                            </h:panelGrid>
+
+                            <!--                            <h:panelGrid id="xicplots" columns="2">
+                                                            <h:outputText id="xicplot" value="#{spectraProcessor.svgStringBox}" escape="false"/> 
+                                                            <p:graphicImage id="singlexicplot" value="#{spectraProcessor.singleXICPlot}" cache="false"/>
+                                                        </h:panelGrid>
+                            
+                                                        <p:remoteCommand name="updateXICs" update="xicplot" />
+                                                        <p:remoteCommand name="updateSingleXICs" update="singlexicplot" />-->
+                        </p:tab>
+
+                        <p:tab title="Intensity Stats">
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('IntensitySpec')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon2" styleClass="helpTip" style="width: 240px">
+                                    <p>
+                                        Signal intensity across samples.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:scrollPanel mode="native" style="width:600px;height:492.5px; padding: 0 0 0 0;">
+                                <p:graphicImage value="#{spectraProcessor.image}" cache="false">
+                                    <f:param name="filename" value="Peak_Intensity.png" />
+                                </p:graphicImage>
+                            </p:scrollPanel>
+                        </p:tab>
+
+                        <p:tab title="RT Correction" rendered="#{spectraParamer.algorithms ne 'asari'}">
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('RTcor')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon5" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon5" styleClass="helpTip" style="width: 360px">
+                                    <p>
+                                        Retention Time Correction Result for all samples. The x-axis is the retention time (RT) range, while y-axis is the difference between
+                                        adjusted RT and raw RT (adjust RT - raw RT). The grey points in each samples are the peak groups used for adjustment (Only appears when doing 
+                                        the alignment with LOESS method).
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px;" cache="false">
+                                <f:param name="filename" value="Adjusted_RT.png" />
+                            </p:graphicImage>
+                        </p:tab>
+
+                        <p:tab title="TIC Plot">
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('TICs')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon7" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon7" styleClass="helpTip" style="width: 240px">
+                                    <p>
+                                        Total Ion Chromatogram (TIC) plot of all samples.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px" cache="false">
+                                <f:param name="filename" value="TICS_72.png" />
+                            </p:graphicImage>
+                        </p:tab>
+
+                        <p:tab title="BPI Plot">                            
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('BPIs')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon3" styleClass="helpTip" style="width: 240px">
+                                    <p>
+                                        Base Peak Ion (BPI) plot of all samples.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px" cache="false">
+                                <f:param name="filename" value="BPIS_72.png" />
+                            </p:graphicImage>
+                        </p:tab>
+
+                        <p:tab title="Aligned BPI" rendered="#{spectraParamer.algorithms ne 'asari'}">
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('BPIcor')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon4" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon4" styleClass="helpTip" style="width: 260px">
+                                    <p>
+                                        Base Peak Ion (BPI) plot of all samples after peak alignment. 
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px;" cache="false">
+                                <f:param name="filename" value="Adjusted_BPI.png" />
+                            </p:graphicImage>
+                        </p:tab>
+
+                        <p:tab title="Exposome" rendered="#{spectraParamer.target_omics eq 'exposomics'}">
+                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('BPIcor')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output"
+                                               style = "padding-right: 80px">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                </p:commandLink>
+                                <p:graphicImage id="boxIcon6" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="boxIcon6" styleClass="helpTip" style="width: 260px">
+                                    <p>
+                                        Summary of exposome classifications across different groups. 
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px;" cache="false">
+                                <f:param name="filename" value="exposome_cat_comparison.png" />
+                            </p:graphicImage>
+                        </p:tab>
+                    </p:tabView>
+                </h:panelGrid>
+                <p:tabView widgetVar="tabWidget2" style="min-width: 1000px; width: 95%; text-align: left; border:none">
+                    <p:tab title="Result Summary">
+                        <h:panelGrid style="padding: 20px 30px 20px 40px; margin-left: 60px;">
+                            <h:outputLabel value="#{spectraProcessor.msgText}" escape="false"/>
+                        </h:panelGrid>
+                    </p:tab>
+
+                    <p:tab title="Spectra / Sample Table">
+                        <p:dataTable id="featureTB" style="width:98%; font-size: 12px; text-align: left; font-weight: normal !important; padding: 10px"
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     var="data" paginator="true" rows="20" rowsPerPageTemplate="20,50,100"  paginatorPosition="bottom"
+                                     value="#{spectraProcessor.resBeans}" >
+                            <p:column headerText="Spectra" sortBy="#{data.name}" filterBy="#{data.name}" filterMatchMode="startsWith" style="width:220px;">
+                                #{data.name}
+                            </p:column>
+                            <p:column headerText="Group" sortBy="#{data.group}" style="width:100px;">
+                                #{data.group}
+                            </p:column>
+                            <p:column headerText="Peaks No." sortBy="#{data.peakNum}" style="width:100px;">
+                                #{data.peakNum}
+                            </p:column>
+                            <p:column headerText="Missing (%)" sortBy="#{data.missingPeakPercent}" style="width:100px;">
+                                #{data.missingPeakPercent}
+                            </p:column>
+                            <p:column headerText="RT Range"  style="width:150px;">
+                                #{data.rtRange}
+                            </p:column>
+                            <p:column headerText="m/z Range" style="width:150px;">
+                                #{data.mzRange}
+                            </p:column>
+                            <p:column headerText="View" style="width:60px; text-align: center">
+                                <p:commandButton
+                                    style="margin-left: 5px; height:20px; width:30px;"
+                                    value=""
+                                    action="#{spectraProcessor.plotSingleTIC}"
+                                    onclick="PF('statusDialog').show()"
+                                    oncomplete="PF('statusDialog').hide(); PF('TIC').show()"
+                                    icon="pi pi-image"
+                                    disabled="false"
+                                    update="tic">
+                                    <f:setPropertyActionListener target="#{spectraProcessor.ticName}" value="#{data.name}" />
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+
+                    <p:tab title="Feature / Peak Table">
+                        <ul>
+                            <li>
+                                For isotopes/adducts annotation, the matching is based on the m/z value of its corresponding parent ion. Otherwise, 
+                                it is considered as in the format of the primary ion.
+                            </li>
+                            <li>
+                                All compounds/formulas are matched to <a href="https://hmdb.ca/" target="_blank">HMDB</a> (v5) based on the mass error (ppm value) for raw spectra processing.
+                            </li>
+                            <li>
+                                Intensity is average of all samples. Coefficient of variation (CV) is also the summarized based on all samples.
+                            </li>
+                            <li>
+                                When group information is provided, p values wiil be calculated with t-test/ANOVA based on log transformed data.
+                            </li>
+                        </ul>
+                        <p:dataTable id="SpectraTB" style="width:98%; text-align: left; font-size: 12px; font-weight: normal !important; padding: 10px"
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     var="data" paginator="true" rows="20" rowsPerPageTemplate="20,50,100"  paginatorPosition="bottom"
+                                     value="#{spectraProcessor.rawFeatureBean}" >
+
+                            <p:column headerText="m/z" sortBy="#{data.mz}" filterBy="#{data.mz}" filterMatchMode="startsWith" style="width:50px;">
+                                #{data.mz}
+                            </p:column>
+                            <p:column headerText="RT/s" sortBy="#{data.RT}" filterBy="#{data.RT}" filterMatchMode="startsWith" style="width:50px;">
+                                #{data.RT}
+                            </p:column>
+                            <p:column headerText="Intensity" sortBy="#{data.intensity}" style="width:65px;">
+                                #{data.intensity}
+                            </p:column>
+                            <p:column headerText="CV (%)" sortBy="#{data.cvs}" style="width:40px;">
+                                #{data.cvs}
+                            </p:column>
+                            <p:column headerText="P values" sortBy="#{data.pvalues}" style="width:65px;" rendered="#{!spectraProcessor.singlegroup}">
+                                #{data.pvalues}
+                            </p:column>
+                            <p:column headerText="FDR" style="width:65px;" rendered="#{!spectraProcessor.singlegroup}">
+                                #{data.pfdrs}
+                            </p:column>
+                            <p:column headerText="Annotations" style="width:160px;">
+                                #{data.annotations}
+                            </p:column>
+
+                            <p:column headerText="Putative IDs"  style="width:50px; text-align: center">
+                                <p:commandButton
+                                    style="margin-left: 5px; height:20px; width:30px;"
+                                    onclick="PF('PeakIDs').show()"
+                                    update="chemic"
+                                    icon="pi pi-list"
+                                    rendered="#{data.formulas ne ''}"
+                                    disabled="false">
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.featureOrder}"/>
+                                </p:commandButton>
+                            </p:column>
+
+                            <p:column headerText="View"  style="width:40px; text-align: center">
+                                <p:commandButton
+                                    style="margin-left: 5px; height:20px; width:30px;"
+                                    action="#{spectraProcessor.plotMSfeature('png')}"
+                                    onclick="PF('statusDialog').show()"
+                                    oncomplete ="getXICPlot2();PF('statusDialog').hide()"
+                                    icon="pi pi-image"                                    
+                                    update="intensity">
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.featureNum0}"/>
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+
+                    <p:tab title="MS/MS Results" rendered="#{spectraProcessor.isms2}">
+                        <ul>
+                            <li>
+                                MS/MS-based compounds identification results are displayed below.
+                            </li>
+                            <li>
+                                Similarity of MS/MS are evaluated based on dot-product or spectral entropy methods. Top 5 compounds are listed from high to low (100, perfect match; 0, not matched).
+                            </li>
+                            <li>
+                                User could click View button below to view the MS/MS pattern matching results.
+                            </li>                            
+                        </ul>                        
+                        <p:dataTable id="ms2TBrows" var="data" paginator="true" rows="50" rowsPerPageTemplate="50,100,200"  paginatorPosition="bottom"
+                                     value="#{spectraProcessor.featureModelMS2}" sortBy="#{data.featureNo}">
+                            <p:headerRow expandable="true" field="featureNo" expanded="false">
+                                <p:column colspan="6">
+                                    <h:outputText value="#{data.featurelabel}"/>
+                                </p:column>
+                            </p:headerRow>
+
+                            <p:column headerText="Compound" filterMatchMode="startsWith" style="width:20%;">
+                                #{data.compounds}
+                            </p:column>
+
+                            <p:column headerText="Formula" style="width:15%;">
+                                #{data.formulas}
+                            </p:column>
+
+                            <p:column headerText="Matching Score" sortBy="#{data.similarity_score}" style="width:12.5%;">
+                                #{data.similarity_score}
+                            </p:column>
+
+                            <p:column headerText="InchiKey" style="width:25%;">
+                                #{data.inchiKeys}
+                            </p:column>
+
+                            <p:column headerText="Database" style="width:15%;">
+                                #{data.databases}
+                            </p:column>
+
+                            <p:column headerText="View"  style="width:12.5%; text-align: center">
+                                <p:commandButton
+                                    style="margin-left: 5px; height:20px; width:30px;"
+                                    action="#{spectraProcessor.plotMirrorMatching()}"
+                                    onclick="PF('statusDialog').show();
+                                            updateDialogMP();
+                                            PF('mirrorDialog').show()"
+                                    oncomplete ="PF('statusDialog').hide(); plotintmirror2();"
+                                    update=":form1:resNumSrc :form1:mp"
+                                    icon="pi pi-image">
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.resNum}"/>
+                                    <f:setPropertyActionListener value="#{data.sub_idx}" target="#{spectraProcessor.subidx}"/>
+                                    <f:setPropertyActionListener value="#{data.featurelabel}" target="#{spectraProcessor.current_ft_label}"/>
+                                </p:commandButton>
+                            </p:column>
+
+                            <p:column headerText="Classes"  style="width:12.5%; text-align: center" rendered="#{spectraParamer.target_omics eq 'exposomics'}">
+                                <p:commandLink update=":myexposomePane"
+                                               oncomplete="PF('ExposomeDetails').show()"
+                                               title="View the details on exposome chemical classfication"
+                                               style = "padding-left: 10px">
+                                    Details
+                                    <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.resNum_exp}"/>
+                                    <f:setPropertyActionListener value="#{data.sub_idx}" target="#{spectraProcessor.subidx_exp}"/>
+                                    <f:setPropertyActionListener value="#{data.featurelabel}" target="#{spectraProcessor.current_ft_label}"/>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:tabView>
+
+                <h:panelGroup layout="block" style="width: 90%; text-align: center; padding-top: 10px">
+                    <p:commandButton value="Download Page" ajax="false" 
+                                     onclick="PF('statusDialog').show()"
+                                     icon="pi pi-chevron-right" 
+                                     disabled="#{spectraProcessor.bnDisabled}"
+                                     action="Download"/>
+                </h:panelGroup>
+                <p:remoteCommand name="updateDialog" update="tic :xicform:eic intensity"/>
+                <p:remoteCommand name="updateDialogMP" update="mpdialogx"/>
+
+                <p:dialog header="Matching Mirror Plot" 
+                          widgetVar="mirrorDialog" dynamic="true"
+                          modal="true" appendTo="@(body)"                   
+                          onShow="updateDialogMP" cache="false"
+                          width="920" height="500"
+                          hideEffect="explode" resizable="true"
+                          id="mpdialogx">
+                    <h:panelGrid id="mp" style="font-size: 12px;">
+                        <h:inputHidden id="myid" value="#{spectraProcessor.jsonDir}"/>
+                        <h:panelGrid id="itPane" style="border: none">
+                            <div id="mirrorwidget" style="width:100%;" class="html-widget"></div>
+                        </h:panelGrid>
+                        <h:panelGrid style="border: none; width: 45%; margin-left: 25%" columns="5">
+                            <p:commandButton value="SVG" title="Click to download SVG image"
+                                             style="width: 80px;  color:black; background: none; border: none"
+                                             onclick="export_image('svg')"  
+                                             icon="pi pi-download"/>
+
+                            <p:commandButton value="PNG" title="Click to download png image"
+                                             style="width: 80px; color:black; background: none; border: none"
+                                             onclick="export_image('png')"
+                                             icon="pi pi-download"/>
+
+                            <p:commandButton value="Spectrum" title="Click to download refence spectrum (mz + intensity)"
+                                             style="width: 100px; color:black; background: none; border: none;"
+                                             onclick="PrimeFaces.monitorDownload(start, stop);"
+                                             icon="pi pi-download">
+                                <p:fileDownload value="#{spectraProcessor.refSpecTxt}"/>
+                            </p:commandButton>
+
+                            <p:commandButton value="Compound" title="Click to download compound information"
+                                             style="width: 110px; color:black; background: none; border: none"
+                                             onclick="PrimeFaces.monitorDownload(start, stop);"                                                 
+                                             icon="pi pi-download">
+                                <p:fileDownload value="#{spectraProcessor.cmpdInfoTxt}"/>
+                            </p:commandButton>                                
+
+                            <p:commandButton value="Reset" title="Click to reset axes of the interactive image"
+                                             style="width: 80px; color:black; background: none; border: none;"
+                                             onclick="resetAxis()"
+                                             icon="pi pi-replay"/>
+                        </h:panelGrid>
+                    </h:panelGrid>         
+                </p:dialog>
+            </h:form>
+        </h:panelGrid>
+
+        <p:dialog header="Exposome Classification" widgetVar="ExposomeDetails" dynamic="true" modal="true" appendTo="@(body)"
+                  hideEffect="explode" resizable="true" id="exposomedialog">
+            <h:outputText id = "myexposomePane" value="#{spectraProcessor.exposome_details}"/>
+        </p:dialog>
+
+        <p:dialog header="Putative IDs" widgetVar="PeakIDs" dynamic="true" modal="true" appendTo="@(body)"
+                  hideEffect="explode" resizable="true" id="chemicdialog">
+            <h:panelGrid id="chemic" style="font-size: 13px; line-height: 23px; width:500px; padding: 20px;">
+                <p:dataTable var="set" value="#{spectraProcessor.fomula2cmpdSet}" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             style="padding-bottom: 18px">
+                    <p:column headerText="Formulas" style="width:130px; ">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column>  
+                    <p:column headerText="Compounds" style="width:370px;">  
+                        <h:outputText escape="false" value="#{set.members}"/>
+                    </p:column>   
+                </p:dataTable>
+            </h:panelGrid>         
+        </p:dialog>
+
+        <p:dialog header="Total Ion Chromatogram" widgetVar="TIC" dynamic="true" modal="true" appendTo="@(body)" height="450" onShow="updateDialog()"
+                  hideEffect="explode" resizable="true" id="TICdialog">
+            <h:panelGrid id="tic" style="padding:10px; font-size: 12px; width:75%">
+                <h:panelGrid style="text-align: right;">
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('TIC')}" 
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customize the graphics output"
+                                   style = "padding-left: 10px">
+                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                    </p:commandLink>
+                    <p:graphicImage value="#{spectraProcessor.image}" cache="false">
+                        <f:param id = "TICimage" name="filename" value="#{spectraProcessor.ticImgName}" />
+                    </p:graphicImage>
+                </h:panelGrid>
+                <div style = "text-align: center">
+                    The labels marked in the TIC is the corresponding <b>m/z value</b> of the <u>base ion</u> in the peak.
+                </div>
+            </h:panelGrid>         
+        </p:dialog>
+
+        <p:dialog header="Boxplots and EICs" widgetVar="BoxPlotdialog" dynamic="true" modal="true" appendTo="@(body)" height="555" width="980"
+                  hideEffect="explode" resizable="true" onShow="updateDialog()">
+
+            <h:panelGrid id="intensity" style="padding:2px 10px 8px 20px; width:100%; line-height: 23px">
+                <h:form id="xicform">
+                    <h:panelGrid id="eic" columns = "5" style="text-align: right; position: absolute; top:5px; right:50px;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EIC_int')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics of boxplot"
+                                       style = "padding-right: 280px">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>   
+
+                        <h:panelGroup layout="block">
+                            <h:outputLabel value="Plot names " style="font-size: 12px;"/>
+                            <p:selectBooleanCheckbox value="#{spectraProcessor.showlabel}" 
+                                                     title="Show Sample Name in EIC" style="line-height: 18px"/>
+                        </h:panelGroup>
+                        <p:commandLink actionListener="#{spectraProcessor.resetSingleXIC()}" 
+                                       update=":myGraphPane singlexicplot"
+                                       oncomplete="updateSingleXICs()"
+                                       title="Reset the EIC/XIC image"
+                                       style = "padding-left: 10px;">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/reset2.png" style="width: 20px"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EICs')}"
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics of EIC/XIC samples"
+                                       style = "padding-left: 10px;">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:graphicImage id="EICIcon2" url="/resources/images/ui-help.png" alt="help" style = "padding-left: 10px"/>
+                        <p:tooltip for="EICIcon2" styleClass="helpTip" style="width: 320px">
+                            <p>
+                                The box plot and Extracted Ion Chromatograms (EICs/XICs) can be exported as high-resolution images.
+                                Click the "Reset" to clear all EICs and restart from zero.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGrid> 
+
+                    <h:panelGrid id="xicplots" columns="2">
+                        <h:outputText id="xicplot" 
+                                      value="#{spectraProcessor.svgStringBox}" 
+                                      escape="false"/> 
+                        <p:graphicImage id="singlexicplot" style=" color:green; font:20px Impact; padding-left: 20px; padding-top: 5px; text-align: center;"
+                                        value="#{spectraProcessor.singleXICPlot}" 
+                                        cache="false"/>
+                    </h:panelGrid>
+
+                    <p:remoteCommand name="updateXICs"
+                                     process="@this"
+                                     partialSubmit="true" 
+                                     update="xicplot" />
+                    <p:remoteCommand name="updateSingleXICs" update="singlexicplot" />
+                </h:form>
+                <p style="text-align: center">
+                    <u>Mouse over</u> a data point on a boxplot to view its sample name. <u>Double click</u> to show its EIC. 
+                    Clicking different data points will stack their EICs. Click the <u>Reset</u> icon to restart. 
+                </p>
+            </h:panelGrid>  
+            <span class="tip-content">tooltip message</span>
+
+        </p:dialog>
+
+        <p:dialog header="Matching Mirror Plot" widgetVar="mirrorp" dynamic="true" modal="true" appendTo="@(body)" 
+                  width="780" height="560"
+                  hideEffect="explode" resizable="true" id="mpdialog">
+            <h:form id="formr">
+                <h:panelGrid id="mp" style="padding:10px; font-size: 12px; width:75%">
+                    <h:panelGrid style="text-align: right;">
+                        <p:graphicImage value="#{spectraProcessor.image}" cache="false">
+                            <f:param id = "mpimgx" name="filename" value="#{spectraProcessor.mirrorplot_imgNM}" />
+                        </p:graphicImage>
+                    </h:panelGrid>
+                </h:panelGrid>  
+            </h:form>
+        </p:dialog>
+
+        <script type="text/javascript">
+            //showPCA3DScore();
+            //showPCA3DLoading();
+            //initFunctions();
+        </script>
+    </ui:define>
+</ui:composition>

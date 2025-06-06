@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Set parameter', '/Secure/pathinteg/IntegParamView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+
+        <h:form id="formW">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Parameter Setting</h2>
+
+                <h3>Pathway Type</h3>
+                <h:panelGrid cellpadding="8" style="margin-bottom: 10px; padding: 20px; border:none; width: 90%" class="surface-card shadow-1 p-4 text-800"> 
+                    The KEGG pathway was updated in December, 2024 using KEGG API. The integration can occur in two different "universes" defined by <b>metabolic pathways</b> or <b>all pathways</b>. 
+                    Metabolic pathways include pathways containing both metabolites and metabolic genes while
+                    all pathways include both metabolic pathways as well as gene-only pathways (i.e. regulatory pathways).
+                    Users can also perform enrichment analysis for metabolites only using <b>metabolic pathways (metabolite only)</b> 
+                    or for genes only using <u>all pathways (gene only)</u>. 
+
+                    <p:selectOneRadio value="#{integResBean.pathDBOpt}" layout="pageDirection" style="margin-left: 30px; width: 670px">  
+                        <f:selectItem itemLabel="Metabolic pathways (integrated)" itemValue="integ"
+                                      itemDisabled="#{integProcesser.datatype eq 'peak'}"/> 
+                        <f:selectItem itemLabel="All pathways (integrated)" itemValue="all" 
+                                      itemDisabled="#{integProcesser.datatype eq 'peak'}"/> 
+                        <f:selectItem itemLabel="Metabolic pathways (metabolite only)" itemValue="metab" 
+                                      itemDisabled="#{integProcesser.datatype eq 'peak'}"/>
+                        <f:selectItem itemLabel="All pathways (gene only)" itemValue="genetic" 
+                                      itemDisabled="#{integProcesser.datatype eq 'peak'}"/>
+                    </p:selectOneRadio>
+                </h:panelGrid>
+
+                <h3>Algorithm selection</h3>
+                <h:panelGrid cellpadding="8" style="margin-bottom: 10px; padding: 20px; border:none; width: 90%" class="surface-card shadow-1 p-4 text-800"> 
+
+                    The topology analysis evaluates the potential importance of a particular molecule (a node)
+                    based on its <b>position</b> within a pathway. <u>Degree Centrality</u> measures the number of links that connect to a node. 
+                    <u>Betweenness Centrality</u> measures the number of shortest paths from all nodes to all the others that 
+                    pass through a given node. <u>Closeness Centrality</u> measures the overall distance from a given node to all other nodes.
+
+                    <p>
+                        For integration methods, there are two general approaches - <u>tight integration by combining queries</u> in which genes and metabolites 
+                        are pooled into a single query and used to perform enrichment analysis within their "pooled universe" 
+                        or <u>loose integration by combining p values</u> in which enrichment analysis is performed separately for genes and metabolites in their 
+                        "individual universe", and then individual p-values are combined via <b>weighted Z-tests</b>. 
+                        Moreover, there are three options for computing weights. Let's assume the pathway database contains a total of 100 pathways covering a total of 
+                        1000 metabolites and 4000 genes, respectively. Pathway A contains 5 compounds and 45 genes, while pathway B contains 20 compounds and 30 genes.  
+                        <ul>
+                            <li>
+                                <b>Unweighted</b> or equal weights (i.e metabolite: 0.5, gene: 0.5);
+                            </li>
+                            <li>
+                                Weights based on the <b>overall</b> proportion of each omics within the "universe"
+                                (i.e metabolite: 0.2, gene: 0.8 for all pathways); 
+                            </li>
+                            <li>
+                                Weights based on the <b>pathway-level</b> proportion within individual "pathway space"
+                                (i.e. pathway A - metabolite 0.1, gene 0.9; pathway B - metabolite 0.4, gene 0.6)
+                            </li>
+                        </ul>
+                        Note that combing p-values can only be applied to pathways that receive hits from both input types (genes + metabolites). 
+                        For pathways with hits from only one input type, p values calculated from their individual universe will be used. 
+                        In this case, <u>combining p values can be viewed as adjusting the confidence level based on new evidence (i.e. input from another omics layer). 
+                            If no new evidence is available, the current confidence level remains</u>.
+                    </p>
+
+                    <h:panelGrid columns="2" style="margin-left: 30px;">
+                        <h:panelGroup layout="block" style="width: 200px">
+                            <p:outputLabel style="font-weight: bold" value="Enrichment analysis"/>
+                        </h:panelGroup>
+                        <p:selectOneRadio value="#{integResBean.enrichOpt}">   
+                            <f:selectItem itemLabel="Hypergeometric Test" itemValue="hyper"/> 
+                            <f:selectItem itemLabel="Fisher's Exact Test" itemValue="fisher"/> 
+                        </p:selectOneRadio>   
+
+                        <p:outputLabel style="font-weight: bold" value="Topology measure"/>
+                        <p:selectOneRadio value="#{integResBean.topoOpt}">  
+                            <f:selectItem itemLabel="Degree Centrality" itemValue="dc"/> 
+                            <f:selectItem itemLabel="Betweenness Centrality" itemValue="bc"/> 
+                            <f:selectItem itemLabel="Closeness Centrality" itemValue="cc"/> 
+                        </p:selectOneRadio>   
+
+                        <p:outputLabel style="font-weight: bold" value="Integration method"/>
+                        <p:selectOneRadio value="#{integResBean.integOpt}">   
+                            <f:selectItem itemLabel="Combine queries" itemValue="query"
+                                          itemDisabled="#{integProcesser.datatype eq 'peak'}"/> 
+                            <f:selectItem itemLabel="Combine p values (unweighted)" itemValue="pvalu" 
+                                          itemDisabled="#{integProcesser.datatype eq 'peak'}"/> 
+                            <f:selectItem itemLabel="Combine p values (overall)" itemValue="pvalo" 
+                                          itemDisabled="#{integProcesser.datatype eq 'peak'}"/> 
+                            <f:selectItem itemLabel="Combine p values (pathway)" itemValue="pvalp"
+                                          itemDisabled="#{integProcesser.datatype eq 'peak'}"/>                              
+                        </p:selectOneRadio>   
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:panelGrid style="width: 90%; text-align: center; padding-top: 10px; ">
+                    <p:commandButton value="Proceed"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     icon="pi pi-caret-right" 
+                                     action="#{integResBean.doIntegPathwayAnalysis()}"/> 
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
+

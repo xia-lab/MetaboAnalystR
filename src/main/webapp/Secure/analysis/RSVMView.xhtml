@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('SVM')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('SVM', '/Secure/analysis/RSVMView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Recursive Support Vector Machine (R-SVM)</h2>
+            <p>
+                R-SVM uses SVM (with linear kernel) to perform classification recursively using different feature subsets. 
+                Features are selected based on their relative contribution in the classification using cross validation error rates. 
+                The least important features are eliminated in the subsequent steps. This process creates a series of SVM models (levels). 
+
+            </p>
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:90%; border: none; font-size: 13px;">
+                <p:tab title ="Classification">
+                    <p>
+                        The features used by the best model are plotted. LOOCV: leave one out cross-validation. 
+                    </p>
+                    <h:form id="form1">  
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2"  cellpadding="5" style="width: 420px">
+                                <h:outputLabel style="font-weight: bold" value="Validation method:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{classBean.validationOpt}">
+                                    <f:selectItem itemLabel="10-fold CV" itemValue="10" /> 
+                                    <f:selectItem itemLabel="LOOCV" itemValue="LOO" /> 
+                                    <f:selectItem itemLabel="Bootstrap" itemValue="bootstrap" /> 
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <p:commandButton value="Submit" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update=":ac:form1:sumPane  :hisTab:cmdPane" 
+                                             actionListener="#{classBean.svmBn_action()}"/>   
+                        </h:panelGrid>
+
+                        <h:panelGrid id="sumPane" style="padding-top: 20px">
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 40px"
+                                 src="#{sessionBean1.getCurrentImageURL('svm_cls')}" alt="SVMclass"/>
+                        </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Var. Importance">
+                    <h:panelGrid id="impPane" style="padding:20px; width: 100%;">
+                        <p>
+                            Please note : features are ranked by their frequencies being selected in the best classifiers 
+                            (only top 15 will be shown)
+                        </p>
+                        <img onerror='this.style.display="none"' 
+                             style="width:8in; padding-left: 40px"
+                             src="#{sessionBean1.getCurrentImageURL('svm_imp')}" alt="SVMImp"/>
+                    </h:panelGrid> 
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

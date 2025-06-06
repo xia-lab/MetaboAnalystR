@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo"/>
+    <ui:define name="leftpaneout"/> 
+    <ui:define name="content">
+        <p:growl id="msgs" showDetail="true" />
+        <!--
+        <h:form>
+            <h:panelGrid columns="3" style="width:100%; text-align: center">
+                <p:commandButton styleClass="reportBn ui-button-outlined ui-button-help" 
+                                 action="#{downloader.generateReportByModule('NA','html')}" 
+                                 icon="pi pi-sync"
+                                 onclick="PF('statusDialog').show()" 
+                                 style="width: 160px"
+                                 oncomplete="PF('statusDialog').hide()" 
+                                 value="Update Report"
+                                 ajax="false"/>
+
+                <p:commandButton styleClass="reportBn ui-button-outlined ui-button-help"
+                                 icon="pi pi-fw pi-file-pdf"
+                                 style="width: 160px;"
+                                 ajax="false"
+                                 onclick="PrimeFaces.monitorDownload(start, stop)"
+                                 actionListener="#{downloader.generateReport('pdf')}"
+                                 value="PDF Report">
+                    <p:fileDownload value="#{downloader.getAnalysisReport('pdf')}"/>
+                </p:commandButton>
+
+                <p:commandButton styleClass="reportBn ui-button-outlined ui-button-help"
+                                 icon="pi pi-fw pi-images"
+                                 actionListener="#{downloader.generateReport('slides')}"
+                                 style="width: 160px"
+                                 ajax="false"
+                                 onclick="PrimeFaces.monitorDownload(start, stop)"
+                                 value="Slides Report">
+                    <p:fileDownload value="#{downloader.getAnalysisReport('pptx')}"/>
+                </p:commandButton>
+            </h:panelGrid>
+        </h:form>
+        -->
+        <iframe id="iframeId" src="#{downloader.reportPath}" width="100%" height="1000"/>
+    </ui:define>
+    <ui:define name="myfooter"/>
+</ui:composition>

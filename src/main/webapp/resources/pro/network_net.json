@@ -1,0 +1,49 @@
+{
+  "elements": {
+    "nodes": [
+      { "data": { "id": "Data Preparation", "label": "Data Preparation", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "Start", "label": "Start", "color": "#666666",  "size": "10"}, "position": { "x": -5, "y": 0.0 } },
+      { "data": { "id": "List", "label": "List", "size": "10", "color": "#666666" }, "position": { "x": -5, "y": -2 } },
+      { "data": { "id": "Annotation_List", "label": "Annotation", "size": "10", "color": "#666666" }, "position": { "x": -4, "y": -2 } },
+      { "data": { "id": "Table", "label": "Table", "size": "10", "color": "#666666" }, "position": { "x": -5, "y": 2 } },
+      { "data": { "id": "Sanity Check", "label": "Sanity Check", "size": "10", "color": "#666666" }, "position": { "x": -4, "y": 2 } },
+      { "data": { "id": "Annotation_Table", "label": "Annotation", "size": "10", "color": "#666666" }, "position": { "x": -3, "y": 2 } },
+      { "data": { "id": "Filtering", "label": "Filtering", "size": "10", "color": "#666666" }, "position": { "x": -2, "y": 2 } },
+      { "data": { "id": "Normalization", "label": "Normalization", "size": "10", "color": "#666666" }, "position": { "x": -1, "y": 2 } },
+      { "data": { "id": "Network Selection", "label": "Network Selection", "size": "10", "color": "#666666" }, "position": { "x": 0, "y": 0 } },
+      { "data": { "id": "KEGG network", "label": "KEGG network", "size": "10", "color": "#666666" }, "position": { "x": 1, "y": 0 } },
+      { "data": { "id": "Network Builder_metabo_phenotypes", "label": "Network Builder", "size": "10", "color": "#666666" }, "position": { "x": 2, "y": 0 } },
+      { "data": { "id": "Network Viewer_metabo_phenotypes", "label": "Metabolite-Disease", "size": "10", "color": "#666666" }, "position": { "x": 3, "y": 0 } },
+      { "data": { "id": "Network Builder_gene_metabolites", "label": "Network Builder", "size": "10", "color": "#666666" }, "position": { "x": 4, "y": 0 } },
+      { "data": { "id": "Network Viewer_gene_metabolites", "label": "Gene-Metabolite", "size": "10", "color": "#666666" }, "position": { "x": 5, "y": 0 } },
+      { "data": { "id": "Network Builder_metabo_metabolites", "label": "Network Builder", "size": "10", "color": "#666666" }, "position": { "x": 6, "y": 0 } },
+      { "data": { "id": "Network Viewer_metabo_metabolites", "label": "Metabolite-Metabolite", "size": "10", "color": "#666666" }, "position": { "x": 7, "y": 0 } },
+      { "data": { "id": "Network Builder_global", "label": "Network Builder", "size": "10", "color": "#666666" }, "position": { "x": 8, "y": 0 } },
+      { "data": { "id": "Network Viewer_global", "label": "Metabolite-Gene-Disease", "size": "10", "color": "#666666" }, "position": { "x": 9, "y": 0 } },
+      { "data": { "id": "Network Builder_dspc", "label": "Network Builder", "size": "10", "color": "#666666" }, "position": { "x": 10, "y": 0 } },
+      { "data": { "id": "Network Viewer_dspc", "label": "DSPC Network", "size": "10", "color": "#666666" }, "position": { "x": 11, "y": 0 } }
+    ],
+    "edges": [
+      { "data": { "id": "e01", "source": "Data Preparation", "target": "Start" } },
+      { "data": { "id": "e0", "source": "Start", "target": "List" } },
+      { "data": { "id": "e1", "source": "Start", "target": "Table" } },
+      { "data": { "id": "e2", "source": "List", "target": "Annotation_List" } },
+      { "data": { "id": "e4", "source": "Table", "target": "Sanity Check" } },
+      { "data": { "id": "e5", "source": "Sanity Check", "target": "Annotation_Table" } },
+      { "data": { "id": "e6", "source": "Annotation_Table", "target": "Filtering" } },
+      { "data": { "id": "e7", "source": "Filtering", "target": "Normalization" } },
+      { "data": { "id": "e8", "source": "Network Selection", "target": "KEGG network" } },
+      { "data": { "id": "e9", "source": "Network Selection", "target": "Network Builder_metabo_phenotypes" } },
+      { "data": { "id": "e10", "source": "Network Builder_metabo_phenotypes", "target": "Network Viewer_metabo_phenotypes" } },
+      { "data": { "id": "e11", "source": "Network Selection", "target": "Network Builder_gene_metabolites" } },
+      { "data": { "id": "e12", "source": "Network Builder_gene_metabolites", "target": "Network Viewer_gene_metabolites" } },
+      { "data": { "id": "e13", "source": "Network Selection", "target": "Network Builder_metabo_metabolites" } },
+      { "data": { "id": "e14", "source": "Network Builder_metabo_metabolites", "target": "Network Viewer_metabo_metabolites" } },
+      { "data": { "id": "e15", "source": "Network Selection", "target": "Network Builder_global" } },
+      { "data": { "id": "e16", "source": "Network Builder_global", "target": "Network Viewer_global" } },
+      { "data": { "id": "e17", "source": "Annotation_List", "target": "Network Selection" } },
+      { "data": { "id": "e19", "source": "Network Builder_dspc", "target": "Network Viewer_dspc" } },
+      { "data": { "id": "e20", "source": "Normalization", "target": "Network Builder_dspc" } }
+    ]
+  }
+}

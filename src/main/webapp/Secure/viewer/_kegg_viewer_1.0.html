@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <title>MetaboAnalyst</title>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"/>   
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"/>        
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/spectrum.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.min.js"></script>      
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.snapshot.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.canvas.labels.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.canvas.edges.labels.def.metabo.js"></script> 
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.canvas.extremities.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.misc.bindEvents.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.utils.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/shape-library.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.customShapes.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/settings.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.svg.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.curve.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.labels.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.nodes.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.exporters.svg.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/meta.genome.net.v1.25.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/kegg_network.utils.v1.02.js"></script>     
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/metabonet_kegg_report.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>   
+    </head>
+    <body class="easyui-layout">  
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px; background-color:transparent">
+                Processing..... please wait ....
+            </h2>
+        </div>
+        <div data-options="region:'north'" style="height: 40px; padding-bottom: 2px">
+            <div id="options" style="padding-bottom: 2px">  
+                <table cellpadding="5px 5px 2px 5px">
+                    <tr>
+                        <td>
+                            <label for="highlightOpt">View style:</label>
+                            <select id="highlightOpt">
+                                <option value="kegg">KEGG style</option>
+                                <option value="queries">All mapped queries</option>
+                                <option value="expr">Expression</option>
+                                <option value="plain">Plain</option>
+                                <option value="reset">Reset</option>
+                            </select>
+                        </td>
+                        <td>
+                            <label for="backgroundOpt">Background:</label>
+                            <select id="backgroundOpt">
+                                <option value="#222222">Black</option>
+                                <option value="white">White</option>
+                            </select> 
+                        </td>
+                        <td>
+                            <label for="pathnameOpt">Pathway name:</label>
+                            <select id="pathnameOpt">
+                                <option value="hide">Hide</option>
+                                <option value="show">Show</option>
+                            </select> 
+                        </td>
+                        <td>
+                            <label for="cmpdnameOpt">Compound name:</label>
+                            <select id="cmpdnameOpt">
+                                <option value="show">Show</option>
+                                <option value="hide">Hide</option>
+                            </select> 
+                        </td> 
+                        <td>
+                            <label for="genenameOpt">Gene name:</label>
+                            <select id="genenameOpt">
+                                <option value="show">Show</option>
+                                <option value="hide">Hide</option>
+                            </select> 
+                        </td> 
+                        <td>
+                            <label for="exportOpt">Download:</label>
+                            <select id="exportOpt">
+                                <option value="NA">--Please Select--</option>
+                                <option value="png">PNG Image</option>
+                                <option value="svg">SVG Format</option>
+                            </select> 
+                        </td>
+                        <td>
+                            <label for="hightlightStroke">Highlight:</label>
+                            <a href="#" id="colorBn" class="easyui-tooltip" title="Set highlight color">
+                                <input type='text' id="custom" style="height:25px; width:25px;"/>
+                            </a>
+                        </td>
+                        <td>
+                            &nbsp;&nbsp;
+                            <a href="#" class="easyui-tooltip" data-options="
+                               content: $('<div></div>'),
+                               position: 'bottom',
+                               onUpdate: function(cc){
+                               cc.panel({
+                               width: 400,
+                               height: 'auto',
+                               border: false,
+                               href: './tooltip/_help_mummichog.html'
+                               });
+                               }
+                               ">
+                                <img src="../../resources/images/ui-help.png" alt="Help Info"/>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div> 
+            <div style="float: right; padding-right: 20px;">
+
+                <table border="0px" style="text-align: center;">
+                    <tr style="height:32px; padding: 5px"> 
+                        <td style="width:120px; margin-right: 10px"> 
+                            <a href="#" class="easyui-linkbutton" id="reportBn">
+                                Update Report
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="resetBn" class="easyui-tooltip" title="Reset to default view">
+                                <img style="width: 22px; height:21px" border="0" src="../../resources/images/reset-64.png" alt="Reset"/>
+                            </a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="autofitBn" class="easyui-tooltip" title="Auto fit">
+                                <img style="width: 22px; height:20px" border="0" src="../../resources/images/fit.png" alt="Autofit"/></a>
+                        </td>
+                        <!--
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="zoomInBn">
+                                <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomin.png" alt="Zoom in"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="zoomOutBn">
+                                <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomout.png" alt="Zoom out"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="moveUpBn">
+                                <img style="width: 20px; height:20px" border="0" src="../../resources/images/arrow_up.png" alt="Up"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="moveDownBn">
+                                <img style="width: 20px; height:22px" border="0" src="../../resources/images/arrow_down.png" alt="Down"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="moveLeftBn">
+                                <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_left.png" alt="Left"/></a>
+                        </td>
+                        <td style="width:36px; border: 1px black solid; background:#c8d8ec;"> 
+                            <a href="#" id="moveRightBn">
+                                <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_right.png" alt="Right"/></a>
+                        </td>
+                        -->
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div data-options="region:'west',split:true, collapsible:false" style="width:340px;">
+            <div id="westlayoutid" class="easyui-layout" data-options="fit:true">
+                <div data-options="region:'center',split:false, tools:'#funtip', collapsible:false">
+                    <table id="dg2" class="easyui-datagrid" toolbar="#tb1" 
+                           data-options="border:false,fit:true,checkOnSelect:true,selectOnCheck:true, fitColumns:true">  
+                        <thead>  
+                            <tr>  
+                                <th field="ck" checkbox="true"></th>
+                                <th data-options="field:'pathname',width:150">Name</th>  
+                                <th data-options="field:'hit',width:40">Hits</th>  
+                                <th data-options="field:'pval',width:60">P-value</th> 
+                                <th data-options="field:'color',width:40">Color</th> 
+                            </tr>  
+                        </thead>  
+                    </table> 
+                    <div id="funtip">
+                        <a href="#" class="easyui-tooltip" title="Perform over representation analysis">
+                            <img src="../../resources/images/ui-help.png"/>
+                        </a>
+                    </div>
+                </div> 
+                <div data-options="region:'south',split:false,title:'Hits', border:false, collapsible:false" style="height:300px;">
+                    <table id="dg3" class="easyui-datagrid" toolbar="#tb2" 
+                           data-options="border:false,fit:true,checkOnSelect:true,selectOnCheck:true, fitColumns:true">  
+                        <thead>  
+                            <tr>  
+                                <th field="ck" checkbox="true"></th>
+                                <th data-options="field:'idLink',width:100">ID</th>  
+                                <th data-options="field:'name',width:150">Name</th>  
+                                <th data-options="field:'exp',width:60">Expr.</th> 
+                            </tr>  
+                        </thead>  
+                    </table>
+                </div>
+            </div>
+        </div>    
+        <div id="networkspace" data-options="region:'center', split: false, collapsible:false" style="background: #222">
+            <div id="network-parent" class="sigma-parent">
+                <div class="sigma-container" id="networkview">
+                    <canvas id="sigma_edges_1" class="sigma_edges_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_nodes_1" class="sigma_nodes_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_labels_1" class="sigma_labels_canvas" style="position: absolute;"></canvas>
+                    <canvas id="sigma_hover_1" class="sigma_hover_canvas" style="position: absolute;"></canvas>
+                    <div id="sigma_monitor_1" class="sigma_monitor_div"  style="position: absolute;"></div>
+                    <canvas id="sigma_mouse_1" class="sigma_mouse_canvas"  style="position: absolute;"></canvas>
+                </div>
+            </div>
+        </div>
+        <canvas id="canvas2image">
+            Your browser does not support the canvas element.
+        </canvas>
+        <div id="pngdialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:630px;height:400px;padding:5px">  
+            Right click the PNG image to save as your preferred name
+            <image id="downloadimage"></image>  
+        </div> 
+        <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+            <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+            </ul>
+        </div>
+        <div id="download" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:300px;height:120px;padding:20px; font-size: 13px">  
+            <div id="download-content"></div>
+        </div> 
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:$('#queryhighlighter').dialog('close')">OK</a>
+        </div>
+        <div id="faqdialog" class="easyui-dialog" title="FAQs" data-options="resizable:true, closed:true, modal:false" 
+             style="width:800px;height:600px;padding:5px">   
+        </div> 
+        <div id="tutdialog" class="easyui-dialog" title="Tutorials" data-options="resizable:true, closed:true, modal:false"  
+             style="width:800px;height:600px;padding:5px">   
+        </div> 
+        <script type="text/javascript">
+            $(document).ready(function () {
+                setTimeout(initKEGGViewer(), 2000);
+
+                $(window).bind('resize', function () {
+                    setTimeout(resizeNetwork(), 300);
+                });
+
+                updateTheme();
+                initThemeSwitch();
+            });
+        </script>
+    </body>  
+</html>

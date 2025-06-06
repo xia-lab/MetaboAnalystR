@@ -1,0 +1,427 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{fireBaseController.initUserProjects()}"></f:event> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Projects', '/Secure/xialabpro/ProjectView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="mystyle">    
+        <style>
+            .warnHighlight {
+                color: red !important;
+            }
+
+            .button-panel {
+                width: 100%;
+                padding: 2px;
+                font-size: 13px;
+                text-align:center;
+            }
+
+
+            .button-panel p:commandButton {
+                margin: 0 20px;  /* Adjust the margin as needed */
+            }
+
+            /* Narrow column */
+            .narrow-column {
+                width: 35px; /* Adjust width as needed */
+                text-align: right;
+            }
+
+            /* Wide column */
+            .wide-column {
+                text-align: left;
+            }
+
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+
+            <p:growl id="msgs" showDetail="true" />
+
+            <h2>
+                Project Management
+            </h2>
+            <p>
+                Your saved projects are shown below. 
+                <ul>
+                    <li>
+                        Click <b>Project ID</b> to view / edit the details of the project;
+                    </li>
+                    <li>
+                        Click <b>Load</b> to resume a saved project to continue analysis; Or click <b>Delete</b> to remove the project
+                    </li>
+                    <li>
+                        Each project is associated with a live analysis report. Click <b>Report</b> to view or update the analysis report
+                    </li>
+                    <li>
+                        Each project is associated with a workflow. You can analyze new data use a project-associated workflow. To do this, 
+                        click the corresponding icon in <b>Workflow</b> column to extract and save the workflow into the workflow management page, 
+                        and start using the workflow. 
+                    </li>
+                </ul>
+            </p>
+
+            <h:form id="projForm">
+                <p:outputLabel class="text-800 text-xl" value="#{fireProjectBean.checkProjectInfo()}" escape="false"/>  
+                <p:dataTable id="checkboxDT" 
+                             var="project" 
+                             paginator="true"
+                             rows="25" rowsPerPageTemplate="25,50,100" 
+                             paginatorPosition="bottom"
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{fireProjectBean.projectTable}" 
+                             sortBy="#{project.id}"
+                             rowKey="#{project.id}"
+                             editable="true">
+                             <!--selection="#{fireProjectBean.selectedProject}" -->
+
+                    <p:column headerText="Project ID" style="text-align:center;">
+                        <p:commandLink value="#{project.id}" 
+                                       oncomplete="PF('projectEditDialog').show();"
+                                       update=":projForm :editDialogForm">
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+
+                    </p:column>
+                    <p:column headerText="Load" style="text-align:center;">  
+                        <p:commandLink value="" 
+                                       id="loadBn"
+                                       action="#{fireProjectBean.loadProjectOrShowDialog()}"
+                                       update=":projForm :switchDialogForm :switchServerDialogForm"
+                                       onclick="PF('statusDialog').show();"
+                                       oncomplete="PF('statusDialog').hide();"
+                                       >
+                            <i class="pi pi-arrow-circle-right" style="font-size: 1.4rem; color: orangered"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.projectToLoad}" />
+                        </p:commandLink>
+                    </p:column>
+                    <p:column headerText="Title" width="180"> 
+                        <h:outputText value="#{project.title}" />
+                    </p:column>
+
+                    <p:column headerText="Type" width="180">
+                        <h:outputText value="#{project.readableType}" />
+                    </p:column>
+
+                    <p:column headerText="Resume" style="text-align:center;">  
+                        <p:commandLink value="" 
+                                       id="resumeBn"
+                                       action="#{fireProjectBean.settingProceedType('resume')}"
+                                       update=":projForm"
+                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                       onclick="PF('statusDialog').show();"
+                                       oncomplete="PF('statusDialog').hide();"
+                                       >
+                            <i class="pi pi-chevron-circle-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+
+                    <p:column headerText="View" style="text-align:center;">  
+                        <p:commandLink value="" 
+                                       id="viewBn"
+                                       action="#{fireProjectBean.settingProceedType('view')}"
+                                       update=":projForm"
+                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                       onclick="PF('statusDialog').show();"
+                                       oncomplete="PF('statusDialog').hide();"
+                                       >
+                            <i class="pi pi-folder" style="font-size: 1.4rem; color: #2196F3"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+                    <p:column headerText="Report" style="text-align:center;">  
+                        <p:commandLink value=""
+                                       id="reportBn"
+                                       action="#{fireProjectBean.settingProceedType('report')}"
+                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                       onclick="PF('statusDialog').show();"
+                                       oncomplete="PF('statusDialog').hide();"
+                                       >
+                            <i class="pi pi-file" style="font-size: 1.4rem; color: #2196F3"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+                    <!--
+                    <p:column headerText="Transfer" style="text-align:center;" rendered="#{fireUserBean.adminUserBool}">  
+                        <p:commandLink value=""
+                                       id="transferBn"
+                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                       onclick="PF('transferDialog').show();"
+                                       oncomplete="PF('statusDialog').hide();"
+                                       >
+                            <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+                    -->
+                    <p:column headerText="Workflow" style="text-align:center;">  
+                        <p:commandLink value=""
+                                       id="transferBn"
+                                       onclick="PF('workflowDialog').show();"
+                                       >
+                            <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+                    <p:column headerText="Delete" style="text-align:center;"> 
+                        <p:commandLink value="" id="delActBn" onclick="PF('projectDelDialog').show();">
+                            <i class="pi pi-trash" style="font-size: 1.4rem; color: orangered"></i>
+                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                        </p:commandLink>
+                    </p:column>
+
+                    <p:column headerText="Last Updated" sortBy="#{project.creationDate}">
+                        <h:outputText value="#{project.creationDate}" />
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </h:panelGrid>
+
+        <p:dialog widgetVar="projectDelDialog" dynamic="true" modal="true" 
+                  header="Delete Project"
+                  appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="fade" resizable="true"> 
+
+            <h:form>
+                <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 14px">
+                    <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            <i class="pi pi-exclamation-circle" style="font-size:48px;color:red"></i>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            Once deleted, a project cannot be recovered. Are you sure to delete this project?
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="text-align: center; width:100%;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('projectDelDialog').hide()"/>   
+                        <p:commandButton value="Yes, delete" style="width:120px;"
+                                         id="delBn"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{fireProjectBean.callProjectDelete()}"
+                                         ajax="false"
+                                         update=":projForm:checkboxDT"
+                                         oncomplete ="PF('statusDialog').hide(); PF('projectDelDialog').hide()"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Update Project Info" widgetVar="projectEditDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:form id="editDialogForm"> 
+                <h:panelGrid style="padding:10px; width:420px;"> 
+                    <h:panelGrid style="width: 100%;" class="surface-card shadow-1 p-4 text-800">
+                        <p:outputLabel for="title" value="Title" style="font-weight: bold;"/>
+                        <p:inputText id="title" value="#{fireProjectBean.selectedProject.title}" style="width: 100%"/>
+
+                        <p:outputLabel for="description" value="Description"  style="font-weight: bold;"/>
+                        <p:inputTextarea id="description" value="#{fireProjectBean.selectedProject.description}" 
+                                         rows="8" cols="48"/>
+
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="width:100%; text-align: center">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('volcanoDialog').hide()"/>   
+                        <p:commandButton id="facBn" value="Update" style="width:80px" ajax="false"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{fireProjectBean.updateProjectInfo}"
+                                         styleClass="procBn"
+                                         /> 
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog modal="true" widgetVar="Manager Entry" 
+                  style="width: 400px; height:400px;" 
+                  appendTo="@(body)" header="Administrator Entry:"
+                  draggable="false" closable="true" resizable="false"> 
+            <h:form id="formkill">
+
+                <h:panelGrid>
+                    <h:panelGrid columns="2" style="width:300px; padding-bottom:50px; margin-left: 70px;">
+                        <h:outputLabel value="Password:"/>
+                        <p:password value="#{JobManagerBean.killPassword}" style="width:120px" />    
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:400px; text-align: center;">
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('Manager Entry').hide();"
+                                         />
+                        <p:commandButton value="Confirm"
+                                         action="#{JobManagerBean.enterManager()}"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Switch Project Dialog"
+                  widgetVar="switchProjDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="580"
+                  height="180"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form id="switchDialogForm">
+                <h:panelGrid  style="width:500px; line-height: 150%; padding: 2px; font-size: 13px">
+                    <p>
+                        <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                        <div>You are about to access another project: <b>Project #{fireProjectBean.projectToLoad.getId()}</b>. Your current project's progress may be lost!</div>
+                    </p>
+                    <p>Please choose one of the following options:</p>
+                </h:panelGrid>
+                <h:panelGrid columns="2" styleClass="button-panel" style="width:100%; text-align:center">
+                    <p:commandButton style="width:100px; font-size: 13px;" value="Cancel"
+                                     onclick="PF('switchProjDialog').hide()"/>
+
+                    <p:commandButton style="width:100px; font-size: 13px;" value="Proceed"
+                                     onclick="PF('switchProjDialog').hide();PF('statusDialog').show();"
+                                     action="#{fireProjectBean.settingProceedType('load')}"
+                                     update=":projForm"
+                                     oncomplete ="PF('statusDialog').hide();"/>
+                </h:panelGrid>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Switch Server Dialog"
+                  widgetVar="switchServerDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="580"
+                  height="180"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form id="switchServerDialogForm">
+                <h:panelGrid  style="width:500px; line-height: 150%; padding: 2px; font-size: 13px">
+                    <p>
+                        <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                        <div>You are about to access a project located on another server: <b>Project #{fireProjectBean.projectToLoad.getId()}</b>. Your current project's progress may be lost and this may take a while!</div>
+                    </p>
+                    <p>Please choose one of the following options:</p>
+                </h:panelGrid>
+                <h:panelGrid columns="2" styleClass="button-panel" style="width:100%; text-align:center">
+                    <p:commandButton style="width:100px; font-size: 13px;" value="Cancel"
+                                     onclick="PF('switchServerDialog').hide()"/>
+
+                    <p:commandButton style="width:100px; font-size: 13px;" value="Proceed"
+                                     onclick="PF('switchServerDialog').hide();PF('statusDialog').show();"
+                                     action="#{fireProjectBean.settingProceedType('load')}"
+                                     oncomplete="PF('statusDialog').hide();"
+                                     update=":projForm" />
+                </h:panelGrid>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="You are about to log off!"
+                  widgetVar="logoutProjDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="580"
+                  height="180"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid  style="width:500px; line-height: 150%; padding: 2px; font-size: 13px">
+                    <p>
+                        <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                        <div>You are about to log off. Your current progress will be save automatically! If you want to modify any settings, welcome back!</div>
+                    </p>
+                    <p>Please choose one of the following options:</p>
+                </h:panelGrid>
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
+                                 onclick="PF('logoutProjDialog').hide();PF('statusDialog').show();"
+                                 action="#{projCtrl.saveProject()}"
+                                 oncomplete ="PF('statusDialog').hide();"/>
+
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20px" value="Keep staying here"
+                                 onclick="PF('logoutProjDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Transfer Project" widgetVar="transferDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:form id="transferForm"> 
+                <h:panelGrid style="padding-left:20px; width:350px; height:120px;"> 
+                    <h:panelGrid columns="2" style="width: 360px">
+                        <p:outputLabel for="title" value="Destination Email" style="font-weight: bold;"/>
+                        <p:inputText id="title" value="#{fireProjectBean.destEmail}" style="width: 209px"/>
+
+
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="padding-left:20px; width:350px;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('volcanoDialog').hide()"/>   
+                        <p:commandButton id="facBn" value="Update" style="width:80px" ajax="false"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{fireProjectBean.transferProject}"
+                                         styleClass="procBn"
+                                         /> 
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Start Workflow based on selected project" widgetVar="workflowDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:form id="workflowForm"> 
+                <h:panelGrid style="padding-left:20px; width:350px; height:120px;"> 
+                    <h:panelGrid columns="1" style="width: 360px">
+                        <p>
+                            You are about to start an automated workflow based on the template of selected project: #{fireProjectBean.selectedProject.id}
+                        </p>
+                        <p>
+                            You can choose to use parameters from your project or default ones.
+                        </p>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="padding-left:20px; width:350px;">
+                        <h:panelGroup layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Parameters:"/> <br/>
+                        </h:panelGroup>
+                        <p:selectOneRadio layout="pageDirection" value="#{workflowBean.reloadingParameters}">
+                            <f:selectItem itemLabel="Saved" itemValue="saved" /> 
+                            <f:selectItem itemLabel="Default" itemValue="default" /> 
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="padding-left:20px; width:350px;">
+                        <p:commandButton value="Cancel" 
+                                         onclick="PF('workflowDialog').hide()"/>   
+                        <p:commandButton value="Confirm" style="width:80px" ajax="false"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{diagramView.initWorkflowBasedOnProject}"
+                                         styleClass="procBn"
+                                         /> 
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

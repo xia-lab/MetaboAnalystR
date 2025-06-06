@@ -1,0 +1,525 @@
+{
+    "nodes": [{
+            "id": "MetaboAnalyst",
+            "label": "MetaboAnalyst",
+            "x": "-8",
+            "y": " 0.0",
+            "size": "40",
+            "color": "#ffffff",
+            "angle": 30,
+            "type": "image",
+            "url": ".../resources/images/met/ma6_logo.png",
+            "anchor": "bottom"
+        }, {
+            "id": "Spectra Processing",
+            "label": "Spectra Processing",
+            "x": "-6",
+            "y": " 7.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Untargeted Metabolomics",
+            "label": "Untargeted Metabolomics",
+            "x": "-7",
+            "y": " 4.0",
+            "size": "20",
+            "color": "#ffffff",
+            "angle": 30,
+            "type": "image",
+            "url": ".../resources/images/met/line-chart.svg",
+            "anchor": "bottom"
+        }, {
+            "id": "Peak Annotation",
+            "label": "Peak Annotation",
+            "x": "-6",
+            "y": " 6.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Functional Analysis",
+            "label": "Functional Analysis",
+            "x": "-6",
+            "y": " 5.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Functional Meta-Analysis",
+            "label": "Functional Meta-Analysis",
+            "x": "-6",
+            "y": " 4.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Generic Format",
+            "label": "Generic Format",
+            "x": "-7",
+            "y": " 0.0",
+            "size": "20",
+            "color": "#ffffff",
+            "angle": 30,
+            "type": "image",
+            "url": ".../resources/images/met/copy.svg",
+            "anchor": "bottom"
+        }, {
+            "id": "Statistical Analysis",
+            "label": "Statistical Analysis",
+            "x": "-6",
+            "y": " 2.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Data Processing",
+            "label": "Data Processing",
+            "x": "-5",
+            "y": " 2.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Filtering",
+            "label": "Filtering",
+            "x": "-4",
+            "y": " 2.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Normalization",
+            "label": "Normalization",
+            "x": "-3",
+            "y": " 2.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Visual Analytics",
+            "label": "Visual Analytics",
+            "x": "-2",
+            "y": " 2.0",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "Univariate Analysis",
+            "label": "Univariate Analysis",
+            "x": "-1",
+            "y": " 9.6",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "Fold Change",
+            "label": "Fold Change",
+            "x": " 0",
+            "y": "12.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "T-test",
+            "label": "T-test",
+            "x": " 0",
+            "y": "11.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Volcano",
+            "label": "Volcano",
+            "x": " 0",
+            "y": "10.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "ANOVA",
+            "label": "ANOVA",
+            "x": " 0",
+            "y": " 9.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Correlation Heatmaps",
+            "label": "Correlation Heatmaps",
+            "x": " 0",
+            "y": " 8.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pattern Search",
+            "label": "Pattern Search",
+            "x": " 0",
+            "y": " 7.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Correlation Networks (DSPC)",
+            "label": "Correlation Networks (DSPC)",
+            "x": " 0",
+            "y": " 6.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Advanced Significance Analysis",
+            "label": "Advanced Significance Analysis",
+            "x": "-1",
+            "y": " 5.1",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "SAM",
+            "label": "SAM",
+            "x": " 0",
+            "y": " 5.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "EBAM",
+            "label": "EBAM",
+            "x": " 0",
+            "y": " 4.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Chemometrics Analysis",
+            "label": "Chemometrics Analysis",
+            "x": "-1",
+            "y": " 2.1",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "PCA",
+            "label": "PCA",
+            "x": " 0",
+            "y": " 3.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "PLSDA",
+            "label": "PLSDA",
+            "x": " 0",
+            "y": " 2.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "sPLSDA",
+            "label": "sPLSDA",
+            "x": " 0",
+            "y": " 1.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "OrthoPLSDA",
+            "label": "OrthoPLSDA",
+            "x": " 0",
+            "y": " 0.6",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Cluster Analysis",
+            "label": "Cluster Analysis",
+            "x": "-1",
+            "y": "-1.9",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "Dendrogram",
+            "label": "Dendrogram",
+            "x": " 0",
+            "y": "-0.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Heatmaps",
+            "label": "Heatmaps",
+            "x": " 0",
+            "y": "-1.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "K-means",
+            "label": "K-means",
+            "x": " 0",
+            "y": "-2.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SOM",
+            "label": "SOM",
+            "x": " 0",
+            "y": "-3.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Classification and Feature Selection",
+            "label": "Classification and Feature Selection",
+            "x": "-1",
+            "y": "-4.9",
+            "size": "10",
+            "color": "#666666",
+            "anchor":"bottom"
+        }, {
+            "id": "Random Forest",
+            "label": "Random Forest",
+            "x": " 0",
+            "y": "-4.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "SVM",
+            "label": "SVM",
+            "x": " 0",
+            "y": "-5.4",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Multifactor Statistical Analysis",
+            "label": "Multifactor Statistical Analysis",
+            "x": "-6",
+            "y": " 1.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Biomarker Analysis",
+            "label": "Biomarker Analysis",
+            "x": "-6",
+            "y": " 0.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Statistical Meta-analysis",
+            "label": "Statistical Meta-analysis",
+            "x": "-6",
+            "y": "-1.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Dose Response Analysis",
+            "label": "Dose Response Analysis",
+            "x": "-6",
+            "y": "-2.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Targeted Metabolomics",
+            "label": "Targeted Metabolomics",
+            "x": "-7",
+            "y": "-4.0",
+            "size": "20",
+            "color": "#ffffff",
+            "angle": 30,
+            "type": "image",
+            "url": ".../resources/images/met/list.svg",
+            "anchor": "bottom"
+        }, {
+            "id": "Enrichment Analysis",
+            "label": "Enrichment Analysis",
+            "x": "-6",
+            "y": "-3.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Pathway Analysis",
+            "label": "Pathway Analysis",
+            "x": "-6",
+            "y": "-4.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Network Analysis",
+            "label": "Network Analysis",
+            "x": "-6",
+            "y": "-5.0",
+            "size": "10",
+            "color": "#666666"
+        }, {
+            "id": "Causal Analysis",
+            "label": "Causal Analysis",
+            "x": "-6",
+            "y": "-6.0",
+            "size": "10",
+            "color": "#666666"
+        }],
+    "edges": [{
+            "id": "e1",
+            "source": "MetaboAnalyst",
+            "target": "Untargeted Metabolomics"
+        }, {
+            "id": "e2",
+            "source": "Untargeted Metabolomics",
+            "target": "Spectra Processing"
+        }, {
+            "id": "e3",
+            "source": "MetaboAnalyst",
+            "target": "Untargeted Metabolomics"
+        }, {
+            "id": "e4",
+            "source": "Untargeted Metabolomics",
+            "target": "Peak Annotation"
+        }, {
+            "id": "e5",
+            "source": "Untargeted Metabolomics",
+            "target": "Functional Analysis"
+        }, {
+            "id": "e6",
+            "source": "Untargeted Metabolomics",
+            "target": "Functional Meta-Analysis"
+        }, {
+            "id": "e7",
+            "source": "MetaboAnalyst",
+            "target": "Generic Format"
+        }, {
+            "id": "e8",
+            "source": "Generic Format",
+            "target": "Statistical Analysis"
+        }, {
+            "id": "e9",
+            "source": "Statistical Analysis",
+            "target": "Data Processing"
+        }, {
+            "id": "e10",
+            "source": "Data Processing",
+            "target": "Filtering"
+        }, {
+            "id": "e11",
+            "source": "Filtering",
+            "target": "Normalization"
+        }, {
+            "id": "e12",
+            "source": "Normalization",
+            "target": "Visual Analytics"
+        }, {
+            "id": "e13",
+            "source": "Visual Analytics",
+            "target": "Univariate Analysis"
+        }, {
+            "id": "e14",
+            "source": "Univariate Analysis",
+            "target": "Fold Change"
+        }, {
+            "id": "e15",
+            "source": "Univariate Analysis",
+            "target": "T-test"
+        }, {
+            "id": "e16",
+            "source": "Univariate Analysis",
+            "target": "Volcano"
+        }, {
+            "id": "e17",
+            "source": "Univariate Analysis",
+            "target": "ANOVA"
+        }, {
+            "id": "e18",
+            "source": "Univariate Analysis",
+            "target": "Correlation Heatmaps"
+        }, {
+            "id": "e19",
+            "source": "Univariate Analysis",
+            "target": "Pattern Search"
+        }, {
+            "id": "e20",
+            "source": "Univariate Analysis",
+            "target": "Correlation Networks (DSPC)"
+        }, {
+            "id": "e21",
+            "source": "Visual Analytics",
+            "target": "Advanced Significance Analysis"
+        }, {
+            "id": "e22",
+            "source": "Advanced Significance Analysis",
+            "target": "SAM"
+        }, {
+            "id": "e23",
+            "source": "Advanced Significance Analysis",
+            "target": "EBAM"
+        }, {
+            "id": "e24",
+            "source": "Visual Analytics",
+            "target": "Chemometrics Analysis"
+        }, {
+            "id": "e25",
+            "source": "Chemometrics Analysis",
+            "target": "PCA"
+        }, {
+            "id": "e26",
+            "source": "Chemometrics Analysis",
+            "target": "PLSDA"
+        }, {
+            "id": "e27",
+            "source": "Chemometrics Analysis",
+            "target": "sPLSDA"
+        }, {
+            "id": "e28",
+            "source": "Chemometrics Analysis",
+            "target": "OrthoPLSDA"
+        }, {
+            "id": "e29",
+            "source": "Visual Analytics",
+            "target": "Cluster Analysis"
+        }, {
+            "id": "e30",
+            "source": "Cluster Analysis",
+            "target": "Dendrogram"
+        }, {
+            "id": "e31",
+            "source": "Cluster Analysis",
+            "target": "Heatmaps"
+        }, {
+            "id": "e32",
+            "source": "Cluster Analysis",
+            "target": "K-means"
+        }, {
+            "id": "e33",
+            "source": "Cluster Analysis",
+            "target": "SOM"
+        }, {
+            "id": "e34",
+            "source": "Visual Analytics",
+            "target": "Classification and Feature Selection"
+        }, {
+            "id": "e35",
+            "source": "Classification and Feature Selection",
+            "target": "Random Forest"
+        }, {
+            "id": "e36",
+            "source": "Classification and Feature Selection",
+            "target": "SVM"
+        }, {
+            "id": "e37",
+            "source": "Generic Format",
+            "target": "Multifactor Statistical Analysis"
+        }, {
+            "id": "e38",
+            "source": "Generic Format",
+            "target": "Biomarker Analysis"
+        }, {
+            "id": "e39",
+            "source": "Generic Format",
+            "target": "Statistical Meta-analysis"
+        }, {
+            "id": "e40",
+            "source": "Generic Format",
+            "target": "Dose Response Analysis"
+        }, {
+            "id": "e41",
+            "source": "MetaboAnalyst",
+            "target": "Targeted Metabolomics"
+        }, {
+            "id": "e42",
+            "source": "Targeted Metabolomics",
+            "target": "Enrichment Analysis"
+        }, {
+            "id": "e43",
+            "source": "Targeted Metabolomics",
+            "target": "Pathway Analysis"
+        }, {
+            "id": "e44",
+            "source": "Targeted Metabolomics",
+            "target": "Network Analysis"
+        }, {
+            "id": "e45",
+            "source": "MetaboAnalyst",
+            "target": "Targeted Metabolomics"
+        }, {
+            "id": "e46",
+            "source": "Targeted Metabolomics",
+            "target": "Causal Analysis"
+        }]
+}

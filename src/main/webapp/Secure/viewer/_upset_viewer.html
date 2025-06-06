@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"></link>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/upsetjs.umd.production.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/upset.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+    </head>
+    <body class="easyui-layout">  
+        <input type="hidden" id="themeHt" ></input>
+        <button id="toggleTm" onclick="setupTheme()"  style="display:none;" ></button>
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px;">
+                Processing..... please wait ....
+            </h2>
+        </div>
+        <div data-options="region:'east', collapsible:false" style="width:280px;">
+            <div id="all-data">
+                <span id="header-data" class="displayed-data">
+                    <h3 style="padding: 20px 10px 2px 20px">
+                        Current selected compounds:  
+                    </h3>
+                </span>
+                <div id="selected-data" class="well-dataselect" style="padding: 5px;">
+                    <span id="displayed-data" class="displayed-data"/>
+                </div>
+            </div>
+        </div>
+        <div data-options="region:'center', collapsible:false">
+            <div style="position: relative; top: 30px; padding-left: 30px; font-size: 14px; line-height: 23px">
+                <h2>Upset Diagram</h2>
+                <ul>
+                    <li>
+                        Three distinct modes are available: intersection, distinct and union. By default, intersection mode is displayed. Please refer to this <a target="_blank" href="https://jokergoo.github.io/ComplexHeatmap-reference/book/upset-plot.html#upset-mode">link</a> for more information.
+                    </li>
+                    <li>
+                        Different nodes and connecting nodes correspond to the possible comparisons between datasets that contain hits
+                    </li> 
+                    <li>
+                        Different vertical bars represent the number of hits corresponding to select comparison. Horizontal bars represent the number of hits corresponding to select dataset.
+                    </li> 
+                    <li>
+                        <b>Click</b> on nodes and bars to show the corresponding features on the left panel. <b>Click</b> on empty space <u>within the plot area</u> to reset selection and highlight.
+                    </li>
+
+                    <li>
+                        Datasets without hits will be excluded
+                    </li>
+                </ul> 
+                <div style="padding-left: 100px; width: 320px">
+                    <label for="modeOpt">Mode:</label>
+                    <select id="modeOpt">
+                        <option value="intersection">Intersection</option>  
+                        <option value="distinctIntersection">Distinct</option> 
+                        <option value="union">Union</option>   
+                    </select>     
+                    &nbsp; &nbsp; &nbsp;
+                    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="initUpsetPlot()">Update</a>
+                </div>
+            </div>
+
+            <table border="0px"  style="margin-left: 30px; margin-top: 60px">
+                <tr style="vertical-align: top;"> 
+                    <td>
+                        <div id="venn-demo" style="margin: 0; width:1200px; height: 900px; background: white">
+
+                        </div>
+
+                    </td>
+                    <td>
+                        <a href="#" class="easyui-linkbutton" plain="true" onclick="exportImage('svg')"><b>SVG Export</b></a>
+                        <br/>
+                        <a href="#" class="easyui-linkbutton" plain="true" onclick="exportImage('png')"><b>PNG Export</b></a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <script type="text/javascript">
+            $(document).ready(function () {   
+       //         rebindIframe();
+                initUpsetPlot();
+                updateTheme();
+                initThemeSwitch();
+                
+            });
+        </script>
+    </body>  
+</html>

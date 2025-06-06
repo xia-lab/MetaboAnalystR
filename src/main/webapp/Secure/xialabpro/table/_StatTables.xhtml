@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+
+    <p:panel styleClass="myPanel myDashboard" header="Univariate Statistics" toggleable="true" toggleSpeed="500" 
+             class="surface-card text-800"
+             rendered="#{empty rocAnalBean.featureBeans and (not empty detailsBean.listModelAnova or not empty detailsBean.listModelVolcano)}">
+        <h:panelGroup rendered="#{not empty detailsBean.listModelAnova}">
+            <ui:include src="./stat/_AnovaTable.xhtml" />
+        </h:panelGroup>
+        <h:panelGroup rendered="#{not empty detailsBean.listModelVolcano}">
+            <ui:include src="./stat/_VolcanoTable.xhtml" />
+        </h:panelGroup>
+    </p:panel>
+
+
+    <p:panel styleClass="myPanel myDashboard" header="Advanced Significance Analysis" toggleable="true" toggleSpeed="500" 
+             class="surface-card text-800"
+             rendered="#{not empty detailsBean.listModelEbam or not empty detailsBean.listModelSam}">
+
+        <p:tabView id="acAdv" widgetVar="acVarAdv">
+
+            <p:tab title="EBAM" rendered="#{not empty detailsBean.listModelEbam}">
+                <ui:include src="./stat/_EbamTable.xhtml" />
+            </p:tab>
+            <p:tab title="SAM" rendered="#{not empty detailsBean.listModelSam}">
+                <ui:include src="./stat/_SamTable.xhtml" />
+            </p:tab>
+        </p:tabView>
+
+    </p:panel>
+
+    <p:panel styleClass="myPanel myDashboard" header="Multivariate Statistics" toggleable="true" toggleSpeed="500"  
+             class="surface-card text-800"
+             rendered="#{not empty detailsBean.listModelPLS or not empty detailsBean.listModelOPLS}">
+
+        <p:tabView id="ac" widgetVar="acVar">
+
+            <p:tab title="PLS VIP" rendered="#{not empty detailsBean.listModelPLS}">
+                <ui:include src="./stat/_PLSTable.xhtml" />
+            </p:tab>
+            <p:tab title="OPLS VIP" rendered="#{not empty detailsBean.listModelOPLS}">
+                <ui:include src="./stat/_OPLSTable.xhtml" />
+            </p:tab>
+            <p:tab title="sPLS Loading" rendered="#{not empty detailsBean.listModelSPLSLoading}">
+                <ui:include src="./stat/_SPLSLoadingTable.xhtml" />
+            </p:tab>
+            <p:tab title="PCA Loading" rendered="#{not empty detailsBean.listModelPCALoading}">
+                <ui:include src="./stat/_PCALoadingTable.xhtml" />
+            </p:tab>
+        </p:tabView>
+
+    </p:panel>
+    <p:panel styleClass="myPanel myDashboard" header="Machine Learning" toggleable="true" toggleSpeed="500" 
+             class="surface-card text-800"
+             rendered="#{not empty detailsBean.listModelRF or not empty detailsBean.listModelRSVM}">
+        <p:tabView id="ac2" widgetVar="acVar2">
+            <p:tab title="Random Forest VIP" rendered="#{not empty detailsBean.listModelRF}">
+                <ui:include src="./stat/_RFTable.xhtml" />
+            </p:tab>
+            <p:tab title="R-SVM VIP" rendered="#{not empty detailsBean.listModelRSVM}">
+                <ui:include src="./stat/_RSVMTable.xhtml" />
+            </p:tab>
+        </p:tabView>
+    </p:panel>
+
+</ui:composition>
+

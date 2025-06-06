@@ -1,0 +1,438 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            setTimeout(populateTables, 500);
+        });
+    </script>
+    <style type="text/css">
+
+        div.gallery {
+            margin: 5px;
+            margin-bottom: 20px;
+            float: left;
+            padding: 10px 20px 40px 0px;
+        }
+
+
+        div.gallery img {
+            height: 180px;
+            width: auto;
+        }
+
+        div.desc {
+            text-align: center;
+            height: 60px;
+            color: #575765;
+            font-style: italic;
+        }
+
+        /* Image container with fixed size and cropping */
+        .image-container {
+            width: 33%;
+            min-width: 320px; /* Fixed width for the image container */
+            height:  240px; /* Fixed height for the image container */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Hide the parts of the image that overflow */
+            background-color: #f0f0f0; /* Optional background color for placeholder space */
+            border: 1px solid #ddd; /* Optional border around the image */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+        }
+
+        /* Images are cropped and centered */
+        .gallery-image {
+            width: 100%; /* Ensure image fills the width */
+            height: 100%; /* Ensure image fills the height */
+            object-fit: cover; /* Crop and center the image */
+        }
+
+        body .ui-datagrid .ui-datagrid-content {
+            border: none;
+            background: #1f2d40;
+            color: rgba(255, 255, 255, 0.87);
+            padding: 1rem;
+        }
+    </style>
+
+    <h:panelGrid styleClass="my-content-panel">
+
+        <h2>Result Dashboard</h2>    
+        <p>
+            The current page is divided into two sections:
+            <ul>
+                <li>
+                    <b>Results Summary</b>: provide key summary metrics to help determine which workflow is better suited for your data.
+                    Click the "Load" button to load the results from the corresponding workflow into the details view as described below. 
+                </li>
+                <li>
+                    <b>Detail View</b>: showing the analysis results of the currently selected workflow. They are displayed into four categories:
+                    <ul>
+                        <li>
+                            <b>Report Reports</b>: the analysis reports for your data. If you have conducted repeated analyses of the same method (i.e. using different parameters), only 
+                            the most recent results will be included in the report. 
+                        </li>
+                        <li>
+                            <b>Tables Generated</b>: including significant features or enriched functions during the analysis journey. 
+                        </li>
+                        <li>
+                            <b>Figures Generated</b>: including all graphics generated during the analysis journey. You can visit the originating page to update the graph. 
+                        </li>
+                        <li>
+                            <b>Result Files</b>: including all files generated during the analysis journey. The <b>Download.zip</b> contains all the files in your home directory, including the static images.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            For automatic workflow, the default parameters may not be optimal and some analyses could even fail (highlighted on the navigation tree).  
+            You can perform <b>manual refinement</b> by visiting the corresponding pages and updating the parameters to perform re-analysis. 
+        </p>
+        <h:form id="form2">
+            <p:remoteCommand name="populateTables"
+                             action="#{downloader.populateResTable()}"
+                             onstart="PF('statusDialog').show();"
+                             oncomplete="PF('statusDialog').hide();"
+                             update=":form2"/>
+            <h:panelGroup style="margin-bottom: 15px; margin-top: 20px">
+                <p:panel header="Results Summary" 
+                         styleClass="myPanel myDashboard"  
+                         class="surface-card text-800">
+                    <!-- Custom header with hoverable icon -->
+                    <f:facet name="header">
+                        <h:panelGroup layout="inline" style="display: flex; align-items: center;">
+                            <!-- Panel title -->
+                            <p:outputLabel style="font-size: 1.5em; font-weight: bold;" value="Results Summary" />
+
+                            <!-- Spacer between title and icon -->
+                            <p:spacer style="width: 10px;" />
+
+                            <!-- Hoverable info icon -->
+                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                            <p:tooltip for="helpIcon" styleClass="helpTip">
+                                <h:outputText value="This table provides a detailed comparison of different normalization methods. Each column contains the following information:" 
+                                              style="display: block; font-size: 14px; margin-top: 5px;" />
+                                <ul style="font-size: 14px; margin-left: 15px; margin-top: 5px;">
+                                    <li><b>Parameter:</b> The name of the normalization method used (e.g., LogNorm, None).</li>
+                                    <li><b># Sig. Features:</b> The number of features identified as differentially abundant using default threshold (p-value 0.05, log fold change 1)</li>
+                                    <li><b>Group Separation:</b> Summary statistics from PERMANOVA on PCA score plot (top 2 PCs),including:
+                                        <ul style="margin-left: 15px;">
+                                            <li><b>F-value:</b> The statistic for testing group separation.</li>
+                                            <li><b>R-squared:</b> Proportion of variance explained by the groups.</li>
+                                            <li><b>p-value:</b> Significance of group separation (based on 999 permutations).</li>
+                                        </ul>
+                                    </li>
+                                    <li><b>PCA View:</b> PCA visualization of the data.</li>
+                                </ul>
+                            </p:tooltip>
+                        </h:panelGroup>
+                    </f:facet>
+
+                    <p:dataTable value="#{downloader.runSummaries}" var="summary" style="width: 100%; margin-top: 10px;">
+                        <p:column style="text-align:center;width:80px;">
+                            <f:facet name="header">
+                                <h:outputText value="Name" />
+                            </f:facet>
+                            <p:commandLink value="#{summary.runId}" 
+                                           actionListener="#{downloader.loadDetails(summary)}"
+                                           update="form2"
+                                           oncomplete="PF('detailsDialog').show();" />
+                        </p:column>
+                        <p:column style="text-align:center;width:125px;">
+                            <f:facet name="header">
+                                <h:outputText value="# Sig. Features (P-val)" />
+                            </f:facet>
+                            <h:outputText value="#{summary.numDEpval}" />
+                        </p:column>
+                        <p:column style="text-align:center;width:125px;">
+                            <f:facet name="header">
+                                <h:outputText value="# Sig. Features (FC)" />
+                            </f:facet>
+                            <h:outputText value="#{summary.numDEfc}" />
+                        </p:column>
+
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="PCA Separation" />
+                            </f:facet>
+                            <h:outputText value="#{summary.pcaSeparationScore}" />
+                        </p:column>
+
+                        <p:column style="width:110px">
+                            <f:facet name="header">
+                                <h:outputText value="PCA View" />
+                            </f:facet>
+                            <h:graphicImage value="#{summary.pcaImage}" style="width: 100px; height: auto; cursor: pointer;">
+                                <p:ajax event="click" listener="#{downloader.selectImage(summary.pcaImage)}" oncomplete="PF('imageDialog').show();" update="form2"/>
+                            </h:graphicImage>
+                        </p:column>
+
+                        <p:column style="text-align:center;width:70px;"> 
+                            <f:facet name="header">
+                                <h:outputText value="Load" />
+                            </f:facet>
+                            <p:commandLink value=""
+                                           id="viewBn"
+                                           actionListener="#{downloader.loadResults(summary.runId)}"
+                                           onclick="PF('statusDialog').show()"
+                                           ajax="false"
+                                           oncomplete="PF('statusDialog').hide()"
+                                           >
+                                <i class="pi pi-chevron-circle-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                            </p:commandLink>                        
+                        </p:column>
+                    </p:dataTable>
+                    <!-- Dialog for showing the full-size image -->
+                    <p:dialog id="imageDialog" widgetVar="imageDialog" modal="true" resizable="false" closable="true" dynamic="true">
+                        <h:graphicImage value="#{downloader.selectedImage}" style="width: 100%; height: auto;" />
+                    </p:dialog>
+                </p:panel>
+            </h:panelGroup>
+
+            <hr class="style-one"/>
+            <h2>Detail view</h2>    
+            <h:panelGroup layout="inline" style="display: flex; align-items: center;">
+                <h:outputText value="Current Selection:" style="font-size: 1.2em; font-weight: bold; margin-right: 5px;" />
+                <h:outputText value="#{downloader.currentSubFolder}" style="font-size: 1.2em; color: #4CAF50; font-weight: bold;" />
+            </h:panelGroup>
+
+            <h:panelGroup>
+
+                <p:selectOneRadio id="customRadio" value="#{downloader.mdlOpt}" layout="custom">
+                    <f:selectItem itemLabel="Spectra Processing" itemValue="spec"/> 
+                    <f:selectItem itemLabel="MS Peaks to Pathways" itemValue="mummichog" />  
+
+                    <f:selectItem itemLabel="Statistical Analysis" itemValue="stat" /> 
+                    <f:selectItem itemLabel="Biomarker Analysis" itemValue="roc" />                    
+                    <f:selectItem itemLabel="Time-series/Two-factor" itemValue="time" />                                            
+                    <f:selectItem itemLabel="Power Analysis" itemValue="power" />    
+
+                    <f:selectItem itemLabel="Enrichment Analysis" itemValue="enrich" /> 
+                    <f:selectItem itemLabel="Pathway Analysis" itemValue="pathway" /> 
+
+                    <f:selectItem itemLabel="Meta-analysis (targeted)" itemValue="meta" />                      
+                    <f:selectItem itemLabel="Joint Pathway Analysis" itemValue="jpath" />    
+                    <f:selectItem itemLabel="Network Explorer" itemValue="net" /> 
+                </p:selectOneRadio>
+
+
+                <p:panel styleClass="myPanel myDashboard" header="Analysis Report" class="surface-card text-800">
+
+                    <ui:repeat var="module" value="#{workflowBean.moduleNames}" >
+                        <!-- Row Label -->
+                        <h:outputText value="#{workflowView.getReadableType(module)}" style="font-weight: bold; margin-bottom: 10px; display: block;"/>
+
+                        <!-- Row Content -->
+                        <p:panelGrid columns="3" style="width: 100%; padding: 20px; text-align: center">
+                            <p:commandButton styleClass="reportBn ui-button-outlined ui-button-success"
+                                             action="#{downloader.generateReportByModule(module, 'html')}" 
+                                             icon="pi pi-caret-right"
+                                             onclick="PF('statusDialog').show()" 
+                                             style="width: 160px"
+                                             oncomplete="PF('statusDialog').hide()" 
+                                             value="Live Report"
+                                             ajax="false"/>
+
+                            <p:commandButton styleClass="reportBn ui-button-outlined ui-button-info"
+                                             icon="pi pi-download"
+                                             style="width: 160px"
+                                             onclick="PrimeFaces.monitorDownload(start, stop)"
+                                             actionListener="#{downloader.generateReportByModule(module, 'pdf')}"
+                                             ajax="false"
+                                             value="PDF Report">
+                                <p:fileDownload value="#{downloader.getAnalysisReport('pdf')}"/>
+                            </p:commandButton>
+
+                            <p:commandButton id="pptlnk" 
+                                             styleClass="reportBn ui-button-outlined ui-button-help"
+                                             icon="pi pi-download"
+                                             actionListener="#{downloader.generateReportByModule(module, 'slides')}" 
+                                             style="width: 160px"
+                                             onclick="PrimeFaces.monitorDownload(start, stop)"
+                                             ajax="false"
+                                             value="Slide Report">
+                                <p:fileDownload value="#{downloader.getAnalysisReport('pptx')}"/>
+                            </p:commandButton>
+                        </p:panelGrid>
+                    </ui:repeat>
+                </p:panel>
+                <h:panelGroup rendered="#{downloader.containsModule('roc')}">
+                    <ui:include src="./table/_RocTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('stat')}">
+                    <ui:include src="./table/_StatTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('mf')}">
+                    <ui:include src="./table/_MfTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('metadata')}">
+                    <ui:include src="./table/_MetaStatTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('metapaths')}">
+                    <ui:include src="./table/_MetaPathTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('mummichog')}">
+                    <ui:include src="./table/_MumTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('dose')}">
+                    <ui:include src="./table/_DoseTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('mgwas')}">
+                    <ui:include src="./table/_MgwasTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('pathora') or downloader.containsModule('pathqea')}">
+                    <ui:include src="./table/_PathTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('pathinteg')}">
+                    <ui:include src="./table/_PathIntegTables.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{downloader.containsModule('network')}">
+                    <ui:include src="./table/_NetTables.xhtml" />
+                </h:panelGroup>
+
+                <p:panel styleClass="myPanel myDashboard" header="Graphical Outputs" 
+                         class="surface-card text-800">
+                    <p:dataView var="image" value="#{downloader.galleryImages}" rows="12" paginator="true"
+                                paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                                layout="grid" gridRowStyleClass="lg:col-6 xl:col-4" flex="true">
+
+                        <p:dataViewGridItem>
+                            <div class="gallery-grid-item card border-1" style="display:block; text-align:center;">
+                                <div class="image-container">
+                                    <!-- Interactive Result Link -->
+                                    <h:outputLink value="/MetaboAnalyst#{image.downloadUrl}" target="_blank">
+                                        <h:graphicImage value="#{image.downloadUrl}" class="gallery-image" />
+                                    </h:outputLink>
+                                </div>
+                                <div class="gallery-item-details" style="padding-top:8px; line-height: 20px; text-align:left; padding-top: 8px">
+                                    <!-- Caption -->
+                                    <h:outputText value="#{image.caption}" styleClass="gallery-caption" escape="false"/>
+
+                                    >> <h:outputLink value="#{image.interactiveUrl}">
+                                        <h:outputText value="Visit Page" />
+                                    </h:outputLink>
+                                </div>
+                            </div>
+                        </p:dataViewGridItem>
+
+                    </p:dataView>
+                </p:panel>
+                <p:panel styleClass="myPanel myDashboard" header="Result Files" class="surface-card text-800" >
+
+                    <p:dataTable style="width:100%; padding: 20px" var="dnld" value="#{downloader.downloads}" styleClass="hidden-header">  
+                        <p:column >
+                            <h:outputText escape="false" value="#{dnld.fileNameA}" rendered="#{sessionBean1.getAnalType() ne 'raw'}"/>
+                            <p:commandLink style="font-size: 13px;"
+                                           ajax="false" 
+                                           value="#{dnld.fileNameA}"
+                                           rendered="#{sessionBean1.getAnalType() eq 'raw'}">
+                                <p:fileDownload value="#{dnld.fileNameAContent}" />
+                            </p:commandLink>
+                        </p:column>
+                        <p:column>
+                            <h:outputText escape="false" value="#{dnld.fileNameB}" rendered="#{sessionBean1.getAnalType() ne 'raw'}"/>
+                            <p:commandLink style="font-size: 13px;"
+                                           ajax="false" 
+                                           value="#{dnld.fileNameB}"
+                                           rendered="#{sessionBean1.getAnalType() eq 'raw'}">
+                                <p:fileDownload value="#{dnld.fileNameBContent}" /> 
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>  
+
+                </p:panel>
+
+                <!--
+                <p:panel styleClass="myPanel" header="New Journey" 
+                         style="margin-bottom:20px; width: 1000px; margin-left: 2%" 
+                         class="surface-card text-800">
+
+                    <h:panelGrid columns="2" style="padding: 10px 60px 10px 20px; width:90%;">
+                        <h:panelGrid columns="2" cellpadding="4" style="width:100%;">
+                            <h:panelGroup layout="block" style="width: 180px">
+                                <p:outputLabel style="font-weight: bold; font-size: 14px" value="General Statistics"/>
+                            </h:panelGroup>
+                            <h:panelGrid columns="2">
+                                <p:radioButton for="customRadio" itemIndex="2"/>
+                                <p:outputLabel value="Statistical Analysis [one factor]"/>
+                                <p:radioButton for="customRadio" itemIndex="3"/>
+                                <p:outputLabel value="Biomarker Analysis"/>
+                                <p:radioButton for="customRadio" itemIndex="4"/>
+                                <p:outputLabel value="Statistical Analysis [metadata table]"/>
+                                <p:radioButton for="customRadio" itemIndex="5"/>
+                                <p:outputLabel value="Power Analysis"/>                            
+                            </h:panelGrid>
+
+                            <p:outputLabel style="font-weight: bold; font-size: 14px" value="Targeted Metabolomics"/>
+                            <h:panelGrid columns="2">
+                                <p:radioButton for="customRadio" itemIndex="6"/>
+                                <p:outputLabel value="Enrichment Analysis"/>
+                                <p:radioButton for="customRadio" itemIndex="7"/>
+                                <p:outputLabel value="Pathway Analysis"/>   
+                            </h:panelGrid>
+
+                            <p:outputLabel style="font-weight: bold; font-size: 14px" value="Global Metabolomics"/>
+                            <h:panelGrid columns="2">
+                                <p:radioButton for="customRadio" itemIndex="1"/>
+                                <p:outputLabel value="Functional Analysis"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <p:commandButton value="GO!" ajax="false"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"
+                                         style="width:80px; height: 36px;"
+                                         action="#{downloader.switchModule()}"/>
+
+                    </h:panelGrid>
+                </p:panel>
+                -->
+            </h:panelGroup>
+        </h:form>
+    </h:panelGrid>
+    
+    <p:dialog id="detailsDialog" widgetVar="detailsDialog" header="Workflow Details" modal="true" resizable="false" width="500">
+        <p:outputPanel style="padding: 15px; text-align: left; font-size: 14px;">
+
+            <!-- Display Detail Text -->
+            <p:outputPanel style="margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px;">
+                <h:outputText value="#{downloader.selectedWorkflowParams.detailTextHtml}" escape="false" />
+            </p:outputPanel>
+        </p:outputPanel>
+    </p:dialog>
+
+    <!-- Keep the annotation dialog if you still need it -->
+    <p:dialog header="Annotation"
+              widgetVar="idDialog" 
+              showEffect="fade" 
+              hideEffect="fade" 
+              modal="true"
+              closable="true"
+              draggable="false"
+              resizable="false"   
+              dynamic="true"
+              appendTo="@(body)">       
+        <h:form>
+            <h:panelGrid style="font-size: 12px; padding-left: 10px;">
+                <p:outputLabel style="font-size:13px; font-weight: bold" value="Please specify compound ID type:"/>
+                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                    <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                </p:selectOneMenu>     
+            </h:panelGrid>
+            <h:panelGrid style="width: 90%; text-align: center;">
+                <p:commandButton value="Proceed" ajax="false"
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"
+                                 style="width:100px; height: 32px;"
+                                 action="#{downloader.switchModule()}"/>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+
+</ui:composition>
+

@@ -1,0 +1,301 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('pathinteg')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/JointUploadView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Data Upload</h2>
+            <p>
+                This module is designed for integrative analysis of transcriptomics/proteomics and metabolomics data <u>at pathway level</u>. 
+                <ul>
+                    <li>
+                        <b>Transcriptomics / Proteomics</b>: 
+                        <ul>
+                            <li>
+                                A list of significant genes (or proteins) with optional fold change values;
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <b>Metabolomics</b>:
+                        <ul>
+                            <li>
+                                Targeted metabolomics: a list of significant metabolites (or compounds of interest) with optional fold change values;
+                            </li>
+                            <li>
+                                Untargeted metabolomics: a <u>complete</u> peak list. Peak names must be their numeric mass (m/z) values with optional retention times;
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </p>
+            <h:form id="form" enctype="multipart/form-data">
+                <h:panelGrid id="modePane" style="padding-top: 10px; width: 865px">
+                    <h:panelGrid columns="2" style="width:350px; padding-left: 40px">
+                        <h:panelGroup layout="block" style="width:160px">
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Metabolomics Type:"/>           
+                        </h:panelGroup>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{integProcesser.datatype}">
+                            <f:selectItem itemLabel="Targeted (compound list)" itemValue="cmp" />
+                            <f:selectItem itemLabel="Untargeted (peak list)" itemValue="peak" />
+                            <p:ajax update=":form:metPane" event="change"/>
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                </h:panelGrid>
+                <h:panelGrid columns="2" id="inputPane" style="padding: 20px;" styleClass="panelColumns">
+                    <h:panelGrid id="genePane" style="padding-top: 10px; padding-left: 20px">
+                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Genes/proteins with optional fold changes"/>
+                        <h:panelGrid style="padding-left:20px;">
+                            <p:inputTextarea autoResize="false" value="#{integProcesser.geneList}" rows="16" cols="34" />
+                        </h:panelGrid>
+                        <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                            <p:selectOneMenu id="idOpts" styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{integProcesser.geneIDType}">
+                                <f:selectItems value="#{optBean.geneIDOpts}"/>
+                            </p:selectOneMenu>
+                        </h:panelGrid>
+                    </h:panelGrid>
+
+                    <h:panelGrid id="metPane" style="padding-top: 10px; padding-left: 20px; width: 480px;">
+                        <h:panelGrid rendered = "#{integProcesser.datatype eq 'cmp'}" id="cmpdPane">
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Compound list with optional fold changes"/>
+                            <h:panelGrid style="padding-left:20px;">
+                                <p:inputTextarea  autoResize="false" value="#{integProcesser.cmpdList}" rows="16" cols="34" />
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                    <f:selectItems value="#{optBean.pathCmpdIDOpts}" />
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <h:panelGrid id="peakPane" rendered= "#{integProcesser.datatype ne 'cmp'}" >
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Upload a peak list file"/>
+                            <h:panelGrid columns="2" style="line-height: 31px; font-size: 13px; padding-top: 16px">
+
+                                <p:outputLabel value="Ion Mode:"/>
+                                <p:selectOneMenu value="#{integProcesser.msModeOpt}">
+                                    <f:selectItem itemLabel="Positive Mode" itemValue="positive" />
+                                    <f:selectItem itemLabel="Negative Mode" itemValue="negative" />
+                                    <f:selectItem itemLabel="Mixed Mode" itemValue="mixed" />
+                                </p:selectOneMenu>
+
+                                <h:panelGroup  style="width:180px" layout="block">
+                                    <p:outputLabel value="Mass Tolerance (ppm):"/>
+                                    <p:graphicImage id="formatIcon1" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:selectOneMenu value="#{integProcesser.ppmVal}" style = "width:110px" editable="true">
+                                        <f:selectItem itemLabel="10" itemValue="10" />
+                                        <f:selectItem itemLabel="5" itemValue="5" />
+                                        <f:selectItem itemLabel="3" itemValue="3" />
+                                        <f:selectItem itemLabel="1" itemValue="1" />
+                                    </p:selectOneMenu> 
+                                    <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
+                                </h:panelGroup>       
+
+                                <p:outputLabel value="Retention Time:"/>
+                                <p:selectOneMenu value="#{integProcesser.RTOpt}" style = "width:110px" >
+                                    <f:selectItem itemLabel="Not present" itemValue="no" />
+                                    <f:selectItem itemLabel="Yes - Minutes" itemValue="minutes" />
+                                    <f:selectItem itemLabel="Yes - Seconds" itemValue="seconds" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Ranked by (1 column only):"/>
+                                <p:selectOneRadio value="#{integProcesser.rankOpt}">
+                                    <f:selectItem itemValue="pvalue" itemLabel="P values"/>
+                                    <f:selectItem itemValue="tscore" itemLabel="T scores"/>
+                                </p:selectOneRadio>
+
+                                <h:panelGroup  style="width:180px" layout="block">
+                                    <p:outputLabel value="Mummichog version 2:"/>
+                                    <!--                                    <p:graphicImage id="formatIconIon" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>-->
+                                </h:panelGroup>  
+                                <p:selectBooleanCheckbox style="padding-left:3px; line-height: 18px" value="#{integProcesser.ECOpt}"/>
+
+                                <h:panelGroup>
+                                    <p:outputLabel value="Data File:"/>
+                                    <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:fileUpload value="#{integProcesser.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                    <p:outputLabel style = "font-size:12px" rendered="#{integLoader.exampleOrder eq 'genepeak'}" value="MalariaPeaks.txt 323K"/>
+                                </h:panelGroup>
+                            </h:panelGrid>
+
+                            <p:tooltip for="formatIcon1" styleClass="helpTip">
+                                <p>
+                                    The Molecular Weight Tolerance refers to the ppm used for matching m/z features to compounds. 
+                                </p>    
+                            </p:tooltip>
+                            <!--                            <p:tooltip for="formatIconIon" styleClass="helpTip">
+                                                            <p>
+                                                                When primary ions are enforced, mz matches to compounds must contain a primary ion to be considered valid.
+                                                                Primary ions considered are 'M+H[1+]', 'M+Na[1+]', 'M-H2O+H[1+]', 'M-H[-]', 'M-2H[2-]', 'M-H2O-H[-]',
+                                                                'M+H [1+]', 'M+Na [1+]', 'M-H2O+H [1+]', 'M-H [1-]', 'M-2H [2-]', and 'M-H2O-H [1-]'. Note this is only used
+                                                                in Version 2.
+                                                            </p>    
+                                                        </p:tooltip>-->
+                            <p:tooltip for="formatIcon" styleClass="helpTip">
+                                <p>
+                                    You can upload your data in a tab-delimited text file (.txt) format. 
+                                    For single mode, for Version 1, a complete dataset contains three columns with specific names - m.z, p.value, and t.score.
+                                    While for Version 2, a complete dataset contains four columns with specific names - m.z, p.value, t.score and r.t.
+                                    For mixed mode, for Versions 1 and 2, your last column ("mode") must indicate whether the m.z's are positive or negative. 
+                                    Please see below for an example (mixed mode). Note that you can use fold change values instead of t.scores.
+                                    <pre>
+m.z             p.value                 t.score     mode
+304.2979	1.0153771115e-10	14.7179316191   negative
+177.1024	1.61647122234e-10	14.2666000207   negative
+345.0277	1.71651483296e-10	-14.2091952724  positive
+491.0325	1.83359804763e-10	-14.1463478332  positive
+258.0048	2.16851438688e-10	-13.987636322   positive
+483.1205	2.21510885538e-10	-13.9676335843  positive
+694.9937	2.81091747637e-10	-13.7451720928  negative
+270.9767	3.26786548614e-10	13.6060704804   positive
+                                    </pre>
+                                </p>
+                            </p:tooltip>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:panelGrid columns = "2" style="width: 670px; padding-top: 10px; padding-left: 350px; text-align:center;">
+                    <p:commandButton value="Submit" style="font-size: 14px;"
+                                     onclick="PF('statusDialog').show()" 
+                                     icon="pi pi-chevron-right" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     action="#{integProcesser.jointProceed()}"/>
+                    <p:commandLink style="font-size: 14px; font-weight: bold" value="Try our example" onclick="PF('testDataDialog').show();" actionListener="#{integProcesser.setUseExample(true)}"/>
+                </h:panelGrid>
+            </h:form>
+
+            <p:dialog modal="true" widgetVar="testDataDialog" 
+                      appendTo="@(body)" style="line-height: 23px;"
+                      draggable="false" closable="true" resizable="true" header="Example Datasets"> 
+                <h:panelGrid style="padding: 20px">
+                    <div style="font-size:14px; font-weight: bold;">Please select one example dataset from below:</div>
+                    <h:form>
+                        <p:selectOneRadio id="customRadio" 
+                                          value="#{integLoader.exampleOrder}" 
+                                          layout="custom"
+                                          onchange="changePanels(this.value)">  
+                            <f:selectItem itemValue="genecmp"/>
+                            <f:selectItem itemValue="genepeak"/>
+                            <f:selectItem itemValue="protcmp"/>
+                            <f:selectItem itemValue="biugenecmp"/>
+                        </p:selectOneRadio> 
+                        <p:panelGrid layout="tabular" columns="5" style="width: 1000px; font-size: 13px">  
+                            <h:panelGroup> </h:panelGroup>
+                            <h:panelGroup><b>ID Type</b></h:panelGroup>  
+                            <h:panelGroup><b>Organism</b></h:panelGroup>   
+                            <h:panelGroup><b>Data Description</b></h:panelGroup>
+                            <h:panelGroup><b>Instrumentation</b></h:panelGroup>
+
+                            <h:panelGroup>
+                                <p:radioButton id="opt0" for="customRadio" itemIndex="0" style="padding-right:5px"/>
+                            </h:panelGroup>
+                            <h:panelGroup>
+                                <h:panelGrid style="width: 135px; padding: 0px; margin: 0px">
+                                    <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_1.txt">Genes</a> - <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_cmpds.txt">Compounds</a>
+                                </h:panelGrid>
+                            </h:panelGroup>
+                            <h:panelGroup style="text-align: center;">
+                                Human
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                A multiomics study of COVID-19 (covid vs. healthy) from <a href="https://doi.org/10.1016/j.cels.2020.10.003" target="_blank">Ariel et al</a>.
+                                This data includes 1,659 DE genes and 19 DE metabolites.
+                            </h:panelGroup>
+                            <h:panelGroup  style="font-size:12px">
+                                Transcriptomics: Illumina RNA-Seq;<br/>
+                                Metabolomics: GC-MS.
+                            </h:panelGroup>  
+
+                            <h:panelGroup>
+                                <p:radioButton id="opt1" for="customRadio" itemIndex="1" style="padding-right:5px"/>
+                            </h:panelGroup>
+                            <h:panelGroup>                                                                            
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_2.txt">Genes</a> - 
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_peaks.txt">Peaks</a>
+                            </h:panelGroup>
+                            <h:panelGroup  style="text-align: center;">
+                                Human
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                A study on clinical tolerance on infection of <i>P. vivax</i> between patients 
+                                (Semi-immune vs. Naïve) from <a href="https://doi.org/10.1016/j.redox.2018.04.011" target="_blank">Li et al</a>. A total of 
+                                625 DE genes and a complete peak list are included.
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                Transcriptomics: Illumina HiSeq 2500;<br/>
+                                Metabolomics: LC-MS.
+                            </h:panelGroup>
+
+                            <h:panelGroup>
+                                <p:radioButton id="opt3" for="customRadio" itemIndex="2" style="padding-right:5px"/>
+                            </h:panelGroup>
+                            <h:panelGroup>                                        
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_3.txt">Proteins</a> - 
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_cmpds_3.txt">Compounds</a>
+                            </h:panelGroup>
+                            <h:panelGroup  style="text-align: center;">
+                                Human
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                A subset of a multiomics study of COVID-19. (see <a href="https://doi.org/10.1016/j.cell.2020.10.037" target="_blank">James R et al</a>).
+                                This data compares server and moderate patients. 70 proteins and 186 compounds (HMDB ID) are included.
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                Proteomics: Proximity Extension Assay;<br/>
+                                Metabolomics: LC-MS.
+                            </h:panelGroup>
+
+                            <h:panelGroup>
+                                <p:radioButton id="opt4" for="customRadio" itemIndex="3" style="padding-right:5px"/>
+                            </h:panelGroup>
+                            <h:panelGroup>                                        
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_genes_4.txt">Genes</a> - 
+                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/integ_cmpds_4.txt">Compounds</a>
+                            </h:panelGroup>
+                            <h:panelGroup  style="text-align: center;">
+                                Zebu cattle
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                An example dataset of a multi-omics study on zebu cattle, including 17 genes and 20 compounds (KEGG ID) are included.
+                            </h:panelGroup>  
+                            <h:panelGroup>
+                                Transcriptomics: Illumina RNA-Seq;<br/>
+                                Metabolomics: LC-MS.
+                            </h:panelGroup>
+
+                        </p:panelGrid>
+
+                        <h:panelGrid columns="2" style="width:800px; text-align: center; padding-top: 10px; padding-bottom: 10px">
+                            <p:commandButton value="Submit" 
+                                             onclick="PF('testDataDialog').hide();"
+                                             oncomplete="PF('statusDialog').hide();" 
+                                             actionListener="#{integLoader.prepareExample()}"
+                                             update=":form:inputPane"/>
+                            <p:commandButton value="Cancel" 
+                                             onclick="PF('testDataDialog').hide();" 
+                                             oncomplete="PF('statusDialog').hide();" 
+                                             actionListener="#{integProcesser.setUseExample(false)}"/>
+                        </h:panelGrid> 
+                    </h:form>
+                </h:panelGrid>
+            </p:dialog>
+        </h:panelGrid>
+
+    </ui:define>
+</ui:composition>

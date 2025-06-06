@@ -1,0 +1,133 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('utils')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Duplicates Upload', '/Secure/upload/ReplicateUpload.xhtml')}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form" enctype="multipart/form-data"> 
+            <h:panelGrid styleClass="my-content-panel">
+
+
+                <h2>Dealing with duplicate records</h2>
+
+                <h3>Sample duplicates:</h3>
+                <p>
+                    This utility function is used to process the estimation on the technical replicates with different mathematical models; 
+                    Samples of the replicates should be formatted with underscore and integer, e.g. <b>SampleA<span style="background-color:yellow; color:black"><b>_1</b></span></b>.
+
+                    You can see an example <a href="#{applicationBean1.apiResourcePath}Malaria_HILIC_duplicates.csv" target="_blank">technical replicates</a> here. 
+                </p>
+                <ul>
+                    <li>Duplicates values can be merged by estimating with simple arithmetic mean, minimum, maximum, median, sum, or quantile.</li>
+                    <li>When many replicates (at least 3) are provided, you can also smooth values based on kernel density estimation (Gaussian kernel, bandwidth 0.5) before merging </li>
+                    <li>If a feature shows over 1/3 missing and its CV is > 1, the feature in the corresponding sample will be assigned as 0;</li>
+                    <!--                    <li>Default option is the automated estimation with/without kernel density smooth to generate results with minimum Co-efficient variation among estimated and original values.</li>-->
+                </ul>
+
+                <h3>Feature duplicates:</h3>
+                <p>
+                    This utility function is used to merge duplicate features in putative annotated results (such as by mzcloud or chemspider) in untargeted metabolomics. 
+                    Data containing feature replicates must be uploaded in the format of <b><span style="background-color:yellow; color:black"><b>Sample in columns</b></span></b>.
+                    You can see an example data containing <a href="#{facesContext.externalContext.requestContextPath}/resources/data/dup_feat_example.csv" target="_blank">feature duplicates</a> here. 
+                </p>
+                <ul>
+                    <li>
+                        Duplicate values can be replaced by their simple arithmetic mean, median, sum, minimum, maximum, or quantile. In general, only the first two options are recommended
+                    </li>
+                    <li>
+                        Missing values will be ignored
+                    </li>
+                </ul>
+
+                <br/>
+                <hr class="style-one"/>
+                <h3>Please upload your data table</h3>
+                <h:panelGrid columns="2" style="width: 780px;">
+                    <h:panelGrid columns="2" style="padding: 10px; text-align: left; line-height:23px">
+                        <p:outputLabel value="Duplicate type:"/>
+                        <p:selectOneMenu panelStyleClass="panel" value="#{dpEstimator.mergeType}">
+                            <f:selectItem itemLabel="Sample duplicates" itemValue="dup_smpl" />
+                            <f:selectItem itemLabel="Feature duplicate" itemValue="dup_feat" />
+                        </p:selectOneMenu>
+
+                        <p:outputLabel value="Data format:"/>
+                        <p:selectOneMenu panelStyleClass="panel" value="#{dpEstimator.sampleCol}">
+                            <f:selectItem itemLabel="Sample in columns" itemValue="col" />
+                            <f:selectItem itemLabel="Sample in rows" itemValue="row" />
+                        </p:selectOneMenu>
+
+                        <p:outputLabel value="Estimation method:"/>
+                        <p:selectOneMenu panelStyleClass="panel" value="#{dpEstimator.estiMethod}">
+                            <!--                            <f:selectItem itemLabel="automated (default)" itemValue="auto" />-->
+                            <f:selectItem itemLabel="Mean" itemValue="mean" />
+                            <f:selectItem itemLabel="Median" itemValue="median" />
+                            <f:selectItem itemLabel="Minimum" itemValue="min" />
+                            <f:selectItem itemLabel="Maximum" itemValue="max" />
+                            <f:selectItem itemLabel="Sum" itemValue="sum" />
+                            <f:selectItem itemLabel="1st Quarter" itemValue="1stQU" />
+                            <f:selectItem itemLabel="3rd Quarter" itemValue="3rdQU" />
+                        </p:selectOneMenu>
+
+                        <p:outputLabel value="Kernel Density Smoothing:"/>
+                        <h:panelGroup>
+                            <p:selectBooleanCheckbox value="#{dpEstimator.smoother}" style="line-height: 23px"/>
+                            <h:outputText style="color:darkgray" value=" (sample technical replicates only)"/>
+                        </h:panelGroup>
+
+                        <p:outputLabel value="Data File:"/>
+                        <p:fileUpload value="#{dpEstimator.duplicateTable}" mode="simple"  skinSimple="true"  style="line-height: 23px"/>                           
+                    </h:panelGrid>
+
+                    <p:commandButton value="Submit" 
+                                     style="margin-left:40px"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false"
+                                     action="#{dpEstimator.PerformMerging()}"/>  
+                </h:panelGrid>
+                <!--
+                <hr class="style-one"/>
+                <h3>Or try our test data</h3>
+                <p:selectOneRadio id="customRadio" value="#{dpEstimator.exampleDemo}" layout="custom">  
+                    <f:selectItem itemValue="true" itemLabel="data 1"/>
+                </p:selectOneRadio> 
+                <h:panelGrid columns="3" style="width: 540px">
+                    <p:radioButton for="customRadio" itemIndex="0"/>
+                    <h:panelGrid style="width:60px;text-align: center">
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/Malaria_HILIC_duplicates.csv" target="_blank">Data 1</a>
+                    </h:panelGrid>
+                    <h:panelGrid>
+                        This is an example from MetaboLights Database(ID: MTBLS664).                  
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:panelGrid style="width: 540px; padding-top: 10px; text-align: center">
+                    <p:commandButton value="Submit" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false"
+                                     action="#{dpEstimator.PerformDuplicateETDemo()}"/>                            
+                </h:panelGrid>
+                -->
+
+                <h:panelGrid id="resPane" rendered ="#{sessionBean1.jobDone}" style="padding: 20px 30px 20px 40px; font-size: 13px; width: 780px; line-height: 23px; border:2px orange dashed">
+                    <h3>Replicates Merging Results:</h3>
+                    <p>
+                        Click this file download button to save your estimated data.
+                    </p>
+
+                    <p:commandButton value="Download" ajax="false" icon="pi pi-download">
+                        <p:fileDownload value="#{dpEstimator.dupMergeFile}" />
+                    </p:commandButton>
+                </h:panelGrid>                
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

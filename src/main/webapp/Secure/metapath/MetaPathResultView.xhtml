@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Meta paths', '/Secure/metapath/MetaPathResultView.xhtml')}"></f:event>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h:form id="form">
+                <h2>Meta-analysis Results</h2>
+                <h:panelGrid columns="2" style="width: 480px; padding-left: 80px; padding-top: 10px">
+                    <h:panelGrid columns="2">
+                        <h:outputLabel style="width: 240px;" value="Number of pathways to display:"/>
+                        <p:inputText style="width:50px" value="#{pMetaStatBean.maxPaths}"/>
+                    </h:panelGrid>
+                    <h:panelGrid style="padding-left: 20px">
+                        <p:commandButton value="Update"
+                                         update="mpPane :form2:resultTable :mcomform:venntb"
+                                         onclick="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         actionListener="#{pMetaStatBean.updateplotPathwayMeta()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:panelGrid style="text-align: center; width:100%; padding:10px 130px 20px 0px">
+                    <h:panelGrid style="width: 90%; padding-left: 60%">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('metapath')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>    
+                    </h:panelGrid>
+                    <p:graphicImage id="mpPane" value="#{pMetaStatBean.metaResImage}" style="width: 780px" cache="false"/>                
+                </h:panelGrid>
+            </h:form>
+            <hr class="style-one"/> 
+            <h:form id='form2'>
+                <h3>
+                    Detailed result table
+                </h3>
+                <p>
+                    <u>Mean_Enrich</u> describes the percentage of the potential compound hits to the potential hits to the whole pathway (not shown for GSEA under version 2).
+                    <u>Meta.P</u> are the integrated p-values. Other columns are the raw p-values for each individual data.
+                </p>
+                <p:dataTable id ="resultTable"
+                             style="font-size: 12px; width: 95%" 
+                             var="resBean" 
+                             value="#{pMetaStatBean.resBeans}"  
+                             widgetVar="resTable"  
+                             class="surface-card shadow-1 p-0 text-800"
+                             emptyMessage="No record found with given criteria"
+                             paginator="false">                             
+                    <p:columns value="#{pMetaStatBean.columns}" var="column">  
+                        <f:facet name="header">  
+                            #{column.header}  
+                        </f:facet>  
+                        <h:outputText escape="false" style = "" value="#{resBean.getValue(column.property)}"/>
+                    </p:columns>
+                </p:dataTable>
+            </h:form>
+        </h:panelGrid>
+        <p:dialog widgetVar="mcompDialog" 
+                  id="mcompDialog"
+                  dynamic="true" 
+                  modal="true" 
+                  header="Parameter Setting"
+                  appendTo="@(body)" 
+                  onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" 
+                  resizable="false" style="width: 440px"> 
+            <h:panelGrid style="width:420px; padding: 10px; line-height: 21px">
+                Adjust the <b>p-value cutoff</b> below to control the number of significant pathways.
+                <h:form id='mcomform'>
+                    <h:panelGrid columns="4" style="padding: 0px 0px 0px 20px;">
+                        <h:outputLabel style="width: 200px; font-weight: bold" value="P-value cutoff:"/>
+                        <p:inputText style="width:50px" value="#{pLoadBean.pvalCutoff}"/>
+                        <p:spacer style="width: 30px"/>
+                        <p:commandButton value="Update" update=":mcomform:venntb"
+                                         actionListener="#{pLoadBean.updateMetaDataSets()}"/>
+                    </h:panelGrid>
+                    <p:dataTable id="venntb" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 style="padding-top: 8px; text-align: center; font-size: 11px; width:100%;" 
+                                 var="dm" 
+                                 value="#{pLoadBean.metaDataSets}">  
+                        <p:column headerText="Name" style="width:200px"> 
+                            <h:outputLabel value="#{dm.name}" />  
+                        </p:column> 
+                        <p:column headerText="Pathways" style="width:100px"> 
+                            <h:outputLabel value="#{dm.deNum}" />  
+                        </p:column> 
+                        <p:column headerText="Include" style="width:40px">  
+                            <p:selectBooleanCheckbox value="#{dm.vennInclude}" style="line-height: 18px">
+                                <p:ajax event="change"/>
+                            </p:selectBooleanCheckbox> 
+                        </p:column> 
+                    </p:dataTable>
+
+                    <h:panelGrid columns="2" style="width:100%; padding-top: 10px; text-align: center">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('mcompDialog').hide()"/>                                
+                        <p:commandButton value="Submit" id="nextBn"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('mcompDialog').hide(); PF('statusDialog').hide()"
+                                         action="#{pLoadBean.prepareMetaPathUpsetView()}"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+    </ui:define>
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous" style="width:170px; vertical-align: top"
+                                 icon="pi pi-angle-left" ajax="false"
+                                 action="Meta-Analysis Params"/>
+
+                <p:commandButton value="Upset Diagram"
+                                 style="width:170px"
+                                 onclick="PF('statusDialog').show()"
+                                 update=":mcomform:venntb"
+                                 oncomplete="PF('statusDialog').hide(); PF('mcompDialog').show()"
+                                 icon="pi pi-angle-up"/>
+
+                <p:commandButton value="Network Analysis" style="width:180px"
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide()"
+                                 action="#{pMetaStatBean.performNetworkAnalysis()}"
+                                 icon="pi pi-angle-right"/>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+
+

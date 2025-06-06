@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <title></title>
+        <style type="text/css">
+            /*<![CDATA[*/
+            body {margin: 0px; overflow:hidden;}
+            div.leftview {float:left; text-align:center; overflow:hidden;}
+            div.centerview {float:left; text-align:center; overflow:hidden;}
+            div.centertbl {text-align:center; overflow:auto;}
+            div.controls {z-index:500;position:relative;top:4px; left:0px ; text-align:center; overflow:auto;}
+            table.tableclass {z-index:600;line-height:100%;margin-left:auto;margin-right:auto; padding:0;margin-top:0;margin-bottom:auto;text-align:left; overflow:hidden;}
+            div.viewer {z-index:700;margin: 0 auto;position:relative; border:1px solid black; background:gray; top:2px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; clip:rect(0px, 10px, 10px, 0px);}
+            div.top {z-index:900;position:absolute; border:0px solid transparent; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; filter:alpha(opacity=100); opacity:1; color:#FFFFCC;}
+            div.imagepanel {z-index:800;position:absolute; border:0px solid black; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden;}
+            div.fgimagepanel {z-index:850;position:absolute; border:0px solid black; background:blue; top:0px; left:0px ; width:10px; height:10px; text-align:center; overflow:hidden; filter:alpha(opacity=50); opacity:0.5;}
+            div.overdiv {position:absolute; visibility:hidden; z-index:1000;}
+            div.sigma-parent-smpdb {position: relative; width: 535px !important; height: 100px;}
+            div.sigma-container-smpdb {position: absolute; width: 98%; height: 96%; top: 0; left: -70%;}
+            /*]]>*/
+        </style>
+
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"/>        
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+
+        <script type="text/javascript" src="../../resources/jscripts/overlibmws.js"></script><!-- overlibmws (c) Foteos Macrides -->
+
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.helpers.graph.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.snapshot.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.svg.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/shape-library.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.customShapes.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.curve.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.labels.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.nodes.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.exporters.svg.js"></script> 
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.dragNodes.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.layout.noverlap.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.animate.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.keyboard.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.activeState.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.select.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.plugins.lasso.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/spectrum.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/pathviewer.v1.05.js"></script><!-- adapted from AVIS (by SI Berger) -->     
+        <script type="text/javascript" src="../../resources/jscripts/smpdb_network.utils.v1.04.js"></script>
+    </head>
+    <body id="thebody">
+        <div>
+            <div id="leftviewer" class="leftview">
+                <div id="lefttitle">Overview of Pathway Analysis</div>
+                <div id="overview" onclick="dragPress2(event);" onmousemove="panelMouseMove2(event);"></div>
+            </div>
+            <div id="centviewer" class="centerview" style="padding-left: 2%">
+                <div id="title">Pathway Viewer </div>
+                <div id="networkspace" data-options="region:'center', split: false, collapsible:false" style="background: #0000FF; height: 480px; width: 528px; border:1px solid lightgrey">
+                    <div id="network-parent" class="sigma-parent-smpdb">
+                        <div class="sigma-container-smpdb" id="networkview">
+                            <canvas id="sigma_mouse_1" class="sigma_mouse_canvas"  style="position: relative; width: 230px;"></canvas>
+                        </div>
+                        <div id="ctrlpanel" class="control-panel" style="height: 36px; width: 270px; padding-left: 2px; background: rgba(211,211,211,0.5)
+                             ; position: relative; top: 480px; left: 125px">
+                            <table border="0px">
+                                <tr>
+                                    <td style="height:28px; padding-left: 5px;"> 
+                                        <a href="#" id="colorBn" class="easyui-tooltip"
+                                           data-options="position: 'top', content: $('<span>Set highlight color for next selection</span>')">
+                                            <input type='text' id="custom" style="width:30px"/>
+                                        </a>
+                                    </td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="autofitBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Auto fit</div>')">
+                                            <img style="width: 22px; height:20px" border="0" src="../../resources/images/fit.png" alt="Autofit"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomInBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Zoom in</div>')">
+                                            <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomin.png" alt="Zoom in"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomOutBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Zoom out</div>')">
+                                            <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomout.png" alt="Zoom out"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="moveUpBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Move up</div>')">
+                                            <img style="width: 20px; height:20px" border="0" src="../../resources/images/arrow_up.png" alt="Up"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="moveDownBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Move down</div>')">
+                                            <img style="width: 20px; height:22px" border="0" src="../../resources/images/arrow_down.png" alt="Down"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="moveLeftBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Move left</div>')">
+                                            <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_left.png" alt="Left"/></a></td>
+                                    <td style="height:30px; padding-left: 5px;"><a href="#" id="moveRightBn" class="easyui-tooltip"
+                                                                                   data-options="position: 'top', content: $('<div>Move right</div>')">
+                                            <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_right.png" alt="Right"/></a></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="canvas2image">
+                    Your browser does not support the canvas element.
+                </canvas>
+                <div id="pngdialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:630px;height:400px;padding:5px">  
+                    Right click the PNG image to save as your preferred name
+                    <image id="downloadimage"></image>  
+                </div> 
+                <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+                    <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+                    </ul>
+                </div>
+                <div id="download" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:300px;height:120px;padding:20px; font-size: 13px">  
+                    <div id="download-content"></div>
+                </div> 
+                <div id="spinner">
+                    <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px; background-color:transparent">
+                        Processing..... please wait ....
+                    </h2>
+                </div>
+            </div>
+            <script type="text/javascript">
+                //add action listeners for navigation buttons
+                $(document).ready(function () {
+                    initSMPDBPathwayViewer();
+                    $("#custom").spectrum({
+                        color: "#0080ff",
+                        showInitial: true,
+                        change: function (color) {
+                            highlightColor = color.toHexString();
+                        },
+                        showInput: true,
+                        showPalette: true,
+                        showSelectionPalette: true, // true by default
+                        palette: [
+                            ['black', 'white'],
+                            ['#666666', '#0080ff']
+                        ]
+                    });
+                    $(window).bind('resize', function () {
+                        setTimeout(resizeNetwork(), 300);
+                    });
+                });
+
+            </script>
+    </body>
+</html>

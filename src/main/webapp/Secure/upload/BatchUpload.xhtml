@@ -1,0 +1,272 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('utils')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/BatchUpload.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form" enctype="multipart/form-data"> 
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>
+                    Batch Correction
+                </h2>
+                <p>
+                    MetaboAnalyst currently supports nine well-established methods
+                    (<a href="http://www.ncbi.nlm.nih.gov/pubmed/16632515" target="_blank">ComBat</a>, 
+                    <a href="http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0116221" target="_blank">EigenMS</a>,
+                    <a href="http://www.nature.com/articles/nprot.2011.335" target="_blank">QC-RLSC</a>,
+                    <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC4796354/" target="_blank">ANCOVA</a>,
+                    <a href="http://pubs.acs.org/doi/abs/10.1021/ac502439y" target="_blank">RUV-random</a>,
+                    <a href="http://pubs.acs.org/doi/10.1021/ac302748b" target="_blank">RUV2</a>,
+                    <a href="http://www.nature.com/articles/nbt.2931" target="_blank">RUVseq</a>,
+                    <a href="http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-93" target="_blank">NOMIS</a> and 
+                    <a href="http://pubs.acs.org/doi/10.1021/ac901143w" target="_blank">CCMN</a>)
+                    for batch effect correction.
+                </p>
+                <ul>
+                    <li>
+                        Batches can be uploaded as multiple individual files or a single merged file. In the former case, only overlapped features 
+                        across all batches will be used. In the later case, batch information should be provided in the table. More 
+                        details are provided below for each scenario;
+                    </li>
+                    <li>The <b>automated (default)</b> will return the results with least distance among batches.</li>
+                    <li>EigenMS is not supported for large files (> 5M), please use 
+                        <a href="https://github.com/xia-lab/MetaboAnalystR" target="_blank">MetaboAnalystR</a> in this case.</li>
+                    <li>QC-RLSC requires injection order (only available for 'Upload A Single Merged File')</li>
+                </ul>
+                <p:accordionPanel id="ac" style="width: 1000px; padding-left: 20px;">
+                    <p:tab title="Upload multiple batch files">
+                        <h:panelGroup  style="width:360px; padding:20px 20px 10px 30px;" layout="block">
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Please upload your data set (one at a time):"/>
+                        </h:panelGroup>
+                        <h:panelGrid columns="2"  style="width:720px; padding: 0 20px 20px 30px">
+                            <h:panelGrid columns="2" cellpadding="4" style="width: 540px; height: 210px; padding: 20px">
+                                <h:panelGroup layout="block" style="width: 240px;">
+                                    <p:outputLabel value="Data format:"/>       
+                                </h:panelGroup>
+                                <p:selectOneMenu label="Data Format:" panelStyleClass="panel"  style="margin-left: 3px" value="#{batchLoader.dataOpt}">
+                                    <f:selectItem itemLabel="Sample in rows" itemValue="row" />
+                                    <f:selectItem itemLabel="Sample in columns" itemValue="col" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Correction method:"/>
+                                <p:selectOneMenu label="Correction method:" panelStyleClass="panel"  style="margin-left: 3px" value="#{batchLoader.methodOpt}">
+                                    <f:selectItem itemLabel="automated (default)" itemValue="auto" />
+                                    <f:selectItem itemLabel="ComBat" itemValue="Combat" />
+                                    <f:selectItem itemLabel="EigenMS" itemValue="EigenMS" />
+                                    <f:selectItem itemLabel="ANCOVA" itemValue="ANCOVA" />
+                                    <f:selectItem itemLabel="RUV-random" itemValue="RUV_random" />
+                                    <f:selectItem itemLabel="RUV2" itemValue="RUV_2" />
+                                    <f:selectItem itemLabel="RUVseq_s" itemValue="RUV_s" />
+                                    <f:selectItem itemLabel="RUVseq_r" itemValue="RUV_r" />
+                                    <f:selectItem itemLabel="RUVseq_g" itemValue="RUV_g" />
+                                    <f:selectItem itemLabel="NOMIS" itemValue="NOMIS" />
+                                    <f:selectItem itemLabel="CCMN" itemValue="CCMN" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Evaluation target:"/>
+                                <p:selectOneMenu label="Evaluation target" panelStyleClass="panel" style="margin-left: 3px" value="#{batchLoader.dataCenter}">
+                                    <f:selectItem itemLabel="Samples" itemValue="NULL" />
+                                    <f:selectItem itemLabel="QCs" itemValue="QC" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Missing value estimation:"/>
+                                <p:selectOneMenu label="Correction Method:" panelStyleClass="panel"  style="margin-left: 3px" value="#{batchLoader.missingEstt}">                                    
+                                    <f:selectItem itemLabel="LoDs (1/5 of the minimum)" itemValue="lods" />
+                                    <f:selectItem itemLabel="Replace by mean" itemValue="rmean" />
+                                    <f:selectItem itemLabel="Replace by median" itemValue="rmed" />
+                                    <f:selectItem itemLabel="K-nearest neighbours" itemValue="knn" />
+                                    <f:selectItem itemLabel="Probabilistic PCA" itemValue="ppca" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Data label:"/>
+                                <h:panelGrid columns="2" style="width:90px">
+                                    <p:inputText id="keyword" value="#{batchLoader.dataName}" label="Comment: "
+                                    placeholder="Enter data label"/>
+                                </h:panelGrid>
+
+                                <p:outputLabel value="Data file:"/>
+                                <h:panelGrid>
+                                    <p:fileUpload value="#{batchLoader.batchFile}" mode="simple" style="width:240px;line-height: 18px" skinSimple="true"/>
+                                    <h:panelGroup layout="block" style="width: 360px;">
+                                        <p:commandButton value="Upload" 
+                                                         onclick="PF('statusDialog').show()" 
+                                                         oncomplete="PF('statusDialog').hide()"
+                                                         ajax="false" 
+                                                         action="#{batchLoader.performBatchUpload()}"/> 
+                                        <p:spacer style="width:50px"/>
+                                        <p:commandButton value="Reset All" 
+                                                         onclick="PF('statusDialog').show()" 
+                                                         oncomplete="PF('statusDialog').hide()"
+                                                         ajax="false" 
+                                                         action="#{batchLoader.resetBatchData()}"/>      
+                                        <p:spacer style="width:30px"/>
+                                        <p:commandButton value="All Done" 
+                                                         onclick="PF('statusDialog').show()" 
+                                                         oncomplete="PF('statusDialog').hide()"
+                                                         ajax="false" 
+                                                         action="#{batchLoader.performBatchCorrection()}"/>       
+
+                                    </h:panelGroup>
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 240px; line-height: 23px; padding-left: 30px">
+                                <p>
+                                    An <b>example</b> with 3 batches can be downloaded <a href="https://www.xialab.ca/api/download/metaboanalyst/batch.zip" target="_blank">here</a>. 
+                                    Please unzip first and then upload each individually. 
+                                </p>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </p:tab>
+
+                    <p:tab title="Upload a single merged file">
+                        <h:panelGroup  style="width:360px; padding:20px 20px 10px 30px;" layout="block">
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Please upload your data table:"/>
+                            <p:graphicImage id="formatIcon" url="../resources/images/ui-help.png" alt="help"/>
+                        </h:panelGroup>
+                        <h:panelGrid style="width:720px; padding: 0 20px 20px 30px">
+                            <h:panelGrid columns="2" cellpadding="4" style="width: 630px; padding: 20px">
+                                <p:outputLabel value="Data format:"/>
+                                <p:selectOneMenu panelStyleClass="panel" value="#{batchLoader.dataOptT}">
+                                    <f:selectItem itemLabel="Sample in columns" itemValue="col" />
+                                    <f:selectItem itemLabel="Sample in rows" itemValue="row" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Correction method:"/>
+                                <p:selectOneMenu  panelStyleClass="panel" value="#{batchLoader.methodOptT}">
+                                    <f:selectItem itemLabel="automated (default)" itemValue="auto" />
+                                    <f:selectItem itemLabel="ComBat" itemValue="Combat" />
+                                    <f:selectItem itemLabel="EigenMS" itemValue="EigenMS" />
+                                    <f:selectItem itemLabel="QC-RLSC" itemValue="QC_RLSC" />
+                                    <f:selectItem itemLabel="ANCOVA" itemValue="ANCOVA" />
+                                    <f:selectItem itemLabel="RUV-random" itemValue="RUV_random" />
+                                    <f:selectItem itemLabel="RUV2" itemValue="RUV_2" />
+                                    <f:selectItem itemLabel="RUVseq_s" itemValue="RUV_s" />
+                                    <f:selectItem itemLabel="RUVseq_r" itemValue="RUV_r" />
+                                    <f:selectItem itemLabel="RUVseq_g" itemValue="RUV_g" />
+                                    <f:selectItem itemLabel="NOMIS" itemValue="NOMIS" />
+                                    <f:selectItem itemLabel="CCMN" itemValue="CCMN" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Evaluation target:"/>
+                                <p:selectOneMenu label="Evaluation Objects:" panelStyleClass="panel" value="#{batchLoader.dataCenterT}">
+                                    <f:selectItem itemLabel="Samples" itemValue="NULL" />
+                                    <f:selectItem itemLabel="QCs" itemValue="QC" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Missing value estimation:"/>
+                                <p:selectOneMenu label="Correction Method:" panelStyleClass="panel"  style="margin-left: 3px" value="#{batchLoader.missingEstt}">                                    
+                                    <f:selectItem itemLabel="LoDs (1/5 of the minimum)" itemValue="lods" />
+                                    <f:selectItem itemLabel="Replace by mean" itemValue="rmean" />
+                                    <f:selectItem itemLabel="Replace by median" itemValue="rmed" />
+                                    <f:selectItem itemLabel="K-nearest neighbours" itemValue="knn" />
+                                    <f:selectItem itemLabel="Probabilistic PCA" itemValue="ppca" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel value="Data file:"/>
+                                <h:panelGrid>
+                                    <p:fileUpload value="#{batchLoader.batchTableFile}" mode="simple" style="width:180px; line-height: 18px"  skinSimple="true"/>
+                                    <p:commandButton value="Upload" 
+                                                     onclick="PF('statusDialog').show()" 
+                                                     oncomplete="PF('statusDialog').hide()"
+                                                     ajax="false" 
+                                                     action="#{batchLoader.performBatchtTask()}"/>   
+                                </h:panelGrid>
+                            </h:panelGrid>
+
+                            <h:panelGrid style="width: 480px; padding-top: 20px; border-top: thin dashed">
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Or try our test data :"/>
+                            </h:panelGrid>
+                            <p:selectOneRadio id="customRadio" value="#{batchLoader.bctestDataOpt}" layout="custom">  
+                                <f:selectItem itemValue="bcgenericdata" itemLabel="data 1"/>
+                                <f:selectItem itemValue="bcQCrefdata" itemLabel="data 2"/>
+                                <f:selectItem itemValue="bcISrefdata" itemLabel="data 3"/>
+                                <f:selectItem itemValue="bcperfectrefdata" itemLabel="data 0"/>
+                            </p:selectOneRadio> 
+                            <h:panelGrid columns="3" style="width: 480px">
+                                <p:spacer style="width: 30px"/>
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Examples"/>
+                                <p:outputLabel style="font-size:13px; font-weight: bold" value="Description"/>
+
+                                <p:radioButton for="customRadio" itemIndex="0"/>
+                                <h:panelGrid style="width:60px;text-align: center">
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/BC_generic_example.csv" target="_blank">Data 1</a>
+                                </h:panelGrid>
+                                <h:panelGrid>
+                                    Data correction based on generic structure of data.                  
+                                </h:panelGrid>
+
+                                <p:radioButton for="customRadio" itemIndex="1"/>
+                                <h:panelGrid style="width:60px;text-align: center">
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/BC_QC_example.csv" target="_blank">Data 2</a>
+                                </h:panelGrid>
+                                <h:panelGrid>
+                                    Data correction with QC samples as reference.                    
+                                </h:panelGrid>
+
+                                <p:radioButton for="customRadio" itemIndex="2"/>
+                                <h:panelGrid style="width:60px;text-align: center">
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/BC_IS_example.csv" target="_blank">Data 3</a>
+                                </h:panelGrid>
+                                <h:panelGrid>
+                                    Data correction with QC or internal standards as reference.                              
+                                </h:panelGrid>
+
+                                <p:radioButton for="customRadio" itemIndex="3"/>
+                                <h:panelGrid style="width:60px;text-align: center">
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/BC_example.csv" target="_blank">Data 4</a>
+                                </h:panelGrid>
+                                <h:panelGrid>
+                                    Data correction with multiple references.
+                                </h:panelGrid>
+                            </h:panelGrid>
+
+                            <h:panelGrid style="width: 160px; padding-left: 270px">
+                                <p:commandButton value="Upload" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 ajax="false" 
+                                                 action="#{batchLoader.performBatchtTestTask()}"/>                            
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <p:tooltip for="formatIcon" styleClass="helpTip">
+                            <p>
+                                A fixed frame format should be followed according to rules below.
+
+                                <ul>
+                                    <li>Samples should be the 1st row or column (mandatory);</li>
+                                    <li>Classes (groups) should be the 2nd row or column (optional); </li>
+                                    <li>Batch should be the 3rd row or column (mandatory);</li>
+                                    <li>Order should be the 4th row or column (optional);</li>
+                                    <li>Quality control samples' name should contain "QC" (e.g. nonIBD_QC1);</li>
+                                    <li>If reference internal standard is used, please mark related peaks with "IS" (e.g. 157.0523_IS);</li>
+                                    <li>Marks for "QC" or "IS" can be anywhere of the words, as below.</li>
+                                </ul>
+                                <pre>
+This is an example for samples in rows.
+Samples	Class	Batch	Order	Peak1_IS	Peak2	
+S1	UC	B1	1	3420.066635	3595.399657
+S2	UC	B1	2	3332.438928	3522.81833
+S3	UC	B1	3	3384.851346	3705.3387
+S4	UC	B1	4	3593.814736	3574.25952
+QC1_PR	QC	B1	5	3396.273977	3407.036329
+WX_QC2	QC	B1	6	3400.617135	3497.152902
+S5	UC	B1	7	3507.520099	3353.17866
+S6	UC	B1	8	3454.915853	3569.033028
+S7	UC	B1	9	3628.471947	3484.903494
+                                </pre>
+                            </p>
+                        </p:tooltip>
+                    </p:tab>
+                </p:accordionPanel>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

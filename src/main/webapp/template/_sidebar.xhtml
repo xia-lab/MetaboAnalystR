@@ -1,0 +1,523 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:d="http://primefaces.org/diamond">
+
+    <style type="text/css">
+
+        body .ui-dataview .ui-dataview-header {
+            display:none !important;
+        }
+
+        .myiconsize .pi {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .layout-menu .menu-separator {
+            border-top: 1px solid #304562;
+        }
+
+        .layout-menu .menu-separator {
+            margin: 1rem 0;
+        }
+
+        .mysidebar {
+            width: 6rem;
+        }
+
+        .mysidebar .pi {
+            font-size: 1.6rem;
+            padding: 4px;
+        }
+    </style> 
+
+    <div class="layout-sidebar myiconsize">
+        <a class="logo" onclick="document.getElementById('safeLogoutBtn').click()">
+            <p:graphicImage id="app-logo" styleClass="logo-image"
+                            name="images/xialab_logo_s.png"
+                            library="diamond-layout"/>
+            <span class="app-name">MetaboAnalyst Pro</span>
+        </a>
+
+        <div class="layout-menu-container">
+            <h:form id="sidebar-form">
+
+                <d:menu widgetVar="diamondMenuWidget" style="text-align: center; margin-top: 10px">
+
+                    <p:menuitem id="m_data" icon="pi pi-fw pi-paperclip" 
+                                value=" Data "
+                                onclick="PF('dataDialog').show()" 
+                                title="View/edit your data"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_save" icon="pi pi-fw pi-save" 
+                                value="Save"
+                                action="#{fireBaseController.toggleOnDirectQuit('stay')}" 
+                                oncomplete="PF('fireSaveDialog').show()"
+                                title="Save current project"/>
+                    <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
+                    <p:separator/>
+
+                    <p:menuitem id="m_download" icon="pi pi-fw pi-folder" 
+                                value="Results"
+                                title="View/download results in current project folder"
+                                action="#{sessionBean1.goToResultPage()}"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_report" icon="pi pi-fw pi-file" 
+                                value="Report"
+                                disabled="#{not fireBaseController.displayDefaultReportButton}"
+                                action="#{downloader.generateReport('html')}" 
+                                onclick="PF('statusDialog').show()" 
+                                oncomplete="PF('statusDialog').hide()" 
+                                title="Generate analysis report"
+                                ajax="false"/>
+                    <p:separator/>
+                    <!--
+                    <p:menuitem id="m_pdf" 
+                                icon="pi pi-fw pi-file-pdf" 
+                                value=" PDF " 
+                                disabled="#{not fireBaseController.displayDefaultReportButton}" 
+                                actionListener="#{downloader.generateReport('pdf')}" 
+                                title="Generate PDF analysis report" 
+                                onclick="PF('statusDialog').show();" 
+                                ajax="true" 
+                                process="@this" 
+                                update=":sidebar-form" 
+                                oncomplete="$('#sidebar-form\\:downloadButtonPdf').click(); PF('statusDialog').hide();"/>
+                    <p:separator/>
+                    -->
+                    <p:menuitem id="m_slide" icon="pi pi-fw pi-images" 
+                                value="Slides"
+                                disabled="#{not fireBaseController.displayDefaultReportButton}"
+                                actionListener="#{downloader.generateReport('slides')}" 
+                                title="Generate analysis slides"
+                                onclick="PF('statusDialog').show();" 
+                                process="@this"
+                                ajax="true"
+                                update=":sidebar-form"
+                                oncomplete="$('#sidebar-form\\:downloadButtonPptx').click(); PF('statusDialog').hide();"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_view" icon="pi pi-fw pi-database" 
+                                value="Projects"
+                                action = "ProjectView"
+                                title="View/resume/create projects"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_workflow" icon="pi pi-fw pi-sync" 
+                                value="Workflow"
+                                action ="WorkflowView"
+                                title="Create/Run workflow"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_rcmd" icon="pi pi-fw pi-list" 
+                                value ="History"
+                                onclick="PF('historyDialog').show()"
+                                title="View analysis history"/>
+                    <p:separator/>
+
+                    <p:menuitem value="Share" icon="pi pi-link" 
+                                actionListener="#{fireBaseController.saveProject('share')}" 
+                                oncomplete="PF('partialLinkDialog').show()"
+                                update=":formShareLink"/>       
+                    <p:separator/>
+                    <p:menuitem value="Logout" icon="pi pi-sign-out" 
+                                onclick="document.getElementById('safeLogoutBtn').click()"/>
+                </d:menu>
+            </h:form>
+        </div>
+    </div>
+
+    <div class="layout-sidebar-right mysidebar">
+        <a tabindex="0" class="menu-button" style="padding-left: 10px; padding-top: 20px" 
+           onclick="document.getElementById('sideCloseBtn').click()">
+            <i class="pi pi-angle-double-right" style="font-size:2rem"></i>
+        </a>
+        <h:form>
+            <d:menu widgetVar="diamondMenuWidget" style="text-align: center; margin-top: 40px">
+                <p:menuitem url='https://omicsforum.ca/c/metaboanalyst/5' target="_blank"  value="Forum" icon="pi pi-question-circle"/> 
+                <p:separator/>
+                <p:menuitem url='/MetaboAnalyst/docs/Format.xhtml' target="_blank" value="Overview" icon="pi pi-flag"/>  
+                <p:separator/>
+                <p:menuitem url='/MetaboAnalyst/docs/Tutorials.xhtml' target="_blank" value="Tutorials" icon="pi pi-compass"/>  
+                <p:separator/>
+                <p:menuitem url='/MetaboAnalyst/docs/Publications.xhtml' target="_blank" value="Papers" icon="pi pi-copy"/>  
+                <p:separator/>
+                <p:menuitem value="Account Info" icon="pi pi-user" onclick="PF('usrDialog').show()"/>  
+                <p:separator/>
+                <p:menuitem value="Logout" icon="pi pi-sign-out" onclick="document.getElementById('safeLogoutBtn').click()"/>
+            </d:menu>
+        </h:form>
+    </div>
+
+    <p:dialog modal="true" widgetVar="dataDialog" 
+              width="500" 
+              dynamic="true"
+              appendTo="@(body)" header="Your Data" 
+              draggable="false" closable="true" resizable="true"> 
+        <div id="navi" style="line-height: 23px; font-family: Arial, Helvetica, Geneva;">
+            <style type="text/css">
+                .indivcheckbox .ui-chkbox-icon {
+                    top: 0% !important;
+                }
+                .mydt.ui-datatable thead th{
+                    background:inherit !important;
+                    border:none !important;
+                    color:inherit !important;
+                }
+                .mydt.ui-datatable table thead {
+                    display: none;
+                }
+
+            </style>
+            <h:form id="dataListForm">
+                <h:panelGrid style="width:100%; padding: 10px">
+
+                    <p:dataTable rendered="#{sessionBean1.analType ne 'metapaths' and sessionBean1.analType ne 'metadata' }" id="listTblMeta" style="margin-top: 20px; padding: 10px; width:100%;" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 var="data" rowKey="#{data.name}" value="#{procBean.metaDataSet}"> 
+                        <p:column style="width:75%;" headerText="Metadata Summary" > 
+                         <!--   <h:outputLabel value="#{data.name}" style="font-weight:bold"/> <br/>-->
+
+                            <h:outputLabel value="Factors #: #{data.groupInfo}"/>  <br/>
+                            <h:outputLabel value="Sample: #{data.smplNum}"/> <br/>
+                            <h:outputLabel value="Primary: #{data.primaryMeta}"/><br/>
+
+                        </p:column> 
+                        <p:column style="width:25%;" headerText="Edit Groups" > 
+
+                            <p:commandLink  rendered="#{sessionBean1.analType ne 'mf'}"   oncomplete="PF('smplPanelDialog').show()"         
+                                            update="dataListForm">
+                                <span style="color: tomato;">
+                                    <i class="pi pi-pencil"  style="color: tomato !important; font-size: 18px"/>
+                                </span>
+                            </p:commandLink>
+                            <p:commandLink  rendered="#{sessionBean1.analType eq 'mf'}"   oncomplete="PF('multiMetaDialog').show()"         
+                                            update="dataListForm">
+                                <span style="color: tomato;">
+                                    <i class="pi pi-pencil"  style="color: tomato !important; font-size: 18px"/>
+                                </span>
+                            </p:commandLink>
+
+                        </p:column> 
+                    </p:dataTable>
+                    <p:dataTable rendered="#{sessionBean1.uploadType ne 'list'}"   id="listTbl" style="margin-top: 20px; padding: 10px; width: 100%;" 
+                                 class="surface-card shadow-1 p-0 text-700"
+                                 var="data" rowKey="#{data.name}" value="#{procBean.dataSets}"> 
+
+
+                        <p:column rendered="#{sessionBean1.analType eq 'metapaths' or sessionBean1.analType eq 'metadata'}" style="width:3%;" headerText="Data name">
+                            <h:outputText value="#{data.name}" />
+                        </p:column>
+
+                        <p:column rendered="#{sessionBean1.analType eq 'metapaths' or sessionBean1.analType eq 'metadata'}" style="width:50%;"  headerText="Summary">
+                            <h:outputText value="Features: #{data.geneNum}" /> <br/>
+                            <h:outputText value="Sample: #{data.smplNum}" /> <br/>
+                            <h:outputText value="Groups: #{data.groupInfo}" /> <br/>
+                        </p:column>
+
+                        <p:column rendered="#{sessionBean1.analType ne 'metapaths' and sessionBean1.analType ne 'metadata'}"  style="width:75%;" headerText="Feature table"> 
+                            <h:outputLabel value="Features: #{data.geneNum}"/>  <br/>
+                            <h:outputLabel value="Samples: #{data.smplNum}"/> <br/>
+                        </p:column> 
+
+                        <p:column style="width:20%;" headerText="View Data" > 
+                            <p:commandLink   
+                                action="#{procBean.prepViewData(data.dataName)}"
+                                oncomplete="PF('dataPanelDialog').show()"   >
+                                <span style="color: tomato;">
+                                    <i class="pi pi-external-link"  style="color: tomato !important; font-size: 18px"/>
+                                </span>
+                            </p:commandLink>
+
+                        </p:column> 
+                    </p:dataTable>
+                    <p:dataTable rendered="#{sessionBean1.uploadType eq 'list'}" id="listMapTbl" style="margin-top: 20px; padding: 10px; width: 100%;" 
+                                 class="surface-card shadow-1 p-0 text-700"
+                                 var="data"   value=""> 
+
+                        <p:column style="width:75%;" headerText="Feature list"> 
+                            <h:outputLabel value="Features: #{procBean.row_count}"/>  <br/> 
+                        </p:column> 
+
+                        <p:column style="width:25%;" headerText="View Data" > 
+                            <p:commandLink    oncomplete="PF('listMapDialog').show()" 
+                                              >
+                                <span style="color: tomato;">
+                                    <i class="pi pi-external-link"  style="color: tomato !important; font-size: 18px"/>
+                                </span>
+                            </p:commandLink>
+                        </p:column> 
+                    </p:dataTable>
+                </h:panelGrid>
+
+                <h:panelGrid  style="width:100%; padding: 10px">
+
+
+                </h:panelGrid>
+
+
+            </h:form> 
+
+            <p:dialog widgetVar="dataPanelDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                      width="800px" hideEffect="explode" resizable="true">
+                <p>
+                    Your uploaded (raw) data are shown below for manual inspection. It represents the computer's view of your data. 
+                    The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
+                </p>
+                <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
+
+            </p:dialog>
+
+            <ui:include src="./_datapanel.xhtml" />
+        </div>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="historyDialog" 
+              width="540" height="500"
+              dynamic="true"
+              appendTo="@(body)" header="Analysis History:" 
+              draggable="false" closable="true" resizable="true"> 
+        <p:tabView id="hisTab">
+            <p:tab title="R History">
+                <h:panelGrid style="width: 100%; padding: 2px; text-align: right">
+                    <!--
+                    <h:form id="rcmdform">
+                        <p:commandButton value="Save" ajax="false"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);" 
+                                         oncomplete="PF('statusDialog').hide()"
+                                         icon="pi pi-download">
+                            <p:fileDownload value="#{ctl.getRCmdFile()}" />
+                        </p:commandButton>
+                    </h:form>
+                    -->
+                    <p:scrollPanel mode="native" style="width: 100%; padding: 5px; height:460px; text-align: left" class="surface-card">
+                        <h:dataTable id="cmdPane" var="cmdBean" value="#{ctl.cmdVec}"
+                                     styleClass="panelColumns" 
+                                     style="font-size: 11px; font-family:monospace;">
+                            <h:column>
+                                <h:outputText style="font-weight:bold" value="#{cmdBean.step}."/>
+                            </h:column>
+                            <h:column>
+                                <h:outputText style="width:260px; word-wrap: break-word; word-break: break-all;" value="#{cmdBean.cmd}"/>        
+                            </h:column>
+                        </h:dataTable>
+                    </p:scrollPanel>
+                </h:panelGrid>
+            </p:tab>
+            <p:tab title="Java History">
+                <h:panelGrid style="width: 100%; padding: 2px; text-align: right">
+                    <!--
+                    <h:form id="noticeform">
+                        <p:commandButton value="Save" ajax="false"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);" 
+                                         oncomplete="PF('statusDialog').hide()"
+                                         icon="pi pi-download">
+                            <p:fileDownload value="#{ctl.getSysMsgFile()}" />
+                        </p:commandButton>
+                    </h:form>
+                    -->
+                    <p:scrollPanel mode="native" style="width: 100%; padding: 5px; height:460px; text-align: left" class="surface-card">
+                        <h:dataTable id="msgPane" var="msg" value="#{ctl.msgVec}"
+                                     styleClass="panelColumns" 
+                                     style="font-size: 11px; font-family:monospace;">
+                            <h:column>
+                                <h:outputText escape="false" style="width:260px; word-wrap: break-word; word-break: break-all;" value="#{msg}"/>        
+                            </h:column>
+                        </h:dataTable>
+                    </p:scrollPanel>
+                </h:panelGrid>
+            </p:tab>
+        </p:tabView>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="usrDialog" 
+              style="width: 420px; height:400px;" 
+              dynamic="true"
+              appendTo="@(body)" header="Account information:" 
+              draggable="false" closable="true" resizable="false"> 
+        <h:panelGrid style="width: 100%; padding: 20px">
+            <h:outputLabel value="Name: #{fireUserBean.fname}"/>
+            <hr style="height:1px;border:none;color:#e0e0e0;background-color:#e0e0e0; " />
+            <h:outputLabel value="Email: #{fireUserBean.email}" />
+            <hr style="height:1px;border:none;color:#e0e0e0;background-color:#e0e0e0;" />
+            <h:outputLabel value="Status:  #{fireUserBean.status}" />
+            <hr style="height:1px;border:none;color:#e0e0e0;background-color:#e0e0e0;" />
+        </h:panelGrid>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="fireSaveDialog" 
+              style="width: 400px; " 
+              dynamic="true"
+              header="Project Saving:" 
+              appendTo="@(body)" 
+              draggable="false" closable="true" resizable="false"> 
+        <h:form id="formFireDoc">
+            <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
+                <h:panelGrid columns="2" style="width:100%">
+                    <h:outputLabel value="Title"/>
+                    <p:inputText id="float-input" style="width:100%" value="#{fireBaseController.fireDocName}"/>
+                    <h:outputLabel value="Description"/>
+                    <p:inputTextarea rows="10" cols="36" value="#{fireBaseController.fireDocDescription}"/>
+                </h:panelGrid>
+                <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
+                    <p:commandButton value="Save"
+                                     actionListener="#{fireBaseController.saveProject('project')}"
+                                     oncomplete="PF('fireSaveDialog').hide();"
+                                     />
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="partialLinkDialog" 
+              style="height:400px;" 
+              dynamic="true"
+              appendTo="@(body)" header="Shareable link:" 
+              draggable="false" closable="true" resizable="false"> 
+        <h:form id="formShareLink">
+
+            <h:panelGrid>
+                <p:link id="shareLink" value="#{fireBaseController.shareableLink}"> </p:link>
+                <h:panelGrid columns="2" style="text-align: center; width:100%">
+                    <p:commandButton value="Close"
+                                     onclick="PF('partialLinkDialog').hide();"
+                                     />
+                    <p:commandButton value="Copy to Clipboard"
+                                     onclick="copyShareLink()"
+                                     action="#{fireBaseController.showShareMsg()}"
+                                     />
+                </h:panelGrid>
+            </h:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <p:dialog header="Contact Us"
+              widgetVar="contactDialog" 
+              showEffect="fade" 
+              hideEffect="fade" 
+              modal="true"
+              closable="true"
+              draggable="false"
+              resizable="false"   
+              dynamic="true"
+              appendTo="@(body)">       
+        <h:form>
+            <h:panelGrid  style="width:360px; text-align: center; padding: 10px; font-size: 13px">
+                <h:panelGrid columns="2" style="text-align: left">
+                    <h:outputLabel value="Title"/> 
+                    <h:inputText value="#{fireDocBean.name}" style="width: 220px; height: 36px"/>
+                    <h:outputLabel value="Message"/>
+                    <h:panelGrid>
+                        <p:inputTextarea id="myMsg" style="font-size: 13px" autoResize="false" value="#{fireDocBean.description}" 
+                                         rows="12" cols="30"
+                                         placeholder="Specific informaiton to help understand the situation"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+                <p:commandButton value="Submit"  
+                                 style="width:120px; margin-left: 30px" 
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide()"
+                                 ajax="false" 
+                                 action="#{fireBaseController.saveProject('assist')}"
+                                 />
+
+            </h:panelGrid>
+        </h:form>
+    </p:dialog> 
+
+
+    <p:dialog header="Your progress could be lost!"
+              widgetVar="saveWarningDialog" 
+              showEffect="fade" 
+              hideEffect="fade" 
+              modal="true"
+              width="475"
+              height="190"
+              closable="true"
+              draggable="false"
+              resizable="false"   
+              appendTo="@(body)">
+        <h:form>
+            <h:panelGrid  style="width:380px; line-height: 23px; padding: 20px; font-size: 13px">
+                <p>
+                    <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"><i class="pi pi-info-circle" style="font-size: 2rem"></i></span>
+                    You are about to go back to the home page, the current progress will be lost, if not saved.
+                </p>
+
+                <p>Do you want to save your work first?</p>   
+                <h:panelGrid columns="2" style="width:400px; text-align: center">
+                    <p:commandButton style="width:50px; font-size: 14px; " value="Yes" 
+                                     onclick="PF('saveWarningDialog').hide();
+                                             PF('fireSaveDialog').show();"
+                                     action="#{fireBaseController.toggleOnDirectQuit('home')}"
+                                     oncomplete ="PF('statusDialog').hide();" />
+                    <p:commandButton style="width:50px; font-size: 14px;" value="No" onclick="PF('saveWarningDialog').hide()" action="Exit"/>   
+                </h:panelGrid>
+            </h:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <p:dialog header="Your progress could be lost!"
+              widgetVar="saveWarningDialogModule" 
+              showEffect="fade" 
+              hideEffect="fade" 
+              modal="true"
+              width="475"
+              height="190"
+              closable="true"
+              draggable="false"
+              resizable="false"   
+              appendTo="@(body)">
+        <h:form>
+            <h:panelGrid  style="width:380px; line-height: 23px; padding: 20px; font-size: 13px">
+                <p>
+                    <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"><i class="pi pi-info-circle" style="font-size: 2rem"></i></span>
+                    You are about to go back to the module selection page, the current progress will be lost, if not saved.
+                </p>
+
+                <p>Do you want to save your work first?</p>   
+                <h:panelGrid columns="2" style="width:400px; text-align: center">
+                    <p:commandButton style="width:50px; font-size: 14px; " value="Yes" 
+                                     onclick="PF('saveWarningDialogModule').hide();
+                                             PF('fireSaveDialog').show();"
+                                     action="#{fireBaseController.toggleOnDirectQuit('module')}"
+                                     oncomplete ="PF('statusDialog').hide();" />
+                    <p:commandButton style="width:50px; font-size: 14px;" value="No" onclick="PF('saveWarningDialogModule').hide()" action="Upload"/>   
+                </h:panelGrid>
+            </h:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="workflowSaveDialog" 
+              style="width: 400px; " 
+              dynamic="true"
+              header="Workflow Saving:" 
+              appendTo="@(body)" 
+              draggable="false" closable="true" resizable="false"> 
+        <h:form id="formWf">
+            <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
+                <h:panelGrid columns="2" style="width:100%">
+                    <h:outputLabel value="Name"/>
+                    <p:inputText id="float-input" style="width:100%" value="#{workflowBean.name}"/>
+                    <h:outputLabel value="Description"/>
+                    <p:inputTextarea rows="10" cols="36" value="#{workflowBean.description}"/>
+                </h:panelGrid>
+                <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
+                    <p:commandButton value="Save"
+                                     actionListener="#{workflowView.generateWorkflowJson()}"
+                                     oncomplete="PF('workflowSaveDialog').hide();"
+                                     />
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+
+</ui:composition>

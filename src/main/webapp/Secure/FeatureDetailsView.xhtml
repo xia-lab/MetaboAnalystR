@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{detailsBean.setupDetailsTable()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="form1">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Feature Details Table</h2>    
+                <p>
+                    Click a feature name to edit its name and then click the next column to save the change. 
+                    Click the view link to visualize a graphical summary of the distribution. The bar plots on the left show the 
+                    original values (mean +/- SD). The box and whisker plots on the right summarize the 
+                    normalized values. Note, positive infinite numbers are represented as 999999, and negative 
+                    infinite numbers -999999.
+                </p>
+                <h:panelGrid columns="2" style="width:100%; padding: 10px">
+                    <div style="color:orange">
+                        To update a name suitable for graphical display, <b>click the name</b> to edit and then click the next column to save.
+                    </div>
+
+                    <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
+                        <p:fileDownload value="#{detailsBean.detailFile}" />
+                    </p:commandButton>  
+                </h:panelGrid>  
+
+                <p:dataTable  id="detailTbl" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                              rows="20" rowsPerPageTemplate="20,50,100"   
+                              class="surface-card shadow-1 p-0 text-800" 
+                              editable="true" editMode="cell" widgetVar="cellDetails" paginatorPosition="bottom"
+                              var="fb" value="#{detailsBean.featureBeans}" resizableColumns="true">  
+                    <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
+                    <p:column headerText="Name" 
+                              style="width:200px"
+                              sortBy="#{fb.name}" filterBy="#{fb.name}">
+                        <p:cellEditor>
+                            <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                            <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(0)}" sortBy="#{fb.val1}" rendered="#{detailsBean.isColVisible(0)}">
+                        <h:outputText escape="false" value="#{fb.val1}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(1)}" sortBy="#{fb.val2}" rendered="#{detailsBean.isColVisible(1)}">
+                        <h:outputText escape="false" value="#{fb.val2}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(2)}" sortBy="#{fb.val3}" rendered="#{detailsBean.isColVisible(2)}">
+                        <h:outputText escape="false" value="#{fb.val3}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(3)}" sortBy="#{fb.val4}" rendered="#{detailsBean.isColVisible(3)}">
+                        <h:outputText escape="false" value="#{fb.val4}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(4)}" sortBy="#{fb.val5}" rendered="#{detailsBean.isColVisible(4)}">
+                        <h:outputText escape="false" value="#{fb.val5}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(5)}" sortBy="#{fb.val6}" rendered="#{detailsBean.isColVisible(5)}">
+                        <h:outputText escape="false" value="#{fb.val6}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(6)}" sortBy="#{fb.val7}" rendered="#{detailsBean.isColVisible(6)}">
+                        <h:outputText escape="false" value="#{fb.val7}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(7)}" sortBy="#{fb.val8}" rendered="#{detailsBean.isColVisible(7)}">
+                        <h:outputText escape="false" value="#{fb.val8}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(8)}" sortBy="#{fb.val9}" rendered="#{detailsBean.isColVisible(8)}">
+                        <h:outputText escape="false" value="#{fb.val9}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(9)}" sortBy="#{fb.val10}" rendered="#{detailsBean.isColVisible(9)}">
+                        <h:outputText escape="false" value="#{fb.val10}"/>
+                    </p:column>
+                    <p:column headerText="#{detailsBean.getColHeader(10)}" sortBy="#{fb.val11}" rendered="#{detailsBean.isColVisible(10)}">
+                        <h:outputText escape="false" value="#{fb.val11}"/>
+                    </p:column>
+                    <p:column headerText="Post-hoc tests" 
+                              style="width:320px"
+                              rendered="#{detailsBean.isExtraColVisible()}">
+                        <h:outputText escape="false" value="#{fb.extra}"/>
+                    </p:column>
+                    <p:column headerText="">
+                        <p:commandLink value="View" actionListener="#{sessionBean1.viewCmpdSummary(fb.name)}" oncomplete="PF('FeatureView').show();"/>
+                    </p:column>
+                </p:dataTable> 
+
+                <p:contextMenu for="detailTbl" widgetVar="cMenu">   
+                    <p:menuitem value="Edit Cell" icon="pi pi-search" onclick="PF('cellDetails').showCellEditor();return false;"/>  
+                    <p:menuitem value="Hide Menu" icon="pi pi-times" onclick="PF('cMenu').hide()"/>  
+                </p:contextMenu> 
+            </h:panelGrid>
+        </h:form>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

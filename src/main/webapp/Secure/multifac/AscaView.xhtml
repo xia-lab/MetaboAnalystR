@@ -1,0 +1,182 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{ascaBean.doDefaultAsca()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>ANOVA Simultaneous Component Analysis (ASCA)</h2>
+            <p>
+                ASCA is a direct generalization of analysis of variance (ANOVA) for univariate data to the multivariate case 
+                based on <a href="http://dx.doi.org/10.1093/bioinformatics/bti476" target="_blank">AK Smildle, et al.</a> 
+                with additional improvements on feature selection and model validation. ASCA is commonly used to model 
+                two main effects with one interaction effect. The key parameters are the number of components used in each model. 
+                <ul>
+                    <li>
+                        First select two metadata of interest and click Submit button using the default parameters. 
+                        Based on the Scree plots (first tab), you can update the component numbers. 
+                    </li>
+                    <li>
+                        Use <b>0</b> if you don't want to model the interaction or residual;
+                    </li>
+                    <li>
+                        The max. number of components cannot exceed the total number as shown in the corresponding Scree Plots
+                    </li>
+                </ul>
+            </p>
+
+            <h:form id="form1">
+                <h:panelGrid columns="2">
+                    <h:panelGrid columns="2" style="width: 560px; padding-left: 30px; padding-right: 40px; padding-bottom: 10px">
+                        <h:panelGroup layout="block" style="width: 220px">
+                            <h:outputLabel style="font-weight: bold" value="Select two metadata:"/>
+                            <br/>
+                            <h:outputLabel style="font-style: italic; color: grey" value="(categorical only)"/>
+                        </h:panelGroup>
+                        <p:selectCheckboxMenu  styleClass="menu" label="&nbsp; -- None Selected -- &nbsp;" showHeader="false" multiple="true" panelStyleClass="panel" value="#{ascaBean.selectedMetasAsca}">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                        </p:selectCheckboxMenu >
+                        <h:outputLabel style="font-weight: bold" value="Modele A (Model.a):"/>
+                        <p:inputText style="width:60px" value="#{ascaBean.mdlANum}"/>
+                        <h:outputLabel style="font-weight: bold" value="Model B (Model.b):"/>
+                        <p:inputText style="width:60px" value="#{ascaBean.mdlBNum}"/>
+                        <h:outputLabel style="font-weight: bold" value="Interaction Model (Model.ab):"/>
+                        <p:inputText style="width:60px" value="#{ascaBean.mdlABNum}"/>
+                        <h:outputLabel style="font-weight: bold" value="Residual Model (Model.res):"/>
+                        <p:inputText style="width:60px" value="#{ascaBean.mdlResNum}"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" 
+                                     ajax="false"
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     update=":ac"
+                                     actionListener="#{ascaBean.mdlBtn_action()}"/> 
+                </h:panelGrid>
+            </h:form>
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:95%; border: none; font-size: 13px;">
+                <p:tab title ="Scree Plots">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.ascaInit}"/>
+                    </h:panelGrid>
+                    <h:panelGrid id="pairPane" style="padding: 20px">
+                        <img onerror='this.style.display="none"'  
+                             style="width:8in;" 
+                             src="#{sessionBean1.getCurrentImageURL('asca_scree')}"  alt="ASCAScreeImage"/>
+                    </h:panelGrid>        
+                </p:tab>
+                <p:tab title ="Major Patterns">
+                    <h:panelGrid id="screePane" style="padding: 20px; text-align: center; width:90%">
+                        <img onerror='this.style.display="none"'  style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fa')}"/>
+                        <img onerror='this.style.display="none"' style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fb')}"/>
+                        <img onerror='this.style.display="none"' style="height:8in;"  src="#{sessionBean1.getCurrentImageURL('asca_fab')}"/>
+                    </h:panelGrid>     
+                </p:tab>
+                <p:tab title ="Sig. Features">
+                    <h:form id="form4">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 25px">
+                            <h:panelGrid columns="2" style="width:420px; padding-left: 20px">
+                                <h:outputLabel style="font-weight: bold" value="Leverage threshold:"/>
+                                <p:inputText style="width:50px" value="#{ascaBean.lvlThresh}"/> 
+                                <h:outputLabel style="font-weight: bold" value="Alpha threshold:"/>
+                                <p:inputText style="width:50px" value="#{ascaBean.alphaThresh}"/>      
+                            </h:panelGrid>
+                            <p:commandButton value="Submit" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update=":ac:form4:impPane  :hisTab:cmdPane" 
+                                             actionListener="#{ascaBean.sigBn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid columns="2" id="impPane">
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impa')}" alt="SigAImage"/>
+                            <h:panelGrid style="padding-left: 80px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impa')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Image Options">
+                                    <i class="pi pi-palette" style="font-size: 1.0rem">&nbsp; Image Options</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.sigA')}"  title="Sig. Features">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp;  Sig. Features</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.outA')}" title="Outliers">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp;  Outliers</i>
+                                </p:commandLink>                                
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impb')}" alt="SigBImage"/>
+                            <h:panelGrid style="padding-left: 80px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impb')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Image Options">
+                                    <i class="pi pi-palette" style="font-size: 1.0rem">&nbsp; Image Options</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.sigB')}"  title="Sig. Features">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp; Sig. Features</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.outB')}" title="Outliers">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp; Outliers</i>
+                                </p:commandLink>                                
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impab')}" alt="SigABImage"/>
+                            <h:panelGrid style="padding-left: 80px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impab')}"
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Image Options">
+                                    <i class="pi pi-palette" style="font-size: 1.0rem">&nbsp; Image Options</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.sigAB')}" title="Sig. Features">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp; Sig. Features</i>
+                                </p:commandLink>
+                                <p:commandLink action="#{sessionBean1.detailsLnk_action('asca.outAB')}" title="Outliers">
+                                    <i class="pi pi-table" style="font-size: 1.0rem">&nbsp; Outliers</i>
+                                </p:commandLink>                                
+                            </h:panelGrid>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Model Validation">
+                    <h:form id="form3">
+                        <h:panelGrid style="padding: 2px 20px 10px 20px; line-height: 25px">
+                            <h:panelGrid columns="2">
+                                <h:panelGrid columns="2" style="width:420px; padding-left: 20px">
+                                    <h:outputLabel style="font-weight: bold" value="Set permutation times:"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel"  value="#{ascaBean.permNum}">
+                                        <f:selectItem itemLabel="20" itemValue="20" /> 
+                                        <f:selectItem itemLabel="100" itemValue="100" /> 
+                                        <f:selectItem itemLabel="200" itemValue="200" /> 
+                                    </p:selectOneMenu>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" 
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 update=":ac:form3:permPane  :hisTab:cmdPane" 
+                                                 actionListener="#{ascaBean.permBn_action()}"/>   
+                            </h:panelGrid>
+                            <p>
+                                Permutation is a computationally intensive procedure. For large dataset, 
+                                the actual number of permutations may be adjusted automatically in order to complete  
+                                within a reasonable time 
+                            </p>
+                        </h:panelGrid>
+                        <h:panelGrid id="permPane" style="text-align: center; width: 100%;">
+                            <img onerror='this.style.display="none"' style="width:8in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_perm')}" alt="AscaPermImage"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

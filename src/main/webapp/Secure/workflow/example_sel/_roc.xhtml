@@ -1,0 +1,59 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog modal="true" widgetVar="rocExampleDialog" 
+              style="line-height: 21px; width: 850px;" 
+              height="500"
+              appendTo="@(body)" header="Example Datasets"
+              draggable="false" closable="true" resizable="true">
+        <h:form>
+            <!-- Select radio options for datasets -->
+            <p:selectOneRadio id="customRadio" value="#{uploader.dataOpt}" layout="custom">  
+                <f:selectItem itemLabel="data1" itemValue="data1" />
+                <f:selectItem itemLabel="data2" itemValue="data2" />
+            </p:selectOneRadio>
+
+            <!-- Improved Grid Layout -->
+            <p:panelGrid columns="3" style="width:800px" layout="tabular" styleClass="myPanelGrid" class="surface-card shadow-1 p-4 text-800">
+                <!-- Headers -->
+                <h:outputLabel value="Select" style="font-weight: bold; text-align: center;"/>
+                <h:outputLabel value="Dataset" style="font-weight: bold; text-align: center;"/>
+                <h:outputLabel value="Description" style="font-weight: bold; text-align: center;"/>
+
+                <!-- Dataset 1 -->
+                <p:radioButton for="customRadio" itemIndex="0" style="margin: auto;"/>
+                <a href="https://www.xialab.ca/api/download/metaboanalyst/plasma_nmr.csv" 
+                   style="text-align: center; color: #007ad9;">Dataset1</a>
+                <h:panelGrid>
+                    Metabolite concentrations of 90 human plasma samples measured by 1H NMR.<br/>
+                    Phenotype labels: <b>0 - Controls; 1 - Patients.</b>
+                </h:panelGrid>
+
+                <!-- Dataset 2 -->
+                <p:radioButton for="customRadio" itemIndex="1" style="margin: auto;"/>
+                <a href="https://www.xialab.ca/api/download/metaboanalyst/plasma_nmr_new.csv" 
+                   style="text-align: center; color: #007ad9;">Dataset2</a>
+                <h:panelGrid>
+                    Metabolite concentrations of 77 human plasma samples. Among them, the<br/>
+                    phenotypes of 12 samples are <b>empty</b> for prediction <br/>
+                    using the <b>Tester</b> module.
+                </h:panelGrid>
+            </p:panelGrid>
+
+            <!-- Submit Button -->
+            <div style="text-align: center; margin-top: 20px;">
+                <p:commandButton value="Submit" ajax="false"
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"
+                                 action="#{wfUploadBean.handleTestDataUpload_roc()}" 
+                                 styleClass="ui-button-primary" style="width: 150px;"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+
+</ui:composition>
+

@@ -1,0 +1,312 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/workflow/upload/TableUploadView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{workflowBean.loadDefaultWorkflows()}"></f:event> 
+    </ui:define>  
+    <ui:define name="content">
+        <style>
+            /* Ensure the file upload button remains consistent in size */
+            .file-upload-custom .ui-fileupload-button {
+                width: 120px; /* Set a fixed width for the button */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Control the filename display to avoid shrinking */
+            .file-upload-custom .ui-fileupload-filename {
+                display: inline-block;
+                /* Limit the filename display */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                padding-left: 10px; /* Add space between the button and the filename */
+            }
+
+            /* Style to adjust the overall file upload container */
+            .file-upload-custom .ui-fileupload {
+                display: inline-block;
+                width: auto;
+                vertical-align: middle;
+            }
+
+            /* Ensure the file upload input remains consistent */
+            .file-upload-custom .ui-fileupload-choose {
+                width: 200px; /* Same width for the button */
+                height: 30px; /* Adjust the height if necessary */
+            }
+
+            .ui-inputtextarea:disabled {
+                color: white !important; /* Set font color to white */
+                background-color: #333333; /* Optionally, set a dark background for contrast */
+                opacity: 1 !important; /* Remove dimming effect on the text */
+            }
+
+            .ui-tabs-nav li.ui-state-disabled {
+                opacity: 1 !important;     /* Removes the dimmed appearance */
+                pointer-events: none;      /* Ensures the tab remains unclickable */
+                color: inherit;            /* Maintains original text color */
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h:panelGroup id="mainId">
+
+                <p:tabView widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+
+                    <p:tab id="personal" title="Upload" disabled="true">
+
+                    </p:tab>
+                    <p:tab id="datacheck" title="Integrity Check" disabled="true">
+
+                    </p:tab>
+
+                    <p:tab id="design" title="Key Parameters" disabled="true">
+
+                    </p:tab>
+
+
+                </p:tabView>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}" >
+
+                    <h3 style="font-size: 1.5rem; color: var(--surface-800)">
+                        Upload your data
+                    </h3>
+                    <ul>
+                        <li>
+                            <p:outputLabel id="formatIcon" style="font-size:13px; font-weight: bold; text-decoration: underline;" value="Data">
+                            </p:outputLabel>
+                            file in .csv or .txt.  
+                        </li>
+                        <li>                                
+                            <p:outputLabel id="formatIcon2" style="font-size:13px; font-weight: bold; text-decoration: underline;" value="Metadata">
+                            </p:outputLabel> file (optional, for multi-factor statistical analysis module)
+                        </li>
+                    </ul>
+                    <h:form id="form" enctype="multipart/form-data" >
+
+                        <h:panelGrid columns="2" style="margin-top: 10px;  margin-left: 30px">
+                            <h:panelGrid columns="2" style="padding: 20px 60px 20px 60px;  width: 720px; margin-right: 60px;" cellpadding="5">
+                                <h:panelGroup layout="block" style="width:120px">
+                                    <p:outputLabel style="font-size:12px; font-weight: bold" value="Analysis Type:"/>
+                                </h:panelGroup>
+                                <p:selectOneRadio value="#{workflowBean.tableAnalType}">
+                                    <f:selectItem itemValue="default" itemLabel="Default"/>    
+                                    <f:selectItem itemValue="dose" itemLabel="Dose Response"/>     
+                                </p:selectOneRadio>  
+                                <h:panelGroup layout="block" style="width:120px">
+                                    <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Type:"/>
+                                </h:panelGroup>
+                                <p:selectOneRadio value="#{workflowBean.dataType}">
+                                    <f:selectItems value="#{optBean.tableTypeOpts}" />
+                                </p:selectOneRadio>   
+
+                                <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Format:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{workflowBean.dataFormat}">
+                                    <f:selectItem itemValue="colu" itemLabel="Samples in columns"/>    
+                                    <f:selectItem itemValue="rowu" itemLabel="Samples in rows"/>     
+                                    <f:selectItem itemValue="colp" itemLabel="Samples in columns (paired)"/>    
+                                    <f:selectItem itemValue="rowp" itemLabel="Samples in rows (paired)"/>   
+                                </p:selectOneMenu>
+
+
+                                <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                                <p:fileUpload value="#{wfUploadBean.csvFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+
+                                <p:outputLabel style="font-size:12px; font-weight: bold" value="Metadata (optional):"/>
+                                <p:fileUpload value="#{wfUploadBean.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+
+                            </h:panelGrid>
+
+                            <p:commandButton value="Submit" 
+                                             style="width:110px; font-size: 14px !important" 
+                                             update=":form southform"
+                                             id="procBn"
+                                             icon="pi pi-upload"
+                                             onclick="PF('statusDialog').show(); localStorage.clear();"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             actionListener="#{wfUploadBean.processFiles()}"/>
+
+                        </h:panelGrid>
+                        <h:panelGrid style="width: 880px; padding-top: 30px; padding-left: 30px">
+                            <p:outputLabel id="uploadInfo" escape="false"
+                                           style="font-size: 16px !important; color: darksalmon"
+                                           value="#{wfUploadBean.uploadInfo}"/>
+                        </h:panelGrid>
+
+                        <p:tooltip for="formatIcon" styleClass="helpTip">
+                            <p>
+                                Upload your data as a tab-delimited text file (.txt).
+                                The maximum allowed file size is 200MB. The sample names must be in the 
+                                first line, followed by the metadata labels. Each metadata
+                                starts with a new line beginning with "#CLASS:". A small example data 
+                                with two metadata is shown below:
+                                <pre>
+#NAME           Sample1	Sample2	Sample3	Sample4	Sample5	Sample6	Sample7	Sample8 Sample9
+#CLASS:Type	IDC	AC	IDC	DC	DC	IDC	AC	DC      DC
+#CLASS:Survive	Y   	N	N	Y	N	Y	Y	N       N
+100_g_at        -3.06	-2.25	-1.15	-6.64	0.4	1.08	1.22	1.02    1.15
+1000_at         -1.36	-0.67	-0.17	-0.97	-2.32	-5.06	0.28	1.32    0.73
+1002_f_at       1.61	-0.27	0.71	-0.62	0.14		0.11	0.98    0.54
+1008_f_at       0.93	1.29	-0.23	-0.74	-2	-1.25	1.07	1.27    1.02
+                                </pre>
+                            </p>
+                        </p:tooltip>
+                        <p:tooltip for="formatIcon2" styleClass="helpTip">
+                            <p>
+                                Upload your sample data information as a tab-delimited text file (.txt) or comma-seperated values (.csv) format.
+                                The sample names must be in the first column with "#NAME" as header, followed by the sample variable names from 2nd column onwards. 
+                                Sample names must be same in both files. A small example data is shown below:
+                                <pre>
+                                            #NAME       SampleType   Survive
+                                            Sample1     IDC          Y
+                                            Sample2     AC           N
+                                            Sample3     IDC          N                                                                                    
+                                            Sample4     DC           Y                                 
+                                            Sample5     DC           N
+                                            Sample6     IDC          Y
+                                            Sample7     AC           Y
+                                            Sample8     DC           N
+                                </pre>
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                    <hr class="style-one"/>
+
+                    <h3 style="font-size: 1.5rem; color: var(--surface-800)">
+                        Try our example datasets
+                    </h3>
+
+                    <h:form>
+                        <!-- Select radio options for datasets -->
+                        <p:selectOneRadio id="customRadio" value="#{uploader.dataOpt}" layout="custom">  
+                            <f:selectItem itemLabel="data1" itemValue="data1" />
+                            <f:selectItem itemLabel="data2" itemValue="data2" />
+                            <f:selectItem itemLabel="pkcovid" itemValue="pkcovid" />
+                        </p:selectOneRadio>
+                        <h:panelGrid columns="2" style="margin-top: 10px;  margin-left: 30px">
+                            <!-- Improved Grid Layout -->
+                            <h:panelGrid columns="3" style="padding: 20px 60px 20px 60px;  width: 720px; margin-right: 60px;" cellpadding="5">                                  <!-- Headers -->
+                                <h:outputLabel value="Select" style="font-weight: bold; text-align: center;"/>
+                                <h:outputLabel value="Dataset" style="font-weight: bold; text-align: center;"/>
+                                <h:outputLabel value="Description" style="font-weight: bold; text-align: center;"/>
+
+                                <!-- Dataset 1 -->
+                                <p:radioButton for="customRadio" itemIndex="0" style="margin: auto;"/>
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/plasma_nmr.csv" 
+                                   style="text-align: center; color: #007ad9;">Dataset1</a>
+                                <h:panelGrid>
+                                    Metabolite concentrations of 90 human plasma samples measured by 1H NMR.<br/>
+                                    Phenotype labels: <b>0 - Controls; 1 - Patients.</b>
+                                </h:panelGrid>
+
+                                <!-- Dataset 2 -->
+                                <p:radioButton for="customRadio" itemIndex="1" style="margin: auto;"/>
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/plasma_nmr_new.csv" 
+                                   style="text-align: center; color: #007ad9;">Dataset2</a>
+                                <h:panelGrid>
+                                    Metabolite concentrations of 77 human plasma samples. Among them, the<br/>
+                                    phenotypes of 12 samples are empty/unknown. Their class can be predicted<br/>
+                                    using the <b>Tester</b> module.
+                                </h:panelGrid>
+
+                                <p:radioButton for="customRadio" itemIndex="2"/> 
+                                <h:panelGroup style="width:120px">
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/covid_metabolomics_data.csv" style="text-align: center; color: #007ad9;">Data</a>
+                                    <br />
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/covid_metadata_multiclass.csv" style="text-align: center; color: #007ad9;">Metadata</a>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block">
+                                    Multiple factors / covariates --
+                                    LC-MS peak intensity data table and meta-data of 20 healthy and 39 COVID-19 patient samples; 
+                                    <b>Four metadata</b> - 3 categorical and 1 numeric. 
+                                </h:panelGroup> 
+                            </h:panelGrid>
+
+
+                            <p:commandButton value="Submit"  update="form southform"
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"
+                                             action="#{wfUploadBean.handleTestDataUpload_table()}" 
+                                             styleClass="ui-button-primary" style="width:110px; font-size: 14px !important" />
+                        </h:panelGrid>
+                    </h:form>
+
+                </h:panelGroup>
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">
+                    <ui:include src="../process/_SanityCheck.xhtml" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 2}">
+                    <ui:include src="../process/_ParamsView.xhtml" />
+                </h:panelGroup>
+
+
+            </h:panelGroup>
+
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <!-- Button set for "Upload" tab -->
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 0}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform mainId"
+                                     action="WorkflowView"/>
+
+                    <p:commandButton id="visBnUpload" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     disabled="#{not wfUploadBean.fileUploaded}"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     update="southform mainId"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 1}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(0)}"
+                                     oncomplete="PF('tabWidget').select(0);"/>
+                    <p:commandButton id="visBnCheck" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform mainId"
+                                     actionListener="#{wfUploadBean.proceedToNorm(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <!--
+                                                         action="#{workflowBean.finishMultiPreparation('Generic Table')}"
+
+                    -->
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 2}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                    <p:commandButton value="Finish"
+                                     id="runAnalysisBn" style="width:160px"
+                                     icon="pi pi-cog"       
+                                     action="#{workflowBean.finishMultiPreparation('Generic Table')}"
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>

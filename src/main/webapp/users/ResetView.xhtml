@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+
+    <ui:define name="content">
+        <div class="flex flex-wrap align-items-center justify-content-center" style="padding-top: 8%">
+            <div class="surface-card shadow-1 p-4 border-round" style="text-align: center">
+                <h5 class="mt-0 mb-3 text-base text-600">
+                    Enter a new password to complete the reset and login to your account.
+                </h5>
+                <h:form id="form">
+                    <p:focus context="form"/>
+                    <h:panelGrid columns="1" style="position: relative; margin-top: -15px; padding-left: 37%">
+
+
+                        <h:panelGrid style="margin-left: 20px">
+                            <p:outputLabel for="pwd1" value="New Password:" style="font-weight: bold;"/>
+                            <p:password id="pwd1"  value="#{fireUserBean.password}" match="pwd2" label="Password 1" required="true" style="width: 250px" placeholder="Password"/>
+                            <p:password id="pwd2" value="#{fireUserBean.password}" label="Password 2" required="true" style="width: 250px" placeholder="Confirm password"/>
+
+                            <p:commandButton value="Reset" style="width:260px;"
+                                             id="procBn"
+                                             onclick="PF('statusDialog').show();"
+                                             action="#{fireUserBean.doResetPassword()}"
+                                             icon="pi pi-unlock"
+                                             oncomplete ="PF('statusDialog').hide();"
+                                             />
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

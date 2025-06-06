@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('utils')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Batch View', '/Secure/utils/BatchView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Batch Effect Adjustment View
+            </h2>
+            <h:panelGrid style="width: 90%; padding: 10px 20px 20px 60px">
+                <h3>Principal Component Analysis (PCA) showing general profile before and after correction:</h3>
+                <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('batch')}" alt="BatchImage"/>
+
+                <h3>Singular value decomposition (SVD) analysis applied to find systematic trends attributable to bias:</h3>
+                <img onerror='this.style.display="none"' src="#{batchLoader.getBatchImg('trend')}" alt="BatchImage2"/>
+
+                <h3>Distance among all sample batches before and after correction:</h3>
+                <img onerror='this.style.display="none"' src="#{batchLoader.getBatchImg('dist')}" alt="BatchImage3"/>
+            </h:panelGrid>
+
+            <h:form>   
+                <h:panelGrid columns="2" style="text-align: right;">
+                    <h4>Click to download the batch corrected data table</h4>
+                    <p:commandButton value="Download" ajax="false" icon="pi pi-download">
+                        <p:fileDownload value="#{batchLoader.correctedFile}" />
+                    </p:commandButton>    
+                </h:panelGrid>  
+            </h:form>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>
+
+

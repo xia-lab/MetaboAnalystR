@@ -1,0 +1,330 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{projCtrl.setupProjectTable()}"/> 
+    </ui:define>
+    <ui:define name="tracker"/>
+    <ui:define name="mystyle">    
+        <style>
+            .warnHighlight {
+                color: red !important;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="leftpane">
+        <h:panelGrid style="padding: 20px 10px 10px 30px; font-size: 13px; line-height: 23px; font-family: Arial, Helvetica, Geneva;">
+            <h:form id="homeForm">
+                <h:panelGrid style="padding-left: 30px;">
+                    <h:commandLink id="homelnk" action="#{sessionBean1.visitHome()}">
+                        <p:graphicImage id="home" 
+                                        url="/resources/images/home.png"
+                                        width="28" height="28"/>
+                    </h:commandLink>
+                    <p:tooltip for="homelnk" style="font-size: 11px;" value="Exit and return the Home page" />
+                </h:panelGrid>
+            </h:form>
+            <h:outputLabel value="Account details" style="font-size: 10pt; font-weight: bold" />
+            <p:separator />
+            <h:outputLabel value="Email: #{userLoginBean.email}" />
+            <p:separator />
+
+            <h:outputLabel value="Projects: #{userLoginBean.numOfProjects} (max 10)" />
+            <p:separator />
+
+            <h:outputLabel value="Institution: #{userLoginBean.institution}" />
+            <p:separator />
+            <h:outputLabel value="Name: #{userLoginBean.fname}" />
+            <p:separator />
+            <h:panelGrid style="padding-top:20px">
+                <p:commandButton value="Delete Account" style="width:140px;" icon="pi pi-trash" onclick="PF('accountDelDialog').show();"/>
+
+                <p:commandButton value="Job Manager" style="margin-top: 10px; width:140px;"
+                                 onclick="PF('Manager Entry').show()"                                                 
+                                 rendered="#{JobManagerBean.managerPage and userLoginBean.jobManager}"
+                                 icon="pi pi-cogs"
+                                 />
+
+            </h:panelGrid>
+        </h:panelGrid>
+
+        <p:dialog widgetVar="accountDelDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="fade" resizable="true"> 
+
+            <h:form>
+                <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 14px">
+                    <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            <i class="pi pi-exclamation-circle" style="font-size:48px;color:red"></i>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            Once deleted, your account and all saved projects cannot be recovered. Are you sure you want to delete this account?
+                        </h:panelGroup>
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="text-align: center; width:100%;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('accountDelDialog').hide()"/>   
+                        <p:commandButton value="Yes, delete" style="width:120px;"
+                                         id="delBn"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{projCtrl.callAccountDelete()}"
+                                         update=":form"
+                                         oncomplete ="PF('statusDialog').hide(); PF('accountDelDialog').hide()"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>        
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+
+            <p:growl id="msgs" showDetail="true" />
+
+            <h2>
+                Project Management 
+            </h2>
+            <p>  
+                Start by clicking <b>Add New</b> to add a new project. For each created project, an action button
+                appears under the Action column.
+                Click "<b>start</b>" action to begin the desired project or "<b>load</b>" to load a previously saved project.
+                In order to purge a project, select the project and then click on <b>Delete</b>.
+                The maximum total number of projects allowed is <b>10</b>. 
+            </p>
+            <p>
+                Once you start a project, you will be prompted to upload data and <b>Proceed</b> to the next page where you will be able to <b>Save Project</b>.
+            </p>
+            <h:form id="form">
+                <p:dataTable id="checkboxDT" 
+                             var="project" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             value="#{projectBean.projectTable}" 
+                             rowsPerPageTemplate="10"
+                             sortBy="#{project.id}"
+                             selection="#{projectBean.selectedProject}" 
+                             rowKey="#{project.id}" 
+                             style="width: 90%">
+                    <f:facet name="header">
+                        <h:outputLabel style="font-weight:bold">Projects Available</h:outputLabel>
+                    </f:facet>
+
+                    <p:column headerText="Project ID" style="width: 8%">
+                        <h:outputText value="#{project.id}" />
+                    </p:column>
+
+                    <p:column headerText="Title" style="width: 12%">
+                        <h:outputText value="#{project.title}" />
+                    </p:column>
+
+                    <p:column headerText="Description" style="width: 30%">
+                        <h:outputText value="#{project.description}" />
+                    </p:column>
+
+                    <p:column headerText="Type" style="width: 5%">
+                        <h:outputText value="#{project.type}" />
+                    </p:column>
+
+                    <p:column headerText="Date created" sortBy="#{project.creationDate}" style="width: 11%" >
+                        <h:outputText value="#{project.creationDate}" />
+                    </p:column>
+                    <!--
+                                                    <p:column headerText="Note" style="#{project.warning ? 'color: red; width: 9%;' : 'width: 9%;'}">
+                                                        <h:outputText value="#{project.note}" />
+                                                    </p:column>
+                    -->
+                    <p:column headerText="Action" style="width:17%; ">  
+                        <p:panelGrid columns="2" styleClass="ui-noborder">
+                            <p:commandButton 
+                                style="#{project.status eq 'Start' ?  'color: darksalmon; width:75px;':'width:75px;'}"
+                                update=":form"
+                                value="#{project.status}"
+                                action="#{projectBean.prepareProject()}"
+                                onclick="PF('statusDialog').show();"
+                                >
+                                <f:setPropertyActionListener value="#{project}" target="#{projectBean.selectedProject}" />
+                            </p:commandButton>  
+
+                            <p:commandButton value="Delete" style="width:75px;"
+                                             id="delActBn"
+                                             onclick="PF('projectDelDialog').show();"
+                                             >
+                                <f:setPropertyActionListener value="#{project}" target="#{projectBean.selectedProject}" />
+                            </p:commandButton>
+                        </p:panelGrid>
+                    </p:column>
+                    <f:facet name="footer">
+                        <p:commandButton value="Add New" style="width:125px;"
+                                         styleClass="btnBckg3"
+                                         id="addBn"
+                                         onclick="PF('projectAddDialog').show();"
+                                         icon="pi pi-plus"
+                                         />
+                    </f:facet>
+                </p:dataTable>
+            </h:form>
+
+        </h:panelGrid>
+
+
+        <p:dialog widgetVar="projectAddDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="fade" resizable="true"> 
+            <h:form> 
+                <h:panelGrid  style="margin-top: 0px; padding-left: 2%; font-size: 14px; line-height: 24px">
+                    <h:panelGrid style="margin-left: 20px">
+                        <h:panelGrid columns="2" style="width: 360px">
+
+                            <p:outputLabel for="title" value="Title" style="font-weight: bold;"/>
+                            <p:inputText id="title" value="#{projectBean.title}" style="width: 209px"/>
+
+                            <p:outputLabel for="description" value="Description"  style="font-weight: bold;"/>
+                            <p:inputTextarea id="description" value="#{projectBean.description}" rows="5" cols="32" 
+                                             style="width: 209px"/>
+
+                            <p:outputLabel value="Type"  style="font-weight: bold;"/>
+                            <p:selectOneMenu value="#{projectBean.projectType}" style="width: 194px">
+                                <f:selectItems value="#{projectBean.projectTypes}"/>
+                            </p:selectOneMenu> 
+
+
+                        </h:panelGrid>
+                        <h:panelGrid style="padding-top: 10px; text-align: center; width: 360px">
+
+                            <h:panelGrid columns="2" style="padding-left:20px; width:350px;">
+                                <p:commandButton value="Cancel" id="okBn"
+                                                 onclick="PF('projectAddDialog').hide()"/>   
+                                <p:commandButton value="Create" style="width:120px;"
+                                                 id="procBn"
+                                                 onclick="PF('statusDialog').show();"
+                                                 action="#{projCtrl.createProject()}"
+                                                 update=":form"
+                                                 icon="pi pi-pencil"
+                                                 oncomplete ="PF('statusDialog').hide(); PF('projectAddDialog').hide()"
+                                                 />
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="projectDelDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="fade" resizable="true"> 
+
+            <h:form>
+                <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 14px">
+                    <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            <i class="pi pi-exclamation-circle" style="font-size:48px;color:red"></i>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            Once deleted, a project cannot be recovered. Are you sure to delete this project?
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="text-align: center; width:100%;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('projectDelDialog').hide()"/>   
+                        <p:commandButton value="Yes, delete" style="width:120px;"
+                                         id="delBn"
+                                         onclick="PF('statusDialog').show();"
+                                         action="#{projCtrl.callProjectDelete()}"
+                                         update=":form"
+                                         oncomplete ="PF('statusDialog').hide(); PF('projectDelDialog').hide()"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="projectEditDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  hideEffect="explode" resizable="true"> 
+            <h:form> 
+                <h:panelGrid>
+                    <h:outputLabel value="Please select a factor to continue:" />  
+                </h:panelGrid>
+                <h:panelGrid style="padding-left:20px; width:350px; height:120px;"> 
+
+                    <h:panelGrid columns="2" style="width: 360px">
+                        <p:outputLabel for="title" value="Title" style="font-weight: bold;"/>
+                        <p:inputText id="title" value="#{projectBean.title}" style="width: 209px"/>
+
+
+                        <p:outputLabel for="description" value="Description"  style="font-weight: bold;"/>
+                        <p:inputTextarea id="description" value="#{projectBean.description}" rows="5" cols="32" 
+                                         style="width: 209px"/>
+
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="padding-left:20px; width:350px;">
+                        <p:commandButton value="Cancel" id="okBn"
+                                         onclick="PF('volcanoDialog').hide()"/>   
+                        <p:commandButton id="facBn" value="Proceed" style="width:80px" ajax="false"
+                                         onclick="PF('statusDialog').show();"
+                                         action="Volcano Plot"
+                                         styleClass="procBn"
+                                         /> 
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog modal="true" widgetVar="Manager Entry" 
+                  style="width: 400px; height:400px;" 
+                  appendTo="@(body)" header="Administrator Entry:"
+                  draggable="false" closable="true" resizable="false"> 
+            <h:form id="formkill">
+
+                <h:panelGrid>
+                    <h:panelGrid columns="2" style="width:300px; padding-bottom:50px; margin-left: 70px;">
+                        <h:outputLabel value="Password:"/>
+                        <p:password value="#{JobManagerBean.killPassword}" style="width:120px" />    
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:400px; text-align: center;">
+                        <p:commandButton value="Cancel"
+                                         onclick="PF('Manager Entry').hide();"
+                                         />
+                        <p:commandButton value="Confirm"
+                                         action="#{JobManagerBean.enterManager()}"
+                                         />
+                    </h:panelGrid>
+                </h:panelGrid>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="You are about to log off!"
+                  widgetVar="logoutProjDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="580"
+                  height="180"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid  style="width:500px; line-height: 150%; padding: 2px; font-size: 13px">
+                    <p>
+                        <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                        <div>You are about to log off. Your current progress will be save automatically! If you want to modify any settings, welcome back!</div>
+                    </p>
+                    <p>Please choose one of the following options:</p>
+                </h:panelGrid>
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
+                                 onclick="PF('logoutProjDialog').hide();PF('statusDialog').show();"
+                                 action="#{projCtrl.saveProject()}"
+                                 oncomplete ="PF('statusDialog').hide();"/>
+
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20px" value="Keep staying here"
+                                 onclick="PF('logoutProjDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

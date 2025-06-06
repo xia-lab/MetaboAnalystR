@@ -1,0 +1,1109 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{workflowBean.loadAllWorkflows()}"></f:event> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
+        <script type="text/javascript">
+            window.onload = function () {
+                PF("workflowProgressDialog").hide();
+                localStorage.removeItem('pagesToVisit');
+
+                var reportEndBool = localStorage.getItem('reportEndBool');
+                //console.log(reportEndBool + "=====reportEndBool");
+                if (reportEndBool) {
+                    //PF("resDialog").show();
+                    PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Execution Finished! Click 'Dashboard' button to view results."}]);
+
+                    localStorage.removeItem('reportEndBool');
+                }
+
+                //<![CDATA[
+                function getURLParameter(name) {
+                    return decodeURIComponent(
+                            (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')
+                            ) || null;
+                }
+                //]]>
+                if (getURLParameter('callFunc') !== null) {
+                    console.log(getURLParameter('callFunc') + "===");
+                    //if(getURLParameter('callFunc') === "checkPagesToVisit"){
+                    //    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                    checkPagesToVisit([]);
+                    //}
+                }
+
+            };
+        </script>
+    </ui:define>
+    <ui:define name="mystyle">    
+        <style>
+            .ui-diagram-element {
+                background-color: #EFEEEC;
+                padding: 0px;
+                width: 9em;
+                height: 9em;
+                text-align: center;
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+                user-select: none;
+            }
+
+            .ui-diagram-element:hover {
+                background-color: #C7C6C4;
+            }
+
+            .selected {
+                border: 3px solid blue; /* Highlight the entire node */
+                width: 100%; /* Make sure it covers the full node */
+                height: 100%;
+                box-sizing: border-box; /* Include borders in the dimensions */
+            }
+
+            .nodecls{
+                background-color: #90EE90;
+                color: black;
+            }
+
+            .inputcls{
+                width: 10em !important;
+                background-color: #ADD8E6;
+                color: black;
+            }
+
+            .proccls{
+                background-color: #f6dbd1;
+                color: black;
+            }
+
+            .repcls {
+                background-color: orange;
+                color: black;
+                width: 60px; /* Equal width and height */
+                height: 60px;
+                padding: 0px;
+                border-radius: 50%; /* Makes it a circle */
+                display: flex; /* Centers the content inside */
+                justify-content: center; /* Horizontally centers text */
+                align-items: center; /* Vertically centers text */
+                text-align: center; /* Aligns text for consistency */
+                font-size: 14px; /* Adjust font size if needed */
+            }
+
+            .ui-diagram-element.repcls.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+            }
+
+            .ui-diagram-element.nodecls.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+            }
+
+            .ui-diagram-element.proccls.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+            }
+
+            .checkmark-container {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                z-index: 1000; /* Ensure it's above other elements */
+                color: green;
+                font-size: 18px;
+            }
+
+            .indeterminate-progress-bar2 {
+                z-index:100000000;
+                background-color: #d1d5db;
+                border-radius: 9999px;
+
+                height: 6px;
+                top:0px;
+                width:100%;
+                position: absolute;
+                overflow: hidden;
+            }
+
+            .indeterminate-progress-bar__progress2 {
+                background-color: #f6523b;
+                position: absolute;
+                bottom: 0;
+                top: 0;
+                width: 100%;
+
+                animation-duration: 2s;
+                animation-iteration-count: infinite;
+                animation-name: indeterminate-progress-bar;
+
+                animation-timing-function: ease-in-out;
+            }
+
+            @keyframes indeterminate-progress-bar {
+                from {
+                    left: -50%;
+                }
+                to {
+                    left: 100%;
+                }
+            }
+
+            #sigma-parent {
+                float: left;
+                width: 100%;
+                height: 100%;
+                position: relative;
+                background: var(--surface-card);
+                border: none;
+            }
+
+            #sigma-example {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+
+            .ui-dataview .ui-dataview-header {
+                display: none !important;
+            }
+
+            .ui-tabs-header {
+                height:30px;
+            }
+
+            .ui-tabs-nav {
+                height:34px;
+            }
+
+            .loading {
+                background-image: url('(link unavailable)');
+                background-size: 20px 20px;
+                background-position: center;
+                padding-left: 20px !important;
+            }
+
+            .myiconsize .pi {
+                font-size: 1.6rem;
+
+            }
+            /*animation dots*/
+            .dots span {
+                animation: blink 1.5s infinite;
+                font-size: 16px; /* Adjust font size for dots */
+            }
+
+            .dots span:nth-child(1) {
+                animation-delay: 0s;
+            }
+
+            .dots span:nth-child(2) {
+                animation-delay: 0.3s;
+            }
+
+            .dots span:nth-child(3) {
+                animation-delay: 0.6s;
+            }
+
+            @keyframes blink {
+                0% {
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0;
+                }
+            }
+
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid style="padding: 40px 30px 20px 40px; width:100%">
+            <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                <div id="progressBar" class="indeterminate-progress-bar2">
+                    <div class="indeterminate-progress-bar__progress2"></div>
+                </div>
+            </h:panelGroup>
+            <p:outputLabel style="font-size:1.6em !important; font-weight: bold" value="Workflow Management"/>
+            <h:form id="formHidden1">
+                <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
+                <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
+                <h:inputHidden id="dataType" value="#{sessionBean1.dataType}" />
+                <h:inputHidden id="funcArr" value="#{workflowBean.calledWorkflows}" />
+                <h:inputHidden id="funcArrErr" value="#{workflowBean.calledWorkflowsError}" />
+                <h:inputHidden id="libOpt" value="#{pathBean.libOpt}" />
+                <h:inputHidden id="netVisMode" value="#{sessionBean1.visMode}" />
+                <h:inputHidden id="naviType" value="#{sessionBean1.naviType}" />
+                <h:inputHidden id="loggedIn" value="#{sessionBean1.loggedIn}" />
+            </h:form>
+            <p>
+                You can perform automated data analysis without manual operation (except data upload) by creating workflow(s). 
+                For a given data input, you can perform <b>multiple compatible modules</b>, or find the optimal parameters by 
+                comparing results from <b>multiple workflows</b>. 
+
+                Click on a box to select an analysis unit; click again to de-select; Click <b>RUN!</b> to execute the workflow(s); 
+                After completion, click <b>Dashboard</b> view analysis results. 
+            </p>
+
+            <h:panelGrid columns="2" style="width:100%">
+
+                <h:panelGroup>
+                    Current input: <p:outputLabel style="font-weight: bold" value="#{diagramView.input}"/>
+                </h:panelGroup>
+                <h:panelGrid style="text-align: right; width: 100%;">
+
+                    <h:panelGroup layout="block" 
+                                  style="display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  margin: 1rem 0;">
+
+                        <!-- Left side: Poll Form -->
+                        <h:form id="pollForm" style="display: flex; align-items: center; margin-left: 2rem;">
+
+                            <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell designForm" stop="#{jobExecution.stopStatusCheck}" widgetVar="pollWidget" />
+
+                            <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                                <span>
+                                    <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
+                                    <span class="dots">
+                                        <span>.</span>
+                                        <span>.</span>
+                                        <span>.</span>
+                                    </span>
+                                </span>
+                            </h:panelGroup>
+
+                            <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
+                                <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
+                            </h:panelGroup>
+
+
+
+                        </h:form>
+
+                        <!-- Right side: Action Buttons -->
+                        <h:form id="ac" style="display: flex; gap: 20px; align-items: center;">
+
+                            <p:commandButton id="startBn" title="Start Analysis" 
+                                             icon="pi pi-play"
+                                             value="RUN!"
+                                             rendered="#{!specLoader.spectraUploaded}"
+                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                             actionListener="#{diagramView.submitWorkflowJob}" 
+                                             onclick="PF('statusDialog').show()"
+                                             update="formHidden1 :ac :designForm :pollForm :formWorkflowInfo"
+                                             oncomplete="PF('statusDialog').hide(); reattachEvents();" />
+
+                            <p:commandButton id="startBn2" title="Start Analysis" 
+                                             icon="pi pi-play"
+                                             value="RUN!"
+                                             rendered="#{specLoader.spectraUploaded}"
+                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                             actionListener="#{diagramView.submitWorkflowJob}" 
+                                             onclick="PF('statusDialog').show()"
+                                             update="formHidden1 :ac :designForm :pollForm "
+                                             oncomplete="PF('statusDialog').hide(); reattachEvents(); PF('progressDialog').show()" />
+
+                            <p:commandButton id="checkBn" title="Check details of job" 
+                                             icon="pi pi-sync"
+                                             value="Progress"
+                                             rendered="#{specLoader.spectraUploaded}"
+                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                             onclick="PF('progressDialog').show()"/>
+
+                            <p:commandButton value="Reset" 
+                                             icon="pi pi-refresh"
+                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                             onclick="PF('resetDialog').show()" />
+                            <!--onclick="PF('resetDialog').show()"-->
+
+                            <p:commandButton value="Dashboard" immediate="true" 
+                                             icon="pi pi-forward"
+                                             style="font-weight: bold; font-size:1.2rem; width: 140px; height: 42px;"
+                                             action="#{diagramView.goToResultPage}" ajax="false" />
+                        </h:form>
+
+                    </h:panelGroup>
+
+
+
+                </h:panelGrid>
+            </h:panelGrid>
+            <p:outputPanel id="viewerPanel" style="width: 100%; min-height: 70vh; min-width: 1500px; position: relative; line-height: 18px">
+                <div style="position: absolute; padding-top: 10px;  width: 100%; text-align: left; top: 1em; height: 15em; background-color: var(--cyan-300);">
+                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Input Preparation"/>
+                </div>
+                <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 16em; height: 15em;
+                     background-color: var(--blue-300); border-top: medium #202020 groove;">
+                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Processing Units"/>
+                </div>
+                <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 31em; height: 15em;
+                     background-color: var(--indigo-300); border-top: medium #202020 groove">
+                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Analysis Modules"/>
+                </div>
+
+                <h:form id="designForm" style="height: 100%;">
+                    <p:remoteCommand 
+                        name="checkPagesToVisit" 
+                        actionListener="#{diagramView.checkPagesToVisit}" 
+                        oncomplete="console.log('Remote command executed successfully');"
+                        onerror="console.error('Error during remote command execution');"
+                        />
+                    <p:remoteCommand name="handleElementDoubleClick" actionListener="#{diagramView.onElementDoubleClick}" update="designForm" oncomplete="reattachEvents()"/>
+                    <p:remoteCommand name="handleElementClick" actionListener="#{diagramView.onElementClick}" update="designForm" oncomplete="reattachEvents()"/>
+                    <p:remoteCommand name="removeConnection" action="#{diagramView.removeConnection}" update="designForm" oncomplete="reattachEvents()">
+                        <f:param name="sourceId" />
+                        <f:param name="targetId" />
+                    </p:remoteCommand>
+                    <p:remoteCommand name="handleNodeAction" 
+                                     actionListener="#{diagramView.onProcClick}" 
+                                     update="designForm">
+                        <f:param name="nodeId" />
+                    </p:remoteCommand>
+
+                    <!-- Diagram -->
+                    <p:diagram value="#{diagramView.model}" widgetVar="networkDiagram" 
+                               style="height: 70vh; position: relative;" styleClass="ui-widget-content" var="el">
+                        <f:facet name="element"  class="diagram-node">
+                            <!-- Node Content -->
+                            <div style="text-align: center;" class="myiconsize #{diagramView.isNodeSelected(el.id) ? 'selected' : ''}">
+                                <div style="padding:7px" >
+
+                                    <h:outputText rendered="#{el.type eq 'input'}" value="#{el.name}" style="display:block;margin-top:3px;" />
+                                    <h:outputText rendered="#{el.type ne 'input'}" value="#{el.name}" style="display:block;margin-top:1em;" />
+
+                                    <!-- Top-Right Checkmark -->
+
+                                    <h:panelGroup styleClass="checkmark-container" rendered="#{diagramView.isNodeExecuted(el.id)}">
+                                        <span style="position: absolute; top: 0px; right: 0px; color: green; font-size: 30px;">&#10003;</span>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup styleClass="xmark-container" rendered="#{!diagramView.isNodeFailed(el.id)}">
+                                        <span style="position: absolute; top: 0px; right: 0px; color: red; font-size: 30px;">&#10007;</span>
+                                    </h:panelGroup>
+
+                                    <!-- Clickable Icon -->
+                                    <h:panelGroup rendered="#{el.type eq 'input'}" styleClass="center-icon">
+                                        <img src="#{facesContext.externalContext.requestContextPath}/#{el.image}" 
+                                             style="height: 60px;"></img>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{el.type eq 'proc'}" styleClass="center-icon">
+                                        <p:commandButton title="Adjust parameters"
+                                                         icon="pi pi-cog"
+                                                         style="padding: 0; border: none; background: none"
+                                                         onclick="handleNodeAction([{name: 'nodeId', value: '#{el.name}'}]);
+                                                                 event.stopPropagation();
+                                                                 return false;">
+                                        </p:commandButton>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{el.type eq 'anal'}" styleClass="center-icon">
+                                        <p:commandButton title="View Detail"
+                                                         icon="pi pi-share-alt"
+                                                         update="designForm"
+                                                         style="padding: 0; border: none; background: none;"
+                                                         onclick="event.stopPropagation(); return false;">
+                                            <!-- Display Image Inside the Button -->
+                                            <f:param name="nodeId" value="#{el.name}" />
+                                        </p:commandButton>
+                                    </h:panelGroup>
+
+                                </div>
+
+                            </div>
+                        </f:facet>
+                        <p:ajax event="connect" listener="#{diagramView.onConnect}" oncomplete="reattachEvents()"/>
+                        <p:ajax event="disconnect" listener="#{diagramView.onDisconnect}" oncomplete="reattachEvents()"/>
+                        <p:ajax event="connectionChange" listener="#{diagramView.onConnectionChange}" oncomplete="reattachEvents()"/>
+                    </p:diagram>
+                </h:form>
+            </p:outputPanel>
+
+        </h:panelGrid>
+
+        <p:dialog header="You are about to log off!"
+                  widgetVar="logoutProjDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="580"
+                  height="180"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid  style="width:500px; line-height: 150%; padding: 2px; font-size: 13px">
+                    <p>
+                        <span icon="pi pi-info-circle" style="float:left; margin:0 7px 50px 0;"></span>
+                        <div>You are about to log off. Your current progress will be save automatically! If you want to modify any settings, welcome back!</div>
+                    </p>
+                    <p>Please choose one of the following options:</p>
+                </h:panelGrid>
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
+                                 onclick="PF('logoutProjDialog').hide();
+                                         PF('statusDialog').show();"
+                                 action="#{projCtrl.saveProject()}"
+                                 oncomplete ="PF('statusDialog').hide();"/>
+
+                <p:commandButton style="width:160px; font-size: 13px; margin-left: 20px" value="Keep staying here"
+                                 onclick="PF('logoutProjDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Reset"
+                  widgetVar="resetDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="600"
+                  height="200"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid columns="1" style="width:100%; line-height: 1.5; padding: 10px; font-size: 14px;" columnClasses="align-left">
+                    <!-- Warning Message Section -->
+                    <div style="display: flex; align-items: flex-start; margin-bottom: 20px;">
+                        <span class="pi pi-info-circle" style="font-size: 20px; margin-right: 10px; color: #f39c12;"></span>
+                        <div>You are about to reset the workflow. Your current progress will be lost!</div>
+                    </div>
+
+                    <!-- Instruction Text -->
+                    <div style="margin-bottom: 20px;">
+                        Please choose one of the following options:
+                    </div>
+                </h:panelGrid>
+
+                <!-- Buttons Section -->
+                <div style="text-align: center; margin-top: 10px;">
+                    <p:commandButton value="Cancel" 
+                                     style="width:120px; font-size: 14px; margin-right: 10px;" 
+                                     onclick="PF('resetDialog').hide();" />
+
+                    <p:commandButton value="Confirm" 
+                                     style="width:120px; font-size: 14px;" 
+                                     actionListener="#{diagramView.resetWorkflow()}" 
+                                     update="formHidden1 :ac :designForm" 
+                                     onclick="PF('resetDialog').hide();
+                                             PF('statusDialog').show();" 
+                                     oncomplete="PF('statusDialog').hide(); reattachEvents();" />
+                </div>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Workflow Running"
+                  widgetVar="projSubmittedDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="false"
+                  appendTo="@(body)">       
+            <h:panelGrid style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+
+                <p>
+                    The workflow is running, the project has been saved. 
+                    You can check the result later from your saved projects.
+                </p>
+
+                <h:panelGrid style="width: 100%; text-align: center; padding:20px;">
+                    <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+
+                    <h:panelGrid columns="2" id="formRunx">
+                        <h:outputLabel value="Current project ID:" style="font-weight:bold"/>
+                        <h:outputText value="#{fireProjectBean.selectedProject.id}" style="font-weight:bold; color:darkred"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Workflow Running"
+                  widgetVar="projRunDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="false"
+                  appendTo="@(body)">       
+            <h:panelGrid style="width:400px; line-height: 23px; padding: 20px; font-size: 13px" 
+                         class="surface-card shadow-0 p-3 text-600">
+
+                <p>
+                    The workflow is running, the project has been saved. 
+                    You can check the result later from your saved projects.
+                </p>
+                <h:panelGrid style="width: 100%; text-align: center; padding:20px;">
+                    <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+
+                    <h:panelGrid columns="2" id="formRun">
+                        <h:outputLabel value="Current project ID:" style="font-weight:bold"/>
+                        <h:outputText value="#{fireProjectBean.selectedProject.id}" style="font-weight:bold; color:darkred"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Analysis summary"
+                  widgetVar="resDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="false"
+                  appendTo="@(body)">       
+            <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+                <h:form id="formRes">
+                    <h:outputText value="#{workflowBean.summaryText}" escape="false" />
+                    <h:panelGrid columns="2">
+                        <h:outputLabel value="Click here to generate report:" />
+
+                        <p:commandLink id="reportWorkflow"
+                                       style="margin-left:5px"
+                                       action="#{downloader.generateReport('html')}" 
+                                       onclick="PF('statusDialog').show()" 
+                                       ajax="false"
+                                       oncomplete="PF('statusDialog').hide()" 
+                                       >
+                            <i class="pi pi-file" style="width:40px; color: tomato !important;"></i>               
+                        </p:commandLink>
+                        <h:outputLabel id="dialogText" style="grid-column: span 2;" /> <!-- Spans both columns -->
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="enrichDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
+                <h:form id="formEnr">
+
+                    <h:outputText value="Analysis Type:" style="font-weight:bold;" />
+                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.enrichOpt}">
+                        <f:selectItem itemLabel="ORA" itemValue="ora" />
+                        <f:selectItem itemLabel="SSP" itemValue="ssp" />
+                        <f:selectItem itemLabel="QEA" itemValue="qea" />
+                    </p:selectOneRadio>
+
+                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
+                    <h:panelGrid columns="2">
+                        <p:commandButton value="Upload Data" 
+                                         action="#{wfUploadBean.navigateToEnrichUpload}" 
+                                         style="margin-right:10px;" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                        <p:commandButton value="Try Example" 
+                                         action="#{wfUploadBean.loadEnrichExample}" 
+                                         onclick="PF('statusDialog').show();
+                                                 PF('enrichDialog').hide();" 
+                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                         update="formHidden1"/>
+
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="statDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid  style="width:100%; line-height: 23px; padding: 20px;">
+                <p>
+                    Please upload your data or try our example
+                </p>
+                <h:form>
+                    <h:panelGrid columns="2" style="width:100%;" class="surface-card p-3">
+                        <h:outputText value="Data Type:" style="font-weight:bold;" />
+                        <p:selectOneRadio id="analysisType" value="#{wfUploadBean.statOpt}">
+                            <f:selectItem itemLabel="Table" itemValue="table" />
+                            <f:selectItem itemLabel="Zip" itemValue="zip" />
+                            <f:selectItem itemLabel="mzTab" itemValue="mztab" />
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Upload Data" 
+                                         action="#{wfUploadBean.navigateToStatUpload}" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                        <p:commandButton value="Try Example" 
+                                         action="#{wfUploadBean.loadStatExample}" 
+                                         onclick="PF('statusDialog').show();
+                                                 PF('statDialog').hide();" 
+                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                         update="formHidden1"/>
+
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+
+        </p:dialog>
+        <p:dialog header="Data Preparation" widgetVar="pathDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
+                <h:form id="formPath">
+
+                    <h:outputText value="Data Type:" style="font-weight:bold;" />
+                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.pathOpt}">
+                        <f:selectItem itemLabel="List" itemValue="list" />
+                        <f:selectItem itemLabel="Table" itemValue="table" />
+                    </p:selectOneRadio>
+
+                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
+                    <h:panelGrid columns="2">
+                        <p:commandLink value="Upload Data" 
+                                       action="#{wfUploadBean.navigateToPathUpload}" 
+                                       style="margin-right:10px;" 
+                                       onclick="PF('statusDialog').show()" 
+                                       oncomplete="PF('statusDialog').hide()" 
+                                       ajax="false"/>
+                        <p:commandLink value="Try Example" 
+                                       action="#{wfUploadBean.loadPathExample}" 
+                                       onclick="PF('statusDialog').show();
+                                               PF('pathDialog').hide();" 
+                                       oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                       update="formHidden1"/>
+
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="networkDialog" modal="true"
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid styleClass="surface-card shadow-0 p-3 text-600" columns="1">
+                <h:form id="formNet">
+
+                    <h:outputText value="Data Type:" styleClass="font-weight-bold mb-2" />
+                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.networkOpt}" styleClass="mb-3">
+                        <f:selectItem itemLabel="List" itemValue="list" />
+                        <f:selectItem itemLabel="Table" itemValue="table" />
+                    </p:selectOneRadio>
+
+                    <h:outputText value="Choose an Option:" styleClass="font-weight-bold mb-2" />
+                    <h:panelGrid columns="2" styleClass="grid-align-center">
+                        <p:commandButton value="Upload Data" 
+                                         action="#{wfUploadBean.navigateToNetUpload}" 
+                                         styleClass="btn btn-primary mr-2"
+                                         icon="pi pi-upload"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"
+                                         title="Upload your data for analysis"/>
+
+                        <p:commandButton value="Try Example" 
+                                         action="#{wfUploadBean.loadNetExample}" 
+                                         styleClass="btn btn-secondary"
+                                         icon="pi pi-search"
+                                         onclick="PF('statusDialog').show();
+                                                 PF('networkDialog').hide();" 
+                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                         update="formHidden1"
+                                         title="Load an example dataset for preview"/>
+                    </h:panelGrid>
+
+                </h:form>
+            </h:panelGrid>
+
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="mumDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
+                <h:form id="formMum">
+
+                    <h:outputText value="Data Type:" style="font-weight:bold;" />
+                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.mumOpt}">
+                        <f:selectItem itemLabel="List" itemValue="list" />
+                        <f:selectItem itemLabel="Table" itemValue="table" />
+                    </p:selectOneRadio>
+
+                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
+                    <h:panelGrid columns="2">
+                        <p:commandLink value="Upload Data" 
+                                       action="#{wfUploadBean.navigateToMumUpload}" 
+                                       style="margin-right:10px;" 
+                                       onclick="PF('statusDialog').show()" 
+                                       oncomplete="PF('statusDialog').hide()" 
+                                       ajax="false"/>
+                        <p:commandLink value="Try Example" 
+                                       action="#{wfUploadBean.loadMumExample}" 
+                                       onclick="PF('statusDialog').show();
+                                               PF('mumDialog').hide();" 
+                                       oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                       update="formHidden1"/>
+
+                    </h:panelGrid>
+
+                </h:form>
+
+            </h:panelGrid>
+
+        </p:dialog>
+        <p:dialog header="Data Preparation" widgetVar="mfDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+            <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+                <h:form>
+                    <p>Please upload your data or try our example</p>
+
+                    <h:panelGrid columns="2">
+                        <p:commandButton value="Upload Data" 
+                                         action="#{wfUploadBean.navigateToMfUpload}" 
+                                         style="margin-right:10px;" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                        <p:commandButton value="Try Example" 
+                                         action="#{wfUploadBean.loadMfExample}" 
+                                         onclick="PF('statusDialog').show();
+                                                 PF('mfDialog').hide();" 
+                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                         update="formHidden1"/>
+
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="specDialog" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+            <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+                <h:form>
+                    <p>Please upload your data or try our example</p>
+
+                    <h:outputText value="Upload method:" style="font-weight:bold;" />
+                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.specUpOpt}">
+                        <f:selectItem itemLabel="Google Drive" itemValue="googledrive"/>
+                        <f:selectItem itemLabel="Direct Upload" itemValue="direct"/>                        
+                    </p:selectOneRadio>
+
+                    <h:panelGrid columns="2">
+                        <p:commandButton value="Upload Data" 
+                                         action="#{wfUploadBean.navigateToSpecUpload}" 
+                                         style="margin-right:10px;" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                        <p:commandButton value="Try Example" 
+                                         action="#{wfUploadBean.processSpecExampleUpload}" 
+                                         onclick="PF('statusDialog').show();
+                                                 PF('specDialog').hide();" 
+                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
+                                         update="formHidden1"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+
+
+        <p:dialog header="Warning"
+                  widgetVar="projectPreparedDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="false"
+                  appendTo="@(body)">       
+            <h:panelGrid style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+                <h:panelGrid columns="1" style="width: 400px; margin: 0 auto;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="pi pi-exclamation-circle" style="font-size: 2rem; color: #f39c12;"></i>
+                        <p style="font-size: 1rem; margin: 0; text-align: left;">
+                            You need to prepare your data before starting workflow execution!
+                        </p>
+                    </div>
+                </h:panelGrid>
+
+                <h:panelGrid columns="1" style="text-align:center; width:400px">
+                    <p:commandButton value="OK" 
+                                     style="margin-right:10px;" 
+                                     onclick="PF('projectPreparedDialog').hide()" 
+                                     />
+                </h:panelGrid>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="tableInputDlg" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid  style="width:100%; line-height: 23px; padding: 20px;">
+                <p>
+                    Please choose your table type:
+                </p>
+                <ul> 
+                    <li>
+                        Metabolites: metabolite ID or name.
+                    </li>
+                    <li>
+                        LC-MS peaks: m/z values with or without retention time
+                    </li> 
+                    <li>
+                        Generic: other feature type
+                    </li> 
+                </ul>
+                <h:form>
+                    <h:panelGrid columns="2" style="width:100%;" class="surface-card p-3">
+                        <h:outputText value="Type:" style="font-weight:bold;" />
+                        <p:selectOneRadio id="analysisType" value="#{wfUploadBean.tableOpt}">
+                            <f:selectItem itemLabel="Generic" itemValue="generic" />
+                            <f:selectItem itemLabel="Metabolites" itemValue="compound" />
+                            <f:selectItem itemLabel="LC-MS peaks" itemValue="peak" />
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+                    <h:panelGrid columns="1" style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Proceed" 
+                                         action="#{wfUploadBean.navigateToTableUpload}" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="listInputDlg" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid  style="width:100%; line-height: 23px; padding: 20px;">
+                <p>
+                    Please choose your list type:
+                </p>
+                <ul>
+                    <li>
+                        Metabolites metabolite IDs or names.
+                    </li>
+                    <!--
+                    <li>
+                        Genes: gene IDs and optionally a list of metabolites
+                    </li>
+                    -->
+                    <li>
+                        LC-MS peaks: m/z values with or without retention time
+                    </li> 
+                </ul>
+
+                <h:form>
+                    <h:panelGrid columns="2" style="width:100%;" class="surface-card p-3">
+                        <h:outputText value="Type:" style="font-weight:bold;" />
+                        <p:selectOneRadio id="analysisType" value="#{wfUploadBean.listOpt}">
+                            <f:selectItem itemLabel="Metabolites" itemValue="compound" />
+                            <!--
+                            <f:selectItem itemLabel="Genes" itemValue="gene" />
+                            -->
+                            <f:selectItem itemLabel="LC-MS peaks" itemValue="peak" />
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+                    <h:panelGrid columns="1" style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Proceed" 
+                                         action="#{wfUploadBean.navigateToListUpload}" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+
+        </p:dialog>
+
+        <p:dialog header="Data Preparation" widgetVar="tablesInputDlg" modal="true" 
+                  showEffect="fade" hideEffect="fade" width="500">   
+
+            <h:panelGrid  style="width:100%; line-height: 23px; padding: 20px;">
+                <p>
+                    Please choose the type of your tables:
+                </p>
+                <ul>
+                    <li>
+                        Generic: unannotated features
+                    </li>
+                    <li>
+                        LC-MS peaks: m/z values with or without retention time
+                    </li> 
+                </ul>
+
+                <h:form>
+                    <h:panelGrid columns="2" style="width:100%;" class="surface-card p-3">
+                        <h:outputText value="Type:" style="font-weight:bold;" />
+                        <p:selectOneRadio id="analysisType" value="#{wfUploadBean.multiTableOpt}">
+                            <f:selectItem itemLabel="Generic" itemValue="generic" />
+                            <f:selectItem itemLabel="LC-MS peaks" itemValue="peak" />
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+                    <h:panelGrid columns="1" style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Proceed" 
+                                         action="#{wfUploadBean.navigateToMultiTableUpload}" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         ajax="false"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+        </p:dialog>
+        <p:dialog header="Workflow Progress"
+                  widgetVar="workflowInfoDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="600"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form id="formWorkflowInfo">
+                <!-- Job details in a structured grid -->
+                <h:panelGrid style="margin:40px">
+
+                    <h:panelGrid columns="2" 
+                                 style="display: inline-block; border-collapse: separate; border-spacing: 0 10px;"> 
+                        <h:panelGroup style="width:120px" layout="block">
+                            <h:outputLabel value="Start Time:" style="font-weight:bold"/>
+                        </h:panelGroup>
+
+                        <h:outputText value="#{jobExecution.currentStartTime}" />
+
+                        <h:outputLabel value="Job ID:" style="font-weight:bold" />
+                        <h:outputText value="#{jobExecution.currentJobId}" />
+
+                        <h:outputLabel value="Status:" style="font-weight:bold"/>
+                        <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                            <span>
+                                <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
+                                <span class="dots">
+                                    <span>.</span>
+                                    <span>.</span>
+                                    <span>.</span>
+                                </span>
+                            </span>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
+                            <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
+                        </h:panelGroup>
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block" style="margin-top:15px;">
+                        <h:outputText value="Job submitted successfully. An email notice will be sent to you when your job is completed."/>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block" style="margin-top:15px; font-weight:bold;">
+                        <h:outputText value="Use the ‘Notice’ on the top menu bar to view all important system messages."/>
+                    </h:panelGroup>
+
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Job Progress"
+                  widgetVar="progressDialog"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  modal="true"
+                  width="920"
+                  height="550"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"
+                  appendTo="@(body)">
+            <h:form>
+                <h:panelGrid style="width:100%; line-height: 1.5; padding: 10px; font-size: 14px;" id='jobField'
+                             rendered="#{specLoader.spectraUploaded}"
+                             columnClasses="align-left">
+                    <h:panelGrid  columns="2" style="width:auto; text-align: left; line-height: 24px">
+                        <h:outputLabel style="font-weight: bold" value="Job ID:"/>
+                        <h:outputLabel value="#{spectraController.currentJobId}"/>
+
+                        <h:panelGroup style="width: 160px;" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Current Status:"/>
+                        </h:panelGroup>
+                        <h:outputLabel value="#{spectraController.currentJobStatus}"/>
+
+                        <h:outputLabel style="font-weight: bold" value="Job Progress:"/>
+                        <p:progressBar widgetVar="pbAjax1" value="#{spectraController.progressProcessing}" 
+                                       labelTemplate="{value}%" global="false" 
+                                       style="width: 660px"/>
+
+                        <h:outputLabel style="font-weight: bold" value="Text Output:"/>
+                        <p:scrollPanel id="msgPane"
+                                       style="width:620px; height:365px; padding:10px 20px 10px 20px; text-align: left;"
+                                       class="surface-card shadow-1 p-4 text-800">
+                            <p:outputLabel escape="false" value="#{spectraProcessor.jobStatusText}"/>
+                        </p:scrollPanel>
+                    </h:panelGrid>
+                </h:panelGrid>
+                <p:poll interval="3" listener="#{spectraController.checkStatus}" stop="#{!spectraController.stopStatusCheck}" update="jobField" />
+
+                <!-- Buttons Section -->
+                <div style="text-align: center; margin-top: 10px;">
+                    <p:commandButton value="Close" 
+                                     style="width:120px; font-size: 14px; margin-right: 10px;" 
+                                     onclick="PF('progressDialog').hide();" />
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog modal="true" widgetVar="rawWorkflowProgressDialog" 
+                  style="width: 200px; height:100px;" 
+                  appendTo="@(body)" header="Processing .... "
+                  draggable="false" closable="true" resizable="false"> 
+            <h:panelGrid style="width: 100%; text-align: center; padding-top:20px;">
+                <h:outputLabel value="Spectra processing step has finished, now processing the rest of the workflow, please be patient...."/>
+                <h:outputLabel value="Once finished you will be notified through email and notification bell."/>
+                <p:spacer/>
+                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+                <p:spacer/>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog id="rawWorkflowFinishDialogId" widgetVar="rawWorkflowFinishDialog" header="Workflow Status" modal="true" closable="true" width="510">
+            <h:form id="finishDialogForm">
+                <h:panelGrid columns="1" style="margin: 10px;">
+                                        <p:spacer height="30px" />
+
+                    <h:panelGrid columns="2">
+                        <p:outputLabel value="Your workflow processing job (ID: #{diagramView.jobId}) status has become " />
+                        <p:outputLabel value="COMPLETED" style="font-weight: bold; color: green;" />
+                    </h:panelGrid>
+
+                    <p:spacer height="10px" />
+                    <h:panelGrid columns="2">
+
+                        <h:outputText value="You can access the following link to view your results: " />
+                        <h:outputLink value="#{diagramView.finishLink}">Click here</h:outputLink>
+                    </h:panelGrid>
+
+                    <p:spacer height="30px" />
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+
+    </ui:define>
+</ui:composition>

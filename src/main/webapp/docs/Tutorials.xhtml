@@ -1,0 +1,298 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_doc.xhtml">
+    <ui:define name="content">
+        <h:panelGrid style="padding: 30px 50px 20px 40px; line-height: 23px; font-family: Arial, Helvetica, Geneva; width: 96%">
+            <h2>Using MetaboAnalyst</h2>
+            <p>
+                The web interfaces of MetaboAnalyst are designed to be self-explanatory. Most steps are documented on the 
+                top of the corresponding pages. In cases of limited space, mouse-over balloon helps are available. 
+                The following tutorials are meant to complement the aforementioned information by providing step-by-step 
+                instructions for several of the most common tasks. 
+            </p>
+            <p style="padding-bottom:20px"> 
+                <font style="color:  salmon">
+                    Please note, due to the rapid evolution and frequent updates of MetaboAnalyst, many screenshot illustrations are 
+                    outdated. Therefore, we ask that users do not take those steps verbatim. Instead, users should focus on the 
+                    the analysis concepts and the workflow for metabolomics data analysis using this tool. 
+                </font>  
+            </p>
+
+            <style type="text/css">
+                th, tr {
+                    border-bottom: 1px dashed lightgrey;
+                }
+            </style>
+            <table style="font-size: 12px; text-align: left; margin-left: 2.5%; border-top: 1px solid lightgrey; border-bottom: 1px solid lightgrey;
+                   border-collapse: collapse;" class="center">
+                <tr>
+                    <th>
+                        Version
+                    </th> 
+                    <th>
+
+                    </th>
+                    <th style="width:280px;">
+                        Title
+                    </th>
+                    <th style="width:400px;">
+                        Note
+                    </th>
+                    <th>
+                        Time Stamp
+                    </th>
+                </tr>
+                <tr>
+                    <td rowspan="6" style="padding-right: 30px"><b>Version 6.0</b></td> 
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}0_Overview_of_MetaboAnalyst6.pdf">Overview of MetaboAnalyst 6.0</a>
+                    </td>
+                    <td>Overview of MetaboAnalyst 6.0 to show key features</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>                    
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}1_LC_MS_Spectra_Processing.pdf">LC-MS Spectra Processing</a>
+                    </td>
+                    <td>A tutorial to guide raw spectra processing (LC-MS1 + MS2)</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>                    
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}2_Peak_Annotation_MS2_spectra.pdf">Peak Annotation of MS2 spectra</a>
+                    </td>
+                    <td>A tutorial to show how to perform MS2 spectra searching</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>                    
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}3_Dose_Response_Analysis.pdf">Dose Response Analysis</a>
+                    </td>
+                    <td>Instructions to demo how to perform dose-response analysis</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>                    
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}4_Causal_Analysis.pdf">Causal Analysis</a>
+                    </td>
+                    <td>A tutorial to introduce causal analysis</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>                    
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}5_Functional_Analysis_with_MS2_results.pdf">Functional Analysis</a>
+                    </td>
+                    <td>A tutorial to showcase functional analysis with MS1 and MS2 results</td>  
+                    <td>2024-03-10</td>
+                </tr>
+                <tr>
+                    <td rowspan="9" style="padding-right: 30px"><b>Version 5.0</b></td>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}0_MetaboAnalyst_5.0_Overview.pdf">Overview of MetaboAnalyst 5.0</a>
+                    </td>
+                    <td>A brief introduction of history, design concepts and key features</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}1_Raw_Spectral_Processing.pdf">Raw MS spectral Processing</a>
+                    </td>
+                    <td>A detailed tutorial for raw spectral analysis</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}2_Functional_Analysis.pdf">Functional Analysis</a>
+                    </td>
+                    <td>A detailed tutorial to guide functional analysis on MS peaks</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}3_Meta_Functional_Analysis.pdf">Meta Functional Analysis</a>
+                    </td>
+                    <td>A detailed tutorial to guide meta-analysis on MS peaks</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}4_Joint_Pathway_Analysis.pdf">Joint Pathway Analysis</a>
+                    </td>
+                    <td>A brief tutorial to introduce joint pathway analysis</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}5_Enrichment_Analysis.pdf">Enrichment Analysis</a>
+                    </td>
+                    <td>A detailed tutorial to do enrichment analysis</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}6_Network_Explorer.pdf">Network Exploration</a>
+                    </td>
+                    <td>A tutorial to guide network analysis</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}7_Statistical_analysis_metadata.pdf">Statistical Analysis[metadata]</a>
+                    </td>
+                    <td>A tutorial for statistical analysis with metadata</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}8_Video_Tutorial.pdf">Video Demo Series</a>
+                    </td>
+                    <td>A video demo tutorial series</td>  
+                    <td>2022-07-12</td>
+                </tr>
+                <tr>
+                    <td rowspan="6" style="padding-right: 30px"><b>Version 4.0</b></td>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/chapter.jpeg"/></td> 
+                    <td><a style="text-decoration: none" href="http://doi.org/10.1002/cpbi.86">Current Protocols In Bioinformatics (v2019) </a></td> 
+                    <td>A comprehensive step-by-step tutorial (128 pages &amp; 137 figures)</td>  
+                    <td>2019-09-20</td>
+                </tr>   
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}tutorial5.pdf">Overview of new features in version 4</a>
+                    </td>
+                    <td>A detailed screenshot overview of the three new modules introduced</td> 
+                    <td>2018-02-14</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}tutorial6.pdf">Biomarker Meta-Analysis Tutorial</a>
+                    </td>
+                    <td>--</td>
+                    <td>2018-02-14</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}tutorial7.pdf">MS Peaks to Pathways Tutorial</a>
+                    </td>
+                    <td>--</td>
+                    <td>2018-02-14</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}tutorial8.pdf">Network Explorer Tutorial I</a>
+                    </td>
+                    <td>Step-by-step tutorial to perform knowledge-driven network analysis</td>
+                    <td>2018-02-14</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td>
+                        <a style="text-decoration: none" target="_blank" href="#{applicationBean1.apiResourcePath}tutorial9.pdf">Network Explorer Tutorial II</a>
+                    </td>
+                    <td>Step-by-step tutorial to perform data-driven network analysis</td>
+                    <td>2020-11-19</td>
+                </tr>
+                <tr>
+                    <td rowspan="2" style="padding-right: 30px"><b>Version 3.0</b></td>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/chapter.jpeg"/></td> 
+                    <td><a style="text-decoration: none" href="http://dx.doi.org/10.1002/cpbi.11">Current Protocols In Bioinformatics (v2016) </a></td> 
+                    <td>A comprehensive step-by-step tutorial (91 pages &amp; 88 figures)</td>      
+                    <td>2016-09-07</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}metabolomics_xcms_xia.pdf">Raw Spectra Processing using R and XCMS</a></td> 
+                    <td>Step-by-step tutorial to processing LC-MS spectra for MetaboAnalyst</td>    
+                    <td>2014</td>
+                </tr>
+                <tr>
+                    <td rowspan="4" style="padding-right: 30px"><b>Version 2.0</b></td>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/chapter.jpeg"/></td> 
+                    <td><a style="text-decoration: none" href="http://dx.doi.org/10.1002/0471250953.bi1410s34">Current Protocols In Bioinformatics (v2011)</a></td> 
+                    <td>A comprehensive step-by-step tutorial (48 pages &amp; 51 figures)</td>     
+                    <td>2011</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}metabolomics2012_xia.pdf">Metabolomics data analysis IV</a></td> 
+                    <td>Presentation on Metabolomics Conference 2012</td> 
+                    <td>2012</td>
+                </tr>                
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/npg.jpg"/></td> 
+                    <td><a style="text-decoration: none" href="http://dx.doi.org/10.1038/nprot.2011.319">Nature Protocols on MetaboAnalyst</a></td> 
+                    <td>Detailed explanations of major functions of MetaboAnalyst</td> 
+                    <td>2011</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}metabolomics2011_xia.pdf">Metabolomics data analysis III</a></td> 
+                    <td>Presentation on Metabolomics Conference 2011 </td> 
+                    <td>2011</td>
+                </tr>
+                <tr>
+                    <td rowspan="6" style="padding-right: 30px"><b>Version 1.0</b></td>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}metabolomics2010_xia.pdf">Metabolomics data analysis II</a></td> 
+                    <td>Presentation on Metabolomics Conference 2010</td> 
+                    <td>2010</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}metabolomics2009_xia.pdf">Metabolomics data analysis I</a></td> 
+                    <td>Presentation on Metabolomics Conference 2009</td> 
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td>
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}tutorial1.pdf">Identification of significant features</a></td>
+                    <td>--</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}tutorial2.pdf">Two-group classification</a></td> 
+                    <td>--</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}tutorial3.pdf">MS spectra processing and annotation</a></td> 
+                    <td>--</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td><img src="#{facesContext.externalContext.requestContextPath}/resources/images/pdf.png"/></td> 
+                    <td><a style="text-decoration: none" href="#{applicationBean1.apiResourcePath}tutorial4.pdf">Paired (two time-points) analysis</a></td> 
+                    <td>--</td>
+                    <td>2009</td>
+                </tr>
+            </table>
+        </h:panelGrid>
+
+    </ui:define>
+</ui:composition>

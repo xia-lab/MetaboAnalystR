@@ -1,0 +1,207 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('network')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/MnetUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Data Upload
+            </h2>
+            <p>
+                You can upload a list of metabolites, and/or a list of genes and map to our curated knowledge-based networks. Please note the knowledge-based networks are 
+                available for <b>human only</b>. If your data is from other species, please use the <b>Pathway Analysis</b> module.
+            </p>
+            <p:tabView id="ac" style="width: 1000px; border:none; margin-top: 10px">
+                <p:tab title="Lists of genes/compounds">
+                    <h:form id="form" enctype="multipart/form-data">
+                        <h:panelGrid style="padding-left: 40px; padding-bottom: 10px; line-height: 21px; width:100%;">
+
+                            <h:panelGrid columns="2">
+                                <h:panelGrid style="padding: 0px 10px 10px 60px;">
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Compound list with optional fold changes"/>
+                                    <h:panelGrid id="cmpdPane">
+                                        <p:inputTextarea  autoResize="false" value="#{mnetLoader.cmpdList}" rows="18" cols="32" />
+                                        <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                                            <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                                <f:selectItems value="#{optBean.pathCmpdIDOpts}" />
+                                            </p:selectOneMenu>
+                                        </h:panelGrid>
+                                    </h:panelGrid>
+                                </h:panelGrid>  
+
+                                <h:panelGrid style="padding: 0px 10px 10px 30px;">
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Gene list with optional fold changes"/>
+                                    <h:panelGrid id="genePane">
+                                        <p:inputTextarea  autoResize="false" value="#{mnetLoader.geneList}" rows="18" cols="32" />
+                                        <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                                            <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{mnetLoader.geneIDType}">
+                                                <f:selectItem itemLabel="--- Not Specified ---" itemValue="NA" />
+                                                <f:selectItem itemLabel="KEGG Ortholog (KO)" itemValue="kos" />
+                                                <f:selectItem itemLabel="(Human) Entrez ID" itemValue="entrez" />
+                                                <f:selectItem itemLabel="(Human) Ensembl Gene ID" itemValue="embl" />
+                                                <f:selectItem itemLabel="(Human) Official Gene Symbol" itemValue="symbol" />
+                                            </p:selectOneMenu>
+                                        </h:panelGrid>
+                                    </h:panelGrid>
+                                </h:panelGrid>   
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="width: 720px; padding-left: 220px">
+                                <p:commandButton value="Submit" style="font-size: 13px; width: 100px"
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 ajax="false" 
+                                                 action="#{mnetLoader.integrityCheck()}"/>  
+                                <p:commandLink value="Try our example" onclick="PF('testDataDialog').show();"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                    <p:dialog modal="true" widgetVar="testDataDialog" header="Example datasets"
+                              appendTo="@(body)" style="line-height: 23px;"
+                              draggable="false" closable="true" resizable="true">
+
+                        <h:form>
+                            <p:selectOneRadio id="customRadio" value="#{mnetLoader.exampleInputList}" layout="custom">  
+                                <f:selectItem itemLabel="Metabolites - genes" itemValue="metabogene"/>
+                                <f:selectItem itemLabel="Metabolites - KOs" itemValue="metabometag"/>
+                            </p:selectOneRadio> 
+                            <p:panelGrid style="width: 780px;" columns="3" layout="tabular" styleClass="myPanelGrid" class="surface-card shadow-1 p-4 text-800"> 
+                                <h:panelGroup><b>Datasets</b></h:panelGroup>  
+                                <h:panelGroup><b>ID Type</b></h:panelGroup>   
+                                <h:panelGroup><b>Data Description</b></h:panelGroup> 
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <p:radioButton id="opt1" for="customRadio" itemIndex="1"/>   
+                                    Metabolites - KOs
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:240px">
+                                    <b>Organism</b>: Human<br/>
+                                    <b>ID Type</b>: HMDB ID and KEGG Orthology ID 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:320px">
+                                    A subset of data from a metagenome-wide association study coupled with serum metabolomics profiling of 200 lean and obese 
+                                    young individuals (<a href="https://doi.org/10.1038/nm.4358" target="_blank">details</a>).
+                                </h:panelGroup>
+
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <p:radioButton id="opt0" for="customRadio" itemIndex="0"/>  
+                                    Metabolites - genes
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:240px">
+                                    <b>Organism</b>: Human<br/>
+                                    <b>ID Type</b>: KEGG Compound ID and Entrez Gene IDs
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:320px">
+                                    Data from an integrative analysis of the transcriptome and metabolome to identify  
+                                    (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals 
+                                    (<a href="https://doi.org/10.1038/srep16294" target="_blank">details</a>).
+                                </h:panelGroup>
+
+                            </p:panelGrid>
+
+                            <h:panelGrid columns="2" style="width:800px; text-align: center; padding: 10px;">
+                                <p:commandButton value="Yes" 
+                                                 onclick="PF('testDataDialog').hide();"
+                                                 oncomplete="PF('statusDialog').hide();" 
+                                                 update=":ac:form:genePane :ac:form:cmpdPane" 
+                                                 actionListener="#{mnetLoader.updateListArea()}"/>  
+                                <p:commandButton value="Cancel" 
+                                                 onclick="PF('testDataDialog').hide();" 
+                                                 oncomplete="PF('statusDialog').hide();" 
+                                                 actionListener="#{mnetLoader.setUseExample(false)}"/>
+                            </h:panelGrid> 
+                        </h:form>
+                    </p:dialog>
+                </p:tab>
+
+                <p:tab title="A concentration table">
+                    <h:form id="form2" enctype="multipart/form-data">
+                        <h:panelGrid style="padding: 10px 10px 10px 20px; width: 100%; font-size: 13px">
+                            <h:panelGrid style="height: 100%; padding-bottom: 4px; width: 100%">
+                                <p:outputLabel style="font-size:15px; font-weight: bold" value="Upload your concentration data (.csv or .txt) "/>
+                            </h:panelGrid>  
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="width:600px; height: 130px; padding: 14px 20px 16px 30px;">      
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type:"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                        <f:selectItems value="#{optBean.netIDOpts}" />
+                                    </p:selectOneMenu>
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Format:"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{mnetLoader.dataFormat}">
+                                        <f:selectItems value="#{optBean.tableFormatOpts}" />
+                                    </p:selectOneMenu> 
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File:"/>
+                                    <p:fileUpload value="#{mnetLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{mnetLoader.handleMnetDataUpload}"/>  
+                            </h:panelGrid>
+                            <h:panelGrid style="height: 100%; padding-top: 10px; width: 100%">
+                                <p:outputLabel style="font-size:14px; font-weight: bold" value="Download from Metabolomics Workbench"/>
+                            </h:panelGrid> 
+                            <h:panelGrid columns="2" style="width:780px; padding-right: 40px" class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="width:600px; padding: 10px 20px 10px 30px">
+                                    <p:outputLabel style="font-weight: bold" value="Study ID:"/> 
+                                    <h:panelGroup id="cc6" layout="block" style="padding-right: 180px">
+                                        <p:inputText style="width:180px" value="#{uploader.nmdrStudyId}"/> 
+                                        <p:spacer width="10px"/>
+                                        <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"                                         
+                                                 action="#{mnetLoader.handleDSPCMetWorkbenchData()}"/>
+                            </h:panelGrid>
+                            <p:tooltip for="formatIcon2" styleClass="helpTip">
+                                <p>
+                                    MetaboAnalyst now permits users to directly perform analyses on published datasets from the Metabolomics Workbench.
+                                    Users must enter a valid Study ID to upload the preferred dataset. Browse here (https://www.metabolomicsworkbench.org/data/browse.php)
+                                    to view all studies from the Metabolomics Workbench. Note that only studies with a named metabolite dataset such as study ST000017 
+                                    will be able to be uploaded.
+                                </p>    
+                            </p:tooltip>
+
+                            <hr class="style-one"/>
+                            <p:selectOneRadio id="mnetTestRadio" value="#{mnetLoader.mnetTestDataOpt}" layout="custom">  
+                                <f:selectItem itemValue="aminoacids" itemLabel="Data 1"/>
+                            </p:selectOneRadio> 
+                            <p:outputLabel style="font-size:15px; font-weight: bold" value="Try our test data: "/>
+                            <h:panelGrid columns="3" style="padding: 20px; width:780px;" class="surface-card shadow-1 p-4 text-800">
+                                <p:spacer style="width: 23px"/>
+                                <h:panelGrid style="width:80px">
+                                    <p:outputLabel style="font-weight: bold" value="Data"/>
+                                </h:panelGrid>
+                                <p:outputLabel style="font-weight: bold" value="Description"/>
+                                <p:radioButton for="mnetTestRadio" itemIndex="0"/> 
+                                <a href="https://www.xialab.ca/api/download/metaboanalyst/aminoacids.csv">Concentration table</a>
+                                <h:panelGrid>
+                                    23 plasma amino acids concentrations from 240 samples measured by GC-MS (<a href="https://doi.org/10.1093/bioinformatics/btx012">Basu S et al.</a>). 
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 780px; padding-top: 10px; padding-bottom: 10px; text-align: center">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"   
+                                                 action="#{mnetLoader.performExampleDspc()}"/>   
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>  
+            </p:tabView>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>

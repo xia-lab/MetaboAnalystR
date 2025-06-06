@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Integ. result', '/Secure/mummichog/IntegMumResultView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/rainbowvis.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chart.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/mummichog_graphics_report.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.01.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="mydir" value="#{sessionBean1.currentUser.relativeDir}" />
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Integrated Pathway Activity Profile</h2>
+            <p>
+                <b>Mouse over</b> any circle to view its name; <b>click</b> to view compound matches. More details are in the table at bottom
+                The Integrated MS Peaks to Pathways plot summarizes the results  
+                combining p-values computed from mummichog (y-axis) and GSEA (x-axis). 
+                The size and color of the dots correspond to their transformed combined p-values.
+            </p>
+            <h:form id="imgForm">
+                <p:remoteCommand name="myRemote" partialSubmit="true" process="@this" update="summaryForm" action="#{mummiAnalBean.showPathDialog()}"/>
+
+                <h:panelGrid  id="graphPane" columns="2" style="padding-left:20px">
+
+                    <h:panelGrid id="imgPane" class="surface-card shadow-1 p-4 text-800">
+                        <canvas id='canvas1' width='720px' height='670px' style='width:720px;height:670px'/>
+                    </h:panelGrid>
+
+                    <h:panelGrid style="width:400px; height: 360px; padding-left: 100px; font-size: 15px">   
+
+                        <p:commandButton value="Enrich Network" 
+                                         disabled="#{!mummiAnalBean.showMumNetwork}"
+                                         ajax="false" 
+                                         rendered="false"
+                                         icon="pi pi-caret-right"
+                                         style="width: 180px;"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#{mummiAnalBean.proceed2EnrichNet()}"/>
+
+                        <p:commandButton type="button"
+                                         onclick="resetScatterZoom();" 
+                                         immediate="true"
+                                         icon="pi pi-replay"
+                                         style="width: 180px;"
+                                         value="Reset Zoom"/> 
+
+                        <p:commandButton value="KEGG Network" 
+                                         rendered="#{mummiAnalBean.showMumNetwork}"
+                                         ajax="false" 
+                                         style="width: 180px;"
+                                         icon="pi pi-caret-right" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="Metabolic network"/> 
+
+                        <p:commandButton action="#{sessionBean1.graphicsLnk_action('integ_peaks')}" 
+                                         update=":myGraphPane" style="width: 180px;"
+                                         icon="pi pi-download"
+                                         oncomplete="PF('graphDialog').show()"
+                                         value="Hi-res Graphics"/>
+
+                        <p:commandButton onclick="exportToPng()" 
+                                         icon="pi pi-download"
+                                         style="width: 180px;"
+                                         value="PNG Download"/>
+
+                        <p:commandButton value="Pathway Hits" ajax="false" 
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         style="width: 180px;"
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.integPathEnrichFile}" />  
+                        </p:commandButton> 
+
+                        <p:commandButton value="Compound Hits" ajax="false" 
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         style="width: 180px;"
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
+                        </p:commandButton> 
+                    </h:panelGrid>
+                </h:panelGrid>  
+            </h:form> 
+            <hr class="style-one"/> 
+            <h:form id="resTblForm"> 
+                <h3>
+                    Detailed result table
+                </h3>
+                <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             paginatorPosition="bottom" id="resTbl" style="width:100%;" var="ib" value="#{mummiAnalBean.integBeans}">  
+                    <p:column headerText="Pathway Name" width="320px">  
+                        <p:outputLabel value="#{ib.setName}"/>
+                    </p:column>  
+                    <p:column headerText="Total" sortBy="#{ib.setNum}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.setNum}"/>
+                    </p:column> 
+                    <p:column headerText="All Hits" sortBy="#{ib.refNum}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.refNum}"/>
+                    </p:column> 
+                    <p:column headerText="Sig Hits" sortBy="#{ib.hitNum}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.hitNum}"/>
+                    </p:column> 
+                    <p:column headerText="Mummichog P" sortBy="#{ib.mummiP}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.mummiP}"/>
+                    </p:column>  
+                    <p:column headerText="GSEA P" sortBy="#{ib.gseaP}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.gseaP}"/>
+                    </p:column>    
+                    <p:column headerText="Meta P" sortBy="#{ib.comboP}" width="100px">  
+                        <h:outputText escape="false" value="#{ib.comboP}"/>
+                    </p:column>  
+                    <p:column headerText="Details" width="100px">  
+                        <p:commandLink value="View" update=":detailView" oncomplete="PF('msetDialog').show()">  
+                            <f:setPropertyActionListener value="#{ib.setName}" target="#{sessionBean1.currentPathName}" />  
+                        </p:commandLink>
+                    </p:column>  
+                </p:dataTable> 
+            </h:form>
+        </h:panelGrid> 
+
+        <p:dialog header="Match Details" widgetVar="msetDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                  hideEffect="explode" resizable="true"> 
+            <h:panelGrid id="detailView" style="width:540px; font-size: 12px; padding: 0 10px 10px 10px" class="surface-card shadow-1 p-4 text-800">
+                <p>
+                    The red compounds indicate all potential matches from the user's input to the 
+                    selected pathway. More in depth matches can be found in  the <b>Compound Hits</b> table 
+                    and <b>Network Explorer</b>.
+                </p>
+                <h:form id="summaryForm">
+                    <p:dataTable var="set" value="#{mummiAnalBean.currentPathSet}" 
+                                 class="surface-card shadow-1 p-0 text-800">
+                        <p:column headerText="Pathway">  
+                            <h:outputText escape="false" value="#{set.name}"/>  
+                        </p:column>  
+                        <p:column headerText="Metabolites">  
+                            <h:outputText escape="false" value="#{set.members}"/>
+                        </p:column>   
+                    </p:dataTable> 
+                    <h:panelGrid style="width:100%; text-align: center">
+                        <p:commandButton value="OK" onclick="PF('msetDialog').hide()"/>
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid> 
+        </p:dialog>
+        <script type="text/javascript">
+            showInteg();
+        </script>
+    </ui:define>
+</ui:composition>

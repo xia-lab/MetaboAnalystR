@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <h:panelGrid>
+        <p>User performed enrichment analysis result table summarizing statistically overrepresented pathways or functional categories, using overrepresentation analysis</p> 
+
+        <ul> 
+            <li><b>Term/Pathway:</b> The name of the enriched biological pathway, process, or disease category identified from a reference database (e.g., KEGG, GO).</li> 
+            <li><b>Total:</b> The total number of genes or features associated with the given term in the reference database.</li> 
+            <li><b>Expected:</b> The number of hits expected by chance given the background distribution.</li>
+            <li><b>Hits:</b> The actual number of genes or features from the input list that are associated with the term.</li> 
+            <li><b>P-value:</b> The statistical significance of the enrichment, indicating the likelihood that the observed overlap occurred by chance.</li> 
+            <li><b>FDR:</b> The false discovery rate-adjusted p-value, accounting for multiple testing and controlling for false positives.</li> 
+        </ul>
+    </h:panelGrid>
+    <p:tabView value="#{detailsBean.listModelEntries}" var="entry">
+        <h:panelGrid>
+
+        </h:panelGrid>  
+        <p:tab title="#{detailsBean.getEnrTableName(entry.key)}">
+            <ul>
+                <li>
+                    <b>Library:</b> <span class="custom-highlight">#{detailsBean.getEnrFunType(entry.key)}</span>
+                </li>
+
+            </ul>
+            <div style="text-align: right; margin-bottom: 10px;">
+                <p:commandButton value="Download"
+                                 ajax="false"
+                                 icon="pi pi-download"
+                                 style="margin-bottom: 10px;">
+                    <p:fileDownload value="#{detailsBean.getFileByKey(entry.key, 'enr')}" />
+                </p:commandButton>
+            </div>
+
+
+            <p:dataTable  id="detailTblEnr" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                          rows="10" rowsPerPageTemplate="10,20,50" 
+                          class="surface-card shadow-1 p-0 text-800" 
+                          editable="true" editMode="cell" 
+                          widgetVar="cellDetailsVolcano" paginatorPosition="bottom"
+                          rowIndexVar="rowIndex" 
+                          rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                          var="fb" value="#{entry.value}" resizableColumns="true">  
+
+                <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
+
+                <p:column headerText="Name">
+                    <p:cellEditor>
+                        <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                        <f:facet name="input"><p:inputText value="#{fb.name}" /></f:facet>
+                    </p:cellEditor>
+                </p:column>
+
+                <!-- Repeat value columns -->
+                <p:column headerText="#{detailsBean.getColHeaderByEntry(0, entry.key)}"><h:outputText value="#{fb.val1}" /></p:column>
+                <p:column headerText="#{detailsBean.getColHeaderByEntry(1, entry.key)}"><h:outputText value="#{fb.val2}" /></p:column>
+                <p:column headerText="#{detailsBean.getColHeaderByEntry(2, entry.key)}"><h:outputText value="#{fb.val3}" /></p:column>
+                <p:column headerText="#{detailsBean.getColHeaderByEntry(3, entry.key)}"><h:outputText value="#{fb.val4}" /></p:column>
+                <p:column headerText="#{detailsBean.getColHeaderByEntry(4, entry.key)}"><h:outputText value="#{fb.val5}" /></p:column>
+                <!--<p:column headerText="#{detailsBean.getColHeaderByEntry(5, entry.key)}"><h:outputText value="#{fb.val6}" /></p:column>-->
+                <!--
+                <p:column exportable="false" style="width:45px; text-align:center">  
+                    <f:facet name="header">  
+                        Detail 
+                    </f:facet>  
+                    <p:commandButton update=":form1 :summaryForm"
+                                     style="border:none"
+                                     onclick="PF('statusDialog').show()"
+                                     icon="pi pi-list"
+                                     oncomplete="PF('statusDialog').hide(); PF('enrSetDialog').show()">  
+                        <f:setPropertyActionListener value="#{fb}" target="#{detailsBean.selectedPath}" /> 
+                    </p:commandButton>    
+                </p:column>
+                -->
+            </p:dataTable>
+        </p:tab>
+    </p:tabView>
+
+
+
+</ui:composition>
+

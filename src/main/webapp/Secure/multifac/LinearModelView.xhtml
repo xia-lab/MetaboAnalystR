@@ -1,0 +1,306 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Linear Model', '/Secure/multifac/LinearModelView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{lmBean.doDefaultLm}"/> 
+
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chart.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chart_lm_1.01.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>        
+
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Linear models with covariate adjustments
+            </h2>
+            <p>
+                The underlying method is based on <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/limma/inst/doc/usersguide.pdf" target="_blank">
+                    limma</a> for its high-performance implementation. Some data may include some form of blocking in the study design, which can be modeled as either 
+                fixed or random effects. Please note that although you can specify a blocking factor (to be modeled as random effects), we in general recommend 
+                <b>keeping this option unspecified</b> (the default). Using fixed effect model not only is computationally more efficient, but also gives results that are more consistent with the 
+                interpretation of differences. Please refer to the excellent book by
+                <a href="https://us.sagepub.com/en-us/nam/fixed-effects-regression-models/book226025" target="_blank">
+                    Paul D. Allison (2009)</a> for more technical discussions.
+            </p>
+            <p>
+                Based on user feedback, we have added the option to allow users to switch between Raw and FDR-adjusted (default) p values. 
+                If you would like to reproduce the result described in our 
+                <a href="https://www.nature.com/articles/s41596-022-00710-w" target="_blank">2022 Nature Protocol</a>, please use the <b>Raw</b> p-value type. 
+            </p>
+            <h:form id="form1">
+                <p:selectOneRadio id="customRadio" value="#{multifacBean.nestCompOpt}" layout="custom">  
+                    <f:selectItem itemLabel="Against a common control" itemValue="ref" itemDisabled="#{multifacBean.radioDisabled}"/> 
+                    <f:selectItem itemLabel="Specific comparison" itemValue="custom" itemDisabled="#{multifacBean.radioDisabled}"/> 
+                    <f:selectItem itemLabel="interactivity" itemValue="inter" itemDisabled="#{multifacBean.disableInter}"/> 
+                    <f:selectItem itemLabel="Nested comparisons" itemValue="nested" itemDisabled="#{multifacBean.radioDisabled}"/>
+                    <p:ajax event="change" update=":form1" />
+                </p:selectOneRadio>
+                <h:panelGrid columns="2">
+                    <h:panelGrid columns="2" style="width: 700px; padding: 10px 60px 20px 40px;">
+                        <h:panelGroup style="width:180px" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Study design:"/>           
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <p:selectOneRadio id="selRadio" value="#{multifacBean.compDesign}">
+                                <f:selectItem itemLabel="Single Factor" itemValue="cov"/>                                
+                                <f:selectItem itemLabel="Two Factors" itemValue="nest" itemDisabled="#{multifacBean.disableTwofac}"/>
+                                <p:ajax listener="#{lmBean.compDesignChangeListener()}" update=":form1" event="change"/>
+
+                            </p:selectOneRadio>   
+
+                        </h:panelGroup>
+                        <h:panelGroup style="width:180px" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Primary metadata:"/>           
+                        </h:panelGroup>
+                        <p:selectOneMenu id="primaryOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.analysisMeta}" rendered="#{multifacBean.compDesign eq 'cov'}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                            <p:ajax listener="#{lmBean.analysisMetaChangeListener()}" event="change" update="selRadio refOptext refOptswrap contrastOptstext contrastOptswrap covOpts blockOpts"/> 
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu id="primaryOpts2" styleClass="menu" panelStyleClass="panel" value="#{lmBean.analysisMeta}" rendered="#{multifacBean.compDesign eq 'nest'}">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                            <p:ajax listener="#{lmBean.analysisMetaChangeListener()}" event="valueChange" update="selRadio secfOpts covOpts blockOpts :condDialog :grp1Dialog :contr1Dialog" />
+                        </p:selectOneMenu>
+
+
+
+                        <h:outputLabel style="font-weight: bold" value="Secondary factor:" rendered="#{multifacBean.compDesign eq 'nest'}"/>
+                        <p:selectOneMenu id="secfOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.analysisMeta2}"
+                                         rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'nest'}">
+                            <f:selectItem itemValue="NA" itemLabel="-- Not Selected --"/>
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                            <p:ajax event="change" listener="#{lmBean.compDesignChangeListener()}" update="customRadio :condDialog :grp1Dialog :contr1Dialog" />
+                        </p:selectOneMenu>
+
+                        <h:panelGroup id="refOptext"  rendered="#{multifacBean.compDesign eq 'cov'}">
+                            <h:outputLabel style="font-weight: bold" value="Reference group:" rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'cov'}"/>
+                        </h:panelGroup>
+                        <h:panelGroup id="refOptswrap"  rendered="#{multifacBean.compDesign eq 'cov'}">
+                            <p:selectOneMenu id="refOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.referenceGroupFromAnalysisMeta}"
+                                             rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'cov'}">
+                                <f:selectItems value="#{lmBean.referenceGroupFromAnalysisMetaOpts}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+
+                        <h:panelGroup id="contrastOptstext"  rendered="#{multifacBean.compDesign eq 'cov'}">
+                            <h:outputLabel style="font-weight: bold" value="Contrast:" rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'cov'}"/>
+                        </h:panelGroup>
+                        <h:panelGroup id="contrastOptswrap"  rendered="#{multifacBean.compDesign eq 'cov'}">
+                            <p:selectOneMenu id="contrastOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.contrastFromAnalysisMeta}"
+                                             rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'cov'}">
+                                <f:selectItems value="#{lmBean.contrastFromAnalysisMetaOpts}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+
+                        <h:outputText value="Comparision:" style="font-weight: bold;width: 180px;"
+                                      rendered ="#{multifacBean.compDesign eq 'nest'}"/>
+                        <h:panelGrid columns="2" style="line-height: 32px"  rendered ="#{multifacBean.compDesign eq 'nest'}"> 
+
+                            <h:panelGroup layout="block" style="width:200px;">
+                                <p:radioButton  for="customRadio" itemIndex="0"/>
+                                <h:outputLabel   value=" Against a common control" />                                               
+                            </h:panelGroup>     
+                            <p:commandLink value="Specify" onclick="PF('condDialog').show()"/>
+
+                            <h:panelGroup layout="block" style="width:200px;">
+                                <p:radioButton  for="customRadio" itemIndex="1"/> 
+                                <h:outputLabel  value=" Specific comparison" />
+                            </h:panelGroup>
+                            <p:commandLink value="Specify" onclick="PF('grp1Dialog').show()"/>
+
+
+                            <h:panelGroup id="inter1" layout="block" style="width:200px;">
+                                <p:radioButton  for="customRadio" itemIndex="2"/> 
+                                <h:outputLabel  value=" Interactivity" />
+                            </h:panelGroup>
+                            <h:outputLabel id="intIcon">
+                                <i class="pi pi-question-circle" alt="help"/>
+                            </h:outputLabel> 
+
+
+                            <h:panelGroup layout="block" style="width:200px;">
+                                <p:radioButton  for="customRadio" itemIndex="3"/> 
+                                <h:outputLabel   value=" Nested comparisons" />       
+                            </h:panelGroup>
+                            <p:commandLink value="Specify" onclick="PF('contr1Dialog').show()"/> 
+                        </h:panelGrid>
+
+                        <h:outputLabel style="font-weight: bold" value="Covariates (control for):" />
+                        <p:selectCheckboxMenu  id="covOpts"
+                                               styleClass="menu" 
+                                               label="&nbsp; -- None selected -- &nbsp;" 
+                                               showHeader="false" 
+                                               multiple="true"  
+                                               panelStyleClass="panel" 
+                                               value="#{lmBean.adjustedMeta}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectCheckboxMenu>
+                        <h:outputLabel style="font-weight: bold" value="Blocking factor:"/>
+                        <p:selectOneMenu id="blockOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.blockFac}">
+                            <f:selectItem itemValue="NA" itemLabel="-- Unspecified --"/>
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold" value="P-value cutoff:"/>
+                        <h:panelGrid columns="2">
+                            <p:inputText id="covP" style="width:50px" value="#{lmBean.covPThresh}"/> 
+                            <p:selectOneRadio value="#{lmBean.covPvalType}">
+                                <f:selectItem itemLabel="Raw" itemValue="raw" />
+                                <f:selectItem itemLabel="FDR" itemValue="fdr" />
+                            </p:selectOneRadio>
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" update=":aovPane" 
+                                     onclick="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide(); initChart();"
+                                     actionListener="#{lmBean.covScatterButton_action()}"/> 
+                </h:panelGrid>
+                <p:tooltip for="intIcon" styleClass="helpTip">
+                    <p> 
+                        The interaction effect quantifies the deviation from the additive effects of two factors. It determines whether the combined effect of Factor1 and Factor2 differs from what is expected based on their individual effects. The results table includes both the main effects of each factor and their interaction effect, allowing for a comprehensive understanding of how the factors jointly influence the outcome.
+                    </p>
+                </p:tooltip>
+            </h:form>
+
+            <p:dialog header="Set a common control: " id="condDialog" widgetVar="condDialog" dynamic="true" modal="true" appendTo="@(body)" height="200" width="450"
+                      hideEffect="explode" resizable="true">
+                <h:form style="margin-top: 20px">                  
+                    <h:panelGrid columns="1" style="margin-left: 120px">
+                        <p:selectOneMenu id="rfIcon" styleClass="menu" value="#{multifacBean.selectedCondition}">
+                            <f:selectItems value="#{multifacBean.grps}"/>
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="Submit" 
+                                         update=":form1"
+                                         onclick="PF('condDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('condDialog').hide()"/>
+                    </h:panelGrid> 
+                </h:form>         
+            </p:dialog>
+            <p:dialog  header="Select a specific comparision: " id="grp1Dialog" widgetVar="grp1Dialog" dynamic="true" modal="true" appendTo="@(body)" height="200" width="450"
+                       hideEffect="explode" resizable="true">
+                <h:form style="margin-top: 20px">
+
+                    <h:panelGrid  id="grp1" style="margin-left: 120px" styleClass="nopadding">
+
+                        <p:selectOneMenu styleClass="menu" value="#{multifacBean.selectedGrp1}">
+                            <f:selectItems value="#{multifacBean.grps}"/>
+                        </p:selectOneMenu>  
+                        <p:spacer/>   
+                        <h:outputLabel value="Versus" style="margin-left: 20px"/>   
+                        <p:spacer/>                  
+                        <p:selectOneMenu styleClass="menu" value="#{multifacBean.selectedGrp2}">
+                            <f:selectItems value="#{multifacBean.grps}"/>
+                        </p:selectOneMenu>  
+                    </h:panelGrid>
+                    <p:spacer/>     
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+
+                        <p:commandButton value="Submit" 
+                                         update=":form1"
+                                         onclick="PF('grp1Dialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('grp1Dialog').hide()"/>
+                    </h:panelGrid> 
+
+                </h:form>         
+            </p:dialog>
+            <p:dialog  header="Select a specific nested comparision: " id="contr1Dialog" widgetVar="contr1Dialog" dynamic="true" modal="true" appendTo="@(body)" height="200" width="500"
+                       hideEffect="explode" resizable="true">
+                <h:form style="margin-top: 20px">
+                    <h:panelGrid style="margin-left: 120px">
+                        <h:panelGrid  styleClass="nopadding">
+                            <p:selectOneMenu styleClass="menu" value="#{multifacBean.selectedContrast1}">
+                                <f:selectItems  value="#{multifacBean.grpContrasts}"/>
+                            </p:selectOneMenu>  
+                            <p:spacer/>   
+                            <h:outputLabel value="Versus" style="margin-left: 20px"/>   
+                            <p:spacer/>   
+                            <p:selectOneMenu styleClass="menu" value="#{multifacBean.selectedContrast2}">
+                                <f:selectItems value="#{multifacBean.grpContrasts}"/>
+                            </p:selectOneMenu>  
+                        </h:panelGrid>
+
+                        <h:panelGrid columns="3" style="width:170px; padding-left: 10px">
+                            <p:selectBooleanCheckbox style="line-height: 18px" value="#{multifacBean.interOnly}"/>
+                            <h:outputLabel id="nestIcon" value="Interaction only">
+                                <i class="pi pi-question-circle" alt="help"/>
+                            </h:outputLabel> 
+                        </h:panelGrid>
+                    </h:panelGrid>
+                    <p:spacer/>     
+                    <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
+
+                        <p:commandButton value="Submit" 
+                                         update=":form1"
+                                         onclick="PF('contr1Dialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('contr1Dialog').hide()"/>
+                    </h:panelGrid> 
+                    <p:tooltip for="nestIcon" styleClass="helpTip">
+                        <p> 
+                            For two-factor design, the <b>interaction only</b> will return features that 
+                            respond differently in two different conditions or comparisons;
+                            The <b>full model</b> (default) will identify features that are significant in either comparison 
+                            as well as their interaction.
+                        </p>
+                    </p:tooltip>
+                </h:form> 
+
+            </p:dialog>
+
+            <hr class="style-one"/>
+            <h:panelGrid id="aovPane" style="text-align: center; width: 100%;">
+                <h:panelGrid columns="2" style="width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20; size: 14px" rendered="#{multifacBean.covPerformed}" 
+                                       value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                        <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.covPerformed}"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="4" style="width:200px; text-align: right;">
+                        <p:commandLink disabled="#{not sessionBean1.lmSig}" action="#{sessionBean1.detailsLnk_action('covariate_plot')}" title="View the detailed data table">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('covariate_plot')}" 
+                                       update=":myGraphPane"
+                                       disabled="#{!multifacBean.covPerformed}"
+                                       oncomplete="PF('graphDialog').show()" title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:commandLink title="Reset Zoom" onclick="myChart.resetZoom()">
+                            <i class="pi pi-undo"></i>
+                        </p:commandLink>
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                    </h:panelGrid>
+                    <p:tooltip for="helpIcon" styleClass="helpTip">
+                        <p>
+                            Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                            represent the concentrations of the selected feature from all samples. The notch indicates
+                            the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                            The notch can be used to evaluate differences between groups; if the notches 
+                            do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                            with a yellow diamond.
+                        </p>
+                    </p:tooltip>
+                </h:panelGrid>
+                <h:panelGrid style="text-align: center; width: 95%">
+                    <canvas style="width:800px; height:600px" id="myChart"></canvas>
+                </h:panelGrid>
+
+            </h:panelGrid>  
+        </h:panelGrid> 
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

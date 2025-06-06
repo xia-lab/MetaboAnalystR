@@ -1,0 +1,351 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('OrthoPLSDA')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('OrthoPLSDA', '/Secure/analysis/OrthoPLSDAView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
+
+        <script type="text/javascript">
+            var light;
+            var textColor;
+            var gridColor;
+            var pointMap;
+            var usr = "#{sessionBean1.getUserDir()}"
+            usr = usr.replace(/\/\//g, '/');
+            loadLabel = function (raw) {
+                pointMap = raw;
+            }
+
+            function extender() {
+                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                if (light === "light") {
+                    textColor = "grey";
+                    gridColor = 'lightgrey';
+                } else {
+                    textColor = "white";
+                    gridColor = 'rgb(200, 200, 200,0.2)';
+                }
+                $.getJSON(usr + "/pointMap3.json", loadLabel);
+                var options = {
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'p(corr)[1]',
+                                    color: textColor
+                                },
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'p[1]',
+                                    color: textColor
+                                },
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            }
+                        }, plugins: {
+                            legend: {
+                                display: false
+                            },
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    }, pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            function setupTheme() {
+                var button = $("button[id$='toggleTm']");
+
+                button.each(function () {
+                    this.click(); // Trigger the click event
+                });
+            }
+            ;
+        </script>
+        <style>
+            .vertical-text {
+                display:inline-block;
+                white-space: nowrap;
+                filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+                -webkit-transform: rotate(270deg);
+                -ms-transform: rotate(270deg);
+                transform: rotate(270deg);
+            }
+
+            #ac\:chart_canvas { /* Note the escaped colon if ac is a component ID */
+                width: 800px !important; /* Your desired width */
+                height: 720px !important; /* Your desired height */
+                display: block; /* Ensure it behaves as a block element */
+            }
+
+            /* If the chart is responsive, you might also need to ensure its parent containers allow it */
+            /* This might be needed if the chart still doesn't grow despite the canvas styling */
+            .ui-chart { /* The main PrimeFaces chart container div */
+                width: 800px !important;
+                height: 720px !important;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Orthogonal PLS-DA </h2>
+            <p>
+                The implementation of this method is based on the R package <b><i>ropls</i></b> as described by 
+                <a href="https://doi.org/10.1021/acs.jproteome.5b00354" target="_blank">this paper</a>. 
+            </p>
+            <h:panelGrid id="multigrp" rendered="#{sessionBean1.multiGroup}" style="width:100%; padding-left: 20px">
+                <h:form id="form11">
+                    <h:panelGrid columns="2">
+                        <h:panelGrid columns="2" style="padding-right: 40px">
+                            <p:selectBooleanCheckbox value ="#{sessionBean1.keepClsOrder}" style="line-height: 18px"/>
+                            <p:outputLabel style="font-size: 13px" value="Class order matters (i.e. referring to time points, disease severities, etc.)"/>
+                        </h:panelGrid>
+                        <p:commandButton value="Update" 
+                                         ajax="false"
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide()"
+                                         actionListener="#{oplsBean.updateOrthoPLSDA()}"/>   
+                    </h:panelGrid>
+                </h:form>
+            </h:panelGrid>
+            <p:tabView widgetVar="tabWidget" id="ac" style="width:100%; border: none; font-size: 13px;" activeIndex="#{oplsBean.activeTab}">
+                <p:tab title ="Score Plot">
+                    <h:form id="form3">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-right: 60px">
+                                <h:outputLabel style="font-weight: bold" value="Display 95% confidence region:"/>
+                                <p:selectBooleanCheckbox value ="#{oplsBean.displayConfs}" style="line-height: 18px"/>       
+                                <h:outputLabel style="font-weight: bold" value="Display sample names:"/>
+                                <p:selectBooleanCheckbox value ="#{oplsBean.displayNames}" style="line-height: 18px"/>
+                                <h:outputLabel style="font-weight: bold" value="Update font/label size"/>
+                                <p:selectOneMenu value="#{oplsBean.cexOpt}">
+                                    <f:selectItem itemLabel="Default (reset)" itemValue="na" />
+                                    <f:selectItem itemLabel="Increase (++)" itemValue="increase" />
+                                    <f:selectItem itemLabel="Decrease (--)" itemValue="decrease" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Use grey-scale colors:"/>
+                                <p:selectBooleanCheckbox value ="#{oplsBean.greyScale}" style="line-height: 18px"/>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form3:score2dPane  :hisTab:cmdPane" actionListener="#{oplsBean.oplsScore2dBtn_action()}" partialSubmit="true"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="score2dPane" style="width: 100%; padding-left: 10%">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('opls_score2d')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('opls_score2d')}" alt="OPLSScore2DImage"/>
+                        </h:panelGrid>  
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Imp. Feature (S-plot)">
+                    <h:panelGrid style="width:90%; padding-left: 20px; padding-top:10px;">
+                        The plot visualizes the variable influence in an Orthogonal PLS-DA model. It combines 
+                        the covariance and correlation loading profiles. 
+                        This corresponds to combining the contribution, or magnitude (covariance), with the
+                        effect and reliability (correlation) for the model variables with
+                        respect to model component scores (<a href="http://doi.org/10.1021/ac0713510" target="_blank">details</a>).
+                    </h:panelGrid>
+                    <h:form>
+                        <h:panelGrid columns="2" style="width:720px; padding-left: 20px; line-height: 23px">
+                            <h:panelGrid style="width:360px; padding-left: 20px">
+                                <h:outputLabel style="font-weight: bold" value="Set annotations (for download image only)"/>
+                                <p:selectOneRadio layout="pageDirection" value="#{oplsBean.loadOpt}">
+                                    <f:selectItem itemLabel="Label all varaibles" itemValue="all" /> 
+                                    <f:selectItem itemLabel="Do not label variables" itemValue="none" /> 
+                                    <f:selectItem itemLabel="Label only variables of interest" itemValue="custom" /> 
+                                </p:selectOneRadio>
+                            </h:panelGrid>
+                            <h:panelGrid style="width:100%; text-align: center; padding-left: 50px">
+                                <p:commandButton value="Submit" actionListener="#{oplsBean.updateSplot()}" partialSubmit="true"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                    <hr class="style-one"/>
+                    <h:panelGrid columns="2" style="width: 100%; text-align: center">
+                        <h:panelGrid style="width: 500px; text-align: left">
+                            <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                        </h:panelGrid>
+                        <h:panelGrid columns="4" style="width:200px; text-align: right;">
+                            <p:commandLink action="#{sessionBean1.detailsLnk_action('opls.splot')}" title="View the detailed data table">
+                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('opls_splot')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                            <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                                <i class="pi pi-undo"></i>
+                            </p:commandLink>
+                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        </h:panelGrid>
+                        <p:tooltip for="helpIcon" styleClass="helpTip">
+                            <p>
+                                Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                                represent the concentrations of the selected feature from all samples. The notch indicates
+                                the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                                The notch can be used to evaluate differences between groups; if the notches 
+                                do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                                with a yellow diamond.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGrid>  
+                    <h:panelGrid style="text-align: center; width:100%">
+                        <p:chart id="chart" widgetVar="chart" 
+                                 value="#{detailsBean.getModel1('opls')}"  
+                                 style="height:670px; width:95%; margin-top: 50px"
+                                 extender="extender">
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                                    update=":hisTab:cmdPane" 
+                                    oncomplete="PF('FeatureView').show();"/>
+                        </p:chart>
+                    </h:panelGrid>
+                    <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('opls')}" update="chart" />
+                </p:tab>
+                <p:tab title ="VIP Plot">
+                    <h:form id="form6">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 25px">
+                            <h:panelGrid columns="2" style="width: 500px">
+                                <h:outputLabel style="font-weight: bold" value="Select a component:"/>
+                                <p:selectOneRadio layout="pageDirection" value="#{oplsBean.compOpt}">
+                                    <f:selectItem itemLabel="Comp. 1 (T score)" itemValue="tscore" /> 
+                                    <f:selectItem itemLabel="Comp. 2 (Orthogonal T)" itemValue="orth" /> 
+                                </p:selectOneRadio>
+                                <h:outputLabel style="font-weight: bold" value="Show top feature number:"/>
+                                <p:inputText style="width:50px" value="#{oplsBean.impFeatNum}"/> 
+                                <h:outputLabel style="font-weight: bold" value="Use grey scale color:"/>
+                                <p:selectBooleanCheckbox value ="#{oplsBean.grayScale}"/>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form6:impPane  :hisTab:cmdPane" actionListener="#{oplsBean.oplsImpBtn_action()}"/>   
+                        </h:panelGrid>
+                        <hr class="style-one"/>
+                        <h:panelGrid id="impPane" style="width: 100%; padding-left: 10%">
+                            <h:panelGrid style="text-align: right; padding-left: 650px; width: 760px;">
+                                <h:panelGrid columns="2" style="width:120px; text-align: right;">
+                                    <p:commandLink action="#{sessionBean1.detailsLnk_action('opls.vip')}" title="View the detailed data table">
+                                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                    </p:commandLink>
+                                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('opls_imp')}" 
+                                                   update=":myGraphPane"
+                                                   oncomplete="PF('graphDialog').show()"
+                                                   title="Customize the graphics output">
+                                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                    </p:commandLink>
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('opls_imp')}" alt="OplsImpImage"/>
+                        </h:panelGrid>     
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Model Overview">
+                    <h:panelGrid id="cvPane" style="width: 100%; padding-left: 10%">
+                        <h:panelGrid style="text-align: right; padding-left: 650px; width: 760px;">
+                            <h:panelGrid columns="2" style="width:120px; text-align: right;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('opls_mdl')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                                <h:outputText escape="false" value="#{oplsBean.downloadLink}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' 
+                             style="width:9in; padding-left: 50px"
+                             src="#{sessionBean1.getCurrentImageURL('opls_mdl')}" alt="OplsMdlImage"/>
+                    </h:panelGrid>     
+                </p:tab>
+                <p:tab title ="Permutation">
+                    <h:form id="form7">
+                        <h:panelGrid  style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2">
+                                <h:panelGrid columns="2" style="width: 420px; padding-right: 60px">
+                                    <h:outputLabel style="font-weight: bold" value="Set permutation numbers:"/>
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{oplsBean.permNum}">
+                                        <f:selectItem itemLabel="--Not set--" itemValue="0"/>
+                                        <f:selectItem itemLabel="20" itemValue="20"/>
+                                        <f:selectItem itemLabel="100" itemValue="100"/> 
+                                        <f:selectItem itemLabel="1000" itemValue="1000"/> 
+                                        <f:selectItem itemLabel="2000" itemValue="2000"/> 
+                                    </p:selectOneMenu>  
+                                </h:panelGrid>
+                                <p:commandButton value="Submit" update=":ac:form7:permPane  :hisTab:cmdPane" 
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide()"                              
+                                                 actionListener="#{oplsBean.oplsPermBtn_action()}" partialSubmit="true"/>   
+                            </h:panelGrid>
+                            <p>
+                                Permutation is a computationally intensive procedure. For a large dataset, 
+                                the actual number of permutations may be adjusted automatically in order to complete  
+                                within a reasonable time. 
+                            </p>
+                            <h:panelGrid id="permPane" style="width: 100%; text-align: center">
+                                <h:outputLabel style="font-weight: bold" value="#{oplsBean.permMsg}"/>
+                                <img onerror='this.style.display="none"' 
+                                     style="width:8in; padding-left: 50px"
+                                     src="#{sessionBean1.getCurrentImageURL('opls_perm')}" alt="OPLSPermutationImage"/>
+                            </h:panelGrid> 
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+            </p:tabView> 
+        </h:panelGrid>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>

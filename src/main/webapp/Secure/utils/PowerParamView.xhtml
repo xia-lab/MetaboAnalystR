@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Set parameter','/Secure/utils/PowerParamView.xhtml')}"/> 
+        <f:event type="preRenderView" listener="#{powerAnalBean.performPowerAnal()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid  styleClass="my-content-panel">
+
+                <h2>
+                    Parameter Settings
+                </h2>
+                <h:panelGrid columns="4" style="margin-left: 20px">
+                    <h:outputLabel style="font-size: 13px; font-weight: bold" value="Specify the two groups (for >2 groups)"/>
+                    <p:spacer style="width:5px"/>
+                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{powerAnalBean.selectedContrast}">
+                        <f:selectItems  value="#{powerAnalBean.groupContrastOpts}"/> 
+                    </p:selectOneMenu>   
+                    <p:commandButton value="Submit" ajax="false" style="margin-left: 60px"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"                              
+                                     action="#{powerAnalBean.performPowerAnal()}"/>
+                </h:panelGrid> 
+                <ul>
+                    <li>
+                        The test statistics (t-statistics) are expected to follow a near-normal distribution. 
+                        You should try different normalization algorithms if the shape is far from "normal".  
+                    </li>
+                    <li>
+                        Some compounds should be significantly different between the two selected conditions. 
+                        You should see some p values close to zero (shift to left).   
+                    </li>
+                </ul>
+                <h:panelGrid style="padding-left: 10%">
+                    <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('power_stat')}" alt="statImg"/>
+                    <h:panelGrid style="width: 100%; text-align: center; padding-top: 20px">
+                        <p:commandButton value="Proceed" ajax="false" 
+                                         icon="pi pi-caret-right" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#{powerAnalBean.profileBtn_action()}"/>
+                    </h:panelGrid> 
+                </h:panelGrid>         
+
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

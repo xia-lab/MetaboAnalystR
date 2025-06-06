@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+    <h:panelGrid>
+        <p>Features ranked by their contributions to classification accuracy (Mean Decrease Accuracy) </p>
+    </h:panelGrid>
+    <h:panelGrid columns="2">
+        <div style="color:orange">
+            To update a name suitable for graphical display, <b>click the name</b> to edit and then click the next column to save.
+        </div>
+
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
+            <p:fileDownload value="#{detailsBean.detailFileMultiRF}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable  id="detailTblMultiRF" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                      rows="10" rowsPerPageTemplate="10,20,50"  
+                      class="surface-card shadow-1 p-0 text-800" 
+                      editable="true" editMode="cell" widgetVar="cellDetailsMultiRF" paginatorPosition="bottom"
+                      rowIndexVar="rowIndex" 
+                      rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                      var="fb" value="#{detailsBean.listModelMultiRF}" resizableColumns="true">  
+            <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
+            <p:column headerText="Name" 
+                      style="width:200px"
+                      sortBy="#{fb.name}" filterBy="#{fb.name}">
+                <p:cellEditor>
+                    <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                    <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
+                </p:cellEditor>
+            </p:column>
+            <p:column headerText="#{detailsBean.getColHeaderMultiRF(0)}" sortBy="#{fb.val1}">
+                <h:outputText escape="false" value="#{fb.val1}"/>
+            </p:column>
+            <p:column headerText="Detail">
+                <p:commandLink value="View" actionListener="#{sessionBean1.viewCmpdSummary(fb.name)}" oncomplete="PF('FeatureView').show();"/>
+            </p:column>
+        </p:dataTable> 
+    </div>
+    <p:contextMenu for="detailTblMultiRF" widgetVar="cMenu">   
+        <p:menuitem value="Edit Cell" icon="pi pi-search" onclick="PF('cellDetails').showCellEditor();return false;"/>  
+        <p:menuitem value="Hide Menu" icon="pi pi-times" onclick="PF('cMenu').hide()"/>  
+    </p:contextMenu> 
+
+</ui:composition>
+

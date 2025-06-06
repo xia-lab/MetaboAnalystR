@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Map Result', '/Secure/utils/NameMapView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="form">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Name/ID Standardization:</h2>
+                <UL> 
+                    <LI>Greek alphabets are not recognized, they should be replaced by English names (i.e. alpha, beta) </LI>
+                    <LI>Query names in normal indicate exact match - marked by "1" in the download file;</LI>
+                    <LI>Query names highlighted background indicate no exact or unique match - marked by "0" in the downloaded file;</LI>
+                    <LI>For <b>compound name</b>, you should click the <b>View</b> link to perform <b>approximate search</b> and manually select the correct match if found;</LI>
+                    <LI>For <b>KEGG ID</b>, it is possible to have multiple hits, you should click the <b>View</b> link to manually select the correct match if found;</LI>
+                </UL>  
+                <p:dataTable id="mapTbl" style="width:100%; font-size: 12px" var="map" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowIndexVar="rowInx" value="#{utilBean.nameMapResult}">  
+                    <p:column headerText="Query" style="width:280px; font-size: 12px">  
+                        <h:outputText escape="false" value="#{map.query}"/>  
+                    </p:column>  
+                    <p:column headerText="Hit" style="width:280px; font-size: 12px">  
+                        <h:outputText escape="false" value="#{map.hit}"/>  
+                    </p:column>  
+                    <p:column headerText="HMDB">  
+                        <h:outputText escape="false" value="#{map.hmdb_id}"/>
+                    </p:column>  
+                    <p:column headerText="KEGG">  
+                        <h:outputText escape="false" value="#{map.kegg_id}"/>
+                    </p:column>  
+                    <p:column headerText="PubChem">  
+                        <h:outputText escape="false" value="#{map.pubchem_id}"/>
+                    </p:column>  
+                    <p:column headerText="ChEBI">  
+                        <h:outputText escape="false" value="#{map.chebi_id}"/>
+                    </p:column>  
+                    <p:column headerText="MetLin">  
+                        <h:outputText escape="false" value="#{map.metlin_id}"/>
+                    </p:column>  
+                    <p:column headerText="Details">  
+                        <p:commandLink value="#{map.details}" 
+                                       onclick="PF('statusDialog').show()"
+                                       update=":summaryForm:detailView"
+                                       oncomplete="PF('detailDialog').show()">  
+                            <f:setPropertyActionListener value="#{map.query}" target="#{utilBean.currentCmpd}" /> 
+                        </p:commandLink>  
+                    </p:column>   
+                </p:dataTable>
+                <h:outputText escape="false" value="#{utilBean.downloadMsg}"/>         
+            </h:panelGrid>
+        </h:form>
+        <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" 
+                  appendTo="@(body)" onShow="PF('statusDialog').hide()"
+                  header="Candidates"
+                  hideEffect="explode" resizable="true"> 
+            <h:form id="summaryForm">
+                <h:panelGrid id="detailView" style="width:630px; padding: 20px">
+                    <h:outputText escape="false" style="font-size: 13px" value="Query name: #{utilBean.target}"/>
+                    <p:dataTable style="width:100%; font-size: 12px; padding: 6px" var="can" 
+                                 class="surface-card shadow-1 p-0 text-800"
+                                 value="#{utilBean.candidateMaps}">
+                        <p:column style="width: 40px">
+                            <p:selectBooleanCheckbox value="#{can.selected}" style="line-height: 18px"/>
+                        </p:column>
+                        <p:column headerText="Matched Name">  
+                            <h:outputText escape="false" value="#{can.hit}"/>  
+                        </p:column>  
+                        <p:column headerText="HMDB">  
+                            <h:outputText escape="false" value="#{can.hmdb_id}"/>
+                        </p:column>  
+                        <p:column headerText="KEGG">  
+                            <h:outputText escape="false" value="#{can.kegg_id}"/>
+                        </p:column>  
+                        <p:column headerText="PubChem">  
+                            <h:outputText escape="false" value="#{can.pubchem_id}"/>
+                        </p:column>  
+                        <p:column headerText="ChEBI">  
+                            <h:outputText escape="false" value="#{can.chebi_id}"/>
+                        </p:column>  
+                    </p:dataTable> 
+                    <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
+                        <p:commandButton value="OK" update=":form:mapTbl" 
+                                         actionListener="#{utilBean.selectCandidate()}" 
+                                         onclick="PF('statusDialog').show()"
+                                         oncomplete="PF('statusDialog').hide(); PF('detailDialog').hide()"/>
+                        <p:commandButton value="Cancel" onclick="PF('detailDialog').hide()"/>
+                    </h:panelGrid>
+                </h:panelGrid> 
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

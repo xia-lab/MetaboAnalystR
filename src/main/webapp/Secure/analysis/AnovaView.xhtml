@@ -1,0 +1,224 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('ANOVA')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('ANOVA', '/Secure/analysis/AnovaView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:inputHidden id="maxX" value="#{sessionBean1.featureNumber}" />
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                One-way ANOVA &amp; post-hoc Tests
+            </h2>
+            <p>
+                You can choose to perform one-way ANOVA or its non-parametric version (Kruskal Wallis Test). 
+                The post-hoc tests have only been implemented for parametric ANOVA.
+            </p>
+            <h:form id="form1">
+                <h:panelGrid columns="2" style="padding-bottom: 20px;">
+                    <h:panelGrid cellpadding="5" columns="2" style="width: 460px; padding-left: 30px">
+                        <h:panelGroup style="width:200px" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="ANOVA p-value (FDR) cutoff:"/>
+                        </h:panelGroup>
+                        <p:inputText style="width:80px" value="#{univBean.aovPThresh}"/>                                                    
+
+                        <h:outputLabel style="font-weight: bold" value="Non-parametric ANOVA:"/>
+                        <p:selectBooleanCheckbox value ="#{univBean.nonParam}" style="line-height: 18px"/>
+                    </h:panelGrid>
+                    <h:panelGrid style="text-align: center; width:360px">
+                        <p:commandButton value="Submit" update=":aovPane :hisTab:cmdPane" 
+                                         onclick="PF('statusDialog').show(); extender()"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         actionListener="#{univBean.aovButton_action()}"/> 
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+            <hr class="style-one"/>
+            <h:panelGrid id="aovPane" style="text-align: center; width: 100%;">
+                <h:panelGrid columns="2" style="width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="4" style="width:200px; text-align: right;">
+                        <p:commandLink disabled="#{not sessionBean1.anovaSig}" 
+                                       onclick="PF('posthocDialog').show();"
+                                       title="View the detailed data table">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('aov')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()" title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                            <i class="pi pi-undo"></i>
+                        </p:commandLink>
+                    </h:panelGrid>
+                </h:panelGrid>
+                <p:tooltip for="helpIcon" styleClass="helpTip">
+                    <p>
+                        Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                        represent the concentrations of the selected feature from all samples. The notch indicates
+                        the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                        The notch can be used to evaluate differences between groups; if the notches 
+                        do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                        with a yellow diamond.
+                    </p>
+                </p:tooltip>
+                <h:panelGrid style="text-align: center; width: 100%; padding-top: 20px">
+                    <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('aov')}"  
+                                    style="min-height:480px; height:50%; min-width:880px; width: 90%"
+                                    extender="extender">
+                        <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                    </p:chart>
+                    <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('aov')}" update="chart" />
+                      
+                </h:panelGrid>
+            </h:panelGrid>  
+        </h:panelGrid> 
+        <p:dialog widgetVar="posthocDialog" dynamic="true" modal="true" appendTo="@(body)" header="ANOVA post-hoc analysis"
+                  hideEffect="explode" resizable="true"> 
+            <h:form>
+                <h:panelGrid style="width:360px; font-size: 13px; line-height: 23px">
+                    <p>
+                        Please specify a raw p-value threshold for ANOVA (parametric only) post-hoc analysis. 
+                        When too many significant features are identified, only the top 2000 features 
+                        will be subject to post-hoc analysis. 
+                    </p>
+                    <h:panelGrid columns="2" style="width:100%;">
+                        <h:panelGroup style="width:200px" layout="block">
+                            <h:outputLabel style="font-weight: bold" value="Post-hoc analysis:"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block">
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{univBean.posthocType}">
+                                <f:selectItem itemValue="fisher" itemLabel="Fisher's LSD"/>
+                                <f:selectItem itemValue="tukey" itemLabel="Tukey's HSD"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:outputLabel style="font-weight: bold;" value="Raw P-value cutoff:"/>
+                        <p:inputText style="width:100px" value="#{univBean.posthocThresh}"/>  
+                    </h:panelGrid>
+                    <h:panelGrid style="width:100%; text-align: center; padding-top: 10px">
+                        <p:commandButton value="Submit" 
+                                         action="#{univBean.doPostHocTest()}" />
+                    </h:panelGrid>
+                </h:panelGrid> 
+            </h:form>
+        </p:dialog>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+        <script type="text/javascript">
+                            var light;
+                            var textColor;
+                            var gridColor;
+                            function extender() {
+                                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                                //console.log(light)
+                                if (light === "light") {
+                                    textColor = "grey";
+                                    gridColor = 'lightgrey';
+                                } else {
+                                    textColor = "white";
+                                    gridColor = 'rgb(200, 200, 200,0.2)';
+                                }
+
+                                var pointMap = #{detailsBean.pointMapJson};
+                                var maxX = document.getElementById('maxX').value;
+                                var step = maxX / 10;
+                                if (step > 1000) {
+                                    step = 1000;
+                                } else if (step > 500) {
+                                    step = 500;
+                                } else if (step > 200) {
+                                    step = 200;
+                                } else if (step > 100) {
+                                    step = 100;
+                                } else if (step > 50) {
+                                    step = 50;
+                                } else if (step > 20) {
+                                    step = 20;
+                                } else if (step > 10) {
+                                    step = 10;
+                                } else if (step > 2) {
+                                    step = 5;
+                                } else {
+                                    step = 1;
+                                }
+                                var options = {
+                                    options: {
+                                        scales: {
+                                            y: {
+                                                title: {
+                                                    display: true,
+                                                    text: '-log10(raw P-value)',
+                                                    color: textColor
+                                                },
+
+                                                ticks: {
+                                                    color: textColor
+                                                },
+                                                grid: {
+                                                    color: gridColor
+                                                }
+                                            },
+                                            x: {
+                                                title: {
+                                                    display: true,
+                                                    text: 'Features',
+                                                    color: textColor
+                                                },
+                                                ticks: {
+                                                    stepSize: step,
+                                                    color: textColor
+                                                },
+                                                grid: {
+                                                    color: gridColor
+                                                }
+                                            }
+                                        }, plugins: {
+                                            zoom: {
+                                                zoom: {
+                                                    drag: {
+                                                        enabled: true,
+                                                        borderColor: 'rgb(54, 162, 235)',
+                                                        borderWidth: 1,
+                                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                                    }, pinch: {
+                                                        enabled: true
+                                                    },
+                                                    mode: 'xy'
+                                                }
+                                            }, // Adding tooltip configuration
+                                            tooltip: {
+                                                enabled: true,
+                                                callbacks: {
+                                                    label: function (tooltipItem, data) {
+                                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                                        return id;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                };
+                                $.extend(true, this.cfg.config, options);
+                            }
+                            function setupTheme() {
+                                document.getElementById('toggleTm').click();
+                            }
+                            ;
+        </script>
+    </ui:define>
+</ui:composition>

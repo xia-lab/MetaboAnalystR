@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{mCorrBean.doDefaultCorr()}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Correlation and Partial Correlation Analysis</h2>
+            <p>
+                Correlation analysis can be performed for a given feature and metadata of metadata of interest.
+                <ul>
+                    <li>
+                        When the covariate is "none" (default), regular correlation analysis will be performed; otherwise, partial correlation will be performed.
+                    </li>
+                    <li>
+                        For binary metadata, the point biserial correlation will be used; for continuous metadata, users can 
+                        choose Pearson/Spearman/Kendall correlation. 
+                    </li>
+                </ul>
+            </p>
+            <h:form id="form2">
+                <p:selectOneRadio id="ptnRadio" value="#{mCorrBean.tgtType}" layout="custom">  
+                    <f:selectItem itemValue="metaNm" itemLabel="a metadata of interest"/>   
+                    <f:selectItem itemValue="featNm" itemLabel="a feature of interest"/>                
+                </p:selectOneRadio>
+
+                <h:panelGrid columns="3" style="padding-bottom: 10px; padding-left: 30px">
+                    <h:panelGrid columns="2">
+
+                        <h:outputLabel style="font-weight: bold" value="Target of interest"/>              
+                        <h:panelGrid columns="3">
+                            <p:radioButton for="ptnRadio" itemIndex="0"/>
+                            <h:outputLabel value="a metadata:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mCorrBean.ptnMeta}">
+                                <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                            </p:selectOneMenu>
+                            <p:radioButton for="ptnRadio" itemIndex="1"/>
+                            <h:outputLabel value="a feature:"/>
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" 
+                                             rendered="#{not sessionBean1.bigFeature}"
+                                             value="#{mCorrBean.ptnFeature}">
+                                <f:selectItems value="#{univBean.normVarNmOpts}" />
+                            </p:selectOneMenu> 
+                            <p:inputText style="width:180px" value="#{mCorrBean.ptnFeature}" rendered="#{sessionBean1.bigFeature}"/> 
+                        </h:panelGrid>
+
+                        <h:outputLabel style="font-weight: bold" value="Covariates of interest"/>  
+                        <p:selectCheckboxMenu  styleClass="menu" 
+                                               label="&nbsp; -- None selected -- &nbsp;" showHeader="false" 
+                                               multiple="true"  
+                                               panelStyleClass="panel" value="#{mCorrBean.covMetas}">
+                            <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                        </p:selectCheckboxMenu>
+
+                        <h:panelGroup layout="block" style="width: 150px">
+                            <h:outputLabel style="font-weight: bold" value="Correlation measure"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mCorrBean.ptnDistMeasure}">
+                            <f:selectItems value="#{optBean.distMeasureOpts}" />
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <p:spacer style="width: 40px"/>
+                    <p:commandButton value="Submit" update="form2:ptnPane  :hisTab:cmdPane"                                          
+                                     onclick="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide()" actionListener="#{mCorrBean.corBtn_action()}"/>   
+                </h:panelGrid>
+                 <hr class="myhr"/>
+                <h:panelGrid id="ptnPane" style="text-align: center; width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.corrPerformed}"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                        <p:commandLink action="#{sessionBean1.detailsLnk_action('template')}" title="View the detailed data table" disabled="#{!multifacBean.corrPerformed}">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('ptn')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+                    <img onerror='this.style.display="none"' 
+                          style="width:8in;"
+                         src="#{sessionBean1.getCurrentImageURL('ptn')}" alt="Patternimage"/>
+                </h:panelGrid>  
+            </h:form>
+        </h:panelGrid> 
+    </ui:define>
+</ui:composition>

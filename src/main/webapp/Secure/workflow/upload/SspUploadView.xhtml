@@ -1,0 +1,244 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/workflow/upload/SspUploadView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{workflowBean.loadDefaultWorkflows()}"></f:event> 
+    </ui:define>  
+    <ui:define name="content">
+        <style>
+            /* Ensure the file upload button remains consistent in size */
+            .file-upload-custom .ui-fileupload-button {
+                width: 120px; /* Set a fixed width for the button */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Control the filename display to avoid shrinking */
+            .file-upload-custom .ui-fileupload-filename {
+                display: inline-block;
+                /* Limit the filename display */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                padding-left: 10px; /* Add space between the button and the filename */
+            }
+
+            /* Style to adjust the overall file upload container */
+            .file-upload-custom .ui-fileupload {
+                display: inline-block;
+                width: auto;
+                vertical-align: middle;
+            }
+
+            /* Ensure the file upload input remains consistent */
+            .file-upload-custom .ui-fileupload-choose {
+                width: 200px; /* Same width for the button */
+                height: 30px; /* Adjust the height if necessary */
+            }
+
+            .ui-inputtextarea:disabled {
+                color: white !important; /* Set font color to white */
+                background-color: #333333; /* Optionally, set a dark background for contrast */
+                opacity: 1 !important; /* Remove dimming effect on the text */
+            }
+
+            .ui-tabs-nav li.ui-state-disabled {
+                opacity: 1 !important;     /* Removes the dimmed appearance */
+                pointer-events: none;      /* Ensures the tab remains unclickable */
+                color: inherit;            /* Maintains original text color */
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+
+            <h:panelGroup id="tabId">
+                <p:tabView id="tabSsp" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+                    <p:tab id="personal" title="Upload" disabled="true">
+
+                    </p:tab>   
+
+                    <p:tab id="namecheck" title="Name Check" disabled="true">
+
+                    </p:tab>
+
+                    <p:tab id="sspprofile" title="Ssp Profiling" disabled="true">
+
+                    </p:tab>
+
+                    <!--
+                    <p:tab id="design" title="Workflow" disabled="true">
+    
+                    </p:tab>
+                    -->
+
+
+                </p:tabView>
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}">
+
+                    <h:form id="form1">
+                        <h:panelGrid style="padding-left: 150px; padding-top: 2px; padding-bottom: 10px; width: 720px">
+                            <h:panelGrid style="height: 100%; padding-bottom: 5px; width: 100%">
+                                <p:outputLabel style="font-size: 14px; font-weight: bold" value="Enter your data below (two-column data): "/>
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left:20px;">
+                                <p:inputTextarea id="sspArea" autoResize="false" value="#{enrichLoader.msetSspData}" rows="16" cols="36" />
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="padding-top: 5px;">
+
+                                <p:outputLabel style="font-weight: bold" value="Input Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                    <f:selectItems value="#{optBean.cmpdIDOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Feature Type: "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{enrichLoader.featType}">
+                                    <f:selectItems value="#{optBean.featOpts}" />
+                                </p:selectOneMenu>
+
+                                <p:outputLabel style="font-weight: bold" value="Biofluid (unit): "/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:200px" value="#{enrichLoader.biofluidType}">
+                                    <f:selectItem itemValue="urine" itemLabel="Urine (umol/mmol_creatinine)"/>
+                                    <f:selectItem itemValue="blood" itemLabel="Blood (umol)"/>
+                                    <f:selectItem itemValue="csf" itemLabel="CSF (umol)"/>
+                                    <f:selectItem itemValue="saliva" itemLabel="Saliva (uM)"/>
+                                    <f:selectItem itemValue="amniotic fluid" itemLabel="Amniotic fluid (uM)"/>
+                                    <f:selectItem itemValue="bile" itemLabel="Bile (uM)"/>
+                                    <f:selectItem itemValue="breast milk" itemLabel="Breast Milk (uM)"/>
+                                    <f:selectItem itemValue="cellular cytoplasm" itemLabel="Cytoplasm (uM)"/>
+                                    <f:selectItem itemValue="feces1" itemLabel="Feces (uM)"/>
+                                    <f:selectItem itemValue="feces" itemLabel="Feces (nmol/g)"/>
+                                </p:selectOneMenu>
+
+                            </h:panelGrid>
+                            <h:panelGrid columns="2">
+                                <p:selectBooleanCheckbox value="#{enrichLoader.useMsetSspExample}" style="line-height: 18px">
+                                    <p:ajax update=":form1" event="change" listener="#{enrichLoader.updateSspArea()}"/>
+                                </p:selectBooleanCheckbox> 
+                                <h:panelGrid>
+                                    <p:outputLabel style="font-weight: bold" value="Use the example data"/>  
+                                    <p:outputLabel value="- urine sample (umol/mmol_creatinine)"/>  
+                                </h:panelGrid>
+                            </h:panelGrid>
+                            <h:panelGrid style="height: 100%; padding-top: 10px; padding-bottom: 5px; text-align: center; width:360px">
+                                <p:commandButton value="Submit" ajax="false" 
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 action="#{wfUploadBean.handleSspDataUpload()}"/>  
+                            </h:panelGrid>
+                            <h:panelGrid style="width: 880px; padding-top: 30px; padding-left: 30px">
+                                <p:outputLabel id="uploadInfo" escape="false"
+                                               style="font-size: 16px !important; color: darksalmon"
+                                               value="#{wfUploadBean.uploadInfo}"/>
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">
+                    <ui:include src="../process/_NameMapView.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 2}">
+                    <ui:include src="../process/_SspProfileView.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 3}">
+                    <ui:include src="../process/_WorkflowSelection.xhtml" />
+                </h:panelGroup>
+            </h:panelGroup>
+
+
+
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <!-- Button set for "Upload" tab -->
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 0}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Try Examples"
+                                     id="testBn" style="width:160px"
+                                     icon="pi pi-star"            
+                                     rendered="#{sessionBean1.naviType eq 'stat'}"
+                                     onclick="PF('testDataDialog').show();"
+                                     />
+
+                    <p:commandButton id="proc1" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     disabled="#{not wfUploadBean.fileUploaded}"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     update="southform tabId"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 1}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(0)}"
+                                     oncomplete="PF('tabWidget').select(0);"/>
+                    <p:commandButton id="proc2" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 2}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                    <p:commandButton id="proc3" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId"
+                                     actionListener="#{wfUploadBean.sspNextBn_action()}"
+                                     oncomplete="PF('tabWidget').select(3);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <p:commandButton value="Finish"
+                                     id="runAnalysisBn" style="width:160px"
+                                     icon="pi pi-cog"       
+                                     action="#{workflowBean.finishPreparation()}"
+                                     update="southform tabId"
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+            <!--
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId:form2"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <p:commandButton value="Finish"
+                                     id="selectionFinish" style="width:160px"
+                                     icon="pi pi-cog"          
+                                     action="WorkflowView"/>
+
+                </h:panelGrid>
+            </p:outputPanel>
+            -->
+        </h:form>
+
+    </ui:define>
+</ui:composition>

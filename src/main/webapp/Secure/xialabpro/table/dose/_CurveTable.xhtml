@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid columns="5" id='res'>
+        <h:outputLabel value="Features with fitted models:"/>
+        <h:outputLabel style="padding-left:20px; font-weight:bold;" value="#{doseResponseBean.curvNum}"/>
+        <p:spacer style="width: 40px"/>
+        <h:outputLabel value="Features with BMDs:"/>
+        <h:outputLabel style="padding-left:20px; font-weight:bold" value="#{doseResponseBean.bmdNum}"/>
+    </h:panelGrid>  
+    <h:panelGrid columns="2">
+        <div style="color:orange">
+            The table below shows at most top 500 features ranked by their BMD values.
+            <b>BMDl</b>: denotes the lower confidence limit for the calculated BMD; 
+            <b>BMDu</b>: upper limit of BMD reliability
+        </div>
+
+        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
+            <p:fileDownload value="#{doseResponseBean.resTableFile}" />
+        </p:commandButton>  
+    </h:panelGrid>  
+    <div class="card">
+        <p:dataTable id="resultTableCurve" var="resBean" value="#{doseResponseBean.resBeans}"  style="width:100%; padding-bottom: 10px;"
+                     widgetVar="resTableCurve"  emptyMessage="No record found with given criteria"
+                     class="surface-card shadow-1 p-0 text-800"
+                     paginator="true" rows="10" rowsPerPageTemplate="10, 20,50"  paginatorPosition="top"            
+                     rowIndexVar="rowIndex" 
+                     rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">                             
+            <p:columns value="#{doseResponseBean.columns}" var="column" sortBy="#{resBean.getValue(column.property)}" sortable="true">  
+                <f:facet name="header">  
+                    #{column.header}  
+                </f:facet>  
+                <h:outputText escape="false" value="#{resBean.getValue(column.property)}"/>
+            </p:columns>
+            <p:column exportable="false" style="width:40px">  
+                <f:facet name="header">  
+                    <h:outputText  escape="false" value="View" /> 
+                </f:facet> 
+                <p:commandButton style="height:30px; width: 30px;"
+                                 update=":form1:curveVisView"
+                                 onclick="PF('statusDialog').show()"
+                                 icon="pi pi-image"
+                                 oncomplete="PF('statusDialog').hide(); PF('visCurveDialog').show()">  
+                    <f:setPropertyActionListener value="#{resBean}" target="#{doseResponseBean.selectedFeature}" /> 
+                </p:commandButton>  
+            </p:column>
+        </p:dataTable>  
+    </div>
+    <p:dialog widgetVar="visCurveDialog" dynamic="true" modal="true" appendTo="@(body)" 
+              header="Dose-response curve fitting" 
+              hideEffect="explode" resizable="true" position="center top"> 
+        <h:panelGrid id="curveVisView" style="width:380px; text-align: center;">
+
+            <!-- The command panel element placed above the image -->
+            <h:panelGrid id="command" columns="2" style="float:right; text-align: right;">
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('metabolite_dr_curve')}" 
+                               update=":myGraphPane"
+                               oncomplete="PF('graphDialog').show()"
+                               title="Customize the graphics output">
+                    <i class="pi pi-palette" style="font-size: 1.4rem"></i>
+                </p:commandLink>
+                <p:commandLink id="addDoseToReport" actionListener="#{fireBaseController.addDoseFeatureToReport()}" title="Add to report">
+                    <i class="pi pi-file" style="font-size: 1.4rem"/>
+                </p:commandLink> 
+            </h:panelGrid> 
+
+            <!-- The image element placed below the command panel -->
+            <img id="boximage" onerror='this.style.display="none"' 
+                 src="#{doseResponseBean.currentFeatureImgPath}" 
+                 alt="FeatureImage" style="width: 100%; height: auto;"/>
+        </h:panelGrid> 
+    </p:dialog>
+
+</ui:composition>
+

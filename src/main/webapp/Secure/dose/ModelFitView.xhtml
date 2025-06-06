@@ -1,0 +1,260 @@
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Curve Fit', '/Secure/dose/ModelFitView.xhtml')}"></f:event> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid style="width:92%; padding: 30px 20px 10px 60px; line-height: 23px; font-size: 14px; font-family: Arial, Helvetica, Geneva" rendered="#{!doseResponseBean.contineousDoes}">
+            <h2>
+                Perform curve fitting to calculate feature-level benchmark doses (BMDs) 
+            </h2>
+            <p>
+                To calculate compound-level BMDs, up to 10 statistical models are fit to the concentration of each compound. Any model 
+                fits with a poor fit are filtered out, and then the best fitting model is chosen based on Akaike Information Criterion (AIC). The selected fit is 
+                used to compute the BMD. We recommend selecting all statistical models except for Poly3 and Poly4, which should only 
+                be used if you expect a non-monotonic response. These higher order polynomials should be used with caution since they 
+                sometimes have unpredictable behavior, especially for dose-response experiments with a log-scale dosing scheme. 
+                <b>Note</b>, this process is computational intensive, a maximum of <b>1000</b> features can be used for curve fitting.
+            </p>                    
+            <h:form id="form">
+                <h:panelGrid id="deTb" columns="2" style="padding-left: 40px; margin-bottom: 30px">
+                    <p:panelGrid layout="tabular" columns ="2">
+                        <h:outputLabel value="Fit models" style="font-weight:bold;"/>   
+                        <h:panelGrid columns="5" cellpadding="20">
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.exp2}" itemLabel="Exp2"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.exp3}" itemLabel="Exp3"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.exp4}" itemLabel="Exp4"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.exp5}" itemLabel="Exp5"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.lin}" itemLabel="Linear"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.poly2}" itemLabel="Poly2"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.poly3}" itemLabel="Poly3"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.poly4}" itemLabel="Poly4"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.hill}" itemLabel="Hill"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.power}" itemLabel="Power"/>
+                        </h:panelGrid>
+
+                        <h:outputLabel value="Calculate BMDs" style="font-weight:bold;"/>
+                        <h:panelGrid columns="2">
+                            <h:outputLabel value="Lack-of-fit p-value:"/>       
+                            <h:panelGrid columns="2" style="padding-left:20px">
+                                <p:inputNumber id="input1" value="#{doseResponseBean.cutoffval}"/> 
+                                <p:graphicImage id="barIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="barIcon2" styleClass="helpTip">
+                                    <p>
+                                        The lack-of-fit p-value represents how well a statistical model fits the data. Unlike a p-value for a 
+                                        t-test, larger values are associated with higher significance, thus we filter out any results that 
+                                        are lower than the significance threshold.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <h:outputLabel value="BMR factor:"/>       
+                            <h:panelGrid columns="2" style="padding-left:20px">
+                                <p:inputNumber id="input3" value="#{doseResponseBean.numsds}"/> 
+                                <p:graphicImage id="barIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="barIcon3" styleClass="helpTip">
+                                    <p>
+                                        The benchmark response (BMR) is the compound expression value that is used to determine the BMD. The BMR 
+                                        factor controls how the BMR is computed and it must be a positive number greater than zero. 
+                                        Increasing this parameter results in BMRs that represent larger changes in compound expression compared 
+                                        to the control. See the FAQs for detailed diagrams and explanations.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+
+                            <h:outputLabel value="Control abundance:"/>       
+                            <h:panelGrid columns="2" style="padding-left:20px">
+                                <p:selectOneMenu id="xtrans" value="#{doseResponseBean.ctrlMode}">
+                                    <f:selectItem itemLabel="Mean of control samples" itemValue="sampleMean" /> 
+                                    <f:selectItem itemLabel="Evaluate model at 0" itemValue="modelZero" />    
+                                </p:selectOneMenu> 
+                                <p:graphicImage id="barIcon4" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="barIcon4" styleClass="helpTip">
+                                    <p>
+                                        The benchmark response (BMR) is computed as the mean at the control, plus or minus the BMR factor. There are 
+                                        two different ways to calculate the mean at the control. You can either compute it as the mean of the abundance 
+                                        values of the control samples (first option in menu), or by evaluating the fitted model at zero (second 
+                                        option in menu). 
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>                                        
+                        </h:panelGrid> 
+                    </p:panelGrid>
+                    <h:panelGrid columns="2" style="padding-left: 60px">
+                        <p:commandButton value="Submit"
+                                         style="width:110px; height:32px; font-size: 14px"
+                                         icon="pi pi-check"
+                                         onclick="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         update=":form:deTb :resPane"
+                                         actionListener="#{doseResponseBean.performCurveFitting()}"/>  
+
+                        <p:commandButton id="visBn" value="Proceed" style="width:120px; margin-left: 40px"
+                                         styleClass="procBn"
+                                         disabled="#{!doseResponseBean.bmdAnal}"
+                                         onclick="PF('statusDialog').show();"
+                                         icon="pi pi-arrow-circle-right"
+                                         action="FitResultView"/> 
+                    </h:panelGrid>   
+                </h:panelGrid> 
+            </h:form> 
+            <hr class="style-one"/>
+            <h3>Result Summary</h3>
+            <h:panelGrid id="resPane" style="width:100%; text-align:center;">  
+                <h:panelGrid columns="5" id='res'>
+                    <h:outputLabel value="Features with fitted models:"/>
+                    <h:outputLabel style="padding-left:20px; font-weight:bold;" value="#{doseResponseBean.curvNum}"/>
+                    <p:spacer style="width: 40px"/> 
+                    <h:outputLabel value="Features with BMDs:"/>
+                    <h:outputLabel style="padding-left:20px; font-weight:bold" value="#{doseResponseBean.bmdNum}"/>
+                </h:panelGrid>  
+                <p style='text-align: left'>
+                    This bar plot shows how many times each model was found to be the best-fitting model for a compound. 
+                    Each bar shows the number of model fits that have a BMD (blue) or not (dark grey). In most cases, the reason 
+                    that a model fit does not have a BMD is that the feature abundance never exceeds the standard deviation of the 
+                    control. You can view the detailed curve fitting results of each feature in the next page. 
+                </p>
+                <h:panelGrid style="width:100%; text-align:center;">  
+                    <h:panelGrid style="width:100px; text-align: right; float:right" columns="2">
+                        <p:commandLink   id="img1" 
+                                         actionListener="#{sessionBean1.graphicsLnk_action('dr_barplot')}"
+                                         oncomplete="PF('graphDialog').show()">
+                            <i class="pi pi-download pi-2x" ></i>
+                        </p:commandLink> 
+                    </h:panelGrid>
+                    <img onerror='this.style.display="none"' style="width:8in; height:6in;" src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:panelGrid>
+
+        <h:panelGrid style="width:92%; padding: 30px 20px 10px 60px; line-height: 23px; font-size: 14px; font-family: Arial, Helvetica, Geneva" rendered="#{doseResponseBean.contineousDoes}">
+            <h2 style="color: #2196F3">
+                Perform curve fitting to calculate feature-level benchmark doses (BMDs) 
+            </h2>
+            <p>
+                To calculate compound-level BMDs, up to 17 statistical models are fit to the concentration of each compound. 
+                They are organized into the following categories:
+                <ul>
+                    <li><b>Logistic models</b> (L3, L4, L5): Sigmoidal curves with 3–5 parameters governing slope, inflection point, and limits.</li>
+                    <li><b>Log-logistic models</b> (LL3, LL23, LL4, LL24, LL5, LL25): Logistic applied on the log(dose) scale to span wide concentration ranges.</li>
+                    <li><b>Weibull models</b> (W13, W14, W23, W24): Monotonic curves adjusting to skewness and tail.</li>
+                    <li><b>Brain–Cousens models</b> (BC4, BC5): Low-dose stimulation followed by inhibition at high dose (hormetic).</li>
+                    <li><b>Asymptotic regression</b> (AR3): For response that plateaus at higher doses.</li>
+                    <li><b>Michaelis–Menten kinetics</b> (MM3): Saturable, enzyme-like kinetics describing processes that level off.</li>
+                </ul>
+                Please refer to
+                <a href="https://omicsforum.ca/t/how-to-choose-among-different-methods-for-curve-fitting-in-dose-response-analysis-continous-exposures/5994"
+                   target="_blank" rel="noopener noreferrer"> our forum post</a> for more details. 
+                   
+                The recommended models have been selected by default. Any model fits with a poor fit are filtered out, and then the best fitting model is chosen based on AIC. The selected fit is 
+                used to compute the BMD. Please note that this process is computational intensive, and the more models you selected, the longer processing will be needed. 
+                A maximum of <b>1000</b> features can be used for curve fitting. 
+            </p>
+            <h:form id="formx">
+                <h:panelGrid id="deTb" columns="2" style="padding-left: 40px; margin-bottom: 30px">
+                    <p:panelGrid layout="tabular" columns ="2">
+                        <h:outputLabel value="Fit models" style="font-weight:bold;"/>   
+                        <h:panelGrid columns="5" cellpadding="20">
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.l3}" itemLabel="L3"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll3}" itemLabel="LL3"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll23}" itemLabel="LL23"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.l4}" itemLabel="L4"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll4}" itemLabel="LL4"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll24}" itemLabel="LL24"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.l5}" itemLabel="L5"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll5}" itemLabel="LL5"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ll25}" itemLabel="LL25"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.w13}" itemLabel="W13"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.w14}" itemLabel="W14"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.w23}" itemLabel="W23"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.w24}" itemLabel="W24"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.bc4}" itemLabel="BC4"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.bc5}" itemLabel="BC5"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.ar3}" itemLabel="AR3"/>
+                            <p:selectBooleanCheckbox value="#{doseResponseBean.mm3}" itemLabel="MM3"/>
+                        </h:panelGrid>
+
+                        <h:outputLabel value="Calculate BMDs" style="font-weight:bold;"/>
+                        <h:panelGrid columns="2">
+                            <h:outputLabel value="Lack-of-fit p-value:"/>       
+                            <h:panelGrid columns="2" style="padding-left:20px">
+                                <p:inputNumber id="input1" value="#{doseResponseBean.cutoffval}"/> 
+                                <p:graphicImage id="barIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <p:tooltip for="barIcon2" styleClass="helpTip">
+                                    <p>
+                                        The lack-of-fit p-value represents how well a statistical model fits the data. Unlike a p-value for a 
+                                        t-test, larger values are associated with higher significance, thus we filter out any results that 
+                                        are lower than the significance threshold.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <!--                            <h:outputLabel value="BMR factor:"/>       
+                                                        <h:panelGrid columns="2" style="padding-left:20px">
+                                                            <p:inputNumber id="input3" value="#{doseResponseBean.numsds}"/> 
+                                                            <p:graphicImage id="barIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                                            <p:tooltip for="barIcon3" styleClass="helpTip">
+                                                                <p>
+                                                                    The benchmark response (BMR) is the compound expression value that is used to determine the BMD. The BMR 
+                                                                    factor controls how the BMR is computed and it must be a positive number greater than zero. 
+                                                                    Increasing this parameter results in BMRs that represent larger changes in compound expression compared 
+                                                                    to the control. See the FAQs for detailed diagrams and explanations.
+                                                                </p>
+                                                            </p:tooltip>
+                                                        </h:panelGrid>-->
+                        </h:panelGrid>
+                    </p:panelGrid>
+                    <h:panelGrid columns="2" style="padding-left: 60px">
+                        <p:commandButton value="Submit"
+                                         style="width:110px; height:32px; font-size: 14px"
+                                         icon="pi pi-check"
+                                         onclick="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide();"
+                                         update=":formx:deTb :resPanex"
+                                         actionListener="#{doseResponseBean.performContineousCurveFitting()}"/>  
+
+                        <p:commandButton id="visBn" value="Proceed" style="width:120px; margin-left: 40px"
+                                         styleClass="procBn"
+                                         disabled="#{!doseResponseBean.bmdAnal}"
+                                         onclick="PF('statusDialog').show();"
+                                         icon="pi pi-arrow-circle-right"
+                                         action="FitResultView"/> 
+                    </h:panelGrid>   
+                </h:panelGrid> 
+            </h:form> 
+            <hr class="style-one"/>
+            <h3>Result Summary</h3>
+            <h:panelGrid id="resPanex" style="width:100%; text-align:center;">  
+                <h:panelGrid columns="5" id='resx'>
+                    <h:outputLabel value="Features with fitted models:"/>
+                    <h:outputLabel style="padding-left:20px; font-weight:bold;" value="#{doseResponseBean.curvNum}"/>
+                    <p:spacer style="width: 40px"/> 
+                    <h:outputLabel value="Features with BMDs:"/>
+                    <h:outputLabel style="padding-left:20px; font-weight:bold" value="#{doseResponseBean.bmdNum}"/>
+                </h:panelGrid>  
+                <p style='text-align: left'>
+                    This bar plot shows how many times each model was found to be the best-fitting model for a compound. 
+                    Each bar shows the number of model fits that have a BMD (blue) or not (dark grey). In most cases, the reason 
+                    that a model fit does not have a BMD is that the feature abundance never exceeds the standard deviation of the 
+                    control. You can view the detailed curve fitting results of each feature in the next page. 
+                </p>
+                <h:panelGrid style="width:100%; text-align:center;">  
+                    <h:panelGrid style="width:100px; text-align: right; float:right" columns="2">
+                        <p:commandLink   id="img1x" 
+                                         actionListener="#{sessionBean1.graphicsLnk_action('dr_barplot')}"
+                                         oncomplete="PF('graphDialog').show()">
+                            <i class="pi pi-download pi-2x" ></i>
+                        </p:commandLink> 
+                    </h:panelGrid>
+                    <img onerror='this.style.display="none"' style="width:8in; height:6in;" src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:panelGrid>
+    </ui:define>
+</ui:composition>
+

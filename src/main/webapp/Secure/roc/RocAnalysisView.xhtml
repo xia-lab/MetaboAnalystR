@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('ROC Analysis', '/Secure/roc/RocAnalysisView.xhtml')}"/> 
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form>
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>ROC Analysis Options :</h2>
+                <h:panelGrid cellpadding="5" style="border: lightgray thin solid; margin-left: 30px; margin-right: 20px; width: 720px;
+                             padding: 20px 30px 20px 30px; font-size: 14px;" class="surface-card shadow-1 p-4 text-800">
+                    <h:commandLink style="font-size: 13px; font-weight: bold"
+                                   action="Classical ROC" 
+                                   onclick="PF('statusDialog').show()"
+                                   value="Classical univariate ROC curve analysis"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        Perform classical univariate ROC curve analysis, such as to generate ROC curve, 
+                        to calculate AUC or partial AUC as well as their 95% confidence intervals, 
+                        to compute optimal cutoffs for any given feature, as well as to generate performance tables for sensitivity, 
+                        specificity, and confidence intervals at different cutoffs.
+                    </h:panelGrid>
+
+                    <h:commandLink style="font-size: 13px; font-weight: bold" action="#{rocAnalBean.toNextPage('Multivariate')}" onclick="PF('statusDialog').show()" 
+                                   value="Multivariate ROC curve based exploratory analysis (Explorer)"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px;">
+                        Perform automated important feature identification and performance evaluation. ROC curve analyses are performed based on 
+                        three multivariate algorithms - support vector machines (SVM), 
+                        partial least squares discriminant analysis (PLS-DA), and random forests.
+                    </h:panelGrid>
+
+                    <h:commandLink style="font-size: 13px; font-weight: bold" action="#{rocAnalBean.toNextPage('Builder')}" onclick="PF('statusDialog').show()" 
+                                   value="ROC curve based model evaluation (Tester)"/>
+                    <h:panelGrid style="padding-left: 20px; padding-bottom: 6px">
+                        Users can manually select any combination of features to create biomarker models using any of the three algorithms mentioned above. 
+                        The module also allows users to <b>hold out</b> a subset of samples for extra validation purpose, as well as to <b>predict class for new samples</b> 
+                        (samples without class labels).
+                    </h:panelGrid>
+
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

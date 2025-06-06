@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="mobile-web-app-capable" content="yes" />
+            <link rel="shortcut icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"></link>
+            <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"></link>
+        </f:facet>
+        <f:event type="postAddToView" listener="#{userLoginBean.welcomeJustRegistered()}"></f:event>  
+        <title>XiaLab Analytics - Login</title>
+    </h:head>
+
+    <h:body styleClass="login-body #{guestPreferences.inputStyleClass}">
+        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+            <p:autoUpdate/>
+        </p:growl> 
+        <p:growl id="growl2" widgetVar="growlWidget2" severity="error" showDetail="true" globalOnly="false" escape="false" sticky="true">
+            <p:autoUpdate/>
+        </p:growl>
+        <div class="login-wrapper">
+            <div class="login-panel">
+                <div style="width: 100%; text-align: center; padding-top: 20px">
+                    <a href="https://www.xialab.ca/translation.xhtml" target="_blank">
+                        <p:graphicImage name="images/xialab_logo.png" styleClass="logo" 
+                                        title="XiaLab Analytics"
+                                        style="width: 96px; height: 96px" library="diamond-layout" />
+                    </a>
+                    <br/> <br/>
+                    <h:outputText styleClass="copyright" value="Empowering researchers through trainings, tools, and AI" 
+                                  style="font-size: 1.1em; margin-top: 18px"/> 
+                </div>
+                <div class="login-form">
+                    <h:form id="form">
+                        <p:focus context="form"/>
+                        <h:panelGrid columns="2" style="width: 360px">
+                            <h:panelGrid columns="2">
+                                <p:outputLabel for="email" value="Email"  style="font-weight: bold;"/>
+                                <p:graphicImage id="idicon" class="pi pi-info-circle" ></p:graphicImage>
+                                <p:tooltip for="idicon" styleClass="helpTip">
+                                    <p>
+                                        The email address will be used as the username or ID to access the system.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+                            <p:inputText id="email" value="#{fireUserBean.email}" required="true" style="width: 250px"/>
+
+                            <p:outputLabel for="pwd1" value="Password" style="font-weight: bold;"/>
+                            <p:password id="pwd1" value="#{fireUserBean.password}" label="Password 1" required="true" style="width: 250px" />
+                        </h:panelGrid>
+                        <h:panelGrid style="width: 360px; text-align: center; padding-top: 10px">
+                            <p:commandButton value="Login" 
+                                             id="procBn"
+                                             onclick="PF('statusDialog').show();"
+                                             action="#{fireUserBean.doUserLogin()}"
+                                             disabled="false"
+                                             icon="pi pi-sign-in"
+                                             oncomplete ="PF('statusDialog').hide();"
+                                             />
+                        </h:panelGrid>
+                    </h:form>
+                </div>
+
+                <div>   
+                    <h:form>
+                        <h:panelGrid columns="2" style="width: 400px; text-align: center; padding-top: 10px">
+                            <h:commandLink action="RegisterView" onclick="PF('statusDialog').show()" value="Create account"/>
+                            <!--<h:commandLink action="activate" onclick="PF('statusDialog').show()" value="Activate account"/>-->
+                            <h:commandLink action="resetrequest" onclick="PF('statusDialog').show()" value="Forgot password?"/>
+                        </h:panelGrid>
+                    </h:form>
+                </div>
+            </div>
+            <div class="login-image">
+                <div class="login-image-content">
+                    <div class="login-image-content" style="padding:8% 4% 5% 4%; text-align: center">
+
+                        <h2>News and Updates</h2>
+                        <h:panelGrid style="margin: 20px;padding:20px 30px 20px 20px; line-height: 27px; font-size: 16px; color:black; background-color: rgba(255,255,255,0.4); text-align: left">
+                            <ul>
+                             <li>
+                                    MetaboAnalyst Pro has been upgraded to the 2025-R2. Your comments and feedback are welcome.
+                                </li>
+                                <li>
+                                    You can continue to access the previous <a href="https://www.xialab.ca/MetaboAnalyst/" target="_blank" style="text-decoration: underline; color: darkred;"><b>2024-R2 (LTS) version</b></a>.  
+                                </li>
+                                <li>
+                                    We recommend <a href="https://www.google.com/chrome/" target="_blank" style="text-decoration: underline; color: darkred;">Chrome</a> 
+                                    or <a href="https://www.microsoft.com/en-us/edge/" target="_blank" style="text-decoration: underline; color: darkred;">Edge</a> web browser for better user experience.  
+                                </li>
+                                <!--
+                                <li>
+                                    Please join us for a special topics session on Saturday, April 19th (9:00 - 11:30 AM Montreal Time). 
+                                    Please <a href="https://www.xialab.ca/users/UserLogin.xhtml" target="_blank" style="text-decoration: underline; color: darkred;"><b>sign in</b></a> to 
+                                    confirm your attendance (and input suggestions).
+                                </li>
+                                -->
+                            </ul>
+                        </h:panelGrid>
+                        <!--
+                        <h:panelGrid style="padding:20px 20px 12px 30px; line-height: 24px; font-size: 15px; color:black; background-color: rgba(255,255,255,0.3)">
+                            We are planning a special topics session on <u>December 7 (Saturday) 9:00 - 11:00 am</u>. 
+                            The session is free for active members of XiaLab Analytics (if you have subscribed to any omcis data science training or pro tools in the past 12 months). 
+                            Please confirm your attendance using the checkbox below. We will send you the Zoom link three days before the event. 
+                            <uL>
+                                <li>
+                                    <b>(09:00 - 10:00) Introducing New  Release</b>: Omics Pro Tools <u>2025-R1</u>
+                                    <ul>
+                                        <li>
+                                            <u>Workflow</u> creation and management
+                                        </li>
+                                        <li>
+                                            <u>AI Assistant</u> for in-context support and workflow execution
+                                        </li>
+                                        <li>
+                                            Other New features
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <b>(10:00 - 11:00) User Suggested Topics </b>: Please enter your comments below 
+                                </li>
+                            </uL>
+                            <h:form id="regForm">
+                                <h:panelGrid  style="padding: 20px; width: 100%; background: #8AC7DB">
+                                    <p:selectBooleanCheckbox style="line-height:18px; font-weight: bold" value="#{registration.specialTopic}"  
+                                                             itemLabel="I would like to attend the special topics session"/>
+                                    <p:outputLabel for="comment" style="margin-left: 30px" value="Topics you would like us to cover (optional)" />
+                                    <p:inputTextarea id="comment" rows="4" style="width:95%; margin-left: 30px" value="#{registration.comments}"/>
+                                    <h:panelGrid style="width:100%; text-align: center; margin-left: 30px">
+                                        <p:commandButton value="Submit" icon="pi pi-star" iconPos="right" 
+                                                         style="width:130px; height: 40px; font-weight: bold; background: whitesmoke" 
+                                                         action="#{registration.registerSpecialTopic()}" 
+                                                         ajax="false"
+                                                         update="regform">
+                                        </p:commandButton>
+                                    </h:panelGrid>
+                                </h:panelGrid>
+                            </h:form>
+                        </h:panelGrid>
+                        -->
+                    </div> 
+                </div>   
+            </div>
+        </div>
+
+        <p:dialog modal="true" widgetVar="statusDialog" 
+                  style="width: 200px; height:100px;" 
+                  appendTo="@(body)" header="Processing .... "
+                  draggable="false" closable="true" resizable="false"> 
+            <h:panelGrid style="width: 100%; text-align: center; padding-top:20px;">
+                <h:outputLabel value="This may take a while to complete, please be patient...."/>
+                <p:spacer/>
+                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+            </h:panelGrid>
+        </p:dialog>
+
+        <h:outputStylesheet id="layout-scheme" name="css/layout-#{guestPreferences.scheme}.css" library="diamond-layout" />
+        <h:outputStylesheet name="css/primeicons.css" library="diamond-layout" />
+    </h:body>
+
+</html>

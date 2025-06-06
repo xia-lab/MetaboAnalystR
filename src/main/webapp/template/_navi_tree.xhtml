@@ -1,0 +1,26 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:d="http://primefaces.org/diamond">
+
+
+    <h:form id="treeForm">
+        <p:tree style="width: 200px; font-size: 13px; border:none; border: teal thin solid" 
+                value="#{sessionBean1.naviTree}" 
+                var="node"
+                class="cyan-100 text-800 shadow-3"
+                selectionMode="single">
+            <p:ajax update=":treeForm" 
+                    onstart="PF('statusDialog').show()"  
+                    onerror="PF('statusDialog').hide()"
+                    event="select" 
+                    listener="#{ctl.onNodeSelect}" />  
+            <p:treeNode>
+                <h:outputText value="#{node}"/>
+            </p:treeNode>
+        </p:tree>
+    </h:form>
+
+</ui:composition>

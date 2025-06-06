@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('power')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/PowerUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="form1" enctype="multipart/form-data">
+            <h:panelGrid  styleClass="my-content-panel">
+                <h2>Data Upload</h2>
+
+                <p:outputLabel style="font-size:13px; font-weight: bold" value="A plain text file (.txt or .csv):"/>
+                <h:panelGrid columns="2" style="width:720px; height:120px; padding:20px;" class="surface-card shadow-1 p-4 text-800">
+                    <p:outputLabel style="font-weight: bold" value="Data Type:"/>
+                    <p:selectOneRadio value="#{uploader.dataType}">
+                        <f:selectItems value="#{optBean.tableTypeOpts}"/>
+                    </p:selectOneRadio>
+                    <p:outputLabel style="font-weight: bold" value="Format:"/>
+                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{uploader.dataFormat}">
+                        <f:selectItems value="#{optBean.csvFormatOpts}" />
+                    </p:selectOneMenu>
+                    <p:outputLabel style="font-weight: bold" value="Data File:"/>
+                    <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                </h:panelGrid>
+                <h:panelGrid style="width: 720px; padding-top: 10px; padding-bottom: 20px; text-align: center">
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     action="#{uploader.uploadPilotData()}"/>  
+                </h:panelGrid>
+
+                <hr class="style-one" style="width:75%; margin-right: 25%"/>
+
+                <p:outputLabel style="font-size:13px; font-weight: bold" value="Try our test data:"/>
+                <h:panelGrid columns="2" style="width: 720px; padding: 20px" class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGroup layout="block" style="width:80px">
+                        <p:outputLabel style="font-weight: bold" value="Data"/>
+                    </h:panelGroup>       
+                    <p:outputLabel style="font-weight: bold" value="Description"/>
+                    <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Dataset</a>
+                    <h:panelGroup>
+                        Metabolite concentration data from a pilot urine metabolomics study on cancer patients. 
+                        Group 1- cachexic; group 2 - control  
+                    </h:panelGroup>
+                </h:panelGrid>
+                <h:panelGrid style="width: 720px; padding-top: 10px; padding-bottom: 10px; text-align: center">
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     action="#{uploader.handlePowerTestFileUpload()}"/>  
+                </h:panelGrid>
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
+</ui:composition>

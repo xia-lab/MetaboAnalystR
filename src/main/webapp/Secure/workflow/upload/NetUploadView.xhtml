@@ -1,0 +1,265 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/workflow/upload/NetUploadView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{workflowBean.loadDefaultWorkflows()}"></f:event> 
+    </ui:define>  
+    <ui:define name="content">
+        <style>
+            /* Ensure the file upload button remains consistent in size */
+            .file-upload-custom .ui-fileupload-button {
+                width: 120px; /* Set a fixed width for the button */
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            /* Control the filename display to avoid shrinking */
+            .file-upload-custom .ui-fileupload-filename {
+                display: inline-block;
+                /* Limit the filename display */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                padding-left: 10px; /* Add space between the button and the filename */
+            }
+
+            /* Style to adjust the overall file upload container */
+            .file-upload-custom .ui-fileupload {
+                display: inline-block;
+                width: auto;
+                vertical-align: middle;
+            }
+
+            /* Ensure the file upload input remains consistent */
+            .file-upload-custom .ui-fileupload-choose {
+                width: 200px; /* Same width for the button */
+                height: 30px; /* Adjust the height if necessary */
+            }
+
+            .ui-inputtextarea:disabled {
+                color: white !important; /* Set font color to white */
+                background-color: #333333; /* Optionally, set a dark background for contrast */
+                opacity: 1 !important; /* Remove dimming effect on the text */
+            }
+
+            .ui-tabs-nav li.ui-state-disabled {
+                opacity: 1 !important;     /* Removes the dimmed appearance */
+                pointer-events: none;      /* Ensures the tab remains unclickable */
+                color: inherit;            /* Maintains original text color */
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+
+            <p:tabView id="tabId" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+                <p:tab id="personal" title="Upload" disabled="true">
+
+                </p:tab>            
+
+                <p:tab id="namecheck" title="Name Check" disabled="true">
+
+                </p:tab>
+
+                <!--
+                <p:tab id="design" title="Workflow" disabled="true">
+
+                </p:tab>
+                -->
+
+
+            </p:tabView>
+
+            <h:panelGroup id="mainId">
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}">
+
+                    <h:form id="form1" enctype="multipart/form-data">
+                        <h:panelGrid style="padding-left: 40px; padding-bottom: 10px; line-height: 21px; width:100%;">
+                            <p>
+                                Upload a list of genes (<b>human only</b>) or KEGG orthologs, (optional) with a list of metabolites.
+                            </p>
+                            <h:panelGrid columns="2">
+                                <h:panelGrid style="padding: 0px 10px 10px 30px;">
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Gene list with optional fold changes"/>
+                                    <h:panelGrid id="genePane">
+                                        <p:inputTextarea  autoResize="false" value="#{mnetLoader.geneList}" rows="18" cols="32" />
+                                        <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                                            <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{mnetLoader.geneIDType}">
+                                                <f:selectItem itemLabel="--- Not Specified ---" itemValue="NA" />
+                                                <f:selectItem itemLabel="KEGG Ortholog (KO)" itemValue="kos" />
+                                                <f:selectItem itemLabel="(Human) Entrez ID" itemValue="entrez" />
+                                                <f:selectItem itemLabel="(Human) Ensembl Gene ID" itemValue="embl" />
+                                                <f:selectItem itemLabel="(Human) Official Gene Symbol" itemValue="symbol" />
+                                            </p:selectOneMenu>
+                                        </h:panelGrid>
+                                    </h:panelGrid>
+                                </h:panelGrid>  
+
+                                <h:panelGrid style="padding: 0px 10px 10px 60px;">
+                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Compound list with optional fold changes"/>
+                                    <h:panelGrid id="cmpdPane">
+                                        <p:inputTextarea  autoResize="false" value="#{mnetLoader.cmpdList}" rows="18" cols="32" />
+                                        <h:panelGrid columns="2" style="width:280px; padding-top: 5px;">
+                                            <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type: "/>
+                                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.cmpdIDType}">
+                                                <f:selectItems value="#{optBean.pathCmpdIDOpts}" />
+                                            </p:selectOneMenu>
+                                        </h:panelGrid>
+                                    </h:panelGrid>
+                                </h:panelGrid>   
+                            </h:panelGrid>
+                            <h:panelGrid columns="1" style="width: 720px; padding-left: 220px">
+                                <p:commandButton value="Submit" style="font-size: 13px; width: 100px"
+                                                 onclick="PF('statusDialog').show()" 
+                                                 oncomplete="PF('statusDialog').hide()"
+                                                 ajax="false" 
+                                                 action="#{wfUploadBean.integrityCheck()}"/>  
+                            </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                    <p:dialog modal="true" widgetVar="testDataDialog" header="Example datasets"
+                              appendTo="@(body)" style="line-height: 23px;"
+                              draggable="false" closable="true" resizable="true">
+
+                        <h:form>
+                            <p:selectOneRadio id="customRadio" value="#{mnetLoader.exampleInputList}" layout="custom">  
+                                <f:selectItem itemLabel="Metabolites - genes" itemValue="metabogene"/>
+                                <f:selectItem itemLabel="Metabolites - KOs" itemValue="metabometag"/>
+                            </p:selectOneRadio> 
+                            <p:panelGrid style="width: 780px;" columns="3" layout="tabular" styleClass="myPanelGrid" class="surface-card shadow-1 p-4 text-800"> 
+                                <h:panelGroup><b>Datasets</b></h:panelGroup>  
+                                <h:panelGroup><b>ID Type</b></h:panelGroup>   
+                                <h:panelGroup><b>Data Description</b></h:panelGroup> 
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <p:radioButton id="opt0" for="customRadio" itemIndex="0"/>  
+                                    Metabolites - genes
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:240px">
+                                    <b>Organism</b>: Human<br/>
+                                    <b>ID Type</b>: KEGG Compound ID and Entrez Gene IDs
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:320px">
+                                    Data from an integrative analysis of the transcriptome and metabolome to identify  
+                                    (metabolites/genes) biomarkers of intrahepatic cholangiocarcinoma (ICC) in 16 individuals 
+                                    (<a href="https://doi.org/10.1038/srep16294" target="_blank">details</a>).
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width:200px">
+                                    <p:radioButton id="opt1" for="customRadio" itemIndex="1"/>   
+                                    Metabolites - KOs
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:240px">
+                                    <b>Organism</b>: Human<br/>
+                                    <b>ID Type</b>: HMDB ID and KEGG Orthology ID 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:320px">
+                                    A subset of data from a metagenome-wide association study coupled with serum metabolomics profiling of 200 lean and obese 
+                                    young individuals (<a href="https://doi.org/10.1038/nm.4358" target="_blank">details</a>).
+                                </h:panelGroup>
+
+                            </p:panelGrid>
+
+                            <h:panelGrid columns="2" style="width:800px; text-align: center; padding: 10px;">
+                                <p:commandButton value="Yes" 
+                                                 onclick="PF('testDataDialog').hide();"
+                                                 oncomplete="PF('statusDialog').hide();" 
+                                                 update=":form1:genePane :form1:cmpdPane" 
+                                                 actionListener="#{mnetLoader.updateListArea()}"/>  
+                                <p:commandButton value="Cancel" 
+                                                 onclick="PF('testDataDialog').hide();" 
+                                                 oncomplete="PF('statusDialog').hide();" 
+                                                 actionListener="#{mnetLoader.setUseExample(false)}"/>
+                            </h:panelGrid> 
+                        </h:form>
+                    </p:dialog>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">
+                    <ui:include src="../process/_MnetMapView.xhtml" />
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{workflowBean.activeIndex eq 2}">
+                    <ui:include src="../process/_WorkflowSelection.xhtml" />
+                </h:panelGroup>
+
+            </h:panelGroup>
+
+        </h:panelGrid>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 0}">
+                <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Try Examples"
+                                     id="testBn" style="width:160px"
+                                     icon="pi pi-star"            
+                                     onclick="PF('testDataDialog').show();"
+                                     />
+
+                    <p:commandButton id="visBnUpload" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     disabled="#{not wfUploadBean.fileUploaded}"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     update="southform tabId mainId"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                </h:panelGrid>
+            </p:outputPanel>
+
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 1}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(0)}"
+                                     oncomplete="PF('tabWidget').select(0);"/>
+                    <p:commandButton id="visBnCheck" value="Proceed" style="width:160px"
+                                     icon="pi pi-angle-double-right" 
+                                     update="southform tabId mainId"
+                                     action="#{wfUploadBean.prepareNetworkData()}"  
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 2}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId mainId"
+                                     actionListener="#{workflowBean.setActiveIndex(1)}"
+                                     oncomplete="PF('tabWidget').select(1);"/>
+                    <p:commandButton value="Finish"
+                                     id="runAnalysisBn" style="width:160px"
+                                     icon="pi pi-cog"       
+                                     action="#{workflowBean.finishMultiPreparation('Gene list')}"
+                                     update="southform tabId mainId"
+                                     />
+                </h:panelGrid>
+            </p:outputPanel>
+            <!--
+            <p:outputPanel rendered="#{workflowBean.activeIndex == 3}">
+                <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                    <p:commandButton value="Back" style="width:160px"
+                                     icon="pi pi-angle-double-left"
+                                     update="southform tabId:form2"
+                                     actionListener="#{workflowBean.setActiveIndex(2)}"
+                                     oncomplete="PF('tabWidget').select(2);"/>
+                    <p:commandButton value="Finish"
+                                     id="selectionFinish" style="width:160px"
+                                     icon="pi pi-cog"          
+                                     action="WorkflowView"/>
+
+                </h:panelGrid>
+            </p:outputPanel>
+            -->
+        </h:form>
+
+    </ui:define>
+</ui:composition>

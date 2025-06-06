@@ -1,0 +1,168 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Classical ROC', '/Secure/roc/UnivRocView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:form id="summaryForm">
+            <h:panelGrid styleClass="my-content-panel">
+                <h2>Classical univariate ROC curve analysis</h2>
+                <p>
+                    Please note in the classical approach, the ROC is created based on all data points (i.e. training and testing are the same, not through cross validation).
+                    Therefore, the performance (AUC) is optimistic (i.e. overfitting). To obtain more realistic performance, you can use the <b>Tester</b> approach to select 
+                    a single feature and evaluate using any of the machine learning method.
+                </p>
+                <h:panelGrid columns="2" style="width:580px">
+                    <h:panelGrid columns="2" style="margin-left: 20px">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <h:outputLabel for="meta1" style="font-weight: bold;" value="Selected metadata:"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu id="meta1" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.selMeta}">
+                            <f:selectItems value="#{multifacBean.discreteMetaOpts}" />
+                            <p:ajax listener="#{rocAnalBean.analysisMetaChangeListener()}" event="change" update="summaryForm"/> 
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold;" value="Target group:"/>
+                        <p:selectOneMenu style="width:140px" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.factor1}">
+                            <f:selectItems value="#{multifacBean.uniqueMetaList}" />
+                        </p:selectOneMenu>
+
+                        <h:outputLabel style="font-weight: bold;" value="Reference group:"/>
+                        <p:selectOneMenu style="width:140px" styleClass="menu" panelStyleClass="panel" value="#{rocAnalBean.factor2}">
+                            <f:selectItem itemLabel="ALL others" itemValue="all" />
+                            <f:selectItems value="#{multifacBean.uniqueMetaList}" /> 
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false"
+                                     style="margin-left:20px"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     action="#{rocAnalBean.performDefaultUnivAnalysis_update()}"/>  
+                </h:panelGrid>
+                <hr class="style-one"/>
+                <p>
+                    The features displayed in the table below are ranked based on area under ROC curve (AUROC), 
+                    T-statistics or Log2 fold change (FC). Click a header to sort the table accordingly. 
+                    Click "View" in the last column to visualize its ROC curve and performance details. 
+                    Note, the 95% confidence interval is calculated using 500 bootstrappings. You can 
+                    use the <b>ROC Detail Analysis</b> button at the bottom for detailed sensitivity,
+                    specificity analysis at a given cutoff for the compound under current selection. 
+                </p>
+                <h:panelGrid columns="2">
+
+                    <h:panelGrid columns="2" style="margin-left: 20px">
+
+                        <p:selectBooleanCheckbox value ="#{rocAnalBean.partialRoc}" style="line-height: 18px"/>  
+                        <h:outputLabel style="font-weight: bold" value="Calculate partial ROC curve limited by:"/>
+                        <p:spacer/>
+                        <h:panelGrid columns="2">
+                            <h:outputLabel value="Parameter:"/>
+                            <p:selectOneRadio value="#{rocAnalBean.univPerfOpt}">
+                                <f:selectItem itemLabel="X-axis (max FPR)" itemValue="sp" />
+                                <f:selectItem itemLabel="Y-axis (min TPR)" itemValue="se" />
+                            </p:selectOneRadio>
+                            <h:outputLabel value="Threshold:"/>
+                            <h:panelGroup>
+                                <p:inputText style="width: 50px" value="#{rocAnalBean.univThresh}" required="true"
+                                             requiredMessage="Must set a level"/>
+                                <p:outputLabel value="range [0, 1]"/>
+                            </h:panelGroup>
+                        </h:panelGrid>
+                        <p:selectBooleanCheckbox value ="#{rocAnalBean.showOptPoint}" style="line-height: 18px"/>  
+                        <h:panelGroup>
+                            <h:outputLabel style="font-weight: bold" value="Show optimal cutoff using:"/>
+                            <p:selectOneMenu value="#{rocAnalBean.optimalDD}">
+                                <f:selectItem itemLabel= "Closest to top-left corner" itemValue="closest.topleft" />
+                                <f:selectItem itemLabel="Farthest to diagonal line (Youden)" itemValue="youden" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <p:selectBooleanCheckbox id="ciOpt" value ="#{rocAnalBean.showCI}" style="line-height: 18px"/>  
+                        <h:outputLabel style="font-weight: bold" value="Compute 95% confidence band (warning: time consuming)"/>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="margin-left: 20px">
+                        <p:commandButton value="Update" 
+                                         style="margin-left: 20px"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         update=":summaryForm:imgPane :summaryForm:ciOpt :hisTab:cmdPane" 
+                                         actionListener="#{rocAnalBean.updateROC()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+
+                <h:panelGrid id="imgPane" style="width:1080px;">
+                    <h:panelGrid columns="3" style="margin-left:600px; width:200px;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.univ')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.boxplot')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                    </h:panelGrid>
+                    <p:tooltip for="helpIcon" styleClass="helpTip">
+                        <p>
+                            Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                            represent the concentrations of the selected feature from all samples. The notch indicates
+                            the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                            The notch can be used to evaluate differences between groups; if the notches 
+                            do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                            with a red diamond. If "Show optimal cutoff using:" was selected, it is indicated with a horizontal 
+                            red line on the boxplot.
+                        </p>
+                    </p:tooltip>
+                    <h:panelGrid columns="2" style="text-align: center; width: 1080px;">
+                        <img onerror='this.style.display="none"' 
+                             style="height:6in;"
+                             src="#{rocAnalBean.rocUnivImg}" alt="rocImg"/>
+                        <img onerror='this.style.display="none"' 
+                              style="height:6in;"
+                             src="#{rocAnalBean.rocUnivBPImg}" alt="rocbpImg" />
+                    </h:panelGrid>                   
+                </h:panelGrid>    
+
+                <p:dataTable  style="font-size: 12px" paginator="true" 
+                              rows="20" rowsPerPageTemplate="20,50,100"
+                              class="surface-card shadow-1 p-0 text-800"
+                              paginatorPosition="bottom" id="featTable" var="set" value="#{rocAnalBean.featureBeans}">
+                    <p:column headerText="Name" sortBy="#{set.name}">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column> 
+                    <p:column headerText="AUC" sortBy="#{set.val1}">  
+                        <h:outputText escape="false" value="#{set.val1}"/>  
+                    </p:column> 
+                    <p:column headerText="T-tests" sortBy="#{set.val2}">  
+                        <h:outputText escape="false" value="#{set.val2}"/>  
+                    </p:column> 
+                    <p:column headerText="Log2 FC" sortBy="#{set.val3}">  
+                        <h:outputText escape="false" value="#{set.val3}"/>  
+                    </p:column> 
+                    <p:column headerText="ROC Curve" width="100">  
+                        <p:commandLink ajax="true" value="View" 
+                                       action="#{rocAnalBean.plotUnivROCSummary(set.name)}"
+                                       onclick="PF('statusDialog').show()" 
+                                       oncomplete="PF('statusDialog').hide()"  
+                                       update=":summaryForm:imgPane  :hisTab:cmdPane"/> 
+                    </p:column> 
+                    <p:column headerText="Details" width="60">  
+                        <p:commandButton icon="pi pi-caret-right" ajax="false"
+                                         action="#{rocAnalBean.performDefaultDetailRocAnalysis(set.name)}"
+                                         onclick="PF('statusDialog').show()"/> 
+                    </p:column> 
+                </p:dataTable>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

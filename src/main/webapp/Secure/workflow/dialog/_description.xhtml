@@ -1,0 +1,40 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog header="Edit Workflow Details" widgetVar="descriptionDialog" modal="true" 
+              showEffect="fade" hideEffect="fade" width="400">
+        <h:form id="dialogForm">
+            <p>
+                You can update your workflow details here:
+            </p>
+            <h:panelGrid id="dialogContent" columns="2" style="text-align:left; width:350px">
+                <h:outputLabel value="Description:" style="font-weight: bold;"/>
+                <p:inputTextarea value="#{workflowBean.selectedWorkflow['description']}" rows="3" style="width:100%;" />
+
+                <h:outputLabel value="Goal:" style="font-weight: bold;"/>
+                <p:inputTextarea value="#{workflowBean.selectedWorkflow['analysisGoal']}" rows="3" style="width:100%;" />
+
+                <h:outputLabel value="Methods:" style="font-weight: bold;"/>
+                <p:inputTextarea value="#{workflowBean.selectedWorkflow['analysisMethods']}" rows="3" style="width:100%;" />
+
+                <h:outputLabel value="Output:" style="font-weight: bold;"/>
+                <p:inputTextarea value="#{workflowBean.selectedWorkflow['output']}" rows="3" style="width:100%;" />
+
+                <h:outputLabel value="Other:" style="font-weight: bold;"/>
+                <p:inputTextarea value="#{workflowBean.selectedWorkflow['other']}" rows="3" style="width:100%;" />
+            </h:panelGrid>
+
+            <h:panelGrid style="text-align:center; width:350px">
+                <p:commandButton value="Update" 
+                                 disabled="#{workflowBean.selectedWorkflow['type'] eq 'default'}"
+                                 actionListener="#{workflowBean.updateWorkflow}"
+                                 oncomplete="PF('descriptionDialog').hide();" />
+            </h:panelGrid>
+        </h:form>
+
+    </p:dialog>
+</ui:composition>
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      lang="en">
+
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="mobile-web-app-capable" content="yes"/>
+            <link rel="shortcut icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico"
+                  type="image/x-icon"/>
+            <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
+        </f:facet>
+        <title><ui:insert name="title">MetaboAnalyst Pro</ui:insert></title>
+        <style>
+            .glow {
+                text-shadow: 2px 2px 4px #000000;
+            }
+        </style>
+
+        <h:outputScript name="js/layout.js" library="diamond-layout"/>
+        <h:outputScript name="js/prism.js" library="diamond-layout"/>
+    </h:head>
+
+    <h:body styleClass="#{guestPreferences.inputStyleClass}">
+        <div class="layout-wrapper layout-overlay layout-sidebar-dim" data-theme="dim">
+            <div class="layout-content-wrapper">
+                <div id="header" style="clear: both; margin: 0; padding: 0; background-color: #304562; width: 100%" class="ui-widget ui-widget-header ui-corner-all">
+                    <h:panelGrid columns="2" style="padding: 0px 0px 0px 40px;">
+                        <a href="https://www.xialab.ca/translation.xhtml" target="_blank">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/xialab_logo.png" height="100px" alt="Logo"/> 
+                        </a>    
+                        <h:panelGroup layout="block" style="padding-left:80px; font-weight: bold; font-size: 2.0em;">
+                            <h:outputLabel style='letter-spacing: 1.1px; color: white; left:0px; top:4px' value="MetaboAnalyst"/>
+                            <h:outputLabel style='color: #FFAE20; padding-left:10px; top:4px' class="glow" value="Pro"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <ui:include src="/template/_menubar.xhtml" />
+                </div>
+                <div class="layout-content">
+                    <ui:insert name="content"/>
+                </div>
+                <div class="layout-footer">
+                    <div class="footer-logo-container">
+                        <p:graphicImage id="footer-logo" library="diamond-layout"
+                                        name="images/xialab_logo_s.png"/>
+                        <span class="app-name">MetaboAnalyst Pro</span>
+                    </div>
+
+                    <div style="width: 420px; margin: auto; text-align: center;" styleClass="copyright">
+                        <a href="https://www.xialab.ca/Terms.xhtml" target="_blank" style="margin-right: 10px; color:whitesmoke;">Terms of Service</a>
+                        <a href="https://www.xialab.ca/Cookies.xhtml"  target="_blank" style="margin-left: 10px; margin-right: 10px; color:whitesmoke;">Cookie Policy</a>
+                        <a href="https://www.xialab.ca/Privacy.xhtml"  target="_blank" style="margin-left: 10px; color:whitesmoke;">Privacy Policy</a>
+                    </div>  
+
+                    <h:outputText styleClass="copyright" value="&#169; XiaLab Analytics - 2025"/>
+                </div>
+            </div>
+        </div>
+        <h:outputStylesheet name="css/primeicons.css" library="diamond-layout"/>
+        <h:outputStylesheet name="css/primeflex.min.css" library="diamond-layout"/>
+        <h:outputStylesheet id="layout-scheme" name="css/layout-dim.css" library="diamond-layout"/>
+    </h:body>
+</html>

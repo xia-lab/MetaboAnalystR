@@ -1,0 +1,123 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('mgwas')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/MgwasUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <style>
+            .ui-picklist .ui-picklist-list{
+                line-height: 18px;
+                height:320px;
+                width: 280px
+            }
+            .ui-picklist-button-add {
+                visibility: hidden !important;
+            }
+            .ui-picklist-button-add-all {
+                visibility: hidden !important;
+            }
+        </style>
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>
+                Please specify metabolites (exposure) and outcome of interest
+            </h2>
+            <p>
+                Causal analysis is based on Mendelian randomization (MR) which leverages genetic variants such as single-nucleotide polymorphisms (SNPs) 
+                as instrumental variables (IV) to estimate exposure-outcome associations. The growing number of mGWAS studies and two-sample MR method
+                permit causal analysis between metabolite and outcome of interest as described below:
+                <ol>
+                    <li>
+                        Identify SNPs that are significantly associate with a metabolite of interest from our large collections of the recent 
+                        <a href="https://www.mgwas.ca/mGWAS/Secure/upload/MGBrowseView.xhtml"  target="_blank">mGWAS studies</a> (covering &gt; 4000 metabolites including their ratios);
+                    </li>
+                    <li>
+                        Obtain the estimates of associations between these same SNPs with an outcome of interest from public repository.
+                        We use <a href="https://gwas.mrcieu.ac.uk/" target="_blank">Open GWAS Project</a>. 
+                    </li>
+                    <li>
+                        Perform SNP filtering and harmonize the effect sizes for SNPs on the exposures and the outcomes to be for the same reference allele.
+                    </li>
+                    <li>
+                        Conduct MR analysis, sensitivity analyses, and explore the graphical outputs
+                    </li>
+                </ol>
+                Please note you may not be able to perform causal analysis in some cases when no suitable SNPs are found in the two repositories. 
+            </p>
+
+            <h3 style="margin-top:20px">
+                1. Select a metabolite of interest (exposure):
+            </h3>
+            <p>
+                Due to its complex and computing intensive nature, MR analysis is typically performed with <u>one metabolite/exposure at a time</u>, to make sure that 
+                each step is performed properly as well as to avoid performance issue (max 5). 
+            </p>
+
+            <h:form id="form1">
+                <!--
+                <h:panelGrid columns="2">
+                    <b>Population: </b> 
+                    <p:selectOneMenu id="popOpt" value="#{mgwasLoadBean.selectedPopulation}">  
+                        <f:selectItem itemLabel="All" itemValue="all"/>
+                        <f:selectItem itemLabel="African" itemValue="afr"/>
+                        <f:selectItem itemLabel="American (1)" itemValue="amr"/>
+                        <f:selectItem itemLabel="Amish (1)" itemValue="amr"/>
+                        <f:selectItem itemLabel="European (50)" itemValue="eur"/>
+                        <f:selectItem itemLabel="East Asian (1)" itemValue="eas"/>
+                        <f:selectItem itemLabel="South Asian (1)" itemValue="sas"/>
+                        <f:selectItem itemLabel="Hispanic (1)" itemValue="hsp"/>
+                        <f:selectItem itemLabel="Middle East (1)" itemValue="mde"/>
+                        <f:selectItem itemLabel="Mixed Study (6)" itemValue="mix"/>
+                    </p:selectOneMenu> 
+                </h:panelGrid>
+                -->
+
+                <p:pickList id="instantPickList" value="#{mgwasLoadBean.metDualList}" var="met"
+                            itemLabel="#{met}" itemValue="#{met}" 
+                            transferOnCheckboxClick="true"
+                            showCheckbox="true" showTargetControls="false" 
+                            showSourceFilter="true" 
+                            showTargetFilter="true" 
+                            responsive="true"
+                            filterMatchMode="contains" 
+                            sourceFilterPlaceholder="Filter available metabolites"
+                            targetFilterPlaceholder="Filter selected metabolites"
+                            style="width:800px"
+                            />
+
+
+                <h3 style="margin-top:30px">
+                    2. Specify an outcome of interest:
+                </h3>
+                <p>
+                    Enter a key word to see available options from the public repository.
+                </p>
+
+                <p:autoComplete id="acSimple3" 
+                                size="110"
+                                forceSelection="true"
+                                value="#{mgwasLoadBean.selectedDisease}" 
+                                minQueryLength="4" 
+                                maxResults="12" 
+                                completeMethod="#{mgwasLoadBean.completeTextDis}" 
+                                scrollHeight="250"/>
+
+
+                <h:panelGrid style="width: 800px; text-align: center; padding-top: 20px">
+                    <p:commandButton value="Proceed" 
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     action="#{mgwasLoadBean.handleMgwasSelection()}"/>  
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid>     
+    </ui:define>
+</ui:composition>

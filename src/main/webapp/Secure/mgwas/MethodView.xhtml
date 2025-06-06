@@ -1,0 +1,277 @@
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('MR method', '/Secure/mgwas/MethodView.xhtml')}"></f:event> 
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid style="padding: 30px 20px 20px 50px; font-size:13px; line-height: 23px; width: 95%">
+            <h2>
+                Select Statistical Methods for MR Analysis
+            </h2>
+            <p>
+                MR analysis methods are based on the <i>TwoSampleMR</i> and <i>MRInstruments</i> R packages. Among these methods, the <i>median estimator</i> and <i>MR Egger regression</i> allow for genetic pleiotropy. 
+                You can use mouse-over of the corresponding question marks to learn more about each method.  
+            </p>               
+            <h:form id="form">
+                <p:panelGrid columns="3" styleClass="checkbox-grid" style="padding:20px; width: 90%">
+                    <!-- Row 1 -->
+                    <h:panelGroup id="waldIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrWaldRatio}" itemLabel="Wald ratio">
+                            <p:ajax update="waldIcon" listener="#{mgwasBean.addMethodMessage('Wald ratio')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="waldIcon" styleClass="helpTip">
+                            <p>
+                                The Wald Ratio is one of the most straightforward methods. In the Wald ratio method, each genetic variant is used as an instrumental variable, and the causal effect of the exposure on the outcome is estimated as the ratio of the genetic association with the outcome to the genetic association with the exposure. 
+                                This is done for each genetic variant, and then the results can be combined across genetic variants, for example by taking the average.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="maxIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrTwoSampleMl}" itemLabel="Maximum likelihood">
+                            <p:ajax update="maxIcon" listener="#{mgwasBean.addMethodMessage('Maximum likelihood')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="maxIcon" styleClass="helpTip">
+                            <p>
+                                The genetic effects on the exposure and outcome are modeled as a bivariate normal distribution using a maximum likelihood method, similar to IVW (fixed effect).
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="eggIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrEggerRegression}" itemLabel="MR Egger" >
+                            <p:ajax update="eggIcon" listener="#{mgwasBean.addMethodMessage('MR Egger')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="eggIcon" styleClass="helpTip">
+                            <p>
+                                Estimates the causal effect adjusted for any directional pleiotropy by combining the Wald ratio into a meta-regression 
+                                (with an intercept and slope parameter). This method is similar to the IVW approach, but allows the intercept term in the 
+                                regression model to be non-zero, which can be an indication of pleiotropy. This analysis allows for the potential existence 
+                                of pleiotropy, where a single gene or genetic variant affects more than one trait. The intercept from the MR-Egger regression 
+                                provides a measure of the average pleiotropic effect across all genetic variants. A non-zero intercept can indicate directional 
+                                pleiotropy, which could bias the MR estimates. The slope in MR-Egger regression provides a causal estimate that is corrected 
+                                for pleiotropy.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <!--
+                    <h:panelGroup id="eggbIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrEggerRegressionBootstrap}" itemLabel="MR Egger (bootstrap)" />
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="eggbIcon" styleClass="helpTip">
+                            <p>
+                                Run bootstrap to obtain standard errors for MR Egger.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    -->
+
+                    <!-- Row 2 -->
+                    <h:panelGroup id="smIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrSimpleMedian}" itemLabel="Simple median" >
+                            <p:ajax update="smIcon" listener="#{mgwasBean.addMethodMessage('Simple median')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="smIcon" styleClass="helpTip">
+                            <p>
+                                This method calculates the median of the ratio estimates.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    <h:panelGroup id="wmIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrWeightedMedian}" itemLabel="Weighted median" >
+                            <p:ajax update="wmIcon" listener="#{mgwasBean.addMethodMessage('Weighted median')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="wmIcon" styleClass="helpTip">
+                            <p>
+                                This method calculates the median of the ratio estimates, but each ratio estimate is weighted by the inverse of its variance. 
+                                This method provides a consistent estimate of the causal effect even when up to 50% of the information comes from invalid 
+                                instrumental variables (those that violate the MR assumptions). If the weighted median estimate is similar to the standard MR estimate, 
+                                it suggests that the results are robust to violations of the MR assumptions by some of the genetic variants.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    <!--
+                    <h:panelGroup id="pmIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrPenalisedWeightedMedian}" itemLabel="Penalised weighted median" />
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="pmIcon" styleClass="helpTip">
+                            <p>
+                     
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    -->
+                    <!--
+                    <h:panelGroup id="ivwIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrIvw}" itemLabel="Inverse variance weighted" />
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="ivwIcon" styleClass="helpTip">
+                            <p>
+                                IVW combines two or more random variables to minimize the variance of the weighted average, which assumes no 
+                                pleiotropy. The basic idea here is to use each genetic variant as a separate instrumental variable and to combine the 
+                                individual causal effect estimates using a meta-analysis approach. The main assumption is that the genetic variants 
+                                are valid instrumental variables, i.e., they are associated with the exposure, not associated with confounders of 
+                                the exposure-outcome relationship, and affect the outcome only through the exposure.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    -->
+
+
+                    <!-- Row 3 -->
+                    <h:panelGroup id="ivwRIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrIvwRadial}" itemLabel="Inverse variance weighted radial" >
+                            <p:ajax update="ivwRIcon" listener="#{mgwasBean.addMethodMessage('Inverse variance weighted radial')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="ivwRIcon" styleClass="helpTip">
+                            <p>
+                                Fits a radial IVW model as described by <a href="https://pubmed.ncbi.nlm.nih.gov/29961852/" target="_blank">Bowden et al</a>
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="mreIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrIvwMre}" itemLabel="Inverse variance weighted (MRE)" >
+                            <p:ajax update="mreIcon" listener="#{mgwasBean.addMethodMessage('Inverse variance weighted (MRE)')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="mreIcon" styleClass="helpTip">
+                            <p>
+                                <b>Inverse variance weighted (multiplicative random effects)</b>: the multiplicative random effects model permits over-dispersion in the 
+                                regression model, which permits variability between the causal estimates targeted by the genetic variations.
+                            </p>
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="ivwfeIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrIvwFe}" itemLabel="Inverse variance weighted (FE)" >
+                            <p:ajax update="ivwfeIcon" listener="#{mgwasBean.addMethodMessage('Inverse variance weighted (FE)')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="ivwfeIcon" styleClass="helpTip">
+
+                            <b>Inverse variance weighted (fixed effects)</b>: In a fixed-effect meta-analysis, Wald ratios are combined, 
+                            with each ratio's weight equaling the inverse of the variance of the SNP-outcome association.
+
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="smplIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrSimpleMode}" itemLabel="Simple mode" >
+                            <p:ajax update="smplIcon" listener="#{mgwasBean.addMethodMessage('Simple mode')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="smplIcon" styleClass="helpTip">
+                            The simple mode-based estimator clusters the SNPs into groups based on similarity of causal effect estimates. 
+                            The causal effect is estimated based on the cluster that has the largest number of SNPs
+                        </p:tooltip>
+                    </h:panelGroup>
+
+
+                    <!-- Row 4 -->
+                    <h:panelGroup id="wIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrWeightedMode}" itemLabel="Weighted mode">
+                            <p:ajax update="wIcon" listener="#{mgwasBean.addMethodMessage('Weighted mode')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="wIcon" styleClass="helpTip">
+                            The weighted mode-based estimator weights the number of SNPs within each cluster by the inverse variance of 
+                            each SNP’s effect on the outcome and returns the casual estimate based on the cluster that has the largest weighted number of SNPs. 
+                        </p:tooltip>
+                    </h:panelGroup>
+                    
+                    <h:panelGroup id="wnomeIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrWeightedModeNome}" itemLabel="Weighted mode (NOME)">
+                            <p:ajax update="wnomeIcon" listener="#{mgwasBean.addMethodMessage('Weighted mode (NOME)')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="wnomeIcon" styleClass="helpTip">
+                            Weighted mode with NO Measurement Error (NOME) assumption 
+                            and simple mode (NOME) 
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="wsmplIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrSimpleModeNome}" itemLabel="Simple mode (NOME)">
+                            <p:ajax update="wsmplIcon" listener="#{mgwasBean.addMethodMessage('Simple mode (NOME)')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="wsmplIcon" styleClass="helpTip">
+                            Simple mode with NO Measurement Error (NOME) assumption 
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <!--
+                    <h:panelGroup id="rapsIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrRaps}" itemLabel="Robust adjusted profile score (RAPS)" />
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="rapsIcon" styleClass="helpTip">
+                            Robust adjusted profile score, see <a href="https://arxiv.org/pdf/1801.09652.pdf" target="_blank">Zhao et al. </a>
+                        </p:tooltip>
+                    </h:panelGroup>
+                    -->
+
+                    <h:panelGroup id="signIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrSign}" itemLabel="Sign concordance test" >
+                            <p:ajax update="signIcon" listener="#{mgwasBean.addMethodMessage('Sign concordance test')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="signIcon" styleClass="helpTip">
+
+                            <b>Sign concordance test</b>: conducts a binomial test to determine if the proportion of positive signs is greater 
+                            (in the event of a positive effect) or smaller (in the case of a negative effect) than would be predicted by chance 
+                            (<a href="https://www.medrxiv.org/content/medrxiv/suppl/2020/09/03/2020.09.01.20180406.DC1/2020.09.01.20180406-7.pdf" target="_blank"> details</a>)
+
+                        </p:tooltip>
+                    </h:panelGroup>
+                    <h:panelGroup id="uwrIcon">
+                        <p:selectBooleanCheckbox style="line-height: 18px" value="#{mgwasBean.mrUwr}" itemLabel="Unweighted regression" >
+                            <p:ajax update="uwrIcon" listener="#{mgwasBean.addMethodMessage('Unweighted regression')}"/>
+                        </p:selectBooleanCheckbox>
+                        <i class="pi pi-question-circle"/>
+                        <p:tooltip for="uwrIcon" styleClass="helpTip">
+                            Similar to the IVW (fixed effects), but all SNPs are weighted equally
+                        </p:tooltip>
+                    </h:panelGroup>
+
+                    <!--
+                    <h:outputText value="" />
+                    <h:outputText value="" />
+                    -->
+                </p:panelGrid>
+            </h:form>
+        </h:panelGrid>
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous"
+                                 id="testBn" style="width:120px"
+                                 styleClass="prevBn"
+                                 icon="pi pi-arrow-circle-left"
+                                 action="MgwasParamView"/>
+
+                <p:commandButton id="visBn" value="Proceed" style="width:120px"
+                                 onclick="PF('statusDialog').show();"
+                                 oncomplete="PF('statusDialog').hide()"
+                                 icon="pi pi-caret-right"
+                                 action="#{mgwasBean.doMrAnalysis()}"
+                                 /> 
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>
+

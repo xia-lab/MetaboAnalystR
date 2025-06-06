@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
+        <p>
+            MetaboAnalyst 6.0 supports multiple algorithms for raw spectral peak picking (including <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-504"><i>centWave</i></a>, 
+            <a href="https://www.nature.com/articles/s41467-023-39889-1"><i>Asari</i></a>, 
+            <a href="https://pubs.acs.org/doi/10.1021/ac051437y"><i>MatchedFilter</i></a> and <a href="https://doi.org/10.1093/bioinformatics/btu359"><i>Massifquant</i></a>);
+        </p>
+        <p>
+            An auto-optimized workflow has been offered for <i>centWave</i>. The auto-optimized procedure can significantly improve both the quality of peak detection and quantification
+            (see <a href="https://www.mdpi.com/2218-1989/10/5/186" target="_blank">benchmarking results</a>). There are two options for users to choose for <i>centWave</i> algorithm.
+        </p>
+        <ul>
+            <li>Default/manual option will use the parameters in the current display. You can manually overwrite these settings;</li>                    
+            <li>Auto-optimized will automatically select the best parameter combination (for the centWave only). </li>
+        </ul> 
+        <p>
+            The source code for raw spectral processing is now available as the <a href="https://github.com/xia-lab/OptiLCMS" target="_blank">OptiLCMS</a> R package for local installation or further extension.
+        </p>
+
+        <h:form id="form3">
+            <p:growl id="growl" />
+            <h:panelGrid styleClass="my-content-panel">
+                <script>
+                    function showPopUpTags(type) {
+                        switch (type) {
+                            case 'centWave_auto' :
+                                PF('MatchedFilter').close();
+                                PF('centWave').close();
+                                PF('asari').close();
+                                break;
+                            case 'matchedFilter' :
+                                PF('centWave').close();
+                                PF('asari').close();
+                                PF('MatchedFilter').show();
+                                break;
+                            case 'centWave_manual' :
+                                PF('centWave').show();
+                                PF('MatchedFilter').close();
+                                PF('asari').close();
+                                break;
+                            case 'asari' :
+                                PF('centWave').close();
+                                PF('MatchedFilter').close();
+                                PF('asari').show();
+                                break;
+                            case 'massifquant' :
+                                PF('centWave').show();
+                                PF('MatchedFilter').close();
+                                PF('asari').close();
+                                break;
+                        }
+                    }
+
+                    function buttonSwith(mode) {
+                        switch (mode) {
+                            case 'customized' :
+                                //PF('platform').enable();
+                                PF('Method').enable();
+                                PF('min_peakwidth').enable();
+                                PF('max_peakwidth').enable();
+                                PF('ppm').enable();
+                                PF('mzdiff').enable();
+                                PF('snthresh').enable();
+                                PF('noise').enable();
+                                PF('prefilter').enable();
+                                PF('value_of_prefilter').enable();
+                                PF('fwhm').enable();
+                                PF('sigma').enable();
+                                PF('steps').enable();
+                                PF('max').enable();
+                                PF('minSamples').enable();
+                                PF('maxFeatures').enable();
+                                PF('integrate').enable();
+                                PF('extra').enable();
+                                PF('span').enable();
+                                PF('profStep').enable();
+                                PF('Method2').enable();
+                                PF('Bandwidth').enable();
+                                PF('minFraction').enable();
+                                PF('viewbn1').enable();
+                                PF('viewbn2').enable();
+                                break;
+                            case 'auto' :
+                                //PF('platform').disable();
+                                PF('Method').disable();
+                                PF('min_peakwidth').disable();
+                                PF('max_peakwidth').disable();
+                                PF('ppm').disable();
+                                PF('mzdiff').disable();
+                                PF('snthresh').disable();
+                                PF('noise').disable();
+                                PF('prefilter').disable();
+                                PF('value_of_prefilter').disable();
+                                PF('fwhm').disable();
+                                PF('sigma').disable();
+                                PF('steps').disable();
+                                PF('max').disable();
+                                PF('minSamples').disable();
+                                PF('maxFeatures').disable();
+                                PF('integrate').disable();
+                                PF('extra').disable();
+                                PF('span').disable();
+                                PF('profStep').disable();
+                                PF('Method2').disable();
+                                PF('Bandwidth').disable();
+                                PF('minFraction').disable();
+                                PF('viewbn1').disable();
+                                PF('viewbn2').disable();
+                                break;
+                        }
+                    }
+
+                </script>
+
+                <p:panelGrid columns="2" style="width: 720px;" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             layout="tabular" styleClass="myPanelGrid">
+                    <h:panelGroup layout="block">
+                        <h:outputLabel style="font-weight: bold;" value="LC-MS Platform"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="margin-left: 5px">
+                        <p:selectOneMenu value="#{spectraParamer.platformOpt}" 
+                                         widgetVar="platform"
+                                         disabled="#{spectraParamer.buttonEnable}">
+                            <f:selectItem itemLabel="Generic" itemValue="general"/> 
+                            <f:selectItem itemLabel="UPLC-Q/E" itemValue="UPLC-Q/E"/> 
+                            <f:selectItem itemLabel="UPLC-Q/TOF" itemValue="UPLC-Q/TOF"/> 
+                            <f:selectItem itemLabel="UPLC-T/TOF" itemValue="UPLC-T/TOF"/> 
+                            <f:selectItem itemLabel="UPLC-Ion_Trap" itemValue="UPLC-Ion_Trap"/> 
+                            <f:selectItem itemLabel="UPLC-Orbitrap" itemValue="UPLC-Orbitrap"/> 
+                            <f:selectItem itemLabel="UPLC-G2S" itemValue="UPLC-G2S"/> 
+                            <f:selectItem itemLabel="HPLC-Q/TOF" itemValue="HPLC-Q/TOF"/> 
+                            <f:selectItem itemLabel="HPLC-Ion_Trap" itemValue="HPLC-Ion_Trap"/> 
+                            <f:selectItem itemLabel="HPLC-Orbitrap" itemValue="HPLC-Orbitrap"/> 
+                            <f:selectItem itemLabel="HPLC-S/Q" itemValue="HPLC-S/Q"/> 
+                            <p:ajax listener="#{spectraParamer.updatePlatformParam()}" 
+                                    update="update1 update2 update4 update3 update5 update6 update7"/>
+                        </p:selectOneMenu>  
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block">
+                        <h:outputLabel id="formatIcon" style="font-weight: bold;" value="1. Peak Picking ">
+                            <i class="pi pi-question-circle"/>
+                        </h:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGrid columns="1" style="padding: 0px; margin: 0px">
+                        <h:panelGrid columns="2">
+                            <h:outputLabel value="Algorithms: "/>
+                            <p:selectOneMenu 
+                                style="margin-left: 62.5px; width: 140px"
+                                value="#{spectraParamer.algorithms}"
+                                onchange="showPopUpTags(this.value)"
+                                widgetVar="Methods">
+                                <f:selectItem itemLabel="centWave-auto" itemValue="centWave_auto"/>
+                                <f:selectItem itemLabel="Asari" itemValue="asari"/>
+                                <f:selectItem itemLabel="centWave-manual" itemValue="centWave_manual"/>                        
+                                <f:selectItem itemLabel="Massifquant" itemValue="massifquant"/>
+                                <f:selectItem itemLabel="MatchedFilter" itemValue="matchedFilter"/>
+                                <p:ajax event="change"
+                                        update ="update4 update3"
+                                        listener="#{spectraParamer.setButtonEnableAJ(spectraParamer.algorithms)}"/>
+                            </p:selectOneMenu>
+                        </h:panelGrid>
+
+                        <p:panel id="update1" widgetVar="centWave" visible="false" closable="true" toggleable="true"
+                                 style="margin-top: 0px; padding-top: 0px;">
+                            <h:panelGrid columns ="2" style="width:220px; line-height: 23px;">
+                                <h:outputLabel value="min_peakwidth:"
+                                               title="Minimum of Peakwidth" style="width: 120px; margin-right: 15px;"/> 
+                                <p:inputText style="width:70px" widgetVar="min_peakwidth" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.min_peakwidth}"/>
+
+                                <h:outputLabel value="max_peakwidth:"
+                                               title="Maximum of Peakwidth" style="width: 120px; margin-right: 15px;"/>   
+                                <p:inputText style="width:70px" widgetVar="max_peakwidth" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.max_peakwidth}"/>
+
+                                <h:outputLabel value="ppm:"
+                                               title="tolerated mass deviation" style="width: 120px; margin-right: 15px;"/> 
+                                <p:inputText style="width:70px" widgetVar="ppm" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.ppm}"/> 
+
+                                <h:outputLabel value="mzdiff:"
+                                               title="minimum difference in m/z for peaks with overlapping retention time" style="width: 120px; margin-right: 15px;"/> 
+                                <p:inputText style="width:70px" widgetVar="mzdiff" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.mzdiff}"/> 
+
+                                <h:outputLabel style="font-size: 13px; width: 120px; margin-right: 15px;" 
+                                               value="More options"
+                                               title="More options"/> 
+                                <p:commandLink value="View"
+                                               onclick="PF('PeakPicking').show()"
+                                               title ="Show more parameters."/>
+                            </h:panelGrid>
+                        </p:panel>
+
+                        <p:panel id="update2" widgetVar="MatchedFilter" visible="false" closable="true" toggleable="true"
+                                 style="margin-top: 0px; padding-top: 0px;">
+                            <h:panelGrid columns ="2" style="width:220px; line-height: 23px;">
+                                <h:outputLabel value="fwhm:"
+                                               title="width of the model peak for matched filtering" style="width: 120px; margin-right: 70px;"/> 
+                                <p:inputText style="width:70px" widgetVar="fwhm" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.fwhm}"/>
+
+                                <h:outputLabel value="sigma:"
+                                               title="standard deviation of model peak width" style="width: 120px; margin-right: 70px;"/>   
+                                <p:inputText style="width:70px" widgetVar="sigma" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.sigma}"/>
+
+                                <h:outputLabel value="steps:"
+                                               title="number of bins to be merged" style="width: 120px; margin-right: 70px;"/> 
+                                <p:inputText style="width:70px" widgetVar="steps" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.steps}"/> 
+
+                                <h:outputLabel value="max:"
+                                               title="maximum number of peaks identified per slice" style="width: 120px; margin-right: 70px;"/> 
+                                <p:inputText style="width:70px" widgetVar="max" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.max}"/>
+                            </h:panelGrid>
+                        </p:panel>
+
+                        <p:panel id="update11" widgetVar="asari" visible="false" closable="true" toggleable="true"
+                                 style="margin-top: 0px; padding-top: 0px;">
+                            <h:panelGrid columns ="2" style="width:220px; line-height: 23px;">
+                                <h:outputLabel value="ppm:"
+                                               title="tolerated mass deviation" style="width: 120px; margin-right: 35px;"/> 
+                                <p:inputText style="width:70px" widgetVar="ppm" disabled="#{spectraParamer.buttonEnable}"
+                                             value="#{spectraParamer.ppm}"/>
+
+                                <h:outputLabel style="font-size: 13px; width: 120px; margin-right: 35px;" 
+                                               value="More options"
+                                               title="More options"/>
+                                <p:commandLink value="View"
+                                               onclick="PF('PeakPicking_asari').show()"
+                                               title ="Show more parameters."/>
+                            </h:panelGrid>
+                        </p:panel>
+
+                    </h:panelGrid>
+
+                    <h:panelGroup id="update14" layout="block">
+                        <h:outputLabel id="formatIcon2" style="font-weight: bold;" value="2. Peak Alignment ">
+                            <i class="pi pi-question-circle"/>
+                        </h:outputLabel>
+                    </h:panelGroup>
+
+                    <h:panelGrid id="update3" columns ="2" style="line-height: 28px; margin-left: 3px">
+                        <h:panelGroup style="width: 128px;" layout="block" rendered="#{!spectraParamer.buttonEnableAJ}">
+                            <h:outputLabel value="Method:"/>    
+                        </h:panelGroup>
+                        <p:selectOneRadio styleClass="menu" value="#{spectraParamer.rtmeth}" widgetVar="Method2" rendered="#{!spectraParamer.buttonEnableAJ}">
+                            <f:selectItem itemLabel="loess" itemValue="loess"/> 
+                            <f:selectItem itemLabel="obiwarp" itemValue="obiwarp"/>
+                        </p:selectOneRadio>
+
+                        <h:outputLabel value="Bandwidth:" title="bandwidth of gaussian smoothing kernel" rendered="#{!spectraParamer.buttonEnableAJ}"/> 
+                        <p:inputText style="width:70px" value="#{spectraParamer.bw}" widgetVar="Bandwidth" rendered="#{!spectraParamer.buttonEnableAJ}"/>
+
+                        <h:panelGroup style="width: 128px;" layout="block">
+                            <h:outputLabel value="minFraction:" title="fraction of samples to be grouped"/>
+                        </h:panelGroup>
+                        <p:inputText style="width:70px" value="#{spectraParamer.minFraction}" widgetVar="minFraction"/>
+
+                        <h:outputLabel value="More options" title="More options" rendered="#{!spectraParamer.buttonEnableAJ}"/>
+                        <p:commandLink  value="View" onclick="PF('PeakAlignment').show()" rendered="#{!spectraParamer.buttonEnableAJ}"/>
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block">
+                        <h:outputLabel id="formatIcon4" style="font-weight: bold;" value="3. Peak Annotation ">
+                            <i class="pi pi-question-circle"/>
+                        </h:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGrid id="update5" columns ="2" style="line-height: 28px; margin-left: 3px">
+
+                        <h:panelGroup style="width: 128px;" layout="block">
+                            <h:outputLabel value="Polarity:"
+                                           title="polarity of detection mode"/>      
+                        </h:panelGroup>
+                        <p:selectOneRadio styleClass="menu" value="#{spectraParamer.polarity}">
+                            <f:selectItem itemLabel="Positive" itemValue="positive"/> 
+                            <f:selectItem itemLabel="Negative" itemValue="negative"/>
+                            <p:ajax listener="#{spectraParamer.initializeAdductList()}" 
+                                    update="update9"/>
+                        </p:selectOneRadio>
+
+                        <h:outputLabel value="Adducts: " title="Adducts"/> 
+                        <p:commandLink value="View" onclick="PF('addDialog').show()"/>
+
+                        <h:outputLabel value="More options" title="More options"/> 
+                        <p:commandLink value="View" onclick="PF('PeakAnnotation').show()"/>
+
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block">
+                        <h:outputLabel id="formatIcon3" style="font-weight: bold;" value="4. Contaminant Removal ">
+                            <i class="pi pi-question-circle"/>
+                        </h:outputLabel>
+                    </h:panelGroup>
+
+                    <h:panelGrid id="update4" columns ="2" style="line-height: 28px; margin-left: 3px">
+                        <h:panelGroup style="width: 128px;" layout="block">
+                            <p:selectBooleanCheckbox style="line-height: 18px; padding: 0px" 
+                                                     value="#{spectraParamer.rmConts}"
+                                                     widgetVar = "ContsRM"
+                                                     disabled = "#{spectraParamer.algorithms ne 'centWave_auto'}"/>
+                        </h:panelGroup>   
+                        <p:commandLink value="View" 
+                                       action="#{spectraProcessor.plotMSData()}"
+                                       oncomplete="PF('statusDialog').hide(); PF('dataInspect').show()"
+                                       onclick="PF('statusDialog').show()"
+                                       update="dataInspect"/>
+                    </h:panelGrid>
+
+                    <h:panelGroup layout="block" style="width:180px">
+                        <h:outputLabel id="formatIcon5" style="font-weight: bold;" value="5. Blank Subtraction ">
+                            <i class="pi pi-question-circle"/>
+                        </h:outputLabel>
+                    </h:panelGroup>
+
+                    <h:panelGrid id="updateblank" columns ="2" style="line-height: 28px; margin-left: 3px">
+                        <h:panelGroup style="width: 128px;" layout="block">
+                            <p:selectBooleanCheckbox style="line-height: 18px; padding:0px" 
+                                                     value="#{spectraParamer.blksub}" 
+                                                     widgetVar = "BLKRM"
+                                                     disabled = "#{spectraParamer.buttonEnableBS}"/>
+                        </h:panelGroup>
+                        <h:panelGroup></h:panelGroup>
+                    </h:panelGrid>                    
+                </p:panelGrid>
+            </h:panelGrid>
+
+            <p:tooltip for="formatIcon" styleClass="helpTip">
+                <p>The Peak Picking step is first performed to obtain all peaks from the entire spectrum. The "centWave", "Massifquant" and "matchedFilter" 
+                    algorithms are supported.</p>
+                <ul>
+                    <li><b>centWave</b> is used to detect High-resolution MS data</li>
+                    <li><b>Massifquant</b> is used to sensitively detect the low-intensity peaks</li>
+                    <li><b>matchedFilter</b> is used for Low-resolution MS</li>
+                </ul>
+            </p:tooltip>
+
+            <p:tooltip for="formatIcon2" styleClass="helpTip" style="width: 660px">
+                <p>The second step is 'Peak Alignment', which includes 'Grouping' and 'retention time Correction'.</p>
+                <p>Peak Grouping: </p>
+                <ul>
+                    <li><b>Group-density</b> is used to group the peak in different samples;</li>
+                </ul>
+                <p>Retention Time Correction: </p>
+                <ul>
+                    <li><b>loess</b> is used to align the retention times of different samples into one group;</li>
+                    <li><b>obiwarp</b> is used to align the retention time based on correlations from the raw data:</li>
+                </ul>                
+            </p:tooltip>
+
+            <p:tooltip for="formatIcon3" styleClass="helpTip">
+                <p>Optionally, the potential peaks coming from contaminants can be automatically excluded.</p>
+                <ul>
+                    <li> Contaminants are defined as peaks with a retention time range over half of the chromatogram and 
+                        should be excluded from the parameter optimization step.</li>
+                    <li> Note: This option only functions for 'Auto/Optimized' mode.</li>
+                    <li> Please view your data to decide whether or not to remove such peaks.</li>
+                </ul>
+            </p:tooltip>
+
+            <p:tooltip for="formatIcon4" styleClass="helpTip">
+                <p>Finally, the peaks obtained by the steps above are annotated using 'CAMERA' as its core algorithm.</p>
+                <ul>
+                    <li>Polarity: Specify the polarity of the MS detection mode, either positive or negative;</li>
+                    <li>Perc_fwhm: Specify the percentage of the width of the FWHM for peak grouping;</li>
+                    <li>Mz_abs_iso: Set the allowed variance for the search;</li>
+                    <li>Max_charge: Set the maximum number of isotope charge;</li>
+                    <li>Max_iso: Set the maximum number of isotope peaks;</li>
+                    <li>Corr_eic_th: Set the threshold for intensity correlations across samples;</li>
+                    <li>Mz_abs_add: Set the allowed variance for the search;</li>
+                </ul>
+            </p:tooltip>
+
+            <p:tooltip for="formatIcon5" styleClass="helpTip">
+                <p>This option is used to enable/disable the subtraction of the background features 
+                    based on the blanks samples (Start with 'BLANK_' or Marked as 'BLANK').</p>
+            </p:tooltip>
+
+
+            <p:dialog header="Spectral Inspection"
+                      widgetVar="dataInspect"
+                      id="dataInspect"
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)"
+                      style="margin-top: 40px"
+                      position="top"
+                      positionType="absolute">       
+                <h:form>
+                    <style>
+                        .inputOnDataTable input
+                        {
+                            width: 70px !important;
+                        }
+                    </style>
+                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:600px; font-size: 13px; line-height: 23px"> 
+
+                        <h:panelGrid style="text-align: center; width: 100%;">
+                            <p:graphicImage id = "update8" title = "#{spectraProcessor.dataStrucImageNM}" value="#{spectraProcessor.image}" cache="false" alt="">
+                                <f:param name="filename" value="#{spectraProcessor.dataStrucImageNM}"/>
+                            </p:graphicImage>
+                        </h:panelGrid>
+
+                        <h:panelGrid columns ="2" style="padding-left: 10px">
+                            <h:panelGrid columns ="2">
+                                <h:outputLabel style="font-size: 13px; padding-right: 6px" value="File: "/>    
+                                <p:selectOneMenu  value="#{spectraProcessor.fileNameImage}"  dynamic="true" style="width:215px">
+                                    <f:selectItem itemLabel="Select One" itemValue="" />
+                                    <f:selectItems value="#{spectraProcessor.spectraFiles}"/>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <h:outputLabel style="font-size: 12px; padding-top: 0px;" value="(Default is from a random QC sample)"/>
+
+                            <h:panelGrid columns ="4">
+                                <h:outputLabel title = "Unit: Thomson" style="font-size: 13px; padding-top: 0px; padding-right: 8px" value="mz range:"/>
+                                <p:inputNumber value="#{spectraProcessor.mzl}" minValue="0" maxValue="3000" decimalPlaces="4" styleClass="inputOnDataTable"/>
+                                <h:outputLabel style="padding-left: 0px; font-size: 13px; padding-top: 0px" value="~"/> 
+                                <p:inputNumber value="#{spectraProcessor.mzh}" minValue="0" maxValue="3000" decimalPlaces="4" styleClass="inputOnDataTable"/>
+                            </h:panelGrid>
+
+                            <h:panelGrid columns ="4">
+                                <h:outputLabel title = "RT, Retention Time; Unit: second" style="font-size: 13px;" value="RT range:"/>
+                                <p:inputNumber value="#{spectraProcessor.rtl}" minValue="0" maxValue="9000" decimalPlaces="2" styleClass="inputOnDataTable"/>
+                                <h:outputLabel style="padding-left: 0px; font-size: 13px; padding-top: 0px" value="~"/>  
+                                <p:inputNumber value="#{spectraProcessor.rth}" minValue="0" maxValue="9000" decimalPlaces="2" styleClass="inputOnDataTable"/>
+                            </h:panelGrid> 
+
+                            <h:panelGrid columns ="2">
+                                <h:outputLabel title = "A integer between 0 and 1000, the higer the delicater but more time consumed" style="font-size: 13px;" value="Resolution:"/>
+                                <p:inputNumber value="#{spectraProcessor.res}" minValue="1" maxValue="1000" decimalPlaces="0" styleClass="inputOnDataTable"/>                       
+                            </h:panelGrid>
+
+                            <h:panelGrid columns ="2">
+                                <h:outputLabel style="font-size: 13px;" value="Image Style:"/>   
+                                <h:panelGrid style="padding-left: 0px">
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" 
+                                                     style="width:105px; padding-left: 0px;padding-bottom: 0px;" 
+                                                     value="#{spectraProcessor.dimen}">
+                                        <f:selectItem itemLabel="3D (Default)" itemValue="3D"/> 
+                                        <f:selectItem itemLabel="2D (Heatmap)" itemValue="2D"/>                             
+                                    </p:selectOneMenu>
+                                </h:panelGrid>
+
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                            <p:commandButton value="Update" 
+                                             style="width:80px" 
+                                             update ="update8"
+                                             action="#{spectraProcessor.plotMSData()}"
+                                             oncomplete="PF('statusDialog').hide(); PF('dataInspect').show()"
+                                             onclick="PF('statusDialog').show()"/>
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Peak Picking Parameters"
+                      id="update6"                  
+                      widgetVar="PeakPicking" 
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)">       
+                <h:form>
+                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:480px; font-size: 13px; line-height: 23px"> 
+
+                        <h:panelGrid columns="4" style="text-align: left; width: 100%;">
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="snthresh:"
+                                               title="chromatographic signal-to-noise threshold"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.snthresh}" widgetVar="snthresh" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="noise:"
+                                               title="noise level for filteration"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.noise}" widgetVar="noise" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="prefilter:"
+                                               title="scans filter to discard small number if scans regions"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.prefilter}" widgetVar="prefilter" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="value_of_prefilter:"
+                                               title="intensity filter to discard small intensity regions"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.value_of_prefilter}" widgetVar="value_of_prefilter" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width: 100%; text-align: center; padding-top: 10px">
+
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             widgetVar="viewbn1"
+                                             disabled="#{spectraParamer.buttonEnable}"
+                                             ajax="false" 
+                                             action="#{spectraController.updatePeakParam()}" />  
+
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Peak Picking Parameters"
+                      id="update13"                  
+                      widgetVar="PeakPicking_asari" 
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)">       
+                <h:form>
+                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:480px; font-size: 13px; line-height: 23px"> 
+
+                        <h:panelGrid columns="4" style="text-align: left; width: 100%;">
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="snthresh:"
+                                               title="chromatographic signal-to-noise threshold"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.snthresh}" widgetVar="snthresh" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="noise:"
+                                               title="noise level for filteration"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.noise}" widgetVar="noise" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width: 100%; text-align: center; padding-top: 10px">
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             widgetVar="viewbn3"
+                                             ajax="false" 
+                                             action="#{spectraController.updatePeakParam()}"/>
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Peak Alignment Parameters"
+                      id="update7"
+                      widgetVar="PeakAlignment" 
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)">
+                <h:form>
+                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:480px; font-size: 13px; line-height: 23px"> 
+
+                        <h:panelGrid columns="4" style="text-align: left; width: 100%;">
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="minSamples:"
+                                               title="minimum number of sample(s) to be included"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.minSamples}" widgetVar="minSamples" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="maxFeatures:"
+                                               title="maximum number of features to be identified"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.maxFeatures}" widgetVar="maxFeatures" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="integrate:"
+                                               title="integration method"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.integrate}" widgetVar="integrate" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="extra:"
+                                               title="number of extra peaks to allow"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.extra}" widgetVar="extra" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="span:"
+                                               title="degree of smoothing for local polynomial regression fitting"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.span}" widgetVar="span" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="profStep:"
+                                               title="step size (in m/z) to use for profile generation (*only useful for Obiwarp*)"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.profStep}" widgetVar="profStep" disabled="#{spectraParamer.buttonEnable}"/> 
+
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width: 100%; text-align: center; padding-top: 10px">
+
+                            <p:commandButton value="Update" widgetVar="viewbn2"
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             ajax="false" 
+                                             disabled="#{spectraParamer.buttonEnable}"
+                                             action="#{spectraController.updatePeakParam()}" />  
+
+                        </h:panelGrid>                   
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Adduct Customization"
+                      id="update9"
+                      widgetVar="addDialog" 
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)">       
+                <h:form>
+                    <h:panelGrid style="padding: 10px; padding-left: 15px; width:450px; font-size: 13px; line-height: 23px"> 
+                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Use the panels below to select adducts to consider:"/>
+                        <p:pickList id="adductPane" 
+                                    value="#{spectraParamer.adductItems}"
+                                    var ="add" 
+                                    itemValue="#{add}" 
+                                    itemLabel="#{add}"
+                                    showSourceFilter="true" 
+                                    showTargetFilter="true">
+                            <f:facet name="sourceCaption">Available</f:facet>
+                            <f:facet name="targetCaption">Include</f:facet>
+                            <p:ajax event="transfer" listener="#{spectraParamer.doTransfer}"/>
+                        </p:pickList>
+
+                        <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                            <p:commandButton value="Confirm" style="width:80px" ajax="false"                                               
+                                             action="#{spectraParamer.updateAdductParam()}"/>
+                        </h:panelGrid>
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>        
+
+            <p:dialog header="Peak Annotation Parameters"
+                      id="update8x"
+                      widgetVar="PeakAnnotation" 
+                      showEffect="fade" 
+                      hideEffect="fade" 
+                      modal="true"
+                      closable="true"
+                      draggable="false"
+                      resizable="false"   
+                      appendTo="@(body)">       
+                <h:form>
+                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:480px; font-size: 13px; line-height: 23px"> 
+
+                        <h:panelGrid columns="4" style="text-align: center; width: 100%;">
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Perc_fwhm:"
+                                               title="percentage of the width of the FWHM"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.fwhmThresh}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Mz_abs_iso:"
+                                               title="allowed variance"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.mzmabsmiso}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Max_charge:"
+                                               title="maximum number of the isotope charge"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.max_charge}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Max_iso:"
+                                               title="maximum number of isotope peaks"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.max_iso}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Corr_eic_th:"
+                                               title="threshold for intensity correlations across samples"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.corr_eic_th}"/> 
+
+                            <h:panelGrid style="width: 60px">
+                                <h:outputLabel style="font-size: 13px;" 
+                                               value="Mz_abs_add:"
+                                               title="allowed variance for the search"/>      
+                            </h:panelGrid>   
+                            <p:inputText style="width:50px" value="#{spectraParamer.mz_abs_add}"/> 
+
+                        </h:panelGrid>
+
+
+                        <h:panelGrid style="width: 100%; text-align: center; padding-top: 10px">
+
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide()"
+                                             ajax="false" 
+                                             action="#{spectraController.updatePeakParam()}" 
+                                             update="update1 update2"/>  
+
+                        </h:panelGrid>   
+
+                    </h:panelGrid>
+                </h:form>
+            </p:dialog>
+        </h:form>
+
+    </h:panelGrid> 
+</ui:composition>

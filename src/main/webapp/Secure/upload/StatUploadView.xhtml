@@ -1,0 +1,332 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('stat')}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/StatUploadView.xhtml')}"/>
+    </ui:define>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Please upload your data</h2>
+
+            <h:form enctype="multipart/form-data" style="padding: 10px">
+                <h:panelGroup id="formatIcon00">
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="A plain text file (.txt or .csv):"/>
+                    <p:spacer style="width:5px"/>
+                    <i class="pi pi-info-circle"/>
+                </h:panelGroup>
+                <h:panelGrid columns="2" style="width:90%; height:120px; margin-bottom: 20px; text-align: right; padding-right: 30px;" 
+                             class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" cellpadding="5" style="padding-left:20px; text-align: left">
+                        <h:panelGroup id="cc1" layout="block" style="width: 180px">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Type:"/>
+                        </h:panelGroup>
+                        <p:selectOneRadio value="#{uploader.dataType}">
+                            <f:selectItems value="#{optBean.tableTypeOpts}"/>
+                        </p:selectOneRadio>
+
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Format:"/>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{uploader.dataFormat}">
+                            <f:selectItems value="#{optBean.csvFormatOpts}" />
+                        </p:selectOneMenu>
+
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                        <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     update=":sheet"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     action="#{uploader.handleFileUpload()}"/>
+                </h:panelGrid>
+
+                <h:panelGroup id="formatIcon0">
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="A compressed file (.zip):"/>
+                    <p:spacer style="width:5px"/>
+                    <i class="pi pi-info-circle"/>
+                </h:panelGroup>
+                <h:panelGrid columns="2" style="width:90%;height:90px; margin-bottom: 20px; text-align: right; padding-right: 30px;"
+                             class="surface-card shadow-1 p-4 text-800"> 
+                    <h:panelGrid columns="2" cellpadding="5" style="padding-left: 20px; text-align: left">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Type:"/>
+                        </h:panelGroup>
+                        <p:selectOneRadio value="#{uploader.zipDataType}">
+                            <f:selectItem itemValue="nmrpeak" itemLabel="NMR peak list"/>
+                            <f:selectItem itemValue="mspeak" itemLabel="MS peak list"/>
+                        </p:selectOneRadio>
+
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                        <p:fileUpload value="#{uploader.zipFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false" 
+                                     onclick="PF('statusDialog').show()" 
+                                     update=":sheet"
+                                     oncomplete="PF('statusDialog').hide()"                                         
+                                     action="#{uploader.handleZipFileUpload}"/>                               
+                </h:panelGrid>
+
+                <h:panelGroup id="formatIcon1">
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="A mzTab 2.0-M file (.mzTab):"/>
+                    <p:spacer style="width:5px"/>
+                    <i class="pi pi-info-circle"/>
+                </h:panelGroup>
+                <h:panelGrid columns="2" style="width:90%; height:90px; margin-bottom: 20px; text-align: right; padding-right: 30px;"
+                             class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" cellpadding="5" style="padding-left:20px; text-align: left">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Feature Type"/>
+                        </h:panelGroup>
+                        <p:selectOneRadio value="#{uploader.identifier}">
+                            <f:selectItem itemValue="name" itemLabel="Chemical name"/>
+                            <f:selectItem itemValue="mass" itemLabel="Theoretical neutral mass"/>
+                        </p:selectOneRadio>
+
+                        <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
+                        <p:fileUpload value="#{uploader.mzTabFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     update=":sheet"
+                                     action="#{uploader.handleMzTabUpload()}"/>                         
+                </h:panelGrid>
+
+                <h:panelGroup id="formatIcon3">
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="An XLSX file from Metabolon:"/>
+                    <p:spacer style="width:5px"/>
+                    <i class="pi pi-info-circle"/>
+                </h:panelGroup>
+                <h:panelGrid columns="2" style="width:90%; text-align: right; margin-bottom: 20px; padding-right: 30px;"
+                             class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" cellpadding="5" style="padding-left:20px; text-align: left">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
+                        </h:panelGroup>                        
+                        <p:fileUpload value="#{uploader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false"
+                                     onclick="PF('statusDialog').show()" 
+                                     oncomplete="PF('statusDialog').hide()"
+                                     action="#{uploader.handleMetabolonData('stat')}"/>                         
+                </h:panelGrid>
+
+                <h:panelGroup id="formatIcon2">
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="A dataset from Metabolomics Workbench:"/>
+                    <p:spacer style="width:5px"/>
+                    <i class="pi pi-info-circle"/>
+                </h:panelGroup>
+                <h:panelGrid columns="2" style="width:90%; height:42px; text-align: right; padding-right: 30px;"
+                             class="surface-card shadow-1 p-4 text-800">
+                    <h:panelGrid columns="2" cellpadding="5"  style="padding-left: 20px; text-align: left">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <p:outputLabel style="font-size:12px; font-weight: bold;" value="Study ID:"/>
+                        </h:panelGroup>
+                        <p:inputText style="width:200px" value="#{uploader.nmdrStudyId}"/>    
+                    </h:panelGrid>
+                    <p:commandButton value="Submit" ajax="false" 
+                                     onclick="PF('statusDialog').show()" 
+                                     update=":sheet"
+                                     oncomplete="PF('statusDialog').hide()"                                         
+                                     action="#{uploader.handleMetWorkbenchData('stat')}"/>                               
+                </h:panelGrid>                
+
+
+                <p:tooltip for="formatIcon00" styleClass="helpTip">
+                    <p>
+                        Samples can be in either rows or columns. Both sample or feature names must be unique and consist of a combination of common English letters, underscores 
+                        and numbers for naming purpose. Latin/Greek letters are not supported. The class labels must immediately follow sample names. 
+                        Please visit our <u>Data Formats</u> page for more details.  
+                    </p>    
+                </p:tooltip>
+                <p:tooltip for="formatIcon0" styleClass="helpTip">
+                    <p>
+                        Users need to upload a zipped folder containing data files from different groups under study (one file per spectrum and one sub-folder for each group). 
+                        The class labels will be based on the sub-folder names. Please visit our <u>Data Formats</u> page for more details. 
+                    </p>    
+                </p:tooltip>
+
+                <p:tooltip for="formatIcon1" styleClass="helpTip">
+                    <p>
+                        From the mzTab file, the feature names will either be the "chemical_name" or the "theoretical_neutral_mass".
+                        If too many of these feature names are missing however, the feature names will be "SML_ID".
+                    </p>    
+                </p:tooltip>
+
+                <p:tooltip for="formatIcon2" styleClass="helpTip">
+                    <p>
+                        MetaboAnalyst now permits users to directly perform analyses on published datasets from the Metabolomics Workbench.
+                        Users must enter a valid Study ID to upload the preferred dataset. Browse here (https://www.metabolomicsworkbench.org/data/browse.php)
+                        to view all studies from the Metabolomics Workbench. Note that only studies with a named metabolite dataset such as study ST000017 
+                        will be able to be uploaded.
+                    </p>    
+                </p:tooltip>
+
+                <p:tooltip for="formatIcon3" styleClass="helpTip">
+                    <p>
+                        Please upload the original XLSX datasheets from Metabolon directly without any editing or conversion.
+                        Note that there are three sheets (<b>Chemical Annotation</b>, <b>Sample Meta Data</b> and <b>Peak Area Data</b>) required to proceed.                        
+                    </p>    
+                </p:tooltip>
+            </h:form>
+        </h:panelGrid>
+
+        <p:dialog modal="true" widgetVar="metabolondata" header="Metabolon datasets"
+                  appendTo="@(body)" style="line-height: 23px;"
+                  draggable="false" closable="true" resizable="true">            
+            <div style="font-size:14px; font-weight: bold;">Please select one metadata factor and compound identifier:</div>
+            <h:panelGrid style="padding: 20px">
+                <h:form id="form1">
+                    <h:panelGrid columns="2" style="padding: 10px 30px 20px 20px; line-height: 23px; width:500px" class="surface-card shadow-1 p-4 text-800">                        
+                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata Factor: "/>
+                        <p:selectOneMenu id="mf" value="#{uploader.defaultMetafactor}">                            
+                            <f:selectItems value="#{uploader.metaboloneMetaOpts}"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Compound ID: "/>
+                        <p:selectOneMenu id="cID" value="#{uploader.defaultchemid}">
+                            <f:selectItem itemLabel="Chemical Name" itemValue="CHEMICAL_NAME"/>
+                            <f:selectItems value="#{uploader.metaboloneChemIDOpts}"/>
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2" style="width:500px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+                        <p:commandButton value="Confirm" ajax="false" style="width: 100px"
+                                         onclick="PF('statusDialog').show()"
+                                         action="#{uploader.processMetabolonData}"
+                                         oncomplete="PF('statusDialog').hide();"/>   
+                        <p:commandButton value="Cancel" ajax="false" style="width: 100px"
+                                         onclick="PF('metabolondata').hide();" 
+                                         oncomplete="PF('statusDialog').hide();" />   
+                    </h:panelGrid> 
+                </h:form>
+            </h:panelGrid>            
+        </p:dialog>
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Try Examples"
+                                 id="testBn" style="width:150px"
+                                 icon="pi pi-star"                                          
+                                 onclick="PF('testDataDialog').show();"/>
+
+
+                <p:button id="visBn" value="Proceed" style="width:150px"
+                          icon="pi pi-angle-double-right" 
+                          disabled="#{not sessionBean1.dataUploaded}"
+                          outcome="Data check"/>
+            </h:panelGrid>
+        </h:form>
+        <p:dialog modal="true" widgetVar="testDataDialog" 
+                  style="line-height: 21px;" 
+                  height="500"
+                  appendTo="@(body)" header="Example Datasets"
+                  draggable="true" closable="true" resizable="true">
+            <h:form>
+                <p:selectOneRadio id="customRadio" value="#{uploader.testDataOpt}" layout="custom">  
+                    <f:selectItem itemValue="conccancer" itemLabel="Concentrations"/>
+                    <f:selectItem itemValue="conccow" itemLabel="Concentrations"/>
+                    <f:selectItem itemValue="nmrspecbin" itemLabel="NMR spectral bins"/>
+                    <f:selectItem itemValue="nmrpeaklist" itemLabel="NMR peak lists"/>
+                    <f:selectItem itemValue="concpair" itemLabel="Concentrations (paired)"/>
+                    <f:selectItem itemValue="mspkint" itemLabel="MS peak intensities"/>
+                    <f:selectItem itemValue="mspklist" itemLabel="MS peak list"/>
+                    <f:selectItem itemValue="mztabmouse" itemLabel="LC-MS mzTab"/>
+                    <f:selectItem itemValue="mztabgc" itemLabel="GC-MS mzTab"/>
+                    <f:selectItem itemValue="lcmsspec" itemLabel="LC-MS spectra"/>
+                    <!--
+                    <f:selectItem itemValue="gcmsspec" itemLabel="GC-MS spectra"/>
+                    -->
+                </p:selectOneRadio>  
+                <p:panelGrid columns="3" style="width:800px" layout="tabular" styleClass="myPanelGrid" class="surface-card shadow-1 p-4 text-800">
+                    <p:spacer style="width: 30px"/>
+                    <h:panelGrid style="width:150px; padding-left: 4px; padding-right: 4px">
+                        <p:outputLabel style="font-size:13px; font-weight: bold" value="Data Type"/>   
+                    </h:panelGrid>
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Description"/>
+
+                    <p:radioButton for="customRadio" itemIndex="0"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Concentrations</a>
+                    <h:panelGrid>
+                        Metabolite concentrations of 77 urine samples from cancer patients measured by 1H NMR 
+                        (<a href="http://dx.doi.org/10.1007/s11306-010-0232-9">Eisner R, et al.</a>). 
+                        Groups: cachexic; control                                       
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="1"/>                    
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/cow_diet.csv">Concentrations</a>                    
+                    <h:panelGrid>
+                        Metabolite concentrations of 39 rumen samples measured by proton NMR from dairy cows fed with different 
+                        proportions of barley grain (<a href="http://dx.doi.org/10.1007/s11306-010-0227-6">Ametaj BN, et al.</a>). 
+                        Groups: 0, 15, 30, or 45 - indicating the percentage of grain in diet.                                       
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="2"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/nmr_bins.csv">NMR spectral bins</a>                    
+                    <h:panelGrid>   
+                        Binned 1H NMR spectra of 50 urine samples using 0.04 ppm constant width (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17705523">Psihogios NG, et al.</a>) 
+                        Groups: control; severe kidney disease.
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="3"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/nmr_peaks.zip">NMR peak lists</a> 
+                    <h:panelGrid>
+                        Peak lists and intensity files for 50 urine samples measured by 1H NMR (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17705523">Psihogios NG, et al.</a>). 
+                        Groups: control; severe kidney disease.
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="4"/>                    
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/time_series.csv">Concentrations (paired)</a> 
+                    <h:panelGrid>
+                        Compound concentrations of 14 urine samples collected from 7 cows at two time points using 1H NMR
+                        (unpublished data). Groups: day 1; day 4. 
+                    </h:panelGrid>                                                
+
+                    <p:radioButton for="customRadio" itemIndex="5"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/lcms_table.csv">MS peak intensities</a> 
+                    <h:panelGrid>
+                        LC-MS peak intensity table for 12 mice spinal cord samples (<a href="http://www.ncbi.nlm.nih.gov/pubmed/15533037">Saghatelian et al.</a>). 
+                        Groups: wild-type; knock-out.            
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="6"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/lcms_3col_peaks.zip">MS peak lists</a>
+                    <h:panelGrid>
+                        Three-column LC-MS peak list files for 12 mice spinal cord samples (<a href="http://www.ncbi.nlm.nih.gov/pubmed/15533037">Saghatelian et al.</a>). 
+                        Groups: wild-type; knock-out.           
+                    </h:panelGrid>
+
+                    <p:radioButton for="customRadio" itemIndex="7"/>
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/MouseLiver_negative.mzTab">LC-MS mzTab</a>                    
+                    <h:panelGrid>
+                        LC-MS mzTab file of 15 mouse liver samples collected using LTQ Orbitrap Velos by (<a href="https://raw.githubusercontent.com/HUPO-PSI/mzTab/master/examples/2_0-Metabolomics_Release/MouseLiver_negative.mzTab">Hartler et al.</a>) 
+                        Groups: mouse liver 1;  mouse liver 2; mouse liver 3.
+                    </h:panelGrid>
+
+                    <!--
+                    <p:radioButton for="customRadio" itemIndex="8"/> 
+                    <a target="_blank" style="font-size:12px; font-weight: bold" href="https://www.xialab.ca/api/download/metaboanalyst/gcms_tms_height.mzTab">GC-MS mzTab</a>                                        
+                    <h:panelGrid>
+                        GC-MS mzTab file of 6 <i>Arabidopsis</i> samples obtained using (<a href="https://github.com/HUPO-PSI/mzTab/blob/master/examples/2_0-Metabolomics_Release/msdial/gcms_tms_height_mzTab.txt">MS-DIAL</a>). 
+                        Groups: cont; MeKo.
+                    </h:panelGrid>     
+                    -->
+                </p:panelGrid>
+                <h:panelGrid style="width:100%; text-align: center; padding-top: 10px">
+                    <p:commandButton value="Submit" ajax="false" style="width: 100px"
+                                     onclick="PF('statusDialog').show()"
+                                     action="#{uploader.handleStatTestFileUpload}"/>                               
+                </h:panelGrid>
+            </h:form>
+        </p:dialog> 
+    </ui:define>
+
+</ui:composition>
