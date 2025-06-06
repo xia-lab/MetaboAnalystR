@@ -4,10 +4,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +17,7 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.llm.GoogleAIClient;
 import pro.metaboanalyst.rwrappers.UniVarTests;
+import pro.metaboanalyst.rwrappers.RCenter;
 
 @Named
 @SessionScoped
@@ -38,9 +36,7 @@ public class RPlotCustomizationAgent implements Serializable {
     @Inject
     private SessionBean1 sb;
 
-    @Inject
-    private UnivBean ub;
-
+    
     private transient GoogleAIClient aiClient;
     private static String RSCRIPT_DIR;
     private final List<ChatMessage> chatHistory = new ArrayList<>();
@@ -52,13 +48,22 @@ public class RPlotCustomizationAgent implements Serializable {
             return;
         }
         RSCRIPT_DIR = appBean.getRscriptsHomePath() + "/XiaLabPro/R/plotting";
-        aiClient = new GoogleAIClient();
-        LOG.info(() -> "Plot script directory = " + RSCRIPT_DIR);
+        
+        // Initialize the AI client
+        try {
+            aiClient = new GoogleAIClient();
+        } catch (Exception e) {
+            LOG.severe("Failed to initialize GoogleAIClient: " + e.getMessage());
+        }
     }
 
-    public String customizePlot(String functionName, String userRequest) {
+    public String customizePlot(String key, String functionName, String userRequest) {
         if (RSCRIPT_DIR == null) {
             return err("R script directory not initialised");
+        }
+
+        if (aiClient == null) {
+            return err("AI client not initialized");
         }
 
         // Resolve alias if needed and ensure function is loaded in R
@@ -114,33 +119,14 @@ public class RPlotCustomizationAgent implements Serializable {
 
         // Evaluate modified function in R
         try {
+            System.out.println(modifiedRFunction);
             sb.getRConnection().eval(modifiedRFunction);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "R evaluation failed", ex);
         }
 
-        // Trigger re-plotting
-        if (ub.getLabelOpt().equals("all")) {
-            UniVarTests.plotVolcanoAI(
-                    sb,
-                    sb.getNewImage("volcano"),
-                    ub.getPlotLbl(),
-                    ub.getPlotTheme(),
-                    "png",
-                    72,
-                    -1
-            );
-        } else {
-            UniVarTests.plotVolcanoAI(
-                    sb,
-                    sb.getNewImage("volcano"),
-                    ub.getPlotLbl(),
-                    ub.getPlotTheme(),
-                    "png",
-                    72,
-                    sb.getVolcanoLabelNum()
-            );
-        }
+        String origRCommand = sb.getGraphicsMap().get(key);
+        executeAICustomizedPlot(origRCommand);
 
         return modifiedRFunction;
     }
@@ -167,6 +153,7 @@ public class RPlotCustomizationAgent implements Serializable {
     }
 
     private static class ChatMessage {
+
         private final String role;
         private final String content;
 
@@ -185,6 +172,7 @@ public class RPlotCustomizationAgent implements Serializable {
     }
 
     private static class FunctionMapping {
+
         final String rFuncName;
         final String rScriptFile;
 
@@ -193,4 +181,18 @@ public class RPlotCustomizationAgent implements Serializable {
             this.rScriptFile = rScriptFile;
         }
     }
-} 
+
+    public void executeAICustomizedPlot(String rCommand) {
+        try {
+            // Add AI suffix to the R function name
+            String modifiedRCommand = rCommand.replaceFirst("(\\w+)\\(", "$1AI(");
+
+            // Get R connection and execute the modified command
+            RConnection RC = sb.getRConnection();
+            RCenter.recordRCommand(RC, modifiedRCommand);
+            RC.voidEval(modifiedRCommand);
+        } catch (Exception e) {
+            LOG.severe("Error in executeAICustomizedPlot: " + e.getMessage());
+        }
+    }
+}
