@@ -331,7 +331,7 @@ public class DataModel implements Serializable {
     }
 
     public void plotDataProfile() {
-        RMetaUtils.plotDataProfiles(sb.getRConnection(), name, sb.getNewImage("qc_boxplot"), sb.getNewImage("qc_pca"));
+        RMetaUtils.plotDataProfiles(sb.getRConnection(), name, sb.getNewImage("qc_boxplot"), sb.getNewImage("qc_pca"), "png", 150);
     }
 
     public String getFeatureType() {

@@ -55,11 +55,11 @@ public class MetaLoadBean implements Serializable {
     @JsonIgnore
     @Inject
     private ProcessBean pcb;
-    
-       @JsonIgnore
+
+    @JsonIgnore
     @Inject
     private JavaRecord jrd;
-       
+
     /**
      * Record the currently selected data
      */
@@ -627,7 +627,7 @@ public class MetaLoadBean implements Serializable {
                 /*
                 integCheckMsg = "OK, ComBat normalization succeeded. "
                 + "Click <b>Next</b> button to next page.";
-                */
+                 */
                 RDataUtils.plotMetaPCA(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 150, "png");
                 if (adjustBatch) {
                     sb.addMessage("info", "OK, ComBat batch correction succeeded!");

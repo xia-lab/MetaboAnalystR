@@ -64,9 +64,9 @@ public class RMetaUtils {
         return 0;
     }
 
-    public static int plotDataProfiles(RConnection RC, String dataName, String boxName, String pcaName) {
+    public static int plotDataProfiles(RConnection RC, String dataName, String boxName, String pcaName, String format, int dpi) {
         try {
-            String rCommand = "PlotDataProfile(\"" + dataName + "\", \"" + boxName + "\", \"" + pcaName + "\");";
+            String rCommand = "PlotDataProfile(\"" + dataName + "\", \"" + boxName + "\", \"" + pcaName + "\", \"" + format + "\", " + dpi + ")";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
