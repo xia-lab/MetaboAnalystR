@@ -13,7 +13,7 @@ import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.SigVarSelect;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *

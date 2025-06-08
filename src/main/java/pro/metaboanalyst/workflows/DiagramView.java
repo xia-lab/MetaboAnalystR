@@ -67,7 +67,6 @@ import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *

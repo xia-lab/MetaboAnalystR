@@ -17,7 +17,7 @@ import pro.metaboanalyst.rwrappers.Clustering;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.SigVarSelect;
 import pro.metaboanalyst.rwrappers.UniVarTests;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

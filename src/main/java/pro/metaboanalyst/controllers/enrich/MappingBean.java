@@ -22,7 +22,7 @@ import pro.metaboanalyst.rwrappers.SearchUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ProcessBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

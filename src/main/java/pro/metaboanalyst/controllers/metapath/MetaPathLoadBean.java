@@ -29,7 +29,7 @@ import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 import pro.metaboanalyst.controllers.general.ProcessBean;
 import pro.metaboanalyst.models.DataModel;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

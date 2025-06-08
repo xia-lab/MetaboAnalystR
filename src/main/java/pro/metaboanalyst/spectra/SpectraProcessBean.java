@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import pro.metaboanalyst.models.MS2ResutlsBean;
 import pro.metaboanalyst.models.SwathBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

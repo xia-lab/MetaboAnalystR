@@ -22,7 +22,7 @@ import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.models.DataModel;
 import pro.metaboanalyst.models.NameMapBean;
 import pro.metaboanalyst.rwrappers.RCenter;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 @ViewScoped

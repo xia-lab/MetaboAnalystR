@@ -7,7 +7,7 @@ package pro.metaboanalyst.rwrappers;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *

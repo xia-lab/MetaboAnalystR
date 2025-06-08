@@ -19,7 +19,7 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

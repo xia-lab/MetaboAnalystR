@@ -31,7 +31,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import software.xdev.chartjs.model.data.BarData;
 import software.xdev.chartjs.model.data.PieData;

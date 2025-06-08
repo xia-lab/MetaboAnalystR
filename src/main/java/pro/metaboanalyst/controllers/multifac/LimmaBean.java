@@ -18,7 +18,7 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

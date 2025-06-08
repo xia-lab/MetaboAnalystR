@@ -17,7 +17,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

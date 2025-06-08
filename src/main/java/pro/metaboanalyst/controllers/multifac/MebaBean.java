@@ -18,7 +18,7 @@ import pro.metaboanalyst.models.FeatureBean;
 import pro.metaboanalyst.rwrappers.TimeSeries;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

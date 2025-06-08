@@ -24,7 +24,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.REnrichUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import jakarta.inject.Inject;
 

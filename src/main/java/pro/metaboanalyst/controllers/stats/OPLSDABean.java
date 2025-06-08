@@ -12,7 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *

@@ -40,7 +40,7 @@ import pro.metaboanalyst.rwrappers.RSpectraUtils;
 import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *

@@ -17,7 +17,7 @@ import pro.metaboanalyst.rwrappers.TimeSeries;
 import pro.metaboanalyst.rwrappers.UniVarTests;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

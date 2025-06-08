@@ -29,7 +29,7 @@ import java.util.concurrent.Semaphore;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**

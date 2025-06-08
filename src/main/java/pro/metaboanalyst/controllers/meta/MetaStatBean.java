@@ -9,7 +9,7 @@ import java.io.Serializable;
 import pro.metaboanalyst.rwrappers.RMetaUtils;
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.workflows.WorkflowBean;

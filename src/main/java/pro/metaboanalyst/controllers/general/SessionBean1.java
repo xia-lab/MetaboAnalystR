@@ -39,7 +39,7 @@ import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import org.omnifaces.util.Faces;
 import pro.metaboanalyst.workflows.WorkflowView;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.WorkflowBean;
 

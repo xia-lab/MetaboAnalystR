@@ -15,7 +15,7 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
