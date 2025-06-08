@@ -63,6 +63,25 @@ public class MyPhaseListener implements PhaseListener {
     private MailService ms;
     @Inject
     private SessionBean1 sb;
+    @Inject
+    private  ProjectBean prjb;
+    @Inject
+    private  UserLoginBean ulb;
+    @Inject
+    private FireBase fb;
+    @Inject
+    private  FireUserBean fub;
+    @Inject
+    private  FireBaseController fbc;
+    @Inject
+    private SpectraControlBean spcb;
+    @Inject
+    private DiagramView dv;
+    @Inject
+    private WorkflowBean wfb;
+    @Inject
+    private DatabaseClient dbc;
+    
     public static final String USER_SESSION_KEY = "MA6_PRO_user";
     private static final String PartialPersistence = "Share"; //ok
     private static final String LoadingProject = "LoadProject"; //ok
@@ -111,19 +130,12 @@ public class MyPhaseListener implements PhaseListener {
         }
 
         String funcNm = request.getParameter("funcNm");
-
         String rootId = (context.getViewRoot() != null) ? context.getViewRoot().getViewId() : request.getRequestURL().toString();
 
-        if (event.getPhaseId() == PhaseId.RESTORE_VIEW && context.getViewRoot() == null) {
+        //if (event.getPhaseId() == PhaseId.RESTORE_VIEW && context.getViewRoot() == null) {
             //context.setViewRoot(context.getApplication().getViewHandler().createView(context, "/home.xhtml"));
             //System.out.println("Setting default view /home.xhtml");
-        }
-
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-        ValueExpression ve = ef.createValueExpression(elc, "#{sessionBean1}", SessionBean1.class);
-        SessionBean1 sb = (SessionBean1) ve.getValue(elc);
+        //}
 
         if (funcNm != null) {
             switch (funcNm) {
@@ -157,10 +169,8 @@ public class MyPhaseListener implements PhaseListener {
         }
 
         if (rootId.contains(JobManager)) {
-            ValueExpression ve2 = ef.createValueExpression(elc, "#{userLoginBean}", UserLoginBean.class);
-            UserLoginBean ub = (UserLoginBean) ve2.getValue(elc);
 
-            if (!(sb.isRegisteredLogin() && ub.isJobManager())) {
+            if (!(sb.isRegisteredLogin() && ulb.isJobManager())) {
                 context.getApplication().getNavigationHandler().handleNavigation(context, "*", "Exit");
                 context.responseComplete();
                 return; // Ensure no further processing
@@ -197,31 +207,17 @@ public class MyPhaseListener implements PhaseListener {
     private void handlePartialRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
-
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{sessionBean1}", SessionBean1.class);
-        SessionBean1 sb = (SessionBean1) ve.getValue(elc);
-
-        ve = ef.createValueExpression(elc, "#{projectBean}", ProjectBean.class);
-        ProjectBean pb = (ProjectBean) ve.getValue(elc);
-
-        ve = ef.createValueExpression(elc, "#{spectraController}", SpectraControlBean.class);
-        SpectraControlBean spcb = (SpectraControlBean) ve.getValue(elc);
 
         try {
             String partialId = request.getParameter("ID");
             sb.setPartialId(partialId);
 
-            boolean res = false;
+            boolean res;
             if (ab.isInDocker()) {
-                res = pb.checkLinkinDocker();
+                res = prjb.checkLinkinDocker();
             } else {
-                res = pb.checkLink();
+                res = prjb.checkLink();
             }
 
             sb.setPartialLinkValide(res);
@@ -251,26 +247,13 @@ public class MyPhaseListener implements PhaseListener {
     private void handleResumeRawRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
-
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{diagramView}", DiagramView.class);
-        DiagramView dv = (DiagramView) ve.getValue(elc);
-
-        ValueExpression ve2 = ef.createValueExpression(elc, "#{sessionBean1}", SessionBean1.class);
-        SessionBean1 sb = (SessionBean1) ve2.getValue(elc);
-
         try {
-            FireBaseController fb = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
-
             String folderName = request.getParameter("folderName");
             String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
-            System.out.println("handleResumeRawRequest_folderName===" + folderName);
+            //System.out.println("handleResumeRawRequest_folderName===" + folderName);
 
             boolean res = dv.resumeRawProject(folderName, jobId, email);
             if (res) {
@@ -278,17 +261,17 @@ public class MyPhaseListener implements PhaseListener {
 
                 RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
 
-                String funcName = "finishRawProject";
-                String shareLink = ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?"
-                        + "funcNm=" + URLEncoder.encode(funcName, StandardCharsets.UTF_8) + "&"
-                        + "folderName=" + URLEncoder.encode(folderName, StandardCharsets.UTF_8) + "&"
-                        + "jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8) + "&"
-                        + "email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
+                //String funcName = "finishRawProject";
+                //String shareLink = ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?"
+                //        + "funcNm=" + URLEncoder.encode(funcName, StandardCharsets.UTF_8) + "&"
+                //        + "folderName=" + URLEncoder.encode(folderName, StandardCharsets.UTF_8) + "&"
+                //        + "jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8) + "&"
+                //        + "email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
                 fu.setEmail(email);
-                System.out.println("handleResumeRawRequest_EMAIL===" + email);
-                System.out.println("handleResumeRawRequest_ANAL===" + sb.getAnalType());
-                fb.setFireDocName("Workflow Project");
-                boolean saveRes = fb.saveProject("project");
+                //System.out.println("handleResumeRawRequest_EMAIL===" + email);
+                //System.out.println("handleResumeRawRequest_ANAL===" + sb.getAnalType());
+                fbc.setFireDocName("Workflow Project");
+                boolean saveRes = fbc.saveProject("project");
                 if (saveRes) {
                     RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
@@ -312,29 +295,15 @@ public class MyPhaseListener implements PhaseListener {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         String token = request.getParameter("token");
-
-        SessionBean1 sb = context.getApplication().evaluateExpressionGet(context, "#{sessionBean1}", SessionBean1.class);
         if (token != null) {
             sb.setResetToken(token);
         }
-
     }
 
     private void handleLoadingProjectRequest(PhaseEvent event) {
         PrimeFaces.current().executeScript("PF('statusDialog').show();");
         FacesContext context = event.getFacesContext();
-
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{projectBean}", ProjectBean.class);
-        ProjectBean pb = (ProjectBean) ve.getValue(elc);
-
-        ve = ef.createValueExpression(elc, "#{userLoginBean}", UserLoginBean.class);
-        UserLoginBean ulb = (UserLoginBean) ve.getValue(elc);
 
         try {
             String projectLoadingCode = request.getParameter("ID");
@@ -343,8 +312,8 @@ public class MyPhaseListener implements PhaseListener {
 
             String guestFolder = projectLoadingCode.split("_")[1];
             String pageFlag = "";
-            boolean ready = false;
-            boolean ready0 = false;
+            boolean ready;
+            boolean ready0;
 
             if (guestFolder.startsWith("nv")) {
 
@@ -354,11 +323,11 @@ public class MyPhaseListener implements PhaseListener {
                 ulb.doLoginKeep(guestFolder);
 
                 // 2. Restore selected projects
-                String initRes = pb.initializeProject(guestFolder);
+                String initRes = prjb.initializeProject(guestFolder);
                 ready0 = initRes != null;
 
                 // 3. load new project
-                String loadRes = pb.loadnewProject();
+                String loadRes = prjb.loadnewProject();
                 if (loadRes == null) {
                     ready = false;
                 } else {
@@ -373,11 +342,11 @@ public class MyPhaseListener implements PhaseListener {
                 ulb.doLoginKeep(guestFolder);
 
                 // 2. Restore selected projects
-                String initRes = pb.initializeProject(guestFolder);
+                String initRes = prjb.initializeProject(guestFolder);
                 ready0 = initRes != null;
 
                 // 3. load project
-                String loadRes = pb.loadProject();
+                String loadRes = prjb.loadProject();
                 if (loadRes == null) {
                     ready = false;
                 } else {
@@ -405,15 +374,8 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{sessionBean1}", SessionBean1.class);
-        SessionBean1 sb = (SessionBean1) ve.getValue(elc);
-
         try {
-            FireBaseController fu = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
+
             String tokenId = request.getParameter("tokenId");
             String analNavi = request.getParameter("analNavi");
             String imgCmd = request.getParameter("imgCmd");
@@ -424,22 +386,22 @@ public class MyPhaseListener implements PhaseListener {
             boolean res;
             if (analNavi != null && !analNavi.isEmpty()) {
                 String cmpd = request.getParameter("cmpd");
-                fu.loadReport(tokenId, analNavi, cmpd);
+                fbc.loadReport(tokenId, analNavi, cmpd);
                 // DataUtils.doRedirect("/MetaboAnalys/docs/Format.xhtml");
 
             } else if (imgCmd != null && !imgCmd.isEmpty()) {
 
-                fu.loadProject(tokenId, "share");
-                System.out.println("loadProject ==> ");
+                fbc.loadProject(tokenId, "share");
+                //System.out.println("loadProject ==> ");
                 sb.graphicsLnk_action(imgCmd);
                 sb.setFormatOpt(imgType);
-                fu.generateHighDef2();
+                fbc.generateHighDef2();
 
             } else if (downloadPath != null && !downloadPath.isEmpty()) {
-                fu.loadProject(tokenId, "share");
+                fbc.loadProject(tokenId, "share");
                 DataUtils.doRedirect("/MetaboAnalyst/" + sb.getCurrentUser().getRelativeDir() + File.separator + downloadPath, ab);
             } else {
-                res = fu.loadProject(tokenId, "share");
+                res = fbc.loadProject(tokenId, "share");
                 if (res) {
                     if (null == returnNavi) {
                         DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/ProjectLanding.xhtml", ab);
@@ -468,24 +430,20 @@ public class MyPhaseListener implements PhaseListener {
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
         try {
-            FireUserBean fu = (FireUserBean) DataUtils.getBeanInstanceByName("fireUserBean");
             //boolean success = fu.reloadUserInfo();
             String tokenId = (String) request.getParameter("token");
             String projectId = (String) request.getParameter("projectId");
             String navi = (String) request.getParameter("navi");
-            SessionBean1 sb = (SessionBean1) DataUtils.getBeanInstanceByName("sessionBean1");
-            boolean success = fu.loginHandshake(tokenId);
+            boolean success = fub.loginHandshake(tokenId);
             if (success) {
                 if (navi != null) {
                     context.getApplication().getNavigationHandler().handleNavigation(context,
                             "*", navi);
                 } else if (projectId != null) {
-                    FireBaseController fb = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
-                    fb.setProjectToLoadId(projectId);
+                    fbc.setProjectToLoadId(projectId);
                     context.getApplication().getNavigationHandler().handleNavigation(context,
                             "*", "ProjectView");
                 } else {
-
                     sb.addMessage("info", "Login successful!");
                     context.getApplication().getNavigationHandler().handleNavigation(context,
                             "*", "Upload");
@@ -507,20 +465,12 @@ public class MyPhaseListener implements PhaseListener {
     private void handleActivationRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-        ValueExpression ve = ef.createValueExpression(elc, "#{fireUserBean}", FireUserBean.class
-        );
-        FireUserBean fu = (FireUserBean) ve.getValue(elc);
-
         try {
-            System.out.println("activateView===========");
+            //System.out.println("activateView===========");
             String activationCode = context.getExternalContext().getRequestParameterMap().get("code");
             String email = context.getExternalContext().getRequestParameterMap().get("mail");
-
-            fu.setActivationCode(activationCode);
-            fu.setEmail(email);
+            fub.setActivationCode(activationCode);
+            fub.setEmail(email);
 
         } catch (Exception e) {
             LOGGER.error("handleActivationRequest", e);
@@ -549,28 +499,17 @@ public class MyPhaseListener implements PhaseListener {
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
 
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{fireUserBean}", FireUserBean.class
-        );
-        FireUserBean fu = (FireUserBean) ve.getValue(elc);
-
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         //If no parameters are passed, then, try to parse the JSON body of the API request
         try {
-
-            fu.setEmail(username);
-            fu.setPassword(password);
-            boolean res = fu.doUserLoginLocal();
+            fub.setEmail(username);
+            fub.setPassword(password);
+            boolean res = fub.doUserLoginLocal();
 
             if (res) {
-
-                FireBase fb = (FireBase) DataUtils.getBeanInstanceByName("fireBase");
                 String uid = UUID.randomUUID().toString();
-                fb.getLoginUserMap().put(uid, fu);
+                fb.getLoginUserMap().put(uid, fub);
 
                 response.setStatus(HttpServletResponse.SC_OK);
                 // Set the content type, for example, text/plain or application/json
@@ -606,7 +545,6 @@ public class MyPhaseListener implements PhaseListener {
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
 
         try {
-            FireBase fb = (FireBase) DataUtils.getBeanInstanceByName("fireBase");
             String email = request.getParameter("email");
             String folderName = request.getParameter("folderName");
 
@@ -647,45 +585,25 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{sessionBean1}", SessionBean1.class);
-        SessionBean1 sb = (SessionBean1) ve.getValue(elc);
-
-        ValueExpression ve2 = ef.createValueExpression(elc, "#{diagramView}", DiagramView.class);
-        DiagramView dv = (DiagramView) ve2.getValue(elc);
-
-        ValueExpression ve3 = ef.createValueExpression(elc, "#{applicationBean1}", ApplicationBean1.class);
-        ApplicationBean1 ab = (ApplicationBean1) ve3.getValue(elc);
-
-        ValueExpression ve4 = ef.createValueExpression(elc, "#{fireUserBean}", FireUserBean.class
-        );
-        FireUserBean fu = (FireUserBean) ve4.getValue(elc);
 
         try {
-            FireBaseController fb = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
+           
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
             String jobId = request.getParameter("jobId");
-
-            boolean res;
-
-            res = fb.loadProject(tokenId, "workflow");
-
+            boolean res = fbc.loadProject(tokenId, "workflow");
             if (res) {
                 boolean wfRes = dv.startWorkflow();
                 if (wfRes) {
                     sb.setCurrentNaviUrl("/Secure/xialabpro/ResultView.xhtml");
-                    fu.setEmail(email);
+                    fub.setEmail(email);
                     String shareLink = ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=finishWorkflowJob&tokenId=" + tokenId;
                     sb.addMessage("info", DataUtils.obtainTimestampText());
                     sb.addMessage("info", "Your workflow processing job (ID: " + jobId + ") status has become <b>COMPLETED</b>.");
                     sb.addMessage("info", "You can access the following link to resume your project: "
                             + "<a href=\"" + shareLink + "\">click here</a>.\n");
                     dv.setShowNotif(true);
-                    boolean saveRes = fb.saveProject("workflow");
+                    boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         QuartzDbUtils.updateJobStatus(jobId, "COMPLETED");
                         dv.sendRawResume(email, jobId, shareLink);
@@ -704,25 +622,13 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
 
-        ValueExpression ve = ef.createValueExpression(elc, "#{diagramView}", DiagramView.class);
-        DiagramView dv = (DiagramView) ve.getValue(elc);
-
-        ve = ef.createValueExpression(elc, "#{workflowBean}", WorkflowBean.class);
-        WorkflowBean wb = (WorkflowBean) ve.getValue(elc);
         try {
-            FireBaseController fu = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
             String tokenId = request.getParameter("tokenId");
-
-            boolean res;
-
-            res = fu.loadProject(tokenId, "workflow");
+            boolean res = fbc.loadProject(tokenId, "workflow");
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
-                if (wb.getWorkflowOptions() != null && !wb.getWorkflowOptions().isEmpty()) {
+                if (wfb.getWorkflowOptions() != null && !wfb.getWorkflowOptions().isEmpty()) {
                     DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Workflow completed!");
                     //DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml?callFunc=checkPagesToVisit", "info", "Workflow completed!");
 
@@ -743,25 +649,13 @@ public class MyPhaseListener implements PhaseListener {
     private void handleFinishRawRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
-
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
-        FacesContext fc = FacesContext.getCurrentInstance();
-        ELContext elc = fc.getELContext();
-        ExpressionFactory ef = fc.getApplication().getExpressionFactory();
-
-        ValueExpression ve = ef.createValueExpression(elc, "#{diagramView}", DiagramView.class);
-        DiagramView dv = (DiagramView) ve.getValue(elc);
-
         try {
-            DatabaseClient db = (DatabaseClient) DataUtils.getBeanInstanceByName("databaseClient");
-            FireBaseController fb = (FireBaseController) DataUtils.getBeanInstanceByName("fireBaseController");
-            SessionBean1 sb = (SessionBean1) DataUtils.getBeanInstanceByName("sessionBean1");
-
             String folderName = request.getParameter("folderName");
             String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
-            Map<String, Object> obj = db.obtainFolderNameProject(folderName);
+            Map<String, Object> obj = dbc.obtainFolderNameProject(folderName);
             Optional<Map.Entry<String, Object>> matchingEntry = obj.entrySet().stream()
                     .filter(entry -> entry.getKey().equals("partialtoken") || entry.getKey().contains("partialtoken"))
                     .findFirst();
@@ -769,10 +663,9 @@ public class MyPhaseListener implements PhaseListener {
             if (matchingEntry.isPresent()) {
                 Object token2 = matchingEntry.get().getValue();
                 try {
-                    boolean res1 = fb.loadProject(token2 + "", "project", true);
+                    boolean res1 = fbc.loadProject(token2 + "", "project", true);
                     if (res1) {
-                        FireUserBean fu = (FireUserBean) DataUtils.getBeanInstanceByName("fireUserBean");
-                        fu.setEmail(email);
+                        fub.setEmail(email);
                         dv.setWorkflowFinished(true);
                         //SpectraProcessBean spb = (SpectraProcessBean) DataUtils.getBeanInstanceByName("spectraProcessor");
                         //spb.internalizeRes(0);
